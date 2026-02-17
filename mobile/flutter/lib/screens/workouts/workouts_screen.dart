@@ -11,7 +11,6 @@ import '../../data/providers/today_workout_provider.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../../data/repositories/workout_repository.dart';
 import '../../data/services/haptic_service.dart';
-import '../../widgets/glass_back_button.dart';
 import '../../widgets/main_shell.dart';
 import '../../widgets/pill_swipe_navigation.dart';
 import '../home/widgets/cards/next_workout_card.dart';
@@ -77,24 +76,9 @@ class _WorkoutsScreenState extends ConsumerState<WorkoutsScreen>
             // Scrollable content
             CustomScrollView(
               slivers: [
-                // Top padding for floating icons
+                // Top padding for floating header row
                 SliverToBoxAdapter(
                   child: SizedBox(height: MediaQuery.of(context).padding.top + 56),
-                ),
-
-                // Title - scrolls with content
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.only(left: 16, right: 16, bottom: 16),
-                    child: Text(
-                      'Workouts',
-                      style: TextStyle(
-                        fontSize: 28,
-                        fontWeight: FontWeight.bold,
-                        color: textPrimary,
-                      ),
-                    ),
-                  ),
                 ),
 
                 // Content - render unconditionally using valueOrNull to avoid blocking on load
@@ -144,12 +128,14 @@ class _WorkoutsScreenState extends ConsumerState<WorkoutsScreen>
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            // Back button - glassmorphic (left side)
-            GlassBackButton(
-              onTap: () {
-                HapticService.light();
-                context.go('/home');
-              },
+            // Title (left side)
+            Text(
+              'Workouts',
+              style: TextStyle(
+                fontSize: 28,
+                fontWeight: FontWeight.bold,
+                color: textPrimary,
+              ),
             ),
             // Right side buttons
             Row(

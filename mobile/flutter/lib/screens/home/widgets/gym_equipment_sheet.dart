@@ -202,6 +202,13 @@ class _GymEquipmentSheetState extends State<GymEquipmentSheet> {
     );
   }
 
+  void _resetAll() {
+    setState(() {
+      _selectedEquipment.clear();
+      _equipmentMap.clear();
+    });
+  }
+
   void _selectAllInCategory(String category) {
     final items = gymEquipmentCategories[category] ?? [];
     setState(() {
@@ -287,10 +294,27 @@ class _GymEquipmentSheetState extends State<GymEquipmentSheet> {
                       const SizedBox(height: 4),
                       Row(
                         children: [
-                          // Selected / All toggle
-                          _buildFilterChip('Selected', false, isDark, textMuted, accentColor),
-                          const SizedBox(width: 8),
-                          _buildFilterChip('All', true, isDark, textMuted, accentColor),
+                          Text(
+                            '${_selectedEquipment.length} selected',
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: textMuted,
+                            ),
+                          ),
+                          if (_selectedEquipment.isNotEmpty) ...[
+                            const SizedBox(width: 12),
+                            GestureDetector(
+                              onTap: _resetAll,
+                              child: Text(
+                                'Reset All',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  color: Colors.red.shade400,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ),
+                          ],
                         ],
                       ),
                     ],
@@ -389,29 +413,6 @@ class _GymEquipmentSheetState extends State<GymEquipmentSheet> {
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildFilterChip(String label, bool isActive, bool isDark, Color textMuted, Color accentColor) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-      decoration: BoxDecoration(
-        color: isActive ? (isDark ? Colors.white : Colors.black) : Colors.transparent,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: isActive ? Colors.transparent : textMuted.withOpacity(0.3),
-        ),
-      ),
-      child: Text(
-        label,
-        style: TextStyle(
-          fontSize: 13,
-          fontWeight: FontWeight.w500,
-          color: isActive
-              ? (isDark ? Colors.black : Colors.white)
-              : textMuted,
-        ),
       ),
     );
   }

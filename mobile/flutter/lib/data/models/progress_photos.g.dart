@@ -54,6 +54,16 @@ PhotoComparison _$PhotoComparisonFromJson(Map<String, dynamic> json) =>
       daysBetween: (json['days_between'] as num?)?.toInt(),
       visibility: json['visibility'] as String? ?? 'private',
       createdAt: DateTime.parse(json['created_at'] as String),
+      photosJson: (json['photos_json'] as List<dynamic>?)
+          ?.map((e) => ComparisonPhotoEntry.fromJson(e as Map<String, dynamic>))
+          .toList(),
+      layout: json['layout'] as String?,
+      settingsJson: json['settings_json'] as Map<String, dynamic>?,
+      exportedImageUrl: json['exported_image_url'] as String?,
+      aiSummary: json['ai_summary'] as String?,
+      updatedAt: json['updated_at'] == null
+          ? null
+          : DateTime.parse(json['updated_at'] as String),
     );
 
 Map<String, dynamic> _$PhotoComparisonToJson(PhotoComparison instance) =>
@@ -68,7 +78,29 @@ Map<String, dynamic> _$PhotoComparisonToJson(PhotoComparison instance) =>
       'days_between': instance.daysBetween,
       'visibility': instance.visibility,
       'created_at': instance.createdAt.toIso8601String(),
+      'photos_json': instance.photosJson,
+      'layout': instance.layout,
+      'settings_json': instance.settingsJson,
+      'exported_image_url': instance.exportedImageUrl,
+      'ai_summary': instance.aiSummary,
+      'updated_at': instance.updatedAt?.toIso8601String(),
     };
+
+ComparisonPhotoEntry _$ComparisonPhotoEntryFromJson(
+  Map<String, dynamic> json,
+) => ComparisonPhotoEntry(
+  photoId: json['photo_id'] as String,
+  order: (json['order'] as num).toInt(),
+  label: json['label'] as String?,
+);
+
+Map<String, dynamic> _$ComparisonPhotoEntryToJson(
+  ComparisonPhotoEntry instance,
+) => <String, dynamic>{
+  'photo_id': instance.photoId,
+  'order': instance.order,
+  'label': instance.label,
+};
 
 PhotoStats _$PhotoStatsFromJson(Map<String, dynamic> json) => PhotoStats(
   userId: json['user_id'] as String,

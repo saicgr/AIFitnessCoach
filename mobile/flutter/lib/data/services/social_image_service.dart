@@ -16,48 +16,56 @@ class SocialImageService {
 
   SocialImageService(this._apiClient);
 
-  /// Upload an image for a social post
+  /// Upload an image for a social post using pre-signed URL.
+  /// The image goes directly to S3 -- zero bytes through the API server.
   ///
-  /// Returns the image URL if successful, null otherwise
+  /// Returns the public image URL if successful, null otherwise.
   Future<String?> uploadPostImage({
     required File imageFile,
     required String userId,
   }) async {
     try {
-      debugPrint('[SocialImage] Uploading image for user: $userId');
+      debugPrint('[SocialImage] Starting presigned upload for user: $userId');
 
-      // Read file as bytes
-      final fileName = imageFile.path.split('/').last;
-
-      // Create multipart form data
-      final formData = FormData.fromMap({
-        'user_id': userId,
-        'file': await MultipartFile.fromFile(
-          imageFile.path,
-          filename: fileName,
-        ),
-      });
-
-      // Upload to backend
-      final response = await _apiClient.post(
-        '/social/images/upload',
-        data: formData,
-        options: Options(
-          contentType: 'multipart/form-data',
-          // Increase timeout for file uploads
-          sendTimeout: const Duration(seconds: 60),
-          receiveTimeout: const Duration(seconds: 60),
-        ),
+      // Step 1: Get pre-signed URL from backend
+      final presignResponse = await _apiClient.post(
+        '/social/images/presign',
+        queryParameters: {
+          'user_id': userId,
+          'file_extension': 'jpg',
+          'content_type': 'image/jpeg',
+        },
       );
 
-      if (response.statusCode == 200 && response.data != null) {
-        final imageUrl = response.data['image_url'] as String?;
-        debugPrint('[SocialImage] Upload successful: $imageUrl');
-        return imageUrl;
+      if (presignResponse.statusCode != 200 || presignResponse.data == null) {
+        debugPrint('[SocialImage] Failed to get presigned URL: ${presignResponse.statusCode}');
+        return null;
       }
 
-      debugPrint('[SocialImage] Upload failed: status ${response.statusCode}');
-      return null;
+      final uploadUrl = presignResponse.data['upload_url'] as String;
+      final publicUrl = presignResponse.data['public_url'] as String;
+
+      // Step 2: Upload directly to S3 via pre-signed URL
+      final bytes = await imageFile.readAsBytes();
+      debugPrint('[SocialImage] Uploading ${bytes.length} bytes directly to S3');
+
+      final httpClient = HttpClient();
+      try {
+        final request = await httpClient.putUrl(Uri.parse(uploadUrl));
+        request.headers.set('Content-Type', 'image/jpeg');
+        request.add(bytes);
+        final response = await request.close();
+
+        if (response.statusCode == 200) {
+          debugPrint('[SocialImage] Presigned upload successful: $publicUrl');
+          return publicUrl;
+        } else {
+          debugPrint('[SocialImage] S3 upload failed: ${response.statusCode}');
+          return null;
+        }
+      } finally {
+        httpClient.close();
+      }
     } on DioException catch (e) {
       debugPrint('[SocialImage] DioException: ${e.message}');
       debugPrint('[SocialImage] Response: ${e.response?.data}');

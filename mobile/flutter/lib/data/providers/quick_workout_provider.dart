@@ -78,6 +78,9 @@ class QuickWorkoutNotifier extends StateNotifier<QuickWorkoutState> {
   Future<Workout?> generateQuickWorkout({
     required int duration,
     String? focus,
+    String? difficulty,
+    List<String>? equipment,
+    List<String>? injuries,
   }) async {
     final userId = await _apiClient.getUserId();
     if (userId == null) {
@@ -86,7 +89,7 @@ class QuickWorkoutNotifier extends StateNotifier<QuickWorkoutState> {
       return null;
     }
 
-    debugPrint('[QuickWorkout] Starting generation: ${duration}min, focus=$focus');
+    debugPrint('[QuickWorkout] Starting generation: ${duration}min, focus=$focus, difficulty=$difficulty');
     state = state.copyWith(
       isGenerating: true,
       statusMessage: 'Generating workout...',
@@ -95,13 +98,18 @@ class QuickWorkoutNotifier extends StateNotifier<QuickWorkoutState> {
     );
 
     try {
+      final data = <String, dynamic>{
+        'user_id': userId,
+        'duration': duration,
+        'focus': focus,
+      };
+      if (difficulty != null) data['difficulty'] = difficulty;
+      if (equipment != null && equipment.isNotEmpty) data['equipment'] = equipment;
+      if (injuries != null && injuries.isNotEmpty) data['injuries'] = injuries;
+
       final response = await _apiClient.post(
         '${ApiConstants.workouts}/quick',
-        data: {
-          'user_id': userId,
-          'duration': duration,
-          'focus': focus,
-        },
+        data: data,
       );
 
       if (response.statusCode == 200) {

@@ -35,21 +35,23 @@ final friendsListProvider = FutureProvider.family<List<Map<String, dynamic>>, St
   },
 );
 
-/// Followers list provider
+/// Followers list provider (extracts items from paginated response)
 /// Note: Removed autoDispose to prevent refetching on navigation
 final followersListProvider = FutureProvider.family<List<Map<String, dynamic>>, String>(
   (ref, userId) async {
     final socialService = ref.watch(socialServiceProvider);
-    return await socialService.getFollowers(userId: userId);
+    final response = await socialService.getFollowers(userId: userId);
+    return List<Map<String, dynamic>>.from(response['items'] ?? []);
   },
 );
 
-/// Following list provider
+/// Following list provider (extracts items from paginated response)
 /// Note: Removed autoDispose to prevent refetching on navigation
 final followingListProvider = FutureProvider.family<List<Map<String, dynamic>>, String>(
   (ref, userId) async {
     final socialService = ref.watch(socialServiceProvider);
-    return await socialService.getFollowing(userId: userId);
+    final response = await socialService.getFollowing(userId: userId);
+    return List<Map<String, dynamic>>.from(response['items'] ?? []);
   },
 );
 

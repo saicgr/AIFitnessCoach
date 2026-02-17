@@ -56,6 +56,11 @@ class SupabaseDB:
         """Get the Supabase client for direct table operations."""
         return self._manager.client
 
+    @property
+    def nutrition(self) -> NutritionDB:
+        """Get the NutritionDB module."""
+        return self._nutrition_db
+
     # ==================== USER OPERATIONS ====================
     # Delegated to UserDB
 

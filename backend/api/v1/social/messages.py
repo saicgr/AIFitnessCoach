@@ -82,76 +82,52 @@ async def get_conversations(
     try:
         db = get_supabase_db()
 
-        # Get all conversations the user participates in
-        participant_result = db.client.table("conversation_participants").select(
-            "conversation_id"
-        ).eq("user_id", user_id).execute()
+        # Single RPC: gets conversations with last message + unread count
+        convos_result = db.client.rpc("get_user_conversations", {"p_user_id": user_id}).execute()
 
-        if not participant_result.data:
+        if not convos_result.data:
             logger.info(f"[Messages] No conversations found for user {user_id}")
             return ConversationsResponse(conversations=[], total_count=0)
 
-        conversation_ids = [p["conversation_id"] for p in participant_result.data]
+        # Collect conversation IDs to batch-fetch participants (the "other user" info)
+        conversation_ids = [str(row["conversation_id"]) for row in convos_result.data]
 
-        # Get conversation details with participants
-        conversations_result = db.client.table("conversations").select(
-            "*, conversation_participants(*, users(name, avatar_url, is_support_user))"
-        ).in_("id", conversation_ids).order("last_message_at", desc=True).execute()
+        participants_result = db.client.table("conversation_participants").select(
+            "conversation_id, user_id, last_read_at, is_muted, users(name, avatar_url, is_support_user)"
+        ).in_("conversation_id", conversation_ids).neq("user_id", user_id).execute()
 
+        # Index participants by conversation_id
+        participants_by_conv = {}
+        for p in participants_result.data:
+            conv_id = str(p["conversation_id"])
+            participants_by_conv.setdefault(conv_id, []).append(_parse_participant(p))
+
+        # Build conversation objects from RPC results
         conversations = []
-        for conv_data in conversations_result.data:
-            conv_id = str(conv_data["id"])
+        for row in convos_result.data:
+            conv_id = str(row["conversation_id"])
 
-            # Get last message
-            last_msg_result = db.client.table("direct_messages").select(
-                "*, users:sender_id(name, avatar_url, is_support_user)"
-            ).eq("conversation_id", conv_id).order(
-                "created_at", desc=True
-            ).limit(1).execute()
-
+            # Build last message from RPC data
             last_message = None
-            if last_msg_result.data:
-                msg_data = last_msg_result.data[0]
-                users_info = msg_data.pop("users", {}) or {}
-                last_message = _parse_message(msg_data, users_info)
-
-            # Count unread messages
-            user_participant = next(
-                (p for p in conv_data.get("conversation_participants", [])
-                 if str(p["user_id"]) == user_id),
-                None
-            )
-            last_read = user_participant.get("last_read_at") if user_participant else None
-
-            unread_count = 0
-            if last_read:
-                unread_result = db.client.table("direct_messages").select(
-                    "id", count="exact"
-                ).eq("conversation_id", conv_id).neq(
-                    "sender_id", user_id
-                ).gt("created_at", last_read).execute()
-                unread_count = unread_result.count or 0
-            elif last_message and last_message.sender_id != user_id:
-                # Never read - count all messages from others
-                unread_result = db.client.table("direct_messages").select(
-                    "id", count="exact"
-                ).eq("conversation_id", conv_id).neq("sender_id", user_id).execute()
-                unread_count = unread_result.count or 0
-
-            # Parse participants (excluding current user)
-            participants = [
-                _parse_participant(p)
-                for p in conv_data.get("conversation_participants", [])
-                if str(p["user_id"]) != user_id
-            ]
+            if row.get("last_msg_id"):
+                last_message = DirectMessage(
+                    id=str(row["last_msg_id"]),
+                    conversation_id=conv_id,
+                    sender_id=str(row["last_msg_sender_id"]),
+                    content=row["last_msg_content"] or "",
+                    is_system_message=False,
+                    created_at=row.get("last_msg_created_at") or datetime.utcnow(),
+                    sender_name=row.get("last_msg_sender_name"),
+                    sender_avatar=row.get("last_msg_sender_avatar"),
+                )
 
             conversations.append(Conversation(
                 id=conv_id,
-                last_message_at=conv_data.get("last_message_at") or conv_data["created_at"],
-                created_at=conv_data["created_at"],
-                participants=participants,
+                last_message_at=row.get("last_message_at") or row["created_at"],
+                created_at=row["created_at"],
+                participants=participants_by_conv.get(conv_id, []),
                 last_message=last_message,
-                unread_count=unread_count,
+                unread_count=row.get("unread_count", 0),
             ))
 
         logger.info(f"[Messages] Found {len(conversations)} conversations for user {user_id}")

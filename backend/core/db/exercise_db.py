@@ -80,7 +80,11 @@ class ExerciseDB(BaseDB):
         Returns:
             List of exercise records
         """
-        query = self.client.table("exercises").select("*")
+        query = self.client.table("exercises").select(
+            "id, external_id, name, category, body_part, equipment, "
+            "difficulty_level, description, instructions, primary_muscles, "
+            "secondary_muscles"
+        )
 
         if category:
             query = query.eq("category", category)
@@ -142,7 +146,11 @@ class ExerciseDB(BaseDB):
             List of performance log records
         """
         query = (
-            self.client.table("performance_logs").select("*").eq("user_id", user_id)
+            self.client.table("performance_logs").select(
+                "id, user_id, workout_log_id, exercise_id, exercise_name, "
+                "sets_completed, reps_completed, weight_kg, volume_kg, "
+                "one_rep_max, recorded_at"
+            ).eq("user_id", user_id)
         )
 
         if exercise_id:
@@ -217,7 +225,10 @@ class ExerciseDB(BaseDB):
             List of strength records
         """
         query = (
-            self.client.table("strength_records").select("*").eq("user_id", user_id)
+            self.client.table("strength_records").select(
+                "id, user_id, exercise_id, exercise_name, weight_kg, reps, "
+                "one_rep_max, is_pr, achieved_at"
+            ).eq("user_id", user_id)
         )
 
         if exercise_id:
@@ -274,7 +285,10 @@ class ExerciseDB(BaseDB):
             List of weekly volume records
         """
         query = (
-            self.client.table("weekly_volumes").select("*").eq("user_id", user_id)
+            self.client.table("weekly_volumes").select(
+                "id, user_id, muscle_group, total_sets, total_volume_kg, "
+                "week_number, year"
+            ).eq("user_id", user_id)
         )
 
         if week_number is not None:

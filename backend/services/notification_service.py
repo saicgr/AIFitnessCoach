@@ -9,9 +9,6 @@ import logging
 from typing import Optional, Dict, Any, List
 from datetime import datetime
 
-import firebase_admin
-from firebase_admin import credentials, messaging
-
 logger = logging.getLogger(__name__)
 
 # Global Firebase app instance
@@ -20,6 +17,9 @@ _firebase_app = None
 
 def initialize_firebase():
     """Initialize Firebase Admin SDK"""
+    import firebase_admin
+    from firebase_admin import credentials
+
     global _firebase_app
 
     if _firebase_app is not None:
@@ -157,6 +157,8 @@ class NotificationService:
             True if sent successfully, False otherwise
         """
         try:
+            from firebase_admin import messaging
+
             # Build the notification
             notification = messaging.Notification(
                 title=title,
@@ -234,6 +236,8 @@ class NotificationService:
             Dictionary with success_count and failure_count
         """
         try:
+            from firebase_admin import messaging
+
             notification = messaging.Notification(
                 title=title,
                 body=body,

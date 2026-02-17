@@ -58,7 +58,11 @@ class ActivityDB(BaseDB):
         """
         result = (
             self.client.table("daily_activity")
-            .select("*")
+            .select(
+                "id, user_id, activity_date, steps, calories_burned, "
+                "distance_meters, active_minutes, resting_heart_rate, "
+                "avg_heart_rate, sleep_hours, source"
+            )
             .eq("user_id", user_id)
             .eq("activity_date", activity_date)
             .execute()
@@ -85,7 +89,11 @@ class ActivityDB(BaseDB):
             List of daily activity records
         """
         query = (
-            self.client.table("daily_activity").select("*").eq("user_id", user_id)
+            self.client.table("daily_activity").select(
+                "id, user_id, activity_date, steps, calories_burned, "
+                "distance_meters, active_minutes, resting_heart_rate, "
+                "avg_heart_rate, sleep_hours, source"
+            ).eq("user_id", user_id)
         )
 
         if from_date:

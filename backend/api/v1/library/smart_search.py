@@ -28,7 +28,7 @@ router = APIRouter()
 logger = get_logger(__name__)
 
 # In-memory cache: 5-minute TTL, 500 entries max
-_smart_search_cache = ResponseCache(ttl_seconds=300, max_size=500)
+_smart_search_cache = ResponseCache(prefix="smart_search", ttl_seconds=300, max_size=500)
 
 
 def _make_cache_key(query: str, equipment: Optional[str], body_parts: Optional[str], limit: int) -> str:
@@ -257,7 +257,7 @@ async def smart_search_exercises(
     filters = {"equipment": equipment, "body_parts": body_parts}
 
     # --- Tier 0: In-memory cache ---
-    cached = _smart_search_cache.get(cache_key)
+    cached = await _smart_search_cache.get(cache_key)
     if cached is not None:
         elapsed_ms = round((time.time() - start_time) * 1000, 1)
         return {
@@ -282,7 +282,7 @@ async def smart_search_exercises(
                 results_data = json.loads(results_data)
             if results_data:
                 # Warm the in-memory cache
-                _smart_search_cache.set(cache_key, {"results": results_data, "correction": None})
+                await _smart_search_cache.set(cache_key, {"results": results_data, "correction": None})
                 elapsed_ms = round((time.time() - start_time) * 1000, 1)
                 return {
                     "results": results_data[:limit],
@@ -350,7 +350,7 @@ async def smart_search_exercises(
 
     # Cache the results
     cache_entry = {"results": merged, "correction": correction}
-    _smart_search_cache.set(cache_key, cache_entry)
+    await _smart_search_cache.set(cache_key, cache_entry)
 
     # Background DB cache write
     background_tasks.add_task(

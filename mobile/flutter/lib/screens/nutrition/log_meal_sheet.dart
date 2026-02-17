@@ -140,7 +140,6 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet> {
     super.initState();
     _selectedMealType = widget.initialMealType ?? _getDefaultMealType();
     _selectedTime = TimeOfDay.now();
-    _initSpeech();
     _textFieldFocusNode.addListener(_onFocusChange);
 
     debugPrint('🍽️ [LogMeal] Sheet initialized | userId=${widget.userId} | initialMealType=${widget.initialMealType?.value ?? "auto"} | selectedMealType=${_selectedMealType.value}');
@@ -193,6 +192,11 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet> {
       await _speech.stop();
       setState(() => _isListening = false);
     } else {
+      // Lazy-initialize speech on first mic tap to avoid
+      // triggering Bluetooth/nearby-devices permission on sheet open
+      if (!_speechAvailable) {
+        await _initSpeech();
+      }
       if (!_speechAvailable) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Speech recognition not available')),

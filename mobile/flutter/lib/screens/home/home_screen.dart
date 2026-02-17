@@ -36,6 +36,8 @@ import 'widgets/tile_factory.dart';
 import 'widgets/my_program_summary_card.dart';
 import 'widgets/hero_workout_card.dart';
 import 'widgets/hero_workout_carousel.dart';
+import 'widgets/week_calendar_strip.dart';
+import '../../core/providers/user_provider.dart';
 import 'widgets/habits_section.dart';
 import 'widgets/body_metrics_section.dart';
 import 'widgets/achievements_section.dart';
@@ -55,6 +57,8 @@ import 'widgets/minimal_header.dart';
 import 'widgets/collapsed_banner_strip.dart';
 import '../../widgets/health_connect_sheet.dart';
 import '../../data/providers/health_import_provider.dart';
+import '../../data/repositories/nutrition_repository.dart';
+import '../../data/repositories/hydration_repository.dart';
 
 /// The main home screen displaying workouts, progress, and quick actions
 class HomeScreen extends ConsumerStatefulWidget {
@@ -82,6 +86,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   String _generationMessage = '';
   String? _generationDetail;
 
+  // Week calendar strip state
+  late PageController _carouselPageController;
+  int _selectedWeekDay = DateTime.now().weekday - 1; // 0=Mon
+  List<CarouselItem> _carouselItems = [];
+
   // Auto-refresh tracking
   DateTime? _lastRefreshTime;
 
@@ -103,6 +112,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   @override
   void initState() {
     super.initState();
+    _carouselPageController = PageController(viewportFraction: 0.88);
     // Register for app lifecycle events
     WidgetsBinding.instance.addObserver(this);
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -128,12 +138,16 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
         _checkForWorkoutImports().catchError((e) {
           debugPrint('❌ [Home] _checkForWorkoutImports error: $e');
         }),
+        _initializeNutritionAndHydration().catchError((e) {
+          debugPrint('❌ [Home] _initializeNutritionAndHydration error: $e');
+        }),
       ]);
     });
   }
 
   @override
   void dispose() {
+    _carouselPageController.dispose();
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
@@ -182,6 +196,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
 
       // Refresh Health Connect status - user may have granted permissions externally
       ref.read(healthSyncProvider.notifier).refreshConnectionStatus();
+
+      // Refresh nutrition & hydration data for TodayStatsRow
+      _initializeNutritionAndHydration();
 
       // Check for new workout imports from Health Connect on resume
       _checkForWorkoutImports();
@@ -1226,6 +1243,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     }
   }
 
+  /// Load nutrition & hydration data so TodayStatsRow shows on first launch
+  Future<void> _initializeNutritionAndHydration() async {
+    final authState = ref.read(authStateProvider);
+    final userId = authState.user?.id;
+    if (userId == null) return;
+    await Future.wait([
+      ref.read(nutritionProvider.notifier).loadTodaySummary(userId),
+      ref.read(hydrationProvider.notifier).loadTodaySummary(userId),
+    ]);
+  }
+
   /// Initialize window mode tracking with the user's ID
   void _initializeWindowModeTracking() {
     final authState = ref.read(authStateProvider);
@@ -1641,10 +1669,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
 
   @override
   Widget build(BuildContext context) {
-    final authState = ref.watch(authStateProvider);
+    // Performance fix 1.5: use .select() to only rebuild when user changes
+    final user = ref.watch(authStateProvider.select((s) => s.user));
     // Use todayWorkoutProvider for lazy loading (only fetches today's/next workout)
     final todayWorkoutState = ref.watch(todayWorkoutProvider);
-    final user = authState.user;
     final isAIGenerating = ref.watch(aiGeneratingWorkoutProvider);
     final activeLayoutState = ref.watch(activeLayoutProvider);
     // Watch local layout for tile visibility settings
@@ -1732,6 +1760,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
           onRefresh: () async {
             debugPrint('🔄 [Home] Pull-to-refresh triggered');
             _lastRefreshTime = DateTime.now();
+            // Reset carousel auto-generation so it can re-evaluate
+            HeroWorkoutCarousel.resetAutoGeneration();
             // Invalidate todayWorkoutProvider to refetch
             ref.invalidate(todayWorkoutProvider);
             // Also refresh layout in case it changed
@@ -2298,7 +2328,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     // Otherwise show the carousel
     else {
       debugPrint('🏠 [HeroSection] Showing: HeroWorkoutCarousel');
-      workoutContent = const HeroWorkoutCarousel();
+      workoutContent = HeroWorkoutCarousel(
+        externalPageController: _carouselPageController,
+        onCarouselItemsChanged: (items) {
+          if (mounted && items.length != _carouselItems.length ||
+              (items.isNotEmpty && _carouselItems.isNotEmpty &&
+               items.first.date != _carouselItems.first.date)) {
+            setState(() => _carouselItems = items);
+          }
+        },
+        onPageChanged: _onCarouselPageChanged,
+      );
     }
 
     // Return the section with header and workout content
@@ -2354,11 +2394,112 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
             ],
           ),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 8),
+        // Week calendar strip (only show when carousel is visible)
+        if (!_isInitializing && !isAIGenerating && todayWorkoutState.valueOrNull?.isGenerating != true)
+          _buildWeekCalendarStrip(isDark),
+        const SizedBox(height: 8),
         // Workout carousel or loading card
         workoutContent,
       ],
     );
+  }
+
+  /// Build the week calendar strip widget
+  Widget _buildWeekCalendarStrip(bool isDark) {
+    final userAsync = ref.watch(currentUserProvider);
+    final workoutsAsync = ref.watch(workoutsProvider);
+
+    final user = userAsync.valueOrNull;
+    if (user == null) return const SizedBox.shrink();
+
+    final workoutDays = user.workoutDays;
+    if (workoutDays.isEmpty) return const SizedBox.shrink();
+
+    // Build workout status map for the current week
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final todayIndex = today.weekday - 1;
+    final monday = today.subtract(Duration(days: todayIndex));
+
+    final allWorkouts = workoutsAsync.valueOrNull ?? [];
+    final Map<int, bool?> statusMap = {};
+
+    for (int i = 0; i < 7; i++) {
+      if (!workoutDays.contains(i)) {
+        statusMap[i] = null; // Not a workout day
+        continue;
+      }
+      final dayDate = monday.add(Duration(days: i));
+      final dateKey = '${dayDate.year}-${dayDate.month.toString().padLeft(2, '0')}-${dayDate.day.toString().padLeft(2, '0')}';
+
+      // Find workout for this date
+      final workout = allWorkouts.where((w) {
+        if (w.scheduledDate == null) return false;
+        return w.scheduledDate!.split('T')[0] == dateKey;
+      }).toList();
+
+      if (workout.isNotEmpty && workout.any((w) => w.isCompleted == true)) {
+        statusMap[i] = true; // Completed
+      } else {
+        statusMap[i] = false; // Scheduled but not completed
+      }
+    }
+
+    return WeekCalendarStrip(
+      workoutDays: workoutDays,
+      workoutStatusMap: statusMap,
+      selectedDayIndex: _selectedWeekDay,
+      onDaySelected: _onWeekDaySelected,
+    );
+  }
+
+  /// Handle day tap in week strip
+  void _onWeekDaySelected(int dayIndex) {
+    setState(() => _selectedWeekDay = dayIndex);
+
+    if (_carouselItems.isEmpty) return;
+    if (!_carouselPageController.hasClients) return;
+
+    // Find the carousel item whose date matches or is closest to the tapped day
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final todayIndex = today.weekday - 1;
+    final monday = today.subtract(Duration(days: todayIndex));
+    final tappedDate = monday.add(Duration(days: dayIndex));
+
+    int bestIndex = 0;
+    int bestDiff = 999;
+
+    for (int i = 0; i < _carouselItems.length; i++) {
+      final itemDate = _carouselItems[i].date;
+      if (itemDate == null) continue;
+
+      final diff = (itemDate.difference(tappedDate).inDays).abs();
+      if (diff < bestDiff) {
+        bestDiff = diff;
+        bestIndex = i;
+      }
+    }
+
+    _carouselPageController.animateToPage(
+      bestIndex,
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeInOut,
+    );
+  }
+
+  /// Handle carousel page change (sync strip highlight)
+  void _onCarouselPageChanged(int pageIndex) {
+    if (pageIndex < 0 || pageIndex >= _carouselItems.length) return;
+
+    final itemDate = _carouselItems[pageIndex].date;
+    if (itemDate == null) return;
+
+    final weekdayIndex = itemDate.weekday - 1; // 0=Mon
+    if (weekdayIndex != _selectedWeekDay) {
+      setState(() => _selectedWeekDay = weekdayIndex);
+    }
   }
 
   /// Check if a workout is scheduled for today

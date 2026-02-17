@@ -16,7 +16,7 @@ from models.social import (
     UserProfile, ConnectionType,
 )
 from .utils import get_supabase_client
-from .connections import get_followers, get_following, get_friends
+from .connections import get_following
 from .feed import get_activity_feed
 
 router = APIRouter()
@@ -73,23 +73,23 @@ async def get_social_summary(user_id: str):
 
     suggested_challenges = [Challenge(**row) for row in challenges_result.data]
 
-    # Get social stats
-    followers = await get_followers(user_id)
-    following = await get_following(user_id)
-    friends = await get_friends(user_id)
+    # Get social stats using count-only queries (no row data loaded)
+    followers_result = supabase.table("user_connections").select("id", count="exact", head=True).eq("following_id", user_id).eq("status", "active").execute()
+    following_result = supabase.table("user_connections").select("id", count="exact", head=True).eq("follower_id", user_id).eq("status", "active").execute()
+    friends_result = supabase.table("user_friends").select("id", count="exact", head=True).eq("user_id", user_id).execute()
 
-    active_challenges_result = supabase.table("challenge_participants").select("*", count="exact").eq(
+    active_challenges_result = supabase.table("challenge_participants").select("id", count="exact", head=True).eq(
         "user_id", user_id
     ).eq("status", "active").execute()
 
-    completed_challenges_result = supabase.table("challenge_participants").select("*", count="exact").eq(
+    completed_challenges_result = supabase.table("challenge_participants").select("id", count="exact", head=True).eq(
         "user_id", user_id
     ).eq("status", "completed").execute()
 
     social_stats = SocialStats(
-        followers_count=len(followers),
-        following_count=len(following),
-        friends_count=len(friends),
+        followers_count=followers_result.count or 0,
+        following_count=following_result.count or 0,
+        friends_count=friends_result.count or 0,
         active_challenges=active_challenges_result.count or 0,
         completed_challenges=completed_challenges_result.count or 0,
     )
@@ -153,20 +153,28 @@ async def get_senior_social_summary(user_id: str):
                 days_remaining=days_remaining,
             ))
 
-    # Get family connections
-    family_connections = await get_following(user_id, connection_type=ConnectionType.FAMILY)
-    family_members = [conn.user_profile for conn in family_connections if conn.user_profile]
+    # Get family connections (bounded)
+    family_connections = await get_following(user_id, connection_type=ConnectionType.FAMILY, limit=50)
+    family_members = [
+        UserProfile(**conn["user_profile"])
+        for conn in family_connections.get("items", [])
+        if conn.get("user_profile")
+    ]
 
     # Count encouragements received (reactions to user's activities)
-    user_activities = supabase.table("activity_feed").select("id").eq("user_id", user_id).execute()
-    activity_ids = [row["id"] for row in user_activities.data]
+    # Use count-only query for activity IDs
+    user_activities_count = supabase.table("activity_feed").select("id", count="exact", head=True).eq("user_id", user_id).execute()
 
     encouragement_count = 0
-    if activity_ids:
-        reactions_result = supabase.table("activity_reactions").select("*", count="exact").in_(
-            "activity_id", activity_ids
-        ).execute()
-        encouragement_count = reactions_result.count or 0
+    if user_activities_count.count and user_activities_count.count > 0:
+        # Get a bounded set of recent activity IDs for reaction counting
+        recent_activities = supabase.table("activity_feed").select("id").eq("user_id", user_id).order("created_at", desc=True).limit(100).execute()
+        activity_ids = [row["id"] for row in recent_activities.data]
+        if activity_ids:
+            reactions_result = supabase.table("activity_reactions").select("id", count="exact", head=True).in_(
+                "activity_id", activity_ids
+            ).execute()
+            encouragement_count = reactions_result.count or 0
 
     return SeniorSocialSummary(
         recent_activities=simplified_activities,

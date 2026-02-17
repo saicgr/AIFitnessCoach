@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import '../../../core/constants/app_colors.dart';
 import '../widgets/widgets.dart';
 
@@ -71,25 +72,33 @@ class AppInfoSection extends StatelessWidget {
             const Text('FitWiz'),
           ],
         ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Version 1.0.0',
-              style: TextStyle(
-                color: isDark ? AppColors.textSecondary : AppColorsLight.textSecondary,
-              ),
-            ),
-            const SizedBox(height: 12),
-            Text(
-              'Your AI-powered personal fitness coach. Get personalized workout plans, track your progress, and achieve your fitness goals.',
-              style: TextStyle(
-                color: isDark ? AppColors.textSecondary : AppColorsLight.textSecondary,
-                height: 1.5,
-              ),
-            ),
-          ],
+        content: FutureBuilder<PackageInfo>(
+          future: PackageInfo.fromPlatform(),
+          builder: (context, snapshot) {
+            final version = snapshot.hasData
+                ? 'Version ${snapshot.data!.version} (${snapshot.data!.buildNumber})'
+                : 'Loading version...';
+            return Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  version,
+                  style: TextStyle(
+                    color: isDark ? AppColors.textSecondary : AppColorsLight.textSecondary,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  'Your AI-powered personal fitness coach. Get personalized workout plans, track your progress, and achieve your fitness goals.',
+                  style: TextStyle(
+                    color: isDark ? AppColors.textSecondary : AppColorsLight.textSecondary,
+                    height: 1.5,
+                  ),
+                ),
+              ],
+            );
+          },
         ),
         actions: [
           TextButton(

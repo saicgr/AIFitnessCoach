@@ -51,7 +51,7 @@ class QuickActionOrderNotifier extends StateNotifier<List<String>> {
 final pinnedQuickActionsProvider = Provider<List<QuickAction>>((ref) {
   final order = ref.watch(quickActionOrderProvider);
   return order
-      .take(3)
+      .take(4)
       .map((id) => quickActionRegistry[id]!)
       .toList();
 });

@@ -19,10 +19,11 @@ RATE LIMITS:
 - / (POST create): 5 requests/minute
 - Other endpoints: default global limit
 """
+import asyncio
 import json
 import uuid
 from datetime import datetime
-from fastapi import APIRouter, HTTPException, UploadFile, File, Request, Form
+from fastapi import APIRouter, BackgroundTasks, HTTPException, UploadFile, File, Request, Form
 from fastapi.responses import StreamingResponse
 from typing import Optional, List
 from pydantic import BaseModel
@@ -2178,14 +2179,14 @@ class NutritionMetricsResponse(BaseModel):
 
 
 @router.post("/{user_id}/calculate-nutrition-targets", response_model=NutritionMetricsResponse)
-async def calculate_nutrition_targets(user_id: str, request: NutritionCalculationRequest):
+async def calculate_nutrition_targets(user_id: str, request: NutritionCalculationRequest, background_tasks: BackgroundTasks):
     """
     Calculate and save all nutrition metrics for a user.
 
     This endpoint:
     1. Calculates all nutrition metrics (BMR, TDEE, macros, metabolic age, etc.)
     2. Saves them to the nutrition_preferences table
-    3. Indexes them for RAG/AI context
+    3. Indexes them for RAG/AI context (background)
     4. Returns the calculated metrics
 
     Called after quiz completion or when user updates their profile.
@@ -2200,22 +2201,33 @@ async def calculate_nutrition_targets(user_id: str, request: NutritionCalculatio
             raise HTTPException(status_code=404, detail="User not found")
 
         # Call the Supabase function to calculate and save metrics
-        result = db.client.rpc(
-            'calculate_nutrition_metrics',
-            {
-                'p_user_id': user_id,
-                'p_weight_kg': request.weight_kg,
-                'p_height_cm': request.height_cm,
-                'p_age': request.age,
-                'p_gender': request.gender,
-                'p_activity_level': request.activity_level,
-                'p_weight_direction': request.weight_direction,
-                'p_weight_change_rate': request.weight_change_rate,
-                'p_goal_weight_kg': request.goal_weight_kg,
-                'p_nutrition_goals': request.nutrition_goals,
-                'p_workout_days_per_week': request.workout_days_per_week,
-            }
-        ).execute()
+        # Timeout at 90s — well under Gunicorn's 120s worker timeout
+        try:
+            result = await asyncio.wait_for(
+                asyncio.get_event_loop().run_in_executor(
+                    None,
+                    lambda: db.client.rpc(
+                        'calculate_nutrition_metrics',
+                        {
+                            'p_user_id': user_id,
+                            'p_weight_kg': request.weight_kg,
+                            'p_height_cm': request.height_cm,
+                            'p_age': request.age,
+                            'p_gender': request.gender,
+                            'p_activity_level': request.activity_level,
+                            'p_weight_direction': request.weight_direction,
+                            'p_weight_change_rate': request.weight_change_rate,
+                            'p_goal_weight_kg': request.goal_weight_kg,
+                            'p_nutrition_goals': request.nutrition_goals,
+                            'p_workout_days_per_week': request.workout_days_per_week,
+                        }
+                    ).execute()
+                ),
+                timeout=90
+            )
+        except asyncio.TimeoutError:
+            logger.error(f"Nutrition calculation timed out for user {user_id}")
+            raise HTTPException(status_code=504, detail="Calculation timed out. Please try again.")
 
         if not result.data:
             raise HTTPException(status_code=500, detail="Failed to calculate nutrition metrics")
@@ -2224,16 +2236,20 @@ async def calculate_nutrition_targets(user_id: str, request: NutritionCalculatio
 
         logger.info(f"Calculated nutrition targets for user {user_id}: {metrics.get('calories')} cal")
 
-        # Index for RAG (optional - catch errors to not break main flow)
-        try:
-            from services.nutrition_rag_service import index_user_nutrition_metrics
-            await index_user_nutrition_metrics(user_id, metrics)
-            logger.info(f"Indexed nutrition metrics to RAG for user {user_id}")
-        except Exception as rag_error:
-            logger.warning(f"Could not index nutrition metrics to RAG: {rag_error}")
+        # Index for RAG in background (non-blocking)
+        async def _index_rag():
+            try:
+                from services.nutrition_rag_service import index_user_nutrition_metrics
+                await index_user_nutrition_metrics(user_id, metrics)
+                logger.info(f"Indexed nutrition metrics to RAG for user {user_id}")
+            except Exception as rag_error:
+                logger.warning(f"Could not index nutrition metrics to RAG: {rag_error}")
 
-        # Log activity
-        await log_user_activity(
+        background_tasks.add_task(_index_rag)
+
+        # Log activity in background
+        background_tasks.add_task(
+            log_user_activity,
             user_id=user_id,
             action="nutrition_targets_calculated",
             endpoint=f"/api/v1/users/{user_id}/calculate-nutrition-targets",

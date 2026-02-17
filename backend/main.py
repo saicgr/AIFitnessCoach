@@ -13,6 +13,7 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.middleware.gzip import GZipMiddleware
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from slowapi.middleware import SlowAPIMiddleware
@@ -26,6 +27,7 @@ import json
 from core.config import get_settings
 from core.logger import get_logger, set_log_context, clear_log_context
 from core.rate_limiter import limiter
+from core.redis_cache import init_redis, close_redis
 from api.v1 import router as v1_router
 from api.v1 import chat as chat_module
 from services.gemini_service import GeminiService
@@ -282,24 +284,23 @@ async def lifespan(app: FastAPI):
 
     # ── Phase 1: Critical initialization (must complete before serving) ──
     phase1_start = time.time()
-    logger.info("Initializing Gemini service (Phase 1: critical)...")
+    logger.info("Initializing Redis cache and Gemini service (Phase 1: critical)...")
+    await init_redis()
     chat_module.gemini_service = GeminiService()
     logger.info(f"Startup Phase 1 (critical) completed in {time.time() - phase1_start:.2f}s")
 
     # ── Phase 2: Parallel initialization of independent services ──
-    # RAG depends on Gemini (uses gemini_service for embeddings), but LangGraph
-    # and Cache Manager are independent. Run RAG + LangGraph + Cache in parallel.
+    # RAG depends on Gemini (uses gemini_service for embeddings).
+    # LangGraph is lazy-initialized on first request via get_langgraph_service().
     phase2_start = time.time()
     logger.info("Starting Phase 2: parallel service initialization...")
     phase2_results = await asyncio.gather(
         _init_rag_service(),
-        _init_langgraph_service(),
-        _init_cache_manager(),
         return_exceptions=True,
     )
 
     # Log any Phase 2 failures (non-fatal)
-    phase2_names = ["RAG service", "LangGraph service", "Cache manager"]
+    phase2_names = ["RAG service"]
     for name, result in zip(phase2_names, phase2_results):
         if isinstance(result, Exception):
             logger.error(f"Phase 2 failure - {name}: {result}")
@@ -309,6 +310,7 @@ async def lifespan(app: FastAPI):
     # ── Phase 3: Background tasks (server starts serving immediately) ──
     # These can run after the server is already accepting requests.
     logger.info("Starting Phase 3: background initialization tasks...")
+    asyncio.create_task(_init_cache_manager())
     asyncio.create_task(_check_exercise_rag_index())
     asyncio.create_task(_check_chromadb_dimensions())
     asyncio.create_task(_resume_pending_jobs())
@@ -322,6 +324,10 @@ async def lifespan(app: FastAPI):
 
     # Cleanup on shutdown
     logger.info("Shutting down...")
+
+    # Close Redis connection pool
+    logger.info("Closing Redis connection...")
+    await close_redis()
 
     # Shutdown cache manager
     if settings.gemini_cache_enabled:
@@ -361,6 +367,9 @@ app.state.limiter = limiter
 # Add rate limit exceeded exception handler
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
+# Add GZip compression for responses >= 500 bytes
+app.add_middleware(GZipMiddleware, minimum_size=500)
+
 # Add CORS middleware for Flutter app
 app.add_middleware(
     CORSMiddleware,
@@ -380,6 +389,14 @@ app.add_middleware(SecurityHeadersMiddleware)
 # Add SlowAPI middleware for rate limiting
 # This MUST be added for rate limiting to work properly
 app.add_middleware(SlowAPIMiddleware)
+
+# Cleanup rate limiter request body cache after each request
+@app.middleware("http")
+async def cleanup_rate_limit_cache(request, call_next):
+    response = await call_next(request)
+    from core.rate_limiter import _request_body_cache
+    _request_body_cache.pop(id(request), None)
+    return response
 
 # Include API routes
 app.include_router(v1_router, prefix="/api")

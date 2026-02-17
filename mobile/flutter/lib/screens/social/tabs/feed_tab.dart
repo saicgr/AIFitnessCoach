@@ -156,15 +156,7 @@ class _FeedTabState extends ConsumerState<FeedTab> {
     showGlassSheet(
       context: context,
       useRootNavigator: true,
-      builder: (context) => GlassSheet(
-        showHandle: false,
-        child: DraggableScrollableSheet(
-        initialChildSize: 0.85,
-        minChildSize: 0.5,
-        maxChildSize: 0.95,
-        builder: (context, scrollController) => const CreatePostSheet(),
-      ),
-      ),
+      builder: (context) => const CreatePostSheet(),
     ).then((result) {
       // Show the floating nav bar again when sheet closes
       ref.read(floatingNavBarVisibleProvider.notifier).state = true;

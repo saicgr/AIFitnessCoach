@@ -23,6 +23,7 @@ import '../../widgets/exercise_search_results.dart';
 import '../../widgets/glass_sheet.dart';
 import '../../widgets/segmented_tab_bar.dart';
 import '../../widgets/workout_day_detail_sheet.dart';
+import '../progress/comparison_gallery.dart';
 import '../progress/comparison_view.dart';
 import '../progress/photo_editor_screen.dart';
 import '../progress/widgets/readiness_checkin_card.dart';
@@ -124,8 +125,8 @@ class _ComprehensiveStatsScreenState extends ConsumerState<ComprehensiveStatsScr
         title: Text(
           'Stats & Scores',
           style: TextStyle(
-            fontSize: 32,
-            fontWeight: FontWeight.bold,
+            fontSize: 18,
+            fontWeight: FontWeight.w600,
             color: textPrimary,
           ),
         ),
@@ -133,20 +134,27 @@ class _ComprehensiveStatsScreenState extends ConsumerState<ComprehensiveStatsScr
         actions: [
           // Compare Photos (only show on Photos tab - index 1)
           if (_userId != null && _currentTabIndex == 1)
-            IconButton(
-              icon: Icon(Icons.compare_arrows, color: textPrimary),
+            TextButton(
               onPressed: () => _showComparisonPicker(),
-              tooltip: 'Compare Photos',
+              child: Text(
+                'Compare',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: textPrimary,
+                ),
+              ),
             ),
-          // Time Range Selector
-          IconButton(
-            icon: Icon(Icons.calendar_month_outlined, color: textPrimary),
-            onPressed: () {
-              HapticService.light();
-              DateRangeFilterSheet.show(context, ref);
-            },
-            tooltip: 'Time Range',
-          ),
+          // Time Range Selector (hide on Photos tab)
+          if (_currentTabIndex != 1)
+            IconButton(
+              icon: Icon(Icons.calendar_month_outlined, color: textPrimary),
+              onPressed: () {
+                HapticService.light();
+                DateRangeFilterSheet.show(context, ref);
+              },
+              tooltip: 'Time Range',
+            ),
           // Export
           IconButton(
             icon: Icon(Icons.file_download_outlined, color: textPrimary),
@@ -443,6 +451,8 @@ class _PhotosTabState extends ConsumerState<_PhotosTab>
     with AutomaticKeepAliveClientMixin {
   PhotoViewType? _selectedViewFilter;
   bool _hasOpenedPhotoSheet = false;
+  int _gridColumns = 3;
+  bool _sortNewestFirst = true;
 
   @override
   bool get wantKeepAlive => true;
@@ -496,6 +506,16 @@ class _PhotosTabState extends ConsumerState<_PhotosTab>
                   child: _buildLatestPhotosByView(state.latestByView!),
                 ),
 
+              // Sort & Grid Controls
+              SliverToBoxAdapter(
+                child: _buildGridControls(),
+              ),
+
+              // Saved Comparisons section
+              SliverToBoxAdapter(
+                child: _buildSavedComparisonsSection(),
+              ),
+
               // Photo Grid
               if (state.isLoading)
                 const SliverFillRemaining(
@@ -507,22 +527,25 @@ class _PhotosTabState extends ConsumerState<_PhotosTab>
                 )
               else
                 SliverPadding(
-                  padding: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
                   sliver: SliverGrid(
-                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 3,
-                      mainAxisSpacing: 8,
+                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: _gridColumns,
+                      mainAxisSpacing: 12,
                       crossAxisSpacing: 8,
-                      childAspectRatio: 0.75,
+                      childAspectRatio: _gridColumns == 2 ? 0.6 : _gridColumns == 4 ? 0.7 : 0.65,
                     ),
                     delegate: SliverChildBuilderDelegate(
                       (context, index) {
-                        final filteredPhotos = _selectedViewFilter == null
-                            ? state.photos
+                        var filteredPhotos = _selectedViewFilter == null
+                            ? state.photos.toList()
                             : state.photos
                                 .where((p) =>
                                     p.viewTypeEnum == _selectedViewFilter)
                                 .toList();
+                        if (!_sortNewestFirst) {
+                          filteredPhotos = filteredPhotos.reversed.toList();
+                        }
                         if (index >= filteredPhotos.length) return null;
                         return _buildPhotoCard(filteredPhotos[index]);
                       },
@@ -611,7 +634,7 @@ class _PhotosTabState extends ConsumerState<_PhotosTab>
                 Icons.photo_library,
               ),
               _buildStatItem(
-                '${stats?.viewTypesCaptured ?? 0}/4',
+                '${stats?.viewTypesCaptured ?? 0}/${PhotoViewType.values.length}',
                 'Views Captured',
                 Icons.view_carousel,
               ),
@@ -675,6 +698,207 @@ class _PhotosTabState extends ConsumerState<_PhotosTab>
                 ),
               )),
         ],
+      ),
+    );
+  }
+
+  Widget _buildGridControls() {
+    final colorScheme = Theme.of(context).colorScheme;
+    final gridIcons = {2: Icons.grid_on, 3: Icons.grid_view, 4: Icons.apps};
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      child: Row(
+        children: [
+          // Sort toggle
+          InkWell(
+            borderRadius: BorderRadius.circular(8),
+            onTap: () => setState(() => _sortNewestFirst = !_sortNewestFirst),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    _sortNewestFirst ? Icons.arrow_downward : Icons.arrow_upward,
+                    size: 16,
+                    color: colorScheme.onSurfaceVariant,
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    _sortNewestFirst ? 'Newest' : 'Oldest',
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const Spacer(),
+          // Grid column buttons
+          ...([2, 3, 4]).map((cols) => Padding(
+            padding: const EdgeInsets.only(left: 4),
+            child: InkWell(
+              borderRadius: BorderRadius.circular(8),
+              onTap: () => setState(() => _gridColumns = cols),
+              child: Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: _gridColumns == cols
+                      ? colorScheme.primaryContainer
+                      : Colors.transparent,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(
+                  gridIcons[cols] ?? Icons.grid_view,
+                  size: 20,
+                  color: _gridColumns == cols
+                      ? colorScheme.onPrimaryContainer
+                      : colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ),
+          )),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSavedComparisonsSection() {
+    if (widget.userId == null) return const SizedBox.shrink();
+
+    final state = ref.watch(progressPhotosNotifierProvider(widget.userId!));
+    final comparisons = state.comparisons;
+
+    if (comparisons.isEmpty) return const SizedBox.shrink();
+
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Saved Comparisons (${comparisons.length})',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: colorScheme.onSurface,
+                ),
+              ),
+              TextButton(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => ComparisonGalleryScreen(userId: widget.userId!),
+                    ),
+                  );
+                },
+                child: const Text('See all'),
+              ),
+            ],
+          ),
+        ),
+        SizedBox(
+          height: 120,
+          child: ListView.builder(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            itemCount: comparisons.length > 5 ? 5 : comparisons.length,
+            itemBuilder: (context, index) {
+              final comparison = comparisons[index];
+              return _buildComparisonPreviewCard(comparison);
+            },
+          ),
+        ),
+        const SizedBox(height: 8),
+      ],
+    );
+  }
+
+  Widget _buildComparisonPreviewCard(PhotoComparison comparison) {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => ComparisonView(
+              userId: widget.userId!,
+              existingComparison: comparison,
+            ),
+          ),
+        );
+      },
+      child: Container(
+        width: 180,
+        margin: const EdgeInsets.only(right: 12),
+        decoration: BoxDecoration(
+          color: colorScheme.surfaceContainerHighest,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: colorScheme.outlineVariant.withOpacity(0.5)),
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Before/After thumbnail row
+            Expanded(
+              child: Row(
+                children: [
+                  Expanded(
+                    child: CachedNetworkImage(
+                      imageUrl: comparison.beforePhoto.thumbnailUrl ?? comparison.beforePhoto.photoUrl,
+                      fit: BoxFit.cover,
+                    ),
+                  ),
+                  Container(width: 1, color: colorScheme.outline),
+                  Expanded(
+                    child: CachedNetworkImage(
+                      imageUrl: comparison.afterPhoto.thumbnailUrl ?? comparison.afterPhoto.photoUrl,
+                      fit: BoxFit.cover,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            // Info row
+            Padding(
+              padding: const EdgeInsets.all(8),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  if (comparison.formattedWeightChange != null)
+                    Text(
+                      comparison.formattedWeightChange!,
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: (comparison.weightChangeKg ?? 0) < 0
+                            ? Colors.green
+                            : Colors.orange,
+                      ),
+                    ),
+                  if (comparison.formattedDuration != null)
+                    Text(
+                      comparison.formattedDuration!,
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -770,80 +994,95 @@ class _PhotosTabState extends ConsumerState<_PhotosTab>
 
   Widget _buildPhotoCard(ProgressPhoto photo) {
     final colorScheme = Theme.of(context).colorScheme;
+    final dateStr = DateFormat('MMM d, yyyy').format(photo.takenAt);
+    final timeStr = DateFormat('h:mm a').format(photo.takenAt);
     return GestureDetector(
       onTap: () => _showPhotoDetail(photo),
-      child: Container(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(12),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.1),
-              blurRadius: 4,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(12),
-          child: Stack(
-            fit: StackFit.expand,
-            children: [
-              CachedNetworkImage(
-                imageUrl: photo.thumbnailUrl ?? photo.photoUrl,
-                fit: BoxFit.cover,
-                placeholder: (_, __) => Container(
-                  color: colorScheme.surfaceContainerHighest,
-                  child: const Center(
-                    child: CircularProgressIndicator(strokeWidth: 2),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            child: Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(10),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.08),
+                    blurRadius: 4,
+                    offset: const Offset(0, 2),
                   ),
-                ),
-                errorWidget: (_, __, ___) => Container(
-                  color: colorScheme.errorContainer,
-                  child: Icon(Icons.broken_image, color: colorScheme.error),
-                ),
+                ],
               ),
-              // Gradient overlay for text readability
-              Positioned(
-                bottom: 0,
-                left: 0,
-                right: 0,
-                child: Container(
-                  padding: const EdgeInsets.all(6),
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                      colors: [
-                        Colors.transparent,
-                        Colors.black.withOpacity(0.7),
-                      ],
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(10),
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    CachedNetworkImage(
+                      imageUrl: photo.thumbnailUrl ?? photo.photoUrl,
+                      fit: BoxFit.cover,
+                      placeholder: (_, __) => Container(
+                        color: colorScheme.surfaceContainerHighest,
+                        child: const Center(
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        ),
+                      ),
+                      errorWidget: (_, __, ___) => Container(
+                        color: colorScheme.errorContainer,
+                        child: Icon(Icons.broken_image, color: colorScheme.error),
+                      ),
                     ),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        photo.viewTypeEnum.displayName,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 10,
-                          fontWeight: FontWeight.bold,
+                    // View type badge
+                    Positioned(
+                      top: 4,
+                      left: 4,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: Colors.black54,
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: Text(
+                          photo.viewTypeEnum.displayName,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 9,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
                       ),
-                      Text(
-                        photo.formattedDate,
-                        style: TextStyle(
-                          color: Colors.white.withOpacity(0.8),
-                          fontSize: 9,
-                        ),
-                      ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
               ),
-            ],
+            ),
           ),
-        ),
+          // Date and time below the photo
+          Padding(
+            padding: const EdgeInsets.only(top: 4, left: 2),
+            child: Text(
+              dateStr,
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+                color: colorScheme.onSurface,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.only(left: 2),
+            child: Text(
+              timeStr,
+              style: TextStyle(
+                fontSize: 10,
+                color: colorScheme.onSurfaceVariant,
+              ),
+              maxLines: 1,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -1165,6 +1404,18 @@ class _PhotosTabState extends ConsumerState<_PhotosTab>
         return Icons.arrow_forward;
       case PhotoViewType.back:
         return Icons.person_outline;
+      case PhotoViewType.legs:
+        return Icons.directions_walk;
+      case PhotoViewType.glutes:
+        return Icons.airline_seat_legroom_normal;
+      case PhotoViewType.arms:
+        return Icons.fitness_center;
+      case PhotoViewType.abs:
+        return Icons.grid_on;
+      case PhotoViewType.chest:
+        return Icons.shield;
+      case PhotoViewType.custom:
+        return Icons.photo_camera;
     }
   }
 
@@ -1178,6 +1429,18 @@ class _PhotosTabState extends ConsumerState<_PhotosTab>
         return 'Turn your right side to camera';
       case PhotoViewType.back:
         return 'Turn your back to camera';
+      case PhotoViewType.legs:
+        return 'Show your leg muscles';
+      case PhotoViewType.glutes:
+        return 'Show your glute progress';
+      case PhotoViewType.arms:
+        return 'Flex your arms for the camera';
+      case PhotoViewType.abs:
+        return 'Show your core/abs';
+      case PhotoViewType.chest:
+        return 'Show your chest progress';
+      case PhotoViewType.custom:
+        return 'Any other angle or pose';
     }
   }
 }
@@ -1781,7 +2044,7 @@ class _CalorieBarChart extends StatelessWidget {
   Widget build(BuildContext context) {
     final maxCal = entries
         .fold<double>(avgCalories, (m, e) => e.calories > m ? e.calories.toDouble() : m);
-    final chartMax = (maxCal * 1.2).ceilToDouble();
+    final chartMax = maxCal > 0 ? (maxCal * 1.2).ceilToDouble() : 2000.0;
 
     return BarChart(
       BarChartData(

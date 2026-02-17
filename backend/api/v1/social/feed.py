@@ -7,14 +7,14 @@ This module handles activity feed operations:
 - DELETE /feed/{activity_id} - Delete an activity
 - POST /feed/{activity_id}/pin - Pin an activity (admin only)
 - DELETE /feed/{activity_id}/pin - Unpin an activity (admin only)
+- POST /images/presign - Get pre-signed URL for direct S3 upload
 - POST /images/upload - Upload image for social post
 """
 import uuid
-import boto3
 from datetime import datetime, timezone
 from typing import Optional
 
-from fastapi import APIRouter, HTTPException, Query, UploadFile, File, Form
+from fastapi import APIRouter, BackgroundTasks, HTTPException, Query, UploadFile, File, Form
 
 from core.config import get_settings
 from models.social import (
@@ -31,15 +31,68 @@ router = APIRouter()
 # S3 Upload Helper for Social Posts
 # ============================================================================
 
+_s3_client = None
+
+
 def get_s3_client():
-    """Get S3 client with configured credentials."""
-    settings = get_settings()
-    return boto3.client(
-        's3',
-        aws_access_key_id=settings.aws_access_key_id,
-        aws_secret_access_key=settings.aws_secret_access_key,
-        region_name=settings.aws_default_region,
-    )
+    """Get S3 client with configured credentials (singleton)."""
+    global _s3_client
+    if _s3_client is None:
+        import boto3
+        settings = get_settings()
+        _s3_client = boto3.client(
+            's3',
+            aws_access_key_id=settings.aws_access_key_id,
+            aws_secret_access_key=settings.aws_secret_access_key,
+            region_name=settings.aws_default_region,
+        )
+    return _s3_client
+
+
+@router.post("/images/presign")
+async def get_presigned_upload_url(
+    user_id: str = Query(..., description="User ID requesting upload"),
+    file_extension: str = Query("jpg", description="File extension"),
+    content_type: str = Query("image/jpeg", description="Content type"),
+):
+    """
+    Get a pre-signed URL for direct image upload to S3.
+    Client uploads directly to S3 -- zero bytes through the API server.
+    """
+    allowed_types = ['image/jpeg', 'image/png', 'image/gif', 'image/webp']
+    if content_type not in allowed_types:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid content type. Allowed: {', '.join(allowed_types)}"
+        )
+
+    timestamp = datetime.utcnow().strftime('%Y%m%d_%H%M%S')
+    storage_key = f"social_posts/{user_id}/{timestamp}_{uuid.uuid4().hex[:8]}.{file_extension}"
+
+    try:
+        s3 = get_s3_client()
+        settings = get_settings()
+
+        presigned_url = s3.generate_presigned_url(
+            'put_object',
+            Params={
+                'Bucket': settings.s3_bucket_name,
+                'Key': storage_key,
+                'ContentType': content_type,
+            },
+            ExpiresIn=600,  # 10 minutes
+        )
+
+        public_url = f"https://{settings.s3_bucket_name}.s3.{settings.aws_default_region}.amazonaws.com/{storage_key}"
+
+        return {
+            "upload_url": presigned_url,
+            "storage_key": storage_key,
+            "public_url": public_url,
+        }
+    except Exception as e:
+        print(f"[Social] Error generating presigned URL: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to generate upload URL: {str(e)}")
 
 
 @router.post("/images/upload")
@@ -74,6 +127,13 @@ async def upload_post_image(
         # Upload to S3
         s3 = get_s3_client()
         contents = await file.read()
+
+        # Safety limit: reject files > 10MB
+        if len(contents) > 10 * 1024 * 1024:
+            raise HTTPException(
+                status_code=413,
+                detail="File too large. Maximum size is 10MB. Use /images/presign for client-side upload."
+            )
 
         settings = get_settings()
         s3.put_object(
@@ -125,50 +185,38 @@ async def get_activity_feed(
         print(f"[Social] Error getting supabase client: {e}")
         raise HTTPException(status_code=500, detail=f"Database connection error: {str(e)}")
 
-    # Get user's following list
-    try:
-        following_result = supabase.table("user_connections").select("following_id").eq(
-            "follower_id", user_id
-        ).eq("status", "active").execute()
-    except Exception as e:
-        print(f"[Social] Error getting following list: {e}")
-        raise HTTPException(status_code=500, detail=f"Error fetching connections: {str(e)}")
-
-    following_ids = [row["following_id"] for row in following_result.data]
-    following_ids.append(user_id)  # Include user's own activities
-
-    # Build query - order by created_at (is_pinned ordering handled in results if column exists)
     offset = (page - 1) * page_size
 
+    # Single RPC call replaces following_ids fetch + unbounded IN clause
     try:
-        # Simplified query - just get activities without join for now
-        query = supabase.table("activity_feed").select(
-            "*",
-            count="exact"
-        ).in_("user_id", following_ids).order("created_at", desc=True)
-
-        if activity_type:
-            query = query.eq("activity_type", activity_type.value)
-
-        query = query.range(offset, offset + page_size - 1)
-        result = query.execute()
-
+        feed_result = supabase.rpc("get_feed_for_user", {
+            "p_user_id": user_id,
+            "p_activity_type": activity_type.value if activity_type else None,
+            "p_limit": page_size,
+            "p_offset": offset,
+        }).execute()
     except Exception as e:
         print(f"[Social] Error fetching feed: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to fetch activity feed: {str(e)}")
 
-    # Parse activities - return raw data for debugging
+    # Extract total_count from the window function (same on every row)
+    total_count = 0
+    if feed_result.data:
+        total_count = feed_result.data[0].get("total_count", 0)
+
+    # Parse activities
     activities = []
-    for row in result.data:
+    for row in feed_result.data:
         try:
-            # Ensure pinned fields have defaults if not present in DB
             row_data = {
                 **row,
                 "is_pinned": row.get("is_pinned", False),
                 "pinned_at": row.get("pinned_at"),
                 "pinned_by": row.get("pinned_by"),
             }
-            # Remove nested 'users' before creating ActivityFeedItem
+            # Remove window-function column before model parsing
+            row_data.pop("total_count", None)
+            # Remove nested 'users' if present
             users_data = row_data.pop("users", None)
 
             activity = ActivityFeedItem(**row_data)
@@ -179,10 +227,7 @@ async def get_activity_feed(
             activities.append(activity)
         except Exception as parse_error:
             print(f"[Social] Error parsing activity row: {parse_error}, row: {row}")
-            # Skip malformed rows instead of failing the whole request
             continue
-
-    total_count = result.count or 0
 
     return {
         "items": [a.model_dump() for a in activities],
@@ -193,10 +238,42 @@ async def get_activity_feed(
     }
 
 
+def _bg_index_activity(activity_id: str, user_id: str, activity_type: str, activity_data: dict, visibility: str, created_at):
+    """Background task: index activity in ChromaDB for AI context."""
+    try:
+        supabase = get_supabase_client()
+        user_result = supabase.table("users").select("name").eq("id", user_id).execute()
+        user_name = user_result.data[0]["name"] if user_result.data else "User"
+
+        social_rag = get_social_rag_service()
+        social_rag.add_activity_to_rag(
+            activity_id=activity_id,
+            user_id=user_id,
+            user_name=user_name,
+            activity_type=activity_type,
+            activity_data=activity_data,
+            visibility=visibility,
+            created_at=created_at,
+        )
+        print(f"[Social] Activity {activity_id} indexed in ChromaDB")
+    except Exception as e:
+        print(f"[Social] Failed to index activity in ChromaDB: {e}")
+
+
+def _bg_remove_activity(activity_id: str):
+    """Background task: remove activity from ChromaDB."""
+    try:
+        social_rag = get_social_rag_service()
+        social_rag.delete_activity_from_rag(activity_id)
+    except Exception as e:
+        print(f"[Social] Failed to remove activity from ChromaDB: {e}")
+
+
 @router.post("/feed", response_model=ActivityFeedItem)
 async def create_activity(
     user_id: str,
     activity: ActivityFeedItemCreate,
+    background_tasks: BackgroundTasks,
 ):
     """
     Create a new activity feed item.
@@ -225,26 +302,16 @@ async def create_activity(
 
     activity_item = ActivityFeedItem(**result.data[0])
 
-    # Store in ChromaDB for AI context
-    try:
-        # Get user name
-        user_result = supabase.table("users").select("name").eq("id", user_id).execute()
-        user_name = user_result.data[0]["name"] if user_result.data else "User"
-
-        social_rag = get_social_rag_service()
-        social_rag.add_activity_to_rag(
-            activity_id=activity_item.id,
-            user_id=user_id,
-            user_name=user_name,
-            activity_type=activity.activity_type.value,
-            activity_data=activity.activity_data,
-            visibility=activity.visibility.value,
-            created_at=activity_item.created_at,
-        )
-        print(f"[Social] Activity {activity_item.id} saved to ChromaDB")
-    except Exception as e:
-        # Non-critical - don't fail the request if ChromaDB fails
-        print(f"[Social] Failed to save activity to ChromaDB: {e}")
+    # Store in ChromaDB in background - non-blocking
+    background_tasks.add_task(
+        _bg_index_activity,
+        activity_id=activity_item.id,
+        user_id=user_id,
+        activity_type=activity.activity_type.value,
+        activity_data=activity.activity_data,
+        visibility=activity.visibility.value,
+        created_at=activity_item.created_at,
+    )
 
     return activity_item
 
@@ -253,6 +320,7 @@ async def create_activity(
 async def delete_activity(
     user_id: str,
     activity_id: str,
+    background_tasks: BackgroundTasks,
 ):
     """
     Delete an activity (user can only delete their own).
@@ -275,12 +343,8 @@ async def delete_activity(
 
     result = supabase.table("activity_feed").delete().eq("id", activity_id).execute()
 
-    # Remove from ChromaDB
-    try:
-        social_rag = get_social_rag_service()
-        social_rag.delete_activity_from_rag(activity_id)
-    except Exception as e:
-        print(f"[Social] Failed to remove activity from ChromaDB: {e}")
+    # Remove from ChromaDB in background - non-blocking
+    background_tasks.add_task(_bg_remove_activity, activity_id)
 
     return {"message": "Activity deleted successfully"}
 

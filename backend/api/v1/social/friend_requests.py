@@ -184,7 +184,7 @@ async def get_received_requests(
     if status:
         query = query.eq("status", status.value)
 
-    query = query.order("created_at", desc=True)
+    query = query.order("created_at", desc=True).limit(50)
     result = query.execute()
 
     requests = []
@@ -232,7 +232,7 @@ async def get_sent_requests(
     if status:
         query = query.eq("status", status.value)
 
-    query = query.order("created_at", desc=True)
+    query = query.order("created_at", desc=True).limit(50)
     result = query.execute()
 
     requests = []

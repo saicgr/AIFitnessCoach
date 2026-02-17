@@ -11,6 +11,7 @@ import '../../data/models/xp_event.dart';
 import '../../data/models/user_xp.dart';
 import '../../data/services/haptic_service.dart';
 import '../../widgets/dismissed_banners_section.dart';
+import '../../widgets/glass_back_button.dart';
 import '../../widgets/glass_sheet.dart';
 import '../../widgets/segmented_tab_bar.dart';
 
@@ -87,30 +88,11 @@ class _XPGoalsScreenState extends ConsumerState<XPGoalsScreen>
                 padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
                 child: Row(
                   children: [
-                    GestureDetector(
+                    GlassBackButton(
                       onTap: () {
                         HapticService.light();
                         context.pop();
                       },
-                      child: Container(
-                        width: 40,
-                        height: 40,
-                        decoration: BoxDecoration(
-                          color: isDark
-                              ? Colors.black.withValues(alpha: 0.6)
-                              : Colors.white.withValues(alpha: 0.9),
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: borderColor),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.1),
-                              blurRadius: 8,
-                              offset: const Offset(0, 2),
-                            ),
-                          ],
-                        ),
-                        child: Icon(Icons.arrow_back, color: textColor, size: 22),
-                      ),
                     ),
                     const SizedBox(width: 12),
                     Container(

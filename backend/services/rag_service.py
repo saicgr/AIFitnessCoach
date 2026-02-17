@@ -11,7 +11,6 @@ ChromaDB queries to avoid redundant network calls (500ms-2s each).
 """
 from typing import List, Dict, Any, Optional, Union
 from datetime import datetime, timedelta
-import hashlib
 import json as json_module
 import uuid
 import time
@@ -27,65 +26,14 @@ _rag_logger = get_logger(__name__)
 from services.split_descriptions import SPLIT_DESCRIPTIONS, get_split_context
 
 
-class RAGCache:
-    """
-    In-memory TTL cache for RAG queries and embeddings.
+from core.redis_cache import RedisCache
 
-    Reduces redundant ChromaDB Cloud network calls for:
-    - Embedding generation (same text -> same embedding)
-    - Similarity searches (same query + filters -> same results)
-
-    Thread-safe for single-process async usage (Python GIL).
-    """
-
-    def __init__(self, ttl_seconds: int = 1800, max_size: int = 500):
-        self._cache: Dict[str, tuple] = {}  # key -> (timestamp, value)
-        self._ttl = timedelta(seconds=ttl_seconds)
-        self._max_size = max_size
-        self._hits = 0
-        self._misses = 0
-
-    def get(self, key: str) -> Optional[Any]:
-        """Get a cached value if it exists and hasn't expired."""
-        if key in self._cache:
-            ts, val = self._cache[key]
-            if datetime.now() - ts < self._ttl:
-                self._hits += 1
-                return val
-            # Expired entry, remove it
-            del self._cache[key]
-        self._misses += 1
-        return None
-
-    def set(self, key: str, value: Any) -> None:
-        """Cache a value. Evicts oldest entry if at capacity."""
-        if len(self._cache) >= self._max_size:
-            # Evict the oldest entry
-            oldest_key = min(self._cache, key=lambda k: self._cache[k][0])
-            del self._cache[oldest_key]
-        self._cache[key] = (datetime.now(), value)
-
-    def get_stats(self) -> Dict[str, Any]:
-        """Return cache hit/miss statistics."""
-        total = self._hits + self._misses
-        return {
-            "hits": self._hits,
-            "misses": self._misses,
-            "hit_rate": round(self._hits / total, 3) if total > 0 else 0.0,
-            "size": len(self._cache),
-            "max_size": self._max_size,
-        }
-
-    @staticmethod
-    def make_key(*parts) -> str:
-        """Create a deterministic cache key from parts."""
-        raw = "|".join(str(p) for p in parts)
-        return hashlib.sha256(raw.encode()).hexdigest()
-
+# Keep RAGCache as an alias for backwards compatibility (used by exercise_rag_service.py)
+RAGCache = RedisCache
 
 # Module-level cache instances (shared across service instances within a process)
-_embedding_cache = RAGCache(ttl_seconds=3600, max_size=1000)   # 1 hour TTL for embeddings
-_query_cache = RAGCache(ttl_seconds=1800, max_size=500)        # 30 min TTL for query results
+# Note: Embedding cache removed - gemini_service.get_embedding_async() already caches
+_query_cache = RedisCache(prefix="rag_query", ttl_seconds=1800, max_size=50)   # 30 min TTL for query results (reduced for 512MB)
 
 
 class RAGService:
@@ -156,20 +104,8 @@ class RAGService:
         return doc_id
 
     async def _get_embedding_cached(self, text: str) -> List[float]:
-        """Get embedding with in-memory caching to avoid redundant Gemini API calls."""
-        cache_key = _embedding_cache.make_key("emb", text)
-        cached = _embedding_cache.get(cache_key)
-        if cached is not None:
-            _rag_logger.debug(f"Embedding cache HIT for: '{text[:40]}...'")
-            return cached
-
-        start = time.time()
-        embedding = await self.gemini_service.get_embedding_async(text)
-        elapsed_ms = int((time.time() - start) * 1000)
-        _rag_logger.debug(f"Embedding cache MISS, generated in {elapsed_ms}ms for: '{text[:40]}...'")
-
-        _embedding_cache.set(cache_key, embedding)
-        return embedding
+        """Get embedding - delegates to gemini_service which has its own cache."""
+        return await self.gemini_service.get_embedding_async(text)
 
     async def find_similar(
         self,
@@ -197,7 +133,7 @@ class RAGService:
 
         # Check query result cache first
         query_cache_key = _query_cache.make_key("find_similar", query, n_results, user_id, intent_filter)
-        cached_results = _query_cache.get(query_cache_key)
+        cached_results = await _query_cache.get(query_cache_key)
         if cached_results is not None:
             _rag_logger.debug(f"RAG query cache HIT ({len(cached_results)} docs) for: '{query[:40]}...'")
             return cached_results
@@ -242,7 +178,7 @@ class RAGService:
         _rag_logger.debug(f"RAG query cache MISS, found {len(similar_docs)} docs in {elapsed_ms}ms for: '{query[:40]}...'")
 
         # Cache the results
-        _query_cache.set(query_cache_key, similar_docs)
+        await _query_cache.set(query_cache_key, similar_docs)
 
         print(f"🔍 Found {len(similar_docs)} similar docs for: '{query[:50]}...'")
         return similar_docs
@@ -277,7 +213,6 @@ class RAGService:
         return {
             "total_documents": self.collection.count(),
             "storage": "chroma_cloud",
-            "embedding_cache": _embedding_cache.get_stats(),
             "query_cache": _query_cache.get_stats(),
         }
 
@@ -444,15 +379,8 @@ class WorkoutRAGService:
         return doc_id
 
     async def _get_embedding_cached(self, text: str) -> List[float]:
-        """Get embedding with in-memory caching to avoid redundant Gemini API calls."""
-        cache_key = _embedding_cache.make_key("emb", text)
-        cached = _embedding_cache.get(cache_key)
-        if cached is not None:
-            return cached
-
-        embedding = await self.gemini_service.get_embedding_async(text)
-        _embedding_cache.set(cache_key, embedding)
-        return embedding
+        """Get embedding - delegates to gemini_service which has its own cache."""
+        return await self.gemini_service.get_embedding_async(text)
 
     async def find_similar_workouts(
         self,
@@ -478,7 +406,7 @@ class WorkoutRAGService:
 
         # Check query result cache
         query_cache_key = _query_cache.make_key("find_similar_workouts", query, user_id, n_results, workout_type)
-        cached_results = _query_cache.get(query_cache_key)
+        cached_results = await _query_cache.get(query_cache_key)
         if cached_results is not None:
             _rag_logger.debug(f"Workout RAG cache HIT ({len(cached_results)} results) for: '{query[:40]}...'")
             return cached_results
@@ -522,7 +450,7 @@ class WorkoutRAGService:
         _rag_logger.debug(f"Workout RAG cache MISS, found {len(similar_workouts)} results in {elapsed_ms}ms")
 
         # Cache the results
-        _query_cache.set(query_cache_key, similar_workouts)
+        await _query_cache.set(query_cache_key, similar_workouts)
 
         print(f"🔍 Found {len(similar_workouts)} similar workouts for: '{query[:50]}...'")
         return similar_workouts
@@ -1183,15 +1111,8 @@ class NutritionRAGService:
         return doc_id
 
     async def _get_embedding_cached(self, text: str) -> List[float]:
-        """Get embedding with in-memory caching to avoid redundant Gemini API calls."""
-        cache_key = _embedding_cache.make_key("emb", text)
-        cached = _embedding_cache.get(cache_key)
-        if cached is not None:
-            return cached
-
-        embedding = await self.gemini_service.get_embedding_async(text)
-        _embedding_cache.set(cache_key, embedding)
-        return embedding
+        """Get embedding - delegates to gemini_service which has its own cache."""
+        return await self.gemini_service.get_embedding_async(text)
 
     async def find_similar_meals(
         self,
@@ -1217,7 +1138,7 @@ class NutritionRAGService:
 
         # Check query result cache
         query_cache_key = _query_cache.make_key("find_similar_meals", query, user_id, n_results, meal_type)
-        cached_results = _query_cache.get(query_cache_key)
+        cached_results = await _query_cache.get(query_cache_key)
         if cached_results is not None:
             _rag_logger.debug(f"Nutrition RAG cache HIT ({len(cached_results)} results) for: '{query[:40]}...'")
             return cached_results
@@ -1261,7 +1182,7 @@ class NutritionRAGService:
         _rag_logger.debug(f"Nutrition RAG cache MISS, found {len(similar_meals)} results in {elapsed_ms}ms")
 
         # Cache the results
-        _query_cache.set(query_cache_key, similar_meals)
+        await _query_cache.set(query_cache_key, similar_meals)
 
         print(f"🔍 Found {len(similar_meals)} similar meals for: '{query[:50]}...'")
         return similar_meals

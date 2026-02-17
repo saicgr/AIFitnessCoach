@@ -7,7 +7,9 @@ import '../models/fasting.dart';
 
 /// Fasting timer service provider
 final fastingTimerServiceProvider = Provider<FastingTimerService>((ref) {
-  return FastingTimerService(ref);
+  final service = FastingTimerService(ref);
+  ref.onDispose(() => service.dispose());
+  return service;
 });
 
 /// Service for managing fasting timer, notifications, and zone transitions

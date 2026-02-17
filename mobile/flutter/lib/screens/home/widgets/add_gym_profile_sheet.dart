@@ -74,11 +74,10 @@ class _AddGymProfileSheetState extends ConsumerState<AddGymProfileSheet> {
     'home': {
       'name': 'Home (Minimal)',
       'icon': Icons.home_rounded,
-      'description': 'Bodyweight and basic equipment only',
+      'description': 'Bodyweight exercises only',
       'defaultIcon': 'home',
       'defaultEquipment': [
         'bodyweight',
-        'resistance_bands',
       ],
     },
     'hotel': {
@@ -420,23 +419,7 @@ class _AddGymProfileSheetState extends ConsumerState<AddGymProfileSheet> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          'Name Your Gym',
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-            color: textPrimary,
-          ),
-        ),
-        const SizedBox(height: 8),
-        Text(
-          'Give this gym setup a memorable name',
-          style: TextStyle(
-            fontSize: 14,
-            color: textSecondary,
-          ),
-        ),
-        const SizedBox(height: 16),
+        // Name field - compact
         TextField(
           autofocus: true,
           onChanged: (value) => setState(() => _name = value),
@@ -459,41 +442,41 @@ class _AddGymProfileSheetState extends ConsumerState<AddGymProfileSheet> {
             prefixIcon: Icon(Icons.edit_rounded, color: textSecondary),
           ),
         ),
-        const SizedBox(height: 28),
+        const SizedBox(height: 20),
 
         // Environment section
         Text(
           'Workout Environment',
           style: TextStyle(
-            fontSize: 18,
+            fontSize: 16,
             fontWeight: FontWeight.bold,
             color: textPrimary,
           ),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 4),
         Text(
           'This helps us suggest the right equipment',
           style: TextStyle(
-            fontSize: 14,
+            fontSize: 13,
             color: textSecondary,
           ),
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 12),
         ..._environmentPresets.entries.map((entry) {
           final isSelected = _selectedEnvironment == entry.key;
           final preset = entry.value;
           return GestureDetector(
             onTap: () => _selectEnvironment(entry.key),
             child: Container(
-              margin: const EdgeInsets.only(bottom: 10),
-              padding: const EdgeInsets.all(14),
+              margin: const EdgeInsets.only(bottom: 6),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
               decoration: BoxDecoration(
                 color: isSelected
                     ? accentColor.withValues(alpha: 0.1)
                     : (isDark
                         ? Colors.white.withValues(alpha: 0.05)
                         : Colors.black.withValues(alpha: 0.04)),
-                borderRadius: BorderRadius.circular(14),
+                borderRadius: BorderRadius.circular(12),
                 border: Border.all(
                   color: isSelected ? accentColor : (isDark ? Colors.white.withValues(alpha: 0.1) : Colors.black.withValues(alpha: 0.1)),
                   width: isSelected ? 2 : 1,
@@ -502,52 +485,48 @@ class _AddGymProfileSheetState extends ConsumerState<AddGymProfileSheet> {
               child: Row(
                 children: [
                   Container(
-                    width: 42,
-                    height: 42,
+                    width: 36,
+                    height: 36,
                     decoration: BoxDecoration(
                       color: isSelected
                           ? accentColor.withValues(alpha: 0.2)
                           : (isDark
                               ? Colors.white.withValues(alpha: 0.1)
                               : Colors.black.withValues(alpha: 0.06)),
-                      borderRadius: BorderRadius.circular(10),
+                      borderRadius: BorderRadius.circular(8),
                     ),
                     child: Icon(
                       preset['icon'] as IconData,
                       color: isSelected ? accentColor : textSecondary,
-                      size: 22,
+                      size: 18,
                     ),
                   ),
-                  const SizedBox(width: 14),
+                  const SizedBox(width: 12),
                   Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          preset['name'] as String,
-                          style: TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w600,
-                            color: isSelected ? accentColor : textPrimary,
-                          ),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          preset['description'] as String,
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: textSecondary,
-                          ),
-                        ),
-                      ],
+                    child: Text(
+                      preset['name'] as String,
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: isSelected ? accentColor : textPrimary,
+                      ),
                     ),
                   ),
-                  if (isSelected)
+                  Text(
+                    preset['description'] as String,
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: textSecondary,
+                    ),
+                  ),
+                  if (isSelected) ...[
+                    const SizedBox(width: 8),
                     Icon(
                       Icons.check_circle_rounded,
                       color: accentColor,
-                      size: 22,
+                      size: 20,
                     ),
+                  ],
                 ],
               ),
             ),
@@ -655,13 +634,35 @@ class _AddGymProfileSheetState extends ConsumerState<AddGymProfileSheet> {
 
         // Show selected equipment list with weight details
         if (_selectedEquipment.isNotEmpty) ...[
-          Text(
-            'Selected Equipment (${_selectedEquipment.length})',
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-              color: textPrimary,
-            ),
+          Row(
+            children: [
+              Text(
+                'Selected Equipment (${_selectedEquipment.length})',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: textPrimary,
+                ),
+              ),
+              const Spacer(),
+              GestureDetector(
+                onTap: () {
+                  setState(() {
+                    _selectedEquipment.clear();
+                    _equipmentDetails.clear();
+                  });
+                  HapticService.light();
+                },
+                child: Text(
+                  'Reset All',
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: Colors.red.shade400,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 12),
           // Show equipment as list items with weight info
@@ -800,23 +801,57 @@ class _AddGymProfileSheetState extends ConsumerState<AddGymProfileSheet> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          'Customize Style',
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-            color: textPrimary,
+        // Inline preview at top
+        Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: isDark
+                ? Colors.white.withOpacity(0.05)
+                : Colors.black.withOpacity(0.03),
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(
+              color: selectedColorObj.withOpacity(0.5),
+              width: 1.5,
+            ),
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: selectedColorObj.withOpacity(0.15),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(
+                  _iconOptions.firstWhere(
+                    (o) => o['id'] == _selectedIcon,
+                    orElse: () => _iconOptions.first,
+                  )['icon'] as IconData,
+                  color: selectedColorObj,
+                  size: 22,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  _name.isEmpty ? 'Gym Name' : _name,
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                    color: selectedColorObj,
+                  ),
+                ),
+              ),
+              Text(
+                '${_selectedEquipment.length} equipment',
+                style: TextStyle(fontSize: 12, color: textSecondary),
+              ),
+            ],
           ),
         ),
-        const SizedBox(height: 8),
-        Text(
-          'Choose an icon and color for your gym',
-          style: TextStyle(
-            fontSize: 14,
-            color: textSecondary,
-          ),
-        ),
-        const SizedBox(height: 24),
+
+        const SizedBox(height: 20),
 
         // Icon selection
         Text(
@@ -827,10 +862,10 @@ class _AddGymProfileSheetState extends ConsumerState<AddGymProfileSheet> {
             color: textPrimary,
           ),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 10),
         Wrap(
-          spacing: 12,
-          runSpacing: 12,
+          spacing: 10,
+          runSpacing: 10,
           children: _iconOptions.map((iconOption) {
             final isSelected = _selectedIcon == iconOption['id'];
             return GestureDetector(
@@ -839,15 +874,15 @@ class _AddGymProfileSheetState extends ConsumerState<AddGymProfileSheet> {
                 HapticService.light();
               },
               child: Container(
-                width: 52,
-                height: 52,
+                width: 46,
+                height: 46,
                 decoration: BoxDecoration(
                   color: isSelected
                       ? selectedColorObj.withOpacity(0.2)
                       : (isDark
                           ? Colors.white.withOpacity(0.05)
                           : Colors.black.withOpacity(0.03)),
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(10),
                   border: Border.all(
                     color: isSelected ? selectedColorObj : Colors.transparent,
                     width: 2,
@@ -856,14 +891,14 @@ class _AddGymProfileSheetState extends ConsumerState<AddGymProfileSheet> {
                 child: Icon(
                   iconOption['icon'] as IconData,
                   color: isSelected ? selectedColorObj : textSecondary,
-                  size: 24,
+                  size: 22,
                 ),
               ),
             );
           }).toList(),
         ),
 
-        const SizedBox(height: 32),
+        const SizedBox(height: 20),
 
         // Color selection
         Text(
@@ -874,10 +909,10 @@ class _AddGymProfileSheetState extends ConsumerState<AddGymProfileSheet> {
             color: textPrimary,
           ),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 10),
         Wrap(
-          spacing: 12,
-          runSpacing: 12,
+          spacing: 10,
+          runSpacing: 10,
           children: GymProfileColors.palette.map((colorHex) {
             final isSelected = _selectedColor == colorHex && !_usingCustomColor;
             final color = GymProfileColors.fromHex(colorHex);
@@ -890,8 +925,8 @@ class _AddGymProfileSheetState extends ConsumerState<AddGymProfileSheet> {
                 HapticService.light();
               },
               child: Container(
-                width: 44,
-                height: 44,
+                width: 40,
+                height: 40,
                 decoration: BoxDecoration(
                   color: color,
                   shape: BoxShape.circle,
@@ -913,7 +948,7 @@ class _AddGymProfileSheetState extends ConsumerState<AddGymProfileSheet> {
                     ? const Icon(
                         Icons.check_rounded,
                         color: Colors.white,
-                        size: 24,
+                        size: 20,
                       )
                     : null,
               ),
@@ -921,9 +956,9 @@ class _AddGymProfileSheetState extends ConsumerState<AddGymProfileSheet> {
           }).toList(),
         ),
 
-        const SizedBox(height: 20),
+        const SizedBox(height: 16),
 
-        // Color scale / hue picker
+        // Custom color picker - compact
         Text(
           'Custom Color',
           style: TextStyle(
@@ -932,7 +967,7 @@ class _AddGymProfileSheetState extends ConsumerState<AddGymProfileSheet> {
             color: textPrimary,
           ),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 10),
         _ColorScalePicker(
           selectedColor: _usingCustomColor ? GymProfileColors.fromHex(_selectedColor) : null,
           isDark: isDark,
@@ -944,87 +979,6 @@ class _AddGymProfileSheetState extends ConsumerState<AddGymProfileSheet> {
             });
             HapticService.light();
           },
-        ),
-
-        const SizedBox(height: 32),
-
-        // Preview
-        Text(
-          'Preview',
-          style: TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-            color: textPrimary,
-          ),
-        ),
-        const SizedBox(height: 12),
-        Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: isDark
-                ? Colors.white.withOpacity(0.05)
-                : Colors.black.withOpacity(0.03),
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              color: selectedColorObj,
-              width: 2,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: selectedColorObj.withOpacity(0.3),
-                blurRadius: 12,
-              ),
-            ],
-          ),
-          child: Row(
-            children: [
-              Container(
-                width: 48,
-                height: 48,
-                decoration: BoxDecoration(
-                  color: selectedColorObj.withOpacity(0.15),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Icon(
-                  _iconOptions.firstWhere(
-                    (o) => o['id'] == _selectedIcon,
-                    orElse: () => _iconOptions.first,
-                  )['icon'] as IconData,
-                  color: selectedColorObj,
-                  size: 24,
-                ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      _name.isEmpty ? 'Gym Name' : _name,
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                        color: selectedColorObj,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      '${_selectedEquipment.length} equipment • ${_environmentPresets[_selectedEnvironment]!['name']}',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: textSecondary,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Icon(
-                Icons.check_circle_rounded,
-                color: selectedColorObj,
-                size: 24,
-              ),
-            ],
-          ),
         ),
       ],
     );
@@ -1148,7 +1102,7 @@ class _ColorScalePickerState extends State<_ColorScalePicker> {
           },
         ),
 
-        const SizedBox(height: 12),
+        const SizedBox(height: 10),
 
         // Brightness bar
         LayoutBuilder(

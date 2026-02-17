@@ -158,15 +158,15 @@ const defaultOnboarding: OnboardingData = {
   activityLevel: 'lightly_active',
 };
 
-const STORAGE_VERSION = 8;  // v8: Added hydration reminder settings
+const STORAGE_VERSION = 9;  // v9: Light-first theme system
 
 // Helper to apply theme class to document
 const applyThemeToDocument = (theme: 'dark' | 'light') => {
   if (typeof document !== 'undefined') {
-    if (theme === 'light') {
-      document.documentElement.classList.add('light-mode');
+    if (theme === 'dark') {
+      document.documentElement.classList.add('dark-mode');
     } else {
-      document.documentElement.classList.remove('light-mode');
+      document.documentElement.classList.remove('dark-mode');
     }
   }
 };
@@ -175,7 +175,7 @@ export const useAppStore = create<AppState>()(
   persist(
     (set) => ({
       // Theme
-      theme: 'dark',
+      theme: 'light',
       setTheme: (theme) => {
         applyThemeToDocument(theme);
         set({ theme });
@@ -360,7 +360,7 @@ export const useAppStore = create<AppState>()(
             user: null,
             session: null,
             onboardingData: defaultOnboarding,
-            theme: 'dark' as const,
+            theme: 'light' as const,
             notificationSettings: {
               emailEnabled: true,
               pushEnabled: false,
@@ -399,7 +399,7 @@ export const useAppStore = create<AppState>()(
 export const clearAppStorage = () => {
   localStorage.removeItem('fitness-coach-storage');
   useAppStore.setState({
-    theme: 'dark',
+    theme: 'light',
     notificationSettings: {
       emailEnabled: true,
       pushEnabled: false,
@@ -428,5 +428,5 @@ export const clearAppStorage = () => {
       hasUnreadMessages: false,
     },
   });
-  applyThemeToDocument('dark');
+  applyThemeToDocument('light');
 };

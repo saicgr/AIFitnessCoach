@@ -8,9 +8,11 @@
 --     fat_per_100g, carbs_per_100g, fiber_per_100g, sugar_per_100g, serving_description,
 --     serving_weight_g, calories_per_serving, protein_per_serving, fat_per_serving,
 --     carbs_per_serving, allergens, diet_labels, nova_group, nutriscore_score, image_url,
---     inflammatory_score, inflammatory_category, dedup_key, dedup_rank, is_primary
+--     inflammatory_score, inflammatory_category, dedup_key, dedup_rank, is_primary,
+--     variant_names, variant_text
 --   - food_database_deduped view = SELECT * FROM food_database WHERE is_primary = TRUE
 --   - GIN trigram index: idx_food_database_name_trgm ON food_database USING GIN (name_normalized gin_trgm_ops)
+--   - GIN trigram index: idx_food_database_variant_text_trgm ON food_database USING GIN (variant_text gin_trgm_ops) WHERE variant_text IS NOT NULL
 --   - pg_trgm extension enabled
 
 -- ============================================================================
@@ -45,6 +47,9 @@ DECLARE
 BEGIN
     normalized_query := LOWER(TRIM(search_query));
 
+    -- Set trigram similarity threshold for % operator (uses GIN index)
+    PERFORM set_config('pg_trgm.similarity_threshold', '0.15', TRUE);
+
     RETURN QUERY
     SELECT
         f.id,
@@ -60,23 +65,36 @@ BEGIN
         f.sugar_per_100g,
         f.serving_description,
         f.serving_weight_g,
-        similarity(f.name_normalized, normalized_query) AS similarity_score
+        GREATEST(
+            similarity(f.name_normalized, normalized_query),
+            COALESCE(similarity(f.variant_text, normalized_query), 0)
+        ) AS similarity_score
     FROM food_database_deduped f
     WHERE
-        -- Trigram similarity match (catches typos and close matches)
-        similarity(f.name_normalized, normalized_query) > 0.15
+        -- Trigram similarity match (uses GIN index via % operator)
+        f.name_normalized % normalized_query
         -- OR substring match (for exact partial matches like "chicken" in "chicken breast")
         OR f.name_normalized ILIKE '%' || normalized_query || '%'
+        -- OR variant spelling match (uses partial GIN index)
+        OR (f.variant_text IS NOT NULL AND (
+            f.variant_text % normalized_query
+            OR f.variant_text ILIKE '%' || normalized_query || '%'
+        ))
     ORDER BY
         -- Exact matches first
         CASE
             WHEN f.name_normalized = normalized_query THEN 0
             WHEN f.name_normalized ILIKE normalized_query || '%' THEN 1
             WHEN f.name_normalized ILIKE '%' || normalized_query || '%' THEN 2
-            ELSE 3
+            -- Variant text matches
+            WHEN f.variant_text IS NOT NULL AND f.variant_text ILIKE '%' || normalized_query || '%' THEN 3
+            ELSE 4
         END,
-        -- Then by similarity score
-        similarity(f.name_normalized, normalized_query) DESC,
+        -- Then by best similarity score (name or variant)
+        GREATEST(
+            similarity(f.name_normalized, normalized_query),
+            COALESCE(similarity(f.variant_text, normalized_query), 0)
+        ) DESC,
         -- Prefer items with serving info
         CASE WHEN f.serving_weight_g IS NOT NULL THEN 0 ELSE 1 END,
         -- Alphabetical tiebreaker
@@ -116,49 +134,109 @@ RETURNS TABLE (
 )
 AS $$
 BEGIN
+    -- Set trigram similarity threshold for % operator (uses GIN index)
+    PERFORM set_config('pg_trgm.similarity_threshold', '0.15', TRUE);
+
+    -- Two-pass approach for performance:
+    -- Pass 1: name_normalized matches (fast, uses existing GIN index)
+    -- Pass 2: variant_text matches for items with no name match (small partial index)
     RETURN QUERY
-    SELECT
-        input.name AS input_name,
-        best.id AS matched_id,
-        best.name AS matched_name,
-        best.source,
-        best.calories_per_100g,
-        best.protein_per_100g,
-        best.fat_per_100g,
-        best.carbs_per_100g,
-        best.fiber_per_100g,
-        best.sim AS similarity_score
-    FROM unnest(food_names) AS input(name)
-    LEFT JOIN LATERAL (
+    WITH name_matches AS (
         SELECT
-            f.id,
-            f.name,
-            f.source,
-            f.calories_per_100g,
-            f.protein_per_100g,
-            f.fat_per_100g,
-            f.carbs_per_100g,
-            f.fiber_per_100g,
-            similarity(f.name_normalized, LOWER(TRIM(input.name))) AS sim
-        FROM food_database_deduped f
-        WHERE
-            similarity(f.name_normalized, LOWER(TRIM(input.name))) > 0.15
-            OR f.name_normalized ILIKE '%' || LOWER(TRIM(input.name)) || '%'
-        ORDER BY
-            CASE
-                WHEN f.name_normalized = LOWER(TRIM(input.name)) THEN 0
-                WHEN f.name_normalized ILIKE LOWER(TRIM(input.name)) || '%' THEN 1
-                WHEN f.name_normalized ILIKE '%' || LOWER(TRIM(input.name)) || '%' THEN 2
-                ELSE 3
-            END,
-            similarity(f.name_normalized, LOWER(TRIM(input.name))) DESC
-        LIMIT 1
-    ) best ON TRUE;
+            input.name AS inp_name,
+            best.id,
+            best.name,
+            best.source,
+            best.calories_per_100g,
+            best.protein_per_100g,
+            best.fat_per_100g,
+            best.carbs_per_100g,
+            best.fiber_per_100g,
+            best.sim
+        FROM unnest(food_names) AS input(name)
+        LEFT JOIN LATERAL (
+            SELECT
+                f.id,
+                f.name,
+                f.source,
+                f.calories_per_100g,
+                f.protein_per_100g,
+                f.fat_per_100g,
+                f.carbs_per_100g,
+                f.fiber_per_100g,
+                similarity(f.name_normalized, LOWER(TRIM(input.name))) AS sim
+            FROM food_database_deduped f
+            WHERE
+                f.name_normalized % LOWER(TRIM(input.name))
+                OR f.name_normalized ILIKE '%' || LOWER(TRIM(input.name)) || '%'
+            ORDER BY
+                CASE
+                    WHEN f.name_normalized = LOWER(TRIM(input.name)) THEN 0
+                    WHEN f.name_normalized ILIKE LOWER(TRIM(input.name)) || '%' THEN 1
+                    WHEN f.name_normalized ILIKE '%' || LOWER(TRIM(input.name)) || '%' THEN 2
+                    ELSE 3
+                END,
+                similarity(f.name_normalized, LOWER(TRIM(input.name))) DESC
+            LIMIT 1
+        ) best ON TRUE
+    ),
+    -- Pass 2: variant matches only for items with no name match
+    variant_matches AS (
+        SELECT
+            nm.inp_name,
+            vbest.id,
+            vbest.name,
+            vbest.source,
+            vbest.calories_per_100g,
+            vbest.protein_per_100g,
+            vbest.fat_per_100g,
+            vbest.carbs_per_100g,
+            vbest.fiber_per_100g,
+            vbest.sim
+        FROM name_matches nm
+        LEFT JOIN LATERAL (
+            SELECT
+                f.id,
+                f.name,
+                f.source,
+                f.calories_per_100g,
+                f.protein_per_100g,
+                f.fat_per_100g,
+                f.carbs_per_100g,
+                f.fiber_per_100g,
+                similarity(f.variant_text, LOWER(TRIM(nm.inp_name))) AS sim
+            FROM food_database_deduped f
+            WHERE
+                f.variant_text IS NOT NULL
+                AND (
+                    f.variant_text % LOWER(TRIM(nm.inp_name))
+                    OR f.variant_text ILIKE '%' || LOWER(TRIM(nm.inp_name)) || '%'
+                )
+            ORDER BY
+                similarity(f.variant_text, LOWER(TRIM(nm.inp_name))) DESC
+            LIMIT 1
+        ) vbest ON TRUE
+        WHERE nm.id IS NULL  -- only for items with no name match
+    )
+    -- Combine: use name match if found, otherwise variant match
+    SELECT
+        nm.inp_name AS input_name,
+        COALESCE(nm.id, vm.id) AS matched_id,
+        COALESCE(nm.name, vm.name) AS matched_name,
+        COALESCE(nm.source, vm.source) AS source,
+        COALESCE(nm.calories_per_100g, vm.calories_per_100g) AS calories_per_100g,
+        COALESCE(nm.protein_per_100g, vm.protein_per_100g) AS protein_per_100g,
+        COALESCE(nm.fat_per_100g, vm.fat_per_100g) AS fat_per_100g,
+        COALESCE(nm.carbs_per_100g, vm.carbs_per_100g) AS carbs_per_100g,
+        COALESCE(nm.fiber_per_100g, vm.fiber_per_100g) AS fiber_per_100g,
+        COALESCE(nm.sim, vm.sim) AS similarity_score
+    FROM name_matches nm
+    LEFT JOIN variant_matches vm ON nm.inp_name = vm.inp_name;
 END;
 $$ LANGUAGE plpgsql STABLE SECURITY INVOKER
 SET search_path = public;
 
-COMMENT ON FUNCTION batch_lookup_foods IS 'Batch food lookup: takes array of food names, returns best match for each using trigram similarity via LATERAL JOIN.';
+COMMENT ON FUNCTION batch_lookup_foods IS 'Batch food lookup: takes array of food names, returns best match for each. Uses two-pass approach: name_normalized first, then variant_text for misses.';
 
 -- Grant execute permission
 GRANT EXECUTE ON FUNCTION batch_lookup_foods(TEXT[]) TO authenticated;

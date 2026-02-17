@@ -48,8 +48,8 @@ class Settings(BaseSettings):
     sqlite_url: Optional[str] = None
 
     # Database Connection Pool (only applies to PostgreSQL, ignored for SQLite)
-    db_pool_size: int = 10          # Base number of persistent connections
-    db_max_overflow: int = 20       # Extra connections allowed under load
+    db_pool_size: int = 25          # Base number of persistent connections
+    db_max_overflow: int = 50       # Extra connections allowed under load
     db_pool_timeout: int = 30       # Seconds to wait for a connection
     db_pool_recycle: int = 1800     # Recycle connections every 30 minutes
 
@@ -90,6 +90,9 @@ class Settings(BaseSettings):
     discord_support_webhook: Optional[str] = None
     # Admin dashboard URL for action buttons in webhook messages
     admin_dashboard_url: str = "https://fitwiz-admin.example.com"
+
+    # Redis (shared cache across workers)
+    redis_url: Optional[str] = None
 
     # CORS (for Flutter app)
     # Specific allowed origins - do not use ["*"] with allow_credentials=True

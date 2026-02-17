@@ -24,6 +24,7 @@ Note: The limiter must be attached to the FastAPI app in main.py:
     app.state.limiter = limiter
 """
 import json
+import time
 from slowapi import Limiter
 from starlette.requests import Request
 
@@ -67,7 +68,10 @@ limiter = Limiter(
 
 
 # Cache for request bodies (needed because body can only be read once)
+# Bounded to 1000 entries with 60s TTL to prevent unbounded growth
 _request_body_cache: dict = {}
+_REQUEST_CACHE_MAX_SIZE = 1000
+_REQUEST_CACHE_TTL = 60  # seconds
 
 
 async def get_user_id_from_request(request: Request) -> str:
@@ -88,15 +92,25 @@ async def get_user_id_from_request(request: Request) -> str:
 
         # Check if we have a cached body for this request
         request_id = id(request)
-        if request_id in _request_body_cache:
-            body = _request_body_cache[request_id]
+        cached_entry = _request_body_cache.get(request_id)
+        if cached_entry is not None:
+            body = cached_entry[1]  # (timestamp, body)
         else:
             # Read and cache the body (can only be read once)
             body_bytes = await request.body()
             if body_bytes:
                 try:
                     body = json.loads(body_bytes)
-                    _request_body_cache[request_id] = body
+                    # Evict stale entries before adding new one
+                    if len(_request_body_cache) >= _REQUEST_CACHE_MAX_SIZE:
+                        now = time.monotonic()
+                        stale_keys = [
+                            k for k, (ts, _) in _request_body_cache.items()
+                            if now - ts > _REQUEST_CACHE_TTL
+                        ]
+                        for k in stale_keys:
+                            del _request_body_cache[k]
+                    _request_body_cache[request_id] = (time.monotonic(), body)
                 except json.JSONDecodeError:
                     body = {}
             else:

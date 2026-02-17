@@ -275,9 +275,9 @@ class TodayWorkoutNotifier extends StateNotifier<AsyncValue<TodayWorkoutResponse
     _backgroundGenPollTimer?.cancel();
     _backgroundGenTimeout?.cancel();
 
-    debugPrint('[TodayWorkout] Starting background generation polling (every 5s, 2min timeout)');
+    debugPrint('[TodayWorkout] Starting background generation polling (every 15s, 60s timeout)');
 
-    _backgroundGenPollTimer = Timer.periodic(const Duration(seconds: 5), (_) async {
+    _backgroundGenPollTimer = Timer.periodic(const Duration(seconds: 15), (_) async {
       if (_disposed) {
         _backgroundGenPollTimer?.cancel();
         return;
@@ -299,10 +299,10 @@ class TodayWorkoutNotifier extends StateNotifier<AsyncValue<TodayWorkoutResponse
       }
     });
 
-    // Safety timeout: stop polling after 2 minutes
-    _backgroundGenTimeout = Timer(const Duration(minutes: 2), () {
+    // Safety timeout: stop polling after 60 seconds (perf fix 1.6)
+    _backgroundGenTimeout = Timer(const Duration(seconds: 60), () {
       if (!_disposed) {
-        debugPrint('[TodayWorkout] Background generation poll timeout (2 min), stopping');
+        debugPrint('[TodayWorkout] Background generation poll timeout (60s), stopping');
         _stopBackgroundGenerationPolling();
       }
     });
@@ -443,7 +443,7 @@ class TodayWorkoutNotifier extends StateNotifier<AsyncValue<TodayWorkoutResponse
             'targetWeightKg': e.weight,
             'restSeconds': e.restSeconds ?? 60,
             'videoUrl': e.videoUrl,
-            'thumbnailUrl': e.gifUrl ?? e.imageS3Path,
+            'thumbnailUrl': e.gifUrl,
           }).toList(),
           estimatedDuration: workout.durationMinutes,
           targetMuscleGroups: workout.primaryMuscles,
@@ -475,7 +475,7 @@ class TodayWorkoutNotifier extends StateNotifier<AsyncValue<TodayWorkoutResponse
             'weight_kg': e.weight,
             'rest_seconds': e.restSeconds ?? 60,
             'video_url': e.videoUrl,
-            'thumbnail_url': e.gifUrl ?? e.imageS3Path,
+            'thumbnail_url': e.gifUrl,
           }).toList(),
         },
         'date': workout.scheduledDate,

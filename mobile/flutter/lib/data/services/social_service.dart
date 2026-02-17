@@ -675,18 +675,26 @@ class SocialService {
     }
   }
 
-  /// Get followers
-  Future<List<Map<String, dynamic>>> getFollowers({
+  /// Get followers with cursor-based pagination
+  Future<Map<String, dynamic>> getFollowers({
     required String userId,
+    String? cursor,
+    int limit = 50,
   }) async {
     try {
+      final queryParams = <String, String>{
+        'limit': limit.toString(),
+      };
+      if (cursor != null) queryParams['cursor'] = cursor;
+
       final response = await _apiClient.get(
         '/social/connections/followers/$userId',
+        queryParameters: queryParams,
       );
 
       if (response.statusCode == 200) {
         debugPrint('✅ [Social] Got followers for user: $userId');
-        return List<Map<String, dynamic>>.from(response.data);
+        return response.data as Map<String, dynamic>;
       } else {
         throw Exception('Failed to get followers: ${response.statusCode}');
       }
@@ -696,18 +704,26 @@ class SocialService {
     }
   }
 
-  /// Get following
-  Future<List<Map<String, dynamic>>> getFollowing({
+  /// Get following with cursor-based pagination
+  Future<Map<String, dynamic>> getFollowing({
     required String userId,
+    String? cursor,
+    int limit = 50,
   }) async {
     try {
+      final queryParams = <String, String>{
+        'limit': limit.toString(),
+      };
+      if (cursor != null) queryParams['cursor'] = cursor;
+
       final response = await _apiClient.get(
         '/social/connections/following/$userId',
+        queryParameters: queryParams,
       );
 
       if (response.statusCode == 200) {
         debugPrint('✅ [Social] Got following for user: $userId');
-        return List<Map<String, dynamic>>.from(response.data);
+        return response.data as Map<String, dynamic>;
       } else {
         throw Exception('Failed to get following: ${response.statusCode}');
       }

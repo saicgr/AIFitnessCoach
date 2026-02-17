@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-enum QuickActionBehavior { route, waterQuickAdd, foodLog, weightLog, moodLog, fastingNav }
+enum QuickActionBehavior { route, waterQuickAdd, foodLog, weightLog, moodLog, fastingNav, quickWorkout }
 
 class QuickAction {
   final String id;
@@ -49,6 +49,13 @@ const quickActionRegistry = <String, QuickAction>{
     color: Color(0xFFA855F7),
     behavior: QuickActionBehavior.route,
     route: '/stats?openPhoto=true',
+  ),
+  'quick_workout': QuickAction(
+    id: 'quick_workout',
+    label: 'Quick',
+    icon: Icons.flash_on,
+    color: Color(0xFF00D9FF),
+    behavior: QuickActionBehavior.quickWorkout,
   ),
   'fasting': QuickAction(
     id: 'fasting',
@@ -172,7 +179,7 @@ const quickActionRegistry = <String, QuickAction>{
 };
 
 const defaultQuickActionOrder = [
-  'weight', 'food', 'water', 'photo', 'fasting', 'measure', 'mood', 'history',
+  'weight', 'food', 'water', 'quick_workout', 'photo', 'fasting', 'measure', 'mood', 'history',
   'steps', 'workout', 'library', 'settings', 'chat', 'schedule', 'habits',
   'progress', 'achievements', 'hydration', 'summaries',
 ];

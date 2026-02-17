@@ -88,16 +88,9 @@ async def search_users(
         ).in_("user_id", user_ids).execute()
         requires_approval = {p["user_id"]: p.get("require_follow_approval", False) for p in privacy_result.data}
 
-        # Get workout stats for users
-        stats_result = supabase.table("workout_logs").select(
-            "user_id"
-        ).in_("user_id", user_ids).execute()
-
-        # Count workouts per user
-        workout_counts = {}
-        for log in stats_result.data:
-            uid = log["user_id"]
-            workout_counts[uid] = workout_counts.get(uid, 0) + 1
+        # Get workout counts per user using batch RPC
+        counts_result = supabase.rpc("get_workout_counts", {"p_user_ids": user_ids}).execute()
+        workout_counts = {row["user_id"]: row["workout_count"] for row in (counts_result.data or [])}
 
         # Build results - put self first if found
         results = []
@@ -178,37 +171,24 @@ async def get_friend_suggestions(
 
         # Try to get suggestions based on mutual connections
         if original_following_ids:  # Only if user actually follows someone
-            # Get who the user's friends are following
-            friends_following = supabase.table("user_connections").select(
-                "follower_id, following_id"
-            ).in_("follower_id", list(original_following_ids)).execute()
+            # Use RPC to get friend suggestions with mutual counts (server-side)
+            suggestions_result = supabase.rpc("get_friend_suggestions_rpc", {
+                "p_user_id": user_id,
+                "p_limit": limit
+            }).execute()
 
-            # Count how many mutual friends each potential suggestion has
-            mutual_counts = {}
-            for conn in friends_following.data:
-                potential_friend = conn["following_id"]
-                if potential_friend not in following_ids:
-                    mutual_counts[potential_friend] = mutual_counts.get(potential_friend, 0) + 1
-
-            # Get top suggestions by mutual friend count
-            sorted_suggestions = sorted(mutual_counts.items(), key=lambda x: x[1], reverse=True)[:limit]
-
-            if sorted_suggestions:
-                suggestion_ids = [s[0] for s in sorted_suggestions]
+            if suggestions_result.data:
+                suggestion_ids = [s["suggested_user_id"] for s in suggestions_result.data]
+                mutual_map = {s["suggested_user_id"]: s["mutual_count"] for s in suggestions_result.data}
 
                 # Get user profiles (bio column doesn't exist)
                 users = supabase.table("users").select(
                     "id, name, avatar_url"
                 ).in_("id", suggestion_ids).execute()
 
-                # Get workout counts
-                stats = supabase.table("workout_logs").select(
-                    "user_id"
-                ).in_("user_id", suggestion_ids).execute()
-                workout_counts = {}
-                for log in stats.data:
-                    uid = log["user_id"]
-                    workout_counts[uid] = workout_counts.get(uid, 0) + 1
+                # Get workout counts per user using batch RPC
+                counts_result = supabase.rpc("get_workout_counts", {"p_user_ids": suggestion_ids}).execute()
+                workout_counts = {row["user_id"]: row["workout_count"] for row in (counts_result.data or [])}
 
                 # Get privacy settings
                 privacy = supabase.table("user_privacy_settings").select(
@@ -225,9 +205,10 @@ async def get_friend_suggestions(
                 # Build user map for quick lookup
                 user_map = {u["id"]: u for u in users.data}
 
-                for uid, mutual_count in sorted_suggestions:
+                for uid in suggestion_ids:
                     if uid in user_map:
                         user = user_map[uid]
+                        mutual_count = mutual_map.get(uid, 0)
                         has_pending = uid in pending_sent_map
                         suggestions.append(UserSuggestion(
                             id=uid,
@@ -276,14 +257,9 @@ async def get_friend_suggestions(
         ).eq("from_user_id", user_id).eq("status", "pending").in_("to_user_id", user_ids).execute()
         pending_sent_map = {r["to_user_id"]: r["id"] for r in pending_sent.data}
 
-        # Get workout counts for better sorting
-        stats = supabase.table("workout_logs").select(
-            "user_id"
-        ).in_("user_id", user_ids).execute()
-        workout_counts = {}
-        for log in stats.data:
-            uid = log["user_id"]
-            workout_counts[uid] = workout_counts.get(uid, 0) + 1
+        # Get workout counts per user using batch RPC
+        counts_result = supabase.rpc("get_workout_counts", {"p_user_ids": user_ids}).execute()
+        workout_counts = {row["user_id"]: row["workout_count"] for row in (counts_result.data or [])}
 
         return [
             UserSuggestion(

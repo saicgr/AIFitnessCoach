@@ -198,7 +198,12 @@ class AnalyticsDB(BaseDB):
         """
         result = (
             self.client.table("workout_regenerations")
-            .select("*")
+            .select(
+                "id, user_id, original_workout_id, new_workout_id, "
+                "selected_difficulty, selected_duration_minutes, selected_workout_type, "
+                "selected_equipment, selected_focus_areas, generation_method, "
+                "generation_time_ms, created_at"
+            )
             .eq("user_id", user_id)
             .order("created_at", desc=True)
             .limit(limit)
@@ -220,7 +225,12 @@ class AnalyticsDB(BaseDB):
         """
         result = (
             self.client.table("workout_regenerations")
-            .select("*")
+            .select(
+                "id, user_id, original_workout_id, new_workout_id, "
+                "selected_difficulty, selected_duration_minutes, selected_workout_type, "
+                "selected_equipment, selected_focus_areas, generation_method, "
+                "generation_time_ms, created_at"
+            )
             .eq("user_id", user_id)
             .order("created_at", desc=True)
             .limit(1)

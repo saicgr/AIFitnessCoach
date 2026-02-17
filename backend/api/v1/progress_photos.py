@@ -4,6 +4,7 @@ Progress Photos API Endpoints
 Handles progress photo uploads, retrieval, and before/after comparisons.
 """
 
+import json
 import uuid
 import boto3
 from botocore.config import Config as BotoConfig
@@ -67,6 +68,12 @@ class PhotoComparisonResponse(BaseModel):
     days_between: Optional[int] = None
     visibility: str = 'private'
     created_at: datetime
+    photos_json: Optional[list] = None
+    layout: Optional[str] = None
+    settings_json: Optional[dict] = None
+    exported_image_url: Optional[str] = None
+    ai_summary: Optional[str] = None
+    updated_at: Optional[datetime] = None
 
 
 class PhotoComparisonCreate(BaseModel):
@@ -75,6 +82,27 @@ class PhotoComparisonCreate(BaseModel):
     after_photo_id: str
     title: Optional[str] = None
     description: Optional[str] = None
+
+
+class ComparisonUpdate(BaseModel):
+    title: Optional[str] = None
+    description: Optional[str] = None
+    layout: Optional[str] = None
+    settings_json: Optional[dict] = None
+    ai_summary: Optional[str] = None
+    exported_image_url: Optional[str] = None
+    photos_json: Optional[list] = None
+
+
+class AiSummaryRequest(BaseModel):
+    before_photo_url: str
+    after_photo_url: str
+    days_between: int
+    weight_change_kg: Optional[float] = None
+
+
+class AiSummaryResponse(BaseModel):
+    summary: str
 
 
 class PhotoStatsResponse(BaseModel):
@@ -506,12 +534,88 @@ async def create_photo_comparison(data: PhotoComparisonCreate):
             days_between=comparison.get('days_between'),
             visibility=comparison.get('visibility', 'private'),
             created_at=comparison['created_at'],
+            photos_json=comparison.get('photos_json'),
+            layout=comparison.get('layout'),
+            settings_json=comparison.get('settings_json'),
+            exported_image_url=comparison.get('exported_image_url'),
+            ai_summary=comparison.get('ai_summary'),
+            updated_at=comparison.get('updated_at'),
         )
 
     except HTTPException:
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error creating comparison: {str(e)}")
+
+
+@router.put("/comparisons/{comparison_id}", response_model=PhotoComparisonResponse)
+async def update_photo_comparison(
+    comparison_id: str,
+    user_id: str = Query(...),
+    data: ComparisonUpdate = None,
+):
+    """Update a photo comparison's settings, layout, AI summary, etc."""
+    db = get_supabase_db()
+    try:
+        # Verify ownership
+        existing = db.client.table('photo_comparisons') \
+            .select('*, before_photo:progress_photos!before_photo_id(*), after_photo:progress_photos!after_photo_id(*)') \
+            .eq('id', comparison_id) \
+            .eq('user_id', user_id) \
+            .maybe_single() \
+            .execute()
+
+        if not existing.data:
+            raise HTTPException(status_code=404, detail="Comparison not found")
+
+        # Build update dict
+        update_dict = {}
+        if data:
+            if data.title is not None: update_dict['title'] = data.title
+            if data.description is not None: update_dict['description'] = data.description
+            if data.layout is not None: update_dict['layout'] = data.layout
+            if data.settings_json is not None: update_dict['settings_json'] = data.settings_json
+            if data.ai_summary is not None: update_dict['ai_summary'] = data.ai_summary
+            if data.exported_image_url is not None: update_dict['exported_image_url'] = data.exported_image_url
+            if data.photos_json is not None: update_dict['photos_json'] = data.photos_json
+
+        if not update_dict:
+            raise HTTPException(status_code=400, detail="No update data provided")
+
+        result = db.client.table('photo_comparisons') \
+            .update(update_dict) \
+            .eq('id', comparison_id) \
+            .eq('user_id', user_id) \
+            .execute()
+
+        if not result.data:
+            raise HTTPException(status_code=500, detail="Failed to update comparison")
+
+        comp = existing.data  # Use existing data for joined photo fields
+        comp.update(result.data[0])  # Merge updated fields
+
+        return PhotoComparisonResponse(
+            id=comp['id'],
+            user_id=comp['user_id'],
+            before_photo=ProgressPhotoResponse(**_presign_photo(comp['before_photo'])),
+            after_photo=ProgressPhotoResponse(**_presign_photo(comp['after_photo'])),
+            title=comp.get('title'),
+            description=comp.get('description'),
+            weight_change_kg=comp.get('weight_change_kg'),
+            days_between=comp.get('days_between'),
+            visibility=comp.get('visibility', 'private'),
+            created_at=comp['created_at'],
+            photos_json=comp.get('photos_json'),
+            layout=comp.get('layout'),
+            settings_json=comp.get('settings_json'),
+            exported_image_url=comp.get('exported_image_url'),
+            ai_summary=comp.get('ai_summary'),
+            updated_at=comp.get('updated_at'),
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error updating comparison: {str(e)}")
 
 
 @router.get("/comparisons/{user_id}", response_model=List[PhotoComparisonResponse])
@@ -544,6 +648,12 @@ async def get_photo_comparisons(
                 days_between=comp.get('days_between'),
                 visibility=comp.get('visibility', 'private'),
                 created_at=comp['created_at'],
+                photos_json=comp.get('photos_json'),
+                layout=comp.get('layout'),
+                settings_json=comp.get('settings_json'),
+                exported_image_url=comp.get('exported_image_url'),
+                ai_summary=comp.get('ai_summary'),
+                updated_at=comp.get('updated_at'),
             ))
 
         return comparisons
@@ -571,6 +681,70 @@ async def delete_photo_comparison(
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error deleting comparison: {str(e)}")
+
+
+# ============================================================================
+# AI Summary Endpoint
+# ============================================================================
+
+@router.post("/ai-summary", response_model=AiSummaryResponse)
+async def generate_ai_summary(data: AiSummaryRequest):
+    """Generate an AI progress summary by analyzing before/after photos."""
+    try:
+        from google import genai
+        from google.genai import types
+        import httpx
+
+        settings = get_settings()
+        client = genai.Client(api_key=settings.gemini_api_key)
+
+        # Download both images
+        async with httpx.AsyncClient() as http_client:
+            before_resp = await http_client.get(data.before_photo_url)
+            after_resp = await http_client.get(data.after_photo_url)
+
+        duration_text = f"{data.days_between} days"
+        if data.days_between >= 30:
+            months = data.days_between // 30
+            duration_text = f"{months} month{'s' if months > 1 else ''}"
+
+        weight_text = ""
+        if data.weight_change_kg is not None:
+            sign = "+" if data.weight_change_kg > 0 else ""
+            weight_text = f" The person's weight changed by {sign}{data.weight_change_kg:.1f} kg."
+
+        prompt = f"""Analyze these two fitness progress photos taken {duration_text} apart.{weight_text}
+Describe visible changes in 1-2 sentences focusing on: muscle development, body composition, posture improvements.
+Be encouraging but honest. If changes are subtle, acknowledge effort and consistency.
+Return ONLY a JSON object: {{"summary": "your analysis here"}}"""
+
+        response = client.models.generate_content(
+            model="gemini-2.0-flash",
+            contents=[
+                types.Part.from_bytes(data=before_resp.content, mime_type="image/jpeg"),
+                types.Part.from_bytes(data=after_resp.content, mime_type="image/jpeg"),
+                prompt,
+            ],
+            config=types.GenerateContentConfig(
+                temperature=0.7,
+                max_output_tokens=200,
+            ),
+        )
+
+        text = response.text.strip()
+        # Try to parse JSON from response
+        if text.startswith('```'):
+            text = text.split('\n', 1)[1].rsplit('```', 1)[0].strip()
+
+        try:
+            result = json.loads(text)
+            summary = result.get('summary', text)
+        except json.JSONDecodeError:
+            summary = text
+
+        return AiSummaryResponse(summary=summary)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error generating AI summary: {str(e)}")
 
 
 # ============================================================================

@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, useInView, AnimatePresence } from 'framer-motion';
+import MarketingNav from '../components/marketing/MarketingNav';
+import MarketingFooter from '../components/marketing/MarketingFooter';
 
 // Apple-style animations - very subtle, purposeful
 const fade = {
@@ -262,8 +264,6 @@ function TypingText({ text, onComplete }: { text: string; onComplete?: () => voi
 }
 
 export default function MarketingLanding() {
-  const [isScrolled, setIsScrolled] = useState(false);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
   const [isHovering, setIsHovering] = useState(false);
@@ -282,13 +282,6 @@ export default function MarketingLanding() {
   const statsInView = useInView(statsRef, { once: true, margin: '-100px' });
   const chatInView = useInView(chatRef, { once: true, margin: '-100px' });
   const phoneInView = useInView(phoneRef, { once: true, margin: '-100px' });
-
-  // Scroll handler
-  useEffect(() => {
-    const handleScroll = () => setIsScrolled(window.scrollY > 10);
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
 
   // Auto-advance carousel with progress animation
   useEffect(() => {
@@ -341,7 +334,6 @@ export default function MarketingLanding() {
 
   const scrollTo = (id: string) => {
     document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
-    setMobileMenuOpen(false);
   };
 
   const scrollGallery = useCallback((direction: 'left' | 'right') => {
@@ -354,87 +346,9 @@ export default function MarketingLanding() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-black text-white selection:bg-emerald-500/20 overflow-x-hidden">
+    <div className="min-h-screen bg-[var(--color-background)] text-[var(--color-text)] selection:bg-emerald-500/20 overflow-x-hidden">
       {/* Navigation */}
-      <motion.nav
-        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-          isScrolled
-            ? 'bg-black/80 backdrop-blur-xl backdrop-saturate-150 border-b border-white/[0.04]'
-            : 'bg-transparent'
-        }`}
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.5 }}
-      >
-        <div className="max-w-[980px] mx-auto px-6 lg:px-4">
-          <div className="flex items-center justify-between h-12">
-            <Link to="/" className="text-[21px] font-semibold tracking-[-0.01em] text-white/90 hover:text-white transition-colors">
-              FitWiz
-            </Link>
-
-            <div className="hidden md:flex items-center gap-7">
-              <button onClick={() => scrollTo('highlights')} className="text-xs text-white/80 hover:text-white transition-colors">
-                Highlights
-              </button>
-              <Link to="/features" className="text-xs text-white/80 hover:text-white transition-colors">
-                Features
-              </Link>
-              <Link to="/pricing" className="text-xs text-white/80 hover:text-white transition-colors">
-                Pricing
-              </Link>
-              <Link to="/store" className="text-xs text-white/80 hover:text-white transition-colors">
-                Store
-              </Link>
-              <button onClick={() => scrollTo('how-it-works')} className="text-xs text-white/80 hover:text-white transition-colors">
-                How It Works
-              </button>
-              <Link to="/login" className="text-xs text-white/80 hover:text-white transition-colors">
-                Sign In
-              </Link>
-              <Link to="/login" className="text-xs px-4 py-1.5 bg-emerald-500 text-white rounded-full hover:bg-emerald-400 transition-colors">
-                Get Started
-              </Link>
-            </div>
-
-            <button
-              className="md:hidden text-white/80 hover:text-white"
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              aria-label="Menu"
-            >
-              <svg className="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
-                {mobileMenuOpen ? (
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                ) : (
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
-                )}
-              </svg>
-            </button>
-          </div>
-        </div>
-
-        {/* Mobile Menu */}
-        <AnimatePresence>
-          {mobileMenuOpen && (
-            <motion.div
-              className="md:hidden absolute top-12 left-0 right-0 bg-black/95 backdrop-blur-xl border-b border-white/[0.04]"
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              transition={{ duration: 0.2 }}
-            >
-              <div className="max-w-[980px] mx-auto px-6 py-4 flex flex-col gap-4">
-                <button onClick={() => scrollTo('highlights')} className="text-sm text-white/80 hover:text-white text-left py-2">Highlights</button>
-                <Link to="/features" className="text-sm text-white/80 hover:text-white py-2">Features</Link>
-                <Link to="/pricing" className="text-sm text-white/80 hover:text-white py-2">Pricing</Link>
-                <Link to="/store" className="text-sm text-white/80 hover:text-white py-2">Store</Link>
-                <button onClick={() => scrollTo('how-it-works')} className="text-sm text-white/80 hover:text-white text-left py-2">How It Works</button>
-                <Link to="/login" className="text-sm text-white/80 hover:text-white py-2">Sign In</Link>
-                <Link to="/login" className="text-sm text-center py-2.5 bg-emerald-500 text-white rounded-full mt-2">Get Started</Link>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </motion.nav>
+      <MarketingNav />
 
       {/* Hero Section */}
       <section className="relative min-h-screen flex flex-col items-center justify-center px-6 pt-12">
@@ -444,13 +358,14 @@ export default function MarketingLanding() {
           animate="visible"
           variants={stagger}
         >
-          <motion.p variants={fade} className="text-[17px] text-[#6e6e73] mb-3">
+          <motion.p variants={fade} className="text-[17px] text-[var(--color-text-muted)] mb-3">
             Introducing
           </motion.p>
 
           <motion.h1
             variants={fadeUp}
             className="text-[56px] sm:text-[80px] md:text-[96px] font-semibold tracking-[-0.03em] leading-[1.05] mb-4"
+            style={{ fontFamily: 'var(--font-heading)' }}
           >
             <span className="bg-gradient-to-r from-emerald-400 via-green-400 to-lime-400 bg-clip-text text-transparent">
               FitWiz
@@ -459,14 +374,14 @@ export default function MarketingLanding() {
 
           <motion.p
             variants={fadeUp}
-            className="text-[28px] sm:text-[32px] md:text-[40px] font-semibold tracking-[-0.02em] leading-[1.1] text-[#86868b] mb-6"
+            className="text-[28px] sm:text-[32px] md:text-[40px] font-semibold tracking-[-0.02em] leading-[1.1] text-[var(--color-text-secondary)] mb-6"
           >
             Your AI fitness coach.
           </motion.p>
 
           <motion.p
             variants={fadeUp}
-            className="text-[17px] sm:text-[19px] text-[#86868b] max-w-[500px] mx-auto leading-[1.47] mb-10"
+            className="text-[17px] sm:text-[19px] text-[var(--color-text-secondary)] max-w-[500px] mx-auto leading-[1.47] mb-10"
           >
             Personalized workouts. Real-time guidance. Intelligent progress tracking.
           </motion.p>
@@ -495,7 +410,7 @@ export default function MarketingLanding() {
           transition={{ delay: 1.5, duration: 1 }}
         >
           <motion.svg
-            className="w-6 h-6 text-white"
+            className="w-6 h-6 text-[var(--color-text-muted)]"
             fill="none"
             viewBox="0 0 24 24"
             animate={{ y: [0, 8, 0] }}
@@ -508,7 +423,7 @@ export default function MarketingLanding() {
 
       {/* Highlights Carousel Section */}
       <section id="highlights" className="py-20 sm:py-28 px-6">
-        <div className="max-w-[980px] mx-auto">
+        <div className="max-w-[1200px] mx-auto">
           <motion.div
             initial="hidden"
             whileInView="visible"
@@ -516,10 +431,14 @@ export default function MarketingLanding() {
             variants={stagger}
             className="text-center mb-12"
           >
-            <motion.p variants={fade} className="text-[17px] text-[#6e6e73] mb-2">
+            <motion.p variants={fade} className="text-[17px] text-[var(--color-text-muted)] mb-2">
               Get the highlights.
             </motion.p>
-            <motion.h2 variants={fadeUp} className="text-[32px] sm:text-[48px] font-semibold tracking-[-0.02em]">
+            <motion.h2
+              variants={fadeUp}
+              className="text-[32px] sm:text-[48px] font-semibold tracking-[-0.02em]"
+              style={{ fontFamily: 'var(--font-heading)' }}
+            >
               See what's new.
             </motion.h2>
           </motion.div>
@@ -579,9 +498,9 @@ export default function MarketingLanding() {
                     style={{ width: index === currentSlide ? '48px' : '24px' }}
                     aria-label={`Go to slide ${index + 1}`}
                   >
-                    <div className="absolute inset-0 bg-white/20" />
+                    <div className="absolute inset-0 bg-[var(--color-surface-muted)]" />
                     <div
-                      className="absolute inset-y-0 left-0 bg-white rounded-full transition-none"
+                      className="absolute inset-y-0 left-0 bg-emerald-500 rounded-full transition-none"
                       style={{
                         width: index === currentSlide
                           ? `${progress}%`
@@ -596,15 +515,15 @@ export default function MarketingLanding() {
 
               <button
                 onClick={() => setIsPaused(!isPaused)}
-                className="p-2 rounded-full bg-white/10 hover:bg-white/20 transition-colors"
+                className="p-2 rounded-full bg-[var(--color-surface-muted)] hover:bg-[var(--color-surface-elevated)] transition-colors"
                 aria-label={isPaused ? 'Play' : 'Pause'}
               >
                 {isPaused ? (
-                  <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-4 h-4 text-[var(--color-text)]" fill="currentColor" viewBox="0 0 24 24">
                     <path d="M8 5v14l11-7z" />
                   </svg>
                 ) : (
-                  <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-4 h-4 text-[var(--color-text)]" fill="currentColor" viewBox="0 0 24 24">
                     <path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z" />
                   </svg>
                 )}
@@ -616,12 +535,13 @@ export default function MarketingLanding() {
 
       {/* Phone Showcase Section */}
       <section className="py-20 sm:py-28 px-6">
-        <div className="max-w-[980px] mx-auto">
+        <div className="max-w-[1200px] mx-auto">
           <motion.h2
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             className="text-[32px] sm:text-[48px] font-semibold tracking-[-0.02em] mb-16"
+            style={{ fontFamily: 'var(--font-heading)' }}
           >
             Take a closer look.
           </motion.h2>
@@ -632,7 +552,7 @@ export default function MarketingLanding() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.8 }}
-            className="rounded-3xl bg-[#1d1d1f] p-8 sm:p-12 lg:p-16"
+            className="card-spur rounded-3xl p-8 sm:p-12 lg:p-16"
           >
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
               {/* Left side - Feature buttons */}
@@ -646,23 +566,23 @@ export default function MarketingLanding() {
                     onClick={() => setActivePhoneFeature(activePhoneFeature === feature.id ? null : feature.id)}
                     className={`w-full text-left px-5 py-3.5 rounded-full transition-all duration-300 flex items-center gap-3 ${
                       activePhoneFeature === feature.id
-                        ? 'bg-[#2d2d2f]'
-                        : 'bg-[#2d2d2f]/50 hover:bg-[#2d2d2f]'
+                        ? 'bg-[var(--color-surface-elevated)]'
+                        : 'bg-[var(--color-surface-muted)] hover:bg-[var(--color-surface-elevated)]'
                     }`}
                   >
                     <span className={`flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center ${
-                      feature.hasIcon && feature.color ? '' : 'border border-white/20'
+                      feature.hasIcon && feature.color ? '' : 'border border-[var(--color-border)]'
                     }`}
                     style={feature.hasIcon && feature.color ? { backgroundColor: feature.color } : {}}>
                       {feature.hasIcon && feature.color ? (
                         <span className="w-2 h-2 rounded-full bg-white" />
                       ) : (
-                        <svg className="w-3 h-3 text-white/60" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                        <svg className="w-3 h-3 text-[var(--color-text-muted)]" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
                           <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
                         </svg>
                       )}
                     </span>
-                    <span className="text-[15px] sm:text-[17px] text-white font-medium">{feature.label}</span>
+                    <span className="text-[15px] sm:text-[17px] text-[var(--color-text)] font-medium">{feature.label}</span>
                   </motion.button>
                 ))}
 
@@ -677,7 +597,7 @@ export default function MarketingLanding() {
                       transition={{ duration: 0.3 }}
                       className="overflow-hidden"
                     >
-                      <p className="text-[15px] text-[#86868b] leading-relaxed pt-4 pl-14">
+                      <p className="text-[15px] text-[var(--color-text-secondary)] leading-relaxed pt-4 pl-14">
                         {phoneFeatures.find(f => f.id === activePhoneFeature)?.description}
                       </p>
                     </motion.div>
@@ -695,6 +615,7 @@ export default function MarketingLanding() {
                   transition={{ duration: 0.6, ease: 'easeOut' }}
                   style={{ perspective: 1000 }}
                 >
+                  {/* Phone device frame - stays dark always */}
                   <div
                     className="relative w-[280px] sm:w-[320px] rounded-[3rem] p-3 shadow-2xl"
                     style={{
@@ -709,8 +630,10 @@ export default function MarketingLanding() {
                       transformStyle: 'preserve-3d',
                     }}
                   >
+                    {/* Phone notch */}
                     <div className="absolute top-5 left-1/2 -translate-x-1/2 w-28 h-8 bg-black rounded-full z-20" />
 
+                    {/* Phone screen - stays dark (it's a phone UI) */}
                     <div
                       className="relative rounded-[2.5rem] overflow-hidden bg-black"
                       style={{ aspectRatio: '9/19.5' }}
@@ -908,7 +831,7 @@ export default function MarketingLanding() {
       </section>
 
       {/* Feature Gallery Section */}
-      <section id="features" className="py-20 sm:py-28 px-6 bg-[#000000]">
+      <section id="features" className="py-20 sm:py-28 px-6 bg-[var(--color-surface-muted)]">
         <div className="max-w-[1200px] mx-auto">
           <motion.div
             initial="hidden"
@@ -918,10 +841,14 @@ export default function MarketingLanding() {
             className="flex items-end justify-between mb-8"
           >
             <div>
-              <motion.p variants={fade} className="text-[17px] text-[#6e6e73] mb-2">
+              <motion.p variants={fade} className="text-[17px] text-[var(--color-text-muted)] mb-2">
                 Take a closer look.
               </motion.p>
-              <motion.h2 variants={fadeUp} className="text-[32px] sm:text-[48px] font-semibold tracking-[-0.02em]">
+              <motion.h2
+                variants={fadeUp}
+                className="text-[32px] sm:text-[48px] font-semibold tracking-[-0.02em]"
+                style={{ fontFamily: 'var(--font-heading)' }}
+              >
                 Features that work.
               </motion.h2>
             </div>
@@ -929,19 +856,19 @@ export default function MarketingLanding() {
             <div className="hidden sm:flex items-center gap-2">
               <button
                 onClick={() => scrollGallery('left')}
-                className="p-3 rounded-full bg-[#1d1d1f] hover:bg-[#2d2d2f] transition-colors"
+                className="p-3 rounded-full bg-[var(--color-surface)] hover:bg-[var(--color-surface-elevated)] transition-colors border border-[var(--color-border)]"
                 aria-label="Scroll left"
               >
-                <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                <svg className="w-5 h-5 text-[var(--color-text)]" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
                 </svg>
               </button>
               <button
                 onClick={() => scrollGallery('right')}
-                className="p-3 rounded-full bg-[#1d1d1f] hover:bg-[#2d2d2f] transition-colors"
+                className="p-3 rounded-full bg-[var(--color-surface)] hover:bg-[var(--color-surface-elevated)] transition-colors border border-[var(--color-border)]"
                 aria-label="Scroll right"
               >
-                <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                <svg className="w-5 h-5 text-[var(--color-text)]" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
                 </svg>
               </button>
@@ -963,13 +890,13 @@ export default function MarketingLanding() {
                 transition={{ duration: 0.3 }}
                 className="flex-shrink-0 w-[280px] sm:w-[320px] snap-start"
               >
-                <div className="h-[360px] p-6 rounded-3xl bg-[#1d1d1f] hover:bg-[#252527] transition-colors flex flex-col">
+                <div className="h-[360px] p-6 rounded-3xl card-spur flex flex-col">
                   <div className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${feature.gradient} flex items-center justify-center mb-auto`}>
                     {feature.icon}
                   </div>
                   <div>
-                    <h3 className="text-[21px] font-semibold text-white mb-1">{feature.title}</h3>
-                    <p className="text-[15px] text-[#86868b]">{feature.subtitle}</p>
+                    <h3 className="text-[21px] font-semibold text-[var(--color-text)] mb-1">{feature.title}</h3>
+                    <p className="text-[15px] text-[var(--color-text-secondary)]">{feature.subtitle}</p>
                   </div>
                 </div>
               </motion.div>
@@ -993,8 +920,8 @@ export default function MarketingLanding() {
                     <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
                   </svg>
                 </div>
-                <h3 className="text-[21px] font-semibold text-white mb-2">See All Features</h3>
-                <p className="text-[15px] text-[#86868b]">Explore 1000+ features</p>
+                <h3 className="text-[21px] font-semibold text-[var(--color-text)] mb-2">See All Features</h3>
+                <p className="text-[15px] text-[var(--color-text-secondary)]">Explore 1000+ features</p>
               </Link>
             </motion.div>
           </div>
@@ -1003,7 +930,7 @@ export default function MarketingLanding() {
 
       {/* Stats Section */}
       <section className="py-20 sm:py-28 px-6">
-        <div className="max-w-[980px] mx-auto">
+        <div className="max-w-[1200px] mx-auto">
           <motion.div
             ref={statsRef}
             initial="hidden"
@@ -1021,7 +948,7 @@ export default function MarketingLanding() {
                       {count}{stat.suffix}
                     </span>
                   </div>
-                  <p className="text-[17px] text-[#86868b]">{stat.label}</p>
+                  <p className="text-[17px] text-[var(--color-text-secondary)]">{stat.label}</p>
                 </motion.div>
               );
             })}
@@ -1030,8 +957,8 @@ export default function MarketingLanding() {
       </section>
 
       {/* AI Coach Demo */}
-      <section className="py-20 sm:py-28 px-6 bg-[#000000]">
-        <div className="max-w-[980px] mx-auto">
+      <section className="py-20 sm:py-28 px-6 bg-[var(--color-surface-muted)]">
+        <div className="max-w-[1200px] mx-auto">
           <motion.div
             initial="hidden"
             whileInView="visible"
@@ -1040,10 +967,13 @@ export default function MarketingLanding() {
             className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center"
           >
             <motion.div variants={fadeUp}>
-              <h2 className="text-[32px] sm:text-[48px] font-semibold tracking-[-0.02em] mb-6">
+              <h2
+                className="text-[32px] sm:text-[48px] font-semibold tracking-[-0.02em] mb-6"
+                style={{ fontFamily: 'var(--font-heading)' }}
+              >
                 Your coach,<br />always available.
               </h2>
-              <p className="text-[17px] sm:text-[19px] text-[#86868b] leading-[1.47] mb-8">
+              <p className="text-[17px] sm:text-[19px] text-[var(--color-text-secondary)] leading-[1.47] mb-8">
                 Get instant answers about your training, nutrition, and recovery. Your AI coach knows your goals, schedule, and limitations.
               </p>
               <div className="space-y-4">
@@ -1057,22 +987,22 @@ export default function MarketingLanding() {
                     <svg className="w-5 h-5 text-emerald-400" fill="currentColor" viewBox="0 0 20 20">
                       <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                     </svg>
-                    <span className="text-[15px] sm:text-[17px] text-[#f5f5f7]">{item}</span>
+                    <span className="text-[15px] sm:text-[17px] text-[var(--color-text)]">{item}</span>
                   </div>
                 ))}
               </div>
             </motion.div>
 
             <motion.div variants={fadeUp} ref={chatRef}>
-              <div className="p-6 rounded-3xl bg-[#1d1d1f]">
-                <div className="flex items-center gap-3 pb-4 border-b border-white/[0.05]">
+              <div className="p-6 rounded-3xl card-spur">
+                <div className="flex items-center gap-3 pb-4 border-b border-[var(--color-border)]">
                   <div className="w-10 h-10 rounded-full bg-gradient-to-br from-emerald-500 to-green-500 flex items-center justify-center">
                     <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z" />
                     </svg>
                   </div>
                   <div>
-                    <div className="text-[15px] font-medium text-[#f5f5f7]">AI Coach</div>
+                    <div className="text-[15px] font-medium text-[var(--color-text)]">AI Coach</div>
                     <div className="text-[13px] text-emerald-400 flex items-center gap-1">
                       <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
                       Online
@@ -1105,7 +1035,7 @@ export default function MarketingLanding() {
                         animate={{ opacity: 1, y: 0 }}
                         className="flex justify-start"
                       >
-                        <div className="max-w-[85%] px-4 py-2.5 rounded-2xl rounded-bl-md bg-[#2d2d2f] text-[15px] text-[#f5f5f7]">
+                        <div className="max-w-[85%] px-4 py-2.5 rounded-2xl rounded-bl-md bg-[var(--color-surface-elevated)] text-[15px] text-[var(--color-text)]">
                           <TypingText text={chatMessages[1].text} />
                         </div>
                       </motion.div>
@@ -1113,10 +1043,10 @@ export default function MarketingLanding() {
                   </AnimatePresence>
                 </div>
 
-                <div className="pt-4 border-t border-white/[0.05]">
+                <div className="pt-4 border-t border-[var(--color-border)]">
                   <Link
                     to="/login"
-                    className="block w-full px-4 py-3 rounded-xl bg-[#2d2d2f] hover:bg-[#3d3d3f] text-[15px] text-center text-[#86868b] hover:text-white transition-colors"
+                    className="block w-full px-4 py-3 rounded-xl bg-[var(--color-surface-elevated)] hover:bg-[var(--color-surface-muted)] text-[15px] text-center text-[var(--color-text-secondary)] hover:text-[var(--color-text)] transition-colors"
                   >
                     Try it yourself
                   </Link>
@@ -1129,7 +1059,7 @@ export default function MarketingLanding() {
 
       {/* How It Works */}
       <section id="how-it-works" className="py-20 sm:py-28 px-6">
-        <div className="max-w-[980px] mx-auto">
+        <div className="max-w-[1200px] mx-auto">
           <motion.div
             initial="hidden"
             whileInView="visible"
@@ -1137,10 +1067,14 @@ export default function MarketingLanding() {
             variants={stagger}
             className="text-center mb-16"
           >
-            <motion.h2 variants={fadeUp} className="text-[32px] sm:text-[48px] font-semibold tracking-[-0.02em] mb-4">
+            <motion.h2
+              variants={fadeUp}
+              className="text-[32px] sm:text-[48px] font-semibold tracking-[-0.02em] mb-4"
+              style={{ fontFamily: 'var(--font-heading)' }}
+            >
               Start in minutes.
             </motion.h2>
-            <motion.p variants={fadeUp} className="text-[17px] sm:text-[21px] text-[#86868b]">
+            <motion.p variants={fadeUp} className="text-[17px] sm:text-[21px] text-[var(--color-text-secondary)]">
               Three simple steps to your first workout.
             </motion.p>
           </motion.div>
@@ -1161,13 +1095,13 @@ export default function MarketingLanding() {
                 key={i}
                 variants={fadeUp}
                 whileHover={{ y: -4 }}
-                className="text-center p-8 rounded-3xl bg-[#1d1d1f] hover:bg-[#252527] transition-all"
+                className="text-center p-8 rounded-3xl card-spur"
               >
                 <div className={`inline-flex w-16 h-16 rounded-2xl bg-gradient-to-br ${step.color} items-center justify-center mb-6`}>
                   <span className="text-[28px] font-bold text-white">{step.num}</span>
                 </div>
                 <h3 className="text-[21px] sm:text-[24px] font-semibold tracking-[-0.01em] mb-2">{step.title}</h3>
-                <p className="text-[15px] sm:text-[17px] text-[#86868b]">{step.desc}</p>
+                <p className="text-[15px] sm:text-[17px] text-[var(--color-text-secondary)]">{step.desc}</p>
               </motion.div>
             ))}
           </motion.div>
@@ -1175,8 +1109,8 @@ export default function MarketingLanding() {
       </section>
 
       {/* Why FitWiz Section */}
-      <section className="py-20 sm:py-28 px-6 bg-[#0a0a0a]">
-        <div className="max-w-[980px] mx-auto">
+      <section className="py-20 sm:py-28 px-6 bg-[var(--color-surface-muted)]">
+        <div className="max-w-[1200px] mx-auto">
           <motion.div
             initial="hidden"
             whileInView="visible"
@@ -1184,12 +1118,16 @@ export default function MarketingLanding() {
             variants={stagger}
             className="text-center mb-16"
           >
-            <motion.h2 variants={fadeUp} className="text-[32px] sm:text-[48px] font-semibold tracking-[-0.02em] mb-4">
+            <motion.h2
+              variants={fadeUp}
+              className="text-[32px] sm:text-[48px] font-semibold tracking-[-0.02em] mb-4"
+              style={{ fontFamily: 'var(--font-heading)' }}
+            >
               <span className="bg-gradient-to-r from-emerald-400 via-green-400 to-lime-400 bg-clip-text text-transparent">
                 Why FitWiz?
               </span>
             </motion.h2>
-            <motion.p variants={fadeUp} className="text-[17px] sm:text-[21px] text-[#86868b] max-w-[560px] mx-auto">
+            <motion.p variants={fadeUp} className="text-[17px] sm:text-[21px] text-[var(--color-text-secondary)] max-w-[560px] mx-auto">
               The only fitness app you'll ever need.
             </motion.p>
           </motion.div>
@@ -1212,9 +1150,9 @@ export default function MarketingLanding() {
               <motion.div
                 key={i}
                 variants={fadeUp}
-                className="flex items-center gap-4 p-4 rounded-2xl bg-[#1d1d1f] border border-white/[0.05]"
+                className="flex items-center gap-4 p-4 rounded-2xl card-spur"
               >
-                <span className="text-[15px] text-white font-medium w-[200px] flex-shrink-0">{row.category}</span>
+                <span className="text-[15px] text-[var(--color-text)] font-medium w-[200px] flex-shrink-0">{row.category}</span>
                 <div className="flex-1 flex items-center justify-around">
                   {Object.entries(row.apps).map(([app, has]) => (
                     <div key={app} className="flex flex-col items-center gap-1 min-w-[60px]">
@@ -1223,11 +1161,11 @@ export default function MarketingLanding() {
                           <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                         </svg>
                       ) : (
-                        <svg className="w-5 h-5 text-white/20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg className="w-5 h-5 text-[var(--color-text-muted)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                         </svg>
                       )}
-                      <span className={`text-[11px] ${app === 'FitWiz' ? 'text-emerald-400 font-medium' : 'text-[#86868b]'}`}>
+                      <span className={`text-[11px] ${app === 'FitWiz' ? 'text-emerald-400 font-medium' : 'text-[var(--color-text-secondary)]'}`}>
                         {app}
                       </span>
                     </div>
@@ -1244,7 +1182,7 @@ export default function MarketingLanding() {
             viewport={{ once: true }}
             className="p-6 rounded-3xl bg-gradient-to-r from-emerald-900/40 to-green-900/20 border border-emerald-500/20 mb-8"
           >
-            <h3 className="text-[17px] font-semibold text-center mb-4 text-white/80">Monthly premium pricing</h3>
+            <h3 className="text-[17px] font-semibold text-center mb-4 text-[var(--color-text)]">Monthly premium pricing</h3>
             <div className="flex items-end justify-center gap-4 sm:gap-8">
               {[
                 { name: 'FitWiz', price: '$5.99', height: 'h-16', highlight: true },
@@ -1253,17 +1191,17 @@ export default function MarketingLanding() {
                 { name: 'MFP', price: '$19.99', height: 'h-48', highlight: false },
               ].map((app) => (
                 <div key={app.name} className="flex flex-col items-center gap-2">
-                  <span className={`text-[13px] font-bold ${app.highlight ? 'text-emerald-400' : 'text-white/60'}`}>
+                  <span className={`text-[13px] font-bold ${app.highlight ? 'text-emerald-400' : 'text-[var(--color-text-muted)]'}`}>
                     {app.price}
                   </span>
                   <div
                     className={`w-12 sm:w-16 ${app.height} rounded-t-xl ${
                       app.highlight
                         ? 'bg-gradient-to-t from-emerald-600 to-emerald-400'
-                        : 'bg-white/10'
+                        : 'bg-[var(--color-surface-muted)]'
                     }`}
                   />
-                  <span className={`text-[11px] ${app.highlight ? 'text-emerald-400 font-medium' : 'text-[#86868b]'}`}>
+                  <span className={`text-[11px] ${app.highlight ? 'text-emerald-400 font-medium' : 'text-[var(--color-text-secondary)]'}`}>
                     {app.name}
                   </span>
                 </div>
@@ -1275,7 +1213,7 @@ export default function MarketingLanding() {
             initial={{ opacity: 0 }}
             whileInView={{ opacity: 1 }}
             viewport={{ once: true }}
-            className="text-center text-[15px] text-[#86868b]"
+            className="text-center text-[15px] text-[var(--color-text-secondary)]"
           >
             <span className="text-emerald-400 font-medium">FitWiz</span> gives you workouts + nutrition + fasting + AI coaching for less than others charge for just one.
           </motion.p>
@@ -1284,7 +1222,7 @@ export default function MarketingLanding() {
 
       {/* Pricing Preview */}
       <section className="py-20 sm:py-28 px-6">
-        <div className="max-w-[980px] mx-auto">
+        <div className="max-w-[1200px] mx-auto">
           <motion.div
             initial="hidden"
             whileInView="visible"
@@ -1292,10 +1230,14 @@ export default function MarketingLanding() {
             variants={stagger}
             className="text-center mb-12"
           >
-            <motion.h2 variants={fadeUp} className="text-[32px] sm:text-[48px] font-semibold tracking-[-0.02em] mb-4">
+            <motion.h2
+              variants={fadeUp}
+              className="text-[32px] sm:text-[48px] font-semibold tracking-[-0.02em] mb-4"
+              style={{ fontFamily: 'var(--font-heading)' }}
+            >
               Simple, transparent pricing.
             </motion.h2>
-            <motion.p variants={fadeUp} className="text-[17px] sm:text-[21px] text-[#86868b]">
+            <motion.p variants={fadeUp} className="text-[17px] sm:text-[21px] text-[var(--color-text-secondary)]">
               Start free. Upgrade when you're ready.
             </motion.p>
           </motion.div>
@@ -1317,17 +1259,17 @@ export default function MarketingLanding() {
                 className={`p-6 rounded-3xl transition-all ${
                   plan.highlight
                     ? 'bg-gradient-to-br from-emerald-900/50 to-green-900/30 border-2 border-emerald-500/50'
-                    : 'bg-[#1d1d1f] border border-white/[0.05]'
+                    : 'card-spur'
                 }`}
               >
-                <h3 className="text-[21px] font-semibold text-white mb-2">{plan.name}</h3>
+                <h3 className="text-[21px] font-semibold text-[var(--color-text)] mb-2">{plan.name}</h3>
                 <div className="flex items-baseline gap-1 mb-6">
-                  <span className="text-[40px] font-bold text-white">{plan.price}</span>
-                  <span className="text-[15px] text-[#86868b]">{plan.period}</span>
+                  <span className="text-[40px] font-bold text-[var(--color-text)]">{plan.price}</span>
+                  <span className="text-[15px] text-[var(--color-text-secondary)]">{plan.period}</span>
                 </div>
                 <ul className="space-y-3 mb-6">
                   {plan.features.map((feature, j) => (
-                    <li key={j} className="flex items-center gap-2 text-[15px] text-[#86868b]">
+                    <li key={j} className="flex items-center gap-2 text-[15px] text-[var(--color-text-secondary)]">
                       <svg className="w-4 h-4 text-emerald-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                         <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                       </svg>
@@ -1340,7 +1282,7 @@ export default function MarketingLanding() {
                   className={`block w-full py-3 rounded-xl text-center text-[15px] font-medium transition-colors ${
                     plan.highlight
                       ? 'bg-emerald-500 text-white hover:bg-emerald-400'
-                      : 'bg-[#2d2d2f] text-white hover:bg-[#3d3d3f]'
+                      : 'bg-[var(--color-surface-elevated)] text-[var(--color-text)] hover:bg-[var(--color-surface-muted)]'
                   }`}
                 >
                   {plan.name === 'Free' ? 'Get Started' : 'Start Free Trial'}
@@ -1369,7 +1311,11 @@ export default function MarketingLanding() {
           variants={stagger}
           className="max-w-[680px] mx-auto text-center"
         >
-          <motion.h2 variants={fadeUp} className="text-[40px] sm:text-[56px] md:text-[64px] font-semibold tracking-[-0.02em] leading-[1.05] mb-6">
+          <motion.h2
+            variants={fadeUp}
+            className="text-[40px] sm:text-[56px] md:text-[64px] font-semibold tracking-[-0.02em] leading-[1.05] mb-6"
+            style={{ fontFamily: 'var(--font-heading)' }}
+          >
             Start training<br />smarter today.
           </motion.h2>
           <motion.div variants={fadeUp}>
@@ -1379,27 +1325,13 @@ export default function MarketingLanding() {
             >
               Get started free
             </Link>
-            <p className="mt-5 text-[13px] text-[#86868b]">No credit card required.</p>
+            <p className="mt-5 text-[13px] text-[var(--color-text-secondary)]">No credit card required.</p>
           </motion.div>
         </motion.div>
       </section>
 
       {/* Footer */}
-      <footer className="py-5 px-6 border-t border-[#424245]">
-        <div className="max-w-[980px] mx-auto">
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 text-[12px] text-[#86868b]">
-            <p>Copyright {new Date().getFullYear()} FitWiz. All rights reserved.</p>
-            <div className="flex items-center gap-6">
-              <button onClick={() => scrollTo('highlights')} className="hover:text-[#f5f5f7] transition-colors">Highlights</button>
-              <Link to="/features" className="hover:text-[#f5f5f7] transition-colors">Features</Link>
-              <Link to="/pricing" className="hover:text-[#f5f5f7] transition-colors">Pricing</Link>
-              <Link to="/store" className="hover:text-[#f5f5f7] transition-colors">Store</Link>
-              <button onClick={() => scrollTo('how-it-works')} className="hover:text-[#f5f5f7] transition-colors">How It Works</button>
-              <Link to="/login" className="hover:text-[#f5f5f7] transition-colors">Sign In</Link>
-            </div>
-          </div>
-        </div>
-      </footer>
+      <MarketingFooter />
     </div>
   );
 }

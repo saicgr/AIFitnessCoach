@@ -93,6 +93,8 @@ import '../../core/providers/ble_heart_rate_provider.dart';
 import '../../data/services/ble_heart_rate_service.dart';
 import '../../widgets/heart_rate_display.dart';
 import '../../core/providers/window_mode_provider.dart';
+import '../../core/providers/sound_preferences_provider.dart';
+import '../../core/providers/tts_provider.dart';
 import '../../screens/onboarding/widgets/foldable_quiz_scaffold.dart';
 import 'foldable/foldable_workout_layout.dart';
 import 'foldable/foldable_warmup_layout.dart';
@@ -322,7 +324,14 @@ class _ActiveWorkoutScreenState
     // Initialize timer controller
     _timerController = WorkoutTimerController();
     _timerController.onWorkoutTick = (_) => setState(() {});
-    _timerController.onRestTick = (_) => setState(() {});
+    _timerController.onRestTick = (secondsRemaining) {
+      setState(() {});
+      // Play countdown sound + voice at 3, 2, 1
+      if (secondsRemaining <= 3 && secondsRemaining > 0) {
+        ref.read(soundPreferencesProvider.notifier).playCountdown(secondsRemaining);
+        ref.read(voiceAnnouncementsProvider.notifier).announceCountdownIfEnabled(secondsRemaining);
+      }
+    };
     _timerController.onRestComplete = _handleRestComplete;
 
     // Initialize PR detection service
@@ -335,6 +344,12 @@ class _ActiveWorkoutScreenState
 
     // Start workout timer (restore time if returning from mini player)
     _timerController.startWorkoutTimer(initialSeconds: isRestoring ? miniPlayerState.workoutSeconds : 0);
+
+    // Announce workout start (only for fresh workouts, not restores)
+    if (!isRestoring) {
+      ref.read(voiceAnnouncementsProvider.notifier)
+          .announceIfEnabled("Let's go! Starting ${widget.workout.name}");
+    }
 
     // Restore rest timer if was resting
     if (isRestoring && miniPlayerState.isResting && miniPlayerState.restSecondsRemaining > 0) {
@@ -552,6 +567,10 @@ class _ActiveWorkoutScreenState
     });
     HapticFeedback.heavyImpact();
 
+    // Play rest end sound + voice announcement
+    ref.read(soundPreferencesProvider.notifier).playRestTimerEnd();
+    ref.read(voiceAnnouncementsProvider.notifier).announceRestEndIfEnabled();
+
     // If we're in a superset, navigate to the first exercise in the superset
     // that still has sets remaining
     if (groupId != null && currentExercise.isInSuperset) {
@@ -662,6 +681,9 @@ class _ActiveWorkoutScreenState
     final completedCount = _completedSets[_currentExerciseIndex]?.length ?? 0;
 
     if (completedCount >= totalSets) {
+      // Play exercise completion sound
+      ref.read(soundPreferencesProvider.notifier).playExerciseCompletion();
+
       // Exercise complete - move to next or finish
       // If in superset, check if we need to continue the round first
       final groupId = currentExercise.supersetGroup;
@@ -1509,6 +1531,10 @@ class _ActiveWorkoutScreenState
 
       final nextExercise = _exercises[nextIndex];
 
+      // Voice: "Get ready for [exercise name]"
+      ref.read(voiceAnnouncementsProvider.notifier)
+          .announceNextExerciseIfEnabled(nextExercise.name);
+
       setState(() {
         _currentExerciseIndex = nextIndex!;
         _viewingExerciseIndex = nextIndex;
@@ -1535,6 +1561,9 @@ class _ActiveWorkoutScreenState
       // All exercises complete - move to stretch phase
       // Celebratory haptic for workout completion
       HapticService.workoutComplete();
+
+      // Voice: "Congratulations! Workout complete!"
+      ref.read(voiceAnnouncementsProvider.notifier).announceWorkoutCompleteIfEnabled();
 
       // Check if stretch is enabled
       final stretchEnabled = ref.read(warmupDurationProvider).stretchEnabled;
@@ -1877,8 +1906,10 @@ class _ActiveWorkoutScreenState
     final exerciseName = exercise.name;
 
     // 1. First try to use URLs from exercise model (if populated)
-    final modelVideoUrl = exercise.videoUrl ?? exercise.videoS3Path;
-    final modelImageUrl = exercise.gifUrl ?? exercise.imageS3Path;
+    // Only use direct URLs (presigned or public), NOT raw S3 paths (s3://...)
+    // which require presigning via the API to avoid 403 errors.
+    final modelVideoUrl = exercise.videoUrl;
+    final modelImageUrl = exercise.gifUrl;
 
     // 2. If model has URLs, use them directly
     if (modelImageUrl != null && modelImageUrl.isNotEmpty) {

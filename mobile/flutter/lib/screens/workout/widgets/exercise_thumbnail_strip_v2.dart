@@ -512,7 +512,7 @@ class _DraggableThumbnailState extends ConsumerState<_DraggableThumbnail>
       return;
     }
 
-    final exerciseGifUrl = widget.exercise.gifUrl ?? widget.exercise.imageS3Path;
+    final exerciseGifUrl = widget.exercise.gifUrl;
     if (exerciseGifUrl != null && exerciseGifUrl.isNotEmpty) {
       final cacheKey = exerciseName.toLowerCase();
       _imageCache[cacheKey] = exerciseGifUrl;
@@ -903,7 +903,7 @@ class _ExerciseThumbnailState extends ConsumerState<_ExerciseThumbnail>
       return;
     }
 
-    final exerciseGifUrl = widget.exercise.gifUrl ?? widget.exercise.imageS3Path;
+    final exerciseGifUrl = widget.exercise.gifUrl;
     if (exerciseGifUrl != null && exerciseGifUrl.isNotEmpty) {
       final cacheKey = exerciseName.toLowerCase();
       _imageCache[cacheKey] = exerciseGifUrl;

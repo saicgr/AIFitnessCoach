@@ -133,58 +133,8 @@ async def check_comeback_status(user_id: str):
     return status
 
 
-# =============================================================================
-# In-Memory TTL Cache for Workout Generation
-# =============================================================================
-# Prevents duplicate AI generation calls when a user retries with identical
-# parameters within a short window (e.g., double-tap, network retry).
-# Cache entries expire after 5 minutes.
-
-_generation_cache: dict = {}
-_CACHE_TTL = timedelta(minutes=5)
-_cache_lock = threading.Lock()
-
-
-def _generation_cache_key(user_id: str, params: dict) -> str:
-    """Create a deterministic cache key from user_id and generation parameters."""
-    param_str = json.dumps(params, sort_keys=True, default=str)
-    return hashlib.md5(f"{user_id}:{param_str}".encode()).hexdigest()
-
-
-def _get_cached_generation(key: str):
-    """Get a cached generation result if still valid. Returns None on miss."""
-    with _cache_lock:
-        if key in _generation_cache:
-            cached_at, result = _generation_cache[key]
-            if datetime.now() - cached_at < _CACHE_TTL:
-                logger.info(f"Cache HIT for workout generation key={key[:8]}")
-                return result
-            else:
-                del _generation_cache[key]
-                logger.debug(f"Cache EXPIRED for key={key[:8]}")
-    return None
-
-
-def _set_cached_generation(key: str, result):
-    """Store a successful generation result in the cache."""
-    with _cache_lock:
-        _generation_cache[key] = (datetime.now(), result)
-        logger.info(f"Cache SET for workout generation key={key[:8]}")
-        if len(_generation_cache) > 100:
-            _cleanup_expired_cache()
-
-
-def _cleanup_expired_cache():
-    """Remove all expired entries from the generation cache. Must hold _cache_lock."""
-    now = datetime.now()
-    expired_keys = [
-        k for k, (cached_at, _) in _generation_cache.items()
-        if now - cached_at >= _CACHE_TTL
-    ]
-    for k in expired_keys:
-        del _generation_cache[k]
-    if expired_keys:
-        logger.debug(f"Cache cleanup: removed {len(expired_keys)} expired entries")
+# Shared generation cache (see core/generation_cache.py)
+from core.generation_cache import generation_cache_key, get_cached_generation, set_cached_generation
 
 
 def ensure_parsed_dict(value) -> Dict[str, Any]:

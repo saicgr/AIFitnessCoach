@@ -390,55 +390,56 @@ class _PhotoEditorScreenState extends State<PhotoEditorScreen> {
   }
 
   Widget _buildFitWizLogo() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: BoxDecoration(
-        color: Colors.black.withValues(alpha: 0.6),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(
-          color: Colors.white.withValues(alpha: 0.2),
-          width: 1,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.3),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // Logo icon with gradient
-          Container(
-            width: 24,
-            height: 24,
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [AppColors.cyan, AppColors.purple],
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        // Logo icon with gradient and shadow
+        Container(
+          width: 24,
+          height: 24,
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [AppColors.cyan, AppColors.purple],
+            ),
+            borderRadius: BorderRadius.circular(6),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.45),
+                blurRadius: 4,
+                offset: const Offset(0, 1),
               ),
-              borderRadius: BorderRadius.circular(6),
-            ),
-            child: const Icon(
-              Icons.fitness_center,
-              size: 14,
-              color: Colors.white,
-            ),
+            ],
           ),
-          const SizedBox(width: 8),
-          // Logo text
-          const Text(
-            'FitWiz',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-              letterSpacing: 0.5,
-            ),
+          child: const Icon(
+            Icons.fitness_center,
+            size: 14,
+            color: Colors.white,
           ),
-        ],
-      ),
+        ),
+        const SizedBox(width: 8),
+        // Logo text with shadow (no background)
+        Text(
+          'FitWiz',
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+            letterSpacing: 0.5,
+            shadows: [
+              Shadow(
+                color: Colors.black.withValues(alpha: 0.6),
+                blurRadius: 6,
+                offset: const Offset(0, 1),
+              ),
+              Shadow(
+                color: Colors.black.withValues(alpha: 0.3),
+                blurRadius: 12,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }

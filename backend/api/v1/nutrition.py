@@ -471,12 +471,56 @@ async def delete_food_log(log_id: str):
         if not success:
             raise HTTPException(status_code=404, detail="Food log not found")
 
-        return {"status": "deleted", "id": log_id}
+        return {"status": "deleted", "id": log_id, "soft_deleted": True}
 
     except HTTPException:
         raise
     except Exception as e:
         logger.error(f"Failed to delete food log: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/food-logs/{log_id}/copy")
+async def copy_food_log(log_id: str, meal_type: str = Query(..., description="Target meal type")):
+    """Copy an existing food log to a different meal type (or the same)."""
+    logger.info(f"Copying food log {log_id} to {meal_type}")
+
+    try:
+        db = get_supabase_db()
+
+        # Get the source food log
+        source = db.get_food_log(log_id)
+        if not source:
+            raise HTTPException(status_code=404, detail="Food log not found")
+
+        # Create a new food log with the same data but different meal type
+        created_log = db.create_food_log(
+            user_id=source["user_id"],
+            meal_type=meal_type,
+            food_items=source.get("food_items", []),
+            total_calories=source.get("total_calories", 0),
+            protein_g=source.get("protein_g", 0),
+            carbs_g=source.get("carbs_g", 0),
+            fat_g=source.get("fat_g", 0),
+            fiber_g=source.get("fiber_g", 0),
+            health_score=source.get("health_score"),
+            source_type=source.get("source_type", "text"),
+        )
+
+        food_log_id = created_log.get("id") if created_log else "unknown"
+        logger.info(f"Copied food log {log_id} -> {food_log_id} as {meal_type}")
+
+        return {
+            "status": "copied",
+            "source_id": log_id,
+            "new_id": food_log_id,
+            "meal_type": meal_type,
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to copy food log: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -854,6 +898,10 @@ async def search_foods(
         max_length=200,
         description="Filter by brand owner (for branded foods)"
     ),
+    user_id: Optional[str] = Query(
+        default=None,
+        description="User ID to include personal saved foods in results"
+    ),
 ):
     """
     Search the food database for foods matching a query.
@@ -870,12 +918,20 @@ async def search_foods(
         from services.food_database_lookup_service import get_food_db_lookup_service
         food_db_service = get_food_db_lookup_service()
 
-        results = await food_db_service.search_foods(
-            query=query,
-            page_size=page_size,
-            page=page,
-            source=source,
-        )
+        if user_id:
+            results = await food_db_service.search_foods_unified(
+                query=query,
+                user_id=user_id,
+                page_size=page_size,
+                page=page,
+            )
+        else:
+            results = await food_db_service.search_foods(
+                query=query,
+                page_size=page_size,
+                page=page,
+                source=source,
+            )
 
         # Convert local DB results to USDAFoodResponse format for compatibility
         foods = []
@@ -2674,11 +2730,19 @@ async def list_saved_foods(
     limit: int = Query(default=50, le=100),
     offset: int = Query(default=0, ge=0),
     source_type: Optional[str] = Query(default=None),
+    search: Optional[str] = Query(default=None, max_length=200, description="Search saved foods by name"),
+    sort_by: Optional[str] = Query(default=None, description="Sort field: times_logged, total_protein_g, total_calories, total_carbs_g, total_fat_g, name"),
+    sort_order: Optional[str] = Query(default="desc", description="Sort order: asc or desc"),
+    min_protein_g: Optional[float] = Query(default=None, ge=0, description="Minimum protein in grams"),
+    max_calories: Optional[int] = Query(default=None, ge=0, description="Maximum calories"),
+    tag: Optional[str] = Query(default=None, max_length=50, description="Filter by tag"),
 ):
     """
     List saved foods (favorite recipes) for a user.
     """
     logger.info(f"Listing saved foods for user {user_id}")
+
+    _VALID_SORT_FIELDS = {"times_logged", "total_protein_g", "total_calories", "total_carbs_g", "total_fat_g", "name"}
 
     try:
         db = get_supabase_db()
@@ -2687,22 +2751,54 @@ async def list_saved_foods(
         query = db.client.table("saved_foods")\
             .select("*")\
             .eq("user_id", user_id)\
-            .is_("deleted_at", "null")\
-            .order("times_logged", desc=True)\
-            .order("created_at", desc=True)\
-            .range(offset, offset + limit - 1)
+            .is_("deleted_at", "null")
 
         if source_type:
             query = query.eq("source_type", source_type)
 
+        if search:
+            query = query.ilike("name", f"%{search}%")
+
+        if min_protein_g is not None:
+            query = query.gte("total_protein_g", min_protein_g)
+
+        if max_calories is not None:
+            query = query.lte("total_calories", max_calories)
+
+        if tag:
+            query = query.contains("tags", [tag])
+
+        if sort_by and sort_by in _VALID_SORT_FIELDS:
+            query = query.order(sort_by, desc=(sort_order != "asc"))
+        else:
+            query = query.order("times_logged", desc=True).order("created_at", desc=True)
+
+        query = query.range(offset, offset + limit - 1)
+
         result = query.execute()
 
-        # Get total count
-        count_result = db.client.table("saved_foods")\
+        # Get total count (with same filters applied)
+        count_query = db.client.table("saved_foods")\
             .select("id", count="exact")\
             .eq("user_id", user_id)\
-            .is_("deleted_at", "null")\
-            .execute()
+            .is_("deleted_at", "null")
+
+        if source_type:
+            count_query = count_query.eq("source_type", source_type)
+
+        if search:
+            count_query = count_query.ilike("name", f"%{search}%")
+
+        if min_protein_g is not None:
+            count_query = count_query.gte("total_protein_g", min_protein_g)
+
+        if max_calories is not None:
+            count_query = count_query.lte("total_calories", max_calories)
+
+        if tag:
+            count_query = count_query.contains("tags", [tag])
+
+        count_result = count_query.execute()
 
         total_count = count_result.count or 0
 
@@ -3949,7 +4045,7 @@ async def get_nutrition_preferences(user_id: str):
             id=data.get("id"),
             user_id=data.get("user_id", user_id),
             nutrition_goals=nutrition_goals,
-            nutrition_goal=data.get("nutrition_goal", "maintain"),
+            nutrition_goal=data.get("nutrition_goal") or (nutrition_goals[0] if nutrition_goals else "maintain"),
             rate_of_change=data.get("rate_of_change"),
             calculated_bmr=data.get("calculated_bmr"),
             calculated_tdee=data.get("calculated_tdee"),
@@ -5096,6 +5192,7 @@ async def calculate_adaptive_tdee(
         food_result = db.client.table("food_logs")\
             .select("logged_at, total_calories, protein_g, carbs_g, fat_g")\
             .eq("user_id", user_id)\
+            .is_("deleted_at", "null")\
             .gte("logged_at", f"{from_date_str}T00:00:00")\
             .execute()
 
@@ -5420,6 +5517,7 @@ async def get_weekly_summary(user_id: str):
         food_result = db.client.table("food_logs")\
             .select("logged_at, total_calories, protein_g")\
             .eq("user_id", user_id)\
+            .is_("deleted_at", "null")\
             .gte("logged_at", f"{from_date_str}T00:00:00")\
             .execute()
 
@@ -5887,6 +5985,7 @@ async def get_detailed_tdee(user_id: str, days: int = Query(default=14, ge=7, le
         food_logs_result = db.client.table("food_logs")\
             .select("logged_at, total_calories, protein_g, carbs_g, fat_g")\
             .eq("user_id", user_id)\
+            .is_("deleted_at", "null")\
             .gte("logged_at", start_date.isoformat())\
             .lte("logged_at", end_date.isoformat())\
             .execute()
@@ -6078,6 +6177,7 @@ async def get_adherence_summary(user_id: str, weeks: int = Query(default=4, ge=1
         food_logs_result = db.client.table("food_logs")\
             .select("logged_at, total_calories, protein_g, carbs_g, fat_g")\
             .eq("user_id", user_id)\
+            .is_("deleted_at", "null")\
             .gte("logged_at", start_date.isoformat())\
             .lte("logged_at", end_date.isoformat())\
             .execute()

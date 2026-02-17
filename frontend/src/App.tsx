@@ -8,6 +8,9 @@ import MarketingLanding from './pages/MarketingLanding';
 import Features from './pages/Features';
 import Pricing from './pages/Pricing';
 import Store from './pages/Store';
+import PrivacyPolicy from './pages/PrivacyPolicy';
+import TermsOfService from './pages/TermsOfService';
+import RefundPolicy from './pages/RefundPolicy';
 import Onboarding from './pages/Onboarding';
 import OnboardingSelector from './pages/OnboardingSelector';
 import ConversationalOnboarding from './pages/ConversationalOnboarding';
@@ -75,6 +78,9 @@ function App() {
         <Route path="/features" element={<Features />} />
         <Route path="/pricing" element={<Pricing />} />
         <Route path="/store" element={<Store />} />
+        <Route path="/privacy" element={<PrivacyPolicy />} />
+        <Route path="/terms" element={<TermsOfService />} />
+        <Route path="/refunds" element={<RefundPolicy />} />
         {/* Legacy landing page */}
         <Route path="/app" element={<Landing />} />
         {/* Protected home (dashboard) */}

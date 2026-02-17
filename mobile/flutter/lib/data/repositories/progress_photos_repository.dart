@@ -256,6 +256,73 @@ class ProgressPhotosRepository {
     }
   }
 
+  /// Update a comparison's settings, layout, AI summary, etc.
+  Future<PhotoComparison> updateComparison({
+    required String comparisonId,
+    required String userId,
+    String? title,
+    String? description,
+    String? layout,
+    Map<String, dynamic>? settingsJson,
+    String? aiSummary,
+    String? exportedImageUrl,
+    List<Map<String, dynamic>>? photosJson,
+  }) async {
+    try {
+      debugPrint('📝 [ProgressPhotos] Updating comparison $comparisonId');
+
+      final data = <String, dynamic>{};
+      if (title != null) data['title'] = title;
+      if (description != null) data['description'] = description;
+      if (layout != null) data['layout'] = layout;
+      if (settingsJson != null) data['settings_json'] = settingsJson;
+      if (aiSummary != null) data['ai_summary'] = aiSummary;
+      if (exportedImageUrl != null) data['exported_image_url'] = exportedImageUrl;
+      if (photosJson != null) data['photos_json'] = photosJson;
+
+      final response = await _client.put(
+        '/progress-photos/comparisons/$comparisonId',
+        queryParameters: {'user_id': userId},
+        data: data,
+      );
+
+      debugPrint('✅ [ProgressPhotos] Comparison updated');
+      return PhotoComparison.fromJson(response.data as Map<String, dynamic>);
+    } catch (e) {
+      debugPrint('❌ [ProgressPhotos] Error updating comparison: $e');
+      rethrow;
+    }
+  }
+
+  /// Get AI-generated progress summary for two photos
+  Future<String> getAiSummary({
+    required String beforePhotoUrl,
+    required String afterPhotoUrl,
+    required int daysBetween,
+    double? weightChangeKg,
+  }) async {
+    try {
+      debugPrint('🤖 [ProgressPhotos] Requesting AI summary');
+
+      final response = await _client.post(
+        '/progress-photos/ai-summary',
+        data: {
+          'before_photo_url': beforePhotoUrl,
+          'after_photo_url': afterPhotoUrl,
+          'days_between': daysBetween,
+          if (weightChangeKg != null) 'weight_change_kg': weightChangeKg,
+        },
+      );
+
+      final summary = (response.data as Map<String, dynamic>)['summary'] as String;
+      debugPrint('✅ [ProgressPhotos] AI summary received');
+      return summary;
+    } catch (e) {
+      debugPrint('❌ [ProgressPhotos] Error getting AI summary: $e');
+      rethrow;
+    }
+  }
+
   /// Delete a comparison (does not delete the photos)
   Future<void> deleteComparison({
     required String comparisonId,
@@ -472,6 +539,63 @@ class ProgressPhotosNotifier extends StateNotifier<ProgressPhotosState> {
       state = state.copyWith(comparisons: updatedComparisons);
 
       return comparison;
+    } catch (e) {
+      state = state.copyWith(error: e.toString());
+      return null;
+    }
+  }
+
+  /// Update a comparison
+  Future<PhotoComparison?> updateComparison({
+    required String comparisonId,
+    String? title,
+    String? description,
+    String? layout,
+    Map<String, dynamic>? settingsJson,
+    String? aiSummary,
+    String? exportedImageUrl,
+    List<Map<String, dynamic>>? photosJson,
+  }) async {
+    try {
+      final updated = await _repository.updateComparison(
+        comparisonId: comparisonId,
+        userId: _userId,
+        title: title,
+        description: description,
+        layout: layout,
+        settingsJson: settingsJson,
+        aiSummary: aiSummary,
+        exportedImageUrl: exportedImageUrl,
+        photosJson: photosJson,
+      );
+
+      // Update in local state
+      final updatedComparisons = state.comparisons.map((c) {
+        return c.id == comparisonId ? updated : c;
+      }).toList();
+      state = state.copyWith(comparisons: updatedComparisons);
+
+      return updated;
+    } catch (e) {
+      state = state.copyWith(error: e.toString());
+      return null;
+    }
+  }
+
+  /// Get AI progress summary
+  Future<String?> getAiSummary({
+    required String beforePhotoUrl,
+    required String afterPhotoUrl,
+    required int daysBetween,
+    double? weightChangeKg,
+  }) async {
+    try {
+      return await _repository.getAiSummary(
+        beforePhotoUrl: beforePhotoUrl,
+        afterPhotoUrl: afterPhotoUrl,
+        daysBetween: daysBetween,
+        weightChangeKg: weightChangeKg,
+      );
     } catch (e) {
       state = state.copyWith(error: e.toString());
       return null;

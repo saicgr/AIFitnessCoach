@@ -23,10 +23,13 @@ class SocialRAGService:
     def __init__(self):
         self.chroma_client = get_chroma_cloud_client()
         self.collection_name = "social_activities"
+        self._collection = None
 
     def get_social_collection(self):
-        """Get or create the social activities collection."""
-        return self.chroma_client.get_or_create_collection(self.collection_name)
+        """Get or create the social activities collection (cached)."""
+        if self._collection is None:
+            self._collection = self.chroma_client.get_or_create_collection(self.collection_name)
+        return self._collection
 
     def add_activity_to_rag(
         self,

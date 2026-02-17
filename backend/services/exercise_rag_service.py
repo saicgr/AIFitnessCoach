@@ -34,7 +34,7 @@ from .exercise_rag import (
 )
 
 # Re-export caching utilities from rag_service for shared use
-from .rag_service import RAGCache, _embedding_cache, _query_cache
+from .rag_service import RAGCache, _query_cache
 
 # Maintain backwards compatibility with old function names
 _clean_exercise_name_for_display = clean_exercise_name_for_display
@@ -61,6 +61,5 @@ __all__ = [
     "get_exercise_rag_service",
     # Caching (shared across RAG services)
     "RAGCache",
-    "_embedding_cache",
     "_query_cache",
 ]

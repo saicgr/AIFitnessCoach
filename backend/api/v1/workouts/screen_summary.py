@@ -21,7 +21,7 @@ logger = get_logger(__name__)
 router = APIRouter()
 
 # Thread pool for parallel sync DB calls
-_db_executor = ThreadPoolExecutor(max_workers=3)
+_db_executor = ThreadPoolExecutor(max_workers=15)
 
 
 class WorkoutMiniSummary(BaseModel):

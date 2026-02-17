@@ -15,6 +15,7 @@ import '../../../../widgets/mood_picker_sheet.dart';
 import '../../../../widgets/quick_actions_sheet.dart';
 import '../../../fasting/widgets/log_weight_sheet.dart';
 import '../../../nutrition/log_meal_sheet.dart';
+import '../../../workout/widgets/quick_workout_sheet.dart';
 
 /// Maps action IDs to the correct widget
 Widget buildQuickActionWidget(String actionId, bool isDark, BuildContext context, WidgetRef ref) {
@@ -35,6 +36,17 @@ Widget buildQuickActionWidget(String actionId, bool isDark, BuildContext context
         onTap: () {
           HapticService.light();
           showLogMealSheet(context, ref);
+        },
+        isDark: isDark,
+      );
+    case 'quick_workout':
+      return _GridActionItem(
+        icon: Icons.flash_on,
+        label: 'Quick',
+        iconColor: quickActionRegistry['quick_workout']!.color,
+        onTap: () {
+          HapticService.light();
+          showQuickWorkoutSheet(context, ref);
         },
         isDark: isDark,
       );

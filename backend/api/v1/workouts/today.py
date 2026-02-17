@@ -28,7 +28,7 @@ from .utils import parse_json_field
 
 
 # Thread pool for running synchronous DB calls concurrently
-_db_executor = ThreadPoolExecutor(max_workers=4)
+_db_executor = ThreadPoolExecutor(max_workers=15)
 
 
 # =============================================================================

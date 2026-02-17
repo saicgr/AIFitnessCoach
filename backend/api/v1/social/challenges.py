@@ -8,6 +8,7 @@ This module handles challenge operations:
 - PUT /challenges/participate/{challenge_id} - Update progress
 - GET /challenges/{challenge_id}/leaderboard - Get challenge leaderboard
 """
+from collections import defaultdict
 from datetime import datetime, timezone
 from typing import List, Optional
 
@@ -89,9 +90,32 @@ async def get_challenges(
     if active_only:
         query = query.gte("end_date", datetime.now(timezone.utc).isoformat())
 
-    query = query.order("created_at", desc=True)
+    query = query.order("created_at", desc=True).limit(50)
 
     result = query.execute()
+
+    challenge_ids = [row["id"] for row in result.data]
+
+    # Batch-fetch: user participations for all challenges (1 query instead of N)
+    participation_map = {}
+    if user_id and challenge_ids:
+        all_participations = supabase.table("challenge_participants").select("*") \
+            .in_("challenge_id", challenge_ids).eq("user_id", user_id).execute()
+        participation_map = {p["challenge_id"]: p for p in (all_participations.data or [])}
+
+    # Batch-fetch: all participants for these challenges, sorted by value (1 query instead of N)
+    top_by_challenge = defaultdict(list)
+    if challenge_ids:
+        all_top = supabase.table("challenge_participants").select(
+            "*, users(name, avatar_url)"
+        ).in_("challenge_id", challenge_ids).order(
+            "current_value", desc=True
+        ).execute()
+
+        for p in (all_top.data or []):
+            cid = p["challenge_id"]
+            if len(top_by_challenge[cid]) < 3:
+                top_by_challenge[cid].append(p)
 
     challenges = []
     for row in result.data:
@@ -101,23 +125,13 @@ async def get_challenges(
             challenge.creator_name = row["users"].get("name")
             challenge.creator_avatar = row["users"].get("avatar_url")
 
-        # Get user's participation if user_id provided
-        if user_id:
-            part_result = supabase.table("challenge_participants").select("*").eq(
-                "challenge_id", row["id"]
-            ).eq("user_id", user_id).execute()
+        # Use batch-fetched participation data
+        part_data = participation_map.get(row["id"])
+        if part_data:
+            challenge.user_participation = ChallengeParticipant(**part_data)
 
-            if part_result.data:
-                challenge.user_participation = ChallengeParticipant(**part_result.data[0])
-
-        # Get top 3 participants
-        top_result = supabase.table("challenge_participants").select(
-            "*, users(name, avatar_url)"
-        ).eq("challenge_id", row["id"]).order(
-            "current_value", desc=True
-        ).limit(3).execute()
-
-        for part_row in top_result.data:
+        # Use batch-fetched top participants
+        for part_row in top_by_challenge.get(row["id"], []):
             participant = ChallengeParticipant(**part_row)
             if part_row.get("users"):
                 participant.user_name = part_row["users"].get("name")

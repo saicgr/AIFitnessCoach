@@ -587,12 +587,12 @@ async def get_calendar_heatmap(
 
         # Log the filter usage for user context
         try:
-            await user_context_service.log_activity(
+            await user_context_service.log_event(
                 user_id=user_id,
                 event_type=EventType.FEATURE_USAGE,
-                endpoint="/api/v1/consistency/calendar",
-                message=f"Fetched calendar heatmap from {start_date} to {end_date}",
-                metadata={
+                event_data={
+                    "endpoint": "/api/v1/consistency/calendar",
+                    "message": f"Fetched calendar heatmap from {start_date} to {end_date}",
                     "start_date": start_date.isoformat(),
                     "end_date": end_date.isoformat(),
                     "days": (end_date - start_date).days + 1,
@@ -712,7 +712,7 @@ async def get_day_detail(
         # Use date range to properly match timestamp column
         # Prioritize completed workouts, then most recent
         workout_response = db.client.table("workouts").select(
-            "id, name, type, difficulty, duration_minutes, exercises_json, is_completed, target_muscles"
+            "id, name, type, difficulty, duration_minutes, exercises_json, is_completed"
         ).eq("user_id", user_id).gte(
             "scheduled_date", f"{date_str}T00:00:00"
         ).lt(
@@ -744,7 +744,7 @@ async def get_day_detail(
                 "difficulty": workout.get("difficulty"),
                 "duration_minutes": workout.get("duration_minutes"),
                 "exercises": [],
-                "muscles_worked": workout.get("target_muscles", []) or [],
+                "muscles_worked": [ex.get("muscle_group") or ex.get("target_muscles", "") for ex in (workout.get("exercises_json") or []) if ex.get("muscle_group") or ex.get("target_muscles")],
             }
 
         # Get workout log for completed workout

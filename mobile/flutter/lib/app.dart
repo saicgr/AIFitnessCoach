@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'core/providers/window_mode_provider.dart';
@@ -7,6 +6,7 @@ import 'core/theme/accent_color_provider.dart';
 import 'core/theme/app_theme.dart';
 import 'core/theme/theme_provider.dart';
 import 'data/providers/admin_provider.dart';
+import 'core/accessibility/accessibility_provider.dart';
 import 'data/repositories/auth_repository.dart';
 import 'data/services/api_client.dart';
 import 'data/services/notification_service.dart';
@@ -43,6 +43,16 @@ class _FitWizAppState extends ConsumerState<FitWizApp> {
   }
 
   @override
+  void dispose() {
+    // Clear notification callbacks to prevent memory leaks (perf fix 1.3)
+    final notificationService = ref.read(notificationServiceProvider);
+    notificationService.onNotificationReceived = null;
+    notificationService.onNotificationTapped = null;
+    notificationService.onTokenRefresh = null;
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final router = ref.watch(routerProvider);
     final themeMode = ref.watch(themeModeProvider);
@@ -75,16 +85,6 @@ class _FitWizAppState extends ConsumerState<FitWizApp> {
         // 3. FloatingChatOverlay - Messenger-style chat bubble on all screens
 
         final mediaQuery = MediaQuery.of(context);
-
-        // Debug logging to diagnose overflow issues (only in debug mode)
-        if (kDebugMode) {
-          debugPrint('📱 [MediaQuery] Size: ${mediaQuery.size.width}x${mediaQuery.size.height}');
-          debugPrint('📱 [MediaQuery] DevicePixelRatio: ${mediaQuery.devicePixelRatio}');
-          debugPrint('📱 [MediaQuery] TextScaler: ${mediaQuery.textScaler}');
-          debugPrint('📱 [MediaQuery] Padding: ${mediaQuery.padding}');
-          debugPrint('📱 [MediaQuery] BoldText: ${mediaQuery.boldText}');
-          debugPrint('📱 [MediaQuery] OVERRIDE: Forcing textScaler to 1.0 and boldText to false');
-        }
 
         return MediaQuery(
           data: MediaQueryData(
@@ -137,6 +137,21 @@ class _FitWizAppState extends ConsumerState<FitWizApp> {
     prefsNotifier.setSyncCallback((prefs) async {
       await prefsSync.syncPreferences(prefs);
     });
+
+    // Restore onboarding_completed flag from user model to SharedPreferences.
+    // This flag is cleared on logout but the notification scheduler needs it
+    // to be present in SharedPreferences to schedule local notifications.
+    final authState = ref.read(authStateProvider);
+    if (authState.user?.onboardingCompleted == true) {
+      final sharedPrefs = ref.read(sharedPreferencesProvider);
+      final alreadySet = sharedPrefs.getBool('onboarding_completed') ?? false;
+      if (!alreadySet) {
+        sharedPrefs.setBool('onboarding_completed', true);
+        debugPrint('🔔 [App] Restored onboarding_completed flag to SharedPreferences');
+        // Reschedule notifications now that the flag is set
+        prefsNotifier.rescheduleNotifications();
+      }
+    }
 
     // Register FCM token with backend now that user is authenticated
     _registerFcmToken();

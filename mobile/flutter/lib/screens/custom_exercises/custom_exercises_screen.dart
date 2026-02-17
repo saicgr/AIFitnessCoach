@@ -5,6 +5,7 @@ import '../../core/constants/app_colors.dart';
 import '../../core/providers/custom_exercises_provider.dart';
 import '../../data/models/custom_exercise.dart';
 import '../../data/services/haptic_service.dart';
+import '../../widgets/glass_back_button.dart';
 import '../../widgets/glass_sheet.dart';
 import '../../widgets/segmented_tab_bar.dart';
 import 'widgets/custom_exercise_card.dart';
@@ -121,14 +122,11 @@ class _CustomExercisesScreenState extends ConsumerState<CustomExercisesScreen>
       padding: const EdgeInsets.all(16),
       child: Row(
         children: [
-          IconButton(
-            onPressed: () {
+          GlassBackButton(
+            onTap: () {
               HapticService.light();
               context.pop();
             },
-            icon: Icon(Icons.arrow_back_ios, color: textMuted, size: 20),
-            padding: EdgeInsets.zero,
-            constraints: const BoxConstraints(),
           ),
           const SizedBox(width: 12),
           Expanded(

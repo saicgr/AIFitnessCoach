@@ -19,6 +19,7 @@ class DataCacheService {
   static const String xpDataKey = 'cache_xp_data';
   static const String xpStreakKey = 'cache_xp_streak';
   static const String trophySummaryKey = 'cache_trophy_summary';
+  static const String bodyMeasurementsKey = 'cache_body_measurements';
 
   DataCacheService._();
 
@@ -119,6 +120,7 @@ class DataCacheService {
       await p.remove(xpDataKey);
       await p.remove(xpStreakKey);
       await p.remove(trophySummaryKey);
+      await p.remove(bodyMeasurementsKey);
       debugPrint('🧹 [Cache] Cleared all cached data');
     } catch (e) {
       debugPrint('❌ [Cache] Error clearing cache: $e');

@@ -716,7 +716,26 @@ class _MeasurementsScreenState extends ConsumerState<MeasurementsScreen> {
                       ],
                     ),
                   )
-                : filteredHistory.isEmpty
+                : state.error != null
+                    ? Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.cloud_off, size: 40, color: textMuted),
+                            const SizedBox(height: 8),
+                            Text(
+                              'Failed to load data',
+                              style: TextStyle(color: textMuted),
+                            ),
+                            const SizedBox(height: 8),
+                            TextButton(
+                              onPressed: _loadMeasurements,
+                              child: Text('Retry', style: TextStyle(color: cyan)),
+                            ),
+                          ],
+                        ),
+                      )
+                    : filteredHistory.isEmpty
                     ? Center(
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,

@@ -7,6 +7,7 @@ import '../../data/models/workout.dart';
 import '../../data/providers/today_workout_provider.dart';
 import '../../data/repositories/workout_repository.dart';
 import '../../data/services/api_client.dart';
+import '../../widgets/glass_back_button.dart';
 import '../../widgets/gradient_circular_progress_indicator.dart';
 import 'pre_auth_quiz_screen.dart';
 
@@ -258,26 +259,14 @@ class _WorkoutGenerationScreenState extends ConsumerState<WorkoutGenerationScree
                 alignment: Alignment.topLeft,
                 child: Padding(
                   padding: const EdgeInsets.all(16),
-                  child: IconButton(
-                    onPressed: () {
+                  child: GlassBackButton(
+                    onTap: () {
                       if (widget.returnWorkout) {
                         Navigator.of(context).pop();
                       } else {
                         context.go('/coach-selection');
                       }
                     },
-                    icon: Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: isDark ? AppColors.elevated : AppColorsLight.elevated,
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Icon(
-                        Icons.arrow_back,
-                        color: textPrimary,
-                        size: 20,
-                      ),
-                    ),
                   ),
                 ),
               ),

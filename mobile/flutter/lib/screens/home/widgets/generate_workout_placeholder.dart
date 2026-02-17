@@ -128,7 +128,7 @@ class _GenerateWorkoutPlaceholderState
       animation: _pulseController,
       builder: (context, child) {
         return Container(
-          height: 440,
+          height: 340,
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(24),
             border: Border.all(
@@ -173,7 +173,7 @@ class _GenerateWorkoutPlaceholderState
 
             // Content
             Padding(
-              padding: const EdgeInsets.all(20),
+              padding: const EdgeInsets.all(16),
               child: widget.isGenerating && widget.generationStep > 0
                   ? _buildGeneratingContent(isDark, accentColor, isToday)
                   : _buildIdleContent(isDark, accentColor, isToday),

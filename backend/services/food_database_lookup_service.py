@@ -168,6 +168,51 @@ class FoodDatabaseLookupService:
             logger.error(f"[FoodDB] Search failed for '{query}': {e}")
             return []
 
+    async def search_foods_unified(
+        self,
+        query: str,
+        user_id: str,
+        page_size: int = 20,
+        page: int = 1,
+    ) -> List[Dict]:
+        """
+        Search food database unified with user's saved foods.
+        Falls back to regular search_foods if user_id is empty.
+        """
+        query = query.strip()
+        if not query:
+            return []
+
+        if not user_id:
+            return await self.search_foods(query=query, page_size=page_size, page=page)
+
+        cache_key = f"unified_search:{query.lower()}:{user_id}:{page_size}:{page}"
+        cached = self._get_cached(cache_key)
+        if cached is not None:
+            return cached
+
+        logger.info(f"[FoodDB] Unified search for '{query}' (user={user_id[:8]}..., page={page}, size={page_size})")
+
+        try:
+            supabase = get_supabase()
+            offset = (page - 1) * page_size
+            result = supabase.client.rpc("search_food_database_unified", {
+                "search_query": query,
+                "p_user_id": user_id,
+                "result_limit": page_size,
+                "result_offset": offset,
+            }).execute()
+
+            foods = result.data or []
+            logger.info(f"[FoodDB] Unified search found {len(foods)} results for '{query}'")
+            self._set_cached(cache_key, foods)
+            return foods
+
+        except Exception as e:
+            logger.error(f"[FoodDB] Unified search failed for '{query}': {e}")
+            # Fallback to regular search
+            return await self.search_foods(query=query, page_size=page_size, page=page)
+
     async def lookup_single_food(self, food_name: str) -> Optional[Dict]:
         """
         Look up a single food and return per-100g nutrition data.
@@ -203,8 +248,10 @@ class FoodDatabaseLookupService:
 
             top = foods[0]
             result_name = top.get("name", "")
+            sim_score = float(top.get("similarity_score") or 0)
 
-            if not self._is_good_match(food_name, result_name):
+            # Trust high similarity scores (variant match via DB trigram)
+            if sim_score < 0.3 and not self._is_good_match(food_name, result_name):
                 self._set_cached(cache_key, False)
                 return None
 
@@ -291,7 +338,10 @@ class FoodDatabaseLookupService:
                     continue
 
                 result_name = row.get("matched_name", "")
-                if not self._is_good_match(name, result_name):
+                sim_score = float(row.get("similarity_score") or 0)
+
+                # Trust high similarity scores (variant match via DB trigram)
+                if sim_score < 0.3 and not self._is_good_match(name, result_name):
                     results[name] = None
                     self._set_cached(cache_key, False)
                     continue

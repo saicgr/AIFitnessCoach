@@ -55,6 +55,8 @@ COLUMNS = [
     ("dedup_key", "TEXT NOT NULL"),
     ("dedup_rank", "INTEGER NOT NULL"),
     ("is_primary", "BOOLEAN NOT NULL"),
+    ("variant_names", "TEXT[]"),
+    ("variant_text", "TEXT"),
 ]
 
 COL_NAMES = [c[0] for c in COLUMNS]

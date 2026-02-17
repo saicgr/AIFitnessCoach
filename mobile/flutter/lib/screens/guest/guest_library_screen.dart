@@ -6,6 +6,7 @@ import '../../core/constants/app_colors.dart';
 import '../../data/models/exercise.dart';
 import '../../data/providers/guest_mode_provider.dart';
 import '../../data/services/haptic_service.dart';
+import '../../widgets/glass_back_button.dart';
 import '../../widgets/glass_sheet.dart';
 import '../library/providers/library_providers.dart';
 
@@ -97,18 +98,11 @@ class _GuestLibraryScreenState extends ConsumerState<GuestLibraryScreen> {
       child: Row(
         children: [
           // Back button
-          IconButton(
-            onPressed: () {
+          GlassBackButton(
+            onTap: () {
               HapticService.light();
               context.pop();
             },
-            icon: Icon(
-              Icons.arrow_back_ios,
-              color: textMuted,
-              size: 20,
-            ),
-            padding: EdgeInsets.zero,
-            constraints: const BoxConstraints(),
           ),
           const SizedBox(width: 12),
           // Title

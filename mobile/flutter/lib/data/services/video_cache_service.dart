@@ -345,6 +345,9 @@ class VideoCacheService {
         totalBytes: 0,
         status: VideoDownloadStatus.notDownloaded,
       ));
+      // Perf fix 2.6: close StreamController immediately on cancel to prevent leak
+      _progressControllers[exerciseId]?.close();
+      _progressControllers.remove(exerciseId);
     }
   }
 

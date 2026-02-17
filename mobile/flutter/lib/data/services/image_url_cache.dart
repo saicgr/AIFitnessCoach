@@ -10,6 +10,9 @@ class ImageUrlCache {
   // Presigned URLs typically expire after 1 hour, we cache for 45 minutes to be safe
   static const Duration _cacheExpiration = Duration(minutes: 45);
 
+  // Perf fix 2.4: cap in-memory cache to prevent unbounded growth
+  static const int _maxCacheEntries = 500;
+
   // In-memory cache for fast access during session
   static Map<String, String>? _memoryCache;
   static DateTime? _cacheTimestamp;
@@ -54,6 +57,9 @@ class ImageUrlCache {
     final key = exerciseName.toLowerCase();
     _memoryCache![key] = url;
 
+    // Perf fix 2.4: FIFO eviction when cache exceeds max size
+    _evictIfNeeded();
+
     // Persist to SharedPreferences (debounced - only save every 10 entries)
     if (_memoryCache!.length % 10 == 0) {
       await _persistCache();
@@ -67,7 +73,19 @@ class ImageUrlCache {
       final key = entry.key.toLowerCase();
       _memoryCache![key] = entry.value;
     }
+    // Perf fix 2.4: FIFO eviction when cache exceeds max size
+    _evictIfNeeded();
     await _persistCache();
+  }
+
+  /// Evict oldest entries when cache exceeds max size (FIFO)
+  static void _evictIfNeeded() {
+    if (_memoryCache == null || _memoryCache!.length <= _maxCacheEntries) return;
+    final keysToRemove =
+        _memoryCache!.keys.take(_memoryCache!.length - _maxCacheEntries + 50).toList();
+    for (final key in keysToRemove) {
+      _memoryCache!.remove(key);
+    }
   }
 
   /// Persist cache to SharedPreferences

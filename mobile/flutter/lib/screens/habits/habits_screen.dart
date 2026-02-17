@@ -1331,29 +1331,12 @@ class HabitsScreen extends ConsumerWidget {
                       // Header with back button
                       Row(
                         children: [
-                          GestureDetector(
+                          GlassBackButton(
                             onTap: () {
                               HapticService.light();
                               Navigator.pop(context);
-                              // Re-open the Add Habit sheet
                               _showAddHabitSheet(context, ref, ref.read(habitsScreenProvider).templates);
                             },
-                            child: Container(
-                              width: 36,
-                              height: 36,
-                              decoration: BoxDecoration(
-                                color: cardBg,
-                                borderRadius: BorderRadius.circular(10),
-                                border: Border.all(
-                                  color: textSecondary.withValues(alpha: 0.2),
-                                ),
-                              ),
-                              child: Icon(
-                                Icons.arrow_back,
-                                color: textPrimary,
-                                size: 18,
-                              ),
-                            ),
                           ),
                           const SizedBox(width: 12),
                           Text(

@@ -24,12 +24,70 @@ class CarouselItem {
 
   bool get isWorkout => workout != null;
   bool get isPlaceholder => placeholderDate != null;
+
+  /// The date this carousel item represents (from workout or placeholder)
+  DateTime? get date {
+    if (placeholderDate != null) return placeholderDate;
+    if (workout?.scheduledDate != null) {
+      try {
+        final dateStr = workout!.scheduledDate!.split('T')[0];
+        final parts = dateStr.split('-');
+        if (parts.length == 3) {
+          return DateTime(int.parse(parts[0]), int.parse(parts[1]), int.parse(parts[2]));
+        }
+      } catch (_) {}
+    }
+    return null;
+  }
 }
 
 /// Carousel based on user's workout days from profile.
 /// Each day shows either a workout card or a "Generate" placeholder.
 class HeroWorkoutCarousel extends ConsumerStatefulWidget {
-  const HeroWorkoutCarousel({super.key});
+  /// Optional external page controller (parent manages lifecycle)
+  final PageController? externalPageController;
+
+  /// Fires when carousel items are rebuilt (for parent to read dates)
+  final ValueChanged<List<CarouselItem>>? onCarouselItemsChanged;
+
+  /// Fires when the visible page changes (swipe or programmatic)
+  final ValueChanged<int>? onPageChanged;
+
+  /// Shared card height constant
+  static const double cardHeight = 340;
+
+  const HeroWorkoutCarousel({
+    super.key,
+    this.externalPageController,
+    this.onCarouselItemsChanged,
+    this.onPageChanged,
+  });
+
+  /// Reset auto-generation flag (call on pull-to-refresh, regeneration, or logout)
+  static void resetAutoGeneration() {
+    _HeroWorkoutCarouselState.resetAutoGeneration();
+  }
+
+  /// Get workout dates for the current week given workout day indices.
+  /// Returns dates from today forward, wrapping to next week for past days.
+  static List<DateTime> getWorkoutDatesForWeek(List<int> workoutDays) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final monday = today.subtract(Duration(days: today.weekday - 1));
+    final nextMonday = monday.add(const Duration(days: 7));
+
+    final dates = <DateTime>[];
+    for (final day in workoutDays) {
+      final thisWeekDate = monday.add(Duration(days: day));
+      if (!thisWeekDate.isBefore(today)) {
+        dates.add(thisWeekDate);
+      } else {
+        dates.add(nextMonday.add(Duration(days: day)));
+      }
+    }
+    dates.sort((a, b) => a.compareTo(b));
+    return dates;
+  }
 
   @override
   ConsumerState<HeroWorkoutCarousel> createState() =>
@@ -37,10 +95,23 @@ class HeroWorkoutCarousel extends ConsumerStatefulWidget {
 }
 
 class _HeroWorkoutCarouselState extends ConsumerState<HeroWorkoutCarousel> {
-  late PageController _pageController;
+  PageController? _ownedPageController;
   int _currentPage = 0;
-  DateTime? _generatingForDate;
-  bool _autoGenerationTriggered = false;
+
+  /// Whether we own (and should dispose) the page controller
+  bool get _ownsController => widget.externalPageController == null;
+  PageController get _pageController =>
+      widget.externalPageController ?? _ownedPageController!;
+
+  /// Static so it survives widget disposal on tab switch (ShellRoute recreates HomeScreen)
+  static DateTime? _generatingForDate;
+  static bool _autoGenerationTriggered = false;
+
+  /// Reset auto-generation flag (call on pull-to-refresh, regeneration, or logout)
+  static void resetAutoGeneration() {
+    _autoGenerationTriggered = false;
+    _generatingForDate = null;
+  }
 
   /// Generation step tracking for numbered progress UI
   int _generationStep = 0;
@@ -68,13 +139,17 @@ class _HeroWorkoutCarouselState extends ConsumerState<HeroWorkoutCarousel> {
   @override
   void initState() {
     super.initState();
-    // 0.88 = 88% card width, shows more peek of next card
-    _pageController = PageController(viewportFraction: 0.88);
+    // Only create our own controller if no external one is provided
+    if (_ownsController) {
+      _ownedPageController = PageController(viewportFraction: 0.88);
+    }
   }
 
   @override
   void dispose() {
-    _pageController.dispose();
+    if (_ownsController) {
+      _ownedPageController?.dispose();
+    }
     // Cancel all retry timers (Fix 4)
     for (final timer in _retryTimers.values) {
       timer.cancel();
@@ -389,20 +464,29 @@ class _HeroWorkoutCarouselState extends ConsumerState<HeroWorkoutCarousel> {
           }
         }
 
+        // Notify parent of carousel items (for week strip sync)
+        if (widget.onCarouselItemsChanged != null) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            widget.onCarouselItemsChanged?.call(carouselItems);
+          });
+        }
+
         // Auto-trigger generation for the first placeholder
         // Skip if todayWorkoutProvider already shows isGenerating (prevents duplicate calls)
+        // Also skip if todayWorkoutProvider already has a cached workout (prevents re-trigger on tab switch)
         if (!_autoGenerationTriggered && carouselItems.isNotEmpty) {
           final firstItem = carouselItems.first;
-          if (firstItem.isPlaceholder && !firstItem.isAutoGenerating && _generatingForDate == null) {
-            if (!isAutoGenerating) {
-              _autoGenerationTriggered = true;
-              debugPrint('🚀 [HeroCarousel] Auto-triggering generation for first placeholder: ${firstItem.placeholderDate}');
-              WidgetsBinding.instance.addPostFrameCallback((_) {
-                if (mounted) {
-                  _handleGenerateWorkout(firstItem.placeholderDate!);
-                }
-              });
-            }
+          final hasCachedWorkout = todayWorkoutResponse?.todayWorkout != null ||
+                                   todayWorkoutResponse?.nextWorkout != null;
+          if (firstItem.isPlaceholder && !firstItem.isAutoGenerating &&
+              _generatingForDate == null && !isAutoGenerating && !hasCachedWorkout) {
+            _autoGenerationTriggered = true;
+            debugPrint('🚀 [HeroCarousel] Auto-triggering generation for first placeholder: ${firstItem.placeholderDate}');
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (mounted) {
+                _handleGenerateWorkout(firstItem.placeholderDate!);
+              }
+            });
           }
         }
 
@@ -419,7 +503,7 @@ class _HeroWorkoutCarouselState extends ConsumerState<HeroWorkoutCarousel> {
           final item = carouselItems.first;
           final isItemGenerating = _generatingForDate == item.placeholderDate || item.isAutoGenerating;
           return SizedBox(
-            height: 440,
+            height: HeroWorkoutCarousel.cardHeight,
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: item.isWorkout
@@ -449,6 +533,7 @@ class _HeroWorkoutCarouselState extends ConsumerState<HeroWorkoutCarousel> {
             onPageChanged: (index) {
               HapticService.selection();
               setState(() => _currentPage = index);
+              widget.onPageChanged?.call(index);
             },
             itemBuilder: (context, index) {
               final item = carouselItems[index];
@@ -538,7 +623,7 @@ class _HeroWorkoutCarouselState extends ConsumerState<HeroWorkoutCarousel> {
 
   Widget _buildLoadingState(bool isDark, Color accentColor) {
     return Container(
-      height: 440,
+      height: HeroWorkoutCarousel.cardHeight,
       margin: const EdgeInsets.symmetric(horizontal: 16),
       decoration: BoxDecoration(
         color: isDark ? const Color(0xFF1a1a1a) : const Color(0xFFF5F5F5),

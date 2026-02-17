@@ -7,7 +7,13 @@ enum PhotoViewType {
   front('front', 'Front'),
   sideLeft('side_left', 'Left Side'),
   sideRight('side_right', 'Right Side'),
-  back('back', 'Back');
+  back('back', 'Back'),
+  legs('legs', 'Legs'),
+  glutes('glutes', 'Glutes'),
+  arms('arms', 'Arms'),
+  abs('abs', 'Abs'),
+  chest('chest', 'Chest'),
+  custom('custom', 'Other');
 
   final String value;
   final String displayName;
@@ -150,7 +156,7 @@ class ProgressPhoto {
   }
 }
 
-/// Photo comparison (before/after)
+/// Photo comparison (before/after or N-photo)
 @JsonSerializable()
 class PhotoComparison {
   final String id;
@@ -170,6 +176,19 @@ class PhotoComparison {
   @JsonKey(name: 'created_at')
   final DateTime createdAt;
 
+  // N-photo comparison fields
+  @JsonKey(name: 'photos_json')
+  final List<ComparisonPhotoEntry>? photosJson;
+  final String? layout;
+  @JsonKey(name: 'settings_json')
+  final Map<String, dynamic>? settingsJson;
+  @JsonKey(name: 'exported_image_url')
+  final String? exportedImageUrl;
+  @JsonKey(name: 'ai_summary')
+  final String? aiSummary;
+  @JsonKey(name: 'updated_at')
+  final DateTime? updatedAt;
+
   const PhotoComparison({
     required this.id,
     required this.userId,
@@ -181,6 +200,12 @@ class PhotoComparison {
     this.daysBetween,
     this.visibility = 'private',
     required this.createdAt,
+    this.photosJson,
+    this.layout,
+    this.settingsJson,
+    this.exportedImageUrl,
+    this.aiSummary,
+    this.updatedAt,
   });
 
   /// Get formatted weight change
@@ -219,9 +244,260 @@ class PhotoComparison {
     return parts.isEmpty ? 'Progress comparison' : parts.join(' • ');
   }
 
+  /// Get all photos in this comparison (ordered)
+  List<ProgressPhoto> get allPhotos {
+    if (photosJson != null && photosJson!.isNotEmpty) {
+      // For N-photo comparisons, we'd need resolved photos
+      // Fall back to before/after for backward compat
+      return [beforePhoto, afterPhoto];
+    }
+    return [beforePhoto, afterPhoto];
+  }
+
+  PhotoComparison copyWith({
+    String? id,
+    String? userId,
+    ProgressPhoto? beforePhoto,
+    ProgressPhoto? afterPhoto,
+    String? title,
+    String? description,
+    double? weightChangeKg,
+    int? daysBetween,
+    String? visibility,
+    DateTime? createdAt,
+    List<ComparisonPhotoEntry>? photosJson,
+    String? layout,
+    Map<String, dynamic>? settingsJson,
+    String? exportedImageUrl,
+    String? aiSummary,
+    DateTime? updatedAt,
+  }) {
+    return PhotoComparison(
+      id: id ?? this.id,
+      userId: userId ?? this.userId,
+      beforePhoto: beforePhoto ?? this.beforePhoto,
+      afterPhoto: afterPhoto ?? this.afterPhoto,
+      title: title ?? this.title,
+      description: description ?? this.description,
+      weightChangeKg: weightChangeKg ?? this.weightChangeKg,
+      daysBetween: daysBetween ?? this.daysBetween,
+      visibility: visibility ?? this.visibility,
+      createdAt: createdAt ?? this.createdAt,
+      photosJson: photosJson ?? this.photosJson,
+      layout: layout ?? this.layout,
+      settingsJson: settingsJson ?? this.settingsJson,
+      exportedImageUrl: exportedImageUrl ?? this.exportedImageUrl,
+      aiSummary: aiSummary ?? this.aiSummary,
+      updatedAt: updatedAt ?? this.updatedAt,
+    );
+  }
+
   factory PhotoComparison.fromJson(Map<String, dynamic> json) =>
       _$PhotoComparisonFromJson(json);
   Map<String, dynamic> toJson() => _$PhotoComparisonToJson(this);
+}
+
+/// Entry in the photos_json array for N-photo comparisons
+@JsonSerializable()
+class ComparisonPhotoEntry {
+  @JsonKey(name: 'photo_id')
+  final String photoId;
+  final int order;
+  final String? label;
+
+  const ComparisonPhotoEntry({
+    required this.photoId,
+    required this.order,
+    this.label,
+  });
+
+  factory ComparisonPhotoEntry.fromJson(Map<String, dynamic> json) =>
+      _$ComparisonPhotoEntryFromJson(json);
+  Map<String, dynamic> toJson() => _$ComparisonPhotoEntryToJson(this);
+}
+
+/// Settings for comparison customization (stored in settings_json)
+class ComparisonSettings {
+  final String layout;
+  final bool showLogo;
+  final double logoDx;
+  final double logoDy;
+  final double logoScale;
+  final bool showStats;
+  final bool showDates;
+  final bool showAiSummary;
+  final String backgroundColor;
+  final String exportAspectRatio;
+  final bool backgroundRemoved;
+  final Map<int, List<double>> datePositions;
+  final List<double>? statsPosition;
+  final List<String> enabledStatCategories;
+  final bool showPhotoWeights;
+  final String datePosition; // 'left', 'center', 'right'
+  final String photoShape; // 'rectangle', 'squircle', 'circle'
+  final double squircleRadius;
+  final bool photoBorderEnabled;
+  final String photoBorderColor;
+  final double photoBorderWidth;
+  final double photoSpacing;
+
+  const ComparisonSettings({
+    this.layout = 'side_by_side',
+    this.showLogo = true,
+    this.logoDx = 16,
+    this.logoDy = 16,
+    this.logoScale = 1.0,
+    this.showStats = true,
+    this.showDates = true,
+    this.showAiSummary = false,
+    this.backgroundColor = '#000000',
+    this.exportAspectRatio = '1:1',
+    this.backgroundRemoved = false,
+    this.datePositions = const {},
+    this.statsPosition,
+    this.enabledStatCategories = const ['duration', 'weight'],
+    this.showPhotoWeights = true,
+    this.datePosition = 'left',
+    this.photoShape = 'rectangle',
+    this.squircleRadius = 12.0,
+    this.photoBorderEnabled = false,
+    this.photoBorderColor = '#FFFFFF',
+    this.photoBorderWidth = 2.0,
+    this.photoSpacing = 2.0,
+  });
+
+  Map<String, dynamic> toJson() => {
+    'layout': layout,
+    'showLogo': showLogo,
+    'logoPosition': {'dx': logoDx, 'dy': logoDy},
+    'logoScale': logoScale,
+    'showStats': showStats,
+    'showDates': showDates,
+    'showAiSummary': showAiSummary,
+    'backgroundColor': backgroundColor,
+    'exportAspectRatio': exportAspectRatio,
+    'backgroundRemoved': backgroundRemoved,
+    if (datePositions.isNotEmpty)
+      'datePositions': datePositions.map(
+        (k, v) => MapEntry(k.toString(), v),
+      ),
+    if (statsPosition != null) 'statsPosition': statsPosition,
+    'enabledStatCategories': enabledStatCategories,
+    'showPhotoWeights': showPhotoWeights,
+    'datePosition': datePosition,
+    'photoShape': photoShape,
+    'squircleRadius': squircleRadius,
+    'photoBorderEnabled': photoBorderEnabled,
+    'photoBorderColor': photoBorderColor,
+    'photoBorderWidth': photoBorderWidth,
+    'photoSpacing': photoSpacing,
+  };
+
+  factory ComparisonSettings.fromJson(Map<String, dynamic> json) {
+    final logoPos = json['logoPosition'] as Map<String, dynamic>?;
+
+    // Parse datePositions
+    final rawDatePos = json['datePositions'] as Map<String, dynamic>?;
+    final datePositions = <int, List<double>>{};
+    if (rawDatePos != null) {
+      for (final entry in rawDatePos.entries) {
+        final key = int.tryParse(entry.key);
+        if (key != null && entry.value is List) {
+          datePositions[key] = (entry.value as List)
+              .map((e) => (e as num).toDouble())
+              .toList();
+        }
+      }
+    }
+
+    // Parse statsPosition
+    final rawStatsPos = json['statsPosition'] as List?;
+    final statsPosition = rawStatsPos
+        ?.map((e) => (e as num).toDouble())
+        .toList();
+
+    // Parse enabledStatCategories
+    final rawCategories = json['enabledStatCategories'] as List?;
+    final enabledStatCategories = rawCategories
+        ?.map((e) => e as String)
+        .toList() ?? const ['duration', 'weight'];
+
+    return ComparisonSettings(
+      layout: json['layout'] as String? ?? 'side_by_side',
+      showLogo: json['showLogo'] as bool? ?? true,
+      logoDx: (logoPos?['dx'] as num?)?.toDouble() ?? 16,
+      logoDy: (logoPos?['dy'] as num?)?.toDouble() ?? 16,
+      logoScale: (json['logoScale'] as num?)?.toDouble() ?? 1.0,
+      showStats: json['showStats'] as bool? ??
+          json['showWeightChange'] as bool? ?? true,
+      showDates: json['showDates'] as bool? ?? true,
+      showAiSummary: json['showAiSummary'] as bool? ?? false,
+      backgroundColor: json['backgroundColor'] as String? ?? '#000000',
+      exportAspectRatio: json['exportAspectRatio'] as String? ?? '1:1',
+      backgroundRemoved: json['backgroundRemoved'] as bool? ?? false,
+      datePositions: datePositions,
+      statsPosition: statsPosition,
+      enabledStatCategories: enabledStatCategories,
+      showPhotoWeights: json['showPhotoWeights'] as bool? ?? true,
+      datePosition: json['datePosition'] as String? ?? 'left',
+      photoShape: json['photoShape'] as String? ?? 'rectangle',
+      squircleRadius: (json['squircleRadius'] as num?)?.toDouble() ?? 12.0,
+      photoBorderEnabled: json['photoBorderEnabled'] as bool? ?? false,
+      photoBorderColor: json['photoBorderColor'] as String? ?? '#FFFFFF',
+      photoBorderWidth: (json['photoBorderWidth'] as num?)?.toDouble() ?? 2.0,
+      photoSpacing: (json['photoSpacing'] as num?)?.toDouble() ?? 2.0,
+    );
+  }
+
+  ComparisonSettings copyWith({
+    String? layout,
+    bool? showLogo,
+    double? logoDx,
+    double? logoDy,
+    double? logoScale,
+    bool? showStats,
+    bool? showDates,
+    bool? showAiSummary,
+    String? backgroundColor,
+    String? exportAspectRatio,
+    bool? backgroundRemoved,
+    Map<int, List<double>>? datePositions,
+    List<double>? statsPosition,
+    List<String>? enabledStatCategories,
+    bool? showPhotoWeights,
+    String? datePosition,
+    String? photoShape,
+    double? squircleRadius,
+    bool? photoBorderEnabled,
+    String? photoBorderColor,
+    double? photoBorderWidth,
+    double? photoSpacing,
+  }) {
+    return ComparisonSettings(
+      layout: layout ?? this.layout,
+      showLogo: showLogo ?? this.showLogo,
+      logoDx: logoDx ?? this.logoDx,
+      logoDy: logoDy ?? this.logoDy,
+      logoScale: logoScale ?? this.logoScale,
+      showStats: showStats ?? this.showStats,
+      showDates: showDates ?? this.showDates,
+      showAiSummary: showAiSummary ?? this.showAiSummary,
+      backgroundColor: backgroundColor ?? this.backgroundColor,
+      exportAspectRatio: exportAspectRatio ?? this.exportAspectRatio,
+      backgroundRemoved: backgroundRemoved ?? this.backgroundRemoved,
+      datePositions: datePositions ?? this.datePositions,
+      statsPosition: statsPosition ?? this.statsPosition,
+      enabledStatCategories: enabledStatCategories ?? this.enabledStatCategories,
+      showPhotoWeights: showPhotoWeights ?? this.showPhotoWeights,
+      datePosition: datePosition ?? this.datePosition,
+      photoShape: photoShape ?? this.photoShape,
+      squircleRadius: squircleRadius ?? this.squircleRadius,
+      photoBorderEnabled: photoBorderEnabled ?? this.photoBorderEnabled,
+      photoBorderColor: photoBorderColor ?? this.photoBorderColor,
+      photoBorderWidth: photoBorderWidth ?? this.photoBorderWidth,
+      photoSpacing: photoSpacing ?? this.photoSpacing,
+    );
+  }
 }
 
 /// Photo statistics
@@ -426,6 +702,8 @@ class LatestPhotosByView {
         return sideRight != null;
       case PhotoViewType.back:
         return back != null;
+      default:
+        return false;
     }
   }
 
@@ -440,6 +718,8 @@ class LatestPhotosByView {
         return sideRight;
       case PhotoViewType.back:
         return back;
+      default:
+        return null;
     }
   }
 

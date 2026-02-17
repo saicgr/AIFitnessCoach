@@ -1,7 +1,7 @@
 name: fitwiz
 description: "AI-powered fitness coaching app with personalized workouts"
 publish_to: 'none'
-version: 1.0.0+1
+version: 1.1.0+2
 
 environment:
   sdk: ^3.10.1
@@ -48,6 +48,7 @@ dependencies:
   equatable: ^2.0.5
   uuid: ^4.4.2
   shared_preferences: ^2.2.3
+  vibration: ^2.0.0
   timeago: ^3.7.0
 
   # Health Connect / HealthKit
@@ -126,6 +127,9 @@ dependencies:
   flutter_gemma: ^0.11.16
   system_info_plus: ^0.0.6
 
+  # Splash Screen
+  flutter_native_splash: ^2.4.0
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -150,6 +154,16 @@ flutter_launcher_icons:
   adaptive_icon_foreground_inset: 16
   # iOS settings
   remove_alpha_ios: true
+
+flutter_native_splash:
+  color: "#FFFFFF"
+  image: assets/icon/app_icon.png
+  android: true
+  ios: false
+  android_12:
+    color: "#FFFFFF"
+    icon_background_color: "#FFFFFF"
+    image: assets/icon/app_icon.png
 
 flutter:
   uses-material-design: true

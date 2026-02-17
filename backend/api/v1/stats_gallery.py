@@ -78,12 +78,12 @@ async def upload_stats_image(
 
         # Log user activity
         try:
-            await user_context_service.log_activity(
+            await user_context_service.log_event(
                 user_id=user_id,
                 event_type=EventType.SOCIAL_INTERACTION,
-                endpoint="/api/v1/stats-gallery/upload",
-                message=f"Uploaded stats image with template: {request.template_type.value}",
-                metadata={
+                event_data={
+                    "endpoint": "/api/v1/stats-gallery/upload",
+                    "message": f"Uploaded stats image with template: {request.template_type.value}",
                     "template_type": request.template_type.value,
                     "image_id": image.id,
                 }
@@ -282,12 +282,12 @@ async def share_stats_to_feed(
 
         # Log user activity
         try:
-            await user_context_service.log_activity(
+            await user_context_service.log_event(
                 user_id=user_id,
                 event_type=EventType.SOCIAL_INTERACTION,
-                endpoint="/api/v1/stats-gallery/share-to-feed",
-                message=f"Shared stats to feed: {image_data['template_type']}",
-                metadata={
+                event_data={
+                    "endpoint": "/api/v1/stats-gallery/share-to-feed",
+                    "message": f"Shared stats to feed: {image_data['template_type']}",
                     "template_type": image_data["template_type"],
                     "image_id": image_id,
                     "activity_id": activity_result.data[0]["id"],

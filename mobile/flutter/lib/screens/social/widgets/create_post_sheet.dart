@@ -78,9 +78,9 @@ class _CreatePostSheetState extends ConsumerState<CreatePostSheet> {
     try {
       final XFile? image = await _imagePicker.pickImage(
         source: source,
-        maxWidth: 1920,
-        maxHeight: 1920,
-        imageQuality: 85,
+        maxWidth: 1080,
+        maxHeight: 1080,
+        imageQuality: 70,
       );
 
       if (image != null) {

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fl_chart/fl_chart.dart';
@@ -246,25 +247,7 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               child: Row(
                 children: [
-                  // Back button - floating circle
-                  GestureDetector(
-                    onTap: () => context.go('/home'),
-                    child: Container(
-                      width: 40,
-                      height: 40,
-                      decoration: BoxDecoration(
-                        color: glassSurface,
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Icon(
-                        Icons.arrow_back_ios_new_rounded,
-                        size: 18,
-                        color: accentColor,
-                      ),
-                    ),
-                  ),
-                  const Spacer(),
-                  // Date Navigation
+                  // Date Navigation (left-aligned)
                   GestureDetector(
                     onTap: () => _changeDate(-1),
                     child: Container(
@@ -328,18 +311,31 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
                       ),
                     ),
                   ),
-                  const SizedBox(width: 8),
-                  // Favorites - floating circle
+                  const Spacer(),
+                  // Saved Foods - labeled pill for discoverability
                   GestureDetector(
                     onTap: () => _showFavoritesSheet(isDark),
                     child: Container(
-                      width: 32,
-                      height: 32,
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                       decoration: BoxDecoration(
                         color: glassSurface,
                         borderRadius: BorderRadius.circular(16),
                       ),
-                      child: Icon(Icons.star_outline, size: 18, color: AppColors.yellow),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.bookmark_outline, size: 16, color: AppColors.yellow),
+                          const SizedBox(width: 4),
+                          Text(
+                            'Saved',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: textSecondary,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                   const SizedBox(width: 8),
@@ -417,6 +413,7 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
                             onRefresh: _loadData,
                             onLogMeal: (mealType) => _showLogMealSheet(isDark, mealType: mealType),
                             onDeleteMeal: (id) => _deleteMeal(id),
+                            onCopyMeal: (id, mealType) => _copyMeal(id, mealType),
                             onSwitchToNutrientsTab: () => _tabController.animateTo(1), // Switch to Nutrients tab (index 1)
                             onSwitchToHydrationTab: () => _tabController.animateTo(3), // Switch to Hydration tab (index 3)
                             isDark: isDark,
@@ -560,154 +557,23 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
 
 
   /// Show favorites/saved foods sheet
-  void _showFavoritesSheet(bool isDark) async {
-    if (_userId == null || _userId!.isEmpty) {
-      debugPrint('Cannot show FavoritesSheet: userId is null or empty');
-      return;
-    }
+  void _showFavoritesSheet(bool isDark) {
+    if (_userId == null || _userId!.isEmpty) return;
 
-    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
-    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    final teal = isDark ? AppColors.teal : AppColorsLight.teal;
-
-    // Load saved foods
-    final repository = ref.read(nutritionRepositoryProvider);
-    List<SavedFood> savedFoods = [];
-    try {
-      final response = await repository.getSavedFoods(userId: _userId!, limit: 50);
-      savedFoods = response.items;
-    } catch (e) {
-      debugPrint('Error loading saved foods: $e');
-    }
-
-    if (!mounted) return;
-
-    // Hide nav bar while sheet is open
     ref.read(floatingNavBarVisibleProvider.notifier).state = false;
 
     showGlassSheet(
       context: context,
       builder: (context) => GlassSheet(
         showHandle: false,
-        child: DraggableScrollableSheet(
-          initialChildSize: 0.6,
-          minChildSize: 0.4,
-          maxChildSize: 0.9,
-          expand: false,
-          builder: (context, scrollController) => Column(
-            children: [
-              const SizedBox(height: 12),
-              Padding(
-                padding: const EdgeInsets.all(16),
-                child: Row(
-                  children: [
-                    Icon(Icons.star, color: AppColors.yellow, size: 24),
-                    const SizedBox(width: 12),
-                    Text(
-                      'Saved Foods',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: textPrimary,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Expanded(
-                child: savedFoods.isEmpty
-                    ? Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(Icons.star_border, size: 48, color: textMuted),
-                            const SizedBox(height: 12),
-                            Text(
-                              'No saved foods yet',
-                              style: TextStyle(
-                                fontSize: 14,
-                                color: textMuted,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              'Star foods when logging to save them',
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: textMuted.withValues(alpha: 0.7),
-                              ),
-                            ),
-                          ],
-                        ),
-                      )
-                    : ListView.builder(
-                        controller: scrollController,
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                        itemCount: savedFoods.length,
-                        itemBuilder: (context, index) {
-                          final food = savedFoods[index];
-                          return ListTile(
-                            contentPadding: EdgeInsets.zero,
-                            leading: Container(
-                              width: 40,
-                              height: 40,
-                              decoration: BoxDecoration(
-                                color: teal.withValues(alpha: 0.1),
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: Icon(Icons.restaurant, color: teal, size: 20),
-                            ),
-                            title: Text(
-                              food.name,
-                              style: TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w500,
-                                color: textPrimary,
-                              ),
-                            ),
-                            subtitle: Text(
-                              '${food.totalCalories ?? 0} kcal • P: ${food.totalProteinG?.toInt() ?? 0}g',
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: textMuted,
-                              ),
-                            ),
-                            trailing: IconButton(
-                              icon: Icon(Icons.add_circle, color: teal),
-                              onPressed: () async {
-                                Navigator.pop(context);
-                                // Log the saved food
-                                try {
-                                  await repository.relogSavedFood(
-                                    userId: _userId!,
-                                    savedFoodId: food.id,
-                                    mealType: _getSuggestedMealType(),
-                                  );
-                                  _loadData();
-                                  if (mounted) {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
-                                        content: Text('Logged ${food.name}'),
-                                        backgroundColor: teal,
-                                      ),
-                                    );
-                                  }
-                                } catch (e) {
-                                  if (mounted) {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(content: Text('Failed to log: $e')),
-                                    );
-                                  }
-                                }
-                              },
-                            ),
-                          );
-                        },
-                      ),
-              ),
-            ],
-          ),
+        child: _SavedFoodsFilterSheet(
+          userId: _userId!,
+          repository: ref.read(nutritionRepositoryProvider),
+          isDark: isDark,
+          onFoodLogged: () {
+            _loadData();
+          },
+          getSuggestedMealType: _getSuggestedMealType,
         ),
       ),
     ).whenComplete(() {
@@ -802,6 +668,35 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
   Future<void> _deleteMeal(String mealId) async {
     if (_userId == null) return;
     await ref.read(nutritionProvider.notifier).deleteLog(_userId!, mealId);
+  }
+
+  Future<void> _copyMeal(String mealId, String targetMealType) async {
+    if (_userId == null) return;
+    try {
+      final repository = ref.read(nutritionRepositoryProvider);
+      await repository.copyFoodLog(logId: mealId, mealType: targetMealType);
+      // Refresh data to show the copied meal
+      _loadData();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Copied to ${targetMealType[0].toUpperCase()}${targetMealType.substring(1)}'),
+            behavior: SnackBarBehavior.floating,
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
+    } catch (e) {
+      debugPrint('Error copying meal: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Failed to copy meal'),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    }
   }
 
   void _showTargetsSettings(BuildContext context, bool isDark) {
@@ -958,6 +853,7 @@ class _DailyTab extends ConsumerStatefulWidget {
   final VoidCallback onRefresh;
   final void Function(String? mealType) onLogMeal;
   final void Function(String) onDeleteMeal;
+  final void Function(String mealId, String targetMealType) onCopyMeal;
   final VoidCallback? onSwitchToNutrientsTab;
   final VoidCallback? onSwitchToHydrationTab;
   final bool isDark;
@@ -971,6 +867,7 @@ class _DailyTab extends ConsumerStatefulWidget {
     required this.onRefresh,
     required this.onLogMeal,
     required this.onDeleteMeal,
+    required this.onCopyMeal,
     this.onSwitchToNutrientsTab,
     this.onSwitchToHydrationTab,
     required this.isDark,
@@ -1454,6 +1351,7 @@ class _DailyTabState extends ConsumerState<_DailyTab> {
                   _LoggedMealsSection(
                     meals: widget.summary?.meals ?? [],
                     onDeleteMeal: widget.onDeleteMeal,
+                    onCopyMeal: widget.onCopyMeal,
                     isDark: widget.isDark,
                     userId: widget.userId,
                     onFoodSaved: _loadFavorites,
@@ -1462,7 +1360,7 @@ class _DailyTabState extends ConsumerState<_DailyTab> {
                 ],
 
 
-                const SizedBox(height: 80),
+                const SizedBox(height: 100), // FAB clearance
               ],
             ),
           ),
@@ -1655,6 +1553,7 @@ class _MealQuickAddChip extends StatelessWidget {
 class _LoggedMealsSection extends StatelessWidget {
   final List<FoodLog> meals;
   final void Function(String) onDeleteMeal;
+  final void Function(String mealId, String targetMealType) onCopyMeal;
   final bool isDark;
   final String userId;
   final VoidCallback onFoodSaved;
@@ -1662,6 +1561,7 @@ class _LoggedMealsSection extends StatelessWidget {
   const _LoggedMealsSection({
     required this.meals,
     required this.onDeleteMeal,
+    required this.onCopyMeal,
     required this.isDark,
     required this.userId,
     required this.onFoodSaved,
@@ -1765,10 +1665,28 @@ class _LoggedMealsSection extends StatelessWidget {
                       ),
                     ),
                     confirmDismiss: (direction) async {
-                      // Show confirmation snackbar with undo option
-                      return true;
+                      final messenger = ScaffoldMessenger.of(context);
+                      bool undone = false;
+                      messenger.clearSnackBars();
+                      messenger.showSnackBar(
+                        SnackBar(
+                          content: const Text('Meal deleted'),
+                          action: SnackBarAction(
+                            label: 'Undo',
+                            onPressed: () {
+                              undone = true;
+                            },
+                          ),
+                          duration: const Duration(seconds: 4),
+                        ),
+                      );
+                      // Wait for snackbar to finish
+                      await Future.delayed(const Duration(seconds: 4));
+                      if (!undone) {
+                        onDeleteMeal(meal.id);
+                      }
+                      return !undone;
                     },
-                    onDismissed: (_) => onDeleteMeal(meal.id),
                     child: InkWell(
                       onTap: () => _showMealDetails(context, meal),
                       borderRadius: BorderRadius.circular(8),
@@ -1881,6 +1799,11 @@ class _LoggedMealsSection extends StatelessWidget {
                     ),
                   ),
                   IconButton(
+                    onPressed: () => _copyMealTo(ctx, meal),
+                    icon: Icon(Icons.content_copy, color: teal, size: 20),
+                    tooltip: 'Copy to...',
+                  ),
+                  IconButton(
                     onPressed: () {
                       Navigator.pop(ctx);
                       onDeleteMeal(meal.id);
@@ -1978,6 +1901,64 @@ class _LoggedMealsSection extends StatelessWidget {
             ),
             SizedBox(height: MediaQuery.of(context).padding.bottom),
           ],
+        ),
+      ),
+    );
+  }
+
+  void _copyMealTo(BuildContext sheetContext, FoodLog meal) {
+    final isDarkTheme = Theme.of(sheetContext).brightness == Brightness.dark;
+    final elevated = isDarkTheme ? AppColors.elevated : AppColorsLight.elevated;
+    final textPrimary = isDarkTheme ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final teal = isDarkTheme ? AppColors.teal : AppColorsLight.teal;
+
+    final mealTypes = [
+      {'id': 'breakfast', 'label': 'Breakfast', 'emoji': '\u{1F373}'},
+      {'id': 'lunch', 'label': 'Lunch', 'emoji': '\u{2600}\u{FE0F}'},
+      {'id': 'dinner', 'label': 'Dinner', 'emoji': '\u{1F319}'},
+      {'id': 'snack', 'label': 'Snack', 'emoji': '\u{1F34E}'},
+    ];
+
+    showGlassSheet(
+      context: sheetContext,
+      builder: (ctx) => GlassSheet(
+        child: Padding(
+          padding: EdgeInsets.only(
+            left: 16, right: 16, top: 16,
+            bottom: MediaQuery.of(ctx).padding.bottom + 16,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Copy to...',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: textPrimary,
+                ),
+              ),
+              const SizedBox(height: 12),
+              ...mealTypes.map((type) => ListTile(
+                leading: Text(type['emoji']!, style: const TextStyle(fontSize: 20)),
+                title: Text(
+                  type['label']!,
+                  style: TextStyle(color: textPrimary, fontWeight: FontWeight.w500),
+                ),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                tileColor: meal.mealType == type['id'] ? teal.withOpacity(0.1) : null,
+                trailing: meal.mealType == type['id']
+                    ? Text('Current', style: TextStyle(fontSize: 12, color: teal))
+                    : null,
+                onTap: () {
+                  Navigator.pop(ctx);       // close picker
+                  Navigator.pop(sheetContext); // close meal details
+                  onCopyMeal(meal.id, type['id']!);
+                },
+              )),
+            ],
+          ),
         ),
       ),
     );
@@ -5731,6 +5712,419 @@ class _MiniWeightChart extends StatelessWidget {
               },
             ),
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class _SavedFoodsFilterSheet extends StatefulWidget {
+  final String userId;
+  final NutritionRepository repository;
+  final bool isDark;
+  final VoidCallback onFoodLogged;
+  final String Function() getSuggestedMealType;
+
+  const _SavedFoodsFilterSheet({
+    required this.userId,
+    required this.repository,
+    required this.isDark,
+    required this.onFoodLogged,
+    required this.getSuggestedMealType,
+  });
+
+  @override
+  State<_SavedFoodsFilterSheet> createState() => _SavedFoodsFilterSheetState();
+}
+
+class _SavedFoodsFilterSheetState extends State<_SavedFoodsFilterSheet> {
+  List<SavedFood> _foods = [];
+  bool _isLoading = true;
+  String _searchQuery = '';
+  String _activeFilter = 'all';
+  String _sortBy = 'times_logged';
+  String _sortOrder = 'desc';
+  Timer? _debounceTimer;
+  final _searchController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchFoods();
+  }
+
+  @override
+  void dispose() {
+    _debounceTimer?.cancel();
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _fetchFoods() async {
+    setState(() => _isLoading = true);
+    try {
+      double? minProteinG;
+      int? maxCalories;
+      String? sourceType;
+
+      if (_activeFilter == 'high_protein') minProteinG = 20;
+      if (_activeFilter == 'low_cal') maxCalories = 300;
+      if (_activeFilter == 'text') sourceType = 'text';
+      if (_activeFilter == 'barcode') sourceType = 'barcode';
+
+      final response = await widget.repository.getSavedFoods(
+        userId: widget.userId,
+        limit: 50,
+        search: _searchQuery.isNotEmpty ? _searchQuery : null,
+        sortBy: _sortBy,
+        sortOrder: _sortOrder,
+        minProteinG: minProteinG,
+        maxCalories: maxCalories,
+        sourceType: sourceType,
+      );
+      if (mounted) {
+        setState(() {
+          _foods = response.items;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _foods = [];
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
+  void _onSearchChanged(String value) {
+    _debounceTimer?.cancel();
+    _debounceTimer = Timer(const Duration(milliseconds: 300), () {
+      setState(() => _searchQuery = value);
+      _fetchFoods();
+    });
+  }
+
+  void _setFilter(String filter) {
+    if (_activeFilter == filter) return;
+    setState(() => _activeFilter = filter);
+    _fetchFoods();
+  }
+
+  void _setSort(String sortBy) {
+    setState(() {
+      if (_sortBy == sortBy) {
+        _sortOrder = _sortOrder == 'desc' ? 'asc' : 'desc';
+      } else {
+        _sortBy = sortBy;
+        _sortOrder = sortBy == 'name' ? 'asc' : 'desc';
+      }
+    });
+    _fetchFoods();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final elevated = widget.isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final textPrimary = widget.isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textMuted = widget.isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final teal = widget.isDark ? AppColors.teal : AppColorsLight.teal;
+    final surface = widget.isDark ? AppColors.surface : AppColorsLight.surface;
+
+    return DraggableScrollableSheet(
+      initialChildSize: 0.85,
+      minChildSize: 0.5,
+      maxChildSize: 0.95,
+      expand: false,
+      builder: (context, scrollController) => Column(
+        children: [
+          const SizedBox(height: 12),
+          // Header row
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Row(
+              children: [
+                Icon(Icons.bookmark, color: teal, size: 22),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    'Saved Foods',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: textPrimary,
+                    ),
+                  ),
+                ),
+                IconButton(
+                  icon: Icon(Icons.close, color: textMuted, size: 20),
+                  onPressed: () => Navigator.pop(context),
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 12),
+          // Search field
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: TextField(
+              controller: _searchController,
+              onChanged: _onSearchChanged,
+              style: TextStyle(color: textPrimary, fontSize: 14),
+              decoration: InputDecoration(
+                hintText: 'Search saved foods...',
+                hintStyle: TextStyle(color: textMuted, fontSize: 14),
+                prefixIcon: Icon(Icons.search, color: textMuted, size: 20),
+                suffixIcon: _searchController.text.isNotEmpty
+                    ? IconButton(
+                        icon: Icon(Icons.clear, color: textMuted, size: 18),
+                        onPressed: () {
+                          _searchController.clear();
+                          _onSearchChanged('');
+                        },
+                      )
+                    : null,
+                filled: true,
+                fillColor: elevated,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide.none,
+                ),
+                contentPadding: const EdgeInsets.symmetric(vertical: 10),
+              ),
+            ),
+          ),
+          const SizedBox(height: 10),
+          // Filter chips
+          SizedBox(
+            height: 36,
+            child: ListView(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              children: [
+                _buildFilterChip('all', 'All', teal, textMuted),
+                const SizedBox(width: 8),
+                _buildFilterChip('high_protein', 'High Protein', teal, textMuted),
+                const SizedBox(width: 8),
+                _buildFilterChip('low_cal', 'Low Cal', teal, textMuted),
+                const SizedBox(width: 8),
+                _buildFilterChip('text', 'Text', teal, textMuted),
+                const SizedBox(width: 8),
+                _buildFilterChip('barcode', 'Barcode', teal, textMuted),
+              ],
+            ),
+          ),
+          const SizedBox(height: 8),
+          // Sort chips
+          SizedBox(
+            height: 36,
+            child: ListView(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              children: [
+                _buildSortChip('times_logged', 'Most Used', teal, textMuted),
+                const SizedBox(width: 8),
+                _buildSortChip('total_protein_g', 'Protein', teal, textMuted),
+                const SizedBox(width: 8),
+                _buildSortChip('total_calories', 'Calories', teal, textMuted),
+                const SizedBox(width: 8),
+                _buildSortChip('name', 'Name', teal, textMuted),
+              ],
+            ),
+          ),
+          const SizedBox(height: 8),
+          // Food list
+          Expanded(
+            child: _isLoading
+                ? Center(child: CircularProgressIndicator(color: teal))
+                : _foods.isEmpty
+                    ? Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.bookmark_border, size: 48, color: textMuted),
+                            const SizedBox(height: 12),
+                            Text(
+                              'No saved foods found',
+                              style: TextStyle(fontSize: 14, color: textMuted),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              'Save foods when logging meals',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: textMuted.withValues(alpha: 0.7),
+                              ),
+                            ),
+                          ],
+                        ),
+                      )
+                    : ListView.builder(
+                        controller: scrollController,
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        itemCount: _foods.length,
+                        itemBuilder: (context, index) {
+                          final food = _foods[index];
+                          return Dismissible(
+                            key: Key(food.id),
+                            direction: DismissDirection.endToStart,
+                            background: Container(
+                              alignment: Alignment.centerRight,
+                              padding: const EdgeInsets.only(right: 20),
+                              decoration: BoxDecoration(
+                                color: Colors.red.withValues(alpha: 0.8),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: const Icon(Icons.delete, color: Colors.white),
+                            ),
+                            onDismissed: (_) async {
+                              setState(() => _foods.removeAt(index));
+                              try {
+                                await widget.repository.deleteSavedFood(
+                                  userId: widget.userId,
+                                  savedFoodId: food.id,
+                                );
+                              } catch (e) {
+                                if (mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(content: Text('Failed to delete: $e')),
+                                  );
+                                }
+                              }
+                            },
+                            child: Container(
+                              margin: const EdgeInsets.only(bottom: 8),
+                              decoration: BoxDecoration(
+                                color: surface,
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: ListTile(
+                                contentPadding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 4,
+                                ),
+                                leading: Container(
+                                  width: 40,
+                                  height: 40,
+                                  decoration: BoxDecoration(
+                                    color: teal.withValues(alpha: 0.15),
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  child: Icon(Icons.restaurant, color: teal, size: 20),
+                                ),
+                                title: Text(
+                                  food.name,
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w500,
+                                    color: textPrimary,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                                subtitle: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      '${food.totalCalories ?? 0} kcal · P:${food.totalProteinG?.toInt() ?? 0}g · C:${food.totalCarbsG?.toInt() ?? 0}g · F:${food.totalFatG?.toInt() ?? 0}g',
+                                      style: TextStyle(fontSize: 11, color: textMuted),
+                                    ),
+                                    if (food.timesLogged > 0)
+                                      Text(
+                                        'Logged ${food.timesLogged}x',
+                                        style: TextStyle(
+                                          fontSize: 11,
+                                          color: teal.withValues(alpha: 0.8),
+                                        ),
+                                      ),
+                                  ],
+                                ),
+                                trailing: IconButton(
+                                  icon: Icon(Icons.add_circle_outline, color: teal, size: 26),
+                                  onPressed: () async {
+                                    Navigator.pop(context);
+                                    try {
+                                      await widget.repository.relogSavedFood(
+                                        userId: widget.userId,
+                                        savedFoodId: food.id,
+                                        mealType: widget.getSuggestedMealType(),
+                                      );
+                                      widget.onFoodLogged();
+                                    } catch (e) {
+                                      debugPrint('Failed to relog saved food: $e');
+                                    }
+                                  },
+                                ),
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+          ),
+          SizedBox(height: MediaQuery.of(context).padding.bottom + 8),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFilterChip(String value, String label, Color teal, Color textMuted) {
+    final isSelected = _activeFilter == value;
+    return GestureDetector(
+      onTap: () => _setFilter(value),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+        decoration: BoxDecoration(
+          color: isSelected ? teal.withValues(alpha: 0.2) : Colors.transparent,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: isSelected ? teal : textMuted.withValues(alpha: 0.3),
+          ),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: 12,
+            color: isSelected ? teal : textMuted,
+            fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSortChip(String value, String label, Color teal, Color textMuted) {
+    final isSelected = _sortBy == value;
+    final icon = _sortOrder == 'asc' ? Icons.arrow_upward : Icons.arrow_downward;
+    return GestureDetector(
+      onTap: () => _setSort(value),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        decoration: BoxDecoration(
+          color: isSelected ? teal.withValues(alpha: 0.15) : Colors.transparent,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: isSelected ? teal : textMuted.withValues(alpha: 0.3),
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 12,
+                color: isSelected ? teal : textMuted,
+                fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+              ),
+            ),
+            if (isSelected) ...[
+              const SizedBox(width: 4),
+              Icon(icon, size: 12, color: teal),
+            ],
+          ],
         ),
       ),
     );

@@ -688,15 +688,13 @@ class _HeroWorkoutCardState extends ConsumerState<HeroWorkoutCard> {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final workout = widget.workout;
-    final dateLabel = _getScheduledDateLabel(workout.scheduledDate);
-    final isToday = dateLabel == 'TODAY';
 
     // Get accent color from provider
     final accentColorEnum = ref.watch(accentColorProvider);
     final accentColor = accentColorEnum.getColor(isDark);
 
     final cardContent = Container(
-      height: 440,
+      height: 340,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(24),
         border: Border.all(color: accentColor.withValues(alpha: 0.5), width: 2),
@@ -733,98 +731,36 @@ class _HeroWorkoutCardState extends ConsumerState<HeroWorkoutCard> {
 
             // Content
             Padding(
-              padding: const EdgeInsets.all(20),
+              padding: const EdgeInsets.all(16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Top row: Day badge and menu
+                  // Top row: Menu button only (date context provided by week strip)
                   Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    mainAxisAlignment: MainAxisAlignment.end,
                     children: [
-                      // Day badge (Today, Tomorrow, Tuesday, etc.)
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 14,
-                          vertical: 8,
-                        ),
-                        decoration: BoxDecoration(
-                          color: accentColor,
-                          borderRadius: BorderRadius.circular(12),
-                          boxShadow: [
-                            BoxShadow(
-                              color: accentColor.withValues(alpha: 0.4),
-                              blurRadius: 8,
-                              offset: const Offset(0, 2),
-                            ),
-                          ],
-                        ),
-                        child: Text(
-                          dateLabel,
-                          style: TextStyle(
-                            color: isDark ? Colors.black : Colors.white,
-                            fontSize: 13,
-                            fontWeight: FontWeight.bold,
-                            letterSpacing: 0.5,
-                          ),
-                        ),
-                      ),
-                      // Right side: Schedule + Menu buttons
-                      Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          // Schedule button
-                          GestureDetector(
-                            onTap: () {
-                              HapticService.light();
-                              context.push('/schedule');
-                            },
-                            child: Container(
-                              width: 36,
-                              height: 36,
-                              margin: const EdgeInsets.only(right: 8),
-                              decoration: BoxDecoration(
-                                color: isDark
-                                    ? Colors.black.withValues(alpha: 0.4)
-                                    : Colors.white.withValues(alpha: 0.8),
-                                borderRadius: BorderRadius.circular(10),
-                                border: Border.all(
-                                  color: isDark
-                                      ? Colors.white.withValues(alpha: 0.1)
-                                      : Colors.black.withValues(alpha: 0.1),
-                                ),
-                              ),
-                              child: Icon(
-                                Icons.calendar_today_outlined,
-                                color: isDark ? Colors.white : Colors.black87,
-                                size: 18,
-                              ),
+                      GestureDetector(
+                        onTap: _showOptionsMenu,
+                        child: Container(
+                          width: 36,
+                          height: 36,
+                          decoration: BoxDecoration(
+                            color: isDark
+                                ? Colors.black.withValues(alpha: 0.4)
+                                : Colors.white.withValues(alpha: 0.8),
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(
+                              color: isDark
+                                  ? Colors.white.withValues(alpha: 0.1)
+                                  : Colors.black.withValues(alpha: 0.1),
                             ),
                           ),
-                          // Menu button
-                          GestureDetector(
-                            onTap: _showOptionsMenu,
-                            child: Container(
-                              width: 36,
-                              height: 36,
-                              decoration: BoxDecoration(
-                                color: isDark
-                                    ? Colors.black.withValues(alpha: 0.4)
-                                    : Colors.white.withValues(alpha: 0.8),
-                                borderRadius: BorderRadius.circular(10),
-                                border: Border.all(
-                                  color: isDark
-                                      ? Colors.white.withValues(alpha: 0.1)
-                                      : Colors.black.withValues(alpha: 0.1),
-                                ),
-                              ),
-                              child: Icon(
-                                Icons.more_horiz,
-                                color: isDark ? Colors.white : Colors.black87,
-                                size: 20,
-                              ),
-                            ),
+                          child: Icon(
+                            Icons.more_horiz,
+                            color: isDark ? Colors.white : Colors.black87,
+                            size: 20,
                           ),
-                        ],
+                        ),
                       ),
                     ],
                   ),
@@ -836,7 +772,7 @@ class _HeroWorkoutCardState extends ConsumerState<HeroWorkoutCard> {
                     workout.name ?? 'Workout',
                     style: TextStyle(
                       color: isDark ? Colors.white : Colors.black87,
-                      fontSize: 26,
+                      fontSize: 22,
                       fontWeight: FontWeight.bold,
                       height: 1.2,
                       shadows: isDark
@@ -898,7 +834,7 @@ class _HeroWorkoutCardState extends ConsumerState<HeroWorkoutCard> {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 12),
 
                   // Start button - full width
                   SizedBox(
@@ -953,7 +889,7 @@ class _HeroWorkoutCardState extends ConsumerState<HeroWorkoutCard> {
                         foregroundColor: isDark ? Colors.black : Colors.white,
                         padding: const EdgeInsets.symmetric(
                           horizontal: 28,
-                          vertical: 14,
+                          vertical: 12,
                         ),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(14),
@@ -963,7 +899,7 @@ class _HeroWorkoutCardState extends ConsumerState<HeroWorkoutCard> {
                       ),
                     ),
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 8),
 
                   // View Details and Regenerate row
                   Row(
@@ -976,7 +912,7 @@ class _HeroWorkoutCardState extends ConsumerState<HeroWorkoutCard> {
                             context.push('/workout/${workout.id}');
                           },
                           child: Container(
-                            padding: const EdgeInsets.symmetric(vertical: 10),
+                            padding: const EdgeInsets.symmetric(vertical: 8),
                             decoration: BoxDecoration(
                               color: isDark
                                   ? Colors.white.withValues(alpha: 0.1)
@@ -1020,7 +956,7 @@ class _HeroWorkoutCardState extends ConsumerState<HeroWorkoutCard> {
                         child: GestureDetector(
                           onTap: _regenerateWorkout,
                           child: Container(
-                            padding: const EdgeInsets.symmetric(vertical: 10),
+                            padding: const EdgeInsets.symmetric(vertical: 8),
                             decoration: BoxDecoration(
                               color: accentColor.withValues(alpha: 0.15),
                               borderRadius: BorderRadius.circular(10),
@@ -1078,21 +1014,21 @@ class _HeroWorkoutCardState extends ConsumerState<HeroWorkoutCard> {
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Container(
-                            width: 72,
-                            height: 72,
+                            width: 60,
+                            height: 60,
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
                               border: Border.all(color: AppColors.success, width: 3),
                               color: AppColors.success.withValues(alpha: 0.2),
                             ),
-                            child: const Icon(Icons.check, color: AppColors.success, size: 40),
+                            child: const Icon(Icons.check, color: AppColors.success, size: 34),
                           ),
-                          const SizedBox(height: 16),
+                          const SizedBox(height: 12),
                           Text(
                             'Workout Complete',
                             style: TextStyle(
                               color: isDark ? Colors.white : Colors.black87,
-                              fontSize: 22,
+                              fontSize: 20,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
@@ -1208,6 +1144,9 @@ class _HeroWorkoutCardState extends ConsumerState<HeroWorkoutCard> {
             imageUrl: _backgroundImageUrl!,
             fit: BoxFit.contain,
             alignment: Alignment.center,
+            // Perf fix 2.2: limit decoded image size in memory cache
+            memCacheWidth: 400,
+            memCacheHeight: 400,
             placeholder: (_, __) => const SizedBox.shrink(),
             errorWidget: (_, __, ___) => const SizedBox.shrink(),
           ),

@@ -25,33 +25,68 @@ logger = get_logger(__name__)
 
 
 # ============================================
+# In-memory cache for static achievement types (1-hour TTL)
+# ============================================
+_achievement_types_cache: Optional[dict] = None  # {"fetched_at": datetime, "all": [...], "by_category": {...}}
+_ACHIEVEMENT_CACHE_TTL = timedelta(hours=1)
+
+
+def _get_cached_types() -> Optional[dict]:
+    """Return cached achievement types if still valid."""
+    if _achievement_types_cache and (
+        datetime.utcnow() - _achievement_types_cache["fetched_at"] < _ACHIEVEMENT_CACHE_TTL
+    ):
+        return _achievement_types_cache
+    return None
+
+
+def _build_types_cache(rows: list) -> dict:
+    """Build the cache dict from raw DB rows."""
+    all_types = [
+        AchievementType(
+            id=a["id"],
+            name=a["name"],
+            description=a["description"],
+            category=a["category"],
+            icon=a["icon"],
+            tier=a["tier"],
+            points=a["points"],
+            threshold_value=a.get("threshold_value"),
+            threshold_unit=a.get("threshold_unit"),
+            is_repeatable=a.get("is_repeatable", False),
+        )
+        for a in rows
+    ]
+    by_category: dict = {}
+    for t in all_types:
+        by_category.setdefault(t.category, []).append(t)
+    return {"fetched_at": datetime.utcnow(), "all": all_types, "by_category": by_category}
+
+
+async def _ensure_types_cached() -> dict:
+    """Ensure achievement types are cached, fetching from DB if needed."""
+    global _achievement_types_cache
+    cached = _get_cached_types()
+    if cached:
+        return cached
+    db = get_supabase_db()
+    result = db.client.table("achievement_types").select("*").execute()
+    _achievement_types_cache = _build_types_cache(result.data or [])
+    return _achievement_types_cache
+
+
+# ============================================
 # Achievement Types Endpoints
 # ============================================
 
 @router.get("/types", response_model=List[AchievementType])
 async def get_all_achievement_types():
-    """Get all available achievement types."""
+    """Get all available achievement types (cached for 1 hour)."""
     logger.info("Getting all achievement types")
 
     try:
-        db = get_supabase_db()
-        result = db.client.table("achievement_types").select("*").execute()
-
-        return [
-            AchievementType(
-                id=a["id"],
-                name=a["name"],
-                description=a["description"],
-                category=a["category"],
-                icon=a["icon"],
-                tier=a["tier"],
-                points=a["points"],
-                threshold_value=a.get("threshold_value"),
-                threshold_unit=a.get("threshold_unit"),
-                is_repeatable=a.get("is_repeatable", False)
-            )
-            for a in result.data
-        ]
+        cache = await _ensure_types_cached()
+        return cache["all"]
 
     except Exception as e:
         logger.error(f"Failed to get achievement types: {e}")
@@ -60,30 +95,12 @@ async def get_all_achievement_types():
 
 @router.get("/types/category/{category}", response_model=List[AchievementType])
 async def get_achievements_by_category(category: str):
-    """Get achievement types by category."""
+    """Get achievement types by category (cached for 1 hour)."""
     logger.info(f"Getting achievements for category: {category}")
 
     try:
-        db = get_supabase_db()
-        result = db.client.table("achievement_types").select("*").eq(
-            "category", category
-        ).execute()
-
-        return [
-            AchievementType(
-                id=a["id"],
-                name=a["name"],
-                description=a["description"],
-                category=a["category"],
-                icon=a["icon"],
-                tier=a["tier"],
-                points=a["points"],
-                threshold_value=a.get("threshold_value"),
-                threshold_unit=a.get("threshold_unit"),
-                is_repeatable=a.get("is_repeatable", False)
-            )
-            for a in result.data
-        ]
+        cache = await _ensure_types_cached()
+        return cache["by_category"].get(category, [])
 
     except Exception as e:
         logger.error(f"Failed to get achievements by category: {e}")

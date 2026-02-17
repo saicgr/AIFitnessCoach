@@ -162,6 +162,9 @@ class _ExerciseImageState extends ConsumerState<ExerciseImage> {
     return CachedNetworkImage(
       imageUrl: _imageUrl!,
       fit: widget.fit,
+      // Perf fix 2.2: constrain decoded image size in memory cache
+      memCacheWidth: (widget.width * 2).toInt().clamp(100, 400),
+      memCacheHeight: (widget.height * 2).toInt().clamp(100, 400),
       placeholder: (_, __) => const Center(
         child: SizedBox(
           width: 20,

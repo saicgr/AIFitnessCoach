@@ -1,10 +1,10 @@
 """
 Chroma Cloud client for FitWiz.
-Uses Chroma Cloud v2 API with CloudClient.
+Uses a thin HTTP client against Chroma Cloud REST API v2.
 """
-import chromadb
 from typing import List, Dict, Optional
 
+from core.chroma_http_client import ChromaHTTPClient
 from core.config import get_settings
 
 
@@ -14,11 +14,12 @@ class ChromaCloudClient:
     def __init__(self):
         settings = get_settings()
 
-        # Initialize CloudClient for Chroma Cloud v2 API
-        self.client = chromadb.CloudClient(
+        # Initialize lightweight HTTP client for Chroma Cloud v2 API
+        self.client = ChromaHTTPClient(
             tenant=settings.chroma_tenant,
             database=settings.chroma_database,
             api_key=settings.chroma_cloud_api_key,
+            host=settings.chroma_cloud_host,
         )
         print(f"✅ Connected to Chroma Cloud (tenant: {settings.chroma_tenant}, database: {settings.chroma_database})")
 

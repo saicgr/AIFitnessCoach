@@ -64,7 +64,12 @@ class WorkoutDB(BaseDB):
         Returns:
             List of workout records
         """
-        query = self.client.table("workouts").select("*").eq("user_id", user_id)
+        query = self.client.table("workouts").select(
+            "id, user_id, name, type, difficulty, scheduled_date, is_completed, "
+            "exercises_json, duration_minutes, generation_method, is_current, "
+            "version_number, parent_workout_id, gym_profile_id, created_at, "
+            "estimated_duration_minutes, warmup_json, stretch_json"
+        ).eq("user_id", user_id)
 
         # Filter by gym profile if specified
         if gym_profile_id:
@@ -241,7 +246,12 @@ class WorkoutDB(BaseDB):
         """
         query = (
             self.client.table("workouts")
-            .select("*")
+            .select(
+                "id, user_id, name, type, difficulty, scheduled_date, is_completed, "
+                "exercises_json, duration_minutes, generation_method, is_current, "
+                "version_number, parent_workout_id, gym_profile_id, created_at, "
+                "estimated_duration_minutes, warmup_json, stretch_json"
+            )
             .eq("user_id", user_id)
             .eq("is_current", True)
         )
@@ -448,7 +458,11 @@ class WorkoutDB(BaseDB):
         """
         result = (
             self.client.table("workout_logs")
-            .select("*")
+            .select(
+                "id, user_id, workout_id, completed_at, duration_seconds, "
+                "exercises_completed, total_sets, total_reps, total_volume_kg, "
+                "calories_burned, performance_rating, notes"
+            )
             .eq("user_id", user_id)
             .order("completed_at", desc=True)
             .limit(limit)
@@ -514,7 +528,9 @@ class WorkoutDB(BaseDB):
         Returns:
             List of workout change records
         """
-        query = self.client.table("workout_changes").select("*")
+        query = self.client.table("workout_changes").select(
+            "id, workout_id, user_id, change_type, change_details, created_at"
+        )
 
         if workout_id:
             query = query.eq("workout_id", workout_id)

@@ -6,6 +6,7 @@ import '../../data/models/skill_progression.dart';
 import '../../data/providers/skill_progression_provider.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../../data/services/haptic_service.dart';
+import '../../widgets/glass_back_button.dart';
 import '../../widgets/segmented_tab_bar.dart';
 import 'widgets/progression_chain_card.dart';
 import 'widgets/category_filter_chips.dart';
@@ -101,18 +102,11 @@ class _SkillProgressionsScreenState
       child: Row(
         children: [
           // Back button
-          IconButton(
-            onPressed: () {
+          GlassBackButton(
+            onTap: () {
               HapticService.light();
               context.pop();
             },
-            icon: Icon(
-              Icons.arrow_back_ios,
-              color: textMuted,
-              size: 20,
-            ),
-            padding: EdgeInsets.zero,
-            constraints: const BoxConstraints(),
           ),
           const SizedBox(width: 12),
           // Title

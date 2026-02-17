@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import MarketingNav from '../components/marketing/MarketingNav';
+import MarketingFooter from '../components/marketing/MarketingFooter';
 
 const fadeUp = {
   hidden: { opacity: 0, y: 20 },
@@ -253,48 +254,12 @@ export default function Store() {
   void _removeFromCart;
 
   return (
-    <div className="min-h-screen bg-black text-white">
+    <div className="min-h-screen bg-[var(--color-background)] text-[var(--color-text)]">
       {/* Navigation */}
-      <nav className="fixed top-0 left-0 right-0 z-50 bg-black/80 backdrop-blur-xl backdrop-saturate-150 border-b border-white/[0.04]">
-        <div className="max-w-[1200px] mx-auto px-6 lg:px-4">
-          <div className="flex items-center justify-between h-12">
-            <Link to="/" className="text-[21px] font-semibold tracking-[-0.01em] text-white/90 hover:text-white transition-colors">
-              FitWiz
-            </Link>
-
-            <div className="hidden md:flex items-center gap-7">
-              <Link to="/" className="text-xs text-white/80 hover:text-white transition-colors">
-                Home
-              </Link>
-              <Link to="/features" className="text-xs text-white/80 hover:text-white transition-colors">
-                Features
-              </Link>
-              <Link to="/pricing" className="text-xs text-white/80 hover:text-white transition-colors">
-                Pricing
-              </Link>
-              <Link to="/store" className="text-xs text-emerald-400 transition-colors">
-                Store
-              </Link>
-              <Link to="/login" className="text-xs text-white/80 hover:text-white transition-colors">
-                Sign In
-              </Link>
-              {/* Cart Button */}
-              <button className="relative text-xs px-4 py-1.5 bg-emerald-500 text-white rounded-full hover:bg-emerald-400 transition-colors flex items-center gap-2">
-                <span>🛒</span>
-                <span>${cartTotal.toFixed(2)}</span>
-                {cartCount > 0 && (
-                  <span className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-lime-400 text-black text-[10px] font-bold rounded-full flex items-center justify-center">
-                    {cartCount}
-                  </span>
-                )}
-              </button>
-            </div>
-          </div>
-        </div>
-      </nav>
+      <MarketingNav />
 
       {/* Hero Section */}
-      <section className="pt-24 pb-12 px-6">
+      <section className="pt-28 pb-12 px-6">
         <div className="max-w-[980px] mx-auto text-center">
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
@@ -309,6 +274,7 @@ export default function Store() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             className="text-[40px] sm:text-[56px] font-semibold tracking-[-0.02em] mb-4"
+            style={{ fontFamily: 'var(--font-heading)' }}
           >
             Gear up for greatness
           </motion.h1>
@@ -316,7 +282,7 @@ export default function Store() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
-            className="text-[17px] sm:text-[21px] text-[#86868b] max-w-[600px] mx-auto mb-8"
+            className="text-[17px] sm:text-[21px] text-[var(--color-text-secondary)] max-w-[600px] mx-auto mb-8"
           >
             Premium apparel, accessories, and supplements to fuel your fitness journey.
           </motion.p>
@@ -335,7 +301,7 @@ export default function Store() {
                 className={`px-4 py-2 rounded-full text-sm font-medium transition-all flex items-center gap-2 ${
                   selectedCategory === cat.id
                     ? 'bg-emerald-500 text-white'
-                    : 'bg-[#1d1d1f] text-white/60 hover:text-white border border-white/10'
+                    : 'bg-[var(--color-surface)] text-[var(--color-text-secondary)] hover:text-[var(--color-text)] border border-[var(--color-border)]'
                 }`}
               >
                 <span>{cat.icon}</span>
@@ -358,8 +324,8 @@ export default function Store() {
             <motion.div
               key={product.id}
               variants={fadeUp}
-              className={`relative p-5 rounded-3xl bg-[#1d1d1f] border transition-all hover:border-white/20 ${
-                product.comingSoon ? 'opacity-75' : 'border-white/[0.05]'
+              className={`relative p-5 rounded-3xl bg-[var(--color-surface)] border transition-all hover:border-[var(--color-border)] ${
+                product.comingSoon ? 'opacity-75' : 'border-[var(--color-border)]'
               }`}
             >
               {product.badge && (
@@ -375,34 +341,34 @@ export default function Store() {
               )}
 
               {/* Product Image */}
-              <div className="w-full aspect-square rounded-2xl bg-gradient-to-br from-[#2d2d2f] to-[#1d1d1f] flex items-center justify-center mb-4">
+              <div className="w-full aspect-square rounded-2xl bg-gradient-to-br from-[var(--color-surface-elevated)] to-[var(--color-surface)] flex items-center justify-center mb-4">
                 <span className="text-6xl">{product.image}</span>
               </div>
 
               {/* Product Info */}
               <div className="space-y-2">
-                <h3 className="text-[17px] font-semibold text-white">{product.name}</h3>
-                <p className="text-[13px] text-[#86868b] line-clamp-2">{product.description}</p>
+                <h3 className="text-[17px] font-semibold text-[var(--color-text)]">{product.name}</h3>
+                <p className="text-[13px] text-[var(--color-text-secondary)] line-clamp-2">{product.description}</p>
 
                 {/* Rating */}
                 {product.rating && (
                   <div className="flex items-center gap-2">
                     <div className="flex items-center gap-0.5">
                       {[...Array(5)].map((_, i) => (
-                        <span key={i} className={`text-xs ${i < Math.floor(product.rating!) ? 'text-yellow-400' : 'text-white/20'}`}>
+                        <span key={i} className={`text-xs ${i < Math.floor(product.rating!) ? 'text-yellow-400' : 'text-[var(--color-text-muted)]'}`}>
                           ★
                         </span>
                       ))}
                     </div>
-                    <span className="text-[12px] text-[#86868b]">({product.reviews})</span>
+                    <span className="text-[12px] text-[var(--color-text-secondary)]">({product.reviews})</span>
                   </div>
                 )}
 
                 {/* Price */}
                 <div className="flex items-baseline gap-2">
-                  <span className="text-[21px] font-bold text-white">${product.price}</span>
+                  <span className="text-[21px] font-bold text-[var(--color-text)]">${product.price}</span>
                   {product.originalPrice && (
-                    <span className="text-[15px] text-[#86868b] line-through">${product.originalPrice}</span>
+                    <span className="text-[15px] text-[var(--color-text-secondary)] line-through">${product.originalPrice}</span>
                   )}
                 </div>
 
@@ -410,7 +376,7 @@ export default function Store() {
                 {product.comingSoon ? (
                   <button
                     disabled
-                    className="w-full py-3 rounded-xl bg-[#2d2d2f] text-white/50 text-[15px] font-medium cursor-not-allowed"
+                    className="w-full py-3 rounded-xl bg-[var(--color-surface-elevated)] text-[var(--color-text-muted)] text-[15px] font-medium cursor-not-allowed"
                   >
                     Coming Soon
                   </button>
@@ -424,7 +390,7 @@ export default function Store() {
                 ) : (
                   <button
                     disabled
-                    className="w-full py-3 rounded-xl bg-[#2d2d2f] text-white/50 text-[15px] font-medium cursor-not-allowed"
+                    className="w-full py-3 rounded-xl bg-[var(--color-surface-elevated)] text-[var(--color-text-muted)] text-[15px] font-medium cursor-not-allowed"
                   >
                     Out of Stock
                   </button>
@@ -444,10 +410,13 @@ export default function Store() {
             viewport={{ once: true }}
           >
             <span className="text-4xl mb-4 block">📱</span>
-            <h2 className="text-[32px] sm:text-[40px] font-semibold tracking-[-0.02em] mb-4">
+            <h2
+              className="text-[32px] sm:text-[40px] font-semibold tracking-[-0.02em] mb-4"
+              style={{ fontFamily: 'var(--font-heading)' }}
+            >
               Digital products, instant access
             </h2>
-            <p className="text-[17px] text-[#86868b] max-w-[600px] mx-auto mb-8">
+            <p className="text-[17px] text-[var(--color-text-secondary)] max-w-[600px] mx-auto mb-8">
               Download immediately after purchase. Lifetime access to all digital products.
             </p>
             <button
@@ -471,14 +440,14 @@ export default function Store() {
           >
             <span className="text-4xl mb-4 block">💪</span>
             <h3 className="text-[24px] font-semibold mb-2">FitWiz Supplements Coming Soon</h3>
-            <p className="text-[15px] text-[#86868b] max-w-[500px] mx-auto mb-6">
+            <p className="text-[15px] text-[var(--color-text-secondary)] max-w-[500px] mx-auto mb-6">
               Premium quality supplements formulated for athletes. Sign up to be notified when they launch.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
               <input
                 type="email"
                 placeholder="Enter your email"
-                className="w-full sm:w-80 px-4 py-3 rounded-xl bg-[#1d1d1f] border border-white/10 text-white placeholder-white/40 focus:outline-none focus:border-purple-500"
+                className="w-full sm:w-80 px-4 py-3 rounded-xl bg-[var(--color-surface)] border border-[var(--color-border)] text-[var(--color-text)] placeholder-[var(--color-text-muted)] focus:outline-none focus:border-purple-500"
               />
               <button className="w-full sm:w-auto px-6 py-3 bg-purple-500 text-white rounded-xl font-medium hover:bg-purple-400 transition-colors">
                 Notify Me
@@ -489,7 +458,7 @@ export default function Store() {
       </section>
 
       {/* Trust Badges */}
-      <section className="px-6 py-16 bg-[#0a0a0a]">
+      <section className="px-6 py-16 bg-[var(--color-surface-muted)]">
         <div className="max-w-[1000px] mx-auto">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
             {[
@@ -507,8 +476,8 @@ export default function Store() {
                 className="p-4"
               >
                 <span className="text-3xl mb-2 block">{badge.icon}</span>
-                <h4 className="text-[15px] font-semibold text-white mb-1">{badge.title}</h4>
-                <p className="text-[13px] text-[#86868b]">{badge.desc}</p>
+                <h4 className="text-[15px] font-semibold text-[var(--color-text)] mb-1">{badge.title}</h4>
+                <p className="text-[13px] text-[var(--color-text-secondary)]">{badge.desc}</p>
               </motion.div>
             ))}
           </div>
@@ -516,29 +485,7 @@ export default function Store() {
       </section>
 
       {/* Footer */}
-      <footer className="py-8 px-6 border-t border-[#424245]">
-        <div className="max-w-[1200px] mx-auto">
-          <div className="flex flex-col gap-6">
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 text-[12px] text-[#86868b]">
-              <p>Copyright {new Date().getFullYear()} FitWiz. All rights reserved.</p>
-              <div className="flex items-center gap-6">
-                <Link to="/" className="hover:text-[#f5f5f7] transition-colors">Home</Link>
-                <Link to="/features" className="hover:text-[#f5f5f7] transition-colors">Features</Link>
-                <Link to="/pricing" className="hover:text-[#f5f5f7] transition-colors">Pricing</Link>
-                <Link to="/store" className="hover:text-[#f5f5f7] transition-colors">Store</Link>
-                <Link to="/login" className="hover:text-[#f5f5f7] transition-colors">Sign In</Link>
-              </div>
-            </div>
-            <div className="flex items-center justify-center gap-6 text-[11px] text-[#6e6e73]">
-              <Link to="/terms" className="hover:text-[#86868b] transition-colors">Terms of Service</Link>
-              <span>•</span>
-              <Link to="/privacy" className="hover:text-[#86868b] transition-colors">Privacy Policy</Link>
-              <span>•</span>
-              <Link to="/refunds" className="hover:text-[#86868b] transition-colors">Refund Policy</Link>
-            </div>
-          </div>
-        </div>
-      </footer>
+      <MarketingFooter />
 
       {/* Floating Cart (Mobile) */}
       {cartCount > 0 && (

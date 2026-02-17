@@ -6,6 +6,7 @@ import '../../data/models/skill_progression.dart';
 import '../../data/providers/skill_progression_provider.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../../data/services/haptic_service.dart';
+import '../../widgets/glass_back_button.dart';
 import '../../widgets/glass_sheet.dart';
 import 'widgets/progression_step_card.dart';
 import 'widgets/practice_attempt_sheet.dart';
@@ -242,19 +243,12 @@ class _ChainDetailScreenState extends ConsumerState<ChainDetailScreen>
       padding: const EdgeInsets.all(16),
       child: Row(
         children: [
-          IconButton(
-            onPressed: () {
+          GlassBackButton(
+            onTap: () {
               HapticService.light();
               ref.read(skillProgressionProvider.notifier).clearSelectedChain();
               context.pop();
             },
-            icon: Icon(
-              Icons.arrow_back_ios,
-              color: textMuted,
-              size: 20,
-            ),
-            padding: EdgeInsets.zero,
-            constraints: const BoxConstraints(),
           ),
           const SizedBox(width: 12),
           Expanded(

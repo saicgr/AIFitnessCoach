@@ -133,7 +133,9 @@ class UserDB(BaseDB):
         Returns:
             List of injury records
         """
-        query = self.client.table("user_injuries").select("*").eq("user_id", user_id)
+        query = self.client.table("user_injuries").select(
+            "id, user_id, injury_type, body_part, severity, status, notes, created_at"
+        ).eq("user_id", user_id)
 
         if is_active is not None:
             if is_active:
@@ -205,7 +207,10 @@ class UserDB(BaseDB):
         Returns:
             List of injury history records
         """
-        query = self.client.table("injury_history").select("*").eq("user_id", user_id)
+        query = self.client.table("injury_history").select(
+            "id, user_id, injury_type, body_part, severity, is_active, "
+            "reported_at, resolved_at, notes"
+        ).eq("user_id", user_id)
 
         if is_active is not None:
             query = query.eq("is_active", is_active)
@@ -225,7 +230,10 @@ class UserDB(BaseDB):
         """
         result = (
             self.client.table("injury_history")
-            .select("*")
+            .select(
+                "id, user_id, injury_type, body_part, severity, is_active, "
+                "reported_at, resolved_at, notes"
+            )
             .eq("user_id", user_id)
             .eq("is_active", True)
             .order("reported_at", desc=True)
@@ -276,7 +284,10 @@ class UserDB(BaseDB):
         """
         result = (
             self.client.table("user_metrics")
-            .select("*")
+            .select(
+                "id, user_id, weight_kg, body_fat_pct, muscle_mass_kg, "
+                "bmi, recorded_at"
+            )
             .eq("user_id", user_id)
             .order("recorded_at", desc=True)
             .limit(limit)
@@ -309,7 +320,10 @@ class UserDB(BaseDB):
         """
         result = (
             self.client.table("user_metrics")
-            .select("*")
+            .select(
+                "id, user_id, weight_kg, body_fat_pct, muscle_mass_kg, "
+                "bmi, recorded_at"
+            )
             .eq("user_id", user_id)
             .order("recorded_at", desc=True)
             .limit(1)
@@ -367,7 +381,7 @@ class UserDB(BaseDB):
         """
         result = (
             self.client.table("chat_history")
-            .select("*")
+            .select("id, user_id, role, content, intent, timestamp")
             .eq("user_id", user_id)
             .order("timestamp", desc=False)
             .limit(limit)

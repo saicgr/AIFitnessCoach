@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/providers/window_mode_provider.dart';
 import '../../data/models/coach_persona.dart';
@@ -21,6 +22,7 @@ import 'widgets/coach_profile_card.dart';
 import 'widgets/custom_coach_form.dart';
 import 'widgets/foldable_quiz_scaffold.dart';
 import '../../data/models/ai_profile_payload.dart';
+import '../../widgets/glass_back_button.dart';
 
 /// Coach Selection Screen - Choose your AI coach persona before onboarding
 /// Also used for changing coach from AI settings (with fromSettings=true)
@@ -230,6 +232,10 @@ class _CoachSelectionScreenState extends ConsumerState<CoachSelectionScreen> {
             'onboarding_completed': true,
           },
         );
+
+        // Also set in SharedPreferences so local notification scheduling works
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setBool('onboarding_completed', true);
 
         debugPrint('✅ [CoachSelection] User preferences submitted successfully');
 
@@ -897,22 +903,7 @@ class _CoachSelectionScreenState extends ConsumerState<CoachSelectionScreen> {
           children: [
             // Back button when coming from settings
             if (widget.fromSettings) ...[
-              GestureDetector(
-                onTap: () => context.pop(),
-                child: Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    color: orange.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: const Icon(
-                    Icons.arrow_back,
-                    color: orange,
-                    size: 20,
-                  ),
-                ),
-              ),
+              GlassBackButton(onTap: () => context.pop()),
               const SizedBox(width: 12),
             ] else ...[
               Container(

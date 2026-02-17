@@ -167,7 +167,7 @@ class NutritionDB(BaseDB):
         Returns:
             Food log record or None
         """
-        result = self.client.table("food_logs").select("*").eq("id", log_id).execute()
+        result = self.client.table("food_logs").select("*").eq("id", log_id).is_("deleted_at", "null").execute()
         return result.data[0] if result.data else None
 
     def list_food_logs(
@@ -191,7 +191,11 @@ class NutritionDB(BaseDB):
         Returns:
             List of food log records
         """
-        query = self.client.table("food_logs").select("*").eq("user_id", user_id)
+        query = self.client.table("food_logs").select(
+            "id, user_id, meal_type, food_items, total_calories, protein_g, "
+            "carbs_g, fat_g, fiber_g, ai_feedback, health_score, logged_at, "
+            "source_type, image_url"
+        ).eq("user_id", user_id).is_("deleted_at", "null")
 
         if from_date:
             query = query.gte("logged_at", from_date)
@@ -205,7 +209,9 @@ class NutritionDB(BaseDB):
 
     def delete_food_log(self, log_id: str) -> bool:
         """
-        Delete a food log entry.
+        Soft-delete a food log entry (SCD2 pattern).
+
+        Sets deleted_at timestamp instead of removing the row.
 
         Args:
             log_id: Food log UUID
@@ -213,7 +219,10 @@ class NutritionDB(BaseDB):
         Returns:
             True on success
         """
-        self.client.table("food_logs").delete().eq("id", log_id).execute()
+        self.client.table("food_logs") \
+            .update({"deleted_at": datetime.utcnow().isoformat()}) \
+            .eq("id", log_id) \
+            .execute()
         return True
 
     def delete_food_logs_by_user(self, user_id: str) -> bool:
@@ -437,7 +446,9 @@ class NutritionDB(BaseDB):
         Returns:
             List of weight log records ordered by date (newest first)
         """
-        query = self.client.table("weight_logs").select("*").eq("user_id", user_id)
+        query = self.client.table("weight_logs").select(
+            "id, user_id, weight_kg, logged_at, source, notes"
+        ).eq("user_id", user_id)
 
         if from_date:
             query = query.gte("logged_at", from_date)

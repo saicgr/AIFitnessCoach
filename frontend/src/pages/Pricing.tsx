@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, useInView } from 'framer-motion';
+import MarketingNav from '../components/marketing/MarketingNav';
+import MarketingFooter from '../components/marketing/MarketingFooter';
 
 const fadeUp = {
   hidden: { opacity: 0, y: 20 },
@@ -197,7 +199,7 @@ const CheckIcon = () => (
 );
 
 const XIcon = () => (
-  <svg className="w-4 h-4 text-white/20 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+  <svg className="w-4 h-4 text-[var(--color-text-muted)] flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
   </svg>
 );
@@ -214,46 +216,18 @@ export default function Pricing() {
   const featureCount = useCounter(1000, 2000, statsInView);
 
   return (
-    <div className="min-h-screen bg-black text-white">
+    <div className="min-h-screen bg-[var(--color-background)] text-[var(--color-text)]">
       {/* Navigation */}
-      <nav className="fixed top-0 left-0 right-0 z-50 bg-black/80 backdrop-blur-xl backdrop-saturate-150 border-b border-white/[0.04]">
-        <div className="max-w-[1200px] mx-auto px-6 lg:px-4">
-          <div className="flex items-center justify-between h-12">
-            <Link to="/" className="text-[21px] font-semibold tracking-[-0.01em] text-white/90 hover:text-white transition-colors">
-              FitWiz
-            </Link>
-
-            <div className="hidden md:flex items-center gap-7">
-              <Link to="/" className="text-xs text-white/80 hover:text-white transition-colors">
-                Home
-              </Link>
-              <Link to="/features" className="text-xs text-white/80 hover:text-white transition-colors">
-                Features
-              </Link>
-              <Link to="/pricing" className="text-xs text-emerald-400 transition-colors">
-                Pricing
-              </Link>
-              <Link to="/store" className="text-xs text-white/80 hover:text-white transition-colors">
-                Store
-              </Link>
-              <Link to="/login" className="text-xs text-white/80 hover:text-white transition-colors">
-                Sign In
-              </Link>
-              <Link to="/login" className="text-xs px-4 py-1.5 bg-emerald-500 text-white rounded-full hover:bg-emerald-400 transition-colors">
-                Get Started
-              </Link>
-            </div>
-          </div>
-        </div>
-      </nav>
+      <MarketingNav />
 
       {/* Hero Section */}
-      <section className="pt-24 pb-12 px-6">
+      <section className="pt-28 pb-12 px-6">
         <div className="max-w-[980px] mx-auto text-center">
           <motion.h1
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             className="text-[40px] sm:text-[56px] font-semibold tracking-[-0.02em] mb-4"
+            style={{ fontFamily: 'var(--font-heading)' }}
           >
             Simple, transparent pricing
           </motion.h1>
@@ -261,7 +235,7 @@ export default function Pricing() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
-            className="text-[17px] sm:text-[21px] text-[#86868b] max-w-[600px] mx-auto mb-8"
+            className="text-[17px] sm:text-[21px] text-[var(--color-text-secondary)] max-w-[600px] mx-auto mb-8"
           >
             Start free, upgrade when you're ready. No hidden fees.
           </motion.p>
@@ -271,14 +245,14 @@ export default function Pricing() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            className="inline-flex items-center p-1 rounded-full bg-[#1d1d1f] border border-white/10"
+            className="inline-flex items-center p-1 rounded-full bg-[var(--color-surface-muted)] border border-[var(--color-border)]"
           >
             <button
               onClick={() => setIsYearly(false)}
               className={`px-6 py-2 rounded-full text-sm font-medium transition-all ${
                 !isYearly
                   ? 'bg-emerald-500 text-white'
-                  : 'text-white/60 hover:text-white'
+                  : 'text-[var(--color-text-secondary)] hover:text-[var(--color-text)]'
               }`}
             >
               Monthly
@@ -288,7 +262,7 @@ export default function Pricing() {
               className={`px-6 py-2 rounded-full text-sm font-medium transition-all flex items-center gap-2 ${
                 isYearly
                   ? 'bg-emerald-500 text-white'
-                  : 'text-white/60 hover:text-white'
+                  : 'text-[var(--color-text-secondary)] hover:text-[var(--color-text)]'
               }`}
             >
               Yearly
@@ -314,8 +288,8 @@ export default function Pricing() {
               variants={fadeUp}
               className={`relative p-8 rounded-3xl border transition-all ${
                 plan.highlight
-                  ? 'bg-gradient-to-br from-emerald-900/50 to-green-900/30 border-emerald-500/50 md:scale-105'
-                  : 'bg-[#1d1d1f] border-white/[0.05] hover:border-white/10'
+                  ? 'bg-[var(--color-surface)] border-2 border-emerald-500/50 md:scale-105'
+                  : 'bg-[var(--color-surface)] border-[var(--color-border)] hover:border-[var(--color-border)]'
               }`}
             >
               {plan.badge && (
@@ -324,18 +298,18 @@ export default function Pricing() {
                 </div>
               )}
 
-              <h3 className="text-[24px] font-semibold text-white mb-1">{plan.name}</h3>
-              <p className="text-[14px] text-[#86868b] mb-5">{plan.description}</p>
+              <h3 className="text-[24px] font-semibold text-[var(--color-text)] mb-1">{plan.name}</h3>
+              <p className="text-[14px] text-[var(--color-text-secondary)] mb-5">{plan.description}</p>
 
               <div className="mb-6">
                 <div className="flex items-baseline gap-1">
-                  <span className="text-[48px] font-bold text-white">
+                  <span className="text-[48px] font-bold text-[var(--color-text)]">
                     {isYearly ? plan.yearlyPrice : plan.monthlyPrice}
                   </span>
-                  <span className="text-[15px] text-[#86868b]">/mo</span>
+                  <span className="text-[15px] text-[var(--color-text-secondary)]">/mo</span>
                 </div>
                 {isYearly && plan.yearlyTotal !== '$0' && (
-                  <p className="text-[13px] text-[#86868b]">
+                  <p className="text-[13px] text-[var(--color-text-secondary)]">
                     {plan.yearlyTotal}/year
                     {plan.savings && (
                       <span className="ml-2 text-emerald-400">{plan.savings}</span>
@@ -349,7 +323,7 @@ export default function Pricing() {
                 className={`block w-full py-3.5 rounded-xl text-center text-[15px] font-medium transition-colors mb-6 ${
                   plan.highlight
                     ? 'bg-emerald-500 text-white hover:bg-emerald-400'
-                    : 'bg-[#2d2d2f] text-white hover:bg-[#3d3d3f]'
+                    : 'bg-[var(--color-surface-elevated)] text-[var(--color-text)] hover:bg-[var(--color-surface-elevated)]'
                 }`}
               >
                 {plan.cta}
@@ -358,7 +332,7 @@ export default function Pricing() {
               <ul className="space-y-3">
                 {plan.features.map((feature, i) => (
                   <li key={i} className={`flex items-start gap-2 text-[13px] ${
-                    feature.startsWith('Everything') ? 'text-emerald-400 font-medium' : 'text-[#86868b]'
+                    feature.startsWith('Everything') ? 'text-emerald-400 font-medium' : 'text-[var(--color-text-secondary)]'
                   }`}>
                     <CheckIcon />
                     {feature}
@@ -371,13 +345,14 @@ export default function Pricing() {
       </section>
 
       {/* Feature Comparison Table */}
-      <section className="px-6 py-20 bg-[#0a0a0a]">
+      <section className="px-6 py-20 bg-[var(--color-surface-muted)]">
         <div className="max-w-[800px] mx-auto">
           <motion.h2
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             className="text-[32px] sm:text-[40px] font-semibold tracking-[-0.02em] text-center mb-12"
+            style={{ fontFamily: 'var(--font-heading)' }}
           >
             Compare plans
           </motion.h2>
@@ -385,20 +360,20 @@ export default function Pricing() {
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
-                <tr className="border-b border-white/10">
-                  <th className="text-left py-4 px-4 text-[15px] font-semibold text-white">Feature</th>
-                  <th className="text-center py-4 px-4 text-[15px] font-semibold text-white w-[140px]">Free</th>
+                <tr className="border-b border-[var(--color-border)]">
+                  <th className="text-left py-4 px-4 text-[15px] font-semibold text-[var(--color-text)]">Feature</th>
+                  <th className="text-center py-4 px-4 text-[15px] font-semibold text-[var(--color-text)] w-[140px]">Free</th>
                   <th className="text-center py-4 px-4 text-[15px] font-semibold text-emerald-400 w-[180px]">Premium</th>
                 </tr>
               </thead>
               <tbody>
                 {comparisonFeatures.map((row, index) => (
-                  <tr key={index} className="border-b border-white/5">
-                    <td className="py-4 px-4 text-[14px] text-white">{row.feature}</td>
-                    <td className="py-4 px-4 text-center text-[14px] text-[#86868b]">
+                  <tr key={index} className="border-b border-[var(--color-border)]">
+                    <td className="py-4 px-4 text-[14px] text-[var(--color-text)]">{row.feature}</td>
+                    <td className="py-4 px-4 text-center text-[14px] text-[var(--color-text-secondary)]">
                       {row.free === '-' ? <XIcon /> : row.free === 'Yes' ? <CheckIcon /> : row.free}
                     </td>
-                    <td className="py-4 px-4 text-center text-[14px] text-white bg-emerald-500/5">
+                    <td className="py-4 px-4 text-center text-[14px] text-[var(--color-text)] bg-emerald-500/5">
                       {row.premium === 'Yes' ? <CheckIcon /> : row.premium}
                     </td>
                   </tr>
@@ -418,12 +393,15 @@ export default function Pricing() {
             viewport={{ once: true }}
             className="text-center mb-16"
           >
-            <h2 className="text-[32px] sm:text-[48px] font-semibold tracking-[-0.02em] mb-4">
+            <h2
+              className="text-[32px] sm:text-[48px] font-semibold tracking-[-0.02em] mb-4"
+              style={{ fontFamily: 'var(--font-heading)' }}
+            >
               <span className="bg-gradient-to-r from-emerald-400 via-green-400 to-lime-400 bg-clip-text text-transparent">
                 Why FitWiz?
               </span>
             </h2>
-            <p className="text-[17px] sm:text-[21px] text-[#86868b] max-w-[600px] mx-auto">
+            <p className="text-[17px] sm:text-[21px] text-[var(--color-text-secondary)] max-w-[600px] mx-auto">
               The only app that combines workouts + nutrition + fasting + AI coaching.
             </p>
           </motion.div>
@@ -436,23 +414,23 @@ export default function Pricing() {
             viewport={{ once: true }}
             className="grid grid-cols-3 gap-6 mb-16 max-w-[700px] mx-auto"
           >
-            <div className="text-center p-6 rounded-2xl bg-[#1d1d1f] border border-white/[0.05]">
+            <div className="text-center p-6 rounded-2xl bg-[var(--color-surface)] border border-[var(--color-border)]">
               <div className="text-[36px] sm:text-[48px] font-bold bg-gradient-to-r from-emerald-400 to-green-400 bg-clip-text text-transparent leading-none mb-1">
                 {exerciseCount}+
               </div>
-              <div className="text-[13px] text-[#86868b]">Exercises</div>
+              <div className="text-[13px] text-[var(--color-text-secondary)]">Exercises</div>
             </div>
-            <div className="text-center p-6 rounded-2xl bg-[#1d1d1f] border border-white/[0.05]">
+            <div className="text-center p-6 rounded-2xl bg-[var(--color-surface)] border border-[var(--color-border)]">
               <div className="text-[36px] sm:text-[48px] font-bold bg-gradient-to-r from-emerald-400 to-green-400 bg-clip-text text-transparent leading-none mb-1">
                 {agentCount}
               </div>
-              <div className="text-[13px] text-[#86868b]">AI Agents</div>
+              <div className="text-[13px] text-[var(--color-text-secondary)]">AI Agents</div>
             </div>
-            <div className="text-center p-6 rounded-2xl bg-[#1d1d1f] border border-white/[0.05]">
+            <div className="text-center p-6 rounded-2xl bg-[var(--color-surface)] border border-[var(--color-border)]">
               <div className="text-[36px] sm:text-[48px] font-bold bg-gradient-to-r from-emerald-400 to-green-400 bg-clip-text text-transparent leading-none mb-1">
                 {featureCount}+
               </div>
-              <div className="text-[13px] text-[#86868b]">Features</div>
+              <div className="text-[13px] text-[var(--color-text-secondary)]">Features</div>
             </div>
           </motion.div>
 
@@ -479,16 +457,16 @@ export default function Pricing() {
                   className={`text-center p-4 rounded-2xl transition-all ${
                     app.highlight
                       ? 'bg-emerald-500/20 border-2 border-emerald-500/50 ring-2 ring-emerald-500/20'
-                      : 'bg-white/5 border border-white/10'
+                      : 'bg-[var(--color-surface-muted)] border border-[var(--color-border)]'
                   }`}
                 >
-                  <div className={`text-[13px] font-medium mb-1 ${app.highlight ? 'text-emerald-400' : 'text-[#86868b]'}`}>
+                  <div className={`text-[13px] font-medium mb-1 ${app.highlight ? 'text-emerald-400' : 'text-[var(--color-text-secondary)]'}`}>
                     {app.name}
                   </div>
-                  <div className={`text-[24px] sm:text-[28px] font-bold ${app.highlight ? 'text-white' : 'text-white/60'}`}>
+                  <div className={`text-[24px] sm:text-[28px] font-bold ${app.highlight ? 'text-white' : 'text-[var(--color-text-secondary)]'}`}>
                     {app.price}
                   </div>
-                  <div className="text-[11px] text-[#86868b]">/month</div>
+                  <div className="text-[11px] text-[var(--color-text-secondary)]">/month</div>
                 </div>
               ))}
             </div>
@@ -509,22 +487,22 @@ export default function Pricing() {
               <motion.div
                 key={comp.name}
                 variants={fadeUp}
-                className="p-6 rounded-2xl bg-[#1d1d1f] border border-white/[0.05] hover:border-white/10 transition-all"
+                className="p-6 rounded-2xl bg-[var(--color-surface)] border border-[var(--color-border)] hover:border-[var(--color-border)] transition-all"
               >
                 <div className="flex items-center justify-between mb-4">
                   <div>
-                    <h4 className="text-[17px] font-semibold text-white">{comp.name}</h4>
-                    <p className="text-[13px] text-[#86868b]">{comp.focus}</p>
+                    <h4 className="text-[17px] font-semibold text-[var(--color-text)]">{comp.name}</h4>
+                    <p className="text-[13px] text-[var(--color-text-secondary)]">{comp.focus}</p>
                   </div>
                   <div className="text-right">
-                    <div className="text-[17px] font-bold text-white/60">{comp.price}</div>
-                    <div className="text-[11px] text-[#86868b]">{comp.yearlyPrice}</div>
+                    <div className="text-[17px] font-bold text-[var(--color-text-secondary)]">{comp.price}</div>
+                    <div className="text-[11px] text-[var(--color-text-secondary)]">{comp.yearlyPrice}</div>
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <p className="text-[11px] text-white/40 uppercase tracking-wider">What it's missing</p>
+                  <p className="text-[11px] text-[var(--color-text-muted)] uppercase tracking-wider">What it's missing</p>
                   {comp.limitations.map((limit, i) => (
-                    <div key={i} className="flex items-center gap-2 text-[13px] text-[#86868b]">
+                    <div key={i} className="flex items-center gap-2 text-[13px] text-[var(--color-text-secondary)]">
                       <XIcon />
                       {limit}
                     </div>
@@ -546,19 +524,19 @@ export default function Pricing() {
             <div className="overflow-x-auto">
               <table className="w-full min-w-[600px]">
                 <thead>
-                  <tr className="border-b border-white/10">
-                    <th className="text-left py-3 px-3 text-[13px] font-semibold text-white">Feature</th>
+                  <tr className="border-b border-[var(--color-border)]">
+                    <th className="text-left py-3 px-3 text-[13px] font-semibold text-[var(--color-text)]">Feature</th>
                     <th className="text-center py-3 px-3 text-[13px] font-semibold text-emerald-400">FitWiz</th>
-                    <th className="text-center py-3 px-3 text-[13px] font-semibold text-white/60">Hevy</th>
-                    <th className="text-center py-3 px-3 text-[13px] font-semibold text-white/60">MFP</th>
-                    <th className="text-center py-3 px-3 text-[13px] font-semibold text-white/60">MacroFactor</th>
-                    <th className="text-center py-3 px-3 text-[13px] font-semibold text-white/60">Gravl</th>
+                    <th className="text-center py-3 px-3 text-[13px] font-semibold text-[var(--color-text-secondary)]">Hevy</th>
+                    <th className="text-center py-3 px-3 text-[13px] font-semibold text-[var(--color-text-secondary)]">MFP</th>
+                    <th className="text-center py-3 px-3 text-[13px] font-semibold text-[var(--color-text-secondary)]">MacroFactor</th>
+                    <th className="text-center py-3 px-3 text-[13px] font-semibold text-[var(--color-text-secondary)]">Gravl</th>
                   </tr>
                 </thead>
                 <tbody>
                   {whyFitwizFeatures.map((row, index) => (
-                    <tr key={index} className="border-b border-white/5">
-                      <td className="py-3 px-3 text-[13px] text-white">{row.category}</td>
+                    <tr key={index} className="border-b border-[var(--color-border)]">
+                      <td className="py-3 px-3 text-[13px] text-[var(--color-text)]">{row.category}</td>
                       <td className="py-3 px-3 text-center bg-emerald-500/5">
                         {row.fitwiz ? <span className="inline-flex justify-center"><CheckIcon /></span> : <span className="inline-flex justify-center"><XIcon /></span>}
                       </td>
@@ -584,7 +562,7 @@ export default function Pricing() {
       </section>
 
       {/* Why It Costs This Much Section */}
-      <section className="px-6 py-20 bg-[#0a0a0a]">
+      <section className="px-6 py-20 bg-[var(--color-surface-muted)]">
         <div className="max-w-[800px] mx-auto">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -597,10 +575,13 @@ export default function Pricing() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
             </div>
-            <h2 className="text-[32px] sm:text-[40px] font-semibold tracking-[-0.02em] mb-4">
+            <h2
+              className="text-[32px] sm:text-[40px] font-semibold tracking-[-0.02em] mb-4"
+              style={{ fontFamily: 'var(--font-heading)' }}
+            >
               Why does it cost this much?
             </h2>
-            <p className="text-[17px] text-[#86868b] max-w-[600px] mx-auto">
+            <p className="text-[17px] text-[var(--color-text-secondary)] max-w-[600px] mx-auto">
               Transparency matters to us. Here's where your subscription goes.
             </p>
           </motion.div>
@@ -618,10 +599,10 @@ export default function Pricing() {
               { icon: '📱', title: 'App Development', desc: 'Continuous updates, bug fixes, and new features based on your feedback' },
               { icon: '💪', title: 'Exercise Library', desc: '1,722 exercises with video demos, instructions, and AI-powered alternatives' },
             ].map((item, i) => (
-              <div key={i} className="p-5 rounded-2xl bg-[#1d1d1f] border border-white/[0.05]">
+              <div key={i} className="p-5 rounded-2xl bg-[var(--color-surface)] border border-[var(--color-border)]">
                 <span className="text-2xl mb-3 block">{item.icon}</span>
-                <h3 className="text-[15px] font-semibold text-white mb-1">{item.title}</h3>
-                <p className="text-[13px] text-[#86868b]">{item.desc}</p>
+                <h3 className="text-[15px] font-semibold text-[var(--color-text)] mb-1">{item.title}</h3>
+                <p className="text-[13px] text-[var(--color-text-secondary)]">{item.desc}</p>
               </div>
             ))}
           </motion.div>
@@ -631,7 +612,7 @@ export default function Pricing() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ delay: 0.2 }}
-            className="text-center text-[15px] text-[#86868b] mt-8"
+            className="text-center text-[15px] text-[var(--color-text-secondary)] mt-8"
           >
             Competitors charge $10-20/month for a single feature. We deliver everything at $5.99.
           </motion.p>
@@ -646,6 +627,7 @@ export default function Pricing() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             className="text-[32px] sm:text-[40px] font-semibold tracking-[-0.02em] text-center mb-12"
+            style={{ fontFamily: 'var(--font-heading)' }}
           >
             Frequently asked questions
           </motion.h2>
@@ -658,15 +640,15 @@ export default function Pricing() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: index * 0.1 }}
-                className="rounded-2xl bg-[#1d1d1f] border border-white/[0.05] overflow-hidden"
+                className="rounded-2xl bg-[var(--color-surface)] border border-[var(--color-border)] overflow-hidden"
               >
                 <button
                   onClick={() => setExpandedFaq(expandedFaq === index ? null : index)}
                   className="w-full flex items-center justify-between p-6 text-left"
                 >
-                  <span className="text-[17px] font-medium text-white">{faq.question}</span>
+                  <span className="text-[17px] font-medium text-[var(--color-text)]">{faq.question}</span>
                   <svg
-                    className={`w-5 h-5 text-white/60 transition-transform ${expandedFaq === index ? 'rotate-180' : ''}`}
+                    className={`w-5 h-5 text-[var(--color-text-secondary)] transition-transform ${expandedFaq === index ? 'rotate-180' : ''}`}
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -676,7 +658,7 @@ export default function Pricing() {
                 </button>
                 {expandedFaq === index && (
                   <div className="px-6 pb-6">
-                    <p className="text-[15px] text-[#86868b] leading-relaxed">{faq.answer}</p>
+                    <p className="text-[15px] text-[var(--color-text-secondary)] leading-relaxed">{faq.answer}</p>
                   </div>
                 )}
               </motion.div>
@@ -688,10 +670,13 @@ export default function Pricing() {
       {/* CTA Section */}
       <section className="px-6 py-20 bg-gradient-to-br from-emerald-900/30 to-green-900/20">
         <div className="max-w-[680px] mx-auto text-center">
-          <h2 className="text-[32px] sm:text-[40px] font-semibold tracking-[-0.02em] mb-4">
+          <h2
+            className="text-[32px] sm:text-[40px] font-semibold tracking-[-0.02em] mb-4"
+            style={{ fontFamily: 'var(--font-heading)' }}
+          >
             Ready to transform your fitness?
           </h2>
-          <p className="text-[17px] text-[#86868b] mb-8">
+          <p className="text-[17px] text-[var(--color-text-secondary)] mb-8">
             Start free today. No credit card required.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
@@ -712,27 +697,7 @@ export default function Pricing() {
       </section>
 
       {/* Footer */}
-      <footer className="py-8 px-6 border-t border-[#424245]">
-        <div className="max-w-[1200px] mx-auto">
-          <div className="flex flex-col gap-6">
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 text-[12px] text-[#86868b]">
-              <p>Copyright {new Date().getFullYear()} FitWiz. All rights reserved.</p>
-              <div className="flex items-center gap-6">
-                <Link to="/" className="hover:text-[#f5f5f7] transition-colors">Home</Link>
-                <Link to="/features" className="hover:text-[#f5f5f7] transition-colors">Features</Link>
-                <Link to="/pricing" className="hover:text-[#f5f5f7] transition-colors">Pricing</Link>
-                <Link to="/store" className="hover:text-[#f5f5f7] transition-colors">Store</Link>
-                <Link to="/login" className="hover:text-[#f5f5f7] transition-colors">Sign In</Link>
-              </div>
-            </div>
-            <div className="flex items-center justify-center gap-6 text-[11px] text-[#6e6e73]">
-              <Link to="/terms" className="hover:text-[#86868b] transition-colors">Terms of Service</Link>
-              <span>•</span>
-              <Link to="/privacy" className="hover:text-[#86868b] transition-colors">Privacy Policy</Link>
-            </div>
-          </div>
-        </div>
-      </footer>
+      <MarketingFooter />
     </div>
   );
 }

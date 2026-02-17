@@ -10,6 +10,7 @@ import '../data/providers/quick_action_provider.dart';
 import '../data/repositories/hydration_repository.dart';
 import '../data/services/api_client.dart';
 import '../screens/nutrition/log_meal_sheet.dart';
+import '../screens/workout/widgets/quick_workout_sheet.dart';
 import 'main_shell.dart';
 import 'glass_sheet.dart';
 
@@ -40,14 +41,32 @@ class _QuickActionsSheet extends ConsumerStatefulWidget {
   ConsumerState<_QuickActionsSheet> createState() => _QuickActionsSheetState();
 }
 
+const _categories = <String, List<String>>{
+  'Track': ['weight', 'food', 'water', 'photo', 'mood', 'measure'],
+  'Workout': ['quick_workout', 'workout', 'steps', 'library'],
+  'Plan & Review': ['schedule', 'habits', 'fasting', 'history', 'progress', 'summaries', 'achievements'],
+  'Tools': ['chat', 'hydration', 'settings'],
+};
+
 class _QuickActionsSheetState extends ConsumerState<_QuickActionsSheet> {
   bool _isLoggingWater = false;
   bool _isEditMode = false;
+  final _searchController = TextEditingController();
+  String _searchQuery = '';
 
   @override
   void initState() {
     super.initState();
     _isEditMode = widget.startInEditMode;
+    _searchController.addListener(() {
+      setState(() => _searchQuery = _searchController.text.toLowerCase());
+    });
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
   }
 
   Future<void> _quickAddWater() async {
@@ -124,147 +143,265 @@ class _QuickActionsSheetState extends ConsumerState<_QuickActionsSheet> {
     }
   }
 
-  Widget _buildNormalModeAction(QuickAction action, bool isDark, BuildContext context) {
-    switch (action.id) {
-      case 'water':
-        return _CompactActionItem(
-          icon: action.icon,
-          label: action.label,
-          onTap: _quickAddWater,
-          isDark: isDark,
-          isLoading: _isLoggingWater,
-          iconColor: action.color,
-        );
-      case 'food':
-        return _CompactActionItem(
-          icon: action.icon,
-          label: action.label,
-          onTap: () {
-            Navigator.pop(context);
-            showLogMealSheet(context, widget.ref);
-          },
-          isDark: isDark,
-          iconColor: action.color,
-        );
-      case 'fasting':
-        return _CompactActionItem(
-          icon: action.icon,
-          label: action.label,
-          onTap: () {
-            Navigator.pop(context);
-            context.push('/fasting');
-          },
-          isDark: isDark,
-          iconColor: action.color,
-        );
-      default:
-        return _CompactActionItem(
-          icon: action.icon,
-          label: action.label,
-          onTap: () {
-            Navigator.pop(context);
-            HapticFeedback.lightImpact();
-            if (action.route != null) {
-              context.push(action.route!);
-            }
-          },
-          isDark: isDark,
-          iconColor: action.color,
-        );
+  Widget _buildActionChip(QuickAction action, bool isDark, BuildContext context, {bool isPinned = false}) {
+    final textColor = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final chipBg = isDark
+        ? Colors.white.withValues(alpha: isPinned ? 0.12 : 0.08)
+        : Colors.black.withValues(alpha: isPinned ? 0.07 : 0.04);
+    final borderColor = isPinned
+        ? action.color.withValues(alpha: 0.4)
+        : (isDark
+            ? Colors.white.withValues(alpha: 0.1)
+            : Colors.black.withValues(alpha: 0.06));
+
+    void handleTap() {
+      HapticFeedback.lightImpact();
+      switch (action.id) {
+        case 'water':
+          _quickAddWater();
+          return;
+        case 'food':
+          Navigator.pop(context);
+          showLogMealSheet(context, widget.ref);
+          return;
+        case 'quick_workout':
+          Navigator.pop(context);
+          showQuickWorkoutSheet(context, widget.ref);
+          return;
+        case 'fasting':
+          Navigator.pop(context);
+          context.push('/fasting');
+          return;
+        default:
+          Navigator.pop(context);
+          if (action.route != null) {
+            context.push(action.route!);
+          }
+      }
     }
-  }
 
-  Widget _buildNormalMode(BuildContext context, bool isDark) {
-    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    final allActions = ref.watch(orderedQuickActionsProvider);
-
-    // Build rows of 4
-    final rows = <Widget>[];
-    for (int rowStart = 0; rowStart < allActions.length; rowStart += 4) {
-      final rowEnd = (rowStart + 4).clamp(0, allActions.length);
-      final rowActions = allActions.sublist(rowStart, rowEnd);
-      rows.add(
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 4),
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: handleTap,
+        borderRadius: BorderRadius.circular(10),
+        child: Container(
+          padding: EdgeInsets.symmetric(
+            horizontal: isPinned ? 12 : 10,
+            vertical: isPinned ? 10 : 8,
+          ),
+          decoration: BoxDecoration(
+            color: chipBg,
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: borderColor, width: isPinned ? 1.5 : 1),
+          ),
           child: Row(
+            mainAxisSize: MainAxisSize.min,
             children: [
-              for (int i = 0; i < rowActions.length; i++) ...[
-                Expanded(
-                  child: Padding(
-                    padding: EdgeInsets.only(
-                      left: i > 0 ? 2 : 0,
-                      right: i < rowActions.length - 1 ? 2 : 0,
-                    ),
-                    child: _buildNormalModeAction(rowActions[i], isDark, context)
-                        .animateListItem(index: rowStart + i + 1),
-                  ),
+              Icon(
+                action.icon,
+                size: isPinned ? 18 : 16,
+                color: action.color,
+              ),
+              const SizedBox(width: 6),
+              Text(
+                action.label,
+                style: TextStyle(
+                  fontSize: isPinned ? 13 : 12,
+                  fontWeight: isPinned ? FontWeight.w600 : FontWeight.w500,
+                  color: textColor,
                 ),
-              ],
-              // Fill remaining slots with empty Expanded to keep alignment
-              for (int i = rowActions.length; i < 4; i++) ...[
-                const Expanded(child: SizedBox()),
-              ],
+              ),
             ],
           ),
         ),
-      );
-    }
+      ),
+    );
+  }
+
+  Widget _buildNormalMode(BuildContext context, bool isDark) {
+    final textColor = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final pinnedActions = ref.watch(pinnedQuickActionsProvider);
+    final isSearching = _searchQuery.isNotEmpty;
+
+    // Filter all actions by search query
+    final allActionIds = _categories.values.expand((ids) => ids).toSet();
+    final filteredActions = isSearching
+        ? allActionIds
+            .where((id) {
+              final action = quickActionRegistry[id];
+              return action != null &&
+                  action.label.toLowerCase().contains(_searchQuery);
+            })
+            .toList()
+        : <String>[];
 
     return GlassSheet(
       child: SafeArea(
         top: false,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Hero Card (contextual)
-            _HeroActionCard(
-              onClose: () => Navigator.pop(context),
-            ).animateHeroEntrance(),
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Hero Card (contextual)
+              _HeroActionCard(
+                onClose: () => Navigator.pop(context),
+              ).animateHeroEntrance(),
 
-            const SizedBox(height: 12),
+              const SizedBox(height: 12),
 
-            // Header with edit button
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8),
-              child: Row(
-                children: [
-                  Text(
-                    'Quick Actions',
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: textMuted,
-                    ),
-                  ),
-                  const Spacer(),
-                  GestureDetector(
-                    onTap: () {
-                      HapticFeedback.lightImpact();
-                      setState(() => _isEditMode = true);
-                    },
-                    child: Padding(
-                      padding: const EdgeInsets.all(4),
-                      child: Icon(
-                        Icons.edit_outlined,
-                        size: 18,
-                        color: textMuted,
+              // Search bar + edit icon
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Container(
+                        height: 40,
+                        decoration: BoxDecoration(
+                          color: isDark
+                              ? Colors.white.withValues(alpha: 0.08)
+                              : Colors.black.withValues(alpha: 0.05),
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(
+                            color: isDark
+                                ? Colors.white.withValues(alpha: 0.1)
+                                : Colors.black.withValues(alpha: 0.06),
+                          ),
+                        ),
+                        child: TextField(
+                          controller: _searchController,
+                          style: TextStyle(fontSize: 14, color: textColor),
+                          decoration: InputDecoration(
+                            hintText: 'Search actions...',
+                            hintStyle: TextStyle(fontSize: 14, color: textMuted),
+                            prefixIcon: Icon(Icons.search, size: 18, color: textMuted),
+                            suffixIcon: _searchQuery.isNotEmpty
+                                ? GestureDetector(
+                                    onTap: () => _searchController.clear(),
+                                    child: Icon(Icons.close, size: 16, color: textMuted),
+                                  )
+                                : null,
+                            border: InputBorder.none,
+                            contentPadding: const EdgeInsets.symmetric(vertical: 10),
+                            isDense: true,
+                          ),
+                        ),
                       ),
                     ),
-                  ),
-                ],
+                    const SizedBox(width: 8),
+                    GestureDetector(
+                      onTap: () {
+                        HapticFeedback.lightImpact();
+                        setState(() => _isEditMode = true);
+                      },
+                      child: Container(
+                        width: 40,
+                        height: 40,
+                        decoration: BoxDecoration(
+                          color: isDark
+                              ? Colors.white.withValues(alpha: 0.08)
+                              : Colors.black.withValues(alpha: 0.05),
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(
+                            color: isDark
+                                ? Colors.white.withValues(alpha: 0.1)
+                                : Colors.black.withValues(alpha: 0.06),
+                          ),
+                        ),
+                        child: Icon(
+                          Icons.edit_outlined,
+                          size: 18,
+                          color: textMuted,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            ),
 
-            const SizedBox(height: 8),
+              const SizedBox(height: 16),
 
-            // Action rows
-            ...rows.expand((row) sync* {
-              yield row;
-              yield const SizedBox(height: 6);
-            }),
+              // Show search results or categorized view
+              if (isSearching) ...[
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  child: filteredActions.isEmpty
+                      ? Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 24),
+                          child: Center(
+                            child: Text(
+                              'No actions found',
+                              style: TextStyle(fontSize: 14, color: textMuted),
+                            ),
+                          ),
+                        )
+                      : Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          children: filteredActions.map((id) {
+                            final action = quickActionRegistry[id]!;
+                            return _buildActionChip(action, isDark, context);
+                          }).toList(),
+                        ),
+                ),
+              ] else ...[
+                // Pinned section
+                _buildSectionHeader('Pinned', textMuted),
+                const SizedBox(height: 8),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  child: Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: pinnedActions.map((action) {
+                      return _buildActionChip(action, isDark, context, isPinned: true);
+                    }).toList(),
+                  ),
+                ),
 
-            const SizedBox(height: 10),
-          ],
+                const SizedBox(height: 16),
+
+                // Category sections
+                for (final entry in _categories.entries) ...[
+                  _buildSectionHeader(entry.key, textMuted),
+                  const SizedBox(height: 8),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    child: Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: entry.value.map((id) {
+                        final action = quickActionRegistry[id];
+                        if (action == null) return const SizedBox.shrink();
+                        return _buildActionChip(action, isDark, context);
+                      }).toList(),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                ],
+              ],
+
+              const SizedBox(height: 8),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSectionHeader(String title, Color textMuted) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 10),
+      child: Text(
+        title.toUpperCase(),
+        style: TextStyle(
+          fontSize: 11,
+          fontWeight: FontWeight.w700,
+          color: textMuted,
+          letterSpacing: 1.0,
         ),
       ),
     );
@@ -314,7 +451,7 @@ class _QuickActionsSheetState extends ConsumerState<_QuickActionsSheet> {
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
               child: Text(
-                'Drag to reorder. Top 3 appear in your shortcut bar.',
+                'Drag to reorder. Top 4 appear in your shortcut bar.',
                 style: TextStyle(fontSize: 13, color: textMuted),
               ),
             ),
@@ -350,17 +487,17 @@ class _QuickActionsSheetState extends ConsumerState<_QuickActionsSheet> {
                 itemBuilder: (context, index) {
                   final actionId = order[index];
                   final action = quickActionRegistry[actionId]!;
-                  final isTop3 = index < 3;
+                  final isTop4 = index < 4;
 
                   return Container(
                     key: ValueKey(actionId),
                     margin: const EdgeInsets.only(bottom: 4),
                     decoration: BoxDecoration(
-                      color: isTop3
+                      color: isTop4
                           ? action.color.withValues(alpha: isDark ? 0.12 : 0.08)
                           : elevatedColor,
                       borderRadius: BorderRadius.circular(12),
-                      border: isTop3
+                      border: isTop4
                           ? Border.all(color: action.color.withValues(alpha: 0.3))
                           : null,
                     ),
@@ -397,7 +534,7 @@ class _QuickActionsSheetState extends ConsumerState<_QuickActionsSheet> {
                           ),
                         ),
                         // Badge for top 3
-                        if (isTop3)
+                        if (isTop4)
                           Container(
                             width: 24,
                             height: 24,
@@ -837,89 +974,3 @@ class _PhotoHeroCard extends StatelessWidget {
   }
 }
 
-/// Compact action item for the grid
-class _CompactActionItem extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final VoidCallback onTap;
-  final bool isDark;
-  final bool isLoading;
-  final Color? iconColor;
-
-  const _CompactActionItem({
-    required this.icon,
-    required this.label,
-    required this.onTap,
-    required this.isDark,
-    this.isLoading = false,
-    this.iconColor,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final textColor = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final effectiveIconColor = iconColor ?? textColor;
-
-    // Semi-transparent colors for glassmorphic effect
-    final cardColor = isDark
-        ? Colors.white.withValues(alpha: 0.08)
-        : Colors.black.withValues(alpha: 0.05);
-    final borderColor = isDark
-        ? Colors.white.withValues(alpha: 0.12)
-        : Colors.black.withValues(alpha: 0.08);
-
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: () {
-          HapticFeedback.lightImpact();
-          onTap();
-        },
-        borderRadius: BorderRadius.circular(14),
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 8),
-          decoration: BoxDecoration(
-            color: cardColor,
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(
-              color: borderColor,
-              width: 1,
-            ),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              if (isLoading)
-                SizedBox(
-                  width: 24,
-                  height: 24,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    color: effectiveIconColor,
-                  ),
-                )
-              else
-                Icon(
-                  icon,
-                  size: 24,
-                  color: effectiveIconColor,
-                ),
-              const SizedBox(height: 8),
-              Text(
-                label,
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                  color: textColor,
-                ),
-                textAlign: TextAlign.center,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}

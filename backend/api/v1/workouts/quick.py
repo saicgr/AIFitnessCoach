@@ -2,22 +2,23 @@
 Quick Workout API endpoint.
 
 This module provides endpoints for quick, time-constrained workouts
-for busy users who want 5-15 minute workouts.
+for busy users who want 5-30 minute workouts.
 
 - POST /quick - Generate a quick workout tailored to duration and focus
 """
+import asyncio
 import json
 from datetime import datetime
 from typing import Optional, List, Literal
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Request, BackgroundTasks
 from pydantic import BaseModel, Field
 
 from core.supabase_db import get_supabase_db
 from core.logger import get_logger
+from core.rate_limiter import limiter
 from models.schemas import Workout
 from models.gemini_schemas import GeneratedWorkoutResponse
-from services.gemini_service import GeminiService
 from services.user_context_service import user_context_service
 
 from .utils import (
@@ -32,6 +33,9 @@ from .utils import (
 
 router = APIRouter()
 logger = get_logger(__name__)
+
+# Concurrency semaphore to cap concurrent Gemini calls
+_gemini_semaphore = asyncio.Semaphore(10)
 
 
 # ============================================
@@ -51,13 +55,26 @@ class QuickWorkoutRequest(BaseModel):
     duration: int = Field(
         default=10,
         ge=5,
-        le=15,
-        description="Workout duration in minutes (5, 10, or 15)"
+        le=30,
+        description="Workout duration in minutes (5-30)"
     )
     focus: Optional[str] = Field(
         default=None,
         max_length=50,
         description="Optional focus: cardio, strength, stretch, or full_body"
+    )
+    difficulty: Optional[str] = Field(
+        default=None,
+        max_length=20,
+        description="Optional difficulty: easy, medium, hard, or hell"
+    )
+    equipment: Optional[List[str]] = Field(
+        default=None,
+        description="Optional equipment list (overrides user profile)"
+    )
+    injuries: Optional[List[str]] = Field(
+        default=None,
+        description="Optional injuries to work around"
     )
     source: QuickWorkoutSource = Field(
         default="button",
@@ -86,6 +103,7 @@ async def generate_quick_workout_prompt(
     equipment: List[str],
     avoided_exercises: Optional[List[str]] = None,
     avoided_muscles: Optional[dict] = None,
+    injuries: Optional[List[str]] = None,
 ) -> str:
     """Build a prompt specifically for quick workouts."""
 
@@ -140,6 +158,10 @@ FOCUS: BALANCED QUICK WORKOUT
         if avoided_muscles.get("reduce"):
             avoided_instruction += f"\nMINIMIZE targeting these muscles: {', '.join(avoided_muscles['reduce'])}"
 
+    injuries_instruction = ""
+    if injuries:
+        injuries_instruction = f"\n\nINJURIES TO WORK AROUND: {', '.join(injuries)}\n- Avoid exercises that stress these areas\n- Suggest safe alternatives that don't aggravate these injuries"
+
     equipment_str = ", ".join(equipment) if equipment else "bodyweight only"
 
     prompt = f"""Generate a {duration}-minute quick workout for a {fitness_level} user.
@@ -153,85 +175,80 @@ CRITICAL REQUIREMENTS for {duration}-minute workout:
 2. For 5 min: 3-4 exercises, minimal rest
 3. For 10 min: 4-6 exercises, short rest
 4. For 15 min: 5-8 exercises, moderate rest
-5. Include only exercises that can be done quickly
-6. Prioritize efficiency - compound movements over isolation
-7. Clear, actionable exercise names
-{avoided_instruction}
+5. For 20 min: 6-10 exercises, moderate rest
+6. For 25 min: 8-12 exercises, moderate rest
+7. For 30 min: 10-14 exercises, standard rest
+8. Include only exercises that can be done quickly
+9. Prioritize efficiency - compound movements over isolation
+10. Clear, actionable exercise names
+{avoided_instruction}{injuries_instruction}
 
-Return ONLY valid JSON in this exact format (no markdown, no explanation):
-{{
-  "name": "Quick [Focus] Blast" or similar energetic name,
-  "type": "{focus or 'quick'}",
-  "difficulty": "{fitness_level}",
-  "exercises": [
-    {{
-      "name": "Exercise Name",
-      "sets": 2,
-      "reps": 10,
-      "rest_seconds": 15,
-      "duration_seconds": null,
-      "hold_seconds": null,
-      "notes": "Brief form cue",
-      "muscle_group": "primary muscle"
-    }}
-  ]
-}}
-
-IMPORTANT:
-- Use "duration_seconds" for time-based cardio exercises (e.g., 30 seconds of jumping jacks)
-- Use "hold_seconds" for stretches (e.g., hold hamstring stretch 20 seconds)
+FIELD GUIDELINES:
+- "name": A creative, energetic workout name (e.g. "Quick Cardio Blast")
+- "type": "{focus or 'quick'}"
+- "difficulty": "{fitness_level}"
+- "duration_minutes": {duration}
+- "target_muscles": list of primary muscles targeted
+- "notes": optional overall workout tip
+- Each exercise needs "set_targets" matching the "sets" count, each with set_number (1-indexed), set_type ("working"), and target_reps
+- Use "duration_seconds" for time-based cardio (e.g. 30s jumping jacks)
+- Use "hold_seconds" for stretches (e.g. 20s hamstring stretch)
 - Use "reps" for count-based exercises
-- Keep rest_seconds SHORT (10-30 seconds) to fit time constraint
-- Calculate: total_time = sum of (sets * (reps * 3 + rest_seconds)) for all exercises"""
+- Keep rest_seconds SHORT (10-30 seconds) to fit {duration}-minute time constraint
+- Keep sets to 2-3 per exercise to save time"""
 
     return prompt
 
 
 @router.post("/quick", response_model=QuickWorkoutResponse)
-async def generate_quick_workout(request: QuickWorkoutRequest):
+@limiter.limit("5/minute")
+async def generate_quick_workout(request: Request, body: QuickWorkoutRequest, background_tasks: BackgroundTasks):
     """
     Generate a quick workout for busy users.
 
     Parameters:
-    - duration: 5, 10, or 15 minutes
+    - duration: 5-30 minutes
     - focus: optional - cardio, strength, stretch, or full_body
+    - difficulty: optional - easy, medium, hard, or hell
+    - equipment: optional - list of equipment (overrides profile)
+    - injuries: optional - list of injuries to work around
     - source: 'button' (UI button) or 'chat' (AI coach conversation)
 
     Returns a complete workout that can be started immediately.
     """
-    logger.info(f"Generating quick workout for user {request.user_id}: {request.duration}min, focus={request.focus}, source={request.source}")
+    logger.info(f"Generating quick workout for user {body.user_id}: {body.duration}min, focus={body.focus}, difficulty={body.difficulty}, source={body.source}")
 
     try:
         db = get_supabase_db()
 
         # Get user data
-        user = db.get_user(request.user_id)
+        user = db.get_user(body.user_id)
         if not user:
             raise HTTPException(status_code=404, detail="User not found")
 
-        fitness_level = user.get("fitness_level", "intermediate")
-        equipment = user.get("equipment", [])
+        # Use request overrides or fall back to user profile
+        fitness_level = body.difficulty or user.get("fitness_level", "intermediate")
+        equipment = body.equipment if body.equipment is not None else user.get("equipment", [])
 
         # Get user preferences
-        avoided_exercises = await get_user_avoided_exercises(request.user_id)
-        avoided_muscles = await get_user_avoided_muscles(request.user_id)
+        avoided_exercises = await get_user_avoided_exercises(body.user_id)
+        avoided_muscles = await get_user_avoided_muscles(body.user_id)
 
         if avoided_exercises:
             logger.info(f"[Quick Workout] Filtering {len(avoided_exercises)} avoided exercises")
 
         # Build the prompt
         prompt = await generate_quick_workout_prompt(
-            duration=request.duration,
-            focus=request.focus,
+            duration=body.duration,
+            focus=body.focus,
             fitness_level=fitness_level,
             equipment=equipment if isinstance(equipment, list) else [],
             avoided_exercises=avoided_exercises,
             avoided_muscles=avoided_muscles if (avoided_muscles.get("avoid") or avoided_muscles.get("reduce")) else None,
+            injuries=body.injuries,
         )
 
-        # Generate with Gemini
-        gemini_service = GeminiService()
-
+        # Generate with Gemini (with semaphore + retry)
         try:
             from google.genai import types
             from core.config import get_settings
@@ -240,24 +257,59 @@ async def generate_quick_workout(request: QuickWorkoutRequest):
             settings = get_settings()
             client = get_genai_client()
 
-            response = await client.aio.models.generate_content(
-                model=settings.gemini_model,
-                contents=prompt,
-                config=types.GenerateContentConfig(
-                    response_mime_type="application/json",
-                    response_schema=GeneratedWorkoutResponse,
-                    max_output_tokens=4096,
-                    temperature=0.7,
-                ),
-            )
+            content = ""
+            last_error = None
+            for attempt in range(2):  # 1 initial + 1 retry
+                try:
+                    async with _gemini_semaphore:
+                        response = await client.aio.models.generate_content(
+                            model=settings.gemini_model,
+                            contents=prompt,
+                            config=types.GenerateContentConfig(
+                                response_mime_type="application/json",
+                                response_schema=GeneratedWorkoutResponse,
+                                max_output_tokens=8192,
+                                temperature=0.7,
+                            ),
+                        )
 
-            content = response.text.strip() if response.text else ""
+                    content = response.text.strip() if response.text else ""
+                    if content:
+                        break
+                except Exception as e:
+                    last_error = e
+                    error_str = str(e).lower()
+                    if "resourceexhausted" in error_str or "429" in error_str or "quota" in error_str:
+                        if attempt == 0:
+                            logger.warning(f"[Quick Workout] Gemini quota hit, retrying in 2s...")
+                            await asyncio.sleep(2)
+                            continue
+                    raise
 
             if not content:
+                if last_error:
+                    raise last_error
                 raise HTTPException(status_code=500, detail="Empty response from AI")
 
-            # Parse the response - structured output guarantees valid JSON
-            workout_data = json.loads(content)
+            # Parse the response - try direct parse first, then extract JSON
+            workout_data = None
+            try:
+                workout_data = json.loads(content)
+            except json.JSONDecodeError:
+                # Try extracting JSON from markdown code blocks
+                import re
+                json_match = re.search(r'```(?:json)?\s*(\{.*?\})\s*```', content, re.DOTALL)
+                if json_match:
+                    workout_data = json.loads(json_match.group(1))
+                else:
+                    # Try finding the first { to last }
+                    start = content.find('{')
+                    end = content.rfind('}')
+                    if start != -1 and end != -1 and end > start:
+                        workout_data = json.loads(content[start:end + 1])
+
+            if workout_data is None:
+                raise json.JSONDecodeError("Could not extract valid JSON", content, 0)
 
             # Ensure workout_data is a dict (guard against Gemini returning a string)
             if isinstance(workout_data, str):
@@ -274,8 +326,8 @@ async def generate_quick_workout(request: QuickWorkoutRequest):
             exercises = ensure_exercises_are_dicts(exercises)
             exercises = normalize_exercise_numeric_fields(exercises)
 
-            workout_name = workout_data.get("name", f"Quick {request.duration}min Workout")
-            workout_type = workout_data.get("type", request.focus or "quick")
+            workout_name = workout_data.get("name", f"Quick {body.duration}min Workout")
+            workout_type = workout_data.get("type", body.focus or "quick")
             difficulty = workout_data.get("difficulty", fitness_level)
 
             # Validate exercises
@@ -299,54 +351,59 @@ async def generate_quick_workout(request: QuickWorkoutRequest):
         except json.JSONDecodeError as e:
             logger.error(f"Failed to parse AI response: {e}")
             raise HTTPException(status_code=500, detail="Failed to parse workout data")
+        except HTTPException:
+            raise
         except Exception as ai_error:
             logger.error(f"AI generation failed: {ai_error}")
             raise HTTPException(status_code=500, detail=f"Failed to generate workout: {str(ai_error)}")
 
         # Save the workout
         workout_db_data = {
-            "user_id": request.user_id,
+            "user_id": body.user_id,
             "name": workout_name,
             "type": workout_type,
             "difficulty": difficulty,
             "scheduled_date": datetime.now().isoformat(),
             "exercises_json": exercises,
-            "duration_minutes": request.duration,
+            "duration_minutes": body.duration,
             "generation_method": "ai",
             "generation_source": "quick_workout",
             "generation_metadata": json.dumps({
-                "focus": request.focus,
-                "duration": request.duration,
+                "focus": body.focus,
+                "difficulty": body.difficulty,
+                "equipment": body.equipment,
+                "injuries": body.injuries,
+                "duration": body.duration,
                 "quick_workout": True,
-                "source": request.source,
+                "source": body.source,
             }),
         }
 
         created = db.create_workout(workout_db_data)
-        logger.info(f"Quick workout generated: id={created['id']}, exercises={len(exercises)}, source={request.source}")
+        logger.info(f"Quick workout generated: id={created['id']}, exercises={len(exercises)}, source={body.source}")
 
         # Log the change
         log_workout_change(
             workout_id=created['id'],
-            user_id=request.user_id,
+            user_id=body.user_id,
             change_type="generated",
             change_source="quick_workout",
             new_value={
                 "name": workout_name,
                 "exercises_count": len(exercises),
-                "duration": request.duration,
-                "focus": request.focus,
-                "source": request.source,
+                "duration": body.duration,
+                "focus": body.focus,
+                "source": body.source,
             }
         )
 
         # Track quick workout usage for personalization
         try:
             await track_quick_workout_usage(
-                user_id=request.user_id,
-                duration=request.duration,
-                focus=request.focus,
-                source=request.source,
+                user_id=body.user_id,
+                duration=body.duration,
+                focus=body.focus,
+                source=body.source,
             )
         except Exception as e:
             logger.warning(f"Failed to track quick workout usage: {e}")
@@ -354,29 +411,31 @@ async def generate_quick_workout(request: QuickWorkoutRequest):
         # Log to user context
         try:
             await user_context_service.log_action(
-                user_id=request.user_id,
+                user_id=body.user_id,
                 action="quick_workout_generated",
                 details={
                     "workout_id": created['id'],
-                    "duration": request.duration,
-                    "focus": request.focus,
+                    "duration": body.duration,
+                    "focus": body.focus,
                     "exercises_count": len(exercises),
-                    "source": request.source,
+                    "source": body.source,
                 }
             )
         except Exception as e:
             logger.warning(f"Failed to log user context: {e}")
 
         generated_workout = row_to_workout(created)
-        await index_workout_to_rag(generated_workout)
+
+        # Index to RAG in background (non-blocking)
+        background_tasks.add_task(index_workout_to_rag, generated_workout)
 
         return QuickWorkoutResponse(
             workout=generated_workout,
-            message=f"Quick {request.duration}-minute workout ready!",
-            duration_minutes=request.duration,
-            focus=request.focus,
+            message=f"Quick {body.duration}-minute workout ready!",
+            duration_minutes=body.duration,
+            focus=body.focus,
             exercises_count=len(exercises),
-            source=request.source,
+            source=body.source,
         )
 
     except HTTPException:

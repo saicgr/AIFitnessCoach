@@ -482,7 +482,7 @@ class NotificationService {
   /// Initialize local notifications plugin
   Future<void> _initializeLocalNotifications() async {
     // Android settings
-    const androidSettings = AndroidInitializationSettings('@mipmap/ic_launcher');
+    const androidSettings = AndroidInitializationSettings('@drawable/ic_launcher_monochrome');
 
     // iOS settings
     const iosSettings = DarwinInitializationSettings(
@@ -649,7 +649,7 @@ class NotificationService {
       channelDescription: channelConfig.description,
       importance: Importance.high,
       priority: Priority.high,
-      icon: '@mipmap/ic_launcher',
+      icon: '@drawable/ic_launcher_monochrome',
       color: channelConfig.color,
       playSound: true,
     );
@@ -935,7 +935,7 @@ class NotificationService {
       channelDescription: channelConfig.description,
       importance: Importance.high,
       priority: Priority.high,
-      icon: '@mipmap/ic_launcher',
+      icon: '@drawable/ic_launcher_monochrome',
       color: channelConfig.color,
     );
 
@@ -966,7 +966,7 @@ class NotificationService {
       channelDescription: channelConfig.description,
       importance: Importance.high,
       priority: Priority.high,
-      icon: '@mipmap/ic_launcher',
+      icon: '@drawable/ic_launcher_monochrome',
       color: channelConfig.color,
     );
 
@@ -1025,7 +1025,7 @@ class NotificationService {
       channelDescription: channelConfig.description,
       importance: Importance.high,
       priority: Priority.high,
-      icon: '@mipmap/ic_launcher',
+      icon: '@drawable/ic_launcher_monochrome',
       color: channelConfig.color,
     );
 
@@ -1082,7 +1082,7 @@ class NotificationService {
       channelDescription: channelConfig.description,
       importance: Importance.high,
       priority: Priority.high,
-      icon: '@mipmap/ic_launcher',
+      icon: '@drawable/ic_launcher_monochrome',
       color: channelConfig.color,
     );
 
@@ -1114,7 +1114,7 @@ class NotificationService {
       channelDescription: channelConfig.description,
       importance: Importance.high,
       priority: Priority.high,
-      icon: '@mipmap/ic_launcher',
+      icon: '@drawable/ic_launcher_monochrome',
       color: channelConfig.color,
     );
 
@@ -1158,7 +1158,7 @@ class NotificationService {
       channelDescription: channelConfig.description,
       importance: Importance.high,
       priority: Priority.high,
-      icon: '@mipmap/ic_launcher',
+      icon: '@drawable/ic_launcher_monochrome',
       color: channelConfig.color,
     );
 
@@ -1313,7 +1313,7 @@ class NotificationService {
       channelDescription: channelConfig.description,
       importance: Importance.high,
       priority: Priority.high,
-      icon: '@mipmap/ic_launcher',
+      icon: '@drawable/ic_launcher_monochrome',
       color: channelConfig.color,
     );
 
@@ -1377,7 +1377,7 @@ class NotificationService {
       channelDescription: channelConfig.description,
       importance: Importance.high,
       priority: Priority.high,
-      icon: '@mipmap/ic_launcher',
+      icon: '@drawable/ic_launcher_monochrome',
       color: channelConfig.color,
       playSound: true,
     );
@@ -1545,6 +1545,11 @@ class NotificationPreferencesNotifier extends StateNotifier<NotificationPreferen
   /// Reschedule all notifications based on current state
   Future<void> _rescheduleNotifications() async {
     await _notificationService.scheduleAllNotifications(state);
+  }
+
+  /// Public method to trigger rescheduling (e.g., after restoring onboarding flag)
+  Future<void> rescheduleNotifications() async {
+    await _rescheduleNotifications();
   }
 
   /// Sync notification preferences to backend

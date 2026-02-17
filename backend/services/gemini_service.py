@@ -49,48 +49,23 @@ logger = logging.getLogger("gemini")
 
 
 # ===========================================================================
-# In-Memory Response Cache for Repeated Gemini API Queries
+# Redis-backed Response Cache for Repeated Gemini API Queries
+# (falls back to in-memory dict when Redis is unavailable)
 # ===========================================================================
 
-class ResponseCache:
-    """Simple TTL cache for Gemini API responses to avoid redundant calls."""
+from core.redis_cache import RedisCache
 
-    def __init__(self, ttl_seconds: int = 300, max_size: int = 200):
-        self._cache: dict = {}
-        self._ttl = timedelta(seconds=ttl_seconds)
-        self._max_size = max_size
+# Keep ResponseCache as an alias for backwards compatibility (used by smart_search.py)
+ResponseCache = RedisCache
 
-    def get(self, key: str):
-        """Get a cached value if it exists and hasn't expired."""
-        if key in self._cache:
-            cached_at, value = self._cache[key]
-            if datetime.now() - cached_at < self._ttl:
-                return value
-            # Expired - remove it
-            del self._cache[key]
-        return None
-
-    def set(self, key: str, value):
-        """Store a value in the cache, evicting oldest if at capacity."""
-        # Evict oldest entry if at capacity
-        if len(self._cache) >= self._max_size:
-            oldest_key = min(self._cache, key=lambda k: self._cache[k][0])
-            del self._cache[oldest_key]
-        self._cache[key] = (datetime.now(), value)
-
-    @staticmethod
-    def make_key(*args) -> str:
-        """Create a deterministic cache key from arguments."""
-        return hashlib.md5(
-            json.dumps(args, sort_keys=True, default=str).encode()
-        ).hexdigest()
-
+# Concurrency limiter for Gemini API calls (prevents overloading quota)
+_gemini_semaphore = asyncio.Semaphore(10)
 
 # Module-level caches with purpose-tuned TTLs and sizes
-_summary_cache = ResponseCache(ttl_seconds=3600, max_size=100)   # 1hr for workout summaries
-_intent_cache = ResponseCache(ttl_seconds=600, max_size=200)     # 10min for intent extraction
-_food_text_cache = ResponseCache(ttl_seconds=1800, max_size=150) # 30min for food text analysis
-_embedding_cache = ResponseCache(ttl_seconds=3600, max_size=500) # 1hr for embedding vectors
+_summary_cache = RedisCache(prefix="summary", ttl_seconds=3600, max_size=100)   # 1hr for workout summaries
+_intent_cache = RedisCache(prefix="intent", ttl_seconds=600, max_size=200)      # 10min for intent extraction
+_food_text_cache = RedisCache(prefix="food_text", ttl_seconds=1800, max_size=150) # 30min for food text analysis
+_embedding_cache = RedisCache(prefix="embedding", ttl_seconds=3600, max_size=100) # 1hr for embedding vectors (reduced for 512MB)
 
 
 def safe_join_list(items, default: str = "") -> str:
@@ -1189,7 +1164,7 @@ User message: "''' + user_message + '"'
         # Check intent cache first (common intents like greetings hit this often)
         try:
             cache_key = _intent_cache.make_key("intent", user_message.strip().lower())
-            cached_result = _intent_cache.get(cache_key)
+            cached_result = await _intent_cache.get(cache_key)
             if cached_result is not None:
                 logger.info(f"[IntentCache] Cache HIT for message: '{user_message[:50]}...'")
                 return cached_result
@@ -1230,7 +1205,7 @@ User message: "''' + user_message + '"'
 
             # Cache the result
             try:
-                _intent_cache.set(cache_key, result)
+                await _intent_cache.set(cache_key, result)
                 logger.info(f"[IntentCache] Cache MISS - stored result for: '{user_message[:50]}...'")
             except Exception as cache_err:
                 logger.warning(f"[IntentCache] Failed to store result: {cache_err}")
@@ -1764,10 +1739,10 @@ INPUT TO PARSE:
         Returns:
             Embedding vector as list of floats
         """
-        # Check embedding cache first
+        # Check embedding cache first (sync path — local cache only)
         try:
             cache_key = _embedding_cache.make_key("emb", text.strip().lower())
-            cached = _embedding_cache.get(cache_key)
+            cached = _embedding_cache.get_sync(cache_key)
             if cached is not None:
                 logger.debug(f"[EmbeddingCache] Cache HIT for: '{text[:40]}...'")
                 return cached
@@ -1781,9 +1756,9 @@ INPUT TO PARSE:
         )
         embedding = result.embeddings[0].values
 
-        # Cache the result
+        # Cache the result (sync path — local cache only)
         try:
-            _embedding_cache.set(cache_key, embedding)
+            _embedding_cache.set_sync(cache_key, embedding)
             logger.debug(f"[EmbeddingCache] Cache MISS - stored embedding for: '{text[:40]}...'")
         except Exception as cache_err:
             logger.warning(f"[EmbeddingCache] Failed to store embedding: {cache_err}")
@@ -1804,23 +1779,24 @@ INPUT TO PARSE:
         # Check embedding cache first
         try:
             cache_key = _embedding_cache.make_key("emb", text.strip().lower())
-            cached = _embedding_cache.get(cache_key)
+            cached = await _embedding_cache.get(cache_key)
             if cached is not None:
                 logger.debug(f"[EmbeddingCache] Cache HIT (async) for: '{text[:40]}...'")
                 return cached
         except Exception as cache_err:
             logger.warning(f"[EmbeddingCache] Cache lookup error (falling through): {cache_err}")
 
-        result = await client.aio.models.embed_content(
-            model=self.embedding_model,
-            contents=text,
-            config=types.EmbedContentConfig(output_dimensionality=768),
-        )
+        async with _gemini_semaphore:
+            result = await client.aio.models.embed_content(
+                model=self.embedding_model,
+                contents=text,
+                config=types.EmbedContentConfig(output_dimensionality=768),
+            )
         embedding = result.embeddings[0].values
 
         # Cache the result
         try:
-            _embedding_cache.set(cache_key, embedding)
+            await _embedding_cache.set(cache_key, embedding)
             logger.debug(f"[EmbeddingCache] Cache MISS (async) - stored embedding for: '{text[:40]}...'")
         except Exception as cache_err:
             logger.warning(f"[EmbeddingCache] Failed to store embedding: {cache_err}")
@@ -1832,12 +1808,9 @@ INPUT TO PARSE:
         return [self.get_embedding(text) for text in texts]
 
     async def get_embeddings_batch_async(self, texts: List[str]) -> List[List[float]]:
-        """Get embeddings for multiple texts asynchronously."""
-        embeddings = []
-        for text in texts:
-            emb = await self.get_embedding_async(text)
-            embeddings.append(emb)
-        return embeddings
+        """Get embeddings for multiple texts asynchronously (parallel via gather)."""
+        embeddings = await asyncio.gather(*[self.get_embedding_async(t) for t in texts])
+        return list(embeddings)
 
     # ============================================
     # Food Analysis Methods
@@ -2124,7 +2097,7 @@ WEIGHT/COUNT FIELDS (required for portion editing):
             cache_key = _food_text_cache.make_key(
                 "food_text", description.strip().lower(), user_goals, nutrition_targets
             )
-            cached_result = _food_text_cache.get(cache_key)
+            cached_result = await _food_text_cache.get(cache_key)
             if cached_result is not None:
                 logger.info(f"[FoodTextCache] Cache HIT for: '{description[:60]}...'")
                 return cached_result
@@ -2359,7 +2332,7 @@ IMPORTANT - ALWAYS identify foods:
 
                     # Cache the successful result
                     try:
-                        _food_text_cache.set(cache_key, result)
+                        await _food_text_cache.set(cache_key, result)
                         logger.info(f"[FoodTextCache] Cache MISS - stored result for: '{description[:60]}...'")
                     except Exception as cache_err:
                         logger.warning(f"[FoodTextCache] Failed to store result: {cache_err}")
@@ -2412,7 +2385,7 @@ IMPORTANT - ALWAYS identify foods:
 
                     # Cache the fallback result too
                     try:
-                        _food_text_cache.set(cache_key, result)
+                        await _food_text_cache.set(cache_key, result)
                         logger.info(f"[FoodTextCache] Cache MISS (fallback) - stored result for: '{description[:60]}...'")
                     except Exception as cache_err:
                         logger.warning(f"[FoodTextCache] Failed to store fallback result: {cache_err}")
@@ -4797,7 +4770,7 @@ Return a JSON object with:
                 "summary", workout_name, exercise_names, target_muscles,
                 user_goals, fitness_level, duration_minutes, workout_type, difficulty
             )
-            cached_result = _summary_cache.get(cache_key)
+            cached_result = await _summary_cache.get(cache_key)
             if cached_result is not None:
                 logger.info(f"[SummaryCache] Cache HIT for workout: '{workout_name}'")
                 return cached_result
@@ -4821,7 +4794,7 @@ Return a JSON object with:
 
             # Cache the result
             try:
-                _summary_cache.set(cache_key, summary)
+                await _summary_cache.set(cache_key, summary)
                 logger.info(f"[SummaryCache] Cache MISS - stored summary for: '{workout_name}'")
             except Exception as cache_err:
                 logger.warning(f"[SummaryCache] Failed to store result: {cache_err}")

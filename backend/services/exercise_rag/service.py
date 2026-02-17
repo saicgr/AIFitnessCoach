@@ -634,7 +634,7 @@ class ExerciseRAGService:
         query_embedding = await self.gemini_service.get_embedding_async(search_query)
 
         # Search for candidate exercises
-        candidate_count = min(count * 4, 30)
+        candidate_count = min(count * 6, 40)
 
         results = self.collection.query(
             query_embeddings=[query_embedding],
@@ -1081,6 +1081,15 @@ class ExerciseRAGService:
                 else:
                     # Wrap around to beginning if needed
                     offset_candidates = candidates[offset_start:] + candidates[:offset_end - len(candidates)]
+                    # Remove duplicates from wrap-around
+                    seen_oc = set()
+                    unique_oc = []
+                    for c in offset_candidates:
+                        key = c['name'].lower().strip()
+                        if key not in seen_oc:
+                            seen_oc.add(key)
+                            unique_oc.append(c)
+                    offset_candidates = unique_oc
 
                 if batch_offset > 0:
                     logger.info(f"🎯 [Batch Variety] Applied batch_offset={batch_offset}, using candidates [{offset_start}:{offset_end}] (total: {len(candidates)})")
@@ -1099,6 +1108,26 @@ class ExerciseRAGService:
                 strength_history=strength_history,
                 progression_pace=progression_pace,
             )
+
+            # Backfill from full candidate pool if AI returned too few
+            if len(selected) < remaining_count:
+                all_used = {e['name'].lower().strip() for e in selected}
+                all_used |= {s['name'].lower().strip() for s in staple_included}
+                all_used |= {q['name'].lower().strip() for q in queued_included}
+                for candidate in candidates:  # Full pool, not offset slice
+                    if len(selected) >= remaining_count:
+                        break
+                    if candidate['name'].lower().strip() not in all_used:
+                        all_used.add(candidate['name'].lower().strip())
+                        selected.append(self._format_exercise_for_workout(
+                            candidate, fitness_level, adjusted_workout_params,
+                            strength_history, progression_pace
+                        ))
+                if len(selected) < remaining_count:
+                    logger.warning(
+                        f"Could only select {len(selected)}/{remaining_count} exercises "
+                        f"from {len(candidates)} total candidates"
+                    )
         else:
             selected = []
 
@@ -1160,6 +1189,16 @@ class ExerciseRAGService:
         progression_pace: str = "medium",
     ) -> List[Dict[str, Any]]:
         """Use AI to select the best exercises from candidates."""
+
+        # Deduplicate candidates by name (keep first occurrence = highest similarity)
+        seen_cand_names = set()
+        deduped = []
+        for c in candidates:
+            key = c['name'].lower().strip()
+            if key not in seen_cand_names:
+                seen_cand_names.add(key)
+                deduped.append(c)
+        candidates = deduped
 
         candidate_list = "\n".join([
             f"{i+1}. {c['name']} - targets {c['target_muscle']}, equipment: {c['equipment']}, body part: {c['body_part']}"

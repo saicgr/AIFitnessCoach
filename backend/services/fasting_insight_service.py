@@ -35,6 +35,7 @@ client = get_genai_client()
 # Cache for insights (in production, use Redis)
 _insight_cache: Dict[str, Dict[str, Any]] = {}
 CACHE_TTL_HOURS = 24
+CACHE_MAX_SIZE = 50
 
 
 class FastingInsightService:
@@ -108,6 +109,10 @@ class FastingInsightService:
 
     def _save_to_cache(self, cache_key: str, insight: Dict[str, Any]) -> None:
         """Save insight to cache."""
+        if len(_insight_cache) >= CACHE_MAX_SIZE:
+            # Evict oldest entry
+            oldest_key = min(_insight_cache, key=lambda k: _insight_cache[k].get('cached_at', ''))
+            del _insight_cache[oldest_key]
         _insight_cache[cache_key] = {
             "insight": insight,
             "cached_at": datetime.utcnow().isoformat()

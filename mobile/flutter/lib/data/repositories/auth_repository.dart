@@ -14,6 +14,7 @@ import '../providers/scores_provider.dart';
 import '../providers/today_workout_provider.dart';
 import '../providers/xp_provider.dart';
 import '../repositories/hydration_repository.dart';
+import '../repositories/measurements_repository.dart';
 import '../repositories/workout_repository.dart';
 import '../services/api_client.dart';
 import '../services/data_cache_service.dart';
@@ -294,6 +295,7 @@ class AuthRepository {
       NutritionPreferencesNotifier.clearCache();
       HydrationNotifier.clearCache();
       FastingNotifier.clearCache();
+      MeasurementsNotifier.clearCache();
 
       // Clear local onboarding flags so next user gets fresh experience
       final prefs = await SharedPreferences.getInstance();

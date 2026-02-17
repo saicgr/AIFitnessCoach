@@ -134,7 +134,9 @@ class NutritionNotifier extends StateNotifier<NutritionState> {
 
     state = state.copyWith(isLoading: true, error: null);
     try {
-      final summary = await _repository.getDailySummary(userId);
+      // Pass local date to avoid UTC mismatch on server (Render runs in UTC)
+      final localDate = DateTime.now().toIso8601String().substring(0, 10);
+      final summary = await _repository.getDailySummary(userId, date: localDate);
       state = state.copyWith(isLoading: false, todaySummary: summary);
       _lastLoadedUserId = userId;
       _lastLoadTime = DateTime.now();
@@ -325,6 +327,23 @@ class NutritionRepository {
       await _client.delete('/nutrition/food-logs/$logId');
     } catch (e) {
       debugPrint('Error deleting food log: $e');
+      rethrow;
+    }
+  }
+
+  /// Copy a food log to a different meal type
+  Future<Map<String, dynamic>> copyFoodLog({
+    required String logId,
+    required String mealType,
+  }) async {
+    try {
+      final response = await _client.post(
+        '/nutrition/food-logs/$logId/copy',
+        queryParameters: {'meal_type': mealType},
+      );
+      return response.data as Map<String, dynamic>;
+    } catch (e) {
+      debugPrint('Error copying food log: $e');
       rethrow;
     }
   }
@@ -1342,6 +1361,12 @@ class NutritionRepository {
     int limit = 50,
     int offset = 0,
     String? sourceType,
+    String? search,
+    String? sortBy,
+    String? sortOrder,
+    double? minProteinG,
+    int? maxCalories,
+    String? tag,
   }) async {
     try {
       final queryParams = <String, dynamic>{
@@ -1350,6 +1375,12 @@ class NutritionRepository {
         'offset': offset,
       };
       if (sourceType != null) queryParams['source_type'] = sourceType;
+      if (search != null && search.isNotEmpty) queryParams['search'] = search;
+      if (sortBy != null) queryParams['sort_by'] = sortBy;
+      if (sortOrder != null) queryParams['sort_order'] = sortOrder;
+      if (minProteinG != null) queryParams['min_protein_g'] = minProteinG;
+      if (maxCalories != null) queryParams['max_calories'] = maxCalories;
+      if (tag != null) queryParams['tag'] = tag;
 
       final response = await _client.get(
         '/nutrition/saved-foods',
