@@ -27,7 +27,7 @@ Endpoints:
 - GET /{user_id}/insights - Get AI-generated insights
 """
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query, Request
 from datetime import datetime, date, timedelta, timezone
 from typing import Optional, List
 from uuid import UUID
@@ -35,6 +35,7 @@ from uuid import UUID
 from core.supabase_db import get_supabase_db
 from core.logger import get_logger
 from core.activity_logger import log_user_activity, log_user_error
+from core.timezone_utils import resolve_timezone, get_user_today
 from models.habits import (
     HabitCreate, HabitUpdate, Habit, HabitWithStatus,
     HabitLogCreate, HabitLogUpdate, HabitLog,
@@ -97,7 +98,7 @@ async def get_habits(
 
 
 @router.get("/{user_id}/today", response_model=TodayHabitsResponse)
-async def get_today_habits(user_id: str):
+async def get_today_habits(user_id: str, request: Request):
     """
     Get today's habits with completion status.
 
@@ -114,7 +115,8 @@ async def get_today_habits(user_id: str):
 
     try:
         db = get_supabase_db()
-        today = date.today()
+        user_tz = resolve_timezone(request, db, user_id)
+        today = datetime.strptime(get_user_today(user_tz), "%Y-%m-%d").date()
 
         # Get habits with today's status from view
         result = db.client.table("today_habits_view").select("*").eq(
@@ -420,7 +422,7 @@ async def archive_habit(user_id: str, habit_id: str):
 # ============================================================================
 
 @router.post("/{user_id}/log", response_model=HabitLog)
-async def log_habit(user_id: str, log: HabitLogCreate):
+async def log_habit(user_id: str, log: HabitLogCreate, request: Request = None):
     """
     Log habit completion for a specific date.
 
@@ -447,8 +449,10 @@ async def log_habit(user_id: str, log: HabitLogCreate):
         if not habit.data:
             raise HTTPException(status_code=404, detail="Habit not found")
 
-        # Prevent logging future dates
-        if log.log_date > date.today():
+        # Prevent logging future dates (use user's local today)
+        user_tz = resolve_timezone(request, db, user_id) if request else "UTC"
+        user_today = datetime.strptime(get_user_today(user_tz), "%Y-%m-%d").date()
+        if log.log_date > user_today:
             raise HTTPException(status_code=400, detail="Cannot log habits for future dates")
 
         # Prepare log data
@@ -563,6 +567,7 @@ async def update_habit_log(user_id: str, log_id: str, log: HabitLogUpdate):
 async def get_habit_logs(
     user_id: str,
     habit_id: str,
+    request: Request,
     start_date: Optional[date] = Query(None, description="Start date (default: 30 days ago)"),
     end_date: Optional[date] = Query(None, description="End date (default: today)")
 ):
@@ -583,9 +588,10 @@ async def get_habit_logs(
     try:
         db = get_supabase_db()
 
-        # Default date range
+        # Default date range (timezone-aware)
+        user_tz = resolve_timezone(request, db, user_id)
         if end_date is None:
-            end_date = date.today()
+            end_date = datetime.strptime(get_user_today(user_tz), "%Y-%m-%d").date()
         if start_date is None:
             start_date = end_date - timedelta(days=30)
 
@@ -732,7 +738,7 @@ async def get_habit_streak(user_id: str, habit_id: str):
 # ============================================================================
 
 @router.get("/{user_id}/summary", response_model=HabitsSummary)
-async def get_habits_summary(user_id: str):
+async def get_habits_summary(user_id: str, request: Request):
     """
     Get overall habits summary for dashboard.
 
@@ -746,10 +752,11 @@ async def get_habits_summary(user_id: str):
 
     try:
         db = get_supabase_db()
-        today = date.today()
+        user_tz = resolve_timezone(request, db, user_id)
+        today = datetime.strptime(get_user_today(user_tz), "%Y-%m-%d").date()
 
         # Get today's habits response
-        today_response = await get_today_habits(user_id)
+        today_response = await get_today_habits(user_id, request)
 
         # Get all streaks to calculate averages
         streaks = db.client.table("habit_streaks").select(
@@ -796,6 +803,7 @@ async def get_habits_summary(user_id: str):
 @router.get("/{user_id}/weekly-summary", response_model=List[HabitWeeklySummary])
 async def get_weekly_summary(
     user_id: str,
+    request: Request,
     week_start: Optional[date] = Query(None, description="Start of week (Monday)")
 ):
     """
@@ -812,6 +820,8 @@ async def get_weekly_summary(
 
     try:
         db = get_supabase_db()
+        user_tz = resolve_timezone(request, db, user_id)
+        user_today = datetime.strptime(get_user_today(user_tz), "%Y-%m-%d").date()
 
         # Use the weekly summary view
         result = db.client.table("habit_weekly_summary_view").select("*").eq(
@@ -823,7 +833,7 @@ async def get_weekly_summary(
             summaries.append(HabitWeeklySummary(
                 habit_id=row["habit_id"],
                 habit_name=row["name"],
-                week_start=date.today() - timedelta(days=6),
+                week_start=user_today - timedelta(days=6),
                 days_completed=row.get("days_completed", 0) or 0,
                 days_scheduled=7,  # Assuming daily for now
                 completion_rate=row.get("completion_rate", 0) or 0,
@@ -844,7 +854,8 @@ async def get_habits_calendar(
     user_id: str,
     habit_id: str,
     start_date: date,
-    end_date: date
+    end_date: date,
+    request: Request = None,
 ):
     """
     Get calendar view data for a habit.
@@ -862,7 +873,8 @@ async def get_habits_calendar(
 
     try:
         db = get_supabase_db()
-        today = date.today()
+        user_tz = resolve_timezone(request, db, user_id) if request else "UTC"
+        today = datetime.strptime(get_user_today(user_tz), "%Y-%m-%d").date()
 
         # Get habit info
         habit = db.client.table("habits").select("name, frequency, target_days").eq(

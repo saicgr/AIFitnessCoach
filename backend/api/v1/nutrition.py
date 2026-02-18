@@ -47,6 +47,8 @@ from fastapi import APIRouter, BackgroundTasks, HTTPException, Query, UploadFile
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, validator
 
+from core.timezone_utils import resolve_timezone, local_date_to_utc_range, get_user_today, get_user_now_iso
+
 from core.rate_limiter import limiter
 
 from core.supabase_db import get_supabase_db
@@ -368,6 +370,7 @@ class LogFoodResponse(BaseModel):
 @router.get("/food-logs/{user_id}", response_model=List[FoodLogResponse])
 async def list_food_logs(
     user_id: str,
+    request: Request,
     limit: int = Query(default=50, le=100),
     from_date: Optional[str] = Query(default=None, description="Start date (YYYY-MM-DD)"),
     to_date: Optional[str] = Query(default=None, description="End date (YYYY-MM-DD)"),
@@ -385,10 +388,24 @@ async def list_food_logs(
 
     try:
         db = get_supabase_db()
+        user_tz = resolve_timezone(request, db, user_id)
+
+        # Convert date-only params to timezone-aware UTC ranges
+        tz_from = None
+        tz_to = None
+        if from_date and len(from_date) == 10:  # YYYY-MM-DD only
+            tz_from, _ = local_date_to_utc_range(from_date, user_tz)
+        else:
+            tz_from = from_date
+        if to_date and len(to_date) == 10:
+            _, tz_to = local_date_to_utc_range(to_date, user_tz)
+        else:
+            tz_to = to_date
+
         logs = db.list_food_logs(
             user_id=user_id,
-            from_date=from_date,
-            to_date=to_date,
+            from_date=tz_from,
+            to_date=tz_to,
             meal_type=meal_type,
             limit=limit
         )
@@ -481,7 +498,7 @@ async def delete_food_log(log_id: str):
 
 
 @router.post("/food-logs/{log_id}/copy")
-async def copy_food_log(log_id: str, meal_type: str = Query(..., description="Target meal type")):
+async def copy_food_log(log_id: str, http_request: Request, meal_type: str = Query(..., description="Target meal type")):
     """Copy an existing food log to a different meal type (or the same)."""
     logger.info(f"Copying food log {log_id} to {meal_type}")
 
@@ -492,6 +509,10 @@ async def copy_food_log(log_id: str, meal_type: str = Query(..., description="Ta
         source = db.get_food_log(log_id)
         if not source:
             raise HTTPException(status_code=404, detail="Food log not found")
+
+        # Resolve timezone for logged_at timestamp
+        user_tz = resolve_timezone(http_request, db, source["user_id"])
+        user_tz_logged_at = get_user_now_iso(user_tz)
 
         # Create a new food log with the same data but different meal type
         created_log = db.create_food_log(
@@ -504,6 +525,7 @@ async def copy_food_log(log_id: str, meal_type: str = Query(..., description="Ta
             fat_g=source.get("fat_g", 0),
             fiber_g=source.get("fiber_g", 0),
             health_score=source.get("health_score"),
+            logged_at=user_tz_logged_at,
             source_type=source.get("source_type", "text"),
         )
 
@@ -527,6 +549,7 @@ async def copy_food_log(log_id: str, meal_type: str = Query(..., description="Ta
 @router.get("/summary/daily/{user_id}", response_model=DailyNutritionResponse)
 async def get_daily_summary(
     user_id: str,
+    request: Request,
     date: Optional[str] = Query(default=None, description="Date (YYYY-MM-DD), defaults to today"),
 ):
     """
@@ -534,20 +557,20 @@ async def get_daily_summary(
 
     Returns total calories, macros, and list of meals for the day.
     """
-    if date is None:
-        date = datetime.now().strftime("%Y-%m-%d")
-
-    logger.info(f"Getting daily nutrition summary for user {user_id}, date={date}")
-
     try:
         db = get_supabase_db()
+        user_tz = resolve_timezone(request, db, user_id)
 
-        # Get summary
-        summary = db.get_daily_nutrition_summary(user_id, date)
+        if date is None:
+            date = get_user_today(user_tz)
 
-        # Get meals for the day - use full timestamp range to include all meals
-        start_of_day = f"{date}T00:00:00"
-        end_of_day = f"{date}T23:59:59"
+        logger.info(f"Getting daily nutrition summary for user {user_id}, date={date}, tz={user_tz}")
+
+        # Get summary (timezone-aware)
+        summary = db.get_daily_nutrition_summary(user_id, date, timezone_str=user_tz)
+
+        # Get meals for the day using timezone-aware UTC range
+        start_of_day, end_of_day = local_date_to_utc_range(date, user_tz)
         meals = db.list_food_logs(
             user_id=user_id,
             from_date=start_of_day,
@@ -593,6 +616,7 @@ async def get_daily_summary(
 @router.get("/summary/weekly/{user_id}", response_model=WeeklyNutritionResponse)
 async def get_weekly_summary(
     user_id: str,
+    request: Request,
     start_date: Optional[str] = Query(default=None, description="Start date (YYYY-MM-DD), defaults to 7 days ago"),
 ):
     """
@@ -600,18 +624,20 @@ async def get_weekly_summary(
 
     Returns daily summaries for 7 days starting from start_date.
     """
-    if start_date is None:
-        # Default to 7 days ago
-        from datetime import timedelta
-        start_date = (datetime.now() - timedelta(days=6)).strftime("%Y-%m-%d")
-
-    logger.info(f"Getting weekly nutrition summary for user {user_id}, start_date={start_date}")
-
     try:
         db = get_supabase_db()
+        user_tz = resolve_timezone(request, db, user_id)
 
-        # Get weekly summary
-        daily_summaries = db.get_weekly_nutrition_summary(user_id, start_date)
+        if start_date is None:
+            from datetime import timedelta
+            from zoneinfo import ZoneInfo
+            user_now = datetime.now(ZoneInfo(user_tz) if user_tz != "UTC" else ZoneInfo("UTC"))
+            start_date = (user_now - timedelta(days=6)).strftime("%Y-%m-%d")
+
+        logger.info(f"Getting weekly nutrition summary for user {user_id}, start_date={start_date}, tz={user_tz}")
+
+        # Get weekly summary (timezone-aware)
+        daily_summaries = db.get_weekly_nutrition_summary(user_id, start_date, timezone_str=user_tz)
 
         # Calculate totals
         total_calories = 0
@@ -755,10 +781,10 @@ async def lookup_barcode(barcode: str):
 
 
 @router.post("/log-barcode", response_model=LogBarcodeResponse)
-async def log_food_from_barcode(request: LogBarcodeRequest):
+async def log_food_from_barcode(request: LogBarcodeRequest, http_request: Request = None):
     """
     Log food to meal diary from barcode scan.
-    
+
     This endpoint:
     1. Looks up the product by barcode
     2. Calculates nutrition based on servings
@@ -807,6 +833,12 @@ async def log_food_from_barcode(request: LogBarcodeRequest):
         # Create food log
         db = get_supabase_db()
 
+        # Resolve timezone for logged_at timestamp
+        user_tz_logged_at = None
+        if http_request:
+            user_tz = resolve_timezone(http_request, db, request.user_id)
+            user_tz_logged_at = get_user_now_iso(user_tz)
+
         # Save to database using positional arguments
         created_log = db.create_food_log(
             user_id=request.user_id,
@@ -819,6 +851,7 @@ async def log_food_from_barcode(request: LogBarcodeRequest):
             fiber_g=fiber_g,
             ai_feedback=None,
             health_score=None,
+            logged_at=user_tz_logged_at,
         )
 
         food_log_id = created_log.get('id') if created_log else "unknown"
@@ -1207,6 +1240,7 @@ async def search_whole_foods(
 
 @router.post("/log-image", response_model=LogFoodResponse)
 async def log_food_from_image(
+    http_request: Request,
     background_tasks: BackgroundTasks,
     user_id: str = Form(...),
     meal_type: str = Form(...),
@@ -1285,6 +1319,10 @@ async def log_food_from_image(
         # Create food log with image URL
         db = get_supabase_db()
 
+        # Resolve timezone for logged_at timestamp
+        user_tz = resolve_timezone(http_request, db, user_id)
+        user_tz_logged_at = get_user_now_iso(user_tz)
+
         created_log = db.create_food_log(
             user_id=user_id,
             meal_type=meal_type,
@@ -1296,6 +1334,7 @@ async def log_food_from_image(
             fiber_g=fiber_g,
             ai_feedback=food_analysis.get('feedback'),
             health_score=None,
+            logged_at=user_tz_logged_at,
             image_url=image_url,
             image_storage_key=storage_key,
             source_type="image",
@@ -1372,7 +1411,7 @@ async def log_food_from_image(
 
 
 @router.post("/log-text", response_model=LogFoodResponse)
-async def log_food_from_text(request: LogTextRequest, background_tasks: BackgroundTasks):
+async def log_food_from_text(request: LogTextRequest, background_tasks: BackgroundTasks, http_request: Request = None):
     """
     Log food from a text description using Gemini with goal-based analysis.
 
@@ -1483,6 +1522,12 @@ async def log_food_from_text(request: LogTextRequest, background_tasks: Backgrou
         calcium_mg = food_analysis.get('calcium_mg')
         iron_mg = food_analysis.get('iron_mg')
 
+        # Resolve timezone for logged_at timestamp
+        user_tz_logged_at = None
+        if http_request:
+            user_tz = resolve_timezone(http_request, db, request.user_id)
+            user_tz_logged_at = get_user_now_iso(user_tz)
+
         # Save to database using positional arguments
         created_log = db.create_food_log(
             user_id=request.user_id,
@@ -1495,6 +1540,7 @@ async def log_food_from_text(request: LogTextRequest, background_tasks: Backgrou
             fiber_g=fiber_g,
             ai_feedback=ai_suggestion,
             health_score=health_score,
+            logged_at=user_tz_logged_at,
             # Micronutrients from Gemini analysis
             sugar_g=sugar_g,
             sodium_mg=sodium_mg,
@@ -1585,7 +1631,7 @@ async def log_food_from_text(request: LogTextRequest, background_tasks: Backgrou
 
 
 @router.post("/log-direct", response_model=LogFoodResponse)
-async def log_food_direct(request: LogDirectRequest):
+async def log_food_direct(request: LogDirectRequest, http_request: Request = None):
     """
     Log pre-analyzed food directly without AI processing.
 
@@ -1630,6 +1676,12 @@ async def log_food_direct(request: LogDirectRequest):
             if value is not None:
                 micronutrients[field] = value
 
+        # Resolve timezone for logged_at timestamp
+        user_tz_logged_at = None
+        if http_request:
+            user_tz = resolve_timezone(http_request, db, request.user_id)
+            user_tz_logged_at = get_user_now_iso(user_tz)
+
         # Create food log directly
         created_log = db.create_food_log(
             user_id=request.user_id,
@@ -1642,6 +1694,7 @@ async def log_food_direct(request: LogDirectRequest):
             fiber_g=request.total_fiber,
             ai_feedback=f"Logged via {request.source_type}" + (f": {request.notes}" if request.notes else ""),
             health_score=None,  # No AI scoring for direct logs
+            logged_at=user_tz_logged_at,
             **micronutrients,
         )
 
@@ -1833,6 +1886,10 @@ async def log_food_from_text_streaming(request: Request, body: LogTextRequest):
             # Step 4: Save to database
             yield send_progress(4, 4, "Saving your meal...", "Almost done!")
 
+            # Resolve timezone for logged_at timestamp
+            stream_user_tz = resolve_timezone(request, db, body.user_id)
+            stream_logged_at = get_user_now_iso(stream_user_tz)
+
             created_log = db.create_food_log(
                 user_id=body.user_id,
                 meal_type=body.meal_type,
@@ -1844,6 +1901,7 @@ async def log_food_from_text_streaming(request: Request, body: LogTextRequest):
                 fiber_g=fiber_g,
                 ai_feedback=ai_suggestion,
                 health_score=health_score,
+                logged_at=stream_logged_at,
                 **micronutrients,
             )
 
@@ -2237,6 +2295,11 @@ async def log_food_from_image_streaming(
             yield send_progress(4, 4, "Saving your meal...", "Almost done!")
 
             db = get_supabase_db()
+
+            # Resolve timezone for logged_at timestamp
+            stream_user_tz = resolve_timezone(request, db, user_id)
+            stream_logged_at = get_user_now_iso(stream_user_tz)
+
             created_log = db.create_food_log(
                 user_id=user_id,
                 meal_type=meal_type,
@@ -2248,6 +2311,7 @@ async def log_food_from_image_streaming(
                 fiber_g=fiber_g,
                 ai_feedback=food_analysis.get('feedback'),
                 health_score=None,
+                logged_at=stream_logged_at,
                 image_url=image_url,
                 image_storage_key=storage_key,
                 source_type="image",
@@ -2931,6 +2995,7 @@ async def delete_saved_food(saved_food_id: str, user_id: str = Query(...)):
 async def relog_saved_food(
     saved_food_id: str,
     request: RelogSavedFoodRequest,
+    http_request: Request = None,
     user_id: str = Query(...),
 ):
     """
@@ -2955,6 +3020,12 @@ async def relog_saved_food(
 
         saved_food = result.data
 
+        # Resolve timezone for logged_at timestamp
+        user_tz_logged_at = None
+        if http_request:
+            user_tz = resolve_timezone(http_request, db, user_id)
+            user_tz_logged_at = get_user_now_iso(user_tz)
+
         # Create food log from saved food
         created_log = db.create_food_log(
             user_id=user_id,
@@ -2967,6 +3038,7 @@ async def relog_saved_food(
             fiber_g=saved_food.get("total_fiber_g"),
             ai_feedback=None,
             health_score=saved_food.get("overall_meal_score"),
+            logged_at=user_tz_logged_at,
         )
 
         food_log_id = created_log.get('id') if created_log else "unknown"
@@ -3424,6 +3496,7 @@ async def delete_recipe(recipe_id: str, user_id: str = Query(...)):
 async def log_recipe(
     recipe_id: str,
     request: LogRecipeRequest,
+    http_request: Request = None,
     user_id: str = Query(...),
 ):
     """
@@ -3470,6 +3543,12 @@ async def log_recipe(
             "recipe_id": recipe_id,
         }]
 
+        # Resolve timezone for logged_at timestamp
+        user_tz_logged_at = None
+        if http_request:
+            user_tz = resolve_timezone(http_request, db, user_id)
+            user_tz_logged_at = get_user_now_iso(user_tz)
+
         created_log = db.create_food_log(
             user_id=user_id,
             meal_type=request.meal_type,
@@ -3481,6 +3560,7 @@ async def log_recipe(
             fiber_g=fiber,
             ai_feedback=None,
             health_score=None,
+            logged_at=user_tz_logged_at,
         )
 
         # Also update the food_logs table with recipe_id

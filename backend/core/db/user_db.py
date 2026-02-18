@@ -381,7 +381,7 @@ class UserDB(BaseDB):
         """
         result = (
             self.client.table("chat_history")
-            .select("id, user_id, role, content, intent, timestamp")
+            .select("id, user_id, user_message, ai_response, context_json, timestamp")
             .eq("user_id", user_id)
             .order("timestamp", desc=False)
             .limit(limit)

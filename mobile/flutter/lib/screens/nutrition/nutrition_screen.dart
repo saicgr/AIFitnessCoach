@@ -312,7 +312,7 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
                     ),
                   ),
                   const Spacer(),
-                  // History pill
+                  // History
                   GestureDetector(
                     onTap: () {
                       if (_userId != null) {
@@ -324,58 +324,38 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
                         );
                       }
                     },
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                      decoration: BoxDecoration(
-                        color: glassSurface,
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(Icons.history, size: 16, color: isDark ? AppColors.teal : AppColorsLight.teal),
-                          const SizedBox(width: 4),
-                          Text(
-                            'History',
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
-                              color: textSecondary,
-                            ),
-                          ),
-                        ],
+                    child: Tooltip(
+                      message: 'History',
+                      child: Container(
+                        width: 32,
+                        height: 32,
+                        decoration: BoxDecoration(
+                          color: glassSurface,
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: Icon(Icons.history, size: 18, color: isDark ? AppColors.teal : AppColorsLight.teal),
                       ),
                     ),
                   ),
-                  const SizedBox(width: 8),
-                  // Saved Foods - labeled pill for discoverability
+                  const SizedBox(width: 6),
+                  // Saved Foods
                   GestureDetector(
                     onTap: () => _showFavoritesSheet(isDark),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                      decoration: BoxDecoration(
-                        color: glassSurface,
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(Icons.bookmark_outline, size: 16, color: AppColors.yellow),
-                          const SizedBox(width: 4),
-                          Text(
-                            'Saved',
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
-                              color: textSecondary,
-                            ),
-                          ),
-                        ],
+                    child: Tooltip(
+                      message: 'Saved',
+                      child: Container(
+                        width: 32,
+                        height: 32,
+                        decoration: BoxDecoration(
+                          color: glassSurface,
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: Icon(Icons.bookmark_outline, size: 18, color: AppColors.yellow),
                       ),
                     ),
                   ),
-                  const SizedBox(width: 8),
-                  // Stats - floating circle
+                  const SizedBox(width: 6),
+                  // Stats
                   GestureDetector(
                     onTap: () => context.push('/stats?tab=4'),
                     child: Container(
@@ -388,8 +368,8 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
                       child: Icon(Icons.bar_chart_rounded, size: 18, color: textSecondary),
                     ),
                   ),
-                  const SizedBox(width: 8),
-                  // Settings - floating circle
+                  const SizedBox(width: 6),
+                  // Settings
                   GestureDetector(
                     onTap: () {
                       Navigator.push(
@@ -510,50 +490,8 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
   }
 
   Future<void> _showLogMealSheet(bool isDark, {String? mealType}) async {
-    // Try local state first, fallback to apiClient
-    String? userId = _userId;
-    if (userId == null || userId.isEmpty) {
-      debugPrint('_showLogMealSheet: local userId is null, trying apiClient...');
-      userId = await ref.read(apiClientProvider).getUserId();
-    }
-
-    // Guard: Don't show sheet if user ID is not available
-    if (userId == null || userId.isEmpty) {
-      debugPrint('Cannot show LogMealSheet: userId is null or empty');
-      return;
-    }
-
-    // Update local state if we got it from apiClient
-    if (_userId == null) {
-      setState(() => _userId = userId);
-    }
-
-    // Convert string to MealType if provided
-    MealType? initialMealType;
-    if (mealType != null) {
-      initialMealType = MealType.values.firstWhere(
-        (t) => t.value == mealType,
-        orElse: () => MealType.lunch,
-      );
-    }
-
-    // Hide nav bar while sheet is open
-    ref.read(floatingNavBarVisibleProvider.notifier).state = false;
-
-    showGlassSheet(
-      context: context,
-      builder: (context) => GlassSheet(
-        child: LogMealSheet(
-          userId: userId!,
-          isDark: isDark,
-          initialMealType: initialMealType,
-        ),
-      ),
-    ).then((_) {
-      // Show nav bar when sheet is closed
-      ref.read(floatingNavBarVisibleProvider.notifier).state = true;
-      _loadData();
-    });
+    await showLogMealSheet(context, ref, initialMealType: mealType);
+    _loadData();
   }
 
   void _showRecipeBuilder(BuildContext context, bool isDark) {
@@ -3176,7 +3114,7 @@ class _PinnedNutrientsCardState extends State<_PinnedNutrientsCard> {
         widget.isDark ? AppColors.textMuted : AppColorsLight.textMuted;
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
         color: elevated,
         borderRadius: BorderRadius.circular(16),

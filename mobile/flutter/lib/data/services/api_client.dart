@@ -6,6 +6,7 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:pretty_dio_logger/pretty_dio_logger.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' hide MultipartFile;
 import '../../core/constants/api_constants.dart';
 
@@ -165,6 +166,27 @@ class ApiClient with WidgetsBindingObserver {
             }
           }
           return handler.next(error);
+        },
+      ),
+    );
+
+    // Timezone interceptor — attaches X-User-Timezone header to every request
+    _dio.interceptors.add(
+      InterceptorsWrapper(
+        onRequest: (options, handler) async {
+          try {
+            final prefs = await SharedPreferences.getInstance();
+            final tz = prefs.getString('user_timezone');
+            if (tz != null && tz.isNotEmpty) {
+              options.headers['X-User-Timezone'] = tz;
+            } else {
+              // Fallback: use device timezone name
+              options.headers['X-User-Timezone'] = DateTime.now().timeZoneName;
+            }
+          } catch (e) {
+            debugPrint('⚠️ [API] Could not attach timezone header: $e');
+          }
+          return handler.next(options);
         },
       ),
     );

@@ -13,28 +13,30 @@ import '../../../data/services/social_image_service.dart';
 
 /// UI representation for post visibility options
 enum PostVisibilityOption {
-  public('Public', Icons.public_rounded, 'Everyone can see this', PostVisibility.public),
-  friends('Friends', Icons.people_rounded, 'Only friends can see this', PostVisibility.friends),
-  privateOnly('Private', Icons.lock_rounded, 'Only you can see this', PostVisibility.private);
+  public('Public', Icons.public_rounded, PostVisibility.public),
+  friends('Friends', Icons.people_rounded, PostVisibility.friends),
+  privateOnly('Private', Icons.lock_rounded, PostVisibility.private);
 
   final String label;
   final IconData icon;
-  final String description;
   final PostVisibility serviceValue;
 
-  const PostVisibilityOption(this.label, this.icon, this.description, this.serviceValue);
+  const PostVisibilityOption(this.label, this.icon, this.serviceValue);
 }
 
-/// Post type options
-enum PostType {
-  progress('Progress Update', Icons.trending_up_rounded),
-  photo('Photo', Icons.photo_camera_rounded),
-  milestone('Milestone', Icons.emoji_events_rounded);
+/// Reddit-style flair tags for posts
+enum PostFlair {
+  fitness('Fitness', Icons.fitness_center_rounded),
+  progress('Progress', Icons.trending_up_rounded),
+  milestone('Milestone', Icons.emoji_events_rounded),
+  nutrition('Nutrition', Icons.restaurant_rounded),
+  motivation('Motivation', Icons.bolt_rounded),
+  question('Question', Icons.help_outline_rounded);
 
   final String label;
   final IconData icon;
 
-  const PostType(this.label, this.icon);
+  const PostFlair(this.label, this.icon);
 }
 
 /// Create Post Sheet - Bottom sheet for creating manual posts
@@ -49,7 +51,7 @@ class _CreatePostSheetState extends ConsumerState<CreatePostSheet> {
   final TextEditingController _captionController = TextEditingController();
   final ImagePicker _imagePicker = ImagePicker();
 
-  PostType _selectedType = PostType.progress;
+  final Set<PostFlair> _selectedFlairs = {PostFlair.fitness};
   PostVisibilityOption _visibility = PostVisibilityOption.friends;
   File? _selectedImage;
   bool _isPosting = false;
@@ -58,7 +60,6 @@ class _CreatePostSheetState extends ConsumerState<CreatePostSheet> {
   @override
   void initState() {
     super.initState();
-    // Get userId from authStateProvider (consistent with rest of app)
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final authState = ref.read(authStateProvider);
       final userId = authState.user?.id;
@@ -119,13 +120,12 @@ class _CreatePostSheetState extends ConsumerState<CreatePostSheet> {
     try {
       final socialService = ref.read(socialServiceProvider);
 
-      // Prepare activity data based on post type
       final activityData = <String, dynamic>{
         'caption': caption,
-        'post_type': _selectedType.name,
+        'post_type': _selectedFlairs.isNotEmpty ? _selectedFlairs.first.name : 'fitness',
+        'flairs': _selectedFlairs.map((f) => f.name).toList(),
       };
 
-      // Upload image if selected
       if (_selectedImage != null) {
         _showSnackBar('Uploading image...');
 
@@ -156,7 +156,7 @@ class _CreatePostSheetState extends ConsumerState<CreatePostSheet> {
 
       if (mounted) {
         _showSnackBar('Post created successfully!');
-        Navigator.pop(context, true); // Return true to indicate post created
+        Navigator.pop(context, true);
       }
     } catch (e) {
       debugPrint('Error creating post: $e');
@@ -181,7 +181,6 @@ class _CreatePostSheetState extends ConsumerState<CreatePostSheet> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final backgroundColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
     final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
 
     return ClipRRect(
@@ -204,172 +203,100 @@ class _CreatePostSheetState extends ConsumerState<CreatePostSheet> {
             ),
           ),
           child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // Handle bar
-          Container(
-            margin: const EdgeInsets.only(top: 12),
-            width: 40,
-            height: 4,
-            decoration: BoxDecoration(
-              color: cardBorder,
-              borderRadius: BorderRadius.circular(2),
-            ),
-          ),
-
-          // Header
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                TextButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: Text(
-                    'Cancel',
-                    style: TextStyle(
-                      color: isDark ? AppColors.textPrimary : AppColorsLight.textPrimary,
-                    ),
-                  ),
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Handle bar
+              Container(
+                margin: const EdgeInsets.only(top: 12),
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: cardBorder,
+                  borderRadius: BorderRadius.circular(2),
                 ),
-                const Text(
-                  'Create Post',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                FilledButton(
-                  onPressed: _isPosting ? null : _createPost,
-                  style: FilledButton.styleFrom(
-                    backgroundColor: ref.colors(context).accent,
-                    foregroundColor: ref.colors(context).accentContrast,
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                  ),
-                  child: _isPosting
-                      ? const SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: Colors.white,
-                          ),
-                        )
-                      : const Text('Post'),
-                ),
-              ],
-            ),
-          ),
-
-          Divider(color: cardBorder.withValues(alpha: 0.3), height: 1),
-
-          // Scrollable content
-          Flexible(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Post type selector
-                  _buildPostTypeSelector(isDark, cardBorder),
-
-                  const SizedBox(height: 20),
-
-                  // Caption input
-                  _buildCaptionInput(isDark, cardBorder),
-
-                  const SizedBox(height: 20),
-
-                  // Image section
-                  _buildImageSection(isDark, cardBorder),
-
-                  const SizedBox(height: 20),
-
-                  // Visibility selector
-                  _buildVisibilitySelector(isDark, cardBorder),
-
-                  // Bottom padding for keyboard
-                  SizedBox(height: MediaQuery.of(context).viewInsets.bottom + 16),
-                ],
               ),
-            ),
-          ),
-        ],
-      ),
-        ),
-      ),
-    );
-  }
 
-  Widget _buildPostTypeSelector(bool isDark, Color cardBorder) {
-    final accentColor = ref.colors(context).accent;
-    final textColor = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Post Type',
-          style: TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-            color: textColor,
-          ),
-        ),
-        const SizedBox(height: 12),
-        Row(
-          children: PostType.values.map((type) {
-            final isSelected = _selectedType == type;
-            return Expanded(
-              child: Padding(
-                padding: EdgeInsets.only(
-                  right: type != PostType.values.last ? 8 : 0,
-                ),
-                child: GestureDetector(
-                  onTap: () {
-                    HapticFeedback.selectionClick();
-                    setState(() => _selectedType = type);
-                  },
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 200),
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    decoration: BoxDecoration(
-                      color: isSelected
-                          ? accentColor.withValues(alpha: 0.1)
-                          : Colors.transparent,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                        color: isSelected ? accentColor : cardBorder.withValues(alpha: 0.5),
-                        width: isSelected ? 2 : 1,
+              // Header
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(context),
+                      child: Text(
+                        'Cancel',
+                        style: TextStyle(
+                          color: isDark ? AppColors.textPrimary : AppColorsLight.textPrimary,
+                        ),
                       ),
                     ),
-                    child: Column(
-                      children: [
-                        Icon(
-                          type.icon,
-                          color: isSelected ? accentColor : textMuted,
-                          size: 24,
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          type.label,
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                            color: isSelected ? accentColor : textMuted,
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                      ],
+                    const Text(
+                      'Create Post',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
+                    FilledButton(
+                      onPressed: _isPosting ? null : _createPost,
+                      style: FilledButton.styleFrom(
+                        backgroundColor: ref.colors(context).accent,
+                        foregroundColor: ref.colors(context).accentContrast,
+                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                      ),
+                      child: _isPosting
+                          ? const SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Colors.white,
+                              ),
+                            )
+                          : const Text('Post'),
+                    ),
+                  ],
+                ),
+              ),
+
+              Divider(color: cardBorder.withValues(alpha: 0.3), height: 1),
+
+              // Scrollable content
+              Flexible(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Caption input
+                      _buildCaptionInput(isDark, cardBorder),
+
+                      const SizedBox(height: 16),
+
+                      // Flair tags
+                      _buildFlairTags(isDark, cardBorder),
+
+                      const SizedBox(height: 16),
+
+                      // Image section
+                      _buildImageSection(isDark, cardBorder),
+
+                      const SizedBox(height: 16),
+
+                      // Visibility selector
+                      _buildVisibilitySelector(isDark, cardBorder),
+
+                      // Bottom padding for keyboard
+                      SizedBox(height: MediaQuery.of(context).viewInsets.bottom + 16),
+                    ],
                   ),
                 ),
               ),
-            );
-          }).toList(),
+            ],
+          ),
         ),
-      ],
+      ),
     );
   }
 
@@ -389,14 +316,14 @@ class _CreatePostSheetState extends ConsumerState<CreatePostSheet> {
             color: textColor,
           ),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 8),
         TextField(
           controller: _captionController,
           maxLines: 4,
           maxLength: 500,
           textCapitalization: TextCapitalization.sentences,
           decoration: InputDecoration(
-            hintText: _getHintText(),
+            hintText: 'Share your fitness journey...',
             hintStyle: TextStyle(color: textMuted.withValues(alpha: 0.5)),
             filled: true,
             fillColor: isDark
@@ -421,19 +348,80 @@ class _CreatePostSheetState extends ConsumerState<CreatePostSheet> {
     );
   }
 
-  String _getHintText() {
-    switch (_selectedType) {
-      case PostType.progress:
-        return 'Share your fitness progress...';
-      case PostType.photo:
-        return 'Add a caption to your photo...';
-      case PostType.milestone:
-        return 'Celebrate your milestone...';
-    }
+  Widget _buildFlairTags(bool isDark, Color cardBorder) {
+    final accentColor = ref.colors(context).accent;
+    final textColor = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Tags',
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            color: textColor,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: PostFlair.values.map((flair) {
+            final isSelected = _selectedFlairs.contains(flair);
+            return GestureDetector(
+              onTap: () {
+                HapticFeedback.selectionClick();
+                setState(() {
+                  if (isSelected) {
+                    _selectedFlairs.remove(flair);
+                  } else {
+                    _selectedFlairs.add(flair);
+                  }
+                });
+              },
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 150),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: isSelected ? accentColor.withValues(alpha: 0.15) : Colors.transparent,
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
+                    color: isSelected ? accentColor : cardBorder.withValues(alpha: 0.5),
+                    width: isSelected ? 1.5 : 1,
+                  ),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      flair.icon,
+                      size: 14,
+                      color: isSelected ? accentColor : textMuted,
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      flair.label,
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                        color: isSelected ? accentColor : textMuted,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          }).toList(),
+        ),
+      ],
+    );
   }
 
   Widget _buildImageSection(bool isDark, Color cardBorder) {
     final textColor = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -446,7 +434,7 @@ class _CreatePostSheetState extends ConsumerState<CreatePostSheet> {
             color: textColor,
           ),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 8),
 
         if (_selectedImage != null)
           Stack(
@@ -485,67 +473,67 @@ class _CreatePostSheetState extends ConsumerState<CreatePostSheet> {
           Row(
             children: [
               Expanded(
-                child: _buildImagePickerButton(
-                  icon: Icons.camera_alt_rounded,
-                  label: 'Camera',
-                  onTap: () => _pickImage(ImageSource.camera),
-                  isDark: isDark,
-                  cardBorder: cardBorder,
+                child: GestureDetector(
+                  onTap: () {
+                    HapticFeedback.lightImpact();
+                    _pickImage(ImageSource.camera);
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    decoration: BoxDecoration(
+                      color: isDark
+                          ? AppColors.pureBlack.withValues(alpha: 0.5)
+                          : AppColorsLight.pureWhite,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: cardBorder.withValues(alpha: 0.5)),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.camera_alt_rounded, color: textMuted, size: 20),
+                        const SizedBox(width: 8),
+                        Text(
+                          'Camera',
+                          style: TextStyle(color: textColor, fontSize: 13),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
               ),
               const SizedBox(width: 12),
               Expanded(
-                child: _buildImagePickerButton(
-                  icon: Icons.photo_library_rounded,
-                  label: 'Gallery',
-                  onTap: () => _pickImage(ImageSource.gallery),
-                  isDark: isDark,
-                  cardBorder: cardBorder,
+                child: GestureDetector(
+                  onTap: () {
+                    HapticFeedback.lightImpact();
+                    _pickImage(ImageSource.gallery);
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    decoration: BoxDecoration(
+                      color: isDark
+                          ? AppColors.pureBlack.withValues(alpha: 0.5)
+                          : AppColorsLight.pureWhite,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: cardBorder.withValues(alpha: 0.5)),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.photo_library_rounded, color: textMuted, size: 20),
+                        const SizedBox(width: 8),
+                        Text(
+                          'Gallery',
+                          style: TextStyle(color: textColor, fontSize: 13),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
               ),
             ],
           ),
       ],
-    );
-  }
-
-  Widget _buildImagePickerButton({
-    required IconData icon,
-    required String label,
-    required VoidCallback onTap,
-    required bool isDark,
-    required Color cardBorder,
-  }) {
-    final textColor = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-
-    return GestureDetector(
-      onTap: () {
-        HapticFeedback.lightImpact();
-        onTap();
-      },
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 24),
-        decoration: BoxDecoration(
-          color: isDark
-              ? AppColors.pureBlack.withValues(alpha: 0.5)
-              : AppColorsLight.pureWhite,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: cardBorder.withValues(alpha: 0.5)),
-        ),
-        child: Column(
-          children: [
-            Icon(icon, color: textColor, size: 32),
-            const SizedBox(height: 8),
-            Text(
-              label,
-              style: TextStyle(
-                color: textColor,
-                fontSize: 14,
-              ),
-            ),
-          ],
-        ),
-      ),
     );
   }
 
@@ -565,67 +553,54 @@ class _CreatePostSheetState extends ConsumerState<CreatePostSheet> {
             color: textColor,
           ),
         ),
-        const SizedBox(height: 12),
-        ...PostVisibilityOption.values.map((visibility) {
-          final isSelected = _visibility == visibility;
-          return GestureDetector(
-            onTap: () {
-              HapticFeedback.selectionClick();
-              setState(() => _visibility = visibility);
-            },
-            child: Container(
-              margin: const EdgeInsets.only(bottom: 8),
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: isSelected
-                    ? accentColor.withValues(alpha: 0.1)
-                    : Colors.transparent,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: isSelected ? accentColor : cardBorder.withValues(alpha: 0.5),
-                  width: isSelected ? 2 : 1,
-                ),
-              ),
-              child: Row(
-                children: [
-                  Icon(
-                    visibility.icon,
-                    color: isSelected ? accentColor : textMuted,
-                    size: 24,
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
+        const SizedBox(height: 8),
+        Row(
+          children: PostVisibilityOption.values.map((visibility) {
+            final isSelected = _visibility == visibility;
+            final isLast = visibility == PostVisibilityOption.values.last;
+            return Expanded(
+              child: Padding(
+                padding: EdgeInsets.only(right: isLast ? 0 : 8),
+                child: GestureDetector(
+                  onTap: () {
+                    HapticFeedback.selectionClick();
+                    setState(() => _visibility = visibility);
+                  },
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 150),
+                    padding: const EdgeInsets.symmetric(vertical: 10),
+                    decoration: BoxDecoration(
+                      color: isSelected ? accentColor.withValues(alpha: 0.15) : Colors.transparent,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: isSelected ? accentColor : cardBorder.withValues(alpha: 0.5),
+                        width: isSelected ? 1.5 : 1,
+                      ),
+                    ),
                     child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
+                        Icon(
+                          visibility.icon,
+                          color: isSelected ? accentColor : textMuted,
+                          size: 20,
+                        ),
+                        const SizedBox(height: 4),
                         Text(
                           visibility.label,
                           style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: isSelected ? accentColor : null,
-                          ),
-                        ),
-                        Text(
-                          visibility.description,
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: textMuted,
+                            fontSize: 11,
+                            fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                            color: isSelected ? accentColor : textMuted,
                           ),
                         ),
                       ],
                     ),
                   ),
-                  if (isSelected)
-                    Icon(
-                      Icons.check_circle_rounded,
-                      color: accentColor,
-                      size: 24,
-                    ),
-                ],
+                ),
               ),
-            ),
-          );
-        }),
+            );
+          }).toList(),
+        ),
       ],
     );
   }

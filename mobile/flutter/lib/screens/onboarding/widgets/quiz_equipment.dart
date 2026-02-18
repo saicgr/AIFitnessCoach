@@ -115,9 +115,6 @@ class QuizEquipment extends StatelessWidget {
     final textPrimary = isDark ? Colors.white : const Color(0xFF0A0A0A);
     final textSecondary = isDark ? const Color(0xFFD4D4D8) : const Color(0xFF52525B);
 
-    // Total items = equipment list + "Other" option
-    final totalItems = _equipment.length + 1;
-
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Column(
@@ -135,17 +132,46 @@ class QuizEquipment extends StatelessWidget {
             const SizedBox(height: 12),
           ],
           Expanded(
-            child: ListView.builder(
+            child: SingleChildScrollView(
               padding: EdgeInsets.zero,
-              itemCount: totalItems,
-              itemBuilder: (context, index) {
-                // Last item is "Other"
-                if (index == _equipment.length) {
-                  return _buildOtherCard(context, index, isDark, textPrimary, textSecondary);
-                }
-                final item = _equipment[index];
-                return _buildEquipmentCard(context, item, index, isDark, textPrimary, textSecondary);
-              },
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      ..._equipment.map((item) =>
+                        _buildEquipmentChip(context, item, isDark, textPrimary, textSecondary),
+                      ),
+                      _buildOtherChip(context, isDark, textPrimary, textSecondary),
+                    ],
+                  ),
+                  // Quantity selectors shown below the grid when applicable
+                  if (selectedEquipment.contains('dumbbells') && !_hasFullGym) ...[
+                    const SizedBox(height: 12),
+                    _QuantityRow(
+                      label: 'Dumbbells',
+                      isSingle: dumbbellCount == 1,
+                      onSingle: () => onDumbbellCountChanged(1),
+                      onMultiple: () => onDumbbellCountChanged(2),
+                      onInfo: () => onInfoTap(context, 'dumbbells', isDark),
+                      isDark: isDark,
+                    ),
+                  ],
+                  if (selectedEquipment.contains('kettlebell') && !_hasFullGym) ...[
+                    const SizedBox(height: 8),
+                    _QuantityRow(
+                      label: 'Kettlebell',
+                      isSingle: kettlebellCount == 1,
+                      onSingle: () => onKettlebellCountChanged(1),
+                      onMultiple: () => onKettlebellCountChanged(2),
+                      onInfo: () => onInfoTap(context, 'kettlebell', isDark),
+                      isDark: isDark,
+                    ),
+                  ],
+                ],
+              ),
             ),
           ),
         ],
@@ -357,10 +383,9 @@ class QuizEquipment extends StatelessWidget {
     ).animate().fadeIn(delay: 200.ms);
   }
 
-  Widget _buildEquipmentCard(
+  Widget _buildEquipmentChip(
     BuildContext context,
     Map<String, dynamic> item,
-    int index,
     bool isDark,
     Color textPrimary,
     Color textSecondary,
@@ -368,11 +393,12 @@ class QuizEquipment extends StatelessWidget {
     final id = item['id'] as String;
     final isFullGymOption = id == 'full_gym';
     final isSelected = isFullGymOption ? _hasFullGym : selectedEquipment.contains(id);
-    final hasQuantity = item['hasQuantity'] == true;
     final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
 
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
+    return ConstrainedBox(
+      constraints: BoxConstraints(
+        minWidth: (MediaQuery.of(context).size.width - 48 - 8) / 2, // 2 columns with spacing
+      ),
       child: GestureDetector(
         onTap: () {
           HapticFeedback.selectionClick();
@@ -380,15 +406,15 @@ class QuizEquipment extends StatelessWidget {
         },
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 200),
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
           decoration: BoxDecoration(
             gradient: isSelected
-                  ? LinearGradient(
-                      colors: [AppColors.orange, AppColors.orange.withOpacity(0.8)],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    )
-                  : null,
+                ? LinearGradient(
+                    colors: [AppColors.orange, AppColors.orange.withOpacity(0.8)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  )
+                : null,
             color: isSelected
                 ? null
                 : (isDark ? AppColors.glassSurface : AppColorsLight.glassSurface),
@@ -399,176 +425,50 @@ class QuizEquipment extends StatelessWidget {
             ),
           ),
           child: Row(
+            mainAxisSize: MainAxisSize.min,
             children: [
               Icon(
                 item['icon'] as IconData,
                 color: isSelected ? Colors.white : textSecondary,
-                size: 20,
+                size: 18,
               ),
-              const SizedBox(width: 10),
-              Expanded(
+              const SizedBox(width: 8),
+              Flexible(
                 child: Text(
                   item['label'] as String,
                   style: TextStyle(
-                    fontSize: 14,
+                    fontSize: 13,
                     fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
                     color: isSelected ? Colors.white : textPrimary,
                   ),
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
-              if (hasQuantity && isSelected && !_hasFullGym)
-                _buildQuantitySelector(
-                  id: id,
-                  context: context,
-                  isDark: isDark,
-                )
-              else if (hasQuantity && isSelected && _hasFullGym)
-                _buildFullAccessIndicator()
-              else
-                _buildCheckbox(isSelected, cardBorder, isDark),
-            ],
-          ),
-        ),
-      ).animate(delay: (100 + index * 50).ms).fadeIn().slideX(begin: 0.05),
-    );
-  }
-
-  Widget _buildQuantitySelector({
-    required String id,
-    required BuildContext context,
-    required bool isDark,
-  }) {
-    final isSingle = id == 'dumbbells' ? dumbbellCount == 1 : kettlebellCount == 1;
-
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        GestureDetector(
-          onTap: () => onInfoTap(context, id, isDark),
-          child: Container(
-            width: 28,
-            height: 28,
-            margin: const EdgeInsets.only(right: 8),
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.15),
-              shape: BoxShape.circle,
-            ),
-            child: const Icon(
-              Icons.info_outline,
-              color: Colors.white70,
-              size: 16,
-            ),
-          ),
-        ),
-        Container(
-          decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.15),
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              GestureDetector(
-                onTap: () {
-                  HapticFeedback.selectionClick();
-                  if (id == 'dumbbells') {
-                    onDumbbellCountChanged(1);
-                  } else {
-                    onKettlebellCountChanged(1);
-                  }
-                },
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                  decoration: BoxDecoration(
-                    color: isSingle ? Colors.white.withValues(alpha: 0.25) : Colors.transparent,
-                    borderRadius: const BorderRadius.horizontal(left: Radius.circular(8)),
-                  ),
-                  child: Text(
-                    '1',
-                    style: TextStyle(
-                      color: isSingle ? Colors.white : Colors.white70,
-                      fontSize: 14,
-                      fontWeight: isSingle ? FontWeight.w700 : FontWeight.w500,
-                    ),
-                  ),
-                ),
-              ),
+              const SizedBox(width: 6),
               Container(
-                width: 1,
+                width: 20,
                 height: 20,
-                color: Colors.white24,
-              ),
-              GestureDetector(
-                onTap: () {
-                  HapticFeedback.selectionClick();
-                  if (id == 'dumbbells') {
-                    onDumbbellCountChanged(2);
-                  } else {
-                    onKettlebellCountChanged(2);
-                  }
-                },
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                  decoration: BoxDecoration(
-                    color: !isSingle ? Colors.white.withValues(alpha: 0.25) : Colors.transparent,
-                    borderRadius: const BorderRadius.horizontal(right: Radius.circular(8)),
-                  ),
-                  child: Text(
-                    '1+',
-                    style: TextStyle(
-                      color: !isSingle ? Colors.white : Colors.white70,
-                      fontSize: 14,
-                      fontWeight: !isSingle ? FontWeight.w700 : FontWeight.w500,
-                    ),
-                  ),
+                decoration: BoxDecoration(
+                  color: isSelected ? Colors.white.withOpacity(0.2) : Colors.transparent,
+                  shape: BoxShape.circle,
+                  border: isSelected
+                      ? null
+                      : Border.all(
+                          color: isDark ? AppColors.cardBorder : AppColorsLight.cardBorder,
+                          width: 1.5,
+                        ),
                 ),
+                child: isSelected ? const Icon(Icons.check, color: Colors.white, size: 13) : null,
               ),
             ],
           ),
         ),
-      ],
-    );
-  }
-
-  Widget _buildFullAccessIndicator() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.2),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: const Text(
-        '\u221E',
-        style: TextStyle(
-          color: Colors.white,
-          fontSize: 16,
-          fontWeight: FontWeight.bold,
-        ),
       ),
     );
   }
 
-  Widget _buildCheckbox(bool isSelected, Color cardBorder, bool isDark) {
-    return Container(
-      width: 22,
-      height: 22,
-      decoration: BoxDecoration(
-        color: isSelected ? Colors.white.withOpacity(0.2) : Colors.transparent,
-        shape: BoxShape.circle,
-        border: isSelected
-            ? null
-            : Border.all(
-                color: isDark ? AppColors.cardBorder : AppColorsLight.cardBorder,
-                width: 2,
-              ),
-      ),
-      child: isSelected ? const Icon(Icons.check, color: Colors.white, size: 14) : null,
-    );
-  }
-
-  Widget _buildOtherCard(
+  Widget _buildOtherChip(
     BuildContext context,
-    int index,
     bool isDark,
     Color textPrimary,
     Color textSecondary,
@@ -576,8 +476,10 @@ class QuizEquipment extends StatelessWidget {
     final hasOtherSelected = otherSelectedEquipment.isNotEmpty;
     final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
 
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
+    return ConstrainedBox(
+      constraints: BoxConstraints(
+        minWidth: (MediaQuery.of(context).size.width - 48 - 8) / 2,
+      ),
       child: GestureDetector(
         onTap: () {
           HapticFeedback.selectionClick();
@@ -585,7 +487,7 @@ class QuizEquipment extends StatelessWidget {
         },
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 200),
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
           decoration: BoxDecoration(
             gradient: hasOtherSelected ? AppColors.accentGradient : null,
             color: hasOtherSelected
@@ -598,46 +500,149 @@ class QuizEquipment extends StatelessWidget {
             ),
           ),
           child: Row(
+            mainAxisSize: MainAxisSize.min,
             children: [
               Icon(
                 Icons.more_horiz,
                 color: hasOtherSelected ? Colors.white : textSecondary,
-                size: 20,
+                size: 18,
               ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      'Other Equipment',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: hasOtherSelected ? FontWeight.w600 : FontWeight.w500,
-                        color: hasOtherSelected ? Colors.white : textPrimary,
-                      ),
-                    ),
-                    if (hasOtherSelected)
-                      Text(
-                        '${otherSelectedEquipment.length} selected',
-                        style: TextStyle(
-                          fontSize: 11,
-                          color: Colors.white.withValues(alpha: 0.7),
-                        ),
-                      ),
-                  ],
+              const SizedBox(width: 8),
+              Flexible(
+                child: Text(
+                  hasOtherSelected
+                      ? 'Other (${otherSelectedEquipment.length})'
+                      : 'Other Equipment',
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: hasOtherSelected ? FontWeight.w600 : FontWeight.w500,
+                    color: hasOtherSelected ? Colors.white : textPrimary,
+                  ),
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
+              const SizedBox(width: 6),
               Icon(
                 Icons.search,
                 color: hasOtherSelected ? Colors.white70 : textSecondary,
-                size: 18,
+                size: 16,
               ),
             ],
           ),
         ),
-      ).animate(delay: (100 + index * 50).ms).fadeIn().slideX(begin: 0.05),
+      ),
+    );
+  }
+}
+
+/// Compact quantity toggle row shown below the chip grid
+class _QuantityRow extends StatelessWidget {
+  final String label;
+  final bool isSingle;
+  final VoidCallback onSingle;
+  final VoidCallback onMultiple;
+  final VoidCallback onInfo;
+  final bool isDark;
+
+  const _QuantityRow({
+    required this.label,
+    required this.isSingle,
+    required this.onSingle,
+    required this.onMultiple,
+    required this.onInfo,
+    required this.isDark,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final textColor = isDark ? Colors.white : const Color(0xFF0A0A0A);
+    final mutedColor = isDark ? const Color(0xFFD4D4D8) : const Color(0xFF52525B);
+
+    return Row(
+      children: [
+        Icon(Icons.fitness_center, size: 16, color: mutedColor),
+        const SizedBox(width: 8),
+        Text(
+          '$label:',
+          style: TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w500,
+            color: textColor,
+          ),
+        ),
+        const SizedBox(width: 10),
+        Container(
+          decoration: BoxDecoration(
+            color: isDark ? AppColors.glassSurface : AppColorsLight.glassSurface,
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(
+              color: AppColors.orange.withOpacity(0.5),
+              width: 1,
+            ),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              GestureDetector(
+                onTap: () {
+                  HapticFeedback.selectionClick();
+                  onSingle();
+                },
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: isSingle ? AppColors.orange : Colors.transparent,
+                    borderRadius: const BorderRadius.horizontal(left: Radius.circular(7)),
+                  ),
+                  child: Text(
+                    '1',
+                    style: TextStyle(
+                      color: isSingle ? Colors.white : mutedColor,
+                      fontSize: 13,
+                      fontWeight: isSingle ? FontWeight.w700 : FontWeight.w500,
+                    ),
+                  ),
+                ),
+              ),
+              Container(
+                width: 1,
+                height: 18,
+                color: AppColors.orange.withOpacity(0.3),
+              ),
+              GestureDetector(
+                onTap: () {
+                  HapticFeedback.selectionClick();
+                  onMultiple();
+                },
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: !isSingle ? AppColors.orange : Colors.transparent,
+                    borderRadius: const BorderRadius.horizontal(right: Radius.circular(7)),
+                  ),
+                  child: Text(
+                    '1+',
+                    style: TextStyle(
+                      color: !isSingle ? Colors.white : mutedColor,
+                      fontSize: 13,
+                      fontWeight: !isSingle ? FontWeight.w700 : FontWeight.w500,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(width: 8),
+        GestureDetector(
+          onTap: onInfo,
+          child: Icon(
+            Icons.info_outline,
+            size: 18,
+            color: AppColors.accent,
+          ),
+        ),
+      ],
     );
   }
 }

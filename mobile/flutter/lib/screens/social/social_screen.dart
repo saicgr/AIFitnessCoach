@@ -122,8 +122,6 @@ class _SocialScreenState extends ConsumerState<SocialScreen>
       ),
       body: Column(
         children: [
-          // Stats chips row
-          _buildStatsChips(context, isDark, feedDataAsync),
           // Modern segmented tab bar
           _buildSegmentedTabs(context, isDark),
           // Tab content

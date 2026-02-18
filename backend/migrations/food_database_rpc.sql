@@ -168,13 +168,10 @@ BEGIN
             FROM food_database_deduped f
             WHERE
                 f.name_normalized % LOWER(TRIM(input.name))
-                OR f.name_normalized ILIKE '%' || LOWER(TRIM(input.name)) || '%'
             ORDER BY
                 CASE
                     WHEN f.name_normalized = LOWER(TRIM(input.name)) THEN 0
-                    WHEN f.name_normalized ILIKE LOWER(TRIM(input.name)) || '%' THEN 1
-                    WHEN f.name_normalized ILIKE '%' || LOWER(TRIM(input.name)) || '%' THEN 2
-                    ELSE 3
+                    ELSE 1
                 END,
                 similarity(f.name_normalized, LOWER(TRIM(input.name))) DESC
             LIMIT 1
@@ -208,10 +205,7 @@ BEGIN
             FROM food_database_deduped f
             WHERE
                 f.variant_text IS NOT NULL
-                AND (
-                    f.variant_text % LOWER(TRIM(nm.inp_name))
-                    OR f.variant_text ILIKE '%' || LOWER(TRIM(nm.inp_name)) || '%'
-                )
+                AND f.variant_text % LOWER(TRIM(nm.inp_name))
             ORDER BY
                 similarity(f.variant_text, LOWER(TRIM(nm.inp_name))) DESC
             LIMIT 1
@@ -234,9 +228,10 @@ BEGIN
     LEFT JOIN variant_matches vm ON nm.inp_name = vm.inp_name;
 END;
 $$ LANGUAGE plpgsql STABLE SECURITY INVOKER
-SET search_path = public;
+SET search_path = public
+SET statement_timeout = '5000';
 
-COMMENT ON FUNCTION batch_lookup_foods IS 'Batch food lookup: takes array of food names, returns best match for each. Uses two-pass approach: name_normalized first, then variant_text for misses.';
+COMMENT ON FUNCTION batch_lookup_foods IS 'Batch food lookup: takes array of food names, returns best match for each. Uses two-pass approach: name_normalized first, then variant_text for misses. 5s timeout.';
 
 -- Grant execute permission
 GRANT EXECUTE ON FUNCTION batch_lookup_foods(TEXT[]) TO authenticated;

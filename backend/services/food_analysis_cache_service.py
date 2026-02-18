@@ -352,6 +352,9 @@ class FoodAnalysisCacheService:
                 total_fat += analysis["fat_g"] * qty
                 total_fiber += analysis["fiber_g"] * qty
 
+            # Compute a simple health score from combined macros
+            score = self._compute_health_score(total_cals, total_protein, total_fiber)
+
             return {
                 "food_items": all_food_items,
                 "total_calories": total_cals,
@@ -359,10 +362,12 @@ class FoodAnalysisCacheService:
                 "carbs_g": round(total_carbs, 1),
                 "fat_g": round(total_fat, 1),
                 "fiber_g": round(total_fiber, 1),
-                "encouragements": ["All items found in our database for instant results!"],
+                "encouragements": [],
                 "warnings": [],
                 "ai_suggestion": None,
                 "recommended_swap": None,
+                "overall_meal_score": score,
+                "health_score": score,
                 "data_source": "multi_common_foods",
             }
 
@@ -380,28 +385,49 @@ class FoodAnalysisCacheService:
         Returns:
             Dict in same format as Gemini analysis
         """
+        weight_g = float(common_food.get("serving_weight_g", 0)) if common_food.get("serving_weight_g") else None
+        calories = common_food.get("calories", 0)
+        protein_g = float(common_food.get("protein_g", 0))
+        carbs_g = float(common_food.get("carbs_g", 0))
+        fat_g = float(common_food.get("fat_g", 0))
+        fiber_g = float(common_food.get("fiber_g", 0))
+
         food_item = {
             "name": common_food.get("name"),
             "amount": common_food.get("serving_size", "1 serving"),
-            "calories": common_food.get("calories", 0),
-            "protein_g": float(common_food.get("protein_g", 0)),
-            "carbs_g": float(common_food.get("carbs_g", 0)),
-            "fat_g": float(common_food.get("fat_g", 0)),
-            "fiber_g": float(common_food.get("fiber_g", 0)),
-            "weight_g": float(common_food.get("serving_weight_g", 0)) if common_food.get("serving_weight_g") else None,
+            "calories": calories,
+            "protein_g": protein_g,
+            "carbs_g": carbs_g,
+            "fat_g": fat_g,
+            "fiber_g": fiber_g,
+            "weight_g": weight_g,
+            "weight_source": "exact",
             "unit": "g",
         }
+
+        # Add per-gram scaling data so frontend can adjust portions
+        if weight_g and weight_g > 0:
+            food_item["ai_per_gram"] = {
+                "calories": round(calories / weight_g, 3),
+                "protein": round(protein_g / weight_g, 4),
+                "carbs": round(carbs_g / weight_g, 4),
+                "fat": round(fat_g / weight_g, 4),
+                "fiber": round(fiber_g / weight_g, 4),
+            }
 
         # Get micronutrients if available
         micronutrients = common_food.get("micronutrients", {})
 
+        # Compute a simple health score from macros
+        score = self._compute_health_score(calories, protein_g, fiber_g)
+
         return {
             "food_items": [food_item],
-            "total_calories": common_food.get("calories", 0),
-            "protein_g": float(common_food.get("protein_g", 0)),
-            "carbs_g": float(common_food.get("carbs_g", 0)),
-            "fat_g": float(common_food.get("fat_g", 0)),
-            "fiber_g": float(common_food.get("fiber_g", 0)),
+            "total_calories": calories,
+            "protein_g": protein_g,
+            "carbs_g": carbs_g,
+            "fat_g": fat_g,
+            "fiber_g": fiber_g,
             # Micronutrients from JSONB field
             "sugar_g": micronutrients.get("sugar_g"),
             "sodium_mg": micronutrients.get("sodium_mg"),
@@ -412,15 +438,29 @@ class FoodAnalysisCacheService:
             "calcium_mg": micronutrients.get("calcium_mg"),
             "iron_mg": micronutrients.get("iron_mg"),
             "potassium_mg": micronutrients.get("potassium_mg"),
-            # Default encouragements for common foods
-            "encouragements": [f"Good choice! {common_food.get('name')} is a common staple."],
+            "encouragements": [],
             "warnings": [],
             "ai_suggestion": None,
             "recommended_swap": None,
+            "overall_meal_score": score,
+            "health_score": score,
             # Source tracking
             "data_source": common_food.get("source", "common_foods"),
             "category": common_food.get("category"),
         }
+
+    @staticmethod
+    def _compute_health_score(calories: int, protein_g: float, fiber_g: float) -> int:
+        """Compute a simple health score (1-10) from macros."""
+        protein_ratio = (protein_g * 4) / max(calories, 1)
+        score = 5  # neutral baseline
+        if protein_ratio >= 0.25:
+            score += 2
+        elif protein_ratio >= 0.15:
+            score += 1
+        if fiber_g >= 5:
+            score += 1
+        return min(score, 10)
 
     async def _try_cache(self, description: str) -> Optional[Dict[str, Any]]:
         """

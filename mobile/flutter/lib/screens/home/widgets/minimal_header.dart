@@ -15,7 +15,6 @@ import 'gym_profile_switcher.dart';
 /// ```
 /// [Gym Profile Switcher - collapsed tabs]
 /// Hey, {name}         [XP badge (level)] [bell icon]
-/// Day X streak
 /// ```
 class MinimalHeader extends ConsumerWidget {
   const MinimalHeader({super.key});
@@ -24,14 +23,11 @@ class MinimalHeader extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final user = ref.watch(authStateProvider).user;
-    final streak = ref.watch(xpCurrentStreakProvider);
     final xpState = ref.watch(xpProvider);
     final accentColor = ref.watch(accentColorProvider);
 
     final textPrimary =
         isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textSecondary =
-        isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
 
     // Extract first name from user's full name
     final fullName = user?.name;
@@ -53,29 +49,15 @@ class MinimalHeader extends ConsumerWidget {
           // Greeting row + action buttons
           Row(
             children: [
-              // Greeting + streak
+              // Greeting
               Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      greeting,
-                      style: TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.bold,
-                        color: textPrimary,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      'Day $streak streak',
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: textSecondary,
-                      ),
-                    ),
-                  ],
+                child: Text(
+                  greeting,
+                  style: TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                    color: textPrimary,
+                  ),
                 ),
               ),
 

@@ -42,51 +42,19 @@ class WeekCalendarStrip extends ConsumerWidget {
     // Compute the Monday of this week
     final monday = today.subtract(Duration(days: todayIndex));
 
-    // Month/year for header
-    final months = [
-      'JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN',
-      'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC',
-    ];
-    final dayAbbrevs = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-    final shortDays = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
-
-    // Header date: "Tue, 16"
-    final headerDay = dayAbbrevs[todayIndex];
-    final headerDate = today.day.toString();
-    final headerMonth = '${months[today.month - 1]} ${today.year}';
+    const shortDays = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Column(
         children: [
-          // Row 1: Date header + Today chip
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Row(
-                children: [
-                  Text(
-                    '$headerDay, $headerDate',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: isDark ? Colors.white : Colors.black87,
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    headerMonth,
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w500,
-                      color: isDark ? Colors.white54 : Colors.black45,
-                    ),
-                  ),
-                ],
-              ),
-              // "Today" chip
-              if (selectedDayIndex != todayIndex)
-                GestureDetector(
+          // "Today" chip when viewing a different day
+          if (selectedDayIndex != todayIndex)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: Align(
+                alignment: Alignment.centerRight,
+                child: GestureDetector(
                   onTap: () {
                     HapticService.light();
                     onDaySelected(todayIndex);
@@ -107,11 +75,10 @@ class WeekCalendarStrip extends ConsumerWidget {
                     ),
                   ),
                 ),
-            ],
-          ),
-          const SizedBox(height: 10),
+              ),
+            ),
 
-          // Row 2: Day cells (Mon-Sun)
+          // Day cells (Mon-Sun)
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: List.generate(7, (index) {

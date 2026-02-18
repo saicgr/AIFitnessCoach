@@ -13,11 +13,12 @@ Endpoints:
 
 from datetime import datetime, date, timedelta
 from typing import Optional, List, Dict, Any
-from fastapi import APIRouter, HTTPException, Query, BackgroundTasks
+from fastapi import APIRouter, HTTPException, Query, BackgroundTasks, Request
 from collections import defaultdict
 import logging
 
 from core.db import get_supabase_db
+from core.timezone_utils import resolve_timezone, get_user_today
 from models.consistency import (
     ConsistencyInsights,
     ConsistencyPatterns,
@@ -128,6 +129,7 @@ def get_motivation_quote() -> str:
 
 @router.get("/insights", response_model=ConsistencyInsights, tags=["Consistency"])
 async def get_consistency_insights(
+    request: Request,
     user_id: str = Query(..., description="User ID"),
     days_back: int = Query(90, ge=7, le=365, description="Days of history to analyze"),
     background_tasks: BackgroundTasks = None,
@@ -143,6 +145,8 @@ async def get_consistency_insights(
     - Recovery suggestion if streak is broken
     """
     db = get_supabase_db()
+    user_tz = resolve_timezone(request, db, user_id)
+    today = datetime.strptime(get_user_today(user_tz), "%Y-%m-%d").date()
 
     try:
         logger.info(f"Fetching consistency insights for user {user_id}")
@@ -178,7 +182,7 @@ async def get_consistency_insights(
         # Calculate days since last workout
         days_since_last = 0
         if last_workout_date:
-            days_since_last = (date.today() - last_workout_date).days
+            days_since_last = (today - last_workout_date).days
 
         # Get workout time patterns
         patterns_response = db.client.table("workout_time_patterns").select(
@@ -274,8 +278,8 @@ async def get_consistency_insights(
                     break
 
         # Get monthly stats (current month)
-        month_start = date.today().replace(day=1)
-        month_end = date.today()
+        month_start = today.replace(day=1)
+        month_end = today
 
         # Count scheduled workouts this month
         scheduled_response = db.client.table("workouts").select(
@@ -305,7 +309,6 @@ async def get_consistency_insights(
         # Get weekly completion rates (last 4 weeks)
         weekly_rates = []
         rates_for_trend = []
-        today = date.today()
 
         for week_offset in range(4):
             week_end = today - timedelta(days=week_offset * 7)
@@ -533,6 +536,7 @@ async def get_consistency_patterns(
 
 @router.get("/calendar", response_model=CalendarHeatmapResponse, tags=["Consistency"])
 async def get_calendar_heatmap(
+    request: Request,
     user_id: str = Query(..., description="User ID"),
     weeks: int = Query(None, ge=1, le=52, description="Number of weeks to include (legacy, use start_date/end_date instead)"),
     start_date_param: Optional[str] = Query(None, alias="start_date", description="Start date in YYYY-MM-DD format"),
@@ -555,7 +559,8 @@ async def get_calendar_heatmap(
 
     try:
         # Calculate date range based on parameters
-        today = date.today()
+        user_tz = resolve_timezone(request, db, user_id)
+        today = datetime.strptime(get_user_today(user_tz), "%Y-%m-%d").date()
 
         if start_date_param and end_date_param:
             # Use custom date range
@@ -678,6 +683,7 @@ async def get_calendar_heatmap(
 
 @router.get("/day-detail", tags=["Consistency"])
 async def get_day_detail(
+    request: Request,
     user_id: str = Query(..., description="User ID"),
     date_str: str = Query(..., alias="date", description="Date in YYYY-MM-DD format"),
 ):
@@ -695,7 +701,8 @@ async def get_day_detail(
 
     try:
         target_date = date.fromisoformat(date_str)
-        today = date.today()
+        user_tz = resolve_timezone(request, db, user_id)
+        today = datetime.strptime(get_user_today(user_tz), "%Y-%m-%d").date()
 
         # Determine base status
         if target_date > today:
@@ -888,6 +895,7 @@ async def get_day_detail(
 
 @router.get("/search-exercise", tags=["Consistency"])
 async def search_exercise_history(
+    request: Request,
     user_id: str = Query(..., description="User ID"),
     exercise_name: str = Query(..., description="Exercise name to search for"),
     weeks: int = Query(52, ge=1, le=104, description="Number of weeks to search back"),
@@ -903,7 +911,8 @@ async def search_exercise_history(
     db = get_supabase_db()
 
     try:
-        today = date.today()
+        user_tz = resolve_timezone(request, db, user_id)
+        today = datetime.strptime(get_user_today(user_tz), "%Y-%m-%d").date()
         start_date = today - timedelta(days=weeks * 7)
 
         # Search performance logs for this exercise
@@ -1097,6 +1106,7 @@ async def get_exercise_suggestions(
 
 @router.post("/streak-recovery", response_model=StreakRecoveryResponse, tags=["Consistency"])
 async def initiate_streak_recovery(
+    http_request: Request,
     request: StreakRecoveryRequest,
     background_tasks: BackgroundTasks,
 ):
@@ -1128,9 +1138,11 @@ async def initiate_streak_recovery(
                 last_workout_date = date.fromisoformat(last_workout_str) if isinstance(last_workout_str, str) else last_workout_str
 
         # Calculate days since last workout
+        user_tz = resolve_timezone(http_request, db, user_id)
+        user_today = datetime.strptime(get_user_today(user_tz), "%Y-%m-%d").date()
         days_since = 0
         if last_workout_date:
-            days_since = (date.today() - last_workout_date).days
+            days_since = (user_today - last_workout_date).days
 
         # Get previous streak length from most recent streak history
         history_response = db.client.table("streak_history").select(

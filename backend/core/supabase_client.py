@@ -48,6 +48,23 @@ class SupabaseManager:
             )
             self._supabase.auth._http_client = auth_http_client
 
+            # Configure PostgREST client with retry-enabled HTTP transport.
+            # Supabase's edge proxy can close idle connections, causing
+            # "Server disconnected" errors on the next request. httpx's
+            # HTTPTransport(retries=N) automatically retries on connection-
+            # level failures (disconnect, reset, refused) which fixes this.
+            pg = self._supabase.postgrest  # trigger lazy init
+            old_session = pg.session
+            pg.session = httpx.Client(
+                base_url=str(old_session.base_url),
+                headers=dict(old_session.headers),
+                timeout=old_session.timeout,
+                transport=httpx.HTTPTransport(retries=3, http2=True),
+                follow_redirects=True,
+                http2=True,
+            )
+            old_session.close()
+
             # Initialize SQLAlchemy engine for Postgres
             # Lambda-optimized connection pooling:
             # - pool_pre_ping: Tests connections before use (handles frozen connections)

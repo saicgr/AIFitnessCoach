@@ -4,7 +4,7 @@ Daily Activity API Router.
 Provides endpoints for storing and retrieving daily activity data
 from Health Connect (Android) / Apple Health (iOS).
 """
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel, Field
 from typing import Optional, List
 from datetime import date, datetime
@@ -12,6 +12,7 @@ from datetime import date, datetime
 from core.supabase_db import get_supabase_db
 from core.logger import get_logger
 from core.activity_logger import log_user_activity, log_user_error
+from core.timezone_utils import resolve_timezone, get_user_today
 
 router = APIRouter(prefix="/activity", tags=["Activity"])
 logger = get_logger(__name__)
@@ -182,12 +183,13 @@ async def sync_daily_activity(input: DailyActivityInput):
 
 
 @router.get("/today/{user_id}", response_model=Optional[DailyActivityResponse])
-async def get_today_activity(user_id: str):
+async def get_today_activity(user_id: str, request: Request):
     """Get today's activity for a user."""
     logger.info(f"Fetching today's activity for user {user_id}")
 
     db = get_supabase_db()
-    today = date.today().isoformat()
+    user_tz = resolve_timezone(request, db, user_id)
+    today = get_user_today(user_tz)
     row = db.get_daily_activity(user_id=user_id, activity_date=today)
 
     if not row:

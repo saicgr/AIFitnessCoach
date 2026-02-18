@@ -337,6 +337,20 @@ class _HeroWorkoutCarouselState extends ConsumerState<HeroWorkoutCarousel> {
   /// Whether a date has permanently failed generation
   bool _isGenerationFailed(DateTime date) => _permanentlyFailed.contains(_dateKey(date));
 
+  /// Check if the todayWorkoutProvider already has a workout for a specific date.
+  /// Prevents re-triggering on tab switch without blocking generation for today
+  /// when only a future workout exists.
+  bool _hasProviderWorkoutForDate(TodayWorkoutResponse? response, String? dateStr) {
+    if (response == null || dateStr == null) return false;
+    if (response.todayWorkout != null &&
+        response.todayWorkout!.scheduledDate.split('T')[0] == dateStr) return true;
+    if (response.nextWorkout != null &&
+        response.nextWorkout!.scheduledDate.split('T')[0] == dateStr) return true;
+    if (response.completedWorkout != null &&
+        response.completedWorkout!.scheduledDate.split('T')[0] == dateStr) return true;
+    return false;
+  }
+
   /// Get the next N workout dates starting from today, wrapping to next week.
   /// Always returns exactly workoutDays.length dates.
   List<DateTime> _getWorkoutDatesForWeek(List<int> workoutDays) {
@@ -477,10 +491,10 @@ class _HeroWorkoutCarouselState extends ConsumerState<HeroWorkoutCarousel> {
         // Also skip if todayWorkoutProvider already has a cached workout (prevents re-trigger on tab switch)
         if (!_autoGenerationTriggered && carouselItems.isNotEmpty) {
           final firstItem = carouselItems.first;
-          final hasCachedWorkout = todayWorkoutResponse?.todayWorkout != null ||
-                                   todayWorkoutResponse?.nextWorkout != null;
+          final firstItemDateStr = firstItem.date != null ? _dateKey(firstItem.date!) : null;
+          final hasCachedWorkoutForDate = _hasProviderWorkoutForDate(todayWorkoutResponse, firstItemDateStr);
           if (firstItem.isPlaceholder && !firstItem.isAutoGenerating &&
-              _generatingForDate == null && !isAutoGenerating && !hasCachedWorkout) {
+              _generatingForDate == null && !isAutoGenerating && !hasCachedWorkoutForDate) {
             _autoGenerationTriggered = true;
             debugPrint('🚀 [HeroCarousel] Auto-triggering generation for first placeholder: ${firstItem.placeholderDate}');
             WidgetsBinding.instance.addPostFrameCallback((_) {

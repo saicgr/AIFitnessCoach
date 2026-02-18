@@ -71,17 +71,20 @@ class _GoalsPill extends ConsumerWidget {
             ),
           ),
           const SizedBox(height: 4),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              _goalDot('L', loggedIn, doneColor, mutedColor),
-              const SizedBox(width: 2),
-              _goalDot('W', loggedWeight, doneColor, mutedColor),
-              const SizedBox(width: 2),
-              _goalDot('M', loggedMeal, doneColor, mutedColor),
-              const SizedBox(width: 2),
-              _goalDot('T', completedWorkout, doneColor, mutedColor),
-            ],
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                _goalDot('L', loggedIn, doneColor, mutedColor),
+                const SizedBox(width: 2),
+                _goalDot('W', loggedWeight, doneColor, mutedColor),
+                const SizedBox(width: 2),
+                _goalDot('M', loggedMeal, doneColor, mutedColor),
+                const SizedBox(width: 2),
+                _goalDot('T', completedWorkout, doneColor, mutedColor),
+              ],
+            ),
           ),
         ],
       ),
@@ -164,15 +167,18 @@ class _CaloriesPill extends ConsumerWidget {
             overflow: TextOverflow.ellipsis,
           ),
           const SizedBox(height: 4),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              _macroLabel('P', proteinG, _proteinColor),
-              const SizedBox(width: 6),
-              _macroLabel('C', carbsG, _carbsColor),
-              const SizedBox(width: 6),
-              _macroLabel('F', fatG, _fatColor),
-            ],
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                _macroLabel('P', proteinG, _proteinColor),
+                const SizedBox(width: 6),
+                _macroLabel('C', carbsG, _carbsColor),
+                const SizedBox(width: 6),
+                _macroLabel('F', fatG, _fatColor),
+              ],
+            ),
           ),
         ],
       ),

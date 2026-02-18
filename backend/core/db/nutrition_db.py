@@ -39,6 +39,7 @@ class NutritionDB(BaseDB):
         fiber_g: float = 0,
         ai_feedback: Optional[str] = None,
         health_score: Optional[int] = None,
+        logged_at: Optional[str] = None,
         # Micronutrients
         sodium_mg: Optional[float] = None,
         sugar_g: Optional[float] = None,
@@ -109,6 +110,10 @@ class NutritionDB(BaseDB):
             "health_score": health_score,
             "source_type": source_type,
         }
+
+        # Set explicit logged_at timestamp if provided (timezone-aware)
+        if logged_at:
+            data["logged_at"] = logged_at
 
         # Add image fields if provided
         if image_url:
@@ -241,7 +246,7 @@ class NutritionDB(BaseDB):
     # ==================== NUTRITION SUMMARIES ====================
 
     def get_daily_nutrition_summary(
-        self, user_id: str, date: str
+        self, user_id: str, date: str, timezone_str: str | None = None
     ) -> Dict[str, Any]:
         """
         Get nutrition totals for a specific day.
@@ -249,12 +254,19 @@ class NutritionDB(BaseDB):
         Args:
             user_id: User's UUID
             date: Date in YYYY-MM-DD format
+            timezone_str: IANA timezone (e.g. 'America/Los_Angeles').
+                          When provided, the day boundaries are computed in the
+                          user's local timezone then converted to UTC for querying.
 
         Returns:
             Dictionary with nutrition totals and meal breakdown
         """
-        start_of_day = f"{date}T00:00:00"
-        end_of_day = f"{date}T23:59:59"
+        if timezone_str:
+            from core.timezone_utils import local_date_to_utc_range
+            start_of_day, end_of_day = local_date_to_utc_range(date, timezone_str)
+        else:
+            start_of_day = f"{date}T00:00:00"
+            end_of_day = f"{date}T23:59:59"
 
         logs = self.list_food_logs(
             user_id, from_date=start_of_day, to_date=end_of_day, limit=100
@@ -272,7 +284,7 @@ class NutritionDB(BaseDB):
         }
 
     def get_weekly_nutrition_summary(
-        self, user_id: str, start_date: str
+        self, user_id: str, start_date: str, timezone_str: str | None = None
     ) -> List[Dict[str, Any]]:
         """
         Get nutrition totals for a week starting from start_date.
@@ -280,6 +292,7 @@ class NutritionDB(BaseDB):
         Args:
             user_id: User's UUID
             start_date: Start date in YYYY-MM-DD format
+            timezone_str: IANA timezone for day-boundary resolution
 
         Returns:
             List of daily nutrition summaries
@@ -289,7 +302,7 @@ class NutritionDB(BaseDB):
 
         for i in range(7):
             day = (start + timedelta(days=i)).strftime("%Y-%m-%d")
-            summary = self.get_daily_nutrition_summary(user_id, day)
+            summary = self.get_daily_nutrition_summary(user_id, day, timezone_str=timezone_str)
             summaries.append(summary)
 
         return summaries

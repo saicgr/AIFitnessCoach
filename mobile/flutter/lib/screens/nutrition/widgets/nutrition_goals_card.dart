@@ -34,9 +34,10 @@ class NutritionGoalsCard extends ConsumerWidget {
     final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final teal = isDark ? AppColors.teal : AppColorsLight.teal;
+    // Macro colors matching home screen hero_nutrition_card
     final purple = isDark ? AppColors.purple : AppColorsLight.purple;
+    final cyan = isDark ? AppColors.cyan : AppColorsLight.cyan;
     final orange = isDark ? AppColors.orange : AppColorsLight.orange;
-    final coral = isDark ? AppColors.coral : AppColorsLight.coral;
     final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
     final electricBlue = isDark ? AppColors.electricBlue : AppColorsLight.electricBlue;
     final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
@@ -66,6 +67,13 @@ class NutritionGoalsCard extends ConsumerWidget {
     final activityState = ref.watch(dailyActivityProvider);
     final caloriesBurned = activityState.today?.caloriesBurned ?? 0;
     final green = isDark ? AppColors.green : AppColorsLight.green;
+
+    // Build bottom info line parts
+    final hasAdjustment = dynamicTargets?.adjustmentReason != null &&
+        dynamicTargets!.adjustmentReason != 'base_targets';
+    final hasCaloriesBurned = caloriesBurned > 0;
+    final hasGoal = nutritionGoal != null;
+    final showBottomRow = hasGoal || hasAdjustment || hasCaloriesBurned;
 
     return Container(
       decoration: BoxDecoration(
@@ -98,7 +106,7 @@ class NutritionGoalsCard extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header row with title, training indicator, and actions
+          // Header row: title + training badge + water + edit/refresh
           Row(
             children: [
               Icon(Icons.track_changes, color: teal, size: 18),
@@ -137,6 +145,34 @@ class NutritionGoalsCard extends ConsumerWidget {
                 ),
               ],
               const Spacer(),
+              // Compact water display
+              GestureDetector(
+                onTap: onHydrationTap,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.water_drop,
+                      size: 14,
+                      color: hydrationPct >= 0.75
+                          ? electricBlue
+                          : hydrationPct >= 0.25
+                              ? electricBlue.withValues(alpha: 0.7)
+                              : textMuted,
+                    ),
+                    const SizedBox(width: 3),
+                    Text(
+                      '$currentMl/${goalMl}ml',
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: hydrationPct >= 0.75 ? electricBlue : textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
               // Edit button
               IconButton(
                 onPressed: onEdit,
@@ -157,85 +193,9 @@ class NutritionGoalsCard extends ConsumerWidget {
             ],
           ),
 
-          // Hydration progress row
-          const SizedBox(height: 6),
-          GestureDetector(
-            onTap: onHydrationTap,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-              decoration: BoxDecoration(
-                color: electricBlue.withValues(alpha: 0.08),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Row(
-                children: [
-                  Icon(
-                    Icons.water_drop,
-                    size: 18,
-                    color: hydrationPct >= 0.75
-                        ? electricBlue
-                        : hydrationPct >= 0.25
-                            ? electricBlue.withValues(alpha: 0.7)
-                            : textMuted,
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    'Water',
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w500,
-                      color: textSecondary,
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(4),
-                      child: LinearProgressIndicator(
-                        value: hydrationPct,
-                        minHeight: 6,
-                        backgroundColor: electricBlue.withValues(alpha: 0.15),
-                        color: electricBlue,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    '$currentMl / ${goalMl}ml',
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: hydrationPct >= 0.75 ? electricBlue : textSecondary,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-
-          // Goal type badge
-          if (nutritionGoal != null) ...[
-            const SizedBox(height: 8),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-              decoration: BoxDecoration(
-                color: teal.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Text(
-                _getGoalDisplayName(nutritionGoal),
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w500,
-                  color: teal,
-                ),
-              ),
-            ),
-          ],
-
           const SizedBox(height: 10),
 
-          // Macro progress rings in a row
+          // Macro progress rings in a row (colors match home screen tile)
           Row(
             children: [
               Expanded(
@@ -264,7 +224,7 @@ class NutritionGoalsCard extends ConsumerWidget {
                   label: 'Carbs',
                   current: consumedCarbs,
                   target: effectiveCarbs,
-                  color: orange,
+                  color: cyan,
                   unit: 'g',
                   isDark: isDark,
                 ),
@@ -274,7 +234,7 @@ class NutritionGoalsCard extends ConsumerWidget {
                   label: 'Fat',
                   current: consumedFat,
                   target: effectiveFat,
-                  color: coral,
+                  color: orange,
                   unit: 'g',
                   isDark: isDark,
                 ),
@@ -282,31 +242,46 @@ class NutritionGoalsCard extends ConsumerWidget {
             ],
           ),
 
-          // Calories burned from Health Connect / Watch
-          if (caloriesBurned > 0 || (dynamicTargets?.adjustmentReason != null &&
-              dynamicTargets!.adjustmentReason != 'base_targets')) ...[
+          // Bottom info line: goal badge + calories burned + adjustment reason
+          if (showBottomRow) ...[
             const SizedBox(height: 8),
             Row(
               children: [
-                if (caloriesBurned > 0) ...[
+                if (hasGoal) ...[
+                  Text(
+                    _getGoalDisplayName(nutritionGoal),
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w500,
+                      color: teal,
+                    ),
+                  ),
+                  if (hasCaloriesBurned || hasAdjustment)
+                    Text(
+                      '  ·  ',
+                      style: TextStyle(fontSize: 11, color: textMuted),
+                    ),
+                ],
+                if (hasCaloriesBurned) ...[
                   Icon(Icons.local_fire_department, size: 14, color: green),
-                  const SizedBox(width: 4),
+                  const SizedBox(width: 2),
                   Text(
                     '${caloriesBurned.toInt()} burned',
                     style: TextStyle(fontSize: 11, color: green, fontWeight: FontWeight.w500),
                   ),
-                  const SizedBox(width: 6),
-                  Text(
-                    'Net ${(consumedCalories - caloriesBurned).toInt()}/${effectiveCalories.toInt()}',
-                    style: TextStyle(fontSize: 11, color: textMuted),
-                  ),
+                  if (hasAdjustment)
+                    Text(
+                      '  ·  ',
+                      style: TextStyle(fontSize: 11, color: textMuted),
+                    ),
                 ],
-                const Spacer(),
-                if (dynamicTargets?.adjustmentReason != null &&
-                    dynamicTargets!.adjustmentReason != 'base_targets')
-                  Text(
-                    _getAdjustmentReasonDisplay(dynamicTargets.adjustmentReason),
-                    style: TextStyle(fontSize: 10, color: teal),
+                if (hasAdjustment)
+                  Flexible(
+                    child: Text(
+                      _getAdjustmentReasonDisplay(dynamicTargets.adjustmentReason),
+                      style: TextStyle(fontSize: 10, color: teal),
+                      overflow: TextOverflow.ellipsis,
+                    ),
                   ),
               ],
             ),
@@ -375,7 +350,6 @@ class _MacroProgressRing extends StatelessWidget {
   Widget build(BuildContext context) {
     final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    final glassSurface = isDark ? AppColors.glassSurface : AppColorsLight.glassSurface;
 
     return Column(
       children: [
@@ -385,15 +359,15 @@ class _MacroProgressRing extends StatelessWidget {
           child: Stack(
             alignment: Alignment.center,
             children: [
-              // Background ring
+              // Background ring - tinted with macro color
               SizedBox(
                 width: 56,
                 height: 56,
                 child: CircularProgressIndicator(
                   value: 1.0,
                   strokeWidth: 4,
-                  backgroundColor: glassSurface,
-                  color: glassSurface,
+                  backgroundColor: color.withValues(alpha: 0.15),
+                  color: color.withValues(alpha: 0.15),
                 ),
               ),
               // Progress ring
@@ -439,7 +413,7 @@ class _MacroProgressRing extends StatelessWidget {
           style: TextStyle(
             fontSize: 10,
             fontWeight: FontWeight.w500,
-            color: textMuted,
+            color: color,
           ),
         ),
         Text(
@@ -476,8 +450,8 @@ class CompactMacroTargets extends StatelessWidget {
   Widget build(BuildContext context) {
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final purple = isDark ? AppColors.purple : AppColorsLight.purple;
+    final cyan = isDark ? AppColors.cyan : AppColorsLight.cyan;
     final orange = isDark ? AppColors.orange : AppColorsLight.orange;
-    final coral = isDark ? AppColors.coral : AppColorsLight.coral;
     final glassSurface = isDark ? AppColors.glassSurface : AppColorsLight.glassSurface;
 
     // Use dynamic targets if available
@@ -516,7 +490,7 @@ class CompactMacroTargets extends StatelessWidget {
               label: 'C',
               current: consumedCarbs,
               target: effectiveCarbs,
-              color: orange,
+              color: cyan,
               isDark: isDark,
             ),
             Container(
@@ -528,7 +502,7 @@ class CompactMacroTargets extends StatelessWidget {
               label: 'F',
               current: consumedFat,
               target: effectiveFat,
-              color: coral,
+              color: orange,
               isDark: isDark,
             ),
             // Edit indicator

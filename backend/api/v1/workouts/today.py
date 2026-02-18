@@ -17,11 +17,12 @@ import asyncio
 from concurrent.futures import ThreadPoolExecutor
 import json
 
-from fastapi import APIRouter, HTTPException, Query, BackgroundTasks
+from fastapi import APIRouter, HTTPException, Query, BackgroundTasks, Request
 from pydantic import BaseModel
 
 from core.supabase_db import get_supabase_db
 from core.logger import get_logger
+from core.timezone_utils import resolve_timezone, get_user_today
 from services.user_context_service import user_context_service
 
 from .utils import parse_json_field
@@ -115,7 +116,7 @@ def _extract_primary_muscles(exercises: list) -> List[str]:
     return list(muscles)[:4]  # Limit to top 4
 
 
-def _row_to_summary(row: dict) -> TodayWorkoutSummary:
+def _row_to_summary(row: dict, user_today_str: str | None = None) -> TodayWorkoutSummary:
     """Convert a database row to TodayWorkoutSummary."""
     # Parse exercises
     raw_exercises = row.get("exercises") or row.get("exercises_json")
@@ -135,9 +136,9 @@ def _row_to_summary(row: dict) -> TodayWorkoutSummary:
     if scheduled_date:
         scheduled_date = str(scheduled_date)[:10]  # Get YYYY-MM-DD part
 
-    # Check if today
-    today_str = date.today().isoformat()
-    is_today = scheduled_date == today_str
+    # Check if today using user's local date
+    ref_today = user_today_str or date.today().isoformat()
+    is_today = scheduled_date == ref_today
 
     return TodayWorkoutSummary(
         id=row.get("id", ""),
@@ -154,10 +155,13 @@ def _row_to_summary(row: dict) -> TodayWorkoutSummary:
     )
 
 
-def _is_today_a_workout_day(selected_days: List[int]) -> bool:
+def _is_today_a_workout_day(selected_days: List[int], user_today_str: str | None = None) -> bool:
     """Check if today is a scheduled workout day for the user."""
     # Python's weekday(): Monday=0, Sunday=6 - matches our selected_days format
-    today_weekday = date.today().weekday()
+    if user_today_str:
+        today_weekday = datetime.strptime(user_today_str, "%Y-%m-%d").weekday()
+    else:
+        today_weekday = date.today().weekday()
     return today_weekday in selected_days
 
 
@@ -186,14 +190,17 @@ def _get_user_workout_days(user: dict) -> List[int]:
     return selected_days
 
 
-def _calculate_next_workout_date(selected_days: List[int]) -> str:
+def _calculate_next_workout_date(selected_days: List[int], user_today_str: str | None = None) -> str:
     """Calculate the next workout date based on user's selected days.
 
     Returns the date in YYYY-MM-DD format.
     If today is a workout day, returns today.
     Otherwise returns the next upcoming workout day.
     """
-    today = date.today()
+    if user_today_str:
+        today = datetime.strptime(user_today_str, "%Y-%m-%d").date()
+    else:
+        today = date.today()
     today_weekday = today.weekday()
 
     # If today is a workout day, return today
@@ -216,6 +223,7 @@ def _get_upcoming_dates_needing_generation(
     selected_days: List[int],
     active_profile_id: Optional[str],
     max_dates: int = 3,
+    user_today_str: str | None = None,
 ) -> List[date]:
     """Find up to `max_dates` upcoming scheduled workout days that have no workout generated.
 
@@ -227,7 +235,10 @@ def _get_upcoming_dates_needing_generation(
     Uses a single DB query to fetch all workouts in the date range instead of
     one query per day.
     """
-    today_date = date.today()
+    if user_today_str:
+        today_date = datetime.strptime(user_today_str, "%Y-%m-%d").date()
+    else:
+        today_date = date.today()
     end_date = today_date + timedelta(days=8)
 
     # Single query for ALL workouts in the next 8 days
@@ -331,6 +342,7 @@ async def auto_generate_workout(user_id: str, target_date: date, gym_profile_id:
 
 @router.get("/today", response_model=TodayWorkoutResponse)
 async def get_today_workout(
+    request: Request,
     user_id: str = Query(..., description="User ID"),
     background_tasks: BackgroundTasks = BackgroundTasks(),
 ) -> TodayWorkoutResponse:
@@ -354,7 +366,8 @@ async def get_today_workout(
 
     try:
         db = get_supabase_db()
-        today_str = date.today().isoformat()
+        user_tz = resolve_timezone(request, db, user_id)
+        today_str = get_user_today(user_tz)
 
         # Get user to check their workout days
         user = db.get_user(user_id)
@@ -368,7 +381,7 @@ async def get_today_workout(
         selected_days = _get_user_workout_days(user)
 
         day_names = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
-        is_today_workout_day = _is_today_a_workout_day(selected_days)
+        is_today_workout_day = _is_today_a_workout_day(selected_days, user_today_str=today_str)
 
         # Enhanced user context logging for debugging (downgraded to debug)
         user_preferences = parse_json_field(user.get("preferences"), {})
@@ -379,8 +392,9 @@ async def get_today_workout(
                      f"is_workout_day={is_today_workout_day}")
 
         # Compute date range strings before parallel queries
-        tomorrow_str = (date.today() + timedelta(days=1)).isoformat()
-        future_end = (date.today() + timedelta(days=30)).isoformat()
+        user_today_date = datetime.strptime(today_str, "%Y-%m-%d").date()
+        tomorrow_str = (user_today_date + timedelta(days=1)).isoformat()
+        future_end = (user_today_date + timedelta(days=30)).isoformat()
 
         # Run 3 independent DB queries in parallel using thread pool
         # (db.list_workouts is synchronous, so we use run_in_executor)
@@ -411,14 +425,15 @@ async def get_today_workout(
         days_until_next: Optional[int] = None
 
         if today_rows:
-            today_workout = _row_to_summary(today_rows[0])
+            today_workout = _row_to_summary(today_rows[0], user_today_str=today_str)
             has_workout_today = True
             logger.debug(f"[TODAY DEBUG] Found today's workout: {today_workout.name}")
 
         if future_rows:
-            next_workout = _row_to_summary(future_rows[0])
+            next_workout = _row_to_summary(future_rows[0], user_today_str=today_str)
             next_date = datetime.strptime(next_workout.scheduled_date, "%Y-%m-%d").date()
-            days_until_next = (next_date - date.today()).days
+            user_today_date = datetime.strptime(today_str, "%Y-%m-%d").date()
+            days_until_next = (next_date - user_today_date).days
             logger.debug(f"[TODAY DEBUG] Found next workout: {next_workout.name}, in {days_until_next} days")
 
         has_completed_workout_today = len(completed_today_rows) > 0
@@ -427,7 +442,7 @@ async def get_today_workout(
             logger.debug(f"[JIT Safety Net] User {user_id} already completed today's workout. Skipping auto-generation.")
 
         # Check if today is a scheduled workout day
-        is_today_workout_day = _is_today_a_workout_day(selected_days)
+        is_today_workout_day = _is_today_a_workout_day(selected_days, user_today_str=today_str)
 
         # Determine if generation is needed
         # Case 1: No today_workout AND no next_workout => generate for next scheduled day
@@ -438,7 +453,7 @@ async def get_today_workout(
         next_workout_date: Optional[str] = None
 
         if not today_workout and not has_completed_workout_today:
-            nearest_scheduled_date_str = _calculate_next_workout_date(selected_days)
+            nearest_scheduled_date_str = _calculate_next_workout_date(selected_days, user_today_str=today_str)
             if not next_workout:
                 # Case 1: No workouts at all - generate for the next scheduled day
                 needs_generation = True
@@ -471,7 +486,7 @@ async def get_today_workout(
         # Build completed workout summary if user completed today's workout
         completed_workout_summary: Optional[TodayWorkoutSummary] = None
         if has_completed_workout_today:
-            completed_workout_summary = _row_to_summary(completed_today_rows[0])
+            completed_workout_summary = _row_to_summary(completed_today_rows[0], user_today_str=today_str)
             logger.info(f"User completed today's workout: {completed_workout_summary.name}")
 
         # ================================================================
@@ -488,6 +503,7 @@ async def get_today_workout(
                 selected_days=selected_days,
                 active_profile_id=active_profile_id,
                 max_dates=3,
+                user_today_str=today_str,
             )
             if upcoming_missing:
                 logger.info(f"[BG-GEN] Scheduling background generation for {len(upcoming_missing)} dates: "
