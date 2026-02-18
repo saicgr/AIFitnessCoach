@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/providers/window_mode_provider.dart';
+import '../../core/theme/accent_color_provider.dart';
 import '../../data/models/coach_persona.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../../data/repositories/onboarding_repository.dart';
@@ -15,6 +16,7 @@ import '../../data/services/api_client.dart';
 import '../../core/constants/api_constants.dart';
 import '../../data/providers/nutrition_preferences_provider.dart';
 import '../../data/providers/fasting_provider.dart';
+import '../../data/services/notification_service.dart';
 import '../settings/sections/nutrition_fasting_section.dart';
 import '../ai_settings/ai_settings_screen.dart';
 import 'pre_auth_quiz_screen.dart';
@@ -76,6 +78,8 @@ class _CoachSelectionScreenState extends ConsumerState<CoachSelectionScreen> {
       _selectedCoach = coach;
       _isCustomMode = false;
     });
+    // Update app accent color to match the selected coach
+    ref.read(accentColorProvider.notifier).setAccent(coach.appAccentColor);
   }
 
   void _toggleCustomMode() {
@@ -84,8 +88,11 @@ class _CoachSelectionScreenState extends ConsumerState<CoachSelectionScreen> {
       _isCustomMode = !_isCustomMode;
       if (_isCustomMode) {
         _selectedCoach = null;
+        // Custom coach uses orange accent
+        ref.read(accentColorProvider.notifier).setAccent(AccentColor.orange);
       } else {
         _selectedCoach = CoachPersona.predefinedCoaches.first;
+        ref.read(accentColorProvider.notifier).setAccent(_selectedCoach!.appAccentColor);
       }
     });
   }
@@ -726,11 +733,14 @@ class _CoachSelectionScreenState extends ConsumerState<CoachSelectionScreen> {
                     controller: _pageController,
                     onPageChanged: (index) {
                       HapticFeedback.selectionClick();
+                      final coach = CoachPersona.predefinedCoaches[index];
                       setState(() {
                         _currentPageIndex = index;
-                        _selectedCoach = CoachPersona.predefinedCoaches[index];
+                        _selectedCoach = coach;
                         _isCustomMode = false;
                       });
+                      // Update app accent color to match the swiped-to coach
+                      ref.read(accentColorProvider.notifier).setAccent(coach.appAccentColor);
                     },
                     itemCount: CoachPersona.predefinedCoaches.length,
                     itemBuilder: (context, index) {
@@ -899,6 +909,12 @@ class _CoachSelectionScreenState extends ConsumerState<CoachSelectionScreen> {
       await ref.read(authStateProvider.notifier).markCoachNotSelected();
       await ref.read(authStateProvider.notifier).markOnboardingIncomplete();
       await ref.read(authStateProvider.notifier).markPaywallIncomplete();
+
+      // Clear SharedPreferences flags and cancel any scheduled notifications
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove('onboarding_completed');
+      await prefs.remove('paywall_completed');
+      ref.read(notificationServiceProvider).cancelAllScheduledNotifications();
     } catch (e) {
       debugPrint('❌ [CoachSelection] Failed to reset flags: $e');
     }
@@ -915,7 +931,7 @@ class _CoachSelectionScreenState extends ConsumerState<CoachSelectionScreen> {
   }
 
   Widget _buildHeader(Color textPrimary, Color textSecondary) {
-    const orange = Color(0xFFF97316); // App accent color
+    final coachColor = _selectedCoach?.primaryColor ?? const Color(0xFFF97316);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -926,11 +942,13 @@ class _CoachSelectionScreenState extends ConsumerState<CoachSelectionScreen> {
               GlassBackButton(onTap: () => context.pop()),
               const SizedBox(width: 12),
             ] else ...[
-              Container(
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 300),
+                curve: Curves.easeInOut,
                 width: 48,
                 height: 48,
                 decoration: BoxDecoration(
-                  color: orange,
+                  color: coachColor,
                   borderRadius: BorderRadius.circular(14),
                 ),
                 child: const Icon(Icons.smart_toy, color: Colors.white, size: 26),
@@ -969,27 +987,27 @@ class _CoachSelectionScreenState extends ConsumerState<CoachSelectionScreen> {
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(
-                    color: orange.withValues(alpha: 0.1),
+                    color: coachColor.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(8),
                     border: Border.all(
-                      color: orange.withValues(alpha: 0.3),
+                      color: coachColor.withValues(alpha: 0.3),
                     ),
                   ),
-                  child: const Row(
+                  child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Icon(
                         Icons.refresh,
                         size: 14,
-                        color: orange,
+                        color: coachColor,
                       ),
-                      SizedBox(width: 4),
+                      const SizedBox(width: 4),
                       Text(
                         'Start Over',
                         style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
-                          color: orange,
+                          color: coachColor,
                         ),
                       ),
                     ],
@@ -1005,7 +1023,7 @@ class _CoachSelectionScreenState extends ConsumerState<CoachSelectionScreen> {
   /// Compact custom coach toggle for use below the PageView
   Widget _buildCompactCustomToggle(bool isDark, Color textPrimary, Color textSecondary) {
     final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
-    const orange = Color(0xFFF97316); // App accent color
+    final coachColor = _selectedCoach?.primaryColor ?? const Color(0xFFF97316);
 
     return GestureDetector(
       onTap: _toggleCustomMode,
@@ -1014,11 +1032,11 @@ class _CoachSelectionScreenState extends ConsumerState<CoachSelectionScreen> {
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(
           color: _isCustomMode
-              ? orange
+              ? coachColor
               : (isDark ? AppColors.glassSurface : AppColorsLight.glassSurface),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: _isCustomMode ? orange : cardBorder,
+            color: _isCustomMode ? coachColor : cardBorder,
             width: _isCustomMode ? 2 : 1,
           ),
         ),
@@ -1027,7 +1045,7 @@ class _CoachSelectionScreenState extends ConsumerState<CoachSelectionScreen> {
           children: [
             Icon(
               Icons.auto_awesome,
-              color: _isCustomMode ? Colors.white : orange,
+              color: _isCustomMode ? Colors.white : coachColor,
               size: 18,
             ),
             const SizedBox(width: 8),
@@ -1053,7 +1071,7 @@ class _CoachSelectionScreenState extends ConsumerState<CoachSelectionScreen> {
 
   Widget _buildContinueButton(bool isDark, bool canContinue) {
     final isEnabled = canContinue && !_isLoading;
-    const orange = Color(0xFFF97316); // App accent color
+    final coachColor = _selectedCoach?.primaryColor ?? const Color(0xFFF97316);
 
     return Container(
       padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
@@ -1072,11 +1090,12 @@ class _CoachSelectionScreenState extends ConsumerState<CoachSelectionScreen> {
         child: GestureDetector(
           onTap: isEnabled ? _continue : null,
           child: AnimatedContainer(
-            duration: const Duration(milliseconds: 200),
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeInOut,
             width: double.infinity,
             height: 56,
             decoration: BoxDecoration(
-              color: isEnabled ? orange : (isDark ? AppColors.elevated : AppColorsLight.elevated),
+              color: isEnabled ? coachColor : (isDark ? AppColors.elevated : AppColorsLight.elevated),
               borderRadius: BorderRadius.circular(14),
               border: isEnabled
                   ? null

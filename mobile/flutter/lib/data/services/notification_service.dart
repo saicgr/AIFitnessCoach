@@ -873,11 +873,12 @@ class NotificationService {
     // Cancel all existing scheduled notifications first
     await cancelAllScheduledNotifications();
 
-    // Check if user has completed onboarding - don't schedule notifications until they have
+    // Check if user has completed onboarding AND paywall - don't schedule notifications until both are done
     final sharedPrefs = await SharedPreferences.getInstance();
     final onboardingCompleted = sharedPrefs.getBool('onboarding_completed') ?? false;
-    if (!onboardingCompleted) {
-      debugPrint('⏸️ [Schedule] Skipping notification scheduling - onboarding not completed');
+    final paywallCompleted = sharedPrefs.getBool('paywall_completed') ?? false;
+    if (!onboardingCompleted || !paywallCompleted) {
+      debugPrint('⏸️ [Schedule] Skipping notification scheduling - onboarding: $onboardingCompleted, paywall: $paywallCompleted');
       return;
     }
 
@@ -1204,6 +1205,15 @@ class NotificationService {
     required int stepsSoFar,
     required int goal,
   }) async {
+    // Don't show movement reminders until onboarding and paywall are complete
+    final sharedPrefs = await SharedPreferences.getInstance();
+    final onboardingCompleted = sharedPrefs.getBool('onboarding_completed') ?? false;
+    final paywallCompleted = sharedPrefs.getBool('paywall_completed') ?? false;
+    if (!onboardingCompleted || !paywallCompleted) {
+      debugPrint('⏸️ [Movement] Skipping reminder - onboarding: $onboardingCompleted, paywall: $paywallCompleted');
+      return;
+    }
+
     final title = _getMovementReminderTitle(DateTime.now().hour);
     final body = stepsSoFar == 0
         ? 'You haven\'t moved this hour. Stand up and take a quick walk!'

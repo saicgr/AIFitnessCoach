@@ -12,8 +12,8 @@ from datetime import datetime
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.middleware.gzip import GZipMiddleware
+from starlette.types import ASGIApp, Receive, Scope, Send
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from slowapi.middleware import SlowAPIMiddleware
@@ -43,51 +43,53 @@ logger = get_logger(__name__)
 _langgraph_service = None
 
 
-class SecurityHeadersMiddleware(BaseHTTPMiddleware):
-    """Middleware to add security headers to all responses."""
+class SecurityHeadersMiddleware:
+    """Pure ASGI middleware to add security headers to all responses."""
 
-    async def dispatch(self, request: Request, call_next):
-        response = await call_next(request)
+    HEADERS = [
+        (b"x-content-type-options", b"nosniff"),
+        (b"x-frame-options", b"DENY"),
+        (b"x-xss-protection", b"1; mode=block"),
+        (b"strict-transport-security", b"max-age=31536000; includeSubDomains"),
+        (b"content-security-policy", b"default-src 'self'"),
+        (b"referrer-policy", b"strict-origin-when-cross-origin"),
+    ]
 
-        # Prevent MIME type sniffing
-        response.headers["X-Content-Type-Options"] = "nosniff"
+    def __init__(self, app: ASGIApp):
+        self.app = app
 
-        # Prevent clickjacking
-        response.headers["X-Frame-Options"] = "DENY"
+    async def __call__(self, scope: Scope, receive: Receive, send: Send):
+        if scope["type"] != "http":
+            await self.app(scope, receive, send)
+            return
 
-        # Enable XSS filter in browsers
-        response.headers["X-XSS-Protection"] = "1; mode=block"
+        async def send_with_headers(message):
+            if message["type"] == "http.response.start":
+                headers = list(message.get("headers", []))
+                headers.extend(self.HEADERS)
+                message = {**message, "headers": headers}
+            await send(message)
 
-        # Enforce HTTPS
-        response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
-
-        # Restrict resource loading
-        response.headers["Content-Security-Policy"] = "default-src 'self'"
-
-        # Control referrer information
-        response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
-
-        return response
+        await self.app(scope, receive, send_with_headers)
 
 
-class LoggingMiddleware(BaseHTTPMiddleware):
-    """
-    Middleware to log all requests and responses with user context.
+class LoggingMiddleware:
+    """Pure ASGI middleware to log all requests and responses with user context.
 
-    Extracts user_id from:
-    1. Query parameters (?user_id=xxx)
-    2. Request body (for POST requests with user_id field)
-    3. Authorization header (future: JWT token)
-
+    Extracts user_id from query parameters only (does not consume request body).
     Sets request_id for tracing a single request through the system.
-
-    NOTE: We do NOT read the request body here to avoid consuming the stream
-    before the actual endpoint handler can read it. User ID extraction from
-    body has been removed to prevent "body stream already consumed" errors.
     """
 
-    async def dispatch(self, request: Request, call_next):
+    def __init__(self, app: ASGIApp):
+        self.app = app
+
+    async def __call__(self, scope: Scope, receive: Receive, send: Send):
+        if scope["type"] != "http":
+            await self.app(scope, receive, send)
+            return
+
         start_time = time.time()
+        request = Request(scope)
         method = request.method
         path = request.url.path
         query = str(request.query_params) if request.query_params else ""
@@ -95,42 +97,62 @@ class LoggingMiddleware(BaseHTTPMiddleware):
         # Generate unique request ID for tracing
         request_id = str(uuid.uuid4())[:8]
 
-        # Try to extract user_id from query parameters only
-        # NOTE: We cannot read request body here as it would consume the stream
+        # Extract user_id from query parameters only
         user_id = request.query_params.get("user_id")
 
         # Set logging context for this request
         set_log_context(user_id=user_id, request_id=request_id)
 
-        # Log request with context
+        # Log request
         log_msg = f"{method} {path}"
         if query:
             log_msg += f"?{query}"
         logger.info(log_msg)
 
-        # Process request
+        status_code = 500  # default in case send never called
+
+        async def send_with_logging(message):
+            nonlocal status_code
+            if message["type"] == "http.response.start":
+                status_code = message["status"]
+                # Inject X-Request-ID header
+                headers = list(message.get("headers", []))
+                headers.append((b"x-request-id", request_id.encode()))
+                message = {**message, "headers": headers}
+            await send(message)
+
         try:
-            response = await call_next(request)
+            await self.app(scope, receive, send_with_logging)
             duration = (time.time() - start_time) * 1000
-
-            # Add request_id to response headers for Flutter correlation
-            response.headers["X-Request-ID"] = request_id
-
-            # Log response with context
-            if response.status_code < 400:
-                logger.info(f"Response: {response.status_code} ({duration:.0f}ms)")
+            if status_code < 400:
+                logger.info(f"Response: {status_code} ({duration:.0f}ms)")
             else:
-                logger.warning(f"Response: {response.status_code} ({duration:.0f}ms)")
-
-            return response
-
+                logger.warning(f"Response: {status_code} ({duration:.0f}ms)")
         except Exception as e:
             duration = (time.time() - start_time) * 1000
             logger.error(f"Request failed: {type(e).__name__}: {str(e)} ({duration:.0f}ms)")
             raise
         finally:
-            # Clear context after request completes
             clear_log_context()
+
+
+class RateLimitCacheCleanupMiddleware:
+    """Pure ASGI middleware to clean up rate limiter request body cache after each request."""
+
+    def __init__(self, app: ASGIApp):
+        self.app = app
+
+    async def __call__(self, scope: Scope, receive: Receive, send: Send):
+        if scope["type"] != "http":
+            await self.app(scope, receive, send)
+            return
+
+        request = Request(scope)
+        try:
+            await self.app(scope, receive, send)
+        finally:
+            from core.rate_limiter import _request_body_cache
+            _request_body_cache.pop(id(request), None)
 
 
 async def _init_rag_service():
@@ -390,13 +412,8 @@ app.add_middleware(SecurityHeadersMiddleware)
 # This MUST be added for rate limiting to work properly
 app.add_middleware(SlowAPIMiddleware)
 
-# Cleanup rate limiter request body cache after each request
-@app.middleware("http")
-async def cleanup_rate_limit_cache(request, call_next):
-    response = await call_next(request)
-    from core.rate_limiter import _request_body_cache
-    _request_body_cache.pop(id(request), None)
-    return response
+# Add rate limiter cache cleanup middleware
+app.add_middleware(RateLimitCacheCleanupMiddleware)
 
 # Include API routes
 app.include_router(v1_router, prefix="/api")

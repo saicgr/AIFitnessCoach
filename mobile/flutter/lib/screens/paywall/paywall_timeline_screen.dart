@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../../core/theme/theme_colors.dart';
 import '../../core/providers/window_mode_provider.dart';
+import '../../widgets/glass_back_button.dart';
 import '../onboarding/widgets/foldable_quiz_scaffold.dart';
 
 /// Paywall Screen 2: Trial Timeline
@@ -25,6 +26,15 @@ class PaywallTimelineScreen extends ConsumerWidget {
       body: SafeArea(
         child: FoldableQuizScaffold(
           headerTitle: '',
+          headerOverlay: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: GlassBackButton(
+                onTap: () => context.pop(),
+              ),
+            ),
+          ),
           headerExtra: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [

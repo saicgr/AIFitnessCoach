@@ -65,8 +65,6 @@ class NutritionGoalsCard extends ConsumerWidget {
     // Calories burned from Health Connect / Watch
     final activityState = ref.watch(dailyActivityProvider);
     final caloriesBurned = activityState.today?.caloriesBurned ?? 0;
-    final isFromWatch = activityState.today?.isFromWatch ?? false;
-
     final green = isDark ? AppColors.green : AppColorsLight.green;
 
     return Container(
@@ -91,7 +89,7 @@ class NutritionGoalsCard extends ConsumerWidget {
       child: ClipRRect(
         borderRadius: BorderRadius.circular(16),
         child: Container(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
             border: Border(
               left: BorderSide(color: green, width: 4),
@@ -160,11 +158,11 @@ class NutritionGoalsCard extends ConsumerWidget {
           ),
 
           // Hydration progress row
-          const SizedBox(height: 10),
+          const SizedBox(height: 6),
           GestureDetector(
             onTap: onHydrationTap,
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
               decoration: BoxDecoration(
                 color: electricBlue.withValues(alpha: 0.08),
                 borderRadius: BorderRadius.circular(10),
@@ -235,7 +233,7 @@ class NutritionGoalsCard extends ConsumerWidget {
             ),
           ],
 
-          const SizedBox(height: 16),
+          const SizedBox(height: 10),
 
           // Macro progress rings in a row
           Row(
@@ -285,95 +283,32 @@ class NutritionGoalsCard extends ConsumerWidget {
           ),
 
           // Calories burned from Health Connect / Watch
-          if (caloriesBurned > 0) ...[
-            const SizedBox(height: 12),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              decoration: BoxDecoration(
-                color: green.withValues(alpha: 0.08),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Column(
-                children: [
-                  Row(
-                    children: [
-                      Icon(Icons.local_fire_department, size: 16, color: green),
-                      const SizedBox(width: 6),
-                      Text(
-                        'Burned',
-                        style: TextStyle(fontSize: 12, color: textMuted),
-                      ),
-                      const Spacer(),
-                      Text(
-                        '+${caloriesBurned.toInt()}',
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          color: green,
-                        ),
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        isFromWatch ? 'from Watch' : 'from Health Connect',
-                        style: TextStyle(fontSize: 10, color: textMuted),
-                      ),
-                    ],
+          if (caloriesBurned > 0 || (dynamicTargets?.adjustmentReason != null &&
+              dynamicTargets!.adjustmentReason != 'base_targets')) ...[
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                if (caloriesBurned > 0) ...[
+                  Icon(Icons.local_fire_department, size: 14, color: green),
+                  const SizedBox(width: 4),
+                  Text(
+                    '${caloriesBurned.toInt()} burned',
+                    style: TextStyle(fontSize: 11, color: green, fontWeight: FontWeight.w500),
                   ),
-                  const SizedBox(height: 6),
-                  Row(
-                    children: [
-                      Icon(Icons.balance, size: 16, color: teal),
-                      const SizedBox(width: 6),
-                      Text(
-                        'Net',
-                        style: TextStyle(fontSize: 12, color: textMuted),
-                      ),
-                      const Spacer(),
-                      Text(
-                        '${(consumedCalories - caloriesBurned).toInt()}',
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          color: teal,
-                        ),
-                      ),
-                      Text(
-                        ' / ${effectiveCalories.toInt()} kcal',
-                        style: TextStyle(fontSize: 12, color: textMuted),
-                      ),
-                    ],
+                  const SizedBox(width: 6),
+                  Text(
+                    'Net ${(consumedCalories - caloriesBurned).toInt()}/${effectiveCalories.toInt()}',
+                    style: TextStyle(fontSize: 11, color: textMuted),
                   ),
                 ],
-              ),
-            ),
-          ],
-
-          // Adjustment reason - only show if it's NOT the default "base_targets"
-          // (i.e., only show when there's an actual adjustment like "training_day" or "rest_day")
-          if (dynamicTargets?.adjustmentReason != null &&
-              dynamicTargets!.adjustmentReason != 'base_targets') ...[
-            const SizedBox(height: 12),
-            Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: teal.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Row(
-                children: [
-                  Icon(Icons.info_outline, size: 16, color: teal),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      _getAdjustmentReasonDisplay(dynamicTargets!.adjustmentReason),
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: teal,
-                      ),
-                    ),
+                const Spacer(),
+                if (dynamicTargets?.adjustmentReason != null &&
+                    dynamicTargets!.adjustmentReason != 'base_targets')
+                  Text(
+                    _getAdjustmentReasonDisplay(dynamicTargets.adjustmentReason),
+                    style: TextStyle(fontSize: 10, color: teal),
                   ),
-                ],
-              ),
+              ],
             ),
           ],
         ],
@@ -445,8 +380,8 @@ class _MacroProgressRing extends StatelessWidget {
     return Column(
       children: [
         SizedBox(
-          width: 56,
-          height: 56,
+          width: 44,
+          height: 44,
           child: Stack(
             alignment: Alignment.center,
             children: [
@@ -456,7 +391,7 @@ class _MacroProgressRing extends StatelessWidget {
                 height: 56,
                 child: CircularProgressIndicator(
                   value: 1.0,
-                  strokeWidth: 5,
+                  strokeWidth: 4,
                   backgroundColor: glassSurface,
                   color: glassSurface,
                 ),
@@ -467,7 +402,7 @@ class _MacroProgressRing extends StatelessWidget {
                 height: 56,
                 child: CircularProgressIndicator(
                   value: percentage,
-                  strokeWidth: 5,
+                  strokeWidth: 4,
                   backgroundColor: Colors.transparent,
                   color: color,
                   strokeCap: StrokeCap.round,
@@ -480,7 +415,7 @@ class _MacroProgressRing extends StatelessWidget {
                   Text(
                     '${current.toInt()}',
                     style: TextStyle(
-                      fontSize: 14,
+                      fontSize: 12,
                       fontWeight: FontWeight.bold,
                       color: textPrimary,
                     ),
@@ -489,7 +424,7 @@ class _MacroProgressRing extends StatelessWidget {
                     Text(
                       'kcal',
                       style: TextStyle(
-                        fontSize: 8,
+                        fontSize: 7,
                         color: textMuted,
                       ),
                     ),
@@ -498,11 +433,11 @@ class _MacroProgressRing extends StatelessWidget {
             ],
           ),
         ),
-        const SizedBox(height: 6),
+        const SizedBox(height: 4),
         Text(
           label,
           style: TextStyle(
-            fontSize: 11,
+            fontSize: 10,
             fontWeight: FontWeight.w500,
             color: textMuted,
           ),
@@ -510,7 +445,7 @@ class _MacroProgressRing extends StatelessWidget {
         Text(
           '/${target.toInt()}$unit',
           style: TextStyle(
-            fontSize: 10,
+            fontSize: 9,
             color: textMuted.withValues(alpha: 0.7),
           ),
         ),

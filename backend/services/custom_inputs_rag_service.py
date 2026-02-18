@@ -37,7 +37,11 @@ class CustomInputsRAGService:
         self.chroma_client = get_chroma_cloud_client()
         self.collection = self.chroma_client.get_custom_inputs_collection()
 
-        logger.info(f"CustomInputsRAG initialized with {self.collection.count()} custom inputs")
+        try:
+            _count = self.collection.count()
+        except Exception:
+            _count = "unknown"
+        logger.info(f"CustomInputsRAG initialized with {_count} custom inputs")
 
     async def index_custom_input(
         self,
@@ -376,8 +380,13 @@ If it doesn't fit any category, create a simple 1-3 word normalized form."""
 
     def get_stats(self) -> Dict[str, Any]:
         """Get custom inputs RAG statistics."""
+        try:
+            c = self.collection.count()
+            total = c if c >= 0 else -1
+        except Exception:
+            total = -1
         return {
-            "total_indexed": self.collection.count(),
+            "total_indexed": total,
             "storage": "chroma_cloud",
         }
 

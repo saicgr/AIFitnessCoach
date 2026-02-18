@@ -138,19 +138,34 @@ class _FitWizAppState extends ConsumerState<FitWizApp> {
       await prefsSync.syncPreferences(prefs);
     });
 
-    // Restore onboarding_completed flag from user model to SharedPreferences.
-    // This flag is cleared on logout but the notification scheduler needs it
-    // to be present in SharedPreferences to schedule local notifications.
+    // Restore onboarding_completed and paywall_completed flags from user model
+    // to SharedPreferences. These flags are cleared on logout but the notification
+    // scheduler needs them to be present in SharedPreferences to schedule local notifications.
     final authState = ref.read(authStateProvider);
+    final sharedPrefs = ref.read(sharedPreferencesProvider);
+    bool flagsRestored = false;
+
     if (authState.user?.onboardingCompleted == true) {
-      final sharedPrefs = ref.read(sharedPreferencesProvider);
       final alreadySet = sharedPrefs.getBool('onboarding_completed') ?? false;
       if (!alreadySet) {
         sharedPrefs.setBool('onboarding_completed', true);
         debugPrint('🔔 [App] Restored onboarding_completed flag to SharedPreferences');
-        // Reschedule notifications now that the flag is set
-        prefsNotifier.rescheduleNotifications();
+        flagsRestored = true;
       }
+    }
+
+    if (authState.user?.paywallCompleted == true) {
+      final alreadySet = sharedPrefs.getBool('paywall_completed') ?? false;
+      if (!alreadySet) {
+        sharedPrefs.setBool('paywall_completed', true);
+        debugPrint('🔔 [App] Restored paywall_completed flag to SharedPreferences');
+        flagsRestored = true;
+      }
+    }
+
+    if (flagsRestored) {
+      // Reschedule notifications now that flags are restored
+      prefsNotifier.rescheduleNotifications();
     }
 
     // Register FCM token with backend now that user is authenticated

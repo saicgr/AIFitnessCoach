@@ -26,7 +26,11 @@ class SavedFoodsRAGService:
         self.gemini_service = gemini_service or GeminiService()
         self.chroma_client = get_chroma_cloud_client()
         self.collection = self.chroma_client.get_saved_foods_collection()
-        print(f"SavedFoodsRAG initialized with {self.collection.count()} documents")
+        try:
+            _count = self.collection.count()
+        except Exception:
+            _count = "unknown"
+        print(f"SavedFoodsRAG initialized with {_count} documents")
 
     async def save_food(
         self,
@@ -83,7 +87,11 @@ class SavedFoodsRAGService:
             }],
         )
 
-        print(f"Saved food to ChromaDB: {saved_food_id[:8]}... (total: {self.collection.count()})")
+        try:
+            _count = self.collection.count()
+        except Exception:
+            _count = "unknown"
+        print(f"Saved food to ChromaDB: {saved_food_id[:8]}... (total: {_count})")
         return saved_food_id
 
     async def search_similar(
@@ -209,7 +217,11 @@ class SavedFoodsRAGService:
 
     def get_collection_count(self) -> int:
         """Get the number of documents in the saved foods collection."""
-        return self.collection.count()
+        try:
+            c = self.collection.count()
+            return c if c >= 0 else -1
+        except Exception:
+            return -1
 
     def get_user_food_count(self, user_id: str) -> int:
         """Get the number of saved foods for a specific user."""

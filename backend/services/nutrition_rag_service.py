@@ -41,7 +41,11 @@ class NutritionRAGService:
         self._nutrition_db = nutrition_db
         self.chroma_client = get_chroma_cloud_client()
         self.collection = self.chroma_client.get_or_create_collection(NUTRITION_COLLECTION_NAME)
-        print(f"✅ NutritionRAG initialized with {self.collection.count()} documents")
+        try:
+            _count = self.collection.count()
+        except Exception:
+            _count = "unknown"
+        print(f"✅ NutritionRAG initialized with {_count} documents")
 
     @property
     def nutrition_db(self) -> Optional[NutritionDB]:
@@ -92,7 +96,11 @@ class NutritionRAGService:
             }],
         )
 
-        print(f"📚 Added nutrition knowledge: {doc_id[:8]}... (total: {self.collection.count()})")
+        try:
+            _count = self.collection.count()
+        except Exception:
+            _count = "unknown"
+        print(f"📚 Added nutrition knowledge: {doc_id[:8]}... (total: {_count})")
         return doc_id
 
     async def get_context_for_goals(
@@ -230,7 +238,11 @@ class NutritionRAGService:
 
     def get_collection_count(self) -> int:
         """Get the number of documents in the nutrition knowledge collection."""
-        return self.collection.count()
+        try:
+            c = self.collection.count()
+            return c if c >= 0 else -1
+        except Exception:
+            return -1
 
 
 # Singleton instance

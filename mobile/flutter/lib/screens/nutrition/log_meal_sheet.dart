@@ -99,7 +99,7 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet> {
 
   // Streaming progress state
   int _currentStep = 0;
-  int _totalSteps = 4;
+  int _totalSteps = 3;
   String _progressMessage = '';
   String? _progressDetail;
 
@@ -1112,16 +1112,21 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet> {
     final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final teal = isDark ? AppColors.teal : AppColorsLight.teal;
+    final cardBg = isDark
+        ? Colors.white.withValues(alpha: 0.05)
+        : Colors.black.withValues(alpha: 0.04);
 
     return showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: nearBlack,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        titlePadding: const EdgeInsets.fromLTRB(24, 20, 24, 0),
+        contentPadding: const EdgeInsets.fromLTRB(24, 12, 24, 0),
         title: Text('Found Product', style: TextStyle(color: textPrimary)),
         content: ConstrainedBox(
           constraints: BoxConstraints(
-            maxHeight: MediaQuery.of(context).size.height * 0.6,
+            maxHeight: MediaQuery.of(context).size.height * 0.7,
             maxWidth: MediaQuery.of(context).size.width * 0.85,
           ),
           child: SingleChildScrollView(
@@ -1129,45 +1134,176 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  product.productName,
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w600,
-                    color: textPrimary,
-                  ),
+                // Product header with image
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    if (product.imageThumbUrl != null || product.imageUrl != null) ...[
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(8),
+                        child: Image.network(
+                          product.imageThumbUrl ?? product.imageUrl!,
+                          width: 64,
+                          height: 64,
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, __, ___) => Container(
+                            width: 64,
+                            height: 64,
+                            decoration: BoxDecoration(
+                              color: cardBg,
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Icon(Icons.image_not_supported_outlined,
+                                color: textMuted, size: 24),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                    ],
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            product.productName,
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                              color: textPrimary,
+                            ),
+                          ),
+                          if (product.brand != null) ...[
+                            const SizedBox(height: 2),
+                            Text(product.brand!,
+                                style: TextStyle(fontSize: 13, color: textMuted)),
+                          ],
+                          if (product.categories != null) ...[
+                            const SizedBox(height: 2),
+                            Text(product.categories!,
+                                style: TextStyle(fontSize: 11, color: textMuted),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis),
+                          ],
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
-                if (product.brand != null) ...[
-                  const SizedBox(height: 4),
-                  Text(product.brand!, style: TextStyle(color: textMuted)),
+
+                // Nutri-Score and NOVA badges
+                if (product.nutriscoreGrade != null || product.novaGroup != null) ...[
+                  const SizedBox(height: 12),
+                  Wrap(
+                    spacing: 8,
+                    children: [
+                      if (product.nutriscoreGrade != null)
+                        _NutriscoreBadge(
+                            grade: product.nutriscoreGrade!, isDark: isDark),
+                      if (product.novaGroup != null)
+                        _NovaBadge(group: product.novaGroup!, isDark: isDark),
+                    ],
+                  ),
                 ],
-                const SizedBox(height: 16),
+
+                // Serving size info
+                if (product.servingSizeG != null || product.servingSize != null) ...[
+                  const SizedBox(height: 8),
+                  Text(
+                    'Serving: ${product.servingSize ?? '${product.servingSizeG!.toInt()}g'}',
+                    style: TextStyle(fontSize: 12, color: textMuted),
+                  ),
+                ],
+
+                const SizedBox(height: 12),
+                Divider(color: textMuted.withValues(alpha: 0.2)),
+                const SizedBox(height: 8),
+
+                // Nutrition per 100g
+                Text('Nutrition per 100g',
+                    style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: textMuted)),
+                const SizedBox(height: 6),
                 _NutritionInfoRow(
                   label: 'Calories',
-                  value: '${product.caloriesPer100g.toInt()} kcal/100g',
+                  value: '${product.caloriesPer100g.toInt()} kcal',
                   isDark: isDark,
                 ),
                 _NutritionInfoRow(
                   label: 'Protein',
-                  value: '${product.proteinPer100g.toStringAsFixed(1)}g/100g',
+                  value: '${product.proteinPer100g.toStringAsFixed(1)}g',
                   isDark: isDark,
                 ),
                 _NutritionInfoRow(
                   label: 'Carbs',
-                  value: '${product.carbsPer100g.toStringAsFixed(1)}g/100g',
+                  value: '${product.carbsPer100g.toStringAsFixed(1)}g',
                   isDark: isDark,
                 ),
                 _NutritionInfoRow(
                   label: 'Fat',
-                  value: '${product.fatPer100g.toStringAsFixed(1)}g/100g',
+                  value: '${product.fatPer100g.toStringAsFixed(1)}g',
                   isDark: isDark,
                 ),
-                // Inflammation Analysis Section
+                if (product.fiberPer100g > 0)
+                  _NutritionInfoRow(
+                    label: 'Fiber',
+                    value: '${product.fiberPer100g.toStringAsFixed(1)}g',
+                    isDark: isDark,
+                  ),
+                if (product.sugarPer100g > 0)
+                  _NutritionInfoRow(
+                    label: 'Sugar',
+                    value: '${product.sugarPer100g.toStringAsFixed(1)}g',
+                    isDark: isDark,
+                  ),
+
+                // Allergens
+                if (product.allergens != null &&
+                    product.allergens!.isNotEmpty) ...[
+                  const SizedBox(height: 12),
+                  Divider(color: textMuted.withValues(alpha: 0.2)),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Icon(Icons.warning_amber_rounded,
+                          size: 16, color: Colors.orange),
+                      const SizedBox(width: 6),
+                      Text('Allergens',
+                          style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.orange)),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    product.allergens!,
+                    style: TextStyle(fontSize: 12, color: textMuted),
+                  ),
+                ],
+
+                // Ingredients
                 if (product.ingredientsText != null &&
                     product.ingredientsText!.isNotEmpty) ...[
-                  const SizedBox(height: 20),
-                  Divider(color: textMuted.withValues(alpha: 0.3)),
                   const SizedBox(height: 12),
+                  Divider(color: textMuted.withValues(alpha: 0.2)),
+                  const SizedBox(height: 8),
+                  Text('Ingredients',
+                      style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: textMuted)),
+                  const SizedBox(height: 4),
+                  Text(
+                    product.ingredientsText!,
+                    style: TextStyle(fontSize: 11, color: textMuted, height: 1.4),
+                    maxLines: 4,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+
+                  // Inflammation Analysis
+                  const SizedBox(height: 16),
                   InflammationAnalysisWidget(
                     userId: widget.userId,
                     barcode: product.barcode,
@@ -2560,6 +2696,84 @@ class _NutritionInfoRow extends StatelessWidget {
         children: [
           Text(label, style: TextStyle(color: textMuted)),
           Text(value, style: TextStyle(color: textSecondary)),
+        ],
+      ),
+    );
+  }
+}
+
+/// Nutri-Score badge (A-E)
+class _NutriscoreBadge extends StatelessWidget {
+  final String grade;
+  final bool isDark;
+
+  const _NutriscoreBadge({required this.grade, required this.isDark});
+
+  @override
+  Widget build(BuildContext context) {
+    final g = grade.toUpperCase();
+    final color = switch (g) {
+      'A' => const Color(0xFF038141),
+      'B' => const Color(0xFF85BB2F),
+      'C' => const Color(0xFFFECB02),
+      'D' => const Color(0xFFEE8100),
+      _ => const Color(0xFFE63E11),
+    };
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.15),
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(color: color.withValues(alpha: 0.4)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text('Nutri-Score ',
+              style: TextStyle(fontSize: 11, color: isDark ? AppColors.textMuted : AppColorsLight.textMuted)),
+          Text(g,
+              style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: color)),
+        ],
+      ),
+    );
+  }
+}
+
+/// NOVA processing group badge (1-4)
+class _NovaBadge extends StatelessWidget {
+  final int group;
+  final bool isDark;
+
+  const _NovaBadge({required this.group, required this.isDark});
+
+  @override
+  Widget build(BuildContext context) {
+    final color = switch (group) {
+      1 => const Color(0xFF038141),
+      2 => const Color(0xFF85BB2F),
+      3 => const Color(0xFFEE8100),
+      _ => const Color(0xFFE63E11),
+    };
+    final label = switch (group) {
+      1 => 'Unprocessed',
+      2 => 'Processed ingredients',
+      3 => 'Processed',
+      _ => 'Ultra-processed',
+    };
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.15),
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(color: color.withValues(alpha: 0.4)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text('NOVA $group ',
+              style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: color)),
+          Text(label,
+              style: TextStyle(fontSize: 10, color: isDark ? AppColors.textMuted : AppColorsLight.textMuted)),
         ],
       ),
     );

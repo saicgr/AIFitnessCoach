@@ -55,7 +55,11 @@ class RAGService:
         self.chroma_client = get_chroma_cloud_client()
         self.collection = self.chroma_client.get_rag_collection()
 
-        print(f"✅ RAG initialized with {self.collection.count()} documents")
+        try:
+            _count = self.collection.count()
+        except Exception:
+            _count = "unknown"
+        print(f"✅ RAG initialized with {_count} documents")
 
     async def add_qa_pair(
         self,
@@ -100,7 +104,11 @@ class RAGService:
             }],
         )
 
-        print(f"📚 Stored Q&A pair: {doc_id[:8]}... (total: {self.collection.count()})")
+        try:
+            _count = self.collection.count()
+        except Exception:
+            _count = "unknown"
+        print(f"📚 Stored Q&A pair: {doc_id[:8]}... (total: {_count})")
         return doc_id
 
     async def _get_embedding_cached(self, text: str) -> List[float]:
@@ -126,9 +134,6 @@ class RAGService:
         Returns:
             List of similar documents with scores
         """
-        if self.collection.count() == 0:
-            return []
-
         n_results = n_results or settings.rag_top_k
 
         # Check query result cache first
@@ -153,7 +158,7 @@ class RAGService:
         # Query ChromaDB
         results = self.collection.query(
             query_embeddings=[query_embedding],
-            n_results=min(n_results, self.collection.count()),
+            n_results=n_results,
             where=where_filter if where_filter else None,
             include=["documents", "metadatas", "distances"],
         )
@@ -210,8 +215,13 @@ class RAGService:
 
     def get_stats(self) -> Dict[str, Any]:
         """Get RAG system statistics."""
+        try:
+            c = self.collection.count()
+            total = c if c >= 0 else -1
+        except Exception:
+            total = -1
         return {
-            "total_documents": self.collection.count(),
+            "total_documents": total,
             "storage": "chroma_cloud",
             "query_cache": _query_cache.get_stats(),
         }
@@ -247,7 +257,15 @@ class WorkoutRAGService:
             "workout_changes"
         )
 
-        print(f"✅ Workout RAG initialized: {self.workout_collection.count()} workouts, {self.changes_collection.count()} changes")
+        try:
+            _w_count = self.workout_collection.count()
+        except Exception:
+            _w_count = "unknown"
+        try:
+            _c_count = self.changes_collection.count()
+        except Exception:
+            _c_count = "unknown"
+        print(f"✅ Workout RAG initialized: {_w_count} workouts, {_c_count} changes")
 
     async def index_workout(
         self,
@@ -401,9 +419,6 @@ class WorkoutRAGService:
         Returns:
             List of similar workouts
         """
-        if self.workout_collection.count() == 0:
-            return []
-
         # Check query result cache
         query_cache_key = _query_cache.make_key("find_similar_workouts", query, user_id, n_results, workout_type)
         cached_results = await _query_cache.get(query_cache_key)
@@ -426,7 +441,7 @@ class WorkoutRAGService:
         # Query
         results = self.workout_collection.query(
             query_embeddings=[query_embedding],
-            n_results=min(n_results, self.workout_collection.count()),
+            n_results=n_results,
             where=where_filter if where_filter else None,
             include=["documents", "metadatas", "distances"],
         )
@@ -472,9 +487,6 @@ class WorkoutRAGService:
         Returns:
             List of workout changes
         """
-        if self.changes_collection.count() == 0:
-            return []
-
         # Build where filter
         where_filter = {}
         if workout_id is not None:
@@ -998,9 +1010,19 @@ class WorkoutRAGService:
 
     def get_stats(self) -> Dict[str, Any]:
         """Get workout RAG statistics."""
+        try:
+            c = self.workout_collection.count()
+            total_workouts = c if c >= 0 else -1
+        except Exception:
+            total_workouts = -1
+        try:
+            c = self.changes_collection.count()
+            total_changes = c if c >= 0 else -1
+        except Exception:
+            total_changes = -1
         return {
-            "total_workouts": self.workout_collection.count(),
-            "total_changes": self.changes_collection.count(),
+            "total_workouts": total_workouts,
+            "total_changes": total_changes,
             "storage": "chroma_cloud",
         }
 
@@ -1026,7 +1048,11 @@ class NutritionRAGService:
             "food_logs"
         )
 
-        print(f"✅ Nutrition RAG initialized: {self.food_collection.count()} food logs")
+        try:
+            _count = self.food_collection.count()
+        except Exception:
+            _count = "unknown"
+        print(f"✅ Nutrition RAG initialized: {_count} food logs")
 
     async def index_food_log(
         self,
@@ -1133,9 +1159,6 @@ class NutritionRAGService:
         Returns:
             List of similar meals
         """
-        if self.food_collection.count() == 0:
-            return []
-
         # Check query result cache
         query_cache_key = _query_cache.make_key("find_similar_meals", query, user_id, n_results, meal_type)
         cached_results = await _query_cache.get(query_cache_key)
@@ -1158,7 +1181,7 @@ class NutritionRAGService:
         # Query
         results = self.food_collection.query(
             query_embeddings=[query_embedding],
-            n_results=min(n_results, self.food_collection.count()),
+            n_results=n_results,
             where=where_filter if where_filter else None,
             include=["documents", "metadatas", "distances"],
         )
@@ -1202,9 +1225,6 @@ class NutritionRAGService:
         Returns:
             List of food logs
         """
-        if self.food_collection.count() == 0:
-            return []
-
         # Get all matching logs for user
         results = self.food_collection.get(
             where={"user_id": user_id},
@@ -1243,7 +1263,12 @@ class NutritionRAGService:
 
     def get_stats(self) -> Dict[str, Any]:
         """Get nutrition RAG statistics."""
+        try:
+            c = self.food_collection.count()
+            total = c if c >= 0 else -1
+        except Exception:
+            total = -1
         return {
-            "total_food_logs": self.food_collection.count(),
+            "total_food_logs": total,
             "storage": "chroma_cloud",
         }

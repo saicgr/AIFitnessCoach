@@ -1,8 +1,10 @@
+import 'dart:async';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../core/animations/app_animations.dart';
 import '../../core/theme/theme_colors.dart';
@@ -12,6 +14,8 @@ import '../../core/providers/window_mode_provider.dart';
 import '../../core/constants/api_constants.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../../data/services/api_client.dart';
+import '../../data/services/notification_service.dart';
+import '../../widgets/glass_back_button.dart';
 import '../onboarding/widgets/foldable_quiz_scaffold.dart';
 import '../settings/subscription/subscription_history_screen.dart';
 import 'free_trial_screen.dart';
@@ -49,6 +53,15 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
       body: SafeArea(
         child: FoldableQuizScaffold(
           headerTitle: '',
+          headerOverlay: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: GlassBackButton(
+                onTap: () => context.pop(),
+              ),
+            ),
+          ),
           headerExtra: _buildPricingLeftPane(colors, isSubscribed),
           content: SingleChildScrollView(
             padding: EdgeInsets.symmetric(horizontal: hPad),
@@ -71,8 +84,29 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
                 // Title (phone only — foldable shows it in left pane)
                 if (!isFoldable) ...[
                   if (!isSubscribed) ...[
+                    // Social proof bar
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        ...List.generate(5, (_) => const Icon(Icons.star, size: 12, color: Colors.amber)),
+                        const SizedBox(width: 4),
+                        Text(
+                          '4.9',
+                          style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: colors.textPrimary),
+                        ),
+                        Text(
+                          '  \u00b7  ',
+                          style: TextStyle(fontSize: 12, color: colors.textMuted),
+                        ),
+                        Text(
+                          '50K+ workouts generated',
+                          style: TextStyle(fontSize: 12, color: colors.textSecondary),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
                     Text(
-                      'Start your fitness journey',
+                      'Your AI coach is ready',
                       style: TextStyle(
                         fontSize: 22,
                         fontWeight: FontWeight.bold,
@@ -159,14 +193,14 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
                     accentColor: colors.accent,
                     price: _selectedBillingCycle == 'yearly' ? '\$5.83' : '\$6.99',
                     period: '/mo',
-                    billedAs: _selectedBillingCycle == 'yearly' ? '\$69.99/year' : 'Billed monthly',
+                    billedAs: _selectedBillingCycle == 'yearly' ? '\$69.99/year (\$0.19/day)' : 'Billed monthly',
                     features: const [
-                      '∞ Unlimited AI workouts',
-                      '📸 Food photo scanning',
-                      '🍎 Full nutrition tracking',
-                      '📊 Advanced analytics',
-                      '🏋️ Supersets & advanced sets',
-                      '🔥 Hell Mode',
+                      '∞ Never repeat the same workout',
+                      '📸 Snap a photo, get instant macros',
+                      '🍎 Hit your macros effortlessly',
+                      '📊 See exactly how you\'re progressing',
+                      '🏋️ Train like an athlete',
+                      '🔥 Push past every plateau',
                     ],
                     isSelected: true,
                     onTap: () {},
@@ -176,61 +210,47 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
 
                 SizedBox(height: isFoldable ? 12 : 16),
 
-                // Main action button
-                SizedBox(
-                  width: double.infinity,
-                  height: 54,
-                  child: ElevatedButton(
-                    onPressed: subscriptionState.isLoading
-                      ? null
-                      : () => _handleAction(context, ref, isSubscribed, currentTier),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: _getButtonColor(),
-                      foregroundColor: colors.accentContrast,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14),
-                      ),
-                      elevation: 0,
-                    ),
-                    child: subscriptionState.isLoading
-                      ? SizedBox(
-                          width: 24,
-                          height: 24,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            valueColor: AlwaysStoppedAnimation(colors.accentContrast),
-                          ),
-                        )
-                      : Text(
-                          _getButtonText(isSubscribed, currentTier),
-                          style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w600),
+                // Main action button with shimmer
+                _ShimmerOverlay(
+                  child: SizedBox(
+                    width: double.infinity,
+                    height: 54,
+                    child: ElevatedButton(
+                      onPressed: subscriptionState.isLoading
+                        ? null
+                        : () => _handleAction(context, ref, isSubscribed, currentTier),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: _getButtonColor(),
+                        foregroundColor: colors.accentContrast,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
                         ),
+                        elevation: 0,
+                      ),
+                      child: subscriptionState.isLoading
+                        ? SizedBox(
+                            width: 24,
+                            height: 24,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              valueColor: AlwaysStoppedAnimation(colors.accentContrast),
+                            ),
+                          )
+                        : Text(
+                            _getButtonText(isSubscribed, currentTier),
+                            style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w600),
+                          ),
+                    ),
                   ),
                 ),
 
-                // Continue Free button
+                // Reassurance text
                 if (!isSubscribed) ...[
-                  const SizedBox(height: 12),
-                  SizedBox(
-                    width: double.infinity,
-                    height: 48,
-                    child: TextButton(
-                      onPressed: () => _skipToFree(context, ref),
-                      style: TextButton.styleFrom(
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14),
-                          side: BorderSide(color: colors.cardBorder),
-                        ),
-                      ),
-                      child: Text(
-                        'Continue Free',
-                        style: TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w600,
-                          color: colors.textSecondary,
-                        ),
-                      ),
-                    ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Cancel anytime. No charge today.',
+                    style: TextStyle(fontSize: 12, color: colors.textMuted),
+                    textAlign: TextAlign.center,
                   ),
                 ],
 
@@ -256,7 +276,7 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
                                 Icon(Icons.visibility_outlined, size: 18, color: colors.cyan),
                                 const SizedBox(width: 6),
                                 Text(
-                                  'Preview Plan',
+                                  'See Your AI Plan',
                                   style: TextStyle(fontSize: 13, color: colors.cyan, fontWeight: FontWeight.w500),
                                 ),
                               ],
@@ -281,7 +301,7 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
                                 Icon(Icons.play_circle_outline, size: 18, color: Colors.green),
                                 const SizedBox(width: 6),
                                 Text(
-                                  'Try Workout',
+                                  'Try a Free Workout',
                                   style: TextStyle(fontSize: 13, color: Colors.green, fontWeight: FontWeight.w500),
                                 ),
                               ],
@@ -291,6 +311,27 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
                       ),
                     ],
                   ),
+
+                // Maybe later (de-emphasized skip)
+                if (!isSubscribed) ...[
+                  const SizedBox(height: 12),
+                  Center(
+                    child: GestureDetector(
+                      onTap: () => _skipToFree(context, ref),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 4),
+                        child: Text(
+                          'Maybe later',
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w400,
+                            color: colors.textMuted,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
 
                 SizedBox(height: isFoldable ? 10 : 16),
 
@@ -348,7 +389,7 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
 
   String _getButtonText(bool isSubscribed, SubscriptionTier currentTier) {
     if (!isSubscribed) {
-      return _selectedPlan.contains('yearly') ? 'Start Free Trial' : 'Subscribe Now';
+      return _selectedPlan.contains('yearly') ? 'Try Premium Free for 7 Days' : 'Subscribe Now';
     }
     return 'Change Plan';
   }
@@ -402,6 +443,14 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
         );
       }
       ref.read(authStateProvider.notifier).markPaywallComplete();
+
+      // Store in SharedPreferences so notification scheduling knows paywall is done
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool('paywall_completed', true);
+
+      // Now that both onboarding and paywall are complete, schedule notifications
+      ref.read(notificationPreferencesProvider.notifier).rescheduleNotifications();
+      debugPrint('🔔 [Paywall] paywall_completed saved & notifications scheduled');
     } catch (e) {
       debugPrint('❌ [Paywall] Failed to update paywall_completed flag: $e');
     }
@@ -464,9 +513,9 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
       case 'premium_yearly_discount':
         return {
           'name': 'Premium Yearly (Discounted)',
-          'price': 49.99,
+          'price': 59.99,
           'period': 'year',
-          'monthlyPrice': 4.17,
+          'monthlyPrice': 5.00,
         };
       case 'premium_monthly':
         return {
@@ -597,7 +646,7 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
       children: [
         // Title
         Text(
-          isSubscribed ? 'Change Plan' : 'Start your fitness',
+          isSubscribed ? 'Change Plan' : 'Your AI coach',
           style: TextStyle(
             fontSize: 24,
             fontWeight: FontWeight.w600,
@@ -607,7 +656,7 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
         ),
         if (!isSubscribed)
           Text(
-            'journey',
+            'is ready',
             style: TextStyle(
               fontSize: 24,
               fontWeight: FontWeight.bold,
@@ -771,6 +820,78 @@ class _AccentBorderCardState extends State<_AccentBorderCard>
               ),
             ),
             child: child,
+          ),
+        );
+      },
+      child: widget.child,
+    );
+  }
+}
+
+/// Subtle shimmer overlay for CTA button (sweeps every ~4s)
+class _ShimmerOverlay extends StatefulWidget {
+  final Widget child;
+
+  const _ShimmerOverlay({required this.child});
+
+  @override
+  State<_ShimmerOverlay> createState() => _ShimmerOverlayState();
+}
+
+class _ShimmerOverlayState extends State<_ShimmerOverlay>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    // 4s total cycle: shimmer sweeps during first 30% (~1.2s), idle the rest
+    _controller = AnimationController(
+      duration: const Duration(seconds: 4),
+      vsync: this,
+    )..repeat();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _controller,
+      builder: (context, child) {
+        final t = _controller.value;
+        // Only show shimmer during first 30% of the cycle
+        final shimmerProgress = t < 0.3 ? t / 0.3 : -1.0;
+        return ClipRRect(
+          borderRadius: BorderRadius.circular(14),
+          child: Stack(
+            children: [
+              child!,
+              if (shimmerProgress >= 0)
+                Positioned.fill(
+                  child: IgnorePointer(
+                    child: FractionallySizedBox(
+                      widthFactor: 0.35,
+                      alignment: Alignment(-1.0 + 2.35 * shimmerProgress, 0),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [
+                              Colors.white.withValues(alpha: 0),
+                              Colors.white.withValues(alpha: 0.15),
+                              Colors.white.withValues(alpha: 0),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+            ],
           ),
         );
       },
@@ -1103,14 +1224,49 @@ class _CurrentPlanCard extends StatelessWidget {
 }
 
 /// Last-chance discount popup - offers yearly at discounted price
-class _DiscountPopup extends StatelessWidget {
+class _DiscountPopup extends StatefulWidget {
   final ThemeColors colors;
 
   const _DiscountPopup({required this.colors});
 
   @override
+  State<_DiscountPopup> createState() => _DiscountPopupState();
+}
+
+class _DiscountPopupState extends State<_DiscountPopup> {
+  late int _secondsRemaining;
+  Timer? _timer;
+
+  @override
+  void initState() {
+    super.initState();
+    _secondsRemaining = 15 * 60; // 15 minutes
+    _timer = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (_secondsRemaining <= 0) {
+        _timer?.cancel();
+        if (mounted) Navigator.pop(context, false);
+        return;
+      }
+      setState(() => _secondsRemaining--);
+    });
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  String _formatTime() {
+    final minutes = _secondsRemaining ~/ 60;
+    final seconds = _secondsRemaining % 60;
+    return '${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final accentColor = colors.accent; // Theme-aware monochrome accent
+    final colors = widget.colors;
+    final accentColor = colors.accent;
     return Dialog(
       backgroundColor: Colors.transparent,
       insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
@@ -1167,6 +1323,33 @@ class _DiscountPopup extends StatelessWidget {
                 color: colors.textSecondary,
               ),
               textAlign: TextAlign.center,
+            ),
+
+            const SizedBox(height: 12),
+
+            // Countdown timer
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.timer_outlined, size: 16, color: Colors.orange),
+                const SizedBox(width: 6),
+                Text(
+                  'Offer expires in ',
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: colors.textSecondary,
+                  ),
+                ),
+                Text(
+                  _formatTime(),
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    fontFamily: 'monospace',
+                    color: Colors.orange,
+                  ),
+                ),
+              ],
             ),
 
             const SizedBox(height: 16),
@@ -1229,7 +1412,7 @@ class _DiscountPopup extends StatelessWidget {
                             FittedBox(
                               fit: BoxFit.scaleDown,
                               child: Text(
-                                '\$49.99',
+                                '\$59.99',
                                 style: TextStyle(
                                   fontSize: 28,
                                   fontWeight: FontWeight.bold,
@@ -1257,7 +1440,7 @@ class _DiscountPopup extends StatelessWidget {
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Text(
-                      'SAVE \$20 (29% OFF)',
+                      'SAVE \$10 (14% OFF)',
                       style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.bold,
@@ -1267,10 +1450,18 @@ class _DiscountPopup extends StatelessWidget {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'Just \$4.17/month',
+                    'Just \$5.00/month',
                     style: TextStyle(
                       fontSize: 13,
                       color: colors.textSecondary,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    "That's just \$0.16/day — less than a coffee",
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: colors.textSecondary.withOpacity(0.8),
                     ),
                   ),
                 ],
@@ -1306,7 +1497,7 @@ class _DiscountPopup extends StatelessWidget {
                   elevation: 0,
                 ),
                 child: const Text(
-                  'Get Yearly for \$49.99',
+                  'Get Yearly for \$59.99',
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,

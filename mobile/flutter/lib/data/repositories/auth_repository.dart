@@ -300,6 +300,7 @@ class AuthRepository {
       // Clear local onboarding flags so next user gets fresh experience
       final prefs = await SharedPreferences.getInstance();
       await prefs.remove('onboarding_completed');
+      await prefs.remove('paywall_completed');
 
       debugPrint('✅ [Auth] Sign-out success (all caches cleared)');
     } catch (e) {

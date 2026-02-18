@@ -304,7 +304,11 @@ class ExerciseRAGService:
         self.chroma_client = get_chroma_cloud_client()
         self.collection = self.chroma_client.get_or_create_collection("exercise_library")
 
-        logger.info(f"Exercise RAG initialized with {self.collection.count()} exercises")
+        try:
+            _count = self.collection.count()
+        except Exception:
+            _count = "unknown"
+        logger.info(f"Exercise RAG initialized with {_count} exercises")
 
     async def index_all_exercises(self, batch_size: int = 100) -> int:
         """
@@ -1898,8 +1902,13 @@ Select exactly {count} UNIQUE exercises that are SAFE for this user."""
 
     def get_stats(self) -> Dict[str, Any]:
         """Get exercise RAG statistics."""
+        try:
+            c = self.collection.count()
+            total = c if c >= 0 else -1
+        except Exception:
+            total = -1
         return {
-            "total_exercises": self.collection.count(),
+            "total_exercises": total,
             "storage": "chroma_cloud",
         }
 

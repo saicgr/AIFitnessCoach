@@ -104,7 +104,7 @@ const comparisonFeatures = [
   { feature: 'Manual Food Logging', free: 'Yes', premium: 'Yes' },
   { feature: 'Barcode Scanner', free: 'Yes', premium: 'Yes' },
   { feature: 'Macro Tracking', free: 'Full (P/C/F)', premium: 'Full + Micronutrients' },
-  { feature: 'Adaptive TDEE', free: '-', premium: 'MacroFactor-grade' },
+  { feature: 'Adaptive TDEE', free: '-', premium: 'Research-grade' },
   { feature: 'Fasting Protocols', free: '3 (16:8, 18:6, 20:4)', premium: 'All 10 + Custom' },
   { feature: 'Charts & Analytics', free: '3-month history', premium: 'All-time history' },
   { feature: 'Muscle Heatmap', free: '-', premium: 'Yes' },
@@ -116,53 +116,18 @@ const comparisonFeatures = [
   { feature: 'Ads', free: 'None', premium: 'None' },
 ];
 
-// Competitor data for "Why FitWiz"
-const competitors = [
-  {
-    name: 'Hevy',
-    price: '$3.99/mo',
-    yearlyPrice: '$23.99/yr',
-    focus: 'Workout Tracking',
-    limitations: ['No nutrition tracking', 'No fasting', 'No AI coaching', 'Limited free exercises (400+)'],
-    color: 'from-blue-500 to-blue-600',
-  },
-  {
-    name: 'MyFitnessPal',
-    price: '$19.99/mo',
-    yearlyPrice: '$79.99/yr',
-    focus: 'Calorie Counting',
-    limitations: ['No workout generation', 'No AI coach', 'No fasting', 'Barcode scanner now paid', 'Ads on free tier'],
-    color: 'from-sky-500 to-sky-600',
-  },
-  {
-    name: 'MacroFactor',
-    price: '$11.99/mo',
-    yearlyPrice: '$71.99/yr',
-    focus: 'Adaptive Nutrition',
-    limitations: ['No free tier at all', 'No workouts', 'No fasting', 'No AI chat', 'No social features'],
-    color: 'from-violet-500 to-violet-600',
-  },
-  {
-    name: 'Gravl',
-    price: '$10.99/mo',
-    yearlyPrice: '$59.99/yr',
-    focus: 'AI Workouts',
-    limitations: ['Only 3 free workouts', 'No nutrition tracking', 'No fasting', 'Limited exercise library (300+)', 'No social features'],
-    color: 'from-rose-500 to-rose-600',
-  },
-];
-
-const whyFitwizFeatures = [
-  { category: 'AI Workout Generation', fitwiz: true, hevy: false, mfp: false, macrofactor: false, gravl: true },
-  { category: 'Nutrition Tracking', fitwiz: true, hevy: false, mfp: true, macrofactor: true, gravl: false },
-  { category: 'Intermittent Fasting', fitwiz: true, hevy: false, mfp: false, macrofactor: false, gravl: false },
-  { category: 'AI Coach (5 agents)', fitwiz: true, hevy: false, mfp: false, macrofactor: false, gravl: false },
-  { category: 'Workout Logging', fitwiz: true, hevy: true, mfp: false, macrofactor: false, gravl: true },
-  { category: 'Adaptive TDEE', fitwiz: true, hevy: false, mfp: false, macrofactor: true, gravl: false },
-  { category: 'Habit Tracking', fitwiz: true, hevy: false, mfp: false, macrofactor: false, gravl: false },
-  { category: 'Hormonal Health', fitwiz: true, hevy: false, mfp: false, macrofactor: false, gravl: false },
-  { category: 'Free Barcode Scanner', fitwiz: true, hevy: false, mfp: false, macrofactor: false, gravl: false },
-  { category: 'No Ads (Free Tier)', fitwiz: true, hevy: true, mfp: false, macrofactor: false, gravl: true },
+// What FitWiz includes in one app
+const fitwizIncludes = [
+  { category: 'AI Workout Generation', icon: '🤖' },
+  { category: 'Nutrition Tracking', icon: '🥗' },
+  { category: 'Intermittent Fasting', icon: '⏱️' },
+  { category: 'AI Coach (5 agents)', icon: '💬' },
+  { category: 'Workout Logging', icon: '📋' },
+  { category: 'Adaptive TDEE', icon: '📊' },
+  { category: 'Habit Tracking', icon: '✅' },
+  { category: 'Hormonal Health', icon: '🧬' },
+  { category: 'Free Barcode Scanner', icon: '📷' },
+  { category: 'No Ads (Free Tier)', icon: '🚫' },
 ];
 
 const faqs = [
@@ -187,8 +152,8 @@ const faqs = [
     answer: 'Yes, you can change your plan anytime. When upgrading, you get immediate access to new features. When downgrading, the change takes effect at the end of your billing period.',
   },
   {
-    question: 'Why is FitWiz so much cheaper than competitors?',
-    answer: "We believe premium fitness coaching shouldn't cost $20/month. By leveraging cutting-edge AI efficiently, we deliver more features at a fraction of the cost. FitWiz Premium at $5.99/mo gives you workouts + nutrition + fasting + AI coaching, while competitors charge $10-20/mo for just one of those.",
+    question: 'How can FitWiz offer so much for $5.99/month?',
+    answer: "We believe premium fitness coaching shouldn't cost $20/month. By leveraging cutting-edge AI efficiently, we deliver workouts + nutrition + fasting + AI coaching all in one app at a price that's accessible to everyone.",
   },
 ];
 
@@ -384,7 +349,7 @@ export default function Pricing() {
         </div>
       </section>
 
-      {/* Why FitWiz - Competitor Comparison Section */}
+      {/* Why FitWiz - Before & After Section */}
       <section className="px-6 py-20">
         <div className="max-w-[1100px] mx-auto">
           <motion.div
@@ -398,11 +363,11 @@ export default function Pricing() {
               style={{ fontFamily: 'var(--font-heading)' }}
             >
               <span className="bg-gradient-to-r from-emerald-400 via-green-400 to-lime-400 bg-clip-text text-transparent">
-                Why FitWiz?
+                Before & After FitWiz
               </span>
             </h2>
             <p className="text-[17px] sm:text-[21px] text-[var(--color-text-secondary)] max-w-[600px] mx-auto">
-              The only app that combines workouts + nutrition + fasting + AI coaching.
+              Stop juggling multiple apps. Get everything in one place.
             </p>
           </motion.div>
 
@@ -434,128 +399,86 @@ export default function Pricing() {
             </div>
           </motion.div>
 
-          {/* Price Comparison Banner */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="mb-16 p-6 sm:p-8 rounded-3xl bg-gradient-to-r from-emerald-900/40 via-green-900/30 to-lime-900/20 border border-emerald-500/20"
-          >
-            <h3 className="text-[21px] font-semibold text-center mb-6">
-              Premium pricing compared
-            </h3>
-            <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
-              {[
-                { name: 'FitWiz', price: '$5.99', highlight: true },
-                { name: 'Hevy Pro', price: '$3.99', highlight: false },
-                { name: 'Gravl', price: '$10.99', highlight: false },
-                { name: 'MacroFactor', price: '$11.99', highlight: false },
-                { name: 'MFP', price: '$19.99', highlight: false },
-              ].map((app) => (
-                <div
-                  key={app.name}
-                  className={`text-center p-4 rounded-2xl transition-all ${
-                    app.highlight
-                      ? 'bg-emerald-500/20 border-2 border-emerald-500/50 ring-2 ring-emerald-500/20'
-                      : 'bg-[var(--color-surface-muted)] border border-[var(--color-border)]'
-                  }`}
-                >
-                  <div className={`text-[13px] font-medium mb-1 ${app.highlight ? 'text-emerald-400' : 'text-[var(--color-text-secondary)]'}`}>
-                    {app.name}
-                  </div>
-                  <div className={`text-[24px] sm:text-[28px] font-bold ${app.highlight ? 'text-white' : 'text-[var(--color-text-secondary)]'}`}>
-                    {app.price}
-                  </div>
-                  <div className="text-[11px] text-[var(--color-text-secondary)]">/month</div>
-                </div>
-              ))}
-            </div>
-            <p className="text-center text-[14px] text-emerald-400 mt-6 font-medium">
-              FitWiz gives you 10x the features at 60% less cost than MFP
-            </p>
-          </motion.div>
-
-          {/* Competitor Cards */}
+          {/* Before / After Cards */}
           <motion.div
             initial="hidden"
             whileInView="visible"
             viewport={{ once: true }}
             variants={stagger}
-            className="grid grid-cols-1 sm:grid-cols-2 gap-5 mb-16"
+            className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-16"
           >
-            {competitors.map((comp) => (
-              <motion.div
-                key={comp.name}
-                variants={fadeUp}
-                className="p-6 rounded-2xl bg-[var(--color-surface)] border border-[var(--color-border)] hover:border-[var(--color-border)] transition-all"
-              >
-                <div className="flex items-center justify-between mb-4">
-                  <div>
-                    <h4 className="text-[17px] font-semibold text-[var(--color-text)]">{comp.name}</h4>
-                    <p className="text-[13px] text-[var(--color-text-secondary)]">{comp.focus}</p>
-                  </div>
-                  <div className="text-right">
-                    <div className="text-[17px] font-bold text-[var(--color-text-secondary)]">{comp.price}</div>
-                    <div className="text-[11px] text-[var(--color-text-secondary)]">{comp.yearlyPrice}</div>
-                  </div>
+            {/* Before */}
+            <motion.div variants={fadeUp} className="p-6 sm:p-8 rounded-3xl bg-[var(--color-surface)] border border-[var(--color-border)]">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-10 h-10 rounded-full bg-[var(--color-surface-muted)] flex items-center justify-center">
+                  <svg className="w-5 h-5 text-[var(--color-text-muted)]" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
                 </div>
-                <div className="space-y-2">
-                  <p className="text-[11px] text-[var(--color-text-muted)] uppercase tracking-wider">What it's missing</p>
-                  {comp.limitations.map((limit, i) => (
-                    <div key={i} className="flex items-center gap-2 text-[13px] text-[var(--color-text-secondary)]">
-                      <XIcon />
-                      {limit}
-                    </div>
-                  ))}
+                <h3 className="text-[21px] font-semibold text-[var(--color-text-secondary)]">Before FitWiz</h3>
+              </div>
+              <div className="space-y-3">
+                {[
+                  'One app for workouts, another for nutrition, another for fasting',
+                  'Generic programs that ignore your injuries and equipment',
+                  'Paying $15-20/month and still not getting AI coaching',
+                  'No idea if you\'re actually progressing',
+                  'Googling exercises and hoping for the best',
+                ].map((item, i) => (
+                  <div key={i} className="flex items-start gap-3">
+                    <XIcon />
+                    <span className="text-[14px] text-[var(--color-text-secondary)]">{item}</span>
+                  </div>
+                ))}
+              </div>
+            </motion.div>
+
+            {/* After */}
+            <motion.div variants={fadeUp} className="p-6 sm:p-8 rounded-3xl bg-gradient-to-br from-emerald-900/40 to-green-900/20 border border-emerald-500/20">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-10 h-10 rounded-full bg-emerald-500/20 flex items-center justify-center">
+                  <svg className="w-5 h-5 text-emerald-400" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                  </svg>
                 </div>
-              </motion.div>
-            ))}
+                <h3 className="text-[21px] font-semibold text-emerald-400">After FitWiz</h3>
+              </div>
+              <div className="space-y-3">
+                {[
+                  'Workouts + nutrition + fasting + coaching in one $5.99/mo app',
+                  'AI generates plans around your goals, equipment, and injuries',
+                  '5 specialist AI agents for coaching, nutrition, and recovery',
+                  'Track every rep and see clear progress analytics',
+                  '1,722 exercises with video demos and smart alternatives',
+                ].map((item, i) => (
+                  <div key={i} className="flex items-start gap-3">
+                    <CheckIcon />
+                    <span className="text-[14px] text-[var(--color-text)]">{item}</span>
+                  </div>
+                ))}
+              </div>
+            </motion.div>
           </motion.div>
 
-          {/* Feature Matrix */}
+          {/* Everything Included Grid */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
           >
             <h3 className="text-[24px] font-semibold text-center mb-8">
-              FitWiz vs the competition
+              Everything included with FitWiz
             </h3>
-            <div className="overflow-x-auto">
-              <table className="w-full min-w-[600px]">
-                <thead>
-                  <tr className="border-b border-[var(--color-border)]">
-                    <th className="text-left py-3 px-3 text-[13px] font-semibold text-[var(--color-text)]">Feature</th>
-                    <th className="text-center py-3 px-3 text-[13px] font-semibold text-emerald-400">FitWiz</th>
-                    <th className="text-center py-3 px-3 text-[13px] font-semibold text-[var(--color-text-secondary)]">Hevy</th>
-                    <th className="text-center py-3 px-3 text-[13px] font-semibold text-[var(--color-text-secondary)]">MFP</th>
-                    <th className="text-center py-3 px-3 text-[13px] font-semibold text-[var(--color-text-secondary)]">MacroFactor</th>
-                    <th className="text-center py-3 px-3 text-[13px] font-semibold text-[var(--color-text-secondary)]">Gravl</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {whyFitwizFeatures.map((row, index) => (
-                    <tr key={index} className="border-b border-[var(--color-border)]">
-                      <td className="py-3 px-3 text-[13px] text-[var(--color-text)]">{row.category}</td>
-                      <td className="py-3 px-3 text-center bg-emerald-500/5">
-                        {row.fitwiz ? <span className="inline-flex justify-center"><CheckIcon /></span> : <span className="inline-flex justify-center"><XIcon /></span>}
-                      </td>
-                      <td className="py-3 px-3 text-center">
-                        {row.hevy ? <span className="inline-flex justify-center"><CheckIcon /></span> : <span className="inline-flex justify-center"><XIcon /></span>}
-                      </td>
-                      <td className="py-3 px-3 text-center">
-                        {row.mfp ? <span className="inline-flex justify-center"><CheckIcon /></span> : <span className="inline-flex justify-center"><XIcon /></span>}
-                      </td>
-                      <td className="py-3 px-3 text-center">
-                        {row.macrofactor ? <span className="inline-flex justify-center"><CheckIcon /></span> : <span className="inline-flex justify-center"><XIcon /></span>}
-                      </td>
-                      <td className="py-3 px-3 text-center">
-                        {row.gravl ? <span className="inline-flex justify-center"><CheckIcon /></span> : <span className="inline-flex justify-center"><XIcon /></span>}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+            <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+              {fitwizIncludes.map((feature, index) => (
+                <div
+                  key={index}
+                  className="text-center p-4 rounded-2xl bg-[var(--color-surface)] border border-[var(--color-border)] hover:border-emerald-500/30 transition-colors"
+                >
+                  <span className="text-2xl block mb-2">{feature.icon}</span>
+                  <div className="text-[12px] sm:text-[13px] text-[var(--color-text)] font-medium">{feature.category}</div>
+                </div>
+              ))}
             </div>
           </motion.div>
         </div>
@@ -614,7 +537,7 @@ export default function Pricing() {
             transition={{ delay: 0.2 }}
             className="text-center text-[15px] text-[var(--color-text-secondary)] mt-8"
           >
-            Competitors charge $10-20/month for a single feature. We deliver everything at $5.99.
+            Most fitness apps charge $10-20/month for a single feature. FitWiz delivers everything at $5.99.
           </motion.p>
         </div>
       </section>

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../core/constants/app_colors.dart';
+import '../../core/theme/accent_color_provider.dart';
 
 /// Pre-defined coach personas and custom coach configuration.
 /// Each coach has a unique personality, communication style, and visual identity.
@@ -136,6 +136,24 @@ class CoachPersona {
 
   /// Get the default coach (Coach Mike)
   static CoachPersona get defaultCoach => predefinedCoaches.first;
+
+  /// Map this coach's color to the app's AccentColor enum
+  AccentColor get appAccentColor {
+    switch (id) {
+      case 'coach_mike':
+        return AccentColor.orange;
+      case 'dr_sarah':
+        return AccentColor.blue;
+      case 'sergeant_max':
+        return AccentColor.red;
+      case 'zen_maya':
+        return AccentColor.green;
+      case 'hype_danny':
+        return AccentColor.purple;
+      default:
+        return AccentColor.orange;
+    }
+  }
 
   /// Convert to JSON for API/storage
   Map<String, dynamic> toJson() => {

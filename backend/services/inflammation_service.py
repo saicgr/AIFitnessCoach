@@ -2,19 +2,18 @@
 Inflammation Analysis Service
 
 Handles:
-- Ingredient inflammation analysis via Gemini
+- Ingredient inflammation analysis via deterministic database lookup
 - Caching by barcode
 - User scan history
-- Rate limiting and error handling
+- Error handling
 """
 
 from typing import Optional, Dict, List
 from datetime import datetime, timedelta
-import asyncio
 import logging
 
 from core.supabase_client import get_supabase
-from services.gemini_service import GeminiService
+from services.ingredient_inflammation import IngredientDatabaseAnalyzer
 from services.user_context_service import UserContextService, EventType
 from models.inflammation import (
     InflammationAnalysisResponse,
@@ -27,15 +26,12 @@ from models.inflammation import (
 
 logger = logging.getLogger(__name__)
 
-# Rate limiting: max concurrent Gemini requests
-_semaphore = asyncio.Semaphore(5)
-
 
 class InflammationService:
     """Service for analyzing ingredient inflammation properties."""
 
     def __init__(self):
-        self.gemini = GeminiService()
+        self.db_analyzer = IngredientDatabaseAnalyzer()
         self.context_service = UserContextService()
 
     async def analyze_barcode(
@@ -74,18 +70,17 @@ class InflammationService:
             )
             return self._build_response(cached, from_cache=True)
 
-        # 2. Not cached - run Gemini analysis with rate limiting
-        logger.info(f"Cache miss for barcode {barcode}, running Gemini analysis")
+        # 2. Not cached - run deterministic analysis
+        logger.info(f"Cache miss for barcode {barcode}, running ingredient analysis")
 
-        async with _semaphore:
-            try:
-                analysis = await self._analyze_with_retry(
-                    ingredients_text=ingredients_text,
-                    product_name=product_name,
-                )
-            except Exception as e:
-                logger.error(f"Gemini analysis failed for {barcode}: {e}")
-                raise
+        try:
+            analysis = await self._analyze_with_retry(
+                ingredients_text=ingredients_text,
+                product_name=product_name,
+            )
+        except Exception as e:
+            logger.error(f"Ingredient analysis failed for {barcode}: {e}")
+            raise
 
         if not analysis:
             raise ValueError("Failed to analyze ingredients")
@@ -121,25 +116,11 @@ class InflammationService:
         product_name: Optional[str],
         max_retries: int = 3,
     ) -> Optional[Dict]:
-        """Analyze with exponential backoff retry."""
-        last_error = None
-        for attempt in range(max_retries):
-            try:
-                result = await self.gemini.analyze_ingredient_inflammation(
-                    ingredients_text=ingredients_text,
-                    product_name=product_name,
-                )
-                if result:
-                    return result
-            except Exception as e:
-                last_error = e
-                if attempt < max_retries - 1:
-                    wait_time = 2 ** attempt  # 1, 2, 4 seconds
-                    logger.warning(f"Retry {attempt + 1} after {wait_time}s: {e}")
-                    await asyncio.sleep(wait_time)
-                else:
-                    raise last_error
-        return None
+        """Analyze ingredients using deterministic database lookup."""
+        return await self.db_analyzer.analyze(
+            ingredients_text=ingredients_text,
+            product_name=product_name,
+        )
 
     async def _get_cached_analysis(self, barcode: str) -> Optional[Dict]:
         """Get cached analysis if exists and not expired."""
@@ -184,7 +165,7 @@ class InflammationService:
             "anti_inflammatory_ingredients": analysis.get("anti_inflammatory_ingredients", []),
             "additives_found": analysis.get("additives_found", []),
             "analysis_confidence": analysis.get("analysis_confidence"),
-            "model_version": "gemini-2.0-flash",
+            "model_version": "ingredient_db_v1",
             "expires_at": (datetime.utcnow() + timedelta(days=90)).isoformat(),
         }
 

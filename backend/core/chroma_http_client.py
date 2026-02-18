@@ -88,7 +88,40 @@ class ChromaHTTPCollection:
         self._post("delete", {"ids": ids})
 
     def count(self) -> int:
-        return self._post("count", {})
+        """Get the number of documents in this collection.
+
+        Resilient implementation: tries GET /count, falls back to POST /count,
+        falls back to len(get(limit=1)) as an existence check.
+        Returns -1 if all methods fail (callers should handle gracefully).
+        """
+        url = self._url("count")
+
+        # Attempt 1: GET (Chroma Cloud API v2 current)
+        try:
+            resp = self._client._http.get(url)
+            if resp.status_code == 200:
+                return resp.json()
+        except Exception:
+            pass
+
+        # Attempt 2: POST (Chroma Cloud API v2 legacy)
+        try:
+            resp = self._client._http.post(url, json={})
+            if resp.status_code == 200:
+                return resp.json()
+        except Exception:
+            pass
+
+        # Attempt 3: Probe via get() with limit=1 to check non-empty
+        try:
+            result = self.get(limit=1, include=["documents"])
+            ids = result.get("ids", [])
+            # Can't get exact count, but can tell if non-empty
+            return len(ids) if ids else 0
+        except Exception:
+            pass
+
+        return -1
 
 
 class ChromaHTTPClient:

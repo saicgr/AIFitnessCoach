@@ -24,10 +24,10 @@ import '../../widgets/nutrition/health_metrics_card.dart';
 import '../../widgets/nutrition/food_mood_analytics_card.dart';
 import 'log_meal_sheet.dart';
 import 'nutrient_explorer.dart';
+import 'food_history_screen.dart';
 import 'nutrition_settings_screen.dart';
 import 'recipe_builder_sheet.dart';
 import 'weekly_checkin_sheet.dart';
-import 'widgets/quick_add_fab.dart';
 import 'widgets/nutrition_goals_card.dart';
 import 'tabs/hydration_tab.dart';
 import 'tabs/fasting_tab.dart';
@@ -312,6 +312,42 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
                     ),
                   ),
                   const Spacer(),
+                  // History pill
+                  GestureDetector(
+                    onTap: () {
+                      if (_userId != null) {
+                        Navigator.push(
+                          context,
+                          AppPageRoute(
+                            builder: (_) => FoodHistoryScreen(userId: _userId!),
+                          ),
+                        );
+                      }
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: glassSurface,
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.history, size: 16, color: isDark ? AppColors.teal : AppColorsLight.teal),
+                          const SizedBox(width: 4),
+                          Text(
+                            'History',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: textSecondary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
                   // Saved Foods - labeled pill for discoverability
                   GestureDetector(
                     onTap: () => _showFavoritesSheet(isDark),
@@ -469,20 +505,7 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
         ),
       ),
       ),
-      // Quick Add FAB for easy food logging - padded above the floating nav bar
-      floatingActionButton: _userId != null && _userId!.isNotEmpty
-          ? Padding(
-              padding: const EdgeInsets.only(bottom: 80),
-              child: QuickAddFABSimple(
-                userId: _userId!,
-                onMealLogged: () {
-                  // Refresh nutrition data after logging a meal
-                  ref.read(nutritionProvider.notifier).loadTodaySummary(_userId!);
-                },
-              ),
-            )
-          : null,
-      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
+      floatingActionButton: null,
     );
   }
 
@@ -1335,32 +1358,23 @@ class _DailyTabState extends ConsumerState<_DailyTab> {
                     onHydrationTap: widget.onSwitchToHydrationTab,
                   ),
 
-                if (!widget.calmMode) const SizedBox(height: 12),
+                if (!widget.calmMode) const SizedBox(height: 8),
 
-                // 3. COMPACT MEAL LOGGING ROW - Quick add buttons for each meal type
-                _CompactMealLogRow(
-                  isDark: widget.isDark,
-                  onLogMeal: widget.onLogMeal,
+                // 3. MEAL SECTIONS - All 4 meal types always visible with inline add
+                _LoggedMealsSection(
                   meals: widget.summary?.meals ?? [],
+                  onDeleteMeal: widget.onDeleteMeal,
+                  onCopyMeal: widget.onCopyMeal,
+                  onLogMeal: widget.onLogMeal,
+                  isDark: widget.isDark,
+                  userId: widget.userId,
+                  onFoodSaved: _loadFavorites,
+                  calorieTarget: widget.targets?.dailyCalorieTarget,
+                  totalCaloriesEaten: widget.summary?.totalCalories ?? 0,
                 ),
-
                 const SizedBox(height: 12),
 
-                // 4. LOGGED MEALS ONLY - Show only meals that have been logged
-                if ((widget.summary?.meals ?? []).isNotEmpty) ...[
-                  _LoggedMealsSection(
-                    meals: widget.summary?.meals ?? [],
-                    onDeleteMeal: widget.onDeleteMeal,
-                    onCopyMeal: widget.onCopyMeal,
-                    isDark: widget.isDark,
-                    userId: widget.userId,
-                    onFoodSaved: _loadFavorites,
-                  ),
-                  const SizedBox(height: 12),
-                ],
-
-
-                const SizedBox(height: 100), // FAB clearance
+                const SizedBox(height: 80), // Nav bar clearance
               ],
             ),
           ),
@@ -1371,201 +1385,40 @@ class _DailyTabState extends ConsumerState<_DailyTab> {
 
 }
 
-// ─────────────────────────────────────────────────────────────────
-// Compact Meal Log Row - Quick add buttons for each meal type
-// ─────────────────────────────────────────────────────────────────
-
-class _CompactMealLogRow extends StatelessWidget {
-  final bool isDark;
-  final void Function(String mealType) onLogMeal;
-  final List<FoodLog> meals;
-
-  const _CompactMealLogRow({
-    required this.isDark,
-    required this.onLogMeal,
-    required this.meals,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
-    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
-
-    // Calculate calories per meal type
-    final mealCalories = <String, int>{};
-    for (final meal in meals) {
-      final type = meal.mealType ?? 'snack';
-      mealCalories[type] = (mealCalories[type] ?? 0) + meal.totalCalories;
-    }
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 10),
-      decoration: BoxDecoration(
-        color: elevated,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: cardBorder),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: _MealQuickAddChip(
-              label: 'Breakfast',
-              emoji: '🍳',
-              mealType: 'breakfast',
-              calories: mealCalories['breakfast'],
-              isDark: isDark,
-              onTap: onLogMeal,
-            ),
-          ),
-          Container(
-            width: 1,
-            height: 50,
-            color: textMuted.withValues(alpha: 0.2),
-          ),
-          Expanded(
-            child: _MealQuickAddChip(
-              label: 'Lunch',
-              emoji: '🥗',
-              mealType: 'lunch',
-              calories: mealCalories['lunch'],
-              isDark: isDark,
-              onTap: onLogMeal,
-            ),
-          ),
-          Container(
-            width: 1,
-            height: 50,
-            color: textMuted.withValues(alpha: 0.2),
-          ),
-          Expanded(
-            child: _MealQuickAddChip(
-              label: 'Dinner',
-              emoji: '🍽️',
-              mealType: 'dinner',
-              calories: mealCalories['dinner'],
-              isDark: isDark,
-              onTap: onLogMeal,
-            ),
-          ),
-          Container(
-            width: 1,
-            height: 50,
-            color: textMuted.withValues(alpha: 0.2),
-          ),
-          Expanded(
-            child: _MealQuickAddChip(
-              label: 'Snacks',
-              emoji: '🍎',
-              mealType: 'snack',
-              calories: mealCalories['snack'],
-              isDark: isDark,
-              onTap: onLogMeal,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _MealQuickAddChip extends StatelessWidget {
-  final String label;
-  final String emoji;
-  final String mealType;
-  final int? calories;
-  final bool isDark;
-  final void Function(String mealType) onTap;
-
-  const _MealQuickAddChip({
-    required this.label,
-    required this.emoji,
-    required this.mealType,
-    this.calories,
-    required this.isDark,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    final teal = isDark ? AppColors.teal : AppColorsLight.teal;
-
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: () => onTap(mealType),
-        borderRadius: BorderRadius.circular(12),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // Emoji with circled + icon
-              Stack(
-                alignment: Alignment.bottomRight,
-                children: [
-                  Text(emoji, style: const TextStyle(fontSize: 28)),
-                  Container(
-                    padding: const EdgeInsets.all(2),
-                    decoration: BoxDecoration(
-                      color: teal,
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(
-                      Icons.add,
-                      size: 12,
-                      color: Colors.white,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 4),
-              Text(
-                label,
-                style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w500,
-                  color: textMuted,
-                ),
-              ),
-              if (calories != null && calories! > 0)
-                Text(
-                  '${calories}kcal',
-                  style: TextStyle(
-                    fontSize: 10,
-                    color: teal,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
 
 // ─────────────────────────────────────────────────────────────────
-// Logged Meals Section - Shows only meals that have been logged
+// Meal Sections - All 4 meal types always visible with inline add
 // ─────────────────────────────────────────────────────────────────
 
 class _LoggedMealsSection extends StatelessWidget {
   final List<FoodLog> meals;
   final void Function(String) onDeleteMeal;
   final void Function(String mealId, String targetMealType) onCopyMeal;
+  final void Function(String? mealType) onLogMeal;
   final bool isDark;
   final String userId;
   final VoidCallback onFoodSaved;
+  final int? calorieTarget;
+  final int totalCaloriesEaten;
 
   const _LoggedMealsSection({
     required this.meals,
     required this.onDeleteMeal,
     required this.onCopyMeal,
+    required this.onLogMeal,
     required this.isDark,
     required this.userId,
     required this.onFoodSaved,
+    this.calorieTarget,
+    required this.totalCaloriesEaten,
   });
+
+  static const _mealTypes = [
+    {'id': 'breakfast', 'label': 'Breakfast', 'emoji': '🍳'},
+    {'id': 'lunch', 'label': 'Lunch', 'emoji': '🥗'},
+    {'id': 'dinner', 'label': 'Dinner', 'emoji': '🍽️'},
+    {'id': 'snack', 'label': 'Snacks', 'emoji': '🍎'},
+  ];
 
   @override
   Widget build(BuildContext context) {
@@ -1582,8 +1435,9 @@ class _LoggedMealsSection extends StatelessWidget {
       mealsByType.putIfAbsent(type, () => []).add(meal);
     }
 
+    final remaining = (calorieTarget ?? 0) - totalCaloriesEaten;
+
     return Container(
-      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: elevated,
         borderRadius: BorderRadius.circular(12),
@@ -1592,166 +1446,270 @@ class _LoggedMealsSection extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'Today\'s Meals',
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-              color: textPrimary,
-            ),
-          ),
-          const SizedBox(height: 8),
-          ...mealsByType.entries.map((entry) {
-            final mealType = entry.key;
-            final typeMeals = entry.value;
+          // Meal type sections
+          ..._mealTypes.asMap().entries.map((entry) {
+            final index = entry.key;
+            final mealInfo = entry.value;
+            final mealId = mealInfo['id']!;
+            final typeMeals = mealsByType[mealId] ?? [];
             final totalCal = typeMeals.fold<int>(0, (sum, m) => sum + m.totalCalories);
-            final emoji = _getMealEmoji(mealType);
 
-            return Padding(
-              padding: const EdgeInsets.only(bottom: 8),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Text(emoji, style: const TextStyle(fontSize: 16)),
-                      const SizedBox(width: 8),
-                      Text(
-                        mealType.substring(0, 1).toUpperCase() + mealType.substring(1),
-                        style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
-                          color: textPrimary,
-                        ),
-                      ),
-                      const Spacer(),
-                      Text(
-                        '$totalCal kcal',
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                          color: teal,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 4),
-                  ...typeMeals.map((meal) => Dismissible(
-                    key: ValueKey(meal.id),
-                    direction: DismissDirection.endToStart,
-                    background: Container(
-                      alignment: Alignment.centerRight,
-                      padding: const EdgeInsets.only(right: 16),
-                      margin: const EdgeInsets.only(left: 24, top: 2, bottom: 2),
-                      decoration: BoxDecoration(
-                        color: AppColors.error.withOpacity(0.9),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: const Row(
-                        mainAxisAlignment: MainAxisAlignment.end,
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            'Delete',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
-                            ),
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Section header
+                InkWell(
+                  onTap: () => onLogMeal(mealId),
+                  borderRadius: index == 0
+                      ? const BorderRadius.vertical(top: Radius.circular(12))
+                      : BorderRadius.zero,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                    child: Row(
+                      children: [
+                        Text(mealInfo['emoji']!, style: const TextStyle(fontSize: 18)),
+                        const SizedBox(width: 8),
+                        Text(
+                          mealInfo['label']!,
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: textPrimary,
                           ),
-                          SizedBox(width: 4),
-                          Icon(Icons.delete_outline, color: Colors.white, size: 18),
-                        ],
-                      ),
-                    ),
-                    confirmDismiss: (direction) async {
-                      final messenger = ScaffoldMessenger.of(context);
-                      bool undone = false;
-                      messenger.clearSnackBars();
-                      messenger.showSnackBar(
-                        SnackBar(
-                          content: const Text('Meal deleted'),
-                          action: SnackBarAction(
-                            label: 'Undo',
-                            onPressed: () {
-                              undone = true;
-                            },
-                          ),
-                          duration: const Duration(seconds: 4),
                         ),
-                      );
-                      // Wait for snackbar to finish
-                      await Future.delayed(const Duration(seconds: 4));
-                      if (!undone) {
-                        onDeleteMeal(meal.id);
-                      }
-                      return !undone;
-                    },
-                    child: InkWell(
-                      onTap: () => _showMealDetails(context, meal),
-                      borderRadius: BorderRadius.circular(8),
-                      child: Padding(
-                        padding: const EdgeInsets.only(left: 24, top: 4, bottom: 4, right: 4),
-                        child: Row(
-                          children: [
-                            Expanded(
-                              child: Text(
-                                meal.foodItems.isNotEmpty
-                                    ? meal.foodItems.map((f) => f.name).join(', ')
-                                    : 'Food',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: textMuted,
-                                ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                            Text(
-                              '${meal.totalCalories} kcal',
+                        const Spacer(),
+                        if (totalCal > 0)
+                          Padding(
+                            padding: const EdgeInsets.only(right: 8),
+                            child: Text(
+                              '$totalCal kcal',
                               style: TextStyle(
-                                fontSize: 11,
-                                color: textMuted,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                                color: teal,
                               ),
                             ),
-                            const SizedBox(width: 4),
-                            Icon(
-                              Icons.chevron_right,
-                              size: 16,
-                              color: textMuted.withOpacity(0.5),
-                            ),
-                          ],
-                        ),
-                      ),
+                          ),
+                        Icon(Icons.add_circle_outline, size: 20, color: teal),
+                      ],
                     ),
-                  )),
-                ],
-              ),
+                  ),
+                ),
+                // Divider below header
+                Divider(height: 1, color: cardBorder, indent: 14, endIndent: 14),
+                // Food items or empty state
+                if (typeMeals.isEmpty)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                    child: Text(
+                      'No foods logged',
+                      style: TextStyle(fontSize: 12, color: textMuted),
+                    ),
+                  )
+                else
+                  ...typeMeals.expand((meal) {
+                    // Expand each FoodLog's items as individual rows
+                    if (meal.foodItems.isEmpty) {
+                      return [_buildFoodItemRow(
+                        context: context,
+                        meal: meal,
+                        foodName: 'Food',
+                        calories: meal.totalCalories,
+                        time: meal.loggedAt,
+                        textPrimary: textPrimary,
+                        textMuted: textMuted,
+                        teal: teal,
+                      )];
+                    }
+                    return meal.foodItems.map((food) => _buildFoodItemRow(
+                      context: context,
+                      meal: meal,
+                      foodName: food.name,
+                      calories: food.calories ?? 0,
+                      amount: food.amount,
+                      time: meal.loggedAt,
+                      textPrimary: textPrimary,
+                      textMuted: textMuted,
+                      teal: teal,
+                    ));
+                  }),
+                // Section bottom spacing (except last)
+                if (index < _mealTypes.length - 1)
+                  Divider(height: 1, thickness: 1, color: cardBorder),
+              ],
             );
           }),
+          // Summary row
+          if (calorieTarget != null && calorieTarget! > 0) ...[
+            Divider(height: 1, thickness: 1, color: cardBorder),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              child: Row(
+                children: [
+                  Text(
+                    'Eaten',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: textMuted,
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    '$totalCaloriesEaten',
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: textPrimary,
+                    ),
+                  ),
+                  const Spacer(),
+                  Text(
+                    'Remaining',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: textMuted,
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    '${remaining.abs()}',
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: remaining >= 0 ? teal : AppColors.error,
+                    ),
+                  ),
+                  if (remaining < 0)
+                    Text(
+                      ' over',
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: AppColors.error,
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ],
         ],
       ),
     );
   }
 
-  String _getMealEmoji(String mealType) {
-    switch (mealType) {
-      case 'breakfast':
-        return '🍳';
-      case 'lunch':
-        return '🥗';
-      case 'dinner':
-        return '🍽️';
-      case 'snack':
-        return '🍎';
-      default:
-        return '🍴';
-    }
+  Widget _buildFoodItemRow({
+    required BuildContext context,
+    required FoodLog meal,
+    required String foodName,
+    required int calories,
+    String? amount,
+    required DateTime time,
+    required Color textPrimary,
+    required Color textMuted,
+    required Color teal,
+  }) {
+    final timeStr = '${time.hour % 12 == 0 ? 12 : time.hour % 12}:${time.minute.toString().padLeft(2, '0')} ${time.hour < 12 ? 'AM' : 'PM'}';
+
+    return Dismissible(
+      key: ValueKey('${meal.id}_$foodName'),
+      direction: DismissDirection.endToStart,
+      background: Container(
+        alignment: Alignment.centerRight,
+        padding: const EdgeInsets.only(right: 16),
+        color: AppColors.error.withValues(alpha: 0.9),
+        child: const Row(
+          mainAxisAlignment: MainAxisAlignment.end,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              'Delete',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            SizedBox(width: 4),
+            Icon(Icons.delete_outline, color: Colors.white, size: 18),
+          ],
+        ),
+      ),
+      confirmDismiss: (direction) async {
+        final messenger = ScaffoldMessenger.of(context);
+        bool undone = false;
+        messenger.clearSnackBars();
+        messenger.showSnackBar(
+          SnackBar(
+            content: const Text('Meal deleted'),
+            action: SnackBarAction(
+              label: 'Undo',
+              onPressed: () {
+                undone = true;
+              },
+            ),
+            duration: const Duration(seconds: 4),
+          ),
+        );
+        await Future.delayed(const Duration(seconds: 4));
+        if (!undone) {
+          onDeleteMeal(meal.id);
+        }
+        return !undone;
+      },
+      child: InkWell(
+        onTap: () => _showMealDetails(context, meal),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+          child: Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      foodName,
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: textPrimary,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    if (amount != null)
+                      Text(
+                        amount,
+                        style: TextStyle(fontSize: 11, color: textMuted),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                  ],
+                ),
+              ),
+              Text(
+                timeStr,
+                style: TextStyle(fontSize: 11, color: textMuted),
+              ),
+              const SizedBox(width: 12),
+              Text(
+                '$calories',
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: textPrimary,
+                ),
+              ),
+              Text(
+                ' kcal',
+                style: TextStyle(fontSize: 11, color: textMuted),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   void _showMealDetails(BuildContext context, FoodLog meal) {
     final isDarkTheme = Theme.of(context).brightness == Brightness.dark;
-    final elevated = isDarkTheme ? AppColors.elevated : AppColorsLight.elevated;
     final textPrimary = isDarkTheme ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textMuted = isDarkTheme ? AppColors.textMuted : AppColorsLight.textMuted;
     final teal = isDarkTheme ? AppColors.teal : AppColorsLight.teal;
@@ -1827,7 +1785,7 @@ class _LoggedMealsSection extends StatelessWidget {
                     margin: const EdgeInsets.only(bottom: 8),
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: cardBorder.withOpacity(0.3),
+                      color: cardBorder.withValues(alpha: 0.3),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Column(
@@ -1906,9 +1864,23 @@ class _LoggedMealsSection extends StatelessWidget {
     );
   }
 
+  String _getMealEmoji(String mealType) {
+    switch (mealType) {
+      case 'breakfast':
+        return '🍳';
+      case 'lunch':
+        return '🥗';
+      case 'dinner':
+        return '🍽️';
+      case 'snack':
+        return '🍎';
+      default:
+        return '🍴';
+    }
+  }
+
   void _copyMealTo(BuildContext sheetContext, FoodLog meal) {
     final isDarkTheme = Theme.of(sheetContext).brightness == Brightness.dark;
-    final elevated = isDarkTheme ? AppColors.elevated : AppColorsLight.elevated;
     final textPrimary = isDarkTheme ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final teal = isDarkTheme ? AppColors.teal : AppColorsLight.teal;
 
@@ -1947,7 +1919,7 @@ class _LoggedMealsSection extends StatelessWidget {
                   style: TextStyle(color: textPrimary, fontWeight: FontWeight.w500),
                 ),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                tileColor: meal.mealType == type['id'] ? teal.withOpacity(0.1) : null,
+                tileColor: meal.mealType == type['id'] ? teal.withValues(alpha: 0.1) : null,
                 trailing: meal.mealType == type['id']
                     ? Text('Current', style: TextStyle(fontSize: 12, color: teal))
                     : null,

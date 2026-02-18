@@ -2565,7 +2565,10 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
             },
             onStartNow: () {
               Navigator.of(context).pop();
-              setState(() => _currentQuestion = 10); // Skip to nutrition gate
+              setState(() {
+                _skipPersonalization = true;
+                _currentQuestion = 10; // Skip to nutrition gate
+              });
               _questionController.forward(from: 0);
             },
           ),
@@ -2627,7 +2630,13 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
     if (_currentQuestion > 0) {
       HapticFeedback.lightImpact();
       setState(() {
-        _currentQuestion--;
+        // If on nutrition gate (10) and personalization was skipped,
+        // jump back to personalization gate (6) instead of question 9
+        if (_currentQuestion == 10 && _skipPersonalization) {
+          _currentQuestion = 6;
+        } else {
+          _currentQuestion--;
+        }
       });
       _questionController.forward(from: 0);
     }

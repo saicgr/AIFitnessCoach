@@ -143,10 +143,9 @@ class ChromaCloudClient:
         """
         try:
             collection = self.client.get_collection(name=collection_name)
-            if collection.count() == 0:
-                return None
 
             # Sample one document to get embedding dimension
+            # (No count() guard needed -- .get() returns empty on empty collections)
             result = collection.get(
                 limit=1,
                 include=["embeddings"]

@@ -299,9 +299,20 @@ class BarcodeProduct {
   double get fatPer100g =>
       (nutrients['fat_per_100g'] as num?)?.toDouble() ?? 0;
 
+  /// Get fiber per 100g from nutrients map
+  double get fiberPer100g =>
+      (nutrients['fiber_per_100g'] as num?)?.toDouble() ?? 0;
+
+  /// Get sugar per 100g from nutrients map
+  double get sugarPer100g =>
+      (nutrients['sugar_per_100g'] as num?)?.toDouble() ?? 0;
+
   /// Get serving size in grams
   double? get servingSizeG =>
       (nutrients['serving_size_g'] as num?)?.toDouble();
+
+  /// Get serving size description
+  String? get servingSize => nutrients['serving_size'] as String?;
 }
 
 /// Response after logging food from barcode

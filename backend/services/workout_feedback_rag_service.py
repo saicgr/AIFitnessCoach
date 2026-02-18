@@ -50,7 +50,11 @@ class WorkoutFeedbackRAGService:
             self.COLLECTION_NAME
         )
 
-        print(f"✅ Workout Feedback RAG initialized: {self.collection.count()} sessions")
+        try:
+            _count = self.collection.count()
+        except Exception:
+            _count = "unknown"
+        print(f"✅ Workout Feedback RAG initialized: {_count} sessions")
 
     async def index_workout_session(
         self,
@@ -182,9 +186,6 @@ class WorkoutFeedbackRAGService:
         Returns:
             List of workout sessions
         """
-        if self.collection.count() == 0:
-            return []
-
         # Build where filter
         where_filter = {"user_id": user_id}
         if workout_type:
@@ -233,16 +234,13 @@ class WorkoutFeedbackRAGService:
         Returns:
             List of sessions containing the exercise
         """
-        if self.collection.count() == 0:
-            return []
-
         # Search for sessions containing this exercise
         query = f"Exercise: {exercise_name}"
         query_embedding = await self.gemini_service.get_embedding_async(query)
 
         results = self.collection.query(
             query_embeddings=[query_embedding],
-            n_results=min(n_results, self.collection.count()),
+            n_results=n_results,
             where={"user_id": user_id},
             include=["documents", "metadatas", "distances"],
         )
@@ -590,16 +588,13 @@ WORKOUT COMPLETION ANALYSIS:
         Returns:
             List of feedback entries for the exercise
         """
-        if self.collection.count() == 0:
-            return []
-
         # Search for feedback containing this exercise
         query = f"Exercise feedback: {exercise_name}"
         query_embedding = await self.gemini_service.get_embedding_async(query)
 
         results = self.collection.query(
             query_embeddings=[query_embedding],
-            n_results=min(n_results * 2, self.collection.count()),  # Get more to filter
+            n_results=n_results * 2,  # Get more to filter
             where={"$and": [
                 {"user_id": user_id},
                 {"doc_type": "workout_feedback"}
@@ -652,9 +647,6 @@ WORKOUT COMPLETION ANALYSIS:
         Returns:
             Dict with difficulty preference analysis
         """
-        if self.collection.count() == 0:
-            return {"status": "no_data"}
-
         # Get recent feedback
         results = self.collection.get(
             where={"$and": [
@@ -762,8 +754,13 @@ WORKOUT COMPLETION ANALYSIS:
 
     def get_stats(self) -> Dict[str, Any]:
         """Get workout feedback RAG statistics."""
+        try:
+            c = self.collection.count()
+            total = c if c >= 0 else -1
+        except Exception:
+            total = -1
         return {
-            "total_sessions": self.collection.count(),
+            "total_sessions": total,
             "storage": "chroma_cloud",
             "collection": self.COLLECTION_NAME,
         }

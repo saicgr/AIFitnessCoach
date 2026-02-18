@@ -1108,7 +1108,7 @@ export default function MarketingLanding() {
         </div>
       </section>
 
-      {/* Why FitWiz Section */}
+      {/* Before & After FitWiz Section */}
       <section className="py-20 sm:py-28 px-6 bg-[var(--color-surface-muted)]">
         <div className="max-w-[1200px] mx-auto">
           <motion.div
@@ -1124,89 +1124,79 @@ export default function MarketingLanding() {
               style={{ fontFamily: 'var(--font-heading)' }}
             >
               <span className="bg-gradient-to-r from-emerald-400 via-green-400 to-lime-400 bg-clip-text text-transparent">
-                Why FitWiz?
+                Before & After FitWiz
               </span>
             </motion.h2>
             <motion.p variants={fadeUp} className="text-[17px] sm:text-[21px] text-[var(--color-text-secondary)] max-w-[560px] mx-auto">
-              The only fitness app you'll ever need.
+              Everything changes when your fitness app actually works for you.
             </motion.p>
           </motion.div>
 
-          {/* Comparison Rows */}
+          {/* Before / After Comparison */}
           <motion.div
             initial="hidden"
             whileInView="visible"
             viewport={{ once: true }}
             variants={stagger}
-            className="space-y-4 mb-12"
+            className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12"
           >
-            {[
-              { category: 'AI Workout Generation', apps: { FitWiz: true, Hevy: false, MFP: false, Gravl: true } },
-              { category: 'Nutrition + Food Scanning', apps: { FitWiz: true, Hevy: false, MFP: true, Gravl: false } },
-              { category: 'Intermittent Fasting', apps: { FitWiz: true, Hevy: false, MFP: false, Gravl: false } },
-              { category: 'AI Coach (5 agents)', apps: { FitWiz: true, Hevy: false, MFP: false, Gravl: false } },
-              { category: 'All-in-One Platform', apps: { FitWiz: true, Hevy: false, MFP: false, Gravl: false } },
-            ].map((row, i) => (
-              <motion.div
-                key={i}
-                variants={fadeUp}
-                className="flex items-center gap-4 p-4 rounded-2xl card-spur"
-              >
-                <span className="text-[15px] text-[var(--color-text)] font-medium w-[200px] flex-shrink-0">{row.category}</span>
-                <div className="flex-1 flex items-center justify-around">
-                  {Object.entries(row.apps).map(([app, has]) => (
-                    <div key={app} className="flex flex-col items-center gap-1 min-w-[60px]">
-                      {has ? (
-                        <svg className="w-5 h-5 text-emerald-400" fill="currentColor" viewBox="0 0 20 20">
-                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                        </svg>
-                      ) : (
-                        <svg className="w-5 h-5 text-[var(--color-text-muted)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                      )}
-                      <span className={`text-[11px] ${app === 'FitWiz' ? 'text-emerald-400 font-medium' : 'text-[var(--color-text-secondary)]'}`}>
-                        {app}
-                      </span>
-                    </div>
-                  ))}
+            {/* Before */}
+            <motion.div variants={fadeUp} className="p-6 sm:p-8 rounded-3xl card-spur">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-10 h-10 rounded-full bg-[var(--color-surface-muted)] flex items-center justify-center">
+                  <svg className="w-5 h-5 text-[var(--color-text-muted)]" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
                 </div>
-              </motion.div>
-            ))}
-          </motion.div>
+                <h3 className="text-[21px] sm:text-[24px] font-semibold text-[var(--color-text-secondary)]">Before FitWiz</h3>
+              </div>
+              <div className="space-y-4">
+                {[
+                  'Googling random workout routines',
+                  'No idea if you\'re progressing',
+                  'Paying for 3+ separate apps',
+                  'Generic plans that don\'t fit your schedule',
+                  'No guidance on form or alternatives',
+                  'Skipping workouts when motivation drops',
+                ].map((item, i) => (
+                  <div key={i} className="flex items-start gap-3">
+                    <svg className="w-5 h-5 text-[var(--color-text-muted)] flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                    <span className="text-[15px] text-[var(--color-text-secondary)]">{item}</span>
+                  </div>
+                ))}
+              </div>
+            </motion.div>
 
-          {/* Price Comparison Bar */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="p-6 rounded-3xl bg-gradient-to-r from-emerald-900/40 to-green-900/20 border border-emerald-500/20 mb-8"
-          >
-            <h3 className="text-[17px] font-semibold text-center mb-4 text-[var(--color-text)]">Monthly premium pricing</h3>
-            <div className="flex items-end justify-center gap-4 sm:gap-8">
-              {[
-                { name: 'FitWiz', price: '$5.99', height: 'h-16', highlight: true },
-                { name: 'Gravl', price: '$10.99', height: 'h-28', highlight: false },
-                { name: 'MacroFactor', price: '$11.99', height: 'h-32', highlight: false },
-                { name: 'MFP', price: '$19.99', height: 'h-48', highlight: false },
-              ].map((app) => (
-                <div key={app.name} className="flex flex-col items-center gap-2">
-                  <span className={`text-[13px] font-bold ${app.highlight ? 'text-emerald-400' : 'text-[var(--color-text-muted)]'}`}>
-                    {app.price}
-                  </span>
-                  <div
-                    className={`w-12 sm:w-16 ${app.height} rounded-t-xl ${
-                      app.highlight
-                        ? 'bg-gradient-to-t from-emerald-600 to-emerald-400'
-                        : 'bg-[var(--color-surface-muted)]'
-                    }`}
-                  />
-                  <span className={`text-[11px] ${app.highlight ? 'text-emerald-400 font-medium' : 'text-[var(--color-text-secondary)]'}`}>
-                    {app.name}
-                  </span>
+            {/* After */}
+            <motion.div variants={fadeUp} className="p-6 sm:p-8 rounded-3xl bg-gradient-to-br from-emerald-900/40 to-green-900/20 border border-emerald-500/20">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-10 h-10 rounded-full bg-emerald-500/20 flex items-center justify-center">
+                  <svg className="w-5 h-5 text-emerald-400" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                  </svg>
                 </div>
-              ))}
-            </div>
+                <h3 className="text-[21px] sm:text-[24px] font-semibold text-emerald-400">After FitWiz</h3>
+              </div>
+              <div className="space-y-4">
+                {[
+                  'AI generates workouts tailored to your goals',
+                  'Track every rep, set, and personal record',
+                  'One app for workouts, nutrition, fasting & coaching',
+                  'Plans that adapt to your schedule and equipment',
+                  'AI coach available 24/7 for form tips and swaps',
+                  'Smart accountability with streaks and progress insights',
+                ].map((item, i) => (
+                  <div key={i} className="flex items-start gap-3">
+                    <svg className="w-5 h-5 text-emerald-400 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                    </svg>
+                    <span className="text-[15px] text-[var(--color-text)]">{item}</span>
+                  </div>
+                ))}
+              </div>
+            </motion.div>
           </motion.div>
 
           <motion.p
@@ -1215,7 +1205,7 @@ export default function MarketingLanding() {
             viewport={{ once: true }}
             className="text-center text-[15px] text-[var(--color-text-secondary)]"
           >
-            <span className="text-emerald-400 font-medium">FitWiz</span> gives you workouts + nutrition + fasting + AI coaching for less than others charge for just one.
+            <span className="text-emerald-400 font-medium">FitWiz</span> replaces your entire fitness app stack — workouts, nutrition, fasting, and AI coaching — all in one place.
           </motion.p>
         </div>
       </section>
