@@ -349,10 +349,14 @@ async def generate_workout(request: GenerateWorkoutRequest, background_tasks: Ba
         placeholder_id = None
         if request.scheduled_date:
             try:
+                sched = request.scheduled_date
+                end_of_day = sched + "T23:59:59.999999+00:00" if len(sched) == 10 else sched
                 existing = db.client.table("workouts").select("*").eq(
                     "user_id", request.user_id
-                ).eq(
-                    "scheduled_date", request.scheduled_date
+                ).gte(
+                    "scheduled_date", sched
+                ).lte(
+                    "scheduled_date", end_of_day
                 ).neq("status", "cancelled").limit(1).execute()
                 if existing.data:
                     logger.info(f"✅ [Dedup] Workout already exists for {request.user_id} on {request.scheduled_date}, returning existing")
@@ -1131,7 +1135,7 @@ async def generate_workout(request: GenerateWorkoutRequest, background_tasks: Ba
             "type": workout_type,
             "difficulty": difficulty,
             "description": workout_description,
-            "scheduled_date": datetime.now().isoformat(),
+            "scheduled_date": request.scheduled_date or datetime.now().isoformat(),
             "exercises_json": exercises,
             "duration_minutes": request.duration_minutes or 45,
             "generation_method": "ai",
@@ -2056,7 +2060,7 @@ async def generate_mood_workout_streaming(request: Request, body: MoodWorkoutReq
                 "type": workout_type,
                 "difficulty": difficulty,
                 "description": workout_description,
-                "scheduled_date": datetime.now().isoformat(),
+                "scheduled_date": params.get("scheduled_date") or datetime.now().isoformat(),
                 "exercises_json": exercises,
                 "duration_minutes": params["duration_minutes"],
                 "generation_method": "ai",

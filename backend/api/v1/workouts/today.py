@@ -25,7 +25,7 @@ from core.logger import get_logger
 from core.timezone_utils import resolve_timezone, get_user_today
 from services.user_context_service import user_context_service
 
-from .utils import parse_json_field
+from .utils import parse_json_field, get_workout_focus, resolve_training_split, infer_workout_type_from_focus
 
 
 # Thread pool for running synchronous DB calls concurrently
@@ -273,7 +273,7 @@ def _get_upcoming_dates_needing_generation(
     return results
 
 
-async def auto_generate_workout(user_id: str, target_date: date, gym_profile_id: Optional[str] = None) -> None:
+async def auto_generate_workout(user_id: str, target_date: date, gym_profile_id: Optional[str] = None, selected_days: Optional[List[int]] = None) -> None:
     """Background task: generate a workout for a specific date.
 
     Safety guarantees:
@@ -308,10 +308,14 @@ async def auto_generate_workout(user_id: str, target_date: date, gym_profile_id:
 
         # Also check for a workout with status='generating' (another request may have started it)
         try:
+            target_str = target_date.isoformat()
+            end_of_day = target_str + "T23:59:59.999999+00:00"
             generating_check = db.client.table("workouts").select("id").eq(
                 "user_id", user_id
-            ).eq(
-                "scheduled_date", target_date.isoformat()
+            ).gte(
+                "scheduled_date", target_str
+            ).lte(
+                "scheduled_date", end_of_day
             ).eq(
                 "status", "generating"
             ).execute()
@@ -321,6 +325,28 @@ async def auto_generate_workout(user_id: str, target_date: date, gym_profile_id:
         except Exception:
             pass  # Non-critical check, proceed with generation
 
+        # Determine per-day focus area for workout variety
+        focus_for_day = None
+        workout_type = None
+        if selected_days and gym_profile_id:
+            try:
+                training_split = None
+                profile_focus_areas = []
+                profile = db.client.table("gym_profiles").select(
+                    "training_split, focus_areas"
+                ).eq("id", gym_profile_id).single().execute()
+                if profile.data:
+                    training_split = profile.data.get("training_split")
+                    profile_focus_areas = profile.data.get("focus_areas") or []
+                resolved_split = resolve_training_split(training_split, len(selected_days))
+                focus_map = get_workout_focus(resolved_split, selected_days, profile_focus_areas)
+                focus_for_day = focus_map.get(target_date.weekday())
+                if focus_for_day:
+                    workout_type = infer_workout_type_from_focus(focus_for_day)
+                logger.info(f"[BG-GEN] Day {target_date.weekday()} focus={focus_for_day}, type={workout_type}, split={resolved_split}")
+            except Exception as e:
+                logger.warning(f"[BG-GEN] Could not determine focus for {target_date}: {e}")
+
         # Import the generation function (local import to avoid circular dependency)
         from .generation import generate_workout
         from models.schemas import GenerateWorkoutRequest
@@ -329,6 +355,8 @@ async def auto_generate_workout(user_id: str, target_date: date, gym_profile_id:
             user_id=user_id,
             scheduled_date=target_date.isoformat(),
             gym_profile_id=gym_profile_id,
+            focus_areas=[focus_for_day] if focus_for_day else None,
+            workout_type=workout_type,
         )
 
         # Use the existing non-streaming generate_workout function
@@ -518,6 +546,7 @@ async def get_today_workout(
                     user_id=user_id,
                     target_date=gen_date,
                     gym_profile_id=active_profile_id,
+                    selected_days=selected_days,
                 )
 
         return TodayWorkoutResponse(

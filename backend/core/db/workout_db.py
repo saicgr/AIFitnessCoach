@@ -83,7 +83,8 @@ class WorkoutDB(BaseDB):
         if from_date:
             query = query.gte("scheduled_date", from_date)
         if to_date:
-            query = query.lte("scheduled_date", to_date)
+            effective_to = to_date + "T23:59:59.999999+00:00" if len(to_date) == 10 else to_date
+            query = query.lte("scheduled_date", effective_to)
 
         # Fetch more than needed to account for duplicates, then deduplicate
         fetch_limit = (limit + offset) * 3
@@ -265,7 +266,8 @@ class WorkoutDB(BaseDB):
         if from_date:
             query = query.gte("scheduled_date", from_date)
         if to_date:
-            query = query.lte("scheduled_date", to_date)
+            effective_to = to_date + "T23:59:59.999999+00:00" if len(to_date) == 10 else to_date
+            query = query.lte("scheduled_date", effective_to)
 
         result = (
             query.order("scheduled_date", desc=True)
