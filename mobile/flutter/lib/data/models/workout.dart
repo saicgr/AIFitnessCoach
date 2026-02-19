@@ -32,6 +32,7 @@ class Workout extends Equatable {
   @JsonKey(name: 'user_id')
   final String? userId;
   final String? name;
+  final String? description;
   final String? type;
   final String? difficulty;
   @JsonKey(name: 'scheduled_date')
@@ -72,6 +73,7 @@ class Workout extends Equatable {
     this.id,
     this.userId,
     this.name,
+    this.description,
     this.type,
     this.difficulty,
     this.scheduledDate,
@@ -273,6 +275,7 @@ class Workout extends Equatable {
         id,
         userId,
         name,
+        description,
         type,
         difficulty,
         scheduledDate,
@@ -289,6 +292,7 @@ class Workout extends Equatable {
     String? id,
     String? userId,
     String? name,
+    String? description,
     String? type,
     String? difficulty,
     String? scheduledDate,
@@ -308,6 +312,7 @@ class Workout extends Equatable {
       id: id ?? this.id,
       userId: userId ?? this.userId,
       name: name ?? this.name,
+      description: description ?? this.description,
       type: type ?? this.type,
       difficulty: difficulty ?? this.difficulty,
       scheduledDate: scheduledDate ?? this.scheduledDate,

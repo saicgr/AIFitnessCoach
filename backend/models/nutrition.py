@@ -84,6 +84,7 @@ class HydrationLogCreate(BaseModel):
     amount_ml: int = Field(..., ge=1, le=10000)  # Amount in milliliters
     workout_id: Optional[str] = Field(default=None, max_length=100)  # Optional workout association
     notes: Optional[str] = Field(default=None, max_length=500)
+    local_date: Optional[str] = Field(default=None, max_length=10)  # Client's local date YYYY-MM-DD for correct day grouping
 
 
 class HydrationLog(BaseModel):

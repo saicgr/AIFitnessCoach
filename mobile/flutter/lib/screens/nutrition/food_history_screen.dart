@@ -24,6 +24,7 @@ class _FoodHistoryScreenState extends ConsumerState<FoodHistoryScreen> {
   String? _error;
   String? _activeSearchQuery;
   String? _selectedMealFilter;
+  String? _selectedSourceFilter;
   int _currentLimit = 50;
   bool _hasMore = true;
   bool _isLoadingMore = false;
@@ -144,6 +145,15 @@ class _FoodHistoryScreenState extends ConsumerState<FoodHistoryScreen> {
       _currentLimit = 50;
     });
     _loadData();
+  }
+
+  void _onSourceFilterChanged(String? source) {
+    setState(() => _selectedSourceFilter = source);
+    final searchService = ref.read(foodSearchServiceProvider);
+    searchService.setSource(source);
+    if (_activeSearchQuery != null && _activeSearchQuery!.isNotEmpty) {
+      searchService.search(_activeSearchQuery!, widget.userId);
+    }
   }
 
   void _onDateRangeChanged(_DateRange range) async {
@@ -386,8 +396,10 @@ class _FoodHistoryScreenState extends ConsumerState<FoodHistoryScreen> {
             selectedDateRange: _selectedDateRange,
             customDateRange: _customDateRange,
             selectedMealFilter: _selectedMealFilter,
+            selectedSourceFilter: _selectedSourceFilter,
             onDateRangeChanged: _onDateRangeChanged,
             onMealFilterChanged: _onMealFilterChanged,
+            onSourceFilterChanged: _onSourceFilterChanged,
             isDark: isDark,
           ),
 
@@ -464,16 +476,20 @@ class _CollapsibleFilterBar extends StatefulWidget {
   final _DateRange selectedDateRange;
   final DateTimeRange? customDateRange;
   final String? selectedMealFilter;
+  final String? selectedSourceFilter;
   final ValueChanged<_DateRange> onDateRangeChanged;
   final ValueChanged<String?> onMealFilterChanged;
+  final ValueChanged<String?> onSourceFilterChanged;
   final bool isDark;
 
   const _CollapsibleFilterBar({
     required this.selectedDateRange,
     required this.customDateRange,
     required this.selectedMealFilter,
+    required this.selectedSourceFilter,
     required this.onDateRangeChanged,
     required this.onMealFilterChanged,
+    required this.onSourceFilterChanged,
     required this.isDark,
   });
 
@@ -498,9 +514,21 @@ class _CollapsibleFilterBarState extends State<_CollapsibleFilterBar> {
         widget.selectedMealFilter!.substring(1);
   }
 
+  String get _sourceLabel {
+    switch (widget.selectedSourceFilter) {
+      case 'usda': return 'USDA';
+      case 'usda_branded': return 'Branded';
+      case 'openfoodfacts': return 'Open Food Facts';
+      case 'indb': return 'Indian';
+      case 'cnf': return 'Canadian';
+      default: return 'All DBs';
+    }
+  }
+
   bool get _hasActiveFilters =>
       widget.selectedDateRange != _DateRange.all ||
-      widget.selectedMealFilter != null;
+      widget.selectedMealFilter != null ||
+      widget.selectedSourceFilter != null;
 
   @override
   Widget build(BuildContext context) {
@@ -534,7 +562,7 @@ class _CollapsibleFilterBarState extends State<_CollapsibleFilterBar> {
                   ),
                   const SizedBox(width: 8),
                   Text(
-                    '$_dateLabel  ·  $_mealLabel',
+                    '$_dateLabel  ·  $_mealLabel  ·  $_sourceLabel',
                     style: TextStyle(
                       color: _hasActiveFilters ? textSecondary : textMuted,
                       fontSize: 13,
@@ -624,6 +652,42 @@ class _CollapsibleFilterBarState extends State<_CollapsibleFilterBar> {
                         cardBg: cardBg,
                         cardBorder: cardBorder,
                         onTap: () => widget.onMealFilterChanged(value),
+                      );
+                    }).toList(),
+                  ),
+                  const SizedBox(height: 10),
+                  // Database source chips
+                  Text(
+                    'DATABASE',
+                    style: TextStyle(
+                      color: textMuted,
+                      fontSize: 10,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 1,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Wrap(
+                    spacing: 6,
+                    runSpacing: 6,
+                    children: [
+                      (null, 'All'),
+                      ('usda', 'USDA'),
+                      ('usda_branded', 'Branded'),
+                      ('openfoodfacts', 'Open Food Facts'),
+                      ('indb', 'Indian'),
+                      ('cnf', 'Canadian'),
+                    ].map((filter) {
+                      final (value, label) = filter;
+                      final isSelected = widget.selectedSourceFilter == value;
+                      return _buildChip(
+                        label: label,
+                        isSelected: isSelected,
+                        accentColor: cyan,
+                        textMuted: textMuted,
+                        cardBg: cardBg,
+                        cardBorder: cardBorder,
+                        onTap: () => widget.onSourceFilterChanged(value),
                       );
                     }).toList(),
                   ),

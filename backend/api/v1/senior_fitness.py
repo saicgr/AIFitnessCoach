@@ -26,7 +26,7 @@ ENDPOINTS:
 - GET  /api/v1/senior-fitness/{user_id}/prompt-context - Get AI context for seniors
 """
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query, Request
 from pydantic import BaseModel, Field
 from typing import Optional, List, Dict, Any
 from datetime import datetime, date, timedelta
@@ -34,6 +34,7 @@ import logging
 
 from core.supabase_client import get_supabase
 from core.logger import get_logger
+from core.timezone_utils import resolve_timezone, get_user_today
 
 router = APIRouter()
 logger = get_logger(__name__)
@@ -593,7 +594,7 @@ async def update_senior_settings(user_id: str, update: SeniorSettingsUpdate):
 
 
 @router.get("/{user_id}/recovery-status", response_model=RecoveryStatus)
-async def get_recovery_status(user_id: str):
+async def get_recovery_status(user_id: str, request: Request):
     """Get recovery status and recommendations for a senior user."""
     logger.info(f"Getting recovery status for user {user_id}")
 
@@ -602,6 +603,10 @@ async def get_recovery_status(user_id: str):
 
         # Get senior settings
         settings = await get_senior_settings(user_id)
+
+        # Resolve user timezone for date logic
+        user_tz = resolve_timezone(request, None, user_id)
+        today_date = date.fromisoformat(get_user_today(user_tz))
 
         # Get last workout date
         workout_result = supabase.client.table("workouts").select(
@@ -619,7 +624,7 @@ async def get_recovery_status(user_id: str):
                 last_workout_date = datetime.fromisoformat(
                     completed_at.replace("Z", "+00:00")
                 ).date()
-                days_since = (date.today() - last_workout_date).days
+                days_since = (today_date - last_workout_date).days
 
         recommended_rest = settings.min_rest_days_between_workouts
         is_recovered = days_since >= recommended_rest

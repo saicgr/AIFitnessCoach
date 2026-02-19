@@ -22,7 +22,7 @@ ENDPOINTS:
 - PUT  /api/v1/progression-settings/{user_id}/category-paces - Update category-specific paces
 """
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query, Request
 from pydantic import BaseModel, Field
 from typing import Optional, List, Dict, Any
 from datetime import datetime, date, timedelta
@@ -30,6 +30,7 @@ import logging
 
 from core.supabase_client import get_supabase
 from core.logger import get_logger
+from core.timezone_utils import resolve_timezone, get_user_today
 
 router = APIRouter()
 logger = get_logger(__name__)
@@ -205,7 +206,7 @@ def get_pace_definitions() -> Dict[str, ProgressionPaceDefinition]:
     }
 
 
-async def analyze_user_for_recommendation(user_id: str) -> Dict[str, Any]:
+async def analyze_user_for_recommendation(user_id: str, user_tz: str = "UTC") -> Dict[str, Any]:
     """Analyze user profile for pace recommendation."""
     supabase = get_supabase()
     analysis = {
@@ -261,7 +262,8 @@ async def analyze_user_for_recommendation(user_id: str) -> Dict[str, Any]:
 
     # Get strain history
     try:
-        ninety_days_ago = (date.today() - timedelta(days=90)).isoformat()
+        today_date = date.fromisoformat(get_user_today(user_tz))
+        ninety_days_ago = (today_date - timedelta(days=90)).isoformat()
         strain_result = supabase.client.table("strain_history").select(
             "id, body_part, severity, strain_date"
         ).eq("user_id", user_id).gte("strain_date", ninety_days_ago).execute()
@@ -499,12 +501,13 @@ async def update_progression_preferences(user_id: str, update: ProgressionPrefer
 
 
 @router.get("/{user_id}/recommendation", response_model=PaceRecommendationResponse)
-async def get_pace_recommendation(user_id: str):
+async def get_pace_recommendation(user_id: str, request: Request):
     """Get AI-recommended progression pace based on user profile."""
     logger.info(f"Generating pace recommendation for user {user_id}")
 
     try:
-        analysis = await analyze_user_for_recommendation(user_id)
+        user_tz = resolve_timezone(request, None, user_id)
+        analysis = await analyze_user_for_recommendation(user_id, user_tz)
         recommendation = generate_recommendation(analysis)
 
         supabase = get_supabase()
@@ -556,12 +559,13 @@ async def get_pace_recommendation(user_id: str):
 
 
 @router.post("/{user_id}/apply-recommendation", response_model=ApplyRecommendationResponse)
-async def apply_pace_recommendation(user_id: str):
+async def apply_pace_recommendation(user_id: str, request: Request):
     """Apply AI-recommended progression pace settings."""
     logger.info(f"Applying pace recommendation for user {user_id}")
 
     try:
-        analysis = await analyze_user_for_recommendation(user_id)
+        user_tz = resolve_timezone(request, None, user_id)
+        analysis = await analyze_user_for_recommendation(user_id, user_tz)
         recommendation = generate_recommendation(analysis)
 
         update = ProgressionPreferencesUpdate(

@@ -104,6 +104,7 @@ Future<void> showExerciseOptionsSheet({
   required VoidCallback onRemoveFromWorkout,
   VoidCallback? onAddToSuperset,
   VoidCallback? onRemoveAndDontRecommend,
+  VoidCallback? onChangeEquipment,
 }) {
   HapticFeedback.mediumImpact();
 
@@ -122,6 +123,7 @@ Future<void> showExerciseOptionsSheet({
         onRemoveFromWorkout: onRemoveFromWorkout,
         onAddToSuperset: onAddToSuperset,
         onRemoveAndDontRecommend: onRemoveAndDontRecommend,
+        onChangeEquipment: onChangeEquipment,
       ),
     ),
   );
@@ -139,6 +141,7 @@ class ExerciseOptionsSheet extends StatefulWidget {
   final VoidCallback onRemoveFromWorkout;
   final VoidCallback? onAddToSuperset;
   final VoidCallback? onRemoveAndDontRecommend;
+  final VoidCallback? onChangeEquipment;
 
   const ExerciseOptionsSheet({
     super.key,
@@ -152,6 +155,7 @@ class ExerciseOptionsSheet extends StatefulWidget {
     required this.onRemoveFromWorkout,
     this.onAddToSuperset,
     this.onRemoveAndDontRecommend,
+    this.onChangeEquipment,
   });
 
   @override
@@ -342,6 +346,19 @@ class _ExerciseOptionsSheetState extends State<ExerciseOptionsSheet> {
           isDark: isDark,
           textPrimary: textPrimary,
         ),
+
+        // Change Equipment (if available and exercise uses equipment)
+        if (widget.onChangeEquipment != null)
+          _buildOptionItem(
+            icon: Icons.build_outlined,
+            label: "Don't Have This Equipment?",
+            onTap: () {
+              Navigator.pop(context);
+              widget.onChangeEquipment!();
+            },
+            isDark: isDark,
+            textPrimary: textPrimary,
+          ),
 
         // Divider before destructive actions
         Padding(

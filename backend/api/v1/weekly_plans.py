@@ -22,6 +22,7 @@ from pydantic import BaseModel, Field
 from core.supabase_db import get_supabase_db
 from core.logger import get_logger
 from core.rate_limiter import limiter
+from core.timezone_utils import resolve_timezone, get_user_today
 from services.holistic_plan_service import (
     get_holistic_plan_service,
     WeeklyPlan,
@@ -153,7 +154,8 @@ async def generate_weekly_plan(request: GenerateWeeklyPlanRequest, http_request:
             week_start = date.fromisoformat(request.week_start)
         else:
             # Default to current week's Monday
-            today = date.today()
+            user_tz = resolve_timezone(http_request, None, request.user_id)
+            today = date.fromisoformat(get_user_today(user_tz))
             week_start = today - timedelta(days=today.weekday())
 
         # Parse preferred workout time

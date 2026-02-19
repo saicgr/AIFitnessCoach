@@ -10,6 +10,10 @@ class ExerciseImage extends ConsumerStatefulWidget {
   /// The exercise name to display image for
   final String exerciseName;
 
+  /// Pre-resolved image URL (e.g., presigned URL from library API).
+  /// If this is a valid HTTP(S) URL, it is used directly without an API call.
+  final String? imageUrl;
+
   /// Width of the image container
   final double width;
 
@@ -31,6 +35,7 @@ class ExerciseImage extends ConsumerStatefulWidget {
   const ExerciseImage({
     super.key,
     required this.exerciseName,
+    this.imageUrl,
     this.width = 60,
     this.height = 60,
     this.borderRadius = 8,
@@ -57,13 +62,37 @@ class _ExerciseImageState extends ConsumerState<ExerciseImage> {
   @override
   void didUpdateWidget(ExerciseImage oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.exerciseName != widget.exerciseName) {
+    if (oldWidget.exerciseName != widget.exerciseName ||
+        oldWidget.imageUrl != widget.imageUrl) {
       _loadImageUrl();
     }
   }
 
   Future<void> _loadImageUrl() async {
+    // Reset state for fresh load (important when widget updates)
+    _hasError = false;
+    _isLoading = true;
+    _imageUrl = null;
+
     final exerciseName = widget.exerciseName;
+
+    // If a pre-resolved HTTP URL is provided (e.g., presigned URL from library API),
+    // use it directly without an API call.
+    final preResolved = widget.imageUrl;
+    if (preResolved != null && preResolved.startsWith('http')) {
+      if (mounted) {
+        setState(() {
+          _imageUrl = preResolved;
+          _isLoading = false;
+        });
+      }
+      // Cache for future use by name-only lookups
+      if (exerciseName.isNotEmpty) {
+        ImageUrlCache.set(exerciseName, preResolved);
+      }
+      return;
+    }
+
     if (exerciseName.isEmpty) {
       if (mounted) {
         setState(() {
@@ -161,6 +190,9 @@ class _ExerciseImageState extends ConsumerState<ExerciseImage> {
 
     return CachedNetworkImage(
       imageUrl: _imageUrl!,
+      // Use exercise name as stable cache key so presigned URL rotation
+      // doesn't duplicate images in disk cache.
+      cacheKey: widget.exerciseName.isNotEmpty ? widget.exerciseName : null,
       fit: widget.fit,
       // Perf fix 2.2: constrain decoded image size in memory cache
       memCacheWidth: (widget.width * 2).toInt().clamp(100, 400),

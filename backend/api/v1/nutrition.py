@@ -426,7 +426,7 @@ async def list_food_logs(
                 fiber_g=log.get("fiber_g"),
                 health_score=log.get("health_score"),
                 ai_feedback=log.get("ai_feedback"),
-                created_at=str(log.get("created_at", "")),
+                created_at=str(log.get("created_at") or log.get("logged_at") or ""),
             ))
 
         logger.info(f"Returning {len(result)} food logs for user {user_id}")
@@ -466,7 +466,7 @@ async def get_food_log(user_id: str, log_id: str):
             fiber_g=log.get("fiber_g"),
             health_score=log.get("health_score"),
             ai_feedback=log.get("ai_feedback"),
-            created_at=str(log.get("created_at", "")),
+            created_at=str(log.get("created_at") or log.get("logged_at") or ""),
         )
 
     except HTTPException:
@@ -593,7 +593,7 @@ async def get_daily_summary(
                 fiber_g=log.get("fiber_g"),
                 health_score=log.get("health_score"),
                 ai_feedback=log.get("ai_feedback"),
-                created_at=str(log.get("created_at", "")),
+                created_at=str(log.get("created_at") or log.get("logged_at") or ""),
             ))
 
         return DailyNutritionResponse(
@@ -3745,6 +3745,7 @@ class PinnedNutrientsUpdate(BaseModel):
 
 @router.get("/micronutrients/{user_id}", response_model=DailyMicronutrientSummary)
 async def get_daily_micronutrients(
+    request: Request,
     user_id: str,
     date: Optional[str] = Query(default=None, description="Date (YYYY-MM-DD), defaults to today"),
 ):
@@ -3754,13 +3755,14 @@ async def get_daily_micronutrients(
     Returns vitamins, minerals, fatty acids, and other nutrients with
     floor/target/ceiling values and current intake.
     """
-    if date is None:
-        date = datetime.now().strftime("%Y-%m-%d")
-
-    logger.info(f"Getting daily micronutrients for user {user_id}, date={date}")
-
     try:
         db = get_supabase_db()
+        user_tz = resolve_timezone(request, db, user_id)
+
+        if date is None:
+            date = get_user_today(user_tz)
+
+        logger.info(f"Getting daily micronutrients for user {user_id}, date={date}")
 
         # Get RDA values
         rda_result = db.client.table("nutrient_rdas")\
@@ -3859,6 +3861,7 @@ async def get_daily_micronutrients(
 
 @router.get("/micronutrients/{user_id}/contributors/{nutrient}", response_model=NutrientContributorsResponse)
 async def get_nutrient_contributors(
+    request: Request,
     user_id: str,
     nutrient: str,
     date: Optional[str] = Query(default=None, description="Date (YYYY-MM-DD), defaults to today"),
@@ -3869,13 +3872,14 @@ async def get_nutrient_contributors(
 
     Shows which foods contributed the most to the day's intake.
     """
-    if date is None:
-        date = datetime.now().strftime("%Y-%m-%d")
-
-    logger.info(f"Getting contributors for {nutrient} for user {user_id}, date={date}")
-
     try:
         db = get_supabase_db()
+        user_tz = resolve_timezone(request, db, user_id)
+
+        if date is None:
+            date = get_user_today(user_tz)
+
+        logger.info(f"Getting contributors for {nutrient} for user {user_id}, date={date}")
 
         # Get RDA info
         rda_result = db.client.table("nutrient_rdas")\
@@ -4260,6 +4264,21 @@ async def get_dynamic_nutrition_targets(
         adjust_for_training = prefs.get("adjust_calories_for_training", True)
         adjust_for_rest = prefs.get("adjust_calories_for_rest", False)
 
+        # Check if today is a training day per the user's workout schedule
+        # workout_days is stored as 0-indexed (0=Mon, 1=Tue, ..., 6=Sun)
+        # Python's weekday() is also 0=Mon, 1=Tue, ..., 6=Sun
+        is_scheduled_training_day = False
+        gym_profile_result = db.client.table("gym_profiles")\
+            .select("workout_days")\
+            .eq("user_id", user_id)\
+            .eq("is_active", True)\
+            .maybe_single()\
+            .execute()
+
+        if gym_profile_result and gym_profile_result.data:
+            workout_days = gym_profile_result.data.get("workout_days") or []
+            is_scheduled_training_day = target_date.weekday() in workout_days
+
         # Check if there's a workout logged today
         workout_result = db.client.table("workout_logs")\
             .select("id")\
@@ -4268,17 +4287,12 @@ async def get_dynamic_nutrition_targets(
             .lt("completed_at", f"{target_date_str}T23:59:59")\
             .execute()
 
-        has_workout = bool(workout_result and workout_result.data)
+        has_workout_log = bool(workout_result and workout_result.data)
 
-        # Also check scheduled workouts if no log exists
-        if not has_workout:
-            schedule_result = db.client.table("workouts")\
-                .select("id")\
-                .eq("user_id", user_id)\
-                .gte("scheduled_date", f"{target_date_str}T00:00:00")\
-                .lt("scheduled_date", f"{target_date_str}T23:59:59")\
-                .execute()
-            has_workout = bool(schedule_result and schedule_result.data)
+        # A day counts as a training day if:
+        # 1. It's in the user's workout_days schedule, OR
+        # 2. There's an actual completed workout log for it
+        has_workout = is_scheduled_training_day or has_workout_log
 
         # Check if it's a fasting day (for 5:2 or ADF protocols)
         is_fasting_day = False
@@ -4502,6 +4516,7 @@ async def delete_weight_log(
 
 @router.get("/weight-logs/{user_id}/trend", response_model=WeightTrendResponse)
 async def get_weight_trend(
+    request: Request,
     user_id: str,
     days: int = Query(14, description="Number of days to analyze"),
 ):
@@ -4514,8 +4529,11 @@ async def get_weight_trend(
 
     try:
         db = get_supabase_db()
+        user_tz = resolve_timezone(request, db, user_id)
 
-        from_date = (datetime.utcnow() - timedelta(days=days)).isoformat()
+        today_str = get_user_today(user_tz)
+        from_date_obj = datetime.strptime(today_str, "%Y-%m-%d") - timedelta(days=days)
+        from_date = from_date_obj.isoformat()
 
         result = db.client.table("weight_logs")\
             .select("weight_kg, logged_at")\
@@ -5138,7 +5156,7 @@ async def get_nutrition_streak(user_id: str):
 
 
 @router.post("/streak/{user_id}/freeze", response_model=NutritionStreakResponse)
-async def use_streak_freeze(user_id: str):
+async def use_streak_freeze(request: Request, user_id: str):
     """
     Use a streak freeze to preserve current streak.
     """
@@ -5146,6 +5164,7 @@ async def use_streak_freeze(user_id: str):
 
     try:
         db = get_supabase_db()
+        user_tz = resolve_timezone(request, db, user_id)
 
         # Get current streak
         result = db.client.table("nutrition_streaks")\
@@ -5168,7 +5187,7 @@ async def use_streak_freeze(user_id: str):
             .update({
                 "freezes_available": freezes_available - 1,
                 "freezes_used_this_week": data.get("freezes_used_this_week", 0) + 1,
-                "last_logged_date": datetime.utcnow().date().isoformat(),
+                "last_logged_date": get_user_today(user_tz),
             })\
             .eq("user_id", user_id)\
             .execute()
@@ -5249,6 +5268,7 @@ async def get_adaptive_calculation(user_id: str):
 
 @router.post("/adaptive/{user_id}/calculate", response_model=AdaptiveCalculationResponse)
 async def calculate_adaptive_tdee(
+    request: Request,
     user_id: str,
     days: int = Query(14, description="Number of days to analyze"),
 ):
@@ -5263,10 +5283,11 @@ async def calculate_adaptive_tdee(
 
     try:
         db = get_supabase_db()
+        user_tz = resolve_timezone(request, db, user_id)
 
-        from_date = datetime.utcnow() - timedelta(days=days)
-        from_date_str = from_date.date().isoformat()
-        to_date_str = datetime.utcnow().date().isoformat()
+        to_date_str = get_user_today(user_tz)
+        from_date_obj = datetime.strptime(to_date_str, "%Y-%m-%d") - timedelta(days=days)
+        from_date_str = from_date_obj.strftime("%Y-%m-%d")
 
         # Get food logs for the period
         food_result = db.client.table("food_logs")\
@@ -5581,7 +5602,7 @@ class WeeklySummaryResponse(BaseModel):
 
 
 @router.get("/weekly-summary/{user_id}", response_model=WeeklySummaryResponse)
-async def get_weekly_summary(user_id: str):
+async def get_weekly_summary(request: Request, user_id: str):
     """
     Get the weekly nutrition summary for a user (last 7 days).
     """
@@ -5589,9 +5610,11 @@ async def get_weekly_summary(user_id: str):
 
     try:
         db = get_supabase_db()
+        user_tz = resolve_timezone(request, db, user_id)
 
-        from_date = datetime.utcnow() - timedelta(days=7)
-        from_date_str = from_date.date().isoformat()
+        today_str = get_user_today(user_tz)
+        from_date_obj = datetime.strptime(today_str, "%Y-%m-%d") - timedelta(days=7)
+        from_date_str = from_date_obj.strftime("%Y-%m-%d")
 
         # Get food logs for the past week
         food_result = db.client.table("food_logs")\
@@ -5655,7 +5678,7 @@ async def get_weekly_summary(user_id: str):
 
 
 @router.post("/recommendations/{user_id}/generate", response_model=WeeklyRecommendationResponse)
-async def generate_weekly_recommendation(user_id: str):
+async def generate_weekly_recommendation(request: Request, user_id: str):
     """
     Generate a new weekly nutrition recommendation based on adaptive TDEE calculation.
     """
@@ -5663,6 +5686,7 @@ async def generate_weekly_recommendation(user_id: str):
 
     try:
         db = get_supabase_db()
+        user_tz = resolve_timezone(request, db, user_id)
 
         # First, get the latest adaptive calculation
         adaptive_result = db.client.table("adaptive_nutrition_calculations")\
@@ -5736,7 +5760,8 @@ async def generate_weekly_recommendation(user_id: str):
         recommended_fat = int((recommended_calories * 0.30) / 9)      # 9 cal/g
 
         # Create the recommendation
-        week_start = datetime.utcnow().date() - timedelta(days=datetime.utcnow().weekday())
+        today = datetime.strptime(get_user_today(user_tz), "%Y-%m-%d").date()
+        week_start = today - timedelta(days=today.weekday())
 
         rec_data = {
             "user_id": user_id,
@@ -6041,7 +6066,7 @@ class SelectRecommendationRequest(BaseModel):
 
 
 @router.get("/tdee/{user_id}/detailed", response_model=DetailedTDEEResponse)
-async def get_detailed_tdee(user_id: str, days: int = Query(default=14, ge=7, le=30)):
+async def get_detailed_tdee(request: Request, user_id: str, days: int = Query(default=14, ge=7, le=30)):
     """
     Get TDEE with confidence intervals, weight trend, and metabolic adaptation status.
 
@@ -6055,11 +6080,12 @@ async def get_detailed_tdee(user_id: str, days: int = Query(default=14, ge=7, le
 
     try:
         db = get_supabase_db()
+        user_tz = resolve_timezone(request, db, user_id)
         tdee_service = get_adaptive_tdee_service()
         adaptation_service = get_metabolic_adaptation_service()
 
         # Get food logs for the period
-        end_date = datetime.utcnow().date()
+        end_date = datetime.strptime(get_user_today(user_tz), "%Y-%m-%d").date()
         start_date = end_date - timedelta(days=days)
 
         food_logs_result = db.client.table("food_logs")\
@@ -6216,7 +6242,7 @@ async def get_detailed_tdee(user_id: str, days: int = Query(default=14, ge=7, le
 
 
 @router.get("/adherence/{user_id}/summary", response_model=AdherenceSummaryResponse)
-async def get_adherence_summary(user_id: str, weeks: int = Query(default=4, ge=1, le=12)):
+async def get_adherence_summary(request: Request, user_id: str, weeks: int = Query(default=4, ge=1, le=12)):
     """
     Get adherence summary with sustainability score.
 
@@ -6229,6 +6255,7 @@ async def get_adherence_summary(user_id: str, weeks: int = Query(default=4, ge=1
 
     try:
         db = get_supabase_db()
+        user_tz = resolve_timezone(request, db, user_id)
         adherence_service = get_adherence_tracking_service()
 
         # Get user's nutrition targets
@@ -6250,7 +6277,7 @@ async def get_adherence_summary(user_id: str, weeks: int = Query(default=4, ge=1
         )
 
         # Get daily nutrition summaries for the period
-        end_date = datetime.utcnow().date()
+        end_date = datetime.strptime(get_user_today(user_tz), "%Y-%m-%d").date()
         start_date = end_date - timedelta(weeks=weeks * 7)
 
         # Get food logs aggregated by day

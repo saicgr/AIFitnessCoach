@@ -10,6 +10,7 @@ import '../../../data/services/api_client.dart';
 import '../../../widgets/exercise_image.dart';
 import '../../../widgets/glass_sheet.dart';
 import '../../../widgets/segmented_tab_bar.dart';
+import '../../../data/services/image_url_cache.dart';
 
 /// Shows exercise add sheet with AI suggestions and library search
 Future<Workout?> showExerciseAddSheet(
@@ -122,10 +123,25 @@ class _ExerciseAddSheetState extends ConsumerState<_ExerciseAddSheet>
       }).toList();
 
       if (mounted) {
-        setState(() {
-          _suggestions = filteredSuggestions;
-          _isLoadingSuggestions = false;
-        });
+        // Batch pre-fetch images BEFORE showing suggestions so the cache
+        // is populated when ExerciseImage widgets render (~100ms overhead).
+        // Without await, each widget falls back to individual API calls,
+        // defeating the purpose of batching.
+        final suggestionNames = filteredSuggestions
+            .map((s) => s['name'] as String?)
+            .whereType<String>()
+            .toList();
+        if (suggestionNames.isNotEmpty) {
+          final apiClient = ref.read(apiClientProvider);
+          await ImageUrlCache.batchPreFetch(suggestionNames, apiClient);
+        }
+
+        if (mounted) {
+          setState(() {
+            _suggestions = filteredSuggestions;
+            _isLoadingSuggestions = false;
+          });
+        }
       }
     } catch (e) {
       debugPrint('Error loading suggestions: $e');
@@ -457,6 +473,7 @@ class _ExerciseAddSheetState extends ConsumerState<_ExerciseAddSheet>
                         final exercise = _libraryExercises[index];
                         return _ExerciseOptionCard(
                           name: exercise.name,
+                          imageUrl: exercise.imageUrl,
                           subtitle: exercise.targetMuscle ?? exercise.bodyPart ?? '',
                           badge: exercise.equipment ?? 'Bodyweight',
                           badgeColor: AppColors.purple,
@@ -476,6 +493,7 @@ class _ExerciseAddSheetState extends ConsumerState<_ExerciseAddSheet>
 
 class _ExerciseOptionCard extends ConsumerWidget {
   final String name;
+  final String? imageUrl;
   final String subtitle;
   final String badge;
   final Color badgeColor;
@@ -487,6 +505,7 @@ class _ExerciseOptionCard extends ConsumerWidget {
 
   const _ExerciseOptionCard({
     required this.name,
+    this.imageUrl,
     required this.subtitle,
     required this.badge,
     required this.badgeColor,
@@ -515,9 +534,10 @@ class _ExerciseOptionCard extends ConsumerWidget {
             padding: const EdgeInsets.all(12),
             child: Row(
               children: [
-                // Exercise image (fetches presigned URL from API)
+                // Exercise image (uses presigned URL directly if available)
                 ExerciseImage(
                   exerciseName: name,
+                  imageUrl: imageUrl,
                   width: 60,
                   height: 60,
                   borderRadius: 8,

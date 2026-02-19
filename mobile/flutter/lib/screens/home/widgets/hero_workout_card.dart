@@ -504,6 +504,21 @@ class _HeroWorkoutCardState extends ConsumerState<HeroWorkoutCard> {
                   );
                 },
               ),
+              // Regenerate Workout
+              ListTile(
+                leading: Icon(
+                  Icons.refresh,
+                  color: isDark ? Colors.white70 : Colors.black54,
+                ),
+                title: Text(
+                  'Regenerate Workout',
+                  style: TextStyle(color: isDark ? Colors.white : Colors.black87),
+                ),
+                onTap: () {
+                  Navigator.pop(sheetContext);
+                  _regenerateWorkout();
+                },
+              ),
               // Share to Social
               ListTile(
                 leading: Icon(
@@ -693,8 +708,10 @@ class _HeroWorkoutCardState extends ConsumerState<HeroWorkoutCard> {
     final accentColorEnum = ref.watch(accentColorProvider);
     final accentColor = accentColorEnum.getColor(isDark);
 
+    final dateLabel = _getScheduledDateLabel(workout.scheduledDate);
+
     final cardContent = Container(
-      height: 340,
+      height: 280,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(24),
         border: Border.all(color: accentColor.withValues(alpha: 0.5), width: 2),
@@ -735,10 +752,33 @@ class _HeroWorkoutCardState extends ConsumerState<HeroWorkoutCard> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Top row: Menu button only (date context provided by week strip)
+                  // Top row: Date label + Menu button
                   Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                        decoration: BoxDecoration(
+                          color: isDark
+                              ? Colors.black.withValues(alpha: 0.4)
+                              : Colors.white.withValues(alpha: 0.8),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(
+                            color: isDark
+                                ? Colors.white.withValues(alpha: 0.1)
+                                : Colors.black.withValues(alpha: 0.1),
+                          ),
+                        ),
+                        child: Text(
+                          dateLabel,
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: 0.5,
+                            color: isDark ? Colors.white : Colors.black87,
+                          ),
+                        ),
+                      ),
                       GestureDetector(
                         onTap: _showOptionsMenu,
                         child: Container(
@@ -788,6 +828,33 @@ class _HeroWorkoutCardState extends ConsumerState<HeroWorkoutCard> {
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
+
+                  // Workout description (if available)
+                  if (workout.description != null && workout.description!.isNotEmpty) ...[
+                    const SizedBox(height: 4),
+                    Text(
+                      workout.description!,
+                      style: TextStyle(
+                        color: isDark
+                            ? Colors.white.withValues(alpha: 0.7)
+                            : Colors.black45,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w400,
+                        height: 1.3,
+                        shadows: isDark
+                            ? [
+                                const Shadow(
+                                  color: Colors.black38,
+                                  blurRadius: 4,
+                                  offset: Offset(0, 1),
+                                ),
+                              ]
+                            : null,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
                   const SizedBox(height: 8),
 
                   // Stats row

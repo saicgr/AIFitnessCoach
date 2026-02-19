@@ -2,6 +2,11 @@ import 'package:json_annotation/json_annotation.dart';
 
 part 'nutrition.g.dart';
 
+DateTime _parseDateTimeOrNow(String? value) {
+  if (value == null || value.isEmpty) return DateTime.now();
+  return DateTime.parse(value);
+}
+
 /// Individual food item
 @JsonSerializable()
 class FoodItem {
@@ -90,7 +95,7 @@ class FoodLog {
   final String? moodAfter;
   @JsonKey(name: 'energy_level')
   final int? energyLevel;
-  @JsonKey(name: 'created_at')
+  @JsonKey(name: 'created_at', fromJson: _parseDateTimeOrNow)
   final DateTime createdAt;
 
   const FoodLog({

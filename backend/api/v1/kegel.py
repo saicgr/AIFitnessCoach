@@ -3,7 +3,7 @@ Kegel/Pelvic Floor API Endpoints
 API routes for kegel preferences, session tracking, and pelvic floor exercises.
 """
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query, Request
 from typing import Optional, List
 from datetime import date, datetime, timedelta
 from uuid import UUID
@@ -15,6 +15,7 @@ from models.hormonal_health import (
     KegelFocusArea, KegelLevel
 )
 from core.supabase_client import get_supabase
+from core.timezone_utils import resolve_timezone, get_user_today
 
 router = APIRouter(prefix="/kegel", tags=["Kegel/Pelvic Floor"])
 
@@ -165,15 +166,17 @@ async def get_kegel_sessions(
 
 
 @router.get("/sessions/{user_id}/today", response_model=List[KegelSession])
-async def get_today_kegel_sessions(user_id: UUID):
+async def get_today_kegel_sessions(user_id: UUID, request: Request):
     """Get today's kegel sessions."""
     print(f"🔍 [Kegel] Fetching today's sessions for user {user_id}")
 
     try:
         supabase = get_supabase().client
+        user_tz = resolve_timezone(request, None, str(user_id))
+        today_str = get_user_today(user_tz)
         result = supabase.table("kegel_sessions").select("*").eq(
             "user_id", str(user_id)
-        ).eq("session_date", date.today().isoformat()).order("session_time", desc=True).execute()
+        ).eq("session_date", today_str).order("session_time", desc=True).execute()
 
         return result.data
 
@@ -187,7 +190,7 @@ async def get_today_kegel_sessions(user_id: UUID):
 # ============================================================================
 
 @router.get("/stats/{user_id}", response_model=KegelStats)
-async def get_kegel_stats(user_id: UUID):
+async def get_kegel_stats(user_id: UUID, request: Request):
     """Get kegel exercise statistics for a user."""
     print(f"🔍 [Kegel] Calculating stats for user {user_id}")
 
@@ -212,11 +215,13 @@ async def get_kegel_stats(user_id: UUID):
         total_days = len(session_dates)
 
         # Today's sessions
-        today = date.today().isoformat()
-        sessions_today = len([s for s in sessions if s.get("session_date") == today])
+        user_tz = resolve_timezone(request, None, str(user_id))
+        today_str = get_user_today(user_tz)
+        today_date = date.fromisoformat(today_str)
+        sessions_today = len([s for s in sessions if s.get("session_date") == today_str])
 
         # Last 7 days
-        week_ago = (date.today() - timedelta(days=7)).isoformat()
+        week_ago = (today_date - timedelta(days=7)).isoformat()
         sessions_last_7 = len([s for s in sessions if s.get("session_date", "") >= week_ago])
 
         # Calculate streak
@@ -226,9 +231,9 @@ async def get_kegel_stats(user_id: UUID):
             sorted_dates = sorted([date.fromisoformat(d) for d in session_dates], reverse=True)
 
             # Current streak (consecutive days including today or yesterday)
-            check_date = date.today()
+            check_date = today_date
             if check_date not in [date.fromisoformat(d) for d in session_dates]:
-                check_date = date.today() - timedelta(days=1)
+                check_date = today_date - timedelta(days=1)
 
             temp_streak = 0
             for d in sorted_dates:
@@ -275,14 +280,18 @@ async def get_kegel_stats(user_id: UUID):
 
 
 @router.get("/daily-goal/{user_id}", response_model=KegelDailyGoal)
-async def check_daily_goal(user_id: UUID, check_date: date = Query(default=None)):
+async def check_daily_goal(user_id: UUID, request: Request, check_date: date = Query(default=None)):
     """Check if user has met their daily kegel goal."""
     print(f"🔍 [Kegel] Checking daily goal for user {user_id}")
 
     try:
         supabase = get_supabase().client
 
-        target_date = check_date or date.today()
+        if check_date is None:
+            user_tz = resolve_timezone(request, None, str(user_id))
+            target_date = date.fromisoformat(get_user_today(user_tz))
+        else:
+            target_date = check_date
 
         # Get preferences
         prefs_result = supabase.table("kegel_preferences").select("target_sessions_per_day").eq("user_id", str(user_id)).execute()
@@ -469,6 +478,7 @@ async def get_kegels_for_workout(
 @router.post("/log-from-workout/{user_id}")
 async def log_kegels_from_workout(
     user_id: UUID,
+    request: Request,
     workout_id: UUID,
     placement: str = Query(..., description="'warmup' or 'cooldown'"),
     duration_seconds: int = Query(..., ge=1),
@@ -479,10 +489,11 @@ async def log_kegels_from_workout(
 
     try:
         supabase = get_supabase().client
+        user_tz = resolve_timezone(request, None, str(user_id))
 
         session_data = {
             "user_id": str(user_id),
-            "session_date": date.today().isoformat(),
+            "session_date": get_user_today(user_tz),
             "session_time": datetime.utcnow().time().isoformat(),
             "duration_seconds": duration_seconds,
             "session_type": "standard",

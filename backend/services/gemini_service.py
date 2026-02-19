@@ -4115,6 +4115,7 @@ Return ONLY valid JSON (no markdown):
   "name": "{naming_context}",
   "type": "strength",
   "difficulty": "{difficulty}",
+  "description": "1-2 sentence explanation of the workout's training logic, e.g. 'This upper body session starts with compound pulls, transitions to pressing movements, and finishes with isolation work for biceps and triceps.'",
   "duration_minutes": {duration_minutes},
   "duration_minutes_min": {duration_minutes_min or 'null'},
   "duration_minutes_max": {duration_minutes_max or 'null'},

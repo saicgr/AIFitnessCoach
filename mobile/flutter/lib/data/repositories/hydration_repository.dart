@@ -121,6 +121,7 @@ class HydrationNotifier extends StateNotifier<HydrationState> {
         amountMl: amountMl,
         workoutId: workoutId,
         notes: notes,
+        localDate: DateTime.now().toIso8601String().substring(0, 10),
       );
 
       // Fire-and-forget: sync hydration to Health Connect / HealthKit
@@ -166,6 +167,7 @@ class HydrationNotifier extends StateNotifier<HydrationState> {
         userId: userId,
         drinkType: drinkType,
         amountMl: amountMl,
+        localDate: DateTime.now().toIso8601String().substring(0, 10),
       );
 
       // Fire-and-forget: sync hydration to Health Connect / HealthKit
@@ -236,6 +238,7 @@ class HydrationRepository {
     required int amountMl,
     String? workoutId,
     String? notes,
+    String? localDate,
   }) async {
     try {
       final response = await _client.post(
@@ -246,6 +249,7 @@ class HydrationRepository {
           'amount_ml': amountMl,
           if (workoutId != null) 'workout_id': workoutId,
           if (notes != null) 'notes': notes,
+          if (localDate != null) 'local_date': localDate,
         },
       );
       return HydrationLog.fromJson(response.data);
@@ -261,6 +265,7 @@ class HydrationRepository {
     String drinkType = 'water',
     int amountMl = 250,
     String? workoutId,
+    String? localDate,
   }) async {
     try {
       final queryParams = <String, dynamic>{
@@ -269,6 +274,9 @@ class HydrationRepository {
       };
       if (workoutId != null) {
         queryParams['workout_id'] = workoutId;
+      }
+      if (localDate != null) {
+        queryParams['local_date'] = localDate;
       }
       final response = await _client.post(
         '/hydration/quick-log/$userId',

@@ -54,6 +54,36 @@ class _NotificationsCardState extends ConsumerState<_NotificationsCard> {
       ),
       child: Column(
         children: [
+          // Smart Timing
+          SettingSwitchTile(
+            icon: Icons.auto_awesome,
+            iconColor: AppColors.cyan,
+            title: 'Smart Timing',
+            subtitle: notifPrefs.smartTimingEnabled
+                ? 'Sends when you\'re most likely to engage'
+                : 'Send at fixed times you set below',
+            value: notifPrefs.smartTimingEnabled,
+            onChanged: (value) {
+              ref.read(notificationPreferencesProvider.notifier).setSmartTimingEnabled(value);
+            },
+          ),
+          if (notifPrefs.smartTimingEnabled)
+            Padding(
+              padding: const EdgeInsets.only(left: 50, right: 16, bottom: 8),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  'Based on your app usage patterns',
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: textMuted,
+                    fontStyle: FontStyle.italic,
+                  ),
+                ),
+              ),
+            ),
+          Divider(height: 1, color: cardBorder, indent: 50),
+
           // Workout Reminders
           _buildNotificationToggleWithTime(
             sectionKey: 'workout',

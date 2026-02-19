@@ -111,6 +111,80 @@ from services.adaptive_workout_service import (
 router = APIRouter()
 logger = get_logger(__name__)
 
+# Semaphore to limit concurrent background generations (prevent overloading Gemini)
+_background_gen_semaphore = asyncio.Semaphore(50)
+
+
+async def generate_next_day_background(user_id: str, target_date: str):
+    """Background task: generate workout for next day after workout completion.
+
+    Called when a user's today workout is marked as completed, to pre-cache
+    tomorrow's workout so it's instantly available.
+
+    Uses a semaphore to limit concurrent background generations and prevent
+    overloading the Gemini API.
+    """
+    async with _background_gen_semaphore:
+        logger.info(f"[NEXT-DAY] Starting next-day pre-cache for user={user_id}, date={target_date}")
+
+        try:
+            db = get_supabase_db()
+
+            # Check if workout already exists for target date
+            existing = db.list_workouts(
+                user_id=user_id,
+                from_date=target_date,
+                to_date=target_date,
+                limit=1,
+            )
+            if existing:
+                logger.info(f"[NEXT-DAY] Workout already exists for {user_id} on {target_date}, skipping")
+                return
+
+            # Check for in-flight generation
+            try:
+                generating_check = db.client.table("workouts").select("id").eq(
+                    "user_id", user_id
+                ).eq(
+                    "scheduled_date", target_date
+                ).eq(
+                    "status", "generating"
+                ).execute()
+                if generating_check.data:
+                    logger.info(f"[NEXT-DAY] Workout already being generated for {user_id} on {target_date}, skipping")
+                    return
+            except Exception:
+                pass
+
+            # Use the existing generate_workout function
+            from models.schemas import GenerateWorkoutRequest
+
+            # Try to get user's active gym profile
+            gym_profile_id = None
+            try:
+                active_result = db.client.table("gym_profiles").select("id").eq(
+                    "user_id", user_id
+                ).eq(
+                    "is_active", True
+                ).single().execute()
+                if active_result.data:
+                    gym_profile_id = active_result.data.get("id")
+            except Exception:
+                pass
+
+            request = GenerateWorkoutRequest(
+                user_id=user_id,
+                scheduled_date=target_date,
+                gym_profile_id=gym_profile_id,
+            )
+
+            result = await generate_workout(request, background_tasks=BackgroundTasks())
+            logger.info(f"[NEXT-DAY] Successfully pre-cached workout for {user_id} on {target_date}: "
+                        f"{result.name if result else 'unknown'}")
+
+        except Exception as e:
+            logger.error(f"[NEXT-DAY] Failed to pre-cache workout for {user_id} on {target_date}: {e}")
+
 
 # =============================================================================
 # Comeback Status Check (lightweight pre-generation check)
@@ -668,6 +742,7 @@ async def generate_workout(request: GenerateWorkoutRequest, background_tasks: Ba
             exercises = normalize_exercise_numeric_fields(exercises)
             workout_name = workout_data.get("name", "Generated Workout")
             difficulty = workout_data.get("difficulty", intensity_preference)
+            workout_description = workout_data.get("description")
 
             # Infer workout type from focus area for PPL tracking
             # This ensures workout_type is set correctly even when Gemini doesn't specify it
@@ -1021,6 +1096,7 @@ async def generate_workout(request: GenerateWorkoutRequest, background_tasks: Ba
             "name": workout_name,
             "type": workout_type,
             "difficulty": difficulty,
+            "description": workout_description,
             "scheduled_date": datetime.now().isoformat(),
             "exercises_json": exercises,
             "duration_minutes": request.duration_minutes or 45,
@@ -1403,6 +1479,7 @@ async def generate_workout_streaming(request: Request, body: GenerateWorkoutRequ
                 workout_name = workout_data.get("name", "Generated Workout")
                 workout_type = workout_data.get("type", body.workout_type or "strength")
                 difficulty = workout_data.get("difficulty", intensity_preference)
+                workout_description = workout_data.get("description")
                 estimated_duration = workout_data.get("estimated_duration_minutes")
                 if estimated_duration is not None:
                     estimated_duration = int(estimated_duration)
@@ -1605,6 +1682,7 @@ async def generate_workout_streaming(request: Request, body: GenerateWorkoutRequ
                 "name": workout_name,
                 "type": workout_type,
                 "difficulty": difficulty,
+                "description": workout_description,
                 "scheduled_date": scheduled_date_str,
                 "exercises_json": exercises,
                 "duration_minutes": body.duration_minutes or 45,
@@ -1645,6 +1723,7 @@ async def generate_workout_streaming(request: Request, body: GenerateWorkoutRequ
                 "name": generated_workout.name,
                 "type": generated_workout.type,
                 "difficulty": generated_workout.difficulty,
+                "description": generated_workout.description,
                 "scheduled_date": generated_workout.scheduled_date.isoformat() if generated_workout.scheduled_date else None,
                 "exercises": exercises_list,
                 "exercises_json": generated_workout.exercises_json,
@@ -1867,6 +1946,7 @@ async def generate_mood_workout_streaming(request: Request, body: MoodWorkoutReq
                 workout_name = workout_data.get("name", f"{mood.value.capitalize()} Quick Workout")
                 workout_type = workout_data.get("type", params["workout_type_preference"])
                 difficulty = workout_data.get("difficulty", params["intensity_preference"])
+                workout_description = workout_data.get("description")
                 motivational_message = workout_data.get("motivational_message", "")
 
                 # Apply 1RM-based weights for personalized weight recommendations
@@ -1921,6 +2001,7 @@ async def generate_mood_workout_streaming(request: Request, body: MoodWorkoutReq
                 "name": workout_name,
                 "type": workout_type,
                 "difficulty": difficulty,
+                "description": workout_description,
                 "scheduled_date": datetime.now().isoformat(),
                 "exercises_json": exercises,
                 "duration_minutes": params["duration_minutes"],
@@ -3378,3 +3459,341 @@ Generate exactly {request.additional_exercises} exercises that complement the ex
     except Exception as e:
         logger.error(f"Failed to extend workout: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
+
+# =============================================================================
+# ONBOARDING WORKOUT GENERATION (Minimal Profile, No DB User Required)
+# =============================================================================
+
+
+class OnboardingGenerateRequest(BaseModel):
+    """Request model for generating a workout during onboarding with inline profile data."""
+    user_id: str
+    goals: List[str]
+    fitness_level: str
+    equipment: List[str]
+    limitations: List[str] = []
+    days_per_week: int = Field(default=3, ge=1, le=7)
+    workout_duration_min: Optional[int] = Field(default=None, ge=10, le=120)
+    workout_duration_max: Optional[int] = Field(default=None, ge=10, le=120)
+    primary_goal: Optional[str] = None
+    scheduled_date: Optional[str] = None  # YYYY-MM-DD
+
+
+@router.post("/generate-onboarding")
+@limiter.limit("10/minute")
+async def generate_onboarding_workout_streaming(request: Request, body: OnboardingGenerateRequest):
+    """
+    Generate a workout during onboarding using inline profile data.
+
+    This is a simplified streaming endpoint for use during onboarding when the
+    full user profile may not yet exist in the database. It accepts all
+    necessary profile information directly in the request body.
+
+    Returns Server-Sent Events (SSE) with:
+    - event: chunk - Progress updates during generation
+    - event: done - Complete workout data
+    - event: error - Error message if generation fails
+    - event: already_generating - Workout generation already in progress
+    """
+    logger.info(f"🚀 Onboarding workout generation for user {body.user_id}, "
+                f"level={body.fitness_level}, goals={body.goals}, equipment={len(body.equipment)} items")
+
+    db = get_supabase_db()
+    scheduled_date = body.scheduled_date or datetime.now().strftime("%Y-%m-%d")
+
+    # Idempotency: check for existing generating or completed workout
+    try:
+        existing_generating = db.client.table("workouts").select("id").eq(
+            "user_id", body.user_id
+        ).eq(
+            "scheduled_date", scheduled_date
+        ).eq(
+            "status", "generating"
+        ).execute()
+
+        if existing_generating.data:
+            workout_id = existing_generating.data[0]["id"]
+            logger.info(f"⏳ [Onboarding Idempotency] Already generating for {body.user_id} on {scheduled_date}: {workout_id}")
+
+            async def already_generating_sse():
+                yield f"event: already_generating\ndata: {json.dumps({'status': 'already_generating', 'workout_id': workout_id, 'message': 'Workout generation already in progress'})}\n\n"
+
+            return StreamingResponse(already_generating_sse(), media_type="text/event-stream")
+
+        existing_workout = db.client.table("workouts").select("id,name,status").eq(
+            "user_id", body.user_id
+        ).eq(
+            "scheduled_date", scheduled_date
+        ).neq(
+            "status", "generating"
+        ).limit(1).execute()
+
+        if existing_workout.data:
+            workout_id = existing_workout.data[0]["id"]
+            logger.info(f"✅ [Onboarding Duplicate] Workout exists for {body.user_id} on {scheduled_date}: {workout_id}")
+            full_workout = db.client.table("workouts").select("*").eq("id", workout_id).single().execute()
+
+            async def existing_sse():
+                yield f"event: done\ndata: {json.dumps(full_workout.data)}\n\n"
+
+            return StreamingResponse(existing_sse(), media_type="text/event-stream")
+    except Exception as e:
+        logger.warning(f"⚠️ [Onboarding Idempotency] Check failed: {e}")
+
+    async def generate_sse() -> AsyncGenerator[str, None]:
+        start_time = datetime.now()
+
+        try:
+            fitness_level = body.fitness_level or "intermediate"
+            goals = body.goals if isinstance(body.goals, list) else []
+            equipment = body.equipment if isinstance(body.equipment, list) else []
+            intensity_preference = get_intensity_from_fitness_level(fitness_level)
+
+            # Duration from request or sensible defaults
+            duration_min = body.workout_duration_min
+            duration_max = body.workout_duration_max
+            effective_duration = duration_max or duration_min or 45
+
+            # Calculate exercise count with fitness-level caps
+            base_exercise_count = max(4, min(12, effective_duration // 6))
+
+            EXERCISE_CAPS = {
+                "beginner": {30: 4, 45: 5, 60: 5, 75: 6, 90: 6},
+                "intermediate": {30: 5, 45: 6, 60: 7, 75: 8, 90: 9},
+                "advanced": {30: 5, 45: 7, 60: 8, 75: 10, 90: 11},
+            }
+
+            level_caps = EXERCISE_CAPS.get(fitness_level, EXERCISE_CAPS["intermediate"])
+
+            if effective_duration <= 35:
+                duration_bracket = 30
+            elif effective_duration <= 50:
+                duration_bracket = 45
+            elif effective_duration <= 65:
+                duration_bracket = 60
+            elif effective_duration <= 80:
+                duration_bracket = 75
+            else:
+                duration_bracket = 90
+
+            max_exercises = level_caps.get(duration_bracket, 8)
+            exercise_count = min(base_exercise_count, max_exercises)
+
+            logger.info(f"📊 [Onboarding Exercise Count] Level: {fitness_level}, Duration: {effective_duration}min, "
+                        f"Cap: {max_exercises}, Final: {exercise_count}")
+
+            # Send initial acknowledgment
+            first_chunk_time = (datetime.now() - start_time).total_seconds() * 1000
+            yield f"event: chunk\ndata: {json.dumps({'status': 'started', 'ttfb_ms': first_chunk_time})}\n\n"
+
+            # Stream the workout generation (no user preferences - this is onboarding)
+            gemini_service = GeminiService()
+            accumulated_text = ""
+            chunk_count = 0
+
+            settings = get_settings()
+            use_cached = settings.gemini_cache_enabled
+            logger.info(f"[Onboarding] Using {'CACHED' if use_cached else 'non-cached'} workout generation")
+
+            try:
+                generator_func = (
+                    gemini_service.generate_workout_plan_streaming_cached
+                    if use_cached
+                    else gemini_service.generate_workout_plan_streaming
+                )
+
+                generator_kwargs = {
+                    "fitness_level": fitness_level,
+                    "goals": goals,
+                    "equipment": equipment,
+                    "duration_minutes": effective_duration,
+                    "duration_minutes_min": duration_min,
+                    "duration_minutes_max": duration_max,
+                    "focus_areas": None,
+                    "intensity_preference": intensity_preference,
+                    "avoided_exercises": None,
+                    "avoided_muscles": None,
+                    "staple_exercises": None,
+                    "progression_philosophy": None,
+                    "exercise_count": exercise_count,
+                    "coach_style": None,
+                    "coach_tone": None,
+                    "scheduled_date": scheduled_date,
+                }
+
+                if use_cached:
+                    generator_kwargs["strength_history"] = None
+
+                async for chunk in generator_func(**generator_kwargs):
+                    accumulated_text += chunk
+                    chunk_count += 1
+
+                    if chunk_count % 3 == 0:
+                        elapsed_ms = (datetime.now() - start_time).total_seconds() * 1000
+                        yield f"event: chunk\ndata: {json.dumps({'status': 'generating', 'progress': len(accumulated_text), 'elapsed_ms': elapsed_ms})}\n\n"
+
+                logger.info(f"✅ [Onboarding] Stream completed: {chunk_count} chunks, {len(accumulated_text)} total chars")
+            except Exception as stream_error:
+                logger.error(f"❌ [Onboarding] Stream error after {chunk_count} chunks: {stream_error}")
+                yield f"event: error\ndata: {json.dumps({'error': f'Streaming failed: {str(stream_error)}'})}\n\n"
+                return
+
+            # Parse the complete response
+            try:
+                content = accumulated_text.strip()
+                logger.info(f"🔍 [Onboarding Parse] Raw response length: {len(accumulated_text)} chars")
+
+                if "```json" in content:
+                    content = content.split("```json")[1].split("```")[0].strip()
+                elif "```" in content:
+                    parts = content.split("```")
+                    if len(parts) >= 2:
+                        content = parts[1].strip()
+                        if content.startswith(("json", "JSON")):
+                            content = content[4:].strip()
+
+                workout_data = json.loads(content)
+
+                if isinstance(workout_data, str):
+                    try:
+                        workout_data = json.loads(workout_data)
+                    except (json.JSONDecodeError, ValueError):
+                        workout_data = {}
+
+                if not isinstance(workout_data, dict):
+                    workout_data = {}
+
+                exercises = workout_data.get("exercises", [])
+                exercises = normalize_exercise_numeric_fields(exercises)
+
+                workout_name = workout_data.get("name", "Your First Workout")
+                workout_type = workout_data.get("type", "strength")
+                difficulty = workout_data.get("difficulty", intensity_preference)
+                workout_description = workout_data.get("description")
+                estimated_duration = workout_data.get("estimated_duration_minutes")
+                if estimated_duration is not None:
+                    estimated_duration = int(estimated_duration)
+                else:
+                    fallback_duration = 0
+                    for ex in exercises:
+                        sets = ex.get("sets", 3)
+                        reps = ex.get("reps", 10)
+                        rest = ex.get("rest_seconds", 60)
+                        time_per_set = (reps * 3) + rest
+                        exercise_time = sets * time_per_set
+                        fallback_duration += exercise_time
+                    fallback_duration = (fallback_duration + len(exercises) * 30) / 60
+                    estimated_duration = max(10, int(fallback_duration))
+
+                # Validate and cap exercise parameters for onboarding users
+                if exercises:
+                    exercises = validate_and_cap_exercise_parameters(
+                        exercises=exercises,
+                        fitness_level=fitness_level,
+                        age=None,
+                        is_comeback=False,
+                        difficulty=intensity_preference,
+                    )
+                    logger.info(f"🛡️ [Onboarding Safety] Validated exercise parameters (fitness={fitness_level})")
+
+                # Validate set_targets
+                user_context = {
+                    "user_id": body.user_id,
+                    "fitness_level": fitness_level,
+                    "difficulty": difficulty,
+                    "goals": goals,
+                    "equipment": equipment,
+                }
+                exercises = validate_set_targets_strict(exercises, user_context)
+
+            except json.JSONDecodeError as e:
+                logger.error(f"❌ [Onboarding] Failed to parse response: {e}")
+                if content and (content.rstrip().endswith((',', '{', '[', ':')) or
+                               not content.rstrip().endswith(('}', ']'))):
+                    yield f"event: error\ndata: {json.dumps({'error': 'Workout generation was interrupted. Please try again.', 'truncated': True})}\n\n"
+                else:
+                    yield f"event: error\ndata: {json.dumps({'error': 'Failed to parse workout data'})}\n\n"
+                return
+
+            # Determine scheduled date
+            if body.scheduled_date:
+                try:
+                    scheduled_dt = datetime.strptime(body.scheduled_date, "%Y-%m-%d")
+                    scheduled_date_str = scheduled_dt.isoformat()
+                except ValueError:
+                    scheduled_date_str = datetime.now().isoformat()
+            else:
+                scheduled_date_str = datetime.now().isoformat()
+
+            # Save to database
+            workout_db_data = {
+                "user_id": body.user_id,
+                "name": workout_name,
+                "type": workout_type,
+                "difficulty": difficulty,
+                "description": workout_description,
+                "scheduled_date": scheduled_date_str,
+                "exercises_json": exercises,
+                "duration_minutes": effective_duration,
+                "duration_minutes_min": duration_min,
+                "duration_minutes_max": duration_max,
+                "estimated_duration_minutes": estimated_duration,
+                "generation_method": "ai",
+                "generation_source": "onboarding_generation",
+            }
+
+            created = db.create_workout(workout_db_data)
+            total_time_ms = (datetime.now() - start_time).total_seconds() * 1000
+
+            logger.info(f"✅ [Onboarding] Workout complete: {len(exercises)} exercises in {total_time_ms:.0f}ms")
+
+            # Log the change
+            log_workout_change(
+                workout_id=created['id'],
+                user_id=body.user_id,
+                change_type="generated",
+                change_source="onboarding_generation",
+                new_value={"name": workout_name, "exercises_count": len(exercises)},
+            )
+
+            # Convert to Workout model
+            generated_workout = row_to_workout(created)
+
+            # Index to RAG asynchronously
+            asyncio.create_task(index_workout_to_rag(generated_workout))
+
+            # Send final complete response
+            exercises_list = json.loads(generated_workout.exercises_json) if generated_workout.exercises_json else []
+
+            workout_response = {
+                "id": generated_workout.id,
+                "user_id": generated_workout.user_id,
+                "name": generated_workout.name,
+                "type": generated_workout.type,
+                "difficulty": generated_workout.difficulty,
+                "description": generated_workout.description,
+                "scheduled_date": generated_workout.scheduled_date.isoformat() if generated_workout.scheduled_date else None,
+                "exercises": exercises_list,
+                "exercises_json": generated_workout.exercises_json,
+                "duration_minutes": generated_workout.duration_minutes,
+                "total_time_ms": total_time_ms,
+                "chunk_count": chunk_count,
+                "source": "onboarding",
+            }
+
+            yield f"event: done\ndata: {json.dumps(workout_response)}\n\n"
+
+        except Exception as e:
+            logger.error(f"❌ [Onboarding] Generation failed: {e}")
+            yield f"event: error\ndata: {json.dumps({'error': str(e)})}\n\n"
+
+    return StreamingResponse(
+        generate_sse(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "X-Accel-Buffering": "no",
+        },
+    )

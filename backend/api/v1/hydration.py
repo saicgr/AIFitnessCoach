@@ -9,7 +9,7 @@ ENDPOINTS:
 - PUT /api/v1/hydration/goal/{user_id} - Update daily hydration goal
 - GET /api/v1/hydration/goal/{user_id} - Get user's hydration goal
 """
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query, Request
 from typing import List, Optional
 from datetime import datetime, date, timedelta
 import uuid
@@ -17,6 +17,7 @@ import uuid
 from core.supabase_db import get_supabase_db
 from core.logger import get_logger
 from core.activity_logger import log_user_activity, log_user_error
+from core.timezone_utils import resolve_timezone, get_user_today
 from models.schemas import (
     HydrationLog, HydrationLogCreate,
     DailyHydrationSummary, HydrationGoalUpdate,
@@ -45,7 +46,7 @@ def row_to_hydration_log(row: dict) -> HydrationLog:
 # ==================== Hydration Logging ====================
 
 @router.post("/log", response_model=HydrationLog)
-async def log_hydration(data: HydrationLogCreate):
+async def log_hydration(data: HydrationLogCreate, http_request: Request):
     """
     Log a hydration intake entry.
 
@@ -55,6 +56,11 @@ async def log_hydration(data: HydrationLogCreate):
 
     try:
         db = get_supabase_db()
+        user_tz = resolve_timezone(http_request, db, data.user_id)
+
+        # Use client's local date if provided, otherwise derive from user timezone
+        utc_now = datetime.utcnow()
+        local_date = data.local_date or get_user_today(user_tz)
 
         log_data = {
             "id": str(uuid.uuid4()),
@@ -63,7 +69,8 @@ async def log_hydration(data: HydrationLogCreate):
             "amount_ml": data.amount_ml,
             "workout_id": data.workout_id,
             "notes": data.notes,
-            "logged_at": datetime.utcnow().isoformat(),
+            "logged_at": utc_now.isoformat(),
+            "local_date": local_date,
         }
 
         result = db.client.table("hydration_logs").insert(log_data).execute()
@@ -103,6 +110,7 @@ async def log_hydration(data: HydrationLogCreate):
 @router.get("/daily/{user_id}", response_model=DailyHydrationSummary)
 async def get_daily_hydration(
     user_id: str,
+    http_request: Request,
     date_str: Optional[str] = Query(None, description="Date in YYYY-MM-DD format, defaults to today"),
 ):
     """Get daily hydration summary for a user."""
@@ -110,25 +118,35 @@ async def get_daily_hydration(
 
     try:
         db = get_supabase_db()
+        user_tz = resolve_timezone(http_request, db, user_id)
 
-        # Parse date or use today
+        # Parse date or use today in user's timezone
         if date_str:
             target_date = datetime.fromisoformat(date_str).date()
         else:
-            target_date = date.today()
+            target_date = date.fromisoformat(get_user_today(user_tz))
 
-        # Get start and end of day
-        start_of_day = datetime.combine(target_date, datetime.min.time())
-        end_of_day = datetime.combine(target_date, datetime.max.time())
+        target_date_str = target_date.isoformat()
 
-        # Fetch logs for the day
+        # Try filtering by local_date first (timezone-correct)
+        # Fall back to logged_at range for older entries without local_date
         result = db.client.table("hydration_logs").select("*").eq(
             "user_id", user_id
-        ).gte(
-            "logged_at", start_of_day.isoformat()
-        ).lte(
-            "logged_at", end_of_day.isoformat()
+        ).eq(
+            "local_date", target_date_str
         ).order("logged_at", desc=True).execute()
+
+        # If no results with local_date, fall back to logged_at range (legacy data)
+        if not result.data:
+            start_of_day = datetime.combine(target_date, datetime.min.time())
+            end_of_day = datetime.combine(target_date, datetime.max.time())
+            result = db.client.table("hydration_logs").select("*").eq(
+                "user_id", user_id
+            ).gte(
+                "logged_at", start_of_day.isoformat()
+            ).lte(
+                "logged_at", end_of_day.isoformat()
+            ).order("logged_at", desc=True).execute()
 
         logs = [row_to_hydration_log(row) for row in (result.data or [])]
 
@@ -163,6 +181,7 @@ async def get_daily_hydration(
 @router.get("/logs/{user_id}", response_model=List[HydrationLog])
 async def get_hydration_logs(
     user_id: str,
+    http_request: Request,
     workout_id: Optional[str] = None,
     days: int = Query(default=7, ge=1, le=90),
     limit: int = Query(default=100, ge=1, le=500),
@@ -172,10 +191,11 @@ async def get_hydration_logs(
 
     try:
         db = get_supabase_db()
+        user_tz = resolve_timezone(http_request, db, user_id)
 
-        # Calculate date range
-        end_date = datetime.utcnow()
-        start_date = end_date - timedelta(days=days)
+        # Calculate date range based on user's timezone
+        today = date.fromisoformat(get_user_today(user_tz))
+        start_date = datetime.combine(today - timedelta(days=days), datetime.min.time())
 
         query = db.client.table("hydration_logs").select("*").eq(
             "user_id", user_id
@@ -271,9 +291,11 @@ async def update_hydration_goal(user_id: str, data: HydrationGoalUpdate):
 @router.post("/quick-log/{user_id}")
 async def quick_log_hydration(
     user_id: str,
+    http_request: Request,
     drink_type: str = Query(default="water"),
     amount_ml: int = Query(default=250),  # Default glass of water ~8oz
     workout_id: Optional[str] = None,
+    local_date: Optional[str] = Query(default=None),
 ):
     """
     Quick log hydration with minimal parameters.
@@ -289,4 +311,5 @@ async def quick_log_hydration(
         drink_type=drink_type,
         amount_ml=amount_ml,
         workout_id=workout_id,
-    ))
+        local_date=local_date,
+    ), http_request)

@@ -45,6 +45,9 @@ class ExerciseThumbnailStripV2 extends StatefulWidget {
   /// Callback when superset is created via drag onto another exercise
   final void Function(int draggedIndex, int targetIndex)? onCreateSuperset;
 
+  /// Callback when user long-presses an exercise
+  final void Function(int index)? onExerciseLongPress;
+
   const ExerciseThumbnailStripV2({
     super.key,
     required this.exercises,
@@ -55,6 +58,7 @@ class ExerciseThumbnailStripV2 extends StatefulWidget {
     this.showAddButton = true,
     this.onReorder,
     this.onCreateSuperset,
+    this.onExerciseLongPress,
   });
 
   @override
@@ -194,6 +198,9 @@ class _ExerciseThumbnailStripV2State extends State<ExerciseThumbnailStripV2> {
               HapticFeedback.selectionClick();
               widget.onExerciseTap(i);
             },
+            onLongPress: widget.onExerciseLongPress != null
+                ? () => widget.onExerciseLongPress!(i)
+                : null,
           ));
         }
         globalIndex++;
@@ -246,6 +253,9 @@ class _ExerciseThumbnailStripV2State extends State<ExerciseThumbnailStripV2> {
                   HapticFeedback.selectionClick();
                   widget.onExerciseTap(i);
                 },
+                onLongPress: widget.onExerciseLongPress != null
+                    ? () => widget.onExerciseLongPress!(i)
+                    : null,
               );
             }
           }).toList(),
@@ -841,6 +851,7 @@ class _ExerciseThumbnail extends ConsumerStatefulWidget {
   final bool isCompleted;
   final bool isInSupersetGroup; // Whether this thumbnail is inside a superset group container
   final VoidCallback onTap;
+  final VoidCallback? onLongPress;
 
   static const double _width = 44.0;
   static const double _height = 56.0;
@@ -852,6 +863,7 @@ class _ExerciseThumbnail extends ConsumerStatefulWidget {
     required this.isCompleted,
     this.isInSupersetGroup = false,
     required this.onTap,
+    this.onLongPress,
   });
 
   @override
@@ -1047,6 +1059,7 @@ class _ExerciseThumbnailState extends ConsumerState<_ExerciseThumbnail>
 
     return GestureDetector(
       onTap: widget.onTap,
+      onLongPress: widget.onLongPress,
       child: Padding(
         padding: const EdgeInsets.only(right: 6),
         child: thumbnailContent,

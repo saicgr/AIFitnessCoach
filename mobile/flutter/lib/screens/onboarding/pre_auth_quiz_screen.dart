@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -13,6 +14,7 @@ import '../../data/services/api_client.dart';
 import '../../data/services/template_workout_generator.dart';
 import '../../core/constants/api_constants.dart';
 import '../../data/models/workout.dart';
+import '../../data/repositories/workout_repository.dart';
 import 'widgets/quiz_progress_bar.dart';
 import 'widgets/quiz_header.dart';
 import 'widgets/quiz_continue_button.dart';
@@ -24,11 +26,10 @@ import 'widgets/quiz_training_preferences.dart';
 import 'widgets/quiz_motivation.dart';
 import 'widgets/quiz_nutrition_goals.dart';
 import 'widgets/quiz_fasting.dart';
-import 'widgets/quiz_weight_rate.dart';
-import 'widgets/quiz_body_metrics.dart';
 import 'widgets/equipment_search_sheet.dart';
 import 'widgets/quiz_primary_goal.dart';
 import 'widgets/quiz_muscle_focus.dart';
+import 'widgets/quiz_limitations.dart';
 import 'widgets/quiz_personalization_gate.dart';
 import 'widgets/quiz_training_style.dart';
 import 'widgets/quiz_progression_constraints.dart';
@@ -36,7 +37,6 @@ import 'widgets/quiz_nutrition_gate.dart';
 import 'widgets/foldable_quiz_scaffold.dart';
 import '../../core/providers/window_mode_provider.dart';
 import 'plan_preview_screen.dart';
-import 'workout_generation_screen.dart';
 
 /// Pre-auth quiz data stored in SharedPreferences
 class PreAuthQuizData {
@@ -292,6 +292,11 @@ class PreAuthQuizData {
 final preAuthQuizProvider = StateNotifierProvider<PreAuthQuizNotifier, PreAuthQuizData>((ref) {
   return PreAuthQuizNotifier();
 });
+
+/// Provider to hold the background generation completer.
+/// When set, the WorkoutGenerationScreen can check if a workout is already ready
+/// instead of starting generation from scratch.
+final backgroundGenerationProvider = StateProvider<Completer<Workout?>?>((ref) => null);
 
 class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
   PreAuthQuizNotifier() : super(PreAuthQuizData()) {
@@ -2164,9 +2169,12 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
   // Feature flag for conditional workout days screen
   static const bool _featureFlagWorkoutDays = false;
 
-  // Dynamic total - 12 screens base, minus 1 if workout days feature disabled
+  // Dynamic total - 13 screens base, minus 1 if workout days feature disabled
+  // New flow: 0-Goals, 1-Fitness+Exp, 2-Schedule, 3-WorkoutDays[COND], 4-Equipment,
+  //           5-Limitations, 6-PrimaryGoal+Generate, 7-PersonalizationGate, 8-MuscleFocus,
+  //           9-TrainingStyle, 10-Progression(pace), 11-NutritionGate, 12-NutritionDetails
   int get _totalQuestions {
-    int total = 12; // New flow: 12 screens total
+    int total = 13; // New flow: 13 screens total
     if (!_featureFlagWorkoutDays) {
       total -= 1; // Skip Screen 3 (Workout Days)
     }
@@ -2233,7 +2241,11 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
   bool _skipPersonalization = false;  // Track if user skipped Phase 2
   bool? _nutritionEnabled;  // Track nutrition opt-in
   final Set<String> _selectedLimitations = {'none'};  // Physical limitations (default: none)
-  String? _customLimitation;  // ← ADDED: Custom limitation text when "Other" is selected
+  String? _customLimitation;  // Custom limitation text when "Other" is selected
+
+  // Background pre-generation: starts after Screen 6 (PrimaryGoal) while user goes through optional screens
+  Completer<Workout?>? _backgroundGenerationCompleter;
+  StreamSubscription<WorkoutGenerationProgress>? _backgroundGenerationSub;
 
   late AnimationController _progressController;
   late AnimationController _questionController;
@@ -2291,6 +2303,7 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
   void dispose() {
     _progressController.dispose();
     _questionController.dispose();
+    _backgroundGenerationSub?.cancel();
     super.dispose();
   }
 
@@ -2298,8 +2311,8 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
   /// Phase 1 (0-5): Show 0-100% progress
   /// Phase 2 & 3 (6+): Stay at 100% to show Phase 1 completion
   double get _progress {
-    if (_currentQuestion <= 5) {
-      return (_currentQuestion + 1) / 6;  // Phase 1 only (6 screens)
+    if (_currentQuestion <= 6) {
+      return (_currentQuestion + 1) / 7;  // Phase 1 only (7 screens: 0-6)
     }
     return 1.0;  // User-selected: Fill to 100% for optional phases
   }
@@ -2319,13 +2332,13 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
       return;
     }
 
-    // Special handling for Screen 5 (Primary Goal + Generate Preview)
+    // Special handling for Screen 6 (Primary Goal + Generate Preview)
     // Note: This should be triggered by button in _buildPrimaryGoal, not auto-advance
-    // The preview screen will handle navigation to Screen 6 or 10
+    // The preview screen will handle navigation to Screen 7 or 11
 
-    // Check if this is the last question (screen 11 - Nutrition Details)
-    // Note: _totalQuestions adjusts for feature flags but screen indices stay fixed (0-11)
-    if (_currentQuestion == 11) {
+    // Check if this is the last question (screen 12 - Nutrition Details)
+    // Note: _totalQuestions adjusts for feature flags but screen indices stay fixed (0-12)
+    if (_currentQuestion == 12) {
       _finishOnboarding();
       return;
     }
@@ -2337,13 +2350,13 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
   }
 
   Future<void> _saveCurrentQuestionData() async {
-    // NEW 12-SCREEN FLOW (Progressive Profiling)
-    // Phase 1 (Required): 0-Goals, 1-Fitness+Experience, 2-Schedule, 3-WorkoutDays[COND], 4-Equipment, 5-PrimaryGoal+Generate
-    // Phase 2 (Optional): 6-PersonalizationGate, 7-MuscleFocus, 8-TrainingStyle, 9-Progression+Constraints
-    // Phase 3 (Optional): 10-NutritionGate, 11-NutritionDetails
+    // 13-SCREEN FLOW (Progressive Profiling)
+    // Phase 1 (Required): 0-Goals, 1-Fitness+Experience, 2-Schedule, 3-WorkoutDays[COND], 4-Equipment, 5-Limitations, 6-PrimaryGoal+Generate
+    // Phase 2 (Optional): 7-PersonalizationGate, 8-MuscleFocus, 9-TrainingStyle, 10-Progression(pace)
+    // Phase 3 (Optional): 11-NutritionGate, 12-NutritionDetails
 
     switch (_currentQuestion) {
-      // PHASE 1: REQUIRED (Screens 0-5)
+      // PHASE 1: REQUIRED (Screens 0-6)
       case 0: // Goals (multi-select)
         if (_selectedGoals.isNotEmpty) {
           await ref.read(preAuthQuizProvider.notifier).setGoals(_selectedGoals.toList());
@@ -2379,21 +2392,32 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
         }
         break;
 
-      case 5: // Primary Goal (saved when user clicks "Generate My First Workout")
+      case 5: // Injuries/Limitations (NEW POSITION - moved from old Screen 9)
+        if (_selectedLimitations.isNotEmpty) {
+          final limitationsList = _selectedLimitations.toList();
+          if (_selectedLimitations.contains('other') && _customLimitation != null && _customLimitation!.isNotEmpty) {
+            limitationsList.remove('other');
+            limitationsList.add('other: $_customLimitation');
+          }
+          await ref.read(preAuthQuizProvider.notifier).setLimitations(limitationsList);
+        }
+        break;
+
+      case 6: // Primary Goal (saved when user clicks "Generate My First Workout")
         if (_selectedPrimaryGoal != null) {
           await ref.read(preAuthQuizProvider.notifier).setPrimaryGoal(_selectedPrimaryGoal!);
         }
         break;
 
-      // PHASE 2: OPTIONAL PERSONALIZATION (Screens 6-9)
-      case 6: // Personalization Gate (no data to save, just navigation)
+      // PHASE 2: OPTIONAL PERSONALIZATION (Screens 7-10)
+      case 7: // Personalization Gate (no data to save, just navigation)
         break;
 
-      case 7: // Muscle Focus Points
+      case 8: // Muscle Focus Points
         await _saveMuscleFocusData();
         break;
 
-      case 8: // Training Style (split + workout type + variety)
+      case 9: // Training Style (split + workout type + variety)
         if (_selectedTrainingSplit != null) {
           await ref.read(preAuthQuizProvider.notifier).setTrainingSplit(_selectedTrainingSplit!);
         }
@@ -2405,30 +2429,17 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
         }
         break;
 
-      case 9: // Progression + Constraints
+      case 10: // Progression pace only (limitations moved to Screen 5)
         if (_selectedProgressionPace != null) {
           await ref.read(preAuthQuizProvider.notifier).setProgressionPace(_selectedProgressionPace!);
         }
-        if (_selectedLimitations.isNotEmpty) {
-          // Build limitations list, including custom limitation if present
-          final limitationsList = _selectedLimitations.toList();
-
-          // If "other" is selected and custom text is provided, append it
-          if (_selectedLimitations.contains('other') && _customLimitation != null && _customLimitation!.isNotEmpty) {
-            // Replace "other" with actual custom limitation text
-            limitationsList.remove('other');
-            limitationsList.add('other: $_customLimitation');
-          }
-
-          await ref.read(preAuthQuizProvider.notifier).setLimitations(limitationsList);
-        }
         break;
 
-      // PHASE 3: OPTIONAL NUTRITION (Screens 10-11)
-      case 10: // Nutrition Opt-In Gate (handled in button callbacks)
+      // PHASE 3: OPTIONAL NUTRITION (Screens 11-12)
+      case 11: // Nutrition Opt-In Gate (handled in button callbacks)
         break;
 
-      case 11: // Nutrition Details (merged nutrition + fasting)
+      case 12: // Nutrition Details (merged nutrition + fasting)
         await _saveNutritionData();
         await _saveFastingData();
         break;
@@ -2528,6 +2539,94 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
   /// Generate workout preview and navigate to plan preview screen
   ///
   /// Shows instant template-based preview without waiting for AI generation
+  /// Start background workout generation via the streaming API.
+  /// Called after the user completes Screen 6 (PrimaryGoal).
+  /// The result is stored in a Completer that the WorkoutGenerationScreen can check.
+  void _startBackgroundGeneration() {
+    // Don't start if already running
+    if (_backgroundGenerationCompleter != null && !_backgroundGenerationCompleter!.isCompleted) {
+      debugPrint('⚠️ [Onboarding] Background generation already in progress');
+      return;
+    }
+
+    _backgroundGenerationCompleter = Completer<Workout?>();
+    // Store in provider so WorkoutGenerationScreen can access it
+    ref.read(backgroundGenerationProvider.notifier).state = _backgroundGenerationCompleter;
+
+    () async {
+      try {
+        final apiClient = ref.read(apiClientProvider);
+        final userId = await apiClient.getUserId();
+        if (userId == null) {
+          debugPrint('⚠️ [Onboarding] No userId for background generation');
+          _backgroundGenerationCompleter?.complete(null);
+          return;
+        }
+
+        final quizData = ref.read(preAuthQuizProvider);
+        final workoutDuration = quizData.workoutDuration ?? 45;
+
+        // Calculate duration range
+        int? durationMin;
+        int? durationMax;
+        if (workoutDuration == 30) {
+          durationMax = 30;
+        } else if (workoutDuration == 45) {
+          durationMin = 30;
+          durationMax = 45;
+        } else if (workoutDuration == 60) {
+          durationMin = 45;
+          durationMax = 60;
+        } else if (workoutDuration == 75) {
+          durationMin = 60;
+          durationMax = 75;
+        } else if (workoutDuration == 90) {
+          durationMin = 75;
+          durationMax = 90;
+        }
+
+        final repository = ref.read(workoutRepositoryProvider);
+        final todayLocal = DateTime.now().toIso8601String().substring(0, 10);
+
+        debugPrint('🚀 [Onboarding] Starting background workout generation');
+        final stream = repository.generateWorkoutStreaming(
+          userId: userId,
+          durationMinutes: workoutDuration,
+          durationMinutesMin: durationMin,
+          durationMinutesMax: durationMax,
+          scheduledDate: todayLocal,
+        );
+
+        _backgroundGenerationSub = stream.listen(
+          (progress) {
+            if (progress.status == WorkoutGenerationStatus.completed && progress.workout != null) {
+              debugPrint('✅ [Onboarding] Background generation complete: ${progress.workout!.name}');
+              if (!_backgroundGenerationCompleter!.isCompleted) {
+                _backgroundGenerationCompleter!.complete(progress.workout);
+              }
+            }
+          },
+          onError: (error) {
+            debugPrint('❌ [Onboarding] Background generation error: $error');
+            if (!_backgroundGenerationCompleter!.isCompleted) {
+              _backgroundGenerationCompleter!.complete(null);
+            }
+          },
+          onDone: () {
+            if (!_backgroundGenerationCompleter!.isCompleted) {
+              _backgroundGenerationCompleter!.complete(null);
+            }
+          },
+        );
+      } catch (e) {
+        debugPrint('❌ [Onboarding] Background generation exception: $e');
+        if (!_backgroundGenerationCompleter!.isCompleted) {
+          _backgroundGenerationCompleter!.complete(null);
+        }
+      }
+    }();
+  }
+
   Future<void> _generateAndShowPreview() async {
     try {
       // Save current primary goal selection
@@ -2552,22 +2651,25 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
       debugPrint('   Exercises: ${templateWorkout.exercises.length}');
       debugPrint('   Duration: ${templateWorkout.estimatedDurationMinutes} min');
 
+      // Kick off background AI generation while user reviews preview
+      _startBackgroundGeneration();
+
       // Show plan preview immediately with template workout
       await Navigator.of(context).push(
         MaterialPageRoute(
           builder: (context) => PlanPreviewScreen(
             quizData: quizData,
-            generatedWorkout: templateWorkout,  // ← Pass template workout
+            generatedWorkout: templateWorkout,
             onContinue: () {
               Navigator.of(context).pop();
-              setState(() => _currentQuestion = 6); // Go to personalization gate
+              setState(() => _currentQuestion = 7); // Go to personalization gate
               _questionController.forward(from: 0);
             },
             onStartNow: () {
               Navigator.of(context).pop();
               setState(() {
                 _skipPersonalization = true;
-                _currentQuestion = 10; // Skip to nutrition gate
+                _currentQuestion = 11; // Skip to nutrition gate
               });
               _questionController.forward(from: 0);
             },
@@ -2599,7 +2701,7 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
       await ref.read(preAuthQuizProvider.notifier).setIsComplete(true);
 
       // Log analytics
-      final skippedScreens = _skipPersonalization ? 4 : 0; // Screens 6-9 skipped
+      final skippedScreens = _skipPersonalization ? 4 : 0; // Screens 7-10 skipped
       AnalyticsService.logOnboardingCompleted(
         totalScreens: _totalQuestions,
         skippedScreens: skippedScreens,
@@ -2630,10 +2732,10 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
     if (_currentQuestion > 0) {
       HapticFeedback.lightImpact();
       setState(() {
-        // If on nutrition gate (10) and personalization was skipped,
-        // jump back to personalization gate (6) instead of question 9
-        if (_currentQuestion == 10 && _skipPersonalization) {
-          _currentQuestion = 6;
+        // If on nutrition gate (11) and personalization was skipped,
+        // jump back to personalization gate (7) instead of question 10
+        if (_currentQuestion == 11 && _skipPersonalization) {
+          _currentQuestion = 7;
         } else {
           _currentQuestion--;
         }
@@ -2643,13 +2745,13 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
   }
 
   bool get _canProceed {
-    // NEW 12-SCREEN FLOW (Progressive Profiling)
-    // Phase 1 (Required): 0-Goals, 1-Fitness+Experience, 2-Schedule, 3-WorkoutDays[COND], 4-Equipment, 5-PrimaryGoal+Generate
-    // Phase 2 (Optional): 6-PersonalizationGate, 7-MuscleFocus, 8-TrainingStyle, 9-Progression+Constraints
-    // Phase 3 (Optional): 10-NutritionGate, 11-NutritionDetails
+    // 13-SCREEN FLOW (Progressive Profiling)
+    // Phase 1 (Required): 0-Goals, 1-Fitness+Exp, 2-Schedule, 3-WorkoutDays[COND], 4-Equipment, 5-Limitations, 6-PrimaryGoal+Generate
+    // Phase 2 (Optional): 7-PersonalizationGate, 8-MuscleFocus, 9-TrainingStyle, 10-Progression(pace)
+    // Phase 3 (Optional): 11-NutritionGate, 12-NutritionDetails
 
     switch (_currentQuestion) {
-      // PHASE 1: REQUIRED (Screens 0-5)
+      // PHASE 1: REQUIRED (Screens 0-6)
       case 0: // Goals (must select at least 1)
         return _selectedGoals.isNotEmpty;
 
@@ -2661,37 +2763,39 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
 
       case 3: // Workout Days [CONDITIONAL - only if feature flag enabled]
         if (_featureFlagWorkoutDays) {
-          // Must select at least the number of days specified
           return _selectedWorkoutDays.length >= (_selectedDays ?? 0);
         }
-        return true; // Skip validation if feature disabled
+        return true;
 
       case 4: // Equipment (must select environment + at least 1 equipment)
         return _selectedEnvironment != null &&
                (_selectedEquipment.isNotEmpty || _otherSelectedEquipment.isNotEmpty);
 
-      case 5: // Primary Goal (must select 1, but "Generate" button handles navigation)
+      case 5: // Injuries/Limitations (always valid - defaults to 'none')
+        return true;
+
+      case 6: // Primary Goal (must select 1, but "Generate" button handles navigation)
         return _selectedPrimaryGoal != null;
 
-      // PHASE 2: OPTIONAL PERSONALIZATION (Screens 6-9, all optional)
-      case 6: // Personalization Gate (no validation, just navigation)
+      // PHASE 2: OPTIONAL PERSONALIZATION (Screens 7-10, all optional)
+      case 7: // Personalization Gate (no validation, just navigation)
         return true;
 
-      case 7: // Muscle Focus Points (optional, 0-5 total)
+      case 8: // Muscle Focus Points (optional, 0-5 total)
         final totalPoints = _muscleFocusPoints.values.fold(0, (sum, val) => sum + val);
-        return totalPoints <= 5; // Can be 0, but max is 5
+        return totalPoints <= 5;
 
-      case 8: // Training Style (optional)
+      case 9: // Training Style (optional)
         return true;
 
-      case 9: // Progression + Constraints (optional)
+      case 10: // Progression pace (optional)
         return true;
 
-      // PHASE 3: OPTIONAL NUTRITION (Screens 10-11)
-      case 10: // Nutrition Opt-In Gate (no validation, buttons handle navigation)
+      // PHASE 3: OPTIONAL NUTRITION (Screens 11-12)
+      case 11: // Nutrition Opt-In Gate (no validation, buttons handle navigation)
         return true;
 
-      case 11: // Nutrition Details (all optional)
+      case 12: // Nutrition Details (all optional)
         return true;
 
       default:
@@ -2713,18 +2817,20 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
       case 4:
         return 'What equipment do you have access to?';
       case 5:
-        return 'What is your primary training focus?';
+        return 'Any injuries or limitations?';
       case 6:
-        return 'Personalize Your Plan';
+        return 'What is your primary training focus?';
       case 7:
-        return 'Would you like to give extra focus to any muscles?';
+        return 'Personalize Your Plan';
       case 8:
-        return 'Training Style';
+        return 'Would you like to give extra focus to any muscles?';
       case 9:
-        return 'Progression & Safety';
+        return 'Training Style';
       case 10:
-        return 'Nutrition Setup';
+        return 'Progression Pace';
       case 11:
+        return 'Nutrition Setup';
+      case 12:
         return 'What are your nutrition goals?';
       default:
         return '';
@@ -2745,14 +2851,16 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
       case 4:
         return "Select all that apply - we'll design workouts around what you have";
       case 5:
+        return "We'll avoid exercises that stress these areas";
+      case 6:
         return 'This helps us customize your workout intensity and rep ranges';
-      case 7:
-        return 'Allocate up to 5 focus points to prioritize specific muscle groups';
       case 8:
-        return 'Choose how you want to structure your workouts';
+        return 'Allocate up to 5 focus points to prioritize specific muscle groups';
       case 9:
-        return 'Set your pace and tell us about any limitations';
-      case 11:
+        return 'Choose how you want to structure your workouts';
+      case 10:
+        return 'How fast do you want to progress?';
+      case 12:
         return 'Select all that apply';
       default:
         return null;
@@ -2890,37 +2998,44 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
           ],
         );
       case 5:
-        return QuizPrimaryGoal.buildInfoButton(context);
+        return buildTip(
+          icon: Icons.shield_outlined,
+          color: AppColors.green,
+          title: 'Safety first',
+          body: 'Telling us about injuries ensures we avoid exercises that could cause pain or setbacks.',
+        );
       case 6:
+        return QuizPrimaryGoal.buildInfoButton(context);
+      case 7:
         return buildTip(
           icon: Icons.tune_rounded,
           color: AppColors.orange,
           title: 'Fine-tuning your plan',
           body: 'These optional details make your workouts even more personalized. Skip if you prefer AI defaults.',
         );
-      case 7:
+      case 8:
         return buildTip(
           icon: Icons.accessibility_new,
           color: const Color(0xFFEF4444),
           title: 'Target weak points',
           body: 'Selected muscles get extra volume and priority placement in your workouts.',
         );
-      case 8:
+      case 9:
         return buildTip(
           icon: Icons.view_week_rounded,
           color: const Color(0xFF3B82F6),
           title: 'Training philosophy',
           body: 'Each style structures your week differently. Let AI decide if you\'re unsure — it adapts to your schedule.',
         );
-      case 9:
-        return buildTip(
-          icon: Icons.shield_outlined,
-          color: AppColors.green,
-          title: 'Safety first',
-          body: 'Progression pace and injury info ensure your workouts challenge you without risking setbacks.',
-        );
       case 10:
+        return buildTip(
+          icon: Icons.speed_rounded,
+          color: AppColors.green,
+          title: 'Your progression speed',
+          body: 'Controls how quickly weights, reps, and difficulty increase each week.',
+        );
       case 11:
+      case 12:
         return buildTip(
           icon: Icons.restaurant_rounded,
           color: AppColors.orange,
@@ -2997,8 +3112,8 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
 
   /// Build the action button for the current question step.
   Widget? _buildActionButton(bool isDark) {
-    // Case 5 gets special "Generate" button
-    if (_currentQuestion == 5) {
+    // Case 6 gets special "Generate" button
+    if (_currentQuestion == 6) {
       return Padding(
         padding: const EdgeInsets.symmetric(horizontal: 24),
         child: SizedBox(
@@ -3039,8 +3154,8 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
         ),
       ).animate().fadeIn(delay: 400.ms).slideY(begin: 0.1);
     }
-    // Cases 6 and 10 have their own action buttons (gate screens)
-    if (_currentQuestion == 6 || _currentQuestion == 10) {
+    // Cases 7 and 11 have their own action buttons (gate screens)
+    if (_currentQuestion == 7 || _currentQuestion == 11) {
       return null;
     }
     // All other cases: standard continue button
@@ -3052,14 +3167,14 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
   }
 
   Widget _buildCurrentQuestion({bool showHeader = true}) {
-    // NEW 12-SCREEN FLOW (Progressive Profiling)
-    // Phase 1 (Required): 0-Goals, 1-Fitness+Experience, 2-Schedule, 3-WorkoutDays[COND], 4-Equipment, 5-PrimaryGoal+Generate
-    // Phase 2 (Optional): 6-PersonalizationGate, 7-MuscleFocus, 8-TrainingStyle, 9-Progression+Constraints
-    // Phase 3 (Optional): 10-NutritionGate, 11-NutritionDetails
+    // 13-SCREEN FLOW (Progressive Profiling)
+    // Phase 1 (Required): 0-Goals, 1-Fitness+Exp, 2-Schedule, 3-WorkoutDays[COND], 4-Equipment, 5-Limitations, 6-PrimaryGoal+Generate
+    // Phase 2 (Optional): 7-PersonalizationGate, 8-MuscleFocus, 9-TrainingStyle, 10-Progression(pace)
+    // Phase 3 (Optional): 11-NutritionGate, 12-NutritionDetails
 
     switch (_currentQuestion) {
-      // PHASE 1: REQUIRED (Screens 0-5)
-      case 0: // Goals (multi-select) - NO CHANGES
+      // PHASE 1: REQUIRED (Screens 0-6)
+      case 0: // Goals (multi-select)
         return _buildGoalQuestion(showHeader: showHeader);
 
       case 1: // Fitness Level + Training Experience (combined, experience optional)
@@ -3081,18 +3196,31 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
         if (_featureFlagWorkoutDays) {
           return _buildWorkoutDaysSelector(showHeader: showHeader);
         }
-        // If feature disabled, this case shouldn't be reached due to skip logic
         return const SizedBox.shrink();
 
       case 4: // Equipment (2-step: environment + equipment list)
         return _buildEquipmentSelector(showHeader: showHeader);
 
-      case 5: // Training Focus (Primary Goal) + Generate Preview
-        return _buildPrimaryGoal(showHeader: showHeader);
-        // Note: Generate button in _buildPrimaryGoal should call _generateAndShowPreview()
+      case 5: // Injuries/Limitations (NEW POSITION - moved from old Phase 2)
+        return QuizLimitations(
+          key: const ValueKey('limitations'),
+          selectedLimitations: _selectedLimitations.toList(),
+          customLimitation: _customLimitation,
+          onLimitationsChanged: (limitations) => setState(() {
+            _selectedLimitations.clear();
+            _selectedLimitations.addAll(limitations);
+          }),
+          onCustomLimitationChanged: (customText) => setState(() {
+            _customLimitation = customText;
+          }),
+          showHeader: showHeader,
+        );
 
-      // PHASE 2: OPTIONAL PERSONALIZATION (Screens 6-9, shown AFTER preview)
-      case 6: // Personalization Gate
+      case 6: // Training Focus (Primary Goal) + Generate Preview
+        return _buildPrimaryGoal(showHeader: showHeader);
+
+      // PHASE 2: OPTIONAL PERSONALIZATION (Screens 7-10, shown AFTER preview)
+      case 7: // Personalization Gate
         return QuizPersonalizationGate(
           key: const ValueKey('personalization_gate'),
           onPersonalize: () {
@@ -3105,16 +3233,16 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
             AnalyticsService.logPersonalizationSkipped();
             setState(() {
               _skipPersonalization = true;
-              _currentQuestion = 10; // Jump to nutrition gate
+              _currentQuestion = 11; // Jump to nutrition gate
             });
             _questionController.forward(from: 0);
           },
         );
 
-      case 7: // Muscle Focus Points (existing widget, repositioned)
+      case 8: // Muscle Focus Points
         return _buildMuscleFocus(showHeader: showHeader);
 
-      case 8: // Training Style (split + workout type)
+      case 9: // Training Style (split + workout type)
         return QuizTrainingStyle(
           key: const ValueKey('training_style'),
           selectedSplit: _selectedTrainingSplit,
@@ -3125,34 +3253,23 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
           onWorkoutTypeChanged: (type) => setState(() => _selectedWorkoutType = type),
           onWorkoutVarietyChanged: (variety) => setState(() => _selectedWorkoutVariety = variety),
           onDaysPerWeekChanged: (newDays) async {
-            // Update local state
             setState(() => _selectedDays = newDays);
-            // Save to SharedPreferences via state notifier
             await ref.read(preAuthQuizProvider.notifier).setDaysPerWeek(newDays);
           },
           showHeader: showHeader,
         );
 
-      case 9: // Progression + Constraints
+      case 10: // Progression pace only (limitations already collected in Screen 5)
         return QuizProgressionConstraints(
-          key: const ValueKey('progression_constraints'),
+          key: const ValueKey('progression_pace'),
           selectedPace: _selectedProgressionPace,
-          selectedLimitations: _selectedLimitations.toList(),
-          customLimitation: _customLimitation,  // ← ADDED: Pass custom limitation text
           fitnessLevel: _selectedLevel ?? 'intermediate',
           onPaceChanged: (pace) => setState(() => _selectedProgressionPace = pace),
-          onLimitationsChanged: (limitations) => setState(() {
-            _selectedLimitations.clear();
-            _selectedLimitations.addAll(limitations);
-          }),
-          onCustomLimitationChanged: (customText) => setState(() {  // ← ADDED: Handle custom text changes
-            _customLimitation = customText;
-          }),
           showHeader: showHeader,
         );
 
-      // PHASE 3: OPTIONAL NUTRITION (Screens 10-11)
-      case 10: // Nutrition Opt-In Gate
+      // PHASE 3: OPTIONAL NUTRITION (Screens 11-12)
+      case 11: // Nutrition Opt-In Gate
         return QuizNutritionGate(
           key: const ValueKey('nutrition_gate'),
           goals: _selectedGoals.toList(),
@@ -3172,7 +3289,7 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
           },
         );
 
-      case 11: // Nutrition Details (merged nutrition + fasting)
+      case 12: // Nutrition Details (merged nutrition + fasting)
         return _buildNutritionGoals(showHeader: showHeader);
 
       default:

@@ -55,7 +55,7 @@ class HeroWorkoutCarousel extends ConsumerStatefulWidget {
   final ValueChanged<int>? onPageChanged;
 
   /// Shared card height constant
-  static const double cardHeight = 340;
+  static const double cardHeight = 280;
 
   const HeroWorkoutCarousel({
     super.key,
@@ -541,7 +541,7 @@ class _HeroWorkoutCarouselState extends ConsumerState<HeroWorkoutCarousel> {
 
         // PageView carousel for multiple items
         return SizedBox(
-          height: 440,
+          height: 360,
           child: PageView.builder(
             controller: _pageController,
             itemCount: carouselItems.length,

@@ -8,11 +8,12 @@ Tracks user achievements like:
 - Habit streaks (hydration, protein, sleep)
 """
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Request
 from typing import List, Optional
 from datetime import datetime, date, timedelta
 
 from core.supabase_db import get_supabase_db
+from core.timezone_utils import resolve_timezone, get_user_today
 from core.logger import get_logger
 from core.activity_logger import log_user_activity, log_user_error
 from models.schemas import (
@@ -370,7 +371,7 @@ async def get_user_streaks(user_id: str):
 
 
 @router.post("/user/{user_id}/streaks/{streak_type}/update")
-async def update_streak(user_id: str, streak_type: str):
+async def update_streak(user_id: str, streak_type: str, request: Request):
     """
     Update a user's streak. Called when the user completes an activity.
 
@@ -380,7 +381,8 @@ async def update_streak(user_id: str, streak_type: str):
 
     try:
         db = get_supabase_db()
-        today = date.today()
+        user_tz = resolve_timezone(request, db, user_id)
+        today = date.fromisoformat(get_user_today(user_tz))
         new_achievements = []
 
         # Get current streak record

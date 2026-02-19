@@ -11,6 +11,7 @@ import '../../../data/services/api_client.dart';
 import '../../../widgets/exercise_image.dart';
 import '../../../widgets/glass_sheet.dart';
 import '../../../widgets/segmented_tab_bar.dart';
+import '../../../data/services/image_url_cache.dart';
 
 /// Shows exercise swap sheet with fast DB suggestions and optional AI picks
 Future<Workout?> showExerciseSwapSheet(
@@ -209,10 +210,23 @@ class _ExerciseSwapSheetState extends ConsumerState<_ExerciseSwapSheet>
       );
 
       if (mounted) {
-        setState(() {
-          _similarExercises = suggestions;
-          _isLoadingSimilar = false;
-        });
+        // Batch pre-fetch images BEFORE showing results so the cache
+        // is populated when ExerciseImage widgets render.
+        final exerciseNames = suggestions
+            .map((s) => s['name'] as String?)
+            .whereType<String>()
+            .toList();
+        if (exerciseNames.isNotEmpty) {
+          final apiClient = ref.read(apiClientProvider);
+          await ImageUrlCache.batchPreFetch(exerciseNames, apiClient);
+        }
+
+        if (mounted) {
+          setState(() {
+            _similarExercises = suggestions;
+            _isLoadingSimilar = false;
+          });
+        }
       }
     } catch (e) {
       debugPrint('Error loading similar exercises: $e');
@@ -253,11 +267,23 @@ class _ExerciseSwapSheetState extends ConsumerState<_ExerciseSwapSheet>
       );
 
       if (mounted) {
-        setState(() {
-          _aiSuggestions = suggestions;
-          _isLoadingAI = false;
-          _aiLoaded = true;
-        });
+        // Batch pre-fetch images BEFORE showing AI results
+        final aiNames = suggestions
+            .map((s) => s['name'] as String?)
+            .whereType<String>()
+            .toList();
+        if (aiNames.isNotEmpty) {
+          final apiClient = ref.read(apiClientProvider);
+          await ImageUrlCache.batchPreFetch(aiNames, apiClient);
+        }
+
+        if (mounted) {
+          setState(() {
+            _aiSuggestions = suggestions;
+            _isLoadingAI = false;
+            _aiLoaded = true;
+          });
+        }
       }
     } catch (e) {
       debugPrint('Error loading AI suggestions: $e');
@@ -1049,6 +1075,7 @@ class _ExerciseSwapSheetState extends ConsumerState<_ExerciseSwapSheet>
                         final exercise = _libraryExercises[index];
                         return _ExerciseOptionCard(
                           name: exercise.name,
+                          imageUrl: exercise.imageUrl,
                           subtitle:
                               exercise.targetMuscle ?? exercise.bodyPart ?? '',
                           badge: exercise.equipment ?? 'Bodyweight',
@@ -1068,6 +1095,7 @@ class _ExerciseSwapSheetState extends ConsumerState<_ExerciseSwapSheet>
 
 class _ExerciseOptionCard extends ConsumerWidget {
   final String name;
+  final String? imageUrl;
   final String subtitle;
   final String badge;
   final Color badgeColor;
@@ -1077,6 +1105,7 @@ class _ExerciseOptionCard extends ConsumerWidget {
 
   const _ExerciseOptionCard({
     required this.name,
+    this.imageUrl,
     required this.subtitle,
     required this.badge,
     required this.badgeColor,
@@ -1105,9 +1134,10 @@ class _ExerciseOptionCard extends ConsumerWidget {
             padding: const EdgeInsets.all(12),
             child: Row(
               children: [
-                // Exercise image (fetches presigned URL from API)
+                // Exercise image (uses presigned URL directly if available)
                 ExerciseImage(
                   exerciseName: name,
+                  imageUrl: imageUrl,
                   width: 60,
                   height: 60,
                   borderRadius: 8,

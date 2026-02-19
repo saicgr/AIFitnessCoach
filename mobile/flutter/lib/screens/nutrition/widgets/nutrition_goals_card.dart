@@ -122,26 +122,12 @@ class NutritionGoalsCard extends ConsumerWidget {
               if (isTrainingDay) ...[
                 const SizedBox(width: 6),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  padding: const EdgeInsets.all(4),
                   decoration: BoxDecoration(
                     color: teal.withValues(alpha: 0.2),
-                    borderRadius: BorderRadius.circular(10),
+                    shape: BoxShape.circle,
                   ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(Icons.fitness_center, size: 10, color: teal),
-                      const SizedBox(width: 3),
-                      Text(
-                        'Training',
-                        style: TextStyle(
-                          fontSize: 9,
-                          fontWeight: FontWeight.w600,
-                          color: teal,
-                        ),
-                      ),
-                    ],
-                  ),
+                  child: Icon(Icons.fitness_center, size: 10, color: teal),
                 ),
               ],
               const Spacer(),
@@ -269,20 +255,52 @@ class NutritionGoalsCard extends ConsumerWidget {
                     '${caloriesBurned.toInt()} burned',
                     style: TextStyle(fontSize: 11, color: green, fontWeight: FontWeight.w500),
                   ),
-                  if (hasAdjustment)
-                    Text(
-                      '  ·  ',
-                      style: TextStyle(fontSize: 11, color: textMuted),
-                    ),
                 ],
-                if (hasAdjustment)
-                  Flexible(
-                    child: Text(
-                      _getAdjustmentReasonDisplay(dynamicTargets.adjustmentReason),
-                      style: TextStyle(fontSize: 10, color: teal),
-                      overflow: TextOverflow.ellipsis,
+                if (hasAdjustment) ...[
+                  const Spacer(),
+                  GestureDetector(
+                    onTap: () {
+                      showDialog(
+                        context: context,
+                        barrierColor: Colors.black26,
+                        builder: (ctx) => AlertDialog(
+                          backgroundColor: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+                          surfaceTintColor: Colors.transparent,
+                          title: Text(
+                            'Target Adjustment',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                              color: isDark ? Colors.white : Colors.black87,
+                            ),
+                          ),
+                          content: Text(
+                            _getAdjustmentReasonDisplay(dynamicTargets!.adjustmentReason),
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: isDark ? Colors.white70 : Colors.black54,
+                            ),
+                          ),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.pop(ctx),
+                              child: Text('Got it', style: TextStyle(color: teal)),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                    child: Container(
+                      width: 20,
+                      height: 20,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: teal.withValues(alpha: 0.15),
+                      ),
+                      child: Icon(Icons.info_outline, size: 12, color: teal),
                     ),
                   ),
+                ],
               ],
             ),
           ],
@@ -313,11 +331,11 @@ class NutritionGoalsCard extends ConsumerWidget {
   String _getAdjustmentReasonDisplay(String reason) {
     switch (reason) {
       case 'training_day':
-        return 'Targets adjusted for your workout today';
+        return 'Your nutrition targets have been adjusted for today\'s workout - extra fuel for performance and recovery.';
       case 'rest_day':
-        return 'Rest day - lower calorie target';
+        return 'It\'s a rest day, so your calorie target has been slightly reduced to match lower activity.';
       case 'fasting_day':
-        return 'Fasting day - targets adjusted';
+        return 'Fasting day - your targets have been adjusted to align with your fasting protocol.';
       default:
         return reason;
     }

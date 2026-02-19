@@ -119,6 +119,8 @@ class QuizDaysSelector extends StatelessWidget {
             final maxDuration = option['max'] as int;
             // Match selection by max value (the upper bound of the range)
             final isSelected = workoutDurationMax == maxDuration;
+            // 45-60min is the recommended range
+            final isRecommended = maxDuration == 60;
 
             return Expanded(
               child: Padding(
@@ -128,54 +130,82 @@ class QuizDaysSelector extends StatelessWidget {
                     HapticFeedback.selectionClick();
                     onDurationChanged!(minDuration, maxDuration);
                   },
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 200),
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    decoration: BoxDecoration(
-                      gradient: isSelected
-                  ? LinearGradient(
-                      colors: [AppColors.orange, AppColors.orange.withOpacity(0.8)],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    )
-                  : null,
-                      color: isSelected
-                          ? null
-                          : (isDark ? AppColors.glassSurface : AppColorsLight.glassSurface),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                        color: isSelected ? AppColors.orange : cardBorder,
-                        width: isSelected ? 2 : 1,
-                      ),
-                      boxShadow: isSelected
-                          ? [
-                              BoxShadow(
-                                color: AppColors.accent.withValues(alpha: 0.3),
-                                blurRadius: 6,
-                                spreadRadius: 0,
-                              ),
-                            ]
-                          : null,
-                    ),
-                    child: Column(
-                      children: [
-                        Text(
-                          option['label'] as String,
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: isSelected ? Colors.white : textPrimary,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      AnimatedContainer(
+                        duration: const Duration(milliseconds: 200),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        decoration: BoxDecoration(
+                          gradient: isSelected
+                      ? LinearGradient(
+                          colors: [AppColors.orange, AppColors.orange.withOpacity(0.8)],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        )
+                      : null,
+                          color: isSelected
+                              ? null
+                              : (isDark ? AppColors.glassSurface : AppColorsLight.glassSurface),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: isSelected
+                                ? AppColors.orange
+                                : isRecommended
+                                    ? AppColors.orange.withValues(alpha: 0.4)
+                                    : cardBorder,
+                            width: isSelected ? 2 : 1,
                           ),
+                          boxShadow: isSelected
+                              ? [
+                                  BoxShadow(
+                                    color: AppColors.accent.withValues(alpha: 0.3),
+                                    blurRadius: 6,
+                                    spreadRadius: 0,
+                                  ),
+                                ]
+                              : null,
                         ),
-                        Text(
-                          'min',
-                          style: TextStyle(
-                            fontSize: 10,
-                            color: isSelected ? Colors.white70 : textSecondary,
+                        child: Column(
+                          children: [
+                            Text(
+                              option['label'] as String,
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: isSelected ? Colors.white : textPrimary,
+                              ),
+                            ),
+                            Text(
+                              'min',
+                              style: TextStyle(
+                                fontSize: 10,
+                                color: isSelected ? Colors.white70 : textSecondary,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      if (isRecommended) ...[
+                        const SizedBox(height: 4),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: AppColors.orange.withValues(alpha: 0.12),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: const Text(
+                            'Recommended',
+                            style: TextStyle(
+                              fontSize: 9,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.orange,
+                              letterSpacing: 0.2,
+                            ),
                           ),
                         ),
                       ],
-                    ),
+                    ],
                   ),
                 ).animate(delay: (200 + index * 40).ms).fadeIn().scale(begin: const Offset(0.9, 0.9)),
               ),
@@ -258,62 +288,78 @@ class QuizDaysSelector extends StatelessWidget {
       children: List.generate(7, (index) {
         final day = index + 1;
         final isSelected = selectedDays == day;
+        final isRecommended = day == 3 || day == 4;
 
         return GestureDetector(
           onTap: () {
             HapticFeedback.selectionClick();
             onDaysChanged(day);
           },
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 200),
-            width: 44,
-            height: 64,
-            decoration: BoxDecoration(
-              gradient: isSelected
-                  ? LinearGradient(
-                      colors: [AppColors.orange, AppColors.orange.withOpacity(0.8)],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    )
-                  : null,
-              color: isSelected
-                  ? null
-                  : (isDark ? AppColors.glassSurface : AppColorsLight.glassSurface),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: isSelected ? AppColors.orange : cardBorder,
-                width: isSelected ? 2 : 1,
-              ),
-              boxShadow: isSelected
-                  ? [
-                      BoxShadow(
-                        color: AppColors.accent.withOpacity(0.3),
-                        blurRadius: 8,
-                        spreadRadius: 0,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                width: 44,
+                height: 64,
+                decoration: BoxDecoration(
+                  gradient: isSelected
+                      ? LinearGradient(
+                          colors: [AppColors.orange, AppColors.orange.withOpacity(0.8)],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        )
+                      : null,
+                  color: isSelected
+                      ? null
+                      : (isDark ? AppColors.glassSurface : AppColorsLight.glassSurface),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: isSelected ? AppColors.orange : cardBorder,
+                    width: isSelected ? 2 : 1,
+                  ),
+                  boxShadow: isSelected
+                      ? [
+                          BoxShadow(
+                            color: AppColors.accent.withOpacity(0.3),
+                            blurRadius: 8,
+                            spreadRadius: 0,
+                          ),
+                        ]
+                      : null,
+                ),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      '$day',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: isSelected ? Colors.white : textPrimary,
                       ),
-                    ]
-                  : null,
-            ),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  '$day',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: isSelected ? Colors.white : textPrimary,
-                  ),
+                    ),
+                    Text(
+                      day == 1 ? 'day' : 'days',
+                      style: TextStyle(
+                        fontSize: 10,
+                        color: isSelected ? Colors.white70 : textSecondary,
+                      ),
+                    ),
+                  ],
                 ),
-                Text(
-                  day == 1 ? 'day' : 'days',
-                  style: TextStyle(
-                    fontSize: 10,
-                    color: isSelected ? Colors.white70 : textSecondary,
-                  ),
+              ),
+              if (isRecommended) ...[
+                const SizedBox(height: 4),
+                Icon(
+                  Icons.star_rounded,
+                  size: 12,
+                  color: AppColors.orange.withValues(alpha: 0.7),
                 ),
+              ] else ...[
+                const SizedBox(height: 16),
               ],
-            ),
+            ],
           ),
         ).animate(delay: (100 + index * 30).ms).fadeIn().scale(begin: const Offset(0.9, 0.9));
       }),
@@ -444,7 +490,6 @@ class QuizDaysSelector extends StatelessWidget {
   }
 
   Widget _buildSelectionCounter(bool isDark, Color textPrimary, int requiredDays, int selectedCount) {
-    final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
     final isComplete = selectedCount >= requiredDays;
 
     return Center(

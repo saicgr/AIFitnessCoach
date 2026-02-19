@@ -69,6 +69,7 @@ class TodayWorkoutSummary(BaseModel):
     name: str
     type: str
     difficulty: str
+    description: Optional[str] = None
     duration_minutes: int
     exercise_count: int
     primary_muscles: List[str]
@@ -145,6 +146,7 @@ def _row_to_summary(row: dict, user_today_str: str | None = None) -> TodayWorkou
         name=row.get("name", "Workout"),
         type=row.get("type", "strength"),
         difficulty=row.get("difficulty", "medium"),
+        description=row.get("description"),
         duration_minutes=row.get("duration_minutes", 45),
         exercise_count=len(exercises) if isinstance(exercises, list) else 0,
         primary_muscles=_extract_primary_muscles(exercises) if isinstance(exercises, list) else [],
@@ -440,6 +442,10 @@ async def get_today_workout(
 
         if has_completed_workout_today:
             logger.debug(f"[JIT Safety Net] User {user_id} already completed today's workout. Skipping auto-generation.")
+            # Pre-cache tomorrow's workout in the background
+            tomorrow_str = (user_today_date + timedelta(days=1)).isoformat()
+            from .generation import generate_next_day_background
+            background_tasks.add_task(generate_next_day_background, user_id, tomorrow_str)
 
         # Check if today is a scheduled workout day
         is_today_workout_day = _is_today_a_workout_day(selected_days, user_today_str=today_str)

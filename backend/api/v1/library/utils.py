@@ -6,12 +6,47 @@ This module contains helper functions for the library API:
 - Body part normalization
 - Row conversion functions
 - Goal/suitability derivation
+- S3 presigned URL generation
 """
 import re
 from typing import List, Dict, Any, Optional
 
 from core.supabase_db import get_supabase_db
 from .models import LibraryExercise, LibraryProgram
+
+
+_presign_error_logged = False  # Log first error only to avoid log spam
+
+
+def presign_s3_path(s3_path: Optional[str]) -> Optional[str]:
+    """Convert an S3 path (s3://bucket/key) to a presigned HTTPS URL.
+
+    Returns the original value if not an S3 path (None, empty, or already HTTP).
+    Returns None on presigning failure.
+
+    Note: generate_presigned_url is a local HMAC computation (no network call),
+    so calling this per-exercise (~2000 calls) adds <50ms total.
+    """
+    global _presign_error_logged
+    if not s3_path or not s3_path.startswith('s3://'):
+        return s3_path
+    try:
+        from api.v1.videos import s3_client, PRESIGNED_URL_EXPIRATION
+        path_without_prefix = s3_path[5:]  # Remove 's3://'
+        slash_idx = path_without_prefix.index('/')
+        bucket = path_without_prefix[:slash_idx]
+        key = path_without_prefix[slash_idx + 1:]
+        return s3_client.generate_presigned_url(
+            'get_object',
+            Params={'Bucket': bucket, 'Key': key},
+            ExpiresIn=PRESIGNED_URL_EXPIRATION,
+        )
+    except Exception as e:
+        if not _presign_error_logged:
+            from core.logger import get_logger
+            get_logger(__name__).warning(f"presign_s3_path failed (further errors suppressed): {e}")
+            _presign_error_logged = True
+        return None
 
 
 async def fetch_all_rows(
@@ -239,7 +274,7 @@ def row_to_library_exercise(row: dict, from_cleaned_view: bool = True) -> Librar
             category=row.get("category"),
             gif_url=row.get("gif_url"),
             video_url=row.get("video_url"),
-            image_url=row.get("image_url"),
+            image_url=presign_s3_path(row.get("image_url")),
             goals=row.get("goals", []),
             suitable_for=row.get("suitable_for", []),
             avoid_if=row.get("avoid_if", []),
@@ -285,7 +320,7 @@ def row_to_library_exercise(row: dict, from_cleaned_view: bool = True) -> Librar
             category=row.get("category"),
             gif_url=row.get("gif_url"),
             video_url=row.get("video_s3_path"),
-            image_url=row.get("image_s3_path"),
+            image_url=presign_s3_path(row.get("image_s3_path")),
             goals=row.get("goals", []),
             suitable_for=row.get("suitable_for", []),
             avoid_if=row.get("avoid_if", []),

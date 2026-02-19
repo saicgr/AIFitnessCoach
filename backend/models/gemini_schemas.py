@@ -120,6 +120,7 @@ class GeneratedWorkoutResponse(BaseModel):
     name: str = Field(..., description="Creative workout name")
     type: str = Field(..., description="Workout type (strength, cardio, etc.)")
     difficulty: str = Field(..., description="Difficulty level")
+    description: Optional[str] = Field(default=None, description="1-2 sentence explanation of the workout's training logic and structure")
     duration_minutes: int = Field(..., description="Total workout duration")
     target_muscles: List[str] = Field(default=[], description="Primary muscles targeted")
     exercises: List[WorkoutExerciseSchema] = Field(..., description="List of exercises")

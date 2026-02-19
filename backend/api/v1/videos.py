@@ -9,7 +9,10 @@ S3 Bucket Structure:
     └── subfolder2/
         └── video3.mp4
 """
+from typing import List
+
 from fastapi import APIRouter, HTTPException
+from pydantic import BaseModel
 import boto3
 from botocore.exceptions import ClientError
 import os
@@ -437,6 +440,65 @@ async def get_image_by_exercise_name(exercise_name: str, gender: str = None):
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to get image URL: {str(e)}")
+
+
+class BatchImageRequest(BaseModel):
+    names: List[str]
+
+
+@router.post("/exercise-images/batch")
+async def batch_get_image_urls(request: BatchImageRequest):
+    """
+    Batch resolve exercise names to presigned image URLs.
+
+    Accepts up to 100 exercise names and returns a dict of {name: presigned_url}.
+    Uses exact name match on the cleaned exercise library view for speed.
+
+    Names not found (case mismatch, typo) are silently omitted — the frontend
+    falls back to the individual GET /exercise-images/{name} endpoint which
+    does fuzzy matching.
+    """
+    try:
+        db = get_supabase_db()
+
+        # Sanitize: cap at 100 names, skip blanks and overly long strings
+        names = [
+            n for n in request.names[:100]
+            if n and len(n) <= 200
+        ]
+
+        if not names:
+            return {"urls": {}}
+
+        # Query cleaned view with exact name match (single DB call)
+        result = db.client.table("exercise_library_cleaned").select(
+            "name, image_url"
+        ).in_("name", names).execute()
+
+        # Generate presigned URLs for matching exercises
+        urls = {}
+        for row in (result.data or []):
+            name = row.get("name", "")
+            s3_path = row.get("image_url")
+            if not name or not s3_path or not s3_path.startswith("s3://"):
+                continue
+            try:
+                key = s3_path.replace(f"s3://{BUCKET_NAME}/", "")
+                urls[name] = s3_client.generate_presigned_url(
+                    'get_object',
+                    Params={'Bucket': BUCKET_NAME, 'Key': key},
+                    ExpiresIn=PRESIGNED_URL_EXPIRATION,
+                )
+            except Exception:
+                pass
+
+        return {"urls": urls, "resolved": len(urls), "requested": len(names)}
+
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Batch image resolve failed: {str(e)}",
+        )
 
 
 @router.get("/videos/list/")

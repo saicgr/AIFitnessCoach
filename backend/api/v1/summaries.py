@@ -7,13 +7,14 @@ Generates AI-powered weekly workout summaries with:
 - Tips for the next week
 """
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Request
 from typing import List, Optional
 from datetime import datetime, date, timedelta
 import json
 
 from core.supabase_db import get_supabase_db
 from core.logger import get_logger
+from core.timezone_utils import resolve_timezone, get_user_today
 from services.gemini_service import GeminiService
 from models.schemas import (
     WeeklySummary, WeeklySummaryCreate,
@@ -29,7 +30,7 @@ logger = get_logger(__name__)
 # ============================================
 
 @router.post("/generate/{user_id}", response_model=WeeklySummary)
-async def generate_weekly_summary(user_id: str, week_start: Optional[str] = None):
+async def generate_weekly_summary(user_id: str, request: Request, week_start: Optional[str] = None):
     """
     Generate a weekly summary for a user.
 
@@ -41,13 +42,14 @@ async def generate_weekly_summary(user_id: str, week_start: Optional[str] = None
     try:
         db = get_supabase_db()
         gemini_service = GeminiService()
+        user_tz = resolve_timezone(request, db, user_id)
 
         # Determine week dates
         if week_start:
             start_date = date.fromisoformat(week_start)
         else:
             # Default to last week (Monday to Sunday)
-            today = date.today()
+            today = date.fromisoformat(get_user_today(user_tz))
             days_since_monday = today.weekday()
             last_monday = today - timedelta(days=days_since_monday + 7)
             start_date = last_monday

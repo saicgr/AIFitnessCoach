@@ -1,12 +1,13 @@
 """
 XP Events API - Daily Login, Streaks, Double XP Events
 """
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from pydantic import BaseModel
 from datetime import date, datetime, timedelta
 from typing import Optional, List
 from core.supabase_db import get_supabase_db
 from core.auth import get_current_user
+from core.timezone_utils import resolve_timezone, get_user_today, local_date_to_utc_range
 
 router = APIRouter(prefix="/xp", tags=["XP & Progression"])
 
@@ -279,6 +280,7 @@ async def update_bonus_template(
 
 @router.get("/checkpoint-progress")
 async def get_checkpoint_progress(
+    request: Request,
     checkpoint_type: str = Query("weekly", description="'weekly' or 'monthly'"),
     current_user=Depends(get_current_user)
 ):
@@ -310,7 +312,8 @@ async def get_checkpoint_progress(
                 }
 
         # Fallback if RPC doesn't return expected data (uses default 5 days/week)
-        today = date.today()
+        user_tz = resolve_timezone(request, db, user_id)
+        today = date.fromisoformat(get_user_today(user_tz))
         default_days_per_week = 5
         if checkpoint_type == "weekly":
             period_start = today - timedelta(days=today.weekday())
@@ -435,6 +438,7 @@ class AwardGoalXPResponse(BaseModel):
 @router.post("/award-goal-xp", response_model=AwardGoalXPResponse)
 async def award_goal_xp(
     request: AwardGoalXPRequest,
+    http_request: Request,
     current_user=Depends(get_current_user)
 ):
     """
@@ -452,10 +456,11 @@ async def award_goal_xp(
         user_id = current_user["id"]
         print(f"🎯 [XP] award-goal-xp called: user_id={user_id}, goal_type={request.goal_type}")
 
-        # Use UTC timestamps with timezone for proper comparison with TIMESTAMPTZ
-        today_start = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
-        today_end = today_start + timedelta(days=1)
-        print(f"🔍 [XP] Checking existing claims from {today_start.isoformat()}Z to {today_end.isoformat()}Z")
+        # Resolve user timezone and get today's UTC range
+        user_tz = resolve_timezone(http_request, db, user_id)
+        today_str = get_user_today(user_tz)
+        today_start_iso, today_end_iso = local_date_to_utc_range(today_str, user_tz)
+        print(f"🔍 [XP] Checking existing claims from {today_start_iso} to {today_end_iso}")
 
         # Define XP amounts for each goal type
         goal_xp_amounts = {
@@ -486,15 +491,14 @@ async def award_goal_xp(
             print(f"⚠️ [XP] Could not ensure user_xp record: {init_err}")
 
         # Check if already awarded today (prevent double claiming)
-        # Use ISO format with Z suffix for UTC timezone
         existing = db.client.table("xp_transactions").select("id").eq(
             "user_id", user_id
         ).eq(
             "source", source
         ).gte(
-            "created_at", today_start.isoformat() + "Z"
+            "created_at", today_start_iso
         ).lt(
-            "created_at", today_end.isoformat() + "Z"
+            "created_at", today_end_iso
         ).execute()
         print(f"🔍 [XP] Existing claims found: {len(existing.data) if existing.data else 0}")
 
@@ -562,6 +566,7 @@ class DailyGoalsStatusResponse(BaseModel):
 
 @router.get("/daily-goals-status", response_model=DailyGoalsStatusResponse)
 async def get_daily_goals_status(
+    request: Request,
     current_user=Depends(get_current_user)
 ):
     """
@@ -572,12 +577,16 @@ async def get_daily_goals_status(
     try:
         db = get_supabase_db()
         user_id = current_user["id"]
-        today_start = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
+        user_tz = resolve_timezone(request, db, user_id)
+        today_str = get_user_today(user_tz)
+        today_start_iso, today_end_iso = local_date_to_utc_range(today_str, user_tz)
 
         result = db.client.table("xp_transactions").select("source").eq(
             "user_id", user_id
         ).gte(
-            "created_at", today_start.isoformat() + "Z"
+            "created_at", today_start_iso
+        ).lt(
+            "created_at", today_end_iso
         ).execute()
 
         sources = [r.get("source", "") for r in (result.data or [])]
@@ -1076,6 +1085,7 @@ class ClaimDailyCrateResponse(BaseModel):
 
 @router.get("/daily-crates", response_model=DailyCratesResponse)
 async def get_daily_crates(
+    request: Request,
     current_user=Depends(get_current_user)
 ):
     """
@@ -1095,6 +1105,9 @@ async def get_daily_crates(
             {"p_user_id": user_id}
         ).execute()
 
+        user_tz = resolve_timezone(request, db, user_id)
+        today_str = get_user_today(user_tz)
+
         if result.data:
             data = result.data
             return DailyCratesResponse(
@@ -1105,10 +1118,10 @@ async def get_daily_crates(
                 reward=data.get("reward"),
                 claimed=data.get("claimed", False),
                 claimed_at=data.get("claimed_at"),
-                crate_date=str(data.get("crate_date", date.today().isoformat()))
+                crate_date=str(data.get("crate_date", today_str))
             )
 
-        return DailyCratesResponse(crate_date=date.today().isoformat())
+        return DailyCratesResponse(crate_date=today_str)
 
     except Exception as e:
         print(f"❌ [XP] Error getting daily crates: {e}")
@@ -1241,6 +1254,7 @@ async def unlock_activity_crate(
 
 @router.get("/weekly-checkpoints")
 async def get_weekly_checkpoints(
+    request: Request,
     current_user=Depends(get_current_user)
 ):
     """
@@ -1273,8 +1287,10 @@ async def get_weekly_checkpoints(
             return result.data
 
         # Fallback if RPC doesn't exist yet
+        user_tz = resolve_timezone(request, db, user_id)
+        today_str = get_user_today(user_tz)
         return {
-            "week_start": date.today().isoformat(),
+            "week_start": today_str,
             "total_xp_possible": 1575,
             "checkpoints": []
         }
@@ -1363,6 +1379,7 @@ async def update_weekly_habits(
 
 @router.get("/monthly-achievements")
 async def get_monthly_achievements(
+    request: Request,
     current_user=Depends(get_current_user)
 ):
     """
@@ -1397,8 +1414,10 @@ async def get_monthly_achievements(
             return result.data
 
         # Fallback if RPC doesn't exist yet
+        user_tz = resolve_timezone(request, db, user_id)
+        today_str = get_user_today(user_tz)
         return {
-            "month": date.today().strftime("%Y-%m"),
+            "month": today_str[:7],  # "YYYY-MM"
             "total_xp_possible": 5250,
             "achievements": []
         }
@@ -1606,6 +1625,7 @@ async def evaluate_month_end(
 
 @router.get("/daily-social-xp")
 async def get_daily_social_xp(
+    request: Request,
     current_user=Depends(get_current_user)
 ):
     """
@@ -1632,8 +1652,10 @@ async def get_daily_social_xp(
             return result.data
 
         # Fallback if RPC doesn't exist
+        user_tz = resolve_timezone(request, db, user_id)
+        today_str = get_user_today(user_tz)
         return {
-            "date": date.today().isoformat(),
+            "date": today_str,
             "total_social_xp_today": 0,
             "daily_cap": 270,
             "remaining_cap": 270,

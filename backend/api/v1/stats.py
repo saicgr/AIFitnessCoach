@@ -10,13 +10,14 @@ Provides endpoints for:
 - Progress graphs data
 """
 
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, Request
 from typing import List, Optional, Dict, Any
 from datetime import datetime, date, timedelta
 from pydantic import BaseModel
 
 from core.supabase_db import get_supabase_db
 from core.logger import get_logger
+from core.timezone_utils import resolve_timezone, get_user_today
 from models.schemas import AchievementType, UserAchievement, PersonalRecord
 
 router = APIRouter(prefix="/stats", tags=["stats"])
@@ -102,7 +103,7 @@ class ComprehensiveStatsResponse(BaseModel):
 # ============================================
 
 @router.get("/overview/{user_id}", response_model=ComprehensiveStatsResponse)
-async def get_comprehensive_stats(user_id: str):
+async def get_comprehensive_stats(user_id: str, request: Request):
     """
     Get comprehensive stats overview for a user.
     Includes quick stats, achievements, PRs, and measurements.
@@ -111,9 +112,10 @@ async def get_comprehensive_stats(user_id: str):
 
     try:
         db = get_supabase_db()
+        user_tz = resolve_timezone(request, db, user_id)
 
         # 1. Quick Stats
-        quick_stats = await _get_quick_stats(user_id, db)
+        quick_stats = await _get_quick_stats(user_id, db, user_tz)
 
         # 2. Recent Achievements (last 5)
         achievements_result = db.client.table("user_achievements") \
@@ -177,13 +179,14 @@ async def get_comprehensive_stats(user_id: str):
 
 
 @router.get("/quick/{user_id}", response_model=QuickStatsResponse)
-async def get_quick_stats(user_id: str):
+async def get_quick_stats(user_id: str, request: Request):
     """Get quick overview statistics."""
     logger.info(f"Getting quick stats for user {user_id}")
 
     try:
         db = get_supabase_db()
-        return await _get_quick_stats(user_id, db)
+        user_tz = resolve_timezone(request, db, user_id)
+        return await _get_quick_stats(user_id, db, user_tz)
 
     except Exception as e:
         logger.error(f"Failed to get quick stats: {e}")
@@ -191,7 +194,7 @@ async def get_quick_stats(user_id: str):
 
 
 @router.get("/workout-frequency/{user_id}", response_model=List[WorkoutFrequencyData])
-async def get_workout_frequency(user_id: str, weeks: int = 12):
+async def get_workout_frequency(user_id: str, request: Request, weeks: int = 12):
     """
     Get workout frequency by week for graphing.
     Returns last N weeks of workout data.
@@ -200,7 +203,9 @@ async def get_workout_frequency(user_id: str, weeks: int = 12):
 
     try:
         db = get_supabase_db()
-        cutoff_date = datetime.now() - timedelta(weeks=weeks)
+        user_tz = resolve_timezone(request, db, user_id)
+        today = date.fromisoformat(get_user_today(user_tz))
+        cutoff_date = datetime.combine(today - timedelta(weeks=weeks), datetime.min.time())
 
         # Get workout logs
         result = db.client.table("workout_logs") \
@@ -242,7 +247,7 @@ async def get_workout_frequency(user_id: str, weeks: int = 12):
 
 
 @router.get("/weight-trend/{user_id}", response_model=List[WeightTrendData])
-async def get_weight_trend(user_id: str, days: int = 90):
+async def get_weight_trend(user_id: str, request: Request, days: int = 90):
     """
     Get weight tracking trend over time.
     Returns measurements from last N days.
@@ -251,7 +256,9 @@ async def get_weight_trend(user_id: str, days: int = 90):
 
     try:
         db = get_supabase_db()
-        cutoff_date = datetime.now() - timedelta(days=days)
+        user_tz = resolve_timezone(request, db, user_id)
+        today = date.fromisoformat(get_user_today(user_tz))
+        cutoff_date = datetime.combine(today - timedelta(days=days), datetime.min.time())
 
         result = db.client.table("body_measurements") \
             .select("measured_at, weight_kg, body_fat_percent, bmi") \
@@ -276,7 +283,7 @@ async def get_weight_trend(user_id: str, days: int = 90):
 
 
 @router.get("/nutrition/{user_id}", response_model=NutritionStatsResponse)
-async def get_nutrition_stats(user_id: str, days: int = 7):
+async def get_nutrition_stats(user_id: str, request: Request, days: int = 7):
     """
     Get nutrition statistics (averages over last N days).
     """
@@ -284,7 +291,9 @@ async def get_nutrition_stats(user_id: str, days: int = 7):
 
     try:
         db = get_supabase_db()
-        cutoff_date = datetime.now() - timedelta(days=days)
+        user_tz = resolve_timezone(request, db, user_id)
+        today = date.fromisoformat(get_user_today(user_tz))
+        cutoff_date = datetime.combine(today - timedelta(days=days), datetime.min.time())
 
         # Get food logs
         result = db.client.table("food_logs") \
@@ -334,7 +343,7 @@ async def get_nutrition_stats(user_id: str, days: int = 7):
 
 
 @router.get("/volume-progress/{user_id}", response_model=List[VolumeProgressData])
-async def get_volume_progress(user_id: str, days: int = 30):
+async def get_volume_progress(user_id: str, request: Request, days: int = 30):
     """
     Get training volume progression over time.
     """
@@ -342,7 +351,9 @@ async def get_volume_progress(user_id: str, days: int = 30):
 
     try:
         db = get_supabase_db()
-        cutoff_date = datetime.now() - timedelta(days=days)
+        user_tz = resolve_timezone(request, db, user_id)
+        today = date.fromisoformat(get_user_today(user_tz))
+        cutoff_date = datetime.combine(today - timedelta(days=days), datetime.min.time())
 
         # Get workout logs with performance data
         result = db.client.table("workout_logs") \
@@ -392,7 +403,7 @@ async def get_volume_progress(user_id: str, days: int = 30):
 # Helper Functions
 # ============================================
 
-async def _get_quick_stats(user_id: str, db) -> QuickStatsResponse:
+async def _get_quick_stats(user_id: str, db, user_tz: str) -> QuickStatsResponse:
     """Calculate quick overview statistics."""
 
     # Total workouts
@@ -403,7 +414,8 @@ async def _get_quick_stats(user_id: str, db) -> QuickStatsResponse:
     total_workouts = total_workouts_result.count or 0
 
     # Workouts this week
-    week_start = datetime.now() - timedelta(days=datetime.now().weekday())
+    today = date.fromisoformat(get_user_today(user_tz))
+    week_start = datetime.combine(today - timedelta(days=today.weekday()), datetime.min.time())
     week_workouts_result = db.client.table("workout_logs") \
         .select("id", count="exact") \
         .eq("user_id", user_id) \
@@ -412,7 +424,7 @@ async def _get_quick_stats(user_id: str, db) -> QuickStatsResponse:
     workouts_this_week = week_workouts_result.count or 0
 
     # Workouts this month
-    month_start = datetime.now().replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+    month_start = datetime.combine(today.replace(day=1), datetime.min.time())
     month_workouts_result = db.client.table("workout_logs") \
         .select("id", count="exact") \
         .eq("user_id", user_id) \

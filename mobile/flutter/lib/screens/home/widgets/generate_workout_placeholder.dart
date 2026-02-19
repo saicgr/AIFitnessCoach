@@ -128,7 +128,7 @@ class _GenerateWorkoutPlaceholderState
       animation: _pulseController,
       builder: (context, child) {
         return Container(
-          height: 340,
+          height: 280,
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(24),
             border: Border.all(

@@ -151,6 +151,7 @@ class Workout(BaseModel):
     name: str = Field(..., max_length=200)
     type: str = Field(..., max_length=50)
     difficulty: str = Field(..., max_length=50)
+    description: Optional[str] = Field(default=None, description="1-2 sentence explanation of the workout's training logic")
     scheduled_date: datetime
     is_completed: bool
     exercises_json: str = Field(..., max_length=100000)

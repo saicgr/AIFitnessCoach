@@ -411,6 +411,7 @@ def row_to_workout(row: dict, enrich_videos: bool = True) -> Workout:
         name=row.get("name"),
         type=row.get("type"),
         difficulty=row.get("difficulty"),
+        description=row.get("description"),
         scheduled_date=row.get("scheduled_date"),
         is_completed=row.get("is_completed", False),
         exercises_json=exercises_json,

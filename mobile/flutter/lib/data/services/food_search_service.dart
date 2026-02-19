@@ -190,6 +190,9 @@ class FoodSearchService {
   // Current query to prevent stale results
   String? _currentQuery;
 
+  // Current database source filter
+  String? _currentSource;
+
   FoodSearchService({
     required NutritionRepository nutritionRepository,
     required ApiClient apiClient,
@@ -202,15 +205,30 @@ class FoodSearchService {
   /// Get cached results without triggering a search
   FoodSearchResults? getCachedResults(String query) {
     final normalizedQuery = _normalizeQuery(query);
-    final entry = _cache[normalizedQuery];
+    final entry = _cache[_cacheKey(normalizedQuery)];
     if (entry != null && !entry.isExpired) {
       return entry.results;
     }
     return null;
   }
 
+  /// Set database source filter for food database search
+  void setSource(String? source) {
+    _currentSource = source;
+  }
+
+  /// Cache key combining query and source filter
+  String _cacheKey(String normalizedQuery) {
+    if (_currentSource != null) {
+      return '$normalizedQuery|$_currentSource';
+    }
+    return normalizedQuery;
+  }
+
   /// Search with debouncing
-  void search(String query, String userId) {
+  /// Pass [cachedLogs] from NutritionState.recentLogs to avoid an API call
+  /// for recent foods filtering.
+  void search(String query, String userId, {List<FoodLog>? cachedLogs}) {
     // Cancel previous debounce timer
     _debounceTimer?.cancel();
 
@@ -224,7 +242,8 @@ class FoodSearchService {
     }
 
     // Check cache first for instant results
-    final cachedEntry = _cache[normalizedQuery];
+    final cacheKey = _cacheKey(normalizedQuery);
+    final cachedEntry = _cache[cacheKey];
     if (cachedEntry != null && !cachedEntry.isExpired) {
       debugPrint('FoodSearch: Cache hit for "$normalizedQuery"');
       _searchController.add(FoodSearchResults(
@@ -243,12 +262,27 @@ class FoodSearchService {
 
     // Debounce the actual API call
     _debounceTimer = Timer(_debounceDuration, () {
-      _performSearch(normalizedQuery, userId);
+      _performSearch(normalizedQuery, userId, cachedLogs: cachedLogs);
     });
   }
 
+  /// Per-source error isolation — one failing source doesn't kill all results
+  Future<List<FoodSearchResult>> _safeSearch(
+    Future<List<FoodSearchResult>> Function() search,
+    String label,
+  ) async {
+    try {
+      return await search();
+    } catch (e) {
+      debugPrint('FoodSearch: $label error: $e');
+      return [];
+    }
+  }
+
   /// Perform the actual search (after debounce)
-  Future<void> _performSearch(String query, String userId) async {
+  /// Only 2 sources: local recent foods filter + fast pg_trgm backend RPC.
+  /// No ChromaDB/Gemini embedding calls in the hot path.
+  Future<void> _performSearch(String query, String userId, {List<FoodLog>? cachedLogs}) async {
     // Double-check this is still the current query
     if (_currentQuery != query) {
       debugPrint('FoodSearch: Skipping stale query "$query"');
@@ -258,106 +292,101 @@ class FoodSearchService {
     debugPrint('FoodSearch: Searching for "$query"');
     final stopwatch = Stopwatch()..start();
 
-    try {
-      // Run searches in parallel for speed
-      final results = await Future.wait([
-        _searchSavedFoods(query, userId),
-        _searchRecentFoods(query, userId),
-        _searchSemanticDatabase(query, userId),
-        _searchFoodDatabase(query, userId),
-      ]);
+    // Run 2 fast searches in parallel (no ChromaDB)
+    final results = await Future.wait([
+      _safeSearch(() => _searchRecentFoods(query, userId, cachedLogs: cachedLogs), 'recent'),
+      _safeSearch(() => _searchFoodDatabase(query, userId), 'foodDb'),
+    ]);
 
-      // Check if query is still current before emitting results
-      if (_currentQuery != query) {
-        debugPrint('FoodSearch: Query changed, discarding results for "$query"');
-        return;
-      }
-
-      final savedResults = results[0];
-      final recentResults = results[1];
-      final databaseResults = results[2];
-      final foodDatabaseResults = results[3];
-
-      stopwatch.stop();
-      debugPrint('FoodSearch: Found ${savedResults.length + recentResults.length + databaseResults.length + foodDatabaseResults.length} results in ${stopwatch.elapsedMilliseconds}ms');
-
-      final searchResults = FoodSearchResults(
-        query: query,
-        saved: savedResults,
-        recent: recentResults,
-        database: databaseResults,
-        foodDatabase: foodDatabaseResults,
-      );
-
-      // Cache the results
-      _addToCache(query, searchResults);
-
-      // Emit results
-      _searchController.add(searchResults);
-    } catch (e) {
-      debugPrint('FoodSearch: Error searching for "$query": $e');
-      if (_currentQuery == query) {
-        _searchController.add(FoodSearchError(
-          'Failed to search foods. Please try again.',
-          query,
-        ));
-      }
+    // Check if query is still current before emitting results
+    if (_currentQuery != query) {
+      debugPrint('FoodSearch: Query changed, discarding results for "$query"');
+      return;
     }
-  }
 
-  /// Search saved foods (favorites)
-  Future<List<FoodSearchResult>> _searchSavedFoods(
-      String query, String userId) async {
-    try {
-      // Use semantic search for saved foods
-      final response = await _apiClient.post(
-        '/nutrition/saved-foods/search',
-        queryParameters: {'user_id': userId},
-        data: {
-          'query': query,
-          'limit': 5,
-        },
-      );
+    final recentResults = results[0];
+    final foodDatabaseResults = results[1];
 
-      final List<dynamic> items = response.data['similar_foods'] ?? [];
-      return items.map((item) {
-        return FoodSearchResult(
-          id: item['id'] as String,
-          name: item['name'] as String? ?? 'Unknown',
-          calories: (item['total_calories'] as num?)?.toInt() ?? 0,
-          protein: (item['total_protein_g'] as num?)?.toDouble(),
+    // Split food DB results: saved foods (source='saved'/'saved_item') vs curated DB
+    final savedResults = <FoodSearchResult>[];
+    final dbResults = <FoodSearchResult>[];
+    for (final r in foodDatabaseResults) {
+      final sourceStr = r.originalData?['source'] as String? ?? '';
+      if (sourceStr == 'saved' || sourceStr == 'saved_item') {
+        savedResults.add(FoodSearchResult(
+          id: r.id,
+          name: r.name,
+          brand: r.brand,
+          calories: r.calories,
+          protein: r.protein,
+          carbs: r.carbs,
+          fat: r.fat,
+          servingSize: r.servingSize,
           source: FoodSearchSource.saved,
-          distance: (item['distance'] as num?)?.toDouble(),
-          originalData: item as Map<String, dynamic>,
-        );
-      }).toList();
-    } catch (e) {
-      debugPrint('FoodSearch: Error searching saved foods: $e');
-      return [];
+          originalData: r.originalData,
+        ));
+      } else {
+        dbResults.add(r);
+      }
     }
+
+    stopwatch.stop();
+    final total = recentResults.length + savedResults.length + dbResults.length;
+    debugPrint('FoodSearch: Found $total results in ${stopwatch.elapsedMilliseconds}ms');
+
+    final searchResults = FoodSearchResults(
+      query: query,
+      saved: savedResults,
+      recent: recentResults,
+      foodDatabase: dbResults,
+    );
+
+    // Cache the results
+    _addToCache(_cacheKey(query), searchResults);
+
+    // Emit results (only emit error if ALL sources returned empty AND we know the DB call threw)
+    _searchController.add(searchResults);
   }
 
-  /// Search recent food logs
+  /// Bigram similarity for typo-tolerant matching (e.g. "aaple" → "apple")
+  static Set<String> _bigrams(String s) =>
+      {for (int i = 0; i < s.length - 1; i++) s.substring(i, i + 2)};
+
+  static bool _fuzzyMatch(String text, String query) {
+    final textLower = text.toLowerCase();
+    final queryLower = query.toLowerCase();
+    // Exact substring in either direction
+    if (textLower.contains(queryLower) || queryLower.contains(textLower)) {
+      return true;
+    }
+    if (queryLower.length < 3 || textLower.length < 3) return false;
+    final tBigrams = _bigrams(textLower);
+    final qBigrams = _bigrams(queryLower);
+    if (qBigrams.isEmpty || tBigrams.isEmpty) return false;
+    final common = qBigrams.intersection(tBigrams).length;
+    // Check similarity in both directions — use the SMALLER set as denominator
+    // so "apple" (4 bigrams) vs a long query still works: common/min(4, 80) >= 0.5
+    final smaller = qBigrams.length < tBigrams.length ? qBigrams.length : tBigrams.length;
+    return common / smaller >= 0.5;
+  }
+
+  /// Search recent food logs — local-only filter with fuzzy matching.
+  /// Uses [cachedLogs] if provided (from NutritionState.recentLogs),
+  /// otherwise falls back to API call.
   Future<List<FoodSearchResult>> _searchRecentFoods(
-      String query, String userId) async {
+      String query, String userId, {List<FoodLog>? cachedLogs}) async {
     try {
-      // Get recent food logs
-      final logs = await _nutritionRepository.getFoodLogs(
+      final logs = cachedLogs ?? await _nutritionRepository.getFoodLogs(
         userId,
         limit: 20,
       );
 
-      // Filter logs that match the query
-      final queryLower = query.toLowerCase();
+      // Filter logs that fuzzy-match the query
       final matchingLogs = logs.where((log) {
-        // Check meal type
-        if (log.mealType.toLowerCase().contains(queryLower)) return true;
-
-        // Check food items
+        if (_fuzzyMatch(log.mealType, query)) return true;
         for (final item in log.foodItems) {
-          if (item.name.toLowerCase().contains(queryLower)) return true;
+          if (_fuzzyMatch(item.name, query)) return true;
         }
-
         return false;
       }).take(5).toList();
 
@@ -370,59 +399,41 @@ class FoodSearchService {
     }
   }
 
-  /// Search semantic database (ChromaDB via API)
-  Future<List<FoodSearchResult>> _searchSemanticDatabase(
-      String query, String userId) async {
-    try {
-      final response = await _apiClient.post(
-        '/nutrition/saved-foods/search',
-        queryParameters: {'user_id': userId},
-        data: {
-          'query': query,
-          'limit': 10,
-        },
-      );
-
-      final List<dynamic> items = response.data['similar_foods'] ?? [];
-
-      // Filter out items already in saved (to avoid duplicates)
-      return items
-          .skip(5) // Skip first 5 which are shown as "saved"
-          .take(5)
-          .map((item) => FoodSearchResult.fromSearchResult(item as Map<String, dynamic>))
-          .toList();
-    } catch (e) {
-      debugPrint('FoodSearch: Error searching database: $e');
-      return [];
-    }
-  }
-
-  /// Search the curated food database via backend API
+  /// Search the curated food database via backend API (fast pg_trgm RPC).
   Future<List<FoodSearchResult>> _searchFoodDatabase(
       String query, String userId) async {
     try {
+      final queryParams = <String, dynamic>{
+        'query': query,
+        'page_size': 15,
+        'user_id': userId, // triggers search_food_database_unified() — includes saved foods
+      };
+      if (_currentSource != null) {
+        queryParams['source'] = _currentSource!;
+      }
       final response = await _apiClient.get(
         '/nutrition/food-search',
-        queryParameters: {
-          'query': query,
-          'page_size': 10,
-        },
+        queryParameters: queryParams,
       );
 
       // Backend returns USDASearchResponse format: {foods: [...], total_hits, ...}
       final List<dynamic> foods = response.data['foods'] ?? [];
       return foods.map((item) {
         final nutrients = item['nutrients'] as Map<String, dynamic>? ?? {};
+        final sourceStr = item['source'] as String? ?? '';
+        final isPersonal = sourceStr == 'saved' || sourceStr == 'saved_item';
         return FoodSearchResult(
-          id: (item['fdc_id'] ?? 0).toString(),
-          name: item['description'] as String? ?? 'Unknown',
+          id: (item['fdc_id'] ?? item['id'] ?? 0).toString(),
+          name: item['description'] as String? ?? item['name'] as String? ?? 'Unknown',
           brand: item['brand_owner'] as String?,
-          calories: (nutrients['calories_per_100g'] as num?)?.toInt() ?? 0,
-          protein: (nutrients['protein_per_100g'] as num?)?.toDouble(),
+          calories: (nutrients['calories_per_100g'] as num?)?.toInt() ??
+              (item['total_calories'] as num?)?.toInt() ?? 0,
+          protein: (nutrients['protein_per_100g'] as num?)?.toDouble() ??
+              (item['total_protein_g'] as num?)?.toDouble(),
           carbs: (nutrients['carbs_per_100g'] as num?)?.toDouble(),
           fat: (nutrients['fat_per_100g'] as num?)?.toDouble(),
-          servingSize: '100g',
-          source: FoodSearchSource.foodDatabase,
+          servingSize: isPersonal ? null : '100g',
+          source: isPersonal ? FoodSearchSource.saved : FoodSearchSource.foodDatabase,
           originalData: item as Map<String, dynamic>,
         );
       }).toList();

@@ -44,7 +44,7 @@ FoodLog _$FoodLogFromJson(Map<String, dynamic> json) => FoodLog(
   moodBefore: json['mood_before'] as String?,
   moodAfter: json['mood_after'] as String?,
   energyLevel: (json['energy_level'] as num?)?.toInt(),
-  createdAt: DateTime.parse(json['created_at'] as String),
+  createdAt: _parseDateTimeOrNow(json['created_at'] as String?),
 );
 
 Map<String, dynamic> _$FoodLogToJson(FoodLog instance) => <String, dynamic>{

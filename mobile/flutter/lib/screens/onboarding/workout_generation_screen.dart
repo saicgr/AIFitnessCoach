@@ -4,12 +4,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
 import '../../data/models/workout.dart';
-import '../../data/providers/today_workout_provider.dart';
 import '../../data/repositories/workout_repository.dart';
 import '../../data/services/api_client.dart';
 import '../../widgets/glass_back_button.dart';
 import '../../widgets/gradient_circular_progress_indicator.dart';
 import 'pre_auth_quiz_screen.dart';
+import 'program_summary_screen.dart';
 
 /// Full-screen workout generation screen with animated progress steps
 /// Similar to the diet plan generation screen
@@ -34,8 +34,6 @@ class _WorkoutGenerationScreenState extends ConsumerState<WorkoutGenerationScree
   String? _errorMessage;
   int _currentStep = 0;
   double _progress = 0.0;
-  int _generatedWorkouts = 0;
-  int _totalWorkouts = 0;
   Workout? _generatedWorkout; // Store the generated workout
 
   // Steps with their completion status
@@ -73,8 +71,59 @@ class _WorkoutGenerationScreenState extends ConsumerState<WorkoutGenerationScree
       duration: const Duration(seconds: 2),
     )..repeat();
 
-    // Start generation after a short delay
-    Future.delayed(const Duration(milliseconds: 500), _startGeneration);
+    // Check if a background generation is already available
+    Future.delayed(const Duration(milliseconds: 500), _checkBackgroundOrGenerate);
+  }
+
+  /// Check if background generation from onboarding is already complete.
+  /// If so, use the pre-generated workout. Otherwise, start fresh generation.
+  Future<void> _checkBackgroundOrGenerate() async {
+    final bgCompleter = ref.read(backgroundGenerationProvider);
+    if (bgCompleter != null) {
+      // Start animating steps while waiting
+      _animateSteps();
+
+      try {
+        // Wait for the background generation with a timeout
+        final workout = await bgCompleter.future.timeout(
+          const Duration(seconds: 90),
+          onTimeout: () => null,
+        );
+
+        // Clear the provider so it's not reused
+        ref.read(backgroundGenerationProvider.notifier).state = null;
+
+        if (workout != null && mounted) {
+          debugPrint('✅ [WorkoutGeneration] Using pre-generated workout: ${workout.name}');
+          setState(() {
+            _generatedWorkout = workout;
+            _progress = 1.0;
+            _currentStep = _steps.length;
+            _isGenerating = false;
+          });
+
+          // Navigate after showing completion
+          Future.delayed(const Duration(milliseconds: 1500), () {
+            if (mounted) {
+              if (widget.returnWorkout) {
+                Navigator.of(context).pop(_generatedWorkout);
+              } else {
+                Navigator.of(context).pushReplacement(
+                  MaterialPageRoute(builder: (_) => const ProgramSummaryScreen()),
+                );
+              }
+            }
+          });
+          return;
+        }
+      } catch (e) {
+        debugPrint('⚠️ [WorkoutGeneration] Background generation failed, starting fresh: $e');
+        ref.read(backgroundGenerationProvider.notifier).state = null;
+      }
+    }
+
+    // No background generation or it failed - start fresh
+    _startGeneration();
   }
 
   @override
@@ -100,7 +149,6 @@ class _WorkoutGenerationScreenState extends ConsumerState<WorkoutGenerationScree
 
       // Get quiz data for workout preferences
       final quizData = ref.read(preAuthQuizProvider);
-      final selectedDays = quizData.workoutDays ?? [1, 3, 5]; // Default Mon/Wed/Fri
       final workoutDuration = quizData.workoutDuration ?? 45;
 
       // Calculate duration range based on selected duration
@@ -130,9 +178,6 @@ class _WorkoutGenerationScreenState extends ConsumerState<WorkoutGenerationScree
         durationMax = 90;
       }
 
-      // Generate 1 workout for today or next workout day
-      _totalWorkouts = 1;
-
       // Simulate step progression while waiting for stream
       _animateSteps();
 
@@ -156,7 +201,6 @@ class _WorkoutGenerationScreenState extends ConsumerState<WorkoutGenerationScree
           setState(() {
             // Update progress based on status
             if (progress.status == WorkoutGenerationStatus.completed) {
-              _generatedWorkouts = 1;
               _progress = 1.0;
               _currentStep = _steps.length;
               // Store the generated workout
@@ -190,13 +234,15 @@ class _WorkoutGenerationScreenState extends ConsumerState<WorkoutGenerationScree
             });
 
             // If returnWorkout is true, pop with the generated workout
-            // Otherwise, navigate to home after showing completion
+            // Otherwise, navigate to program summary after showing completion
             Future.delayed(const Duration(milliseconds: 1500), () {
               if (mounted) {
                 if (widget.returnWorkout) {
                   Navigator.of(context).pop(_generatedWorkout);
                 } else {
-                  context.go('/home');
+                  Navigator.of(context).pushReplacement(
+                    MaterialPageRoute(builder: (_) => const ProgramSummaryScreen()),
+                  );
                 }
               }
             });
@@ -233,7 +279,6 @@ class _WorkoutGenerationScreenState extends ConsumerState<WorkoutGenerationScree
       _errorMessage = null;
       _currentStep = 0;
       _progress = 0.0;
-      _generatedWorkouts = 0;
       for (var step in _steps) {
         step.isComplete = false;
       }
@@ -289,216 +334,139 @@ class _WorkoutGenerationScreenState extends ConsumerState<WorkoutGenerationScree
   }
 
   Widget _buildGeneratingState(bool isDark, Color textPrimary, Color textSecondary) {
+    final accentColor = isDark ? AppColors.orange : AppColorsLight.orange;
+    final accentColorLight = isDark ? AppColors.orangeLight : AppColorsLight.orangeLight;
+
+    // Current step label
+    final stepLabel = _currentStep < _steps.length
+        ? _steps[_currentStep].title
+        : 'Finalizing your plan';
+
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        // Animated circular progress
-        SizedBox(
-          width: 160,
-          height: 160,
-          child: Stack(
-            alignment: Alignment.center,
-            children: [
-              // Background circle
-              GradientCircularProgressIndicator(
-                size: 160,
-                strokeWidth: 8,
-                value: 1.0,
-                gradientColors: [
-                  isDark ? AppColors.elevated : AppColorsLight.elevated,
-                  isDark ? AppColors.elevated : AppColorsLight.elevated,
-                ],
-                backgroundColor: Colors.transparent,
-              ),
-              // Progress circle with gradient
-              TweenAnimationBuilder<double>(
-                tween: Tween(begin: 0, end: _progress),
-                duration: const Duration(milliseconds: 400),
-                curve: Curves.easeOut,
-                builder: (context, value, child) {
-                  final accentColor = isDark ? AppColors.orange : AppColorsLight.orange;
-                  final accentColorLight = isDark ? AppColors.orangeLight : AppColorsLight.orangeLight;
+        // Large animated progress ring with glow
+        AnimatedBuilder(
+          animation: _progressController,
+          builder: (context, child) {
+            // Subtle pulsing glow while generating (oscillates 0.1 - 0.25)
+            final pulse = _progressController.value < 0.5
+                ? _progressController.value * 2
+                : 2 - _progressController.value * 2;
+            final glowOpacity = _isGenerating ? 0.1 + 0.15 * pulse : 0.0;
 
-                  return GradientCircularProgressIndicator(
-                    size: 160,
-                    strokeWidth: 8,
-                    value: value > 0 ? value : null,
-                    gradientColors: [
-                      accentColor,
-                      accentColorLight,
-                    ],
-                    backgroundColor: Colors.transparent,
-                    strokeCap: StrokeCap.round,
-                  );
-                },
+            return Container(
+              width: 260,
+              height: 260,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                boxShadow: _isGenerating
+                    ? [
+                        BoxShadow(
+                          color: accentColor.withValues(alpha: glowOpacity),
+                          blurRadius: 40,
+                          spreadRadius: 8,
+                        ),
+                      ]
+                    : null,
               ),
-              // Percentage text
-              Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    '${(_progress * 100).toInt()}%',
-                    style: TextStyle(
-                      fontSize: 36,
-                      fontWeight: FontWeight.bold,
-                      color: textPrimary,
+              child: child,
+            );
+          },
+          child: SizedBox(
+            width: 240,
+            height: 240,
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                // Background track
+                GradientCircularProgressIndicator(
+                  size: 240,
+                  strokeWidth: 12,
+                  value: 1.0,
+                  gradientColors: [
+                    isDark ? AppColors.elevated : AppColorsLight.elevated,
+                    isDark ? AppColors.elevated : AppColorsLight.elevated,
+                  ],
+                  backgroundColor: Colors.transparent,
+                ),
+                // Progress arc
+                TweenAnimationBuilder<double>(
+                  tween: Tween(begin: 0, end: _progress),
+                  duration: const Duration(milliseconds: 600),
+                  curve: Curves.easeOutCubic,
+                  builder: (context, value, _) {
+                    return GradientCircularProgressIndicator(
+                      size: 240,
+                      strokeWidth: 12,
+                      value: value > 0 ? value : null,
+                      gradientColors: [accentColor, accentColorLight],
+                      backgroundColor: Colors.transparent,
+                      strokeCap: StrokeCap.round,
+                    );
+                  },
+                ),
+                // Center content: percentage + completion icon
+                Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (_progress >= 1.0)
+                      Icon(
+                        Icons.check_circle_rounded,
+                        color: AppColors.success,
+                        size: 32,
+                      )
+                    else
+                      Icon(
+                        _currentStep < _steps.length ? _steps[_currentStep].icon : Icons.auto_awesome,
+                        color: accentColor.withValues(alpha: 0.5),
+                        size: 28,
+                      ),
+                    const SizedBox(height: 8),
+                    Text(
+                      '${(_progress * 100).toInt()}%',
+                      style: TextStyle(
+                        fontSize: 48,
+                        fontWeight: FontWeight.w800,
+                        color: textPrimary,
+                        letterSpacing: -1,
+                      ),
                     ),
-                  ),
-                ],
-              ),
-            ],
+                  ],
+                ),
+              ],
+            ),
           ),
         ),
-        const SizedBox(height: 40),
+
+        const SizedBox(height: 32),
 
         // Title
         Text(
-          'AI Coach is',
+          _progress >= 1.0 ? 'Workout Ready!' : 'Generating Your Plan',
           style: TextStyle(
-            fontSize: 24,
-            fontWeight: FontWeight.w600,
+            fontSize: 22,
+            fontWeight: FontWeight.w700,
             color: textPrimary,
           ),
         ),
-        Text(
-          'generating',
-          style: TextStyle(
-            fontSize: 24,
-            fontWeight: FontWeight.w600,
-            color: textPrimary,
-          ),
-        ),
-        Text(
-          'your Workout Plan',
-          style: TextStyle(
-            fontSize: 24,
-            fontWeight: FontWeight.w600,
-            color: textPrimary,
-          ),
-        ),
-        const SizedBox(height: 48),
 
-        // Steps list
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 40),
-          child: Column(
-            children: _steps.asMap().entries.map((entry) {
-              final index = entry.key;
-              final step = entry.value;
-              final isActive = index == _currentStep;
-              final isComplete = index < _currentStep || step.isComplete;
-              final isPending = index > _currentStep;
+        const SizedBox(height: 12),
 
-              return _buildStepRow(
-                step: step,
-                isActive: isActive,
-                isComplete: isComplete,
-                isPending: isPending,
-                progress: isActive && _totalWorkouts > 0
-                    ? '${(_generatedWorkouts / _totalWorkouts * 100).toInt()}%'
-                    : null,
-                isDark: isDark,
-                textPrimary: textPrimary,
-                textSecondary: textSecondary,
-              );
-            }).toList(),
-          ),
-        ),
-
-        if (_totalWorkouts > 1) ...[
-          const SizedBox(height: 24),
-          Text(
-            '($_generatedWorkouts of $_totalWorkouts workouts)',
+        // Current step label
+        AnimatedSwitcher(
+          duration: const Duration(milliseconds: 300),
+          child: Text(
+            stepLabel,
+            key: ValueKey(stepLabel),
             style: TextStyle(
-              fontSize: 14,
+              fontSize: 15,
               color: textSecondary,
             ),
+            textAlign: TextAlign.center,
           ),
-        ],
+        ),
       ],
-    );
-  }
-
-  Widget _buildStepRow({
-    required _GenerationStep step,
-    required bool isActive,
-    required bool isComplete,
-    required bool isPending,
-    String? progress,
-    required bool isDark,
-    required Color textPrimary,
-    required Color textSecondary,
-  }) {
-    final checkColor = AppColors.success;
-    final activeColor = const Color(0xFF4A5FC1);
-    final pendingColor = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: Row(
-        children: [
-          // Status indicator
-          AnimatedContainer(
-            duration: const Duration(milliseconds: 300),
-            width: 24,
-            height: 24,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: isComplete
-                  ? checkColor.withValues(alpha: 0.15)
-                  : isActive
-                      ? activeColor.withValues(alpha: 0.15)
-                      : Colors.transparent,
-              border: Border.all(
-                color: isComplete
-                    ? checkColor
-                    : isActive
-                        ? activeColor
-                        : pendingColor.withValues(alpha: 0.3),
-                width: isComplete || isActive ? 2 : 1,
-              ),
-            ),
-            child: Center(
-              child: isComplete
-                  ? Icon(Icons.check, color: checkColor, size: 14)
-                  : isActive
-                      ? SizedBox(
-                          width: 12,
-                          height: 12,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            valueColor: AlwaysStoppedAnimation<Color>(activeColor),
-                          ),
-                        )
-                      : null,
-            ),
-          ),
-          const SizedBox(width: 12),
-
-          // Step title
-          Expanded(
-            child: Text(
-              step.title,
-              style: TextStyle(
-                fontSize: 15,
-                fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
-                color: isComplete || isActive ? textPrimary : pendingColor,
-              ),
-            ),
-          ),
-
-          // Progress percentage (if active)
-          if (progress != null)
-            Text(
-              progress,
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-                color: activeColor,
-              ),
-            ),
-        ],
-      ),
     );
   }
 

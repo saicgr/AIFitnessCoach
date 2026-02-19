@@ -78,6 +78,8 @@ import '../../core/services/fatigue_service.dart';
 import '../../core/providers/user_provider.dart';
 import '../../core/providers/warmup_duration_provider.dart';
 import '../../data/repositories/auth_repository.dart';
+import '../../data/repositories/exercise_preferences_repository.dart';
+import '../settings/equipment/environment_list_screen.dart';
 import '../../data/services/haptic_service.dart';
 import '../../data/services/pr_detection_service.dart';
 import '../../data/models/coach_persona.dart';
@@ -3278,28 +3280,31 @@ class _ActiveWorkoutScreenState
                           child: Row(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              // Exercise name and set counter
+                              // Exercise name and set counter (long-press for options)
                               Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      _exercises[_viewingExerciseIndex].name,
-                                      style: WorkoutDesign.titleStyle.copyWith(
-                                        fontSize: 26, // Bigger font size
-                                        color: isDark ? WorkoutDesign.textPrimary : Colors.grey.shade900,
+                                child: GestureDetector(
+                                  onLongPress: () => _showExerciseOptionsSheet(_viewingExerciseIndex),
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        _exercises[_viewingExerciseIndex].name,
+                                        style: WorkoutDesign.titleStyle.copyWith(
+                                          fontSize: 26, // Bigger font size
+                                          color: isDark ? WorkoutDesign.textPrimary : Colors.grey.shade900,
+                                        ),
+                                        maxLines: 2,
+                                        overflow: TextOverflow.ellipsis,
                                       ),
-                                      maxLines: 2,
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                    const SizedBox(height: 4),
-                                    Text(
-                                      'Set ${(_completedSets[_viewingExerciseIndex]?.length ?? 0) + 1} of ${_totalSetsPerExercise[_viewingExerciseIndex] ?? 3}',
-                                      style: WorkoutDesign.subtitleStyle.copyWith(
-                                        color: isDark ? WorkoutDesign.textSecondary : Colors.grey.shade600,
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        'Set ${(_completedSets[_viewingExerciseIndex]?.length ?? 0) + 1} of ${_totalSetsPerExercise[_viewingExerciseIndex] ?? 3}',
+                                        style: WorkoutDesign.subtitleStyle.copyWith(
+                                          color: isDark ? WorkoutDesign.textSecondary : Colors.grey.shade600,
+                                        ),
                                       ),
-                                    ),
-                                  ],
+                                    ],
+                                  ),
                                 ),
                               ),
                               const SizedBox(width: 8),
@@ -3489,6 +3494,7 @@ class _ActiveWorkoutScreenState
                               _currentExerciseIndex = index; // Allow working on any exercise
                             });
                           },
+                          onExerciseLongPress: (index) => _showExerciseOptionsSheet(index),
                           onAddTap: () => _showExerciseAddSheet(),
                           showAddButton: true,
                           onReorder: _onExercisesReordered,
@@ -4826,13 +4832,49 @@ class _ActiveWorkoutScreenState
 
   /// Show equipment sheet
   void _showEquipmentSheet(WorkoutExercise exercise) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     showGlassSheet(
       context: context,
-      builder: (context) => GlassSheet(
-        child: _buildInfoSheet(
-          title: 'Equipment',
-          content: 'Required: ${exercise.equipment ?? 'Bodyweight'}\n\nNo equipment? Tap Swap to find alternatives.',
-          icon: Icons.fitness_center,
+      builder: (sheetCtx) => GlassSheet(
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _buildInfoSheet(
+                title: 'Equipment',
+                content: 'Required: ${exercise.equipment ?? 'Bodyweight'}\n\nNo equipment? Tap Swap to find alternatives.',
+                icon: Icons.fitness_center,
+              ),
+              const SizedBox(height: 12),
+              SizedBox(
+                width: double.infinity,
+                child: TextButton.icon(
+                  onPressed: () {
+                    Navigator.pop(sheetCtx);
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const EnvironmentListScreen(),
+                      ),
+                    );
+                  },
+                  icon: Icon(
+                    Icons.settings_outlined,
+                    size: 18,
+                    color: isDark ? Colors.white70 : Colors.black54,
+                  ),
+                  label: Text(
+                    'Change Equipment Settings',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: isDark ? Colors.white70 : Colors.black54,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -6343,15 +6385,22 @@ class _ActiveWorkoutScreenState
       },
       onRemoveAndDontRecommend: () {
         _removeExerciseFromWorkout(exerciseIndex);
-        // TODO: Add to blacklist for AI recommendations
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('${exercise.name} removed and won\'t be recommended'),
-            duration: const Duration(seconds: 2),
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
+        _addToAvoidedExercises(exercise);
       },
+      onChangeEquipment: (exercise.equipment != null &&
+              exercise.equipment!.isNotEmpty &&
+              !exercise.equipment!.toLowerCase().contains('bodyweight') &&
+              !exercise.equipment!.toLowerCase().contains('body weight') &&
+              exercise.equipment!.toLowerCase() != 'none')
+          ? () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => const EnvironmentListScreen(),
+                ),
+              );
+            }
+          : null,
     );
   }
 
@@ -6461,6 +6510,49 @@ class _ActiveWorkoutScreenState
         ),
       ),
     );
+  }
+
+  /// Add exercise to the avoided exercises list
+  Future<void> _addToAvoidedExercises(WorkoutExercise exercise) async {
+    try {
+      final apiClient = ref.read(apiClientProvider);
+      final userId = await apiClient.getUserId();
+      if (userId == null) return;
+
+      final repo = ref.read(exercisePreferencesRepositoryProvider);
+      await repo.addAvoidedExercise(
+        userId,
+        exercise.name,
+        reason: 'Excluded during workout',
+      );
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('${exercise.name} won\'t be recommended again'),
+            duration: const Duration(seconds: 3),
+            behavior: SnackBarBehavior.floating,
+            action: SnackBarAction(
+              label: 'Manage',
+              onPressed: () {
+                context.push('/settings/avoided-exercises');
+              },
+            ),
+          ),
+        );
+      }
+    } catch (e) {
+      debugPrint('❌ [ActiveWorkout] Error adding avoided exercise: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('${exercise.name} removed but could not update preferences'),
+            duration: const Duration(seconds: 2),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    }
   }
 }
 
@@ -6750,6 +6842,35 @@ class _ExerciseDetailsSheetContentState
                               textPrimary: textPrimary,
                               textSecondary: textSecondary,
                             ),
+
+                            // "Don't have this equipment?" link (only for non-bodyweight)
+                            if (exercise.equipment != null &&
+                                exercise.equipment!.isNotEmpty &&
+                                !exercise.equipment!.toLowerCase().contains('bodyweight') &&
+                                !exercise.equipment!.toLowerCase().contains('body weight') &&
+                                exercise.equipment!.toLowerCase() != 'none')
+                              Padding(
+                                padding: const EdgeInsets.only(left: 40, top: 2, bottom: 4),
+                                child: GestureDetector(
+                                  onTap: () {
+                                    Navigator.pop(context);
+                                    Navigator.push(
+                                      this.context,
+                                      MaterialPageRoute(
+                                        builder: (_) => const EnvironmentListScreen(),
+                                      ),
+                                    );
+                                  },
+                                  child: Text(
+                                    "Don't have this equipment?",
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: accentColor,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ),
+                              ),
 
                             // Difficulty (if available)
                             if (exercise.difficulty != null)

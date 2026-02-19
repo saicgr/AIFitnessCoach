@@ -1,5 +1,7 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'api_client.dart';
 
 /// Persistent cache for S3 presigned URLs.
 /// URLs are cached with expiration to avoid stale presigned URLs.
@@ -95,6 +97,39 @@ class ImageUrlCache {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_cacheKey, json.encode(_memoryCache));
     await prefs.setInt(_timestampKey, DateTime.now().millisecondsSinceEpoch);
+  }
+
+  /// Batch pre-fetch image URLs for multiple exercises in a single API call.
+  /// Calls POST /exercise-images/batch and caches all results.
+  static Future<void> batchPreFetch(
+    List<String> names,
+    ApiClient apiClient,
+  ) async {
+    if (names.isEmpty) return;
+
+    // Filter out names already in cache
+    final uncachedNames =
+        names.where((name) => get(name) == null).toList();
+    if (uncachedNames.isEmpty) return;
+
+    try {
+      final response = await apiClient.post(
+        '/exercise-images/batch',
+        data: {'names': uncachedNames.take(100).toList()},
+      );
+
+      if (response.statusCode == 200 && response.data != null) {
+        final rawUrls = response.data['urls'] as Map?;
+        if (rawUrls != null && rawUrls.isNotEmpty) {
+          final urls = rawUrls.map<String, String>(
+            (key, value) => MapEntry(key.toString(), value.toString()),
+          );
+          await setAll(urls);
+        }
+      }
+    } catch (e) {
+      debugPrint('⚠️ Batch image pre-fetch failed: $e');
+    }
   }
 
   /// Clear all cached URLs (call when presigned URLs might have expired)

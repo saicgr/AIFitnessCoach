@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 import 'dart:ui';
 import 'package:firebase_core/firebase_core.dart';
@@ -46,6 +47,13 @@ class NotificationPrefsKeys {
   static const movementReminderStartTime = 'notif_movement_start_time';
   static const movementReminderEndTime = 'notif_movement_end_time';
   static const movementStepThreshold = 'notif_movement_step_threshold';
+  // Smart timing
+  static const smartTimingEnabled = 'notif_smart_timing_enabled';
+  // Cached user context
+  static const cachedUserName = 'notif_cached_user_name';
+  static const cachedStreak = 'notif_cached_streak';
+  // App open times for smart timing
+  static const appOpenTimes = 'notif_app_open_times';
 }
 
 /// Notification preferences state
@@ -76,6 +84,8 @@ class NotificationPreferences {
   final String movementReminderStartTime;
   final String movementReminderEndTime;
   final int movementStepThreshold; // Steps per hour threshold (default 250)
+  // Smart timing
+  final bool smartTimingEnabled;
 
   const NotificationPreferences({
     this.workoutReminders = true,
@@ -104,6 +114,8 @@ class NotificationPreferences {
     this.movementReminderStartTime = '09:00',
     this.movementReminderEndTime = '17:00',
     this.movementStepThreshold = 250, // 250 steps per hour threshold
+    // Smart timing
+    this.smartTimingEnabled = false,
   });
 
   NotificationPreferences copyWith({
@@ -131,6 +143,7 @@ class NotificationPreferences {
     String? movementReminderStartTime,
     String? movementReminderEndTime,
     int? movementStepThreshold,
+    bool? smartTimingEnabled,
   }) {
     return NotificationPreferences(
       workoutReminders: workoutReminders ?? this.workoutReminders,
@@ -157,6 +170,7 @@ class NotificationPreferences {
       movementReminderStartTime: movementReminderStartTime ?? this.movementReminderStartTime,
       movementReminderEndTime: movementReminderEndTime ?? this.movementReminderEndTime,
       movementStepThreshold: movementStepThreshold ?? this.movementStepThreshold,
+      smartTimingEnabled: smartTimingEnabled ?? this.smartTimingEnabled,
     );
   }
 
@@ -185,6 +199,7 @@ class NotificationPreferences {
         'movement_reminder_start_time': movementReminderStartTime,
         'movement_reminder_end_time': movementReminderEndTime,
         'movement_step_threshold': movementStepThreshold,
+        'smart_timing_enabled': smartTimingEnabled,
       };
 }
 
@@ -840,6 +855,261 @@ class NotificationService {
   /// Base notification ID for schedule reminders (7000-7999 range)
   static const int _scheduleReminderBaseId = 7000;
 
+  // ─────────────────────────────────────────────────────────────────
+  // Template Rotation Lists
+  // ─────────────────────────────────────────────────────────────────
+
+  /// Get day-of-year (0-365) for template rotation
+  static int _getDayOfYear() {
+    final now = DateTime.now();
+    return now.difference(DateTime(now.year, 1, 1)).inDays;
+  }
+
+  // Workout reminder templates (8 variants)
+  static const _workoutTitles = [
+    'Time to Work Out!',
+    'Your Workout Awaits!',
+    'Ready to Train?',
+    'Let\'s Get Moving!',
+    'Gym Time!',
+    'Sweat Session Time!',
+    'Workout O\'Clock!',
+    'Time to Crush It!',
+  ];
+  static const _workoutBodies = [
+    'Your workout is waiting. Let\'s crush those goals today!',
+    'Consistency builds results. Show up and give it your best!',
+    'Every rep counts. Let\'s make today a strong one!',
+    'Your future self will thank you. Let\'s go!',
+    'No excuses today - your body is ready for this!',
+    'Progress happens one workout at a time. Start now!',
+    'You\'re stronger than you think. Prove it today!',
+    'The hardest part is starting. After that, it\'s all momentum!',
+  ];
+
+  // Nutrition breakfast templates (8 variants)
+  static const _breakfastTitles = [
+    'Breakfast Time!',
+    'Good Morning! Time to Eat!',
+    'Fuel Your Morning!',
+    'Rise & Eat!',
+    'Morning Fuel Check!',
+    'Breakfast is Calling!',
+    'Start Your Day Right!',
+    'AM Nutrition Check!',
+  ];
+  static const _breakfastBodies = [
+    'Don\'t forget to log your breakfast and start the day right!',
+    'A good breakfast sets the tone. Log your morning meal!',
+    'Fuel up for the day ahead. What are you having?',
+    'Breakfast powers your morning. Track it to stay on target!',
+    'Your metabolism needs a kickstart. Log your breakfast!',
+    'Morning nutrition matters. Don\'t skip tracking!',
+    'Start strong with a logged breakfast!',
+    'What\'s fueling your morning? Log it now!',
+  ];
+
+  // Nutrition lunch templates (8 variants)
+  static const _lunchTitles = [
+    'Lunch Time!',
+    'Midday Meal!',
+    'Time for Lunch!',
+    'Lunch Break!',
+    'Noon Nutrition!',
+    'Midday Fuel Up!',
+    'Lunchtime Log!',
+    'Afternoon Fuel!',
+  ];
+  static const _lunchBodies = [
+    'Time for lunch! Remember to log your meal.',
+    'Keep your nutrition on track. Log your lunch!',
+    'Midday fuel matters. What are you having?',
+    'Stay consistent - log your lunch to hit your goals!',
+    'A balanced lunch keeps you going. Track it!',
+    'Don\'t let lunch go untracked. Log it now!',
+    'Halfway through the day - keep your nutrition dialed in!',
+    'Your afternoon energy depends on lunch. Log it!',
+  ];
+
+  // Nutrition dinner templates (8 variants)
+  static const _dinnerTitles = [
+    'Dinner Time!',
+    'Evening Meal!',
+    'Time for Dinner!',
+    'Dinner is Served!',
+    'Evening Nutrition!',
+    'Dinnertime Log!',
+    'Last Meal of the Day!',
+    'Evening Fuel Check!',
+  ];
+  static const _dinnerBodies = [
+    'Enjoy your dinner! Don\'t forget to log it.',
+    'Finish the day strong - log your dinner!',
+    'Evening nutrition counts. Track your dinner!',
+    'Almost done for the day. Log your final meal!',
+    'A well-tracked day ends with a logged dinner!',
+    'Your dinner matters for recovery. Log it!',
+    'Complete your food diary - log dinner now!',
+    'End the day right. Track your evening meal!',
+  ];
+
+  // Hydration templates (expanded to 8 variants)
+  static const _hydrationTitles = [
+    'Hydration Check!',
+    'Water Break Time!',
+    'Stay Hydrated!',
+    'Drink Up!',
+    'H2O Reminder!',
+    'Thirst Alert!',
+    'Water O\'Clock!',
+    'Sip Reminder!',
+  ];
+  static const _hydrationBodies = [
+    'Time to drink some water. Your body will thank you!',
+    'A quick water break keeps you energized.',
+    'Staying hydrated helps your workout performance!',
+    'Don\'t forget to hydrate! It\'s essential for recovery.',
+    'Water fuels everything. Take a sip now!',
+    'Hydration boosts focus and energy. Drink up!',
+    'Keep that water bottle handy. Time for a refill!',
+    'Your muscles need water to perform. Hydrate now!',
+  ];
+
+  // Streak alert templates (8 variants)
+  static const _streakTitles = [
+    'Keep Your Streak Alive!',
+    'Don\'t Break the Chain!',
+    'Streak Check!',
+    'Your Streak Needs You!',
+    'Streak in Danger!',
+    'Keep It Going!',
+    'Streak Reminder!',
+    'Stay Consistent!',
+  ];
+  static const _streakBodies = [
+    'Don\'t break your streak! Complete a workout today.',
+    'Your streak is counting on you. Get moving!',
+    'One workout keeps the streak alive. You got this!',
+    'Streaks build habits. Don\'t let today be the break!',
+    'Your consistency is impressive. Keep it up today!',
+    'A streak is a promise to yourself. Honor it!',
+    'Every day counts. Protect your streak!',
+    'Champions don\'t skip days. Keep your streak going!',
+  ];
+
+  // Weekly summary templates (8 variants)
+  static const _weeklySummaryTitles = [
+    'Your Weekly Summary is Ready!',
+    'Week in Review!',
+    'Weekly Progress Report!',
+    'How Was Your Week?',
+    'Weekly Fitness Recap!',
+    'Your Week at a Glance!',
+    'Progress Check-In!',
+    'Weekly Wrap-Up!',
+  ];
+  static const _weeklySummaryBodies = [
+    'Check out your progress from the past week.',
+    'See how you did this week. Tap to review!',
+    'Your weekly stats are in. Take a look!',
+    'Reflect on your week and plan for the next one!',
+    'Numbers don\'t lie. See your weekly progress!',
+    'Another week done! Review your achievements.',
+    'Your hard work is tracked. Check your summary!',
+    'Week complete! See what you accomplished.',
+  ];
+
+  // ─────────────────────────────────────────────────────────────────
+  // Cached User Context
+  // ─────────────────────────────────────────────────────────────────
+
+  /// Cache user's first name and streak count for personalized notifications
+  static Future<void> cacheUserContext(String name, int streak) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(NotificationPrefsKeys.cachedUserName, name);
+    await prefs.setInt(NotificationPrefsKeys.cachedStreak, streak);
+    debugPrint('🔔 [Cache] User context cached: name=$name, streak=$streak');
+  }
+
+  /// Get cached user name (returns null if not cached)
+  static Future<String?> _getCachedUserName() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(NotificationPrefsKeys.cachedUserName);
+  }
+
+  /// Get cached streak count (returns null if not cached)
+  static Future<int?> _getCachedStreak() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getInt(NotificationPrefsKeys.cachedStreak);
+  }
+
+  // ─────────────────────────────────────────────────────────────────
+  // Smart Timing (App Open Tracking)
+  // ─────────────────────────────────────────────────────────────────
+
+  /// Record an app open timestamp for smart timing calculation.
+  /// Maintains a rolling 14-day list of ISO timestamps.
+  static Future<void> recordAppOpen() async {
+    final prefs = await SharedPreferences.getInstance();
+    final raw = prefs.getString(NotificationPrefsKeys.appOpenTimes);
+    final List<String> timestamps = raw != null
+        ? List<String>.from(jsonDecode(raw) as List)
+        : <String>[];
+
+    timestamps.add(DateTime.now().toIso8601String());
+
+    // Trim to 14 days
+    final cutoff = DateTime.now().subtract(const Duration(days: 14));
+    timestamps.removeWhere((t) {
+      final dt = DateTime.tryParse(t);
+      return dt == null || dt.isBefore(cutoff);
+    });
+
+    await prefs.setString(NotificationPrefsKeys.appOpenTimes, jsonEncode(timestamps));
+    debugPrint('🔔 [SmartTiming] Recorded app open (${timestamps.length} data points)');
+  }
+
+  /// Calculate the optimal hour for workout reminders based on app usage patterns.
+  /// Uses weighted average with recency decay over 14 days.
+  /// Returns null if fewer than 5 data points.
+  Future<int?> _calculateOptimalHour() async {
+    final prefs = await SharedPreferences.getInstance();
+    final raw = prefs.getString(NotificationPrefsKeys.appOpenTimes);
+    if (raw == null) return null;
+
+    final List<String> timestamps = List<String>.from(jsonDecode(raw) as List);
+    if (timestamps.length < 5) return null;
+
+    final now = DateTime.now();
+    // Weight each hour bucket by recency
+    final hourWeights = List<double>.filled(24, 0.0);
+
+    for (final t in timestamps) {
+      final dt = DateTime.tryParse(t);
+      if (dt == null) continue;
+
+      final daysAgo = now.difference(dt).inDays;
+      // Recency weight: 1.0 for today, decays linearly to ~0.07 at 14 days
+      final weight = 1.0 - (daysAgo / 15.0);
+      if (weight <= 0) continue;
+
+      hourWeights[dt.hour] += weight;
+    }
+
+    // Find the hour with the highest weighted score
+    double maxWeight = 0;
+    int bestHour = 8; // default fallback
+    for (int h = 0; h < 24; h++) {
+      if (hourWeights[h] > maxWeight) {
+        maxWeight = hourWeights[h];
+        bestHour = h;
+      }
+    }
+
+    debugPrint('🔔 [SmartTiming] Optimal hour calculated: $bestHour (weight: ${maxWeight.toStringAsFixed(2)})');
+    return bestHour;
+  }
+
   /// Parse time string (e.g. "08:00") to hour and minute
   (int hour, int minute) _parseTime(String time) {
     final parts = time.split(':');
@@ -884,7 +1154,10 @@ class NotificationService {
 
     // Schedule each type if enabled
     if (prefs.workoutReminders) {
-      await scheduleWorkoutReminder(prefs.workoutReminderTime);
+      await scheduleWorkoutReminder(
+        prefs.workoutReminderTime,
+        smartTimingEnabled: prefs.smartTimingEnabled,
+      );
     }
 
     if (prefs.nutritionReminders) {
@@ -924,9 +1197,20 @@ class NotificationService {
     debugPrint('🔔 [Schedule] All scheduled notifications cancelled');
   }
 
-  /// Schedule daily workout reminder
-  Future<void> scheduleWorkoutReminder(String time) async {
-    final (hour, minute) = _parseTime(time);
+  /// Schedule daily workout reminder with template rotation and smart timing
+  Future<void> scheduleWorkoutReminder(String time, {bool smartTimingEnabled = false}) async {
+    var (hour, minute) = _parseTime(time);
+
+    // Smart timing: override hour if enabled and enough data
+    if (smartTimingEnabled) {
+      final optimalHour = await _calculateOptimalHour();
+      if (optimalHour != null) {
+        hour = optimalHour;
+        minute = 0;
+        debugPrint('🔔 [SmartTiming] Using optimal hour $hour for workout reminder');
+      }
+    }
+
     final scheduledDate = _nextInstanceOfTime(hour, minute);
 
     final channelConfig = _channelConfigs['workout_reminder']!;
@@ -940,10 +1224,21 @@ class NotificationService {
       color: channelConfig.color,
     );
 
+    // Template rotation
+    final dayIndex = _getDayOfYear();
+    var title = _workoutTitles[dayIndex % _workoutTitles.length];
+    var body = _workoutBodies[dayIndex % _workoutBodies.length];
+
+    // Personalize with cached user context
+    final userName = await _getCachedUserName();
+    if (userName != null && userName.isNotEmpty) {
+      title = '$userName, ${title[0].toLowerCase()}${title.substring(1)}';
+    }
+
     await _localNotifications.zonedSchedule(
       _workoutNotificationId,
-      '💪 Time to Work Out!',
-      'Your workout is waiting. Let\'s crush those goals today!',
+      title,
+      body,
       scheduledDate,
       NotificationDetails(android: androidDetails, iOS: const DarwinNotificationDetails()),
       androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
@@ -951,10 +1246,10 @@ class NotificationService {
       uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
     );
 
-    debugPrint('🔔 [Schedule] Workout reminder scheduled for $time daily');
+    debugPrint('🔔 [Schedule] Workout reminder scheduled for $hour:${minute.toString().padLeft(2, '0')} daily (smart=$smartTimingEnabled)');
   }
 
-  /// Schedule nutrition reminders (breakfast, lunch, dinner)
+  /// Schedule nutrition reminders (breakfast, lunch, dinner) with template rotation
   Future<void> scheduleNutritionReminders(
     String breakfastTime,
     String lunchTime,
@@ -971,12 +1266,14 @@ class NotificationService {
       color: channelConfig.color,
     );
 
+    final dayIndex = _getDayOfYear();
+
     // Breakfast
     final (bHour, bMinute) = _parseTime(breakfastTime);
     await _localNotifications.zonedSchedule(
       _nutritionBreakfastId,
-      '🍳 Breakfast Time!',
-      'Don\'t forget to log your breakfast and start the day right!',
+      _breakfastTitles[dayIndex % _breakfastTitles.length],
+      _breakfastBodies[dayIndex % _breakfastBodies.length],
       _nextInstanceOfTime(bHour, bMinute),
       NotificationDetails(android: androidDetails, iOS: const DarwinNotificationDetails()),
       androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
@@ -988,8 +1285,8 @@ class NotificationService {
     final (lHour, lMinute) = _parseTime(lunchTime);
     await _localNotifications.zonedSchedule(
       _nutritionLunchId,
-      '🥗 Lunch Time!',
-      'Time for lunch! Remember to log your meal.',
+      _lunchTitles[dayIndex % _lunchTitles.length],
+      _lunchBodies[dayIndex % _lunchBodies.length],
       _nextInstanceOfTime(lHour, lMinute),
       NotificationDetails(android: androidDetails, iOS: const DarwinNotificationDetails()),
       androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
@@ -1001,8 +1298,8 @@ class NotificationService {
     final (dHour, dMinute) = _parseTime(dinnerTime);
     await _localNotifications.zonedSchedule(
       _nutritionDinnerId,
-      '🍽️ Dinner Time!',
-      'Enjoy your dinner! Don\'t forget to log it.',
+      _dinnerTitles[dayIndex % _dinnerTitles.length],
+      _dinnerBodies[dayIndex % _dinnerBodies.length],
       _nextInstanceOfTime(dHour, dMinute),
       NotificationDetails(android: androidDetails, iOS: const DarwinNotificationDetails()),
       androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
@@ -1013,7 +1310,7 @@ class NotificationService {
     debugPrint('🔔 [Schedule] Nutrition reminders scheduled: Breakfast=$breakfastTime, Lunch=$lunchTime, Dinner=$dinnerTime');
   }
 
-  /// Schedule hydration reminders at intervals
+  /// Schedule hydration reminders at intervals with template rotation
   Future<void> scheduleHydrationReminders(
     String startTime,
     String endTime,
@@ -1037,28 +1334,20 @@ class NotificationService {
     final startMinutes = startHour * 60 + startMinute;
     final endMinutes = endHour * 60 + endMinute;
 
+    final dayIndex = _getDayOfYear();
     int notificationIndex = 0;
-    final hydrationMessages = [
-      '💧 Hydration Check!',
-      '🚰 Water Break Time!',
-      '💦 Stay Hydrated!',
-      '🥤 Drink Up!',
-    ];
-    final hydrationBodies = [
-      'Time to drink some water. Your body will thank you!',
-      'A quick water break keeps you energized.',
-      'Staying hydrated helps your workout performance!',
-      'Don\'t forget to hydrate! It\'s essential for recovery.',
-    ];
 
     for (int minutes = startMinutes; minutes <= endMinutes; minutes += intervalMinutes) {
       final hour = minutes ~/ 60;
       final minute = minutes % 60;
 
+      // Combine day + index for varied rotation across reminders in a day
+      final templateIndex = (dayIndex + notificationIndex) % _hydrationTitles.length;
+
       await _localNotifications.zonedSchedule(
         _hydrationBaseId + notificationIndex,
-        hydrationMessages[notificationIndex % hydrationMessages.length],
-        hydrationBodies[notificationIndex % hydrationBodies.length],
+        _hydrationTitles[templateIndex],
+        _hydrationBodies[templateIndex],
         _nextInstanceOfTime(hour, minute),
         NotificationDetails(android: androidDetails, iOS: const DarwinNotificationDetails()),
         androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
@@ -1071,7 +1360,7 @@ class NotificationService {
     debugPrint('🔔 [Schedule] $notificationIndex hydration reminders scheduled from $startTime to $endTime every $intervalMinutes minutes');
   }
 
-  /// Schedule daily streak alert
+  /// Schedule daily streak alert with template rotation and personalization
   Future<void> scheduleStreakAlert(String time) async {
     final (hour, minute) = _parseTime(time);
     final scheduledDate = _nextInstanceOfTime(hour, minute);
@@ -1087,10 +1376,21 @@ class NotificationService {
       color: channelConfig.color,
     );
 
+    // Template rotation
+    final dayIndex = _getDayOfYear();
+    final title = _streakTitles[dayIndex % _streakTitles.length];
+    var body = _streakBodies[dayIndex % _streakBodies.length];
+
+    // Personalize with cached streak count
+    final streak = await _getCachedStreak();
+    if (streak != null && streak > 0) {
+      body = '$body You\'re on a $streak-day streak!';
+    }
+
     await _localNotifications.zonedSchedule(
       _streakAlertId,
-      '🔥 Keep Your Streak Alive!',
-      'Don\'t break your streak! Complete a workout today.',
+      title,
+      body,
       scheduledDate,
       NotificationDetails(android: androidDetails, iOS: const DarwinNotificationDetails()),
       androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
@@ -1101,7 +1401,7 @@ class NotificationService {
     debugPrint('🔔 [Schedule] Streak alert scheduled for $time daily');
   }
 
-  /// Schedule weekly summary notification
+  /// Schedule weekly summary notification with template rotation
   Future<void> scheduleWeeklySummary(int day, String time) async {
     final (hour, minute) = _parseTime(time);
     // Convert day (0=Sunday) to DateTime weekday (1=Monday, 7=Sunday)
@@ -1119,10 +1419,15 @@ class NotificationService {
       color: channelConfig.color,
     );
 
+    // Template rotation (use week number for weekly notifications)
+    final weekIndex = _getDayOfYear() ~/ 7;
+    final title = _weeklySummaryTitles[weekIndex % _weeklySummaryTitles.length];
+    final body = _weeklySummaryBodies[weekIndex % _weeklySummaryBodies.length];
+
     await _localNotifications.zonedSchedule(
       _weeklySummaryId,
-      '📊 Your Weekly Summary is Ready!',
-      'Check out your progress from the past week.',
+      title,
+      body,
       scheduledDate,
       NotificationDetails(android: androidDetails, iOS: const DarwinNotificationDetails()),
       androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
@@ -1547,6 +1852,8 @@ class NotificationPreferencesNotifier extends StateNotifier<NotificationPreferen
       movementReminderStartTime: _prefs.getString(NotificationPrefsKeys.movementReminderStartTime) ?? '09:00',
       movementReminderEndTime: _prefs.getString(NotificationPrefsKeys.movementReminderEndTime) ?? '17:00',
       movementStepThreshold: _prefs.getInt(NotificationPrefsKeys.movementStepThreshold) ?? 250,
+      // Smart timing
+      smartTimingEnabled: _prefs.getBool(NotificationPrefsKeys.smartTimingEnabled) ?? false,
     );
     // Schedule notifications on load
     _rescheduleNotifications();
@@ -1705,6 +2012,13 @@ class NotificationPreferencesNotifier extends StateNotifier<NotificationPreferen
   Future<void> setMovementStepThreshold(int threshold) async {
     await _prefs.setInt(NotificationPrefsKeys.movementStepThreshold, threshold);
     state = state.copyWith(movementStepThreshold: threshold);
+    await _syncPreferencesToBackend();
+  }
+
+  Future<void> setSmartTimingEnabled(bool value) async {
+    await _prefs.setBool(NotificationPrefsKeys.smartTimingEnabled, value);
+    state = state.copyWith(smartTimingEnabled: value);
+    await _rescheduleNotifications();
     await _syncPreferencesToBackend();
   }
 }

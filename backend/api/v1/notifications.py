@@ -8,6 +8,8 @@ ENDPOINTS:
 - POST /api/v1/notifications/billing/{user_id}/preferences - Update billing notification preferences
 - POST /api/v1/notifications/billing/{user_id}/dismiss-banner - Dismiss renewal banner
 - POST /api/v1/notifications/scheduler/send-billing-reminders - Send due billing reminders
+- POST /api/v1/notifications/track-interaction - Track notification open/interaction
+- POST /api/v1/notifications/scheduler/recalculate-optimal-times - Recalculate optimal send times
 """
 
 from datetime import datetime, timedelta
@@ -19,6 +21,7 @@ from core.supabase_db import get_supabase_db
 from core.supabase_client import get_supabase
 from core.logger import get_logger
 from services.notification_service import get_notification_service
+from services.optimal_time_service import recalculate_all_optimal_times
 from core.activity_logger import log_user_activity, log_user_error
 
 router = APIRouter()
@@ -382,7 +385,7 @@ async def check_inactive_users():
 
         # Get all users with FCM tokens
         users_response = db.client.table("users").select(
-            "id, name, fcm_token, notification_preferences"
+            "id, name, fcm_token, notification_preferences, timezone"
         ).not_.is_("fcm_token", "null").execute()
 
         users = users_response.data if users_response.data else []
@@ -438,6 +441,8 @@ async def check_inactive_users():
                     success = await notification_service.send_missed_workout_guilt(
                         fcm_token=fcm_token,
                         days_missed=days_missed,
+                        user_name=user.get("name"),
+                        user_timezone=user.get("timezone"),
                     )
 
                     if success:
@@ -528,6 +533,7 @@ async def send_workout_reminders():
                     fcm_token=fcm_token,
                     workout_name=workout_name,
                     user_name=user.get("name"),
+                    user_timezone=user.get("timezone"),
                 )
 
                 if success:
@@ -580,13 +586,20 @@ async def scheduler_status():
                 "method": "POST",
                 "description": "Send NEAT movement reminders to sedentary users",
                 "recommended_schedule": "Hourly (on the hour, e.g., 9am, 10am, ...)"
+            },
+            {
+                "path": "/scheduler/recalculate-optimal-times",
+                "method": "POST",
+                "description": "Recalculate optimal notification send times for all users",
+                "recommended_schedule": "Daily at 3am UTC"
             }
         ],
         "notes": [
             "These endpoints should be called by external cron jobs (e.g., Render cron, AWS CloudWatch)",
             "Each endpoint respects user notification preferences",
             "Users without FCM tokens are skipped",
-            "Movement reminders require step data synced from the mobile app"
+            "Movement reminders require step data synced from the mobile app",
+            "Optimal time recalculation uses notification open events and app activity data"
         ]
     }
 
@@ -1098,6 +1111,110 @@ def _is_upgrade(old_plan: str, new_plan: str) -> bool:
     old_level = tier_levels.get(old_plan.lower(), 0)
     new_level = tier_levels.get(new_plan.lower(), 0)
     return new_level > old_level
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# NOTIFICATION INTERACTION TRACKING + OPTIMAL TIME ENDPOINTS
+# ─────────────────────────────────────────────────────────────────────────────
+
+
+class TrackInteractionRequest(BaseModel):
+    """Request body for tracking a notification interaction."""
+    notification_type: str
+    opened_at: str  # ISO timestamp
+
+
+@router.post("/track-interaction")
+async def track_notification_interaction(
+    request: TrackInteractionRequest,
+    user_id: str = None,
+):
+    """
+    Track when a user opens/interacts with a notification.
+
+    Updates the most recent matching notification_event for this user/type
+    that hasn't been opened yet.
+    """
+    if not user_id:
+        raise HTTPException(status_code=400, detail="user_id query parameter is required")
+
+    logger.info(f"Tracking notification interaction for user {user_id}: {request.notification_type}")
+
+    try:
+        supabase = get_supabase()
+
+        # Parse the opened_at timestamp
+        try:
+            opened_dt = datetime.fromisoformat(request.opened_at.replace("Z", "+00:00"))
+        except ValueError:
+            raise HTTPException(status_code=400, detail="Invalid opened_at timestamp format")
+
+        local_hour_opened = opened_dt.hour
+
+        # Find the most recent unread notification event for this user/type
+        event_resp = supabase.client.table("notification_events").select(
+            "id"
+        ).eq("user_id", user_id).eq(
+            "notification_type", request.notification_type
+        ).is_("opened_at", "null").order(
+            "sent_at", desc=True
+        ).limit(1).execute()
+
+        if not event_resp.data:
+            # No matching unread event found - create a new interaction record
+            supabase.client.table("notification_events").insert({
+                "user_id": user_id,
+                "notification_type": request.notification_type,
+                "sent_at": request.opened_at,
+                "opened_at": request.opened_at,
+                "local_hour_opened": local_hour_opened,
+            }).execute()
+
+            return {
+                "success": True,
+                "message": "Interaction recorded (new event created)",
+                "user_id": user_id,
+            }
+
+        # Update the existing event
+        event_id = event_resp.data[0]["id"]
+        supabase.client.table("notification_events").update({
+            "opened_at": request.opened_at,
+            "local_hour_opened": local_hour_opened,
+        }).eq("id", event_id).execute()
+
+        return {
+            "success": True,
+            "message": "Interaction tracked",
+            "user_id": user_id,
+            "event_id": event_id,
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error tracking notification interaction: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/scheduler/recalculate-optimal-times")
+async def recalculate_optimal_times():
+    """
+    Recalculate optimal notification send times for all active users.
+
+    This endpoint should be called daily by a cron job (recommended: 3am UTC).
+    Uses notification open events and app activity data to determine the best
+    hour to send each type of notification per user.
+    """
+    logger.info("Running scheduler: recalculating optimal notification times")
+
+    try:
+        results = await recalculate_all_optimal_times()
+        logger.info(f"Optimal times recalculation complete: {results}")
+        return results
+    except Exception as e:
+        logger.error(f"Error recalculating optimal times: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 # ─────────────────────────────────────────────────────────────────────────────

@@ -6,7 +6,8 @@ Sends push notifications to users via Firebase Cloud Messaging (FCM)
 import os
 import json
 import logging
-from typing import Optional, Dict, Any, List
+import random
+from typing import Optional, Dict, Any, List, Tuple
 from datetime import datetime
 
 logger = logging.getLogger(__name__)
@@ -122,6 +123,144 @@ class NotificationService:
         },
     ]
 
+    # ─────────────────────────────────────────────────────────────────
+    # Phase 1: Template Pools
+    # ─────────────────────────────────────────────────────────────────
+
+    # 1a. Workout reminder templates with {name} and {workout_name} placeholders
+    WORKOUT_REMINDER_TEMPLATES = [
+        {"title": "Hey {name}, your {workout_name} is ready!", "body": "Your body is primed and waiting. Let's make today count."},
+        {"title": "Today's plan: {workout_name}", "body": "Everything's set, {name}. Just press play."},
+        {"title": "{name}, ready to train?", "body": "One session closer to your goals."},
+        {"title": "Time to move, {name}!", "body": "Your {workout_name} won't do itself. Let's go!"},
+        {"title": "{workout_name} awaits!", "body": "Show up today and your future self will thank you."},
+        {"title": "Let's get after it, {name}!", "body": "Your {workout_name} is loaded and ready to roll."},
+        {"title": "Training time!", "body": "{name}, your {workout_name} is calling. Answer with action."},
+        {"title": "Your workout is set!", "body": "{workout_name} is ready. Lace up and let's do this, {name}."},
+        {"title": "Ready when you are, {name}!", "body": "Today's {workout_name} is waiting. Let's build something great."},
+        {"title": "Rise and grind!", "body": "{name}, your {workout_name} is prepped. Time to earn it."},
+    ]
+
+    # 1b. Inactivity nudge templates - 3 tiers, positive/progress-affirming (NO guilt/shame)
+    INACTIVITY_NUDGE_1DAY = [
+        {"title": "Pick up where you left off!", "body": "Your next workout is ready whenever you are."},
+        {"title": "Quick check-in!", "body": "Yesterday was rest -- today's a fresh start."},
+        {"title": "One day off, no worries!", "body": "Consistency is about the long game. Ready to jump back in?"},
+        {"title": "Your workout is waiting!", "body": "A single session can set the tone for the whole week."},
+    ]
+    INACTIVITY_NUDGE_2DAY = [
+        {"title": "Two days off -- feeling rested?", "body": "Sometimes rest is progress. Ready to move again?"},
+        {"title": "Recharged and ready?", "body": "Two rest days in the bank. Time to spend that energy!"},
+        {"title": "Your body's had a break!", "body": "A quick session today can feel amazing after some rest."},
+        {"title": "Fresh start today?", "body": "Two days off means your muscles are recovered. Let's use that."},
+    ]
+    INACTIVITY_NUDGE_3PLUS_DAY = [
+        {"title": "Welcome back anytime!", "body": "It's been {days} days. No pressure -- just pick one exercise to start."},
+        {"title": "We saved your spot!", "body": "{days} days away, but your plan is still here. Start small."},
+        {"title": "Every comeback starts with one rep!", "body": "It's been {days} days. A 10-minute session is all it takes."},
+        {"title": "No judgment, just progress!", "body": "{days} days off? That's okay. Today is a great day to start fresh."},
+    ]
+
+    # 1c. Streak celebration templates with {streak} placeholder
+    STREAK_CELEBRATION_TEMPLATES = [
+        {"title": "{streak}-day streak!", "body": "You've shown up {streak} days in a row. That's real dedication."},
+        {"title": "Streak: {streak} days!", "body": "Consistency is your superpower. Keep it rolling!"},
+        {"title": "{streak} days strong!", "body": "Every day you show up, you're building a better you."},
+        {"title": "On fire: {streak} days!", "body": "This streak is proof that discipline beats motivation."},
+        {"title": "{streak} and counting!", "body": "You're not stopping anytime soon. Incredible work!"},
+        {"title": "Day {streak} -- unstoppable!", "body": "Most people quit by now. You didn't. Respect."},
+        {"title": "Still going: {streak} days!", "body": "Your future self is cheering right now."},
+        {"title": "{streak}-day champion!", "body": "This is what commitment looks like. Keep going!"},
+    ]
+    # Special milestone messages
+    STREAK_MILESTONE_TEMPLATES = {
+        7: {"title": "1 Week Streak!", "body": "7 days strong! You've built a real habit. This is just the beginning."},
+        14: {"title": "2 Week Streak!", "body": "14 days of consistency. You're officially in a groove!"},
+        30: {"title": "30-Day Streak!", "body": "A full month! You've proven this isn't a phase -- it's a lifestyle."},
+        50: {"title": "50 Days!", "body": "Half a hundred days of dedication. You're in elite company now."},
+        100: {"title": "100-Day Streak!", "body": "Triple digits! This is extraordinary discipline. Be proud."},
+        365: {"title": "365-Day Streak!", "body": "ONE FULL YEAR. You are a legend. Absolutely incredible."},
+    }
+
+    # 1d. Nutrition reminder templates per meal type
+    NUTRITION_BREAKFAST_TEMPLATES = [
+        {"title": "Good morning! Log your breakfast", "body": "Start your day right -- track what fuels your morning."},
+        {"title": "Breakfast time!", "body": "Snap a pic or log your meal to stay on track."},
+        {"title": "Fuel up!", "body": "A logged breakfast sets the tone for the whole day."},
+        {"title": "Morning fuel check!", "body": "What's on the plate? Log your breakfast to keep your streak."},
+        {"title": "Rise and eat!", "body": "Track your breakfast and start the day with intention."},
+        {"title": "Breakfast check-in!", "body": "Log your morning meal -- it takes 10 seconds."},
+        {"title": "Don't skip tracking!", "body": "Your breakfast matters. Log it to see your full picture."},
+        {"title": "Morning nutrition!", "body": "Quick -- log what you're eating before the day gets busy."},
+    ]
+    NUTRITION_LUNCH_TEMPLATES = [
+        {"title": "Lunchtime! Log your meal", "body": "Midday fuel matters. Keep your nutrition on point."},
+        {"title": "Lunch check-in!", "body": "What are you having? Log it in under 10 seconds."},
+        {"title": "Midday fuel!", "body": "Track your lunch to keep your nutrition goals on track."},
+        {"title": "Time to log lunch!", "body": "A quick snap or log keeps your day on track."},
+        {"title": "Lunch break = log break!", "body": "Take a sec to track what you're eating."},
+        {"title": "Halfway through the day!", "body": "Log your lunch to see how your macros are looking."},
+        {"title": "Fuel check!", "body": "Lunchtime logging keeps you aware and in control."},
+        {"title": "What's for lunch?", "body": "Log it now so you don't forget later!"},
+    ]
+    NUTRITION_DINNER_TEMPLATES = [
+        {"title": "Dinner time! Log your meal", "body": "End your day strong -- track your evening nutrition."},
+        {"title": "Evening fuel!", "body": "Log your dinner to complete today's nutrition picture."},
+        {"title": "Last meal of the day!", "body": "Track your dinner and see how you did today."},
+        {"title": "Dinner check-in!", "body": "What's on the plate tonight? Log it to stay on track."},
+        {"title": "Wrap up your nutrition!", "body": "Log dinner and you'll have a full day of tracking."},
+        {"title": "Time to log dinner!", "body": "A quick entry completes your daily nutrition log."},
+        {"title": "Evening nutrition check!", "body": "Track your dinner -- your tomorrow self will appreciate it."},
+        {"title": "Finish strong!", "body": "Log your dinner to close out today's nutrition."},
+    ]
+    NUTRITION_GENERIC_TEMPLATES = [
+        {"title": "Time to log your meal!", "body": "Tracking your food takes 10 seconds and pays off big."},
+        {"title": "Meal check-in!", "body": "Snap a photo or log what you're eating to stay on target."},
+        {"title": "Fuel your progress!", "body": "Log your meal to keep your nutrition goals on track."},
+        {"title": "Track your nutrition!", "body": "Quick -- log what you're eating before you forget."},
+        {"title": "Nutrition reminder!", "body": "Every meal logged is a step closer to your goals."},
+        {"title": "Don't forget to log!", "body": "A few taps now means better insights later."},
+        {"title": "Food tracking time!", "body": "Stay consistent with your logging. You're doing great!"},
+        {"title": "Log your meal!", "body": "Keeping track of nutrition is half the battle. You've got this."},
+    ]
+
+    # 1e. Hydration reminder templates - 3 tiers based on progress
+    # Low tier: <40% of goal
+    HYDRATION_LOW_TEMPLATES = [
+        {"title": "Time to hydrate!", "body": "You're at {percent}% of your water goal. Your body needs fuel!"},
+        {"title": "Water check!", "body": "Only {percent}% of your hydration goal so far. Grab a glass!"},
+        {"title": "Stay hydrated!", "body": "You're at {percent}%. A few glasses can make a big difference."},
+        {"title": "Drink up!", "body": "{percent}% of your water goal. Even a small sip counts!"},
+        {"title": "Hydration alert!", "body": "You're behind at {percent}%. Time to catch up on water."},
+        {"title": "Your body needs water!", "body": "At {percent}% of your goal. Pour yourself a tall glass!"},
+    ]
+    # Medium tier: 40-75% of goal
+    HYDRATION_MEDIUM_TEMPLATES = [
+        {"title": "Solid progress!", "body": "You're at {percent}% of your water goal. Keep sipping!"},
+        {"title": "Halfway there!", "body": "{percent}% of your hydration goal reached. Keep it up!"},
+        {"title": "Good hydration!", "body": "You're at {percent}%. A few more glasses to hit your target."},
+        {"title": "Keep drinking!", "body": "{percent}% done. You're on pace -- don't slow down now!"},
+    ]
+    # High tier: >75% of goal
+    HYDRATION_HIGH_TEMPLATES = [
+        {"title": "Almost there!", "body": "You're at {percent}% of your water goal. The finish line is close!"},
+        {"title": "So close!", "body": "{percent}% hydrated. Just a little more to hit your goal!"},
+        {"title": "Final stretch!", "body": "You're at {percent}%. One or two more glasses and you're done!"},
+        {"title": "Crushing it!", "body": "{percent}% of your water goal. You're almost at 100%!"},
+    ]
+
+    # 1f. Weekly summary templates with {count} placeholder
+    WEEKLY_SUMMARY_TEMPLATES = [
+        {"title": "Your weekly report is ready!", "body": "You completed {count} workout{s} this week. Check your progress!"},
+        {"title": "Week in review!", "body": "{count} workout{s} done this week. See how you stacked up!"},
+        {"title": "Weekly recap is here!", "body": "{count} session{s} this week. Tap to see your full breakdown."},
+        {"title": "Your progress this week!", "body": "{count} workout{s} completed. Let's see the numbers!"},
+        {"title": "Weekly summary ready!", "body": "This week: {count} workout{s}. Your report has all the details."},
+        {"title": "How'd your week go?", "body": "{count} training session{s} logged. Check your trends and stats!"},
+        {"title": "Time for your weekly review!", "body": "{count} workout{s} in the books. See your progress report."},
+        {"title": "Week complete!", "body": "You trained {count} time{s} this week. Your summary awaits!"},
+    ]
+
     # Default channel
     DEFAULT_CHANNEL_ID = "fitwiz_notifications"
 
@@ -132,6 +271,115 @@ class NotificationService:
     def _get_channel_id(self, notification_type: str) -> str:
         """Get the Android notification channel ID for a notification type"""
         return self.CHANNEL_IDS.get(notification_type, self.DEFAULT_CHANNEL_ID)
+
+    @staticmethod
+    def _get_time_of_day(user_timezone: Optional[str] = None) -> str:
+        """Get the time of day based on user's timezone.
+
+        Returns: 'morning' (5-12), 'afternoon' (12-17), 'evening' (17-21), 'night' (21-5)
+        """
+        try:
+            if user_timezone:
+                import pytz
+                tz = pytz.timezone(user_timezone)
+                hour = datetime.now(tz).hour
+            else:
+                hour = datetime.utcnow().hour
+        except Exception:
+            hour = datetime.utcnow().hour
+
+        if 5 <= hour < 12:
+            return "morning"
+        elif 12 <= hour < 17:
+            return "afternoon"
+        elif 17 <= hour < 21:
+            return "evening"
+        else:
+            return "night"
+
+    # ─────────────────────────────────────────────────────────────────
+    # Phase 3: Gemini-Powered Personalization
+    # ─────────────────────────────────────────────────────────────────
+
+    async def _generate_personalized_message(
+        self,
+        notification_type: str,
+        user_name: Optional[str] = None,
+        streak: Optional[int] = None,
+        workout_name: Optional[str] = None,
+        time_of_day: Optional[str] = None,
+        days_missed: Optional[int] = None,
+        workouts_completed: Optional[int] = None,
+    ) -> Optional[Tuple[str, str]]:
+        """Generate a personalized notification message using Gemini.
+
+        Returns (title, body) tuple, or None on any failure (falls back to template).
+        """
+        try:
+            from google import genai
+            from core.gemini_client import get_genai_client
+            from core.config import get_settings
+
+            settings = get_settings()
+            client = get_genai_client()
+
+            # Build context string
+            context_parts = []
+            if user_name:
+                context_parts.append(f"User name: {user_name}")
+            if streak is not None:
+                context_parts.append(f"Current streak: {streak} days")
+            if workout_name:
+                context_parts.append(f"Workout: {workout_name}")
+            if time_of_day:
+                context_parts.append(f"Time of day: {time_of_day}")
+            if days_missed is not None:
+                context_parts.append(f"Days since last workout: {days_missed}")
+            if workouts_completed is not None:
+                context_parts.append(f"Workouts completed this week: {workouts_completed}")
+
+            context_str = ". ".join(context_parts)
+
+            prompt = (
+                "You are a fitness app notification writer. Write a single push notification "
+                f"for type: {notification_type}. Context: {context_str}. "
+                "Be motivating, concise, and positive. No guilt or shame. No emojis. "
+                "Reply ONLY in this exact format on two lines:\n"
+                "TITLE: <title text>\n"
+                "BODY: <body text>"
+            )
+
+            response = client.models.generate_content(
+                model=settings.gemini_model,
+                contents=prompt,
+                config=genai.types.GenerateContentConfig(
+                    max_output_tokens=60,
+                    temperature=0.9,
+                ),
+            )
+
+            text = response.text.strip()
+            lines = text.split("\n")
+
+            title = None
+            body = None
+            for line in lines:
+                line = line.strip()
+                if line.upper().startswith("TITLE:"):
+                    title = line[6:].strip()
+                elif line.upper().startswith("BODY:"):
+                    body = line[5:].strip()
+
+            if title and body:
+                logger.info(f"🤖 [Notification] Gemini personalized: {title}")
+                return (title, body)
+
+            logger.warning(f"🤖 [Notification] Gemini response unparseable: {text[:100]}")
+            return None
+
+        except Exception as e:
+            logger.warning(f"🤖 [Notification] Gemini personalization failed: {e}")
+            return None
 
     async def send_notification(
         self,
@@ -285,7 +533,7 @@ class NotificationService:
             return {"success_count": 0, "failure_count": len(fcm_tokens)}
 
     # ─────────────────────────────────────────────────────────────────
-    # Pre-built notification messages (Duolingo-style)
+    # Pre-built notification messages with template pools
     # ─────────────────────────────────────────────────────────────────
 
     async def send_workout_reminder(
@@ -293,11 +541,34 @@ class NotificationService:
         fcm_token: str,
         workout_name: str = "today's workout",
         user_name: Optional[str] = None,
+        user_timezone: Optional[str] = None,
+        use_ai: bool = True,
     ) -> bool:
         """Send a workout reminder notification"""
-        greeting = f"Hey {user_name}! " if user_name else ""
-        title = f"{greeting}Time to train! 💪"
-        body = f"Your {workout_name} is ready and waiting. Let's crush it!"
+        # Try Gemini personalization first
+        if use_ai and user_name:
+            time_of_day = self._get_time_of_day(user_timezone)
+            ai_result = await self._generate_personalized_message(
+                notification_type="workout_reminder",
+                user_name=user_name,
+                workout_name=workout_name,
+                time_of_day=time_of_day,
+            )
+            if ai_result:
+                title, body = ai_result
+                return await self.send_notification(
+                    fcm_token=fcm_token,
+                    title=title,
+                    body=body,
+                    notification_type=self.TYPE_WORKOUT_REMINDER,
+                    data={"action": "open_workout"},
+                )
+
+        # Template pool fallback
+        template = random.choice(self.WORKOUT_REMINDER_TEMPLATES)
+        name = user_name or "there"
+        title = template["title"].format(name=name, workout_name=workout_name)
+        body = template["body"].format(name=name, workout_name=workout_name)
 
         return await self.send_notification(
             fcm_token=fcm_token,
@@ -311,17 +582,43 @@ class NotificationService:
         self,
         fcm_token: str,
         days_missed: int = 1,
+        user_name: Optional[str] = None,
+        user_timezone: Optional[str] = None,
+        use_ai: bool = True,
     ) -> bool:
-        """Send a guilt notification for missed workouts"""
+        """Send an inactivity nudge notification (positive, no guilt/shame)"""
+        # Try Gemini personalization first
+        if use_ai and user_name:
+            time_of_day = self._get_time_of_day(user_timezone)
+            ai_result = await self._generate_personalized_message(
+                notification_type="inactivity_nudge",
+                user_name=user_name,
+                days_missed=days_missed,
+                time_of_day=time_of_day,
+            )
+            if ai_result:
+                title, body = ai_result
+                return await self.send_notification(
+                    fcm_token=fcm_token,
+                    title=title,
+                    body=body,
+                    notification_type=self.TYPE_AI_COACH,
+                    data={"action": "open_home"},
+                )
+
+        # Template pool fallback - select tier based on days_missed
         if days_missed == 1:
-            title = "Your muscles miss you! 💪"
-            body = "It's been a day since your last workout. Don't break your streak!"
+            template = random.choice(self.INACTIVITY_NUDGE_1DAY)
+            title = template["title"]
+            body = template["body"]
         elif days_missed == 2:
-            title = "Your AI Coach is getting lonely... 🥺"
-            body = "2 days without training. Let's get back on track!"
+            template = random.choice(self.INACTIVITY_NUDGE_2DAY)
+            title = template["title"]
+            body = template["body"]
         else:
-            title = f"It's been {days_missed} days! 😱"
-            body = "Your fitness journey is calling. Time to answer!"
+            template = random.choice(self.INACTIVITY_NUDGE_3PLUS_DAY)
+            title = template["title"].format(days=days_missed)
+            body = template["body"].format(days=days_missed)
 
         return await self.send_notification(
             fcm_token=fcm_token,
@@ -335,10 +632,38 @@ class NotificationService:
         self,
         fcm_token: str,
         streak_days: int,
+        user_name: Optional[str] = None,
+        user_timezone: Optional[str] = None,
+        use_ai: bool = True,
     ) -> bool:
         """Send a streak celebration notification"""
-        title = f"🔥 {streak_days}-day streak!"
-        body = f"You've worked out {streak_days} days in a row! Keep the fire burning!"
+        # Try Gemini personalization first
+        if use_ai and user_name:
+            time_of_day = self._get_time_of_day(user_timezone)
+            ai_result = await self._generate_personalized_message(
+                notification_type="streak_celebration",
+                user_name=user_name,
+                streak=streak_days,
+                time_of_day=time_of_day,
+            )
+            if ai_result:
+                title, body = ai_result
+                return await self.send_notification(
+                    fcm_token=fcm_token,
+                    title=title,
+                    body=body,
+                    notification_type=self.TYPE_STREAK_ALERT,
+                    data={"streak": str(streak_days)},
+                )
+
+        # Check for milestone first
+        if streak_days in self.STREAK_MILESTONE_TEMPLATES:
+            template = self.STREAK_MILESTONE_TEMPLATES[streak_days]
+        else:
+            template = random.choice(self.STREAK_CELEBRATION_TEMPLATES)
+
+        title = template["title"].format(streak=streak_days)
+        body = template["body"].format(streak=streak_days)
 
         return await self.send_notification(
             fcm_token=fcm_token,
@@ -354,8 +679,20 @@ class NotificationService:
         meal_type: str = "meal",
     ) -> bool:
         """Send a nutrition logging reminder"""
-        title = f"Time to log your {meal_type}! 📸"
-        body = "Snap a photo to track your nutrition and stay on target."
+        # Select pool based on meal type
+        meal_lower = meal_type.lower()
+        if meal_lower == "breakfast":
+            pool = self.NUTRITION_BREAKFAST_TEMPLATES
+        elif meal_lower == "lunch":
+            pool = self.NUTRITION_LUNCH_TEMPLATES
+        elif meal_lower == "dinner":
+            pool = self.NUTRITION_DINNER_TEMPLATES
+        else:
+            pool = self.NUTRITION_GENERIC_TEMPLATES
+
+        template = random.choice(pool)
+        title = template["title"]
+        body = template["body"]
 
         return await self.send_notification(
             fcm_token=fcm_token,
@@ -374,12 +711,17 @@ class NotificationService:
         """Send a hydration reminder"""
         percent = int((current_ml / goal_ml) * 100) if goal_ml > 0 else 0
 
-        if percent < 50:
-            title = "Stay hydrated! 💧"
-            body = f"You're at {percent}% of your water goal. Drink up!"
+        # Select tier based on progress percentage
+        if percent < 40:
+            pool = self.HYDRATION_LOW_TEMPLATES
+        elif percent <= 75:
+            pool = self.HYDRATION_MEDIUM_TEMPLATES
         else:
-            title = "Keep it up! 💧"
-            body = f"You're at {percent}% of your water goal. Almost there!"
+            pool = self.HYDRATION_HIGH_TEMPLATES
+
+        template = random.choice(pool)
+        title = template["title"].format(percent=percent)
+        body = template["body"].format(percent=percent)
 
         return await self.send_notification(
             fcm_token=fcm_token,
@@ -393,10 +735,35 @@ class NotificationService:
         self,
         fcm_token: str,
         workouts_completed: int = 0,
+        user_name: Optional[str] = None,
+        user_timezone: Optional[str] = None,
+        use_ai: bool = True,
     ) -> bool:
         """Send notification that weekly summary is ready"""
-        title = "Your weekly report is ready! 📊"
-        body = f"You completed {workouts_completed} workout{'s' if workouts_completed != 1 else ''} this week. Check your progress!"
+        # Try Gemini personalization first
+        if use_ai and user_name:
+            time_of_day = self._get_time_of_day(user_timezone)
+            ai_result = await self._generate_personalized_message(
+                notification_type="weekly_summary",
+                user_name=user_name,
+                workouts_completed=workouts_completed,
+                time_of_day=time_of_day,
+            )
+            if ai_result:
+                title, body = ai_result
+                return await self.send_notification(
+                    fcm_token=fcm_token,
+                    title=title,
+                    body=body,
+                    notification_type=self.TYPE_WEEKLY_SUMMARY,
+                    data={"action": "open_summaries"},
+                )
+
+        # Template pool fallback
+        template = random.choice(self.WEEKLY_SUMMARY_TEMPLATES)
+        s = "s" if workouts_completed != 1 else ""
+        title = template["title"].format(count=workouts_completed, s=s)
+        body = template["body"].format(count=workouts_completed, s=s)
 
         return await self.send_notification(
             fcm_token=fcm_token,
@@ -444,8 +811,6 @@ class NotificationService:
         Returns:
             True if sent successfully, False otherwise
         """
-        import random
-
         # Select a template (random or specified)
         if template_index is not None:
             template_idx = template_index % len(self.MOVEMENT_REMINDER_TEMPLATES)

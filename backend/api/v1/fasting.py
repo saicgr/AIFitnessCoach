@@ -29,7 +29,7 @@ Fasting Scores:
 - GET  /api/v1/fasting/score/{user_id}/current - Get current/latest score
 - GET  /api/v1/fasting/score/trend/{user_id} - Get score trend vs last week
 """
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query, Request
 from typing import List, Optional
 from datetime import datetime, date, timedelta
 from decimal import Decimal
@@ -40,6 +40,7 @@ from pydantic import BaseModel, Field
 from core.supabase_db import get_supabase_db
 from core.logger import get_logger
 from core.activity_logger import log_user_activity, log_user_error
+from core.timezone_utils import resolve_timezone, get_user_today
 
 router = APIRouter()
 logger = get_logger(__name__)
@@ -342,10 +343,10 @@ def get_encouraging_message(completion_percent: float, goal_hours: int) -> str:
         return f"No problem! Every fast counts. You made progress today."
 
 
-async def update_streak(user_id: str, completed_goal: bool, completion_percentage: float) -> dict:
+async def update_streak(user_id: str, completed_goal: bool, completion_percentage: float, user_tz: str = "UTC") -> dict:
     """Update user's fasting streak after completing a fast."""
     db = get_supabase_db()
-    today = date.today()
+    today = date.fromisoformat(get_user_today(user_tz))
 
     # Get or create streak record
     result = db.client.table("fasting_streaks").select("*").eq("user_id", user_id).execute()
@@ -507,12 +508,13 @@ async def start_fast(data: StartFastRequest):
 
 
 @router.post("/{fast_id}/end", response_model=FastEndResultResponse)
-async def end_fast(fast_id: str, data: EndFastRequest):
+async def end_fast(fast_id: str, data: EndFastRequest, http_request: Request):
     """End an active fast and calculate results."""
     logger.info(f"Ending fast {fast_id} for user {data.user_id}")
 
     try:
         db = get_supabase_db()
+        user_tz = resolve_timezone(http_request, db, data.user_id)
 
         # Get the fast record
         result = db.client.table("fasting_records").select("*").eq(
@@ -550,7 +552,7 @@ async def end_fast(fast_id: str, data: EndFastRequest):
         db.client.table("fasting_records").update(update_data).eq("id", fast_id).execute()
 
         # Update streak
-        streak_info = await update_streak(data.user_id, completed_goal, completion_percent)
+        streak_info = await update_streak(data.user_id, completed_goal, completion_percent, user_tz)
 
         # Get updated record
         updated = db.client.table("fasting_records").select("*").eq("id", fast_id).execute()
@@ -1187,7 +1189,7 @@ async def get_fasting_context(
 # ==================== Fasting Score Endpoints ====================
 
 @router.post("/score")
-async def save_fasting_score(request: FastingScoreCreateRequest):
+async def save_fasting_score(request: FastingScoreCreateRequest, http_request: Request):
     """
     Save or update today's fasting score for a user.
 
@@ -1197,6 +1199,7 @@ async def save_fasting_score(request: FastingScoreCreateRequest):
 
     try:
         db = get_supabase_db()
+        user_tz = resolve_timezone(http_request, db, request.user_id)
 
         data = {
             "user_id": request.user_id,
@@ -1211,7 +1214,7 @@ async def save_fasting_score(request: FastingScoreCreateRequest):
             "weekly_goal": request.weekly_goal,
             "completion_rate": request.completion_rate,
             "avg_duration_minutes": request.avg_duration_minutes,
-            "score_date": date.today().isoformat(),
+            "score_date": get_user_today(user_tz),
             "recorded_at": datetime.utcnow().isoformat(),
         }
 
@@ -1235,6 +1238,7 @@ async def save_fasting_score(request: FastingScoreCreateRequest):
 @router.get("/score/history/{user_id}")
 async def get_fasting_score_history(
     user_id: str,
+    http_request: Request,
     days: int = Query(30, ge=1, le=365, description="Number of days of history to retrieve"),
 ):
     """
@@ -1246,8 +1250,10 @@ async def get_fasting_score_history(
 
     try:
         db = get_supabase_db()
+        user_tz = resolve_timezone(http_request, db, user_id)
 
-        cutoff_date = (date.today() - timedelta(days=days)).isoformat()
+        today = date.fromisoformat(get_user_today(user_tz))
+        cutoff_date = (today - timedelta(days=days)).isoformat()
 
         result = db.client.table("fasting_scores")\
             .select("*")\
