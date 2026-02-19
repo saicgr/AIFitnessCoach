@@ -5,8 +5,11 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/constants/api_constants.dart';
 import '../../core/providers/window_mode_provider.dart';
+import '../../data/models/ai_profile_payload.dart';
 import '../../data/repositories/auth_repository.dart';
+import '../../data/services/api_client.dart';
 import '../onboarding/pre_auth_quiz_screen.dart';
 import '../onboarding/widgets/foldable_quiz_scaffold.dart';
 
@@ -73,6 +76,10 @@ class _SignInScreenState extends ConsumerState<SignInScreen>
         _showSupportFriendWelcome();
       }
 
+      // Fire-and-forget: submit quiz preferences and trigger workout generation
+      // so workouts start generating while the user completes remaining onboarding screens
+      _triggerEarlyGeneration();
+
       // After successful sign-in, navigation happens automatically via router redirect
       // The pre-auth data is still in SharedPreferences and will be loaded in onboarding
     } finally {
@@ -84,6 +91,44 @@ class _SignInScreenState extends ConsumerState<SignInScreen>
         });
       }
     }
+  }
+
+  /// Fire-and-forget: submit quiz preferences early and trigger workout generation
+  /// so workouts are ready by the time the user reaches the loading screen.
+  void _triggerEarlyGeneration() {
+    Future<void>(() async {
+      try {
+        final apiClient = ref.read(apiClientProvider);
+        final userId = await apiClient.getUserId();
+        if (userId == null) return;
+
+        final quizData = ref.read(preAuthQuizProvider);
+
+        // Build workout-relevant preferences from quiz data
+        final payload = AIProfilePayloadBuilder.buildPayload(quizData);
+
+        // Add personal info needed for generation
+        if (quizData.gender != null) payload['gender'] = quizData.gender;
+        if (quizData.age != null) payload['age'] = quizData.age;
+        if (quizData.heightCm != null) payload['height_cm'] = quizData.heightCm;
+        if (quizData.weightKg != null) payload['weight_kg'] = quizData.weightKg;
+        if (quizData.workoutDays != null) payload['workout_days'] = quizData.workoutDays;
+
+        // Submit preferences so backend has workout config for generation
+        await apiClient.post(
+          '${ApiConstants.users}/$userId/preferences',
+          data: payload,
+        );
+        debugPrint('✅ [EarlyGen] Preferences submitted');
+
+        // Trigger /today which auto-generates workouts for upcoming dates
+        await apiClient.get('${ApiConstants.workouts}/today?user_id=$userId');
+        debugPrint('✅ [EarlyGen] Generation triggered');
+      } catch (e) {
+        // Non-critical — generation will happen normally via loading screen
+        debugPrint('⚠️ [EarlyGen] Early generation failed (non-critical): $e');
+      }
+    });
   }
 
   void _showSupportFriendWelcome() {

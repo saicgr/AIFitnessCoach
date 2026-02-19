@@ -10,7 +10,7 @@ This module contains common utilities used across workout-related endpoints:
 """
 import json
 import time
-from datetime import datetime, timedelta
+from datetime import datetime, date, timedelta
 from typing import List, Optional, Dict, Any
 
 from core.supabase_db import get_supabase_db
@@ -32,6 +32,67 @@ def get_workout_rag_service() -> WorkoutRAGService:
         gemini_service = GeminiService()
         _workout_rag_service = WorkoutRAGService(gemini_service)
     return _workout_rag_service
+
+
+def invalidate_upcoming_workouts(
+    user_id: str,
+    reason: str,
+    only_next: bool = False,
+) -> int:
+    """Delete upcoming non-completed workouts so the next /today call regenerates them.
+
+    Skips workouts with status='generating' to avoid disrupting in-flight generation.
+
+    Args:
+        user_id: The user whose workouts to invalidate.
+        reason: Human-readable reason for logging (e.g. "injury reported").
+        only_next: If True, only invalidate the single next upcoming workout
+                   (used for exercise queue changes).
+
+    Returns:
+        Number of workouts deleted.
+    """
+    try:
+        db = get_supabase_db()
+        today_str = date.today().isoformat()
+
+        query = db.client.table("workouts").select("id, scheduled_date, status").eq(
+            "user_id", user_id
+        ).gte(
+            "scheduled_date", today_str
+        ).eq(
+            "is_completed", False
+        )
+
+        rows = query.execute()
+        if not rows.data:
+            return 0
+
+        # Filter out workouts that are currently generating
+        ids_to_delete = [
+            r["id"] for r in rows.data
+            if r.get("status") != "generating"
+        ]
+
+        if only_next:
+            # Sort by date and keep only the earliest
+            dated = sorted(
+                [(r["id"], r.get("scheduled_date", "")) for r in rows.data if r.get("status") != "generating"],
+                key=lambda x: x[1],
+            )
+            ids_to_delete = [dated[0][0]] if dated else []
+
+        if not ids_to_delete:
+            return 0
+
+        deleted = db.client.table("workouts").delete().in_("id", ids_to_delete).execute()
+        count = len(deleted.data) if deleted.data else 0
+        logger.info(f"[INVALIDATE] Deleted {count} upcoming workouts for user {user_id} ({reason})")
+        return count
+
+    except Exception as e:
+        logger.warning(f"[INVALIDATE] Failed to invalidate workouts for user {user_id} ({reason}): {e}")
+        return 0
 
 
 def parse_json_field(value, default):

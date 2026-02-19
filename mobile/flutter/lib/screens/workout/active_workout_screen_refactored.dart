@@ -2601,6 +2601,12 @@ class _ActiveWorkoutScreenState
       await _logWorkoutExit(result.reason, result.notes);
       if (mounted) {
         context.pop();
+        // Prompt injury report if user quit due to pain/injury
+        if (result.reason == 'injury') {
+          Future.delayed(const Duration(milliseconds: 300), () {
+            if (mounted) context.push('/injuries/report');
+          });
+        }
       }
     }
     // If result is null, user chose to continue (tapped "Keep Going")

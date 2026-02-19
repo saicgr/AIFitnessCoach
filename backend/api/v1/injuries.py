@@ -421,6 +421,10 @@ async def report_injury(user_id: str, request: InjuryReportRequest):
 
         recommended_exercises = _get_recommended_rehab_exercises(request.body_part)
 
+        # Invalidate upcoming workouts so they regenerate without the injured area
+        from api.v1.workouts.utils import invalidate_upcoming_workouts
+        invalidate_upcoming_workouts(user_id, reason=f"injury reported: {request.body_part}")
+
         logger.info(f"Injury reported: {result.data[0]['id']}")
 
         return InjuryReportResponse(

@@ -70,10 +70,19 @@ async def log_hydration(data: HydrationLogCreate, http_request: Request):
             "workout_id": data.workout_id,
             "notes": data.notes,
             "logged_at": utc_now.isoformat(),
-            "local_date": local_date,
         }
 
-        result = db.client.table("hydration_logs").insert(log_data).execute()
+        # Try inserting with local_date if column exists
+        try:
+            log_data["local_date"] = local_date
+            result = db.client.table("hydration_logs").insert(log_data).execute()
+        except Exception as insert_err:
+            if "local_date" in str(insert_err):
+                # Column doesn't exist yet (migration not applied), insert without it
+                log_data.pop("local_date", None)
+                result = db.client.table("hydration_logs").insert(log_data).execute()
+            else:
+                raise
 
         if not result.data:
             raise HTTPException(status_code=500, detail="Failed to create hydration log")
@@ -129,15 +138,24 @@ async def get_daily_hydration(
         target_date_str = target_date.isoformat()
 
         # Try filtering by local_date first (timezone-correct)
-        # Fall back to logged_at range for older entries without local_date
-        result = db.client.table("hydration_logs").select("*").eq(
-            "user_id", user_id
-        ).eq(
-            "local_date", target_date_str
-        ).order("logged_at", desc=True).execute()
+        # Fall back to logged_at range if column doesn't exist or no results
+        result = None
+        try:
+            result = db.client.table("hydration_logs").select("*").eq(
+                "user_id", user_id
+            ).eq(
+                "local_date", target_date_str
+            ).order("logged_at", desc=True).execute()
+        except Exception as local_date_err:
+            if "local_date" in str(local_date_err):
+                # Column doesn't exist yet (migration not applied)
+                logger.debug("local_date column not available, using logged_at range")
+                result = None
+            else:
+                raise
 
-        # If no results with local_date, fall back to logged_at range (legacy data)
-        if not result.data:
+        # Fall back to logged_at range for legacy data or missing column
+        if result is None or not result.data:
             start_of_day = datetime.combine(target_date, datetime.min.time())
             end_of_day = datetime.combine(target_date, datetime.max.time())
             result = db.client.table("hydration_logs").select("*").eq(

@@ -9,6 +9,8 @@ in-memory TTL caching.
 import time
 from typing import Optional, Dict, List
 
+from sqlalchemy import text
+
 from core.logger import get_logger
 from core.supabase_client import get_supabase
 
@@ -143,14 +145,14 @@ class FoodDatabaseLookupService:
         try:
             supabase = get_supabase()
             offset = (page - 1) * page_size
-            params = {
-                "search_query": query,
-                "result_limit": page_size,
-                "result_offset": offset,
-            }
 
-            result = supabase.client.rpc("search_food_database", params).execute()
-            foods = result.data or []
+            # Use direct SQLAlchemy to bypass PostgREST's 3s anon statement_timeout
+            async with supabase.get_session() as session:
+                result = await session.execute(
+                    text("SELECT * FROM search_food_database(:q, :lim, :off)"),
+                    {"q": query, "lim": page_size, "off": offset},
+                )
+                foods = [dict(row._mapping) for row in result.fetchall()]
 
             # Post-filter by source/category if specified
             if source:
@@ -196,14 +198,15 @@ class FoodDatabaseLookupService:
         try:
             supabase = get_supabase()
             offset = (page - 1) * page_size
-            result = supabase.client.rpc("search_food_database_unified", {
-                "search_query": query,
-                "p_user_id": user_id,
-                "result_limit": page_size,
-                "result_offset": offset,
-            }).execute()
 
-            foods = result.data or []
+            # Use direct SQLAlchemy to bypass PostgREST's 3s anon statement_timeout
+            async with supabase.get_session() as session:
+                result = await session.execute(
+                    text("SELECT * FROM search_food_database_unified(:q, :uid::uuid, :lim, :off)"),
+                    {"q": query, "uid": user_id, "lim": page_size, "off": offset},
+                )
+                foods = [dict(row._mapping) for row in result.fetchall()]
+
             logger.info(f"[FoodDB] Unified search found {len(foods)} results for '{query}'")
             self._set_cached(cache_key, foods)
             return foods
@@ -235,12 +238,13 @@ class FoodDatabaseLookupService:
 
         try:
             supabase = get_supabase()
-            result = supabase.client.rpc(
-                "search_food_database",
-                {"search_query": food_name, "result_limit": 1, "result_offset": 0},
-            ).execute()
+            async with supabase.get_session() as session:
+                result = await session.execute(
+                    text("SELECT * FROM search_food_database(:q, 1, 0)"),
+                    {"q": food_name},
+                )
+                foods = [dict(row._mapping) for row in result.fetchall()]
 
-            foods = result.data or []
             if not foods:
                 logger.info(f"[FoodDB] No results for '{food_name}'")
                 self._set_cached(cache_key, False)
@@ -312,12 +316,12 @@ class FoodDatabaseLookupService:
 
         try:
             supabase = get_supabase()
-            rpc_result = supabase.client.rpc(
-                "batch_lookup_foods",
-                {"food_names": uncached_names},
-            ).execute()
-
-            rows = rpc_result.data or []
+            async with supabase.get_session() as session:
+                rpc_result = await session.execute(
+                    text("SELECT * FROM batch_lookup_foods(:names::text[])"),
+                    {"names": uncached_names},
+                )
+                rows = [dict(r._mapping) for r in rpc_result.fetchall()]
 
             # Build a lookup from input_name -> row
             row_map: Dict[str, Dict] = {}

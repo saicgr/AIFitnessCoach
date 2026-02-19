@@ -572,10 +572,10 @@ class SupabaseDB:
         )
 
     def get_daily_nutrition_summary(
-        self, user_id: str, date: str
+        self, user_id: str, date: str, timezone_str: str = None
     ) -> Dict[str, Any]:
         """Get nutrition totals for a specific day."""
-        return self._nutrition_db.get_daily_nutrition_summary(user_id, date)
+        return self._nutrition_db.get_daily_nutrition_summary(user_id, date, timezone_str=timezone_str)
 
     def get_weekly_nutrition_summary(
         self, user_id: str, start_date: str

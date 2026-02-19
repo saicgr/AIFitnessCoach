@@ -2086,6 +2086,10 @@ async def add_to_exercise_queue(user_id: str, request: QueueExerciseRequest):
         row = result.data[0]
         logger.info(f"Added to queue: {request.exercise_name} for user {user_id}")
 
+        # Invalidate only the next upcoming workout so it includes the queued exercise
+        from api.v1.workouts.utils import invalidate_upcoming_workouts
+        invalidate_upcoming_workouts(user_id, reason=f"exercise queued: {request.exercise_name}", only_next=True)
+
         return QueuedExercise(
             id=row["id"],
             user_id=row["user_id"],

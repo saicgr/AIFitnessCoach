@@ -990,8 +990,15 @@ async def search_foods(
                     "fat_g": round((item.get("fat_per_100g", 0) or 0) * mult, 1),
                 }
 
+            # ID may be BIGINT (food_database) or TEXT/UUID (saved foods from unified)
+            raw_id = item.get("id", 0)
+            try:
+                fdc_id = int(raw_id)
+            except (ValueError, TypeError):
+                fdc_id = 0  # Saved food UUIDs -> 0; frontend uses source field
+
             foods.append(USDAFoodResponse(
-                fdc_id=item.get("id", 0),
+                fdc_id=fdc_id,
                 description=item.get("name", "Unknown"),
                 data_type=item.get("source", "local_db"),
                 brand_owner=item.get("brand"),

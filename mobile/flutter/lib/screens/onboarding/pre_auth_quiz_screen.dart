@@ -13,8 +13,6 @@ import '../../data/repositories/onboarding_repository.dart';
 import '../../data/services/api_client.dart';
 import '../../data/services/template_workout_generator.dart';
 import '../../core/constants/api_constants.dart';
-import '../../data/models/workout.dart';
-import '../../data/repositories/workout_repository.dart';
 import 'widgets/quiz_progress_bar.dart';
 import 'widgets/quiz_header.dart';
 import 'widgets/quiz_continue_button.dart';
@@ -292,11 +290,6 @@ class PreAuthQuizData {
 final preAuthQuizProvider = StateNotifierProvider<PreAuthQuizNotifier, PreAuthQuizData>((ref) {
   return PreAuthQuizNotifier();
 });
-
-/// Provider to hold the background generation completer.
-/// When set, the WorkoutGenerationScreen can check if a workout is already ready
-/// instead of starting generation from scratch.
-final backgroundGenerationProvider = StateProvider<Completer<Workout?>?>((ref) => null);
 
 class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
   PreAuthQuizNotifier() : super(PreAuthQuizData()) {
@@ -2243,10 +2236,6 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
   final Set<String> _selectedLimitations = {'none'};  // Physical limitations (default: none)
   String? _customLimitation;  // Custom limitation text when "Other" is selected
 
-  // Background pre-generation: starts after Screen 6 (PrimaryGoal) while user goes through optional screens
-  Completer<Workout?>? _backgroundGenerationCompleter;
-  StreamSubscription<WorkoutGenerationProgress>? _backgroundGenerationSub;
-
   late AnimationController _progressController;
   late AnimationController _questionController;
 
@@ -2303,7 +2292,6 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
   void dispose() {
     _progressController.dispose();
     _questionController.dispose();
-    _backgroundGenerationSub?.cancel();
     super.dispose();
   }
 
@@ -2538,95 +2526,10 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
 
   /// Generate workout preview and navigate to plan preview screen
   ///
-  /// Shows instant template-based preview without waiting for AI generation
-  /// Start background workout generation via the streaming API.
-  /// Called after the user completes Screen 6 (PrimaryGoal).
-  /// The result is stored in a Completer that the WorkoutGenerationScreen can check.
-  void _startBackgroundGeneration() {
-    // Don't start if already running
-    if (_backgroundGenerationCompleter != null && !_backgroundGenerationCompleter!.isCompleted) {
-      debugPrint('⚠️ [Onboarding] Background generation already in progress');
-      return;
-    }
-
-    _backgroundGenerationCompleter = Completer<Workout?>();
-    // Store in provider so WorkoutGenerationScreen can access it
-    ref.read(backgroundGenerationProvider.notifier).state = _backgroundGenerationCompleter;
-
-    () async {
-      try {
-        final apiClient = ref.read(apiClientProvider);
-        final userId = await apiClient.getUserId();
-        if (userId == null) {
-          debugPrint('⚠️ [Onboarding] No userId for background generation');
-          _backgroundGenerationCompleter?.complete(null);
-          return;
-        }
-
-        final quizData = ref.read(preAuthQuizProvider);
-        final workoutDuration = quizData.workoutDuration ?? 45;
-
-        // Calculate duration range
-        int? durationMin;
-        int? durationMax;
-        if (workoutDuration == 30) {
-          durationMax = 30;
-        } else if (workoutDuration == 45) {
-          durationMin = 30;
-          durationMax = 45;
-        } else if (workoutDuration == 60) {
-          durationMin = 45;
-          durationMax = 60;
-        } else if (workoutDuration == 75) {
-          durationMin = 60;
-          durationMax = 75;
-        } else if (workoutDuration == 90) {
-          durationMin = 75;
-          durationMax = 90;
-        }
-
-        final repository = ref.read(workoutRepositoryProvider);
-        final todayLocal = DateTime.now().toIso8601String().substring(0, 10);
-
-        debugPrint('🚀 [Onboarding] Starting background workout generation');
-        final stream = repository.generateWorkoutStreaming(
-          userId: userId,
-          durationMinutes: workoutDuration,
-          durationMinutesMin: durationMin,
-          durationMinutesMax: durationMax,
-          scheduledDate: todayLocal,
-        );
-
-        _backgroundGenerationSub = stream.listen(
-          (progress) {
-            if (progress.status == WorkoutGenerationStatus.completed && progress.workout != null) {
-              debugPrint('✅ [Onboarding] Background generation complete: ${progress.workout!.name}');
-              if (!_backgroundGenerationCompleter!.isCompleted) {
-                _backgroundGenerationCompleter!.complete(progress.workout);
-              }
-            }
-          },
-          onError: (error) {
-            debugPrint('❌ [Onboarding] Background generation error: $error');
-            if (!_backgroundGenerationCompleter!.isCompleted) {
-              _backgroundGenerationCompleter!.complete(null);
-            }
-          },
-          onDone: () {
-            if (!_backgroundGenerationCompleter!.isCompleted) {
-              _backgroundGenerationCompleter!.complete(null);
-            }
-          },
-        );
-      } catch (e) {
-        debugPrint('❌ [Onboarding] Background generation exception: $e');
-        if (!_backgroundGenerationCompleter!.isCompleted) {
-          _backgroundGenerationCompleter!.complete(null);
-        }
-      }
-    }();
-  }
-
+  /// Shows instant template-based preview without waiting for AI generation.
+  /// Background AI generation is NOT started here because the user hasn't
+  /// authenticated yet (this is a pre-auth quiz). Real AI generation happens
+  /// later in WorkoutGenerationScreen after sign-in.
   Future<void> _generateAndShowPreview() async {
     try {
       // Save current primary goal selection
@@ -2650,9 +2553,6 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
       debugPrint('✅ [Onboarding] Generated template workout: ${templateWorkout.name}');
       debugPrint('   Exercises: ${templateWorkout.exercises.length}');
       debugPrint('   Duration: ${templateWorkout.estimatedDurationMinutes} min');
-
-      // Kick off background AI generation while user reviews preview
-      _startBackgroundGeneration();
 
       // Show plan preview immediately with template workout
       await Navigator.of(context).push(

@@ -978,22 +978,9 @@ async def add_avoided_exercise(user_id: str, request: AvoidedExerciseCreate):
 
         row = result.data[0]
 
-        # Clear future incomplete workouts so they regenerate without the avoided exercise
-        # This ensures the avoided exercise is excluded from today's and upcoming workouts
-        try:
-            today_str = date.today().isoformat()
-            deleted = db.client.table("workouts").delete().eq(
-                "user_id", user_id
-            ).gte(
-                "scheduled_date", today_str
-            ).eq(
-                "is_completed", False
-            ).execute()
-            deleted_count = len(deleted.data) if deleted.data else 0
-            if deleted_count > 0:
-                logger.info(f"🚫 Cleared {deleted_count} future workouts to exclude avoided exercise: {request.exercise_name}")
-        except Exception as e:
-            logger.warning(f"Could not clear future workouts for avoided exercise: {e}")
+        # Invalidate upcoming workouts so they regenerate without the avoided exercise
+        from api.v1.workouts.utils import invalidate_upcoming_workouts
+        invalidate_upcoming_workouts(user_id, reason=f"exercise avoided: {request.exercise_name}")
 
         return AvoidedExerciseResponse(
             id=row["id"],
@@ -1074,6 +1061,10 @@ async def remove_avoided_exercise(user_id: str, exercise_id: str):
 
         if not result.data:
             raise HTTPException(status_code=404, detail="Avoided exercise not found")
+
+        # Invalidate upcoming workouts so they can now include the previously-avoided exercise
+        from api.v1.workouts.utils import invalidate_upcoming_workouts
+        invalidate_upcoming_workouts(user_id, reason=f"exercise avoidance removed: {exercise_id}")
 
         return {"success": True, "message": "Exercise removed from avoidance list"}
 
@@ -1232,6 +1223,11 @@ async def update_avoided_muscle(user_id: str, muscle_id: str, request: AvoidedMu
             raise HTTPException(status_code=404, detail="Avoided muscle not found")
 
         row = result.data[0]
+
+        # Invalidate upcoming workouts so they regenerate respecting the muscle avoidance
+        from api.v1.workouts.utils import invalidate_upcoming_workouts
+        invalidate_upcoming_workouts(user_id, reason=f"muscle avoidance updated: {request.muscle_group}")
+
         return AvoidedMuscleResponse(
             id=row["id"],
             muscle_group=row["muscle_group"],

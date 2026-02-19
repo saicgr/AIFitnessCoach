@@ -246,7 +246,7 @@ class NutritionDB(BaseDB):
     # ==================== NUTRITION SUMMARIES ====================
 
     def get_daily_nutrition_summary(
-        self, user_id: str, date: str, timezone_str: str | None = None
+        self, user_id: str, date: str, timezone_str: Optional[str] = None
     ) -> Dict[str, Any]:
         """
         Get nutrition totals for a specific day.
@@ -284,7 +284,7 @@ class NutritionDB(BaseDB):
         }
 
     def get_weekly_nutrition_summary(
-        self, user_id: str, start_date: str, timezone_str: str | None = None
+        self, user_id: str, start_date: str, timezone_str: Optional[str] = None
     ) -> List[Dict[str, Any]]:
         """
         Get nutrition totals for a week starting from start_date.

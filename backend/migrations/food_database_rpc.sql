@@ -47,7 +47,11 @@ DECLARE
 BEGIN
     normalized_query := LOWER(TRIM(search_query));
 
+    -- Override PostgREST's anon role 3s timeout (SET LOCAL inside DEFINER function)
+    PERFORM set_config('statement_timeout', '8000', TRUE);
+
     -- Set trigram similarity threshold for % operator (uses GIN index)
+    -- 0.15 balances typo tolerance vs GIN candidate volume
     PERFORM set_config('pg_trgm.similarity_threshold', '0.15', TRUE);
 
     RETURN QUERY
@@ -69,41 +73,36 @@ BEGIN
             similarity(f.name_normalized, normalized_query),
             COALESCE(similarity(f.variant_text, normalized_query), 0)
         ) AS similarity_score
-    FROM food_database_deduped f
+    FROM food_database f
     WHERE
-        -- Trigram similarity match (uses GIN index via % operator)
-        f.name_normalized % normalized_query
-        -- OR substring match (for exact partial matches like "chicken" in "chicken breast")
-        OR f.name_normalized ILIKE '%' || normalized_query || '%'
-        -- OR variant spelling match (uses partial GIN index)
-        OR (f.variant_text IS NOT NULL AND (
-            f.variant_text % normalized_query
-            OR f.variant_text ILIKE '%' || normalized_query || '%'
-        ))
+        f.is_primary = TRUE
+        AND (
+            -- Trigram similarity on name (uses GIN index via % operator)
+            f.name_normalized % normalized_query
+            -- OR trigram similarity on variant spellings (uses partial GIN index)
+            OR (f.variant_text IS NOT NULL AND f.variant_text % normalized_query)
+        )
     ORDER BY
-        -- Exact matches first
+        -- Exact / prefix matches first
         CASE
             WHEN f.name_normalized = normalized_query THEN 0
-            WHEN f.name_normalized ILIKE normalized_query || '%' THEN 1
-            WHEN f.name_normalized ILIKE '%' || normalized_query || '%' THEN 2
-            -- Variant text matches
-            WHEN f.variant_text IS NOT NULL AND f.variant_text ILIKE '%' || normalized_query || '%' THEN 3
-            ELSE 4
+            WHEN f.name_normalized LIKE normalized_query || '%' THEN 1
+            ELSE 2
         END,
-        -- Then by best similarity score (name or variant)
+        -- Then by best similarity score
         GREATEST(
             similarity(f.name_normalized, normalized_query),
             COALESCE(similarity(f.variant_text, normalized_query), 0)
         ) DESC,
         -- Prefer items with serving info
         CASE WHEN f.serving_weight_g IS NOT NULL THEN 0 ELSE 1 END,
-        -- Alphabetical tiebreaker
         f.name ASC
     LIMIT result_limit
     OFFSET result_offset;
 END;
-$$ LANGUAGE plpgsql STABLE SECURITY INVOKER
-SET search_path = public;
+$$ LANGUAGE plpgsql STABLE SECURITY DEFINER
+SET search_path = public
+SET statement_timeout = '8000';
 
 COMMENT ON FUNCTION search_food_database IS 'Fuzzy food search using trigram similarity on food_database_deduped view. Returns ranked results with nutrient data.';
 

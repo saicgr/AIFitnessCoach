@@ -7,6 +7,7 @@ is correctly resolved regardless of their timezone.
 
 import logging
 from datetime import datetime
+from typing import Optional
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 logger = logging.getLogger(__name__)
@@ -45,7 +46,7 @@ def get_user_now_iso(timezone_str: str) -> str:
     return datetime.now(ZoneInfo("UTC")).isoformat()
 
 
-def resolve_timezone(request, db=None, user_id: str | None = None) -> str:
+def resolve_timezone(request, db=None, user_id: Optional[str] = None) -> str:
     """
     Determine the user's IANA timezone.
 

@@ -117,7 +117,7 @@ def _extract_primary_muscles(exercises: list) -> List[str]:
     return list(muscles)[:4]  # Limit to top 4
 
 
-def _row_to_summary(row: dict, user_today_str: str | None = None) -> TodayWorkoutSummary:
+def _row_to_summary(row: dict, user_today_str: Optional[str] = None) -> TodayWorkoutSummary:
     """Convert a database row to TodayWorkoutSummary."""
     # Parse exercises
     raw_exercises = row.get("exercises") or row.get("exercises_json")
@@ -157,7 +157,7 @@ def _row_to_summary(row: dict, user_today_str: str | None = None) -> TodayWorkou
     )
 
 
-def _is_today_a_workout_day(selected_days: List[int], user_today_str: str | None = None) -> bool:
+def _is_today_a_workout_day(selected_days: List[int], user_today_str: Optional[str] = None) -> bool:
     """Check if today is a scheduled workout day for the user."""
     # Python's weekday(): Monday=0, Sunday=6 - matches our selected_days format
     if user_today_str:
@@ -192,7 +192,7 @@ def _get_user_workout_days(user: dict) -> List[int]:
     return selected_days
 
 
-def _calculate_next_workout_date(selected_days: List[int], user_today_str: str | None = None) -> str:
+def _calculate_next_workout_date(selected_days: List[int], user_today_str: Optional[str] = None) -> str:
     """Calculate the next workout date based on user's selected days.
 
     Returns the date in YYYY-MM-DD format.
@@ -225,11 +225,11 @@ def _get_upcoming_dates_needing_generation(
     selected_days: List[int],
     active_profile_id: Optional[str],
     max_dates: int = 3,
-    user_today_str: str | None = None,
+    user_today_str: Optional[str] = None,
 ) -> List[date]:
     """Find up to `max_dates` upcoming scheduled workout days that have no workout generated.
 
-    Scans the next 8 calendar days and returns dates that:
+    Scans the next 14 calendar days and returns dates that:
     1. Fall on one of the user's selected workout days
     2. Are today or in the future
     3. Don't already have a workout (completed or not) in the database
@@ -241,14 +241,14 @@ def _get_upcoming_dates_needing_generation(
         today_date = datetime.strptime(user_today_str, "%Y-%m-%d").date()
     else:
         today_date = date.today()
-    end_date = today_date + timedelta(days=8)
+    end_date = today_date + timedelta(days=14)
 
-    # Single query for ALL workouts in the next 8 days
+    # Single query for ALL workouts in the next 14 days
     existing_workouts = db.list_workouts(
         user_id=user_id,
         from_date=today_date.isoformat(),
         to_date=end_date.isoformat(),
-        limit=20,
+        limit=30,
         gym_profile_id=active_profile_id,
     )
 
@@ -261,7 +261,7 @@ def _get_upcoming_dates_needing_generation(
 
     # Find scheduled days without workouts
     results: List[date] = []
-    for days_ahead in range(0, 8):
+    for days_ahead in range(0, 14):
         check_date = today_date + timedelta(days=days_ahead)
         if check_date.weekday() not in selected_days:
             continue
@@ -496,31 +496,29 @@ async def get_today_workout(
             logger.info(f"User completed today's workout: {completed_workout_summary.name}")
 
         # ================================================================
-        # Proactive Background Generation (Fix 1 + Fix 3)
+        # Proactive Background Generation
         # ================================================================
-        # When workouts are missing, auto-generate them in the background.
-        # This covers the immediate next day AND up to 3 upcoming days.
-        # The user sees needs_generation=true on first call, but on next
-        # poll/refresh the workout will already exist.
-        if needs_generation and not has_completed_workout_today:
-            upcoming_missing = _get_upcoming_dates_needing_generation(
-                db=db,
-                user_id=user_id,
-                selected_days=selected_days,
-                active_profile_id=active_profile_id,
-                max_dates=3,
-                user_today_str=today_str,
-            )
-            if upcoming_missing:
-                logger.info(f"[BG-GEN] Scheduling background generation for {len(upcoming_missing)} dates: "
-                           f"{[d.isoformat() for d in upcoming_missing]}")
-                for gen_date in upcoming_missing:
-                    background_tasks.add_task(
-                        auto_generate_workout,
-                        user_id=user_id,
-                        target_date=gen_date,
-                        gym_profile_id=active_profile_id,
-                    )
+        # Always check for missing upcoming workouts and pre-generate them.
+        # This runs on every /today call so the user always has workouts
+        # ready for the next 7 scheduled days.
+        upcoming_missing = _get_upcoming_dates_needing_generation(
+            db=db,
+            user_id=user_id,
+            selected_days=selected_days,
+            active_profile_id=active_profile_id,
+            max_dates=7,
+            user_today_str=today_str,
+        )
+        if upcoming_missing:
+            logger.info(f"[BG-GEN] Scheduling background generation for {len(upcoming_missing)} dates: "
+                       f"{[d.isoformat() for d in upcoming_missing]}")
+            for gen_date in upcoming_missing:
+                background_tasks.add_task(
+                    auto_generate_workout,
+                    user_id=user_id,
+                    target_date=gen_date,
+                    gym_profile_id=active_profile_id,
+                )
 
         return TodayWorkoutResponse(
             has_workout_today=has_workout_today,

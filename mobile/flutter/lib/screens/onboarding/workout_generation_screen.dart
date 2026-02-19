@@ -71,59 +71,8 @@ class _WorkoutGenerationScreenState extends ConsumerState<WorkoutGenerationScree
       duration: const Duration(seconds: 2),
     )..repeat();
 
-    // Check if a background generation is already available
-    Future.delayed(const Duration(milliseconds: 500), _checkBackgroundOrGenerate);
-  }
-
-  /// Check if background generation from onboarding is already complete.
-  /// If so, use the pre-generated workout. Otherwise, start fresh generation.
-  Future<void> _checkBackgroundOrGenerate() async {
-    final bgCompleter = ref.read(backgroundGenerationProvider);
-    if (bgCompleter != null) {
-      // Start animating steps while waiting
-      _animateSteps();
-
-      try {
-        // Wait for the background generation with a timeout
-        final workout = await bgCompleter.future.timeout(
-          const Duration(seconds: 90),
-          onTimeout: () => null,
-        );
-
-        // Clear the provider so it's not reused
-        ref.read(backgroundGenerationProvider.notifier).state = null;
-
-        if (workout != null && mounted) {
-          debugPrint('✅ [WorkoutGeneration] Using pre-generated workout: ${workout.name}');
-          setState(() {
-            _generatedWorkout = workout;
-            _progress = 1.0;
-            _currentStep = _steps.length;
-            _isGenerating = false;
-          });
-
-          // Navigate after showing completion
-          Future.delayed(const Duration(milliseconds: 1500), () {
-            if (mounted) {
-              if (widget.returnWorkout) {
-                Navigator.of(context).pop(_generatedWorkout);
-              } else {
-                Navigator.of(context).pushReplacement(
-                  MaterialPageRoute(builder: (_) => const ProgramSummaryScreen()),
-                );
-              }
-            }
-          });
-          return;
-        }
-      } catch (e) {
-        debugPrint('⚠️ [WorkoutGeneration] Background generation failed, starting fresh: $e');
-        ref.read(backgroundGenerationProvider.notifier).state = null;
-      }
-    }
-
-    // No background generation or it failed - start fresh
-    _startGeneration();
+    // Start generation after a brief delay for UI to settle
+    Future.delayed(const Duration(milliseconds: 500), _startGeneration);
   }
 
   @override

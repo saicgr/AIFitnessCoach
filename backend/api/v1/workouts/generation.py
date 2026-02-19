@@ -344,6 +344,40 @@ async def generate_workout(request: GenerateWorkoutRequest, background_tasks: Ba
 
     try:
         db = get_supabase_db()
+
+        # Duplicate check: return existing workout if one already exists for this date
+        placeholder_id = None
+        if request.scheduled_date:
+            try:
+                existing = db.client.table("workouts").select("*").eq(
+                    "user_id", request.user_id
+                ).eq(
+                    "scheduled_date", request.scheduled_date
+                ).neq("status", "cancelled").limit(1).execute()
+                if existing.data:
+                    logger.info(f"✅ [Dedup] Workout already exists for {request.user_id} on {request.scheduled_date}, returning existing")
+                    return row_to_workout(existing.data[0])
+            except Exception as dedup_err:
+                logger.warning(f"Dedup check failed, proceeding with generation: {dedup_err}")
+
+            # Insert placeholder with status='generating' to prevent concurrent generation
+            # This lets the streaming endpoint detect generation is already in progress
+            try:
+                import uuid
+                placeholder_id = str(uuid.uuid4())
+                db.client.table("workouts").insert({
+                    "id": placeholder_id,
+                    "user_id": request.user_id,
+                    "scheduled_date": request.scheduled_date,
+                    "status": "generating",
+                    "name": "Generating...",
+                    "exercises_json": [],
+                }).execute()
+                logger.info(f"🔒 [Dedup] Inserted placeholder {placeholder_id} for {request.user_id} on {request.scheduled_date}")
+            except Exception as ph_err:
+                logger.warning(f"Placeholder insert failed: {ph_err}")
+                placeholder_id = None
+
         equipment_details = []  # Initialize to empty, may be populated from user data
         gym_profile_id = None  # Track which profile this workout is generated for
 
@@ -1107,6 +1141,14 @@ async def generate_workout(request: GenerateWorkoutRequest, background_tasks: Ba
         created = db.create_workout(workout_db_data)
         logger.info(f"Workout generated: id={created['id']}, gym_profile_id={gym_profile_id}")
 
+        # Delete placeholder now that real workout exists
+        if placeholder_id:
+            try:
+                db.client.table("workouts").delete().eq("id", placeholder_id).execute()
+                logger.info(f"🔓 [Dedup] Deleted placeholder {placeholder_id}")
+            except Exception:
+                pass
+
         # Log workout change synchronously (quick, important for audit trail)
         log_workout_change(
             workout_id=created['id'],
@@ -1130,8 +1172,20 @@ async def generate_workout(request: GenerateWorkoutRequest, background_tasks: Ba
         return generated_workout
 
     except HTTPException:
+        # Clean up placeholder on error
+        if placeholder_id:
+            try:
+                db.client.table("workouts").delete().eq("id", placeholder_id).execute()
+            except Exception:
+                pass
         raise
     except Exception as e:
+        # Clean up placeholder on error
+        if placeholder_id:
+            try:
+                db.client.table("workouts").delete().eq("id", placeholder_id).execute()
+            except Exception:
+                pass
         logger.error(f"Failed to generate workout: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
