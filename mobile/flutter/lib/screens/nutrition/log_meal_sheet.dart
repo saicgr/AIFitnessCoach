@@ -2823,7 +2823,7 @@ class _CollapsibleFoodItemsSection extends StatefulWidget {
 }
 
 class _CollapsibleFoodItemsSectionState extends State<_CollapsibleFoodItemsSection> {
-  bool _isExpanded = false;
+  bool _isExpanded = true;
 
   @override
   Widget build(BuildContext context) {

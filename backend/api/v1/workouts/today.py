@@ -273,6 +273,26 @@ def _get_upcoming_dates_needing_generation(
     return results
 
 
+def _backfill_gym_profile_id(db, user_id: str, gym_profile_id: str) -> None:
+    """Background task: tag workouts with NULL gym_profile_id.
+
+    Workouts created before gym profiles existed or through flows that
+    didn't set gym_profile_id will be invisible to profile-filtered queries.
+    This one-shot backfill assigns the active profile to those workouts.
+    """
+    try:
+        result = db.client.table("workouts") \
+            .update({"gym_profile_id": gym_profile_id}) \
+            .eq("user_id", user_id) \
+            .is_("gym_profile_id", "null") \
+            .execute()
+        count = len(result.data) if result.data else 0
+        if count > 0:
+            logger.info(f"[BACKFILL] Tagged {count} orphaned workouts with gym_profile_id={gym_profile_id}")
+    except Exception as e:
+        logger.warning(f"[BACKFILL] Failed to backfill gym_profile_id: {e}")
+
+
 async def auto_generate_workout(user_id: str, target_date: date, gym_profile_id: Optional[str] = None, selected_days: Optional[List[int]] = None) -> None:
     """Background task: generate a workout for a specific date.
 
@@ -548,6 +568,15 @@ async def get_today_workout(
                     gym_profile_id=active_profile_id,
                     selected_days=selected_days,
                 )
+
+        # Backfill: tag orphaned workouts (gym_profile_id IS NULL) with the active profile
+        if active_profile_id:
+            background_tasks.add_task(
+                _backfill_gym_profile_id,
+                db=db,
+                user_id=user_id,
+                gym_profile_id=active_profile_id,
+            )
 
         return TodayWorkoutResponse(
             has_workout_today=has_workout_today,

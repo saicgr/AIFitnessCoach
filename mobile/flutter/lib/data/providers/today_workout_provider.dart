@@ -168,13 +168,39 @@ class TodayWorkoutNotifier extends StateNotifier<AsyncValue<TodayWorkoutResponse
 
       // Handle auto-generation trigger
       if (response?.needsGeneration == true && response?.nextWorkoutDate != null) {
-        debugPrint('🚀 [Auto-Gen] Backend signaled needs_generation=true, date=${response!.nextWorkoutDate}');
-        _triggerAutoGeneration(response.nextWorkoutDate!);
+        final hasAnyWorkout = response!.todayWorkout != null || response.nextWorkout != null;
 
-        // Start polling for the backend-generated workout (Fix 2)
-        // The backend also generates in the background, so poll until it appears
-        _startBackgroundGenerationPolling();
+        if (!hasAnyWorkout) {
+          // No workouts at all - show generating UI and trigger streaming gen
+          debugPrint('🚀 [Auto-Gen] No workouts exist, triggering generation for date=${response.nextWorkoutDate}');
+          _triggerAutoGeneration(response.nextWorkoutDate!);
+          _startBackgroundGenerationPolling();
 
+          response = TodayWorkoutResponse(
+            hasWorkoutToday: response.hasWorkoutToday,
+            todayWorkout: response.todayWorkout,
+            nextWorkout: response.nextWorkout,
+            daysUntilNext: response.daysUntilNext,
+            restDayMessage: response.restDayMessage,
+            completedToday: response.completedToday,
+            completedWorkout: response.completedWorkout,
+            isGenerating: true,
+            generationMessage: 'Generating your workout...',
+            needsGeneration: false,
+            nextWorkoutDate: response.nextWorkoutDate,
+          );
+        } else {
+          // Workouts exist - backend background tasks handle remaining dates silently
+          debugPrint('✅ [Auto-Gen] Workouts already exist, letting backend handle remaining generation silently');
+        }
+      }
+
+      // Normalize: guarantee isGenerating=false when displayable content exists.
+      // This is the canonical fix — all UI code can trust isGenerating without
+      // also needing to check for existing workouts. Fixes the caching bug too
+      // (_saveToCache skips when isGenerating=true, losing valid workout data).
+      if (response != null && response.hasDisplayableContent && response.isGenerating) {
+        debugPrint('🔄 [TodayWorkout] Normalized: cleared isGenerating (content exists)');
         response = TodayWorkoutResponse(
           hasWorkoutToday: response.hasWorkoutToday,
           todayWorkout: response.todayWorkout,
@@ -183,10 +209,11 @@ class TodayWorkoutNotifier extends StateNotifier<AsyncValue<TodayWorkoutResponse
           restDayMessage: response.restDayMessage,
           completedToday: response.completedToday,
           completedWorkout: response.completedWorkout,
-          isGenerating: true,
-          generationMessage: 'Generating your workout...',
-          needsGeneration: false,
+          isGenerating: false,
+          generationMessage: null,
+          needsGeneration: response.needsGeneration,
           nextWorkoutDate: response.nextWorkoutDate,
+          gymProfileId: response.gymProfileId,
         );
       }
 

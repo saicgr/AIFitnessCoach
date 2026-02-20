@@ -269,7 +269,6 @@ class _HeroWorkoutCardState extends ConsumerState<HeroWorkoutCard> {
       final result = await repo.markWorkoutAsDone(widget.workout.id!);
 
       if (result != null && mounted) {
-        TodayWorkoutNotifier.clearCache();
         ref.invalidate(todayWorkoutProvider);
         ref.invalidate(workoutsProvider);
         if (mounted) {
@@ -393,7 +392,6 @@ class _HeroWorkoutCardState extends ConsumerState<HeroWorkoutCard> {
       final success = await repo.uncompleteWorkout(widget.workout.id!);
 
       if (success && mounted) {
-        TodayWorkoutNotifier.clearCache();
         ref.invalidate(todayWorkoutProvider);
         ref.invalidate(workoutsProvider);
         if (mounted) {

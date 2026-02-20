@@ -1001,7 +1001,19 @@ Create engaging, creative names that:
                     # Match found but has 0 calories - fall back to AI values
                     logger.warning(f"[{source_label}] Found match for '{food_names[i]}' but calories=0, keeping AI estimate | ai_calories={item.get('calories', 0)}")
                     item['usda_data'] = None
-                    item['ai_per_gram'] = None
+                    # Calculate ai_per_gram so frontend can still scale portions
+                    original_item = food_items[i]
+                    ai_cal = original_item.get('calories', 0)
+                    if weight_g > 0 and ai_cal > 0:
+                        item['ai_per_gram'] = {
+                            'calories': round(ai_cal / weight_g, 3),
+                            'protein': round(original_item.get('protein_g', 0) / weight_g, 4),
+                            'carbs': round(original_item.get('carbs_g', 0) / weight_g, 4),
+                            'fat': round(original_item.get('fat_g', 0) / weight_g, 4),
+                            'fiber': round(original_item.get('fiber_g', 0) / weight_g, 4) if original_item.get('fiber_g') else 0,
+                        }
+                    else:
+                        item['ai_per_gram'] = None
             else:
                 # Fallback: Calculate per-gram from AI estimate
                 item['usda_data'] = None

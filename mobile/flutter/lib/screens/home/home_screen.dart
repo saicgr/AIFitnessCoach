@@ -208,10 +208,18 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   }
 
   /// Auto-show Health Connect popup if not connected and not recently dismissed.
+  /// Waits until workout initialization/generation finishes so it doesn't
+  /// overlay the loading screen.
   Future<void> _maybeShowHealthConnectPopup() async {
     if (_healthPopupShownThisSession) return;
 
-    // Small delay so the home screen renders first
+    // Wait until workout init and any streaming generation finishes
+    while (mounted && (_isInitializing || _isStreamingGeneration)) {
+      await Future.delayed(const Duration(milliseconds: 500));
+    }
+    if (!mounted) return;
+
+    // Extra small delay so the home content renders first
     await Future.delayed(const Duration(milliseconds: 500));
     if (!mounted) return;
 
@@ -2210,7 +2218,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     return state.whenOrNull(
       data: (response) {
         if (response == null) return null;
-        if (response.isGenerating) return null;
+        // Show existing workout even if background generation is in progress
         final summary = response.todayWorkout ?? response.nextWorkout;
         return summary?.toWorkout();
       },
@@ -2231,8 +2239,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     AsyncValue<TodayWorkoutResponse?> todayWorkoutState,
     bool isAIGenerating,
   ) {
-    // Show loading during initial app load
-    if (_isInitializing) {
+    // Show loading during initial app load, but only if provider has no data yet.
+    // Skip this gate when provider has cached data (prevents flash on back-navigation).
+    if (_isInitializing && !todayWorkoutState.hasValue) {
       return const GeneratingHeroCard(
         message: 'Loading your workout...',
       );
@@ -2251,15 +2260,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
           return _buildFallbackHeroCard(context);
         }
 
-        // Show generating card if workout is being generated
-        if (response.isGenerating) {
+        // Get the workout to display (today's or next upcoming)
+        final workoutSummary = response.todayWorkout ?? response.nextWorkout;
+
+        // Only show generating card when no workout exists at all
+        if (response.isGenerating && workoutSummary == null) {
           return GeneratingHeroCard(
             message: response.generationMessage ?? 'Generating your workout...',
           );
         }
-
-        // Get the workout to display (today's or next upcoming)
-        final workoutSummary = response.todayWorkout ?? response.nextWorkout;
 
         if (workoutSummary != null) {
           final workout = workoutSummary.toWorkout();
@@ -2316,15 +2325,16 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     // During initial app load, show loading card
     Widget workoutContent;
 
-    if (_isInitializing) {
-      debugPrint('🏠 [HeroSection] Showing: GeneratingHeroCard (initializing)');
+    if (_isInitializing && !todayWorkoutState.hasValue) {
+      debugPrint('🏠 [HeroSection] Showing: GeneratingHeroCard (initializing, no cached data)');
       workoutContent = const GeneratingHeroCard(
         message: 'Loading your workout...',
       );
     }
-    // During AI generation, show generating card
-    else if (isAIGenerating || todayWorkoutState.valueOrNull?.isGenerating == true) {
-      debugPrint('🏠 [HeroSection] Showing: GeneratingHeroCard (generating)');
+    // During AI generation, show generating card ONLY if no displayable content
+    else if ((isAIGenerating || todayWorkoutState.valueOrNull?.isGenerating == true)
+        && todayWorkoutState.valueOrNull?.hasDisplayableContent != true) {
+      debugPrint('🏠 [HeroSection] Showing: GeneratingHeroCard (generating, no content yet)');
       workoutContent = GeneratingHeroCard(
         message: todayWorkoutState.valueOrNull?.generationMessage ?? 'Generating your workout...',
       );
@@ -2399,8 +2409,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
           ),
         ),
         const SizedBox(height: 8),
-        // Week calendar strip (only show when carousel is visible)
-        if (!_isInitializing && !isAIGenerating && todayWorkoutState.valueOrNull?.isGenerating != true)
+        // Week calendar strip - show if content exists OR not generating
+        if ((!_isInitializing || todayWorkoutState.hasValue) && (
+            todayWorkoutState.valueOrNull?.hasDisplayableContent == true ||
+            (!isAIGenerating && todayWorkoutState.valueOrNull?.isGenerating != true)
+        ))
           _buildWeekCalendarStrip(isDark),
         const SizedBox(height: 8),
         // Workout carousel or loading card

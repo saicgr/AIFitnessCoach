@@ -1028,7 +1028,6 @@ class _WorkoutSummaryScreenState extends ConsumerState<WorkoutSummaryScreen> {
       final repo = ref.read(workoutRepositoryProvider);
       final success = await repo.uncompleteWorkout(widget.workoutId);
       if (success && mounted) {
-        TodayWorkoutNotifier.clearCache();
         ref.invalidate(todayWorkoutProvider);
         ref.invalidate(workoutsProvider);
         if (mounted) context.pop();

@@ -55,10 +55,16 @@ def resolve_timezone(request, db=None, user_id: Optional[str] = None) -> str:
         2. users.timezone DB column (if db + user_id provided)
         3. Fallback to 'UTC'
     """
-    # 1. Header
+    # 1. Header (try IANA first, then map abbreviation)
     header_tz = request.headers.get("x-user-timezone")
-    if header_tz and _is_valid_tz(header_tz):
-        return header_tz
+    if header_tz:
+        if _is_valid_tz(header_tz):
+            return header_tz
+        # Flutter fallback sends abbreviations like "IST" — map to IANA
+        mapped = _TZ_ABBREVIATION_MAP.get(header_tz.upper())
+        if mapped:
+            logger.debug(f"Mapped timezone abbreviation '{header_tz}' -> '{mapped}'")
+            return mapped
 
     # 2. DB lookup
     if db is not None and user_id:
@@ -83,6 +89,39 @@ def _is_valid_tz(tz_str: str) -> bool:
         return True
     except (ZoneInfoNotFoundError, KeyError, ValueError):
         return False
+
+
+# Map common timezone abbreviations to IANA identifiers.
+# Flutter's DateTime.now().timeZoneName returns these abbreviations,
+# which are NOT valid IANA identifiers.
+_TZ_ABBREVIATION_MAP = {
+    "IST": "Asia/Kolkata",
+    "EST": "America/New_York",
+    "EDT": "America/New_York",
+    "CST": "America/Chicago",
+    "CDT": "America/Chicago",
+    "MST": "America/Denver",
+    "MDT": "America/Denver",
+    "PST": "America/Los_Angeles",
+    "PDT": "America/Los_Angeles",
+    "GMT": "Europe/London",
+    "BST": "Europe/London",
+    "CET": "Europe/Paris",
+    "CEST": "Europe/Paris",
+    "JST": "Asia/Tokyo",
+    "KST": "Asia/Seoul",
+    "CST+8": "Asia/Shanghai",
+    "SGT": "Asia/Singapore",
+    "AEST": "Australia/Sydney",
+    "AEDT": "Australia/Sydney",
+    "NZST": "Pacific/Auckland",
+    "NZDT": "Pacific/Auckland",
+    "GST": "Asia/Dubai",
+    "PKT": "Asia/Karachi",
+    "ICT": "Asia/Bangkok",
+    "WIB": "Asia/Jakarta",
+    "MSK": "Europe/Moscow",
+}
 
 
 def _safe_zone(tz_str: str) -> ZoneInfo:

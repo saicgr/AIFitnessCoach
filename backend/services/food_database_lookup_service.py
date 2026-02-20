@@ -168,7 +168,7 @@ class FoodDatabaseLookupService:
 
         except Exception as e:
             logger.error(f"[FoodDB] Search failed for '{query}': {e}")
-            return []
+            raise
 
     async def search_foods_unified(
         self,
@@ -213,7 +213,7 @@ class FoodDatabaseLookupService:
 
         except Exception as e:
             logger.error(f"[FoodDB] Unified search failed for '{query}': {e}")
-            # Fallback to regular search
+            # Fallback to regular search (will raise if that also fails)
             return await self.search_foods(query=query, page_size=page_size, page=page)
 
     async def lookup_single_food(self, food_name: str) -> Optional[Dict]:

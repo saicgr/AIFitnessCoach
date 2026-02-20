@@ -71,9 +71,10 @@ class WorkoutDB(BaseDB):
             "estimated_duration_minutes, warmup_json, stretch_json"
         ).eq("user_id", user_id)
 
-        # Filter by gym profile if specified
+        # Filter by gym profile if specified — also include workouts with no profile
+        # (created before gym profiles were introduced or through flows that didn't tag them)
         if gym_profile_id:
-            query = query.eq("gym_profile_id", gym_profile_id)
+            query = query.or_(f"gym_profile_id.eq.{gym_profile_id},gym_profile_id.is.null")
 
         # Only show current workouts (filter out superseded versions from SCD2)
         query = query.eq("is_current", True)
@@ -257,9 +258,9 @@ class WorkoutDB(BaseDB):
             .eq("is_current", True)
         )
 
-        # Filter by gym profile if specified
+        # Filter by gym profile if specified — also include workouts with no profile
         if gym_profile_id:
-            query = query.eq("gym_profile_id", gym_profile_id)
+            query = query.or_(f"gym_profile_id.eq.{gym_profile_id},gym_profile_id.is.null")
 
         if is_completed is not None:
             query = query.eq("is_completed", is_completed)

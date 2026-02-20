@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/accent_color_provider.dart';
@@ -7,11 +6,8 @@ import '../../../data/repositories/auth_repository.dart';
 import '../../../data/models/workout.dart';
 import '../../../data/repositories/workout_repository.dart';
 import '../../../data/providers/today_workout_provider.dart';
-import '../../../data/services/api_client.dart';
 import '../../../data/services/haptic_service.dart';
-import '../../../widgets/comeback_mode_sheet.dart';
 import 'hero_workout_card.dart';
-import 'generate_workout_placeholder.dart';
 
 /// Represents either a workout or a placeholder date in the carousel
 class CarouselItem {
@@ -69,21 +65,18 @@ class HeroWorkoutCarousel extends ConsumerStatefulWidget {
     _HeroWorkoutCarouselState.resetAutoGeneration();
   }
 
-  /// Get workout dates for the current week given workout day indices.
-  /// Returns dates from today forward, wrapping to next week for past days.
+  /// Get remaining workout dates for this week (today through Sunday).
+  /// Past days are skipped — no wrapping to next week.
   static List<DateTime> getWorkoutDatesForWeek(List<int> workoutDays) {
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
     final monday = today.subtract(Duration(days: today.weekday - 1));
-    final nextMonday = monday.add(const Duration(days: 7));
 
     final dates = <DateTime>[];
     for (final day in workoutDays) {
       final thisWeekDate = monday.add(Duration(days: day));
       if (!thisWeekDate.isBefore(today)) {
         dates.add(thisWeekDate);
-      } else {
-        dates.add(nextMonday.add(Duration(days: day)));
       }
     }
     dates.sort((a, b) => a.compareTo(b));
@@ -104,35 +97,8 @@ class _HeroWorkoutCarouselState extends ConsumerState<HeroWorkoutCarousel> {
   PageController get _pageController =>
       widget.externalPageController ?? _ownedPageController!;
 
-  /// Static so it survives widget disposal on tab switch (ShellRoute recreates HomeScreen)
-  static DateTime? _generatingForDate;
-  static bool _autoGenerationTriggered = false;
-
-  /// Reset auto-generation flag (call on pull-to-refresh, regeneration, or logout)
-  static void resetAutoGeneration() {
-    _autoGenerationTriggered = false;
-    _generatingForDate = null;
-  }
-
-  /// Generation step tracking for numbered progress UI
-  int _generationStep = 0;
-  int _generationTotalSteps = 4;
-  String _generationMessage = '';
-
-  /// Tracks generation failure counts per date for retry logic (Fix 4)
-  final Map<String, int> _generationFailures = {};
-
-  /// Max retries before showing permanent error state
-  static const int _maxRetries = 3;
-
-  /// Retry delay schedule: 5s, 15s, 30s
-  static const List<int> _retryDelaySeconds = [5, 15, 30];
-
-  /// Active retry timers per date
-  final Map<String, Timer> _retryTimers = {};
-
-  /// Dates that have permanently failed (exceeded max retries)
-  final Set<String> _permanentlyFailed = {};
+  /// No-op: generation is handled by todayWorkoutProvider
+  static void resetAutoGeneration() {}
 
   /// Locally generated workouts stored for immediate display (Fix: workout vanishes after generation)
   final List<Workout> _locallyGeneratedWorkouts = [];
@@ -151,11 +117,6 @@ class _HeroWorkoutCarouselState extends ConsumerState<HeroWorkoutCarousel> {
     if (_ownsController) {
       _ownedPageController?.dispose();
     }
-    // Cancel all retry timers (Fix 4)
-    for (final timer in _retryTimers.values) {
-      timer.cancel();
-    }
-    _retryTimers.clear();
     super.dispose();
   }
 
@@ -163,210 +124,19 @@ class _HeroWorkoutCarouselState extends ConsumerState<HeroWorkoutCarousel> {
   String _dateKey(DateTime date) =>
       '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
 
-  /// Minimum days since last completed workout to trigger comeback mode prompt.
-  static const int _comebackThresholdDays = 14;
-
-  /// Computes days since the most recent completed workout.
-  /// Returns null if no completed workouts are found.
-  int? _daysSinceLastCompletedWorkout() {
-    final workouts = ref.read(workoutsProvider).valueOrNull ?? [];
-    DateTime? latestCompleted;
-    for (final w in workouts) {
-      if (w.isCompleted != true) continue;
-      final dateKey = w.scheduledDateKey;
-      if (dateKey == null) continue;
-      try {
-        final parts = dateKey.split('-');
-        final d = DateTime(int.parse(parts[0]), int.parse(parts[1]), int.parse(parts[2]));
-        if (latestCompleted == null || d.isAfter(latestCompleted)) {
-          latestCompleted = d;
-        }
-      } catch (_) {}
-    }
-    if (latestCompleted == null) return null;
-    final now = DateTime.now();
-    final today = DateTime(now.year, now.month, now.day);
-    return today.difference(latestCompleted).inDays;
-  }
-
-  Future<void> _handleGenerateWorkout(DateTime date) async {
-    final key = _dateKey(date);
-
-    // Clear permanent failure state if user manually taps retry
-    _permanentlyFailed.remove(key);
-
-    // --- Comeback mode check ---
-    bool? skipComeback = ref.read(comebackChoiceProvider);
-    if (skipComeback == null) {
-      final daysSince = _daysSinceLastCompletedWorkout();
-      if (daysSince != null && daysSince >= _comebackThresholdDays && mounted) {
-        final choice = await showComebackModeSheet(context, daysSinceLastWorkout: daysSince);
-        if (!mounted) return;
-        if (choice == null) {
-          // User dismissed without choosing - don't generate
-          return;
-        }
-        // choice: true = skip comeback (full workout), false = use comeback mode
-        skipComeback = choice;
-        ref.read(comebackChoiceProvider.notifier).state = choice;
-      }
-    }
-
-    setState(() {
-      _generatingForDate = date;
-      _generationStep = 1;
-      _generationTotalSteps = 4;
-      _generationMessage = 'Analyzing your profile...';
-    });
-
-    try {
-      final repository = ref.read(workoutRepositoryProvider);
-      final apiClient = ref.read(apiClientProvider);
-      String? userId = await apiClient.getUserId();
-      if (userId == null || userId.isEmpty) {
-        debugPrint('❌ [HeroCarousel] Cannot generate workout: no userId');
-        _handleGenerationFailure(date);
-        return;
-      }
-
-      final scheduledDate = '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
-      debugPrint('🏋️ [HeroCarousel] Streaming generation for $scheduledDate');
-
-      int chunkCount = 0;
-      Workout? generatedWorkout;
-
-      await for (final progress in repository.generateWorkoutStreaming(
-        userId: userId,
-        scheduledDate: scheduledDate,
-        skipComeback: skipComeback,
-      )) {
-        if (!mounted) break;
-
-        if (progress.status == WorkoutGenerationStatus.started) {
-          setState(() {
-            _generationStep = 1;
-            _generationMessage = 'Analyzing your profile...';
-          });
-        } else if (progress.status == WorkoutGenerationStatus.progress) {
-          chunkCount++;
-          if (chunkCount == 1) {
-            setState(() {
-              _generationStep = 2;
-              _generationMessage = 'Selecting exercises...';
-            });
-          } else if (chunkCount >= 3) {
-            setState(() {
-              _generationStep = 3;
-              _generationMessage = 'Building your workout...';
-            });
-          }
-        } else if (progress.status == WorkoutGenerationStatus.completed) {
-          setState(() {
-            _generationStep = 4;
-            _generationMessage = 'Finalizing workout...';
-          });
-          generatedWorkout = progress.workout;
-        } else if (progress.status == WorkoutGenerationStatus.error) {
-          debugPrint('❌ [HeroCarousel] Stream error: ${progress.message}');
-          _handleGenerationFailure(date);
-          return;
-        }
-      }
-
-      if (generatedWorkout != null) {
-        // Store locally for immediate display (prevents vanishing after generation)
-        _locallyGeneratedWorkouts.add(generatedWorkout);
-        // Refresh providers to pick up the new workout
-        ref.invalidate(workoutsProvider);
-        ref.invalidate(todayWorkoutProvider);
-        // Success: clear failure tracking
-        _generationFailures.remove(key);
-        _retryTimers[key]?.cancel();
-        _retryTimers.remove(key);
-      } else {
-        _handleGenerationFailure(date);
-      }
-    } catch (e) {
-      debugPrint('❌ [HeroCarousel] Generation failed for $key: $e');
-      _handleGenerationFailure(date);
-    } finally {
-      if (mounted) {
-        setState(() {
-          _generatingForDate = null;
-          _generationStep = 0;
-          _generationMessage = '';
-        });
-      }
-    }
-  }
-
-  /// Handle a generation failure: track count and schedule retry (Fix 4)
-  void _handleGenerationFailure(DateTime date) {
-    final key = _dateKey(date);
-    final currentFailures = (_generationFailures[key] ?? 0) + 1;
-    _generationFailures[key] = currentFailures;
-
-    debugPrint('[HeroCarousel] Generation failure #$currentFailures for $key');
-
-    if (currentFailures >= _maxRetries) {
-      // Max retries exceeded: show permanent error state
-      debugPrint('[HeroCarousel] Max retries ($currentFailures) reached for $key, showing error state');
-      if (mounted) {
-        setState(() => _permanentlyFailed.add(key));
-      }
-      return;
-    }
-
-    // Schedule retry with increasing delay
-    final delayIndex = currentFailures - 1;
-    final delaySec = delayIndex < _retryDelaySeconds.length
-        ? _retryDelaySeconds[delayIndex]
-        : _retryDelaySeconds.last;
-
-    debugPrint('[HeroCarousel] Scheduling retry #${currentFailures + 1} for $key in ${delaySec}s');
-
-    _retryTimers[key]?.cancel();
-    _retryTimers[key] = Timer(Duration(seconds: delaySec), () {
-      if (mounted && !_permanentlyFailed.contains(key)) {
-        debugPrint('[HeroCarousel] Auto-retrying generation for $key');
-        _handleGenerateWorkout(date);
-      }
-    });
-  }
-
-  /// Whether a date has permanently failed generation
-  bool _isGenerationFailed(DateTime date) => _permanentlyFailed.contains(_dateKey(date));
-
-  /// Check if the todayWorkoutProvider already has a workout for a specific date.
-  /// Prevents re-triggering on tab switch without blocking generation for today
-  /// when only a future workout exists.
-  bool _hasProviderWorkoutForDate(TodayWorkoutResponse? response, String? dateStr) {
-    if (response == null || dateStr == null) return false;
-    if (response.todayWorkout != null &&
-        response.todayWorkout!.scheduledDate.split('T')[0] == dateStr) return true;
-    if (response.nextWorkout != null &&
-        response.nextWorkout!.scheduledDate.split('T')[0] == dateStr) return true;
-    if (response.completedWorkout != null &&
-        response.completedWorkout!.scheduledDate.split('T')[0] == dateStr) return true;
-    return false;
-  }
-
-  /// Get the next N workout dates starting from today, wrapping to next week.
-  /// Always returns exactly workoutDays.length dates.
+  /// Get remaining workout dates for this week (today through Sunday).
+  /// Past days are skipped — no wrapping to next week.
   List<DateTime> _getWorkoutDatesForWeek(List<int> workoutDays) {
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
     final monday = today.subtract(Duration(days: today.weekday - 1));
-    final nextMonday = monday.add(const Duration(days: 7));
 
     final dates = <DateTime>[];
     for (final day in workoutDays) {
       final thisWeekDate = monday.add(Duration(days: day));
-      // If this week's date is today or future, use it; otherwise wrap to next week
+      // Only include today or future dates this week
       if (!thisWeekDate.isBefore(today)) {
         dates.add(thisWeekDate);
-      } else {
-        dates.add(nextMonday.add(Duration(days: day)));
       }
     }
     dates.sort((a, b) => a.compareTo(b));
@@ -380,9 +150,10 @@ class _HeroWorkoutCarouselState extends ConsumerState<HeroWorkoutCarousel> {
     final targetKey = _dateKey(date); // "YYYY-MM-DD" from local DateTime
     for (final workout in workouts) {
       if (workout.scheduledDate == null) continue;
-      // Compare date strings directly — scheduledDate is "YYYY-MM-DD" or "YYYY-MM-DDT..."
-      final workoutDateStr = workout.scheduledDate!.split('T')[0];
-      if (workoutDateStr == targetKey) {
+      // Extract YYYY-MM-DD: handles "YYYY-MM-DD", "YYYY-MM-DDT...", "YYYY-MM-DD ..."
+      final raw = workout.scheduledDate!;
+      final dateOnly = raw.length >= 10 ? raw.substring(0, 10) : raw;
+      if (dateOnly == targetKey) {
         return workout;
       }
     }
@@ -422,19 +193,6 @@ class _HeroWorkoutCarouselState extends ConsumerState<HeroWorkoutCarousel> {
         final todayWorkout = todayWorkoutResponse?.todayWorkout?.toWorkout();
         final nextWorkout = todayWorkoutResponse?.nextWorkout?.toWorkout();
 
-        // Detect if auto-generation is in progress from todayWorkoutProvider
-        final isAutoGenerating = todayWorkoutResponse?.isGenerating == true;
-        final autoGeneratingDateStr = todayWorkoutResponse?.nextWorkoutDate;
-
-        // Parse the auto-generating date for comparison with carousel dates
-        DateTime? autoGeneratingDate;
-        if (autoGeneratingDateStr != null) {
-          try {
-            autoGeneratingDate = DateTime.parse(autoGeneratingDateStr);
-            autoGeneratingDate = DateTime(autoGeneratingDate.year, autoGeneratingDate.month, autoGeneratingDate.day);
-          } catch (_) {}
-        }
-
         // Use valueOrNull so we don't block on the slow all-workouts fetch
         final allWorkouts = workoutsAsync.valueOrNull ?? [];
 
@@ -457,7 +215,7 @@ class _HeroWorkoutCarouselState extends ConsumerState<HeroWorkoutCarousel> {
           (local) => allWorkouts.any((w) => w.id == local.id),
         );
 
-        // Build carousel items: one slide per workout day, wrapping to next week
+        // Build carousel items: one per workout day (workout card or pending card)
         List<CarouselItem> carouselItems = [];
 
         if (workoutDays.isNotEmpty) {
@@ -467,14 +225,7 @@ class _HeroWorkoutCarouselState extends ConsumerState<HeroWorkoutCarousel> {
             if (workout != null) {
               carouselItems.add(CarouselItem.workout(workout));
             } else {
-              final isThisDateAutoGenerating = isAutoGenerating &&
-                  autoGeneratingDate != null && date == autoGeneratingDate;
-              final isThisDateFailed = _isGenerationFailed(date);
-              carouselItems.add(CarouselItem.placeholder(
-                date,
-                isAutoGenerating: isThisDateAutoGenerating,
-                isGenerationFailed: isThisDateFailed,
-              ));
+              carouselItems.add(CarouselItem.placeholder(date));
             }
           }
         }
@@ -486,26 +237,7 @@ class _HeroWorkoutCarouselState extends ConsumerState<HeroWorkoutCarousel> {
           });
         }
 
-        // Auto-trigger generation for the first placeholder
-        // Skip if todayWorkoutProvider already shows isGenerating (prevents duplicate calls)
-        // Also skip if todayWorkoutProvider already has a cached workout (prevents re-trigger on tab switch)
-        if (!_autoGenerationTriggered && carouselItems.isNotEmpty) {
-          final firstItem = carouselItems.first;
-          final firstItemDateStr = firstItem.date != null ? _dateKey(firstItem.date!) : null;
-          final hasCachedWorkoutForDate = _hasProviderWorkoutForDate(todayWorkoutResponse, firstItemDateStr);
-          if (firstItem.isPlaceholder && !firstItem.isAutoGenerating &&
-              _generatingForDate == null && !isAutoGenerating && !hasCachedWorkoutForDate) {
-            _autoGenerationTriggered = true;
-            debugPrint('🚀 [HeroCarousel] Auto-triggering generation for first placeholder: ${firstItem.placeholderDate}');
-            WidgetsBinding.instance.addPostFrameCallback((_) {
-              if (mounted) {
-                _handleGenerateWorkout(firstItem.placeholderDate!);
-              }
-            });
-          }
-        }
-
-        // If still no items, show appropriate state
+        // If no workout items to display, show appropriate state
         if (carouselItems.isEmpty) {
           if (workoutDays.isEmpty) {
             return _buildNoWorkoutDaysState(isDark, accentColor);
@@ -516,25 +248,13 @@ class _HeroWorkoutCarouselState extends ConsumerState<HeroWorkoutCarousel> {
         // Show single card if only one item (no carousel needed)
         if (carouselItems.length == 1) {
           final item = carouselItems.first;
-          final isItemGenerating = _generatingForDate == item.placeholderDate || item.isAutoGenerating;
           return SizedBox(
             height: HeroWorkoutCarousel.cardHeight,
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: item.isWorkout
-                  ? HeroWorkoutCard(
-                      workout: item.workout!,
-                      inCarousel: false,
-                    )
-                  : GenerateWorkoutPlaceholder(
-                      date: item.placeholderDate!,
-                      onGenerate: () => _handleGenerateWorkout(item.placeholderDate!),
-                      isGenerating: isItemGenerating,
-                      isGenerationFailed: item.isGenerationFailed,
-                      generationStep: isItemGenerating ? _generationStep : 0,
-                      generationTotalSteps: _generationTotalSteps,
-                      generationMessage: isItemGenerating ? _generationMessage : null,
-                    ),
+                  ? HeroWorkoutCard(workout: item.workout!, inCarousel: false)
+                  : _buildPendingCard(item.placeholderDate!, isDark, accentColor),
             ),
           );
         }
@@ -557,7 +277,6 @@ class _HeroWorkoutCarouselState extends ConsumerState<HeroWorkoutCarousel> {
               final isActive = index == _currentPage;
               final scale = isActive ? 1.0 : 0.92;
               final opacity = isActive ? 1.0 : 0.8;
-              final isItemGenerating = _generatingForDate == item.placeholderDate || item.isAutoGenerating;
 
               return AnimatedScale(
                 scale: scale,
@@ -566,25 +285,77 @@ class _HeroWorkoutCarouselState extends ConsumerState<HeroWorkoutCarousel> {
                   opacity: opacity,
                   duration: const Duration(milliseconds: 200),
                   child: item.isWorkout
-                      ? HeroWorkoutCard(
-                          workout: item.workout!,
-                          inCarousel: true,
-                        )
-                      : GenerateWorkoutPlaceholder(
-                          date: item.placeholderDate!,
-                          onGenerate: () => _handleGenerateWorkout(item.placeholderDate!),
-                          isGenerating: isItemGenerating,
-                          isGenerationFailed: item.isGenerationFailed,
-                          generationStep: isItemGenerating ? _generationStep : 0,
-                          generationTotalSteps: _generationTotalSteps,
-                          generationMessage: isItemGenerating ? _generationMessage : null,
-                        ),
+                      ? HeroWorkoutCard(workout: item.workout!, inCarousel: true)
+                      : _buildPendingCard(item.placeholderDate!, isDark, accentColor),
                 ),
               );
             },
           ),
         );
       },
+    );
+  }
+
+  /// Minimal card for workout days that don't have a generated workout yet.
+  Widget _buildPendingCard(DateTime date, bool isDark, Color accentColor) {
+    const dayNames = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+    final dayName = dayNames[date.weekday - 1];
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final isToday = date == today;
+
+    return Container(
+      height: HeroWorkoutCarousel.cardHeight,
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF1a1a1a) : const Color(0xFFF5F5F5),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(
+          color: (isDark ? Colors.white : Colors.black).withValues(alpha: 0.06),
+        ),
+      ),
+      child: Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.fitness_center_rounded,
+              size: 40,
+              color: accentColor.withValues(alpha: 0.3),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              isToday ? 'Today' : dayName,
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.w700,
+                color: isDark ? Colors.white : Colors.black87,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                SizedBox(
+                  width: 14,
+                  height: 14,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: accentColor.withValues(alpha: 0.5),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  'Generating workout...',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: isDark ? Colors.white54 : Colors.black45,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
     );
   }
 

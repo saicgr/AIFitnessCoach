@@ -128,6 +128,12 @@ class TodayWorkoutResponse {
   // Gym profile context
   final String? gymProfileId;  // Active gym profile ID used for filtering
 
+  /// Whether there's any displayable content for the home screen.
+  /// Used by provider normalization and loading screen to make display decisions.
+  /// When true, isGenerating should never block the UI from showing content.
+  bool get hasDisplayableContent =>
+      todayWorkout != null || nextWorkout != null || completedToday || restDayMessage != null;
+
   const TodayWorkoutResponse({
     required this.hasWorkoutToday,
     this.todayWorkout,

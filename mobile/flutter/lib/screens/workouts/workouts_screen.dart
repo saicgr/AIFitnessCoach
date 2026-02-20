@@ -635,21 +635,7 @@ class _WorkoutsScreenState extends ConsumerState<WorkoutsScreen>
       ];
     }
 
-    // 3. Generating state - backend is creating workouts
-    if (isGenerating) {
-      debugPrint('🏋️ [WorkoutsScreen] Showing: Generating state');
-      return [
-        _buildSectionHeader('YOUR WORKOUT', textSecondary),
-        const SizedBox(height: 8),
-        GeneratingHeroCard(
-          message: generationMessage ?? 'Generating your workout...',
-          subtitle: 'Your personalized plan is being created',
-        ),
-        const SizedBox(height: 24),
-      ];
-    }
-
-    // 4. Has workout - show the workout card
+    // 3. Has workout - show it (even if background generation is running for other dates)
     if (todayOrNextWorkout != null) {
       debugPrint('🏋️ [WorkoutsScreen] Showing: Workout card for ${todayOrNextWorkout.name}');
       return [
@@ -674,15 +660,29 @@ class _WorkoutsScreenState extends ConsumerState<WorkoutsScreen>
       ];
     }
 
-    // 5. Completed today - show encouraging message
+    // 4. Completed today - show encouraging message
     if (completedToday) {
       debugPrint('🏋️ [WorkoutsScreen] Showing: Completed today state');
       return [
         _buildSectionHeader('YOUR WORKOUT', textSecondary),
         const SizedBox(height: 8),
         const GeneratingHeroCard(
-          message: 'Great job today! 🎉',
+          message: 'Great job today!',
           subtitle: 'Rest up for your next workout',
+        ),
+        const SizedBox(height: 24),
+      ];
+    }
+
+    // 5. Generating state - only when no workout exists at all
+    if (isGenerating) {
+      debugPrint('🏋️ [WorkoutsScreen] Showing: Generating state');
+      return [
+        _buildSectionHeader('YOUR WORKOUT', textSecondary),
+        const SizedBox(height: 8),
+        GeneratingHeroCard(
+          message: generationMessage ?? 'Generating your workout...',
+          subtitle: 'Your personalized plan is being created',
         ),
         const SizedBox(height: 24),
       ];

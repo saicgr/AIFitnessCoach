@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
+import '../../data/models/today_workout.dart';
 import '../../data/providers/today_workout_provider.dart';
 import '../../widgets/gradient_circular_progress_indicator.dart';
 
@@ -20,12 +21,15 @@ class _WorkoutLoadingScreenState extends ConsumerState<WorkoutLoadingScreen>
   late AnimationController _glowController;
 
   Timer? _pollTimer;
+  Timer? _maxWaitTimer;
   int _pollCount = 0;
+  int _consecutiveErrors = 0;
   int _currentStep = 0;
   double _progress = 0.0;
   bool _workoutReady = false;
   bool _hasNavigated = false;
-  static const int _maxPolls = 30; // ~2.5 min at 5s intervals
+  static const int _maxConsecutiveErrors = 5; // Navigate after 5 errors
+  static const int _maxWaitSeconds = 20; // Navigate to home after 20s max
 
   final List<_Step> _steps = const [
     _Step('Analyzing your fitness profile', Icons.person_search),
@@ -45,58 +49,70 @@ class _WorkoutLoadingScreenState extends ConsumerState<WorkoutLoadingScreen>
 
     _startPolling();
     _animateSteps();
+
+    // Hard time limit: navigate to home after _maxWaitSeconds.
+    // The home screen's GeneratingHeroCard handles ongoing generation gracefully.
+    // This prevents the user being stuck on a bare loading screen during
+    // backend cold starts or slow generation.
+    _maxWaitTimer = Timer(const Duration(seconds: _maxWaitSeconds), () {
+      if (!_hasNavigated && !_workoutReady) {
+        debugPrint('⏱️ [WorkoutLoading] Max wait $_maxWaitSeconds s reached, navigating to home');
+        _navigateToHome();
+      }
+    });
   }
 
   @override
   void dispose() {
     _glowController.dispose();
     _pollTimer?.cancel();
+    _maxWaitTimer?.cancel();
     super.dispose();
   }
 
   void _startPolling() {
-    // Check immediately — early generation may have already produced the workout
-    _checkWorkoutStatus();
-    // Then poll every 5s to avoid flooding the backend with generation triggers
-    _pollTimer = Timer.periodic(const Duration(seconds: 5), (_) {
-      if (!_workoutReady) _checkWorkoutStatus();
+    // Trigger an immediate refresh
+    ref.read(todayWorkoutProvider.notifier).refresh();
+    // Poll every 3s to keep triggering fresh fetches.
+    // State changes are handled reactively via ref.listen in build().
+    _pollTimer = Timer.periodic(const Duration(seconds: 3), (_) {
+      if (!_workoutReady) {
+        _pollCount++;
+        debugPrint('🔄 [WorkoutLoading] Poll refresh #$_pollCount');
+        ref.read(todayWorkoutProvider.notifier).refresh();
+      }
     });
   }
 
-  Future<void> _checkWorkoutStatus() async {
-    _pollCount++;
-    debugPrint('🔄 [WorkoutLoading] Polling for workouts (attempt $_pollCount/$_maxPolls)');
+  /// Called reactively by ref.listen whenever provider state changes.
+  /// Reacts instantly — no waiting for next poll interval.
+  void _onProviderStateChanged(AsyncValue<TodayWorkoutResponse?> state) {
+    if (_hasNavigated || _workoutReady) return;
 
-    await ref.read(todayWorkoutProvider.notifier).refresh();
-    final todayWorkoutState = ref.read(todayWorkoutProvider);
-
-    todayWorkoutState.when(
+    state.when(
       loading: () {},
       error: (e, _) {
         debugPrint('❌ [WorkoutLoading] Error: $e');
+        _consecutiveErrors++;
+        if (_consecutiveErrors >= _maxConsecutiveErrors) {
+          debugPrint('⚠️ [WorkoutLoading] $_consecutiveErrors consecutive errors, navigating');
+          _navigateToHome();
+        }
       },
       data: (response) {
-        if (response != null && !response.isGenerating) {
-          if (response.todayWorkout != null || response.nextWorkout != null) {
-            debugPrint('✅ [WorkoutLoading] Workouts ready!');
-            if (!_workoutReady) {
-              setState(() {
-                _workoutReady = true;
-                _progress = 1.0;
-                _currentStep = _steps.length;
-              });
-              // Brief pause to show 100% then navigate
-              Future.delayed(const Duration(milliseconds: 800), _navigateToHome);
-            }
-          }
+        _consecutiveErrors = 0;
+        if (response != null && response.hasDisplayableContent) {
+          debugPrint('✅ [WorkoutLoading] Content ready — transitioning immediately');
+          _maxWaitTimer?.cancel();
+          setState(() {
+            _workoutReady = true;
+            _progress = 1.0;
+            _currentStep = _steps.length;
+          });
+          Future.delayed(const Duration(milliseconds: 800), _navigateToHome);
         }
       },
     );
-
-    if (_pollCount >= _maxPolls && !_hasNavigated) {
-      debugPrint('⚠️ [WorkoutLoading] Max polls reached, navigating anyway');
-      _navigateToHome();
-    }
   }
 
   Future<void> _animateSteps() async {
@@ -123,6 +139,14 @@ class _WorkoutLoadingScreenState extends ConsumerState<WorkoutLoadingScreen>
 
   @override
   Widget build(BuildContext context) {
+    // React INSTANTLY to provider state changes (constructor fetch, streaming gen,
+    // background poll — any source). This is the primary transition mechanism.
+    // Polling just drives fresh fetches; ref.listen handles the reaction.
+    ref.listen<AsyncValue<TodayWorkoutResponse?>>(
+      todayWorkoutProvider,
+      (_, next) => _onProviderStateChanged(next),
+    );
+
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final backgroundColor = isDark ? AppColors.pureBlack : AppColorsLight.pureWhite;
     final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
@@ -269,12 +293,12 @@ class _WorkoutLoadingScreenState extends ConsumerState<WorkoutLoadingScreen>
 
                 const Spacer(flex: 4),
 
-                // Skip button after some time
+                // Skip button after 10s (2 polls)
                 AnimatedOpacity(
-                  opacity: _pollCount > 10 ? 1.0 : 0.0,
+                  opacity: _pollCount > 2 ? 1.0 : 0.0,
                   duration: const Duration(milliseconds: 300),
                   child: TextButton(
-                    onPressed: _pollCount > 10 ? _navigateToHome : null,
+                    onPressed: _pollCount > 2 ? _navigateToHome : null,
                     child: Text(
                       'Skip',
                       style: TextStyle(

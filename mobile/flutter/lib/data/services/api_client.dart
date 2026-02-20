@@ -180,7 +180,8 @@ class ApiClient with WidgetsBindingObserver {
             if (tz != null && tz.isNotEmpty) {
               options.headers['X-User-Timezone'] = tz;
             } else {
-              // Fallback: use device timezone name
+              // Fallback: send device timezone abbreviation (e.g. "IST").
+              // Backend maps common abbreviations to IANA identifiers.
               options.headers['X-User-Timezone'] = DateTime.now().timeZoneName;
             }
           } catch (e) {
