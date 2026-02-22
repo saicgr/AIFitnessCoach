@@ -416,32 +416,26 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet> {
   Future<void> _handleLog() async {
     if (_analyzedResponse == null) return;
 
-    setState(() => _isSaving = true);
+    final response = _analyzedResponse!;
+    final repository = ref.read(nutritionRepositoryProvider);
+    final mealType = _selectedMealType.value;
+    final sourceType = _sourceType;
+    final userId = widget.userId;
 
-    try {
-      final repository = ref.read(nutritionRepositoryProvider);
+    // Optimistic: mark XP and close sheet immediately
+    ref.read(xpProvider.notifier).markMealLogged();
 
-      await repository.logFoodDirect(
-        userId: widget.userId,
-        mealType: _selectedMealType.value,
-        analyzedFood: _analyzedResponse!,
-        sourceType: _sourceType,
-      );
+    // Start the save (don't await here - let _logAnalyzedFood close the sheet first)
+    final saveFuture = repository.logFoodDirect(
+      userId: userId,
+      mealType: mealType,
+      analyzedFood: response,
+      sourceType: sourceType,
+    ).catchError((e) {
+      debugPrint('❌ [LogMeal] Background save failed: $e');
+    });
 
-      if (mounted) {
-        setState(() => _isSaving = false);
-        ref.read(xpProvider.notifier).markMealLogged();
-        _logAnalyzedFood(_analyzedResponse!);
-      }
-    } catch (e) {
-      debugPrint('❌ [LogMeal] Error saving food: $e');
-      if (mounted) {
-        setState(() => _isSaving = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to save meal: $e'), backgroundColor: Colors.red),
-        );
-      }
-    }
+    _logAnalyzedFood(response, saveFuture);
   }
 
   Future<void> _handleSaveAsFavorite() async {
@@ -698,7 +692,7 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet> {
 
 
   /// Log an already analyzed food response
-  void _logAnalyzedFood(LogFoodResponse response) async {
+  void _logAnalyzedFood(LogFoodResponse response, [Future<void>? saveFuture]) async {
     debugPrint('✅ [LogMeal] _logAnalyzedFood called | calories=${response.totalCalories} | protein=${response.proteinG}g | foodItems=${response.foodItems.length}');
 
     // Check if there's an active fast that should be ended
@@ -722,9 +716,19 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet> {
       // If shouldEndFast == false, continue logging but don't end fast
     }
 
+    // Capture refs before popping (widget unmounts after pop)
+    final nutritionNotifier = ref.read(nutritionProvider.notifier);
+    final userId = widget.userId;
+
+    // Close sheet immediately for snappy UX
     Navigator.pop(context);
     _showSuccessSnackbar(response.totalCalories);
-    ref.read(nutritionProvider.notifier).loadTodaySummary(widget.userId);
+
+    // Wait for backend save to complete, then refresh to show updated data
+    if (saveFuture != null) {
+      await saveFuture;
+    }
+    nutritionNotifier.loadTodaySummary(userId, forceRefresh: true);
   }
 
   /// Show dialog to ask user if they want to end their fast

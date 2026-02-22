@@ -1,0 +1,41 @@
+{
+  "_description": "SFR: stimulus per unit fatigue. Higher = more efficient. Scale 0.3-1.0",
+  "patterns": {
+    "squat": {"sfr": 0.55, "systemic_fatigue": 0.9, "local_stimulus": 0.95},
+    "deadlift": {"sfr": 0.45, "systemic_fatigue": 1.0, "local_stimulus": 0.90},
+    "bench press": {"sfr": 0.65, "systemic_fatigue": 0.6, "local_stimulus": 0.90},
+    "leg press": {"sfr": 0.75, "systemic_fatigue": 0.4, "local_stimulus": 0.85},
+    "leg extension": {"sfr": 0.90, "systemic_fatigue": 0.15, "local_stimulus": 0.80},
+    "cable fly": {"sfr": 0.85, "systemic_fatigue": 0.10, "local_stimulus": 0.75},
+    "lat pulldown": {"sfr": 0.80, "systemic_fatigue": 0.3, "local_stimulus": 0.85},
+    "barbell row": {"sfr": 0.60, "systemic_fatigue": 0.7, "local_stimulus": 0.85},
+    "dumbbell curl": {"sfr": 0.95, "systemic_fatigue": 0.05, "local_stimulus": 0.70},
+    "overhead press": {"sfr": 0.60, "systemic_fatigue": 0.5, "local_stimulus": 0.85},
+    "lateral raise": {"sfr": 0.90, "systemic_fatigue": 0.05, "local_stimulus": 0.75},
+    "romanian deadlift": {"sfr": 0.55, "systemic_fatigue": 0.8, "local_stimulus": 0.90},
+    "hip thrust": {"sfr": 0.70, "systemic_fatigue": 0.35, "local_stimulus": 0.90},
+    "leg curl": {"sfr": 0.85, "systemic_fatigue": 0.15, "local_stimulus": 0.80},
+    "calf raise": {"sfr": 0.95, "systemic_fatigue": 0.05, "local_stimulus": 0.75},
+    "tricep pushdown": {"sfr": 0.90, "systemic_fatigue": 0.05, "local_stimulus": 0.70},
+    "face pull": {"sfr": 0.90, "systemic_fatigue": 0.05, "local_stimulus": 0.70},
+    "pull up": {"sfr": 0.65, "systemic_fatigue": 0.5, "local_stimulus": 0.90},
+    "chin up": {"sfr": 0.65, "systemic_fatigue": 0.5, "local_stimulus": 0.90},
+    "dip": {"sfr": 0.60, "systemic_fatigue": 0.5, "local_stimulus": 0.85},
+    "lunge": {"sfr": 0.55, "systemic_fatigue": 0.7, "local_stimulus": 0.85},
+    "hack squat": {"sfr": 0.70, "systemic_fatigue": 0.5, "local_stimulus": 0.90},
+    "incline press": {"sfr": 0.65, "systemic_fatigue": 0.55, "local_stimulus": 0.88},
+    "machine row": {"sfr": 0.80, "systemic_fatigue": 0.2, "local_stimulus": 0.80},
+    "preacher curl": {"sfr": 0.92, "systemic_fatigue": 0.05, "local_stimulus": 0.75},
+    "hammer curl": {"sfr": 0.92, "systemic_fatigue": 0.05, "local_stimulus": 0.72},
+    "skull crusher": {"sfr": 0.85, "systemic_fatigue": 0.10, "local_stimulus": 0.75},
+    "chest press": {"sfr": 0.75, "systemic_fatigue": 0.3, "local_stimulus": 0.82},
+    "shoulder press": {"sfr": 0.62, "systemic_fatigue": 0.45, "local_stimulus": 0.85},
+    "front raise": {"sfr": 0.88, "systemic_fatigue": 0.05, "local_stimulus": 0.70},
+    "rear delt fly": {"sfr": 0.90, "systemic_fatigue": 0.05, "local_stimulus": 0.72},
+    "shrug": {"sfr": 0.88, "systemic_fatigue": 0.15, "local_stimulus": 0.75}
+  },
+  "defaults": {
+    "compound": {"sfr": 0.60, "systemic_fatigue": 0.6, "local_stimulus": 0.85},
+    "isolation": {"sfr": 0.85, "systemic_fatigue": 0.10, "local_stimulus": 0.75}
+  }
+}

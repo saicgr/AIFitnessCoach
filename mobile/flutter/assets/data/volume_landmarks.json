@@ -1,0 +1,54 @@
+{
+  "_source": "Israetel et al. 2019 - Scientific Principles of Hypertrophy Training",
+  "_note": "Values are weekly sets per muscle group. MEV = Minimum Effective Volume, MAV = Maximum Adaptive Volume, MRV = Maximum Recoverable Volume",
+  "chest": {
+    "beginner": {"mev": 6, "mav": 12, "mrv": 16},
+    "intermediate": {"mev": 8, "mav": 16, "mrv": 20},
+    "advanced": {"mev": 10, "mav": 18, "mrv": 22}
+  },
+  "back": {
+    "beginner": {"mev": 8, "mav": 14, "mrv": 18},
+    "intermediate": {"mev": 10, "mav": 18, "mrv": 23},
+    "advanced": {"mev": 12, "mav": 20, "mrv": 25}
+  },
+  "quads": {
+    "beginner": {"mev": 6, "mav": 10, "mrv": 14},
+    "intermediate": {"mev": 8, "mav": 14, "mrv": 18},
+    "advanced": {"mev": 10, "mav": 16, "mrv": 20}
+  },
+  "shoulders": {
+    "beginner": {"mev": 6, "mav": 12, "mrv": 16},
+    "intermediate": {"mev": 8, "mav": 16, "mrv": 22},
+    "advanced": {"mev": 10, "mav": 20, "mrv": 26}
+  },
+  "biceps": {
+    "beginner": {"mev": 4, "mav": 10, "mrv": 14},
+    "intermediate": {"mev": 6, "mav": 14, "mrv": 18},
+    "advanced": {"mev": 8, "mav": 16, "mrv": 22}
+  },
+  "triceps": {
+    "beginner": {"mev": 4, "mav": 8, "mrv": 12},
+    "intermediate": {"mev": 6, "mav": 12, "mrv": 16},
+    "advanced": {"mev": 6, "mav": 14, "mrv": 18}
+  },
+  "hamstrings": {
+    "beginner": {"mev": 4, "mav": 8, "mrv": 12},
+    "intermediate": {"mev": 6, "mav": 12, "mrv": 16},
+    "advanced": {"mev": 8, "mav": 14, "mrv": 18}
+  },
+  "glutes": {
+    "beginner": {"mev": 4, "mav": 8, "mrv": 12},
+    "intermediate": {"mev": 6, "mav": 12, "mrv": 16},
+    "advanced": {"mev": 8, "mav": 16, "mrv": 20}
+  },
+  "calves": {
+    "beginner": {"mev": 6, "mav": 10, "mrv": 14},
+    "intermediate": {"mev": 8, "mav": 14, "mrv": 18},
+    "advanced": {"mev": 10, "mav": 16, "mrv": 22}
+  },
+  "abs": {
+    "beginner": {"mev": 0, "mav": 10, "mrv": 16},
+    "intermediate": {"mev": 0, "mav": 14, "mrv": 20},
+    "advanced": {"mev": 0, "mav": 18, "mrv": 25}
+  }
+}

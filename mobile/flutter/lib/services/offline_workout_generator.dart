@@ -21,6 +21,9 @@ class OfflineExercise {
   final List<String>? secondaryMuscles;
   final String? difficulty;
   final int? difficultyNum;
+  final String? videoUrl;
+  final String? imageS3Path;
+  final bool? isUnilateral;
 
   const OfflineExercise({
     this.id,
@@ -32,7 +35,44 @@ class OfflineExercise {
     this.secondaryMuscles,
     this.difficulty,
     this.difficultyNum,
+    this.videoUrl,
+    this.imageS3Path,
+    this.isUnilateral,
   });
+
+  /// Create from a JSON map (matching the bundled exercise_library.json format).
+  factory OfflineExercise.fromJson(Map<String, dynamic> json) {
+    List<String>? secondaryMuscles;
+    final sm = json['secondary_muscles'];
+    if (sm is List) {
+      secondaryMuscles = sm.map((e) => e.toString()).toList();
+    } else if (sm is String && sm.isNotEmpty) {
+      secondaryMuscles =
+          sm.split(',').map((s) => s.trim()).where((s) => s.isNotEmpty).toList();
+    }
+
+    int? difficultyNum;
+    final dl = json['difficulty_level'] ?? json['difficulty_num'];
+    if (dl is int) {
+      difficultyNum = dl;
+    } else if (dl is String) {
+      difficultyNum = int.tryParse(dl);
+    }
+
+    return OfflineExercise(
+      id: json['id'] as String?,
+      name: json['name'] as String?,
+      bodyPart: json['body_part'] as String?,
+      equipment: json['equipment'] as String?,
+      targetMuscle: json['target_muscle'] as String?,
+      primaryMuscle: (json['primary_muscle'] ?? json['target_muscle']) as String?,
+      secondaryMuscles: secondaryMuscles,
+      difficulty: dl?.toString(),
+      difficultyNum: difficultyNum,
+      videoUrl: json['video_url'] as String?,
+      imageS3Path: (json['image_s3_path'] ?? json['image_url']) as String?,
+    );
+  }
 }
 
 const _uuid = Uuid();

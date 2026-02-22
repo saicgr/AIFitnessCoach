@@ -390,6 +390,28 @@ async def auto_generate_workout(user_id: str, target_date: date, gym_profile_id:
         _active_background_generations.discard(generation_key)
 
 
+async def _sequential_generate_workouts(
+    user_id: str,
+    dates: List[date],
+    gym_profile_id: Optional[str] = None,
+    selected_days: Optional[List[int]] = None,
+) -> None:
+    """Generate workouts one at a time so each sees the previous one's exercises.
+
+    This ensures get_recently_used_exercises returns the exercises from
+    the just-generated workout, preventing duplicate exercises across
+    adjacent days.
+    """
+    for i, gen_date in enumerate(dates):
+        logger.info(f"[SEQ-GEN] Generating workout {i+1}/{len(dates)} for {gen_date.isoformat()}")
+        await auto_generate_workout(
+            user_id=user_id,
+            target_date=gen_date,
+            gym_profile_id=gym_profile_id,
+            selected_days=selected_days,
+        )
+
+
 @router.get("/today", response_model=TodayWorkoutResponse)
 async def get_today_workout(
     request: Request,
@@ -558,16 +580,17 @@ async def get_today_workout(
             user_today_str=today_str,
         )
         if upcoming_missing:
-            logger.info(f"[BG-GEN] Scheduling background generation for {len(upcoming_missing)} dates: "
+            logger.info(f"[BG-GEN] Scheduling SEQUENTIAL background generation for {len(upcoming_missing)} dates: "
                        f"{[d.isoformat() for d in upcoming_missing]}")
-            for gen_date in upcoming_missing:
-                background_tasks.add_task(
-                    auto_generate_workout,
-                    user_id=user_id,
-                    target_date=gen_date,
-                    gym_profile_id=active_profile_id,
-                    selected_days=selected_days,
-                )
+            # Generate sequentially so each workout sees previous ones' exercises
+            # via get_recently_used_exercises, ensuring variety across adjacent days
+            background_tasks.add_task(
+                _sequential_generate_workouts,
+                user_id=user_id,
+                dates=upcoming_missing,
+                gym_profile_id=active_profile_id,
+                selected_days=selected_days,
+            )
 
         # Backfill: tag orphaned workouts (gym_profile_id IS NULL) with the active profile
         if active_profile_id:

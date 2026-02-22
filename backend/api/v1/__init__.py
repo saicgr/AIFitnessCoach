@@ -73,6 +73,7 @@ from api.v1 import warmup_preferences  # Custom warmup/stretch preferences and p
 from api.v1 import custom_exercises  # User-defined custom exercises with media upload
 from api.v1 import daily_schedule  # Daily schedule planner
 from api.v1 import sync  # Offline sync bulk upload and import
+from api.v1 import exercise_popularity  # Collaborative filtering exercise scores
 
 # Create v1 router
 router = APIRouter(prefix="/v1")
@@ -333,3 +334,6 @@ router.include_router(daily_schedule.router, prefix="/daily-schedule", tags=["Da
 
 # Offline sync bulk upload and import (dead letter recovery, data export/import)
 router.include_router(sync.router, tags=["Sync"])
+
+# Exercise popularity scores for collaborative filtering
+router.include_router(exercise_popularity.router, tags=["Exercise Popularity"])

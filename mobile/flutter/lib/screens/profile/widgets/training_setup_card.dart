@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/providers/training_preferences_provider.dart';
 import '../../../data/models/user.dart';
 import '../../../data/providers/gym_profile_provider.dart';
 import '../../../widgets/glass_sheet.dart';
@@ -182,6 +183,13 @@ class TrainingSetupCard extends ConsumerWidget {
             textPrimary: textPrimary,
             textSecondary: textSecondary,
           ),
+          const SizedBox(height: 12),
+
+          // Training Split row
+          _TrainingSplitRow(
+            textPrimary: textPrimary,
+            textSecondary: textSecondary,
+          ),
 
           // Custom Equipment link
           if (onCustomEquipment != null) ...[
@@ -320,6 +328,43 @@ class _TappableRow extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+/// Displays the training split from training preferences provider.
+class _TrainingSplitRow extends ConsumerWidget {
+  final Color textPrimary;
+  final Color textSecondary;
+
+  const _TrainingSplitRow({
+    required this.textPrimary,
+    required this.textSecondary,
+  });
+
+  static const _splitDisplayNames = {
+    'full_body': 'Full Body',
+    'upper_lower': 'Upper/Lower',
+    'push_pull_legs': 'Push/Pull/Legs',
+    'body_part': 'Body Part Split',
+    'phul': 'PHUL',
+    'arnold_split': 'Arnold Split',
+    'hyrox': 'HYROX',
+    'dont_know': 'AI Decides',
+  };
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final trainingPrefs = ref.watch(trainingPreferencesProvider);
+    final splitValue = trainingPrefs.trainingSplit;
+    final displayName = _splitDisplayNames[splitValue] ?? splitValue.replaceAll('_', ' ');
+
+    return _SetupRow(
+      icon: Icons.view_week_outlined,
+      label: 'Training Split',
+      value: displayName,
+      textPrimary: textPrimary,
+      textSecondary: textSecondary,
     );
   }
 }

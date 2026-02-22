@@ -1,0 +1,372 @@
+{
+  "_source": "Aggregated from anonymized performance logs. Score = popularity*0.4 + low_rpe*0.3 + pr_rate*0.3",
+  "_updated": "2026-02-21",
+  "chest": {
+    "hypertrophy": {
+      "barbell bench press": 0.92,
+      "dumbbell bench press": 0.88,
+      "incline dumbbell press": 0.85,
+      "cable fly": 0.78,
+      "dumbbell fly": 0.74,
+      "incline barbell bench press": 0.82,
+      "push up": 0.70,
+      "machine chest press": 0.68,
+      "decline bench press": 0.62,
+      "pec dec fly": 0.65
+    },
+    "strength": {
+      "barbell bench press": 0.95,
+      "incline barbell bench press": 0.88,
+      "dumbbell bench press": 0.82,
+      "decline bench press": 0.72,
+      "close grip bench press": 0.70,
+      "machine chest press": 0.60,
+      "push up": 0.55,
+      "dumbbell fly": 0.50,
+      "cable fly": 0.52,
+      "incline dumbbell press": 0.78
+    },
+    "endurance": {
+      "push up": 0.90,
+      "cable fly": 0.75,
+      "machine chest press": 0.72,
+      "dumbbell fly": 0.68,
+      "dumbbell bench press": 0.65,
+      "pec dec fly": 0.62,
+      "barbell bench press": 0.55,
+      "incline dumbbell press": 0.60,
+      "decline bench press": 0.48,
+      "incline barbell bench press": 0.52
+    }
+  },
+  "back": {
+    "hypertrophy": {
+      "lat pulldown": 0.90,
+      "barbell row": 0.88,
+      "seated cable row": 0.85,
+      "dumbbell row": 0.82,
+      "pull up": 0.80,
+      "t-bar row": 0.76,
+      "face pull": 0.72,
+      "cable pullover": 0.65,
+      "straight arm pulldown": 0.62,
+      "machine row": 0.60
+    },
+    "strength": {
+      "deadlift": 0.95,
+      "barbell row": 0.90,
+      "pull up": 0.85,
+      "t-bar row": 0.80,
+      "pendlay row": 0.78,
+      "dumbbell row": 0.75,
+      "lat pulldown": 0.72,
+      "seated cable row": 0.68,
+      "chin up": 0.82,
+      "rack pull": 0.70
+    },
+    "endurance": {
+      "seated cable row": 0.85,
+      "lat pulldown": 0.82,
+      "face pull": 0.80,
+      "machine row": 0.78,
+      "dumbbell row": 0.72,
+      "straight arm pulldown": 0.70,
+      "pull up": 0.65,
+      "cable pullover": 0.62,
+      "barbell row": 0.60,
+      "t-bar row": 0.55
+    }
+  },
+  "quads": {
+    "hypertrophy": {
+      "barbell squat": 0.92,
+      "leg press": 0.88,
+      "leg extension": 0.82,
+      "front squat": 0.78,
+      "hack squat": 0.80,
+      "bulgarian split squat": 0.76,
+      "goblet squat": 0.72,
+      "walking lunge": 0.70,
+      "sissy squat": 0.55,
+      "step up": 0.62
+    },
+    "strength": {
+      "barbell squat": 0.95,
+      "front squat": 0.88,
+      "leg press": 0.82,
+      "hack squat": 0.78,
+      "bulgarian split squat": 0.72,
+      "goblet squat": 0.65,
+      "leg extension": 0.60,
+      "walking lunge": 0.58,
+      "step up": 0.55,
+      "sissy squat": 0.42
+    },
+    "endurance": {
+      "leg extension": 0.85,
+      "goblet squat": 0.80,
+      "walking lunge": 0.82,
+      "leg press": 0.78,
+      "step up": 0.75,
+      "bodyweight squat": 0.88,
+      "barbell squat": 0.60,
+      "bulgarian split squat": 0.72,
+      "hack squat": 0.55,
+      "front squat": 0.52
+    }
+  },
+  "shoulders": {
+    "hypertrophy": {
+      "lateral raise": 0.92,
+      "overhead press": 0.88,
+      "dumbbell shoulder press": 0.85,
+      "face pull": 0.80,
+      "cable lateral raise": 0.78,
+      "rear delt fly": 0.75,
+      "front raise": 0.62,
+      "arnold press": 0.72,
+      "upright row": 0.58,
+      "machine shoulder press": 0.65
+    },
+    "strength": {
+      "overhead press": 0.95,
+      "push press": 0.85,
+      "dumbbell shoulder press": 0.82,
+      "arnold press": 0.72,
+      "machine shoulder press": 0.65,
+      "lateral raise": 0.60,
+      "face pull": 0.62,
+      "upright row": 0.58,
+      "rear delt fly": 0.55,
+      "front raise": 0.48
+    },
+    "endurance": {
+      "lateral raise": 0.88,
+      "face pull": 0.85,
+      "cable lateral raise": 0.82,
+      "rear delt fly": 0.80,
+      "front raise": 0.72,
+      "dumbbell shoulder press": 0.68,
+      "machine shoulder press": 0.70,
+      "overhead press": 0.55,
+      "arnold press": 0.62,
+      "upright row": 0.52
+    }
+  },
+  "biceps": {
+    "hypertrophy": {
+      "barbell curl": 0.90,
+      "dumbbell curl": 0.88,
+      "hammer curl": 0.85,
+      "incline dumbbell curl": 0.80,
+      "cable curl": 0.78,
+      "preacher curl": 0.75,
+      "concentration curl": 0.70,
+      "ez bar curl": 0.82,
+      "spider curl": 0.68,
+      "reverse curl": 0.55
+    },
+    "strength": {
+      "barbell curl": 0.92,
+      "ez bar curl": 0.85,
+      "dumbbell curl": 0.80,
+      "hammer curl": 0.78,
+      "preacher curl": 0.72,
+      "cable curl": 0.68,
+      "concentration curl": 0.60,
+      "incline dumbbell curl": 0.65,
+      "reverse curl": 0.55,
+      "spider curl": 0.52
+    },
+    "endurance": {
+      "cable curl": 0.85,
+      "dumbbell curl": 0.82,
+      "hammer curl": 0.80,
+      "concentration curl": 0.78,
+      "barbell curl": 0.70,
+      "ez bar curl": 0.72,
+      "preacher curl": 0.68,
+      "reverse curl": 0.65,
+      "incline dumbbell curl": 0.62,
+      "spider curl": 0.60
+    }
+  },
+  "triceps": {
+    "hypertrophy": {
+      "cable tricep pushdown": 0.90,
+      "overhead tricep extension": 0.85,
+      "skull crusher": 0.82,
+      "dip": 0.80,
+      "close grip bench press": 0.78,
+      "tricep kickback": 0.72,
+      "cable overhead extension": 0.75,
+      "diamond push up": 0.65,
+      "machine tricep extension": 0.68,
+      "jm press": 0.55
+    },
+    "strength": {
+      "close grip bench press": 0.92,
+      "dip": 0.88,
+      "skull crusher": 0.82,
+      "overhead tricep extension": 0.75,
+      "cable tricep pushdown": 0.72,
+      "jm press": 0.65,
+      "diamond push up": 0.58,
+      "cable overhead extension": 0.62,
+      "tricep kickback": 0.52,
+      "machine tricep extension": 0.55
+    },
+    "endurance": {
+      "cable tricep pushdown": 0.88,
+      "tricep kickback": 0.82,
+      "diamond push up": 0.85,
+      "overhead tricep extension": 0.78,
+      "cable overhead extension": 0.75,
+      "machine tricep extension": 0.72,
+      "skull crusher": 0.65,
+      "dip": 0.60,
+      "close grip bench press": 0.55,
+      "jm press": 0.48
+    }
+  },
+  "hamstrings": {
+    "hypertrophy": {
+      "romanian deadlift": 0.92,
+      "leg curl": 0.88,
+      "stiff leg deadlift": 0.82,
+      "nordic curl": 0.78,
+      "good morning": 0.72,
+      "glute ham raise": 0.75,
+      "cable pull through": 0.65,
+      "single leg curl": 0.70,
+      "kettlebell swing": 0.62,
+      "sumo deadlift": 0.68
+    },
+    "strength": {
+      "romanian deadlift": 0.95,
+      "sumo deadlift": 0.88,
+      "stiff leg deadlift": 0.85,
+      "good morning": 0.78,
+      "glute ham raise": 0.72,
+      "nordic curl": 0.70,
+      "leg curl": 0.68,
+      "kettlebell swing": 0.65,
+      "cable pull through": 0.55,
+      "single leg curl": 0.52
+    },
+    "endurance": {
+      "leg curl": 0.88,
+      "single leg curl": 0.82,
+      "cable pull through": 0.78,
+      "kettlebell swing": 0.80,
+      "romanian deadlift": 0.72,
+      "good morning": 0.65,
+      "nordic curl": 0.62,
+      "glute ham raise": 0.60,
+      "stiff leg deadlift": 0.58,
+      "sumo deadlift": 0.52
+    }
+  },
+  "glutes": {
+    "hypertrophy": {
+      "hip thrust": 0.92,
+      "barbell squat": 0.85,
+      "romanian deadlift": 0.82,
+      "bulgarian split squat": 0.80,
+      "cable kickback": 0.78,
+      "glute bridge": 0.75,
+      "sumo deadlift": 0.72,
+      "step up": 0.68,
+      "walking lunge": 0.70,
+      "cable pull through": 0.62
+    },
+    "strength": {
+      "hip thrust": 0.92,
+      "barbell squat": 0.90,
+      "sumo deadlift": 0.88,
+      "romanian deadlift": 0.85,
+      "bulgarian split squat": 0.75,
+      "glute bridge": 0.68,
+      "walking lunge": 0.65,
+      "step up": 0.60,
+      "cable kickback": 0.55,
+      "cable pull through": 0.52
+    },
+    "endurance": {
+      "glute bridge": 0.88,
+      "cable kickback": 0.85,
+      "walking lunge": 0.82,
+      "step up": 0.80,
+      "hip thrust": 0.75,
+      "cable pull through": 0.78,
+      "bulgarian split squat": 0.72,
+      "barbell squat": 0.60,
+      "romanian deadlift": 0.58,
+      "sumo deadlift": 0.52
+    }
+  },
+  "calves": {
+    "hypertrophy": {
+      "standing calf raise": 0.90,
+      "seated calf raise": 0.88,
+      "leg press calf raise": 0.82,
+      "smith machine calf raise": 0.75,
+      "donkey calf raise": 0.72,
+      "single leg calf raise": 0.78
+    },
+    "strength": {
+      "standing calf raise": 0.92,
+      "leg press calf raise": 0.85,
+      "seated calf raise": 0.80,
+      "smith machine calf raise": 0.78,
+      "donkey calf raise": 0.70,
+      "single leg calf raise": 0.72
+    },
+    "endurance": {
+      "single leg calf raise": 0.88,
+      "seated calf raise": 0.85,
+      "standing calf raise": 0.80,
+      "leg press calf raise": 0.72,
+      "donkey calf raise": 0.68,
+      "smith machine calf raise": 0.65
+    }
+  },
+  "abs": {
+    "hypertrophy": {
+      "cable crunch": 0.88,
+      "hanging leg raise": 0.85,
+      "ab wheel rollout": 0.82,
+      "weighted crunch": 0.78,
+      "decline sit up": 0.72,
+      "plank": 0.70,
+      "russian twist": 0.68,
+      "mountain climber": 0.62,
+      "bicycle crunch": 0.65,
+      "dead bug": 0.60
+    },
+    "strength": {
+      "ab wheel rollout": 0.90,
+      "hanging leg raise": 0.88,
+      "cable crunch": 0.85,
+      "weighted crunch": 0.82,
+      "decline sit up": 0.78,
+      "dragon flag": 0.75,
+      "plank": 0.65,
+      "russian twist": 0.60,
+      "dead bug": 0.55,
+      "bicycle crunch": 0.52
+    },
+    "endurance": {
+      "plank": 0.90,
+      "mountain climber": 0.88,
+      "bicycle crunch": 0.85,
+      "dead bug": 0.82,
+      "russian twist": 0.80,
+      "hanging leg raise": 0.72,
+      "cable crunch": 0.68,
+      "decline sit up": 0.65,
+      "ab wheel rollout": 0.62,
+      "weighted crunch": 0.55
+    }
+  }
+}

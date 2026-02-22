@@ -911,30 +911,50 @@ class ExerciseRAGService:
             # Re-sort by similarity after boosting
             candidates.sort(key=lambda x: x["similarity"], reverse=True)
 
-        # Consistency mode boost: In "consistent" mode, boost recently used exercises
-        # This ensures users who prefer consistent routines get exercises they know
-        if consistency_mode == "consistent" and recently_used_exercises:
+        # Consistency mode: adjust recently used exercises based on user preference
+        if recently_used_exercises:
             recently_used_lower = [e.lower() for e in recently_used_exercises]
-            boosted_count = 0
-            for candidate in candidates:
-                if candidate["name"].lower() in recently_used_lower:
-                    # 80% boost (1.8x multiplier) for recently used in consistent mode
-                    original_sim = candidate["similarity"]
-                    candidate["similarity"] = min(1.0, candidate["similarity"] * 1.8)
-                    candidate["consistency_boosted"] = True
-                    if not candidate.get("boost_reason"):
-                        candidate["boost_reason"] = "consistent_routine"
-                    else:
-                        candidate["boost_reason"] += "+consistent_routine"
-                    boosted_count += 1
-                    logger.info(f"Boosted consistent exercise (1.8x): {candidate['name']} {original_sim:.2f} -> {candidate['similarity']:.2f}")
-                else:
-                    candidate["consistency_boosted"] = False
 
-            if boosted_count > 0:
-                logger.info(f"Consistency mode: boosted {boosted_count} recently used exercises")
-                # Re-sort after consistency boost
-                candidates.sort(key=lambda x: x["similarity"], reverse=True)
+            if consistency_mode == "consistent":
+                # Boost recently used exercises - user prefers familiar routines
+                boosted_count = 0
+                for candidate in candidates:
+                    if candidate["name"].lower() in recently_used_lower:
+                        original_sim = candidate["similarity"]
+                        candidate["similarity"] = min(1.0, candidate["similarity"] * 1.8)
+                        candidate["consistency_boosted"] = True
+                        if not candidate.get("boost_reason"):
+                            candidate["boost_reason"] = "consistent_routine"
+                        else:
+                            candidate["boost_reason"] += "+consistent_routine"
+                        boosted_count += 1
+                        logger.info(f"Boosted consistent exercise (1.8x): {candidate['name']} {original_sim:.2f} -> {candidate['similarity']:.2f}")
+                    else:
+                        candidate["consistency_boosted"] = False
+
+                if boosted_count > 0:
+                    logger.info(f"Consistency mode: boosted {boosted_count} recently used exercises")
+                    candidates.sort(key=lambda x: x["similarity"], reverse=True)
+
+            else:
+                # "vary" mode (default): penalize recently used exercises for variety
+                # Use variation_percentage to control penalty strength:
+                #   variation=100 -> full penalty (0.3x), variation=0 -> no penalty
+                penalty_factor = max(0.3, 1.0 - (variation_percentage / 100.0) * 0.7)
+                penalized_count = 0
+                for candidate in candidates:
+                    if candidate["name"].lower() in recently_used_lower:
+                        original_sim = candidate["similarity"]
+                        candidate["similarity"] = candidate["similarity"] * penalty_factor
+                        candidate["variety_penalized"] = True
+                        penalized_count += 1
+                        logger.debug(f"Penalized recent exercise ({penalty_factor:.1f}x): {candidate['name']} {original_sim:.2f} -> {candidate['similarity']:.2f}")
+                    else:
+                        candidate["variety_penalized"] = False
+
+                if penalized_count > 0:
+                    logger.info(f"Vary mode: penalized {penalized_count} recently used exercises (factor={penalty_factor:.1f}x, variation={variation_percentage}%)")
+                    candidates.sort(key=lambda x: x["similarity"], reverse=True)
 
         # Process STAPLE exercises - these are ALWAYS included (never rotated)
         # Staples take highest priority, even above queued exercises

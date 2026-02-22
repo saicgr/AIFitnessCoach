@@ -6,7 +6,9 @@ import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 
 import 'daos/embedding_dao.dart';
+import 'daos/exercise_1rm_dao.dart';
 import 'daos/exercise_library_dao.dart';
+import 'daos/volume_response_dao.dart';
 import 'daos/food_dao.dart';
 import 'daos/gym_profile_dao.dart';
 import 'daos/media_cache_dao.dart';
@@ -15,7 +17,9 @@ import 'daos/user_profile_dao.dart';
 import 'daos/workout_dao.dart';
 import 'daos/workout_log_dao.dart';
 import 'tables/embedding_cache_table.dart';
+import 'tables/exercise_1rm_table.dart';
 import 'tables/exercise_library_table.dart';
+import 'tables/volume_response_table.dart';
 import 'tables/exercise_media_cache_table.dart';
 import 'tables/food_table.dart';
 import 'tables/gym_profiles_table.dart';
@@ -37,6 +41,8 @@ part 'database.g.dart';
     CachedGymProfiles,
     CachedFoods,
     EmbeddingCache,
+    CachedExercise1rmHistory,
+    CachedVolumeResponses,
   ],
   daos: [
     WorkoutDao,
@@ -48,6 +54,8 @@ part 'database.g.dart';
     GymProfileDao,
     FoodDao,
     EmbeddingDao,
+    Exercise1rmDao,
+    VolumeResponseDao,
   ],
 )
 class AppDatabase extends _$AppDatabase {
@@ -62,6 +70,8 @@ class AppDatabase extends _$AppDatabase {
   GymProfileDao get gymProfileDao => GymProfileDao(this);
   FoodDao get foodDao => FoodDao(this);
   EmbeddingDao get embeddingDao => EmbeddingDao(this);
+  Exercise1rmDao get exercise1rmDao => Exercise1rmDao(this);
+  VolumeResponseDao get volumeResponseDao => VolumeResponseDao(this);
 
   Future<void> clearAllUserData() {
     return transaction(() async {
@@ -74,11 +84,13 @@ class AppDatabase extends _$AppDatabase {
       await delete(cachedGymProfiles).go();
       await delete(cachedFoods).go();
       await delete(embeddingCache).go();
+      await delete(cachedExercise1rmHistory).go();
+      await delete(cachedVolumeResponses).go();
     });
   }
 
   @override
-  int get schemaVersion => 3;
+  int get schemaVersion => 5;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -89,6 +101,12 @@ class AppDatabase extends _$AppDatabase {
           }
           if (from < 3) {
             await m.createTable(embeddingCache);
+          }
+          if (from < 4) {
+            await m.createTable(cachedExercise1rmHistory);
+          }
+          if (from < 5) {
+            await m.createTable(cachedVolumeResponses);
           }
         },
       );

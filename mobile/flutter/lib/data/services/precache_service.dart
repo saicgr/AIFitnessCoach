@@ -6,6 +6,7 @@ import '../local/database.dart';
 import '../local/database_provider.dart';
 import '../services/api_client.dart';
 import '../services/connectivity_service.dart';
+import '../services/exercise_library_loader.dart';
 import '../../core/constants/api_constants.dart';
 
 /// State for pre-cache operations.
@@ -63,6 +64,10 @@ class PreCacheService extends StateNotifier<PreCacheState> {
       debugPrint('⚠️ [PreCache] Already pre-caching, skipping');
       return;
     }
+
+    // Seed the full exercise library from bundled asset (runs once, ~800+ exercises).
+    // This ensures the offline engine has a rich pool even before any server call.
+    await ExerciseLibraryLoader.seedDatabaseIfNeeded(_db);
 
     final isOnline = _ref.read(isOnlineProvider);
     if (!isOnline) {

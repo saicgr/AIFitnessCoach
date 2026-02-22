@@ -202,7 +202,7 @@ class FoodDatabaseLookupService:
             # Use direct SQLAlchemy to bypass PostgREST's 3s anon statement_timeout
             async with supabase.get_session() as session:
                 result = await session.execute(
-                    text("SELECT * FROM search_food_database_unified(:q, :uid::uuid, :lim, :off)"),
+                    text("SELECT * FROM search_food_database_unified(:q, CAST(:uid AS uuid), :lim, :off)"),
                     {"q": query, "uid": user_id, "lim": page_size, "off": offset},
                 )
                 foods = [dict(row._mapping) for row in result.fetchall()]
@@ -318,7 +318,7 @@ class FoodDatabaseLookupService:
             supabase = get_supabase()
             async with supabase.get_session() as session:
                 rpc_result = await session.execute(
-                    text("SELECT * FROM batch_lookup_foods(:names::text[])"),
+                    text("SELECT * FROM batch_lookup_foods(CAST(:names AS text[]))"),
                     {"names": uncached_names},
                 )
                 rows = [dict(r._mapping) for r in rpc_result.fetchall()]

@@ -93,6 +93,24 @@ class _HeroWorkoutCardState extends ConsumerState<HeroWorkoutCard> {
     if (mounted) setState(() => _isLoadingImage = false);
   }
 
+  String _getWorkoutTypeLabel(String? type) {
+    const typeLabels = {
+      'push': 'Push Day',
+      'pull': 'Pull Day',
+      'legs': 'Leg Day',
+      'full_body': 'Full Body',
+      'upper': 'Upper Body',
+      'lower': 'Lower Body',
+      'core': 'Core',
+      'strength': 'Strength',
+      'recovery': 'Recovery',
+      'cardio': 'Cardio',
+      'mobility': 'Mobility',
+    };
+    if (type == null || type.isEmpty) return '';
+    return typeLabels[type.toLowerCase()] ?? '';
+  }
+
   String _getScheduledDateLabel(String? scheduledDate) {
     if (scheduledDate == null) return 'TODAY';
     // Parse date from string directly to avoid timezone shift
@@ -750,32 +768,63 @@ class _HeroWorkoutCardState extends ConsumerState<HeroWorkoutCard> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Top row: Date label + Menu button
+                  // Top row: Date label + Type chip + Menu button
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                        decoration: BoxDecoration(
-                          color: isDark
-                              ? Colors.black.withValues(alpha: 0.4)
-                              : Colors.white.withValues(alpha: 0.8),
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(
-                            color: isDark
-                                ? Colors.white.withValues(alpha: 0.1)
-                                : Colors.black.withValues(alpha: 0.1),
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                            decoration: BoxDecoration(
+                              color: isDark
+                                  ? Colors.black.withValues(alpha: 0.4)
+                                  : Colors.white.withValues(alpha: 0.8),
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(
+                                color: isDark
+                                    ? Colors.white.withValues(alpha: 0.1)
+                                    : Colors.black.withValues(alpha: 0.1),
+                              ),
+                            ),
+                            child: Text(
+                              dateLabel,
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w700,
+                                letterSpacing: 0.5,
+                                color: isDark ? Colors.white : Colors.black87,
+                              ),
+                            ),
                           ),
-                        ),
-                        child: Text(
-                          dateLabel,
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w700,
-                            letterSpacing: 0.5,
-                            color: isDark ? Colors.white : Colors.black87,
-                          ),
-                        ),
+                          if (_getWorkoutTypeLabel(workout.type).isNotEmpty) ...[
+                            const SizedBox(width: 6),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                              decoration: BoxDecoration(
+                                color: isDark
+                                    ? Colors.black.withValues(alpha: 0.4)
+                                    : Colors.white.withValues(alpha: 0.8),
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(
+                                  color: isDark
+                                      ? Colors.white.withValues(alpha: 0.1)
+                                      : Colors.black.withValues(alpha: 0.1),
+                                ),
+                              ),
+                              child: Text(
+                                _getWorkoutTypeLabel(workout.type),
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w700,
+                                  letterSpacing: 0.5,
+                                  color: isDark ? Colors.white : Colors.black87,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ],
                       ),
                       GestureDetector(
                         onTap: _showOptionsMenu,

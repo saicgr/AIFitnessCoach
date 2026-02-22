@@ -118,6 +118,7 @@ import '../screens/strain_prevention/report_strain_screen.dart';
 import '../screens/settings/senior_fitness_screen.dart';
 import '../screens/settings/progression_pace_screen.dart';
 import '../screens/settings/training_focus_screen.dart';
+import '../screens/settings/exercise_science_research_screen.dart';
 import '../screens/weekly_plan/weekly_plan_screen.dart';
 import '../screens/hormonal_health/hormonal_health_screen.dart';
 import '../screens/hormonal_health/hormonal_health_settings_screen.dart';
@@ -1710,6 +1711,12 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/settings/training-focus',
         builder: (context, state) => const TrainingFocusScreen(),
+      ),
+
+      // Exercise Science Research
+      GoRoute(
+        path: '/settings/research',
+        builder: (context, state) => const ExerciseScienceResearchScreen(),
       ),
 
       // Weekly Plan - Holistic planning with workouts, nutrition, and fasting

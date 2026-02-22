@@ -1,4 +1,7 @@
+import 'dart:math';
+
 import '../data/models/exercise.dart';
+import 'equipment_context.dart';
 
 /// Progressive overload logic for offline workout generation.
 ///
@@ -52,6 +55,8 @@ double getIntensityPercent({
     case 'muscle_hypertrophy':
     case 'hypertrophy':
       base = 72.5;
+    case 'power':
+      base = 90.0;
     case 'endurance':
     case 'muscular_endurance':
       base = 60.0;
@@ -111,6 +116,10 @@ List<SetTarget> generateSetTargets({
       minReps = 3;
       maxReps = 6;
       workingSets = isCompound ? 5 : 4;
+    case 'power':
+      minReps = 1;
+      maxReps = 5;
+      workingSets = isCompound ? 5 : 3;
     case 'endurance':
     case 'muscular_endurance':
       minReps = 15;
@@ -173,6 +182,8 @@ int _getRestSeconds({required String goal, required bool isCompound}) {
   switch (goal.toLowerCase()) {
     case 'strength':
       return isCompound ? 180 : 120;
+    case 'power':
+      return isCompound ? 240 : 150;
     case 'endurance':
     case 'muscular_endurance':
       return isCompound ? 60 : 45;
@@ -191,6 +202,8 @@ int getTotalSets({
   switch (goal.toLowerCase()) {
     case 'strength':
       working = isCompound ? 5 : 4;
+    case 'power':
+      working = isCompound ? 5 : 3;
     case 'endurance':
     case 'muscular_endurance':
       working = 3;
@@ -205,6 +218,8 @@ int getDefaultReps({required String goal}) {
   switch (goal.toLowerCase()) {
     case 'strength':
       return 5;
+    case 'power':
+      return 3;
     case 'endurance':
     case 'muscular_endurance':
       return 17;
@@ -215,7 +230,7 @@ int getDefaultReps({required String goal}) {
 
 /// Get rest seconds for a specific exercise context.
 int getRestSeconds({required String goal, required bool isCompound}) {
-  return _getRestSeconds(goal: goal, isCompound: isCompound);
+  return max(30, _getRestSeconds(goal: goal, isCompound: isCompound));
 }
 
 /// Round weight to nearest equipment increment.
@@ -223,4 +238,158 @@ double _roundWeight(double weight, String equipType) {
   final increment = _weightIncrements[equipType] ?? 2.5;
   if (increment <= 0) return weight.roundToDouble();
   return ((weight / increment).round() * increment).roundToDouble();
+}
+
+// ==========================================================================
+// Equipment-aware weight snapping
+// ==========================================================================
+
+/// Result of rep/rest adjustment after weight snapping.
+class RepAdjustment {
+  final int adjustedReps;
+  final int adjustedRestSeconds;
+  final int? adjustedRpe;
+  final int? adjustedRir;
+  final String? note;
+  final bool useTempo;
+
+  const RepAdjustment({
+    required this.adjustedReps,
+    required this.adjustedRestSeconds,
+    this.adjustedRpe,
+    this.adjustedRir,
+    this.note,
+    this.useTempo = false,
+  });
+}
+
+/// Snap a target weight to the nearest available in [inventory].
+///
+/// Delegates to [EquipmentInventory.snap] which uses binary search.
+WeightSnapResult snapToAvailable(
+  double targetWeight,
+  EquipmentInventory inventory,
+) {
+  return inventory.snap(targetWeight);
+}
+
+/// Calculate rep and rest adjustments based on the snap ratio.
+///
+/// [ratio] = targetWeight / snappedWeight:
+/// - 1.0: no change
+/// - 1.01-1.20: +1-2 reps
+/// - >1.20: +30% reps, -15% rest, suggest tempo
+/// - <1.0 (heavier): reduce reps proportionally
+RepAdjustment calculateRepAdjustment(
+  int baseReps,
+  int baseRestSeconds,
+  double ratio,
+  String goal,
+) {
+  if ((ratio - 1.0).abs() < 0.01) {
+    return RepAdjustment(
+      adjustedReps: baseReps,
+      adjustedRestSeconds: baseRestSeconds,
+    );
+  }
+
+  int adjustedReps = baseReps;
+  int adjustedRest = baseRestSeconds;
+  int? adjustedRpe;
+  int? adjustedRir;
+  String? note;
+  bool useTempo = false;
+
+  if (ratio > 1.20) {
+    // Inverse Epley: targetReps = 30 * (targetWeight / snappedWeight - 1)
+    // This is more accurate than flat +30% when weight changes significantly
+    final epleyReps = (30 * (ratio - 1)).round();
+    adjustedReps = epleyReps > 0 ? max(baseReps, epleyReps + baseReps ~/ 2) : (baseReps * 1.3).round();
+    adjustedRest = (baseRestSeconds * 0.85).round();
+    useTempo = true;
+    adjustedRpe = null;
+    adjustedRir = null;
+    note = 'Epley-adjusted reps for equivalent stimulus (lighter available weight)';
+  } else if (ratio > 1.0) {
+    // Slightly lighter — small bump
+    final extra = ratio <= 1.10 ? 1 : 2;
+    adjustedReps = baseReps + extra;
+    note = 'Slight rep increase (nearest available weight)';
+  } else if (ratio < 1.0) {
+    // Heavier than target — reduce reps
+    adjustedReps = max(1, (baseReps * ratio).round());
+    note = 'Reduced reps (heavier available weight)';
+  }
+
+  return RepAdjustment(
+    adjustedReps: adjustedReps,
+    adjustedRestSeconds: adjustedRest,
+    adjustedRpe: adjustedRpe,
+    adjustedRir: adjustedRir,
+    note: note,
+    useTempo: useTempo,
+  );
+}
+
+/// Apply snap adjustments to the full set target list.
+///
+/// - Working sets: update weight, reps, RPE/RIR
+/// - Warmup sets: 50% of snapped weight
+List<SetTarget> adjustSetTargetsForSnap(
+  List<SetTarget> setTargets,
+  WeightSnapResult snapResult,
+  String goal,
+) {
+  if (!snapResult.wasSnapped || snapResult.snappedWeight == null) {
+    return setTargets;
+  }
+
+  final snappedWeight = snapResult.snappedWeight!;
+  final ratio = snapResult.ratio;
+
+  return setTargets.map((st) {
+    if (st.isWarmup) {
+      // Warmup: 50% of snapped working weight
+      return SetTarget(
+        setNumber: st.setNumber,
+        setType: st.setType,
+        targetReps: st.targetReps,
+        targetWeightKg: _roundWeight(snappedWeight * 0.5,
+            'dumbbell'), // Use smallest increment for warmup
+        targetRpe: st.targetRpe,
+        targetRir: st.targetRir,
+      );
+    }
+
+    // Working set adjustments
+    final repAdj = calculateRepAdjustment(
+      st.targetReps,
+      0, // rest is handled at exercise level
+      ratio,
+      goal,
+    );
+
+    // RPE/RIR shift based on ratio
+    int? newRpe = st.targetRpe;
+    int? newRir = st.targetRir;
+
+    if (ratio > 1.30) {
+      // Significantly lighter → more reps in reserve
+      if (newRir != null) newRir = min(5, newRir + 1);
+      if (newRpe != null) newRpe = max(5, newRpe - 1);
+    } else if (ratio < 1.0) {
+      // Heavier → fewer reps in reserve
+      if (newRir != null) newRir = max(0, newRir - 1);
+      if (newRpe != null) newRpe = min(10, newRpe + 1);
+    }
+
+    return SetTarget(
+      setNumber: st.setNumber,
+      setType: st.setType,
+      targetReps: repAdj.adjustedReps,
+      targetWeightKg: snappedWeight,
+      targetRpe: newRpe,
+      targetRir: newRir,
+    );
+  }).toList();
 }

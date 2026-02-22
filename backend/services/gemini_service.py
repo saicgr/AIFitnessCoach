@@ -2254,8 +2254,8 @@ IMPORTANT - ALWAYS identify foods:
         last_error = None
         content = ""
 
-        # Timeout for food analysis (20 seconds per attempt)
-        FOOD_ANALYSIS_TIMEOUT = 20
+        # Timeout for food analysis (12 seconds per attempt)
+        FOOD_ANALYSIS_TIMEOUT = 12
 
         for attempt in range(max_retries):
             try:

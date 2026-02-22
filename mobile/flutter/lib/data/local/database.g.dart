@@ -6457,6 +6457,1308 @@ class EmbeddingCacheCompanion extends UpdateCompanion<EmbeddingCacheData> {
   }
 }
 
+class $CachedExercise1rmHistoryTable extends CachedExercise1rmHistory
+    with
+        TableInfo<
+          $CachedExercise1rmHistoryTable,
+          CachedExercise1rmHistoryData
+        > {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $CachedExercise1rmHistoryTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    hasAutoIncrement: true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'PRIMARY KEY AUTOINCREMENT',
+    ),
+  );
+  static const VerificationMeta _userIdMeta = const VerificationMeta('userId');
+  @override
+  late final GeneratedColumn<String> userId = GeneratedColumn<String>(
+    'user_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _exerciseNameMeta = const VerificationMeta(
+    'exerciseName',
+  );
+  @override
+  late final GeneratedColumn<String> exerciseName = GeneratedColumn<String>(
+    'exercise_name',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _estimated1rmMeta = const VerificationMeta(
+    'estimated1rm',
+  );
+  @override
+  late final GeneratedColumn<double> estimated1rm = GeneratedColumn<double>(
+    'estimated1rm',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _weightKgMeta = const VerificationMeta(
+    'weightKg',
+  );
+  @override
+  late final GeneratedColumn<double> weightKg = GeneratedColumn<double>(
+    'weight_kg',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _repsMeta = const VerificationMeta('reps');
+  @override
+  late final GeneratedColumn<int> reps = GeneratedColumn<int>(
+    'reps',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _rpeMeta = const VerificationMeta('rpe');
+  @override
+  late final GeneratedColumn<int> rpe = GeneratedColumn<int>(
+    'rpe',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _isPrMeta = const VerificationMeta('isPr');
+  @override
+  late final GeneratedColumn<bool> isPr = GeneratedColumn<bool>(
+    'is_pr',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("is_pr" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
+  static const VerificationMeta _achievedAtMeta = const VerificationMeta(
+    'achievedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> achievedAt = GeneratedColumn<DateTime>(
+    'achieved_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _sourceMeta = const VerificationMeta('source');
+  @override
+  late final GeneratedColumn<String> source = GeneratedColumn<String>(
+    'source',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('local'),
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    userId,
+    exerciseName,
+    estimated1rm,
+    weightKg,
+    reps,
+    rpe,
+    isPr,
+    achievedAt,
+    source,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'cached_exercise1rm_history';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<CachedExercise1rmHistoryData> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('user_id')) {
+      context.handle(
+        _userIdMeta,
+        userId.isAcceptableOrUnknown(data['user_id']!, _userIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_userIdMeta);
+    }
+    if (data.containsKey('exercise_name')) {
+      context.handle(
+        _exerciseNameMeta,
+        exerciseName.isAcceptableOrUnknown(
+          data['exercise_name']!,
+          _exerciseNameMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_exerciseNameMeta);
+    }
+    if (data.containsKey('estimated1rm')) {
+      context.handle(
+        _estimated1rmMeta,
+        estimated1rm.isAcceptableOrUnknown(
+          data['estimated1rm']!,
+          _estimated1rmMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_estimated1rmMeta);
+    }
+    if (data.containsKey('weight_kg')) {
+      context.handle(
+        _weightKgMeta,
+        weightKg.isAcceptableOrUnknown(data['weight_kg']!, _weightKgMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_weightKgMeta);
+    }
+    if (data.containsKey('reps')) {
+      context.handle(
+        _repsMeta,
+        reps.isAcceptableOrUnknown(data['reps']!, _repsMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_repsMeta);
+    }
+    if (data.containsKey('rpe')) {
+      context.handle(
+        _rpeMeta,
+        rpe.isAcceptableOrUnknown(data['rpe']!, _rpeMeta),
+      );
+    }
+    if (data.containsKey('is_pr')) {
+      context.handle(
+        _isPrMeta,
+        isPr.isAcceptableOrUnknown(data['is_pr']!, _isPrMeta),
+      );
+    }
+    if (data.containsKey('achieved_at')) {
+      context.handle(
+        _achievedAtMeta,
+        achievedAt.isAcceptableOrUnknown(data['achieved_at']!, _achievedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_achievedAtMeta);
+    }
+    if (data.containsKey('source')) {
+      context.handle(
+        _sourceMeta,
+        source.isAcceptableOrUnknown(data['source']!, _sourceMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  CachedExercise1rmHistoryData map(
+    Map<String, dynamic> data, {
+    String? tablePrefix,
+  }) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return CachedExercise1rmHistoryData(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      userId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}user_id'],
+      )!,
+      exerciseName: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}exercise_name'],
+      )!,
+      estimated1rm: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}estimated1rm'],
+      )!,
+      weightKg: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}weight_kg'],
+      )!,
+      reps: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}reps'],
+      )!,
+      rpe: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}rpe'],
+      ),
+      isPr: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}is_pr'],
+      )!,
+      achievedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}achieved_at'],
+      )!,
+      source: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}source'],
+      )!,
+    );
+  }
+
+  @override
+  $CachedExercise1rmHistoryTable createAlias(String alias) {
+    return $CachedExercise1rmHistoryTable(attachedDatabase, alias);
+  }
+}
+
+class CachedExercise1rmHistoryData extends DataClass
+    implements Insertable<CachedExercise1rmHistoryData> {
+  final int id;
+  final String userId;
+  final String exerciseName;
+
+  /// Estimated 1RM in kg (Brzycki formula).
+  final double estimated1rm;
+
+  /// Actual weight lifted for the set that produced this estimate.
+  final double weightKg;
+
+  /// Actual reps performed for the set that produced this estimate.
+  final int reps;
+
+  /// RPE of the set (nullable).
+  final int? rpe;
+
+  /// Whether this entry represents a personal record.
+  final bool isPr;
+
+  /// When the set was performed.
+  final DateTime achievedAt;
+
+  /// Source: 'local' (computed on-device) or 'synced' (from backend).
+  final String source;
+  const CachedExercise1rmHistoryData({
+    required this.id,
+    required this.userId,
+    required this.exerciseName,
+    required this.estimated1rm,
+    required this.weightKg,
+    required this.reps,
+    this.rpe,
+    required this.isPr,
+    required this.achievedAt,
+    required this.source,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['user_id'] = Variable<String>(userId);
+    map['exercise_name'] = Variable<String>(exerciseName);
+    map['estimated1rm'] = Variable<double>(estimated1rm);
+    map['weight_kg'] = Variable<double>(weightKg);
+    map['reps'] = Variable<int>(reps);
+    if (!nullToAbsent || rpe != null) {
+      map['rpe'] = Variable<int>(rpe);
+    }
+    map['is_pr'] = Variable<bool>(isPr);
+    map['achieved_at'] = Variable<DateTime>(achievedAt);
+    map['source'] = Variable<String>(source);
+    return map;
+  }
+
+  CachedExercise1rmHistoryCompanion toCompanion(bool nullToAbsent) {
+    return CachedExercise1rmHistoryCompanion(
+      id: Value(id),
+      userId: Value(userId),
+      exerciseName: Value(exerciseName),
+      estimated1rm: Value(estimated1rm),
+      weightKg: Value(weightKg),
+      reps: Value(reps),
+      rpe: rpe == null && nullToAbsent ? const Value.absent() : Value(rpe),
+      isPr: Value(isPr),
+      achievedAt: Value(achievedAt),
+      source: Value(source),
+    );
+  }
+
+  factory CachedExercise1rmHistoryData.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return CachedExercise1rmHistoryData(
+      id: serializer.fromJson<int>(json['id']),
+      userId: serializer.fromJson<String>(json['userId']),
+      exerciseName: serializer.fromJson<String>(json['exerciseName']),
+      estimated1rm: serializer.fromJson<double>(json['estimated1rm']),
+      weightKg: serializer.fromJson<double>(json['weightKg']),
+      reps: serializer.fromJson<int>(json['reps']),
+      rpe: serializer.fromJson<int?>(json['rpe']),
+      isPr: serializer.fromJson<bool>(json['isPr']),
+      achievedAt: serializer.fromJson<DateTime>(json['achievedAt']),
+      source: serializer.fromJson<String>(json['source']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'userId': serializer.toJson<String>(userId),
+      'exerciseName': serializer.toJson<String>(exerciseName),
+      'estimated1rm': serializer.toJson<double>(estimated1rm),
+      'weightKg': serializer.toJson<double>(weightKg),
+      'reps': serializer.toJson<int>(reps),
+      'rpe': serializer.toJson<int?>(rpe),
+      'isPr': serializer.toJson<bool>(isPr),
+      'achievedAt': serializer.toJson<DateTime>(achievedAt),
+      'source': serializer.toJson<String>(source),
+    };
+  }
+
+  CachedExercise1rmHistoryData copyWith({
+    int? id,
+    String? userId,
+    String? exerciseName,
+    double? estimated1rm,
+    double? weightKg,
+    int? reps,
+    Value<int?> rpe = const Value.absent(),
+    bool? isPr,
+    DateTime? achievedAt,
+    String? source,
+  }) => CachedExercise1rmHistoryData(
+    id: id ?? this.id,
+    userId: userId ?? this.userId,
+    exerciseName: exerciseName ?? this.exerciseName,
+    estimated1rm: estimated1rm ?? this.estimated1rm,
+    weightKg: weightKg ?? this.weightKg,
+    reps: reps ?? this.reps,
+    rpe: rpe.present ? rpe.value : this.rpe,
+    isPr: isPr ?? this.isPr,
+    achievedAt: achievedAt ?? this.achievedAt,
+    source: source ?? this.source,
+  );
+  CachedExercise1rmHistoryData copyWithCompanion(
+    CachedExercise1rmHistoryCompanion data,
+  ) {
+    return CachedExercise1rmHistoryData(
+      id: data.id.present ? data.id.value : this.id,
+      userId: data.userId.present ? data.userId.value : this.userId,
+      exerciseName: data.exerciseName.present
+          ? data.exerciseName.value
+          : this.exerciseName,
+      estimated1rm: data.estimated1rm.present
+          ? data.estimated1rm.value
+          : this.estimated1rm,
+      weightKg: data.weightKg.present ? data.weightKg.value : this.weightKg,
+      reps: data.reps.present ? data.reps.value : this.reps,
+      rpe: data.rpe.present ? data.rpe.value : this.rpe,
+      isPr: data.isPr.present ? data.isPr.value : this.isPr,
+      achievedAt: data.achievedAt.present
+          ? data.achievedAt.value
+          : this.achievedAt,
+      source: data.source.present ? data.source.value : this.source,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('CachedExercise1rmHistoryData(')
+          ..write('id: $id, ')
+          ..write('userId: $userId, ')
+          ..write('exerciseName: $exerciseName, ')
+          ..write('estimated1rm: $estimated1rm, ')
+          ..write('weightKg: $weightKg, ')
+          ..write('reps: $reps, ')
+          ..write('rpe: $rpe, ')
+          ..write('isPr: $isPr, ')
+          ..write('achievedAt: $achievedAt, ')
+          ..write('source: $source')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    userId,
+    exerciseName,
+    estimated1rm,
+    weightKg,
+    reps,
+    rpe,
+    isPr,
+    achievedAt,
+    source,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is CachedExercise1rmHistoryData &&
+          other.id == this.id &&
+          other.userId == this.userId &&
+          other.exerciseName == this.exerciseName &&
+          other.estimated1rm == this.estimated1rm &&
+          other.weightKg == this.weightKg &&
+          other.reps == this.reps &&
+          other.rpe == this.rpe &&
+          other.isPr == this.isPr &&
+          other.achievedAt == this.achievedAt &&
+          other.source == this.source);
+}
+
+class CachedExercise1rmHistoryCompanion
+    extends UpdateCompanion<CachedExercise1rmHistoryData> {
+  final Value<int> id;
+  final Value<String> userId;
+  final Value<String> exerciseName;
+  final Value<double> estimated1rm;
+  final Value<double> weightKg;
+  final Value<int> reps;
+  final Value<int?> rpe;
+  final Value<bool> isPr;
+  final Value<DateTime> achievedAt;
+  final Value<String> source;
+  const CachedExercise1rmHistoryCompanion({
+    this.id = const Value.absent(),
+    this.userId = const Value.absent(),
+    this.exerciseName = const Value.absent(),
+    this.estimated1rm = const Value.absent(),
+    this.weightKg = const Value.absent(),
+    this.reps = const Value.absent(),
+    this.rpe = const Value.absent(),
+    this.isPr = const Value.absent(),
+    this.achievedAt = const Value.absent(),
+    this.source = const Value.absent(),
+  });
+  CachedExercise1rmHistoryCompanion.insert({
+    this.id = const Value.absent(),
+    required String userId,
+    required String exerciseName,
+    required double estimated1rm,
+    required double weightKg,
+    required int reps,
+    this.rpe = const Value.absent(),
+    this.isPr = const Value.absent(),
+    required DateTime achievedAt,
+    this.source = const Value.absent(),
+  }) : userId = Value(userId),
+       exerciseName = Value(exerciseName),
+       estimated1rm = Value(estimated1rm),
+       weightKg = Value(weightKg),
+       reps = Value(reps),
+       achievedAt = Value(achievedAt);
+  static Insertable<CachedExercise1rmHistoryData> custom({
+    Expression<int>? id,
+    Expression<String>? userId,
+    Expression<String>? exerciseName,
+    Expression<double>? estimated1rm,
+    Expression<double>? weightKg,
+    Expression<int>? reps,
+    Expression<int>? rpe,
+    Expression<bool>? isPr,
+    Expression<DateTime>? achievedAt,
+    Expression<String>? source,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (userId != null) 'user_id': userId,
+      if (exerciseName != null) 'exercise_name': exerciseName,
+      if (estimated1rm != null) 'estimated1rm': estimated1rm,
+      if (weightKg != null) 'weight_kg': weightKg,
+      if (reps != null) 'reps': reps,
+      if (rpe != null) 'rpe': rpe,
+      if (isPr != null) 'is_pr': isPr,
+      if (achievedAt != null) 'achieved_at': achievedAt,
+      if (source != null) 'source': source,
+    });
+  }
+
+  CachedExercise1rmHistoryCompanion copyWith({
+    Value<int>? id,
+    Value<String>? userId,
+    Value<String>? exerciseName,
+    Value<double>? estimated1rm,
+    Value<double>? weightKg,
+    Value<int>? reps,
+    Value<int?>? rpe,
+    Value<bool>? isPr,
+    Value<DateTime>? achievedAt,
+    Value<String>? source,
+  }) {
+    return CachedExercise1rmHistoryCompanion(
+      id: id ?? this.id,
+      userId: userId ?? this.userId,
+      exerciseName: exerciseName ?? this.exerciseName,
+      estimated1rm: estimated1rm ?? this.estimated1rm,
+      weightKg: weightKg ?? this.weightKg,
+      reps: reps ?? this.reps,
+      rpe: rpe ?? this.rpe,
+      isPr: isPr ?? this.isPr,
+      achievedAt: achievedAt ?? this.achievedAt,
+      source: source ?? this.source,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (userId.present) {
+      map['user_id'] = Variable<String>(userId.value);
+    }
+    if (exerciseName.present) {
+      map['exercise_name'] = Variable<String>(exerciseName.value);
+    }
+    if (estimated1rm.present) {
+      map['estimated1rm'] = Variable<double>(estimated1rm.value);
+    }
+    if (weightKg.present) {
+      map['weight_kg'] = Variable<double>(weightKg.value);
+    }
+    if (reps.present) {
+      map['reps'] = Variable<int>(reps.value);
+    }
+    if (rpe.present) {
+      map['rpe'] = Variable<int>(rpe.value);
+    }
+    if (isPr.present) {
+      map['is_pr'] = Variable<bool>(isPr.value);
+    }
+    if (achievedAt.present) {
+      map['achieved_at'] = Variable<DateTime>(achievedAt.value);
+    }
+    if (source.present) {
+      map['source'] = Variable<String>(source.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('CachedExercise1rmHistoryCompanion(')
+          ..write('id: $id, ')
+          ..write('userId: $userId, ')
+          ..write('exerciseName: $exerciseName, ')
+          ..write('estimated1rm: $estimated1rm, ')
+          ..write('weightKg: $weightKg, ')
+          ..write('reps: $reps, ')
+          ..write('rpe: $rpe, ')
+          ..write('isPr: $isPr, ')
+          ..write('achievedAt: $achievedAt, ')
+          ..write('source: $source')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $CachedVolumeResponsesTable extends CachedVolumeResponses
+    with TableInfo<$CachedVolumeResponsesTable, CachedVolumeResponse> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $CachedVolumeResponsesTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    hasAutoIncrement: true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'PRIMARY KEY AUTOINCREMENT',
+    ),
+  );
+  static const VerificationMeta _userIdMeta = const VerificationMeta('userId');
+  @override
+  late final GeneratedColumn<String> userId = GeneratedColumn<String>(
+    'user_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _muscleMeta = const VerificationMeta('muscle');
+  @override
+  late final GeneratedColumn<String> muscle = GeneratedColumn<String>(
+    'muscle',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _weekNumberMeta = const VerificationMeta(
+    'weekNumber',
+  );
+  @override
+  late final GeneratedColumn<int> weekNumber = GeneratedColumn<int>(
+    'week_number',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _mesocycleIdMeta = const VerificationMeta(
+    'mesocycleId',
+  );
+  @override
+  late final GeneratedColumn<String> mesocycleId = GeneratedColumn<String>(
+    'mesocycle_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _totalSetsMeta = const VerificationMeta(
+    'totalSets',
+  );
+  @override
+  late final GeneratedColumn<int> totalSets = GeneratedColumn<int>(
+    'total_sets',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _avgRpeMeta = const VerificationMeta('avgRpe');
+  @override
+  late final GeneratedColumn<double> avgRpe = GeneratedColumn<double>(
+    'avg_rpe',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _performanceChangeMeta = const VerificationMeta(
+    'performanceChange',
+  );
+  @override
+  late final GeneratedColumn<double> performanceChange =
+      GeneratedColumn<double>(
+        'performance_change',
+        aliasedName,
+        false,
+        type: DriftSqlType.double,
+        requiredDuringInsert: true,
+      );
+  static const VerificationMeta _recoveryScore7dMeta = const VerificationMeta(
+    'recoveryScore7d',
+  );
+  @override
+  late final GeneratedColumn<double> recoveryScore7d = GeneratedColumn<double>(
+    'recovery_score7d',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _wasOverreachingMeta = const VerificationMeta(
+    'wasOverreaching',
+  );
+  @override
+  late final GeneratedColumn<bool> wasOverreaching = GeneratedColumn<bool>(
+    'was_overreaching',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("was_overreaching" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
+  static const VerificationMeta _recordedAtMeta = const VerificationMeta(
+    'recordedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> recordedAt = GeneratedColumn<DateTime>(
+    'recorded_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    userId,
+    muscle,
+    weekNumber,
+    mesocycleId,
+    totalSets,
+    avgRpe,
+    performanceChange,
+    recoveryScore7d,
+    wasOverreaching,
+    recordedAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'cached_volume_responses';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<CachedVolumeResponse> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('user_id')) {
+      context.handle(
+        _userIdMeta,
+        userId.isAcceptableOrUnknown(data['user_id']!, _userIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_userIdMeta);
+    }
+    if (data.containsKey('muscle')) {
+      context.handle(
+        _muscleMeta,
+        muscle.isAcceptableOrUnknown(data['muscle']!, _muscleMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_muscleMeta);
+    }
+    if (data.containsKey('week_number')) {
+      context.handle(
+        _weekNumberMeta,
+        weekNumber.isAcceptableOrUnknown(data['week_number']!, _weekNumberMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_weekNumberMeta);
+    }
+    if (data.containsKey('mesocycle_id')) {
+      context.handle(
+        _mesocycleIdMeta,
+        mesocycleId.isAcceptableOrUnknown(
+          data['mesocycle_id']!,
+          _mesocycleIdMeta,
+        ),
+      );
+    }
+    if (data.containsKey('total_sets')) {
+      context.handle(
+        _totalSetsMeta,
+        totalSets.isAcceptableOrUnknown(data['total_sets']!, _totalSetsMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_totalSetsMeta);
+    }
+    if (data.containsKey('avg_rpe')) {
+      context.handle(
+        _avgRpeMeta,
+        avgRpe.isAcceptableOrUnknown(data['avg_rpe']!, _avgRpeMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_avgRpeMeta);
+    }
+    if (data.containsKey('performance_change')) {
+      context.handle(
+        _performanceChangeMeta,
+        performanceChange.isAcceptableOrUnknown(
+          data['performance_change']!,
+          _performanceChangeMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_performanceChangeMeta);
+    }
+    if (data.containsKey('recovery_score7d')) {
+      context.handle(
+        _recoveryScore7dMeta,
+        recoveryScore7d.isAcceptableOrUnknown(
+          data['recovery_score7d']!,
+          _recoveryScore7dMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_recoveryScore7dMeta);
+    }
+    if (data.containsKey('was_overreaching')) {
+      context.handle(
+        _wasOverreachingMeta,
+        wasOverreaching.isAcceptableOrUnknown(
+          data['was_overreaching']!,
+          _wasOverreachingMeta,
+        ),
+      );
+    }
+    if (data.containsKey('recorded_at')) {
+      context.handle(
+        _recordedAtMeta,
+        recordedAt.isAcceptableOrUnknown(data['recorded_at']!, _recordedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_recordedAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  CachedVolumeResponse map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return CachedVolumeResponse(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      userId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}user_id'],
+      )!,
+      muscle: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}muscle'],
+      )!,
+      weekNumber: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}week_number'],
+      )!,
+      mesocycleId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}mesocycle_id'],
+      ),
+      totalSets: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}total_sets'],
+      )!,
+      avgRpe: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}avg_rpe'],
+      )!,
+      performanceChange: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}performance_change'],
+      )!,
+      recoveryScore7d: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}recovery_score7d'],
+      )!,
+      wasOverreaching: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}was_overreaching'],
+      )!,
+      recordedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}recorded_at'],
+      )!,
+    );
+  }
+
+  @override
+  $CachedVolumeResponsesTable createAlias(String alias) {
+    return $CachedVolumeResponsesTable(attachedDatabase, alias);
+  }
+}
+
+class CachedVolumeResponse extends DataClass
+    implements Insertable<CachedVolumeResponse> {
+  final int id;
+  final String userId;
+  final String muscle;
+  final int weekNumber;
+  final String? mesocycleId;
+
+  /// Total sets performed for this muscle this week.
+  final int totalSets;
+
+  /// Average RPE across all sets for this muscle this week.
+  final double avgRpe;
+
+  /// 1RM change since previous week as percentage (e.g., +2.0 or -1.5).
+  final double performanceChange;
+
+  /// 7-day recovery score (0-100) at end of week.
+  final double recoveryScore7d;
+
+  /// Whether this week showed signs of overreaching.
+  final bool wasOverreaching;
+  final DateTime recordedAt;
+  const CachedVolumeResponse({
+    required this.id,
+    required this.userId,
+    required this.muscle,
+    required this.weekNumber,
+    this.mesocycleId,
+    required this.totalSets,
+    required this.avgRpe,
+    required this.performanceChange,
+    required this.recoveryScore7d,
+    required this.wasOverreaching,
+    required this.recordedAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['user_id'] = Variable<String>(userId);
+    map['muscle'] = Variable<String>(muscle);
+    map['week_number'] = Variable<int>(weekNumber);
+    if (!nullToAbsent || mesocycleId != null) {
+      map['mesocycle_id'] = Variable<String>(mesocycleId);
+    }
+    map['total_sets'] = Variable<int>(totalSets);
+    map['avg_rpe'] = Variable<double>(avgRpe);
+    map['performance_change'] = Variable<double>(performanceChange);
+    map['recovery_score7d'] = Variable<double>(recoveryScore7d);
+    map['was_overreaching'] = Variable<bool>(wasOverreaching);
+    map['recorded_at'] = Variable<DateTime>(recordedAt);
+    return map;
+  }
+
+  CachedVolumeResponsesCompanion toCompanion(bool nullToAbsent) {
+    return CachedVolumeResponsesCompanion(
+      id: Value(id),
+      userId: Value(userId),
+      muscle: Value(muscle),
+      weekNumber: Value(weekNumber),
+      mesocycleId: mesocycleId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(mesocycleId),
+      totalSets: Value(totalSets),
+      avgRpe: Value(avgRpe),
+      performanceChange: Value(performanceChange),
+      recoveryScore7d: Value(recoveryScore7d),
+      wasOverreaching: Value(wasOverreaching),
+      recordedAt: Value(recordedAt),
+    );
+  }
+
+  factory CachedVolumeResponse.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return CachedVolumeResponse(
+      id: serializer.fromJson<int>(json['id']),
+      userId: serializer.fromJson<String>(json['userId']),
+      muscle: serializer.fromJson<String>(json['muscle']),
+      weekNumber: serializer.fromJson<int>(json['weekNumber']),
+      mesocycleId: serializer.fromJson<String?>(json['mesocycleId']),
+      totalSets: serializer.fromJson<int>(json['totalSets']),
+      avgRpe: serializer.fromJson<double>(json['avgRpe']),
+      performanceChange: serializer.fromJson<double>(json['performanceChange']),
+      recoveryScore7d: serializer.fromJson<double>(json['recoveryScore7d']),
+      wasOverreaching: serializer.fromJson<bool>(json['wasOverreaching']),
+      recordedAt: serializer.fromJson<DateTime>(json['recordedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'userId': serializer.toJson<String>(userId),
+      'muscle': serializer.toJson<String>(muscle),
+      'weekNumber': serializer.toJson<int>(weekNumber),
+      'mesocycleId': serializer.toJson<String?>(mesocycleId),
+      'totalSets': serializer.toJson<int>(totalSets),
+      'avgRpe': serializer.toJson<double>(avgRpe),
+      'performanceChange': serializer.toJson<double>(performanceChange),
+      'recoveryScore7d': serializer.toJson<double>(recoveryScore7d),
+      'wasOverreaching': serializer.toJson<bool>(wasOverreaching),
+      'recordedAt': serializer.toJson<DateTime>(recordedAt),
+    };
+  }
+
+  CachedVolumeResponse copyWith({
+    int? id,
+    String? userId,
+    String? muscle,
+    int? weekNumber,
+    Value<String?> mesocycleId = const Value.absent(),
+    int? totalSets,
+    double? avgRpe,
+    double? performanceChange,
+    double? recoveryScore7d,
+    bool? wasOverreaching,
+    DateTime? recordedAt,
+  }) => CachedVolumeResponse(
+    id: id ?? this.id,
+    userId: userId ?? this.userId,
+    muscle: muscle ?? this.muscle,
+    weekNumber: weekNumber ?? this.weekNumber,
+    mesocycleId: mesocycleId.present ? mesocycleId.value : this.mesocycleId,
+    totalSets: totalSets ?? this.totalSets,
+    avgRpe: avgRpe ?? this.avgRpe,
+    performanceChange: performanceChange ?? this.performanceChange,
+    recoveryScore7d: recoveryScore7d ?? this.recoveryScore7d,
+    wasOverreaching: wasOverreaching ?? this.wasOverreaching,
+    recordedAt: recordedAt ?? this.recordedAt,
+  );
+  CachedVolumeResponse copyWithCompanion(CachedVolumeResponsesCompanion data) {
+    return CachedVolumeResponse(
+      id: data.id.present ? data.id.value : this.id,
+      userId: data.userId.present ? data.userId.value : this.userId,
+      muscle: data.muscle.present ? data.muscle.value : this.muscle,
+      weekNumber: data.weekNumber.present
+          ? data.weekNumber.value
+          : this.weekNumber,
+      mesocycleId: data.mesocycleId.present
+          ? data.mesocycleId.value
+          : this.mesocycleId,
+      totalSets: data.totalSets.present ? data.totalSets.value : this.totalSets,
+      avgRpe: data.avgRpe.present ? data.avgRpe.value : this.avgRpe,
+      performanceChange: data.performanceChange.present
+          ? data.performanceChange.value
+          : this.performanceChange,
+      recoveryScore7d: data.recoveryScore7d.present
+          ? data.recoveryScore7d.value
+          : this.recoveryScore7d,
+      wasOverreaching: data.wasOverreaching.present
+          ? data.wasOverreaching.value
+          : this.wasOverreaching,
+      recordedAt: data.recordedAt.present
+          ? data.recordedAt.value
+          : this.recordedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('CachedVolumeResponse(')
+          ..write('id: $id, ')
+          ..write('userId: $userId, ')
+          ..write('muscle: $muscle, ')
+          ..write('weekNumber: $weekNumber, ')
+          ..write('mesocycleId: $mesocycleId, ')
+          ..write('totalSets: $totalSets, ')
+          ..write('avgRpe: $avgRpe, ')
+          ..write('performanceChange: $performanceChange, ')
+          ..write('recoveryScore7d: $recoveryScore7d, ')
+          ..write('wasOverreaching: $wasOverreaching, ')
+          ..write('recordedAt: $recordedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    userId,
+    muscle,
+    weekNumber,
+    mesocycleId,
+    totalSets,
+    avgRpe,
+    performanceChange,
+    recoveryScore7d,
+    wasOverreaching,
+    recordedAt,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is CachedVolumeResponse &&
+          other.id == this.id &&
+          other.userId == this.userId &&
+          other.muscle == this.muscle &&
+          other.weekNumber == this.weekNumber &&
+          other.mesocycleId == this.mesocycleId &&
+          other.totalSets == this.totalSets &&
+          other.avgRpe == this.avgRpe &&
+          other.performanceChange == this.performanceChange &&
+          other.recoveryScore7d == this.recoveryScore7d &&
+          other.wasOverreaching == this.wasOverreaching &&
+          other.recordedAt == this.recordedAt);
+}
+
+class CachedVolumeResponsesCompanion
+    extends UpdateCompanion<CachedVolumeResponse> {
+  final Value<int> id;
+  final Value<String> userId;
+  final Value<String> muscle;
+  final Value<int> weekNumber;
+  final Value<String?> mesocycleId;
+  final Value<int> totalSets;
+  final Value<double> avgRpe;
+  final Value<double> performanceChange;
+  final Value<double> recoveryScore7d;
+  final Value<bool> wasOverreaching;
+  final Value<DateTime> recordedAt;
+  const CachedVolumeResponsesCompanion({
+    this.id = const Value.absent(),
+    this.userId = const Value.absent(),
+    this.muscle = const Value.absent(),
+    this.weekNumber = const Value.absent(),
+    this.mesocycleId = const Value.absent(),
+    this.totalSets = const Value.absent(),
+    this.avgRpe = const Value.absent(),
+    this.performanceChange = const Value.absent(),
+    this.recoveryScore7d = const Value.absent(),
+    this.wasOverreaching = const Value.absent(),
+    this.recordedAt = const Value.absent(),
+  });
+  CachedVolumeResponsesCompanion.insert({
+    this.id = const Value.absent(),
+    required String userId,
+    required String muscle,
+    required int weekNumber,
+    this.mesocycleId = const Value.absent(),
+    required int totalSets,
+    required double avgRpe,
+    required double performanceChange,
+    required double recoveryScore7d,
+    this.wasOverreaching = const Value.absent(),
+    required DateTime recordedAt,
+  }) : userId = Value(userId),
+       muscle = Value(muscle),
+       weekNumber = Value(weekNumber),
+       totalSets = Value(totalSets),
+       avgRpe = Value(avgRpe),
+       performanceChange = Value(performanceChange),
+       recoveryScore7d = Value(recoveryScore7d),
+       recordedAt = Value(recordedAt);
+  static Insertable<CachedVolumeResponse> custom({
+    Expression<int>? id,
+    Expression<String>? userId,
+    Expression<String>? muscle,
+    Expression<int>? weekNumber,
+    Expression<String>? mesocycleId,
+    Expression<int>? totalSets,
+    Expression<double>? avgRpe,
+    Expression<double>? performanceChange,
+    Expression<double>? recoveryScore7d,
+    Expression<bool>? wasOverreaching,
+    Expression<DateTime>? recordedAt,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (userId != null) 'user_id': userId,
+      if (muscle != null) 'muscle': muscle,
+      if (weekNumber != null) 'week_number': weekNumber,
+      if (mesocycleId != null) 'mesocycle_id': mesocycleId,
+      if (totalSets != null) 'total_sets': totalSets,
+      if (avgRpe != null) 'avg_rpe': avgRpe,
+      if (performanceChange != null) 'performance_change': performanceChange,
+      if (recoveryScore7d != null) 'recovery_score7d': recoveryScore7d,
+      if (wasOverreaching != null) 'was_overreaching': wasOverreaching,
+      if (recordedAt != null) 'recorded_at': recordedAt,
+    });
+  }
+
+  CachedVolumeResponsesCompanion copyWith({
+    Value<int>? id,
+    Value<String>? userId,
+    Value<String>? muscle,
+    Value<int>? weekNumber,
+    Value<String?>? mesocycleId,
+    Value<int>? totalSets,
+    Value<double>? avgRpe,
+    Value<double>? performanceChange,
+    Value<double>? recoveryScore7d,
+    Value<bool>? wasOverreaching,
+    Value<DateTime>? recordedAt,
+  }) {
+    return CachedVolumeResponsesCompanion(
+      id: id ?? this.id,
+      userId: userId ?? this.userId,
+      muscle: muscle ?? this.muscle,
+      weekNumber: weekNumber ?? this.weekNumber,
+      mesocycleId: mesocycleId ?? this.mesocycleId,
+      totalSets: totalSets ?? this.totalSets,
+      avgRpe: avgRpe ?? this.avgRpe,
+      performanceChange: performanceChange ?? this.performanceChange,
+      recoveryScore7d: recoveryScore7d ?? this.recoveryScore7d,
+      wasOverreaching: wasOverreaching ?? this.wasOverreaching,
+      recordedAt: recordedAt ?? this.recordedAt,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (userId.present) {
+      map['user_id'] = Variable<String>(userId.value);
+    }
+    if (muscle.present) {
+      map['muscle'] = Variable<String>(muscle.value);
+    }
+    if (weekNumber.present) {
+      map['week_number'] = Variable<int>(weekNumber.value);
+    }
+    if (mesocycleId.present) {
+      map['mesocycle_id'] = Variable<String>(mesocycleId.value);
+    }
+    if (totalSets.present) {
+      map['total_sets'] = Variable<int>(totalSets.value);
+    }
+    if (avgRpe.present) {
+      map['avg_rpe'] = Variable<double>(avgRpe.value);
+    }
+    if (performanceChange.present) {
+      map['performance_change'] = Variable<double>(performanceChange.value);
+    }
+    if (recoveryScore7d.present) {
+      map['recovery_score7d'] = Variable<double>(recoveryScore7d.value);
+    }
+    if (wasOverreaching.present) {
+      map['was_overreaching'] = Variable<bool>(wasOverreaching.value);
+    }
+    if (recordedAt.present) {
+      map['recorded_at'] = Variable<DateTime>(recordedAt.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('CachedVolumeResponsesCompanion(')
+          ..write('id: $id, ')
+          ..write('userId: $userId, ')
+          ..write('muscle: $muscle, ')
+          ..write('weekNumber: $weekNumber, ')
+          ..write('mesocycleId: $mesocycleId, ')
+          ..write('totalSets: $totalSets, ')
+          ..write('avgRpe: $avgRpe, ')
+          ..write('performanceChange: $performanceChange, ')
+          ..write('recoveryScore7d: $recoveryScore7d, ')
+          ..write('wasOverreaching: $wasOverreaching, ')
+          ..write('recordedAt: $recordedAt')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -6477,6 +7779,10 @@ abstract class _$AppDatabase extends GeneratedDatabase {
       $CachedGymProfilesTable(this);
   late final $CachedFoodsTable cachedFoods = $CachedFoodsTable(this);
   late final $EmbeddingCacheTable embeddingCache = $EmbeddingCacheTable(this);
+  late final $CachedExercise1rmHistoryTable cachedExercise1rmHistory =
+      $CachedExercise1rmHistoryTable(this);
+  late final $CachedVolumeResponsesTable cachedVolumeResponses =
+      $CachedVolumeResponsesTable(this);
   late final WorkoutDao workoutDao = WorkoutDao(this as AppDatabase);
   late final ExerciseLibraryDao exerciseLibraryDao = ExerciseLibraryDao(
     this as AppDatabase,
@@ -6490,6 +7796,12 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final GymProfileDao gymProfileDao = GymProfileDao(this as AppDatabase);
   late final FoodDao foodDao = FoodDao(this as AppDatabase);
   late final EmbeddingDao embeddingDao = EmbeddingDao(this as AppDatabase);
+  late final Exercise1rmDao exercise1rmDao = Exercise1rmDao(
+    this as AppDatabase,
+  );
+  late final VolumeResponseDao volumeResponseDao = VolumeResponseDao(
+    this as AppDatabase,
+  );
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -6504,6 +7816,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     cachedGymProfiles,
     cachedFoods,
     embeddingCache,
+    cachedExercise1rmHistory,
+    cachedVolumeResponses,
   ];
 }
 
@@ -9627,6 +10941,659 @@ typedef $$EmbeddingCacheTableProcessedTableManager =
       EmbeddingCacheData,
       PrefetchHooks Function()
     >;
+typedef $$CachedExercise1rmHistoryTableCreateCompanionBuilder =
+    CachedExercise1rmHistoryCompanion Function({
+      Value<int> id,
+      required String userId,
+      required String exerciseName,
+      required double estimated1rm,
+      required double weightKg,
+      required int reps,
+      Value<int?> rpe,
+      Value<bool> isPr,
+      required DateTime achievedAt,
+      Value<String> source,
+    });
+typedef $$CachedExercise1rmHistoryTableUpdateCompanionBuilder =
+    CachedExercise1rmHistoryCompanion Function({
+      Value<int> id,
+      Value<String> userId,
+      Value<String> exerciseName,
+      Value<double> estimated1rm,
+      Value<double> weightKg,
+      Value<int> reps,
+      Value<int?> rpe,
+      Value<bool> isPr,
+      Value<DateTime> achievedAt,
+      Value<String> source,
+    });
+
+class $$CachedExercise1rmHistoryTableFilterComposer
+    extends Composer<_$AppDatabase, $CachedExercise1rmHistoryTable> {
+  $$CachedExercise1rmHistoryTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get userId => $composableBuilder(
+    column: $table.userId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get exerciseName => $composableBuilder(
+    column: $table.exerciseName,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get estimated1rm => $composableBuilder(
+    column: $table.estimated1rm,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get weightKg => $composableBuilder(
+    column: $table.weightKg,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get reps => $composableBuilder(
+    column: $table.reps,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get rpe => $composableBuilder(
+    column: $table.rpe,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get isPr => $composableBuilder(
+    column: $table.isPr,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get achievedAt => $composableBuilder(
+    column: $table.achievedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get source => $composableBuilder(
+    column: $table.source,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$CachedExercise1rmHistoryTableOrderingComposer
+    extends Composer<_$AppDatabase, $CachedExercise1rmHistoryTable> {
+  $$CachedExercise1rmHistoryTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get userId => $composableBuilder(
+    column: $table.userId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get exerciseName => $composableBuilder(
+    column: $table.exerciseName,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get estimated1rm => $composableBuilder(
+    column: $table.estimated1rm,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get weightKg => $composableBuilder(
+    column: $table.weightKg,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get reps => $composableBuilder(
+    column: $table.reps,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get rpe => $composableBuilder(
+    column: $table.rpe,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get isPr => $composableBuilder(
+    column: $table.isPr,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get achievedAt => $composableBuilder(
+    column: $table.achievedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get source => $composableBuilder(
+    column: $table.source,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$CachedExercise1rmHistoryTableAnnotationComposer
+    extends Composer<_$AppDatabase, $CachedExercise1rmHistoryTable> {
+  $$CachedExercise1rmHistoryTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get userId =>
+      $composableBuilder(column: $table.userId, builder: (column) => column);
+
+  GeneratedColumn<String> get exerciseName => $composableBuilder(
+    column: $table.exerciseName,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<double> get estimated1rm => $composableBuilder(
+    column: $table.estimated1rm,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<double> get weightKg =>
+      $composableBuilder(column: $table.weightKg, builder: (column) => column);
+
+  GeneratedColumn<int> get reps =>
+      $composableBuilder(column: $table.reps, builder: (column) => column);
+
+  GeneratedColumn<int> get rpe =>
+      $composableBuilder(column: $table.rpe, builder: (column) => column);
+
+  GeneratedColumn<bool> get isPr =>
+      $composableBuilder(column: $table.isPr, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get achievedAt => $composableBuilder(
+    column: $table.achievedAt,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get source =>
+      $composableBuilder(column: $table.source, builder: (column) => column);
+}
+
+class $$CachedExercise1rmHistoryTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $CachedExercise1rmHistoryTable,
+          CachedExercise1rmHistoryData,
+          $$CachedExercise1rmHistoryTableFilterComposer,
+          $$CachedExercise1rmHistoryTableOrderingComposer,
+          $$CachedExercise1rmHistoryTableAnnotationComposer,
+          $$CachedExercise1rmHistoryTableCreateCompanionBuilder,
+          $$CachedExercise1rmHistoryTableUpdateCompanionBuilder,
+          (
+            CachedExercise1rmHistoryData,
+            BaseReferences<
+              _$AppDatabase,
+              $CachedExercise1rmHistoryTable,
+              CachedExercise1rmHistoryData
+            >,
+          ),
+          CachedExercise1rmHistoryData,
+          PrefetchHooks Function()
+        > {
+  $$CachedExercise1rmHistoryTableTableManager(
+    _$AppDatabase db,
+    $CachedExercise1rmHistoryTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$CachedExercise1rmHistoryTableFilterComposer(
+                $db: db,
+                $table: table,
+              ),
+          createOrderingComposer: () =>
+              $$CachedExercise1rmHistoryTableOrderingComposer(
+                $db: db,
+                $table: table,
+              ),
+          createComputedFieldComposer: () =>
+              $$CachedExercise1rmHistoryTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<String> userId = const Value.absent(),
+                Value<String> exerciseName = const Value.absent(),
+                Value<double> estimated1rm = const Value.absent(),
+                Value<double> weightKg = const Value.absent(),
+                Value<int> reps = const Value.absent(),
+                Value<int?> rpe = const Value.absent(),
+                Value<bool> isPr = const Value.absent(),
+                Value<DateTime> achievedAt = const Value.absent(),
+                Value<String> source = const Value.absent(),
+              }) => CachedExercise1rmHistoryCompanion(
+                id: id,
+                userId: userId,
+                exerciseName: exerciseName,
+                estimated1rm: estimated1rm,
+                weightKg: weightKg,
+                reps: reps,
+                rpe: rpe,
+                isPr: isPr,
+                achievedAt: achievedAt,
+                source: source,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                required String userId,
+                required String exerciseName,
+                required double estimated1rm,
+                required double weightKg,
+                required int reps,
+                Value<int?> rpe = const Value.absent(),
+                Value<bool> isPr = const Value.absent(),
+                required DateTime achievedAt,
+                Value<String> source = const Value.absent(),
+              }) => CachedExercise1rmHistoryCompanion.insert(
+                id: id,
+                userId: userId,
+                exerciseName: exerciseName,
+                estimated1rm: estimated1rm,
+                weightKg: weightKg,
+                reps: reps,
+                rpe: rpe,
+                isPr: isPr,
+                achievedAt: achievedAt,
+                source: source,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$CachedExercise1rmHistoryTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $CachedExercise1rmHistoryTable,
+      CachedExercise1rmHistoryData,
+      $$CachedExercise1rmHistoryTableFilterComposer,
+      $$CachedExercise1rmHistoryTableOrderingComposer,
+      $$CachedExercise1rmHistoryTableAnnotationComposer,
+      $$CachedExercise1rmHistoryTableCreateCompanionBuilder,
+      $$CachedExercise1rmHistoryTableUpdateCompanionBuilder,
+      (
+        CachedExercise1rmHistoryData,
+        BaseReferences<
+          _$AppDatabase,
+          $CachedExercise1rmHistoryTable,
+          CachedExercise1rmHistoryData
+        >,
+      ),
+      CachedExercise1rmHistoryData,
+      PrefetchHooks Function()
+    >;
+typedef $$CachedVolumeResponsesTableCreateCompanionBuilder =
+    CachedVolumeResponsesCompanion Function({
+      Value<int> id,
+      required String userId,
+      required String muscle,
+      required int weekNumber,
+      Value<String?> mesocycleId,
+      required int totalSets,
+      required double avgRpe,
+      required double performanceChange,
+      required double recoveryScore7d,
+      Value<bool> wasOverreaching,
+      required DateTime recordedAt,
+    });
+typedef $$CachedVolumeResponsesTableUpdateCompanionBuilder =
+    CachedVolumeResponsesCompanion Function({
+      Value<int> id,
+      Value<String> userId,
+      Value<String> muscle,
+      Value<int> weekNumber,
+      Value<String?> mesocycleId,
+      Value<int> totalSets,
+      Value<double> avgRpe,
+      Value<double> performanceChange,
+      Value<double> recoveryScore7d,
+      Value<bool> wasOverreaching,
+      Value<DateTime> recordedAt,
+    });
+
+class $$CachedVolumeResponsesTableFilterComposer
+    extends Composer<_$AppDatabase, $CachedVolumeResponsesTable> {
+  $$CachedVolumeResponsesTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get userId => $composableBuilder(
+    column: $table.userId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get muscle => $composableBuilder(
+    column: $table.muscle,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get weekNumber => $composableBuilder(
+    column: $table.weekNumber,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get mesocycleId => $composableBuilder(
+    column: $table.mesocycleId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get totalSets => $composableBuilder(
+    column: $table.totalSets,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get avgRpe => $composableBuilder(
+    column: $table.avgRpe,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get performanceChange => $composableBuilder(
+    column: $table.performanceChange,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get recoveryScore7d => $composableBuilder(
+    column: $table.recoveryScore7d,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get wasOverreaching => $composableBuilder(
+    column: $table.wasOverreaching,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get recordedAt => $composableBuilder(
+    column: $table.recordedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$CachedVolumeResponsesTableOrderingComposer
+    extends Composer<_$AppDatabase, $CachedVolumeResponsesTable> {
+  $$CachedVolumeResponsesTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get userId => $composableBuilder(
+    column: $table.userId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get muscle => $composableBuilder(
+    column: $table.muscle,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get weekNumber => $composableBuilder(
+    column: $table.weekNumber,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get mesocycleId => $composableBuilder(
+    column: $table.mesocycleId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get totalSets => $composableBuilder(
+    column: $table.totalSets,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get avgRpe => $composableBuilder(
+    column: $table.avgRpe,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get performanceChange => $composableBuilder(
+    column: $table.performanceChange,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get recoveryScore7d => $composableBuilder(
+    column: $table.recoveryScore7d,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get wasOverreaching => $composableBuilder(
+    column: $table.wasOverreaching,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get recordedAt => $composableBuilder(
+    column: $table.recordedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$CachedVolumeResponsesTableAnnotationComposer
+    extends Composer<_$AppDatabase, $CachedVolumeResponsesTable> {
+  $$CachedVolumeResponsesTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get userId =>
+      $composableBuilder(column: $table.userId, builder: (column) => column);
+
+  GeneratedColumn<String> get muscle =>
+      $composableBuilder(column: $table.muscle, builder: (column) => column);
+
+  GeneratedColumn<int> get weekNumber => $composableBuilder(
+    column: $table.weekNumber,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get mesocycleId => $composableBuilder(
+    column: $table.mesocycleId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get totalSets =>
+      $composableBuilder(column: $table.totalSets, builder: (column) => column);
+
+  GeneratedColumn<double> get avgRpe =>
+      $composableBuilder(column: $table.avgRpe, builder: (column) => column);
+
+  GeneratedColumn<double> get performanceChange => $composableBuilder(
+    column: $table.performanceChange,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<double> get recoveryScore7d => $composableBuilder(
+    column: $table.recoveryScore7d,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<bool> get wasOverreaching => $composableBuilder(
+    column: $table.wasOverreaching,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get recordedAt => $composableBuilder(
+    column: $table.recordedAt,
+    builder: (column) => column,
+  );
+}
+
+class $$CachedVolumeResponsesTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $CachedVolumeResponsesTable,
+          CachedVolumeResponse,
+          $$CachedVolumeResponsesTableFilterComposer,
+          $$CachedVolumeResponsesTableOrderingComposer,
+          $$CachedVolumeResponsesTableAnnotationComposer,
+          $$CachedVolumeResponsesTableCreateCompanionBuilder,
+          $$CachedVolumeResponsesTableUpdateCompanionBuilder,
+          (
+            CachedVolumeResponse,
+            BaseReferences<
+              _$AppDatabase,
+              $CachedVolumeResponsesTable,
+              CachedVolumeResponse
+            >,
+          ),
+          CachedVolumeResponse,
+          PrefetchHooks Function()
+        > {
+  $$CachedVolumeResponsesTableTableManager(
+    _$AppDatabase db,
+    $CachedVolumeResponsesTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$CachedVolumeResponsesTableFilterComposer(
+                $db: db,
+                $table: table,
+              ),
+          createOrderingComposer: () =>
+              $$CachedVolumeResponsesTableOrderingComposer(
+                $db: db,
+                $table: table,
+              ),
+          createComputedFieldComposer: () =>
+              $$CachedVolumeResponsesTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<String> userId = const Value.absent(),
+                Value<String> muscle = const Value.absent(),
+                Value<int> weekNumber = const Value.absent(),
+                Value<String?> mesocycleId = const Value.absent(),
+                Value<int> totalSets = const Value.absent(),
+                Value<double> avgRpe = const Value.absent(),
+                Value<double> performanceChange = const Value.absent(),
+                Value<double> recoveryScore7d = const Value.absent(),
+                Value<bool> wasOverreaching = const Value.absent(),
+                Value<DateTime> recordedAt = const Value.absent(),
+              }) => CachedVolumeResponsesCompanion(
+                id: id,
+                userId: userId,
+                muscle: muscle,
+                weekNumber: weekNumber,
+                mesocycleId: mesocycleId,
+                totalSets: totalSets,
+                avgRpe: avgRpe,
+                performanceChange: performanceChange,
+                recoveryScore7d: recoveryScore7d,
+                wasOverreaching: wasOverreaching,
+                recordedAt: recordedAt,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                required String userId,
+                required String muscle,
+                required int weekNumber,
+                Value<String?> mesocycleId = const Value.absent(),
+                required int totalSets,
+                required double avgRpe,
+                required double performanceChange,
+                required double recoveryScore7d,
+                Value<bool> wasOverreaching = const Value.absent(),
+                required DateTime recordedAt,
+              }) => CachedVolumeResponsesCompanion.insert(
+                id: id,
+                userId: userId,
+                muscle: muscle,
+                weekNumber: weekNumber,
+                mesocycleId: mesocycleId,
+                totalSets: totalSets,
+                avgRpe: avgRpe,
+                performanceChange: performanceChange,
+                recoveryScore7d: recoveryScore7d,
+                wasOverreaching: wasOverreaching,
+                recordedAt: recordedAt,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$CachedVolumeResponsesTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $CachedVolumeResponsesTable,
+      CachedVolumeResponse,
+      $$CachedVolumeResponsesTableFilterComposer,
+      $$CachedVolumeResponsesTableOrderingComposer,
+      $$CachedVolumeResponsesTableAnnotationComposer,
+      $$CachedVolumeResponsesTableCreateCompanionBuilder,
+      $$CachedVolumeResponsesTableUpdateCompanionBuilder,
+      (
+        CachedVolumeResponse,
+        BaseReferences<
+          _$AppDatabase,
+          $CachedVolumeResponsesTable,
+          CachedVolumeResponse
+        >,
+      ),
+      CachedVolumeResponse,
+      PrefetchHooks Function()
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -9649,4 +11616,11 @@ class $AppDatabaseManager {
       $$CachedFoodsTableTableManager(_db, _db.cachedFoods);
   $$EmbeddingCacheTableTableManager get embeddingCache =>
       $$EmbeddingCacheTableTableManager(_db, _db.embeddingCache);
+  $$CachedExercise1rmHistoryTableTableManager get cachedExercise1rmHistory =>
+      $$CachedExercise1rmHistoryTableTableManager(
+        _db,
+        _db.cachedExercise1rmHistory,
+      );
+  $$CachedVolumeResponsesTableTableManager get cachedVolumeResponses =>
+      $$CachedVolumeResponsesTableTableManager(_db, _db.cachedVolumeResponses);
 }

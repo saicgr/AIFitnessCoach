@@ -70,6 +70,22 @@ from services.gemini_service import GeminiService
 from services.nutrition_rag_service import get_nutrition_rag_service
 from services.food_analysis_cache_service import get_food_analysis_cache_service
 from services.saved_foods_rag_service import get_saved_foods_rag_service
+
+# Regional/complex food keywords — frozenset for O(1) lookup
+_REGIONAL_KEYWORDS = frozenset([
+    'biryani', 'curry', 'masala', 'tikka', 'tandoori', 'paneer', 'dosa', 'idli',
+    'sambar', 'rasam', 'korma', 'vindaloo', 'dal', 'chapati', 'naan',
+    'paratha', 'puri', 'samosa', 'pakora', 'chutney', 'raita', 'lassi', 'kulfi',
+    'halwa', 'ladoo', 'jalebi', 'kheer', 'upma', 'poha',
+    'pho', 'pad thai', 'rendang', 'satay', 'laksa',
+    'kimchi', 'bibimbap', 'bulgogi', 'ramen', 'udon', 'sushi', 'tempura',
+    'congee', 'szechuan',
+    'tacos', 'burrito', 'enchilada', 'tamale', 'mole', 'ceviche',
+    'falafel', 'shawarma', 'hummus', 'tabouleh',
+    'injera', 'tagine', 'couscous', 'jollof', 'fufu',
+    'pierogi', 'borscht', 'goulash', 'schnitzel', 'paella', 'risotto',
+    'gnocchi', 'carbonara', 'bolognese', 'tiramisu',
+])
 from models.saved_food import (
     SavedFood,
     SavedFoodCreate,
@@ -2004,20 +2020,8 @@ async def analyze_food_from_text_streaming(request: Request, body: LogTextReques
 
             # Check if this is a complex/regional food that may take longer
             description_lower = body.description.lower()
-            regional_keywords = ['biryani', 'curry', 'masala', 'tikka', 'tandoori', 'paneer', 'dosa', 'idli',
-                               'sambar', 'rasam', 'korma', 'vindaloo', 'rogan josh', 'dal', 'chapati', 'naan',
-                               'paratha', 'puri', 'samosa', 'pakora', 'chutney', 'raita', 'lassi', 'kulfi',
-                               'halwa', 'ladoo', 'gulab jamun', 'jalebi', 'kheer', 'payasam', 'upma', 'poha',
-                               'pav bhaji', 'vada pav', 'chole', 'rajma', 'aloo', 'gobi', 'bhindi', 'palak',
-                               'pho', 'banh mi', 'pad thai', 'tom yum', 'rendang', 'satay', 'laksa', 'nasi',
-                               'kimchi', 'bibimbap', 'bulgogi', 'japchae', 'ramen', 'udon', 'sushi', 'tempura',
-                               'dim sum', 'congee', 'char siu', 'kung pao', 'mapo tofu', 'szechuan',
-                               'tacos', 'burrito', 'enchilada', 'tamale', 'mole', 'pozole', 'ceviche',
-                               'falafel', 'shawarma', 'hummus', 'baba ganoush', 'tabouleh', 'fattoush',
-                               'injera', 'doro wat', 'tagine', 'couscous', 'jollof', 'fufu', 'egusi',
-                               'pierogi', 'borscht', 'goulash', 'schnitzel', 'paella', 'tapas', 'risotto',
-                               'gnocchi', 'carbonara', 'bolognese', 'osso buco', 'tiramisu', 'panna cotta']
-            is_complex = any(keyword in description_lower for keyword in regional_keywords)
+            description_words = set(description_lower.split())
+            is_complex = bool(description_words & _REGIONAL_KEYWORDS)
 
             # Run user profile fetch and cache check in parallel
             user_goals = None
@@ -2092,13 +2096,13 @@ async def analyze_food_from_text_streaming(request: Request, body: LogTextReques
                     except Exception as e:
                         logger.warning(f"[ANALYZE-STREAM] Could not fetch RAG context: {e}")
 
-                # Full AI analysis with RAG context (cache will save for next time)
+                # Skip cache checks (already done above) — go straight to Gemini
                 food_analysis = await cache_service.analyze_food(
                     description=body.description,
                     user_goals=user_goals,
                     nutrition_targets=nutrition_targets,
                     rag_context=rag_context,
-                    use_cache=True,
+                    use_cache=False,
                 )
 
                 # Step 3: Finalize results

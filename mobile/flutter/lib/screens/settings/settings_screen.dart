@@ -301,6 +301,13 @@ const Map<String, List<String>> _settingsSearchIndex = {
     'fasting window', 'feeding window', 'fast schedule',
     'change wake time', 'change sleep time', 'when i sleep', 'when i wake',
   ],
+  'research': [
+    'research', 'science', 'exercise science', 'studies', 'papers',
+    'evidence', 'peer reviewed', 'citations', 'references',
+    'ACSM', 'NSCA', 'Tabata', 'HIIT', 'progressive overload',
+    'superset research', 'antagonist', 'periodization', 'RPE',
+    'how it works', 'why', 'based on', 'proof', 'methodology',
+  ],
   'offline_mode': [
     'offline', 'offline mode', 'download', 'sync', 'no internet',
     'airplane mode', 'on device', 'on-device', 'local ai', 'local model',
@@ -371,6 +378,15 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         subtitle: 'Progression, intensity, splits, schedule',
         color: iconColor,
         sectionKeys: ['training'],
+      ),
+      _SettingsGroup(
+        id: 'research',
+        icon: Icons.science_outlined,
+        title: 'Research',
+        subtitle: 'Peer-reviewed papers behind your workouts',
+        color: iconColor,
+        sectionKeys: ['research'],
+        onTap: () => context.push('/settings/research'),
       ),
       _SettingsGroup(
         id: 'offline_mode',

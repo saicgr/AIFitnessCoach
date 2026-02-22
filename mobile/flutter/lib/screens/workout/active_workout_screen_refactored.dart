@@ -100,6 +100,7 @@ import '../../core/providers/tts_provider.dart';
 import '../../screens/onboarding/widgets/foldable_quiz_scaffold.dart';
 import 'foldable/foldable_workout_layout.dart';
 import 'foldable/foldable_warmup_layout.dart';
+import '../../services/intra_workout_autoregulator.dart';
 
 /// Active workout screen with modular composition
 class ActiveWorkoutScreen extends ConsumerStatefulWidget {
@@ -1347,9 +1348,130 @@ class _ActiveWorkoutScreenState
     if (exerciseSets != null && exerciseSets.isNotEmpty) {
       final lastIndex = exerciseSets.length - 1;
       exerciseSets[lastIndex] = exerciseSets[lastIndex].copyWith(rpe: rpe);
+
+      // Run autoregulation check after RPE is recorded
+      _evaluateAutoregulation(exerciseSets[lastIndex], lastIndex + 1);
     }
 
     HapticFeedback.selectionClick();
+  }
+
+  /// Evaluate autoregulation after RPE is recorded for a set.
+  ///
+  /// Calls [IntraWorkoutAutoregulator.evaluateSet] with the completed set data
+  /// and shows a non-intrusive SnackBar if an adjustment is suggested.
+  void _evaluateAutoregulation(SetLog setLog, int setNumber) {
+    final exercise = _exercises[_currentExerciseIndex];
+    final totalSets = _totalSetsPerExercise[_currentExerciseIndex] ?? 3;
+    final targetReps = setLog.targetReps > 0 ? setLog.targetReps : (exercise.reps ?? 10);
+    final isWarmup = setLog.setType == 'warmup';
+    final reportedRpe = (setLog.rpe ?? 7).toDouble();
+    final workingWeight = setLog.weight;
+
+    final suggestion = IntraWorkoutAutoregulator.evaluateSet(
+      setNumber: setNumber,
+      totalPlannedSets: totalSets,
+      completedReps: setLog.reps,
+      targetReps: targetReps,
+      reportedRpe: reportedRpe,
+      targetRpe: null, // Not tracked separately
+      workingWeight: workingWeight > 0 ? workingWeight : null,
+      isWarmup: isWarmup,
+    );
+
+    if (suggestion != null && mounted) {
+      _showAutoregSuggestion(suggestion);
+    }
+  }
+
+  /// Show a non-intrusive SnackBar with the autoregulation suggestion.
+  void _showAutoregSuggestion(AutoregSuggestion suggestion) {
+    // Dismiss any existing snackbar first
+    ScaffoldMessenger.of(context).hideCurrentSnackBar();
+
+    final Color snackColor;
+    final IconData snackIcon;
+    switch (suggestion.action) {
+      case AutoregAction.reduceWeight:
+        snackColor = suggestion.adjustedWeight != null &&
+                suggestion.adjustedWeight! > (double.tryParse(_weightController.text) ?? 0)
+            ? AppColors.success
+            : AppColors.warning;
+        snackIcon = suggestion.adjustedWeight != null &&
+                suggestion.adjustedWeight! > (double.tryParse(_weightController.text) ?? 0)
+            ? Icons.trending_up
+            : Icons.trending_down;
+      case AutoregAction.reduceSets:
+        snackColor = AppColors.warning;
+        snackIcon = Icons.remove_circle_outline;
+      case AutoregAction.swapExercise:
+        snackColor = AppColors.error;
+        snackIcon = Icons.swap_horiz;
+      case AutoregAction.proceed:
+        return; // No action needed
+    }
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            Icon(snackIcon, color: Colors.white, size: 20),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                suggestion.message,
+                style: const TextStyle(fontSize: 13, color: Colors.white),
+                maxLines: 3,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ],
+        ),
+        backgroundColor: snackColor,
+        behavior: SnackBarBehavior.floating,
+        duration: const Duration(seconds: 8),
+        margin: const EdgeInsets.only(bottom: 80, left: 16, right: 16),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        action: suggestion.action != AutoregAction.swapExercise
+            ? SnackBarAction(
+                label: 'Accept',
+                textColor: Colors.white,
+                onPressed: () => _acceptAutoregSuggestion(suggestion),
+              )
+            : null,
+      ),
+    );
+  }
+
+  /// Apply the accepted autoregulation suggestion.
+  void _acceptAutoregSuggestion(AutoregSuggestion suggestion) {
+    switch (suggestion.action) {
+      case AutoregAction.reduceWeight:
+        if (suggestion.adjustedWeight != null) {
+          final displayWeight = _useKg
+              ? suggestion.adjustedWeight!
+              : suggestion.adjustedWeight! * 2.20462;
+          _weightController.text = displayWeight.toStringAsFixed(1);
+        }
+        if (suggestion.adjustedSets != null) {
+          setState(() {
+            _totalSetsPerExercise[_currentExerciseIndex] = suggestion.adjustedSets!;
+          });
+        }
+      case AutoregAction.reduceSets:
+        if (suggestion.adjustedSets != null) {
+          setState(() {
+            _totalSetsPerExercise[_currentExerciseIndex] = suggestion.adjustedSets!;
+          });
+        }
+      case AutoregAction.swapExercise:
+        // User can manually swap via existing UI - no automatic action
+        break;
+      case AutoregAction.proceed:
+        break;
+    }
+
+    HapticFeedback.mediumImpact();
   }
 
   /// Handle inline rest note added

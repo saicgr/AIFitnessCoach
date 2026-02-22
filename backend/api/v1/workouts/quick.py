@@ -5,6 +5,7 @@ This module provides endpoints for quick, time-constrained workouts
 for busy users who want 5-30 minute workouts.
 
 - POST /quick - Generate a quick workout tailored to duration and focus
+- POST /quick/save - Save a locally-generated quick workout to the server
 """
 import asyncio
 import json
@@ -90,6 +91,15 @@ class QuickWorkoutResponse(BaseModel):
     focus: Optional[str] = None
     exercises_count: int
     source: QuickWorkoutSource = "button"
+
+
+class QuickWorkoutSaveRequest(BaseModel):
+    """Request to save a locally-generated quick workout."""
+    workout: dict = Field(..., description="Pre-built workout JSON")
+    source: str = Field(default="quick_button", max_length=50)
+    generation_method: str = Field(default="quick_rule_based", max_length=50)
+    generation_source: str = Field(default="quick_workout", max_length=50)
+    generation_metadata: Optional[dict] = Field(default=None)
 
 
 # ============================================
@@ -443,6 +453,112 @@ async def generate_quick_workout(request: Request, body: QuickWorkoutRequest, ba
     except Exception as e:
         logger.error(f"Failed to generate quick workout: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/quick/save")
+@limiter.limit("10/minute")
+async def save_quick_workout(request: Request, body: QuickWorkoutSaveRequest, background_tasks: BackgroundTasks):
+    """
+    Save a locally-generated quick workout to the server.
+
+    This endpoint persists workouts that were generated client-side
+    (e.g. via rule-based or on-device AI generation) so they are
+    synced to the backend and available across devices.
+    """
+    try:
+        # Extract user_id from JWT auth middleware, fallback to workout payload
+        user_id = getattr(request.state, "user_id", None)
+        if not user_id:
+            user_id = body.workout.get("user_id")
+        if not user_id:
+            raise HTTPException(status_code=400, detail="Missing user_id")
+
+        workout_data = body.workout
+
+        # Validate required fields
+        if not workout_data.get("id"):
+            raise HTTPException(status_code=400, detail="Workout data missing required field: id")
+        if not workout_data.get("exercises_json"):
+            raise HTTPException(status_code=400, detail="Workout data missing required field: exercises_json")
+
+        db = get_supabase_db()
+
+        # Build the DB row
+        exercises_json = workout_data.get("exercises_json", [])
+        if isinstance(exercises_json, list):
+            exercises_json = json.dumps(exercises_json)
+
+        workout_db_data = {
+            "id": workout_data["id"],
+            "user_id": user_id,
+            "name": workout_data.get("name", "Quick Workout"),
+            "type": workout_data.get("type", "quick"),
+            "difficulty": workout_data.get("difficulty", "medium"),
+            "scheduled_date": workout_data.get("scheduled_date") or datetime.now().isoformat(),
+            "exercises_json": exercises_json,
+            "duration_minutes": workout_data.get("duration_minutes", 15),
+            "estimated_duration_minutes": workout_data.get("estimated_duration_minutes"),
+            "generation_method": body.generation_method,
+            "generation_source": body.generation_source,
+            "generation_metadata": json.dumps(body.generation_metadata) if body.generation_metadata else None,
+        }
+
+        # Upsert to handle both new and re-saved workouts
+        result = db.client.table("workouts").upsert(workout_db_data, on_conflict="id").execute()
+
+        created_id = workout_db_data["id"]
+        if result.data and len(result.data) > 0:
+            created_id = result.data[0].get("id", created_id)
+
+        logger.info(f"Quick workout saved: id={created_id}, user={user_id}, method={body.generation_method}, source={body.source}")
+
+        # Background tasks (non-blocking)
+        # Index to RAG
+        if result.data:
+            try:
+                saved_workout = row_to_workout(result.data[0])
+                background_tasks.add_task(index_workout_to_rag, saved_workout)
+            except Exception as e:
+                logger.warning(f"Failed to prepare workout for RAG indexing: {e}")
+
+        # Track usage
+        async def _background_track():
+            try:
+                await track_quick_workout_usage(
+                    user_id=user_id,
+                    duration=workout_data.get("duration_minutes", 15),
+                    focus=workout_data.get("type"),
+                    source=body.source,
+                )
+            except Exception as e:
+                logger.warning(f"Failed to track quick workout usage: {e}")
+
+        # Log to user context
+        async def _background_log_context():
+            try:
+                await user_context_service.log_action(
+                    user_id=user_id,
+                    action="quick_workout_saved",
+                    details={
+                        "workout_id": created_id,
+                        "generation_method": body.generation_method,
+                        "generation_source": body.generation_source,
+                        "source": body.source,
+                    }
+                )
+            except Exception as e:
+                logger.warning(f"Failed to log user context for saved workout: {e}")
+
+        background_tasks.add_task(_background_track)
+        background_tasks.add_task(_background_log_context)
+
+        return {"status": "saved", "workout_id": created_id}
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to save quick workout: {e}")
+        raise HTTPException(status_code=500, detail="Failed to save workout")
 
 
 async def track_quick_workout_usage(
