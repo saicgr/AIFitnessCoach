@@ -94,6 +94,11 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
 
       final dateStr = DateFormat('yyyy-MM-dd').format(_selectedDate);
 
+      // Fire independent loads immediately (non-blocking)
+      // Micronutrients and recipes don't depend on Phase 1 results
+      _loadMicronutrients(userId, dateStr);
+      _loadRecipes(userId);
+
       // Phase 1: Load essential data for immediate display (blocking)
       await Future.wait([
         ref.read(nutritionProvider.notifier).loadTodaySummary(userId),
@@ -107,10 +112,6 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
         ref.read(nutritionProvider.notifier).loadRecentLogs(userId),
         ref.read(hydrationProvider.notifier).loadTodaySummary(userId),
       ], eagerError: false);
-
-      // Phase 3: Lazy load micronutrients and recipes (non-blocking)
-      _loadMicronutrients(userId, dateStr);
-      _loadRecipes(userId);
 
       // Log state after initialization for debugging
       final initState = ref.read(nutritionPreferencesProvider);

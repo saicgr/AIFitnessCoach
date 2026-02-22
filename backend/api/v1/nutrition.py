@@ -3775,25 +3775,34 @@ async def get_daily_micronutrients(
 
         logger.info(f"Getting daily micronutrients for user {user_id}, date={date}")
 
-        # Get RDA values
-        rda_result = db.client.table("nutrient_rdas")\
-            .select("*")\
-            .order("display_order")\
-            .execute()
+        # Run all 3 DB queries in parallel (sync calls offloaded to thread pool)
+        loop = asyncio.get_event_loop()
+
+        def _fetch_rdas():
+            return db.client.table("nutrient_rdas")\
+                .select("*")\
+                .order("display_order")\
+                .execute()
+
+        def _fetch_user():
+            return db.get_user(user_id)
+
+        def _fetch_logs():
+            return db.list_food_logs(
+                user_id=user_id,
+                from_date=date,
+                to_date=date,
+                limit=50
+            )
+
+        rda_result, user, logs = await asyncio.gather(
+            loop.run_in_executor(None, _fetch_rdas),
+            loop.run_in_executor(None, _fetch_user),
+            loop.run_in_executor(None, _fetch_logs),
+        )
 
         rdas = {r["nutrient_key"]: r for r in (rda_result.data or [])}
-
-        # Get user's pinned nutrients
-        user = db.get_user(user_id)
         pinned_keys = user.get("pinned_nutrients", ["vitamin_d", "calcium", "iron", "omega3"]) if user else []
-
-        # Get all food logs for the day and sum up micronutrients
-        logs = db.list_food_logs(
-            user_id=user_id,
-            from_date=date,
-            to_date=date,
-            limit=50
-        )
 
         # Aggregate micronutrients from all logs
         totals = {}
