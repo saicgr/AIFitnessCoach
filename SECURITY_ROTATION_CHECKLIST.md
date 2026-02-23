@@ -137,6 +137,98 @@ After updating all credentials in Render, verify each service is working:
 
 ---
 
+## Render Configuration Changes Required After Security Fixes
+
+These are **code-driven changes** that require matching Render env var updates:
+
+### Must Set / Change
+| Variable | Required Value | Why |
+|----------|---------------|-----|
+| `DEBUG` | `false` | Was defaulting to `true`; disables Swagger docs in prod, tightens CORS, reduces log verbosity |
+| `CORS_ORIGINS` | `["https://fitwiz-zqi3.onrender.com"]` | Remove localhost origins in production (only include production domains) |
+
+### Must Verify Already Set
+| Variable | Notes |
+|----------|-------|
+| `RENDER` | Auto-set by Render to `true`. Used by rate limiter to trust `X-Forwarded-For` from Render proxy only |
+| `SUPABASE_URL` | Ensure set (no default in code after cleanup) |
+| `GEMINI_MODEL` | Ensure set if using non-default model |
+| `AWS_DEFAULT_REGION` | Required for S3 photo uploads |
+| `S3_BUCKET_NAME` | Required for S3 photo uploads |
+| `CHROMA_CLOUD_HOST` | Required for RAG features |
+| `CHROMA_TENANT` | Required for RAG features |
+| `CHROMA_DATABASE` | Required for RAG features |
+
+### New Env Vars Required by Security Fixes
+| Variable | Purpose | What Happens If Missing |
+|----------|---------|------------------------|
+| `DATABASE_PASSWORD` | Used by migration scripts (no more hardcoded fallback) | Scripts exit with error instead of using hardcoded password |
+| `SUPPORT_PASSWORD` | Used by `setup_support_user.py` (no more hardcoded fallback) | Script exits with error |
+
+### Complete Required Env Vars for Production
+```
+# Core
+SUPABASE_URL=<your-supabase-url>
+SUPABASE_KEY=<rotated-service-role-key>
+DATABASE_URL=<full-connection-string-with-rotated-password>
+DATABASE_PASSWORD=<rotated-password>
+GEMINI_API_KEY=<rotated-key>
+
+# Storage
+AWS_ACCESS_KEY_ID=<rotated-key>
+AWS_SECRET_ACCESS_KEY=<rotated-secret>
+AWS_DEFAULT_REGION=<your-region>
+S3_BUCKET_NAME=<your-bucket>
+
+# RAG
+CHROMA_CLOUD_HOST=<host>
+CHROMA_CLOUD_API_KEY=<rotated-key>
+CHROMA_TENANT=<tenant>
+CHROMA_DATABASE=<database>
+
+# Payments
+REVCAT_API_KEY=<key>
+REVENUECAT_WEBHOOK_SECRET=<rotated-secret>
+
+# Auth
+GCP_OAUTH_CLIENT_ID=<client-id>
+GCP_OAUTH_CLIENT_SECRET=<rotated-secret>
+
+# Config (NEW/CHANGED)
+DEBUG=false
+CORS_ORIGINS=["https://fitwiz-zqi3.onrender.com"]
+
+# Optional
+REDIS_URL=<if-using-redis>
+SLACK_SUPPORT_WEBHOOK=<if-using-slack-alerts>
+USDA_API_KEY=<if-registered-for-production-key>
+SUPPORT_PASSWORD=<new-strong-password>
+OPENAI_API_KEY=<rotated-key>
+RESEND_API_KEY=<rotated-key>
+```
+
+### What Changes on Deploy (automatic from code changes)
+1. **Swagger/ReDoc disabled** — `/docs` and `/redoc` return 404 in production (`DEBUG=false`)
+2. **Rate limiting enforced** — 34 additional Gemini-calling endpoints now have 5-10/min limits
+3. **Auth required on all endpoints** — Requests without `Authorization: Bearer <token>` header get 401
+4. **Webhook verification strict** — RevenueCat webhooks without valid `Authorization` header get 401
+5. **Error messages sanitized** — 500 errors return generic "An internal error occurred" instead of stack traces
+6. **python-multipart updated** — CVE-2024-24762 patched
+
+### Post-Deploy Smoke Test Checklist
+- [ ] Backend starts without errors in Render logs
+- [ ] `GET /health` returns 200 (no auth needed)
+- [ ] `GET /docs` returns 404 (Swagger disabled)
+- [ ] Login via mobile app works (auth flow intact)
+- [ ] Generate a workout (Gemini + auth working)
+- [ ] Send a chat message (LangGraph + auth working)
+- [ ] Log a meal via text (nutrition + rate limit working)
+- [ ] Upload a progress photo (S3 + auth working)
+- [ ] Check subscription status (RevenueCat + auth working)
+- [ ] Rapid-fire 10+ requests to `/nutrition/log-image` — should get 429 after 10
+
+---
+
 ## Important Notes
 
 - Rotate credentials **in the order listed** to minimize downtime (database first, then dependent services)

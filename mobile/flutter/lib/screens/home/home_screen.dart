@@ -35,8 +35,7 @@ import 'widgets/tile_factory.dart';
 import 'widgets/my_program_summary_card.dart';
 import 'widgets/hero_workout_card.dart';
 import 'widgets/hero_workout_carousel.dart';
-import 'widgets/week_calendar_strip.dart';
-import '../../core/providers/user_provider.dart';
+import 'widgets/sectioned_hero_area.dart';
 import 'widgets/habits_section.dart';
 import 'widgets/body_metrics_section.dart';
 import 'widgets/achievements_section.dart';
@@ -2280,165 +2279,29 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     );
   }
 
-  /// Build hero section with weekly carousel
-  /// Shows carousel of workout cards for the current week
+  /// Build hero section with tab pills (Workouts | Nutrition | Fasting)
+  /// and weekly carousel for workouts
   Widget _buildHeroSectionFixed(
     BuildContext context,
     AsyncValue<TodayWorkoutResponse?> todayWorkoutState,
     bool isAIGenerating,
     bool isDark,
   ) {
-    debugPrint('🏠 [HeroSection] Building hero section with carousel...');
-
-    final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
-    final cyan = isDark ? AppColors.cyan : AppColorsLight.cyan;
-
-    // During initial app load, show loading card
-    Widget workoutContent;
-
-    if (_isInitializing && !todayWorkoutState.hasValue) {
-      debugPrint('🏠 [HeroSection] Showing: GeneratingHeroCard (initializing, no cached data)');
-      workoutContent = const GeneratingHeroCard(
-        message: 'Loading your workout...',
-      );
-    }
-    // During AI generation, show generating card ONLY if no displayable content
-    else if ((isAIGenerating || todayWorkoutState.valueOrNull?.isGenerating == true)
-        && todayWorkoutState.valueOrNull?.hasDisplayableContent != true) {
-      debugPrint('🏠 [HeroSection] Showing: GeneratingHeroCard (generating, no content yet)');
-      workoutContent = GeneratingHeroCard(
-        message: todayWorkoutState.valueOrNull?.generationMessage ?? 'Generating your workout...',
-      );
-    }
-    // Otherwise show the carousel
-    else {
-      debugPrint('🏠 [HeroSection] Showing: HeroWorkoutCarousel');
-      workoutContent = HeroWorkoutCarousel(
-        externalPageController: _carouselPageController,
-        onCarouselItemsChanged: (items) {
-          if (mounted && items.length != _carouselItems.length ||
-              (items.isNotEmpty && _carouselItems.isNotEmpty &&
-               items.first.date != _carouselItems.first.date)) {
-            setState(() => _carouselItems = items);
-          }
-        },
-        onPageChanged: _onCarouselPageChanged,
-      );
-    }
-
-    // Return the section with header and workout content
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // Top spacing before WORKOUT header
-        const SizedBox(height: 16),
-        // Section header with "WORKOUT" and "View Programs" button
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'WORKOUT',
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                  color: textSecondary,
-                  letterSpacing: 1.2,
-                ),
-              ),
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    'View Programs',
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.grey[400],
-                    ),
-                  ),
-                  const SizedBox(width: 6),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                    decoration: BoxDecoration(
-                      color: Colors.grey[300],
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                    child: Text(
-                      'Coming Soon',
-                      style: TextStyle(
-                        fontSize: 10,
-                        fontWeight: FontWeight.w500,
-                        color: Colors.grey[600],
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 8),
-        // Week calendar strip - show if content exists OR not generating
-        if ((!_isInitializing || todayWorkoutState.hasValue) && (
-            todayWorkoutState.valueOrNull?.hasDisplayableContent == true ||
-            (!isAIGenerating && todayWorkoutState.valueOrNull?.isGenerating != true)
-        ))
-          _buildWeekCalendarStrip(isDark),
-        const SizedBox(height: 8),
-        // Workout carousel or loading card
-        workoutContent,
-      ],
-    );
-  }
-
-  /// Build the week calendar strip widget
-  Widget _buildWeekCalendarStrip(bool isDark) {
-    final userAsync = ref.watch(currentUserProvider);
-    final workoutsAsync = ref.watch(workoutsProvider);
-
-    final user = userAsync.valueOrNull;
-    if (user == null) return const SizedBox.shrink();
-
-    final workoutDays = user.workoutDays;
-    if (workoutDays.isEmpty) return const SizedBox.shrink();
-
-    // Build workout status map for the current week
-    final now = DateTime.now();
-    final today = DateTime(now.year, now.month, now.day);
-    final todayIndex = today.weekday - 1;
-    final monday = today.subtract(Duration(days: todayIndex));
-
-    final allWorkouts = workoutsAsync.valueOrNull ?? [];
-    final Map<int, bool?> statusMap = {};
-
-    for (int i = 0; i < 7; i++) {
-      if (!workoutDays.contains(i)) {
-        statusMap[i] = null; // Not a workout day
-        continue;
-      }
-      final dayDate = monday.add(Duration(days: i));
-      final dateKey = '${dayDate.year}-${dayDate.month.toString().padLeft(2, '0')}-${dayDate.day.toString().padLeft(2, '0')}';
-
-      // Find workout for this date
-      final workout = allWorkouts.where((w) {
-        if (w.scheduledDate == null) return false;
-        return w.scheduledDate!.split('T')[0] == dateKey;
-      }).toList();
-
-      if (workout.isNotEmpty && workout.any((w) => w.isCompleted == true)) {
-        statusMap[i] = true; // Completed
-      } else {
-        statusMap[i] = false; // Scheduled but not completed
-      }
-    }
-
-    return WeekCalendarStrip(
-      workoutDays: workoutDays,
-      workoutStatusMap: statusMap,
-      selectedDayIndex: _selectedWeekDay,
-      onDaySelected: _onWeekDaySelected,
+    return SectionedHeroArea(
+      carouselPageController: _carouselPageController,
+      onCarouselItemsChanged: (items) {
+        if (mounted && items.length != _carouselItems.length ||
+            (items.isNotEmpty && _carouselItems.isNotEmpty &&
+             items.first.date != _carouselItems.first.date)) {
+          setState(() => _carouselItems = items);
+        }
+      },
+      onPageChanged: _onCarouselPageChanged,
+      todayWorkoutState: todayWorkoutState,
+      isAIGenerating: isAIGenerating,
+      isInitializing: _isInitializing,
+      selectedWeekDay: _selectedWeekDay,
+      onWeekDaySelected: _onWeekDaySelected,
     );
   }
 

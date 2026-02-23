@@ -1276,7 +1276,7 @@ async def search_whole_foods(
 @router.post("/log-image", response_model=LogFoodResponse)
 @limiter.limit("10/minute")
 async def log_food_from_image(
-    http_request: Request,
+    request: Request,
     background_tasks: BackgroundTasks,
     user_id: str = Form(...),
     meal_type: str = Form(...),
@@ -1357,7 +1357,7 @@ async def log_food_from_image(
         db = get_supabase_db()
 
         # Resolve timezone for logged_at timestamp
-        user_tz = resolve_timezone(http_request, db, user_id)
+        user_tz = resolve_timezone(request, db, user_id)
         user_tz_logged_at = get_user_now_iso(user_tz)
 
         created_log = db.create_food_log(
@@ -1449,7 +1449,7 @@ async def log_food_from_image(
 
 @router.post("/log-text", response_model=LogFoodResponse)
 @limiter.limit("10/minute")
-async def log_food_from_text(request: LogTextRequest, background_tasks: BackgroundTasks, http_request: Request = None, current_user: dict = Depends(get_current_user)):
+async def log_food_from_text(body: LogTextRequest, background_tasks: BackgroundTasks, request: Request = None, current_user: dict = Depends(get_current_user)):
     """
     Log food from a text description using Gemini with goal-based analysis.
 
@@ -1464,7 +1464,7 @@ async def log_food_from_text(request: LogTextRequest, background_tasks: Backgrou
     - "chicken salad with grilled chicken, lettuce, tomatoes, and ranch dressing"
     - "a bowl of oatmeal with banana and honey"
     """
-    logger.info(f"Logging food from text for user {request.user_id}: {request.description[:50]}...")
+    logger.info(f"Logging food from text for user {body.user_id}: {body.description[:50]}...")
 
     try:
         db = get_supabase_db()
@@ -1473,7 +1473,7 @@ async def log_food_from_text(request: LogTextRequest, background_tasks: Backgrou
         user_goals = None
         nutrition_targets = None
         try:
-            user = db.get_user(request.user_id)
+            user = db.get_user(body.user_id)
             if user:
                 # Parse goals from JSON string
                 goals_str = user.get('goals', '[]')
@@ -1503,7 +1503,7 @@ async def log_food_from_text(request: LogTextRequest, background_tasks: Backgrou
             try:
                 nutrition_rag = get_nutrition_rag_service()
                 rag_context = await nutrition_rag.get_context_for_goals(
-                    food_description=request.description,
+                    food_description=body.description,
                     user_goals=user_goals,
                     n_results=5,
                 )
@@ -1515,7 +1515,7 @@ async def log_food_from_text(request: LogTextRequest, background_tasks: Backgrou
         # Parse description with Gemini (with goal context + RAG)
         gemini_service = GeminiService()
         food_analysis = await gemini_service.parse_food_description(
-            description=request.description,
+            description=body.description,
             user_goals=user_goals,
             nutrition_targets=nutrition_targets,
             rag_context=rag_context,
@@ -1528,7 +1528,7 @@ async def log_food_from_text(request: LogTextRequest, background_tasks: Backgrou
             )
 
         # Apply calorie estimate bias (AI estimates only, not barcode)
-        bias = await get_user_calorie_bias(request.user_id)
+        bias = await get_user_calorie_bias(body.user_id)
         if bias != 0:
             food_analysis = apply_calorie_bias(food_analysis, bias)
 
@@ -1562,14 +1562,14 @@ async def log_food_from_text(request: LogTextRequest, background_tasks: Backgrou
 
         # Resolve timezone for logged_at timestamp
         user_tz_logged_at = None
-        if http_request:
-            user_tz = resolve_timezone(http_request, db, request.user_id)
+        if request:
+            user_tz = resolve_timezone(request, db, body.user_id)
             user_tz_logged_at = get_user_now_iso(user_tz)
 
         # Save to database using positional arguments
         created_log = db.create_food_log(
-            user_id=request.user_id,
-            meal_type=request.meal_type,
+            user_id=body.user_id,
+            meal_type=body.meal_type,
             food_items=food_items,
             total_calories=total_calories,
             protein_g=protein_g,
@@ -1599,13 +1599,13 @@ async def log_food_from_text(request: LogTextRequest, background_tasks: Backgrou
         # Background: Log activity analytics (non-critical, don't block response)
         background_tasks.add_task(
             log_user_activity,
-            user_id=request.user_id,
+            user_id=body.user_id,
             action="food_log_text",
             endpoint="/api/v1/nutrition/log-text",
             message=f"Logged {len(food_items)} food items from text ({total_calories} cal)",
             metadata={
                 "food_log_id": food_log_id,
-                "meal_type": request.meal_type,
+                "meal_type": body.meal_type,
                 "total_calories": total_calories,
                 "food_items_count": len(food_items),
                 "health_score": health_score,
@@ -1615,9 +1615,9 @@ async def log_food_from_text(request: LogTextRequest, background_tasks: Backgrou
 
         # Text descriptions are generally more accurate than images
         confidence_score = 0.85  # Base confidence for text
-        if len(request.description) < 20:
+        if len(body.description) < 20:
             confidence_score = 0.7  # Short descriptions have less context
-        elif "about" in request.description.lower() or "roughly" in request.description.lower():
+        elif "about" in body.description.lower() or "roughly" in body.description.lower():
             confidence_score = 0.65  # Approximate language reduces confidence
 
         confidence_level = "high" if confidence_score >= 0.75 else "medium" if confidence_score >= 0.5 else "low"
@@ -1650,13 +1650,13 @@ async def log_food_from_text(request: LogTextRequest, background_tasks: Backgrou
         # Background: Log error analytics (non-critical)
         background_tasks.add_task(
             log_user_error,
-            user_id=request.user_id,
+            user_id=body.user_id,
             action="food_log_text",
             error=e,
             endpoint="/api/v1/nutrition/log-text",
             metadata={
-                "meal_type": request.meal_type,
-                "description": request.description[:100] if request.description else None,
+                "meal_type": body.meal_type,
+                "description": body.description[:100] if body.description else None,
             },
             status_code=500,
         )
@@ -1670,7 +1670,7 @@ async def log_food_from_text(request: LogTextRequest, background_tasks: Backgrou
 
 @router.post("/log-direct", response_model=LogFoodResponse)
 @limiter.limit("10/minute")
-async def log_food_direct(request: LogDirectRequest, http_request: Request = None, current_user: dict = Depends(get_current_user)):
+async def log_food_direct(body: LogDirectRequest, request: Request = None, current_user: dict = Depends(get_current_user)):
     """
     Log pre-analyzed food directly without AI processing.
 
@@ -1681,20 +1681,20 @@ async def log_food_direct(request: LogDirectRequest, http_request: Request = Non
 
     The caller provides the nutrition data directly, which is logged as-is.
     """
-    logger.info(f"Logging food directly for user {request.user_id}, source: {request.source_type}")
+    logger.info(f"Logging food directly for user {body.user_id}, source: {body.source_type}")
 
     # Debug: Log incoming values
     logger.info(
         f"[LOG-DIRECT] RECEIVED VALUES | "
-        f"user={request.user_id} | "
-        f"calories={request.total_calories} | "
-        f"protein={request.total_protein} | "
-        f"carbs={request.total_carbs} | "
-        f"fat={request.total_fat} | "
-        f"food_items_count={len(request.food_items)}"
+        f"user={body.user_id} | "
+        f"calories={body.total_calories} | "
+        f"protein={body.total_protein} | "
+        f"carbs={body.total_carbs} | "
+        f"fat={body.total_fat} | "
+        f"food_items_count={len(body.food_items)}"
     )
-    if request.food_items:
-        for idx, item in enumerate(request.food_items[:3]):  # Log first 3 items
+    if body.food_items:
+        for idx, item in enumerate(body.food_items[:3]):  # Log first 3 items
             logger.info(f"[LOG-DIRECT] ITEM[{idx}] | name={item.get('name')} | calories={item.get('calories')}")
 
     try:
@@ -1711,27 +1711,27 @@ async def log_food_direct(request: LogDirectRequest, http_request: Request = Non
             'copper_mg', 'manganese_mg', 'selenium_ug', 'choline_mg', 'omega3_g', 'omega6_g',
         ]
         for field in micronutrient_fields:
-            value = getattr(request, field, None)
+            value = getattr(body, field, None)
             if value is not None:
                 micronutrients[field] = value
 
         # Resolve timezone for logged_at timestamp
         user_tz_logged_at = None
-        if http_request:
-            user_tz = resolve_timezone(http_request, db, request.user_id)
+        if request:
+            user_tz = resolve_timezone(request, db, body.user_id)
             user_tz_logged_at = get_user_now_iso(user_tz)
 
         # Create food log directly
         created_log = db.create_food_log(
-            user_id=request.user_id,
-            meal_type=request.meal_type,
-            food_items=request.food_items,
-            total_calories=request.total_calories,
-            protein_g=request.total_protein,
-            carbs_g=request.total_carbs,
-            fat_g=request.total_fat,
-            fiber_g=request.total_fiber,
-            ai_feedback=f"Logged via {request.source_type}" + (f": {request.notes}" if request.notes else ""),
+            user_id=body.user_id,
+            meal_type=body.meal_type,
+            food_items=body.food_items,
+            total_calories=body.total_calories,
+            protein_g=body.total_protein,
+            carbs_g=body.total_carbs,
+            fat_g=body.total_fat,
+            fiber_g=body.total_fiber,
+            ai_feedback=f"Logged via {body.source_type}" + (f": {body.notes}" if body.notes else ""),
             health_score=None,  # No AI scoring for direct logs
             logged_at=user_tz_logged_at,
             **micronutrients,
@@ -1741,23 +1741,23 @@ async def log_food_direct(request: LogDirectRequest, http_request: Request = Non
         logger.info(f"Successfully logged food directly as {food_log_id}")
 
         # Restaurant mode has lower confidence due to portion estimation
-        confidence_score = 0.6 if request.source_type == "restaurant" else 0.9
-        confidence_level = "medium" if request.source_type == "restaurant" else "high"
+        confidence_score = 0.6 if body.source_type == "restaurant" else 0.9
+        confidence_level = "medium" if body.source_type == "restaurant" else "high"
 
         return LogFoodResponse(
             success=True,
             food_log_id=food_log_id,
-            food_items=request.food_items,
-            total_calories=request.total_calories,
-            protein_g=float(request.total_protein),
-            carbs_g=float(request.total_carbs),
-            fat_g=float(request.total_fat),
-            fiber_g=float(request.total_fiber) if request.total_fiber else 0.0,
+            food_items=body.food_items,
+            total_calories=body.total_calories,
+            protein_g=float(body.total_protein),
+            carbs_g=float(body.total_carbs),
+            fat_g=float(body.total_fat),
+            fiber_g=float(body.total_fiber) if body.total_fiber else 0.0,
             overall_meal_score=None,
             ai_suggestion=None,
             confidence_score=confidence_score,
             confidence_level=confidence_level,
-            source_type=request.source_type,
+            source_type=body.source_type,
         )
     except Exception as e:
         logger.error(f"Error logging food directly: {e}")
@@ -1770,7 +1770,6 @@ async def log_food_direct(request: LogDirectRequest, http_request: Request = Non
 
 
 @router.post("/log-text-stream")
-@limiter.limit("10/minute")
 @limiter.limit("10/minute")
 async def log_food_from_text_streaming(request: Request, body: LogTextRequest, current_user: dict = Depends(get_current_user)):
     """
@@ -1990,7 +1989,6 @@ async def log_food_from_text_streaming(request: Request, body: LogTextRequest, c
 
 
 @router.post("/analyze-text-stream")
-@limiter.limit("10/minute")
 @limiter.limit("10/minute")
 async def analyze_food_from_text_streaming(request: Request, body: LogTextRequest, current_user: dict = Depends(get_current_user)):
     """
