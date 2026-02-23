@@ -10,7 +10,9 @@ ENDPOINTS:
 import json
 from datetime import date, datetime
 from typing import List, Optional
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
+from core.auth import get_current_user
+from core.exceptions import safe_internal_error
 from pydantic import BaseModel
 
 from core.supabase_db import get_supabase_db
@@ -38,7 +40,9 @@ class SingleReminderResponse(BaseModel):
 
 
 @router.get("/status")
-async def get_email_status():
+async def get_email_status(
+    current_user: dict = Depends(get_current_user),
+):
     """
     Check if the email service is properly configured.
 
@@ -53,7 +57,9 @@ async def get_email_status():
 
 
 @router.post("/send-daily", response_model=ReminderResponse)
-async def send_daily_reminders(target_date: Optional[str] = None):
+async def send_daily_reminders(target_date: Optional[str] = None,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Send workout reminder emails to all users who have workouts scheduled for today.
 
@@ -208,7 +214,9 @@ async def send_daily_reminders(target_date: Optional[str] = None):
 
 
 @router.post("/send-user/{user_id}", response_model=SingleReminderResponse)
-async def send_user_reminder(user_id: str, target_date: Optional[str] = None):
+async def send_user_reminder(user_id: str, target_date: Optional[str] = None,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Send a workout reminder to a specific user.
 
@@ -333,7 +341,9 @@ async def send_user_reminder(user_id: str, target_date: Optional[str] = None):
 
 
 @router.post("/test")
-async def send_test_reminder(to_email: str):
+async def send_test_reminder(to_email: str,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Send a test reminder email to verify the email service is working.
 

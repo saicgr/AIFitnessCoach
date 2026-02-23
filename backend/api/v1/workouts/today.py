@@ -17,7 +17,9 @@ import asyncio
 from concurrent.futures import ThreadPoolExecutor
 import json
 
-from fastapi import APIRouter, HTTPException, Query, BackgroundTasks, Request
+from fastapi import APIRouter, Depends, HTTPException, Query, BackgroundTasks, Request
+from core.auth import get_current_user
+from core.exceptions import safe_internal_error
 from pydantic import BaseModel
 
 from core.supabase_db import get_supabase_db
@@ -77,6 +79,7 @@ class TodayWorkoutSummary(BaseModel):
     is_today: bool
     is_completed: bool
     exercises: List[dict] = []  # Full exercise data for hero card preview
+    generation_method: Optional[str] = None  # e.g. 'quick_rule_based', 'gemini', etc.
 
 
 class TodayWorkoutResponse(BaseModel):
@@ -85,6 +88,8 @@ class TodayWorkoutResponse(BaseModel):
     today_workout: Optional[TodayWorkoutSummary] = None
     next_workout: Optional[TodayWorkoutSummary] = None
     days_until_next: Optional[int] = None
+    # Extra today workouts (quick workouts coexisting with scheduled workout)
+    extra_today_workouts: List[TodayWorkoutSummary] = []
     # Completed workout info (if user already completed today's workout)
     completed_today: bool = False
     completed_workout: Optional[TodayWorkoutSummary] = None
@@ -154,6 +159,7 @@ def _row_to_summary(row: dict, user_today_str: Optional[str] = None) -> TodayWor
         is_today=is_today,
         is_completed=row.get("is_completed", False),
         exercises=exercises if isinstance(exercises, list) else [],
+        generation_method=row.get("generation_method"),
     )
 
 
@@ -417,6 +423,7 @@ async def get_today_workout(
     request: Request,
     user_id: str = Query(..., description="User ID"),
     background_tasks: BackgroundTasks = BackgroundTasks(),
+    current_user: dict = Depends(get_current_user),
 ) -> TodayWorkoutResponse:
     """
     Get today's scheduled workout or the next upcoming workout.
@@ -470,11 +477,14 @@ async def get_today_workout(
 
         # Run 3 independent DB queries in parallel using thread pool
         # (db.list_workouts is synchronous, so we use run_in_executor)
+        # Today query uses allow_multiple_per_date=True and limit=5 to capture
+        # quick workouts that coexist with the scheduled workout.
         loop = asyncio.get_event_loop()
         today_rows, future_rows, completed_today_rows = await asyncio.gather(
             loop.run_in_executor(_db_executor, lambda: db.list_workouts(
                 user_id=user_id, from_date=today_str, to_date=today_str,
-                is_completed=False, limit=1, gym_profile_id=active_profile_id,
+                is_completed=False, limit=5, gym_profile_id=active_profile_id,
+                allow_multiple_per_date=True,
             )),
             loop.run_in_executor(_db_executor, lambda: db.list_workouts(
                 user_id=user_id, from_date=tomorrow_str, to_date=future_end,
@@ -490,6 +500,7 @@ async def get_today_workout(
             logger.debug(f"[TODAY DEBUG] No workout found for today ({today_str}), profile={active_profile_id}")
 
         today_workout: Optional[TodayWorkoutSummary] = None
+        extra_today_workouts: List[TodayWorkoutSummary] = []
         next_workout: Optional[TodayWorkoutSummary] = None
         has_workout_today = False
         is_generating = False
@@ -500,6 +511,13 @@ async def get_today_workout(
             today_workout = _row_to_summary(today_rows[0], user_today_str=today_str)
             has_workout_today = True
             logger.debug(f"[TODAY DEBUG] Found today's workout: {today_workout.name}")
+            # Additional today workouts (quick workouts coexisting with scheduled)
+            if len(today_rows) > 1:
+                extra_today_workouts = [
+                    _row_to_summary(row, user_today_str=today_str)
+                    for row in today_rows[1:]
+                ]
+                logger.debug(f"[TODAY DEBUG] Found {len(extra_today_workouts)} extra today workouts")
 
         if future_rows:
             next_workout = _row_to_summary(future_rows[0], user_today_str=today_str)
@@ -606,6 +624,7 @@ async def get_today_workout(
             today_workout=today_workout,
             next_workout=next_workout,
             days_until_next=days_until_next,
+            extra_today_workouts=extra_today_workouts,
             completed_today=has_completed_workout_today,
             completed_workout=completed_workout_summary,
             is_generating=is_generating,
@@ -617,13 +636,14 @@ async def get_today_workout(
 
     except Exception as e:
         logger.error(f"Failed to get today's workout: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "today")
 
 
 @router.post("/today/start")
 async def log_quick_start(
     user_id: str = Query(..., description="User ID"),
     workout_id: str = Query(..., description="Workout ID being started"),
+    current_user: dict = Depends(get_current_user),
 ) -> dict:
     """
     Log when user taps 'Start Today's Workout' for analytics.

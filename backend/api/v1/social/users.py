@@ -9,7 +9,9 @@ This module handles user search and suggestions:
 import logging
 from typing import List, Optional
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
+from core.auth import get_current_user
+from core.exceptions import safe_internal_error
 
 from models.friend_request import UserSearchResult, UserSuggestion
 from .utils import get_supabase_client
@@ -24,6 +26,7 @@ async def search_users(
     user_id: str = Query(..., description="Current user ID"),
     query: str = Query(..., min_length=1, description="Search query"),
     limit: int = Query(20, ge=1, le=50, description="Maximum results to return"),
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Search users by name or username.
@@ -143,6 +146,7 @@ async def search_users(
 async def get_friend_suggestions(
     user_id: str = Query(..., description="Current user ID"),
     limit: int = Query(10, ge=1, le=20, description="Maximum suggestions to return"),
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Get friend suggestions based on mutual connections and activity.
@@ -291,6 +295,7 @@ async def get_friend_suggestions(
 async def get_user_profile(
     target_user_id: str,
     user_id: str = Query(..., description="Current user ID"),
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Get a user's profile for social display.

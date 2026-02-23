@@ -12,7 +12,7 @@ Endpoints:
 - GET /stats/{user_id} - Get challenge statistics
 """
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
 from typing import Optional
 from datetime import datetime, timezone
 
@@ -24,6 +24,7 @@ from models.workout_challenges import (
     ChallengeNotification, NotificationsResponse,
     ChallengeStats, ChallengeStatus,
 )
+from core.auth import get_current_user
 from core.supabase_client import get_supabase
 from core.logger import get_logger
 from core.activity_logger import log_user_activity, log_user_error
@@ -45,9 +46,10 @@ router = APIRouter(prefix="/challenges")
 
 @router.post("/send", response_model=SendChallengeResponse)
 async def send_challenges(
-    user_id: str,
     request: SendChallengeRequest,
+    current_user: dict = Depends(get_current_user),
 ):
+    user_id = str(current_user["id"])
     """
     Send workout challenge to specific friends.
 
@@ -171,11 +173,12 @@ async def send_challenges(
 
 @router.get("/received", response_model=ChallengesResponse)
 async def get_received_challenges(
-    user_id: str,
     status: Optional[ChallengeStatus] = None,
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=100),
+    current_user: dict = Depends(get_current_user),
 ):
+    user_id = str(current_user["id"])
     """
     Get challenges received by user.
 
@@ -223,11 +226,12 @@ async def get_received_challenges(
 
 @router.get("/sent", response_model=ChallengesResponse)
 async def get_sent_challenges(
-    user_id: str,
     status: Optional[ChallengeStatus] = None,
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=100),
+    current_user: dict = Depends(get_current_user),
 ):
+    user_id = str(current_user["id"])
     """
     Get challenges sent by user.
 
@@ -279,9 +283,10 @@ async def get_sent_challenges(
 
 @router.post("/accept/{challenge_id}", response_model=WorkoutChallenge)
 async def accept_challenge(
-    user_id: str,
     challenge_id: str,
+    current_user: dict = Depends(get_current_user),
 ):
+    user_id = str(current_user["id"])
     """
     Accept a challenge.
 
@@ -340,9 +345,10 @@ async def accept_challenge(
 
 @router.post("/decline/{challenge_id}")
 async def decline_challenge(
-    user_id: str,
     challenge_id: str,
+    current_user: dict = Depends(get_current_user),
 ):
+    user_id = str(current_user["id"])
     """
     Decline a challenge.
 
@@ -381,11 +387,12 @@ async def decline_challenge(
 
 @router.post("/complete/{challenge_id}", response_model=WorkoutChallenge)
 async def complete_challenge(
-    user_id: str,
     challenge_id: str,
     request: CompleteChallengeRequest,
     auto_post_to_feed: bool = True,  # NEW: Auto-post to activity feed
+    current_user: dict = Depends(get_current_user),
 ):
+    user_id = str(current_user["id"])
     """
     Mark challenge as completed with results.
 
@@ -509,10 +516,11 @@ async def complete_challenge(
 
 @router.post("/abandon/{challenge_id}", response_model=WorkoutChallenge)
 async def abandon_challenge(
-    user_id: str,
     challenge_id: str,
     request: AbandonChallengeRequest,
+    current_user: dict = Depends(get_current_user),
 ):
+    user_id = str(current_user["id"])
     """
     Abandon/quit a challenge midway through workout.
 
@@ -607,9 +615,10 @@ async def abandon_challenge(
 
 @router.get("/notifications", response_model=NotificationsResponse)
 async def get_notifications(
-    user_id: str,
     unread_only: bool = False,
+    current_user: dict = Depends(get_current_user),
 ):
+    user_id = str(current_user["id"])
     """
     Get challenge notifications for user.
 
@@ -648,9 +657,10 @@ async def get_notifications(
 
 @router.put("/notifications/{notification_id}/read")
 async def mark_notification_read(
-    user_id: str,
     notification_id: str,
+    current_user: dict = Depends(get_current_user),
 ):
+    user_id = str(current_user["id"])
     """Mark notification as read."""
     supabase = get_supabase_client()
 
@@ -667,7 +677,9 @@ async def mark_notification_read(
 # ============================================================
 
 @router.get("/stats/{user_id}", response_model=ChallengeStats)
-async def get_challenge_stats(user_id: str):
+async def get_challenge_stats(user_id: str, current_user: dict = Depends(get_current_user)):
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     """
     Get challenge statistics for user.
 

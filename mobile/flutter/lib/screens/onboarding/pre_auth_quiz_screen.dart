@@ -2295,6 +2295,58 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
     super.dispose();
   }
 
+  /// Whether the current page collects non-essential data and can be skipped.
+  /// Essential pages (goals, fitnessLevel, daysPerWeek, equipment) cannot be skipped.
+  bool get _isCurrentPageSkippable {
+    switch (_currentQuestion) {
+      case 0:  // Goals - ESSENTIAL
+      case 1:  // Fitness Level - ESSENTIAL
+      case 2:  // Schedule (days/week + duration) - ESSENTIAL
+      case 4:  // Equipment - ESSENTIAL
+        return false;
+      case 3:  // Workout Days (conditional) - optional
+      case 5:  // Limitations - optional
+      case 6:  // Primary Goal - optional (not in isComplete)
+      case 8:  // Muscle Focus - optional (Phase 2)
+      case 9:  // Training Style - optional (Phase 2)
+      case 10: // Progression Pace - optional (Phase 2)
+      case 12: // Nutrition Details - optional (Phase 3)
+        return true;
+      default: // Gate screens (7, 11) have their own skip handling
+        return false;
+    }
+  }
+
+  /// Skip the current page without saving its data, advancing to the next screen.
+  void _skipCurrentPage() {
+    HapticFeedback.lightImpact();
+    AnalyticsService.logScreenView('onboarding_skip_$_currentQuestion');
+
+    // Special handling for Screen 6: skip primary goal and go straight to generate
+    if (_currentQuestion == 6) {
+      _generateAndShowPreview();
+      return;
+    }
+
+    // Special handling for Screen 2 -> Skip Screen 3 if feature flag disabled
+    if (_currentQuestion == 2 && !_featureFlagWorkoutDays) {
+      setState(() => _currentQuestion = 4);
+      _questionController.forward(from: 0);
+      return;
+    }
+
+    // Screen 12 is the last screen - skip means finish
+    if (_currentQuestion == 12) {
+      _finishOnboarding();
+      return;
+    }
+
+    setState(() {
+      _currentQuestion++;
+    });
+    _questionController.forward(from: 0);
+  }
+
   /// Calculate progress value with phase-aware behavior
   /// Phase 1 (0-5): Show 0-100% progress
   /// Phase 2 & 3 (6+): Stay at 100% to show Phase 1 completion
@@ -3012,45 +3064,68 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
 
   /// Build the action button for the current question step.
   Widget? _buildActionButton(bool isDark) {
-    // Case 6 gets special "Generate" button
+    final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+
+    // Case 6 gets special "Generate" button with optional skip
     if (_currentQuestion == 6) {
       return Padding(
         padding: const EdgeInsets.symmetric(horizontal: 24),
-        child: SizedBox(
-          width: double.infinity,
-          height: 56,
-          child: ElevatedButton(
-            onPressed: _canProceed ? _generateAndShowPreview : null,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: _canProceed
-                  ? AppColors.orange
-                  : (isDark ? AppColors.glassSurface : AppColorsLight.glassSurface),
-              foregroundColor: _canProceed
-                  ? Colors.white
-                  : (isDark ? AppColors.textMuted : AppColorsLight.textMuted),
-              elevation: _canProceed ? 4 : 0,
-              shadowColor: _canProceed ? AppColors.orange.withValues(alpha: 0.4) : Colors.transparent,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
-              ),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Text(
-                  'Generate My First Workout',
-                  style: TextStyle(
-                    fontSize: 17,
-                    fontWeight: FontWeight.w600,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            SizedBox(
+              width: double.infinity,
+              height: 56,
+              child: ElevatedButton(
+                onPressed: _canProceed ? _generateAndShowPreview : null,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: _canProceed
+                      ? AppColors.orange
+                      : (isDark ? AppColors.glassSurface : AppColorsLight.glassSurface),
+                  foregroundColor: _canProceed
+                      ? Colors.white
+                      : (isDark ? AppColors.textMuted : AppColorsLight.textMuted),
+                  elevation: _canProceed ? 4 : 0,
+                  shadowColor: _canProceed ? AppColors.orange.withValues(alpha: 0.4) : Colors.transparent,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
                   ),
                 ),
-                if (_canProceed) ...[
-                  const SizedBox(width: 8),
-                  const Icon(Icons.auto_awesome_rounded, size: 20),
-                ],
-              ],
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Text(
+                      'Generate My First Workout',
+                      style: TextStyle(
+                        fontSize: 17,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    if (_canProceed) ...[
+                      const SizedBox(width: 8),
+                      const Icon(Icons.auto_awesome_rounded, size: 20),
+                    ],
+                  ],
+                ),
+              ),
             ),
-          ),
+            // Skip option below the generate button
+            if (!_canProceed)
+              GestureDetector(
+                onTap: _skipCurrentPage,
+                child: Padding(
+                  padding: const EdgeInsets.only(top: 12),
+                  child: Text(
+                    'Skip, let AI decide',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                      color: textSecondary,
+                    ),
+                  ),
+                ),
+              ),
+          ],
         ),
       ).animate().fadeIn(delay: 400.ms).slideY(begin: 0.1);
     }
@@ -3058,11 +3133,13 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
     if (_currentQuestion == 7 || _currentQuestion == 11) {
       return null;
     }
-    // All other cases: standard continue button
+    // All other cases: standard continue button with optional skip
     return QuizContinueButton(
       canProceed: _canProceed,
       isLastQuestion: _currentQuestion == _totalQuestions - 1,
       onPressed: _nextQuestion,
+      onSkip: _isCurrentPageSkippable ? _skipCurrentPage : null,
+      skipText: _currentQuestion == 12 ? 'Skip & Finish' : 'Skip',
     );
   }
 

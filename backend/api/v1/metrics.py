@@ -6,7 +6,9 @@ Provides endpoints for calculating and storing health metrics.
 import io
 
 import pandas as pd
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
+from core.auth import get_current_user
+from core.exceptions import safe_internal_error
 from fastapi.responses import StreamingResponse, JSONResponse
 from pydantic import BaseModel, Field
 from typing import Optional, List
@@ -104,7 +106,9 @@ def row_to_metrics_history_item(row: dict) -> MetricsHistoryItem:
 
 
 @router.post("/calculate", response_model=MetricsResponse)
-async def calculate_metrics(input: MetricsInput):
+async def calculate_metrics(input: MetricsInput,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Calculate health metrics from user measurements.
 
@@ -161,7 +165,9 @@ async def calculate_metrics(input: MetricsInput):
 
 
 @router.post("/record", response_model=MetricsResponse)
-async def record_metrics(input: MetricsInput):
+async def record_metrics(input: MetricsInput,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Calculate and record metrics to the user's history.
 
@@ -246,7 +252,9 @@ async def record_metrics(input: MetricsInput):
 
 
 @router.get("/history/{user_id}", response_model=List[MetricsHistoryItem])
-async def get_metrics_history(user_id: str, limit: int = 30):
+async def get_metrics_history(user_id: str, limit: int = 30,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Get user's metrics history for progress tracking.
 
@@ -261,7 +269,9 @@ async def get_metrics_history(user_id: str, limit: int = 30):
 
 
 @router.get("/latest/{user_id}")
-async def get_latest_metrics(user_id: str):
+async def get_latest_metrics(user_id: str,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Get the most recent metrics for a user.
 
@@ -296,7 +306,9 @@ async def get_latest_metrics(user_id: str):
 
 
 @router.delete("/history/{user_id}/{metric_id}")
-async def delete_metric_entry(user_id: str, metric_id: int):
+async def delete_metric_entry(user_id: str, metric_id: int,
+    current_user: dict = Depends(get_current_user),
+):
     """Delete a specific metrics entry."""
     logger.info(f"Deleting metric {metric_id} for user {user_id}")
 
@@ -315,7 +327,9 @@ from services.injury_service import get_injury_service, Injury
 
 
 @router.get("/injuries/active/{user_id}")
-async def get_active_injuries(user_id: str):
+async def get_active_injuries(user_id: str,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Get all active injuries for a user with recovery status.
 
@@ -437,7 +451,9 @@ def _convert_to_metric(value: float, unit: str, metric_type: str) -> float:
 
 
 @router.post("/body/record", response_model=SimpleMetricResponse, tags=["body-measurements"])
-async def record_simple_metric(input: SimpleMetricInput):
+async def record_simple_metric(input: SimpleMetricInput,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Record a simple body measurement (weight, body fat, circumferences, etc.)
 
@@ -496,14 +512,15 @@ async def record_simple_metric(input: SimpleMetricInput):
         )
     except Exception as e:
         logger.error(f"Failed to record measurement: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "metrics")
 
 
 @router.get("/body/history/{user_id}", response_model=List[SimpleMetricResponse], tags=["body-measurements"])
 async def get_body_measurement_history(
     user_id: str,
     metric_type: Optional[str] = None,
-    limit: int = 50
+    limit: int = 50,
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Get measurement history for a user.
@@ -579,11 +596,13 @@ async def get_body_measurement_history(
 
     except Exception as e:
         logger.error(f"Failed to get measurement history: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "metrics")
 
 
 @router.delete("/body/history/{user_id}/{measurement_id}", tags=["body-measurements"])
-async def delete_body_measurement(user_id: str, measurement_id: str):
+async def delete_body_measurement(user_id: str, measurement_id: str,
+    current_user: dict = Depends(get_current_user),
+):
     """Delete a specific body measurement entry."""
     logger.info(f"Deleting measurement {measurement_id} for user {user_id}")
 
@@ -604,11 +623,13 @@ async def delete_body_measurement(user_id: str, measurement_id: str):
         raise
     except Exception as e:
         logger.error(f"Failed to delete measurement: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "metrics")
 
 
 @router.get("/body/grouped/{user_id}", tags=["body-measurements"])
-async def get_grouped_body_measurements(user_id: str, limit: int = 300):
+async def get_grouped_body_measurements(user_id: str, limit: int = 300,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Fetch ALL measurement types in a single query, grouped by type.
     Replaces 15 per-type API calls with one.
@@ -662,7 +683,7 @@ async def get_grouped_body_measurements(user_id: str, limit: int = 300):
         return grouped
     except Exception as e:
         logger.error(f"Failed to get grouped measurements: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "metrics")
 
 
 # ============ BODY MEASUREMENTS EXPORT ============
@@ -675,6 +696,7 @@ async def export_body_measurements(
     start_date: Optional[str] = None,
     end_date: Optional[str] = None,
     types: Optional[str] = None,
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Export body measurements in the specified format.
@@ -794,4 +816,4 @@ async def export_body_measurements(
         raise
     except Exception as e:
         logger.error(f"Failed to export body measurements: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "metrics")

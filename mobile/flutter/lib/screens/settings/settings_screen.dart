@@ -1,41 +1,31 @@
+import 'dart:io' show Platform;
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:url_launcher/url_launcher.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import '../../core/constants/api_constants.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/theme/theme_colors.dart';
+import '../../core/theme/theme_provider.dart';
+import '../../core/providers/training_preferences_provider.dart';
+import '../../data/providers/billing_reminder_provider.dart';
+import '../../data/providers/gym_profile_provider.dart';
+import '../../data/repositories/auth_repository.dart';
+import '../../data/repositories/onboarding_repository.dart';
+import '../../data/services/api_client.dart';
+import '../../data/providers/beast_mode_provider.dart';
+import '../../data/services/haptic_service.dart';
+import '../../widgets/app_snackbar.dart';
 import '../../widgets/glass_back_button.dart';
-import '../../widgets/main_shell.dart';
+import 'beast_mode_unlock_dialog.dart';
 import 'sections/sections.dart';
 import 'widgets/widgets.dart';
 
-/// Samsung-style grouped settings model
-class _SettingsGroup {
-  final String id;
-  final IconData icon;
-  final String title;
-  final String subtitle;
-  final Color color;
-  final List<String> sectionKeys;
-  final VoidCallback? onTap;
-
-  const _SettingsGroup({
-    required this.id,
-    required this.icon,
-    required this.title,
-    required this.subtitle,
-    required this.color,
-    required this.sectionKeys,
-    this.onTap,
-  });
-}
-
-/// The main settings screen with Samsung-style grouped layout.
+/// The main settings screen with iOS Settings-style sub-page navigation.
 ///
-/// Shows compact grouped cards that expand to show detailed settings.
+/// Shows a flat list of grouped rows that push to dedicated sub-pages.
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
 
@@ -47,215 +37,163 @@ class SettingsScreen extends ConsumerStatefulWidget {
 /// Each section has keywords, synonyms, and related phrases that users might search for
 const Map<String, List<String>> _settingsSearchIndex = {
   'preferences': [
-    // Direct keywords
     'preferences', 'theme', 'appearance', 'dark mode', 'light mode',
     'color', 'colors', 'look', 'style', 'display',
-    // Natural language
     'change theme', 'switch theme', 'dark', 'light', 'night mode',
     'how do i change', 'make it dark', 'make it light',
     'background color', 'app color', 'visual', 'looks',
   ],
   'custom_content': [
-    // Direct keywords
     'custom', 'content', 'equipment', 'exercises', 'workouts',
     'my equipment', 'my exercises', 'my workouts', 'gym equipment',
-    // Natural language
     'add equipment', 'add exercise', 'create workout', 'custom workout',
     'what equipment', 'gym gear', 'fitness equipment', 'machines',
     'dumbbells', 'barbells', 'weights', 'bands', 'resistance',
     'home gym', 'available equipment',
   ],
   'haptics': [
-    // Direct keywords
     'haptics', 'vibration', 'feedback', 'haptic', 'vibrate',
     'touch feedback', 'tactile',
-    // Natural language
     'turn off vibration', 'disable vibration', 'phone vibrate',
     'feel', 'buzz', 'buzzing', 'shake',
   ],
   'app_mode': [
-    // Direct keywords
     'app mode', 'mode', 'standard', 'senior', 'kids', 'elderly',
     'simple mode', 'easy mode', 'child',
-    // Natural language
     'change mode', 'make it simpler', 'bigger buttons', 'easier to use',
     'for my parents', 'for children', 'for kids', 'simplified',
     'large text mode', 'accessibility mode',
   ],
   'accessibility': [
-    // Direct keywords
     'accessibility', 'font', 'size', 'text', 'readable',
     'font size', 'text size', 'large text', 'small text',
-    // Natural language
     'make text bigger', 'make text smaller', 'can\'t read', 'too small',
     'increase font', 'decrease font', 'vision', 'see better',
     'readable', 'legibility', 'screen reader',
   ],
   'health_sync': [
-    // Direct keywords
     'health', 'sync', 'connect', 'apple health', 'health connect',
     'google fit', 'fitness tracker', 'wearable',
-    // Natural language
     'connect health app', 'sync with apple', 'sync with google',
     'track steps', 'heart rate', 'calories burned', 'activity data',
     'fitbit', 'garmin', 'samsung health',
     'import health data', 'export to health',
   ],
   'wear_os': [
-    // Direct keywords
     'wear os', 'wearos', 'watch', 'smartwatch', 'wearable',
     'watch app', 'wear', 'galaxy watch', 'pixel watch',
-    // Natural language
     'install watch', 'install on watch', 'connect watch', 'sync watch',
     'watch connection', 'watch status', 'track on watch', 'wrist',
     'workout on watch', 'log from watch',
   ],
   'notifications': [
-    // Direct keywords
     'notifications', 'reminders', 'alerts', 'notify', 'push',
     'notification', 'reminder', 'alert',
-    // Natural language
     'turn off notifications', 'stop notifications', 'disable alerts',
     'workout reminder', 'remind me', 'daily reminder',
     'don\'t disturb', 'mute', 'silence', 'annoying',
     'push notifications', 'app notifications',
   ],
   'social_privacy': [
-    // Direct keywords
     'social', 'privacy', 'sharing', 'friends', 'profile visibility',
     'public', 'private', 'share', 'followers',
-    // Natural language
     'who can see', 'hide profile', 'make private', 'share workouts',
     'connect with friends', 'social media', 'post workouts',
     'visible to', 'privacy settings', 'block', 'data privacy',
   ],
   'support': [
-    // Direct keywords (now LEGAL section)
     'legal', 'privacy', 'terms', 'policy', 'service',
     'privacy policy', 'terms of service', 'tos',
-    // Natural language
     'legal documents', 'read terms', 'read privacy',
     'data policy', 'user agreement', 'legal info',
   ],
   'app_info': [
-    // Direct keywords
     'app info', 'info', 'version', 'about', 'app version',
     'update', 'changelog', 'what\'s new',
-    // Natural language
     'check version', 'current version', 'app details',
     'terms', 'privacy policy', 'licenses', 'credits',
     'about app', 'about fitwiz',
   ],
   'data_management': [
-    // Direct keywords
     'data', 'management', 'export', 'import', 'backup',
     'download', 'restore', 'transfer',
-    // Natural language
     'download my data', 'export data', 'backup data', 'restore backup',
     'transfer data', 'move data', 'save data', 'my information',
     'data portability', 'get my data',
   ],
   'danger_zone': [
-    // Direct keywords
     'danger', 'zone', 'delete', 'reset', 'account',
     'remove', 'erase', 'clear',
-    // Natural language
     'delete account', 'delete my account', 'remove account',
     'reset app', 'start over', 'clear all data', 'erase everything',
     'close account', 'deactivate', 'permanently delete',
   ],
   'logout': [
-    // Direct keywords
     'logout', 'log out', 'sign out', 'signout',
-    // Natural language
     'exit', 'leave', 'switch account', 'change account',
     'sign off', 'log off',
   ],
-  // AI Privacy - data usage, AI processing, medical disclaimer
   'ai_privacy': [
-    // Direct keywords
     'ai privacy', 'privacy', 'data usage', 'ai data', 'data processing',
     'medical disclaimer', 'disclaimer', 'anonymized', 'anonymize',
     'personal data', 'data protection',
-    // Natural language
     'how ai uses data', 'what data', 'my data', 'data safety',
     'ai sees', 'data collection', 'privacy settings', 'medical',
     'health disclaimer', 'not medical advice',
     'privacy policy', 'terms of service',
   ],
-  // AI Coach specific - this is what the user asked about!
   'ai_coach': [
-    // Direct keywords
     'ai', 'coach', 'voice', 'ai voice', 'ai coach', 'assistant',
     'personality', 'persona', 'trainer', 'coaching style',
-    // Natural language
     'change ai voice', 'modify ai', 'ai settings', 'coach voice',
     'change coach', 'different coach', 'coach personality',
     'ai personality', 'trainer voice', 'virtual coach',
     'chatbot', 'bot voice', 'assistant voice',
   ],
-  // Training preferences - progression pace and workout type
   'training': [
-    // Direct keywords
     'training', 'progression', 'pace', 'workout type', 'cardio',
     'strength', 'mixed', 'weights', 'weight increase', 'reps',
-    // Natural language
     'how fast increase weight', 'slow progression', 'fast progression',
     'dont increase weight', 'keep same weight', 'weight too fast',
     'add cardio', 'cardio workouts', 'strength training',
     'mixed workouts', 'progression speed', 'weight jumps',
   ],
-  // Superset settings
   'superset': [
-    // Direct keywords
     'superset', 'supersets', 'pair', 'pairs', 'pairing',
     'antagonist', 'compound set', 'back to back', 'circuit',
-    // Natural language
     'exercise pairs', 'pair exercises', 'superset exercises',
     'combine exercises', 'exercises together', 'no rest between',
     'chest and back', 'biceps triceps', 'save time', 'faster workouts',
     'add superset', 'create superset', 'favorite pairs',
   ],
-  // Voice announcements - TTS during workouts
   'voice_announcements': [
-    // Direct keywords
     'voice', 'announcements', 'tts', 'text to speech', 'speak',
     'audio', 'sound', 'speech', 'announce', 'say',
-    // Natural language
     'voice coach', 'hear exercise', 'speak exercise names',
     'audio announcements', 'workout voice', 'exercise voice',
     'announce next exercise', 'voice during workout',
     'enable voice', 'turn on voice', 'audio guide',
   ],
-  // Audio settings - background music, ducking, volume
   'audio_settings': [
-    // Direct keywords
     'audio', 'music', 'background', 'spotify', 'ducking', 'volume',
     'sound', 'tts', 'mute', 'silent', 'quiet',
-    // Natural language
     'background music', 'keep music playing', 'spotify playing',
     'audio ducking', 'lower music', 'music volume', 'voice volume',
     'mute during video', 'music settings', 'sound settings',
     'interrupt music', 'pause music', 'stop music',
   ],
-  // Warmup and stretch duration settings
   'warmup_settings': [
-    // Direct keywords
     'warmup', 'warm up', 'warm-up', 'stretch', 'stretching', 'cooldown',
     'cool down', 'cool-down', 'duration', 'minutes', 'time',
-    // Natural language
     'warmup time', 'stretch time', 'warmup duration', 'stretch duration',
     'how long warmup', 'how long stretch', 'warmup length', 'cooldown length',
     'before workout', 'after workout', 'pre workout', 'post workout',
     'longer warmup', 'shorter warmup', 'skip warmup', 'quick warmup',
   ],
-  // Subscription management - billing, plans, cancel, pause
   'subscription': [
-    // Direct keywords
     'subscription', 'billing', 'payment', 'plan', 'premium', 'upgrade',
     'downgrade', 'cancel', 'pause', 'resume', 'refund', 'price', 'pricing',
     'lifetime', 'monthly', 'yearly', 'annual', 'trial', 'free trial',
-    // Natural language
     'cancel subscription', 'pause subscription', 'resume subscription',
     'manage subscription', 'change plan', 'upgrade plan', 'downgrade plan',
     'billing history', 'payment history', 'subscription status',
@@ -263,39 +201,29 @@ const Map<String, List<String>> _settingsSearchIndex = {
     'subscription price', 'how much', 'cancel auto renew', 'stop billing',
     'request refund', 'get refund', 'money back',
   ],
-  // Email preferences - unsubscribe from emails
   'email_preferences': [
-    // Direct keywords
     'email', 'emails', 'unsubscribe', 'subscribe', 'subscription',
     'newsletter', 'marketing', 'promotional', 'inbox', 'mail',
-    // Natural language
     'stop emails', 'unsubscribe from emails', 'email preferences',
     'email settings', 'marketing emails', 'promotional emails',
     'too many emails', 'spam', 'mailing list', 'email notifications',
     'weekly email', 'workout email', 'coach email', 'product email',
     'cant unsubscribe', 'find unsubscribe', 'where unsubscribe',
   ],
-  // Shop - merchandise and products
   'shop': [
-    // Direct keywords
     'shop', 'store', 'merch', 'merchandise', 'apparel', 'gear', 'products',
     'clothing', 'buy', 'purchase', 'order',
-    // Natural language
     'buy merchandise', 'get gear', 'fitwiz store', 'fitwiz shop',
     'buy clothes', 'buy apparel', 'fitness gear', 'workout gear',
     't-shirt', 'hoodie', 'tank top', 'shorts', 'accessories',
     'bottle', 'shaker', 'bag', 'bands', 'supplements', 'ebook', 'program',
   ],
-  // Nutrition & Fasting - intermittent fasting, eating window, sleep schedule
   'nutrition_fasting': [
-    // Direct keywords
     'nutrition', 'fasting', 'intermittent fasting', 'if', 'eating window',
     'fasting protocol', 'eating schedule', 'meal timing', 'time restricted',
     '16:8', '18:6', '12:12', '20:4', 'omad', 'one meal a day',
-    // Sleep related
     'sleep', 'sleep schedule', 'wake time', 'wake up', 'bedtime', 'sleep time',
     'circadian', 'rhythm',
-    // Natural language
     'when to eat', 'eating hours', 'fasting hours', 'skip breakfast',
     'intermittent', 'time restricted eating', 'eating pattern',
     'fasting window', 'feeding window', 'fast schedule',
@@ -317,159 +245,54 @@ const Map<String, List<String>> _settingsSearchIndex = {
     'download videos', 'offline videos', 'sync status',
     'gemma', 'on device ai', 'rule-based', 'cloud ai',
   ],
+  'beast_mode': [
+    'beast', 'beast mode', 'power user', 'debug', 'developer',
+    'advanced', 'diagnostics', 'algorithm', 'hidden', 'secret', 'easter egg',
+  ],
 };
+
+/// A single row in the settings screen
+class _SettingsRow {
+  final IconData icon;
+  final Color? iconColor;
+  final String title;
+  final String? value;
+  final String route;
+  final List<String> sectionKeys;
+  final bool isThemeRow;
+
+  const _SettingsRow({
+    required this.icon,
+    this.iconColor,
+    required this.title,
+    this.value,
+    required this.route,
+    required this.sectionKeys,
+    this.isThemeRow = false,
+  });
+}
+
+/// A labeled group of rows
+class _SettingsSection {
+  final String label;
+  final List<_SettingsRow> rows;
+
+  const _SettingsSection({required this.label, required this.rows});
+
+  List<String> get allSectionKeys =>
+      rows.expand((r) => r.sectionKeys).toList();
+}
 
 class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   final TextEditingController _searchController = TextEditingController();
   final FocusNode _searchFocusNode = FocusNode();
   String _searchQuery = '';
-
-  // Track which sections match the current search
   Set<String> _matchingSections = {};
-
-  // Track which groups are expanded (Samsung-style collapse/expand)
-  final Set<String> _expandedGroups = {};
-
-  // Track if search bar is expanded
   bool _isSearchExpanded = false;
 
-  // Samsung-style settings groups - colors are set dynamically in build
-  List<_SettingsGroup> _getSettingsGroups(bool isDark) {
-    final iconColor = isDark ? AppColors.textSecondary : AppColorsLight.textPrimary;
-    final mutedColor = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-
-    return [
-      _SettingsGroup(
-        id: 'ai_coach',
-        icon: Icons.auto_awesome,
-        title: 'AI Coach',
-        subtitle: 'Voice, personality, coaching style',
-        color: iconColor,
-        sectionKeys: ['ai_coach'],
-      ),
-      _SettingsGroup(
-        id: 'ai_privacy',
-        icon: Icons.shield_outlined,
-        title: 'Privacy & AI Data',
-        subtitle: 'Data usage, AI processing, medical disclaimer',
-        color: iconColor,
-        sectionKeys: ['ai_privacy'],
-      ),
-      _SettingsGroup(
-        id: 'appearance',
-        icon: Icons.palette_outlined,
-        title: 'Appearance',
-        subtitle: 'Theme, haptics, app mode, accessibility',
-        color: iconColor,
-        sectionKeys: ['preferences', 'haptics', 'app_mode', 'accessibility'],
-      ),
-      _SettingsGroup(
-        id: 'audio',
-        icon: Icons.volume_up_outlined,
-        title: 'Sound & Voice',
-        subtitle: 'Announcements, music, audio settings',
-        color: iconColor,
-        sectionKeys: ['voice_announcements', 'audio_settings'],
-      ),
-      _SettingsGroup(
-        id: 'workout_settings',
-        icon: Icons.speed,
-        title: 'Workout Settings',
-        subtitle: 'Progression, intensity, splits, schedule',
-        color: iconColor,
-        sectionKeys: ['training'],
-      ),
-      _SettingsGroup(
-        id: 'research',
-        icon: Icons.science_outlined,
-        title: 'Research',
-        subtitle: 'Peer-reviewed papers behind your workouts',
-        color: iconColor,
-        sectionKeys: ['research'],
-        onTap: () => context.push('/settings/research'),
-      ),
-      _SettingsGroup(
-        id: 'offline_mode',
-        icon: Icons.cloud_off_outlined,
-        title: 'Offline Mode',
-        subtitle: 'Workout generation, downloads, sync',
-        color: iconColor,
-        sectionKeys: ['offline_mode'],
-      ),
-      _SettingsGroup(
-        id: 'nutrition_fasting',
-        icon: Icons.restaurant_outlined,
-        title: 'Nutrition & Fasting',
-        subtitle: 'Fasting protocol, eating window, sleep',
-        color: iconColor,
-        sectionKeys: ['nutrition_fasting'],
-      ),
-      _SettingsGroup(
-        id: 'exercise_preferences',
-        icon: Icons.favorite_outline,
-        title: 'Exercise Preferences',
-        subtitle: 'Favorites, avoided, queue',
-        color: iconColor,
-        sectionKeys: ['training'],
-      ),
-      _SettingsGroup(
-        id: 'equipment',
-        icon: Icons.fitness_center,
-        title: 'Equipment & Environment',
-        subtitle: 'Equipment, warmup, supersets',
-        color: iconColor,
-        sectionKeys: ['custom_content', 'warmup_settings', 'superset'],
-      ),
-      _SettingsGroup(
-        id: 'notifications',
-        icon: Icons.notifications_outlined,
-        title: 'Notifications',
-        subtitle: 'Workout reminders, push notifications',
-        color: iconColor,
-        sectionKeys: ['notifications'],
-      ),
-      _SettingsGroup(
-        id: 'connections',
-        icon: Icons.sync_alt,
-        title: 'Connections',
-        subtitle: 'Health sync, watch, email',
-        color: iconColor,
-        sectionKeys: ['health_sync', 'wear_os', 'email_preferences'],
-      ),
-      _SettingsGroup(
-        id: 'shop',
-        icon: Icons.storefront,
-        title: 'Shop',
-        subtitle: 'Apparel, gear & digital products',
-        color: iconColor,
-        sectionKeys: ['shop'],
-      ),
-      _SettingsGroup(
-        id: 'about',
-        icon: Icons.info_outline,
-        title: 'About & Support',
-        subtitle: 'Legal, version info',
-        color: mutedColor,
-        sectionKeys: ['support', 'app_info'],
-      ),
-      _SettingsGroup(
-        id: 'subscription',
-        icon: Icons.workspace_premium,
-        title: 'Subscription',
-        subtitle: 'Manage your plan and billing',
-        color: isDark ? const Color(0xFFFFD700) : const Color(0xFFB8860B),
-        sectionKeys: ['subscription'],
-      ),
-      _SettingsGroup(
-        id: 'account',
-        icon: Icons.manage_accounts_outlined,
-        title: 'Account',
-        subtitle: 'Privacy, data export, delete account',
-        color: isDark ? AppColors.error : AppColorsLight.error,
-        sectionKeys: ['social_privacy', 'data_management', 'danger_zone', 'logout'],
-      ),
-    ];
-  }
+  // Beast Mode easter egg
+  int _versionTapCount = 0;
+  DateTime? _lastVersionTap;
 
   @override
   void dispose() {
@@ -485,7 +308,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     });
   }
 
-  /// AI-powered semantic search - finds sections that match user intent
   Set<String> _computeMatchingSections(String query) {
     if (query.isEmpty) return {};
 
@@ -496,17 +318,14 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       final sectionKey = entry.key;
       final keywords = entry.value;
 
-      // Check if any keyword contains the query or vice versa
       for (final keyword in keywords) {
         final keywordLower = keyword.toLowerCase();
 
-        // Full query match
         if (keywordLower.contains(query) || query.contains(keywordLower)) {
           matches.add(sectionKey);
           break;
         }
 
-        // Word-by-word match (for multi-word queries)
         if (queryWords.length > 1) {
           int matchedWords = 0;
           for (final word in queryWords) {
@@ -514,7 +333,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               matchedWords++;
             }
           }
-          // If most words match, consider it a match
           if (matchedWords >= (queryWords.length * 0.6).ceil()) {
             matches.add(sectionKey);
             break;
@@ -526,7 +344,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     return matches;
   }
 
-  /// Build no results message when search finds nothing
   Widget _buildNoResultsMessage(BuildContext context, Color textMuted) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 48),
@@ -560,361 +377,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     );
   }
 
-  /// Check if a group matches the current search
-  bool _groupMatches(_SettingsGroup group) {
-    if (_searchQuery.isEmpty) return true;
-    return group.sectionKeys.any((key) => _matchingSections.contains(key));
-  }
-
-  /// Build a Samsung-style settings group card
-  Widget _buildSettingsGroupCard({
-    required _SettingsGroup group,
-    required bool isDark,
-    required int index,
-  }) {
-    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
-    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
-    final isExpanded = _expandedGroups.contains(group.id);
-
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 200),
-      margin: const EdgeInsets.only(bottom: 12),
-      decoration: BoxDecoration(
-        color: elevated,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: isExpanded ? group.color.withValues(alpha: 0.3) : cardBorder,
-          width: isExpanded ? 1.5 : 1,
-        ),
-      ),
-      child: Column(
-        children: [
-          // Group header (always visible)
-          InkWell(
-            onTap: () {
-              HapticFeedback.lightImpact();
-              // Check if group has custom onTap handler
-              if (group.onTap != null) {
-                group.onTap!();
-                return;
-              }
-              setState(() {
-                if (isExpanded) {
-                  _expandedGroups.remove(group.id);
-                } else {
-                  _expandedGroups.add(group.id);
-                }
-              });
-            },
-            borderRadius: BorderRadius.circular(16),
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Row(
-                children: [
-                  // Icon container
-                  Container(
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      color: group.color.withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Icon(
-                      group.icon,
-                      color: group.color,
-                      size: 22,
-                    ),
-                  ),
-                  const SizedBox(width: 14),
-                  // Title and subtitle
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          group.title,
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                            color: textPrimary,
-                          ),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          group.subtitle,
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: textMuted,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  // Expand/collapse indicator
-                  AnimatedRotation(
-                    turns: isExpanded ? 0.5 : 0,
-                    duration: const Duration(milliseconds: 200),
-                    child: Icon(
-                      Icons.keyboard_arrow_down,
-                      color: textMuted,
-                      size: 24,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          // Expanded content
-          AnimatedCrossFade(
-            firstChild: const SizedBox.shrink(),
-            secondChild: Padding(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-              child: _buildGroupContent(group),
-            ),
-            crossFadeState: isExpanded
-                ? CrossFadeState.showSecond
-                : CrossFadeState.showFirst,
-            duration: const Duration(milliseconds: 200),
-          ),
-        ],
-      ),
-    );
-  }
-
-  /// Build the expanded content for a group
-  Widget _buildGroupContent(_SettingsGroup group) {
-    switch (group.id) {
-      case 'ai_coach':
-        return Column(
-          children: [
-            _buildNavigationTile(
-              icon: Icons.record_voice_over,
-              title: 'Coach Voice & Personality',
-              subtitle: 'Change AI voice and style',
-              color: AppColors.purple,
-              onTap: () => context.push('/ai-settings'),
-            ),
-            const SizedBox(height: 12),
-            _buildEdgeHandleToggle(),
-          ],
-        );
-      case 'ai_privacy':
-        return const AIPrivacySection();
-      case 'appearance':
-        return const Column(
-          children: [
-            PreferencesSection(),
-            SizedBox(height: 16),
-            HapticsSection(),
-            SizedBox(height: 16),
-            AppModeSection(),
-            SizedBox(height: 16),
-            AccessibilitySection(),
-          ],
-        );
-      case 'audio':
-        return const Column(
-          children: [
-            VoiceAnnouncementsSection(),
-            SizedBox(height: 16),
-            AudioSettingsSection(),
-          ],
-        );
-      case 'workout_settings':
-        return const _WorkoutSettingsContent();
-      case 'offline_mode':
-        return const OfflineModeSection();
-      case 'nutrition_fasting':
-        return const NutritionFastingSection();
-      case 'exercise_preferences':
-        return const _ExercisePreferencesContent();
-      case 'equipment':
-        return const Column(
-          children: [
-            CustomContentSection(),
-            SizedBox(height: 16),
-            WarmupSettingsSection(),
-            SizedBox(height: 16),
-            SupersetSettingsSection(),
-          ],
-        );
-      case 'notifications':
-        return const NotificationsSection();
-      case 'connections':
-        return const Column(
-          children: [
-            HealthSyncSection(),
-            SizedBox(height: 16),
-            BleHeartRateSection(),
-            SizedBox(height: 16),
-            WearOSSection(),
-            SizedBox(height: 16),
-            EmailPreferencesSection(),
-          ],
-        );
-      case 'shop':
-        return Column(
-          children: [
-            _buildNavigationTile(
-              icon: Icons.shopping_bag,
-              title: 'Visit FitWiz Store',
-              subtitle: 'Browse apparel, accessories & more',
-              color: AppColors.success,
-              onTap: () async {
-                // Main Vercel deployment URL
-                const storeUrl = 'https://ai-fitness-coach.vercel.app/store';
-                final uri = Uri.parse(storeUrl);
-                if (await canLaunchUrl(uri)) {
-                  await launchUrl(uri, mode: LaunchMode.externalApplication);
-                }
-              },
-            ),
-          ],
-        );
-      case 'about':
-        return const Column(
-          children: [
-            SupportSection(),
-            SizedBox(height: 16),
-            AppInfoSection(),
-          ],
-        );
-      case 'subscription':
-        return const SubscriptionSection();
-      case 'account':
-        return const Column(
-          children: [
-            SocialPrivacySection(),
-            SizedBox(height: 16),
-            DataManagementSection(),
-            SizedBox(height: 16),
-            DangerZoneSection(),
-            SizedBox(height: 24),
-            LogoutSection(),
-          ],
-        );
-      default:
-        return const SizedBox.shrink();
-    }
-  }
-
-  /// Build a navigation tile within a group
-  Widget _buildNavigationTile({
-    required IconData icon,
-    required String title,
-    required String subtitle,
-    required Color color,
-    required VoidCallback onTap,
-  }) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
-
-    return InkWell(
-      onTap: () {
-        HapticFeedback.lightImpact();
-        onTap();
-      },
-      borderRadius: BorderRadius.circular(12),
-      child: Container(
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: cardBorder),
-        ),
-        child: Row(
-          children: [
-            Icon(icon, color: color, size: 20),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                      color: textPrimary,
-                    ),
-                  ),
-                  Text(
-                    subtitle,
-                    style: TextStyle(
-                      fontSize: 11,
-                      color: textMuted,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            Icon(Icons.chevron_right, color: textMuted, size: 18),
-          ],
-        ),
-      ),
-    );
-  }
-
-  /// Build the edge handle toggle for AI Coach access
-  Widget _buildEdgeHandleToggle() {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
-    final isEnabled = ref.watch(edgeHandleEnabledProvider);
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: cardBorder),
-      ),
-      child: Row(
-        children: [
-          Icon(
-            Icons.swipe_left,
-            color: AppColors.info,
-            size: 20,
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Edge AI Coach Handle',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
-                    color: textPrimary,
-                  ),
-                ),
-                Text(
-                  'Swipe from edge to open AI Coach',
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: textMuted,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Switch.adaptive(
-            value: isEnabled,
-            onChanged: (value) {
-              HapticFeedback.lightImpact();
-              ref.read(edgeHandleEnabledProvider.notifier).setEnabled(value);
-            },
-            activeColor: AppColors.info,
-          ),
-        ],
-      ),
-    );
-  }
-
-  /// Build the collapsed search FAB
   Widget _buildSearchFAB(bool isDark) {
     final accentColor = ref.colors(context).accent;
 
@@ -925,7 +387,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         setState(() {
           _isSearchExpanded = true;
         });
-        // Focus the text field after expansion
         Future.delayed(const Duration(milliseconds: 300), () {
           _searchFocusNode.requestFocus();
         });
@@ -955,7 +416,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     );
   }
 
-  /// Build the expanded search bar
   Widget _buildExpandedSearchBar(bool isDark, Color textPrimary, Color textMuted) {
     return ClipRRect(
       key: const ValueKey('search_bar'),
@@ -985,14 +445,12 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           child: Row(
             children: [
               const SizedBox(width: 16),
-              // AI sparkle icon
               Icon(
                 Icons.auto_awesome,
                 color: textPrimary,
                 size: 20,
               ),
               const SizedBox(width: 12),
-              // Search field
               Expanded(
                 child: TextField(
                   controller: _searchController,
@@ -1013,7 +471,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   ),
                 ),
               ),
-              // Close button
               GestureDetector(
                 onTap: () {
                   HapticFeedback.lightImpact();
@@ -1042,13 +499,570 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     );
   }
 
+  // --- Helper: split display name ---
+  String _splitDisplayName(String split) {
+    switch (split) {
+      case 'push_pull_legs':
+        return 'PPL';
+      case 'upper_lower':
+        return 'Upper/Lower';
+      case 'full_body':
+        return 'Full Body';
+      case 'bro_split':
+        return 'Bro Split';
+      case 'dont_know':
+        return 'Auto';
+      default:
+        return split.replaceAll('_', ' ');
+    }
+  }
+
+  // --- Section label ---
+  Widget _buildSectionLabel(String label, Color color) {
+    return Padding(
+      padding: const EdgeInsets.only(left: 4),
+      child: Text(
+        label,
+        style: TextStyle(
+          fontSize: 13,
+          fontWeight: FontWeight.w600,
+          color: color,
+          letterSpacing: 0.5,
+        ),
+      ),
+    );
+  }
+
+  // --- Group card containing rows ---
+  Widget _buildGroupCard(
+    List<_SettingsRow> rows,
+    bool isDark,
+    Color elevated,
+    Color cardBorder,
+    Color textPrimary,
+    Color textMuted,
+    ThemeMode themeMode,
+  ) {
+    // Filter rows based on search
+    final visibleRows = _searchQuery.isEmpty
+        ? rows
+        : rows.where((r) => r.sectionKeys.any((k) => _matchingSections.contains(k))).toList();
+
+    if (visibleRows.isEmpty) return const SizedBox.shrink();
+
+    return Container(
+      decoration: BoxDecoration(
+        color: elevated,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: cardBorder),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: Column(
+        children: [
+          for (int i = 0; i < visibleRows.length; i++) ...[
+            _buildRow(visibleRows[i], isDark, textPrimary, textMuted, themeMode),
+            if (i < visibleRows.length - 1)
+              Divider(
+                height: 1,
+                indent: 52,
+                color: cardBorder,
+              ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  // --- Single row ---
+  Widget _buildRow(
+    _SettingsRow row,
+    bool isDark,
+    Color textPrimary,
+    Color textMuted,
+    ThemeMode themeMode,
+  ) {
+    final iconBg = (row.iconColor ?? (isDark ? AppColors.cyan : AppColorsLight.cyan))
+        .withValues(alpha: 0.15);
+    final iconFg = row.iconColor ?? (isDark ? AppColors.cyan : AppColorsLight.cyan);
+
+    return InkWell(
+      onTap: () {
+        HapticFeedback.lightImpact();
+        context.push(row.route);
+      },
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        child: Row(
+          children: [
+            // Icon container
+            Container(
+              width: 32,
+              height: 32,
+              decoration: BoxDecoration(
+                color: iconBg,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Icon(row.icon, color: iconFg, size: 18),
+            ),
+            const SizedBox(width: 12),
+            // Title
+            Expanded(
+              child: Text(
+                row.title,
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w500,
+                  color: textPrimary,
+                ),
+              ),
+            ),
+            // Theme selector or value text
+            if (row.isThemeRow)
+              InlineThemeSelector(
+                currentMode: themeMode,
+                onChanged: (mode) {
+                  HapticFeedback.selectionClick();
+                  ref.read(themeModeProvider.notifier).setTheme(mode);
+                },
+              )
+            else if (row.value != null) ...[
+              Flexible(
+                flex: 0,
+                child: Text(
+                  row.value!,
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: textMuted,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                  maxLines: 1,
+                ),
+              ),
+              const SizedBox(width: 4),
+              Icon(Icons.chevron_right, color: textMuted, size: 18),
+            ] else
+              Icon(Icons.chevron_right, color: textMuted, size: 18),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // --- User card at top ---
+  Widget _buildUserCard(
+    BuildContext context,
+    WidgetRef ref,
+    bool isDark,
+    Color elevated,
+    Color cardBorder,
+    Color textPrimary,
+    Color textMuted,
+  ) {
+    final authState = ref.watch(authStateProvider);
+    final user = authState.user;
+    final userName = user?.name ?? user?.username ?? 'User';
+    final userEmail = user?.email ?? '';
+    final photoUrl = user?.photoUrl;
+
+    return GestureDetector(
+      onTap: () => context.push('/profile'),
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: elevated,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: cardBorder),
+        ),
+        child: Row(
+          children: [
+            // Avatar
+            Container(
+              width: 52,
+              height: 52,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: (isDark ? AppColors.cyan : AppColorsLight.cyan).withValues(alpha: 0.15),
+                image: photoUrl != null && photoUrl.isNotEmpty
+                    ? DecorationImage(
+                        image: NetworkImage(photoUrl),
+                        fit: BoxFit.cover,
+                      )
+                    : null,
+              ),
+              child: photoUrl == null || photoUrl.isEmpty
+                  ? Icon(
+                      Icons.person,
+                      color: isDark ? AppColors.cyan : AppColorsLight.cyan,
+                      size: 28,
+                    )
+                  : null,
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    userName,
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w700,
+                      color: textPrimary,
+                    ),
+                  ),
+                  if (userEmail.isNotEmpty) ...[
+                    const SizedBox(height: 2),
+                    Text(
+                      userEmail,
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: textMuted,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ],
+              ),
+            ),
+            Icon(Icons.chevron_right, color: textMuted, size: 20),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // --- Delete account dialog ---
+  void _showDeleteAccountDialog(BuildContext context, WidgetRef ref) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: isDark ? AppColors.elevated : AppColorsLight.elevated,
+        title: Row(
+          children: [
+            Icon(Icons.delete_forever, color: AppColors.error, size: 24),
+            const SizedBox(width: 12),
+            Text(
+              'Delete Account?',
+              style: TextStyle(
+                color: isDark ? AppColors.textPrimary : AppColorsLight.textPrimary,
+              ),
+            ),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: AppColors.error.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: AppColors.error.withValues(alpha: 0.3)),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.warning_amber_rounded, color: AppColors.error, size: 20),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'This action cannot be undone!',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.error,
+                        fontSize: 13,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'This will permanently delete:',
+              style: TextStyle(
+                fontWeight: FontWeight.w600,
+                color: isDark ? AppColors.textPrimary : AppColorsLight.textPrimary,
+              ),
+            ),
+            const SizedBox(height: 12),
+            DialogBulletPoint(
+              text: 'Your account and profile',
+              color: AppColors.error,
+              isDark: isDark,
+            ),
+            DialogBulletPoint(
+              text: 'All workout history',
+              color: AppColors.error,
+              isDark: isDark,
+            ),
+            DialogBulletPoint(
+              text: 'All saved preferences',
+              color: AppColors.error,
+              isDark: isDark,
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'You will need to sign up again to use the app.',
+              style: TextStyle(
+                fontSize: 13,
+                color: isDark ? AppColors.textSecondary : AppColorsLight.textSecondary,
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(
+              'Cancel',
+              style: TextStyle(
+                color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
+              ),
+            ),
+          ),
+          TextButton(
+            onPressed: () async {
+              Navigator.pop(context);
+              await _deleteAccount(context, ref);
+            },
+            child: const Text(
+              'Delete Account',
+              style: TextStyle(color: AppColors.error),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _deleteAccount(BuildContext context, WidgetRef ref) async {
+    final navigator = Navigator.of(context);
+    final scaffoldMessenger = ScaffoldMessenger.of(context);
+    final router = GoRouter.of(context);
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) => const Center(
+        child: CircularProgressIndicator(color: AppColors.cyan),
+      ),
+    );
+
+    try {
+      final apiClient = ref.read(apiClientProvider);
+      final authState = ref.read(authStateProvider);
+      final userId = authState.user?.id;
+
+      if (userId == null || userId.isEmpty) {
+        throw Exception('User not found');
+      }
+
+      final response = await apiClient.delete(
+        '${ApiConstants.users}/$userId/reset',
+      );
+
+      navigator.pop();
+
+      if (response.statusCode == 200) {
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.clear();
+        ref.read(onboardingStateProvider.notifier).reset();
+        await ref.read(authStateProvider.notifier).signOut();
+        router.go('/stats-welcome');
+      } else {
+        throw Exception('Failed to delete account: ${response.statusCode}');
+      }
+    } catch (e) {
+      try {
+        navigator.pop();
+      } catch (_) {}
+
+      scaffoldMessenger.showSnackBar(
+        SnackBar(
+          content: Text('Error: ${e.toString()}'),
+          backgroundColor: AppColors.error,
+        ),
+      );
+    }
+  }
+
+  void _onVersionTap() {
+    final now = DateTime.now();
+    final isBeastModeUnlocked = ref.read(beastModeProvider);
+
+    if (isBeastModeUnlocked) {
+      AppSnackBar.info(context, 'Beast Mode is already unlocked!');
+      return;
+    }
+
+    // Reset counter if more than 3 seconds since last tap
+    if (_lastVersionTap != null &&
+        now.difference(_lastVersionTap!).inSeconds >= 3) {
+      _versionTapCount = 0;
+    }
+    _lastVersionTap = now;
+    _versionTapCount++;
+
+    if (_versionTapCount >= 7) {
+      _versionTapCount = 0;
+      _unlockBeastMode();
+    } else if (_versionTapCount >= 3) {
+      final remaining = 7 - _versionTapCount;
+      AppSnackBar.info(context, '$remaining taps away from Beast Mode...');
+      HapticService.light();
+    }
+  }
+
+  void _unlockBeastMode() {
+    ref.read(beastModeProvider.notifier).unlock();
+    showBeastModeUnlockDialog(context, () {});
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final backgroundColor = isDark ? AppColors.pureBlack : AppColorsLight.pureWhite;
     final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
     final bottomPadding = MediaQuery.of(context).padding.bottom;
+
+    final authState = ref.watch(authStateProvider);
+    final trainingPrefs = ref.watch(trainingPreferencesProvider);
+    final themeMode = ref.watch(themeModeProvider);
+
+    // Gym profile name
+    final gymProfile = ref.watch(activeGymProfileProvider);
+    final gymProfileName = gymProfile?.name ?? 'Default';
+
+    // Subscription value
+    final renewalAsync = ref.watch(upcomingRenewalProvider);
+    final subscriptionValue = renewalAsync.when(
+      data: (r) => r.hasUpcomingRenewal ? (r.tier ?? 'Active') : 'Free',
+      loading: () => 'Loading...',
+      error: (_, __) => 'Manage',
+    );
+
+    // Training split + days display
+    final splitName = _splitDisplayName(trainingPrefs.trainingSplit);
+    final daysPerWeek = authState.user?.workoutsPerWeek ?? 4;
+
+    // Build sections
+    final sections = [
+      _SettingsSection(
+        label: 'TRAINING',
+        rows: [
+          _SettingsRow(
+            icon: Icons.speed,
+            iconColor: isDark ? AppColors.orange : AppColorsLight.orange,
+            title: 'Workout Settings',
+            value: '$splitName \u00B7 $daysPerWeek days',
+            route: '/settings/workout-settings',
+            sectionKeys: const ['training'],
+          ),
+          _SettingsRow(
+            icon: Icons.fitness_center,
+            iconColor: isDark ? AppColors.purple : AppColorsLight.purple,
+            title: 'Exercise Prefs',
+            value: 'Favorites, avoided & queue',
+            route: '/settings/my-exercises',
+            sectionKeys: const ['custom_content'],
+          ),
+          _SettingsRow(
+            icon: Icons.fitness_center,
+            iconColor: isDark ? AppColors.success : AppColorsLight.success,
+            title: 'Equipment',
+            value: gymProfileName,
+            route: '/settings/equipment',
+            sectionKeys: const ['custom_content', 'warmup_settings', 'superset'],
+          ),
+        ],
+      ),
+      _SettingsSection(
+        label: 'PERSONALIZATION',
+        rows: [
+          _SettingsRow(
+            icon: Icons.auto_awesome,
+            iconColor: isDark ? AppColors.purple : AppColorsLight.purple,
+            title: 'AI Coach',
+            value: 'Voice & personality',
+            route: '/settings/ai-coach',
+            sectionKeys: const ['ai_coach', 'ai_privacy'],
+          ),
+          _SettingsRow(
+            icon: Icons.palette_outlined,
+            iconColor: isDark ? AppColors.cyan : AppColorsLight.cyan,
+            title: 'Appearance',
+            route: '/settings/appearance',
+            sectionKeys: const ['preferences', 'haptics', 'app_mode', 'accessibility'],
+            isThemeRow: true,
+          ),
+          _SettingsRow(
+            icon: Icons.notifications_outlined,
+            iconColor: isDark ? AppColors.info : AppColorsLight.info,
+            title: 'Sound & Notifs',
+            value: 'Voice, audio, reminders',
+            route: '/settings/sound-notifications',
+            sectionKeys: const ['voice_announcements', 'audio_settings', 'notifications'],
+          ),
+        ],
+      ),
+      _SettingsSection(
+        label: 'CONNECTIONS',
+        rows: [
+          _SettingsRow(
+            icon: Icons.cloud_off,
+            iconColor: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
+            title: 'Offline Mode',
+            value: 'Sync & AI models',
+            route: '/settings/offline-mode',
+            sectionKeys: const ['offline_mode'],
+          ),
+          _SettingsRow(
+            icon: Icons.favorite_outline,
+            iconColor: isDark ? AppColors.error : AppColorsLight.error,
+            title: 'Health & Devices',
+            value: Platform.isIOS ? 'Apple Health' : 'Health Connect',
+            route: '/settings/health-devices',
+            sectionKeys: const ['nutrition_fasting', 'health_sync', 'wear_os'],
+          ),
+        ],
+      ),
+      _SettingsSection(
+        label: 'ACCOUNT',
+        rows: [
+          _SettingsRow(
+            icon: Icons.diamond_outlined,
+            iconColor: isDark ? AppColors.cyan : AppColorsLight.cyan,
+            title: 'Subscription',
+            value: subscriptionValue,
+            route: '/subscription-management',
+            sectionKeys: const ['subscription'],
+          ),
+          _SettingsRow(
+            icon: Icons.lock_outline,
+            iconColor: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
+            title: 'Privacy & Data',
+            value: 'Sharing, export, email',
+            route: '/settings/privacy-data',
+            sectionKeys: const ['social_privacy', 'email_preferences', 'data_management'],
+          ),
+        ],
+      ),
+    ];
+
+    // Standalone "About" section (no label)
+    final aboutRow = _SettingsRow(
+      icon: Icons.info_outline,
+      iconColor: textMuted,
+      title: 'About & Support',
+      route: '/settings/about-support',
+      sectionKeys: const ['support', 'app_info', 'research', 'shop'],
+    );
 
     return Scaffold(
       backgroundColor: backgroundColor,
@@ -1081,62 +1095,118 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       ),
       body: Stack(
         children: [
-          // Scrollable content
           SafeArea(
             child: SingleChildScrollView(
               padding: EdgeInsets.only(
                 left: 16,
                 right: 16,
                 top: 16,
-                bottom: 80 + bottomPadding, // Space for floating search bar
+                bottom: 80 + bottomPadding,
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Samsung-style grouped settings cards
-                  ..._getSettingsGroups(isDark).asMap().entries.map((entry) {
-                    final index = entry.key;
-                    final group = entry.value;
+                  // User card
+                  _buildUserCard(context, ref, isDark, elevated, cardBorder, textPrimary, textMuted),
+                  const SizedBox(height: 24),
 
-                    // Filter groups based on search
-                    if (!_groupMatches(group)) return const SizedBox.shrink();
-
-                    // Auto-expand matching groups when searching
-                    if (_searchQuery.isNotEmpty && !_expandedGroups.contains(group.id)) {
-                      WidgetsBinding.instance.addPostFrameCallback((_) {
-                        if (mounted && _groupMatches(group)) {
-                          setState(() {
-                            _expandedGroups.add(group.id);
-                          });
-                        }
-                      });
-                    }
-
-                    return _buildSettingsGroupCard(
-                      group: group,
-                      isDark: isDark,
-                      index: index,
-                    ).animate().fadeIn(delay: Duration(milliseconds: 30 + (index * 20)));
-                  }),
-
-                  // Version info at bottom
-                  if (_searchQuery.isEmpty) ...[
-                    const SizedBox(height: 16),
-                    Center(
-                      child: Text(
-                        'FitWiz v1.0.0',
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              color: textMuted,
-                            ),
+                  // Grouped sections
+                  for (final section in sections) ...[
+                    // Check if any row in this section matches search
+                    if (_searchQuery.isEmpty ||
+                        section.rows.any((r) => r.sectionKeys.any((k) => _matchingSections.contains(k)))) ...[
+                      _buildSectionLabel(section.label, textMuted),
+                      const SizedBox(height: 8),
+                      _buildGroupCard(
+                        section.rows,
+                        isDark,
+                        elevated,
+                        cardBorder,
+                        textPrimary,
+                        textMuted,
+                        themeMode,
                       ),
-                    ),
+                      const SizedBox(height: 24),
+                    ],
                   ],
 
-                  // No results message
+                  // About standalone row
+                  if (_searchQuery.isEmpty ||
+                      aboutRow.sectionKeys.any((k) => _matchingSections.contains(k))) ...[
+                    _buildGroupCard(
+                      [aboutRow],
+                      isDark,
+                      elevated,
+                      cardBorder,
+                      textPrimary,
+                      textMuted,
+                      themeMode,
+                    ),
+                    const SizedBox(height: 24),
+                  ],
+
+                  // Beast Mode row (only visible when unlocked)
+                  if (ref.watch(beastModeProvider) &&
+                      (_searchQuery.isEmpty ||
+                          _matchingSections.contains('beast_mode'))) ...[
+                    _buildGroupCard(
+                      [
+                        _SettingsRow(
+                          icon: Icons.local_fire_department,
+                          iconColor: isDark ? AppColors.orange : AppColorsLight.orange,
+                          title: 'Beast Mode',
+                          value: 'Power user tools',
+                          route: '/settings/beast-mode',
+                          sectionKeys: const ['beast_mode'],
+                        ),
+                      ],
+                      isDark,
+                      elevated,
+                      cardBorder,
+                      textPrimary,
+                      textMuted,
+                      themeMode,
+                    ),
+                    const SizedBox(height: 32),
+                  ],
+
+                  // Sign Out
+                  if (_searchQuery.isEmpty ||
+                      _matchingSections.contains('logout') ||
+                      _matchingSections.contains('danger_zone')) ...[
+                    const LogoutSection(),
+                    const SizedBox(height: 12),
+                    Center(
+                      child: TextButton(
+                        onPressed: () => _showDeleteAccountDialog(context, ref),
+                        child: Text(
+                          'Delete Account',
+                          style: TextStyle(
+                            color: (isDark ? AppColors.error : AppColorsLight.error)
+                                .withValues(alpha: 0.7),
+                            fontSize: 14,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                  ],
+
+                  // Version (tap 7 times to unlock Beast Mode)
+                  Center(
+                    child: GestureDetector(
+                      onTap: _onVersionTap,
+                      child: Text(
+                        'FitWiz v1.2.0',
+                        style: TextStyle(fontSize: 12, color: textMuted),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 32),
+
+                  // No results
                   if (_searchQuery.isNotEmpty && _matchingSections.isEmpty)
                     _buildNoResultsMessage(context, textMuted),
-
-                  const SizedBox(height: 32),
                 ],
               ),
             ),
@@ -1166,144 +1236,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           ),
         ],
       ),
-    );
-  }
-}
-
-/// Workout Settings Content - Progression, intensity, splits, schedule
-/// Split from the original massive TrainingPreferencesSection
-class _WorkoutSettingsContent extends StatelessWidget {
-  const _WorkoutSettingsContent();
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        SectionHeader(
-          title: 'WORKOUT SETTINGS',
-          subtitle: 'Configure progression and scheduling',
-        ),
-        const SizedBox(height: 12),
-        SettingsCard(
-          items: [
-            SettingItemData(
-              icon: Icons.speed,
-              title: 'My 1RMs',
-              subtitle: 'View and edit your max lifts',
-              isMyOneRMsScreen: true,
-            ),
-            SettingItemData(
-              icon: Icons.percent,
-              title: 'Training Intensity',
-              subtitle: 'Work at a percentage of your max',
-              isTrainingIntensitySelector: true,
-            ),
-            SettingItemData(
-              icon: Icons.trending_up,
-              title: 'Progression Pace',
-              subtitle: 'How fast to increase weights',
-              isProgressionPaceSelector: true,
-            ),
-            SettingItemData(
-              icon: Icons.fitness_center,
-              title: 'Workout Type',
-              subtitle: 'Strength, cardio, or mixed',
-              isWorkoutTypeSelector: true,
-            ),
-            SettingItemData(
-              icon: Icons.view_week,
-              title: 'Training Split',
-              subtitle: 'Push/Pull/Legs, Full Body, etc.',
-              isTrainingSplitSelector: true,
-            ),
-            SettingItemData(
-              icon: Icons.calendar_month,
-              title: 'Workout Days',
-              subtitle: 'Which days you train',
-              isWorkoutDaysSelector: true,
-            ),
-            SettingItemData(
-              icon: Icons.shuffle,
-              title: 'Exercise Consistency',
-              subtitle: 'Vary or keep same exercises',
-              isConsistencyModeSelector: true,
-            ),
-            SettingItemData(
-              icon: Icons.tune,
-              title: 'Weekly Variety',
-              subtitle: 'How much exercises change each week',
-              isVariationSlider: true,
-            ),
-            SettingItemData(
-              icon: Icons.show_chart,
-              title: 'Progress Charts',
-              subtitle: 'Visualize strength & volume over time',
-              isProgressChartsScreen: true,
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-}
-
-/// Exercise Preferences Content - Favorites, avoided, queue
-/// Split from the original massive TrainingPreferencesSection
-class _ExercisePreferencesContent extends StatelessWidget {
-  const _ExercisePreferencesContent();
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        SectionHeader(
-          title: 'EXERCISE PREFERENCES',
-          subtitle: 'Customize which exercises appear in workouts',
-        ),
-        const SizedBox(height: 12),
-        SettingsCard(
-          items: [
-            SettingItemData(
-              icon: Icons.favorite,
-              title: 'Favorite Exercises',
-              subtitle: 'AI will prioritize these',
-              isFavoriteExercisesManager: true,
-            ),
-            SettingItemData(
-              icon: Icons.lock,
-              title: 'Staple Exercises',
-              subtitle: 'Core lifts that never rotate',
-              isStapleExercisesManager: true,
-            ),
-            SettingItemData(
-              icon: Icons.queue,
-              title: 'Exercise Queue',
-              subtitle: 'Queue exercises for next workout',
-              isExerciseQueueManager: true,
-            ),
-            SettingItemData(
-              icon: Icons.block,
-              title: 'Exercises to Avoid',
-              subtitle: 'Skip specific exercises',
-              isAvoidedExercisesManager: true,
-            ),
-            SettingItemData(
-              icon: Icons.accessibility_new,
-              title: 'Muscles to Avoid',
-              subtitle: 'Skip or reduce muscle groups',
-              isAvoidedMusclesManager: true,
-            ),
-            SettingItemData(
-              icon: Icons.history,
-              title: 'Import Workout History',
-              subtitle: 'Add past workouts for better AI weights',
-              isWorkoutHistoryImport: true,
-            ),
-          ],
-        ),
-      ],
     );
   }
 }

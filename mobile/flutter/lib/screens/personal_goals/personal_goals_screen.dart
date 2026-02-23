@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants/app_colors.dart';
+import '../../widgets/app_loading.dart';
+import '../../widgets/app_snackbar.dart';
 import '../../widgets/glass_sheet.dart';
 import '../../data/services/api_client.dart';
 import '../../data/services/personal_goals_service.dart';
@@ -171,12 +173,7 @@ class _PersonalGoalsScreenState extends ConsumerState<PersonalGoalsScreen> {
       );
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Goal created: ${suggestion.exerciseName}'),
-            backgroundColor: AppColors.green,
-          ),
-        );
+        AppSnackBar.success(context, 'Goal created: ${suggestion.exerciseName}');
         // Refresh data and invalidate suggestions
         _loadData();
         ref.invalidate(goalSuggestionsProvider(
@@ -185,12 +182,7 @@ class _PersonalGoalsScreenState extends ConsumerState<PersonalGoalsScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to create goal: $e'),
-            backgroundColor: AppColors.error,
-          ),
-        );
+        AppSnackBar.error(context, 'Failed to create goal: $e');
       }
     }
   }
@@ -210,12 +202,7 @@ class _PersonalGoalsScreenState extends ConsumerState<PersonalGoalsScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to dismiss suggestion: $e'),
-            backgroundColor: AppColors.error,
-          ),
-        );
+        AppSnackBar.error(context, 'Failed to dismiss suggestion: $e');
       }
     }
   }
@@ -265,7 +252,7 @@ class _PersonalGoalsScreenState extends ConsumerState<PersonalGoalsScreen> {
         ],
       ),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
+          ? AppLoading.fullScreen()
           : _error != null
               ? _buildErrorState()
               : _buildContent(textPrimary, textSecondary),

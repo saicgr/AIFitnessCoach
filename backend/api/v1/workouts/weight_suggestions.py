@@ -10,7 +10,10 @@ Provides real-time weight suggestions during active workouts based on:
 Uses Gemini AI to generate intelligent, personalized suggestions.
 """
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
+from core.auth import get_current_user
+from core.rate_limiter import limiter
+from core.exceptions import safe_internal_error
 from typing import List, Optional
 from datetime import datetime
 from pydantic import BaseModel
@@ -556,7 +559,10 @@ IMPORTANT:
 
 
 @router.post("/weight-suggestion", response_model=WeightSuggestionResponse)
-async def get_weight_suggestion(request: WeightSuggestionRequest):
+@limiter.limit("5/minute")
+async def get_weight_suggestion(request: WeightSuggestionRequest,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Get an AI-powered weight suggestion for the next set.
 
@@ -633,11 +639,13 @@ async def get_weight_suggestion(request: WeightSuggestionRequest):
 
     except Exception as e:
         logger.error(f"Weight suggestion failed: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "weight_suggestions")
 
 
 @router.get("/weight-suggestion/history/{user_id}/{exercise_name}")
-async def get_weight_history(user_id: str, exercise_name: str, limit: int = 10):
+async def get_weight_history(user_id: str, exercise_name: str, limit: int = 10,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Get weight history for an exercise.
 
@@ -660,4 +668,4 @@ async def get_weight_history(user_id: str, exercise_name: str, limit: int = 10):
 
     except Exception as e:
         logger.error(f"Failed to get weight history: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "weight_suggestions")

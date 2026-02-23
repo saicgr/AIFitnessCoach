@@ -8,9 +8,11 @@ import '../../../data/repositories/exercise_preferences_repository.dart';
 import '../../../widgets/glass_back_button.dart';
 import 'widgets/exercise_picker_sheet.dart';
 
-/// Screen for managing favorite exercises
+/// Screen for managing favorite exercises.
+/// When [embedded] is true, renders without Scaffold/AppBar for use inside tabs.
 class FavoriteExercisesScreen extends ConsumerWidget {
-  const FavoriteExercisesScreen({super.key});
+  final bool embedded;
+  const FavoriteExercisesScreen({super.key, this.embedded = false});
 
   Future<void> _showAddExercisePicker(BuildContext context, WidgetRef ref) async {
     HapticFeedback.lightImpact();
@@ -58,6 +60,22 @@ class FavoriteExercisesScreen extends ConsumerWidget {
 
     final favoritesState = ref.watch(favoritesProvider);
 
+    final body = favoritesState.isLoading
+        ? const Center(child: CircularProgressIndicator())
+        : favoritesState.favorites.isEmpty
+            ? _buildEmptyState(context, ref, textMuted)
+            : _buildFavoritesList(
+                context,
+                ref,
+                favoritesState.favorites,
+                isDark,
+                textPrimary,
+                textMuted,
+                elevated,
+              );
+
+    if (embedded) return body;
+
     return Scaffold(
       backgroundColor: backgroundColor,
       appBar: AppBar(
@@ -81,19 +99,7 @@ class FavoriteExercisesScreen extends ConsumerWidget {
           ),
         ],
       ),
-      body: favoritesState.isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : favoritesState.favorites.isEmpty
-              ? _buildEmptyState(context, ref, textMuted)
-              : _buildFavoritesList(
-                  context,
-                  ref,
-                  favoritesState.favorites,
-                  isDark,
-                  textPrimary,
-                  textMuted,
-                  elevated,
-                ),
+      body: body,
     );
   }
 

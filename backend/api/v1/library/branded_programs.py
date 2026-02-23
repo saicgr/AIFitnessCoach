@@ -20,6 +20,7 @@ from pydantic import BaseModel
 
 from core.supabase_db import get_supabase_db
 from core.logger import get_logger
+from core.exceptions import safe_internal_error
 
 router = APIRouter()
 logger = get_logger(__name__)
@@ -119,7 +120,7 @@ async def list_branded_programs(
 
     except Exception as e:
         logger.error(f"Error listing branded programs: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "branded_programs")
 
 
 @router.get("/branded-programs/featured", response_model=List[Dict[str, Any]])
@@ -137,7 +138,7 @@ async def get_featured_programs():
 
     except Exception as e:
         logger.error(f"Error fetching featured programs: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "branded_programs")
 
 
 @router.get("/branded-programs/categories", response_model=List[Dict[str, Any]])
@@ -164,7 +165,7 @@ async def get_program_categories():
 
     except Exception as e:
         logger.error(f"Error getting program categories: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "branded_programs")
 
 
 # NOTE: The /{program_id} route is defined at the END of this file
@@ -239,7 +240,7 @@ async def assign_program(request: AssignProgramRequest):
         raise
     except Exception as e:
         logger.error(f"Error assigning program: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "branded_programs")
 
 
 @router.get("/branded-programs/current", response_model=Dict[str, Any])
@@ -273,7 +274,7 @@ async def get_current_program(user_id: str = Query(...)):
         raise
     except Exception as e:
         logger.error(f"Error getting current program for user {user_id}: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "branded_programs")
 
 
 @router.patch("/branded-programs/current/rename", response_model=Dict[str, Any])
@@ -311,7 +312,7 @@ async def rename_current_program(request: RenameProgramRequest):
         raise
     except Exception as e:
         logger.error(f"Error renaming program: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "branded_programs")
 
 
 @router.delete("/branded-programs/current")
@@ -338,7 +339,7 @@ async def end_current_program(user_id: str = Query(...)):
         raise
     except Exception as e:
         logger.error(f"Error ending program: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "branded_programs")
 
 
 @router.get("/branded-programs/history", response_model=List[Dict[str, Any]])
@@ -368,7 +369,7 @@ async def get_program_history(user_id: str = Query(...)):
 
     except Exception as e:
         logger.error(f"Error getting program history: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "branded_programs")
 
 
 # IMPORTANT: This route MUST be at the end to prevent it from matching
@@ -391,4 +392,4 @@ async def get_branded_program(program_id: str):
         raise
     except Exception as e:
         logger.error(f"Error getting program {program_id}: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "branded_programs")

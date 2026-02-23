@@ -8,6 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fl_chart/fl_chart.dart';
+import '../../widgets/app_loading.dart';
 
 import '../../core/constants/app_colors.dart';
 import '../../data/models/subjective_feedback.dart';
@@ -62,7 +63,7 @@ class _FeelResultsScreenState extends ConsumerState<FeelResultsScreen> {
         surfaceTintColor: Colors.transparent,
       ),
       body: feedbackState.isLoading
-          ? const Center(child: CircularProgressIndicator())
+          ? AppLoading.fullScreen()
           : RefreshIndicator(
               onRefresh: () async => _loadData(),
               child: SingleChildScrollView(

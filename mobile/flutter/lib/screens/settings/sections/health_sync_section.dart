@@ -5,6 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../data/services/health_service.dart';
+import '../../../widgets/app_dialog.dart';
 import '../widgets/section_header.dart';
 import '../../../widgets/glass_sheet.dart';
 
@@ -873,44 +874,12 @@ class _HealthConnectSettingsCardState extends ConsumerState<_HealthConnectSettin
   }
 
   Future<void> _disconnect() async {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final confirm = await showDialog<bool>(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          backgroundColor: isDark ? AppColors.elevated : AppColorsLight.elevated,
-          title: Text(
-            'Disconnect ${Platform.isAndroid ? "Health Connect" : "Apple Health"}?',
-            style: TextStyle(
-              color: isDark ? AppColors.textPrimary : AppColorsLight.textPrimary,
-            ),
-          ),
-          content: Text(
-            'Your health data will no longer sync with the app. You can reconnect at any time.',
-            style: TextStyle(
-              color: isDark ? AppColors.textSecondary : AppColorsLight.textSecondary,
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context, false),
-              child: Text(
-                'Cancel',
-                style: TextStyle(
-                  color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
-                ),
-              ),
-            ),
-            TextButton(
-              onPressed: () => Navigator.pop(context, true),
-              child: const Text(
-                'Disconnect',
-                style: TextStyle(color: AppColors.error),
-              ),
-            ),
-          ],
-        );
-      },
+    final confirm = await AppDialog.destructive(
+      context,
+      title: 'Disconnect ${Platform.isAndroid ? "Health Connect" : "Apple Health"}?',
+      message: 'Your health data will no longer sync with the app. You can reconnect at any time.',
+      confirmText: 'Disconnect',
+      icon: Icons.link_off_rounded,
     );
 
     if (confirm == true) {

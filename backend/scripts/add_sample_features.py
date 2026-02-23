@@ -12,7 +12,9 @@ from supabase import create_client
 
 # Supabase credentials
 SUPABASE_URL = "https://hpbzfahijszqmgsybuor.supabase.co"
-SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhwYnpmYWhpanN6cW1nc3lidW9yIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTczMzQ1NjQ1MywiZXhwIjoyMDQ5MDMyNDUzfQ.MWU3r9ZB-9uFQnfM6rB8eaUd1M5gW58sxo8c2K5bfcI"
+SUPABASE_KEY = os.environ.get("SUPABASE_KEY")
+if not SUPABASE_KEY:
+    raise SystemExit("SUPABASE_KEY environment variable is required")
 
 def main():
     """Insert sample features into the database."""

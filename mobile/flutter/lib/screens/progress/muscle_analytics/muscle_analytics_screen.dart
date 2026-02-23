@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../data/models/muscle_analytics.dart';
+import '../../../widgets/app_loading.dart';
 import '../../../data/providers/muscle_analytics_provider.dart';
 import '../../../data/repositories/muscle_analytics_repository.dart';
 import '../../../widgets/segmented_tab_bar.dart';
@@ -129,7 +130,7 @@ class _HeatmapTab extends ConsumerWidget {
     final heatmapAsync = ref.watch(muscleHeatmapProvider);
 
     return heatmapAsync.when(
-      loading: () => const Center(child: CircularProgressIndicator()),
+      loading: () => AppLoading.fullScreen(),
       error: (error, _) => _ErrorWidget(
         message: 'Failed to load muscle data',
         onRetry: () => ref.invalidate(muscleHeatmapProvider),
@@ -233,7 +234,7 @@ class _FrequencyTab extends ConsumerWidget {
     final frequencyAsync = ref.watch(muscleFrequencyProvider);
 
     return frequencyAsync.when(
-      loading: () => const Center(child: CircularProgressIndicator()),
+      loading: () => AppLoading.fullScreen(),
       error: (error, _) => _ErrorWidget(
         message: 'Failed to load frequency data',
         onRetry: () => ref.invalidate(muscleFrequencyProvider),
@@ -338,7 +339,7 @@ class _BalanceTab extends ConsumerWidget {
     final balanceAsync = ref.watch(muscleBalanceProvider);
 
     return balanceAsync.when(
-      loading: () => const Center(child: CircularProgressIndicator()),
+      loading: () => AppLoading.fullScreen(),
       error: (error, _) => _ErrorWidget(
         message: 'Failed to load balance data',
         onRetry: () => ref.invalidate(muscleBalanceProvider),

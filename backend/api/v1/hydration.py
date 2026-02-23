@@ -9,7 +9,7 @@ ENDPOINTS:
 - PUT /api/v1/hydration/goal/{user_id} - Update daily hydration goal
 - GET /api/v1/hydration/goal/{user_id} - Get user's hydration goal
 """
-from fastapi import APIRouter, HTTPException, Query, Request
+from fastapi import APIRouter, HTTPException, Query, Request, Depends
 from typing import List, Optional
 from datetime import datetime, date, timedelta
 import uuid
@@ -22,6 +22,8 @@ from models.schemas import (
     HydrationLog, HydrationLogCreate,
     DailyHydrationSummary, HydrationGoalUpdate,
 )
+from core.auth import get_current_user
+from core.exceptions import safe_internal_error
 
 router = APIRouter()
 logger = get_logger(__name__)
@@ -46,7 +48,10 @@ def row_to_hydration_log(row: dict) -> HydrationLog:
 # ==================== Hydration Logging ====================
 
 @router.post("/log", response_model=HydrationLog)
-async def log_hydration(data: HydrationLogCreate, http_request: Request):
+async def log_hydration(
+    data: HydrationLogCreate, http_request: Request,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Log a hydration intake entry.
 
@@ -85,7 +90,7 @@ async def log_hydration(data: HydrationLogCreate, http_request: Request):
                 raise
 
         if not result.data:
-            raise HTTPException(status_code=500, detail="Failed to create hydration log")
+            raise HTTPException(status_code=500, detail="Failed to log hydration")
 
         # Log hydration entry
         await log_user_activity(
@@ -113,7 +118,7 @@ async def log_hydration(data: HydrationLogCreate, http_request: Request):
             endpoint="/api/v1/hydration/log",
             status_code=500
         )
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "endpoint")
 
 
 @router.get("/daily/{user_id}", response_model=DailyHydrationSummary)
@@ -121,6 +126,7 @@ async def get_daily_hydration(
     user_id: str,
     http_request: Request,
     date_str: Optional[str] = Query(None, description="Date in YYYY-MM-DD format, defaults to today"),
+    current_user: dict = Depends(get_current_user),
 ):
     """Get daily hydration summary for a user."""
     logger.info(f"Getting daily hydration for user {user_id}")
@@ -193,7 +199,7 @@ async def get_daily_hydration(
 
     except Exception as e:
         logger.error(f"Error getting daily hydration: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "endpoint")
 
 
 @router.get("/logs/{user_id}", response_model=List[HydrationLog])
@@ -203,6 +209,7 @@ async def get_hydration_logs(
     workout_id: Optional[str] = None,
     days: int = Query(default=7, ge=1, le=90),
     limit: int = Query(default=100, ge=1, le=500),
+    current_user: dict = Depends(get_current_user),
 ):
     """Get hydration logs for a user, optionally filtered by workout."""
     logger.info(f"Getting hydration logs for user {user_id}")
@@ -230,11 +237,14 @@ async def get_hydration_logs(
 
     except Exception as e:
         logger.error(f"Error getting hydration logs: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "endpoint")
 
 
 @router.delete("/log/{log_id}")
-async def delete_hydration_log(log_id: str):
+async def delete_hydration_log(
+    log_id: str,
+    current_user: dict = Depends(get_current_user),
+):
     """Delete a hydration log entry."""
     logger.info(f"Deleting hydration log {log_id}")
 
@@ -252,7 +262,7 @@ async def delete_hydration_log(log_id: str):
         raise
     except Exception as e:
         logger.error(f"Error deleting hydration log: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "endpoint")
 
 
 # ==================== Hydration Goals ====================
@@ -276,14 +286,20 @@ async def get_user_hydration_goal(user_id: str) -> int:
 
 
 @router.get("/goal/{user_id}")
-async def get_hydration_goal(user_id: str):
+async def get_hydration_goal(
+    user_id: str,
+    current_user: dict = Depends(get_current_user),
+):
     """Get user's daily hydration goal."""
     goal = await get_user_hydration_goal(user_id)
     return {"user_id": user_id, "daily_goal_ml": goal}
 
 
 @router.put("/goal/{user_id}")
-async def update_hydration_goal(user_id: str, data: HydrationGoalUpdate):
+async def update_hydration_goal(
+    user_id: str, data: HydrationGoalUpdate,
+    current_user: dict = Depends(get_current_user),
+):
     """Update user's daily hydration goal."""
     logger.info(f"Updating hydration goal for user {user_id} to {data.daily_goal_ml}ml")
 
@@ -301,7 +317,7 @@ async def update_hydration_goal(user_id: str, data: HydrationGoalUpdate):
 
     except Exception as e:
         logger.error(f"Error updating hydration goal: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "endpoint")
 
 
 # ==================== Quick Log Helpers ====================
@@ -314,6 +330,7 @@ async def quick_log_hydration(
     amount_ml: int = Query(default=250),  # Default glass of water ~8oz
     workout_id: Optional[str] = None,
     local_date: Optional[str] = Query(default=None),
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Quick log hydration with minimal parameters.

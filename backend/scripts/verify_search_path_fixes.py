@@ -7,6 +7,7 @@ This script verifies that:
 2. Materialized views are not accessible to anon/authenticated
 3. Wrapper functions exist for leaderboard access
 """
+import os
 from __future__ import annotations
 
 import psycopg2
@@ -18,8 +19,11 @@ DB_CONFIG = {
     "port": 5432,
     "database": "postgres",
     "user": "postgres",
-    "password": "d2nHU5oLZ1GCz63B"
+    "password": os.environ.get("DATABASE_PASSWORD")
 }
+
+if not DB_CONFIG["password"]:
+    raise SystemExit("DATABASE_PASSWORD environment variable is required")
 
 # Functions that should have search_path set
 FUNCTIONS_TO_CHECK = [

@@ -16,7 +16,9 @@ import json
 from datetime import date, datetime, time, timedelta
 from typing import List, Optional
 
-from fastapi import APIRouter, BackgroundTasks, HTTPException, Request
+from fastapi import APIRouter, Depends, BackgroundTasks, HTTPException, Request
+from core.auth import get_current_user
+from core.exceptions import safe_internal_error
 from pydantic import BaseModel, Field
 
 from core.supabase_db import get_supabase_db
@@ -134,7 +136,9 @@ async def _log_weekly_plan_event(user_id: str, week_start_iso: str, workout_days
 
 @router.post("/generate", response_model=WeeklyPlanResponse)
 @limiter.limit("5/minute")
-async def generate_weekly_plan(request: GenerateWeeklyPlanRequest, http_request: Request, background_tasks: BackgroundTasks):
+async def generate_weekly_plan(request: GenerateWeeklyPlanRequest, http_request: Request, background_tasks: BackgroundTasks,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Generate a new weekly holistic plan.
 
@@ -208,7 +212,7 @@ async def generate_weekly_plan(request: GenerateWeeklyPlanRequest, http_request:
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
         logger.error(f"Error generating weekly plan: {e}")
-        raise HTTPException(status_code=500, detail="Failed to generate weekly plan")
+        raise safe_internal_error(e, "weekly_plan_generate")
 
 
 async def _log_screen_view_event(user_id: str, screen: str, metadata: dict):
@@ -224,7 +228,9 @@ async def _log_screen_view_event(user_id: str, screen: str, metadata: dict):
 
 
 @router.get("/current")
-async def get_current_week_plan(user_id: str, background_tasks: BackgroundTasks):
+async def get_current_week_plan(user_id: str, background_tasks: BackgroundTasks,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Get the current week's plan for a user.
 
@@ -261,11 +267,14 @@ async def get_current_week_plan(user_id: str, background_tasks: BackgroundTasks)
 
     except Exception as e:
         logger.error(f"Error getting current week plan: {e}")
-        raise HTTPException(status_code=500, detail="Failed to get current week plan")
+        raise safe_internal_error(e, "weekly_plan_current")
 
 
 @router.get("/{week_start}")
-async def get_week_plan(week_start: str, user_id: str):
+@limiter.limit("10/minute")
+async def get_week_plan(request: Request, week_start: str, user_id: str,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Get a specific week's plan.
 
@@ -299,11 +308,13 @@ async def get_week_plan(week_start: str, user_id: str):
         raise
     except Exception as e:
         logger.error(f"Error getting week plan: {e}")
-        raise HTTPException(status_code=500, detail="Failed to get week plan")
+        raise safe_internal_error(e, "weekly_plan_get")
 
 
 @router.put("/{plan_id}")
-async def update_weekly_plan(plan_id: str, user_id: str, updates: dict):
+async def update_weekly_plan(plan_id: str, user_id: str, updates: dict,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Update a weekly plan's settings.
 
@@ -338,11 +349,13 @@ async def update_weekly_plan(plan_id: str, user_id: str, updates: dict):
         raise
     except Exception as e:
         logger.error(f"Error updating weekly plan: {e}")
-        raise HTTPException(status_code=500, detail="Failed to update plan")
+        raise safe_internal_error(e, "weekly_plan_update")
 
 
 @router.delete("/{plan_id}")
-async def archive_weekly_plan(plan_id: str, user_id: str):
+async def archive_weekly_plan(plan_id: str, user_id: str,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Archive a weekly plan (soft delete).
     """
@@ -369,11 +382,13 @@ async def archive_weekly_plan(plan_id: str, user_id: str):
         raise
     except Exception as e:
         logger.error(f"Error archiving weekly plan: {e}")
-        raise HTTPException(status_code=500, detail="Failed to archive plan")
+        raise safe_internal_error(e, "weekly_plan_archive")
 
 
 @router.get("/{plan_id}/daily/{plan_date}")
-async def get_daily_entry(plan_id: str, plan_date: str, user_id: str, background_tasks: BackgroundTasks):
+async def get_daily_entry(plan_id: str, plan_date: str, user_id: str, background_tasks: BackgroundTasks,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Get a specific daily entry from a weekly plan.
     """
@@ -434,7 +449,7 @@ async def get_daily_entry(plan_id: str, plan_date: str, user_id: str, background
         raise
     except Exception as e:
         logger.error(f"Error getting daily entry: {e}")
-        raise HTTPException(status_code=500, detail="Failed to get daily entry")
+        raise safe_internal_error(e, "weekly_plan_daily_entry")
 
 
 @router.put("/{plan_id}/daily/{plan_date}")
@@ -443,6 +458,7 @@ async def update_daily_entry(
     plan_date: str,
     user_id: str,
     request: UpdateDailyEntryRequest,
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Update a specific daily entry.
@@ -494,12 +510,14 @@ async def update_daily_entry(
         raise
     except Exception as e:
         logger.error(f"Error updating daily entry: {e}")
-        raise HTTPException(status_code=500, detail="Failed to update daily entry")
+        raise safe_internal_error(e, "weekly_plan_daily_update")
 
 
 @router.post("/meal-suggestions", response_model=MealSuggestionsResponse)
 @limiter.limit("10/minute")
-async def generate_meal_suggestions(request: GenerateMealSuggestionsRequest, http_request: Request):
+async def generate_meal_suggestions(request: GenerateMealSuggestionsRequest, http_request: Request,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Generate AI meal suggestions for a specific day.
 
@@ -619,7 +637,7 @@ Return JSON only:
 
     except Exception as e:
         logger.error(f"Error generating meal suggestions: {e}")
-        raise HTTPException(status_code=500, detail="Failed to generate meal suggestions")
+        raise safe_internal_error(e, "weekly_plan_meals")
 
 
 @router.post("/{plan_id}/daily/{plan_date}/meal-suggestions")
@@ -629,6 +647,7 @@ async def save_meal_suggestions_to_daily(
     plan_date: str,
     user_id: str,
     request: Request,
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Generate and save meal suggestions directly to a daily entry.
@@ -689,4 +708,4 @@ async def save_meal_suggestions_to_daily(
         raise
     except Exception as e:
         logger.error(f"Error saving meal suggestions: {e}")
-        raise HTTPException(status_code=500, detail="Failed to save meal suggestions")
+        raise safe_internal_error(e, "weekly_plan_save_meals")

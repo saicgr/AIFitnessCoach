@@ -19,13 +19,15 @@ Endpoints:
 - POST   /{user_id}/gcal/push-event          - Push item to Google Calendar
 """
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
 from datetime import datetime, date, timezone
 from typing import Optional, List
 
 from core.supabase_db import get_supabase_db
 from core.logger import get_logger
 from core.activity_logger import log_user_activity, log_user_error
+from core.auth import get_current_user
+from core.exceptions import safe_internal_error
 from models.daily_schedule import (
     ScheduleItemCreate, ScheduleItemUpdate, ScheduleItemResponse,
     DailyScheduleResponse, UpNextResponse,
@@ -44,7 +46,7 @@ TABLE = "schedule_items"
 # ============================================================================
 
 @router.post("/{user_id}/items", response_model=ScheduleItemResponse)
-async def create_schedule_item(user_id: str, item: ScheduleItemCreate):
+async def create_schedule_item(user_id: str, item: ScheduleItemCreate, current_user: dict = Depends(get_current_user)):
     """
     Create a new schedule item.
 
@@ -55,6 +57,8 @@ async def create_schedule_item(user_id: str, item: ScheduleItemCreate):
     Returns:
         Created schedule item
     """
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     logger.info(f"Creating schedule item: user={user_id}, title={item.title}, type={item.item_type}")
 
     try:
@@ -105,7 +109,7 @@ async def create_schedule_item(user_id: str, item: ScheduleItemCreate):
     except Exception as e:
         logger.error(f"Error creating schedule item: {e}")
         log_user_error(user_id, "create_schedule_item", str(e))
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "daily_schedule")
 
 
 @router.get("/{user_id}/items", response_model=List[ScheduleItemResponse])
@@ -114,6 +118,7 @@ async def list_schedule_items(
     scheduled_date: Optional[date] = Query(None, description="Filter by date (YYYY-MM-DD)"),
     item_type: Optional[str] = Query(None, description="Filter by item type"),
     status: Optional[str] = Query(None, description="Filter by status"),
+    current_user: dict = Depends(get_current_user),
 ):
     """
     List schedule items for a user, optionally filtered by date, type, or status.
@@ -127,6 +132,8 @@ async def list_schedule_items(
     Returns:
         List of schedule items
     """
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     logger.info(f"Listing schedule items: user={user_id}, date={scheduled_date}, type={item_type}")
 
     try:
@@ -151,11 +158,11 @@ async def list_schedule_items(
     except Exception as e:
         logger.error(f"Error listing schedule items: {e}")
         log_user_error(user_id, "list_schedule_items", str(e))
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "daily_schedule")
 
 
 @router.get("/{user_id}/items/{item_id}", response_model=ScheduleItemResponse)
-async def get_schedule_item(user_id: str, item_id: str):
+async def get_schedule_item(user_id: str, item_id: str, current_user: dict = Depends(get_current_user)):
     """
     Get a single schedule item by ID.
 
@@ -166,6 +173,8 @@ async def get_schedule_item(user_id: str, item_id: str):
     Returns:
         Schedule item
     """
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     logger.info(f"Getting schedule item: user={user_id}, item_id={item_id}")
 
     try:
@@ -185,11 +194,11 @@ async def get_schedule_item(user_id: str, item_id: str):
     except Exception as e:
         logger.error(f"Error getting schedule item: {e}")
         log_user_error(user_id, "get_schedule_item", str(e))
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "daily_schedule")
 
 
 @router.put("/{user_id}/items/{item_id}", response_model=ScheduleItemResponse)
-async def update_schedule_item(user_id: str, item_id: str, item: ScheduleItemUpdate):
+async def update_schedule_item(user_id: str, item_id: str, item: ScheduleItemUpdate, current_user: dict = Depends(get_current_user)):
     """
     Update an existing schedule item.
 
@@ -201,6 +210,8 @@ async def update_schedule_item(user_id: str, item_id: str, item: ScheduleItemUpd
     Returns:
         Updated schedule item
     """
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     logger.info(f"Updating schedule item: user={user_id}, item_id={item_id}")
 
     try:
@@ -242,11 +253,11 @@ async def update_schedule_item(user_id: str, item_id: str, item: ScheduleItemUpd
     except Exception as e:
         logger.error(f"Error updating schedule item: {e}")
         log_user_error(user_id, "update_schedule_item", str(e))
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "daily_schedule")
 
 
 @router.delete("/{user_id}/items/{item_id}")
-async def delete_schedule_item(user_id: str, item_id: str):
+async def delete_schedule_item(user_id: str, item_id: str, current_user: dict = Depends(get_current_user)):
     """
     Delete a schedule item.
 
@@ -257,6 +268,8 @@ async def delete_schedule_item(user_id: str, item_id: str):
     Returns:
         Success message
     """
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     logger.info(f"Deleting schedule item: user={user_id}, item_id={item_id}")
 
     try:
@@ -289,7 +302,7 @@ async def delete_schedule_item(user_id: str, item_id: str):
     except Exception as e:
         logger.error(f"Error deleting schedule item: {e}")
         log_user_error(user_id, "delete_schedule_item", str(e))
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "daily_schedule")
 
 
 # ============================================================================
@@ -300,6 +313,7 @@ async def delete_schedule_item(user_id: str, item_id: str):
 async def get_daily_schedule(
     user_id: str,
     date: date = Query(..., description="Date to get schedule for (YYYY-MM-DD)"),
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Get the full daily schedule with items and summary stats.
@@ -311,6 +325,8 @@ async def get_daily_schedule(
     Returns:
         DailyScheduleResponse with items and summary
     """
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     logger.info(f"Getting daily schedule: user={user_id}, date={date}")
 
     try:
@@ -348,13 +364,14 @@ async def get_daily_schedule(
     except Exception as e:
         logger.error(f"Error getting daily schedule: {e}")
         log_user_error(user_id, "get_daily_schedule", str(e))
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "daily_schedule")
 
 
 @router.get("/{user_id}/up-next", response_model=UpNextResponse)
 async def get_up_next(
     user_id: str,
     limit: int = Query(3, ge=1, le=20, description="Max items to return"),
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Get the next upcoming schedule items from now.
@@ -366,6 +383,8 @@ async def get_up_next(
     Returns:
         UpNextResponse with upcoming items
     """
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     logger.info(f"Getting up-next: user={user_id}, limit={limit}")
 
     try:
@@ -398,7 +417,7 @@ async def get_up_next(
     except Exception as e:
         logger.error(f"Error getting up-next: {e}")
         log_user_error(user_id, "get_up_next", str(e))
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "daily_schedule")
 
 
 # ============================================================================
@@ -406,7 +425,7 @@ async def get_up_next(
 # ============================================================================
 
 @router.post("/{user_id}/items/{item_id}/complete", response_model=ScheduleItemResponse)
-async def complete_schedule_item(user_id: str, item_id: str):
+async def complete_schedule_item(user_id: str, item_id: str, current_user: dict = Depends(get_current_user)):
     """
     Mark a schedule item as completed.
 
@@ -417,6 +436,8 @@ async def complete_schedule_item(user_id: str, item_id: str):
     Returns:
         Updated schedule item
     """
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     logger.info(f"Completing schedule item: user={user_id}, item_id={item_id}")
 
     try:
@@ -453,7 +474,7 @@ async def complete_schedule_item(user_id: str, item_id: str):
     except Exception as e:
         logger.error(f"Error completing schedule item: {e}")
         log_user_error(user_id, "complete_schedule_item", str(e))
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "daily_schedule")
 
 
 # ============================================================================
@@ -461,7 +482,7 @@ async def complete_schedule_item(user_id: str, item_id: str):
 # ============================================================================
 
 @router.post("/{user_id}/auto-populate", response_model=List[ScheduleItemResponse])
-async def auto_populate_schedule(user_id: str, request: AutoPopulateRequest):
+async def auto_populate_schedule(user_id: str, request: AutoPopulateRequest, current_user: dict = Depends(get_current_user)):
     """
     Auto-populate schedule items from existing workouts, habits, and fasting records.
 
@@ -475,6 +496,8 @@ async def auto_populate_schedule(user_id: str, request: AutoPopulateRequest):
     Returns:
         List of created schedule items
     """
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     logger.info(
         f"Auto-populating schedule: user={user_id}, date={request.date}, "
         f"workouts={request.include_workouts}, habits={request.include_habits}, "
@@ -577,7 +600,7 @@ async def auto_populate_schedule(user_id: str, request: AutoPopulateRequest):
     except Exception as e:
         logger.error(f"Error auto-populating schedule: {e}")
         log_user_error(user_id, "auto_populate_schedule", str(e))
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "daily_schedule")
 
 
 # ============================================================================
@@ -585,7 +608,7 @@ async def auto_populate_schedule(user_id: str, request: AutoPopulateRequest):
 # ============================================================================
 
 @router.post("/{user_id}/gcal/connect")
-async def connect_google_calendar(user_id: str, request: GoogleCalendarConnectRequest):
+async def connect_google_calendar(user_id: str, request: GoogleCalendarConnectRequest, current_user: dict = Depends(get_current_user)):
     """
     Connect Google Calendar by exchanging an OAuth authorization code.
 
@@ -596,6 +619,8 @@ async def connect_google_calendar(user_id: str, request: GoogleCalendarConnectRe
     Returns:
         Connection result
     """
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     logger.info(f"Connecting Google Calendar: user={user_id}")
 
     try:
@@ -619,13 +644,14 @@ async def connect_google_calendar(user_id: str, request: GoogleCalendarConnectRe
     except Exception as e:
         logger.error(f"Error connecting Google Calendar: {e}")
         log_user_error(user_id, "connect_google_calendar", str(e))
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "daily_schedule")
 
 
 @router.get("/{user_id}/gcal/busy-times", response_model=List[GoogleCalendarBusyTime])
 async def get_gcal_busy_times(
     user_id: str,
     date: str = Query(..., description="Date to get busy times for (YYYY-MM-DD)"),
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Get busy time blocks from user's Google Calendar for a date.
@@ -637,6 +663,8 @@ async def get_gcal_busy_times(
     Returns:
         List of busy time blocks
     """
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     logger.info(f"Getting Google Calendar busy times: user={user_id}, date={date}")
 
     try:
@@ -655,11 +683,11 @@ async def get_gcal_busy_times(
     except Exception as e:
         logger.error(f"Error getting busy times: {e}")
         log_user_error(user_id, "get_gcal_busy_times", str(e))
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "daily_schedule")
 
 
 @router.post("/{user_id}/gcal/push-event")
-async def push_to_google_calendar(user_id: str, request: GoogleCalendarPushRequest):
+async def push_to_google_calendar(user_id: str, request: GoogleCalendarPushRequest, current_user: dict = Depends(get_current_user)):
     """
     Push a schedule item to Google Calendar as an event.
 
@@ -670,6 +698,8 @@ async def push_to_google_calendar(user_id: str, request: GoogleCalendarPushReque
     Returns:
         Created Google Calendar event info
     """
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     logger.info(f"Pushing to Google Calendar: user={user_id}, item_id={request.item_id}")
 
     try:
@@ -712,4 +742,4 @@ async def push_to_google_calendar(user_id: str, request: GoogleCalendarPushReque
     except Exception as e:
         logger.error(f"Error pushing to Google Calendar: {e}")
         log_user_error(user_id, "push_to_google_calendar", str(e))
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "daily_schedule")

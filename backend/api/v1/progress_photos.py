@@ -10,11 +10,14 @@ import boto3
 from botocore.config import Config as BotoConfig
 from datetime import datetime
 from typing import Optional, List
-from fastapi import APIRouter, HTTPException, UploadFile, File, Form, Query
+from fastapi import APIRouter, HTTPException, UploadFile, File, Form, Query, Depends, Request
 from pydantic import BaseModel, Field
 
 from core.db import get_supabase_db
 from core.config import get_settings
+from core.auth import get_current_user
+from core.exceptions import safe_internal_error
+from core.rate_limiter import limiter
 
 PRESIGNED_URL_EXPIRATION = 3600  # 1 hour
 
@@ -207,6 +210,7 @@ async def upload_progress_photo(
     notes: Optional[str] = Form(None),
     measurement_id: Optional[str] = Form(None),
     visibility: str = Form('private'),
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Upload a new progress photo.
@@ -219,6 +223,9 @@ async def upload_progress_photo(
     - **notes**: Any notes about the photo
     - **visibility**: 'private', 'shared', or 'public'
     """
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
+
     db = get_supabase_db()
 
     # Validate view type
@@ -229,13 +236,45 @@ async def upload_progress_photo(
             detail=f"Invalid view_type. Must be one of: {valid_view_types}"
         )
 
-    # Validate file type
-    allowed_types = ['image/jpeg', 'image/png', 'image/webp']
+    # Validate file type (content-type allowlist)
+    allowed_types = ['image/jpeg', 'image/png', 'image/webp', 'image/heic']
     if file.content_type not in allowed_types:
         raise HTTPException(
             status_code=400,
             detail=f"Invalid file type. Must be one of: {allowed_types}"
         )
+
+    # Validate file size (10MB max)
+    MAX_FILE_SIZE = 10 * 1024 * 1024  # 10MB
+    contents = await file.read()
+    if len(contents) > MAX_FILE_SIZE:
+        raise HTTPException(
+            status_code=400,
+            detail=f"File too large. Maximum size is 10MB."
+        )
+
+    # Magic byte validation
+    magic_bytes = {
+        'image/jpeg': [b'\xff\xd8\xff'],
+        'image/png': [b'\x89PNG\r\n\x1a\n'],
+        'image/webp': [b'RIFF'],
+        'image/heic': [b'\x00\x00\x00', b'ftyp'],  # HEIC starts with ftyp box
+    }
+
+    expected_magics = magic_bytes.get(file.content_type, [])
+    if expected_magics:
+        header = contents[:12]
+        if not any(header.startswith(m) for m in expected_magics):
+            # Special handling for HEIC - check for 'ftyp' at offset 4
+            if file.content_type == 'image/heic':
+                if b'ftyp' not in header[:12]:
+                    raise HTTPException(status_code=400, detail="File content does not match declared content type")
+            else:
+                raise HTTPException(status_code=400, detail="File content does not match declared content type")
+
+    # Reset file position after reading for magic byte check
+    # We already have contents, so we'll pass them directly below
+    await file.seek(0)
 
     try:
         # Upload to S3
@@ -265,12 +304,13 @@ async def upload_progress_photo(
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error uploading photo: {str(e)}")
+        raise safe_internal_error(e, "upload_progress_photo")
 
 
 @router.get("/photos/{user_id}", response_model=List[ProgressPhotoResponse])
 async def get_progress_photos(
     user_id: str,
+    current_user: dict = Depends(get_current_user),
     view_type: Optional[str] = Query(None, description="Filter by view type"),
     limit: int = Query(50, ge=1, le=100),
     offset: int = Query(0, ge=0),
@@ -287,6 +327,9 @@ async def get_progress_photos(
     - **from_date**: Filter photos from this date
     - **to_date**: Filter photos until this date
     """
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
+
     db = get_supabase_db()
 
     try:
@@ -311,16 +354,19 @@ async def get_progress_photos(
         return [ProgressPhotoResponse(**_presign_photo(photo)) for photo in result.data]
 
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error fetching photos: {str(e)}")
+        raise safe_internal_error(e, "get_progress_photos")
 
 
 @router.get("/photos/{user_id}/latest", response_model=dict)
-async def get_latest_photos_by_view(user_id: str):
+async def get_latest_photos_by_view(user_id: str, current_user: dict = Depends(get_current_user)):
     """
     Get the most recent photo for each view type.
 
     Returns a dict with view_type as keys and photo objects as values.
     """
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
+
     db = get_supabase_db()
 
     try:
@@ -355,12 +401,14 @@ async def get_latest_photos_by_view(user_id: str):
         return photos_by_view
 
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error fetching latest photos: {str(e)}")
+        raise safe_internal_error(e, "get_latest_photos_by_view")
 
 
 @router.get("/photos/{user_id}/{photo_id}", response_model=ProgressPhotoResponse)
-async def get_progress_photo(user_id: str, photo_id: str):
+async def get_progress_photo(user_id: str, photo_id: str, current_user: dict = Depends(get_current_user)):
     """Get a specific progress photo."""
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     db = get_supabase_db()
 
     try:
@@ -379,7 +427,7 @@ async def get_progress_photo(user_id: str, photo_id: str):
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error fetching photo: {str(e)}")
+        raise safe_internal_error(e, "get_progress_photo")
 
 
 @router.put("/photos/{photo_id}", response_model=ProgressPhotoResponse)
@@ -387,8 +435,11 @@ async def update_progress_photo(
     photo_id: str,
     user_id: str = Query(...),
     update_data: ProgressPhotoUpdate = None,
+    current_user: dict = Depends(get_current_user),
 ):
     """Update a progress photo's metadata."""
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     db = get_supabase_db()
 
     try:
@@ -421,15 +472,18 @@ async def update_progress_photo(
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error updating photo: {str(e)}")
+        raise safe_internal_error(e, "update_progress_photo")
 
 
 @router.delete("/photos/{photo_id}")
 async def delete_progress_photo(
     photo_id: str,
     user_id: str = Query(...),
+    current_user: dict = Depends(get_current_user),
 ):
     """Delete a progress photo."""
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     db = get_supabase_db()
 
     try:
@@ -460,7 +514,7 @@ async def delete_progress_photo(
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error deleting photo: {str(e)}")
+        raise safe_internal_error(e, "delete_progress_photo")
 
 
 # ============================================================================
@@ -468,7 +522,7 @@ async def delete_progress_photo(
 # ============================================================================
 
 @router.post("/comparisons", response_model=PhotoComparisonResponse)
-async def create_photo_comparison(data: PhotoComparisonCreate):
+async def create_photo_comparison(data: PhotoComparisonCreate, current_user: dict = Depends(get_current_user)):
     """
     Create a before/after photo comparison.
 
@@ -477,6 +531,9 @@ async def create_photo_comparison(data: PhotoComparisonCreate):
     - **title**: Optional title for the comparison
     - **description**: Optional description
     """
+    if str(current_user["id"]) != str(data.user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
+
     db = get_supabase_db()
 
     try:
@@ -545,7 +602,7 @@ async def create_photo_comparison(data: PhotoComparisonCreate):
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error creating comparison: {str(e)}")
+        raise safe_internal_error(e, "create_photo_comparison")
 
 
 @router.put("/comparisons/{comparison_id}", response_model=PhotoComparisonResponse)
@@ -553,8 +610,11 @@ async def update_photo_comparison(
     comparison_id: str,
     user_id: str = Query(...),
     data: ComparisonUpdate = None,
+    current_user: dict = Depends(get_current_user),
 ):
     """Update a photo comparison's settings, layout, AI summary, etc."""
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     db = get_supabase_db()
     try:
         # Verify ownership
@@ -615,15 +675,18 @@ async def update_photo_comparison(
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error updating comparison: {str(e)}")
+        raise safe_internal_error(e, "update_photo_comparison")
 
 
 @router.get("/comparisons/{user_id}", response_model=List[PhotoComparisonResponse])
 async def get_photo_comparisons(
     user_id: str,
+    current_user: dict = Depends(get_current_user),
     limit: int = Query(20, ge=1, le=50),
 ):
     """Get all photo comparisons for a user."""
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     db = get_supabase_db()
 
     try:
@@ -659,15 +722,18 @@ async def get_photo_comparisons(
         return comparisons
 
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error fetching comparisons: {str(e)}")
+        raise safe_internal_error(e, "get_photo_comparisons")
 
 
 @router.delete("/comparisons/{comparison_id}")
 async def delete_photo_comparison(
     comparison_id: str,
     user_id: str = Query(...),
+    current_user: dict = Depends(get_current_user),
 ):
     """Delete a photo comparison (does not delete the photos themselves)."""
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     db = get_supabase_db()
 
     try:
@@ -680,7 +746,7 @@ async def delete_photo_comparison(
         return {"status": "deleted", "comparison_id": comparison_id}
 
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error deleting comparison: {str(e)}")
+        raise safe_internal_error(e, "delete_photo_comparison")
 
 
 # ============================================================================
@@ -688,7 +754,8 @@ async def delete_photo_comparison(
 # ============================================================================
 
 @router.post("/ai-summary", response_model=AiSummaryResponse)
-async def generate_ai_summary(data: AiSummaryRequest):
+@limiter.limit("5/minute")
+async def generate_ai_summary(request: Request, data: AiSummaryRequest, current_user: dict = Depends(get_current_user)):
     """Generate an AI progress summary by analyzing before/after photos."""
     try:
         from google import genai
@@ -744,7 +811,7 @@ Return ONLY a JSON object: {{"summary": "your analysis here"}}"""
 
         return AiSummaryResponse(summary=summary)
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error generating AI summary: {str(e)}")
+        raise safe_internal_error(e, "generate_ai_summary")
 
 
 # ============================================================================
@@ -752,8 +819,10 @@ Return ONLY a JSON object: {{"summary": "your analysis here"}}"""
 # ============================================================================
 
 @router.get("/stats/{user_id}", response_model=PhotoStatsResponse)
-async def get_photo_stats(user_id: str):
+async def get_photo_stats(user_id: str, current_user: dict = Depends(get_current_user)):
     """Get photo statistics for a user."""
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     db = get_supabase_db()
 
     try:
@@ -788,4 +857,4 @@ async def get_photo_stats(user_id: str):
         )
 
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error fetching stats: {str(e)}")
+        raise safe_internal_error(e, "get_photo_stats")

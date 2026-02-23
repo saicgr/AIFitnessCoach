@@ -17,17 +17,22 @@ ENDPOINTS:
 - POST /api/v1/subscriptions/{user_id}/accept-offer - Accept retention offer
 """
 from datetime import datetime, date, timedelta
-from fastapi import APIRouter, HTTPException, Request, Header
+from fastapi import APIRouter, HTTPException, Request, Header, Depends
 from typing import Optional, List
 from pydantic import BaseModel
 from enum import Enum
 import hmac
 import hashlib
+import logging
 
 from core.supabase_client import get_supabase
 from core.logger import get_logger
 from core.config import get_settings
 from core.activity_logger import log_user_activity, log_user_error
+from core.auth import get_current_user
+from core.exceptions import safe_internal_error
+
+audit_logger = logging.getLogger("audit.subscriptions")
 
 
 class SubscriptionTier(str, Enum):
@@ -115,8 +120,10 @@ def get_user_internal_id(supabase, user_id: str) -> str:
 
 
 @router.get("/{user_id}", response_model=SubscriptionResponse)
-async def get_subscription(user_id: str):
+async def get_subscription(user_id: str, current_user: dict = Depends(get_current_user)):
     """Get user's current subscription status."""
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     logger.info(f"Fetching subscription for user: {user_id}")
 
     try:
@@ -154,12 +161,11 @@ async def get_subscription(user_id: str):
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to get subscription: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "get_subscription")
 
 
 @router.post("/{user_id}/check-access", response_model=FeatureAccessResponse)
-async def check_feature_access(user_id: str, request: FeatureAccessRequest):
+async def check_feature_access(user_id: str, request: FeatureAccessRequest, current_user: dict = Depends(get_current_user)):
     """
     Check if user has access to a specific feature.
 
@@ -168,6 +174,8 @@ async def check_feature_access(user_id: str, request: FeatureAccessRequest):
     2. Feature's minimum required tier
     3. Usage limits for the current period
     """
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     logger.info(f"Checking access to '{request.feature_key}' for user: {user_id}")
 
     try:
@@ -267,8 +275,7 @@ async def check_feature_access(user_id: str, request: FeatureAccessRequest):
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to check feature access: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "check_feature_access")
 
 
 def _get_next_tier(current_tier: str) -> str:
@@ -284,12 +291,14 @@ def _get_next_tier(current_tier: str) -> str:
 
 
 @router.post("/{user_id}/track-usage")
-async def track_feature_usage(user_id: str, request: FeatureUsageRequest):
+async def track_feature_usage(user_id: str, request: FeatureUsageRequest, current_user: dict = Depends(get_current_user)):
     """
     Track usage of a feature for rate limiting.
 
     This increments the daily usage counter for the feature.
     """
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     logger.info(f"Tracking usage of '{request.feature_key}' for user: {user_id}")
 
     try:
@@ -342,17 +351,18 @@ async def track_feature_usage(user_id: str, request: FeatureUsageRequest):
             return {"status": "tracked", "feature_key": request.feature_key}
 
         except Exception as e2:
-            logger.error(f"Failed to track usage: {e2}")
-            raise HTTPException(status_code=500, detail=str(e2))
+            raise safe_internal_error(e2, "track_feature_usage")
 
 
 @router.post("/{user_id}/paywall-impression")
-async def track_paywall_impression(user_id: str, request: PaywallImpressionRequest):
+async def track_paywall_impression(user_id: str, request: PaywallImpressionRequest, current_user: dict = Depends(get_current_user)):
     """
     Track user interaction with paywall screens.
 
     Used for conversion funnel analysis.
     """
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     logger.info(f"Tracking paywall impression: user={user_id}, screen={request.screen}, action={request.action}")
 
     try:
@@ -397,8 +407,10 @@ async def track_paywall_impression(user_id: str, request: PaywallImpressionReque
 
 
 @router.get("/{user_id}/usage-stats", response_model=List[UsageStatsResponse])
-async def get_usage_stats(user_id: str, feature_key: Optional[str] = None):
+async def get_usage_stats(user_id: str, feature_key: Optional[str] = None, current_user: dict = Depends(get_current_user)):
     """Get feature usage statistics for a user."""
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     logger.info(f"Fetching usage stats for user: {user_id}")
 
     try:
@@ -473,8 +485,7 @@ async def get_usage_stats(user_id: str, feature_key: Optional[str] = None):
         return response
 
     except Exception as e:
-        logger.error(f"Failed to get usage stats: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "get_usage_stats")
 
 
 # ==================== REVENUECAT WEBHOOK ====================
@@ -508,10 +519,11 @@ async def revenuecat_webhook(
     try:
         # Verify webhook signature
         webhook_secret = getattr(settings, 'revenuecat_webhook_secret', None)
-        if webhook_secret and authorization:
-            if authorization != f"Bearer {webhook_secret}":
-                logger.warning("Invalid webhook authorization")
-                raise HTTPException(status_code=401, detail="Invalid authorization")
+        if not webhook_secret:
+            raise HTTPException(status_code=503, detail="Webhook not configured")
+        if not authorization or not hmac.compare_digest(authorization, f"Bearer {webhook_secret}"):
+            logger.warning("Invalid webhook authorization")
+            raise HTTPException(status_code=401, detail="Invalid authorization")
 
         body = await request.json()
         event_type = body.get("event", {}).get("type")
@@ -547,8 +559,7 @@ async def revenuecat_webhook(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Webhook processing failed: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "revenuecat_webhook")
 
 
 async def _handle_initial_purchase(supabase, event: dict):
@@ -878,8 +889,9 @@ class RefundRequestDetails(BaseModel):
 @router.get("/{user_id}/history", response_model=SubscriptionHistoryResponse)
 async def get_subscription_history(
     user_id: str,
+    current_user: dict = Depends(get_current_user),
     limit: int = 50,
-    offset: int = 0
+    offset: int = 0,
 ):
     """
     Get user's subscription change history.
@@ -895,6 +907,8 @@ async def get_subscription_history(
 
     This provides full transparency into all subscription changes.
     """
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     logger.info(f"Fetching subscription history for user: {user_id}")
 
     try:
@@ -975,12 +989,11 @@ async def get_subscription_history(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to get subscription history: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "get_subscription_history")
 
 
 @router.get("/{user_id}/upcoming-renewal", response_model=UpcomingRenewalResponse)
-async def get_upcoming_renewal(user_id: str):
+async def get_upcoming_renewal(user_id: str, current_user: dict = Depends(get_current_user)):
     """
     Get upcoming subscription renewal information.
 
@@ -994,6 +1007,8 @@ async def get_upcoming_renewal(user_id: str):
 
     Note: Lifetime members never have upcoming renewals.
     """
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     logger.info(f"Fetching upcoming renewal for user: {user_id}")
 
     try:
@@ -1076,12 +1091,11 @@ async def get_upcoming_renewal(user_id: str):
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to get upcoming renewal: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "get_upcoming_renewal")
 
 
 @router.post("/{user_id}/request-refund", response_model=RefundRequestResponse)
-async def request_refund(user_id: str, request: RefundRequest):
+async def request_refund(user_id: str, request: RefundRequest, current_user: dict = Depends(get_current_user)):
     """
     Submit a refund request for the user's subscription.
 
@@ -1091,6 +1105,8 @@ async def request_refund(user_id: str, request: RefundRequest):
     This addresses concerns about unwanted tier changes by providing
     a clear path to request refunds.
     """
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     logger.info(f"Processing refund request for user: {user_id}")
 
     try:
@@ -1176,7 +1192,6 @@ async def request_refund(user_id: str, request: RefundRequest):
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to create refund request: {e}")
         await log_user_error(
             user_id=user_id,
             action="refund_request_failed",
@@ -1184,16 +1199,18 @@ async def request_refund(user_id: str, request: RefundRequest):
             error_message=str(e),
             metadata={"reason": request.reason}
         )
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "request_refund")
 
 
 @router.get("/{user_id}/refund-requests", response_model=List[RefundRequestDetails])
-async def get_refund_requests(user_id: str):
+async def get_refund_requests(user_id: str, current_user: dict = Depends(get_current_user)):
     """
     Get all refund requests for a user.
 
     Returns the status of all submitted refund requests.
     """
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     logger.info(f"Fetching refund requests for user: {user_id}")
 
     try:
@@ -1223,8 +1240,7 @@ async def get_refund_requests(user_id: str):
         return refunds
 
     except Exception as e:
-        logger.error(f"Failed to get refund requests: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "get_refund_requests")
 
 
 # ==================== FREE TRIAL SYSTEM ====================
@@ -1269,7 +1285,7 @@ class TrialConversionRequest(BaseModel):
 
 
 @router.get("/trial-eligibility/{user_id}", response_model=TrialEligibilityResponse)
-async def check_trial_eligibility(user_id: str):
+async def check_trial_eligibility(user_id: str, current_user: dict = Depends(get_current_user)):
     """
     Check if a user is eligible for a free trial.
 
@@ -1285,6 +1301,8 @@ async def check_trial_eligibility(user_id: str):
 
     Returns eligibility status and available trial options.
     """
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     logger.info(f"Checking trial eligibility for user: {user_id}")
 
     try:
@@ -1371,12 +1389,11 @@ async def check_trial_eligibility(user_id: str):
         )
 
     except Exception as e:
-        logger.error(f"Failed to check trial eligibility: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "check_trial_eligibility")
 
 
 @router.post("/start-trial/{user_id}", response_model=StartTrialResponse)
-async def start_trial(user_id: str, request: StartTrialRequest):
+async def start_trial(user_id: str, request: StartTrialRequest, current_user: dict = Depends(get_current_user)):
     """
     Start a 7-day free trial for a user.
 
@@ -1392,6 +1409,8 @@ async def start_trial(user_id: str, request: StartTrialRequest):
 
     No payment required to start - just creates the trial subscription.
     """
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     logger.info(f"Starting trial for user: {user_id}, plan: {request.plan_type}")
 
     try:
@@ -1504,18 +1523,19 @@ async def start_trial(user_id: str, request: StartTrialRequest):
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to start trial: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "start_trial")
 
 
 @router.post("/convert-trial/{user_id}")
-async def convert_trial_to_paid(user_id: str, request: TrialConversionRequest):
+async def convert_trial_to_paid(user_id: str, request: TrialConversionRequest, current_user: dict = Depends(get_current_user)):
     """
     Convert a trial to a paid subscription.
 
     This is called after successful payment through RevenueCat/App Store/Play Store.
     It updates the subscription status from 'trial' to 'active'.
     """
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     logger.info(f"Converting trial to paid for user: {user_id}")
 
     try:
@@ -1592,12 +1612,11 @@ async def convert_trial_to_paid(user_id: str, request: TrialConversionRequest):
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to convert trial: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "convert_trial_to_paid")
 
 
 @router.get("/trial-status/{user_id}")
-async def get_trial_status(user_id: str):
+async def get_trial_status(user_id: str, current_user: dict = Depends(get_current_user)):
     """
     Get detailed trial status for a user.
 
@@ -1607,6 +1626,8 @@ async def get_trial_status(user_id: str):
     - Trial plan type
     - Conversion options
     """
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     logger.info(f"Getting trial status for user: {user_id}")
 
     try:
@@ -1678,8 +1699,7 @@ async def get_trial_status(user_id: str):
         }
 
     except Exception as e:
-        logger.error(f"Failed to get trial status: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "get_trial_status")
 
 
 # ==================== LIFETIME MEMBERSHIP SYSTEM ====================
@@ -1786,7 +1806,7 @@ def calculate_lifetime_value(months_as_member: int, monthly_price: float = 9.99)
 
 
 @router.get("/{user_id}/lifetime-status", response_model=LifetimeStatusResponse)
-async def get_lifetime_status(user_id: str):
+async def get_lifetime_status(user_id: str, current_user: dict = Depends(get_current_user)):
     """
     Check if user is a lifetime member and get their status.
 
@@ -1803,6 +1823,8 @@ async def get_lifetime_status(user_id: str):
     - Never expire
     - Get recognition badges based on membership duration
     """
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     logger.info(f"Checking lifetime status for user: {user_id}")
 
     try:
@@ -1906,18 +1928,19 @@ async def get_lifetime_status(user_id: str):
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to get lifetime status: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "get_lifetime_status")
 
 
 @router.get("/{user_id}/lifetime-benefits", response_model=LifetimeMemberBenefitsResponse)
-async def get_lifetime_benefits(user_id: str):
+async def get_lifetime_benefits(user_id: str, current_user: dict = Depends(get_current_user)):
     """
     Get detailed lifetime member benefits and perks.
 
     Returns comprehensive information about what the lifetime member gets,
     including estimated savings and tier-specific perks.
     """
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     logger.info(f"Fetching lifetime benefits for user: {user_id}")
 
     try:
@@ -1994,8 +2017,7 @@ async def get_lifetime_benefits(user_id: str):
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to get lifetime benefits: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "get_lifetime_benefits")
 
 
 @router.post("/{user_id}/convert-to-lifetime")
@@ -2003,7 +2025,8 @@ async def convert_to_lifetime(
     user_id: str,
     product_id: str = "lifetime",
     price_paid: float = 99.99,
-    promotion_code: Optional[str] = None
+    promotion_code: Optional[str] = None,
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Convert a user's subscription to lifetime membership.
@@ -2020,6 +2043,8 @@ async def convert_to_lifetime(
     Returns:
         Updated subscription status
     """
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     logger.info(f"Converting user {user_id} to lifetime membership")
 
     try:
@@ -2110,7 +2135,6 @@ async def convert_to_lifetime(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to convert to lifetime: {e}")
         await log_user_error(
             user_id=user_id,
             action="lifetime_conversion_failed",
@@ -2118,7 +2142,7 @@ async def convert_to_lifetime(
             error_message=str(e),
             metadata={"product_id": product_id, "price_paid": price_paid}
         )
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "convert_to_lifetime")
 
 
 # ==================== SUBSCRIPTION PAUSE/RESUME SYSTEM ====================
@@ -2189,7 +2213,7 @@ class AcceptOfferResponse(BaseModel):
 
 
 @router.post("/{user_id}/pause", response_model=PauseSubscriptionResponse)
-async def pause_subscription(user_id: str, request: PauseSubscriptionRequest):
+async def pause_subscription(user_id: str, request: PauseSubscriptionRequest, current_user: dict = Depends(get_current_user)):
     """
     Pause a user's subscription for a specified duration.
 
@@ -2203,6 +2227,8 @@ async def pause_subscription(user_id: str, request: PauseSubscriptionRequest):
 
     Note: Lifetime members cannot pause (they have permanent access).
     """
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     logger.info(f"Pausing subscription for user: {user_id}, duration: {request.duration_days} days")
 
     try:
@@ -2318,7 +2344,6 @@ async def pause_subscription(user_id: str, request: PauseSubscriptionRequest):
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to pause subscription: {e}")
         await log_user_error(
             user_id=user_id,
             action="subscription_pause_failed",
@@ -2326,11 +2351,11 @@ async def pause_subscription(user_id: str, request: PauseSubscriptionRequest):
             error_message=str(e),
             metadata={"duration_days": request.duration_days}
         )
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "pause_subscription")
 
 
 @router.post("/{user_id}/resume", response_model=ResumeSubscriptionResponse)
-async def resume_subscription(user_id: str):
+async def resume_subscription(user_id: str, current_user: dict = Depends(get_current_user)):
     """
     Resume a paused subscription early.
 
@@ -2339,6 +2364,8 @@ async def resume_subscription(user_id: str):
 
     Note: Billing cycle adjustments are handled by RevenueCat.
     """
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     logger.info(f"Resuming subscription for user: {user_id}")
 
     try:
@@ -2427,7 +2454,6 @@ async def resume_subscription(user_id: str):
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to resume subscription: {e}")
         await log_user_error(
             user_id=user_id,
             action="subscription_resume_failed",
@@ -2435,11 +2461,11 @@ async def resume_subscription(user_id: str):
             error_message=str(e),
             metadata={}
         )
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "resume_subscription")
 
 
 @router.get("/{user_id}/retention-offers", response_model=RetentionOffersResponse)
-async def get_retention_offers(user_id: str, reason: Optional[str] = None):
+async def get_retention_offers(user_id: str, reason: Optional[str] = None, current_user: dict = Depends(get_current_user)):
     """
     Get available retention offers to prevent cancellation.
 
@@ -2455,6 +2481,8 @@ async def get_retention_offers(user_id: str, reason: Optional[str] = None):
     - downgrade: Move to a lower tier instead of canceling
     - pause: Pause subscription instead of canceling
     """
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     logger.info(f"Fetching retention offers for user: {user_id}, reason: {reason}")
 
     try:
@@ -2561,12 +2589,11 @@ async def get_retention_offers(user_id: str, reason: Optional[str] = None):
         )
 
     except Exception as e:
-        logger.error(f"Failed to get retention offers: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "get_retention_offers")
 
 
 @router.post("/{user_id}/accept-offer", response_model=AcceptOfferResponse)
-async def accept_retention_offer(user_id: str, request: AcceptOfferRequest):
+async def accept_retention_offer(user_id: str, request: AcceptOfferRequest, current_user: dict = Depends(get_current_user)):
     """
     Accept a retention offer.
 
@@ -2578,6 +2605,8 @@ async def accept_retention_offer(user_id: str, request: AcceptOfferRequest):
 
     Records the acceptance for analytics and prevents double-use.
     """
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     logger.info(f"Accepting retention offer for user: {user_id}, offer: {request.offer_id}")
 
     try:
@@ -2654,7 +2683,27 @@ async def accept_retention_offer(user_id: str, request: AcceptOfferRequest):
         elif offer_type == "downgrade":
             # Extract target tier
             target_tier = "premium" if len(offer_parts) < 2 else offer_parts[1]
+
+            # CRITICAL: Prevent tier escalation - offers can only downgrade/discount, never upgrade
+            tier_levels = {"free": 0, "premium": 1, "premium_plus": 2, "lifetime": 3}
+            current_level = tier_levels.get(subscription.get("tier", "free"), 0)
+            target_level = tier_levels.get(target_tier, 0)
+
+            if target_level > current_level:
+                audit_logger.warning(
+                    f"BLOCKED tier escalation attempt: user={user_id}, "
+                    f"current={subscription.get('tier')}, attempted={target_tier}, offer={request.offer_id}"
+                )
+                raise HTTPException(
+                    status_code=403,
+                    detail="Retention offers cannot escalate subscription tier"
+                )
+
             new_tier = target_tier
+            audit_logger.info(
+                f"Tier change via retention offer: user={user_id}, "
+                f"from={subscription.get('tier')}, to={target_tier}, offer={request.offer_id}"
+            )
 
             supabase.client.table("user_subscriptions")\
                 .update({"tier": target_tier})\
@@ -2725,7 +2774,6 @@ async def accept_retention_offer(user_id: str, request: AcceptOfferRequest):
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to accept retention offer: {e}")
         await log_user_error(
             user_id=user_id,
             action="retention_offer_failed",
@@ -2733,4 +2781,4 @@ async def accept_retention_offer(user_id: str, request: AcceptOfferRequest):
             error_message=str(e),
             metadata={"offer_id": request.offer_id}
         )
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "accept_retention_offer")

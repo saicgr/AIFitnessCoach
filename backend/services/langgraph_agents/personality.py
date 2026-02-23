@@ -4,6 +4,7 @@ Personality prompt builder for AI agents.
 This module builds dynamic system prompts based on user's AI settings,
 allowing each agent to adapt its communication style.
 """
+import re
 from typing import Optional, Dict, Any
 from models.chat import AISettings
 from core.logger import get_logger
@@ -12,6 +13,14 @@ logger = get_logger(__name__)
 
 # Default settings if none provided
 DEFAULT_SETTINGS = AISettings()
+
+
+def sanitize_coach_name(name: str, default: str = "Coach") -> str:
+    """Sanitize coach name to prevent prompt injection via user-controlled names."""
+    if not name:
+        return default
+    cleaned = re.sub(r"[^a-zA-Z0-9\s\-\']", '', name)[:30].strip()
+    return cleaned or default
 
 
 def build_personality_prompt(
@@ -33,7 +42,7 @@ def build_personality_prompt(
     settings = ai_settings or DEFAULT_SETTINGS
 
     # Use the user's selected coach name if available, otherwise use the default agent name
-    display_name = settings.coach_name if settings.coach_name else agent_name
+    display_name = sanitize_coach_name(settings.coach_name, default=agent_name) if settings.coach_name else agent_name
 
     # Build coaching style description
     style_descriptions = {

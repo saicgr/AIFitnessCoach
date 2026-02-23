@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../widgets/app_dialog.dart';
 import '../../../data/providers/support_provider.dart';
 import '../../../data/repositories/auth_repository.dart';
 import '../../../models/support_ticket.dart';
@@ -91,46 +92,12 @@ class _TicketDetailScreenState extends ConsumerState<TicketDetailScreen> {
   }
 
   Future<void> _closeTicket() async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) {
-        final isDark = Theme.of(context).brightness == Brightness.dark;
-        final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
-        final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-        final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
-
-        return AlertDialog(
-          backgroundColor: elevated,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-          title: Text(
-            'Close Ticket?',
-            style: TextStyle(color: textPrimary),
-          ),
-          content: Text(
-            'Are you sure you want to close this ticket? You won\'t be able to send more messages.',
-            style: TextStyle(color: textSecondary),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(false),
-              child: Text(
-                'Cancel',
-                style: TextStyle(color: textSecondary),
-              ),
-            ),
-            ElevatedButton(
-              onPressed: () => Navigator.of(context).pop(true),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.error,
-                foregroundColor: Colors.white,
-              ),
-              child: const Text('Close Ticket'),
-            ),
-          ],
-        );
-      },
+    final confirmed = await AppDialog.destructive(
+      context,
+      title: 'Close Ticket?',
+      message: 'Are you sure you want to close this ticket? You won\'t be able to send more messages.',
+      confirmText: 'Close Ticket',
+      icon: Icons.close_rounded,
     );
 
     if (confirmed == true) {

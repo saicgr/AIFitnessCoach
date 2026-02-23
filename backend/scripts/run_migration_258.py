@@ -6,6 +6,7 @@ Run migration 258 - Fix nutrition_goal for users whose weight_direction contradi
 - Affects users who have weight_direction='lose' or 'gain' but nutrition_goal='maintain'
 """
 
+import os
 import sys
 import psycopg2
 
@@ -14,7 +15,9 @@ DATABASE_HOST = "db.hpbzfahijszqmgsybuor.supabase.co"
 DATABASE_PORT = 5432
 DATABASE_NAME = "postgres"
 DATABASE_USER = "postgres"
-DATABASE_PASSWORD = "d2nHU5oLZ1GCz63B"
+DATABASE_PASSWORD = os.environ.get("DATABASE_PASSWORD")
+if not DATABASE_PASSWORD:
+    raise SystemExit("DATABASE_PASSWORD environment variable is required")
 
 
 def run_migration():

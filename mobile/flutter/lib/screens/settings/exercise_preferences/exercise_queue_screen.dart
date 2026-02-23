@@ -8,9 +8,11 @@ import '../../../data/repositories/exercise_preferences_repository.dart';
 import '../../../widgets/glass_back_button.dart';
 import 'widgets/exercise_picker_sheet.dart';
 
-/// Screen for managing the exercise queue
+/// Screen for managing the exercise queue.
+/// When [embedded] is true, renders without Scaffold/AppBar for use inside tabs.
 class ExerciseQueueScreen extends ConsumerWidget {
-  const ExerciseQueueScreen({super.key});
+  final bool embedded;
+  const ExerciseQueueScreen({super.key, this.embedded = false});
 
   Future<void> _showAddExercisePicker(BuildContext context, WidgetRef ref) async {
     HapticFeedback.lightImpact();
@@ -60,6 +62,22 @@ class ExerciseQueueScreen extends ConsumerWidget {
     final queueState = ref.watch(exerciseQueueProvider);
     final activeQueue = queueState.activeQueue;
 
+    final body = queueState.isLoading
+        ? const Center(child: CircularProgressIndicator())
+        : activeQueue.isEmpty
+            ? _buildEmptyState(context, ref, textMuted)
+            : _buildQueueList(
+                context,
+                ref,
+                activeQueue,
+                isDark,
+                textPrimary,
+                textMuted,
+                elevated,
+              );
+
+    if (embedded) return body;
+
     return Scaffold(
       backgroundColor: backgroundColor,
       appBar: AppBar(
@@ -83,19 +101,7 @@ class ExerciseQueueScreen extends ConsumerWidget {
           ),
         ],
       ),
-      body: queueState.isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : activeQueue.isEmpty
-              ? _buildEmptyState(context, ref, textMuted)
-              : _buildQueueList(
-                  context,
-                  ref,
-                  activeQueue,
-                  isDark,
-                  textPrimary,
-                  textMuted,
-                  elevated,
-                ),
+      body: body,
     );
   }
 

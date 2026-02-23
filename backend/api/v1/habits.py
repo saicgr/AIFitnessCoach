@@ -27,7 +27,7 @@ Endpoints:
 - GET /{user_id}/insights - Get AI-generated insights
 """
 
-from fastapi import APIRouter, HTTPException, Query, Request
+from fastapi import APIRouter, HTTPException, Query, Request, Depends
 from datetime import datetime, date, timedelta, timezone
 from typing import Optional, List
 from uuid import UUID
@@ -45,6 +45,8 @@ from models.habits import (
     BulkHabitLogCreate, BulkHabitLogResponse,
     HabitCalendarData, HabitCalendarResponse,
 )
+from core.auth import get_current_user
+from core.exceptions import safe_internal_error
 
 router = APIRouter()
 logger = get_logger(__name__)
@@ -58,7 +60,8 @@ logger = get_logger(__name__)
 async def get_habits(
     user_id: str,
     is_active: bool = Query(True, description="Filter by active status"),
-    category: Optional[str] = Query(None, description="Filter by category")
+    category: Optional[str] = Query(None, description="Filter by category"),
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Get all habits for a user.
@@ -94,11 +97,14 @@ async def get_habits(
     except Exception as e:
         logger.error(f"❌ Error getting habits: {e}")
         log_user_error(user_id, "get_habits", str(e))
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "endpoint")
 
 
 @router.get("/{user_id}/today", response_model=TodayHabitsResponse)
-async def get_today_habits(user_id: str, request: Request):
+async def get_today_habits(
+    user_id: str, request: Request,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Get today's habits with completion status.
 
@@ -203,11 +209,14 @@ async def get_today_habits(user_id: str, request: Request):
     except Exception as e:
         logger.error(f"❌ Error getting today's habits: {e}")
         log_user_error(user_id, "get_today_habits", str(e))
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "endpoint")
 
 
 @router.post("/{user_id}", response_model=Habit)
-async def create_habit(user_id: str, habit: HabitCreate):
+async def create_habit(
+    user_id: str, habit: HabitCreate,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Create a new habit for a user.
 
@@ -245,7 +254,7 @@ async def create_habit(user_id: str, habit: HabitCreate):
         result = db.client.table("habits").insert(habit_data).execute()
 
         if not result.data:
-            raise HTTPException(status_code=500, detail="Failed to create habit")
+            raise safe_internal_error(e, "endpoint")
 
         created_habit = result.data[0]
 
@@ -265,11 +274,14 @@ async def create_habit(user_id: str, habit: HabitCreate):
     except Exception as e:
         logger.error(f"❌ Error creating habit: {e}")
         log_user_error(user_id, "create_habit", str(e))
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "endpoint")
 
 
 @router.put("/{user_id}/{habit_id}", response_model=Habit)
-async def update_habit(user_id: str, habit_id: str, habit: HabitUpdate):
+async def update_habit(
+    user_id: str, habit_id: str, habit: HabitUpdate,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Update an existing habit.
 
@@ -331,7 +343,7 @@ async def update_habit(user_id: str, habit_id: str, habit: HabitUpdate):
         ).eq("user_id", user_id).execute()
 
         if not result.data:
-            raise HTTPException(status_code=500, detail="Failed to update habit")
+            raise safe_internal_error(e, "endpoint")
 
         logger.info(f"✅ Updated habit: id={habit_id}")
         return result.data[0]
@@ -341,11 +353,14 @@ async def update_habit(user_id: str, habit_id: str, habit: HabitUpdate):
     except Exception as e:
         logger.error(f"❌ Error updating habit: {e}")
         log_user_error(user_id, "update_habit", str(e))
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "endpoint")
 
 
 @router.delete("/{user_id}/{habit_id}")
-async def delete_habit(user_id: str, habit_id: str, hard_delete: bool = Query(False)):
+async def delete_habit(
+    user_id: str, habit_id: str, hard_delete: bool = Query(False),
+    current_user: dict = Depends(get_current_user),
+):
     """
     Delete a habit (soft delete by default).
 
@@ -399,11 +414,14 @@ async def delete_habit(user_id: str, habit_id: str, hard_delete: bool = Query(Fa
     except Exception as e:
         logger.error(f"❌ Error deleting habit: {e}")
         log_user_error(user_id, "delete_habit", str(e))
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "endpoint")
 
 
 @router.post("/{user_id}/{habit_id}/archive")
-async def archive_habit(user_id: str, habit_id: str):
+async def archive_habit(
+    user_id: str, habit_id: str,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Archive a habit (same as soft delete).
 
@@ -422,7 +440,10 @@ async def archive_habit(user_id: str, habit_id: str):
 # ============================================================================
 
 @router.post("/{user_id}/log", response_model=HabitLog)
-async def log_habit(user_id: str, log: HabitLogCreate, request: Request = None):
+async def log_habit(
+    user_id: str, log: HabitLogCreate, request: Request = None,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Log habit completion for a specific date.
 
@@ -475,7 +496,7 @@ async def log_habit(user_id: str, log: HabitLogCreate, request: Request = None):
         ).execute()
 
         if not result.data:
-            raise HTTPException(status_code=500, detail="Failed to log habit")
+            raise safe_internal_error(e, "endpoint")
 
         log_entry = result.data[0]
 
@@ -496,11 +517,14 @@ async def log_habit(user_id: str, log: HabitLogCreate, request: Request = None):
     except Exception as e:
         logger.error(f"❌ Error logging habit: {e}")
         log_user_error(user_id, "log_habit", str(e))
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "endpoint")
 
 
 @router.put("/{user_id}/log/{log_id}", response_model=HabitLog)
-async def update_habit_log(user_id: str, log_id: str, log: HabitLogUpdate):
+async def update_habit_log(
+    user_id: str, log_id: str, log: HabitLogUpdate,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Update an existing habit log.
 
@@ -550,7 +574,7 @@ async def update_habit_log(user_id: str, log_id: str, log: HabitLogUpdate):
         ).eq("user_id", user_id).execute()
 
         if not result.data:
-            raise HTTPException(status_code=500, detail="Failed to update habit log")
+            raise safe_internal_error(e, "endpoint")
 
         logger.info(f"✅ Updated habit log: id={log_id}")
         return result.data[0]
@@ -560,7 +584,7 @@ async def update_habit_log(user_id: str, log_id: str, log: HabitLogUpdate):
     except Exception as e:
         logger.error(f"❌ Error updating habit log: {e}")
         log_user_error(user_id, "update_habit_log", str(e))
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "endpoint")
 
 
 @router.get("/{user_id}/{habit_id}/logs", response_model=List[HabitLog])
@@ -569,7 +593,8 @@ async def get_habit_logs(
     habit_id: str,
     request: Request,
     start_date: Optional[date] = Query(None, description="Start date (default: 30 days ago)"),
-    end_date: Optional[date] = Query(None, description="End date (default: today)")
+    end_date: Optional[date] = Query(None, description="End date (default: today)"),
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Get habit logs for a date range.
@@ -619,11 +644,14 @@ async def get_habit_logs(
     except Exception as e:
         logger.error(f"❌ Error getting habit logs: {e}")
         log_user_error(user_id, "get_habit_logs", str(e))
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "endpoint")
 
 
 @router.post("/{user_id}/batch-log", response_model=BulkHabitLogResponse)
-async def batch_log_habits(user_id: str, request: BulkHabitLogCreate):
+async def batch_log_habits(
+    user_id: str, request: BulkHabitLogCreate,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Log multiple habits at once.
 
@@ -671,7 +699,10 @@ async def batch_log_habits(user_id: str, request: BulkHabitLogCreate):
 # ============================================================================
 
 @router.get("/{user_id}/streaks", response_model=List[HabitStreak])
-async def get_all_streaks(user_id: str):
+async def get_all_streaks(
+    user_id: str,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Get streaks for all habits.
 
@@ -696,11 +727,14 @@ async def get_all_streaks(user_id: str):
     except Exception as e:
         logger.error(f"❌ Error getting streaks: {e}")
         log_user_error(user_id, "get_all_streaks", str(e))
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "endpoint")
 
 
 @router.get("/{user_id}/{habit_id}/streak", response_model=HabitStreak)
-async def get_habit_streak(user_id: str, habit_id: str):
+async def get_habit_streak(
+    user_id: str, habit_id: str,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Get streak for a specific habit.
 
@@ -730,7 +764,7 @@ async def get_habit_streak(user_id: str, habit_id: str):
     except Exception as e:
         logger.error(f"❌ Error getting streak: {e}")
         log_user_error(user_id, "get_habit_streak", str(e))
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "endpoint")
 
 
 # ============================================================================
@@ -738,7 +772,10 @@ async def get_habit_streak(user_id: str, habit_id: str):
 # ============================================================================
 
 @router.get("/{user_id}/summary", response_model=HabitsSummary)
-async def get_habits_summary(user_id: str, request: Request):
+async def get_habits_summary(
+    user_id: str, request: Request,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Get overall habits summary for dashboard.
 
@@ -797,14 +834,15 @@ async def get_habits_summary(user_id: str, request: Request):
     except Exception as e:
         logger.error(f"❌ Error getting habits summary: {e}")
         log_user_error(user_id, "get_habits_summary", str(e))
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "endpoint")
 
 
 @router.get("/{user_id}/weekly-summary", response_model=List[HabitWeeklySummary])
 async def get_weekly_summary(
     user_id: str,
     request: Request,
-    week_start: Optional[date] = Query(None, description="Start of week (Monday)")
+    week_start: Optional[date] = Query(None, description="Start of week (Monday)"),
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Get weekly summary for all habits.
@@ -846,7 +884,7 @@ async def get_weekly_summary(
     except Exception as e:
         logger.error(f"❌ Error getting weekly summary: {e}")
         log_user_error(user_id, "get_weekly_summary", str(e))
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "endpoint")
 
 
 @router.get("/{user_id}/calendar", response_model=HabitCalendarResponse)
@@ -856,6 +894,7 @@ async def get_habits_calendar(
     start_date: date,
     end_date: date,
     request: Request = None,
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Get calendar view data for a habit.
@@ -951,7 +990,7 @@ async def get_habits_calendar(
     except Exception as e:
         logger.error(f"❌ Error getting calendar: {e}")
         log_user_error(user_id, "get_habits_calendar", str(e))
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "endpoint")
 
 
 # ============================================================================
@@ -959,7 +998,10 @@ async def get_habits_calendar(
 # ============================================================================
 
 @router.get("/templates/all", response_model=List[HabitTemplate])
-async def get_habit_templates(category: Optional[str] = Query(None)):
+async def get_habit_templates(
+    category: Optional[str] = Query(None),
+    current_user: dict = Depends(get_current_user),
+):
     """
     Get available habit templates.
 
@@ -988,11 +1030,14 @@ async def get_habit_templates(category: Optional[str] = Query(None)):
 
     except Exception as e:
         logger.error(f"❌ Error getting templates: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "endpoint")
 
 
 @router.post("/{user_id}/from-template", response_model=Habit)
-async def create_habit_from_template(user_id: str, template_id: str):
+async def create_habit_from_template(
+    user_id: str, template_id: str,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Create a habit from a template.
 
@@ -1038,11 +1083,14 @@ async def create_habit_from_template(user_id: str, template_id: str):
     except Exception as e:
         logger.error(f"❌ Error creating from template: {e}")
         log_user_error(user_id, "create_habit_from_template", str(e))
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "endpoint")
 
 
 @router.post("/{user_id}/suggestions", response_model=HabitSuggestionResponse)
-async def get_ai_suggestions(user_id: str, request: HabitSuggestionRequest):
+async def get_ai_suggestions(
+    user_id: str, request: HabitSuggestionRequest,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Get AI-powered habit suggestions based on user profile.
 
@@ -1099,7 +1147,7 @@ async def get_ai_suggestions(user_id: str, request: HabitSuggestionRequest):
     except Exception as e:
         logger.error(f"❌ Error getting AI suggestions: {e}")
         log_user_error(user_id, "get_ai_suggestions", str(e))
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "endpoint")
 
 
 # ============================================================================
@@ -1107,7 +1155,10 @@ async def get_ai_suggestions(user_id: str, request: HabitSuggestionRequest):
 # ============================================================================
 
 @router.get("/{user_id}/insights", response_model=HabitInsights)
-async def get_habit_insights(user_id: str):
+async def get_habit_insights(
+    user_id: str,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Get AI-generated insights about habit performance.
 
@@ -1179,4 +1230,4 @@ async def get_habit_insights(user_id: str):
     except Exception as e:
         logger.error(f"❌ Error getting insights: {e}")
         log_user_error(user_id, "get_habit_insights", str(e))
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "endpoint")

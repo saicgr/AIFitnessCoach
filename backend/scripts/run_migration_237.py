@@ -12,6 +12,7 @@ Changes:
 Depends on migration 235 (adds metadata columns) and 236 (backfills them).
 """
 
+import os
 import sys
 from pathlib import Path
 
@@ -23,7 +24,9 @@ DATABASE_HOST = "db.hpbzfahijszqmgsybuor.supabase.co"
 DATABASE_PORT = 5432
 DATABASE_NAME = "postgres"
 DATABASE_USER = "postgres"
-DATABASE_PASSWORD = "d2nHU5oLZ1GCz63B"
+DATABASE_PASSWORD = os.environ.get("DATABASE_PASSWORD")
+if not DATABASE_PASSWORD:
+    raise SystemExit("DATABASE_PASSWORD environment variable is required")
 
 
 def run_migration():

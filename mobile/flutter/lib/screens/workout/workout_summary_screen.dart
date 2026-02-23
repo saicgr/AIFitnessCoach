@@ -8,6 +8,7 @@ import '../../data/models/exercise.dart';
 import '../../data/providers/today_workout_provider.dart';
 import '../../data/repositories/workout_repository.dart';
 import '../../widgets/glass_back_button.dart';
+import '../../widgets/glass_sheet.dart';
 import 'widgets/share_workout_sheet.dart';
 
 class WorkoutSummaryScreen extends ConsumerStatefulWidget {
@@ -958,10 +959,8 @@ class _WorkoutSummaryScreenState extends ConsumerState<WorkoutSummaryScreen> {
       child: OutlinedButton.icon(
         onPressed: workout != null
             ? () {
-                showModalBottomSheet(
+                showGlassSheet(
                   context: context,
-                  backgroundColor: Colors.transparent,
-                  isScrollControlled: true,
                   builder: (_) => ShareWorkoutSheet(
                     workoutName: workout.name ?? 'Workout',
                     workoutLogId: workout.id ?? '',

@@ -18,9 +18,11 @@ final avoidedExercisesProvider = FutureProvider.family<List<AvoidedExercise>, St
   return repo.getAvoidedExercises(userId);
 });
 
-/// Screen for managing exercises to avoid
+/// Screen for managing exercises to avoid.
+/// When [embedded] is true, renders without Scaffold/AppBar for use inside tabs.
 class AvoidedExercisesScreen extends ConsumerStatefulWidget {
-  const AvoidedExercisesScreen({super.key});
+  final bool embedded;
+  const AvoidedExercisesScreen({super.key, this.embedded = false});
 
   @override
   ConsumerState<AvoidedExercisesScreen> createState() => _AvoidedExercisesScreenState();
@@ -41,14 +43,115 @@ class _AvoidedExercisesScreenState extends ConsumerState<AvoidedExercisesScreen>
     final userId = authState.user?.id;
 
     if (userId == null) {
+      final notLoggedIn = Center(child: Text('Please log in', style: TextStyle(color: textMuted)));
+      if (widget.embedded) return notLoggedIn;
       return Scaffold(
         backgroundColor: backgroundColor,
         appBar: AppBar(title: const Text('Exercises to Avoid')),
-        body: const Center(child: Text('Please log in')),
+        body: notLoggedIn,
       );
     }
 
     final avoidedAsync = ref.watch(avoidedExercisesProvider(userId));
+
+    final body = Column(
+      children: [
+        // Info Card
+        Padding(
+          padding: const EdgeInsets.all(16),
+          child: Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: AppColors.orange.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: AppColors.orange.withValues(alpha: 0.3)),
+            ),
+            child: Row(
+              children: [
+                Icon(Icons.info_outline, color: AppColors.orange, size: 24),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    'Exercises you add here will be excluded from AI-generated workout plans.',
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: textColor,
+                      height: 1.4,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        // List
+        Expanded(
+          child: avoidedAsync.when(
+            loading: () => const Center(child: CircularProgressIndicator()),
+            error: (error, _) => Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.error_outline, size: 48, color: AppColors.error),
+                  const SizedBox(height: 16),
+                  Text('Error loading exercises', style: TextStyle(color: textMuted)),
+                  const SizedBox(height: 8),
+                  TextButton(
+                    onPressed: () => ref.invalidate(avoidedExercisesProvider(userId)),
+                    child: const Text('Retry'),
+                  ),
+                ],
+              ),
+            ),
+            data: (exercises) {
+              if (exercises.isEmpty) {
+                return Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.check_circle_outline,
+                        size: 64,
+                        color: AppColors.green.withValues(alpha: 0.5),
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        'No exercises to avoid',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w600,
+                          color: textColor,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Tap + to add exercises you want to skip',
+                        style: TextStyle(color: textMuted),
+                      ),
+                    ],
+                  ),
+                );
+              }
+
+              return ListView.builder(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                itemCount: exercises.length,
+                itemBuilder: (context, index) {
+                  final exercise = exercises[index];
+                  return _AvoidedExerciseCard(
+                    exercise: exercise,
+                    isDark: isDark,
+                    onRemove: () => _removeExercise(userId, exercise),
+                  );
+                },
+              );
+            },
+          ),
+        ),
+      ],
+    );
+
+    if (widget.embedded) return body;
 
     return Scaffold(
       backgroundColor: backgroundColor,
@@ -71,102 +174,7 @@ class _AvoidedExercisesScreenState extends ConsumerState<AvoidedExercisesScreen>
           ),
         ],
       ),
-      body: Column(
-        children: [
-          // Info Card
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: AppColors.orange.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: AppColors.orange.withValues(alpha: 0.3)),
-              ),
-              child: Row(
-                children: [
-                  Icon(Icons.info_outline, color: AppColors.orange, size: 24),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      'Exercises you add here will be excluded from AI-generated workout plans.',
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: textColor,
-                        height: 1.4,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          // List
-          Expanded(
-            child: avoidedAsync.when(
-              loading: () => const Center(child: CircularProgressIndicator()),
-              error: (error, _) => Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.error_outline, size: 48, color: AppColors.error),
-                    const SizedBox(height: 16),
-                    Text('Error loading exercises', style: TextStyle(color: textMuted)),
-                    const SizedBox(height: 8),
-                    TextButton(
-                      onPressed: () => ref.invalidate(avoidedExercisesProvider(userId)),
-                      child: const Text('Retry'),
-                    ),
-                  ],
-                ),
-              ),
-              data: (exercises) {
-                if (exercises.isEmpty) {
-                  return Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.check_circle_outline,
-                          size: 64,
-                          color: AppColors.green.withValues(alpha: 0.5),
-                        ),
-                        const SizedBox(height: 16),
-                        Text(
-                          'No exercises to avoid',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w600,
-                            color: textColor,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          'Tap + to add exercises you want to skip',
-                          style: TextStyle(color: textMuted),
-                        ),
-                      ],
-                    ),
-                  );
-                }
-
-                return ListView.builder(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  itemCount: exercises.length,
-                  itemBuilder: (context, index) {
-                    final exercise = exercises[index];
-                    return _AvoidedExerciseCard(
-                      exercise: exercise,
-                      isDark: isDark,
-                      onRemove: () => _removeExercise(userId, exercise),
-                    );
-                  },
-                );
-              },
-            ),
-          ),
-        ],
-      ),
+      body: body,
     );
   }
 

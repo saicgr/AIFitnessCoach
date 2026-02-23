@@ -3,7 +3,7 @@ Hormonal Health API Endpoints
 API routes for hormonal health tracking, cycle management, and personalized recommendations.
 """
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query, Depends
 from typing import Optional, List
 from datetime import date, datetime, timedelta
 from uuid import UUID
@@ -17,6 +17,8 @@ from models.hormonal_health import (
     HormoneGoal
 )
 from core.supabase_client import get_supabase
+from core.auth import get_current_user
+from core.exceptions import safe_internal_error
 
 router = APIRouter(prefix="/hormonal-health", tags=["Hormonal Health"])
 
@@ -137,7 +139,10 @@ def get_phase_recommendations(phase: CyclePhase) -> CyclePhaseRecommendation:
 # ============================================================================
 
 @router.get("/profile/{user_id}", response_model=Optional[HormonalProfile])
-async def get_hormonal_profile(user_id: UUID):
+async def get_hormonal_profile(
+    user_id: UUID,
+    current_user: dict = Depends(get_current_user),
+):
     """Get user's hormonal health profile."""
     print(f"🔍 [Hormonal] Fetching profile for user {user_id}")
 
@@ -154,11 +159,14 @@ async def get_hormonal_profile(user_id: UUID):
 
     except Exception as e:
         print(f"❌ [Hormonal] Error fetching profile: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "endpoint")
 
 
 @router.put("/profile/{user_id}", response_model=HormonalProfile)
-async def upsert_hormonal_profile(user_id: UUID, profile: HormonalProfileUpdate):
+async def upsert_hormonal_profile(
+    user_id: UUID, profile: HormonalProfileUpdate,
+    current_user: dict = Depends(get_current_user),
+):
     """Create or update user's hormonal health profile."""
     print(f"🔍 [Hormonal] Upserting profile for user {user_id}")
 
@@ -197,11 +205,14 @@ async def upsert_hormonal_profile(user_id: UUID, profile: HormonalProfileUpdate)
 
     except Exception as e:
         print(f"❌ [Hormonal] Error upserting profile: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "endpoint")
 
 
 @router.delete("/profile/{user_id}")
-async def delete_hormonal_profile(user_id: UUID):
+async def delete_hormonal_profile(
+    user_id: UUID,
+    current_user: dict = Depends(get_current_user),
+):
     """Delete user's hormonal health profile."""
     print(f"🔍 [Hormonal] Deleting profile for user {user_id}")
 
@@ -213,7 +224,7 @@ async def delete_hormonal_profile(user_id: UUID):
 
     except Exception as e:
         print(f"❌ [Hormonal] Error deleting profile: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "endpoint")
 
 
 # ============================================================================
@@ -221,7 +232,10 @@ async def delete_hormonal_profile(user_id: UUID):
 # ============================================================================
 
 @router.post("/logs/{user_id}", response_model=HormoneLog)
-async def create_hormone_log(user_id: UUID, log: HormoneLogCreate):
+async def create_hormone_log(
+    user_id: UUID, log: HormoneLogCreate,
+    current_user: dict = Depends(get_current_user),
+):
     """Create a hormone log entry."""
     print(f"🔍 [Hormonal] Creating log for user {user_id} on {log.log_date}")
 
@@ -266,7 +280,7 @@ async def create_hormone_log(user_id: UUID, log: HormoneLogCreate):
 
     except Exception as e:
         print(f"❌ [Hormonal] Error creating log: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "endpoint")
 
 
 @router.get("/logs/{user_id}", response_model=List[HormoneLog])
@@ -274,7 +288,8 @@ async def get_hormone_logs(
     user_id: UUID,
     start_date: Optional[date] = Query(None),
     end_date: Optional[date] = Query(None),
-    limit: int = Query(30, ge=1, le=365)
+    limit: int = Query(30, ge=1, le=365),
+    current_user: dict = Depends(get_current_user),
 ):
     """Get hormone logs for a user with optional date range."""
     print(f"🔍 [Hormonal] Fetching logs for user {user_id}")
@@ -296,11 +311,14 @@ async def get_hormone_logs(
 
     except Exception as e:
         print(f"❌ [Hormonal] Error fetching logs: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "endpoint")
 
 
 @router.get("/logs/{user_id}/today", response_model=Optional[HormoneLog])
-async def get_today_hormone_log(user_id: UUID):
+async def get_today_hormone_log(
+    user_id: UUID,
+    current_user: dict = Depends(get_current_user),
+):
     """Get today's hormone log if it exists."""
     print(f"🔍 [Hormonal] Fetching today's log for user {user_id}")
 
@@ -316,7 +334,7 @@ async def get_today_hormone_log(user_id: UUID):
 
     except Exception as e:
         print(f"❌ [Hormonal] Error fetching today's log: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "endpoint")
 
 
 # ============================================================================
@@ -324,7 +342,10 @@ async def get_today_hormone_log(user_id: UUID):
 # ============================================================================
 
 @router.get("/cycle-phase/{user_id}", response_model=CyclePhaseInfo)
-async def get_cycle_phase(user_id: UUID):
+async def get_cycle_phase(
+    user_id: UUID,
+    current_user: dict = Depends(get_current_user),
+):
     """Get current cycle phase information for a user."""
     print(f"🔍 [Hormonal] Getting cycle phase for user {user_id}")
 
@@ -387,11 +408,14 @@ async def get_cycle_phase(user_id: UUID):
 
     except Exception as e:
         print(f"❌ [Hormonal] Error getting cycle phase: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "endpoint")
 
 
 @router.get("/cycle-phase/recommendations/{phase}", response_model=CyclePhaseRecommendation)
-async def get_phase_recommendation(phase: CyclePhase):
+async def get_phase_recommendation(
+    phase: CyclePhase,
+    current_user: dict = Depends(get_current_user),
+):
     """Get recommendations for a specific cycle phase."""
     recommendations = get_phase_recommendations(phase)
     if not recommendations:
@@ -400,7 +424,10 @@ async def get_phase_recommendation(phase: CyclePhase):
 
 
 @router.post("/cycle-phase/{user_id}/log-period")
-async def log_period_start(user_id: UUID, period_date: date = Query(default=None)):
+async def log_period_start(
+    user_id: UUID, period_date: date = Query(default=None),
+    current_user: dict = Depends(get_current_user),
+):
     """Log the start of a new menstrual period."""
     print(f"🔍 [Hormonal] Logging period start for user {user_id}")
 
@@ -435,7 +462,7 @@ async def log_period_start(user_id: UUID, period_date: date = Query(default=None
         raise
     except Exception as e:
         print(f"❌ [Hormonal] Error logging period: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "endpoint")
 
 
 # ============================================================================
@@ -445,7 +472,8 @@ async def log_period_start(user_id: UUID, period_date: date = Query(default=None
 @router.get("/foods", response_model=List[HormoneSupportiveFood])
 async def get_hormone_supportive_foods(
     goal: Optional[HormoneGoal] = Query(None),
-    cycle_phase: Optional[CyclePhase] = Query(None)
+    cycle_phase: Optional[CyclePhase] = Query(None),
+    current_user: dict = Depends(get_current_user),
 ):
     """Get hormone-supportive foods, optionally filtered by goal or cycle phase."""
     print(f"🔍 [Hormonal] Fetching hormone-supportive foods")
@@ -482,11 +510,14 @@ async def get_hormone_supportive_foods(
 
     except Exception as e:
         print(f"❌ [Hormonal] Error fetching foods: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "endpoint")
 
 
 @router.get("/foods/recommendations/{user_id}", response_model=HormonalFoodRecommendation)
-async def get_food_recommendations(user_id: UUID):
+async def get_food_recommendations(
+    user_id: UUID,
+    current_user: dict = Depends(get_current_user),
+):
     """Get personalized hormone-supportive food recommendations."""
     print(f"🔍 [Hormonal] Getting food recommendations for user {user_id}")
 
@@ -581,7 +612,7 @@ async def get_food_recommendations(user_id: UUID):
 
     except Exception as e:
         print(f"❌ [Hormonal] Error getting food recommendations: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "endpoint")
 
 
 # ============================================================================
@@ -589,7 +620,10 @@ async def get_food_recommendations(user_id: UUID):
 # ============================================================================
 
 @router.get("/insights/{user_id}", response_model=HormonalInsights)
-async def get_hormonal_insights(user_id: UUID):
+async def get_hormonal_insights(
+    user_id: UUID,
+    current_user: dict = Depends(get_current_user),
+):
     """Get comprehensive hormonal health insights for a user."""
     print(f"🔍 [Hormonal] Getting comprehensive insights for user {user_id}")
 
@@ -680,4 +714,4 @@ async def get_hormonal_insights(user_id: UUID):
 
     except Exception as e:
         print(f"❌ [Hormonal] Error getting insights: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "endpoint")

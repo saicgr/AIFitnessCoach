@@ -1,6 +1,8 @@
 """Saved and Scheduled Workouts API endpoints."""
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
+from core.auth import get_current_user
+from core.exceptions import safe_internal_error
 from typing import List, Optional
 from datetime import datetime, date, timezone
 import json
@@ -35,6 +37,7 @@ router = APIRouter(prefix="/saved-workouts")
 async def track_challenge_click(
     user_id: str,
     activity_id: str,
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Track when user clicks 'BEAT THIS WORKOUT' button.
@@ -125,7 +128,9 @@ async def track_challenge_click(
 # ============================================================
 
 @router.get("/badges/{activity_id}")
-async def get_workout_badges(activity_id: str):
+async def get_workout_badges(activity_id: str,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Get badges for a workout activity.
 
@@ -202,6 +207,7 @@ async def get_workout_badges(activity_id: str):
 async def save_workout_from_activity(
     user_id: str,
     request: SaveWorkoutFromActivity,
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Save a workout from a social feed activity to user's library.
@@ -332,6 +338,7 @@ async def get_saved_workouts(
     tag: Optional[str] = None,
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=100),
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Get user's saved workouts.
@@ -383,6 +390,7 @@ async def get_saved_workouts(
 async def get_saved_workout(
     user_id: str,
     workout_id: str,
+    current_user: dict = Depends(get_current_user),
 ):
     """Get a specific saved workout."""
     supabase = get_supabase_client()
@@ -402,6 +410,7 @@ async def update_saved_workout(
     user_id: str,
     workout_id: str,
     update: SavedWorkoutUpdate,
+    current_user: dict = Depends(get_current_user),
 ):
     """Update a saved workout."""
     supabase = get_supabase_client()
@@ -429,6 +438,7 @@ async def update_saved_workout(
 async def delete_saved_workout(
     user_id: str,
     workout_id: str,
+    current_user: dict = Depends(get_current_user),
 ):
     """Delete a saved workout."""
     supabase = get_supabase_client()
@@ -463,6 +473,7 @@ async def delete_saved_workout(
 async def do_workout_now(
     user_id: str,
     saved_workout_id: str,
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Start a saved workout immediately.
@@ -523,6 +534,7 @@ async def do_workout_now(
 async def schedule_workout(
     user_id: str,
     request: ScheduleWorkoutRequest,
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Schedule a workout for a future date.
@@ -620,6 +632,7 @@ async def get_upcoming_scheduled_workouts(
     user_id: str,
     days_ahead: int = Query(30, ge=1, le=365),
     limit: Optional[int] = Query(None, ge=1, le=100, description="Maximum number of workouts to return"),
+    current_user: dict = Depends(get_current_user),
 ):
     """Get upcoming scheduled workouts.
 
@@ -653,6 +666,7 @@ async def get_monthly_calendar(
     user_id: str,
     year: int,
     month: int,
+    current_user: dict = Depends(get_current_user),
 ):
     """Get calendar view for a specific month."""
     supabase = get_supabase_client()
@@ -704,6 +718,7 @@ async def update_scheduled_workout(
     user_id: str,
     scheduled_id: str,
     update: ScheduledWorkoutUpdate,
+    current_user: dict = Depends(get_current_user),
 ):
     """Update a scheduled workout."""
     supabase = get_supabase_client()
@@ -744,6 +759,7 @@ async def update_scheduled_workout(
 async def delete_scheduled_workout(
     user_id: str,
     scheduled_id: str,
+    current_user: dict = Depends(get_current_user),
 ):
     """Delete a scheduled workout."""
     supabase = get_supabase_client()

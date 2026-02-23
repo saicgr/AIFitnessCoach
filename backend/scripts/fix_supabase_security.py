@@ -8,6 +8,7 @@ This script fixes:
 3. Views with SECURITY DEFINER (should be SECURITY INVOKER)
 """
 
+import os
 import psycopg2
 from psycopg2 import sql
 import sys
@@ -18,8 +19,11 @@ DB_CONFIG = {
     "port": 5432,
     "database": "postgres",
     "user": "postgres",
-    "password": "d2nHU5oLZ1GCz63B"
+    "password": os.environ.get("DATABASE_PASSWORD")
 }
+
+if not DB_CONFIG["password"]:
+    raise SystemExit("DATABASE_PASSWORD environment variable is required")
 
 # Tables with RLS policies but RLS not enabled
 TABLES_RLS_NOT_ENABLED = [

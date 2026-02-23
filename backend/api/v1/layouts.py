@@ -12,7 +12,9 @@ ENDPOINTS:
 - POST /api/v1/layouts/user/{user_id}/from-template/{template_id} - Create from template
 """
 from datetime import datetime
-from fastapi import APIRouter, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException, Request
+from core.auth import get_current_user
+from core.exceptions import safe_internal_error
 from typing import Optional, List, Any
 from pydantic import BaseModel
 
@@ -118,7 +120,9 @@ def row_to_template_response(row: dict) -> HomeLayoutTemplateResponse:
 # ===================================
 
 @router.get("/templates")
-async def get_templates() -> List[HomeLayoutTemplateResponse]:
+async def get_templates(
+    current_user: dict = Depends(get_current_user),
+) -> List[HomeLayoutTemplateResponse]:
     """
     Get all system layout templates.
 
@@ -140,11 +144,13 @@ async def get_templates() -> List[HomeLayoutTemplateResponse]:
 
     except Exception as e:
         logger.error(f"Error fetching layout templates: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "layouts")
 
 
 @router.get("/user/{user_id}")
-async def get_user_layouts(user_id: str) -> List[HomeLayoutResponse]:
+async def get_user_layouts(user_id: str,
+    current_user: dict = Depends(get_current_user),
+) -> List[HomeLayoutResponse]:
     """
     Get all layouts for a user.
 
@@ -171,11 +177,13 @@ async def get_user_layouts(user_id: str) -> List[HomeLayoutResponse]:
 
     except Exception as e:
         logger.error(f"Error fetching layouts for user {user_id}: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "layouts")
 
 
 @router.get("/user/{user_id}/active")
-async def get_active_layout(user_id: str) -> HomeLayoutResponse:
+async def get_active_layout(user_id: str,
+    current_user: dict = Depends(get_current_user),
+) -> HomeLayoutResponse:
     """
     Get the active layout for a user, creating default if none exists.
 
@@ -232,11 +240,13 @@ async def get_active_layout(user_id: str) -> HomeLayoutResponse:
         raise
     except Exception as e:
         logger.error(f"Error fetching active layout for user {user_id}: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "layouts")
 
 
 @router.post("/user/{user_id}", status_code=201)
-async def create_layout(user_id: str, layout: CreateLayoutRequest) -> HomeLayoutResponse:
+async def create_layout(user_id: str, layout: CreateLayoutRequest,
+    current_user: dict = Depends(get_current_user),
+) -> HomeLayoutResponse:
     """
     Create a new layout for a user.
 
@@ -296,14 +306,15 @@ async def create_layout(user_id: str, layout: CreateLayoutRequest) -> HomeLayout
             endpoint="/api/v1/layouts/user/{user_id}",
             status_code=500
         )
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "layouts")
 
 
 @router.put("/{layout_id}")
 async def update_layout(
     layout_id: str,
     layout: UpdateLayoutRequest,
-    user_id: str
+    user_id: str,
+    current_user: dict = Depends(get_current_user),
 ) -> HomeLayoutResponse:
     """
     Update an existing layout.
@@ -376,11 +387,13 @@ async def update_layout(
             metadata={"layout_id": layout_id},
             status_code=500
         )
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "layouts")
 
 
 @router.delete("/{layout_id}")
-async def delete_layout(layout_id: str, user_id: str):
+async def delete_layout(layout_id: str, user_id: str,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Delete a layout.
 
@@ -446,11 +459,13 @@ async def delete_layout(layout_id: str, user_id: str):
             metadata={"layout_id": layout_id},
             status_code=500
         )
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "layouts")
 
 
 @router.post("/{layout_id}/activate")
-async def activate_layout(layout_id: str, user_id: str) -> HomeLayoutResponse:
+async def activate_layout(layout_id: str, user_id: str,
+    current_user: dict = Depends(get_current_user),
+) -> HomeLayoutResponse:
     """
     Activate a layout (deactivates all others).
 
@@ -508,14 +523,15 @@ async def activate_layout(layout_id: str, user_id: str) -> HomeLayoutResponse:
             metadata={"layout_id": layout_id},
             status_code=500
         )
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "layouts")
 
 
 @router.post("/user/{user_id}/from-template/{template_id}", status_code=201)
 async def create_from_template(
     user_id: str,
     template_id: str,
-    name: Optional[str] = None
+    name: Optional[str] = None,
+    current_user: dict = Depends(get_current_user),
 ) -> HomeLayoutResponse:
     """
     Create a new layout from a template.
@@ -581,4 +597,4 @@ async def create_from_template(
             metadata={"template_id": template_id},
             status_code=500
         )
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "layouts")

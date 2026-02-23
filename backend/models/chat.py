@@ -2,7 +2,7 @@
 Chat-related data models.
 Pydantic models for request/response validation.
 """
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 from typing import Optional, List, Dict, Any
 from datetime import datetime
 from enum import Enum
@@ -138,6 +138,20 @@ class ChatRequest(BaseModel):
         max_length=100,
         description="Previous messages in format [{'role': 'user'/'assistant', 'content': '...'}] (max 100 messages)"
     )
+
+    @field_validator("conversation_history")
+    @classmethod
+    def validate_conversation_history(cls, v):
+        """Validate each message has a valid role and bounded content length."""
+        valid_roles = {"user", "assistant"}
+        for msg in v:
+            role = msg.get("role")
+            if role not in valid_roles:
+                raise ValueError(f"Invalid conversation_history role: {role!r} (must be 'user' or 'assistant')")
+            content = msg.get("content", "")
+            if isinstance(content, str) and len(content) > 5000:
+                raise ValueError("conversation_history message content too long (max 5000 chars)")
+        return v
     image_base64: Optional[str] = Field(
         default=None,
         max_length=17_800_000,

@@ -6,6 +6,7 @@ Adds exercise completion sound preferences to the sound_preferences table,
 allowing users to customize the chime that plays when all sets of an exercise are done.
 """
 
+import os
 import sys
 from pathlib import Path
 
@@ -17,7 +18,9 @@ DATABASE_HOST = "db.hpbzfahijszqmgsybuor.supabase.co"
 DATABASE_PORT = 5432
 DATABASE_NAME = "postgres"
 DATABASE_USER = "postgres"
-DATABASE_PASSWORD = "d2nHU5oLZ1GCz63B"
+DATABASE_PASSWORD = os.environ.get("DATABASE_PASSWORD")
+if not DATABASE_PASSWORD:
+    raise SystemExit("DATABASE_PASSWORD environment variable is required")
 
 
 def run_migration():

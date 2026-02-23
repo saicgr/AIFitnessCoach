@@ -18,7 +18,7 @@ Insights:
 Calendar:
 - GET  /api/v1/fasting-impact/calendar/{user_id} - Get calendar view data with fasting/workout/goal info
 """
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query, Depends, Request
 from typing import List, Optional, Dict, Any
 from datetime import datetime, date, timedelta
 from decimal import Decimal
@@ -30,10 +30,12 @@ from pydantic import BaseModel, Field
 from core.supabase_db import get_supabase_db
 from core.logger import get_logger
 from core.activity_logger import log_user_activity, log_user_error
+from core.auth import get_current_user
+from core.rate_limiter import limiter
+from core.exceptions import safe_internal_error
 
 router = APIRouter()
 logger = get_logger(__name__)
-
 
 # ==================== Pydantic Models ====================
 
@@ -44,7 +46,6 @@ class LogWeightWithFastingRequest(BaseModel):
     date: str = Field(description="Date in YYYY-MM-DD format")
     notes: Optional[str] = None
     fasting_record_id: Optional[str] = Field(None, description="Optional explicit link to a fasting record")
-
 
 class WeightLogResponse(BaseModel):
     """Weight log entry with fasting correlation."""
@@ -59,14 +60,12 @@ class WeightLogResponse(BaseModel):
     fasting_completion_percent: Optional[float] = None
     created_at: str
 
-
 class FastingWeightCorrelationResponse(BaseModel):
     """Response containing weight logs with fasting correlation data."""
     user_id: str
     period_days: int
     weight_logs: List[WeightLogResponse]
     summary: Dict[str, Any]
-
 
 class FastingGoalImpactResponse(BaseModel):
     """Response containing fasting impact on goals analysis."""
@@ -99,7 +98,6 @@ class FastingGoalImpactResponse(BaseModel):
     fasting_impact_summary: str
     recommendations: List[str]
 
-
 class FastingImpactInsightResponse(BaseModel):
     """AI-generated insights about fasting impact."""
     user_id: str
@@ -118,7 +116,6 @@ class FastingImpactInsightResponse(BaseModel):
     overall_trend: str  # 'positive', 'neutral', 'needs_attention'
     confidence_level: str  # 'high', 'medium', 'low' based on data quantity
 
-
 class CalendarDayData(BaseModel):
     """Data for a single calendar day."""
     date: str
@@ -132,7 +129,6 @@ class CalendarDayData(BaseModel):
     goals_hit: int = 0
     goals_total: int = 0
 
-
 class CalendarViewResponse(BaseModel):
     """Calendar view with fasting, weight, workout, and goal data."""
     user_id: str
@@ -140,7 +136,6 @@ class CalendarViewResponse(BaseModel):
     year: int
     days: List[CalendarDayData]
     summary: Dict[str, Any]
-
 
 # ==================== Helper Functions ====================
 
@@ -188,7 +183,6 @@ def calculate_correlation_score(fasting_days_success: List[bool], non_fasting_da
     except Exception as e:
         logger.warning(f"Could not calculate correlation: {e}")
         return None
-
 
 def generate_impact_insight(
     weight_trend: Optional[str],
@@ -312,7 +306,6 @@ def generate_impact_insight(
 
     return insights
 
-
 async def get_fasting_status_for_date(user_id: str, target_date: date) -> Dict[str, Any]:
     """
     Check if a specific date was a fasting day for the user.
@@ -347,7 +340,6 @@ async def get_fasting_status_for_date(user_id: str, target_date: date) -> Dict[s
         "completion_percent": record.get("completion_percentage"),
     }
 
-
 async def link_weight_to_fasting(user_id: str, weight_date: date, weight_log_id: str) -> Optional[str]:
     """
     Associate weight log with any fasting record from that date.
@@ -367,7 +359,6 @@ async def link_weight_to_fasting(user_id: str, weight_date: date, weight_log_id:
         return fasting_status["fasting_record_id"]
 
     return None
-
 
 def interpret_correlation(score: Optional[float]) -> str:
     """Interpret the correlation score for users."""
@@ -389,17 +380,21 @@ def interpret_correlation(score: Optional[float]) -> str:
     else:
         return "Strong negative correlation: Your current fasting may be hindering goals."
 
-
 # ==================== Weight Logging Endpoints ====================
 
 @router.post("/weight", response_model=WeightLogResponse)
-async def log_weight_with_fasting(data: LogWeightWithFastingRequest):
+async def log_weight_with_fasting(
+    data: LogWeightWithFastingRequest,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Log weight with automatic fasting day detection.
 
     Automatically checks if the user has an active fast or completed fast on the given date
     and links the weight log to the fasting record if applicable.
     """
+    if str(current_user["id"]) != str(data.user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     logger.info(f"Logging weight for user {data.user_id} on {data.date}")
 
     try:
@@ -481,14 +476,14 @@ async def log_weight_with_fasting(data: LogWeightWithFastingRequest):
             endpoint="/api/v1/fasting-impact/weight",
             status_code=500
         )
-        raise HTTPException(status_code=500, detail=str(e))
-
+        raise safe_internal_error(e, "endpoint")
 
 @router.get("/weight-correlation/{user_id}", response_model=FastingWeightCorrelationResponse)
 async def get_weight_correlation(
     user_id: str,
     days: int = Query(default=30, ge=7, le=365, description="Number of days to analyze"),
     include_non_fasting: bool = Query(default=True, description="Include non-fasting days in response"),
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Get weight logs with fasting correlation data.
@@ -496,6 +491,8 @@ async def get_weight_correlation(
     Returns weight logs tagged with whether they were on fasting days,
     along with summary statistics comparing fasting vs non-fasting days.
     """
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     logger.info(f"Getting weight correlation for user {user_id} (last {days} days)")
 
     try:
@@ -592,8 +589,7 @@ async def get_weight_correlation(
             endpoint=f"/api/v1/fasting-impact/weight-correlation/{user_id}",
             status_code=500
         )
-        raise HTTPException(status_code=500, detail=str(e))
-
+        raise safe_internal_error(e, "endpoint")
 
 # ==================== Impact Analysis Endpoints ====================
 
@@ -601,6 +597,7 @@ async def get_weight_correlation(
 async def get_fasting_impact_analysis(
     user_id: str,
     period: str = Query(default="month", description="Period: 'week', 'month', '3months', 'all'"),
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Analyze fasting impact on goals.
@@ -611,6 +608,8 @@ async def get_fasting_impact_analysis(
     - Goal achievement rates
     - Calculates correlation score
     """
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     logger.info(f"Getting fasting impact analysis for user {user_id} (period: {period})")
 
     try:
@@ -809,19 +808,21 @@ async def get_fasting_impact_analysis(
             endpoint=f"/api/v1/fasting-impact/analysis/{user_id}",
             status_code=500
         )
-        raise HTTPException(status_code=500, detail=str(e))
-
+        raise safe_internal_error(e, "endpoint")
 
 @router.post("/analyze/{user_id}", response_model=FastingGoalImpactResponse)
 async def trigger_fasting_analysis(
     user_id: str,
     period: str = Query(default="month", description="Period: 'week', 'month', '3months', 'all'"),
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Trigger fresh analysis and store results.
 
     Recalculates all metrics and stores the analysis results for future reference.
     """
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     logger.info(f"Triggering fasting analysis for user {user_id}")
 
     try:
@@ -882,19 +883,23 @@ async def trigger_fasting_analysis(
             endpoint=f"/api/v1/fasting-impact/analyze/{user_id}",
             status_code=500
         )
-        raise HTTPException(status_code=500, detail=str(e))
-
+        raise safe_internal_error(e, "endpoint")
 
 # ==================== Insights Endpoint ====================
 
 @router.get("/insights/{user_id}", response_model=FastingImpactInsightResponse)
-async def get_fasting_insights(user_id: str):
+async def get_fasting_insights(
+    user_id: str,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Get AI-generated insights about fasting impact.
 
     Returns structured insights about weight, performance, and goals
     based on the user's fasting patterns.
     """
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     logger.info(f"Getting fasting insights for user {user_id}")
 
     try:
@@ -969,8 +974,7 @@ async def get_fasting_insights(user_id: str):
             endpoint=f"/api/v1/fasting-impact/insights/{user_id}",
             status_code=500
         )
-        raise HTTPException(status_code=500, detail=str(e))
-
+        raise safe_internal_error(e, "endpoint")
 
 # ==================== Calendar Endpoint ====================
 
@@ -979,6 +983,7 @@ async def get_fasting_calendar(
     user_id: str,
     month: int = Query(..., ge=1, le=12, description="Month (1-12)"),
     year: int = Query(..., ge=2020, le=2100, description="Year"),
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Get calendar view data with fasting, weight, workout, and goal information.
@@ -989,6 +994,8 @@ async def get_fasting_calendar(
     - Workout completed
     - Goals hit vs total
     """
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     logger.info(f"Getting fasting calendar for user {user_id} ({month}/{year})")
 
     try:
@@ -1150,8 +1157,7 @@ async def get_fasting_calendar(
             endpoint=f"/api/v1/fasting-impact/calendar/{user_id}",
             status_code=500
         )
-        raise HTTPException(status_code=500, detail=str(e))
-
+        raise safe_internal_error(e, "endpoint")
 
 # ==================== AI-Powered Insights Endpoints ====================
 
@@ -1167,7 +1173,6 @@ class AIFastingInsightResponse(BaseModel):
     data_summary: Dict[str, Any]
     created_at: str
 
-
 class AICorrelationResponse(BaseModel):
     """Correlation score response."""
     user_id: str
@@ -1175,7 +1180,6 @@ class AICorrelationResponse(BaseModel):
     interpretation: str
     days_analyzed: int
     sufficient_data: bool
-
 
 class AIFastingSummaryResponse(BaseModel):
     """Fasting summary data response."""
@@ -1186,7 +1190,6 @@ class AIFastingSummaryResponse(BaseModel):
     avg_fast_duration_hours: float
     correlation_score: Optional[float]
     period_days: int
-
 
 def interpret_ai_correlation(score: float) -> str:
     """Interpret correlation score for user display."""
@@ -1204,7 +1207,6 @@ def interpret_ai_correlation(score: float) -> str:
         return "Moderate negative correlation - consider adjusting fasting approach"
     else:
         return "Strong negative correlation - fasting may be impacting goals negatively"
-
 
 async def get_weight_data_for_ai(user_id: str, days: int = 30) -> List[Dict[str, Any]]:
     """
@@ -1257,7 +1259,6 @@ async def get_weight_data_for_ai(user_id: str, days: int = 30) -> List[Dict[str,
     except Exception as e:
         logger.error(f"Error getting weight data for AI: {e}")
         return []
-
 
 async def get_goal_data_for_ai(user_id: str, days: int = 30) -> Dict[str, Any]:
     """
@@ -1335,11 +1336,13 @@ async def get_goal_data_for_ai(user_id: str, days: int = 30) -> Dict[str, Any]:
             "workout_completion_non_fasting": 0,
         }
 
-
 @router.get("/ai-insight/{user_id}", response_model=AIFastingInsightResponse)
+@limiter.limit("5/minute")
 async def get_ai_fasting_insight(
+    request: Request,
     user_id: str,
     days: int = Query(default=30, ge=7, le=90, description="Number of days to analyze"),
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Get Gemini AI-generated insight about how fasting impacts the user's goals.
@@ -1352,6 +1355,8 @@ async def get_ai_fasting_insight(
     Results are cached for 24 hours to avoid repeated AI calls.
     Uses Gemini Pro with 120-second timeout for reliable generation.
     """
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     logger.info(f"Getting AI fasting insight for user {user_id} (days={days})")
 
     try:
@@ -1402,16 +1407,15 @@ async def get_ai_fasting_insight(
             endpoint=f"/api/v1/fasting-impact/ai-insight/{user_id}",
             status_code=500
         )
-        raise HTTPException(
-            status_code=500,
-            detail=f"Failed to generate AI fasting insight: {str(e)}"
-        )
-
+        raise safe_internal_error(e, "endpoint")
 
 @router.post("/ai-insight/refresh/{user_id}", response_model=AIFastingInsightResponse)
+@limiter.limit("5/minute")
 async def refresh_ai_fasting_insight(
+    request: Request,
     user_id: str,
     days: int = Query(default=30, ge=7, le=90, description="Number of days to analyze"),
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Force refresh the AI fasting insight, bypassing cache.
@@ -1419,6 +1423,8 @@ async def refresh_ai_fasting_insight(
     Use this when user wants latest analysis after logging new data.
     Generates a fresh Gemini AI insight.
     """
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     logger.info(f"Force refreshing AI fasting insight for user {user_id}")
 
     try:
@@ -1463,16 +1469,15 @@ async def refresh_ai_fasting_insight(
             endpoint=f"/api/v1/fasting-impact/ai-insight/refresh/{user_id}",
             status_code=500
         )
-        raise HTTPException(
-            status_code=500,
-            detail=f"Failed to refresh AI fasting insight: {str(e)}"
-        )
-
+        raise safe_internal_error(e, "endpoint")
 
 @router.get("/ai-correlation/{user_id}", response_model=AICorrelationResponse)
+@limiter.limit("5/minute")
 async def get_ai_correlation_score(
+    request: Request,
     user_id: str,
     days: int = Query(default=30, ge=7, le=90, description="Number of days to analyze"),
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Get the correlation score between fasting and goal achievement.
@@ -1482,6 +1487,8 @@ async def get_ai_correlation_score(
     - Negative: Fasting correlates with worse goal achievement
     - Near zero: No clear correlation
     """
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     logger.info(f"Getting AI correlation score for user {user_id} (days={days})")
 
     try:
@@ -1500,22 +1507,21 @@ async def get_ai_correlation_score(
 
     except Exception as e:
         logger.error(f"Error getting AI correlation score: {e}")
-        raise HTTPException(
-            status_code=500,
-            detail=f"Failed to calculate correlation: {str(e)}"
-        )
-
+        raise safe_internal_error(e, "endpoint")
 
 @router.get("/ai-summary/{user_id}", response_model=AIFastingSummaryResponse)
 async def get_ai_fasting_summary(
     user_id: str,
     days: int = Query(default=30, ge=7, le=90, description="Number of days to analyze"),
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Get a summary of fasting data for the specified period.
 
     This is the raw data used for AI insight generation.
     """
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     logger.info(f"Getting AI fasting summary for user {user_id} (days={days})")
 
     try:
@@ -1536,11 +1542,7 @@ async def get_ai_fasting_summary(
 
     except Exception as e:
         logger.error(f"Error getting AI fasting summary: {e}")
-        raise HTTPException(
-            status_code=500,
-            detail=f"Failed to get fasting summary: {str(e)}"
-        )
-
+        raise safe_internal_error(e, "endpoint")
 
 # ==================== Mark Historical Fasting Day ====================
 
@@ -1551,7 +1553,6 @@ class MarkFastingDayRequest(BaseModel):
     protocol: Optional[str] = Field(None, description="Fasting protocol (e.g., '16:8', '18:6')")
     estimated_hours: Optional[float] = Field(None, ge=1, le=72, description="Estimated fasting hours (1-72)")
     notes: Optional[str] = Field(None, description="Optional notes about the fast")
-
 
 class MarkFastingDayResponse(BaseModel):
     """Response after marking a historical fasting day."""
@@ -1566,9 +1567,11 @@ class MarkFastingDayResponse(BaseModel):
     created_at: str
     message: str
 
-
 @router.post("/mark-fasting-day", response_model=MarkFastingDayResponse)
-async def mark_historical_fasting_day(data: MarkFastingDayRequest):
+async def mark_historical_fasting_day(
+    data: MarkFastingDayRequest,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Mark a historical date as a fasting day.
 
@@ -1580,6 +1583,8 @@ async def mark_historical_fasting_day(data: MarkFastingDayRequest):
     - Date cannot be more than 30 days in the past
     - Cannot mark a date that already has a fasting record
     """
+    if str(current_user["id"]) != str(data.user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     logger.info(f"Marking historical fasting day for user {data.user_id} on {data.date}")
 
     try:
@@ -1712,4 +1717,4 @@ async def mark_historical_fasting_day(data: MarkFastingDayRequest):
             endpoint="/api/v1/fasting-impact/mark-fasting-day",
             status_code=500
         )
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "endpoint")

@@ -3,8 +3,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:intl/intl.dart';
 import '../../core/constants/app_colors.dart';
+import '../../widgets/app_loading.dart';
+import '../../widgets/app_snackbar.dart';
 import '../../data/models/progress_photos.dart';
 import '../../data/repositories/progress_photos_repository.dart';
+import '../../widgets/glass_sheet.dart';
 import 'comparison_view.dart';
 
 /// Full-screen gallery of saved before/after comparisons
@@ -55,7 +58,7 @@ class _ComparisonGalleryScreenState
             .read(progressPhotosNotifierProvider(widget.userId).notifier)
             .loadAll(),
         child: state.isLoading
-            ? const Center(child: CircularProgressIndicator())
+            ? AppLoading.fullScreen()
             : comparisons.isEmpty
                 ? _buildEmptyState(colorScheme)
                 : _buildGrid(comparisons, colorScheme),
@@ -314,29 +317,16 @@ class _ComparisonGalleryScreenState
     final afterDate =
         DateFormat('MMM d, yyyy').format(comparison.afterPhoto.takenAt);
 
-    showModalBottomSheet(
+    showGlassSheet(
       context: context,
-      backgroundColor: colorScheme.surface,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
       builder: (ctx) {
-        return SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(24, 12, 24, 16),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // Drag handle
-                Container(
-                  width: 40,
-                  height: 4,
-                  margin: const EdgeInsets.only(bottom: 20),
-                  decoration: BoxDecoration(
-                    color: colorScheme.outlineVariant,
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
+        return GlassSheet(
+          child: SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(24, 12, 24, 16),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
                 // Mini side-by-side preview
                 SizedBox(
                   height: 140,
@@ -433,7 +423,8 @@ class _ComparisonGalleryScreenState
                     _confirmDelete(comparison);
                   },
                 ),
-              ],
+                ],
+              ),
             ),
           ),
         );
@@ -486,9 +477,7 @@ class _ComparisonGalleryScreenState
       // If we already have an exported image, share it directly via URL
       // For now, show a snackbar indicating we are working on it.
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Preparing comparison for sharing...')),
-        );
+        AppSnackBar.info(context, 'Preparing comparison for sharing...');
       }
     } else {
       if (mounted) {

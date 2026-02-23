@@ -57,8 +57,6 @@ class _LayoutEditorScreenState extends ConsumerState<LayoutEditorScreen>
 
     final layoutState = ref.watch(localLayoutProvider);
     final accentColor = ref.colors(context).accent;
-    final isAtDefault = ref.watch(localLayoutProvider.notifier).matchesAppDefault();
-
     return Scaffold(
       backgroundColor: backgroundColor,
       appBar: AppBar(
@@ -74,9 +72,8 @@ class _LayoutEditorScreenState extends ConsumerState<LayoutEditorScreen>
         automaticallyImplyLeading: false,
         leading: const GlassBackButton(),
         actions: [
-          // Reset button - only show when layout is modified from default
-          if (!isAtDefault)
-            IconButton(
+          // Reset button - always available
+          IconButton(
               icon: Icon(Icons.refresh, color: accentColor),
               tooltip: 'Reset to Original',
               onPressed: _showResetDialog,
@@ -322,7 +319,7 @@ class _TogglesTabState extends ConsumerState<_TogglesTab> {
       if (!a.isVisible && b.isVisible) return 1;
       return a.order.compareTo(b.order);
     });
-    _orderedTiles = allTiles;
+    _orderedTiles = allTiles.where((t) => !deprecatedTiles.contains(t.type)).toList();
   }
 
   Color _darkenColor(Color color) {

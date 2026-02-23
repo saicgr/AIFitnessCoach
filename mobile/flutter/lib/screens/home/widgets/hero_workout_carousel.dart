@@ -143,21 +143,23 @@ class _HeroWorkoutCarouselState extends ConsumerState<HeroWorkoutCarousel> {
     return dates;
   }
 
-  /// Find workout for a specific date using string comparison
+  /// Find ALL workouts for a specific date using string comparison
   /// to avoid timezone shift issues (DateTime.parse on date-only strings
   /// creates UTC midnight, and .toLocal() can shift the date backward).
-  Workout? _findWorkoutForDate(List<Workout> workouts, DateTime date) {
+  /// Returns multiple workouts when quick workouts coexist with scheduled ones.
+  List<Workout> _findAllWorkoutsForDate(List<Workout> workouts, DateTime date) {
     final targetKey = _dateKey(date); // "YYYY-MM-DD" from local DateTime
+    final results = <Workout>[];
     for (final workout in workouts) {
       if (workout.scheduledDate == null) continue;
       // Extract YYYY-MM-DD: handles "YYYY-MM-DD", "YYYY-MM-DDT...", "YYYY-MM-DD ..."
       final raw = workout.scheduledDate!;
       final dateOnly = raw.length >= 10 ? raw.substring(0, 10) : raw;
       if (dateOnly == targetKey) {
-        return workout;
+        results.add(workout);
       }
     }
-    return null;
+    return results;
   }
 
   @override
@@ -204,6 +206,14 @@ class _HeroWorkoutCarouselState extends ConsumerState<HeroWorkoutCarousel> {
         if (nextWorkout != null && !mergedWorkouts.any((w) => w.id == nextWorkout.id)) {
           mergedWorkouts.add(nextWorkout);
         }
+        // Merge extra today workouts (quick workouts coexisting with scheduled)
+        final extraTodayWorkouts = todayWorkoutResponse?.extraTodayWorkouts ?? [];
+        for (final extra in extraTodayWorkouts) {
+          final extraWorkout = extra.toWorkout();
+          if (!mergedWorkouts.any((w) => w.id == extraWorkout.id)) {
+            mergedWorkouts.add(extraWorkout);
+          }
+        }
         // Merge locally generated workouts for immediate display
         for (final workout in _locallyGeneratedWorkouts) {
           if (!mergedWorkouts.any((w) => w.id == workout.id)) {
@@ -216,16 +226,41 @@ class _HeroWorkoutCarouselState extends ConsumerState<HeroWorkoutCarousel> {
         );
 
         // Build carousel items: one per workout day (workout card or pending card)
+        // Multiple workouts on the same day each get their own carousel card.
         List<CarouselItem> carouselItems = [];
 
         if (workoutDays.isNotEmpty) {
           final workoutDates = _getWorkoutDatesForWeek(workoutDays);
+          // Track which workouts have been added to avoid duplicates
+          final addedWorkoutIds = <String>{};
+
           for (final date in workoutDates) {
-            final workout = _findWorkoutForDate(mergedWorkouts, date);
-            if (workout != null) {
-              carouselItems.add(CarouselItem.workout(workout));
+            final workoutsForDate = _findAllWorkoutsForDate(mergedWorkouts, date);
+            if (workoutsForDate.isNotEmpty) {
+              for (final workout in workoutsForDate) {
+                final wId = workout.id ?? '';
+                if (wId.isNotEmpty && addedWorkoutIds.add(wId)) {
+                  carouselItems.add(CarouselItem.workout(workout));
+                }
+              }
             } else {
               carouselItems.add(CarouselItem.placeholder(date));
+            }
+          }
+
+          // Handle quick workouts on rest days (today not in workoutDays)
+          final now = DateTime.now();
+          final today = DateTime(now.year, now.month, now.day);
+          final todayKey = _dateKey(today);
+          final isTodayWorkoutDay = workoutDates.any((d) => _dateKey(d) == todayKey);
+          if (!isTodayWorkoutDay) {
+            final restDayWorkouts = _findAllWorkoutsForDate(mergedWorkouts, today);
+            for (final workout in restDayWorkouts) {
+              final wId = workout.id ?? '';
+              if (wId.isNotEmpty && addedWorkoutIds.add(wId)) {
+                // Insert at the start so today's quick workout is visible first
+                carouselItems.insert(0, CarouselItem.workout(workout));
+              }
             }
           }
         }

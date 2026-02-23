@@ -18,6 +18,7 @@ import uuid
 import logging
 
 from core.db import get_supabase_db
+from core.exceptions import safe_internal_error
 from services.exercise_library_service import ExerciseLibraryService
 
 logger = logging.getLogger(__name__)
@@ -296,7 +297,7 @@ async def generate_preview_plan(request: PreviewPlanRequest):
 
     except Exception as e:
         logger.error(f"Failed to generate preview plan: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "demo")
 
 
 @router.post("/session/start")
@@ -339,7 +340,7 @@ async def start_demo_session(request: DemoSession):
 
     except Exception as e:
         logger.error(f"Failed to start demo session: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "demo")
 
 
 @router.post("/interaction")
@@ -502,7 +503,7 @@ async def generate_personalized_sample_workout(request: PersonalizedSampleWorkou
 
     except Exception as e:
         logger.error(f"Failed to generate personalized sample workout: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "demo")
 
 
 def _get_personalized_workout_name(goal: str, fitness_level: str) -> str:
@@ -672,7 +673,7 @@ async def convert_demo_session(request: SessionConvertRequest):
 
     except Exception as e:
         logger.error(f"Failed to convert demo session: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "demo")
 
 
 @router.get("/session/{session_id}")
@@ -704,7 +705,7 @@ async def get_demo_session(session_id: str):
         raise
     except Exception as e:
         logger.error(f"Failed to get demo session: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "demo")
 
 
 @router.get("/analytics/conversion")
@@ -723,7 +724,7 @@ async def get_conversion_analytics(days: int = Query(30, ge=1, le=90)):
 
     except Exception as e:
         logger.error(f"Failed to get conversion analytics: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "demo")
 
 
 @router.get("/analytics/features")
@@ -740,7 +741,7 @@ async def get_feature_analytics():
 
     except Exception as e:
         logger.error(f"Failed to get feature analytics: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "demo")
 
 
 # ============================================================================
@@ -871,7 +872,7 @@ async def start_app_tour(request: TourStartRequest):
 
     except Exception as e:
         logger.error(f"Failed to start app tour: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "demo")
 
 
 @router.post("/tour/step-completed")
@@ -931,7 +932,7 @@ async def complete_tour_step(request: TourStepCompletedRequest):
         raise
     except Exception as e:
         logger.error(f"Failed to log tour step completion: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "demo")
 
 
 @router.post("/tour/completed")
@@ -1043,7 +1044,7 @@ async def complete_app_tour(request: TourCompletedRequest):
         raise
     except Exception as e:
         logger.error(f"Failed to complete app tour: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "demo")
 
 
 @router.get("/tour/status/{identifier}")
@@ -1103,7 +1104,7 @@ async def get_tour_status(
         raise
     except Exception as e:
         logger.error(f"Failed to get tour status: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "demo")
 
 
 @router.get("/tour/analytics")
@@ -1236,7 +1237,7 @@ async def get_tour_analytics(
 
     except Exception as e:
         logger.error(f"Failed to get tour analytics: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "demo")
 
 
 # ============================================================================
@@ -1370,7 +1371,7 @@ async def get_preview_workout(
         raise
     except Exception as e:
         logger.error(f"Failed to get preview workout: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "demo")
 
 
 @router.post("/try-workout")
@@ -1465,7 +1466,7 @@ async def start_try_workout(request: TryWorkoutRequest):
 
     except Exception as e:
         logger.error(f"Failed to start try workout: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "demo")
 
 
 @router.post("/try-workout/complete")
@@ -1532,7 +1533,7 @@ async def complete_try_workout(request: TryWorkoutCompleteRequest):
 
     except Exception as e:
         logger.error(f"Failed to complete try workout: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "demo")
 
 
 @router.get("/exercises-previewed/{session_id}")
@@ -1584,7 +1585,7 @@ async def get_previewed_exercises(session_id: str):
 
     except Exception as e:
         logger.error(f"Failed to get previewed exercises: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "demo")
 
 
 # ============================================================================

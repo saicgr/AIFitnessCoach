@@ -11,7 +11,9 @@ This module handles social notification operations:
 """
 from typing import List, Optional
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
+from core.auth import get_current_user
+from core.exceptions import safe_internal_error
 
 from models.friend_request import (
     SocialNotification, SocialNotificationsList, SocialNotificationType,
@@ -29,6 +31,7 @@ async def get_notifications(
     notification_type: Optional[SocialNotificationType] = Query(None, description="Filter by type"),
     limit: int = Query(50, ge=1, le=100, description="Maximum notifications to return"),
     offset: int = Query(0, ge=0, description="Offset for pagination"),
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Get social notifications for the current user.
@@ -79,6 +82,7 @@ async def get_notifications(
 @router.get("/unread-count")
 async def get_unread_count(
     user_id: str = Query(..., description="Current user ID"),
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Get count of unread social notifications.
@@ -102,6 +106,7 @@ async def get_unread_count(
 async def mark_notification_read(
     notification_id: str,
     user_id: str = Query(..., description="Current user ID"),
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Mark a notification as read.
@@ -137,6 +142,7 @@ async def mark_notification_read(
 @router.put("/read-all")
 async def mark_all_notifications_read(
     user_id: str = Query(..., description="Current user ID"),
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Mark all notifications as read for the current user.
@@ -162,6 +168,7 @@ async def mark_all_notifications_read(
 async def delete_notification(
     notification_id: str,
     user_id: str = Query(..., description="Current user ID"),
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Delete a notification.
@@ -195,6 +202,7 @@ async def delete_notification(
 @router.delete("/clear-all")
 async def clear_all_notifications(
     user_id: str = Query(..., description="Current user ID"),
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Delete all notifications for the current user.
@@ -223,6 +231,7 @@ async def clear_all_notifications(
 @router.get("/settings", response_model=SocialPrivacySettings)
 async def get_social_settings(
     user_id: str = Query(..., description="Current user ID"),
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Get social and notification privacy settings for the user.
@@ -262,6 +271,7 @@ async def get_social_settings(
 async def update_social_settings(
     user_id: str = Query(..., description="Current user ID"),
     settings: SocialPrivacySettingsUpdate = ...,
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Update social and notification privacy settings.

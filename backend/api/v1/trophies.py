@@ -8,7 +8,9 @@ Provides endpoints for:
 - Recently earned trophies
 """
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
+from core.auth import get_current_user
+from core.exceptions import safe_internal_error
 from typing import List, Optional, Dict, Any
 from datetime import datetime, timedelta
 from pydantic import BaseModel, Field
@@ -94,7 +96,9 @@ class TrophyFilter(str, Enum):
 # ============================================
 
 @router.get("/trophies/{user_id}/summary", response_model=TrophyRoomSummary)
-async def get_trophy_room_summary(user_id: str):
+async def get_trophy_room_summary(user_id: str,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Get trophy room summary for a user.
 
@@ -164,14 +168,15 @@ async def get_trophy_room_summary(user_id: str):
 
     except Exception as e:
         logger.error(f"Failed to get trophy summary: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "trophies")
 
 
 @router.get("/trophies/{user_id}", response_model=List[TrophyProgress])
 async def get_all_trophies(
     user_id: str,
     category: Optional[str] = Query(None, description="Filter by category"),
-    filter: TrophyFilter = Query(TrophyFilter.ALL, description="Filter by status")
+    filter: TrophyFilter = Query(TrophyFilter.ALL, description="Filter by status"),
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Get all trophies with progress for a user.
@@ -294,11 +299,13 @@ async def get_all_trophies(
 
     except Exception as e:
         logger.error(f"Failed to get all trophies: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "trophies")
 
 
 @router.get("/trophies/{user_id}/earned", response_model=List[UserTrophy])
-async def get_earned_trophies(user_id: str):
+async def get_earned_trophies(user_id: str,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Get all earned trophies for a user.
 
@@ -368,13 +375,14 @@ async def get_earned_trophies(user_id: str):
 
     except Exception as e:
         logger.error(f"Failed to get earned trophies: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "trophies")
 
 
 @router.get("/trophies/{user_id}/recent", response_model=List[UserTrophy])
 async def get_recent_trophies(
     user_id: str,
-    limit: int = Query(5, ge=1, le=20, description="Number of recent trophies to return")
+    limit: int = Query(5, ge=1, le=20, description="Number of recent trophies to return"),
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Get recently earned trophies for celebration/notification.
@@ -449,13 +457,14 @@ async def get_recent_trophies(
 
     except Exception as e:
         logger.error(f"Failed to get recent trophies: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "trophies")
 
 
 @router.post("/trophies/{user_id}/mark-notified")
 async def mark_trophies_notified(
     user_id: str,
-    achievement_ids: List[str]
+    achievement_ids: List[str],
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Mark trophies as notified (user has seen the celebration).
@@ -481,7 +490,7 @@ async def mark_trophies_notified(
 
     except Exception as e:
         logger.error(f"Failed to mark trophies as notified: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "trophies")
 
 
 # ============================================
@@ -495,7 +504,9 @@ class TrophyCheckResponse(BaseModel):
 
 
 @router.post("/trophies/{user_id}/check-all", response_model=TrophyCheckResponse)
-async def check_all_user_trophies(user_id: str):
+async def check_all_user_trophies(user_id: str,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Check all trophy categories for a user and award any earned trophies.
 
@@ -520,13 +531,14 @@ async def check_all_user_trophies(user_id: str):
 
     except Exception as e:
         logger.error(f"Failed to check trophies: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "trophies")
 
 
 @router.post("/trophies/{user_id}/check-workout")
 async def check_workout_trophies(
     user_id: str,
-    workout_data: Dict[str, Any] = None
+    workout_data: Dict[str, Any] = None,
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Check trophies after workout completion.
@@ -549,7 +561,7 @@ async def check_workout_trophies(
 
     except Exception as e:
         logger.error(f"Failed to check workout trophies: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "trophies")
 
 
 # ============================================
@@ -568,7 +580,9 @@ class UserXPResponse(BaseModel):
 
 
 @router.get("/xp/{user_id}", response_model=UserXPResponse)
-async def get_user_xp(user_id: str):
+async def get_user_xp(user_id: str,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Get user's XP and level data.
 

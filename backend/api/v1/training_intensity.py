@@ -10,7 +10,10 @@ Endpoints for:
 """
 from typing import Dict, List, Optional
 from datetime import datetime
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
+from core.auth import get_current_user
+from core.rate_limiter import limiter
+from core.exceptions import safe_internal_error
 from pydantic import BaseModel, Field
 import logging
 
@@ -182,7 +185,10 @@ class ExerciseSuggestionResponse(BaseModel):
 # -------------------------------------------------------------------------
 
 @router.post("/training/1rm", response_model=UserExercise1RMResponse)
-async def set_user_1rm(request: Set1RMRequest):
+@limiter.limit("5/minute")
+async def set_user_1rm(request: Set1RMRequest,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Set or update a user's 1RM for an exercise.
 
@@ -241,11 +247,13 @@ async def set_user_1rm(request: Set1RMRequest):
         )
     except Exception as e:
         logger.error(f"Error setting 1RM: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "training_intensity")
 
 
 @router.get("/training/1rm/{user_id}", response_model=List[UserExercise1RMResponse])
-async def get_user_1rms(user_id: str):
+async def get_user_1rms(user_id: str,
+    current_user: dict = Depends(get_current_user),
+):
     """Get all stored 1RMs for a user."""
     try:
         supabase = get_supabase_client()
@@ -267,11 +275,13 @@ async def get_user_1rms(user_id: str):
         ]
     except Exception as e:
         logger.error(f"Error getting 1RMs: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "training_intensity")
 
 
 @router.get("/training/1rm/{user_id}/{exercise_name}", response_model=Optional[UserExercise1RMResponse])
-async def get_user_1rm(user_id: str, exercise_name: str):
+async def get_user_1rm(user_id: str, exercise_name: str,
+    current_user: dict = Depends(get_current_user),
+):
     """Get stored 1RM for a specific exercise."""
     try:
         supabase = get_supabase_client()
@@ -293,11 +303,13 @@ async def get_user_1rm(user_id: str, exercise_name: str):
         )
     except Exception as e:
         logger.error(f"Error getting 1RM: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "training_intensity")
 
 
 @router.delete("/training/1rm/{user_id}/{exercise_name}")
-async def delete_user_1rm(user_id: str, exercise_name: str):
+async def delete_user_1rm(user_id: str, exercise_name: str,
+    current_user: dict = Depends(get_current_user),
+):
     """Delete a stored 1RM for an exercise."""
     try:
         supabase = get_supabase_client()
@@ -315,7 +327,7 @@ async def delete_user_1rm(user_id: str, exercise_name: str):
         return {"message": f"Deleted 1RM for {exercise_name}"}
     except Exception as e:
         logger.error(f"Error deleting 1RM: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "training_intensity")
 
 
 # -------------------------------------------------------------------------
@@ -323,7 +335,9 @@ async def delete_user_1rm(user_id: str, exercise_name: str):
 # -------------------------------------------------------------------------
 
 @router.post("/training/intensity", response_model=IntensityResponse)
-async def set_global_intensity(request: SetIntensityRequest):
+async def set_global_intensity(request: SetIntensityRequest,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Set user's global training intensity (percentage of 1RM).
 
@@ -373,11 +387,13 @@ async def set_global_intensity(request: SetIntensityRequest):
         )
     except Exception as e:
         logger.error(f"Error setting intensity: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "training_intensity")
 
 
 @router.get("/training/intensity/{user_id}", response_model=IntensitySettingsResponse)
-async def get_intensity_settings(user_id: str):
+async def get_intensity_settings(user_id: str,
+    current_user: dict = Depends(get_current_user),
+):
     """Get user's complete intensity settings including overrides."""
     try:
         supabase = get_supabase_client()
@@ -394,11 +410,13 @@ async def get_intensity_settings(user_id: str):
         )
     except Exception as e:
         logger.error(f"Error getting intensity settings: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "training_intensity")
 
 
 @router.post("/training/intensity/exercise", response_model=IntensityResponse)
-async def set_exercise_intensity_override(request: SetExerciseIntensityRequest):
+async def set_exercise_intensity_override(request: SetExerciseIntensityRequest,
+    current_user: dict = Depends(get_current_user),
+):
     """Set per-exercise intensity override."""
     try:
         supabase = get_supabase_client()
@@ -428,11 +446,13 @@ async def set_exercise_intensity_override(request: SetExerciseIntensityRequest):
         )
     except Exception as e:
         logger.error(f"Error setting exercise intensity: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "training_intensity")
 
 
 @router.delete("/training/intensity/exercise/{user_id}/{exercise_name}")
-async def delete_exercise_intensity_override(user_id: str, exercise_name: str):
+async def delete_exercise_intensity_override(user_id: str, exercise_name: str,
+    current_user: dict = Depends(get_current_user),
+):
     """Remove per-exercise intensity override (reverts to global setting)."""
     try:
         supabase = get_supabase_client()
@@ -450,7 +470,7 @@ async def delete_exercise_intensity_override(user_id: str, exercise_name: str):
         return {"message": f"Removed intensity override for {exercise_name}"}
     except Exception as e:
         logger.error(f"Error deleting exercise intensity: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "training_intensity")
 
 
 # -------------------------------------------------------------------------
@@ -458,7 +478,9 @@ async def delete_exercise_intensity_override(user_id: str, exercise_name: str):
 # -------------------------------------------------------------------------
 
 @router.post("/training/calculate-weight", response_model=WorkingWeightResponse)
-async def calculate_working_weight(request: CalculateWeightRequest):
+async def calculate_working_weight(request: CalculateWeightRequest,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Calculate working weight from 1RM and intensity percentage.
 
@@ -489,11 +511,13 @@ async def calculate_working_weight(request: CalculateWeightRequest):
         )
     except Exception as e:
         logger.error(f"Error calculating working weight: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "training_intensity")
 
 
 @router.post("/training/workout-weights", response_model=List[ExerciseWorkingWeight])
-async def calculate_workout_weights(request: BulkWorkingWeightsRequest):
+async def calculate_workout_weights(request: BulkWorkingWeightsRequest,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Calculate working weights for all exercises in a workout.
 
@@ -525,7 +549,7 @@ async def calculate_workout_weights(request: BulkWorkingWeightsRequest):
         ]
     except Exception as e:
         logger.error(f"Error calculating workout weights: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "training_intensity")
 
 
 # -------------------------------------------------------------------------
@@ -537,6 +561,7 @@ async def auto_populate_1rms(
     user_id: str,
     days_lookback: int = Query(default=90, ge=7, le=365),
     min_confidence: float = Query(default=0.7, ge=0.5, le=1.0),
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Auto-calculate 1RMs from workout history.
@@ -603,7 +628,7 @@ async def auto_populate_1rms(
         )
     except Exception as e:
         logger.error(f"Error auto-populating 1RMs: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "training_intensity")
 
 
 # -------------------------------------------------------------------------
@@ -611,7 +636,9 @@ async def auto_populate_1rms(
 # -------------------------------------------------------------------------
 
 @router.post("/training/linked-exercises", response_model=LinkedExerciseResponse)
-async def create_linked_exercise(request: CreateLinkedExerciseRequest):
+async def create_linked_exercise(request: CreateLinkedExerciseRequest,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Create a link between two exercises for 1RM sharing.
 
@@ -677,13 +704,14 @@ async def create_linked_exercise(request: CreateLinkedExerciseRequest):
         )
     except Exception as e:
         logger.error(f"Error creating linked exercise: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "training_intensity")
 
 
 @router.get("/training/linked-exercises/{user_id}", response_model=List[LinkedExerciseResponse])
 async def get_linked_exercises(
     user_id: str,
     primary_exercise_name: Optional[str] = Query(default=None),
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Get all linked exercises for a user.
@@ -716,13 +744,14 @@ async def get_linked_exercises(
         ]
     except Exception as e:
         logger.error(f"Error getting linked exercises: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "training_intensity")
 
 
 @router.put("/training/linked-exercises/{link_id}", response_model=LinkedExerciseResponse)
 async def update_linked_exercise(
     link_id: str,
     request: UpdateLinkedExerciseRequest,
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Update a linked exercise relationship.
@@ -774,11 +803,13 @@ async def update_linked_exercise(
         raise
     except Exception as e:
         logger.error(f"Error updating linked exercise: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "training_intensity")
 
 
 @router.delete("/training/linked-exercises/{link_id}")
-async def delete_linked_exercise(link_id: str, user_id: str = Query(...)):
+async def delete_linked_exercise(link_id: str, user_id: str = Query(...),
+    current_user: dict = Depends(get_current_user),
+):
     """
     Delete a linked exercise relationship.
 
@@ -803,7 +834,7 @@ async def delete_linked_exercise(link_id: str, user_id: str = Query(...)):
         return {"message": "Linked exercise deleted successfully"}
     except Exception as e:
         logger.error(f"Error deleting linked exercise: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "training_intensity")
 
 
 @router.get(
@@ -814,6 +845,7 @@ async def get_exercise_linking_suggestions(
     user_id: str,
     primary_exercise_name: str,
     limit: int = Query(default=10, ge=1, le=50),
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Get suggested exercises to link to a primary exercise.
@@ -847,4 +879,4 @@ async def get_exercise_linking_suggestions(
         ]
     except Exception as e:
         logger.error(f"Error getting exercise suggestions: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "training_intensity")

@@ -9,6 +9,7 @@ This script fixes:
 Run this script with: python -m scripts.fix_search_path_security
 Or directly: python scripts/fix_search_path_security.py
 """
+import os
 from __future__ import annotations
 
 import psycopg2
@@ -23,8 +24,11 @@ DB_CONFIG = {
     "port": 5432,
     "database": "postgres",
     "user": "postgres",
-    "password": "d2nHU5oLZ1GCz63B"
+    "password": os.environ.get("DATABASE_PASSWORD")
 }
+
+if not DB_CONFIG["password"]:
+    raise SystemExit("DATABASE_PASSWORD environment variable is required")
 
 # List of functions that need search_path fix (59 functions)
 FUNCTIONS_TO_FIX = [

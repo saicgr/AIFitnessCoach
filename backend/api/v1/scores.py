@@ -23,6 +23,8 @@ Endpoints:
 from datetime import datetime, date, timedelta
 from typing import Optional, List, Dict, Any
 from fastapi import APIRouter, HTTPException, Query, Depends, BackgroundTasks
+from core.auth import get_current_user
+from core.exceptions import safe_internal_error
 from pydantic import BaseModel, Field
 
 from core.db import get_supabase_db
@@ -335,6 +337,7 @@ class ScoresOverviewResponse(BaseModel):
 async def submit_readiness_checkin(
     request: ReadinessCheckInRequest,
     background_tasks: BackgroundTasks,
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Submit daily readiness check-in.
@@ -435,6 +438,7 @@ async def submit_readiness_checkin(
 async def get_readiness_for_date(
     score_date: date,
     user_id: str = Query(...),
+    current_user: dict = Depends(get_current_user),
 ):
     """Get readiness score for a specific date."""
     db = get_supabase_db()
@@ -474,6 +478,7 @@ async def get_readiness_for_date(
 async def get_readiness_history(
     user_id: str = Query(...),
     days: int = Query(30, ge=1, le=365),
+    current_user: dict = Depends(get_current_user),
 ):
     """Get readiness history for specified number of days."""
     db = get_supabase_db()
@@ -539,6 +544,7 @@ async def get_readiness_history(
 @router.get("/strength", response_model=AllStrengthScoresResponse, tags=["Strength"])
 async def get_all_strength_scores(
     user_id: str = Query(...),
+    current_user: dict = Depends(get_current_user),
 ):
     """Get all muscle group strength scores for a user."""
     db = get_supabase_db()
@@ -606,6 +612,7 @@ async def get_all_strength_scores(
 async def get_strength_detail(
     muscle_group: str,
     user_id: str = Query(...),
+    current_user: dict = Depends(get_current_user),
 ):
     """Get detailed strength information for a specific muscle group."""
     db = get_supabase_db()
@@ -680,6 +687,7 @@ async def get_strength_detail(
 async def calculate_strength_scores(
     user_id: str = Query(...),
     background_tasks: BackgroundTasks = None,
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Trigger recalculation of strength scores.
@@ -806,6 +814,7 @@ async def get_personal_records(
     user_id: str = Query(...),
     limit: int = Query(10, ge=1, le=50),
     period_days: int = Query(30, ge=1, le=365),
+    current_user: dict = Depends(get_current_user),
 ):
     """Get personal records and statistics for a user."""
     db = get_supabase_db()
@@ -865,6 +874,7 @@ async def get_personal_records(
 async def get_exercise_pr_history(
     exercise: str,
     user_id: str = Query(...),
+    current_user: dict = Depends(get_current_user),
 ):
     """Get PR history for a specific exercise."""
     db = get_supabase_db()
@@ -892,6 +902,7 @@ async def get_exercise_pr_history(
 async def get_nutrition_score(
     user_id: str = Query(...),
     week_start: Optional[date] = Query(None, description="Start of week (Monday)"),
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Get weekly nutrition score for a user.
@@ -953,6 +964,7 @@ async def get_nutrition_score(
 async def calculate_nutrition_score(
     request: NutritionCalculateRequest,
     background_tasks: BackgroundTasks,
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Calculate and save weekly nutrition score.
@@ -1114,6 +1126,7 @@ async def calculate_nutrition_score(
 @router.get("/fitness", response_model=FitnessScoreBreakdownResponse, tags=["Fitness"])
 async def get_fitness_score(
     user_id: str = Query(...),
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Get overall fitness score with breakdown.
@@ -1189,6 +1202,7 @@ async def get_fitness_score(
 async def calculate_fitness_score(
     request: FitnessCalculateRequest,
     background_tasks: BackgroundTasks,
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Calculate and save overall fitness score.
@@ -1370,6 +1384,7 @@ async def calculate_fitness_score(
 @router.get("/overview", response_model=ScoresOverviewResponse, tags=["Overview"])
 async def get_scores_overview(
     user_id: str = Query(...),
+    current_user: dict = Depends(get_current_user),
 ):
     """Get combined dashboard data including readiness, strength, and PRs."""
     db = get_supabase_db()

@@ -5,7 +5,9 @@ Allows users to customize weight step sizes per equipment type (dumbbell, barbel
 Supports both kg and lbs units.
 """
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
+from core.auth import get_current_user
+from core.exceptions import safe_internal_error
 from pydantic import BaseModel, Field
 from typing import Optional, Literal
 from datetime import datetime
@@ -50,7 +52,9 @@ DEFAULTS = {
 
 
 @router.get("/{user_id}", response_model=WeightIncrementsResponse)
-async def get_weight_increments(user_id: str):
+async def get_weight_increments(user_id: str,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Get user's weight increment preferences.
 
@@ -69,7 +73,9 @@ async def get_weight_increments(user_id: str):
 
 
 @router.put("/{user_id}", response_model=WeightIncrementsResponse)
-async def update_weight_increments(user_id: str, update: WeightIncrementsUpdate):
+async def update_weight_increments(user_id: str, update: WeightIncrementsUpdate,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Update weight increment preferences (upsert).
 
@@ -107,7 +113,9 @@ async def update_weight_increments(user_id: str, update: WeightIncrementsUpdate)
 
 
 @router.delete("/{user_id}")
-async def reset_weight_increments(user_id: str):
+async def reset_weight_increments(user_id: str,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Reset weight increments to defaults by deleting user's record.
 

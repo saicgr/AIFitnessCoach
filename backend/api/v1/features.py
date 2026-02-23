@@ -14,7 +14,7 @@ RATE LIMITS:
 - Other endpoints: default global limit
 """
 from datetime import datetime
-from fastapi import APIRouter, HTTPException, Request
+from fastapi import APIRouter, HTTPException, Request, Depends
 from typing import Optional, List
 from pydantic import BaseModel
 
@@ -22,6 +22,8 @@ from core.supabase_db import get_supabase_db
 from core.logger import get_logger
 from core.rate_limiter import limiter
 from core.activity_logger import log_user_activity, log_user_error
+from core.auth import get_current_user
+from core.exceptions import safe_internal_error
 
 router = APIRouter(prefix="/features", tags=["features"])
 logger = get_logger(__name__)
@@ -102,7 +104,8 @@ def row_to_feature_response(
 @router.get("/list")
 async def get_feature_requests(
     status: Optional[str] = None,
-    user_id: Optional[str] = None
+    user_id: Optional[str] = None,
+    current_user: dict = Depends(get_current_user),
 ) -> List[FeatureRequestResponse]:
     """
     Get all feature requests with voting status.
@@ -143,14 +146,15 @@ async def get_feature_requests(
 
     except Exception as e:
         logger.error(f"Error fetching feature requests: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "features")
 
 
 @router.post("/create", status_code=201)
 @limiter.limit("10/hour")
 async def create_feature_request(
     request: Request,
-    feature: CreateFeatureRequest
+    feature: CreateFeatureRequest,
+    current_user: dict = Depends(get_current_user),
 ) -> FeatureRequestResponse:
     """
     Create a new feature request.
@@ -166,6 +170,8 @@ async def create_feature_request(
     Raises:
         HTTPException: If user has reached submission limit or other error
     """
+    if str(current_user["id"]) != str(feature.user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     try:
         db = get_supabase_db()
         client = db.client
@@ -242,12 +248,12 @@ async def create_feature_request(
             endpoint="/api/v1/features/create",
             status_code=500
         )
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "features")
 
 
 @router.post("/vote")
 @limiter.limit("100/hour")
-async def vote_for_feature(request: Request, vote: VoteRequest):
+async def vote_for_feature(request: Request, vote: VoteRequest, current_user: dict = Depends(get_current_user)):
     """
     Toggle vote for a feature (vote if not voted, unvote if already voted).
 
@@ -257,6 +263,8 @@ async def vote_for_feature(request: Request, vote: VoteRequest):
     Returns:
         Action taken and updated vote count
     """
+    if str(current_user["id"]) != str(vote.user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     try:
         db = get_supabase_db()
         client = db.client
@@ -319,11 +327,11 @@ async def vote_for_feature(request: Request, vote: VoteRequest):
             metadata={"feature_id": vote.feature_id},
             status_code=500
         )
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "features")
 
 
 @router.get("/{feature_id}")
-async def get_feature_details(feature_id: str, user_id: Optional[str] = None) -> FeatureRequestResponse:
+async def get_feature_details(feature_id: str, user_id: Optional[str] = None, current_user: dict = Depends(get_current_user)) -> FeatureRequestResponse:
     """
     Get detailed information about a specific feature.
 
@@ -349,11 +357,11 @@ async def get_feature_details(feature_id: str, user_id: Optional[str] = None) ->
         raise
     except Exception as e:
         logger.error(f"Error fetching feature {feature_id}: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "features")
 
 
 @router.get("/user/{user_id}/remaining")
-async def get_remaining_submissions(user_id: str):
+async def get_remaining_submissions(user_id: str, current_user: dict = Depends(get_current_user)):
     """
     Get number of remaining feature submissions for a user.
 
@@ -363,6 +371,8 @@ async def get_remaining_submissions(user_id: str):
     Returns:
         Remaining submissions count and total limit
     """
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     try:
         db = get_supabase_db()
         client = db.client
@@ -382,4 +392,4 @@ async def get_remaining_submissions(user_id: str):
 
     except Exception as e:
         logger.error(f"Error checking remaining submissions for user {user_id}: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "features")

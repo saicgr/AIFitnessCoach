@@ -5,7 +5,6 @@ import '../../../../core/constants/app_colors.dart';
 import '../../../../data/models/scores.dart';
 import '../../../../data/providers/recovery_provider.dart';
 import '../../../../data/providers/scores_provider.dart';
-import '../../../../data/providers/sleep_provider.dart';
 import '../../../../data/repositories/auth_repository.dart';
 import '../../../../data/services/haptic_service.dart';
 

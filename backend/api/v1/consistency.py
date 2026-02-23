@@ -13,12 +13,14 @@ Endpoints:
 
 from datetime import datetime, date, timedelta
 from typing import Optional, List, Dict, Any
-from fastapi import APIRouter, HTTPException, Query, BackgroundTasks, Request
+from fastapi import APIRouter, Depends, HTTPException, Query, BackgroundTasks, Request
 from collections import defaultdict
 import logging
 
 from core.db import get_supabase_db
 from core.timezone_utils import resolve_timezone, get_user_today
+from core.auth import get_current_user
+from core.exceptions import safe_internal_error
 from models.consistency import (
     ConsistencyInsights,
     ConsistencyPatterns,
@@ -133,6 +135,7 @@ async def get_consistency_insights(
     user_id: str = Query(..., description="User ID"),
     days_back: int = Query(90, ge=7, le=365, description="Days of history to analyze"),
     background_tasks: BackgroundTasks = None,
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Get comprehensive consistency insights for a user.
@@ -144,6 +147,8 @@ async def get_consistency_insights(
     - Weekly completion rates (last 4 weeks)
     - Recovery suggestion if streak is broken
     """
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     db = get_supabase_db()
     user_tz = resolve_timezone(request, db, user_id)
     today = datetime.strptime(get_user_today(user_tz), "%Y-%m-%d").date()
@@ -391,18 +396,21 @@ async def get_consistency_insights(
 
     except Exception as e:
         logger.error(f"Error fetching consistency insights: {e}")
-        raise HTTPException(status_code=500, detail=f"Failed to fetch consistency insights: {str(e)}")
+        raise safe_internal_error(e, "get_consistency_insights")
 
 
 @router.get("/patterns", response_model=ConsistencyPatterns, tags=["Consistency"])
 async def get_consistency_patterns(
     user_id: str = Query(..., description="User ID"),
     days_back: int = Query(180, ge=30, le=365, description="Days of history to analyze"),
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Get detailed consistency patterns including time of day preferences,
     day of week patterns, and historical streak analysis.
     """
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     db = get_supabase_db()
 
     try:
@@ -531,7 +539,7 @@ async def get_consistency_patterns(
 
     except Exception as e:
         logger.error(f"Error fetching consistency patterns: {e}")
-        raise HTTPException(status_code=500, detail=f"Failed to fetch consistency patterns: {str(e)}")
+        raise safe_internal_error(e, "get_consistency_patterns")
 
 
 @router.get("/calendar", response_model=CalendarHeatmapResponse, tags=["Consistency"])
@@ -541,6 +549,7 @@ async def get_calendar_heatmap(
     weeks: int = Query(None, ge=1, le=52, description="Number of weeks to include (legacy, use start_date/end_date instead)"),
     start_date_param: Optional[str] = Query(None, alias="start_date", description="Start date in YYYY-MM-DD format"),
     end_date_param: Optional[str] = Query(None, alias="end_date", description="End date in YYYY-MM-DD format"),
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Get calendar heatmap data for visualizing workout consistency.
@@ -555,6 +564,8 @@ async def get_calendar_heatmap(
     - rest: No workout scheduled (rest day)
     - future: Future date
     """
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     db = get_supabase_db()
 
     try:
@@ -678,7 +689,7 @@ async def get_calendar_heatmap(
         raise
     except Exception as e:
         logger.error(f"Error fetching calendar heatmap: {e}")
-        raise HTTPException(status_code=500, detail=f"Failed to fetch calendar data: {str(e)}")
+        raise safe_internal_error(e, "get_calendar_heatmap")
 
 
 @router.get("/day-detail", tags=["Consistency"])
@@ -686,6 +697,7 @@ async def get_day_detail(
     request: Request,
     user_id: str = Query(..., description="User ID"),
     date_str: str = Query(..., alias="date", description="Date in YYYY-MM-DD format"),
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Get detailed workout information for a specific day.
@@ -697,6 +709,8 @@ async def get_day_detail(
     - Total volume and stats
     - Muscles worked
     """
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     db = get_supabase_db()
 
     try:
@@ -890,7 +904,7 @@ async def get_day_detail(
         raise HTTPException(status_code=400, detail=f"Invalid date format: {str(e)}")
     except Exception as e:
         logger.error(f"Error fetching day detail: {e}")
-        raise HTTPException(status_code=500, detail=f"Failed to fetch day detail: {str(e)}")
+        raise safe_internal_error(e, "get_day_detail")
 
 
 @router.get("/search-exercise", tags=["Consistency"])
@@ -899,6 +913,7 @@ async def search_exercise_history(
     user_id: str = Query(..., description="User ID"),
     exercise_name: str = Query(..., description="Exercise name to search for"),
     weeks: int = Query(52, ge=1, le=104, description="Number of weeks to search back"),
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Search for all occurrences of an exercise in workout history.
@@ -908,6 +923,8 @@ async def search_exercise_history(
     - Summary for each occurrence (sets, best weight × reps, PR status)
     - Matching dates for heatmap highlighting
     """
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     db = get_supabase_db()
 
     try:
@@ -1035,7 +1052,7 @@ async def search_exercise_history(
 
     except Exception as e:
         logger.error(f"Error searching exercise history: {e}")
-        raise HTTPException(status_code=500, detail=f"Failed to search exercise history: {str(e)}")
+        raise safe_internal_error(e, "search_exercise_history")
 
 
 @router.get("/exercise-suggestions", tags=["Consistency"])
@@ -1043,6 +1060,7 @@ async def get_exercise_suggestions(
     user_id: str = Query(..., description="User ID"),
     query: str = Query("", description="Search query for autocomplete"),
     limit: int = Query(10, ge=1, le=50, description="Max suggestions to return"),
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Get exercise name suggestions for autocomplete.
@@ -1050,6 +1068,8 @@ async def get_exercise_suggestions(
     Returns exercises the user has performed, filtered by query,
     sorted by frequency of use.
     """
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     db = get_supabase_db()
 
     try:
@@ -1101,7 +1121,7 @@ async def get_exercise_suggestions(
 
     except Exception as e:
         logger.error(f"Error fetching exercise suggestions: {e}")
-        raise HTTPException(status_code=500, detail=f"Failed to fetch suggestions: {str(e)}")
+        raise safe_internal_error(e, "get_exercise_suggestions")
 
 
 @router.post("/streak-recovery", response_model=StreakRecoveryResponse, tags=["Consistency"])
@@ -1109,6 +1129,7 @@ async def initiate_streak_recovery(
     http_request: Request,
     request: StreakRecoveryRequest,
     background_tasks: BackgroundTasks,
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Initiate a streak recovery attempt.
@@ -1116,6 +1137,8 @@ async def initiate_streak_recovery(
     Called when a user returns after breaking their streak.
     Records the attempt and provides encouraging guidance.
     """
+    if str(current_user["id"]) != str(request.user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     db = get_supabase_db()
 
     try:
@@ -1200,7 +1223,7 @@ async def initiate_streak_recovery(
         raise
     except Exception as e:
         logger.error(f"Error initiating streak recovery: {e}")
-        raise HTTPException(status_code=500, detail=f"Failed to initiate recovery: {str(e)}")
+        raise safe_internal_error(e, "initiate_streak_recovery")
 
 
 @router.post("/streak-recovery/{attempt_id}/complete", tags=["Consistency"])
@@ -1209,12 +1232,15 @@ async def complete_streak_recovery(
     user_id: str = Query(...),
     workout_id: Optional[str] = Query(None),
     was_successful: bool = Query(True),
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Mark a streak recovery attempt as completed.
 
     Called after the user completes (or abandons) their recovery workout.
     """
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     db = get_supabase_db()
 
     try:
@@ -1243,7 +1269,7 @@ async def complete_streak_recovery(
         raise
     except Exception as e:
         logger.error(f"Error completing streak recovery: {e}")
-        raise HTTPException(status_code=500, detail=f"Failed to complete recovery: {str(e)}")
+        raise safe_internal_error(e, "complete_streak_recovery")
 
 
 # ============================================================================

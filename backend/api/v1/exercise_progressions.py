@@ -16,7 +16,7 @@ Example chains:
 - Squat: Assisted -> Bodyweight -> Split -> Bulgarian -> Pistol
 """
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query, Depends
 from pydantic import BaseModel, Field
 from typing import List, Optional, Dict, Any
 from datetime import datetime, date
@@ -27,6 +27,8 @@ import logging
 from core.supabase_db import get_supabase_db
 from core.logger import get_logger
 from core.activity_logger import log_user_activity, log_user_error
+from core.auth import get_current_user
+from core.exceptions import safe_internal_error
 
 logger = get_logger(__name__)
 router = APIRouter()
@@ -463,6 +465,7 @@ async def get_next_variant(exercise_name: str) -> Optional[dict]:
 async def get_progression_chains(
     muscle_group: Optional[MuscleGroup] = None,
     chain_type: Optional[ChainType] = None,
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Get all progression chains.
@@ -500,11 +503,11 @@ async def get_progression_chains(
 
     except Exception as e:
         logger.error(f"Failed to get progression chains: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "exercise_progressions")
 
 
 @router.get("/chains/{chain_id}", response_model=ProgressionChainResponse)
-async def get_progression_chain(chain_id: str):
+async def get_progression_chain(chain_id: str, current_user: dict = Depends(get_current_user)):
     """
     Get a specific progression chain with all its variants.
     """
@@ -537,7 +540,7 @@ async def get_progression_chain(chain_id: str):
         raise
     except Exception as e:
         logger.error(f"Failed to get progression chain: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "exercise_progressions")
 
 
 # =============================================================================
@@ -548,6 +551,7 @@ async def get_progression_chain(chain_id: str):
 async def get_user_mastery(
     user_id: str,
     ready_only: bool = Query(default=False, description="Only return exercises ready for progression"),
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Get user's exercise mastery levels for all exercises they've performed.
@@ -555,6 +559,8 @@ async def get_user_mastery(
     Returns exercises with mastery status, including whether they're ready
     to progress and what the suggested next variant is.
     """
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     logger.info(f"Getting mastery for user {user_id}, ready_only={ready_only}")
 
     try:
@@ -603,11 +609,11 @@ async def get_user_mastery(
 
     except Exception as e:
         logger.error(f"Failed to get user mastery: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "exercise_progressions")
 
 
 @router.get("/user/{user_id}/suggestions", response_model=List[ProgressionSuggestion])
-async def get_progression_suggestions(user_id: str):
+async def get_progression_suggestions(user_id: str, current_user: dict = Depends(get_current_user)):
     """
     Get progression suggestions for exercises the user is ready to advance on.
 
@@ -615,6 +621,8 @@ async def get_progression_suggestions(user_id: str):
     - consecutive_easy_sessions >= 2, OR
     - total_sessions >= 5 with high performance
     """
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     logger.info(f"Getting progression suggestions for user {user_id}")
 
     try:
@@ -691,11 +699,11 @@ async def get_progression_suggestions(user_id: str):
 
     except Exception as e:
         logger.error(f"Failed to get progression suggestions: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "exercise_progressions")
 
 
 @router.post("/user/{user_id}/update-mastery", response_model=UpdateMasteryResponse)
-async def update_exercise_mastery(user_id: str, request: UpdateMasteryRequest):
+async def update_exercise_mastery(user_id: str, request: UpdateMasteryRequest, current_user: dict = Depends(get_current_user)):
     """
     Update exercise mastery after a workout.
 
@@ -707,6 +715,8 @@ async def update_exercise_mastery(user_id: str, request: UpdateMasteryRequest):
     Updates consecutive_easy_sessions, current_max_reps, and calculates
     whether user is ready for progression.
     """
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     logger.info(f"Updating mastery for user {user_id}, exercise: {request.exercise_name}")
 
     try:
@@ -891,11 +901,11 @@ async def update_exercise_mastery(user_id: str, request: UpdateMasteryRequest):
             metadata={"exercise_name": request.exercise_name},
             status_code=500
         )
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "exercise_progressions")
 
 
 @router.post("/user/{user_id}/accept-progression", response_model=AcceptProgressionResponse)
-async def accept_progression(user_id: str, request: AcceptProgressionRequest):
+async def accept_progression(user_id: str, request: AcceptProgressionRequest, current_user: dict = Depends(get_current_user)):
     """
     User accepts a progression to a harder exercise variant.
 
@@ -904,6 +914,8 @@ async def accept_progression(user_id: str, request: AcceptProgressionRequest):
     2. Creates a new mastery record for the new exercise
     3. Logs the activity for user context service
     """
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     logger.info(f"User {user_id} accepting progression: {request.current_exercise} -> {request.new_exercise}")
 
     try:
@@ -1019,7 +1031,7 @@ async def accept_progression(user_id: str, request: AcceptProgressionRequest):
             },
             status_code=500
         )
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "exercise_progressions")
 
 
 # =============================================================================
@@ -1027,10 +1039,12 @@ async def accept_progression(user_id: str, request: AcceptProgressionRequest):
 # =============================================================================
 
 @router.get("/user/{user_id}/rep-preferences", response_model=RepPreferencesResponse)
-async def get_rep_preferences(user_id: str):
+async def get_rep_preferences(user_id: str, current_user: dict = Depends(get_current_user)):
     """
     Get user's rep range preferences and training focus.
     """
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     logger.info(f"Getting rep preferences for user {user_id}")
 
     try:
@@ -1079,11 +1093,11 @@ async def get_rep_preferences(user_id: str):
 
     except Exception as e:
         logger.error(f"Failed to get rep preferences: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "exercise_progressions")
 
 
 @router.put("/user/{user_id}/rep-preferences", response_model=RepPreferencesResponse)
-async def update_rep_preferences(user_id: str, request: RepPreferences):
+async def update_rep_preferences(user_id: str, request: RepPreferences, current_user: dict = Depends(get_current_user)):
     """
     Update user's rep range preferences.
 
@@ -1093,6 +1107,8 @@ async def update_rep_preferences(user_id: str, request: RepPreferences):
     - avoid_high_reps: Never prescribe sets above 15 reps
     - progression_style: How aggressively to suggest harder variants
     """
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     logger.info(f"Updating rep preferences for user {user_id}: {request.training_focus}")
 
     try:
@@ -1165,7 +1181,7 @@ async def update_rep_preferences(user_id: str, request: RepPreferences):
 
     except Exception as e:
         logger.error(f"Failed to update rep preferences: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "exercise_progressions")
 
 
 # =============================================================================
@@ -1173,12 +1189,14 @@ async def update_rep_preferences(user_id: str, request: RepPreferences):
 # =============================================================================
 
 @router.get("/user/{user_id}/check-readiness/{exercise_name}")
-async def check_readiness_endpoint(user_id: str, exercise_name: str):
+async def check_readiness_endpoint(user_id: str, exercise_name: str, current_user: dict = Depends(get_current_user)):
     """
     Check if user is ready to progress on a specific exercise.
 
     Returns readiness status with reason and suggested next variant.
     """
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     logger.info(f"Checking readiness for user {user_id}, exercise: {exercise_name}")
 
     result = await check_progression_readiness(user_id, exercise_name)
@@ -1186,7 +1204,7 @@ async def check_readiness_endpoint(user_id: str, exercise_name: str):
 
 
 @router.get("/next-variant/{exercise_name}")
-async def get_next_variant_endpoint(exercise_name: str):
+async def get_next_variant_endpoint(exercise_name: str, current_user: dict = Depends(get_current_user)):
     """
     Get the next harder variant for an exercise.
 
@@ -1212,7 +1230,7 @@ async def get_next_variant_endpoint(exercise_name: str):
 
 
 @router.get("/chain-types")
-async def get_chain_types():
+async def get_chain_types(current_user: dict = Depends(get_current_user)):
     """Get all available progression chain types with descriptions."""
     return {
         "chain_types": [
@@ -1246,7 +1264,7 @@ async def get_chain_types():
 
 
 @router.get("/muscle-groups")
-async def get_muscle_groups():
+async def get_muscle_groups(current_user: dict = Depends(get_current_user)):
     """Get all available muscle groups for filtering chains."""
     return {
         "muscle_groups": [mg.value for mg in MuscleGroup],

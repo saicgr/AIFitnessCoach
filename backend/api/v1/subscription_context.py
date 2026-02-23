@@ -17,6 +17,8 @@ from typing import Optional
 from uuid import UUID
 
 from fastapi import APIRouter, Depends
+from core.auth import get_current_user
+from core.exceptions import safe_internal_error
 from pydantic import BaseModel, Field
 from supabase import Client
 
@@ -116,7 +118,8 @@ class PlanChangedRequest(BaseModel):
 async def log_pricing_viewed(
     user_id: UUID,
     request: PricingViewedRequest,
-    supabase: Client = Depends(get_supabase)
+    supabase: Client = Depends(get_supabase),
+    current_user: dict = Depends(get_current_user),
 ) -> dict:
     """Log when user views pricing information."""
     try:
@@ -143,7 +146,8 @@ async def log_pricing_viewed(
 async def log_trial_started(
     user_id: UUID,
     request: TrialStartedRequest,
-    supabase: Client = Depends(get_supabase)
+    supabase: Client = Depends(get_supabase),
+    current_user: dict = Depends(get_current_user),
 ) -> dict:
     """Log when user starts a trial."""
     try:
@@ -170,7 +174,8 @@ async def log_trial_started(
 async def log_trial_reminder(
     user_id: UUID,
     request: TrialReminderRequest,
-    supabase: Client = Depends(get_supabase)
+    supabase: Client = Depends(get_supabase),
+    current_user: dict = Depends(get_current_user),
 ) -> dict:
     """Log when trial reminder is shown to user."""
     try:
@@ -196,7 +201,8 @@ async def log_trial_reminder(
 async def log_free_plan_selected(
     user_id: UUID,
     request: FreePlanSelectedRequest,
-    supabase: Client = Depends(get_supabase)
+    supabase: Client = Depends(get_supabase),
+    current_user: dict = Depends(get_current_user),
 ) -> dict:
     """Log when user selects the free plan."""
     try:
@@ -222,7 +228,8 @@ async def log_free_plan_selected(
 async def log_demo_workout_viewed(
     user_id: UUID,
     request: DemoWorkoutRequest,
-    supabase: Client = Depends(get_supabase)
+    supabase: Client = Depends(get_supabase),
+    current_user: dict = Depends(get_current_user),
 ) -> dict:
     """Log when user views/completes a demo workout."""
     try:
@@ -254,7 +261,8 @@ async def log_guest_session(
     user_id: UUID,
     request: GuestSessionRequest,
     ended: bool = False,
-    supabase: Client = Depends(get_supabase)
+    supabase: Client = Depends(get_supabase),
+    current_user: dict = Depends(get_current_user),
 ) -> dict:
     """Log guest session start or end."""
     try:
@@ -283,7 +291,8 @@ async def log_guest_session(
 async def log_guest_converted(
     user_id: UUID,
     converted_to: str = "account",  # account, trial, paid
-    supabase: Client = Depends(get_supabase)
+    supabase: Client = Depends(get_supabase),
+    current_user: dict = Depends(get_current_user),
 ) -> dict:
     """Log when a guest user converts to a registered user."""
     try:
@@ -308,7 +317,8 @@ async def log_guest_converted(
 async def log_feature_limit_hit(
     user_id: UUID,
     request: FeatureLimitRequest,
-    supabase: Client = Depends(get_supabase)
+    supabase: Client = Depends(get_supabase),
+    current_user: dict = Depends(get_current_user),
 ) -> dict:
     """Log when user hits a feature usage limit."""
     try:
@@ -336,7 +346,8 @@ async def log_feature_limit_hit(
 async def log_plan_changed(
     user_id: UUID,
     request: PlanChangedRequest,
-    supabase: Client = Depends(get_supabase)
+    supabase: Client = Depends(get_supabase),
+    current_user: dict = Depends(get_current_user),
 ) -> dict:
     """Log when user's subscription plan changes."""
     try:
@@ -362,7 +373,8 @@ async def log_plan_changed(
 @router.get("/{user_id}/context")
 async def get_subscription_context(
     user_id: UUID,
-    supabase: Client = Depends(get_supabase)
+    supabase: Client = Depends(get_supabase),
+    current_user: dict = Depends(get_current_user),
 ) -> dict:
     """
     Get subscription context for AI personalization.

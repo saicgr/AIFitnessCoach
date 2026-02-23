@@ -99,6 +99,8 @@ class QuickWorkoutNotifier extends StateNotifier<QuickWorkoutState> {
       : super(const QuickWorkoutState());
 
   /// Generate a quick workout — local engine first, API fallback if cache is small.
+  /// If [scheduledDate] is provided, the generated workout's scheduled date
+  /// will be overridden (used when user picks "Change Date" in conflict dialog).
   Future<Workout?> generateQuickWorkout({
     required int duration,
     String? focus,
@@ -109,6 +111,7 @@ class QuickWorkoutNotifier extends StateNotifier<QuickWorkoutState> {
     List<String>? equipment,
     List<String>? injuries,
     Map<String, EquipmentItem>? equipmentDetails,
+    DateTime? scheduledDate,
   }) async {
     final userId = await _apiClient.getUserId();
     if (userId == null) {
@@ -296,7 +299,7 @@ class QuickWorkoutNotifier extends StateNotifier<QuickWorkoutState> {
 
       // 7. Generate locally (<100ms)
       final engine = QuickWorkoutEngine();
-      final workout = engine.generate(
+      var workout = engine.generate(
         userId: userId,
         durationMinutes: duration,
         focus: focus,
@@ -326,6 +329,13 @@ class QuickWorkoutNotifier extends StateNotifier<QuickWorkoutState> {
 
       debugPrint('[QuickWorkout] Generated locally: ${workout.name} '
           '(${workout.exercises.length} exercises, ~${workout.estimatedDurationMinutes}min)');
+
+      // 7b. Apply scheduled date override if user chose "Change Date"
+      if (scheduledDate != null) {
+        final dateStr = '${scheduledDate.year}-${scheduledDate.month.toString().padLeft(2, '0')}-${scheduledDate.day.toString().padLeft(2, '0')}';
+        workout = workout.copyWith(scheduledDate: dateStr);
+        debugPrint('[QuickWorkout] Overriding scheduled date to $dateStr');
+      }
 
       // 8. Save variety data
       final newExerciseNames = workout.exercises.map((e) => e.name).join(',');

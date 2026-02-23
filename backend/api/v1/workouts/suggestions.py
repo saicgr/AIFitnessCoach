@@ -10,7 +10,9 @@ import json
 from datetime import datetime
 from typing import List, Optional
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
+from core.auth import get_current_user
+from core.exceptions import safe_internal_error
 from pydantic import BaseModel
 
 from core.supabase_db import get_supabase_db
@@ -49,7 +51,9 @@ class WorkoutSuggestionsResponse(BaseModel):
 
 
 @router.post("/suggest", response_model=WorkoutSuggestionsResponse)
-async def get_workout_suggestions(request: WorkoutSuggestionRequest):
+async def get_workout_suggestions(request: WorkoutSuggestionRequest,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Get AI-powered workout suggestions for regeneration.
 
@@ -194,7 +198,7 @@ Example format: {{"suggestions": [...]}}"""
         raise
     except Exception as e:
         logger.error(f"Failed to get workout suggestions: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "suggestions")
 
 
 def _generate_fallback_summary(
@@ -258,7 +262,9 @@ def _generate_fallback_summary(
 
 
 @router.get("/{workout_id}/summary")
-async def get_workout_ai_summary(workout_id: str, force_regenerate: bool = False):
+async def get_workout_ai_summary(workout_id: str, force_regenerate: bool = False,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Generate an AI summary/description of a workout explaining the intention and benefits.
 
@@ -381,13 +387,15 @@ async def get_workout_ai_summary(workout_id: str, force_regenerate: bool = False
         raise
     except Exception as e:
         logger.error(f"Failed to generate workout summary: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "suggestions")
 
 
 # ==================== WORKOUT GENERATION PARAMETERS ENDPOINT ====================
 
 @router.get("/{workout_id}/generation-params")
-async def get_workout_generation_params(workout_id: str):
+async def get_workout_generation_params(workout_id: str,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Get the generation parameters and AI reasoning for a workout.
 
@@ -605,7 +613,7 @@ async def get_workout_generation_params(workout_id: str):
         import traceback
         logger.error(f"Failed to get workout generation params: {e}")
         logger.error(f"Traceback: {traceback.format_exc()}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "suggestions")
 
 
 def _build_exercise_reasoning(

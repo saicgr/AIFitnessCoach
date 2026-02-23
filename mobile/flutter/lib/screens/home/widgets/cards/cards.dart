@@ -27,3 +27,9 @@ export 'quick_log_weight_card.dart';
 export 'quick_log_measurements_card.dart';
 export 'habits_tile_card.dart';
 export 'up_next_card.dart';
+
+// New tile cards
+export 'fasting_tile.dart';
+export 'progress_photo_tile.dart';
+export 'weekly_calendar_tile.dart';
+export 'muscle_heatmap_tile.dart';

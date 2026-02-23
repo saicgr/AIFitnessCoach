@@ -97,8 +97,9 @@ class LoggingMiddleware:
         # Generate unique request ID for tracing
         request_id = str(uuid.uuid4())[:8]
 
-        # Extract user_id from query parameters only
-        user_id = request.query_params.get("user_id")
+        # Extract user_id from query parameters only (truncate for privacy)
+        raw_user_id = request.query_params.get("user_id")
+        user_id = f"...{raw_user_id[-4:]}" if raw_user_id and len(raw_user_id) > 4 else raw_user_id
 
         # Set logging context for this request
         set_log_context(user_id=user_id, request_id=request_id)
@@ -253,7 +254,8 @@ async def _resume_pending_jobs():
                 user_id = job.get("user_id")
                 status = job.get("status")
 
-                logger.info(f"  - Resuming job {job_id} for user {user_id} (status: {status})")
+                truncated_uid = f"...{user_id[-4:]}" if user_id and len(str(user_id)) > 4 else user_id
+                logger.info(f"  - Resuming job {job_id} for user {truncated_uid} (status: {status})")
 
                 # Create an async task to resume the job
                 asyncio.create_task(
@@ -358,6 +360,7 @@ async def lifespan(app: FastAPI):
 
 
 # Create FastAPI app
+# Disable Swagger/OpenAPI docs in production to reduce attack surface
 app = FastAPI(
     title="FitWiz API",
     description="""
@@ -381,6 +384,9 @@ app = FastAPI(
     """,
     version="1.0.0",
     lifespan=lifespan,
+    docs_url="/docs" if settings.debug else None,
+    redoc_url="/redoc" if settings.debug else None,
+    openapi_url="/openapi.json" if settings.debug else None,
 )
 
 # Attach limiter to app state for endpoint decorators
@@ -422,12 +428,14 @@ app.include_router(v1_router, prefix="/api")
 @app.get("/")
 async def root():
     """Root endpoint - basic info."""
-    return {
+    result = {
         "service": "FitWiz Backend",
         "version": "1.0.0",
-        "docs": "/docs",
         "health": "/health",
     }
+    if settings.debug:
+        result["docs"] = "/docs"
+    return result
 
 
 @app.get("/health", tags=["health"])

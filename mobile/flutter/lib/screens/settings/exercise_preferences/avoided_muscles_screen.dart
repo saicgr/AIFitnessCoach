@@ -18,9 +18,11 @@ final avoidedMusclesProvider =
   return repo.getAvoidedMuscles(userId);
 });
 
-/// Screen for managing muscle groups to avoid - shows body diagram directly
+/// Screen for managing muscle groups to avoid - shows body diagram directly.
+/// When [embedded] is true, renders without Scaffold/AppBar for use inside tabs.
 class AvoidedMusclesScreen extends ConsumerStatefulWidget {
-  const AvoidedMusclesScreen({super.key});
+  final bool embedded;
+  const AvoidedMusclesScreen({super.key, this.embedded = false});
 
   @override
   ConsumerState<AvoidedMusclesScreen> createState() =>
@@ -50,48 +52,18 @@ class _AvoidedMusclesScreenState extends ConsumerState<AvoidedMusclesScreen> {
     final userId = authState.user?.id;
 
     if (userId == null) {
+      final notLoggedIn = Center(child: Text('Please log in', style: TextStyle(color: textMuted)));
+      if (widget.embedded) return notLoggedIn;
       return Scaffold(
         backgroundColor: backgroundColor,
         appBar: AppBar(title: const Text('Muscles to Avoid')),
-        body: const Center(child: Text('Please log in')),
+        body: notLoggedIn,
       );
     }
 
     final avoidedAsync = ref.watch(avoidedMusclesProvider(userId));
 
-    return Scaffold(
-      backgroundColor: backgroundColor,
-      appBar: AppBar(
-        backgroundColor: backgroundColor,
-        elevation: 0,
-        automaticallyImplyLeading: false,
-        leading: const GlassBackButton(),
-        title: Text(
-          'Muscles to Avoid',
-          style: TextStyle(
-            color: textColor,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        actions: [
-          // Clear selection button (only show if there are pending selections)
-          if (_pendingMuscles.isNotEmpty)
-            TextButton(
-              onPressed: () {
-                setState(() {
-                  _pendingMuscles.clear();
-                  _bodySelectorKey++; // Force body selector to rebuild
-                });
-                HapticService.light();
-              },
-              child: Text(
-                'Clear',
-                style: TextStyle(color: textMuted),
-              ),
-            ),
-        ],
-      ),
-      body: avoidedAsync.when(
+    final body = avoidedAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (error, _) => Center(
           child: Column(
@@ -311,7 +283,42 @@ class _AvoidedMusclesScreenState extends ConsumerState<AvoidedMusclesScreen> {
             ],
           );
         },
+    );
+
+    if (widget.embedded) return body;
+
+    return Scaffold(
+      backgroundColor: backgroundColor,
+      appBar: AppBar(
+        backgroundColor: backgroundColor,
+        elevation: 0,
+        automaticallyImplyLeading: false,
+        leading: const GlassBackButton(),
+        title: Text(
+          'Muscles to Avoid',
+          style: TextStyle(
+            color: textColor,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        actions: [
+          if (_pendingMuscles.isNotEmpty)
+            TextButton(
+              onPressed: () {
+                setState(() {
+                  _pendingMuscles.clear();
+                  _bodySelectorKey++;
+                });
+                HapticService.light();
+              },
+              child: Text(
+                'Clear',
+                style: TextStyle(color: textMuted),
+              ),
+            ),
+        ],
       ),
+      body: body,
     );
   }
 

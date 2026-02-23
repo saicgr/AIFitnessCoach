@@ -7759,6 +7759,893 @@ class CachedVolumeResponsesCompanion
   }
 }
 
+class $CachedQuickPresetsTable extends CachedQuickPresets
+    with TableInfo<$CachedQuickPresetsTable, CachedQuickPreset> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $CachedQuickPresetsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _userIdMeta = const VerificationMeta('userId');
+  @override
+  late final GeneratedColumn<String> userId = GeneratedColumn<String>(
+    'user_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _durationMeta = const VerificationMeta(
+    'duration',
+  );
+  @override
+  late final GeneratedColumn<int> duration = GeneratedColumn<int>(
+    'duration',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _focusMeta = const VerificationMeta('focus');
+  @override
+  late final GeneratedColumn<String> focus = GeneratedColumn<String>(
+    'focus',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _difficultyMeta = const VerificationMeta(
+    'difficulty',
+  );
+  @override
+  late final GeneratedColumn<String> difficulty = GeneratedColumn<String>(
+    'difficulty',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _goalMeta = const VerificationMeta('goal');
+  @override
+  late final GeneratedColumn<String> goal = GeneratedColumn<String>(
+    'goal',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _moodMeta = const VerificationMeta('mood');
+  @override
+  late final GeneratedColumn<String> mood = GeneratedColumn<String>(
+    'mood',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _useSupersetsMeta = const VerificationMeta(
+    'useSupersets',
+  );
+  @override
+  late final GeneratedColumn<bool> useSupersets = GeneratedColumn<bool>(
+    'use_supersets',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("use_supersets" IN (0, 1))',
+    ),
+    defaultValue: const Constant(true),
+  );
+  static const VerificationMeta _equipmentMeta = const VerificationMeta(
+    'equipment',
+  );
+  @override
+  late final GeneratedColumn<String> equipment = GeneratedColumn<String>(
+    'equipment',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('["Bodyweight"]'),
+  );
+  static const VerificationMeta _injuriesMeta = const VerificationMeta(
+    'injuries',
+  );
+  @override
+  late final GeneratedColumn<String> injuries = GeneratedColumn<String>(
+    'injuries',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('[]'),
+  );
+  static const VerificationMeta _equipDetailsMeta = const VerificationMeta(
+    'equipDetails',
+  );
+  @override
+  late final GeneratedColumn<String> equipDetails = GeneratedColumn<String>(
+    'equip_details',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _useCountMeta = const VerificationMeta(
+    'useCount',
+  );
+  @override
+  late final GeneratedColumn<int> useCount = GeneratedColumn<int>(
+    'use_count',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _isFavoriteMeta = const VerificationMeta(
+    'isFavorite',
+  );
+  @override
+  late final GeneratedColumn<bool> isFavorite = GeneratedColumn<bool>(
+    'is_favorite',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("is_favorite" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
+  static const VerificationMeta _isAiGeneratedMeta = const VerificationMeta(
+    'isAiGenerated',
+  );
+  @override
+  late final GeneratedColumn<bool> isAiGenerated = GeneratedColumn<bool>(
+    'is_ai_generated',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("is_ai_generated" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    userId,
+    duration,
+    focus,
+    difficulty,
+    goal,
+    mood,
+    useSupersets,
+    equipment,
+    injuries,
+    equipDetails,
+    useCount,
+    isFavorite,
+    isAiGenerated,
+    createdAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'cached_quick_presets';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<CachedQuickPreset> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('user_id')) {
+      context.handle(
+        _userIdMeta,
+        userId.isAcceptableOrUnknown(data['user_id']!, _userIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_userIdMeta);
+    }
+    if (data.containsKey('duration')) {
+      context.handle(
+        _durationMeta,
+        duration.isAcceptableOrUnknown(data['duration']!, _durationMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_durationMeta);
+    }
+    if (data.containsKey('focus')) {
+      context.handle(
+        _focusMeta,
+        focus.isAcceptableOrUnknown(data['focus']!, _focusMeta),
+      );
+    }
+    if (data.containsKey('difficulty')) {
+      context.handle(
+        _difficultyMeta,
+        difficulty.isAcceptableOrUnknown(data['difficulty']!, _difficultyMeta),
+      );
+    }
+    if (data.containsKey('goal')) {
+      context.handle(
+        _goalMeta,
+        goal.isAcceptableOrUnknown(data['goal']!, _goalMeta),
+      );
+    }
+    if (data.containsKey('mood')) {
+      context.handle(
+        _moodMeta,
+        mood.isAcceptableOrUnknown(data['mood']!, _moodMeta),
+      );
+    }
+    if (data.containsKey('use_supersets')) {
+      context.handle(
+        _useSupersetsMeta,
+        useSupersets.isAcceptableOrUnknown(
+          data['use_supersets']!,
+          _useSupersetsMeta,
+        ),
+      );
+    }
+    if (data.containsKey('equipment')) {
+      context.handle(
+        _equipmentMeta,
+        equipment.isAcceptableOrUnknown(data['equipment']!, _equipmentMeta),
+      );
+    }
+    if (data.containsKey('injuries')) {
+      context.handle(
+        _injuriesMeta,
+        injuries.isAcceptableOrUnknown(data['injuries']!, _injuriesMeta),
+      );
+    }
+    if (data.containsKey('equip_details')) {
+      context.handle(
+        _equipDetailsMeta,
+        equipDetails.isAcceptableOrUnknown(
+          data['equip_details']!,
+          _equipDetailsMeta,
+        ),
+      );
+    }
+    if (data.containsKey('use_count')) {
+      context.handle(
+        _useCountMeta,
+        useCount.isAcceptableOrUnknown(data['use_count']!, _useCountMeta),
+      );
+    }
+    if (data.containsKey('is_favorite')) {
+      context.handle(
+        _isFavoriteMeta,
+        isFavorite.isAcceptableOrUnknown(data['is_favorite']!, _isFavoriteMeta),
+      );
+    }
+    if (data.containsKey('is_ai_generated')) {
+      context.handle(
+        _isAiGeneratedMeta,
+        isAiGenerated.isAcceptableOrUnknown(
+          data['is_ai_generated']!,
+          _isAiGeneratedMeta,
+        ),
+      );
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_createdAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  CachedQuickPreset map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return CachedQuickPreset(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      userId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}user_id'],
+      )!,
+      duration: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}duration'],
+      )!,
+      focus: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}focus'],
+      ),
+      difficulty: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}difficulty'],
+      ),
+      goal: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}goal'],
+      ),
+      mood: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}mood'],
+      ),
+      useSupersets: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}use_supersets'],
+      )!,
+      equipment: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}equipment'],
+      )!,
+      injuries: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}injuries'],
+      )!,
+      equipDetails: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}equip_details'],
+      ),
+      useCount: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}use_count'],
+      )!,
+      isFavorite: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}is_favorite'],
+      )!,
+      isAiGenerated: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}is_ai_generated'],
+      )!,
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}created_at'],
+      )!,
+    );
+  }
+
+  @override
+  $CachedQuickPresetsTable createAlias(String alias) {
+    return $CachedQuickPresetsTable(attachedDatabase, alias);
+  }
+}
+
+class CachedQuickPreset extends DataClass
+    implements Insertable<CachedQuickPreset> {
+  /// UUID primary key
+  final String id;
+
+  /// User who owns this preset
+  final String userId;
+
+  /// Duration in minutes (5-30)
+  final int duration;
+
+  /// Focus area (e.g., 'full_body', 'upper_body', 'cardio')
+  final String? focus;
+
+  /// Difficulty level
+  final String? difficulty;
+
+  /// Training goal (e.g., 'strength', 'hypertrophy')
+  final String? goal;
+
+  /// Mood at time of workout
+  final String? mood;
+
+  /// Whether to use supersets
+  final bool useSupersets;
+
+  /// JSON-encoded List<String> of equipment names
+  final String equipment;
+
+  /// JSON-encoded List<String> of injury areas
+  final String injuries;
+
+  /// JSON-encoded Map<String, EquipmentItem> details (nullable)
+  final String? equipDetails;
+
+  /// Number of times this preset has been used
+  final int useCount;
+
+  /// Whether the user marked this as a favorite
+  final bool isFavorite;
+
+  /// Whether this preset was AI-generated (vs auto-captured)
+  final bool isAiGenerated;
+
+  /// When this preset was created
+  final DateTime createdAt;
+  const CachedQuickPreset({
+    required this.id,
+    required this.userId,
+    required this.duration,
+    this.focus,
+    this.difficulty,
+    this.goal,
+    this.mood,
+    required this.useSupersets,
+    required this.equipment,
+    required this.injuries,
+    this.equipDetails,
+    required this.useCount,
+    required this.isFavorite,
+    required this.isAiGenerated,
+    required this.createdAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['user_id'] = Variable<String>(userId);
+    map['duration'] = Variable<int>(duration);
+    if (!nullToAbsent || focus != null) {
+      map['focus'] = Variable<String>(focus);
+    }
+    if (!nullToAbsent || difficulty != null) {
+      map['difficulty'] = Variable<String>(difficulty);
+    }
+    if (!nullToAbsent || goal != null) {
+      map['goal'] = Variable<String>(goal);
+    }
+    if (!nullToAbsent || mood != null) {
+      map['mood'] = Variable<String>(mood);
+    }
+    map['use_supersets'] = Variable<bool>(useSupersets);
+    map['equipment'] = Variable<String>(equipment);
+    map['injuries'] = Variable<String>(injuries);
+    if (!nullToAbsent || equipDetails != null) {
+      map['equip_details'] = Variable<String>(equipDetails);
+    }
+    map['use_count'] = Variable<int>(useCount);
+    map['is_favorite'] = Variable<bool>(isFavorite);
+    map['is_ai_generated'] = Variable<bool>(isAiGenerated);
+    map['created_at'] = Variable<DateTime>(createdAt);
+    return map;
+  }
+
+  CachedQuickPresetsCompanion toCompanion(bool nullToAbsent) {
+    return CachedQuickPresetsCompanion(
+      id: Value(id),
+      userId: Value(userId),
+      duration: Value(duration),
+      focus: focus == null && nullToAbsent
+          ? const Value.absent()
+          : Value(focus),
+      difficulty: difficulty == null && nullToAbsent
+          ? const Value.absent()
+          : Value(difficulty),
+      goal: goal == null && nullToAbsent ? const Value.absent() : Value(goal),
+      mood: mood == null && nullToAbsent ? const Value.absent() : Value(mood),
+      useSupersets: Value(useSupersets),
+      equipment: Value(equipment),
+      injuries: Value(injuries),
+      equipDetails: equipDetails == null && nullToAbsent
+          ? const Value.absent()
+          : Value(equipDetails),
+      useCount: Value(useCount),
+      isFavorite: Value(isFavorite),
+      isAiGenerated: Value(isAiGenerated),
+      createdAt: Value(createdAt),
+    );
+  }
+
+  factory CachedQuickPreset.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return CachedQuickPreset(
+      id: serializer.fromJson<String>(json['id']),
+      userId: serializer.fromJson<String>(json['userId']),
+      duration: serializer.fromJson<int>(json['duration']),
+      focus: serializer.fromJson<String?>(json['focus']),
+      difficulty: serializer.fromJson<String?>(json['difficulty']),
+      goal: serializer.fromJson<String?>(json['goal']),
+      mood: serializer.fromJson<String?>(json['mood']),
+      useSupersets: serializer.fromJson<bool>(json['useSupersets']),
+      equipment: serializer.fromJson<String>(json['equipment']),
+      injuries: serializer.fromJson<String>(json['injuries']),
+      equipDetails: serializer.fromJson<String?>(json['equipDetails']),
+      useCount: serializer.fromJson<int>(json['useCount']),
+      isFavorite: serializer.fromJson<bool>(json['isFavorite']),
+      isAiGenerated: serializer.fromJson<bool>(json['isAiGenerated']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'userId': serializer.toJson<String>(userId),
+      'duration': serializer.toJson<int>(duration),
+      'focus': serializer.toJson<String?>(focus),
+      'difficulty': serializer.toJson<String?>(difficulty),
+      'goal': serializer.toJson<String?>(goal),
+      'mood': serializer.toJson<String?>(mood),
+      'useSupersets': serializer.toJson<bool>(useSupersets),
+      'equipment': serializer.toJson<String>(equipment),
+      'injuries': serializer.toJson<String>(injuries),
+      'equipDetails': serializer.toJson<String?>(equipDetails),
+      'useCount': serializer.toJson<int>(useCount),
+      'isFavorite': serializer.toJson<bool>(isFavorite),
+      'isAiGenerated': serializer.toJson<bool>(isAiGenerated),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+    };
+  }
+
+  CachedQuickPreset copyWith({
+    String? id,
+    String? userId,
+    int? duration,
+    Value<String?> focus = const Value.absent(),
+    Value<String?> difficulty = const Value.absent(),
+    Value<String?> goal = const Value.absent(),
+    Value<String?> mood = const Value.absent(),
+    bool? useSupersets,
+    String? equipment,
+    String? injuries,
+    Value<String?> equipDetails = const Value.absent(),
+    int? useCount,
+    bool? isFavorite,
+    bool? isAiGenerated,
+    DateTime? createdAt,
+  }) => CachedQuickPreset(
+    id: id ?? this.id,
+    userId: userId ?? this.userId,
+    duration: duration ?? this.duration,
+    focus: focus.present ? focus.value : this.focus,
+    difficulty: difficulty.present ? difficulty.value : this.difficulty,
+    goal: goal.present ? goal.value : this.goal,
+    mood: mood.present ? mood.value : this.mood,
+    useSupersets: useSupersets ?? this.useSupersets,
+    equipment: equipment ?? this.equipment,
+    injuries: injuries ?? this.injuries,
+    equipDetails: equipDetails.present ? equipDetails.value : this.equipDetails,
+    useCount: useCount ?? this.useCount,
+    isFavorite: isFavorite ?? this.isFavorite,
+    isAiGenerated: isAiGenerated ?? this.isAiGenerated,
+    createdAt: createdAt ?? this.createdAt,
+  );
+  CachedQuickPreset copyWithCompanion(CachedQuickPresetsCompanion data) {
+    return CachedQuickPreset(
+      id: data.id.present ? data.id.value : this.id,
+      userId: data.userId.present ? data.userId.value : this.userId,
+      duration: data.duration.present ? data.duration.value : this.duration,
+      focus: data.focus.present ? data.focus.value : this.focus,
+      difficulty: data.difficulty.present
+          ? data.difficulty.value
+          : this.difficulty,
+      goal: data.goal.present ? data.goal.value : this.goal,
+      mood: data.mood.present ? data.mood.value : this.mood,
+      useSupersets: data.useSupersets.present
+          ? data.useSupersets.value
+          : this.useSupersets,
+      equipment: data.equipment.present ? data.equipment.value : this.equipment,
+      injuries: data.injuries.present ? data.injuries.value : this.injuries,
+      equipDetails: data.equipDetails.present
+          ? data.equipDetails.value
+          : this.equipDetails,
+      useCount: data.useCount.present ? data.useCount.value : this.useCount,
+      isFavorite: data.isFavorite.present
+          ? data.isFavorite.value
+          : this.isFavorite,
+      isAiGenerated: data.isAiGenerated.present
+          ? data.isAiGenerated.value
+          : this.isAiGenerated,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('CachedQuickPreset(')
+          ..write('id: $id, ')
+          ..write('userId: $userId, ')
+          ..write('duration: $duration, ')
+          ..write('focus: $focus, ')
+          ..write('difficulty: $difficulty, ')
+          ..write('goal: $goal, ')
+          ..write('mood: $mood, ')
+          ..write('useSupersets: $useSupersets, ')
+          ..write('equipment: $equipment, ')
+          ..write('injuries: $injuries, ')
+          ..write('equipDetails: $equipDetails, ')
+          ..write('useCount: $useCount, ')
+          ..write('isFavorite: $isFavorite, ')
+          ..write('isAiGenerated: $isAiGenerated, ')
+          ..write('createdAt: $createdAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    userId,
+    duration,
+    focus,
+    difficulty,
+    goal,
+    mood,
+    useSupersets,
+    equipment,
+    injuries,
+    equipDetails,
+    useCount,
+    isFavorite,
+    isAiGenerated,
+    createdAt,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is CachedQuickPreset &&
+          other.id == this.id &&
+          other.userId == this.userId &&
+          other.duration == this.duration &&
+          other.focus == this.focus &&
+          other.difficulty == this.difficulty &&
+          other.goal == this.goal &&
+          other.mood == this.mood &&
+          other.useSupersets == this.useSupersets &&
+          other.equipment == this.equipment &&
+          other.injuries == this.injuries &&
+          other.equipDetails == this.equipDetails &&
+          other.useCount == this.useCount &&
+          other.isFavorite == this.isFavorite &&
+          other.isAiGenerated == this.isAiGenerated &&
+          other.createdAt == this.createdAt);
+}
+
+class CachedQuickPresetsCompanion extends UpdateCompanion<CachedQuickPreset> {
+  final Value<String> id;
+  final Value<String> userId;
+  final Value<int> duration;
+  final Value<String?> focus;
+  final Value<String?> difficulty;
+  final Value<String?> goal;
+  final Value<String?> mood;
+  final Value<bool> useSupersets;
+  final Value<String> equipment;
+  final Value<String> injuries;
+  final Value<String?> equipDetails;
+  final Value<int> useCount;
+  final Value<bool> isFavorite;
+  final Value<bool> isAiGenerated;
+  final Value<DateTime> createdAt;
+  final Value<int> rowid;
+  const CachedQuickPresetsCompanion({
+    this.id = const Value.absent(),
+    this.userId = const Value.absent(),
+    this.duration = const Value.absent(),
+    this.focus = const Value.absent(),
+    this.difficulty = const Value.absent(),
+    this.goal = const Value.absent(),
+    this.mood = const Value.absent(),
+    this.useSupersets = const Value.absent(),
+    this.equipment = const Value.absent(),
+    this.injuries = const Value.absent(),
+    this.equipDetails = const Value.absent(),
+    this.useCount = const Value.absent(),
+    this.isFavorite = const Value.absent(),
+    this.isAiGenerated = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  CachedQuickPresetsCompanion.insert({
+    required String id,
+    required String userId,
+    required int duration,
+    this.focus = const Value.absent(),
+    this.difficulty = const Value.absent(),
+    this.goal = const Value.absent(),
+    this.mood = const Value.absent(),
+    this.useSupersets = const Value.absent(),
+    this.equipment = const Value.absent(),
+    this.injuries = const Value.absent(),
+    this.equipDetails = const Value.absent(),
+    this.useCount = const Value.absent(),
+    this.isFavorite = const Value.absent(),
+    this.isAiGenerated = const Value.absent(),
+    required DateTime createdAt,
+    this.rowid = const Value.absent(),
+  }) : id = Value(id),
+       userId = Value(userId),
+       duration = Value(duration),
+       createdAt = Value(createdAt);
+  static Insertable<CachedQuickPreset> custom({
+    Expression<String>? id,
+    Expression<String>? userId,
+    Expression<int>? duration,
+    Expression<String>? focus,
+    Expression<String>? difficulty,
+    Expression<String>? goal,
+    Expression<String>? mood,
+    Expression<bool>? useSupersets,
+    Expression<String>? equipment,
+    Expression<String>? injuries,
+    Expression<String>? equipDetails,
+    Expression<int>? useCount,
+    Expression<bool>? isFavorite,
+    Expression<bool>? isAiGenerated,
+    Expression<DateTime>? createdAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (userId != null) 'user_id': userId,
+      if (duration != null) 'duration': duration,
+      if (focus != null) 'focus': focus,
+      if (difficulty != null) 'difficulty': difficulty,
+      if (goal != null) 'goal': goal,
+      if (mood != null) 'mood': mood,
+      if (useSupersets != null) 'use_supersets': useSupersets,
+      if (equipment != null) 'equipment': equipment,
+      if (injuries != null) 'injuries': injuries,
+      if (equipDetails != null) 'equip_details': equipDetails,
+      if (useCount != null) 'use_count': useCount,
+      if (isFavorite != null) 'is_favorite': isFavorite,
+      if (isAiGenerated != null) 'is_ai_generated': isAiGenerated,
+      if (createdAt != null) 'created_at': createdAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  CachedQuickPresetsCompanion copyWith({
+    Value<String>? id,
+    Value<String>? userId,
+    Value<int>? duration,
+    Value<String?>? focus,
+    Value<String?>? difficulty,
+    Value<String?>? goal,
+    Value<String?>? mood,
+    Value<bool>? useSupersets,
+    Value<String>? equipment,
+    Value<String>? injuries,
+    Value<String?>? equipDetails,
+    Value<int>? useCount,
+    Value<bool>? isFavorite,
+    Value<bool>? isAiGenerated,
+    Value<DateTime>? createdAt,
+    Value<int>? rowid,
+  }) {
+    return CachedQuickPresetsCompanion(
+      id: id ?? this.id,
+      userId: userId ?? this.userId,
+      duration: duration ?? this.duration,
+      focus: focus ?? this.focus,
+      difficulty: difficulty ?? this.difficulty,
+      goal: goal ?? this.goal,
+      mood: mood ?? this.mood,
+      useSupersets: useSupersets ?? this.useSupersets,
+      equipment: equipment ?? this.equipment,
+      injuries: injuries ?? this.injuries,
+      equipDetails: equipDetails ?? this.equipDetails,
+      useCount: useCount ?? this.useCount,
+      isFavorite: isFavorite ?? this.isFavorite,
+      isAiGenerated: isAiGenerated ?? this.isAiGenerated,
+      createdAt: createdAt ?? this.createdAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (userId.present) {
+      map['user_id'] = Variable<String>(userId.value);
+    }
+    if (duration.present) {
+      map['duration'] = Variable<int>(duration.value);
+    }
+    if (focus.present) {
+      map['focus'] = Variable<String>(focus.value);
+    }
+    if (difficulty.present) {
+      map['difficulty'] = Variable<String>(difficulty.value);
+    }
+    if (goal.present) {
+      map['goal'] = Variable<String>(goal.value);
+    }
+    if (mood.present) {
+      map['mood'] = Variable<String>(mood.value);
+    }
+    if (useSupersets.present) {
+      map['use_supersets'] = Variable<bool>(useSupersets.value);
+    }
+    if (equipment.present) {
+      map['equipment'] = Variable<String>(equipment.value);
+    }
+    if (injuries.present) {
+      map['injuries'] = Variable<String>(injuries.value);
+    }
+    if (equipDetails.present) {
+      map['equip_details'] = Variable<String>(equipDetails.value);
+    }
+    if (useCount.present) {
+      map['use_count'] = Variable<int>(useCount.value);
+    }
+    if (isFavorite.present) {
+      map['is_favorite'] = Variable<bool>(isFavorite.value);
+    }
+    if (isAiGenerated.present) {
+      map['is_ai_generated'] = Variable<bool>(isAiGenerated.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('CachedQuickPresetsCompanion(')
+          ..write('id: $id, ')
+          ..write('userId: $userId, ')
+          ..write('duration: $duration, ')
+          ..write('focus: $focus, ')
+          ..write('difficulty: $difficulty, ')
+          ..write('goal: $goal, ')
+          ..write('mood: $mood, ')
+          ..write('useSupersets: $useSupersets, ')
+          ..write('equipment: $equipment, ')
+          ..write('injuries: $injuries, ')
+          ..write('equipDetails: $equipDetails, ')
+          ..write('useCount: $useCount, ')
+          ..write('isFavorite: $isFavorite, ')
+          ..write('isAiGenerated: $isAiGenerated, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -7783,6 +8670,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
       $CachedExercise1rmHistoryTable(this);
   late final $CachedVolumeResponsesTable cachedVolumeResponses =
       $CachedVolumeResponsesTable(this);
+  late final $CachedQuickPresetsTable cachedQuickPresets =
+      $CachedQuickPresetsTable(this);
   late final WorkoutDao workoutDao = WorkoutDao(this as AppDatabase);
   late final ExerciseLibraryDao exerciseLibraryDao = ExerciseLibraryDao(
     this as AppDatabase,
@@ -7802,6 +8691,9 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final VolumeResponseDao volumeResponseDao = VolumeResponseDao(
     this as AppDatabase,
   );
+  late final QuickPresetDao quickPresetDao = QuickPresetDao(
+    this as AppDatabase,
+  );
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -7818,6 +8710,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     embeddingCache,
     cachedExercise1rmHistory,
     cachedVolumeResponses,
+    cachedQuickPresets,
   ];
 }
 
@@ -11594,6 +12487,419 @@ typedef $$CachedVolumeResponsesTableProcessedTableManager =
       CachedVolumeResponse,
       PrefetchHooks Function()
     >;
+typedef $$CachedQuickPresetsTableCreateCompanionBuilder =
+    CachedQuickPresetsCompanion Function({
+      required String id,
+      required String userId,
+      required int duration,
+      Value<String?> focus,
+      Value<String?> difficulty,
+      Value<String?> goal,
+      Value<String?> mood,
+      Value<bool> useSupersets,
+      Value<String> equipment,
+      Value<String> injuries,
+      Value<String?> equipDetails,
+      Value<int> useCount,
+      Value<bool> isFavorite,
+      Value<bool> isAiGenerated,
+      required DateTime createdAt,
+      Value<int> rowid,
+    });
+typedef $$CachedQuickPresetsTableUpdateCompanionBuilder =
+    CachedQuickPresetsCompanion Function({
+      Value<String> id,
+      Value<String> userId,
+      Value<int> duration,
+      Value<String?> focus,
+      Value<String?> difficulty,
+      Value<String?> goal,
+      Value<String?> mood,
+      Value<bool> useSupersets,
+      Value<String> equipment,
+      Value<String> injuries,
+      Value<String?> equipDetails,
+      Value<int> useCount,
+      Value<bool> isFavorite,
+      Value<bool> isAiGenerated,
+      Value<DateTime> createdAt,
+      Value<int> rowid,
+    });
+
+class $$CachedQuickPresetsTableFilterComposer
+    extends Composer<_$AppDatabase, $CachedQuickPresetsTable> {
+  $$CachedQuickPresetsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get userId => $composableBuilder(
+    column: $table.userId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get duration => $composableBuilder(
+    column: $table.duration,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get focus => $composableBuilder(
+    column: $table.focus,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get difficulty => $composableBuilder(
+    column: $table.difficulty,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get goal => $composableBuilder(
+    column: $table.goal,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get mood => $composableBuilder(
+    column: $table.mood,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get useSupersets => $composableBuilder(
+    column: $table.useSupersets,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get equipment => $composableBuilder(
+    column: $table.equipment,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get injuries => $composableBuilder(
+    column: $table.injuries,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get equipDetails => $composableBuilder(
+    column: $table.equipDetails,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get useCount => $composableBuilder(
+    column: $table.useCount,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get isFavorite => $composableBuilder(
+    column: $table.isFavorite,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get isAiGenerated => $composableBuilder(
+    column: $table.isAiGenerated,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$CachedQuickPresetsTableOrderingComposer
+    extends Composer<_$AppDatabase, $CachedQuickPresetsTable> {
+  $$CachedQuickPresetsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get userId => $composableBuilder(
+    column: $table.userId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get duration => $composableBuilder(
+    column: $table.duration,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get focus => $composableBuilder(
+    column: $table.focus,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get difficulty => $composableBuilder(
+    column: $table.difficulty,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get goal => $composableBuilder(
+    column: $table.goal,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get mood => $composableBuilder(
+    column: $table.mood,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get useSupersets => $composableBuilder(
+    column: $table.useSupersets,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get equipment => $composableBuilder(
+    column: $table.equipment,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get injuries => $composableBuilder(
+    column: $table.injuries,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get equipDetails => $composableBuilder(
+    column: $table.equipDetails,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get useCount => $composableBuilder(
+    column: $table.useCount,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get isFavorite => $composableBuilder(
+    column: $table.isFavorite,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get isAiGenerated => $composableBuilder(
+    column: $table.isAiGenerated,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$CachedQuickPresetsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $CachedQuickPresetsTable> {
+  $$CachedQuickPresetsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get userId =>
+      $composableBuilder(column: $table.userId, builder: (column) => column);
+
+  GeneratedColumn<int> get duration =>
+      $composableBuilder(column: $table.duration, builder: (column) => column);
+
+  GeneratedColumn<String> get focus =>
+      $composableBuilder(column: $table.focus, builder: (column) => column);
+
+  GeneratedColumn<String> get difficulty => $composableBuilder(
+    column: $table.difficulty,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get goal =>
+      $composableBuilder(column: $table.goal, builder: (column) => column);
+
+  GeneratedColumn<String> get mood =>
+      $composableBuilder(column: $table.mood, builder: (column) => column);
+
+  GeneratedColumn<bool> get useSupersets => $composableBuilder(
+    column: $table.useSupersets,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get equipment =>
+      $composableBuilder(column: $table.equipment, builder: (column) => column);
+
+  GeneratedColumn<String> get injuries =>
+      $composableBuilder(column: $table.injuries, builder: (column) => column);
+
+  GeneratedColumn<String> get equipDetails => $composableBuilder(
+    column: $table.equipDetails,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get useCount =>
+      $composableBuilder(column: $table.useCount, builder: (column) => column);
+
+  GeneratedColumn<bool> get isFavorite => $composableBuilder(
+    column: $table.isFavorite,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<bool> get isAiGenerated => $composableBuilder(
+    column: $table.isAiGenerated,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+}
+
+class $$CachedQuickPresetsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $CachedQuickPresetsTable,
+          CachedQuickPreset,
+          $$CachedQuickPresetsTableFilterComposer,
+          $$CachedQuickPresetsTableOrderingComposer,
+          $$CachedQuickPresetsTableAnnotationComposer,
+          $$CachedQuickPresetsTableCreateCompanionBuilder,
+          $$CachedQuickPresetsTableUpdateCompanionBuilder,
+          (
+            CachedQuickPreset,
+            BaseReferences<
+              _$AppDatabase,
+              $CachedQuickPresetsTable,
+              CachedQuickPreset
+            >,
+          ),
+          CachedQuickPreset,
+          PrefetchHooks Function()
+        > {
+  $$CachedQuickPresetsTableTableManager(
+    _$AppDatabase db,
+    $CachedQuickPresetsTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$CachedQuickPresetsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$CachedQuickPresetsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$CachedQuickPresetsTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<String> id = const Value.absent(),
+                Value<String> userId = const Value.absent(),
+                Value<int> duration = const Value.absent(),
+                Value<String?> focus = const Value.absent(),
+                Value<String?> difficulty = const Value.absent(),
+                Value<String?> goal = const Value.absent(),
+                Value<String?> mood = const Value.absent(),
+                Value<bool> useSupersets = const Value.absent(),
+                Value<String> equipment = const Value.absent(),
+                Value<String> injuries = const Value.absent(),
+                Value<String?> equipDetails = const Value.absent(),
+                Value<int> useCount = const Value.absent(),
+                Value<bool> isFavorite = const Value.absent(),
+                Value<bool> isAiGenerated = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => CachedQuickPresetsCompanion(
+                id: id,
+                userId: userId,
+                duration: duration,
+                focus: focus,
+                difficulty: difficulty,
+                goal: goal,
+                mood: mood,
+                useSupersets: useSupersets,
+                equipment: equipment,
+                injuries: injuries,
+                equipDetails: equipDetails,
+                useCount: useCount,
+                isFavorite: isFavorite,
+                isAiGenerated: isAiGenerated,
+                createdAt: createdAt,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String id,
+                required String userId,
+                required int duration,
+                Value<String?> focus = const Value.absent(),
+                Value<String?> difficulty = const Value.absent(),
+                Value<String?> goal = const Value.absent(),
+                Value<String?> mood = const Value.absent(),
+                Value<bool> useSupersets = const Value.absent(),
+                Value<String> equipment = const Value.absent(),
+                Value<String> injuries = const Value.absent(),
+                Value<String?> equipDetails = const Value.absent(),
+                Value<int> useCount = const Value.absent(),
+                Value<bool> isFavorite = const Value.absent(),
+                Value<bool> isAiGenerated = const Value.absent(),
+                required DateTime createdAt,
+                Value<int> rowid = const Value.absent(),
+              }) => CachedQuickPresetsCompanion.insert(
+                id: id,
+                userId: userId,
+                duration: duration,
+                focus: focus,
+                difficulty: difficulty,
+                goal: goal,
+                mood: mood,
+                useSupersets: useSupersets,
+                equipment: equipment,
+                injuries: injuries,
+                equipDetails: equipDetails,
+                useCount: useCount,
+                isFavorite: isFavorite,
+                isAiGenerated: isAiGenerated,
+                createdAt: createdAt,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$CachedQuickPresetsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $CachedQuickPresetsTable,
+      CachedQuickPreset,
+      $$CachedQuickPresetsTableFilterComposer,
+      $$CachedQuickPresetsTableOrderingComposer,
+      $$CachedQuickPresetsTableAnnotationComposer,
+      $$CachedQuickPresetsTableCreateCompanionBuilder,
+      $$CachedQuickPresetsTableUpdateCompanionBuilder,
+      (
+        CachedQuickPreset,
+        BaseReferences<
+          _$AppDatabase,
+          $CachedQuickPresetsTable,
+          CachedQuickPreset
+        >,
+      ),
+      CachedQuickPreset,
+      PrefetchHooks Function()
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -11623,4 +12929,6 @@ class $AppDatabaseManager {
       );
   $$CachedVolumeResponsesTableTableManager get cachedVolumeResponses =>
       $$CachedVolumeResponsesTableTableManager(_db, _db.cachedVolumeResponses);
+  $$CachedQuickPresetsTableTableManager get cachedQuickPresets =>
+      $$CachedQuickPresetsTableTableManager(_db, _db.cachedQuickPresets);
 }

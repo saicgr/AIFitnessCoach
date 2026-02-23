@@ -18,7 +18,9 @@ ENDPOINTS:
 - GET  /api/v1/performance-db/rest-intervals/stats/{workout_log_id} - Get rest stats
 """
 import json
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
+from core.auth import get_current_user
+from core.exceptions import safe_internal_error
 from pydantic import BaseModel
 from typing import List, Optional
 from datetime import datetime, date, timedelta
@@ -110,7 +112,9 @@ def row_to_weekly_volume(row: dict) -> WeeklyVolume:
 # ============ Performance Logs ============
 
 @router.post("/logs", response_model=PerformanceLog)
-async def create_performance_log(log: PerformanceLogCreate):
+async def create_performance_log(log: PerformanceLogCreate,
+    current_user: dict = Depends(get_current_user),
+):
     """Create a performance log entry."""
     try:
         db = get_supabase_db()
@@ -139,7 +143,7 @@ async def create_performance_log(log: PerformanceLogCreate):
 
     except Exception as e:
         logger.error(f"Error creating performance log: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "performance_db")
 
 
 @router.get("/logs", response_model=List[PerformanceLog])
@@ -147,6 +151,7 @@ async def list_performance_logs(
     user_id: str,
     exercise_id: Optional[str] = None,
     limit: int = Query(default=50, ge=1, le=200),
+    current_user: dict = Depends(get_current_user),
 ):
     """List performance logs for a user."""
     try:
@@ -161,7 +166,7 @@ async def list_performance_logs(
 
     except Exception as e:
         logger.error(f"Error listing performance logs: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "performance_db")
 
 
 class ExerciseLastPerformance(BaseModel):
@@ -176,6 +181,7 @@ class ExerciseLastPerformance(BaseModel):
 async def get_exercise_last_performance(
     exercise_name: str,
     user_id: str,
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Get the last performance data for a specific exercise.
@@ -241,13 +247,15 @@ async def get_exercise_last_performance(
 
     except Exception as e:
         logger.error(f"Error getting last performance for exercise: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "performance_db")
 
 
 # ============ Workout Logs ============
 
 @router.post("/workout-logs", response_model=WorkoutLog)
-async def create_workout_log(log: WorkoutLogCreate):
+async def create_workout_log(log: WorkoutLogCreate,
+    current_user: dict = Depends(get_current_user),
+):
     """Create a workout log entry."""
     try:
         db = get_supabase_db()
@@ -280,13 +288,14 @@ async def create_workout_log(log: WorkoutLogCreate):
         raise
     except Exception as e:
         logger.error(f"Error creating workout log: {e}, workout_id={log.workout_id}, user_id={log.user_id}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "performance_db")
 
 
 @router.get("/workout-logs", response_model=List[WorkoutLog])
 async def list_workout_logs(
     user_id: str,
     limit: int = Query(default=50, ge=1, le=200),
+    current_user: dict = Depends(get_current_user),
 ):
     """List workout logs for a user."""
     try:
@@ -297,13 +306,15 @@ async def list_workout_logs(
 
     except Exception as e:
         logger.error(f"Error listing workout logs: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "performance_db")
 
 
 # ============ Strength Records ============
 
 @router.post("/strength-records", response_model=StrengthRecord)
-async def create_strength_record(record: StrengthRecordCreate):
+async def create_strength_record(record: StrengthRecordCreate,
+    current_user: dict = Depends(get_current_user),
+):
     """Create a strength record entry."""
     try:
         db = get_supabase_db()
@@ -325,7 +336,7 @@ async def create_strength_record(record: StrengthRecordCreate):
 
     except Exception as e:
         logger.error(f"Error creating strength record: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "performance_db")
 
 
 @router.get("/strength-records", response_model=List[StrengthRecord])
@@ -334,6 +345,7 @@ async def list_strength_records(
     exercise_id: Optional[str] = None,
     prs_only: bool = False,
     limit: int = Query(default=50, ge=1, le=200),
+    current_user: dict = Depends(get_current_user),
 ):
     """List strength records for a user."""
     try:
@@ -349,13 +361,15 @@ async def list_strength_records(
 
     except Exception as e:
         logger.error(f"Error listing strength records: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "performance_db")
 
 
 # ============ Weekly Volume ============
 
 @router.post("/weekly-volume", response_model=WeeklyVolume)
-async def upsert_weekly_volume(volume: WeeklyVolumeCreate):
+async def upsert_weekly_volume(volume: WeeklyVolumeCreate,
+    current_user: dict = Depends(get_current_user),
+):
     """Create or update weekly volume entry."""
     try:
         db = get_supabase_db()
@@ -379,7 +393,7 @@ async def upsert_weekly_volume(volume: WeeklyVolumeCreate):
 
     except Exception as e:
         logger.error(f"Error upserting weekly volume: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "performance_db")
 
 
 @router.get("/weekly-volume", response_model=List[WeeklyVolume])
@@ -387,6 +401,7 @@ async def list_weekly_volumes(
     user_id: str,
     week_number: Optional[int] = None,
     year: Optional[int] = None,
+    current_user: dict = Depends(get_current_user),
 ):
     """List weekly volumes for a user."""
     try:
@@ -401,7 +416,7 @@ async def list_weekly_volumes(
 
     except Exception as e:
         logger.error(f"Error listing weekly volumes: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "performance_db")
 
 
 # ============ Streaks ============
@@ -416,7 +431,9 @@ class StreakResponse(BaseModel):
 
 
 @router.get("/streak/{user_id}", response_model=StreakResponse)
-async def get_user_streak(user_id: str):
+async def get_user_streak(user_id: str,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Get workout streak information for a user.
 
@@ -519,7 +536,7 @@ async def get_user_streak(user_id: str):
 
     except Exception as e:
         logger.error(f"Error calculating streak: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "performance_db")
 
 
 # ============ Workout Exit Tracking ============
@@ -542,7 +559,9 @@ def row_to_workout_exit(row: dict) -> WorkoutExit:
 
 
 @router.post("/workout-exit", response_model=WorkoutExit)
-async def create_workout_exit(data: WorkoutExitCreate):
+async def create_workout_exit(data: WorkoutExitCreate,
+    current_user: dict = Depends(get_current_user),
+):
     """Create a workout exit log entry."""
     try:
         db = get_supabase_db()
@@ -565,7 +584,7 @@ async def create_workout_exit(data: WorkoutExitCreate):
 
     except Exception as e:
         logger.error(f"Error creating workout exit: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "performance_db")
 
 
 @router.get("/workout-exits", response_model=List[WorkoutExit])
@@ -573,6 +592,7 @@ async def list_workout_exits(
     user_id: str,
     workout_id: Optional[str] = None,
     limit: int = Query(default=50, ge=1, le=200),
+    current_user: dict = Depends(get_current_user),
 ):
     """List workout exits for a user."""
     try:
@@ -583,7 +603,7 @@ async def list_workout_exits(
 
     except Exception as e:
         logger.error(f"Error listing workout exits: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "performance_db")
 
 
 # ============ Drink Intake Tracking ============
@@ -602,7 +622,9 @@ def row_to_drink_intake(row: dict) -> DrinkIntake:
 
 
 @router.post("/drink-intake", response_model=DrinkIntake)
-async def create_drink_intake(data: DrinkIntakeCreate):
+async def create_drink_intake(data: DrinkIntakeCreate,
+    current_user: dict = Depends(get_current_user),
+):
     """Log drink intake during workout."""
     try:
         db = get_supabase_db()
@@ -621,7 +643,7 @@ async def create_drink_intake(data: DrinkIntakeCreate):
 
     except Exception as e:
         logger.error(f"Error creating drink intake: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "performance_db")
 
 
 @router.get("/drink-intake", response_model=List[DrinkIntake])
@@ -629,6 +651,7 @@ async def list_drink_intakes(
     user_id: str,
     workout_log_id: Optional[str] = None,
     limit: int = Query(default=100, ge=1, le=500),
+    current_user: dict = Depends(get_current_user),
 ):
     """List drink intakes for a user."""
     try:
@@ -639,7 +662,7 @@ async def list_drink_intakes(
 
     except Exception as e:
         logger.error(f"Error listing drink intakes: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "performance_db")
 
 
 class DrinkIntakeSummary(BaseModel):
@@ -650,7 +673,9 @@ class DrinkIntakeSummary(BaseModel):
 
 
 @router.get("/drink-intake/summary/{workout_log_id}", response_model=DrinkIntakeSummary)
-async def get_drink_intake_summary(workout_log_id: str):
+async def get_drink_intake_summary(workout_log_id: str,
+    current_user: dict = Depends(get_current_user),
+):
     """Get drink intake summary for a workout."""
     try:
         db = get_supabase_db()
@@ -665,7 +690,7 @@ async def get_drink_intake_summary(workout_log_id: str):
 
     except Exception as e:
         logger.error(f"Error getting drink intake summary: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "performance_db")
 
 
 # ============ Rest Interval Tracking ============
@@ -688,7 +713,9 @@ def row_to_rest_interval(row: dict) -> RestInterval:
 
 
 @router.post("/rest-intervals", response_model=RestInterval)
-async def create_rest_interval(data: RestIntervalCreate):
+async def create_rest_interval(data: RestIntervalCreate,
+    current_user: dict = Depends(get_current_user),
+):
     """Log rest interval during workout."""
     try:
         db = get_supabase_db()
@@ -718,7 +745,7 @@ async def create_rest_interval(data: RestIntervalCreate):
 
     except Exception as e:
         logger.error(f"Error creating rest interval: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "performance_db")
 
 
 @router.get("/rest-intervals", response_model=List[RestInterval])
@@ -726,6 +753,7 @@ async def list_rest_intervals(
     user_id: str,
     workout_log_id: Optional[str] = None,
     limit: int = Query(default=200, ge=1, le=500),
+    current_user: dict = Depends(get_current_user),
 ):
     """List rest intervals for a user."""
     try:
@@ -736,7 +764,7 @@ async def list_rest_intervals(
 
     except Exception as e:
         logger.error(f"Error listing rest intervals: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "performance_db")
 
 
 class RestIntervalStats(BaseModel):
@@ -750,7 +778,9 @@ class RestIntervalStats(BaseModel):
 
 
 @router.get("/rest-intervals/stats/{workout_log_id}", response_model=RestIntervalStats)
-async def get_rest_interval_stats(workout_log_id: str):
+async def get_rest_interval_stats(workout_log_id: str,
+    current_user: dict = Depends(get_current_user),
+):
     """Get rest interval statistics for a workout."""
     try:
         db = get_supabase_db()
@@ -763,7 +793,7 @@ async def get_rest_interval_stats(workout_log_id: str):
 
     except Exception as e:
         logger.error(f"Error getting rest interval stats: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "performance_db")
 
 
 # ============ Exercise Stats (Per-Exercise Performance History) ============
@@ -813,7 +843,9 @@ class ExerciseHistoryItem(BaseModel):
 
 
 @router.get("/exercise-stats/{user_id}", response_model=AllExerciseStats)
-async def get_all_exercise_stats(user_id: str):
+async def get_all_exercise_stats(user_id: str,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Get performance stats for all exercises a user has performed.
 
@@ -851,11 +883,13 @@ async def get_all_exercise_stats(user_id: str):
 
     except Exception as e:
         logger.error(f"Error getting exercise stats: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "performance_db")
 
 
 @router.get("/exercise-stats/{user_id}/{exercise_name}", response_model=ExerciseStats)
-async def get_single_exercise_stats(user_id: str, exercise_name: str):
+async def get_single_exercise_stats(user_id: str, exercise_name: str,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Get detailed stats for a specific exercise.
 
@@ -915,13 +949,14 @@ async def get_single_exercise_stats(user_id: str, exercise_name: str):
 
     except Exception as e:
         logger.error(f"Error getting exercise stats for '{exercise_name}': {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "performance_db")
 
 
 @router.get("/exercise-history/{user_id}", response_model=List[ExerciseHistoryItem])
 async def get_exercise_history(
     user_id: str,
     limit: int = Query(default=20, ge=1, le=100),
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Get user's exercise history with stats for each exercise.
@@ -971,4 +1006,4 @@ async def get_exercise_history(
 
     except Exception as e:
         logger.error(f"Error getting exercise history: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "performance_db")

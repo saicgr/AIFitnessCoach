@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import '../../widgets/app_dialog.dart';
 import '../../widgets/glass_back_button.dart';
 import '../../widgets/glass_sheet.dart';
 import 'package:flutter_animate/flutter_animate.dart';
@@ -162,11 +163,11 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
         _isFavorite = workout?.isFavorite ?? false;
         _isLoading = false;
       });
-      // Load workout summary, training split, generation params, and warmup/stretches
+      // Load workout summary, training split, and generation params
+      // Warmup/stretches are lazy-loaded when user expands those sections
       _loadWorkoutSummary();
       _loadTrainingSplit();
       _loadGenerationParams();
-      _loadWarmupAndStretches();
     } catch (e) {
       setState(() {
         _error = e.toString();
@@ -588,27 +589,12 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
   Future<void> _revertToOriginalExercises() async {
     if (_originalExercises == null || _workout == null) return;
 
-    final accentColor = ref.colors(context).accent;
-
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Revert to Original?'),
-        content: const Text(
-          'This will restore all exercises to their original state before equipment changes were applied.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            style: TextButton.styleFrom(foregroundColor: accentColor),
-            child: const Text('Revert'),
-          ),
-        ],
-      ),
+    final confirmed = await AppDialog.confirm(
+      context,
+      title: 'Revert to Original?',
+      message: 'This will restore all exercises to their original state before equipment changes were applied.',
+      confirmText: 'Revert',
+      icon: Icons.restore_rounded,
     );
 
     if (confirmed != true) return;
@@ -940,24 +926,12 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
 
   /// Break superset (long-press on header)
   Future<void> _breakSuperset(int groupNumber) async {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final confirm = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: isDark ? AppColors.surface : AppColorsLight.surface,
-        title: const Text('Break Superset?'),
-        content: const Text('This will unlink these exercises so they are performed separately.'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Break', style: TextStyle(color: Colors.red)),
-          ),
-        ],
-      ),
+    final confirm = await AppDialog.destructive(
+      context,
+      title: 'Break Superset?',
+      message: 'This will unlink these exercises so they are performed separately.',
+      confirmText: 'Break',
+      icon: Icons.link_off_rounded,
     );
 
     if (confirm == true) {
@@ -1212,23 +1186,12 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
     }
 
     // Show confirmation dialog
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Remove Exercise'),
-        content: Text('Remove "${exercise.name}" from this workout?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            style: TextButton.styleFrom(foregroundColor: AppColors.error),
-            child: const Text('Remove'),
-          ),
-        ],
-      ),
+    final confirmed = await AppDialog.destructive(
+      context,
+      title: 'Remove Exercise',
+      message: 'Remove "${exercise.name}" from this workout?',
+      confirmText: 'Remove',
+      icon: Icons.remove_circle_outline_rounded,
     );
 
     if (confirmed != true || !mounted) return;
@@ -1281,26 +1244,13 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
   /// Add exercise to never recommend list
   Future<void> _neverRecommendExercise(WorkoutExercise exercise) async {
     // Show confirmation dialog
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Never Recommend'),
-        content: Text(
-          'Block "${exercise.name}" from all future AI recommendations?\n\n'
+    final confirmed = await AppDialog.destructive(
+      context,
+      title: 'Never Recommend',
+      message: 'Block "${exercise.name}" from all future AI recommendations?\n\n'
           'You can undo this in Settings > Exercise Preferences.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            style: TextButton.styleFrom(foregroundColor: AppColors.error),
-            child: const Text('Block'),
-          ),
-        ],
-      ),
+      confirmText: 'Block',
+      icon: Icons.block_rounded,
     );
 
     if (confirmed != true || !mounted) return;
@@ -1602,7 +1552,13 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
                 icon: Icons.whatshot,
                 color: AppColors.orange,
                 isExpanded: _isWarmupExpanded,
-                onTap: () => setState(() => _isWarmupExpanded = !_isWarmupExpanded),
+                onTap: () {
+                  setState(() => _isWarmupExpanded = !_isWarmupExpanded);
+                  // Lazy-load warmup/stretch data on first expand
+                  if (_isWarmupExpanded && _warmupData == null) {
+                    _loadWarmupAndStretches();
+                  }
+                },
                 itemCount: _getWarmupExercises().length,
                 toggleValue: ref.watch(warmupDurationProvider).warmupEnabled,
                 onToggleChanged: (value) {
@@ -1881,7 +1837,13 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
                 icon: Icons.self_improvement,
                 color: AppColors.green,
                 isExpanded: _isStretchesExpanded,
-                onTap: () => setState(() => _isStretchesExpanded = !_isStretchesExpanded),
+                onTap: () {
+                  setState(() => _isStretchesExpanded = !_isStretchesExpanded);
+                  // Lazy-load warmup/stretch data on first expand
+                  if (_isStretchesExpanded && _stretchData == null) {
+                    _loadWarmupAndStretches();
+                  }
+                },
                 itemCount: _getStretchExercises().length,
                 toggleValue: ref.watch(warmupDurationProvider).stretchEnabled,
                 onToggleChanged: (value) {
@@ -2393,7 +2355,7 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
       context: context,
       builder: (modalContext) => GlassSheet(
         child: StatefulBuilder(
-        builder: (context, setModalState) {
+        builder: (sheetContext, setModalState) {
           Future<void> regenerateInsights() async {
             setModalState(() => isRegenerating = true);
             try {
@@ -2490,7 +2452,7 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
                               : Icon(Icons.refresh, color: accentColor),
                         ),
                         IconButton(
-                          onPressed: () => Navigator.pop(context),
+                          onPressed: () => Navigator.pop(sheetContext),
                           icon: Icon(Icons.close, color: textMuted),
                         ),
                       ],
@@ -2989,12 +2951,12 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
 
     showGlassSheet(
       context: context,
-      builder: (context) => DraggableScrollableSheet(
+      builder: (sheetCtx) => DraggableScrollableSheet(
         expand: false,
         initialChildSize: 0.75,
         minChildSize: 0.4,
         maxChildSize: 0.9,
-        builder: (context, scrollController) => GlassSheet(
+        builder: (scrollCtx, scrollController) => GlassSheet(
           child: Column(
             children: [
               // Header
@@ -3030,7 +2992,7 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
                       ),
                     ),
                     IconButton(
-                      onPressed: () => Navigator.pop(context),
+                      onPressed: () => Navigator.pop(sheetCtx),
                       icon: Icon(Icons.close, color: textMuted),
                     ),
                   ],

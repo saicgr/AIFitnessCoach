@@ -10,7 +10,7 @@ Reports are analyzed by Gemini AI to understand why a response
 might have been problematic, helping improve the AI coach over time.
 """
 
-from fastapi import APIRouter, HTTPException, BackgroundTasks
+from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
 from typing import List, Optional
 from datetime import datetime
 from pydantic import BaseModel, Field
@@ -19,6 +19,8 @@ from enum import Enum
 from core.supabase_db import get_supabase_db
 from core.logger import get_logger
 from core.activity_logger import log_user_activity, log_user_error
+from core.auth import get_current_user
+from core.exceptions import safe_internal_error
 from services.gemini_service import GeminiService
 
 router = APIRouter()
@@ -230,7 +232,8 @@ Keep your analysis professional, objective, and constructive. Focus on actionabl
 @router.post("/report", response_model=ChatMessageReportResponse)
 async def submit_chat_report(
     report: ChatMessageReportCreate,
-    background_tasks: BackgroundTasks
+    background_tasks: BackgroundTasks,
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Submit a report for a problematic AI chat message.
@@ -238,6 +241,8 @@ async def submit_chat_report(
     Creates a report record and triggers async Gemini analysis
     to understand why the response might have been problematic.
     """
+    if str(current_user["id"]) != str(report.user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     logger.info(f"Submitting chat report for user {report.user_id}: category={report.report_category.value}")
 
     try:
@@ -311,7 +316,7 @@ async def submit_chat_report(
             },
             status_code=500
         )
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "submit_chat_report")
 
 
 # =============================================================================
@@ -325,6 +330,7 @@ async def get_user_reports(
     category: Optional[ReportCategory] = None,
     limit: int = 50,
     offset: int = 0,
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Get all chat message reports submitted by a user.
@@ -332,6 +338,8 @@ async def get_user_reports(
     Returns a list of report summaries with optional filtering by status and category.
     Reports are ordered by created_at descending (most recent first).
     """
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     logger.info(f"Getting chat reports for user {user_id}")
 
     try:
@@ -353,7 +361,7 @@ async def get_user_reports(
 
     except Exception as e:
         logger.error(f"Failed to get user reports: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "get_user_reports")
 
 
 # =============================================================================
@@ -361,13 +369,15 @@ async def get_user_reports(
 # =============================================================================
 
 @router.get("/report/{report_id}", response_model=ChatMessageReport)
-async def get_report(report_id: str, user_id: str):
+async def get_report(report_id: str, user_id: str, current_user: dict = Depends(get_current_user)):
     """
     Get a single chat message report with full details.
 
     Returns the full report including the AI analysis if available.
     Only the report owner can access their reports (enforced by query).
     """
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     logger.info(f"Getting report {report_id} for user {user_id}")
 
     try:
@@ -386,7 +396,7 @@ async def get_report(report_id: str, user_id: str):
         raise
     except Exception as e:
         logger.error(f"Failed to get report: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "get_report")
 
 
 # =============================================================================
@@ -394,7 +404,7 @@ async def get_report(report_id: str, user_id: str):
 # =============================================================================
 
 @router.get("/categories")
-async def get_report_categories():
+async def get_report_categories(current_user: dict = Depends(get_current_user)):
     """
     Get available report categories and statuses.
 
@@ -433,12 +443,14 @@ def _get_category_description(category: ReportCategory) -> str:
 # =============================================================================
 
 @router.get("/reports/{user_id}/stats")
-async def get_user_report_stats(user_id: str):
+async def get_user_report_stats(user_id: str, current_user: dict = Depends(get_current_user)):
     """
     Get report statistics for a user.
 
     Returns counts of reports by status and category.
     """
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     logger.info(f"Getting report stats for user {user_id}")
 
     try:
@@ -476,4 +488,4 @@ async def get_user_report_stats(user_id: str):
 
     except Exception as e:
         logger.error(f"Failed to get report stats: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "get_user_report_stats")

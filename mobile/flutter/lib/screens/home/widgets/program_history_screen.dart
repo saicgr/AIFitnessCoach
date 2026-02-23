@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../models/program_history.dart';
 import '../../../data/repositories/workout_repository.dart';
 import '../../../data/repositories/auth_repository.dart';
+import '../../../widgets/app_dialog.dart';
 import 'components/sheet_theme_colors.dart';
 
 class ProgramHistoryScreen extends ConsumerStatefulWidget {
@@ -59,25 +60,13 @@ class _ProgramHistoryScreenState extends ConsumerState<ProgramHistoryScreen> {
 
   Future<void> _restoreProgram(ProgramHistory program) async {
     // Show confirmation dialog
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Restore Program?'),
-        content: Text(
-          'This will restore "${program.displayName}" as your current program. '
+    final confirmed = await AppDialog.confirm(
+      context,
+      title: 'Restore Program?',
+      message: 'This will restore "${program.displayName}" as your current program. '
           'You can regenerate workouts after restoring.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('Restore'),
-          ),
-        ],
-      ),
+      confirmText: 'Restore',
+      icon: Icons.restore_rounded,
     );
 
     if (confirmed != true) return;

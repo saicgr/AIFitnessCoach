@@ -9,6 +9,8 @@ counting, and Health Connect integration.
 from datetime import datetime, date, timedelta
 from typing import List, Optional
 from fastapi import APIRouter, HTTPException, Depends, Query
+from core.auth import get_current_user
+from core.exceptions import safe_internal_error
 from pydantic import BaseModel, Field, validator
 import uuid
 
@@ -446,8 +448,10 @@ def calculate_cv(readings: List[float]) -> Optional[float]:
 # ============================================================
 
 @router.post("/profile", response_model=DiabetesProfileResponse)
-async def create_diabetes_profile(request: CreateDiabetesProfileRequest):
+async def create_diabetes_profile(request: CreateDiabetesProfileRequest, current_user: dict = Depends(get_current_user)):
     """Create a diabetes profile for a user."""
+    if str(current_user["id"]) != str(request.user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     db = get_supabase_db()
 
     # Check if profile already exists
@@ -479,7 +483,7 @@ async def create_diabetes_profile(request: CreateDiabetesProfileRequest):
     result = db.client.table("diabetes_profiles").insert(profile_data).execute()
 
     if not result.data:
-        raise HTTPException(status_code=500, detail="Failed to create diabetes profile")
+        raise safe_internal_error(Exception("Failed to create diabetes profile"), "diabetes")
 
     await log_user_activity(
         request.user_id,
@@ -491,8 +495,10 @@ async def create_diabetes_profile(request: CreateDiabetesProfileRequest):
 
 
 @router.get("/profile/{user_id}", response_model=DiabetesProfileResponse)
-async def get_diabetes_profile(user_id: str):
+async def get_diabetes_profile(user_id: str, current_user: dict = Depends(get_current_user)):
     """Get a user's diabetes profile."""
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     db = get_supabase_db()
 
     result = db.client.table("diabetes_profiles").select("*").eq(
@@ -506,8 +512,10 @@ async def get_diabetes_profile(user_id: str):
 
 
 @router.patch("/profile/{user_id}/targets", response_model=DiabetesProfileResponse)
-async def update_glucose_targets(user_id: str, request: UpdateGlucoseTargetsRequest):
+async def update_glucose_targets(user_id: str, request: UpdateGlucoseTargetsRequest, current_user: dict = Depends(get_current_user)):
     """Update glucose targets for a user."""
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     db = get_supabase_db()
 
     # Validate min/max relationship
@@ -533,8 +541,10 @@ async def update_glucose_targets(user_id: str, request: UpdateGlucoseTargetsRequ
 # ============================================================
 
 @router.post("/glucose", response_model=GlucoseReadingResponse)
-async def log_glucose_reading(request: LogGlucoseReadingRequest):
+async def log_glucose_reading(request: LogGlucoseReadingRequest, current_user: dict = Depends(get_current_user)):
     """Log a glucose reading."""
+    if str(current_user["id"]) != str(request.user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     db = get_supabase_db()
 
     reading_data = {
@@ -552,7 +562,7 @@ async def log_glucose_reading(request: LogGlucoseReadingRequest):
     result = db.client.table("glucose_readings").insert(reading_data).execute()
 
     if not result.data:
-        raise HTTPException(status_code=500, detail="Failed to log glucose reading")
+        raise safe_internal_error(Exception("Failed to log glucose reading"), "diabetes")
 
     status = classify_glucose_status(request.glucose_mg_dl)
     await log_user_activity(
@@ -575,8 +585,11 @@ async def get_glucose_history(
     offset: int = Query(0, ge=0),
     from_date: Optional[str] = None,
     to_date: Optional[str] = None,
+    current_user: dict = Depends(get_current_user),
 ):
     """Get glucose reading history with pagination."""
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     db = get_supabase_db()
 
     # Validate date range
@@ -608,8 +621,10 @@ async def get_glucose_history(
 
 
 @router.get("/glucose/{user_id}/latest", response_model=Optional[GlucoseReadingResponse])
-async def get_latest_reading(user_id: str):
+async def get_latest_reading(user_id: str, current_user: dict = Depends(get_current_user)):
     """Get the most recent glucose reading."""
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     db = get_supabase_db()
 
     result = db.client.table("glucose_readings").select("*").eq(
@@ -627,8 +642,11 @@ async def get_glucose_summary(
     user_id: str,
     period: str = "daily",  # daily, weekly, monthly
     date: Optional[str] = None,
+    current_user: dict = Depends(get_current_user),
 ):
     """Get glucose summary statistics for a period."""
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     import statistics
 
     db = get_supabase_db()
@@ -679,7 +697,7 @@ async def get_glucose_summary(
 
 
 @router.get("/glucose/status/{glucose_value}", response_model=GlucoseStatusResponse)
-async def get_glucose_status(glucose_value: float):
+async def get_glucose_status(glucose_value: float, current_user: dict = Depends(get_current_user)):
     """Get status classification for a glucose value."""
     status = classify_glucose_status(glucose_value)
 
@@ -709,8 +727,10 @@ async def get_glucose_status(glucose_value: float):
 
 
 @router.delete("/glucose/{user_id}/{reading_id}")
-async def delete_glucose_reading(user_id: str, reading_id: str):
+async def delete_glucose_reading(user_id: str, reading_id: str, current_user: dict = Depends(get_current_user)):
     """Delete a glucose reading."""
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     db = get_supabase_db()
 
     # Verify ownership
@@ -727,8 +747,10 @@ async def delete_glucose_reading(user_id: str, reading_id: str):
 
 
 @router.post("/glucose/sync", response_model=HealthConnectSyncResponse)
-async def sync_from_health_connect(request: HealthConnectSyncRequest):
+async def sync_from_health_connect(request: HealthConnectSyncRequest, current_user: dict = Depends(get_current_user)):
     """Sync glucose readings from Health Connect."""
+    if str(current_user["id"]) != str(request.user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     db = get_supabase_db()
 
     synced_count = 0
@@ -762,8 +784,10 @@ async def sync_from_health_connect(request: HealthConnectSyncRequest):
 # ============================================================
 
 @router.post("/insulin", response_model=InsulinDoseResponse)
-async def log_insulin_dose(request: LogInsulinDoseRequest):
+async def log_insulin_dose(request: LogInsulinDoseRequest, current_user: dict = Depends(get_current_user)):
     """Log an insulin dose."""
+    if str(current_user["id"]) != str(request.user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     db = get_supabase_db()
 
     dose_data = {
@@ -784,7 +808,7 @@ async def log_insulin_dose(request: LogInsulinDoseRequest):
     result = db.client.table("insulin_doses").insert(dose_data).execute()
 
     if not result.data:
-        raise HTTPException(status_code=500, detail="Failed to log insulin dose")
+        raise safe_internal_error(Exception("Failed to log insulin dose"), "diabetes")
 
     await log_user_activity(
         request.user_id,
@@ -796,8 +820,10 @@ async def log_insulin_dose(request: LogInsulinDoseRequest):
 
 
 @router.get("/insulin/{user_id}/daily", response_model=DailyInsulinTotalResponse)
-async def get_daily_insulin_total(user_id: str, date: Optional[str] = None):
+async def get_daily_insulin_total(user_id: str, date: Optional[str] = None, current_user: dict = Depends(get_current_user)):
     """Get total insulin for a day."""
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     db = get_supabase_db()
 
     if date:
@@ -827,8 +853,10 @@ async def get_daily_insulin_total(user_id: str, date: Optional[str] = None):
 
 
 @router.get("/insulin/{user_id}/history", response_model=InsulinHistoryResponse)
-async def get_insulin_history(user_id: str, days: int = 7):
+async def get_insulin_history(user_id: str, days: int = 7, current_user: dict = Depends(get_current_user)):
     """Get insulin dose history."""
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     db = get_supabase_db()
 
     start_date = datetime.now() - timedelta(days=days)
@@ -851,8 +879,10 @@ async def get_insulin_history(user_id: str, days: int = 7):
 # ============================================================
 
 @router.post("/a1c", response_model=A1cResultResponse)
-async def log_a1c_result(request: LogA1cRequest):
+async def log_a1c_result(request: LogA1cRequest, current_user: dict = Depends(get_current_user)):
     """Log an A1C result."""
+    if str(current_user["id"]) != str(request.user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     db = get_supabase_db()
 
     estimated_avg = round(a1c_to_glucose(request.a1c_value), 0)
@@ -871,7 +901,7 @@ async def log_a1c_result(request: LogA1cRequest):
     result = db.client.table("a1c_records").insert(a1c_data).execute()
 
     if not result.data:
-        raise HTTPException(status_code=500, detail="Failed to log A1C result")
+        raise safe_internal_error(Exception("Failed to log A1C result"), "diabetes")
 
     await log_user_activity(
         request.user_id,
@@ -883,8 +913,10 @@ async def log_a1c_result(request: LogA1cRequest):
 
 
 @router.get("/a1c/{user_id}/history", response_model=A1cHistoryResponse)
-async def get_a1c_history(user_id: str):
+async def get_a1c_history(user_id: str, current_user: dict = Depends(get_current_user)):
     """Get A1C history."""
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     db = get_supabase_db()
 
     result = db.client.table("a1c_records").select("*").eq(
@@ -898,8 +930,10 @@ async def get_a1c_history(user_id: str):
 
 
 @router.get("/a1c/{user_id}/trend", response_model=A1cTrendResponse)
-async def get_a1c_trend(user_id: str):
+async def get_a1c_trend(user_id: str, current_user: dict = Depends(get_current_user)):
     """Get A1C trend analysis."""
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     db = get_supabase_db()
 
     result = db.client.table("a1c_records").select("a1c_value,test_date").eq(
@@ -924,8 +958,10 @@ async def get_a1c_trend(user_id: str):
 
 
 @router.get("/a1c/{user_id}/estimated", response_model=EstimatedA1cResponse)
-async def calculate_estimated_a1c(user_id: str, days: int = 90):
+async def calculate_estimated_a1c(user_id: str, days: int = 90, current_user: dict = Depends(get_current_user)):
     """Calculate estimated A1C from glucose readings."""
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     import statistics
 
     db = get_supabase_db()
@@ -962,8 +998,10 @@ async def calculate_estimated_a1c(user_id: str, days: int = 90):
 # ============================================================
 
 @router.post("/medications", response_model=MedicationResponse)
-async def add_medication(request: AddMedicationRequest):
+async def add_medication(request: AddMedicationRequest, current_user: dict = Depends(get_current_user)):
     """Add a diabetes medication."""
+    if str(current_user["id"]) != str(request.user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     db = get_supabase_db()
 
     med_data = {
@@ -983,14 +1021,16 @@ async def add_medication(request: AddMedicationRequest):
     result = db.client.table("diabetes_medications").insert(med_data).execute()
 
     if not result.data:
-        raise HTTPException(status_code=500, detail="Failed to add medication")
+        raise safe_internal_error(Exception("Failed to add medication"), "diabetes")
 
     return MedicationResponse(**result.data[0])
 
 
 @router.get("/medications/{user_id}", response_model=MedicationsListResponse)
-async def get_active_medications(user_id: str):
+async def get_active_medications(user_id: str, current_user: dict = Depends(get_current_user)):
     """Get list of active medications."""
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     db = get_supabase_db()
 
     result = db.client.table("diabetes_medications").select("*").eq(
@@ -1003,8 +1043,10 @@ async def get_active_medications(user_id: str):
 
 
 @router.patch("/medications/{user_id}/{medication_id}/deactivate", response_model=MedicationResponse)
-async def deactivate_medication(user_id: str, medication_id: str):
+async def deactivate_medication(user_id: str, medication_id: str, current_user: dict = Depends(get_current_user)):
     """Deactivate a medication."""
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     db = get_supabase_db()
 
     result = db.client.table("diabetes_medications").update({
@@ -1020,8 +1062,10 @@ async def deactivate_medication(user_id: str, medication_id: str):
 
 
 @router.patch("/medications/{user_id}/{medication_id}", response_model=MedicationResponse)
-async def update_medication(user_id: str, medication_id: str, request: UpdateMedicationRequest):
+async def update_medication(user_id: str, medication_id: str, request: UpdateMedicationRequest, current_user: dict = Depends(get_current_user)):
     """Update a medication."""
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     db = get_supabase_db()
 
     update_data = {k: v for k, v in request.dict().items() if v is not None}
@@ -1042,8 +1086,10 @@ async def update_medication(user_id: str, medication_id: str, request: UpdateMed
 # ============================================================
 
 @router.post("/carbs", response_model=CarbEntryResponse)
-async def log_carb_entry(request: LogCarbEntryRequest):
+async def log_carb_entry(request: LogCarbEntryRequest, current_user: dict = Depends(get_current_user)):
     """Log a carbohydrate entry."""
+    if str(current_user["id"]) != str(request.user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     db = get_supabase_db()
 
     carb_data = {
@@ -1062,14 +1108,16 @@ async def log_carb_entry(request: LogCarbEntryRequest):
     result = db.client.table("carb_entries").insert(carb_data).execute()
 
     if not result.data:
-        raise HTTPException(status_code=500, detail="Failed to log carb entry")
+        raise safe_internal_error(Exception("Failed to log carb entry"), "diabetes")
 
     return CarbEntryResponse(**result.data[0])
 
 
 @router.get("/carbs/{user_id}/daily", response_model=DailyCarbTotalResponse)
-async def get_daily_carb_total(user_id: str, date: Optional[str] = None):
+async def get_daily_carb_total(user_id: str, date: Optional[str] = None, current_user: dict = Depends(get_current_user)):
     """Get total carbs for a day."""
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     db = get_supabase_db()
 
     if date:
@@ -1101,8 +1149,10 @@ async def get_daily_carb_total(user_id: str, date: Optional[str] = None):
 
 
 @router.get("/carbs/{user_id}/correlation", response_model=CarbCorrelationResponse)
-async def get_carb_glucose_correlation(user_id: str, days: int = 30):
+async def get_carb_glucose_correlation(user_id: str, days: int = 30, current_user: dict = Depends(get_current_user)):
     """Get carb-to-glucose correlation analysis."""
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     db = get_supabase_db()
 
     start_date = datetime.now() - timedelta(days=days)
@@ -1151,8 +1201,10 @@ async def get_carb_glucose_correlation(user_id: str, days: int = 30):
 # ============================================================
 
 @router.post("/alerts", response_model=GlucoseAlertResponse)
-async def create_glucose_alert(request: CreateGlucoseAlertRequest):
+async def create_glucose_alert(request: CreateGlucoseAlertRequest, current_user: dict = Depends(get_current_user)):
     """Create a glucose alert configuration."""
+    if str(current_user["id"]) != str(request.user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     db = get_supabase_db()
 
     alert_data = {
@@ -1168,14 +1220,16 @@ async def create_glucose_alert(request: CreateGlucoseAlertRequest):
     result = db.client.table("glucose_alerts").insert(alert_data).execute()
 
     if not result.data:
-        raise HTTPException(status_code=500, detail="Failed to create alert")
+        raise safe_internal_error(Exception("Failed to create alert"), "diabetes")
 
     return GlucoseAlertResponse(**result.data[0])
 
 
 @router.get("/alerts/{user_id}/check", response_model=AlertTriggeredResponse)
-async def check_alert_triggered(user_id: str, glucose_value: float):
+async def check_alert_triggered(user_id: str, glucose_value: float, current_user: dict = Depends(get_current_user)):
     """Check if any alerts should be triggered."""
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     db = get_supabase_db()
 
     result = db.client.table("glucose_alerts").select("*").eq(
@@ -1204,8 +1258,10 @@ async def check_alert_triggered(user_id: str, glucose_value: float):
 
 
 @router.patch("/alerts/{user_id}/{alert_id}", response_model=GlucoseAlertResponse)
-async def update_glucose_alert(user_id: str, alert_id: str, request: UpdateGlucoseAlertRequest):
+async def update_glucose_alert(user_id: str, alert_id: str, request: UpdateGlucoseAlertRequest, current_user: dict = Depends(get_current_user)):
     """Update a glucose alert."""
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     db = get_supabase_db()
 
     update_data = {k: v for k, v in request.dict().items() if v is not None}
@@ -1230,9 +1286,12 @@ async def calculate_time_in_range(
     user_id: str,
     days: int = 7,
     target_min: float = 70,
-    target_max: float = 180
+    target_max: float = 180,
+    current_user: dict = Depends(get_current_user),
 ):
     """Calculate time in range percentage."""
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     db = get_supabase_db()
 
     start_date = datetime.now() - timedelta(days=days)
@@ -1266,8 +1325,10 @@ async def calculate_time_in_range(
 
 
 @router.get("/analytics/{user_id}/variability", response_model=VariabilityResponse)
-async def calculate_glucose_variability(user_id: str, days: int = 7):
+async def calculate_glucose_variability(user_id: str, days: int = 7, current_user: dict = Depends(get_current_user)):
     """Calculate glucose variability metrics."""
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     import statistics
 
     db = get_supabase_db()
@@ -1302,8 +1363,10 @@ async def calculate_glucose_variability(user_id: str, days: int = 7):
 
 
 @router.get("/analytics/{user_id}/patterns", response_model=PatternsResponse)
-async def detect_glucose_patterns(user_id: str, days: int = 14):
+async def detect_glucose_patterns(user_id: str, days: int = 14, current_user: dict = Depends(get_current_user)):
     """Detect glucose patterns."""
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     import statistics
 
     db = get_supabase_db()
@@ -1337,8 +1400,10 @@ async def detect_glucose_patterns(user_id: str, days: int = 14):
 
 
 @router.get("/analytics/{user_id}/dashboard", response_model=DashboardDataResponse)
-async def get_dashboard_data(user_id: str):
+async def get_dashboard_data(user_id: str, current_user: dict = Depends(get_current_user)):
     """Get comprehensive dashboard data."""
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     db = get_supabase_db()
 
     # Get profile
@@ -1386,8 +1451,10 @@ async def get_dashboard_data(user_id: str):
 # ============================================================
 
 @router.get("/exercise/{user_id}/pre-workout", response_model=PreWorkoutRiskResponse)
-async def assess_pre_workout_risk(user_id: str):
+async def assess_pre_workout_risk(user_id: str, current_user: dict = Depends(get_current_user)):
     """Assess glucose risk before workout."""
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     db = get_supabase_db()
 
     # Get latest reading
@@ -1466,8 +1533,10 @@ async def assess_pre_workout_risk(user_id: str):
 
 
 @router.get("/exercise/{user_id}/impact", response_model=WorkoutGlucoseImpactResponse)
-async def analyze_workout_glucose_impact(user_id: str, days: int = 30):
+async def analyze_workout_glucose_impact(user_id: str, days: int = 30, current_user: dict = Depends(get_current_user)):
     """Analyze how workouts affect glucose levels."""
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     # This would require workout data correlation
     # For now, return placeholder
     return WorkoutGlucoseImpactResponse(

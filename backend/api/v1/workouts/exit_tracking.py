@@ -8,7 +8,9 @@ This module handles tracking when users exit workouts early:
 """
 from typing import List
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
+from core.auth import get_current_user
+from core.exceptions import safe_internal_error
 
 from core.supabase_db import get_supabase_db
 from core.logger import get_logger
@@ -21,7 +23,9 @@ logger = get_logger(__name__)
 
 
 @router.post("/{workout_id}/exit", response_model=WorkoutExit)
-async def log_workout_exit(workout_id: str, exit_data: WorkoutExitCreate):
+async def log_workout_exit(workout_id: str, exit_data: WorkoutExitCreate,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Log a workout exit/quit event with reason and progress tracking.
 
@@ -106,11 +110,13 @@ async def log_workout_exit(workout_id: str, exit_data: WorkoutExitCreate):
         raise
     except Exception as e:
         logger.error(f"Failed to log workout exit: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "exit_tracking")
 
 
 @router.get("/{workout_id}/exits", response_model=List[WorkoutExit])
-async def get_workout_exits(workout_id: str):
+async def get_workout_exits(workout_id: str,
+    current_user: dict = Depends(get_current_user),
+):
     """Get all exit records for a workout."""
     logger.info(f"Getting exit records for workout {workout_id}")
 
@@ -138,11 +144,13 @@ async def get_workout_exits(workout_id: str):
 
     except Exception as e:
         logger.error(f"Failed to get workout exits: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "exit_tracking")
 
 
 @router.get("/user/{user_id}/exit-stats")
-async def get_user_exit_stats(user_id: str):
+async def get_user_exit_stats(user_id: str,
+    current_user: dict = Depends(get_current_user),
+):
     """Get exit statistics for a user - helpful for understanding workout completion patterns."""
     logger.info(f"Getting exit stats for user {user_id}")
 
@@ -181,4 +189,4 @@ async def get_user_exit_stats(user_id: str):
 
     except Exception as e:
         logger.error(f"Failed to get user exit stats: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "exit_tracking")

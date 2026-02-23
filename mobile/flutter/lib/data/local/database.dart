@@ -1,7 +1,9 @@
 import 'dart:io';
+import 'dart:math';
 
 import 'package:drift/drift.dart';
 import 'package:drift/native.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 
@@ -12,6 +14,7 @@ import 'daos/volume_response_dao.dart';
 import 'daos/food_dao.dart';
 import 'daos/gym_profile_dao.dart';
 import 'daos/media_cache_dao.dart';
+import 'daos/quick_preset_dao.dart';
 import 'daos/sync_queue_dao.dart';
 import 'daos/user_profile_dao.dart';
 import 'daos/workout_dao.dart';
@@ -24,6 +27,7 @@ import 'tables/exercise_media_cache_table.dart';
 import 'tables/food_table.dart';
 import 'tables/gym_profiles_table.dart';
 import 'tables/pending_sync_queue_table.dart';
+import 'tables/quick_preset_table.dart';
 import 'tables/user_profile_table.dart';
 import 'tables/workout_logs_table.dart';
 import 'tables/workouts_table.dart';
@@ -43,6 +47,7 @@ part 'database.g.dart';
     EmbeddingCache,
     CachedExercise1rmHistory,
     CachedVolumeResponses,
+    CachedQuickPresets,
   ],
   daos: [
     WorkoutDao,
@@ -56,6 +61,7 @@ part 'database.g.dart';
     EmbeddingDao,
     Exercise1rmDao,
     VolumeResponseDao,
+    QuickPresetDao,
   ],
 )
 class AppDatabase extends _$AppDatabase {
@@ -72,6 +78,7 @@ class AppDatabase extends _$AppDatabase {
   EmbeddingDao get embeddingDao => EmbeddingDao(this);
   Exercise1rmDao get exercise1rmDao => Exercise1rmDao(this);
   VolumeResponseDao get volumeResponseDao => VolumeResponseDao(this);
+  QuickPresetDao get quickPresetDao => QuickPresetDao(this);
 
   Future<void> clearAllUserData() {
     return transaction(() async {
@@ -86,11 +93,12 @@ class AppDatabase extends _$AppDatabase {
       await delete(embeddingCache).go();
       await delete(cachedExercise1rmHistory).go();
       await delete(cachedVolumeResponses).go();
+      await delete(cachedQuickPresets).go();
     });
   }
 
   @override
-  int get schemaVersion => 5;
+  int get schemaVersion => 6;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -108,14 +116,38 @@ class AppDatabase extends _$AppDatabase {
           if (from < 5) {
             await m.createTable(cachedVolumeResponses);
           }
+          if (from < 6) {
+            await m.createTable(cachedQuickPresets);
+          }
         },
       );
+}
+
+Future<String> _getOrCreateDbKey() async {
+  const storage = FlutterSecureStorage(
+    aOptions: AndroidOptions(encryptedSharedPreferences: true),
+    iOptions: IOSOptions(accessibility: KeychainAccessibility.first_unlock),
+  );
+  var key = await storage.read(key: 'db_encryption_key');
+  if (key == null) {
+    final random = Random.secure();
+    final values = List<int>.generate(32, (i) => random.nextInt(256));
+    key = values.map((b) => b.toRadixString(16).padLeft(2, '0')).join();
+    await storage.write(key: 'db_encryption_key', value: key);
+  }
+  return key;
 }
 
 LazyDatabase _openConnection() {
   return LazyDatabase(() async {
     final dbFolder = await getApplicationDocumentsDirectory();
     final file = File(p.join(dbFolder.path, 'fitwiz_offline.db'));
-    return NativeDatabase.createInBackground(file);
+    final encryptionKey = await _getOrCreateDbKey();
+    return NativeDatabase.createInBackground(
+      file,
+      setup: (rawDb) {
+        rawDb.execute("PRAGMA key = '$encryptionKey'");
+      },
+    );
   });
 }

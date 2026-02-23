@@ -20,7 +20,10 @@ class FoodApiService {
   static const String _openFoodFactsBaseUrl =
       'https://world.openfoodfacts.org/api/v2';
   static const String _usdaBaseUrl = 'https://api.nal.usda.gov/fdc/v1';
-  static const String _usdaApiKey = 'DEMO_KEY';
+  static const String _usdaApiKey = String.fromEnvironment(
+    'USDA_API_KEY',
+    defaultValue: 'DEMO_KEY',
+  );
 
   FoodApiService(this._dio, this._db);
 

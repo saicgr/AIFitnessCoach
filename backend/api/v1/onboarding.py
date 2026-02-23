@@ -16,7 +16,9 @@ RATE LIMITS:
 - /validate-data: 20 requests/minute
 - /save-conversation: 10 requests/minute
 """
-from fastapi import APIRouter, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException, Request
+from core.auth import get_current_user
+from core.exceptions import safe_internal_error
 from pydantic import BaseModel
 from typing import Dict, Any, List, Optional
 from datetime import datetime
@@ -82,7 +84,9 @@ class SaveConversationRequest(BaseModel):
 
 @router.post("/parse-response", response_model=ParseOnboardingResponse)
 @limiter.limit("10/minute")
-async def parse_onboarding_response(request: Request, body: ParseOnboardingRequest):
+async def parse_onboarding_response(request: Request, body: ParseOnboardingRequest,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Parse user's natural language response and extract onboarding data.
 
@@ -166,12 +170,14 @@ async def parse_onboarding_response(request: Request, body: ParseOnboardingReque
             metadata={"message": message[:200] if message else None},
             status_code=500
         )
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "onboarding")
 
 
 @router.post("/validate-data", response_model=ValidateDataResponse)
 @limiter.limit("20/minute")
-async def validate_onboarding_data(request: Request, body: ValidateDataRequest):
+async def validate_onboarding_data(request: Request, body: ValidateDataRequest,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Validate partial or complete onboarding data.
 
@@ -210,12 +216,14 @@ async def validate_onboarding_data(request: Request, body: ValidateDataRequest):
 
     except Exception as e:
         logger.error(f"❌ [LangGraph] Validation failed: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "onboarding")
 
 
 @router.post("/save-conversation")
 @limiter.limit("10/minute")
-async def save_conversation(request: Request, body: SaveConversationRequest):
+async def save_conversation(request: Request, body: SaveConversationRequest,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Save the entire onboarding conversation to the database.
 
@@ -271,4 +279,4 @@ async def save_conversation(request: Request, body: SaveConversationRequest):
 
     except Exception as e:
         logger.error(f"❌ Failed to save conversation: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "onboarding")

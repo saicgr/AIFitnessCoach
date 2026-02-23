@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants/app_colors.dart';
+import '../../widgets/app_snackbar.dart';
 import '../../data/models/hydration.dart';
 import '../../data/repositories/hydration_repository.dart';
 import '../../data/services/api_client.dart';
@@ -131,13 +132,7 @@ class _HydrationScreenState extends ConsumerState<HydrationScreen> {
           amountMl: amountMl,
         );
     if (success && mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Added ${amountMl}ml of water'),
-          backgroundColor: AppColors.success,
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
+      AppSnackBar.success(context, 'Added ${amountMl}ml of water');
     }
   }
 
@@ -416,13 +411,7 @@ class _HydrationScreenState extends ConsumerState<HydrationScreen> {
             notes: result['notes'],
           );
       if (success && mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Added ${result['amount']}ml of ${type.label}'),
-            backgroundColor: AppColors.success,
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
+        AppSnackBar.success(context, 'Added ${result['amount']}ml of ${type.label}');
       }
     }
   }

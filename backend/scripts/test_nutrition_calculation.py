@@ -10,7 +10,9 @@ from supabase import create_client
 
 # Supabase credentials
 SUPABASE_URL = "https://hpbzfahijszqmgsybuor.supabase.co"
-SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhwYnpmYWhpanN6cW1nc3lidW9yIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2NDI2MTM5NiwiZXhwIjoyMDc5ODM3Mzk2fQ.hN3d5uFlhtMgYCiBr8esc9vlQSeM8iLF4blhg3VOdTY"
+SUPABASE_KEY = os.environ.get("SUPABASE_KEY")
+if not SUPABASE_KEY:
+    raise SystemExit("SUPABASE_KEY environment variable is required")
 
 # User to test
 USER_ID = "c30a0993-b88c-4cd6-bf7b-fc631cd290c5"

@@ -12,7 +12,9 @@ import json
 from datetime import datetime
 from typing import Optional, List, Literal
 
-from fastapi import APIRouter, HTTPException, Request, BackgroundTasks
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, BackgroundTasks
+from core.auth import get_current_user
+from core.exceptions import safe_internal_error
 from pydantic import BaseModel, Field
 
 from core.supabase_db import get_supabase_db
@@ -210,9 +212,52 @@ FIELD GUIDELINES:
     return prompt
 
 
+@router.get("/quick/conflict-check")
+async def check_quick_workout_conflict(
+    date: str = Query(..., description="Date to check in YYYY-MM-DD format"),
+    current_user: dict = Depends(get_current_user),
+):
+    """
+    Check if a workout already exists on the given date.
+
+    Returns conflict info so the frontend can show a Replace/Add/Change dialog.
+    Single DB call, lightweight (<100ms).
+    """
+    user_id = current_user.get("sub") or current_user.get("id", "")
+    try:
+        db = get_supabase_db()
+        existing = db.list_workouts(
+            user_id=user_id,
+            from_date=date,
+            to_date=date,
+            is_completed=False,
+            limit=1,
+        )
+
+        if existing:
+            workout = existing[0]
+            return {
+                "has_conflict": True,
+                "existing_workout": {
+                    "id": workout.get("id"),
+                    "name": workout.get("name", "Workout"),
+                    "type": workout.get("type", "strength"),
+                },
+            }
+
+        return {"has_conflict": False, "existing_workout": None}
+
+    except Exception as e:
+        logger.warning(f"Conflict check failed: {e}")
+        # Graceful degradation: assume no conflict so user isn't blocked
+        return {"has_conflict": False, "existing_workout": None}
+
+
 @router.post("/quick", response_model=QuickWorkoutResponse)
 @limiter.limit("5/minute")
-async def generate_quick_workout(request: Request, body: QuickWorkoutRequest, background_tasks: BackgroundTasks):
+async def generate_quick_workout(request: Request, body: QuickWorkoutRequest, background_tasks: BackgroundTasks,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Generate a quick workout for busy users.
 
@@ -452,12 +497,14 @@ async def generate_quick_workout(request: Request, body: QuickWorkoutRequest, ba
         raise
     except Exception as e:
         logger.error(f"Failed to generate quick workout: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "quick")
 
 
 @router.post("/quick/save")
 @limiter.limit("10/minute")
-async def save_quick_workout(request: Request, body: QuickWorkoutSaveRequest, background_tasks: BackgroundTasks):
+async def save_quick_workout(request: Request, body: QuickWorkoutSaveRequest, background_tasks: BackgroundTasks,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Save a locally-generated quick workout to the server.
 
@@ -604,7 +651,9 @@ async def track_quick_workout_usage(
 
 
 @router.get("/quick/preferences/{user_id}")
-async def get_quick_workout_preferences(user_id: str):
+async def get_quick_workout_preferences(user_id: str,
+    current_user: dict = Depends(get_current_user),
+):
     """Get user's quick workout preferences."""
     db = get_supabase_db()
 
@@ -639,7 +688,9 @@ async def get_quick_workout_preferences(user_id: str):
 
 
 @router.get("/quick/analytics/source")
-async def get_quick_workout_source_analytics():
+async def get_quick_workout_source_analytics(
+    current_user: dict = Depends(get_current_user),
+):
     """
     Get analytics on quick workout source usage (button vs chat).
 

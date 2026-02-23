@@ -8,6 +8,7 @@ import '../../../../data/repositories/auth_repository.dart';
 import '../../../../data/repositories/workout_repository.dart';
 import '../../../../data/services/api_client.dart';
 import '../../../../data/services/haptic_service.dart';
+import '../../../../widgets/app_dialog.dart';
 import '../../../../widgets/glass_sheet.dart';
 import '../../../../widgets/main_shell.dart';
 import '../edit_program_sheet.dart';
@@ -476,63 +477,13 @@ class _CustomizeProgramButtonState extends ConsumerState<CustomizeProgramButton>
     HapticService.medium();
 
     // Show confirmation dialog
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (ctx) {
-        final isDark = Theme.of(ctx).brightness == Brightness.dark;
-        final elevatedColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
-        final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-        final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
-
-        return AlertDialog(
-          backgroundColor: elevatedColor,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          title: Row(
-            children: [
-              Icon(Icons.refresh, color: AppColors.orange, size: 24),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Text(
-                  'Regenerate Workouts?',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: textPrimary,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          content: Text(
-            'This will delete your upcoming incomplete workouts and generate fresh ones using your current program settings.\n\nCompleted workouts will NOT be affected.',
-            style: TextStyle(
-              fontSize: 14,
-              color: textSecondary,
-              height: 1.4,
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(ctx, false),
-              child: Text(
-                'Cancel',
-                style: TextStyle(color: textSecondary),
-              ),
-            ),
-            ElevatedButton(
-              onPressed: () => Navigator.pop(ctx, true),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.orange,
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
-              ),
-              child: const Text('Regenerate'),
-            ),
-          ],
-        );
-      },
+    final confirmed = await AppDialog.confirm(
+      context,
+      title: 'Regenerate Workouts?',
+      message: 'This will delete your upcoming incomplete workouts and generate fresh ones using your current program settings.\n\nCompleted workouts will NOT be affected.',
+      confirmText: 'Regenerate',
+      confirmColor: AppColors.orange,
+      icon: Icons.refresh_rounded,
     );
 
     if (confirmed != true) return;

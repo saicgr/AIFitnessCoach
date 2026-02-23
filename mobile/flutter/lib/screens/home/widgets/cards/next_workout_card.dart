@@ -8,6 +8,7 @@ import '../../../../data/models/workout.dart';
 import '../../../../data/repositories/workout_repository.dart';
 import '../../../../data/services/haptic_service.dart';
 import '../components/stat_badge.dart';
+import '../../../../widgets/app_dialog.dart';
 import '../regenerate_workout_sheet.dart';
 import 'exercise_image_thumbnail.dart';
 
@@ -36,6 +37,36 @@ class NextWorkoutCard extends ConsumerStatefulWidget {
 
 class _NextWorkoutCardState extends ConsumerState<NextWorkoutCard> {
   bool _isSkipping = false;
+
+  bool _isQuickWorkout(Workout w) {
+    final method = w.generationMethod?.toLowerCase() ?? '';
+    if (method == 'quick_rule_based' || method == 'ai_quick_workout') {
+      return true;
+    }
+    final duration = w.durationMinutes ?? w.durationMinutesMax ?? 0;
+    return duration > 0 && duration <= 15 && w.exerciseCount <= 5;
+  }
+
+  String _formatTypeLabel(String? type) {
+    const typeLabels = {
+      'push': 'Push',
+      'pull': 'Pull',
+      'legs': 'Legs',
+      'full_body': 'Full Body',
+      'upper_body': 'Upper Body',
+      'upper': 'Upper Body',
+      'lower_body': 'Lower Body',
+      'lower': 'Lower Body',
+      'core': 'Core',
+      'strength': 'Strength',
+      'recovery': 'Recovery',
+      'cardio': 'Cardio',
+      'mobility': 'Mobility',
+      'stretch': 'Stretch',
+    };
+    if (type == null || type.isEmpty) return 'Strength';
+    return typeLabels[type.toLowerCase()] ?? type.replaceAll('_', ' ').split(' ').map((w) => w.isNotEmpty ? '${w[0].toUpperCase()}${w.substring(1)}' : '').join(' ');
+  }
 
   String _getScheduledDateLabel(String? scheduledDate) {
     if (scheduledDate == null) return 'Scheduled';
@@ -88,26 +119,12 @@ class _NextWorkoutCardState extends ConsumerState<NextWorkoutCard> {
 
   Future<void> _skipWorkout() async {
     // Show confirmation dialog
-    final confirm = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: AppColors.elevated,
-        title: const Text('Skip Workout?'),
-        content: const Text(
-          'This workout will be marked as skipped and won\'t count towards your weekly goal.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            style: TextButton.styleFrom(foregroundColor: AppColors.error),
-            child: const Text('Skip'),
-          ),
-        ],
-      ),
+    final confirm = await AppDialog.destructive(
+      context,
+      title: 'Skip Workout?',
+      message: 'This workout will be marked as skipped and won\'t count towards your weekly goal.',
+      confirmText: 'Skip',
+      icon: Icons.skip_next_rounded,
     );
 
     if (confirm != true) return;
@@ -240,7 +257,7 @@ class _NextWorkoutCardState extends ConsumerState<NextWorkoutCard> {
                                   borderRadius: BorderRadius.circular(8),
                                 ),
                                 child: Text(
-                                  workout.type?.toUpperCase() ?? 'STRENGTH',
+                                  _formatTypeLabel(workout.type),
                                   style: TextStyle(
                                     fontSize: 11,
                                     fontWeight: FontWeight.bold,
@@ -249,6 +266,27 @@ class _NextWorkoutCardState extends ConsumerState<NextWorkoutCard> {
                                   ),
                                 ),
                               ),
+                              // Quick workout badge
+                              if (_isQuickWorkout(workout))
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                    vertical: 4,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: accentColor.withValues(alpha: 0.15),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: Text(
+                                    'Quick',
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.bold,
+                                      color: accentColor,
+                                      letterSpacing: 0.5,
+                                    ),
+                                  ),
+                                ),
                               // Difficulty badge
                               Container(
                                 padding: const EdgeInsets.symmetric(

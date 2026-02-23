@@ -19,6 +19,7 @@ class TodayWorkoutSummary {
   final bool isToday;
   final bool isCompleted;
   final List<WorkoutExercise> exercises;
+  final String? generationMethod;
 
   const TodayWorkoutSummary({
     required this.id,
@@ -34,6 +35,7 @@ class TodayWorkoutSummary {
     required this.isToday,
     required this.isCompleted,
     this.exercises = const [],
+    this.generationMethod,
   });
 
   /// Get formatted duration display (e.g., "45-60m" or "45m")
@@ -73,6 +75,7 @@ class TodayWorkoutSummary {
       isToday: json['is_today'] as bool? ?? false,
       isCompleted: json['is_completed'] as bool? ?? false,
       exercises: exercises,
+      generationMethod: json['generation_method'] as String?,
     );
   }
 
@@ -90,6 +93,7 @@ class TodayWorkoutSummary {
         'is_today': isToday,
         'is_completed': isCompleted,
         'exercises': exercises.map((e) => e.toJson()).toList(),
+        'generation_method': generationMethod,
       };
 
   /// Convert to full Workout object for NextWorkoutCard compatibility
@@ -106,6 +110,7 @@ class TodayWorkoutSummary {
         exercisesJson: exercises.map((e) => e.toJson()).toList(),
         // Pass the API's exercise count so it can be used as fallback
         knownExerciseCount: exerciseCount,
+        generationMethod: generationMethod,
       );
 }
 
@@ -119,6 +124,8 @@ class TodayWorkoutResponse {
   // Completed workout info (if user already completed today's workout)
   final bool completedToday;
   final TodayWorkoutSummary? completedWorkout;
+  // Extra today workouts (quick workouts coexisting with scheduled workout)
+  final List<TodayWorkoutSummary> extraTodayWorkouts;
   // Generation status fields - used when auto-generating workout
   final bool isGenerating;
   final String? generationMessage;
@@ -142,6 +149,7 @@ class TodayWorkoutResponse {
     this.restDayMessage,
     this.completedToday = false,
     this.completedWorkout,
+    this.extraTodayWorkouts = const [],
     this.isGenerating = false,
     this.generationMessage,
     this.needsGeneration = false,
@@ -167,6 +175,11 @@ class TodayWorkoutResponse {
           ? TodayWorkoutSummary.fromJson(
               json['completed_workout'] as Map<String, dynamic>)
           : null,
+      extraTodayWorkouts: (json['extra_today_workouts'] as List<dynamic>?)
+              ?.map((e) =>
+                  TodayWorkoutSummary.fromJson(e as Map<String, dynamic>))
+              .toList() ??
+          const [],
       isGenerating: json['is_generating'] as bool? ?? false,
       generationMessage: json['generation_message'] as String?,
       needsGeneration: json['needs_generation'] as bool? ?? false,
@@ -183,6 +196,8 @@ class TodayWorkoutResponse {
         'rest_day_message': restDayMessage,
         'completed_today': completedToday,
         'completed_workout': completedWorkout?.toJson(),
+        'extra_today_workouts':
+            extraTodayWorkouts.map((e) => e.toJson()).toList(),
         'is_generating': isGenerating,
         'generation_message': generationMessage,
         'needs_generation': needsGeneration,

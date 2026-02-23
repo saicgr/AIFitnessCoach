@@ -16,7 +16,9 @@ import json
 from datetime import datetime, date, timedelta
 from typing import List, Optional, Dict, Any
 
-from fastapi import APIRouter, HTTPException, Query, BackgroundTasks
+from fastapi import APIRouter, Depends, HTTPException, Query, BackgroundTasks
+from core.auth import get_current_user
+from core.exceptions import safe_internal_error
 from pydantic import BaseModel
 
 from core.supabase_db import get_supabase_db
@@ -155,7 +157,9 @@ class WorkoutSummaryResponse(BaseModel):
 
 
 @router.post("/", response_model=Workout)
-async def create_workout(workout: WorkoutCreate):
+async def create_workout(workout: WorkoutCreate,
+    current_user: dict = Depends(get_current_user),
+):
     """Create a new workout."""
     logger.info(f"Creating workout for user {workout.user_id}: {workout.name}")
     try:
@@ -194,7 +198,7 @@ async def create_workout(workout: WorkoutCreate):
 
     except Exception as e:
         logger.error(f"Failed to create workout: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "crud")
 
 
 @router.get("/", response_model=List[Workout])
@@ -206,13 +210,16 @@ async def list_workouts(
     limit: int = Query(default=50, ge=1, le=200),
     offset: int = Query(default=0, ge=0),
     gym_profile_id: Optional[str] = Query(default=None, description="Filter by gym profile ID"),
+    allow_multiple_per_date: bool = Query(default=False, description="Skip per-date deduplication"),
+    current_user: dict = Depends(get_current_user),
 ):
     """List workouts for a user with optional filters.
 
     If gym_profile_id is provided, only returns workouts for that profile.
     If not provided and the user has an active gym profile, filters by that profile.
+    If allow_multiple_per_date is True, returns all workouts per day (no dedup).
     """
-    logger.info(f"Listing workouts for user {user_id}, gym_profile_id={gym_profile_id}")
+    logger.info(f"Listing workouts for user {user_id}, gym_profile_id={gym_profile_id}, multi_per_date={allow_multiple_per_date}")
     try:
         db = get_supabase_db()
 
@@ -241,17 +248,20 @@ async def list_workouts(
             limit=limit,
             offset=offset,
             gym_profile_id=profile_filter,
+            allow_multiple_per_date=allow_multiple_per_date,
         )
         logger.info(f"Found {len(rows)} workouts for user {user_id} (profile: {profile_filter})")
         return [row_to_workout(row) for row in rows]
 
     except Exception as e:
         logger.error(f"Failed to list workouts: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "crud")
 
 
 @router.get("/{workout_id}", response_model=Workout)
-async def get_workout(workout_id: str):
+async def get_workout(workout_id: str,
+    current_user: dict = Depends(get_current_user),
+):
     """Get a workout by ID."""
     logger.debug(f"Fetching workout: id={workout_id}")
     try:
@@ -268,11 +278,13 @@ async def get_workout(workout_id: str):
         raise
     except Exception as e:
         logger.error(f"Failed to get workout: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "crud")
 
 
 @router.put("/{workout_id}", response_model=Workout)
-async def update_workout(workout_id: str, workout: WorkoutUpdate):
+async def update_workout(workout_id: str, workout: WorkoutUpdate,
+    current_user: dict = Depends(get_current_user),
+):
     """Update a workout."""
     logger.info(f"Updating workout: id={workout_id}")
     try:
@@ -324,11 +336,13 @@ async def update_workout(workout_id: str, workout: WorkoutUpdate):
         raise
     except Exception as e:
         logger.error(f"Failed to update workout: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "crud")
 
 
 @router.patch("/{workout_id}/favorite")
-async def toggle_workout_favorite(workout_id: str, user_id: str = Query(...)):
+async def toggle_workout_favorite(workout_id: str, user_id: str = Query(...),
+    current_user: dict = Depends(get_current_user),
+):
     """Toggle the favorite status of a workout."""
     logger.info(f"Toggling favorite for workout: id={workout_id}, user={user_id}")
     try:
@@ -356,11 +370,13 @@ async def toggle_workout_favorite(workout_id: str, user_id: str = Query(...)):
         raise
     except Exception as e:
         logger.error(f"Failed to toggle workout favorite: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "crud")
 
 
 @router.delete("/{workout_id}")
-async def delete_workout(workout_id: str):
+async def delete_workout(workout_id: str,
+    current_user: dict = Depends(get_current_user),
+):
     """Delete a workout and all related records."""
     logger.info(f"Deleting workout: id={workout_id}")
     try:
@@ -383,13 +399,14 @@ async def delete_workout(workout_id: str):
         raise
     except Exception as e:
         logger.error(f"Failed to delete workout: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "crud")
 
 
 @router.delete("/cleanup/{user_id}")
 async def cleanup_old_workouts(
     user_id: str,
-    keep_count: int = Query(default=1, ge=1, le=10, description="Number of future workouts to keep")
+    keep_count: int = Query(default=1, ge=1, le=10, description="Number of future workouts to keep"),
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Clean up old workouts for a user, keeping only the specified number of upcoming workouts.
@@ -474,7 +491,7 @@ async def cleanup_old_workouts(
 
     except Exception as e:
         logger.error(f"[Cleanup] Failed: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "crud")
 
 
 @router.post("/{workout_id}/complete", response_model=WorkoutCompletionResponse)
@@ -482,6 +499,7 @@ async def complete_workout(
     workout_id: str,
     background_tasks: BackgroundTasks,
     completion_method: str = Query(default="tracked", description="How the workout was completed: 'tracked' or 'marked_done'"),
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Mark a workout as completed with PR detection and strength score updates.
@@ -951,11 +969,13 @@ async def complete_workout(
         raise
     except Exception as e:
         logger.error(f"Failed to complete workout: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "crud")
 
 
 @router.post("/{workout_id}/uncomplete", response_model=Workout)
-async def uncomplete_workout(workout_id: str):
+async def uncomplete_workout(workout_id: str,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Revert a workout that was marked as done (completion_method='marked_done').
 
@@ -1016,11 +1036,13 @@ async def uncomplete_workout(workout_id: str):
         raise
     except Exception as e:
         logger.error(f"Failed to uncomplete workout: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "crud")
 
 
 @router.get("/{workout_id}/completion-summary", response_model=WorkoutSummaryResponse)
-async def get_workout_completion_summary(workout_id: str):
+async def get_workout_completion_summary(workout_id: str,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Get a combined summary of a completed workout for the View Summary screen.
 
@@ -1197,7 +1219,7 @@ async def get_workout_completion_summary(workout_id: str):
         raise
     except Exception as e:
         logger.error(f"Failed to get workout summary: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "crud")
 
 
 async def recalculate_user_strength_scores(user_id: str, supabase):

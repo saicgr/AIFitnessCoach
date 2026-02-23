@@ -38,6 +38,7 @@ from pydantic import BaseModel, Field
 
 from core.supabase_db import get_supabase_db
 from core.auth import get_current_user
+from core.exceptions import safe_internal_error
 from core.activity_logger import log_user_activity, log_user_error
 from services.user_context_service import user_context_service
 
@@ -352,7 +353,7 @@ async def get_nutrition_preferences(current_user: dict = Depends(get_current_use
 
     except Exception as e:
         logger.error(f"Error getting nutrition preferences: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "nutrition_preferences")
 
 
 @router.put("/preferences", response_model=NutritionPreferencesResponse)
@@ -459,7 +460,7 @@ async def update_nutrition_preferences(
             endpoint="/api/v1/nutrition/preferences",
             status_code=500
         )
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "nutrition_preferences")
 
 
 @router.post("/preferences/reset", response_model=NutritionPreferencesResponse)
@@ -514,7 +515,7 @@ async def reset_nutrition_preferences(current_user: dict = Depends(get_current_u
         raise
     except Exception as e:
         logger.error(f"Error resetting nutrition preferences: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "nutrition_preferences")
 
 
 # =============================================================================
@@ -645,7 +646,7 @@ async def quick_log_saved_food(
             metadata={"saved_food_id": request.saved_food_id},
             status_code=500
         )
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "nutrition_preferences")
 
 
 @router.get("/quick-suggestions", response_model=QuickSuggestionsResponse)
@@ -766,7 +767,7 @@ async def get_quick_suggestions(
 
     except Exception as e:
         logger.error(f"Error getting quick suggestions: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "nutrition_preferences")
 
 
 # =============================================================================
@@ -837,7 +838,7 @@ async def list_meal_templates(
 
     except Exception as e:
         logger.error(f"Error listing meal templates: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "nutrition_preferences")
 
 
 @router.post("/templates", response_model=MealTemplate)
@@ -940,7 +941,7 @@ async def create_meal_template(
             endpoint="/api/v1/nutrition/templates",
             status_code=500
         )
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "nutrition_preferences")
 
 
 @router.put("/templates/{template_id}", response_model=MealTemplate)
@@ -1034,7 +1035,7 @@ async def update_meal_template(
         raise
     except Exception as e:
         logger.error(f"Error updating meal template: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "nutrition_preferences")
 
 
 @router.delete("/templates/{template_id}")
@@ -1093,7 +1094,7 @@ async def delete_meal_template(
         raise
     except Exception as e:
         logger.error(f"Error deleting meal template: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "nutrition_preferences")
 
 
 @router.post("/templates/{template_id}/log", response_model=LogTemplateResponse)
@@ -1226,7 +1227,7 @@ async def log_meal_template(
             endpoint=f"/api/v1/nutrition/templates/{template_id}/log",
             status_code=500
         )
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "nutrition_preferences")
 
 
 # =============================================================================
@@ -1375,4 +1376,4 @@ async def search_foods(
 
     except Exception as e:
         logger.error(f"Error searching foods: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "nutrition_preferences")

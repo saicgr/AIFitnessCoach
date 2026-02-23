@@ -13,7 +13,6 @@ import '../screens/chat/chat_screen.dart';
 import '../screens/features/feature_voting_screen.dart';
 import '../screens/home/home_screen.dart';
 import '../screens/home/senior_home_screen.dart';
-import '../screens/habits/habits_screen.dart';
 import '../screens/hydration/hydration_screen.dart';
 import '../screens/library/library_screen.dart';
 import '../screens/nutrition/nutrition_screen.dart';
@@ -43,12 +42,11 @@ import '../screens/workout/exercise_detail_screen.dart';
 import '../screens/workout/custom_workout_builder_screen.dart';
 import '../screens/schedule/schedule_screen.dart';
 import '../screens/settings/settings_screen.dart';
+import '../screens/settings/pages/pages.dart';
 import '../screens/settings/ai_data_usage_screen.dart';
 import '../screens/settings/medical_disclaimer_screen.dart';
 import '../screens/settings/help_screen.dart';
-import '../screens/settings/exercise_preferences/favorite_exercises_screen.dart';
-import '../screens/settings/exercise_preferences/exercise_queue_screen.dart';
-import '../screens/settings/exercise_preferences/staple_exercises_screen.dart';
+import '../screens/settings/exercise_preferences/my_exercises_screen.dart';
 import '../screens/settings/workout_history_import_screen.dart';
 import '../screens/settings/training/my_1rms_screen.dart';
 import '../screens/settings/layout_editor_screen.dart';
@@ -82,8 +80,9 @@ import '../screens/nutrition/recipe_suggestions_screen.dart';
 import '../screens/mood/mood_history_screen.dart';
 import '../screens/scores/scoring_screen.dart';
 import '../screens/custom_exercises/custom_exercises_screen.dart';
-import '../screens/settings/exercise_preferences/avoided_exercises_screen.dart';
-import '../screens/settings/exercise_preferences/avoided_muscles_screen.dart';
+// Avoided screens now accessed via unified MyExercisesScreen
+// import '../screens/settings/exercise_preferences/avoided_exercises_screen.dart';
+// import '../screens/settings/exercise_preferences/avoided_muscles_screen.dart';
 import '../screens/settings/support/support_tickets_screen.dart';
 import '../screens/settings/support/create_ticket_screen.dart';
 import '../screens/settings/support/ticket_detail_screen.dart';
@@ -95,8 +94,9 @@ import '../screens/skills/chain_detail_screen.dart';
 import '../screens/demo/demo_workout_screen.dart';
 import '../screens/demo/demo_active_workout_screen.dart';
 import '../screens/demo/plan_preview_screen.dart';
-import '../screens/guest/guest_home_screen.dart';
-import '../screens/guest/guest_library_screen.dart';
+// Guest mode is disabled - screens kept but not routed
+// import '../screens/guest/guest_home_screen.dart';
+// import '../screens/guest/guest_library_screen.dart';
 import '../screens/cardio/log_cardio_screen.dart';
 import '../screens/neat/neat_dashboard_screen.dart';
 import '../screens/live_chat/live_chat_screen.dart';
@@ -107,7 +107,8 @@ import '../screens/leaderboard/xp_leaderboard_screen.dart';
 import '../screens/rewards/rewards_screen.dart';
 import '../screens/inventory/inventory_screen.dart';
 import '../screens/xp_goals/xp_goals_screen.dart';
-import '../data/providers/guest_mode_provider.dart';
+// Guest mode provider import kept for potential future re-enablement
+// import '../data/providers/guest_mode_provider.dart';
 import '../data/providers/xp_provider.dart';
 import '../screens/injuries/injuries_list_screen.dart';
 import '../screens/injuries/report_injury_screen.dart';
@@ -118,6 +119,7 @@ import '../screens/strain_prevention/report_strain_screen.dart';
 import '../screens/settings/senior_fitness_screen.dart';
 import '../screens/settings/progression_pace_screen.dart';
 import '../screens/settings/training_focus_screen.dart';
+import '../screens/settings/beast_mode_screen.dart';
 import '../screens/settings/exercise_science_research_screen.dart';
 import '../screens/weekly_plan/weekly_plan_screen.dart';
 import '../screens/hormonal_health/hormonal_health_screen.dart';
@@ -147,6 +149,237 @@ class _AuthStateNotifier extends ChangeNotifier {
 /// This allows widgets to rebuild when navigation happens
 final currentRouteProvider = StateProvider<String>((ref) => '/splash');
 
+// ---------------------------------------------------------------------------
+// Redirect helper functions
+// ---------------------------------------------------------------------------
+
+/// Handle widget deep link redirects (fitwiz:// scheme)
+String? _handleDeepLinkRedirect(GoRouterState state) {
+  if (state.matchedLocation == '/add') {
+    debugPrint('Router: Widget deep link /add -> /hydration');
+    return '/hydration';
+  }
+  if (state.matchedLocation == '/share') {
+    debugPrint('Router: Widget deep link /share -> /social');
+    return '/social';
+  }
+  if (state.matchedLocation == '/start') {
+    debugPrint('Router: Widget deep link /start -> /home');
+    return '/home';
+  }
+  return null;
+}
+
+/// Handle loading/initial auth states - keep user on splash or pre-auth screens
+String? _handleLoadingState(GoRouterState state, AuthState authState, LanguageState languageState) {
+  if (authState.status != AuthStatus.initial &&
+      authState.status != AuthStatus.loading &&
+      !languageState.isLoading) {
+    return null; // Not in loading state, skip
+  }
+
+  final loc = state.matchedLocation;
+  if (loc == '/splash') return null; // Stay on splash
+
+  // Allow pre-auth screens to stay during loading (don't interrupt sign-in flow)
+  const preAuthScreens = {
+    '/how-it-works', '/pre-auth-quiz', '/sign-in', '/email-sign-in',
+    '/pricing-preview', '/demo-workout', '/plan-preview', '/stats-welcome',
+  };
+  if (preAuthScreens.contains(loc)) return null;
+
+  return '/splash'; // Everything else -> splash while loading
+}
+
+/// Handle auth error state
+String? _handleAuthError(GoRouterState state, AuthState authState) {
+  if (authState.status != AuthStatus.error) return null;
+
+  final loc = state.matchedLocation;
+  // Allow sign-in pages to show errors
+  if (loc == '/sign-in' || loc == '/email-sign-in') return null;
+  // Allow other pre-auth pages to stay
+  const preAuthScreens = {
+    '/how-it-works', '/pre-auth-quiz', '/pricing-preview',
+    '/demo-workout', '/plan-preview', '/stats-welcome',
+  };
+  if (preAuthScreens.contains(loc)) return null;
+
+  // For non-pre-auth screens during error, don't redirect (original behavior)
+  return null;
+}
+
+/// Get the next onboarding step for a logged-in user
+String? _getNextOnboardingStep(app_user.User user, Ref ref) {
+  // Step 0: Check if pre-auth quiz is complete
+  // SKIP this check if user has already completed later steps (coach selection or paywall)
+  // This prevents race condition where SharedPreferences hasn't loaded yet on app reopen
+  // and also handles users who signed up before the pre-auth quiz existed
+  if (!user.isCoachSelected && !user.isPaywallComplete) {
+    final quizData = ref.read(preAuthQuizProvider);
+    if (!quizData.isComplete) {
+      return '/pre-auth-quiz';
+    }
+  }
+
+  // Step 1: Personal info (name, DOB, gender, height, weight)
+  if (!user.isPersonalInfoComplete) {
+    return '/personal-info';
+  }
+
+  // Step 1.5: AI consent (after personal info, before coach selection)
+  // Skip if user already selected a coach (existing users before this feature)
+  if (!user.isCoachSelected) {
+    final hasAiConsent = ref.read(aiConsentProvider);
+    if (!hasAiConsent) {
+      return '/ai-consent';
+    }
+  }
+
+  // Step 2: Coach selection
+  if (!user.isCoachSelected) {
+    return '/coach-selection';
+  }
+
+  // Step 3: Conversational onboarding is SKIPPED
+  // Coach selection now marks onboarding complete and goes directly to paywall/home
+
+  // Step 4: Paywall (after coach selection)
+  if (!user.isPaywallComplete) {
+    return '/paywall-features';
+  }
+
+  // All steps complete
+  return null;
+}
+
+/// Get the appropriate home route based on accessibility mode
+String _getHomeRoute(AccessibilitySettings accessibilitySettings) {
+  if (accessibilitySettings.mode == AccessibilityMode.senior) {
+    return '/senior-home';
+  }
+  return '/home';
+}
+
+/// Handle auth-based redirects (splash, onboarding, login gates)
+String? _handleAuthRedirect(
+  GoRouterState state,
+  Ref ref,
+  AuthState authState,
+  AccessibilitySettings accessibilitySettings,
+) {
+  final loc = state.matchedLocation;
+  final isLoggedIn = authState.status == AuthStatus.authenticated;
+  final homeRoute = _getHomeRoute(accessibilitySettings);
+
+  // Redirect from splash to appropriate destination
+  if (loc == '/splash') {
+    if (isLoggedIn) {
+      final user = authState.user;
+      if (user != null) {
+        final nextStep = _getNextOnboardingStep(user, ref);
+        if (nextStep != null) return nextStep;
+      }
+      return homeRoute;
+    } else {
+      return '/stats-welcome';
+    }
+  }
+
+  // Stats welcome - allow if not logged in, redirect if logged in
+  if (loc == '/stats-welcome') {
+    if (isLoggedIn) {
+      final user = authState.user;
+      if (user != null) {
+        final nextStep = _getNextOnboardingStep(user, ref);
+        if (nextStep != null) return nextStep;
+      }
+      return homeRoute;
+    }
+    return null;
+  }
+
+  // Demo and plan preview screens - allow for anyone (no auth required)
+  if (loc == '/demo-workout' || loc == '/plan-preview') {
+    return null;
+  }
+
+  // Pre-auth flow screens (how-it-works, quiz, sign-in, pricing)
+  const preAuthFlowScreens = {
+    '/how-it-works', '/pre-auth-quiz', '/sign-in', '/email-sign-in', '/pricing-preview',
+  };
+  if (preAuthFlowScreens.contains(loc)) {
+    if (isLoggedIn) {
+      final user = authState.user;
+      // Allow quiz/how-it-works if user is starting over (no coach selected)
+      if ((loc == '/how-it-works' || loc == '/pre-auth-quiz') &&
+          user != null && !user.isCoachSelected) {
+        return null;
+      }
+      // Allow pricing preview for logged-in users
+      if (loc == '/pricing-preview') return null;
+
+      if (user != null) {
+        final nextStep = _getNextOnboardingStep(user, ref);
+        if (nextStep != null) return nextStep;
+      }
+      return homeRoute;
+    }
+    return null; // Allow for non-logged-in users
+  }
+
+  // Personal info - auth required
+  if (loc == '/personal-info') {
+    return isLoggedIn ? null : '/stats-welcome';
+  }
+
+  // Weight projection - auth required
+  if (loc == '/weight-projection') {
+    return isLoggedIn ? null : '/stats-welcome';
+  }
+
+  // AI consent - auth required
+  if (loc == '/ai-consent') {
+    return isLoggedIn ? null : '/stats-welcome';
+  }
+
+  // Coach selection - auth required (also used for changing coach from settings)
+  if (loc == '/coach-selection') {
+    return isLoggedIn ? null : '/stats-welcome';
+  }
+
+  // Paywall screens - allow if user hasn't completed paywall yet
+  const paywallScreens = {'/paywall-features', '/paywall-timeline', '/paywall-pricing'};
+  if (paywallScreens.contains(loc)) {
+    if (isLoggedIn) {
+      final user = authState.user;
+      if (user != null && !user.isPaywallComplete) return null;
+      return homeRoute;
+    }
+    return '/stats-welcome';
+  }
+
+  // Allow onboarding-related routes
+  if (loc == '/senior-onboarding' || loc == '/mode-selection') {
+    return null;
+  }
+
+  // Not logged in -> redirect to stats-welcome
+  if (!isLoggedIn) {
+    return '/stats-welcome';
+  }
+
+  // Redirect /home <-> /senior-home based on accessibility mode
+  if (loc == '/home' && accessibilitySettings.mode == AccessibilityMode.senior) {
+    return '/senior-home';
+  }
+  if (loc == '/senior-home' && accessibilitySettings.mode != AccessibilityMode.senior) {
+    return '/home';
+  }
+
+  return null;
+}
+
 /// Router provider
 final routerProvider = Provider<GoRouter>((ref) {
   final authNotifier = _AuthStateNotifier(ref);
@@ -156,318 +389,47 @@ final routerProvider = Provider<GoRouter>((ref) {
     debugLogDiagnostics: true,
     refreshListenable: authNotifier,
     redirect: (context, state) {
-      // Read auth state fresh each time redirect is called
       final authState = ref.read(authStateProvider);
       final languageState = ref.read(languageProvider);
       final accessibilitySettings = ref.read(accessibilityProvider);
 
-      // Handle widget deep links (fitwiz://) that come through as path only
-      // The full URI gets parsed and only the path portion reaches go_router
-      final fullUri = state.uri;
-      debugPrint('Router redirect - uri: $fullUri, matchedLocation: ${state.matchedLocation}');
+      debugPrint('Router redirect - uri: ${state.uri}, matchedLocation: ${state.matchedLocation}');
 
-      // Handle other widget deep links that need simple redirects
-      if (state.matchedLocation == '/add') {
-        debugPrint('Router: Widget deep link /add -> /hydration');
-        return '/hydration';
-      }
+      // 1. Handle widget deep links
+      final deepLink = _handleDeepLinkRedirect(state);
+      if (deepLink != null) return deepLink;
 
-      if (state.matchedLocation == '/share') {
-        debugPrint('Router: Widget deep link /share -> /social');
-        return '/social';
-      }
-
-      if (state.matchedLocation == '/start') {
-        debugPrint('Router: Widget deep link /start -> /home');
-        return '/home';
-      }
-
-      final isLoggedIn = authState.status == AuthStatus.authenticated;
-
-      // Process daily login XP early so first login bonus is awarded even if user
-      // doesn't reach HomeScreen (e.g., goes through onboarding first).
-      // This is fire-and-forget - processDailyLogin() has its own deduplication.
-      if (isLoggedIn) {
-        // Schedule async processing without blocking redirect
+      // 2. Process daily login XP for authenticated users (fire-and-forget)
+      if (authState.status == AuthStatus.authenticated) {
         Future.microtask(() {
           ref.read(xpProvider.notifier).processDailyLogin();
         });
       }
 
-      final isOnSplash = state.matchedLocation == '/splash';
-      final isOnSeniorOnboarding = state.matchedLocation == '/senior-onboarding';
-      final isOnModeSelection = state.matchedLocation == '/mode-selection';
-      final isOnStatsWelcome = state.matchedLocation == '/stats-welcome';
-
-      // Check if on new onboarding flow screens (declare early for use in loading/error checks)
-      final isOnHowItWorks = state.matchedLocation == '/how-it-works';
-      final isOnPreAuthQuiz = state.matchedLocation == '/pre-auth-quiz';
-      final isOnSignIn = state.matchedLocation == '/sign-in';
-      final isOnEmailSignIn = state.matchedLocation == '/email-sign-in';
-      final isOnPricingPreview = state.matchedLocation == '/pricing-preview';
-      final isOnPersonalInfo = state.matchedLocation == '/personal-info';
-      final isOnWeightProjection = state.matchedLocation == '/weight-projection';
-      final isOnCoachSelection = state.matchedLocation == '/coach-selection';
-      final isOnPaywallFeatures = state.matchedLocation == '/paywall-features';
-      final isOnPaywallTimeline = state.matchedLocation == '/paywall-timeline';
-      final isOnPaywallPricing = state.matchedLocation == '/paywall-pricing';
-      final isOnPaywall = isOnPaywallFeatures || isOnPaywallTimeline || isOnPaywallPricing;
-      final isOnDemoWorkout = state.matchedLocation == '/demo-workout';
-      final isOnPlanPreview = state.matchedLocation == '/plan-preview';
-      final isOnGuestHome = state.matchedLocation == '/guest-home';
-      final isOnGuestLibrary = state.matchedLocation == '/guest-library';
-      final isGuestRoute = isOnGuestHome || isOnGuestLibrary;
-
-      // Helper to get the appropriate home route based on accessibility mode
-      String getHomeRoute() {
-        if (accessibilitySettings.mode == AccessibilityMode.senior) {
-          return '/senior-home';
-        }
-        return '/home';
-      }
-
-      // Still loading auth or language - stay on splash (or go to splash if starting)
-      // But allow pre-auth screens to stay as-is during loading (don't interrupt sign-in flow)
+      // 3. Handle loading/initial state
+      final loadingRedirect = _handleLoadingState(state, authState, languageState);
+      if (loadingRedirect != null) return loadingRedirect;
+      // If loading state returned null but we ARE loading, stay put
       if (authState.status == AuthStatus.initial ||
           authState.status == AuthStatus.loading ||
           languageState.isLoading) {
-        // If we're on splash, stay there
-        if (isOnSplash) return null;
-        // Allow pre-auth screens to stay during loading (sign-in process shouldn't redirect)
-        if (isOnHowItWorks || isOnPreAuthQuiz || isOnSignIn || isOnEmailSignIn || isOnPricingPreview ||
-            isOnDemoWorkout || isOnPlanPreview || isGuestRoute || isOnStatsWelcome) {
-          return null;
-        }
-        // Otherwise redirect to splash
-        return '/splash';
-      }
-
-      // Handle error state - allow sign-in screen to show errors
-      if (authState.status == AuthStatus.error) {
-        // If on sign-in page, stay there to show the error
-        if (isOnSignIn || isOnEmailSignIn) return null;
-        // If on other pre-auth pages, stay there
-        if (isOnHowItWorks || isOnPreAuthQuiz || isOnPricingPreview ||
-            isOnDemoWorkout || isOnPlanPreview || isGuestRoute || isOnStatsWelcome) {
-          return null;
-        }
-      }
-
-      // Check if user is in guest mode
-      final isGuestMode = ref.read(guestModeProvider).isGuestMode;
-
-      // Helper to get the next step in onboarding flow for logged-in users
-      // NOTE: Conversational onboarding is now SKIPPED - pre-auth quiz collects all data
-      String? getNextOnboardingStep(app_user.User user) {
-        // Step 0: Check if pre-auth quiz is complete (stored in SharedPreferences)
-        // SKIP this check if user has already completed later steps (coach selection or paywall)
-        // This prevents race condition where SharedPreferences hasn't loaded yet on app reopen
-        // and also handles users who signed up before the pre-auth quiz existed
-        if (!user.isCoachSelected && !user.isPaywallComplete) {
-          final quizData = ref.read(preAuthQuizProvider);
-          if (!quizData.isComplete) {
-            return '/pre-auth-quiz';  // Send to pre-auth quiz
-          }
-        }
-
-        // Step 1: Personal info (name, DOB, gender, height, weight)
-        // Must be filled before coach selection
-        if (!user.isPersonalInfoComplete) {
-          return '/personal-info';
-        }
-
-        // Step 1.5: AI consent (after personal info, before coach selection)
-        // Skip if user already selected a coach (existing users before this feature)
-        if (!user.isCoachSelected) {
-          final hasAiConsent = ref.read(aiConsentProvider);
-          if (!hasAiConsent) {
-            return '/ai-consent';
-          }
-        }
-
-        // Step 2: Coach selection
-        if (!user.isCoachSelected) {
-          return '/coach-selection';
-        }
-        // Step 3: Conversational onboarding is SKIPPED
-        // Coach selection now marks onboarding complete and goes directly to paywall/home
-        // if (!user.isOnboardingComplete) {
-        //   return '/onboarding';
-        // }
-        // Step 4: Paywall (after coach selection)
-        if (!user.isPaywallComplete) {
-          return '/paywall-features';
-        }
-        // All steps complete - go home
         return null;
       }
 
-      // Auth is resolved - redirect from splash to appropriate destination
-      if (isOnSplash) {
-        if (isLoggedIn) {
-          final user = authState.user;
-          if (user != null) {
-            final nextStep = getNextOnboardingStep(user);
-            if (nextStep != null) return nextStep;
-          }
-          return getHomeRoute();
-        } else {
-          // New users go directly to stats welcome screen (entry point for new flow)
-          return '/stats-welcome';
-        }
-      }
+      // 4. Handle auth error state
+      _handleAuthError(state, authState);
 
-      // On stats-welcome - allow it if not logged in, redirect appropriately if logged in
-      if (isOnStatsWelcome) {
-        if (isLoggedIn) {
-          final user = authState.user;
-          if (user != null) {
-            final nextStep = getNextOnboardingStep(user);
-            if (nextStep != null) return nextStep;
-          }
-          return getHomeRoute();
-        }
-        return null; // Stay on stats welcome
-      }
-
-      // Allow demo workout and plan preview screens for anyone (no auth required)
-      // This lets users preview workouts and their personalized plan before signing up
-      // Addressing user complaint: "After giving all personal info, it requires subscription to see the personal plan"
-      if (isOnDemoWorkout || isOnPlanPreview) {
-        return null; // Allow demo/preview screens for all users
-      }
-
-      // Guest Mode disabled - Coming Soon based on user feedback
-      // Guest routes now redirect to sign-up flow instead
-      if (isGuestRoute) {
-        // Guest mode disabled - redirect all guest routes to sign-up
-        // if (isGuestMode) {
-        //   return null; // Allow - user is in guest mode
-        // }
-        // Not in guest mode, redirect to appropriate location
-        if (isLoggedIn) {
-          return getHomeRoute();
-        }
-        return '/stats-welcome';
-      }
-
-      // Guest Mode disabled - Coming Soon based on user feedback
-      // Guests now must sign up to access the app (email required)
-      // Keeping code commented for easy re-enable when ready
-      //
-      // if (isGuestMode && !isLoggedIn) {
-      //   // Allow main app routes for guests
-      //   final mainAppRoutes = ['/home', '/chat', '/nutrition', '/progress', '/library', '/settings'];
-      //   final isMainAppRoute = mainAppRoutes.any((route) => state.matchedLocation.startsWith(route));
-      //
-      //   if (isMainAppRoute || isGuestRoute || isOnDemoWorkout || isOnPlanPreview ||
-      //       isOnPreAuthQuiz || isOnPreview || isOnSignIn || isOnPricingPreview) {
-      //     return null; // Allow - guests can access full app UI
-      //   }
-      //
-      //   // For other routes, redirect to home (main app shell)
-      //   if (!isOnSplash && !isOnStatsWelcome) {
-      //     return '/home';
-      //   }
-      // }
-
-      // Allow how-it-works, pre-auth quiz, sign-in, email sign-in, and pricing preview screens for non-logged-in users
-      // Also allow pre-auth quiz for logged-in users who are starting over (no coach selected)
-      if (isOnHowItWorks || isOnPreAuthQuiz || isOnSignIn || isOnEmailSignIn || isOnPricingPreview) {
-        if (isLoggedIn) {
-          final user = authState.user;
-          // Allow how-it-works or pre-auth quiz if user is starting over (coach not selected)
-          if ((isOnHowItWorks || isOnPreAuthQuiz) && user != null && !user.isCoachSelected) {
-            return null; // Allow - user is starting over
-          }
-          // Allow pricing preview for logged-in users too (they might want to see pricing)
-          if (isOnPricingPreview) {
-            return null; // Allow - user wants to see pricing
-          }
-          if (user != null) {
-            final nextStep = getNextOnboardingStep(user);
-            if (nextStep != null) return nextStep;
-          }
-          return getHomeRoute();
-        }
-        return null; // Allow these screens for non-logged-in users
-      }
-
-      // Personal info screen - allow for logged-in users who need to fill it
-      if (isOnPersonalInfo) {
-        if (isLoggedIn) {
-          return null; // Allow - user is filling personal info
-        }
-        return '/stats-welcome'; // Not logged in, go to start
-      }
-
-      // Weight projection screen - allow for logged-in users after personal info
-      if (isOnWeightProjection) {
-        if (isLoggedIn) {
-          return null; // Allow - user is viewing weight projection
-        }
-        return '/stats-welcome'; // Not logged in, go to start
-      }
-
-      // AI consent screen - allow for logged-in users during onboarding
-      if (state.matchedLocation == '/ai-consent') {
-        if (isLoggedIn) {
-          return null; // Allow - user is reviewing AI consent
-        }
-        return '/stats-welcome'; // Not logged in, go to start
-      }
-
-      // Coach selection screen - allow for all logged-in users
-      // Users can change their coach from AI settings even after initial selection
-      if (isOnCoachSelection) {
-        if (isLoggedIn) {
-          return null; // Allow - user is selecting or changing coach
-        }
-        return '/stats-welcome'; // Not logged in, go to start
-      }
-
-      // Paywall screens - allow if user hasn't completed paywall yet
-      if (isOnPaywall) {
-        if (isLoggedIn) {
-          final user = authState.user;
-          if (user != null && !user.isPaywallComplete) {
-            return null; // Allow - user is going through paywall
-          }
-          return getHomeRoute();
-        }
-        return '/stats-welcome'; // Not logged in, go to start
-      }
-
-      // Allow onboarding-related routes
-      if (isOnSeniorOnboarding || isOnModeSelection) {
-        return null; // Allow these routes
-      }
-
-      // Not logged in and not on stats-welcome -> redirect to stats-welcome
-      if (!isLoggedIn && !isOnSplash && !isOnStatsWelcome) {
-        return '/stats-welcome';
-      }
-
-      // Redirect /home to /senior-home if in senior mode
-      if (state.matchedLocation == '/home' && accessibilitySettings.mode == AccessibilityMode.senior) {
-        return '/senior-home';
-      }
-
-      // Redirect /senior-home to /home if not in senior mode
-      if (state.matchedLocation == '/senior-home' && accessibilitySettings.mode != AccessibilityMode.senior) {
-        return '/home';
-      }
-
-      return null;
+      // 5. Handle auth-based redirects (onboarding, login gates, accessibility)
+      return _handleAuthRedirect(state, ref, authState, accessibilitySettings);
     },
     routes: [
-      // Splash - shown while auth is loading
+      // === Pre-Auth Routes ===
+
       GoRoute(
         path: '/splash',
         builder: (context, state) => const SplashScreen(),
       ),
 
-      // Stats welcome - entry point with "Get Started" button
       GoRoute(
         path: '/stats-welcome',
         builder: (context, state) => const StatsWelcomeScreen(),
@@ -612,56 +574,15 @@ final routerProvider = Provider<GoRouter>((ref) {
         ),
       ),
 
-      // Guest Home - limited preview for non-authenticated users
+      // Guest routes removed - guest mode is disabled
+      // /guest-home and /guest-library redirected to /stats-welcome for any stale links
       GoRoute(
         path: '/guest-home',
-        pageBuilder: (context, state) => CustomTransitionPage(
-          key: state.pageKey,
-          child: const GuestHomeScreen(),
-          transitionDuration: const Duration(milliseconds: 400),
-          reverseTransitionDuration: const Duration(milliseconds: 300),
-          transitionsBuilder: (context, animation, secondaryAnimation, child) {
-            return FadeTransition(
-              opacity: animation,
-              child: SlideTransition(
-                position: Tween<Offset>(
-                  begin: const Offset(0.05, 0),
-                  end: Offset.zero,
-                ).animate(CurvedAnimation(
-                  parent: animation,
-                  curve: Curves.easeOutCubic,
-                )),
-                child: child,
-              ),
-            );
-          },
-        ),
+        redirect: (context, state) => '/stats-welcome',
       ),
-
-      // Guest Library - limited exercise library for non-authenticated users
       GoRoute(
         path: '/guest-library',
-        pageBuilder: (context, state) => CustomTransitionPage(
-          key: state.pageKey,
-          child: const GuestLibraryScreen(),
-          transitionDuration: const Duration(milliseconds: 400),
-          reverseTransitionDuration: const Duration(milliseconds: 300),
-          transitionsBuilder: (context, animation, secondaryAnimation, child) {
-            return FadeTransition(
-              opacity: animation,
-              child: SlideTransition(
-                position: Tween<Offset>(
-                  begin: const Offset(0.05, 0),
-                  end: Offset.zero,
-                ).animate(CurvedAnimation(
-                  parent: animation,
-                  curve: Curves.easeOutCubic,
-                )),
-                child: child,
-              ),
-            );
-          },
-        ),
+        redirect: (context, state) => '/stats-welcome',
       ),
 
       // Pre-Auth Quiz - 5 questions before sign-in
@@ -931,19 +852,18 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const PaywallPricingScreen(),
       ),
 
-      // Senior Home (has its own SeniorScaffold with 3-tab nav)
       GoRoute(
         path: '/senior-home',
         builder: (context, state) => const SeniorHomeScreen(),
       ),
 
-      // Workout Loading Screen (shown after onboarding while workouts generate)
       GoRoute(
         path: '/workout-loading',
         builder: (context, state) => const WorkoutLoadingScreen(),
       ),
 
-      // Main app shell with bottom nav
+      // === Main App Shell ===
+
       ShellRoute(
         builder: (context, state, child) => MainShell(child: child),
         routes: [
@@ -959,9 +879,13 @@ final routerProvider = Provider<GoRouter>((ref) {
           ),
           GoRoute(
             path: '/nutrition',
-            pageBuilder: (context, state) => const NoTransitionPage(
-              child: NutritionScreen(),
-            ),
+            pageBuilder: (context, state) {
+              // Support deep link: fitwiz://nutrition?meal=lunch
+              final initialMeal = state.uri.queryParameters['meal'];
+              return NoTransitionPage(
+                child: NutritionScreen(initialMeal: initialMeal),
+              );
+            },
           ),
           GoRoute(
             path: '/fasting',
@@ -977,9 +901,12 @@ final routerProvider = Provider<GoRouter>((ref) {
           ),
           GoRoute(
             path: '/profile',
-            pageBuilder: (context, state) => const NoTransitionPage(
-              child: ProfileScreen(),
-            ),
+            pageBuilder: (context, state) {
+              final scrollTo = state.uri.queryParameters['scrollTo'];
+              return NoTransitionPage(
+                child: ProfileScreen(scrollTo: scrollTo),
+              );
+            },
           ),
           GoRoute(
             path: '/workouts',
@@ -1009,12 +936,16 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
 
       // Chat (full screen overlay)
+      // Supports deep link: fitwiz://chat?prompt=X
       GoRoute(
         path: '/chat',
         builder: (context, state) {
           final extra = state.extra as Map<String, dynamic>?;
+          // Support both extra data and query parameters (deep links)
+          final initialMessage = extra?['initialMessage'] as String?
+              ?? state.uri.queryParameters['prompt'];
           return ChatScreen(
-            initialMessage: extra?['initialMessage'] as String?,
+            initialMessage: initialMessage,
           );
         },
       ),
@@ -1040,7 +971,8 @@ final routerProvider = Provider<GoRouter>((ref) {
         },
       ),
 
-      // Workout detail
+      // === Workout Routes ===
+
       GoRoute(
         path: '/workout/:id',
         builder: (context, state) {
@@ -1330,12 +1262,6 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const HydrationScreen(),
       ),
 
-      // Habits - View all tracked habits
-      GoRoute(
-        path: '/habits',
-        builder: (context, state) => const HabitsScreen(),
-      ),
-
       // Habit Detail - View habit detail with yearly heatmap and stats
       GoRoute(
         path: '/habit/:id',
@@ -1389,10 +1315,55 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const ScheduleScreen(),
       ),
 
-      // Settings
+      // === Settings Routes ===
+
       GoRoute(
         path: '/settings',
         builder: (context, state) => const SettingsScreen(),
+      ),
+
+      // Settings sub-pages (flat navigation)
+      GoRoute(
+        path: '/settings/workout-settings',
+        builder: (context, state) => const WorkoutSettingsPage(),
+      ),
+      GoRoute(
+        path: '/settings/ai-coach',
+        builder: (context, state) => const AiCoachPage(),
+      ),
+      GoRoute(
+        path: '/settings/appearance',
+        builder: (context, state) => const AppearancePage(),
+      ),
+      GoRoute(
+        path: '/settings/sound-notifications',
+        builder: (context, state) => const SoundNotificationsPage(),
+      ),
+      GoRoute(
+        path: '/settings/equipment',
+        builder: (context, state) => const EquipmentPage(),
+      ),
+      GoRoute(
+        path: '/settings/offline-mode',
+        builder: (context, state) => const OfflineModePage(),
+      ),
+      GoRoute(
+        path: '/settings/health-devices',
+        builder: (context, state) => const HealthDevicesPage(),
+      ),
+      GoRoute(
+        path: '/settings/privacy-data',
+        builder: (context, state) => const PrivacyDataPage(),
+      ),
+      GoRoute(
+        path: '/settings/about-support',
+        builder: (context, state) => const AboutSupportPage(),
+      ),
+
+      // Beast Mode - Power user tools (hidden easter egg)
+      GoRoute(
+        path: '/settings/beast-mode',
+        builder: (context, state) => const BeastModeScreen(),
       ),
 
       // AI Data Usage (Settings sub-screen)
@@ -1407,28 +1378,36 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const MedicalDisclaimerScreen(),
       ),
 
-      // Favorite Exercises (Settings sub-screen)
+      // My Exercises - Unified exercise preferences (Favorites, Avoided, Queue)
+      GoRoute(
+        path: '/settings/my-exercises',
+        builder: (context, state) {
+          final tabParam = state.uri.queryParameters['tab'];
+          final initialTab = tabParam != null ? int.tryParse(tabParam) ?? 0 : 0;
+          return MyExercisesScreen(initialTab: initialTab);
+        },
+      ),
+
+      // Legacy routes redirect to unified screen
       GoRoute(
         path: '/settings/favorite-exercises',
-        builder: (context, state) => const FavoriteExercisesScreen(),
+        redirect: (context, state) => '/settings/my-exercises?tab=0',
       ),
-
-      // Exercise Queue (Settings sub-screen)
       GoRoute(
         path: '/settings/exercise-queue',
-        builder: (context, state) => const ExerciseQueueScreen(),
+        redirect: (context, state) => '/settings/my-exercises?tab=2',
       ),
 
-      // Workout History Import (Settings sub-screen)
+      // Workout History Import (Settings sub-screen) - stays separate
       GoRoute(
         path: '/settings/workout-history-import',
         builder: (context, state) => const WorkoutHistoryImportScreen(),
       ),
 
-      // Staple Exercises (Settings sub-screen)
+      // Legacy routes redirect to unified screen
       GoRoute(
         path: '/settings/staple-exercises',
-        builder: (context, state) => const StapleExercisesScreen(),
+        redirect: (context, state) => '/settings/my-exercises?tab=0',
       ),
 
       // My 1RMs (Settings sub-screen for percentage-based training)
@@ -1443,16 +1422,14 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const LayoutEditorScreen(),
       ),
 
-      // Avoided Exercises (Settings sub-screen)
+      // Legacy routes redirect to unified My Exercises screen
       GoRoute(
         path: '/settings/avoided-exercises',
-        builder: (context, state) => const AvoidedExercisesScreen(),
+        redirect: (context, state) => '/settings/my-exercises?tab=1',
       ),
-
-      // Avoided Muscles (Settings sub-screen)
       GoRoute(
         path: '/settings/avoided-muscles',
-        builder: (context, state) => const AvoidedMusclesScreen(),
+        redirect: (context, state) => '/settings/my-exercises?tab=1',
       ),
 
       // Help & Support
@@ -1488,7 +1465,8 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const AISettingsScreen(),
       ),
 
-      // Notifications
+      // === Utility Routes ===
+
       GoRoute(
         path: '/notifications',
         builder: (context, state) => const NotificationsScreen(),
@@ -1576,6 +1554,12 @@ final routerProvider = Provider<GoRouter>((ref) {
       // Subscription Management - Cancel, Pause, Resume
       GoRoute(
         path: '/subscription-management',
+        builder: (context, state) => const SubscriptionManagementScreen(),
+      ),
+
+      // Settings > Subscription (deep link from renewal reminder banner)
+      GoRoute(
+        path: '/settings/subscription',
         builder: (context, state) => const SubscriptionManagementScreen(),
       ),
 

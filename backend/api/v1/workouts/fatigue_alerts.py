@@ -11,7 +11,9 @@ Endpoints:
 - POST /workouts/next-set-preview: Get AI-recommended parameters for next set
 """
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
+from core.auth import get_current_user
+from core.exceptions import safe_internal_error
 from typing import List, Optional
 from pydantic import BaseModel, Field
 

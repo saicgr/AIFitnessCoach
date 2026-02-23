@@ -714,6 +714,16 @@ class _PreviousSessionCard extends StatelessWidget {
     required this.onTap,
   });
 
+  bool _isQuickWorkout() {
+    final method = workout.generationMethod?.toLowerCase() ?? '';
+    if (method == 'quick_rule_based' || method == 'ai_quick_workout') {
+      return true;
+    }
+    // Heuristic: short duration + few exercises = quick workout
+    final duration = workout.durationMinutes ?? workout.durationMinutesMax ?? 0;
+    return duration > 0 && duration <= 15 && workout.exerciseCount <= 5;
+  }
+
   @override
   Widget build(BuildContext context) {
     final elevatedColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
@@ -806,6 +816,25 @@ class _PreviousSessionCard extends StatelessWidget {
                           ),
                         ),
                       ),
+                      // Quick workout badge
+                      if (_isQuickWorkout()) ...[
+                        const SizedBox(width: 4),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.15),
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: Text(
+                            'QUICK',
+                            style: TextStyle(
+                              fontSize: 9,
+                              fontWeight: FontWeight.w600,
+                              color: Theme.of(context).colorScheme.primary,
+                            ),
+                          ),
+                        ),
+                      ],
                       const SizedBox(width: 8),
                       Icon(Icons.timer_outlined, size: 12, color: textSecondary),
                       const SizedBox(width: 2),

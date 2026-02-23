@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'dart:ui';
 import '../../core/constants/app_colors.dart';
+import '../../core/theme/theme_colors.dart';
 import '../../widgets/glass_sheet.dart';
 import '../../data/models/chat_message.dart';
 import '../../data/models/coach_persona.dart';
@@ -112,14 +114,18 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   /// Minimize - shrink back to floating chat overlay with seamless animation
   void _minimizeToFloatingChat() {
     HapticService.light();
-    // Pop the full screen with reverse animation
+    // Capture ref before pop since widget may unmount
+    final currentRef = ref;
+    final currentContext = context;
+    // Pop the full screen, then show floating chat after animation completes
     Navigator.of(context).pop();
-    // Show floating chat immediately after shrink animation - no delay for seamless feel
-    Future.delayed(const Duration(milliseconds: 280), () {
-      if (context.mounted) {
-        // Use the no-animation version for seamless transition
-        showChatBottomSheetNoAnimation(context, ref);
-      }
+    // Use WidgetsBinding to ensure the pop frame is fully processed
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Future.delayed(const Duration(milliseconds: 200), () {
+        if (currentContext.mounted) {
+          showChatBottomSheetNoAnimation(currentContext, currentRef);
+        }
+      });
     });
   }
 
@@ -138,7 +144,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     return Scaffold(
       backgroundColor: backgroundColor,
       appBar: AppBar(
-        backgroundColor: AppColors.pureBlack,
+        backgroundColor: backgroundColor,
         automaticallyImplyLeading: false,
         leading: GlassBackButton(
           onTap: () {
@@ -482,88 +488,138 @@ class _EmptyChat extends StatelessWidget {
 
   const _EmptyChat({super.key, required this.onSuggestionTap, required this.coach});
 
+  static const _suggestions = [
+    ('What should I eat before a workout?', Icons.restaurant_outlined, AppColors.teal),
+    ('How can I improve my squat form?', Icons.fitness_center_outlined, AppColors.orange),
+    ('I feel tired today, should I still work out?', Icons.bedtime_outlined, AppColors.purple),
+    ('Create a quick 15-minute workout', Icons.timer_outlined, AppColors.cyan),
+  ];
+
   @override
   Widget build(BuildContext context) {
-    final suggestions = [
-      'What should I eat before a workout?',
-      'How can I improve my squat form?',
-      'I feel tired today, should I still work out?',
-      'Create a quick 15-minute workout',
-    ];
+    final colors = ThemeColors.of(context);
+    final isDark = colors.isDark;
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
       child: Column(
         children: [
-          const SizedBox(height: 40),
-          CoachAvatar(
-            coach: coach,
-            size: 80,
-            showBorder: true,
-            borderWidth: 3,
-            showShadow: true,
-          ),
           const SizedBox(height: 24),
+
+          // Coach avatar with subtle glow
+          Container(
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                  color: colors.accent.withOpacity(0.25),
+                  blurRadius: 32,
+                  spreadRadius: 4,
+                ),
+              ],
+            ),
+            child: CoachAvatar(
+              coach: coach,
+              size: 88,
+              showBorder: true,
+              borderWidth: 3,
+              showShadow: false,
+            ),
+          ),
+          const SizedBox(height: 20),
+
           Text(
             coach.name,
-            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
+            style: TextStyle(
+              fontSize: 22,
+              fontWeight: FontWeight.bold,
+              color: colors.textPrimary,
+            ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 6),
           Text(
-            'Your personal fitness assistant',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: AppColors.textSecondary,
-                ),
+            coach.tagline.isNotEmpty ? coach.tagline : 'Your personal fitness assistant',
+            style: TextStyle(
+              fontSize: 14,
+              color: colors.textSecondary,
+            ),
+            textAlign: TextAlign.center,
           ),
           const SizedBox(height: 32),
-          Text(
-            'Try asking...',
-            style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                  color: AppColors.textMuted,
-                ),
+
+          // Section label
+          Align(
+            alignment: Alignment.centerLeft,
+            child: Text(
+              'Try asking...',
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: colors.textMuted,
+                letterSpacing: 0.5,
+              ),
+            ),
           ),
-          const SizedBox(height: 16),
-          ...suggestions.map((suggestion) {
+          const SizedBox(height: 12),
+
+          // Suggestion chips - glassmorphic style
+          ...List.generate(_suggestions.length, (index) {
+            final (text, icon, color) = _suggestions[index];
             return Padding(
-              padding: const EdgeInsets.only(bottom: 8),
-              child: InkWell(
+              padding: const EdgeInsets.only(bottom: 10),
+              child: GestureDetector(
                 onTap: () {
                   HapticService.selection();
-                  onSuggestionTap(suggestion);
+                  onSuggestionTap(text);
                 },
-                borderRadius: BorderRadius.circular(12),
-                child: Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: AppColors.elevated,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: AppColors.cardBorder),
-                  ),
-                  child: Row(
-                    children: [
-                      const Icon(
-                        Icons.chat_bubble_outline,
-                        size: 18,
-                        color: AppColors.cyan,
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Text(
-                          suggestion,
-                          style: const TextStyle(
-                            color: AppColors.textPrimary,
-                          ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(14),
+                  child: BackdropFilter(
+                    filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+                    child: Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                      decoration: BoxDecoration(
+                        color: isDark
+                            ? Colors.white.withOpacity(0.06)
+                            : Colors.black.withOpacity(0.04),
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(
+                          color: isDark
+                              ? Colors.white.withOpacity(0.1)
+                              : Colors.black.withOpacity(0.08),
                         ),
                       ),
-                      const Icon(
-                        Icons.arrow_forward_ios,
-                        size: 14,
-                        color: AppColors.textMuted,
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 36,
+                            height: 36,
+                            decoration: BoxDecoration(
+                              color: color.withOpacity(0.12),
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: Icon(icon, size: 18, color: color),
+                          ),
+                          const SizedBox(width: 14),
+                          Expanded(
+                            child: Text(
+                              text,
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w500,
+                                color: colors.textPrimary,
+                              ),
+                            ),
+                          ),
+                          Icon(
+                            Icons.arrow_forward_ios_rounded,
+                            size: 14,
+                            color: colors.textMuted,
+                          ),
+                        ],
                       ),
-                    ],
+                    ),
                   ),
                 ),
               ),
@@ -835,6 +891,9 @@ class _InputBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = ThemeColors.of(context);
+    final isDark = colors.isDark;
+
     return Container(
       padding: EdgeInsets.fromLTRB(
         16,
@@ -843,9 +902,9 @@ class _InputBar extends StatelessWidget {
         MediaQuery.of(context).padding.bottom + 12,
       ),
       decoration: BoxDecoration(
-        color: AppColors.nearBlack,
+        color: isDark ? AppColors.nearBlack : Colors.white,
         border: Border(
-          top: BorderSide(color: AppColors.cardBorder.withOpacity(0.5)),
+          top: BorderSide(color: colors.cardBorder.withOpacity(0.5)),
         ),
       ),
       child: Column(
@@ -871,7 +930,6 @@ class _InputBar extends StatelessWidget {
                 child: TextField(
                   controller: controller,
                   focusNode: focusNode,
-                  // Always enabled so user can type while AI is responding
                   enabled: true,
                   textCapitalization: TextCapitalization.sentences,
                   maxLines: 4,
@@ -879,7 +937,7 @@ class _InputBar extends StatelessWidget {
                   decoration: InputDecoration(
                     hintText: isLoading ? 'Type your next message...' : 'Ask your AI coach...',
                     filled: true,
-                    fillColor: AppColors.glassSurface,
+                    fillColor: colors.glassSurface,
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(24),
                       borderSide: BorderSide.none,
@@ -897,7 +955,7 @@ class _InputBar extends StatelessWidget {
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     colors: isLoading
-                        ? [AppColors.textMuted, AppColors.textMuted]
+                        ? [colors.textMuted, colors.textMuted]
                         : [AppColors.cyan, AppColors.purple],
                   ),
                   shape: BoxShape.circle,

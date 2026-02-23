@@ -13,7 +13,9 @@ ENDPOINTS:
 """
 
 from datetime import datetime, timedelta
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
+from core.auth import get_current_user
+from core.exceptions import safe_internal_error
 from pydantic import BaseModel
 from typing import Optional, List
 
@@ -50,7 +52,9 @@ class SendNotificationRequest(BaseModel):
 
 
 @router.post("/test")
-async def send_test_notification(request: TestNotificationRequest):
+async def send_test_notification(request: TestNotificationRequest,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Send a test notification to verify push notifications are working.
 
@@ -93,11 +97,13 @@ async def send_test_notification(request: TestNotificationRequest):
         raise
     except Exception as e:
         logger.error(f"❌ Error sending test notification: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "notifications")
 
 
 @router.post("/register")
-async def register_fcm_token(request: RegisterTokenRequest):
+async def register_fcm_token(request: RegisterTokenRequest,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Register or update FCM token for a user.
 
@@ -147,11 +153,13 @@ async def register_fcm_token(request: RegisterTokenRequest):
             endpoint="/api/v1/notifications/register",
             status_code=500
         )
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "notifications")
 
 
 @router.post("/send")
-async def send_notification(request: SendNotificationRequest):
+async def send_notification(request: SendNotificationRequest,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Send a custom notification to a user.
 
@@ -222,11 +230,13 @@ async def send_notification(request: SendNotificationRequest):
             endpoint="/api/v1/notifications/send",
             status_code=500
         )
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "notifications")
 
 
 @router.post("/workout-reminder/{user_id}")
-async def send_workout_reminder(user_id: str, workout_name: str = "today's workout"):
+async def send_workout_reminder(user_id: str, workout_name: str = "today's workout",
+    current_user: dict = Depends(get_current_user),
+):
     """
     Send a workout reminder notification to a user.
     """
@@ -257,11 +267,13 @@ async def send_workout_reminder(user_id: str, workout_name: str = "today's worko
         raise
     except Exception as e:
         logger.error(f"Error sending workout reminder: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "notifications")
 
 
 @router.post("/guilt/{user_id}")
-async def send_guilt_notification(user_id: str, days_missed: int = 1):
+async def send_guilt_notification(user_id: str, days_missed: int = 1,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Send a guilt notification for missed workouts (Duolingo-style).
     """
@@ -290,11 +302,13 @@ async def send_guilt_notification(user_id: str, days_missed: int = 1):
         raise
     except Exception as e:
         logger.error(f"Error sending guilt notification: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "notifications")
 
 
 @router.post("/nutrition-reminder/{user_id}")
-async def send_nutrition_reminder(user_id: str, meal_type: str = "meal"):
+async def send_nutrition_reminder(user_id: str, meal_type: str = "meal",
+    current_user: dict = Depends(get_current_user),
+):
     """
     Send a nutrition logging reminder.
     """
@@ -323,11 +337,13 @@ async def send_nutrition_reminder(user_id: str, meal_type: str = "meal"):
         raise
     except Exception as e:
         logger.error(f"Error sending nutrition reminder: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "notifications")
 
 
 @router.post("/hydration-reminder/{user_id}")
-async def send_hydration_reminder(user_id: str, current_ml: int = 0, goal_ml: int = 2000):
+async def send_hydration_reminder(user_id: str, current_ml: int = 0, goal_ml: int = 2000,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Send a hydration reminder.
     """
@@ -357,7 +373,7 @@ async def send_hydration_reminder(user_id: str, current_ml: int = 0, goal_ml: in
         raise
     except Exception as e:
         logger.error(f"Error sending hydration reminder: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "notifications")
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -366,7 +382,9 @@ async def send_hydration_reminder(user_id: str, current_ml: int = 0, goal_ml: in
 # ─────────────────────────────────────────────────────────────────────────────
 
 @router.post("/scheduler/check-inactive-users")
-async def check_inactive_users():
+async def check_inactive_users(
+    current_user: dict = Depends(get_current_user),
+):
     """
     Check for users who haven't worked out recently and send guilt notifications.
 
@@ -469,11 +487,13 @@ async def check_inactive_users():
 
     except Exception as e:
         logger.error(f"❌ Error in scheduler: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "notifications")
 
 
 @router.post("/scheduler/send-workout-reminders")
-async def send_workout_reminders():
+async def send_workout_reminders(
+    current_user: dict = Depends(get_current_user),
+):
     """
     Send workout reminders to users who have workouts scheduled for today.
 
@@ -550,11 +570,13 @@ async def send_workout_reminders():
 
     except Exception as e:
         logger.error(f"❌ Error sending workout reminders: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "notifications")
 
 
 @router.get("/scheduler/status")
-async def scheduler_status():
+async def scheduler_status(
+    current_user: dict = Depends(get_current_user),
+):
     """
     Get information about scheduler endpoints.
 
@@ -647,7 +669,9 @@ class DismissBannerRequest(BaseModel):
 
 
 @router.get("/billing/{user_id}", response_model=UpcomingRenewalResponse)
-async def get_billing_reminders(user_id: str):
+async def get_billing_reminders(user_id: str,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Get upcoming billing reminders and renewal information for a user.
 
@@ -739,11 +763,13 @@ async def get_billing_reminders(user_id: str):
 
     except Exception as e:
         logger.error(f"Error getting billing reminders: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "notifications")
 
 
 @router.post("/billing/{user_id}/preferences")
-async def update_billing_preferences(user_id: str, request: BillingPreferencesRequest):
+async def update_billing_preferences(user_id: str, request: BillingPreferencesRequest,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Update billing notification preferences for a user.
     """
@@ -772,11 +798,13 @@ async def update_billing_preferences(user_id: str, request: BillingPreferencesRe
 
     except Exception as e:
         logger.error(f"Error updating billing preferences: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "notifications")
 
 
 @router.post("/billing/{user_id}/dismiss-banner")
-async def dismiss_renewal_banner(user_id: str, request: DismissBannerRequest):
+async def dismiss_renewal_banner(user_id: str, request: DismissBannerRequest,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Dismiss the renewal reminder banner until a specified date.
 
@@ -814,11 +842,13 @@ async def dismiss_renewal_banner(user_id: str, request: DismissBannerRequest):
 
     except Exception as e:
         logger.error(f"Error dismissing renewal banner: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "notifications")
 
 
 @router.post("/scheduler/send-billing-reminders")
-async def send_billing_reminders():
+async def send_billing_reminders(
+    current_user: dict = Depends(get_current_user),
+):
     """
     Send billing reminder notifications for subscriptions renewing soon.
 
@@ -974,7 +1004,7 @@ async def send_billing_reminders():
 
     except Exception as e:
         logger.error(f"❌ Error sending billing reminders: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "notifications")
 
 
 @router.post("/billing/{user_id}/send-plan-change")
@@ -983,7 +1013,8 @@ async def send_plan_change_notification(
     old_plan: str,
     new_plan: str,
     old_price: Optional[float] = None,
-    new_price: Optional[float] = None
+    new_price: Optional[float] = None,
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Send a plan change confirmation notification.
@@ -1037,14 +1068,15 @@ async def send_plan_change_notification(
         raise
     except Exception as e:
         logger.error(f"Error sending plan change notification: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "notifications")
 
 
 @router.post("/billing/{user_id}/send-refund-confirmation")
 async def send_refund_confirmation(
     user_id: str,
     amount: float,
-    currency: str = "USD"
+    currency: str = "USD",
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Send a refund confirmation notification.
@@ -1102,7 +1134,7 @@ async def send_refund_confirmation(
         raise
     except Exception as e:
         logger.error(f"Error sending refund confirmation: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "notifications")
 
 
 def _is_upgrade(old_plan: str, new_plan: str) -> bool:
@@ -1128,6 +1160,7 @@ class TrackInteractionRequest(BaseModel):
 async def track_notification_interaction(
     request: TrackInteractionRequest,
     user_id: str = None,
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Track when a user opens/interacts with a notification.
@@ -1194,11 +1227,13 @@ async def track_notification_interaction(
         raise
     except Exception as e:
         logger.error(f"Error tracking notification interaction: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "notifications")
 
 
 @router.post("/scheduler/recalculate-optimal-times")
-async def recalculate_optimal_times():
+async def recalculate_optimal_times(
+    current_user: dict = Depends(get_current_user),
+):
     """
     Recalculate optimal notification send times for all active users.
 
@@ -1214,7 +1249,7 @@ async def recalculate_optimal_times():
         return results
     except Exception as e:
         logger.error(f"Error recalculating optimal times: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "notifications")
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -1235,6 +1270,7 @@ async def send_movement_reminder(
     user_id: str,
     current_steps: int = 0,
     threshold: int = 250,
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Send a movement reminder notification to a specific user.
@@ -1274,11 +1310,13 @@ async def send_movement_reminder(
         raise
     except Exception as e:
         logger.error(f"❌ [Movement] Error sending reminder: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "notifications")
 
 
 @router.post("/scheduler/send-movement-reminders")
-async def send_movement_reminders():
+async def send_movement_reminders(
+    current_user: dict = Depends(get_current_user),
+):
     """
     Send movement reminder notifications to users who are sedentary.
 
@@ -1463,11 +1501,13 @@ async def send_movement_reminders():
 
     except Exception as e:
         logger.error(f"❌ [Movement] Error in scheduler: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "notifications")
 
 
 @router.get("/movement-reminder/status/{user_id}")
-async def get_movement_reminder_status(user_id: str):
+async def get_movement_reminder_status(user_id: str,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Get the current movement reminder status for a user.
 
@@ -1527,4 +1567,4 @@ async def get_movement_reminder_status(user_id: str):
         raise
     except Exception as e:
         logger.error(f"❌ [Movement] Error getting status: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "notifications")

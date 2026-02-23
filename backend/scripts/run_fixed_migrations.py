@@ -17,7 +17,9 @@ DATABASE_HOST = "db.hpbzfahijszqmgsybuor.supabase.co"
 DATABASE_PORT = 5432
 DATABASE_NAME = "postgres"
 DATABASE_USER = "postgres"
-DATABASE_PASSWORD = "d2nHU5oLZ1GCz63B"
+DATABASE_PASSWORD = os.environ.get("DATABASE_PASSWORD")
+if not DATABASE_PASSWORD:
+    raise SystemExit("DATABASE_PASSWORD environment variable is required")
 
 # The 9 fixed migrations in order
 FIXED_MIGRATIONS = [

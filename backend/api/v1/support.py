@@ -11,7 +11,9 @@ This addresses the user complaint "Generic reply that didn't address my concern"
 by providing a structured ticket system with proper tracking and response handling.
 """
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
+from core.auth import get_current_user
+from core.exceptions import safe_internal_error
 from typing import List, Optional
 from datetime import datetime
 
@@ -95,7 +97,9 @@ def _parse_ticket_summary(data: dict) -> SupportTicketSummary:
 # =============================================================================
 
 @router.post("/tickets", response_model=SupportTicketWithMessages)
-async def create_support_ticket(ticket: SupportTicketCreate):
+async def create_support_ticket(ticket: SupportTicketCreate,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Create a new support ticket.
 
@@ -201,7 +205,7 @@ async def create_support_ticket(ticket: SupportTicketCreate):
             metadata={"subject": ticket.subject},
             status_code=500
         )
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "support")
 
 
 # =============================================================================
@@ -215,6 +219,7 @@ async def get_user_tickets(
     category: Optional[TicketCategory] = None,
     limit: int = 50,
     offset: int = 0,
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Get all support tickets for a user.
@@ -244,7 +249,7 @@ async def get_user_tickets(
 
     except Exception as e:
         logger.error(f"Failed to get user tickets: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "support")
 
 
 # =============================================================================
@@ -252,7 +257,9 @@ async def get_user_tickets(
 # =============================================================================
 
 @router.get("/tickets/{user_id}/{ticket_id}", response_model=SupportTicketWithMessages)
-async def get_ticket(user_id: str, ticket_id: str):
+async def get_ticket(user_id: str, ticket_id: str,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Get a single support ticket with all its messages.
 
@@ -290,7 +297,7 @@ async def get_ticket(user_id: str, ticket_id: str):
         raise
     except Exception as e:
         logger.error(f"Failed to get ticket: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "support")
 
 
 # =============================================================================
@@ -298,7 +305,9 @@ async def get_ticket(user_id: str, ticket_id: str):
 # =============================================================================
 
 @router.post("/tickets/{ticket_id}/reply", response_model=SupportTicketReplyResponse)
-async def add_ticket_reply(ticket_id: str, user_id: str, reply: SupportTicketMessageCreate):
+async def add_ticket_reply(ticket_id: str, user_id: str, reply: SupportTicketMessageCreate,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Add a reply to an existing support ticket.
 
@@ -388,7 +397,7 @@ async def add_ticket_reply(ticket_id: str, user_id: str, reply: SupportTicketMes
             metadata={"ticket_id": ticket_id},
             status_code=500
         )
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "support")
 
 
 # =============================================================================
@@ -396,7 +405,9 @@ async def add_ticket_reply(ticket_id: str, user_id: str, reply: SupportTicketMes
 # =============================================================================
 
 @router.patch("/tickets/{ticket_id}/close", response_model=SupportTicketCloseResponse)
-async def close_ticket(ticket_id: str, user_id: str, resolution_note: Optional[str] = None):
+async def close_ticket(ticket_id: str, user_id: str, resolution_note: Optional[str] = None,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Close a support ticket.
 
@@ -496,7 +507,7 @@ async def close_ticket(ticket_id: str, user_id: str, resolution_note: Optional[s
             metadata={"ticket_id": ticket_id},
             status_code=500
         )
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "support")
 
 
 # =============================================================================
@@ -504,7 +515,9 @@ async def close_ticket(ticket_id: str, user_id: str, resolution_note: Optional[s
 # =============================================================================
 
 @router.get("/tickets/{user_id}/stats", response_model=SupportTicketStatsResponse)
-async def get_user_ticket_stats(user_id: str):
+async def get_user_ticket_stats(user_id: str,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Get support ticket statistics for a user.
 
@@ -555,7 +568,7 @@ async def get_user_ticket_stats(user_id: str):
 
     except Exception as e:
         logger.error(f"Failed to get ticket stats: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "support")
 
 
 # =============================================================================
@@ -563,7 +576,9 @@ async def get_user_ticket_stats(user_id: str):
 # =============================================================================
 
 @router.get("/categories")
-async def get_ticket_categories():
+async def get_ticket_categories(
+    current_user: dict = Depends(get_current_user),
+):
     """
     Get available ticket categories.
 

@@ -15,13 +15,15 @@ ENDPOINTS:
 - GET  /api/v1/analytics/{user_id}/screen-time - Get screen time breakdown
 """
 from datetime import datetime, date, timedelta
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 from typing import Optional, List
 from pydantic import BaseModel
 import uuid
 
 from core.supabase_client import get_supabase
 from core.logger import get_logger
+from core.auth import get_current_user
+from core.exceptions import safe_internal_error
 
 
 class SessionStartRequest(BaseModel):
@@ -163,7 +165,7 @@ logger = get_logger(__name__)
 
 
 @router.post("/session/start")
-async def start_session(request: SessionStartRequest):
+async def start_session(request: SessionStartRequest, current_user: dict = Depends(get_current_user)):
     """Start a new analytics session."""
     logger.info(f"Starting session for user: {request.user_id or request.anonymous_id}")
 
@@ -196,11 +198,11 @@ async def start_session(request: SessionStartRequest):
 
     except Exception as e:
         logger.error(f"Failed to start session: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "start_session")
 
 
 @router.post("/session/end")
-async def end_session(request: SessionEndRequest):
+async def end_session(request: SessionEndRequest, current_user: dict = Depends(get_current_user)):
     """End an analytics session."""
     logger.info(f"Ending session: {request.session_id}")
 
@@ -221,11 +223,11 @@ async def end_session(request: SessionEndRequest):
 
     except Exception as e:
         logger.error(f"Failed to end session: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "end_session")
 
 
 @router.post("/screen-view")
-async def track_screen_view(request: ScreenViewRequest):
+async def track_screen_view(request: ScreenViewRequest, current_user: dict = Depends(get_current_user)):
     """Track a screen view."""
     logger.debug(f"Screen view: {request.screen_name} for user: {request.user_id}")
 
@@ -254,7 +256,7 @@ async def track_screen_view(request: ScreenViewRequest):
 
 
 @router.post("/screen-exit")
-async def track_screen_exit(request: ScreenExitRequest):
+async def track_screen_exit(request: ScreenExitRequest, current_user: dict = Depends(get_current_user)):
     """Track screen exit with duration."""
     logger.debug(f"Screen exit: {request.screen_view_id}, duration: {request.duration_ms}ms")
 
@@ -280,7 +282,7 @@ async def track_screen_exit(request: ScreenExitRequest):
 
 
 @router.post("/event")
-async def track_event(request: EventRequest):
+async def track_event(request: EventRequest, current_user: dict = Depends(get_current_user)):
     """Track a custom event."""
     logger.debug(f"Event: {request.event_name} for user: {request.user_id}")
 
@@ -313,7 +315,7 @@ async def track_event(request: EventRequest):
 
 
 @router.post("/funnel")
-async def track_funnel_event(request: FunnelEventRequest):
+async def track_funnel_event(request: FunnelEventRequest, current_user: dict = Depends(get_current_user)):
     """Track a funnel event."""
     logger.info(f"Funnel: {request.funnel_name}/{request.step_name} for user: {request.user_id}")
 
@@ -344,7 +346,7 @@ async def track_funnel_event(request: FunnelEventRequest):
 
 
 @router.post("/onboarding")
-async def track_onboarding_step(request: OnboardingStepRequest):
+async def track_onboarding_step(request: OnboardingStepRequest, current_user: dict = Depends(get_current_user)):
     """Track onboarding step."""
     logger.info(f"Onboarding step: {request.step_name} for user: {request.user_id}")
 
@@ -379,7 +381,7 @@ async def track_onboarding_step(request: OnboardingStepRequest):
 
 
 @router.post("/error")
-async def track_error(request: ErrorRequest):
+async def track_error(request: ErrorRequest, current_user: dict = Depends(get_current_user)):
     """Track app error."""
     logger.warning(f"App error: {request.error_type} - {request.error_message}")
 
@@ -410,7 +412,7 @@ async def track_error(request: ErrorRequest):
 
 
 @router.post("/batch")
-async def batch_upload(request: BatchRequest):
+async def batch_upload(request: BatchRequest, current_user: dict = Depends(get_current_user)):
     """
     Batch upload multiple analytics events.
 
@@ -466,15 +468,18 @@ async def batch_upload(request: BatchRequest):
 
     except Exception as e:
         logger.error(f"Failed batch upload: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "batch_upload")
 
 
 @router.get("/{user_id}/summary")
 async def get_analytics_summary(
     user_id: str,
-    days: int = 7
+    days: int = 7,
+    current_user: dict = Depends(get_current_user),
 ):
     """Get user's analytics summary for the past N days."""
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     logger.info(f"Fetching analytics summary for user: {user_id}, days: {days}")
 
     try:
@@ -531,16 +536,19 @@ async def get_analytics_summary(
 
     except Exception as e:
         logger.error(f"Failed to get analytics summary: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "get_analytics_summary")
 
 
 @router.get("/{user_id}/screen-time")
 async def get_screen_time(
     user_id: str,
     start_date: Optional[str] = None,
-    end_date: Optional[str] = None
+    end_date: Optional[str] = None,
+    current_user: dict = Depends(get_current_user),
 ):
     """Get detailed screen time breakdown."""
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     logger.info(f"Fetching screen time for user: {user_id}")
 
     try:
@@ -598,7 +606,7 @@ async def get_screen_time(
 
     except Exception as e:
         logger.error(f"Failed to get screen time: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "get_screen_time")
 
 
 def _increment_daily_sessions(supabase, user_id: str):

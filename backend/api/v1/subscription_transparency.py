@@ -14,6 +14,8 @@ from typing import Optional, List
 from uuid import UUID, uuid4
 
 from fastapi import APIRouter, Depends, HTTPException, Query
+from core.auth import get_current_user
+from core.exceptions import safe_internal_error
 from pydantic import BaseModel, Field
 from supabase import Client
 
@@ -134,7 +136,8 @@ class ConversionTriggerRequest(BaseModel):
 @router.post("/event", response_model=TransparencyEventResponse)
 async def log_transparency_event(
     request: TransparencyEventRequest,
-    supabase: Client = Depends(get_supabase)
+    supabase: Client = Depends(get_supabase),
+    current_user: dict = Depends(get_current_user),
 ) -> TransparencyEventResponse:
     """
     Log a subscription transparency event.
@@ -180,7 +183,8 @@ async def log_transparency_event(
 @router.get("/trial-status/{user_id}", response_model=TrialStatusResponse)
 async def get_trial_status(
     user_id: UUID,
-    supabase: Client = Depends(get_supabase)
+    supabase: Client = Depends(get_supabase),
+    current_user: dict = Depends(get_current_user),
 ) -> TrialStatusResponse:
     """
     Get the trial status for a user.
@@ -227,7 +231,8 @@ async def get_trial_status(
 @router.post("/trial/start", response_model=StartTrialResponse)
 async def start_trial(
     request: StartTrialRequest,
-    supabase: Client = Depends(get_supabase)
+    supabase: Client = Depends(get_supabase),
+    current_user: dict = Depends(get_current_user),
 ) -> StartTrialResponse:
     """
     Start a trial for a user.
@@ -286,14 +291,15 @@ async def start_trial(
         raise
     except Exception as e:
         print(f"❌ Failed to start trial: {e}")
-        raise HTTPException(status_code=500, detail=f"Failed to start trial: {str(e)}")
+        raise safe_internal_error(e, "subscription_start_trial")
 
 
 @router.get("/pricing-shown", response_model=PricingShownResponse)
 async def check_pricing_shown(
     user_id: Optional[UUID] = Query(None),
     device_id: Optional[str] = Query(None),
-    supabase: Client = Depends(get_supabase)
+    supabase: Client = Depends(get_supabase),
+    current_user: dict = Depends(get_current_user),
 ) -> PricingShownResponse:
     """
     Check if pricing was shown to a user before signup.
@@ -366,7 +372,8 @@ async def check_pricing_shown(
 @router.post("/conversion-trigger")
 async def log_conversion_trigger(
     request: ConversionTriggerRequest,
-    supabase: Client = Depends(get_supabase)
+    supabase: Client = Depends(get_supabase),
+    current_user: dict = Depends(get_current_user),
 ) -> dict:
     """
     Log what triggered a user's conversion decision.
@@ -399,7 +406,8 @@ async def log_plan_preview(
     generated_plan: dict = None,
     preview_type: str = "full_plan",
     device_info: dict = None,
-    supabase: Client = Depends(get_supabase)
+    supabase: Client = Depends(get_supabase),
+    current_user: dict = Depends(get_current_user),
 ) -> dict:
     """
     Log when a user previews their personalized plan before signup.
@@ -430,7 +438,8 @@ async def log_try_workout(
     session_id: Optional[str] = None,
     user_id: Optional[UUID] = None,
     workout_data: dict = None,
-    supabase: Client = Depends(get_supabase)
+    supabase: Client = Depends(get_supabase),
+    current_user: dict = Depends(get_current_user),
 ) -> dict:
     """
     Log when a user starts a "Try One Workout" session.
@@ -459,7 +468,8 @@ async def update_try_workout(
     exercises_completed: int = 0,
     feedback: str = None,
     converted_after: bool = False,
-    supabase: Client = Depends(get_supabase)
+    supabase: Client = Depends(get_supabase),
+    current_user: dict = Depends(get_current_user),
 ) -> dict:
     """
     Update a try workout session with completion data.

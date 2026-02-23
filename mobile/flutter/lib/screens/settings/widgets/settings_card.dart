@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/animations/app_animations.dart';
+import 'inline_theme_selector.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/providers/consistency_mode_provider.dart';
 import '../../../core/providers/environment_equipment_provider.dart';
@@ -18,7 +19,7 @@ import '../../../core/providers/video_cache_provider.dart';
 import '../../../core/theme/theme_provider.dart';
 import '../../../core/theme/accent_color_provider.dart';
 import '../../../core/providers/weight_increments_provider.dart';
-import '../../../data/providers/daily_xp_strip_provider.dart';
+import '../../../data/providers/xp_provider.dart';
 import '../../../widgets/weight_increments_sheet.dart';
 import '../../../widgets/schedule_mismatch_dialog.dart';
 import '../../../data/repositories/auth_repository.dart';
@@ -625,11 +626,11 @@ class SettingsCard extends ConsumerWidget {
   }
 
   void _navigateToFavoriteExercises(BuildContext context) {
-    context.push('/settings/favorite-exercises');
+    context.push('/settings/my-exercises?tab=0');
   }
 
   void _navigateToExerciseQueue(BuildContext context) {
-    context.push('/settings/exercise-queue');
+    context.push('/settings/my-exercises?tab=2');
   }
 
   void _navigateToWorkoutHistoryImport(BuildContext context) {
@@ -637,7 +638,7 @@ class SettingsCard extends ConsumerWidget {
   }
 
   void _navigateToStapleExercises(BuildContext context) {
-    context.push('/settings/staple-exercises');
+    context.push('/settings/my-exercises?tab=0');
   }
 
   void _showVariationSlider(BuildContext context, WidgetRef ref) {
@@ -667,11 +668,11 @@ class SettingsCard extends ConsumerWidget {
   }
 
   void _navigateToAvoidedExercises(BuildContext context) {
-    context.push('/settings/avoided-exercises');
+    context.push('/settings/my-exercises?tab=1');
   }
 
   void _navigateToAvoidedMuscles(BuildContext context) {
-    context.push('/settings/avoided-muscles');
+    context.push('/settings/my-exercises?tab=1');
   }
 
   void _navigateToDownloadedVideos(BuildContext context) {
@@ -907,7 +908,7 @@ class SettingsCard extends ConsumerWidget {
 
           if (item.isThemeSelector) {
             // Inline theme selector buttons for better UX - one tap to change
-            trailing = _InlineThemeSelector(
+            trailing = InlineThemeSelector(
               currentMode: themeMode,
               onChanged: (mode) {
                 HapticFeedback.selectionClick();
@@ -1529,132 +1530,6 @@ class _TimezoneOptionTile extends StatelessWidget {
                 color: AppColors.cyan,
                 size: 24,
               ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-/// Inline theme selector with 3 buttons: System, Light, Dark
-/// Provides immediate feedback without requiring a bottom sheet
-class _InlineThemeSelector extends StatelessWidget {
-  final ThemeMode currentMode;
-  final ValueChanged<ThemeMode> onChanged;
-
-  const _InlineThemeSelector({
-    required this.currentMode,
-    required this.onChanged,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final backgroundColor = isDark
-        ? AppColors.pureBlack.withValues(alpha: 0.5)
-        : AppColorsLight.cardBorder.withValues(alpha: 0.5);
-    final selectedColor = isDark ? AppColors.cyan : AppColorsLight.cyan;
-    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-
-    return Container(
-      decoration: BoxDecoration(
-        color: backgroundColor,
-        borderRadius: BorderRadius.circular(8),
-      ),
-      padding: const EdgeInsets.all(2),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          _ThemeButton(
-            icon: Icons.smartphone_outlined,
-            label: 'Auto',
-            isSelected: currentMode == ThemeMode.system,
-            selectedColor: selectedColor,
-            textMuted: textMuted,
-            onTap: () => onChanged(ThemeMode.system),
-          ),
-          _ThemeButton(
-            icon: Icons.light_mode_outlined,
-            label: 'Light',
-            isSelected: currentMode == ThemeMode.light,
-            selectedColor: selectedColor,
-            textMuted: textMuted,
-            onTap: () => onChanged(ThemeMode.light),
-          ),
-          _ThemeButton(
-            icon: Icons.dark_mode_outlined,
-            label: 'Dark',
-            isSelected: currentMode == ThemeMode.dark,
-            selectedColor: selectedColor,
-            textMuted: textMuted,
-            onTap: () => onChanged(ThemeMode.dark),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-/// Individual theme button for the inline selector
-class _ThemeButton extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final bool isSelected;
-  final Color selectedColor;
-  final Color textMuted;
-  final VoidCallback onTap;
-
-  const _ThemeButton({
-    required this.icon,
-    required this.label,
-    required this.isSelected,
-    required this.selectedColor,
-    required this.textMuted,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final buttonColor = isSelected
-        ? (isDark ? AppColors.elevated : Colors.white)
-        : Colors.transparent;
-    final iconColor = isSelected ? selectedColor : textMuted;
-    final textColor = isSelected
-        ? (isDark ? Colors.white : AppColorsLight.textPrimary)
-        : textMuted;
-
-    return GestureDetector(
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-        decoration: BoxDecoration(
-          color: buttonColor,
-          borderRadius: BorderRadius.circular(6),
-          boxShadow: isSelected
-              ? [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.1),
-                    blurRadius: 4,
-                    offset: const Offset(0, 2),
-                  ),
-                ]
-              : null,
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, size: 16, color: iconColor),
-            const SizedBox(width: 4),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-                color: textColor,
-              ),
-            ),
           ],
         ),
       ),

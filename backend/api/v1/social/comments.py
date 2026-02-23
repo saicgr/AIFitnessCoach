@@ -9,7 +9,9 @@ This module handles comment operations:
 """
 from datetime import datetime, timezone
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
+from core.auth import get_current_user
+from core.exceptions import safe_internal_error
 
 from models.social import (
     ActivityComment, ActivityCommentCreate, ActivityCommentUpdate, CommentsResponse,
@@ -23,6 +25,7 @@ router = APIRouter()
 async def add_comment(
     user_id: str,
     comment: ActivityCommentCreate,
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Add a comment to an activity.
@@ -54,6 +57,7 @@ async def update_comment(
     user_id: str,
     comment_id: str,
     update: ActivityCommentUpdate,
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Update a comment (user can only update their own).
@@ -90,6 +94,7 @@ async def update_comment(
 async def delete_comment(
     user_id: str,
     comment_id: str,
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Delete a comment (user can only delete their own).
@@ -120,6 +125,7 @@ async def get_comments(
     activity_id: str,
     page: int = Query(1, ge=1),
     page_size: int = Query(50, ge=1, le=100),
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Get comments for an activity.

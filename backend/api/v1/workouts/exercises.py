@@ -8,7 +8,9 @@ This module handles exercise modifications within workouts:
 """
 from datetime import datetime
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
+from core.auth import get_current_user
+from core.exceptions import safe_internal_error
 
 from core.supabase_db import get_supabase_db
 from core.logger import get_logger
@@ -30,7 +32,9 @@ logger = get_logger(__name__)
 
 
 @router.put("/{workout_id}/exercises", response_model=Workout)
-async def update_workout_exercises(workout_id: str, request: UpdateWorkoutExercisesRequest):
+async def update_workout_exercises(workout_id: str, request: UpdateWorkoutExercisesRequest,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Update the exercises in a workout (add, remove, reorder).
 
@@ -78,11 +82,13 @@ async def update_workout_exercises(workout_id: str, request: UpdateWorkoutExerci
         raise
     except Exception as e:
         logger.error(f"Failed to update workout exercises: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "exercises")
 
 
 @router.put("/{workout_id}/warmup/exercises")
-async def update_warmup_exercises(workout_id: str, request: UpdateWarmupExercisesRequest):
+async def update_warmup_exercises(workout_id: str, request: UpdateWarmupExercisesRequest,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Update the warmup exercises for a workout.
     """
@@ -119,11 +125,13 @@ async def update_warmup_exercises(workout_id: str, request: UpdateWarmupExercise
         raise
     except Exception as e:
         logger.error(f"Failed to update warmup exercises: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "exercises")
 
 
 @router.put("/{workout_id}/stretches/exercises")
-async def update_stretch_exercises(workout_id: str, request: UpdateStretchExercisesRequest):
+async def update_stretch_exercises(workout_id: str, request: UpdateStretchExercisesRequest,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Update the stretch exercises for a workout.
     """
@@ -160,4 +168,4 @@ async def update_stretch_exercises(workout_id: str, request: UpdateStretchExerci
         raise
     except Exception as e:
         logger.error(f"Failed to update stretch exercises: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "exercises")

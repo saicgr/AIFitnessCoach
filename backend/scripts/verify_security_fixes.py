@@ -5,6 +5,7 @@ Verify Supabase Security Fixes
 This script verifies that all security fixes have been applied correctly.
 """
 
+import os
 import psycopg2
 
 # Database connection details
@@ -13,8 +14,11 @@ DB_CONFIG = {
     "port": 5432,
     "database": "postgres",
     "user": "postgres",
-    "password": "d2nHU5oLZ1GCz63B"
+    "password": os.environ.get("DATABASE_PASSWORD")
 }
+
+if not DB_CONFIG["password"]:
+    raise SystemExit("DATABASE_PASSWORD environment variable is required")
 
 # Tables that should have RLS enabled
 TABLES_TO_CHECK = [

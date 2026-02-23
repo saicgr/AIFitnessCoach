@@ -129,6 +129,7 @@ class WorkoutRepository {
     String userId, {
     int? limit,
     int? offset,
+    bool allowMultiplePerDate = false,
   }) async {
     try {
       debugPrint('🔍 [Workout] Fetching workouts for user: $userId (limit: ${limit ?? "unlimited"})');
@@ -139,6 +140,9 @@ class WorkoutRepository {
       }
       if (offset != null) {
         queryParams['offset'] = offset.toString();
+      }
+      if (allowMultiplePerDate) {
+        queryParams['allow_multiple_per_date'] = 'true';
       }
 
       final response = await _apiClient.get(
@@ -3401,7 +3405,7 @@ class WorkoutsNotifier extends StateNotifier<AsyncValue<List<Workout>>> {
   /// Fetch workouts without showing loading state
   Future<void> _fetchWorkoutsSilent(String userId) async {
     try {
-      final workouts = await _repository.getWorkouts(userId);
+      final workouts = await _repository.getWorkouts(userId, allowMultiplePerDate: true);
       if (!mounted) return;
       workouts.sort((a, b) {
         final dateA = a.scheduledDate ?? '';
@@ -3441,7 +3445,7 @@ class WorkoutsNotifier extends StateNotifier<AsyncValue<List<Workout>>> {
     if (!mounted) return;
     state = const AsyncValue.loading();
     try {
-      final workouts = await _repository.getWorkouts(userId);
+      final workouts = await _repository.getWorkouts(userId, allowMultiplePerDate: true);
       if (!mounted) return; // Check mounted after async
       // Sort by scheduled date
       workouts.sort((a, b) {

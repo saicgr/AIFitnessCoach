@@ -4,13 +4,15 @@ WearOS Watch Sync API Router.
 Provides endpoints for batch syncing data from WearOS watch to backend.
 Supports workout logs, nutrition, fasting, and activity data with Gemini integration.
 """
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel, Field
 from typing import Optional, List
 from datetime import datetime
 
 from core.supabase_db import get_supabase_db
 from core.logger import get_logger
+from core.auth import get_current_user
+from core.exceptions import safe_internal_error
 from services.gemini_service import get_gemini_service
 from services.user_context_service import UserContextService
 
@@ -114,13 +116,15 @@ class ActivityGoalsResponse(BaseModel):
 # ==================== Endpoints ====================
 
 @router.post("/sync", response_model=WatchSyncResponse)
-async def sync_watch_data(request: WatchSyncRequest):
+async def sync_watch_data(request: WatchSyncRequest, current_user: dict = Depends(get_current_user)):
     """
     Batch sync all pending data from WearOS watch.
 
     Processes workout sets, completions, food logs (via Gemini),
     fasting events, and activity data in a single request.
     """
+    if str(current_user["id"]) != str(request.user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     logger.info(f"Watch sync request from user {request.user_id}")
 
     db = get_supabase_db()
@@ -238,12 +242,14 @@ async def sync_watch_data(request: WatchSyncRequest):
 
 
 @router.get("/goals/{user_id}", response_model=ActivityGoalsResponse)
-async def get_activity_goals(user_id: str):
+async def get_activity_goals(user_id: str, current_user: dict = Depends(get_current_user)):
     """
     Get user's activity goals for watch display.
 
     Returns step goal, active minutes goal, calorie goal, and water goal.
     """
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     logger.info(f"Getting activity goals for user {user_id}")
 
     db = get_supabase_db()

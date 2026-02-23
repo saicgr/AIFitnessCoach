@@ -12,7 +12,9 @@ ENDPOINTS:
 - GET  /api/v1/programs/featured - Get featured programs for home screen
 """
 from datetime import datetime
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
+from core.auth import get_current_user
+from core.exceptions import safe_internal_error
 from typing import Optional, List
 from pydantic import BaseModel
 from enum import Enum
@@ -128,6 +130,7 @@ async def list_branded_programs(
     is_premium: Optional[bool] = Query(None, description="Filter premium programs"),
     limit: int = Query(50, ge=1, le=100, description="Maximum number of results"),
     offset: int = Query(0, ge=0, description="Offset for pagination"),
+    current_user: dict = Depends(get_current_user),
 ):
     """
     List all branded workout programs.
@@ -187,11 +190,13 @@ async def list_branded_programs(
 
     except Exception as e:
         logger.error(f"Failed to list branded programs: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "programs")
 
 
 @router.get("/branded/{program_id}", response_model=BrandedProgramDetail)
-async def get_branded_program(program_id: str):
+async def get_branded_program(program_id: str,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Get detailed information about a specific branded program.
 
@@ -243,11 +248,13 @@ async def get_branded_program(program_id: str):
         raise
     except Exception as e:
         logger.error(f"Failed to get branded program: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "programs")
 
 
 @router.get("/featured", response_model=FeaturedProgramsResponse)
-async def get_featured_programs():
+async def get_featured_programs(
+    current_user: dict = Depends(get_current_user),
+):
     """
     Get featured programs for the home screen.
 
@@ -314,7 +321,7 @@ async def get_featured_programs():
 
     except Exception as e:
         logger.error(f"Failed to get featured programs: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "programs")
 
 
 # =============================================================================
@@ -323,7 +330,9 @@ async def get_featured_programs():
 
 
 @router.post("/assign/{user_id}", response_model=UserProgramAssignment)
-async def assign_program_to_user(user_id: str, request: ProgramAssignRequest):
+async def assign_program_to_user(user_id: str, request: ProgramAssignRequest,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Assign a program to a user.
 
@@ -447,11 +456,13 @@ async def assign_program_to_user(user_id: str, request: ProgramAssignRequest):
         raise
     except Exception as e:
         logger.error(f"Failed to assign program: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "programs")
 
 
 @router.get("/user/{user_id}/current", response_model=Optional[UserProgramAssignment])
-async def get_current_program(user_id: str):
+async def get_current_program(user_id: str,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Get user's current active program assignment.
 
@@ -493,7 +504,7 @@ async def get_current_program(user_id: str):
         if "0 rows" in str(e).lower() or "no rows" in str(e).lower():
             return None
         logger.error(f"Failed to get current program: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "programs")
 
 
 @router.get("/user/{user_id}/history", response_model=List[UserProgramAssignment])
@@ -502,6 +513,7 @@ async def get_program_history(
     limit: int = Query(20, ge=1, le=100, description="Maximum number of results"),
     offset: int = Query(0, ge=0, description="Offset for pagination"),
     include_active: bool = Query(True, description="Include currently active program"),
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Get user's program assignment history.
@@ -545,11 +557,13 @@ async def get_program_history(
 
     except Exception as e:
         logger.error(f"Failed to get program history: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "programs")
 
 
 @router.patch("/user/{user_id}/rename", response_model=UserProgramAssignment)
-async def rename_current_program(user_id: str, request: ProgramRenameRequest):
+async def rename_current_program(user_id: str, request: ProgramRenameRequest,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Rename the user's current active program.
 
@@ -629,11 +643,13 @@ async def rename_current_program(user_id: str, request: ProgramRenameRequest):
         raise
     except Exception as e:
         logger.error(f"Failed to rename program: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "programs")
 
 
 @router.patch("/user/{user_id}/complete", response_model=UserProgramAssignment)
-async def complete_current_program(user_id: str):
+async def complete_current_program(user_id: str,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Mark the user's current active program as completed.
 
@@ -712,7 +728,7 @@ async def complete_current_program(user_id: str):
         raise
     except Exception as e:
         logger.error(f"Failed to complete program: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "programs")
 
 
 # =============================================================================
@@ -721,7 +737,9 @@ async def complete_current_program(user_id: str):
 
 
 @router.get("/categories", response_model=List[str])
-async def list_program_categories():
+async def list_program_categories(
+    current_user: dict = Depends(get_current_user),
+):
     """
     Get list of all program categories.
 
@@ -747,11 +765,13 @@ async def list_program_categories():
 
     except Exception as e:
         logger.error(f"Failed to get categories: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "programs")
 
 
 @router.patch("/user/{user_id}/week", response_model=UserProgramAssignment)
-async def update_program_week(user_id: str, week_number: int = Query(..., ge=1, description="New week number")):
+async def update_program_week(user_id: str, week_number: int = Query(..., ge=1, description="New week number"),
+    current_user: dict = Depends(get_current_user),
+):
     """
     Update the current week number for user's active program.
 
@@ -810,4 +830,4 @@ async def update_program_week(user_id: str, week_number: int = Query(..., ge=1, 
         raise
     except Exception as e:
         logger.error(f"Failed to update program week: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "programs")

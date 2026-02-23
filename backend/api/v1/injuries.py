@@ -11,7 +11,7 @@ This module integrates with the user_context_logs for AI personalization
 and provides workout modification recommendations based on injury status.
 """
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query, Depends
 from pydantic import BaseModel, Field
 from typing import Optional, List
 from datetime import datetime, date, timedelta
@@ -19,6 +19,8 @@ from enum import Enum
 
 from core.supabase_client import get_supabase
 from core.logger import get_logger
+from core.auth import get_current_user
+from core.exceptions import safe_internal_error
 
 router = APIRouter()
 logger = get_logger(__name__)
@@ -315,6 +317,7 @@ async def get_user_injuries(
     status: Optional[InjuryStatus] = Query(default=None),
     limit: int = Query(default=50, ge=1, le=100),
     offset: int = Query(default=0, ge=0),
+    current_user: dict = Depends(get_current_user),
 ):
     """Get all injuries for a user."""
     logger.info(f"Getting injuries for user {user_id}")
@@ -350,11 +353,14 @@ async def get_user_injuries(
 
     except Exception as e:
         logger.error(f"Failed to get user injuries: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "endpoint")
 
 
 @router.get("/{user_id}/active", response_model=InjuryListResponse)
-async def get_active_injuries(user_id: str):
+async def get_active_injuries(
+    user_id: str,
+    current_user: dict = Depends(get_current_user),
+):
     """Get only active injuries for a user."""
     logger.info(f"Getting active injuries for user {user_id}")
 
@@ -377,11 +383,14 @@ async def get_active_injuries(user_id: str):
 
     except Exception as e:
         logger.error(f"Failed to get active injuries: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "endpoint")
 
 
 @router.post("/{user_id}/report", response_model=InjuryReportResponse)
-async def report_injury(user_id: str, request: InjuryReportRequest):
+async def report_injury(
+    user_id: str, request: InjuryReportRequest,
+    current_user: dict = Depends(get_current_user),
+):
     """Report a new injury for a user."""
     logger.info(f"Reporting injury for user {user_id}: {request.body_part}")
 
@@ -415,7 +424,7 @@ async def report_injury(user_id: str, request: InjuryReportRequest):
         result = supabase.client.table("user_injuries").insert(injury_data).execute()
 
         if not result.data:
-            raise HTTPException(status_code=500, detail="Failed to create injury record")
+            raise safe_internal_error(e, "endpoint")
 
         injury = _parse_injury(result.data[0])
 
@@ -438,11 +447,14 @@ async def report_injury(user_id: str, request: InjuryReportRequest):
         raise
     except Exception as e:
         logger.error(f"Failed to report injury: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "endpoint")
 
 
 @router.get("/detail/{injury_id}", response_model=InjuryWithDetails)
-async def get_injury(injury_id: str):
+async def get_injury(
+    injury_id: str,
+    current_user: dict = Depends(get_current_user),
+):
     """Get a specific injury with full details."""
     logger.info(f"Getting injury details: {injury_id}")
 
@@ -522,11 +534,14 @@ async def get_injury(injury_id: str):
         raise
     except Exception as e:
         logger.error(f"Failed to get injury details: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "endpoint")
 
 
 @router.put("/{injury_id}")
-async def update_injury(injury_id: str, request: InjuryUpdateRequest):
+async def update_injury(
+    injury_id: str, request: InjuryUpdateRequest,
+    current_user: dict = Depends(get_current_user),
+):
     """Update an existing injury."""
     logger.info(f"Updating injury: {injury_id}")
 
@@ -571,7 +586,7 @@ async def update_injury(injury_id: str, request: InjuryUpdateRequest):
         ).execute()
 
         if not result.data:
-            raise HTTPException(status_code=500, detail="Failed to update injury")
+            raise safe_internal_error(e, "endpoint")
 
         injury = _parse_injury(result.data[0])
 
@@ -581,11 +596,14 @@ async def update_injury(injury_id: str, request: InjuryUpdateRequest):
         raise
     except Exception as e:
         logger.error(f"Failed to update injury: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "endpoint")
 
 
 @router.delete("/{injury_id}")
-async def mark_injury_healed(injury_id: str):
+async def mark_injury_healed(
+    injury_id: str,
+    current_user: dict = Depends(get_current_user),
+):
     """Mark an injury as healed."""
     logger.info(f"Marking injury as healed: {injury_id}")
 
@@ -626,11 +644,14 @@ async def mark_injury_healed(injury_id: str):
         raise
     except Exception as e:
         logger.error(f"Failed to mark injury as healed: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "endpoint")
 
 
 @router.post("/{injury_id}/check-in", response_model=InjuryCheckIn)
-async def add_check_in(injury_id: str, request: InjuryCheckInRequest):
+async def add_check_in(
+    injury_id: str, request: InjuryCheckInRequest,
+    current_user: dict = Depends(get_current_user),
+):
     """Add a recovery check-in for an injury."""
     logger.info(f"Adding check-in for injury: {injury_id}")
 
@@ -663,7 +684,7 @@ async def add_check_in(injury_id: str, request: InjuryCheckInRequest):
         result = supabase.client.table("injury_updates").insert(check_in_data).execute()
 
         if not result.data:
-            raise HTTPException(status_code=500, detail="Failed to create check-in")
+            raise safe_internal_error(e, "endpoint")
 
         # Update injury with latest pain level and recovery phase
         update_data = {"updated_at": now}
@@ -697,11 +718,14 @@ async def add_check_in(injury_id: str, request: InjuryCheckInRequest):
         raise
     except Exception as e:
         logger.error(f"Failed to add check-in: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "endpoint")
 
 
 @router.get("/{user_id}/workout-modifications", response_model=WorkoutModifications)
-async def get_workout_modifications(user_id: str):
+async def get_workout_modifications(
+    user_id: str,
+    current_user: dict = Depends(get_current_user),
+):
     """Get workout modifications based on active injuries."""
     logger.info(f"Getting workout modifications for user: {user_id}")
 
@@ -826,4 +850,4 @@ async def get_workout_modifications(user_id: str):
 
     except Exception as e:
         logger.error(f"Failed to get workout modifications: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "endpoint")

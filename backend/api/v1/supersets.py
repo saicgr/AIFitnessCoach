@@ -20,7 +20,9 @@ Benefits:
 - Enhanced muscle pump
 - Greater workout density
 """
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
+from core.auth import get_current_user
+from core.exceptions import safe_internal_error
 from pydantic import BaseModel, Field
 from typing import List, Optional, Dict, Any
 from datetime import datetime, date, timedelta
@@ -275,7 +277,9 @@ class SupersetHistoryResponse(BaseModel):
 # =============================================================================
 
 @router.get("/preferences/{user_id}", response_model=SupersetPreferencesResponse)
-async def get_superset_preferences(user_id: str):
+async def get_superset_preferences(user_id: str,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Get user's superset preferences.
 
@@ -335,11 +339,13 @@ async def get_superset_preferences(user_id: str):
         raise
     except Exception as e:
         logger.error(f"Error getting superset preferences: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "supersets")
 
 
 @router.put("/preferences/{user_id}", response_model=SupersetPreferencesResponse)
-async def update_superset_preferences(user_id: str, request: SupersetPreferencesUpdate):
+async def update_superset_preferences(user_id: str, request: SupersetPreferencesUpdate,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Update user's superset preferences.
 
@@ -428,7 +434,7 @@ async def update_superset_preferences(user_id: str, request: SupersetPreferences
         raise
     except Exception as e:
         logger.error(f"Error updating superset preferences: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "supersets")
 
 
 # =============================================================================
@@ -436,7 +442,9 @@ async def update_superset_preferences(user_id: str, request: SupersetPreferences
 # =============================================================================
 
 @router.post("/pair", response_model=SupersetPairResponse)
-async def create_superset_pair(request: CreateSupersetPairRequest):
+async def create_superset_pair(request: CreateSupersetPairRequest,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Create a manual superset pair within a workout.
 
@@ -541,11 +549,13 @@ async def create_superset_pair(request: CreateSupersetPairRequest):
         raise
     except Exception as e:
         logger.error(f"Error creating superset pair: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "supersets")
 
 
 @router.delete("/pair/{workout_id}/{superset_group}", response_model=RemoveSupersetPairResponse)
-async def remove_superset_pair(workout_id: str, superset_group: int):
+async def remove_superset_pair(workout_id: str, superset_group: int,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Remove a superset pair from a workout.
 
@@ -613,7 +623,7 @@ async def remove_superset_pair(workout_id: str, superset_group: int):
         raise
     except Exception as e:
         logger.error(f"Error removing superset pair: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "supersets")
 
 
 # =============================================================================
@@ -709,6 +719,7 @@ def _find_antagonist_pairs(exercises: List[Dict[str, Any]]) -> List[SupersetSugg
 async def get_superset_suggestions(
     user_id: str,
     workout_id: Optional[str] = Query(default=None, description="Optional workout ID to suggest pairs for"),
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Get AI-suggested superset pairs based on a workout or general recommendations.
@@ -779,7 +790,7 @@ async def get_superset_suggestions(
         raise
     except Exception as e:
         logger.error(f"Error getting superset suggestions: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "supersets")
 
 
 # =============================================================================
@@ -787,7 +798,9 @@ async def get_superset_suggestions(
 # =============================================================================
 
 @router.post("/favorites", response_model=FavoriteSupersetPairResponse)
-async def save_favorite_superset_pair(user_id: str = Query(...), request: FavoriteSupersetPair = ...):
+async def save_favorite_superset_pair(user_id: str = Query(...), request: FavoriteSupersetPair = ...,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Save a favorite superset pair for reuse.
 
@@ -852,11 +865,13 @@ async def save_favorite_superset_pair(user_id: str = Query(...), request: Favori
         raise
     except Exception as e:
         logger.error(f"Error saving favorite superset pair: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "supersets")
 
 
 @router.get("/favorites/{user_id}", response_model=List[FavoriteSupersetPairResponse])
-async def get_favorite_superset_pairs(user_id: str):
+async def get_favorite_superset_pairs(user_id: str,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Get user's saved favorite superset pairs.
 
@@ -892,11 +907,13 @@ async def get_favorite_superset_pairs(user_id: str):
 
     except Exception as e:
         logger.error(f"Error getting favorite superset pairs: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "supersets")
 
 
 @router.delete("/favorites/{pair_id}")
-async def remove_favorite_superset_pair(pair_id: str, user_id: str = Query(...)):
+async def remove_favorite_superset_pair(pair_id: str, user_id: str = Query(...),
+    current_user: dict = Depends(get_current_user),
+):
     """
     Remove a favorite superset pair.
     """
@@ -918,7 +935,7 @@ async def remove_favorite_superset_pair(pair_id: str, user_id: str = Query(...))
         raise
     except Exception as e:
         logger.error(f"Error removing favorite superset pair: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "supersets")
 
 
 # =============================================================================
@@ -929,6 +946,7 @@ async def remove_favorite_superset_pair(pair_id: str, user_id: str = Query(...))
 async def get_superset_history(
     user_id: str,
     days: int = Query(default=30, ge=7, le=90, description="Number of days of history to retrieve"),
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Get user's superset usage history.
@@ -1035,7 +1053,7 @@ async def get_superset_history(
 
     except Exception as e:
         logger.error(f"Error getting superset history: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "supersets")
 
 
 # =============================================================================
@@ -1140,7 +1158,9 @@ class SupersetLogRequest(BaseModel):
 
 
 @router.post("/logs", status_code=201)
-async def log_superset_usage(request: SupersetLogRequest):
+async def log_superset_usage(request: SupersetLogRequest,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Log a user-created superset pair for analytics.
 

@@ -9,6 +9,7 @@ import '../../data/repositories/nutrition_repository.dart';
 import '../../data/services/api_client.dart';
 import '../../data/services/haptic_service.dart';
 import '../../data/providers/xp_provider.dart';
+import '../../widgets/app_dialog.dart';
 import '../../widgets/glass_back_button.dart';
 import '../../widgets/glass_sheet.dart';
 import '../../widgets/segmented_tab_bar.dart';
@@ -547,44 +548,11 @@ class _FoodLibraryScreenState extends ConsumerState<FoodLibraryScreen>
   Future<void> _deleteItem(FoodLibraryItem item) async {
     if (_userId == null) return;
 
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
-    // Confirm deletion
-    final confirm = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: isDark ? AppColors.elevated : AppColorsLight.elevated,
-        title: Text(
-          'Delete ${item.name}?',
-          style: TextStyle(
-            color: isDark ? AppColors.textPrimary : AppColorsLight.textPrimary,
-          ),
-        ),
-        content: Text(
-          'This action cannot be undone.',
-          style: TextStyle(
-            color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: Text(
-              'Cancel',
-              style: TextStyle(
-                color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
-              ),
-            ),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: Text(
-              'Delete',
-              style: TextStyle(color: AppColors.textMuted),
-            ),
-          ),
-        ],
-      ),
+    final confirm = await AppDialog.destructive(
+      context,
+      title: 'Delete ${item.name}?',
+      message: 'This action cannot be undone.',
+      icon: Icons.delete_rounded,
     );
 
     if (confirm != true) return;
@@ -610,7 +578,7 @@ class _FoodLibraryScreenState extends ConsumerState<FoodLibraryScreen>
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('${item.name} deleted'),
-          backgroundColor: isDark ? AppColors.elevated : AppColorsLight.elevated,
+          backgroundColor: Theme.of(context).brightness == Brightness.dark ? AppColors.elevated : AppColorsLight.elevated,
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -1017,30 +985,11 @@ class _FoodLibraryCard extends StatelessWidget {
       ),
       confirmDismiss: (direction) async {
         HapticService.swipeThreshold();
-        return await showDialog<bool>(
-          context: context,
-          builder: (context) => AlertDialog(
-            backgroundColor: elevated,
-            title: Text(
-              'Delete ${item.name}?',
-              style: TextStyle(color: textPrimary),
-            ),
-            content: Text(
-              'This action cannot be undone.',
-              style: TextStyle(color: textMuted),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context, false),
-                child: Text('Cancel', style: TextStyle(color: textMuted)),
-              ),
-              TextButton(
-                onPressed: () => Navigator.pop(context, true),
-                child: Text('Delete',
-                    style: TextStyle(color: AppColors.textMuted)),
-              ),
-            ],
-          ),
+        return await AppDialog.destructive(
+          context,
+          title: 'Delete ${item.name}?',
+          message: 'This action cannot be undone.',
+          icon: Icons.delete_rounded,
         );
       },
       onDismissed: (direction) => onDelete(),

@@ -9,7 +9,7 @@ ENDPOINTS:
 - PUT  /api/v1/inflammation/scans/{scan_id}/favorite - Toggle favorite
 """
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query, Depends
 import logging
 
 from services.inflammation_service import get_inflammation_service
@@ -21,13 +21,18 @@ from models.inflammation import (
     UpdateScanNotesRequest,
     ToggleFavoriteRequest,
 )
+from core.auth import get_current_user
+from core.exceptions import safe_internal_error
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
 
 
 @router.post("/analyze", response_model=InflammationAnalysisResponse)
-async def analyze_inflammation(request: AnalyzeInflammationRequest):
+async def analyze_inflammation(
+    request: AnalyzeInflammationRequest,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Analyze ingredients from a barcode scan for inflammatory properties.
 
@@ -73,7 +78,7 @@ async def analyze_inflammation(request: AnalyzeInflammationRequest):
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
         logger.error(f"Inflammation analysis error: {e}")
-        raise HTTPException(status_code=500, detail="Failed to analyze ingredients")
+        raise safe_internal_error(e, "endpoint")
 
 
 @router.get("/history/{user_id}", response_model=UserInflammationHistoryResponse)
@@ -82,6 +87,7 @@ async def get_inflammation_history(
     limit: int = Query(default=20, le=100),
     offset: int = Query(default=0, ge=0),
     favorited_only: bool = Query(default=False),
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Get user's inflammation scan history.
@@ -112,11 +118,14 @@ async def get_inflammation_history(
 
     except Exception as e:
         logger.error(f"Failed to get inflammation history: {e}")
-        raise HTTPException(status_code=500, detail="Failed to retrieve history")
+        raise safe_internal_error(e, "endpoint")
 
 
 @router.get("/stats/{user_id}", response_model=UserInflammationStatsResponse)
-async def get_inflammation_stats(user_id: str):
+async def get_inflammation_stats(
+    user_id: str,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Get aggregated inflammation statistics for a user.
 
@@ -130,7 +139,7 @@ async def get_inflammation_stats(user_id: str):
 
     except Exception as e:
         logger.error(f"Failed to get inflammation stats: {e}")
-        raise HTTPException(status_code=500, detail="Failed to retrieve statistics")
+        raise safe_internal_error(e, "endpoint")
 
 
 @router.put("/scans/{scan_id}/notes")
@@ -138,6 +147,7 @@ async def update_scan_notes(
     scan_id: str,
     request: UpdateScanNotesRequest,
     user_id: str = Query(..., description="User ID for authorization"),
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Update notes on a specific scan.
@@ -159,7 +169,7 @@ async def update_scan_notes(
         raise
     except Exception as e:
         logger.error(f"Failed to update scan notes: {e}")
-        raise HTTPException(status_code=500, detail="Failed to update notes")
+        raise safe_internal_error(e, "endpoint")
 
 
 @router.put("/scans/{scan_id}/favorite")
@@ -167,6 +177,7 @@ async def toggle_scan_favorite(
     scan_id: str,
     request: ToggleFavoriteRequest,
     user_id: str = Query(..., description="User ID for authorization"),
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Toggle favorite status on a scan.
@@ -188,4 +199,4 @@ async def toggle_scan_favorite(
         raise
     except Exception as e:
         logger.error(f"Failed to toggle favorite: {e}")
-        raise HTTPException(status_code=500, detail="Failed to update favorite status")
+        raise safe_internal_error(e, "endpoint")

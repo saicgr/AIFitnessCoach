@@ -8,7 +8,9 @@ Allows users to:
 - Mark messages as read
 """
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
+from core.auth import get_current_user
+from core.exceptions import safe_internal_error
 from typing import Optional, List
 from datetime import datetime
 
@@ -70,6 +72,7 @@ def _parse_participant(data: dict) -> ConversationParticipant:
 @router.get("/conversations", response_model=ConversationsResponse)
 async def get_conversations(
     user_id: str = Query(..., description="Current user's ID"),
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Get list of conversations for a user.
@@ -139,7 +142,7 @@ async def get_conversations(
 
     except Exception as e:
         logger.error(f"[Messages] Failed to get conversations: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "messages")
 
 
 # =============================================================================
@@ -152,6 +155,7 @@ async def get_messages(
     user_id: str = Query(..., description="Current user's ID"),
     page: int = Query(1, ge=1),
     page_size: int = Query(50, ge=1, le=100),
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Get messages in a conversation.
@@ -215,7 +219,7 @@ async def get_messages(
         raise
     except Exception as e:
         logger.error(f"[Messages] Failed to get messages: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "messages")
 
 
 # =============================================================================
@@ -226,6 +230,7 @@ async def get_messages(
 async def send_message(
     request: DirectMessageCreate,
     user_id: str = Query(..., description="Sender's user ID"),
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Send a direct message to another user.
@@ -336,7 +341,7 @@ async def send_message(
             metadata={"recipient_id": request.recipient_id},
             status_code=500
         )
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "messages")
 
 
 # =============================================================================
@@ -347,6 +352,7 @@ async def send_message(
 async def mark_as_read(
     conversation_id: str,
     user_id: str = Query(..., description="Current user's ID"),
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Mark all messages in a conversation as read.
@@ -376,7 +382,7 @@ async def mark_as_read(
         raise
     except Exception as e:
         logger.error(f"[Messages] Failed to mark as read: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "messages")
 
 
 # =============================================================================
@@ -387,6 +393,7 @@ async def mark_as_read(
 async def get_conversation_with_user(
     other_user_id: str,
     user_id: str = Query(..., description="Current user's ID"),
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Get conversation between current user and another user.
@@ -450,4 +457,4 @@ async def get_conversation_with_user(
 
     except Exception as e:
         logger.error(f"[Messages] Failed to get conversation: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "messages")

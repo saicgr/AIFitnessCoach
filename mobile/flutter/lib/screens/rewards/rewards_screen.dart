@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../data/providers/xp_provider.dart';
+import '../../widgets/app_snackbar.dart';
 import '../../data/services/api_client.dart';
 import '../../widgets/glass_back_button.dart';
 import '../../widgets/segmented_tab_bar.dart';
@@ -94,32 +95,17 @@ class _RewardsScreenState extends ConsumerState<RewardsScreen>
 
       if (success) {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Reward claimed! ${email != null ? 'Check your email.' : ''}'),
-              backgroundColor: Colors.green,
-            ),
-          );
+          AppSnackBar.success(context, 'Reward claimed! ${email != null ? 'Check your email.' : ''}');
         }
         await _loadRewards(); // Refresh
       } else {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Failed to claim reward. Please try again.'),
-              backgroundColor: Colors.red,
-            ),
-          );
+          AppSnackBar.error(context, 'Failed to claim reward. Please try again.');
         }
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
+        AppSnackBar.error(context, 'Error: $e');
       }
     }
   }

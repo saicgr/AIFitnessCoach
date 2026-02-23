@@ -34,7 +34,10 @@ import 'tabs/fasting_tab.dart';
 import '../../data/repositories/hydration_repository.dart';
 
 class NutritionScreen extends ConsumerStatefulWidget {
-  const NutritionScreen({super.key});
+  /// Optional meal type to auto-open the log meal sheet (from deep link).
+  final String? initialMeal;
+
+  const NutritionScreen({super.key, this.initialMeal});
 
   @override
   ConsumerState<NutritionScreen> createState() => _NutritionScreenState();
@@ -57,13 +60,18 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 5, vsync: this);
+    _tabController = TabController(length: 4, vsync: this);
     _loadData();
     // Collapse nav bar labels on this secondary page
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(navBarLabelsExpandedProvider.notifier).state = false;
       // Listen for preferences to become available, then check for weekly check-in
       _setupWeeklyCheckinListener();
+      // Auto-open log meal sheet if deep-linked with a meal type
+      if (widget.initialMeal != null) {
+        final isDark = Theme.of(context).brightness == Brightness.dark;
+        _showLogMealSheet(isDark, mealType: widget.initialMeal);
+      }
     });
   }
 
@@ -339,11 +347,11 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
                     ),
                   ),
                   const SizedBox(width: 6),
-                  // Saved Foods
+                  // My Foods (Saved Foods + Recipes)
                   GestureDetector(
-                    onTap: () => _showFavoritesSheet(isDark),
+                    onTap: () => _showMyFoodsSheet(isDark),
                     child: Tooltip(
-                      message: 'Saved',
+                      message: 'My Foods',
                       child: Container(
                         width: 32,
                         height: 32,
@@ -401,7 +409,6 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
               tabs: const [
                 SegmentedTabItem(label: 'Daily', icon: Icons.restaurant_menu_rounded),
                 SegmentedTabItem(label: 'Nutrients', icon: Icons.science_outlined),
-                SegmentedTabItem(label: 'Recipes', icon: Icons.menu_book_rounded),
                 SegmentedTabItem(label: 'Water', icon: Icons.water_drop_outlined),
                 SegmentedTabItem(label: 'Fast', icon: Icons.timer_outlined),
               ],
@@ -431,8 +438,8 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
                             onLogMeal: (mealType) => _showLogMealSheet(isDark, mealType: mealType),
                             onDeleteMeal: (id) => _deleteMeal(id),
                             onCopyMeal: (id, mealType) => _copyMeal(id, mealType),
-                            onSwitchToNutrientsTab: () => _tabController.animateTo(1), // Switch to Nutrients tab (index 1)
-                            onSwitchToHydrationTab: () => _tabController.animateTo(3), // Switch to Hydration tab (index 3)
+                            onSwitchToNutrientsTab: () => _tabController.animateTo(1),
+                            onSwitchToHydrationTab: () => _tabController.animateTo(2),
                             isDark: isDark,
                             calmMode: calmMode,
                           ),
@@ -444,25 +451,8 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
                             isLoading: _isLoadingMicronutrients,
                             onRefresh: () {
                               if (_userId != null) {
-                                final dateStr = DateFormat('yyyy-MM-dd')
-                                    .format(_selectedDate);
+                                final dateStr = DateFormat('yyyy-MM-dd').format(_selectedDate);
                                 _loadMicronutrients(_userId!, dateStr);
-                              }
-                            },
-                            isDark: isDark,
-                          ),
-
-                          // Recipes Tab
-                          _RecipesTab(
-                            userId: _userId ?? '',
-                            recipes: _recipes,
-                            onCreateRecipe: () =>
-                                _showRecipeBuilder(context, isDark),
-                            onLogRecipe: (recipe) =>
-                                _logRecipe(recipe, isDark),
-                            onRefresh: () {
-                              if (_userId != null) {
-                                _loadRecipes(_userId!);
                               }
                             },
                             isDark: isDark,
@@ -518,8 +508,8 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
   }
 
 
-  /// Show favorites/saved foods sheet
-  void _showFavoritesSheet(bool isDark) {
+  /// Show My Foods sheet (Saved Foods + My Recipes)
+  void _showMyFoodsSheet(bool isDark) {
     if (_userId == null || _userId!.isEmpty) return;
 
     ref.read(floatingNavBarVisibleProvider.notifier).state = false;
@@ -528,14 +518,24 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
       context: context,
       builder: (context) => GlassSheet(
         showHandle: false,
-        child: _SavedFoodsFilterSheet(
+        child: _MyFoodsSheet(
           userId: _userId!,
           repository: ref.read(nutritionRepositoryProvider),
+          recipes: _recipes,
           isDark: isDark,
           onFoodLogged: () {
             _loadData();
           },
           getSuggestedMealType: _getSuggestedMealType,
+          onCreateRecipe: () {
+            Navigator.of(context).pop();
+            _showRecipeBuilder(context, isDark);
+          },
+          onLogRecipe: (recipe) {
+            Navigator.of(context).pop();
+            _logRecipe(recipe, isDark);
+          },
+          onRefreshRecipes: () => _loadRecipes(_userId!),
         ),
       ),
     ).whenComplete(() {
@@ -550,6 +550,7 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
     if (hour < 17) return 'snack';
     return 'dinner';
   }
+
 
   Future<void> _logRecipe(RecipeSummary recipe, bool isDark) async {
     if (_userId == null) return;
@@ -5625,6 +5626,140 @@ class _MiniWeightChart extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+/// My Foods sheet with 2 tabs: Saved Foods + My Recipes
+class _MyFoodsSheet extends StatefulWidget {
+  final String userId;
+  final NutritionRepository repository;
+  final List<RecipeSummary> recipes;
+  final bool isDark;
+  final VoidCallback onFoodLogged;
+  final String Function() getSuggestedMealType;
+  final VoidCallback onCreateRecipe;
+  final void Function(RecipeSummary) onLogRecipe;
+  final VoidCallback onRefreshRecipes;
+
+  const _MyFoodsSheet({
+    required this.userId,
+    required this.repository,
+    required this.recipes,
+    required this.isDark,
+    required this.onFoodLogged,
+    required this.getSuggestedMealType,
+    required this.onCreateRecipe,
+    required this.onLogRecipe,
+    required this.onRefreshRecipes,
+  });
+
+  @override
+  State<_MyFoodsSheet> createState() => _MyFoodsSheetState();
+}
+
+class _MyFoodsSheetState extends State<_MyFoodsSheet>
+    with SingleTickerProviderStateMixin {
+  late final TabController _tabController;
+
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 2, vsync: this);
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final teal = widget.isDark ? AppColors.teal : AppColorsLight.teal;
+    final textColor = widget.isDark ? Colors.white : Colors.black87;
+    final bg = widget.isDark
+        ? AppColors.elevated
+        : AppColorsLight.elevated;
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        // Header
+        Padding(
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
+          child: Row(
+            children: [
+              Icon(Icons.bookmark_outline, color: teal, size: 22),
+              const SizedBox(width: 10),
+              Text(
+                'My Foods',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: textColor,
+                ),
+              ),
+              const Spacer(),
+              GestureDetector(
+                onTap: () => Navigator.of(context).pop(),
+                child: Icon(Icons.close, color: textColor.withOpacity(0.5)),
+              ),
+            ],
+          ),
+        ),
+        // Tab bar
+        Container(
+          margin: const EdgeInsets.symmetric(horizontal: 20),
+          decoration: BoxDecoration(
+            color: bg,
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: TabBar(
+            controller: _tabController,
+            indicator: BoxDecoration(
+              color: teal.withOpacity(0.15),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            indicatorSize: TabBarIndicatorSize.tab,
+            labelColor: teal,
+            unselectedLabelColor: textColor.withOpacity(0.5),
+            labelStyle: const TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+            ),
+            dividerHeight: 0,
+            tabs: const [
+              Tab(text: 'Saved Foods'),
+              Tab(text: 'My Recipes'),
+            ],
+          ),
+        ),
+        const SizedBox(height: 8),
+        // Tab content
+        Expanded(
+          child: TabBarView(
+            controller: _tabController,
+            children: [
+              _SavedFoodsFilterSheet(
+                userId: widget.userId,
+                repository: widget.repository,
+                isDark: widget.isDark,
+                onFoodLogged: widget.onFoodLogged,
+                getSuggestedMealType: widget.getSuggestedMealType,
+              ),
+              _RecipesTab(
+                userId: widget.userId,
+                recipes: widget.recipes,
+                onCreateRecipe: widget.onCreateRecipe,
+                onLogRecipe: widget.onLogRecipe,
+                onRefresh: widget.onRefreshRecipes,
+                isDark: widget.isDark,
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }

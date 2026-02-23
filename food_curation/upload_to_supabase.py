@@ -4,11 +4,15 @@ Creates table, bulk inserts ~716K rows, adds indexes, and creates deduped view.
 """
 
 import io
+import os
 import time
 import pandas as pd
 import psycopg2
 
-CONN_STRING = "postgresql://postgres:d2nHU5oLZ1GCz63B@db.hpbzfahijszqmgsybuor.supabase.co:5432/postgres"
+DATABASE_PASSWORD = os.environ.get("DATABASE_PASSWORD")
+if not DATABASE_PASSWORD:
+    raise SystemExit("DATABASE_PASSWORD environment variable is required")
+CONN_STRING = f"postgresql://postgres:{DATABASE_PASSWORD}@db.hpbzfahijszqmgsybuor.supabase.co:5432/postgres"
 PARQUET_PATH = "food_curation/output/food_database_raw.parquet"
 TABLE_NAME = "food_database"
 VIEW_NAME = "food_database_deduped"

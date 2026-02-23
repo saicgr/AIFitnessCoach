@@ -8,7 +8,9 @@ import uuid
 from datetime import datetime
 from typing import Optional
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
+from core.auth import get_current_user
+from core.exceptions import safe_internal_error
 
 from core.supabase_db import get_supabase_db
 from models.workout_gallery import (
@@ -29,6 +31,7 @@ router = APIRouter()
 async def upload_gallery_image(
     user_id: str = Query(..., description="User ID"),
     request: UploadImageRequest = ...,
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Upload a workout recap image to the gallery.
@@ -93,7 +96,7 @@ async def upload_gallery_image(
         raise
     except Exception as e:
         print(f"Error uploading gallery image: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "workout_gallery")
 
 
 @router.get("/{user_id}", response_model=WorkoutGalleryImageList)
@@ -102,6 +105,7 @@ async def list_gallery_images(
     page: int = Query(1, ge=1, description="Page number"),
     page_size: int = Query(20, ge=1, le=50, description="Items per page"),
     template_type: Optional[TemplateType] = Query(None, description="Filter by template type"),
+    current_user: dict = Depends(get_current_user),
 ):
     """
     List gallery images for a user with pagination.
@@ -138,13 +142,14 @@ async def list_gallery_images(
 
     except Exception as e:
         print(f"Error listing gallery images: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "workout_gallery")
 
 
 @router.get("/{user_id}/{image_id}", response_model=WorkoutGalleryImage)
 async def get_gallery_image(
     user_id: str,
     image_id: str,
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Get a specific gallery image by ID.
@@ -169,13 +174,14 @@ async def get_gallery_image(
         raise
     except Exception as e:
         print(f"Error getting gallery image: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "workout_gallery")
 
 
 @router.delete("/{image_id}", response_model=DeleteImageResponse)
 async def delete_gallery_image(
     image_id: str,
     user_id: str = Query(..., description="User ID for authorization"),
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Soft delete a gallery image.
@@ -213,7 +219,7 @@ async def delete_gallery_image(
         raise
     except Exception as e:
         print(f"Error deleting gallery image: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "workout_gallery")
 
 
 @router.post("/{image_id}/share-to-feed", response_model=ShareToFeedResponse)
@@ -221,6 +227,7 @@ async def share_image_to_feed(
     image_id: str,
     user_id: str = Query(..., description="User ID"),
     request: ShareToFeedRequest = ShareToFeedRequest(),
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Share a gallery image to the social feed.
@@ -287,13 +294,14 @@ async def share_image_to_feed(
         raise
     except Exception as e:
         print(f"Error sharing to feed: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "workout_gallery")
 
 
 @router.put("/{image_id}/track-external-share")
 async def track_external_share(
     image_id: str,
     user_id: str = Query(..., description="User ID"),
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Track when a user shares an image to external platforms.
@@ -335,4 +343,4 @@ async def track_external_share(
         raise
     except Exception as e:
         print(f"Error tracking external share: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "workout_gallery")

@@ -10,7 +10,9 @@ This module allows users to:
 The imported data feeds into the strength history system so the AI
 can generate workouts with appropriate weights from day one.
 """
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
+from core.auth import get_current_user
+from core.exceptions import safe_internal_error
 from pydantic import BaseModel, Field, validator
 from typing import List, Optional
 from datetime import datetime, date
@@ -95,7 +97,9 @@ class StrengthSummary(BaseModel):
 # =============================================================================
 
 @router.post("/import", response_model=ImportSummary)
-async def import_workout_history(request: SingleImportRequest):
+async def import_workout_history(request: SingleImportRequest,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Import a single past workout entry.
 
@@ -137,11 +141,13 @@ async def import_workout_history(request: SingleImportRequest):
         raise
     except Exception as e:
         logger.error(f"Error importing workout entry: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "workout_history")
 
 
 @router.post("/import/bulk", response_model=ImportSummary)
-async def bulk_import_workout_history(request: BulkImportRequest):
+async def bulk_import_workout_history(request: BulkImportRequest,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Bulk import multiple workout history entries.
 
@@ -193,7 +199,7 @@ async def bulk_import_workout_history(request: BulkImportRequest):
 
     except Exception as e:
         logger.error(f"Error in bulk import: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "workout_history")
 
 
 @router.get("/user/{user_id}", response_model=List[WorkoutHistoryResponse])
@@ -202,6 +208,7 @@ async def get_user_workout_history(
     exercise_name: Optional[str] = None,
     limit: int = 50,
     offset: int = 0,
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Get user's imported workout history.
@@ -241,11 +248,13 @@ async def get_user_workout_history(
 
     except Exception as e:
         logger.error(f"Error getting workout history: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "workout_history")
 
 
 @router.get("/user/{user_id}/strength-summary", response_model=List[StrengthSummary])
-async def get_strength_summary(user_id: str):
+async def get_strength_summary(user_id: str,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Get aggregated strength summary from all sources.
 
@@ -313,11 +322,13 @@ async def get_strength_summary(user_id: str):
 
     except Exception as e:
         logger.error(f"Error getting strength summary: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "workout_history")
 
 
 @router.delete("/user/{user_id}/entry/{entry_id}")
-async def delete_workout_history_entry(user_id: str, entry_id: str):
+async def delete_workout_history_entry(user_id: str, entry_id: str,
+    current_user: dict = Depends(get_current_user),
+):
     """Delete a specific imported workout history entry."""
     logger.info(f"Deleting workout history entry {entry_id} for user {user_id}")
 
@@ -339,11 +350,13 @@ async def delete_workout_history_entry(user_id: str, entry_id: str):
         raise
     except Exception as e:
         logger.error(f"Error deleting entry: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "workout_history")
 
 
 @router.delete("/user/{user_id}/clear")
-async def clear_workout_history(user_id: str):
+async def clear_workout_history(user_id: str,
+    current_user: dict = Depends(get_current_user),
+):
     """Clear all imported workout history for a user."""
     logger.info(f"Clearing all workout history for user {user_id}")
 
@@ -364,4 +377,4 @@ async def clear_workout_history(user_id: str):
 
     except Exception as e:
         logger.error(f"Error clearing history: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "workout_history")

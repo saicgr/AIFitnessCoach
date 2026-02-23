@@ -9,7 +9,9 @@ import json
 from datetime import date, datetime
 from typing import Optional
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
+from core.auth import get_current_user
+from core.exceptions import safe_internal_error
 from pydantic import BaseModel
 
 from core.supabase_db import get_supabase_db
@@ -37,7 +39,9 @@ class QuickRegenerateResponse(BaseModel):
 
 
 @router.post("/update-program", response_model=UpdateProgramResponse)
-async def update_program(request: UpdateProgramRequest):
+async def update_program(request: UpdateProgramRequest,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Update user's program preferences and delete future incomplete workouts.
 
@@ -202,11 +206,13 @@ async def update_program(request: UpdateProgramRequest):
         raise
     except Exception as e:
         logger.error(f"Failed to update program: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "program")
 
 
 @router.post("/quick-regenerate", response_model=QuickRegenerateResponse)
-async def quick_regenerate_workouts(request: QuickRegenerateRequest):
+async def quick_regenerate_workouts(request: QuickRegenerateRequest,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Quick regenerate workouts using current program settings.
 
@@ -300,4 +306,4 @@ async def quick_regenerate_workouts(request: QuickRegenerateRequest):
         raise
     except Exception as e:
         logger.error(f"Failed to quick regenerate: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "program")

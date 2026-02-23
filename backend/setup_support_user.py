@@ -19,7 +19,9 @@ from datetime import datetime
 import uuid
 
 SUPPORT_EMAIL = "support@fitwiz.us"
-SUPPORT_PASSWORD = "FitWiz@Support2025!"  # Change this after first login
+SUPPORT_PASSWORD = os.environ.get("SUPPORT_PASSWORD")
+if not SUPPORT_PASSWORD:
+    raise SystemExit("SUPPORT_PASSWORD environment variable is required")
 SUPPORT_NAME = "FitWiz Support"
 
 
@@ -174,7 +176,7 @@ def setup_support_user():
 
         print(f"\n📧 Login credentials:")
         print(f"   Email: {SUPPORT_EMAIL}")
-        print(f"   Password: {SUPPORT_PASSWORD}")
+        print(f"   Password: (set via SUPPORT_PASSWORD env var)")
         print(f"\n⚠️  Remember to change the password after first login!")
 
     except Exception as e:

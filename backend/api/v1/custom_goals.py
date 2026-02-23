@@ -9,13 +9,15 @@ Endpoints:
 - DELETE /api/v1/custom-goals/{goal_id} - Delete a goal
 - POST /api/v1/custom-goals/{user_id}/refresh - Refresh stale keywords
 """
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 from typing import List, Optional, Dict, Any
 import json
 
 from core.logger import get_logger
 from core.activity_logger import log_user_activity, log_user_error
+from core.auth import get_current_user
+from core.exceptions import safe_internal_error
 from services.custom_goal_service import get_custom_goal_service
 
 router = APIRouter()
@@ -112,7 +114,7 @@ def _goal_to_response(goal: dict) -> GoalResponse:
 # =============================================================================
 
 @router.post("/", response_model=GoalResponse)
-async def create_custom_goal(request: CreateGoalRequest):
+async def create_custom_goal(request: CreateGoalRequest, current_user: dict = Depends(get_current_user)):
     """
     Create a new custom goal with AI-generated keywords.
 
@@ -123,6 +125,8 @@ async def create_custom_goal(request: CreateGoalRequest):
 
     Keywords are generated ONCE here, not during every workout generation.
     """
+    if str(current_user["id"]) != str(request.user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     logger.info(f"Creating custom goal for user {request.user_id}: {request.goal_text[:50]}...")
 
     try:
@@ -161,16 +165,18 @@ async def create_custom_goal(request: CreateGoalRequest):
             metadata={"goal_text": request.goal_text[:50]},
             status_code=500
         )
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "custom_goals")
 
 
 @router.get("/{user_id}", response_model=List[GoalResponse])
-async def get_user_goals(user_id: str):
+async def get_user_goals(user_id: str, current_user: dict = Depends(get_current_user)):
     """
     Get all active custom goals for a user.
 
     Goals are ordered by priority (highest first).
     """
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     try:
         service = get_custom_goal_service()
         goals = await service.get_active_goals(user_id)
@@ -180,11 +186,11 @@ async def get_user_goals(user_id: str):
 
     except Exception as e:
         logger.error(f"Failed to get goals for user {user_id}: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "custom_goals")
 
 
 @router.get("/{user_id}/keywords", response_model=KeywordsResponse)
-async def get_combined_keywords(user_id: str):
+async def get_combined_keywords(user_id: str, current_user: dict = Depends(get_current_user)):
     """
     Get combined search keywords from all active goals.
 
@@ -193,6 +199,8 @@ async def get_combined_keywords(user_id: str):
 
     Keywords are deduplicated and weighted by priority.
     """
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     try:
         service = get_custom_goal_service()
         keywords = await service.get_combined_keywords(user_id)
@@ -205,11 +213,11 @@ async def get_combined_keywords(user_id: str):
 
     except Exception as e:
         logger.error(f"Failed to get keywords for user {user_id}: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "custom_goals")
 
 
 @router.patch("/{goal_id}", response_model=GoalResponse)
-async def update_goal(goal_id: str, request: UpdateGoalRequest):
+async def update_goal(goal_id: str, request: UpdateGoalRequest, current_user: dict = Depends(get_current_user)):
     """
     Update a custom goal's priority or active status.
 
@@ -235,11 +243,11 @@ async def update_goal(goal_id: str, request: UpdateGoalRequest):
         logger.error(f"Failed to update goal {goal_id}: {e}")
         if "not found" in str(e).lower():
             raise HTTPException(status_code=404, detail="Goal not found")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "custom_goals")
 
 
 @router.delete("/{goal_id}")
-async def delete_goal(goal_id: str):
+async def delete_goal(goal_id: str, current_user: dict = Depends(get_current_user)):
     """
     Delete a custom goal permanently.
 
@@ -259,17 +267,19 @@ async def delete_goal(goal_id: str):
         raise
     except Exception as e:
         logger.error(f"Failed to delete goal {goal_id}: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "custom_goals")
 
 
 @router.post("/{user_id}/refresh")
-async def refresh_keywords(user_id: str):
+async def refresh_keywords(user_id: str, current_user: dict = Depends(get_current_user)):
     """
     Refresh stale keywords for a user's goals.
 
     Keywords are refreshed if they haven't been updated in 30+ days.
     This should be called periodically, not during workout generation.
     """
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     try:
         service = get_custom_goal_service()
         refreshed_count = await service.refresh_stale_keywords(user_id)
@@ -282,4 +292,4 @@ async def refresh_keywords(user_id: str):
 
     except Exception as e:
         logger.error(f"Failed to refresh keywords for user {user_id}: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "custom_goals")

@@ -43,13 +43,15 @@ import json
 import time
 import asyncio
 import boto3
-from fastapi import APIRouter, BackgroundTasks, HTTPException, Query, UploadFile, File, Form, Request
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, UploadFile, File, Form, Request
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, validator
 
 from core.timezone_utils import resolve_timezone, local_date_to_utc_range, get_user_today, get_user_now_iso
 
 from core.rate_limiter import limiter
+from core.auth import get_current_user
+from core.exceptions import safe_internal_error
 
 from core.supabase_db import get_supabase_db
 from core.logger import get_logger
@@ -391,6 +393,7 @@ async def list_food_logs(
     from_date: Optional[str] = Query(default=None, description="Start date (YYYY-MM-DD)"),
     to_date: Optional[str] = Query(default=None, description="End date (YYYY-MM-DD)"),
     meal_type: Optional[str] = Query(default=None, description="Filter by meal type"),
+    current_user: dict = Depends(get_current_user),
 ):
     """
     List food logs for a user.
@@ -400,6 +403,8 @@ async def list_food_logs(
     - to_date: Filter logs until this date
     - meal_type: Filter by meal type (breakfast, lunch, dinner, snack)
     """
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     logger.info(f"Listing food logs for user {user_id}, limit={limit}")
 
     try:
@@ -450,12 +455,14 @@ async def list_food_logs(
 
     except Exception as e:
         logger.error(f"Failed to list food logs: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "nutrition")
 
 
 @router.get("/food-logs/{user_id}/{log_id}", response_model=FoodLogResponse)
-async def get_food_log(user_id: str, log_id: str):
+async def get_food_log(user_id: str, log_id: str, current_user: dict = Depends(get_current_user)):
     """Get a specific food log."""
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     logger.info(f"Getting food log {log_id} for user {user_id}")
 
     try:
@@ -489,11 +496,11 @@ async def get_food_log(user_id: str, log_id: str):
         raise
     except Exception as e:
         logger.error(f"Failed to get food log: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "nutrition")
 
 
 @router.delete("/food-logs/{log_id}")
-async def delete_food_log(log_id: str):
+async def delete_food_log(log_id: str, current_user: dict = Depends(get_current_user)):
     """Delete a food log."""
     logger.info(f"Deleting food log {log_id}")
 
@@ -510,11 +517,11 @@ async def delete_food_log(log_id: str):
         raise
     except Exception as e:
         logger.error(f"Failed to delete food log: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "nutrition")
 
 
 @router.post("/food-logs/{log_id}/copy")
-async def copy_food_log(log_id: str, http_request: Request, meal_type: str = Query(..., description="Target meal type")):
+async def copy_food_log(log_id: str, http_request: Request, meal_type: str = Query(..., description="Target meal type"), current_user: dict = Depends(get_current_user)):
     """Copy an existing food log to a different meal type (or the same)."""
     logger.info(f"Copying food log {log_id} to {meal_type}")
 
@@ -559,7 +566,7 @@ async def copy_food_log(log_id: str, http_request: Request, meal_type: str = Que
         raise
     except Exception as e:
         logger.error(f"Failed to copy food log: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "nutrition")
 
 
 @router.get("/summary/daily/{user_id}", response_model=DailyNutritionResponse)
@@ -567,6 +574,7 @@ async def get_daily_summary(
     user_id: str,
     request: Request,
     date: Optional[str] = Query(default=None, description="Date (YYYY-MM-DD), defaults to today"),
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Get daily nutrition summary for a user.
@@ -626,13 +634,14 @@ async def get_daily_summary(
 
     except Exception as e:
         logger.error(f"Failed to get daily summary: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "nutrition")
 
 
 @router.get("/summary/weekly/{user_id}", response_model=WeeklyNutritionResponse)
 async def get_weekly_summary(
     user_id: str,
     request: Request,
+    current_user: dict = Depends(get_current_user),
     start_date: Optional[str] = Query(default=None, description="Start date (YYYY-MM-DD), defaults to 7 days ago"),
 ):
     """
@@ -682,11 +691,11 @@ async def get_weekly_summary(
 
     except Exception as e:
         logger.error(f"Failed to get weekly summary: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "nutrition")
 
 
 @router.get("/targets/{user_id}", response_model=NutritionTargetsResponse)
-async def get_nutrition_targets(user_id: str):
+async def get_nutrition_targets(user_id: str, current_user: dict = Depends(get_current_user)):
     """Get user's nutrition targets."""
     logger.info(f"Getting nutrition targets for user {user_id}")
 
@@ -704,11 +713,11 @@ async def get_nutrition_targets(user_id: str):
 
     except Exception as e:
         logger.error(f"Failed to get nutrition targets: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "nutrition")
 
 
 @router.put("/targets/{user_id}", response_model=NutritionTargetsResponse)
-async def update_nutrition_targets(user_id: str, request: UpdateNutritionTargetsRequest):
+async def update_nutrition_targets(user_id: str, request: UpdateNutritionTargetsRequest, current_user: dict = Depends(get_current_user)):
     """Update user's nutrition targets."""
     logger.info(f"Updating nutrition targets for user {user_id}")
 
@@ -734,7 +743,7 @@ async def update_nutrition_targets(user_id: str, request: UpdateNutritionTargets
 
     except Exception as e:
         logger.error(f"Failed to update nutrition targets: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "nutrition")
 
 # ============================================
 # Barcode Scanning Endpoints
@@ -742,7 +751,7 @@ async def update_nutrition_targets(user_id: str, request: UpdateNutritionTargets
 
 
 @router.get("/barcode/{barcode}", response_model=BarcodeProductResponse)
-async def lookup_barcode(barcode: str):
+async def lookup_barcode(barcode: str, current_user: dict = Depends(get_current_user)):
     """
     Look up a product by barcode using Open Food Facts API.
 
@@ -793,11 +802,11 @@ async def lookup_barcode(barcode: str):
         raise
     except Exception as e:
         logger.error(f"Failed to lookup barcode {barcode}: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "nutrition")
 
 
 @router.post("/log-barcode", response_model=LogBarcodeResponse)
-async def log_food_from_barcode(request: LogBarcodeRequest, http_request: Request = None):
+async def log_food_from_barcode(request: LogBarcodeRequest, http_request: Request = None, current_user: dict = Depends(get_current_user)):
     """
     Log food to meal diary from barcode scan.
 
@@ -887,7 +896,7 @@ async def log_food_from_barcode(request: LogBarcodeRequest, http_request: Reques
         raise
     except Exception as e:
         logger.error(f"Failed to log barcode {request.barcode}: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "nutrition")
 
 
 # ============================================
@@ -938,6 +947,7 @@ async def search_foods(
         default=None,
         description="Filter by data source: usda, openfoodfacts, cnf, indb"
     ),
+    current_user: dict = Depends(get_current_user),
     data_types: Optional[str] = Query(
         default=None,
         description="Comma-separated food types: Branded,Foundation,SR Legacy"
@@ -1087,7 +1097,7 @@ async def search_foods(
 
 
 @router.get("/food/{fdc_id}", response_model=USDAFoodResponse)
-async def get_usda_food(fdc_id: int):
+async def get_usda_food(fdc_id: int, current_user: dict = Depends(get_current_user)):
     """
     Get complete food details from USDA by FDC ID.
 
@@ -1133,13 +1143,14 @@ async def get_usda_food(fdc_id: int):
                 status_code=503,
                 detail="USDA food lookup is not available. Please configure USDA_API_KEY."
             )
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "nutrition")
 
 
 @router.get("/food-search/branded", response_model=USDASearchResponse)
 async def search_branded_foods(
     query: str = Query(..., min_length=1, max_length=200, description="Food search query"),
     page_size: int = Query(default=25, ge=1, le=50, description="Number of results per page"),
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Search branded/packaged foods.
@@ -1193,13 +1204,14 @@ async def search_branded_foods(
 
     except Exception as e:
         logger.error(f"Failed to search branded foods: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "nutrition")
 
 
 @router.get("/food-search/whole-foods", response_model=USDASearchResponse)
 async def search_whole_foods(
     query: str = Query(..., min_length=1, max_length=200, description="Food search query"),
     page_size: int = Query(default=25, ge=1, le=50, description="Number of results per page"),
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Search whole/basic foods (fruits, vegetables, meats, grains).
@@ -1253,7 +1265,7 @@ async def search_whole_foods(
 
     except Exception as e:
         logger.error(f"Failed to search whole foods: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "nutrition")
 
 
 # ============================================
@@ -1262,12 +1274,14 @@ async def search_whole_foods(
 
 
 @router.post("/log-image", response_model=LogFoodResponse)
+@limiter.limit("10/minute")
 async def log_food_from_image(
     http_request: Request,
     background_tasks: BackgroundTasks,
     user_id: str = Form(...),
     meal_type: str = Form(...),
     image: UploadFile = File(...),
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Log food from an image using Gemini Vision.
@@ -1430,11 +1444,12 @@ async def log_food_from_image(
             metadata={"meal_type": meal_type},
             status_code=500,
         )
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "nutrition")
 
 
 @router.post("/log-text", response_model=LogFoodResponse)
-async def log_food_from_text(request: LogTextRequest, background_tasks: BackgroundTasks, http_request: Request = None):
+@limiter.limit("10/minute")
+async def log_food_from_text(request: LogTextRequest, background_tasks: BackgroundTasks, http_request: Request = None, current_user: dict = Depends(get_current_user)):
     """
     Log food from a text description using Gemini with goal-based analysis.
 
@@ -1645,7 +1660,7 @@ async def log_food_from_text(request: LogTextRequest, background_tasks: Backgrou
             },
             status_code=500,
         )
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "nutrition")
 
 
 # ============================================
@@ -1654,7 +1669,8 @@ async def log_food_from_text(request: LogTextRequest, background_tasks: Backgrou
 
 
 @router.post("/log-direct", response_model=LogFoodResponse)
-async def log_food_direct(request: LogDirectRequest, http_request: Request = None):
+@limiter.limit("10/minute")
+async def log_food_direct(request: LogDirectRequest, http_request: Request = None, current_user: dict = Depends(get_current_user)):
     """
     Log pre-analyzed food directly without AI processing.
 
@@ -1745,7 +1761,7 @@ async def log_food_direct(request: LogDirectRequest, http_request: Request = Non
         )
     except Exception as e:
         logger.error(f"Error logging food directly: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "nutrition")
 
 
 # ============================================
@@ -1755,7 +1771,8 @@ async def log_food_direct(request: LogDirectRequest, http_request: Request = Non
 
 @router.post("/log-text-stream")
 @limiter.limit("10/minute")
-async def log_food_from_text_streaming(request: Request, body: LogTextRequest):
+@limiter.limit("10/minute")
+async def log_food_from_text_streaming(request: Request, body: LogTextRequest, current_user: dict = Depends(get_current_user)):
     """
     Log food from text description with streaming progress updates via SSE.
 
@@ -1974,7 +1991,8 @@ async def log_food_from_text_streaming(request: Request, body: LogTextRequest):
 
 @router.post("/analyze-text-stream")
 @limiter.limit("10/minute")
-async def analyze_food_from_text_streaming(request: Request, body: LogTextRequest):
+@limiter.limit("10/minute")
+async def analyze_food_from_text_streaming(request: Request, body: LogTextRequest, current_user: dict = Depends(get_current_user)):
     """
     Analyze food from text description with streaming progress updates via SSE.
 
@@ -2200,6 +2218,7 @@ async def log_food_from_image_streaming(
     user_id: str = Form(...),
     meal_type: str = Form(...),
     image: UploadFile = File(...),
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Log food from an image with streaming progress updates via SSE.
@@ -2368,6 +2387,7 @@ async def analyze_food_from_image_streaming(
     user_id: str = Form(...),
     meal_type: str = Form(...),
     image: UploadFile = File(...),
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Analyze food from an image with streaming progress updates via SSE.
@@ -2561,7 +2581,7 @@ async def analyze_food_from_image_streaming(
 
 
 @router.post("/saved-foods", response_model=SavedFood)
-async def save_food(user_id: str = Form(...), request: SaveFoodFromLogRequest = None):
+async def save_food(user_id: str = Form(...), request: SaveFoodFromLogRequest = None, current_user: dict = Depends(get_current_user)):
     """
     Save a meal as a favorite recipe.
 
@@ -2677,11 +2697,11 @@ async def save_food(user_id: str = Form(...), request: SaveFoodFromLogRequest = 
         raise
     except Exception as e:
         logger.error(f"Failed to save food: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "nutrition")
 
 
 @router.post("/saved-foods/save", response_model=SavedFood)
-async def save_food_json(request: SaveFoodFromLogRequest, user_id: str = Query(...)):
+async def save_food_json(request: SaveFoodFromLogRequest, user_id: str = Query(...), current_user: dict = Depends(get_current_user)):
     """
     Save a meal as a favorite recipe (JSON body version).
 
@@ -2796,11 +2816,13 @@ async def save_food_json(request: SaveFoodFromLogRequest, user_id: str = Query(.
         raise
     except Exception as e:
         logger.error(f"Failed to save food: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "nutrition")
 
 
 @router.get("/saved-foods", response_model=SavedFoodsResponse)
+@limiter.limit("10/minute")
 async def list_saved_foods(
+    request: Request,
     user_id: str = Query(...),
     limit: int = Query(default=50, le=100),
     offset: int = Query(default=0, ge=0),
@@ -2808,6 +2830,7 @@ async def list_saved_foods(
     search: Optional[str] = Query(default=None, max_length=200, description="Search saved foods by name"),
     sort_by: Optional[str] = Query(default=None, description="Sort field: times_logged, total_protein_g, total_calories, total_carbs_g, total_fat_g, name"),
     sort_order: Optional[str] = Query(default="desc", description="Sort order: asc or desc"),
+    current_user: dict = Depends(get_current_user),
     min_protein_g: Optional[float] = Query(default=None, ge=0, description="Minimum protein in grams"),
     max_calories: Optional[int] = Query(default=None, ge=0, description="Maximum calories"),
     tag: Optional[str] = Query(default=None, max_length=50, description="Filter by tag"),
@@ -2909,11 +2932,11 @@ async def list_saved_foods(
 
     except Exception as e:
         logger.error(f"Failed to list saved foods: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "nutrition")
 
 
 @router.get("/saved-foods/{saved_food_id}", response_model=SavedFood)
-async def get_saved_food(saved_food_id: str, user_id: str = Query(...)):
+async def get_saved_food(saved_food_id: str, user_id: str = Query(...), current_user: dict = Depends(get_current_user)):
     """
     Get a specific saved food.
     """
@@ -2963,11 +2986,11 @@ async def get_saved_food(saved_food_id: str, user_id: str = Query(...)):
         raise
     except Exception as e:
         logger.error(f"Failed to get saved food: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "nutrition")
 
 
 @router.delete("/saved-foods/{saved_food_id}")
-async def delete_saved_food(saved_food_id: str, user_id: str = Query(...)):
+async def delete_saved_food(saved_food_id: str, user_id: str = Query(...), current_user: dict = Depends(get_current_user)):
     """
     Delete a saved food (soft delete).
     """
@@ -2999,7 +3022,7 @@ async def delete_saved_food(saved_food_id: str, user_id: str = Query(...)):
         raise
     except Exception as e:
         logger.error(f"Failed to delete saved food: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "nutrition")
 
 
 @router.post("/saved-foods/{saved_food_id}/log", response_model=LogFoodResponse)
@@ -3008,6 +3031,7 @@ async def relog_saved_food(
     request: RelogSavedFoodRequest,
     http_request: Request = None,
     user_id: str = Query(...),
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Re-log a saved food to today's meal diary.
@@ -3084,13 +3108,14 @@ async def relog_saved_food(
         raise
     except Exception as e:
         logger.error(f"Failed to re-log saved food: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "nutrition")
 
 
 @router.post("/saved-foods/search", response_model=SimilarFoodsResponse)
 async def search_saved_foods(
     request: SearchSavedFoodsRequest,
     user_id: str = Query(...),
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Search saved foods using semantic search.
@@ -3134,7 +3159,7 @@ async def search_saved_foods(
         raise
     except Exception as e:
         logger.error(f"Failed to search saved foods: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "nutrition")
 
 
 # ============================================
@@ -3143,7 +3168,7 @@ async def search_saved_foods(
 
 
 @router.post("/recipes", response_model=Recipe)
-async def create_recipe(request: RecipeCreate, user_id: str = Query(...)):
+async def create_recipe(request: RecipeCreate, user_id: str = Query(...), current_user: dict = Depends(get_current_user)):
     """
     Create a new recipe with ingredients.
 
@@ -3286,12 +3311,13 @@ async def create_recipe(request: RecipeCreate, user_id: str = Query(...)):
         raise
     except Exception as e:
         logger.error(f"Failed to create recipe: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "nutrition")
 
 
 @router.get("/recipes", response_model=RecipesResponse)
 async def list_recipes(
     user_id: str = Query(...),
+    current_user: dict = Depends(get_current_user),
     limit: int = Query(default=50, le=100),
     offset: int = Query(default=0, ge=0),
     category: Optional[str] = Query(default=None),
@@ -3366,11 +3392,11 @@ async def list_recipes(
 
     except Exception as e:
         logger.error(f"Failed to list recipes: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "nutrition")
 
 
 @router.get("/recipes/{recipe_id}", response_model=Recipe)
-async def get_recipe(recipe_id: str, user_id: str = Query(...)):
+async def get_recipe(recipe_id: str, user_id: str = Query(...), current_user: dict = Depends(get_current_user)):
     """
     Get a specific recipe with all ingredients.
     """
@@ -3472,11 +3498,11 @@ async def get_recipe(recipe_id: str, user_id: str = Query(...)):
         raise
     except Exception as e:
         logger.error(f"Failed to get recipe: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "nutrition")
 
 
 @router.delete("/recipes/{recipe_id}")
-async def delete_recipe(recipe_id: str, user_id: str = Query(...)):
+async def delete_recipe(recipe_id: str, user_id: str = Query(...), current_user: dict = Depends(get_current_user)):
     """
     Delete a recipe (soft delete).
     """
@@ -3500,7 +3526,7 @@ async def delete_recipe(recipe_id: str, user_id: str = Query(...)):
         raise
     except Exception as e:
         logger.error(f"Failed to delete recipe: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "nutrition")
 
 
 @router.post("/recipes/{recipe_id}/log", response_model=LogRecipeResponse)
@@ -3509,6 +3535,7 @@ async def log_recipe(
     request: LogRecipeRequest,
     http_request: Request = None,
     user_id: str = Query(...),
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Log a recipe as a meal (like re-logging a saved food).
@@ -3600,7 +3627,7 @@ async def log_recipe(
         raise
     except Exception as e:
         logger.error(f"Failed to log recipe: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "nutrition")
 
 
 @router.post("/recipes/{recipe_id}/ingredients", response_model=RecipeIngredient)
@@ -3608,6 +3635,7 @@ async def add_ingredient(
     recipe_id: str,
     request: RecipeIngredientCreate,
     user_id: str = Query(...),
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Add an ingredient to a recipe.
@@ -3696,13 +3724,14 @@ async def add_ingredient(
         raise
     except Exception as e:
         logger.error(f"Failed to add ingredient: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "nutrition")
 
 
 @router.delete("/recipes/{recipe_id}/ingredients/{ingredient_id}")
 async def remove_ingredient(
     recipe_id: str,
     ingredient_id: str,
+    current_user: dict = Depends(get_current_user),
     user_id: str = Query(...),
 ):
     """
@@ -3741,7 +3770,7 @@ async def remove_ingredient(
         raise
     except Exception as e:
         logger.error(f"Failed to remove ingredient: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "nutrition")
 
 
 # ============================================
@@ -3759,6 +3788,7 @@ async def get_daily_micronutrients(
     request: Request,
     user_id: str,
     date: Optional[str] = Query(default=None, description="Date (YYYY-MM-DD), defaults to today"),
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Get daily micronutrient summary with progress towards RDA goals.
@@ -3876,7 +3906,7 @@ async def get_daily_micronutrients(
 
     except Exception as e:
         logger.error(f"Failed to get daily micronutrients: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "nutrition")
 
 
 @router.get("/micronutrients/{user_id}/contributors/{nutrient}", response_model=NutrientContributorsResponse)
@@ -3886,6 +3916,7 @@ async def get_nutrient_contributors(
     nutrient: str,
     date: Optional[str] = Query(default=None, description="Date (YYYY-MM-DD), defaults to today"),
     limit: int = Query(default=10, le=20),
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Get top food contributors for a specific nutrient.
@@ -3961,11 +3992,11 @@ async def get_nutrient_contributors(
         raise
     except Exception as e:
         logger.error(f"Failed to get nutrient contributors: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "nutrition")
 
 
 @router.get("/rdas", response_model=List[NutrientRDA])
-async def get_all_rdas():
+async def get_all_rdas(current_user: dict = Depends(get_current_user)):
     """
     Get all RDA (Reference Daily Allowance) values for micronutrients.
 
@@ -4001,11 +4032,11 @@ async def get_all_rdas():
 
     except Exception as e:
         logger.error(f"Failed to get RDAs: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "nutrition")
 
 
 @router.put("/pinned-nutrients/{user_id}")
-async def update_pinned_nutrients(user_id: str, request: PinnedNutrientsUpdate):
+async def update_pinned_nutrients(user_id: str, request: PinnedNutrientsUpdate, current_user: dict = Depends(get_current_user)):
     """
     Update user's pinned micronutrients for the dashboard.
 
@@ -4033,7 +4064,7 @@ async def update_pinned_nutrients(user_id: str, request: PinnedNutrientsUpdate):
         raise
     except Exception as e:
         logger.error(f"Failed to update pinned nutrients: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "nutrition")
 
 
 # ==================== Nutrition Preferences ====================
@@ -4118,7 +4149,7 @@ class DynamicTargetsResponse(BaseModel):
 
 
 @router.get("/preferences/{user_id}", response_model=NutritionPreferencesResponse)
-async def get_nutrition_preferences(user_id: str):
+async def get_nutrition_preferences(user_id: str, current_user: dict = Depends(get_current_user)):
     """
     Get user's nutrition preferences.
 
@@ -4183,11 +4214,11 @@ async def get_nutrition_preferences(user_id: str):
 
     except Exception as e:
         logger.error(f"Failed to get nutrition preferences: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "nutrition")
 
 
 @router.put("/preferences/{user_id}", response_model=NutritionPreferencesResponse)
-async def update_nutrition_preferences(user_id: str, request: NutritionPreferencesUpdate):
+async def update_nutrition_preferences(user_id: str, request: NutritionPreferencesUpdate, current_user: dict = Depends(get_current_user)):
     """
     Update user's nutrition preferences.
 
@@ -4236,13 +4267,14 @@ async def update_nutrition_preferences(user_id: str, request: NutritionPreferenc
         raise
     except Exception as e:
         logger.error(f"Failed to update nutrition preferences: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "nutrition")
 
 
 @router.get("/dynamic-targets/{user_id}", response_model=DynamicTargetsResponse)
 async def get_dynamic_nutrition_targets(
     user_id: str,
     date: Optional[str] = Query(None, description="Date in YYYY-MM-DD format, defaults to today"),
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Get dynamic nutrition targets for a specific date.
@@ -4374,7 +4406,7 @@ async def get_dynamic_nutrition_targets(
 
     except Exception as e:
         logger.error(f"Failed to get dynamic nutrition targets: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "nutrition")
 
 
 # ============================================================================
@@ -4414,7 +4446,7 @@ class WeightTrendResponse(BaseModel):
 
 
 @router.post("/weight-logs", response_model=WeightLogResponse)
-async def create_weight_log(request: WeightLogCreate):
+async def create_weight_log(request: WeightLogCreate, current_user: dict = Depends(get_current_user)):
     """
     Log a weight entry for a user.
 
@@ -4456,12 +4488,13 @@ async def create_weight_log(request: WeightLogCreate):
         raise
     except Exception as e:
         logger.error(f"Failed to create weight log: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "nutrition")
 
 
 @router.get("/weight-logs/{user_id}", response_model=List[WeightLogResponse])
 async def get_weight_logs(
     user_id: str,
+    current_user: dict = Depends(get_current_user),
     limit: int = Query(30, description="Maximum number of logs to return"),
     from_date: Optional[str] = Query(None, description="Start date (YYYY-MM-DD)"),
     to_date: Optional[str] = Query(None, description="End date (YYYY-MM-DD)"),
@@ -4505,12 +4538,13 @@ async def get_weight_logs(
 
     except Exception as e:
         logger.error(f"Failed to get weight logs: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "nutrition")
 
 
 @router.delete("/weight-logs/{log_id}")
 async def delete_weight_log(
     log_id: str,
+    current_user: dict = Depends(get_current_user),
     user_id: str = Query(..., description="User ID for verification"),
 ):
     """
@@ -4531,7 +4565,7 @@ async def delete_weight_log(
 
     except Exception as e:
         logger.error(f"Failed to delete weight log: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "nutrition")
 
 
 @router.get("/weight-logs/{user_id}/trend", response_model=WeightTrendResponse)
@@ -4539,6 +4573,7 @@ async def get_weight_trend(
     request: Request,
     user_id: str,
     days: int = Query(14, description="Number of days to analyze"),
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Calculate weight trend from recent weight logs.
@@ -4610,7 +4645,7 @@ async def get_weight_trend(
 
     except Exception as e:
         logger.error(f"Failed to calculate weight trend: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "nutrition")
 
 
 # ============================================================================
@@ -4670,7 +4705,7 @@ class NutritionOnboardingRequest(BaseModel):
 
 
 @router.post("/onboarding/complete", response_model=NutritionPreferencesResponse)
-async def complete_nutrition_onboarding(request: NutritionOnboardingRequest):
+async def complete_nutrition_onboarding(request: NutritionOnboardingRequest, current_user: dict = Depends(get_current_user)):
     """
     Complete nutrition onboarding and calculate initial targets.
 
@@ -4860,7 +4895,7 @@ async def complete_nutrition_onboarding(request: NutritionOnboardingRequest):
         raise
     except Exception as e:
         logger.error(f"Failed to complete nutrition onboarding: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "nutrition")
 
 
 class SkipOnboardingRequest(BaseModel):
@@ -4869,7 +4904,7 @@ class SkipOnboardingRequest(BaseModel):
 
 
 @router.post("/onboarding/skip")
-async def skip_nutrition_onboarding(request: SkipOnboardingRequest):
+async def skip_nutrition_onboarding(request: SkipOnboardingRequest, current_user: dict = Depends(get_current_user)):
     """
     Skip nutrition onboarding permanently.
 
@@ -4921,11 +4956,11 @@ async def skip_nutrition_onboarding(request: SkipOnboardingRequest):
 
     except Exception as e:
         logger.error(f"Failed to skip nutrition onboarding: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "nutrition")
 
 
 @router.post("/{user_id}/reset-onboarding")
-async def reset_nutrition_onboarding(user_id: str):
+async def reset_nutrition_onboarding(user_id: str, current_user: dict = Depends(get_current_user)):
     """
     Reset nutrition onboarding so user can redo it.
 
@@ -4951,11 +4986,11 @@ async def reset_nutrition_onboarding(user_id: str):
 
     except Exception as e:
         logger.error(f"Failed to reset nutrition onboarding: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "nutrition")
 
 
 @router.post("/preferences/{user_id}/recalculate", response_model=NutritionPreferencesResponse)
-async def recalculate_nutrition_targets(user_id: str):
+async def recalculate_nutrition_targets(user_id: str, current_user: dict = Depends(get_current_user)):
     """
     Recalculate nutrition targets based on current user data.
 
@@ -5100,7 +5135,7 @@ async def recalculate_nutrition_targets(user_id: str):
         raise
     except Exception as e:
         logger.error(f"Failed to recalculate nutrition targets: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "nutrition")
 
 
 # ============================================================================
@@ -5126,7 +5161,7 @@ class NutritionStreakResponse(BaseModel):
 
 
 @router.get("/streak/{user_id}", response_model=NutritionStreakResponse)
-async def get_nutrition_streak(user_id: str):
+async def get_nutrition_streak(user_id: str, current_user: dict = Depends(get_current_user)):
     """
     Get nutrition streak for a user.
     """
@@ -5172,11 +5207,11 @@ async def get_nutrition_streak(user_id: str):
 
     except Exception as e:
         logger.error(f"Failed to get nutrition streak: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "nutrition")
 
 
 @router.post("/streak/{user_id}/freeze", response_model=NutritionStreakResponse)
-async def use_streak_freeze(request: Request, user_id: str):
+async def use_streak_freeze(request: Request, user_id: str, current_user: dict = Depends(get_current_user)):
     """
     Use a streak freeze to preserve current streak.
     """
@@ -5218,7 +5253,7 @@ async def use_streak_freeze(request: Request, user_id: str):
         raise
     except Exception as e:
         logger.error(f"Failed to use streak freeze: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "nutrition")
 
 
 # ============================================================================
@@ -5244,7 +5279,7 @@ class AdaptiveCalculationResponse(BaseModel):
 
 
 @router.get("/adaptive/{user_id}", response_model=Optional[AdaptiveCalculationResponse])
-async def get_adaptive_calculation(user_id: str):
+async def get_adaptive_calculation(user_id: str, current_user: dict = Depends(get_current_user)):
     """
     Get the latest adaptive TDEE calculation for a user.
     """
@@ -5283,7 +5318,7 @@ async def get_adaptive_calculation(user_id: str):
 
     except Exception as e:
         logger.error(f"Failed to get adaptive calculation: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "nutrition")
 
 
 @router.post("/adaptive/{user_id}/calculate", response_model=AdaptiveCalculationResponse)
@@ -5291,6 +5326,7 @@ async def calculate_adaptive_tdee(
     request: Request,
     user_id: str,
     days: int = Query(14, description="Number of days to analyze"),
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Calculate adaptive TDEE based on food intake and weight changes.
@@ -5479,7 +5515,7 @@ async def calculate_adaptive_tdee(
 
     except Exception as e:
         logger.error(f"Failed to calculate adaptive TDEE: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "nutrition")
 
 
 # ============================================================================
@@ -5511,6 +5547,7 @@ async def respond_to_recommendation(
     recommendation_id: str,
     user_id: str,
     accepted: bool,
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Respond to a weekly nutrition recommendation (accept or decline).
@@ -5561,11 +5598,11 @@ async def respond_to_recommendation(
         raise
     except Exception as e:
         logger.error(f"Failed to respond to recommendation: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "nutrition")
 
 
 @router.get("/recommendations/{user_id}", response_model=Optional[WeeklyRecommendationResponse])
-async def get_weekly_recommendation(user_id: str):
+async def get_weekly_recommendation(user_id: str, current_user: dict = Depends(get_current_user)):
     """
     Get the latest pending weekly nutrition recommendation for a user.
     """
@@ -5607,7 +5644,7 @@ async def get_weekly_recommendation(user_id: str):
 
     except Exception as e:
         logger.error(f"Failed to get weekly recommendation: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "nutrition")
 
 
 class WeeklySummaryResponse(BaseModel):
@@ -5622,7 +5659,7 @@ class WeeklySummaryResponse(BaseModel):
 
 
 @router.get("/weekly-summary/{user_id}", response_model=WeeklySummaryResponse)
-async def get_weekly_summary(request: Request, user_id: str):
+async def get_weekly_summary(request: Request, user_id: str, current_user: dict = Depends(get_current_user)):
     """
     Get the weekly nutrition summary for a user (last 7 days).
     """
@@ -5694,11 +5731,11 @@ async def get_weekly_summary(request: Request, user_id: str):
 
     except Exception as e:
         logger.error(f"Failed to get weekly summary: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "nutrition")
 
 
 @router.post("/recommendations/{user_id}/generate", response_model=WeeklyRecommendationResponse)
-async def generate_weekly_recommendation(request: Request, user_id: str):
+async def generate_weekly_recommendation(request: Request, user_id: str, current_user: dict = Depends(get_current_user)):
     """
     Generate a new weekly nutrition recommendation based on adaptive TDEE calculation.
     """
@@ -5827,7 +5864,7 @@ async def generate_weekly_recommendation(request: Request, user_id: str):
 
     except Exception as e:
         logger.error(f"Failed to generate weekly recommendation: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "nutrition")
 
 
 # ============================================================================
@@ -5884,6 +5921,7 @@ class CookingConversionsListResponse(BaseModel):
 async def list_cooking_conversions(
     category: Optional[str] = Query(None, description="Filter by food category (e.g., grains, meats, vegetables)"),
     search: Optional[str] = Query(None, description="Search for specific foods"),
+    current_user: dict = Depends(get_current_user),
 ):
     """
     List all available cooking conversion factors.
@@ -5913,11 +5951,11 @@ async def list_cooking_conversions(
 
     except Exception as e:
         logger.error(f"Failed to list cooking conversions: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "nutrition")
 
 
 @router.get("/cooking-conversions/{food_category}", response_model=List[CookingConversionFactorResponse])
-async def get_cooking_conversions_by_category(food_category: str):
+async def get_cooking_conversions_by_category(food_category: str, current_user: dict = Depends(get_current_user)):
     """
     Get cooking conversion factors for a specific food category.
 
@@ -5940,11 +5978,11 @@ async def get_cooking_conversions_by_category(food_category: str):
         raise
     except Exception as e:
         logger.error(f"Failed to get cooking conversions by category: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "nutrition")
 
 
 @router.post("/convert-weight", response_model=ConvertWeightResponse)
-async def convert_food_weight(request: ConvertWeightRequest):
+async def convert_food_weight(request: ConvertWeightRequest, current_user: dict = Depends(get_current_user)):
     """
     Convert food weight between raw and cooked states.
 
@@ -5998,7 +6036,7 @@ async def convert_food_weight(request: ConvertWeightRequest):
         raise
     except Exception as e:
         logger.error(f"Failed to convert food weight: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "nutrition")
 
 
 # ============================================================================
@@ -6086,7 +6124,7 @@ class SelectRecommendationRequest(BaseModel):
 
 
 @router.get("/tdee/{user_id}/detailed", response_model=DetailedTDEEResponse)
-async def get_detailed_tdee(request: Request, user_id: str, days: int = Query(default=14, ge=7, le=30)):
+async def get_detailed_tdee(request: Request, user_id: str, days: int = Query(default=14, ge=7, le=30), current_user: dict = Depends(get_current_user)):
     """
     Get TDEE with confidence intervals, weight trend, and metabolic adaptation status.
 
@@ -6258,11 +6296,11 @@ async def get_detailed_tdee(request: Request, user_id: str, days: int = Query(de
         raise
     except Exception as e:
         logger.error(f"Failed to get detailed TDEE: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "nutrition")
 
 
 @router.get("/adherence/{user_id}/summary", response_model=AdherenceSummaryResponse)
-async def get_adherence_summary(request: Request, user_id: str, weeks: int = Query(default=4, ge=1, le=12)):
+async def get_adherence_summary(request: Request, user_id: str, weeks: int = Query(default=4, ge=1, le=12), current_user: dict = Depends(get_current_user)):
     """
     Get adherence summary with sustainability score.
 
@@ -6365,11 +6403,11 @@ async def get_adherence_summary(request: Request, user_id: str, weeks: int = Que
         raise
     except Exception as e:
         logger.error(f"Failed to get adherence summary: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "nutrition")
 
 
 @router.get("/recommendations/{user_id}/options", response_model=RecommendationOptionsResponse)
-async def get_recommendation_options(user_id: str):
+async def get_recommendation_options(user_id: str, current_user: dict = Depends(get_current_user)):
     """
     Get multiple recommendation options for user to choose from.
 
@@ -6473,7 +6511,7 @@ async def get_recommendation_options(user_id: str):
         raise
     except Exception as e:
         logger.error(f"Failed to get recommendation options: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "nutrition")
 
 
 def _generate_recommendation_options(
@@ -6580,7 +6618,7 @@ def _generate_recommendation_options(
 
 
 @router.post("/recommendations/{user_id}/select")
-async def select_recommendation(user_id: str, request: SelectRecommendationRequest):
+async def select_recommendation(user_id: str, request: SelectRecommendationRequest, current_user: dict = Depends(get_current_user)):
     """
     User selects a recommendation option to apply.
 
@@ -6653,7 +6691,7 @@ async def select_recommendation(user_id: str, request: SelectRecommendationReque
         raise
     except Exception as e:
         logger.error(f"Failed to select recommendation: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "nutrition")
 
 
 # ============================================
@@ -6685,7 +6723,7 @@ class FoodReportResponse(BaseModel):
 
 
 @router.post("/food-report", response_model=FoodReportResponse)
-async def report_food(request: FoodReportRequest):
+async def report_food(request: FoodReportRequest, current_user: dict = Depends(get_current_user)):
     """
     Report incorrect food nutrition data or submit user corrections.
 
@@ -6733,4 +6771,4 @@ async def report_food(request: FoodReportRequest):
 
     except Exception as e:
         logger.error(f"Failed to create food report: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "nutrition")

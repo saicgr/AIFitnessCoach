@@ -8,6 +8,7 @@ import 'package:intl/intl.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:fl_chart/fl_chart.dart';
 import '../../core/constants/app_colors.dart';
+import '../../widgets/app_loading.dart';
 import '../../widgets/glass_back_button.dart';
 import '../../core/theme/accent_color_provider.dart';
 import '../../data/models/progress_photos.dart';
@@ -476,7 +477,7 @@ class _PhotosTabState extends ConsumerState<_PhotosTab>
     super.build(context); // Required by AutomaticKeepAliveClientMixin
 
     if (widget.userId == null) {
-      return const Center(child: CircularProgressIndicator());
+      return AppLoading.fullScreen();
     }
 
     final state = ref.watch(progressPhotosNotifierProvider(widget.userId!));
@@ -1457,7 +1458,7 @@ class _StrengthTab extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     if (userId == null) {
-      return const Center(child: CircularProgressIndicator());
+      return AppLoading.fullScreen();
     }
 
     return RefreshIndicator(
@@ -2840,7 +2841,7 @@ class _MoodTabState extends ConsumerState<_MoodTab> {
     final teal = isDark ? AppColors.teal : AppColorsLight.teal;
 
     if (state.isLoading) {
-      return const Center(child: CircularProgressIndicator());
+      return AppLoading.fullScreen();
     }
 
     return SingleChildScrollView(

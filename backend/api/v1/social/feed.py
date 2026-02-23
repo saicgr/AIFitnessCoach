@@ -14,7 +14,9 @@ import uuid
 from datetime import datetime, timezone
 from typing import Optional
 
-from fastapi import APIRouter, BackgroundTasks, HTTPException, Query, UploadFile, File, Form
+from fastapi import APIRouter, Depends, BackgroundTasks, HTTPException, Query, UploadFile, File, Form
+from core.auth import get_current_user
+from core.exceptions import safe_internal_error
 
 from core.config import get_settings
 from models.social import (
@@ -54,6 +56,7 @@ async def get_presigned_upload_url(
     user_id: str = Query(..., description="User ID requesting upload"),
     file_extension: str = Query("jpg", description="File extension"),
     content_type: str = Query("image/jpeg", description="Content type"),
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Get a pre-signed URL for direct image upload to S3.
@@ -92,13 +95,14 @@ async def get_presigned_upload_url(
         }
     except Exception as e:
         print(f"[Social] Error generating presigned URL: {e}")
-        raise HTTPException(status_code=500, detail=f"Failed to generate upload URL: {str(e)}")
+        raise safe_internal_error(e, "feed_presign_url")
 
 
 @router.post("/images/upload")
 async def upload_post_image(
     user_id: str = Form(...),
     file: UploadFile = File(...),
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Upload an image for a social post to S3.
@@ -154,10 +158,7 @@ async def upload_post_image(
 
     except Exception as e:
         print(f"[Social] Error uploading image to S3: {e}")
-        raise HTTPException(
-            status_code=500,
-            detail=f"Failed to upload image: {str(e)}"
-        )
+        raise safe_internal_error(e, "feed_image_upload")
 
 
 @router.get("/feed/{user_id}")
@@ -166,6 +167,7 @@ async def get_activity_feed(
     page: int = 1,
     page_size: int = 20,
     activity_type: Optional[ActivityType] = None,
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Get activity feed for a user (their activities + friends' activities).
@@ -183,7 +185,7 @@ async def get_activity_feed(
         supabase = get_supabase_client()
     except Exception as e:
         print(f"[Social] Error getting supabase client: {e}")
-        raise HTTPException(status_code=500, detail=f"Database connection error: {str(e)}")
+        raise safe_internal_error(e, "feed_db_connection")
 
     offset = (page - 1) * page_size
 
@@ -197,7 +199,7 @@ async def get_activity_feed(
         }).execute()
     except Exception as e:
         print(f"[Social] Error fetching feed: {e}")
-        raise HTTPException(status_code=500, detail=f"Failed to fetch activity feed: {str(e)}")
+        raise safe_internal_error(e, "feed_fetch")
 
     # Extract total_count from the window function (same on every row)
     total_count = 0
@@ -274,6 +276,7 @@ async def create_activity(
     user_id: str,
     activity: ActivityFeedItemCreate,
     background_tasks: BackgroundTasks,
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Create a new activity feed item.
@@ -321,6 +324,7 @@ async def delete_activity(
     user_id: str,
     activity_id: str,
     background_tasks: BackgroundTasks,
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Delete an activity (user can only delete their own).
@@ -353,6 +357,7 @@ async def delete_activity(
 async def pin_activity(
     user_id: str,
     activity_id: str,
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Pin an activity to the top of the feed (admin only).
@@ -400,6 +405,7 @@ async def pin_activity(
 async def unpin_activity(
     user_id: str,
     activity_id: str,
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Unpin an activity from the top of the feed (admin only).

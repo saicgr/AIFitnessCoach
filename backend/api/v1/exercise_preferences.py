@@ -13,7 +13,7 @@ want to keep in every workout regardless of the weekly variation setting.
 
 Avoided exercises/muscles are excluded from AI-generated workouts entirely.
 """
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query, Depends
 from pydantic import BaseModel, Field, field_validator
 from typing import List, Optional
 from datetime import datetime, date, timedelta
@@ -21,6 +21,8 @@ import logging
 import json
 
 from core.supabase_db import get_supabase_db
+from core.auth import get_current_user
+from core.exceptions import safe_internal_error
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/exercise-preferences", tags=["Exercise Preferences"])
@@ -194,13 +196,15 @@ MUSCLE_GROUPS = [
 # =============================================================================
 
 @router.get("/staples/{user_id}", response_model=List[StapleExerciseResponse])
-async def get_user_staples(user_id: str):
+async def get_user_staples(user_id: str, current_user: dict = Depends(get_current_user)):
     """
     Get all staple exercises for a user.
 
     Staple exercises are guaranteed to be included in generated workouts
     and are never rotated out during weekly variation.
     """
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     logger.info(f"Getting staple exercises for user {user_id}")
 
     try:
@@ -247,11 +251,11 @@ async def get_user_staples(user_id: str):
 
     except Exception as e:
         logger.error(f"Error getting staple exercises: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "exercise_preferences")
 
 
 @router.post("/staples", response_model=StapleExerciseResponse)
-async def add_staple_exercise(request: StapleExerciseCreate):
+async def add_staple_exercise(request: StapleExerciseCreate, current_user: dict = Depends(get_current_user)):
     """
     Add an exercise to user's staples.
 
@@ -260,6 +264,8 @@ async def add_staple_exercise(request: StapleExerciseCreate):
     - Never appear in the "avoid recently used" list
     - Be visually marked in the workout UI
     """
+    if str(current_user["id"]) != str(request.user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     logger.info(f"Adding staple exercise '{request.exercise_name}' for user {request.user_id}")
 
     try:
@@ -406,16 +412,18 @@ async def add_staple_exercise(request: StapleExerciseCreate):
         raise
     except Exception as e:
         logger.error(f"Error adding staple exercise: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "exercise_preferences")
 
 
 @router.delete("/staples/{user_id}/{staple_id}")
-async def remove_staple_exercise(user_id: str, staple_id: str):
+async def remove_staple_exercise(user_id: str, staple_id: str, current_user: dict = Depends(get_current_user)):
     """
     Remove an exercise from user's staples.
 
     The exercise will now be subject to normal weekly variation rules.
     """
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     logger.info(f"Removing staple exercise {staple_id} for user {user_id}")
 
     try:
@@ -433,7 +441,7 @@ async def remove_staple_exercise(user_id: str, staple_id: str):
         raise
     except Exception as e:
         logger.error(f"Error removing staple exercise: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "exercise_preferences")
 
 
 # =============================================================================
@@ -441,7 +449,7 @@ async def remove_staple_exercise(user_id: str, staple_id: str):
 # =============================================================================
 
 @router.get("/variation/{user_id}", response_model=VariationPreferenceResponse)
-async def get_variation_preference(user_id: str):
+async def get_variation_preference(user_id: str, current_user: dict = Depends(get_current_user)):
     """
     Get user's exercise variation percentage setting.
 
@@ -449,6 +457,8 @@ async def get_variation_preference(user_id: str):
     30% = Default - rotate about 1/3 of exercises (balanced)
     100% = Maximum variety - new exercises every week
     """
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     logger.info(f"Getting variation preference for user {user_id}")
 
     try:
@@ -482,11 +492,11 @@ async def get_variation_preference(user_id: str):
         raise
     except Exception as e:
         logger.error(f"Error getting variation preference: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "exercise_preferences")
 
 
 @router.put("/variation", response_model=VariationPreferenceResponse)
-async def update_variation_preference(request: VariationPreferenceUpdate):
+async def update_variation_preference(request: VariationPreferenceUpdate, current_user: dict = Depends(get_current_user)):
     """
     Update user's exercise variation percentage.
 
@@ -496,6 +506,8 @@ async def update_variation_preference(request: VariationPreferenceUpdate):
 
     Note: Staple exercises are never affected by this setting.
     """
+    if str(current_user["id"]) != str(request.user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     logger.info(f"Updating variation preference to {request.variation_percentage}% for user {request.user_id}")
 
     try:
@@ -530,7 +542,7 @@ async def update_variation_preference(request: VariationPreferenceUpdate):
         raise
     except Exception as e:
         logger.error(f"Error updating variation preference: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "exercise_preferences")
 
 
 # =============================================================================
@@ -556,7 +568,7 @@ class SetsLimitsResponse(BaseModel):
 
 
 @router.get("/sets-limits/{user_id}", response_model=SetsLimitsResponse)
-async def get_sets_limits(user_id: str):
+async def get_sets_limits(user_id: str, current_user: dict = Depends(get_current_user)):
     """
     Get user's sets/reps limits preferences.
 
@@ -566,6 +578,8 @@ async def get_sets_limits(user_id: str):
     - max_reps_ceiling: Hard cap on reps if enforce_rep_ceiling is True
     - enforce_rep_ceiling: Whether to strictly enforce the max_reps_ceiling
     """
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     logger.info(f"Getting sets limits for user {user_id}")
 
     try:
@@ -605,11 +619,11 @@ async def get_sets_limits(user_id: str):
         raise
     except Exception as e:
         logger.error(f"Error getting sets limits: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "exercise_preferences")
 
 
 @router.put("/sets-limits", response_model=SetsLimitsResponse)
-async def update_sets_limits(request: SetsLimitsUpdate):
+async def update_sets_limits(request: SetsLimitsUpdate, current_user: dict = Depends(get_current_user)):
     """
     Update user's sets/reps limits preferences.
 
@@ -624,6 +638,8 @@ async def update_sets_limits(request: SetsLimitsUpdate):
     - User prefers strength training: max_reps_ceiling=8, enforce_rep_ceiling=True
     - User wants high volume: max_sets=6, min_sets=4
     """
+    if str(current_user["id"]) != str(request.user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     logger.info(
         f"Updating sets limits for user {request.user_id}: "
         f"max_sets={request.max_sets_per_exercise}, min_sets={request.min_sets_per_exercise}, "
@@ -684,7 +700,7 @@ async def update_sets_limits(request: SetsLimitsUpdate):
         raise
     except Exception as e:
         logger.error(f"Error updating sets limits: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "exercise_preferences")
 
 
 # =============================================================================
@@ -695,6 +711,7 @@ async def update_sets_limits(request: SetsLimitsUpdate):
 async def get_week_comparison(
     user_id: str,
     current_week_start: Optional[date] = None,
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Compare exercises between current week and previous week.
@@ -704,6 +721,8 @@ async def get_week_comparison(
     - Added (new this week)
     - Removed (not in this week but was last week)
     """
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     logger.info(f"Getting week comparison for user {user_id}")
 
     try:
@@ -769,13 +788,14 @@ async def get_week_comparison(
 
     except Exception as e:
         logger.error(f"Error getting week comparison: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "exercise_preferences")
 
 
 @router.get("/rotations/{user_id}", response_model=List[ExerciseRotationResponse])
 async def get_exercise_rotations(
     user_id: str,
     weeks: int = Query(default=4, ge=1, le=12),
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Get recent exercise rotation history.
@@ -783,6 +803,8 @@ async def get_exercise_rotations(
     Shows which exercises were added/removed during workout generation
     over the specified number of weeks.
     """
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     logger.info(f"Getting exercise rotations for user {user_id}, last {weeks} weeks")
 
     try:
@@ -810,7 +832,7 @@ async def get_exercise_rotations(
 
     except Exception as e:
         logger.error(f"Error getting exercise rotations: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "exercise_preferences")
 
 
 # =============================================================================
@@ -897,13 +919,15 @@ async def log_exercise_rotation(
 # =============================================================================
 
 @router.get("/avoided-exercises/{user_id}", response_model=List[AvoidedExerciseResponse])
-async def get_avoided_exercises(user_id: str, include_expired: bool = False):
+async def get_avoided_exercises(user_id: str, include_expired: bool = False, current_user: dict = Depends(get_current_user)):
     """
     Get all exercises the user wants to avoid.
 
     By default, only returns active avoidances (not expired temporary ones).
     Set include_expired=true to get all entries.
     """
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     logger.info(f"Getting avoided exercises for user {user_id}")
 
     try:
@@ -937,17 +961,19 @@ async def get_avoided_exercises(user_id: str, include_expired: bool = False):
 
     except Exception as e:
         logger.error(f"Error getting avoided exercises: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "exercise_preferences")
 
 
 @router.post("/avoided-exercises/{user_id}", response_model=AvoidedExerciseResponse)
-async def add_avoided_exercise(user_id: str, request: AvoidedExerciseCreate):
+async def add_avoided_exercise(user_id: str, request: AvoidedExerciseCreate, current_user: dict = Depends(get_current_user)):
     """
     Add an exercise to the user's avoidance list.
 
     The AI will completely skip this exercise when generating workouts.
     Useful for injuries, equipment limitations, or personal preference.
     """
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     logger.info(f"Adding avoided exercise '{request.exercise_name}' for user {user_id}")
 
     try:
@@ -996,14 +1022,16 @@ async def add_avoided_exercise(user_id: str, request: AvoidedExerciseCreate):
         raise
     except Exception as e:
         logger.error(f"Error adding avoided exercise: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "exercise_preferences")
 
 
 @router.put("/avoided-exercises/{user_id}/{exercise_id}", response_model=AvoidedExerciseResponse)
-async def update_avoided_exercise(user_id: str, exercise_id: str, request: AvoidedExerciseCreate):
+async def update_avoided_exercise(user_id: str, exercise_id: str, request: AvoidedExerciseCreate, current_user: dict = Depends(get_current_user)):
     """
     Update an avoided exercise entry.
     """
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     logger.info(f"Updating avoided exercise {exercise_id} for user {user_id}")
 
     try:
@@ -1040,16 +1068,18 @@ async def update_avoided_exercise(user_id: str, exercise_id: str, request: Avoid
         raise
     except Exception as e:
         logger.error(f"Error updating avoided exercise: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "exercise_preferences")
 
 
 @router.delete("/avoided-exercises/{user_id}/{exercise_id}")
-async def remove_avoided_exercise(user_id: str, exercise_id: str):
+async def remove_avoided_exercise(user_id: str, exercise_id: str, current_user: dict = Depends(get_current_user)):
     """
     Remove an exercise from the avoidance list.
 
     The AI will be able to use this exercise again in workouts.
     """
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     logger.info(f"Removing avoided exercise {exercise_id} for user {user_id}")
 
     try:
@@ -1072,7 +1102,7 @@ async def remove_avoided_exercise(user_id: str, exercise_id: str):
         raise
     except Exception as e:
         logger.error(f"Error removing avoided exercise: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "exercise_preferences")
 
 
 # =============================================================================
@@ -1080,13 +1110,15 @@ async def remove_avoided_exercise(user_id: str, exercise_id: str):
 # =============================================================================
 
 @router.get("/avoided-muscles/{user_id}", response_model=List[AvoidedMuscleResponse])
-async def get_avoided_muscles(user_id: str, include_expired: bool = False):
+async def get_avoided_muscles(user_id: str, include_expired: bool = False, current_user: dict = Depends(get_current_user)):
     """
     Get all muscle groups the user wants to avoid.
 
     By default, only returns active avoidances (not expired temporary ones).
     Set include_expired=true to get all entries.
     """
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     logger.info(f"Getting avoided muscles for user {user_id}")
 
     try:
@@ -1118,11 +1150,11 @@ async def get_avoided_muscles(user_id: str, include_expired: bool = False):
 
     except Exception as e:
         logger.error(f"Error getting avoided muscles: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "exercise_preferences")
 
 
 @router.post("/avoided-muscles/{user_id}", response_model=AvoidedMuscleResponse)
-async def add_avoided_muscle(user_id: str, request: AvoidedMuscleCreate):
+async def add_avoided_muscle(user_id: str, request: AvoidedMuscleCreate, current_user: dict = Depends(get_current_user)):
     """
     Add a muscle group to the user's avoidance list.
 
@@ -1132,6 +1164,8 @@ async def add_avoided_muscle(user_id: str, request: AvoidedMuscleCreate):
 
     Useful for injuries, recovery, or limitations.
     """
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     logger.info(f"Adding avoided muscle '{request.muscle_group}' for user {user_id}")
 
     try:
@@ -1193,14 +1227,16 @@ async def add_avoided_muscle(user_id: str, request: AvoidedMuscleCreate):
         raise
     except Exception as e:
         logger.error(f"Error adding avoided muscle: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "exercise_preferences")
 
 
 @router.put("/avoided-muscles/{user_id}/{muscle_id}", response_model=AvoidedMuscleResponse)
-async def update_avoided_muscle(user_id: str, muscle_id: str, request: AvoidedMuscleCreate):
+async def update_avoided_muscle(user_id: str, muscle_id: str, request: AvoidedMuscleCreate, current_user: dict = Depends(get_current_user)):
     """
     Update an avoided muscle entry.
     """
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     logger.info(f"Updating avoided muscle {muscle_id} for user {user_id}")
 
     try:
@@ -1242,16 +1278,18 @@ async def update_avoided_muscle(user_id: str, muscle_id: str, request: AvoidedMu
         raise
     except Exception as e:
         logger.error(f"Error updating avoided muscle: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "exercise_preferences")
 
 
 @router.delete("/avoided-muscles/{user_id}/{muscle_id}")
-async def remove_avoided_muscle(user_id: str, muscle_id: str):
+async def remove_avoided_muscle(user_id: str, muscle_id: str, current_user: dict = Depends(get_current_user)):
     """
     Remove a muscle group from the avoidance list.
 
     The AI will be able to target this muscle group again in workouts.
     """
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     logger.info(f"Removing avoided muscle {muscle_id} for user {user_id}")
 
     try:
@@ -1270,11 +1308,11 @@ async def remove_avoided_muscle(user_id: str, muscle_id: str):
         raise
     except Exception as e:
         logger.error(f"Error removing avoided muscle: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "exercise_preferences")
 
 
 @router.get("/muscle-groups")
-async def get_muscle_groups():
+async def get_muscle_groups(current_user: dict = Depends(get_current_user)):
     """
     Get list of all available muscle groups that can be avoided.
     """
@@ -1454,7 +1492,7 @@ def get_exercise_muscle_group(exercise_name: str) -> Optional[str]:
 
 
 @router.post("/suggest-substitutes", response_model=SubstituteResponse)
-async def suggest_exercise_substitutes(request: SubstituteRequest):
+async def suggest_exercise_substitutes(request: SubstituteRequest, current_user: dict = Depends(get_current_user)):
     """
     Get safe substitute exercises when avoiding a specific exercise.
 
@@ -1558,11 +1596,11 @@ async def suggest_exercise_substitutes(request: SubstituteRequest):
 
     except Exception as e:
         logger.error(f"Error getting substitutes: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "exercise_preferences")
 
 
 @router.get("/injury-exercises/{injury_type}")
-async def get_exercises_to_avoid_for_injury(injury_type: str):
+async def get_exercises_to_avoid_for_injury(injury_type: str, current_user: dict = Depends(get_current_user)):
     """
     Get list of exercises to avoid for a specific injury type.
 
@@ -1680,6 +1718,7 @@ class RecentSwapResponse(BaseModel):
 async def get_recent_swaps(
     user_id: str = Query(..., description="User ID"),
     limit: int = Query(default=10, le=50, description="Max number of swaps to return"),
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Get user's recent exercise swaps for quick re-selection.
@@ -1688,6 +1727,8 @@ async def get_recent_swaps(
     and sorted by most recent first. Useful for showing a "Recent" tab
     in the exercise swap sheet.
     """
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     logger.info(f"Getting recent swaps for user {user_id}, limit {limit}")
 
     try:
@@ -1744,4 +1785,4 @@ async def get_recent_swaps(
 
     except Exception as e:
         logger.error(f"Error getting recent swaps: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "exercise_preferences")

@@ -6,12 +6,14 @@ with full analytics tracking for every setting change.
 """
 from typing import Optional, List
 from datetime import datetime
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
 
 from core.supabase_client import get_supabase
 from core.logger import get_logger
 from core.activity_logger import log_user_activity, log_user_error
+from core.auth import get_current_user
+from core.exceptions import safe_internal_error
 
 logger = get_logger(__name__)
 router = APIRouter(prefix="/ai-settings", tags=["AI Settings"])
@@ -97,11 +99,13 @@ class PopularSettingsResponse(BaseModel):
 # =====================================================
 
 @router.get("/{user_id}", response_model=AISettingsResponse)
-async def get_ai_settings(user_id: str):
+async def get_ai_settings(user_id: str, current_user: dict = Depends(get_current_user)):
     """
     Get AI settings for a user.
     Creates default settings if none exist.
     """
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     try:
         supabase = get_supabase().client
 
@@ -142,15 +146,17 @@ async def get_ai_settings(user_id: str):
         raise
     except Exception as e:
         logger.error(f"Error getting AI settings for user {user_id}: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "get_ai_settings")
 
 
 @router.put("/{user_id}", response_model=AISettingsResponse)
-async def update_ai_settings(user_id: str, settings: AISettingsUpdate):
+async def update_ai_settings(user_id: str, settings: AISettingsUpdate, current_user: dict = Depends(get_current_user)):
     """
     Update AI settings for a user.
     Tracks all changes in history for analytics.
     """
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     try:
         supabase = get_supabase().client
 
@@ -247,7 +253,7 @@ async def update_ai_settings(user_id: str, settings: AISettingsUpdate):
             endpoint=f"/api/v1/ai-settings/{user_id}",
             status_code=500
         )
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "update_ai_settings")
 
 
 @router.get("/{user_id}/history", response_model=AISettingsHistoryResponse)
@@ -256,11 +262,14 @@ async def get_ai_settings_history(
     setting_name: Optional[str] = Query(None, description="Filter by setting name"),
     limit: int = Query(50, ge=1, le=500, description="Number of records to return"),
     offset: int = Query(0, ge=0, description="Offset for pagination"),
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Get AI settings change history for a user.
     Useful for analyzing user behavior and preferences over time.
     """
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     try:
         supabase = get_supabase().client
 
@@ -280,15 +289,17 @@ async def get_ai_settings_history(
 
     except Exception as e:
         logger.error(f"Error getting AI settings history for user {user_id}: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "get_ai_settings_history")
 
 
 @router.delete("/{user_id}")
-async def reset_ai_settings(user_id: str):
+async def reset_ai_settings(user_id: str, current_user: dict = Depends(get_current_user)):
     """
     Reset AI settings to defaults for a user.
     Records the reset in history.
     """
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     try:
         supabase = get_supabase().client
 
@@ -331,7 +342,7 @@ async def reset_ai_settings(user_id: str):
             endpoint=f"/api/v1/ai-settings/{user_id}",
             status_code=500
         )
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "reset_ai_settings")
 
 
 # =====================================================
@@ -354,7 +365,7 @@ async def get_popular_settings():
 
     except Exception as e:
         logger.error(f"Error getting popular settings analytics: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "ai_settings_analytics")
 
 
 @router.get("/analytics/trends")
@@ -373,7 +384,7 @@ async def get_settings_trends(days: int = Query(30, ge=1, le=365, description="N
 
     except Exception as e:
         logger.error(f"Error getting settings trends: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "ai_settings_analytics")
 
 
 @router.get("/analytics/engagement")
@@ -391,4 +402,4 @@ async def get_engagement_by_style():
 
     except Exception as e:
         logger.error(f"Error getting engagement analytics: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "ai_settings_analytics")

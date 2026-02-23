@@ -6,6 +6,7 @@ import '../../../data/providers/gym_profile_provider.dart';
 import '../../../data/providers/today_workout_provider.dart';
 import '../../../data/repositories/workout_repository.dart';
 import '../../../data/services/haptic_service.dart';
+import '../../../widgets/app_dialog.dart';
 import '../../../widgets/glass_sheet.dart';
 import '../../../widgets/sheet_header.dart';
 import 'add_gym_profile_sheet.dart';
@@ -134,28 +135,12 @@ class _ManageGymProfilesSheetState
 
   Future<void> _deleteProfile(GymProfile profile) async {
     // Show confirmation dialog
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Delete Gym Profile?'),
-        content: Text(
-          'Are you sure you want to delete "${profile.name}"? '
+    final confirmed = await AppDialog.destructive(
+      context,
+      title: 'Delete Gym Profile?',
+      message: 'Are you sure you want to delete "${profile.name}"? '
           'This cannot be undone.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            style: TextButton.styleFrom(
-              foregroundColor: AppColors.error,
-            ),
-            child: const Text('Delete'),
-          ),
-        ],
-      ),
+      icon: Icons.delete_rounded,
     );
 
     if (confirmed != true) return;

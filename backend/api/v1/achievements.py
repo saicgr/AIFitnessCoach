@@ -8,7 +8,7 @@ Tracks user achievements like:
 - Habit streaks (hydration, protein, sleep)
 """
 
-from fastapi import APIRouter, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException, Request
 from typing import List, Optional
 from datetime import datetime, date, timedelta
 
@@ -16,6 +16,8 @@ from core.supabase_db import get_supabase_db
 from core.timezone_utils import resolve_timezone, get_user_today
 from core.logger import get_logger
 from core.activity_logger import log_user_activity, log_user_error
+from core.auth import get_current_user
+from core.exceptions import safe_internal_error
 from models.schemas import (
     AchievementType, UserAchievement, UserStreak, PersonalRecord,
     AchievementsSummary, NewAchievementNotification
@@ -81,7 +83,7 @@ async def _ensure_types_cached() -> dict:
 # ============================================
 
 @router.get("/types", response_model=List[AchievementType])
-async def get_all_achievement_types():
+async def get_all_achievement_types(current_user: dict = Depends(get_current_user)):
     """Get all available achievement types (cached for 1 hour)."""
     logger.info("Getting all achievement types")
 
@@ -91,11 +93,11 @@ async def get_all_achievement_types():
 
     except Exception as e:
         logger.error(f"Failed to get achievement types: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "get_all_achievement_types")
 
 
 @router.get("/types/category/{category}", response_model=List[AchievementType])
-async def get_achievements_by_category(category: str):
+async def get_achievements_by_category(category: str, current_user: dict = Depends(get_current_user)):
     """Get achievement types by category (cached for 1 hour)."""
     logger.info(f"Getting achievements for category: {category}")
 
@@ -105,7 +107,7 @@ async def get_achievements_by_category(category: str):
 
     except Exception as e:
         logger.error(f"Failed to get achievements by category: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "get_achievements_by_category")
 
 
 # ============================================
@@ -113,8 +115,10 @@ async def get_achievements_by_category(category: str):
 # ============================================
 
 @router.get("/user/{user_id}", response_model=List[UserAchievement])
-async def get_user_achievements(user_id: str):
+async def get_user_achievements(user_id: str, current_user: dict = Depends(get_current_user)):
     """Get all achievements earned by a user."""
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     logger.info(f"Getting achievements for user: {user_id}")
 
     try:
@@ -158,12 +162,14 @@ async def get_user_achievements(user_id: str):
 
     except Exception as e:
         logger.error(f"Failed to get user achievements: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "get_user_achievements")
 
 
 @router.get("/user/{user_id}/summary", response_model=AchievementsSummary)
-async def get_achievements_summary(user_id: str):
+async def get_achievements_summary(user_id: str, current_user: dict = Depends(get_current_user)):
     """Get a summary of user's achievements, streaks, and PRs."""
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     logger.info(f"Getting achievements summary for user: {user_id}")
 
     try:
@@ -265,12 +271,14 @@ async def get_achievements_summary(user_id: str):
 
     except Exception as e:
         logger.error(f"Failed to get achievements summary: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "get_achievements_summary")
 
 
 @router.get("/user/{user_id}/unnotified", response_model=List[NewAchievementNotification])
-async def get_unnotified_achievements(user_id: str):
+async def get_unnotified_achievements(user_id: str, current_user: dict = Depends(get_current_user)):
     """Get achievements that haven't been shown to the user yet."""
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     logger.info(f"Getting unnotified achievements for user: {user_id}")
 
     try:
@@ -307,12 +315,14 @@ async def get_unnotified_achievements(user_id: str):
 
     except Exception as e:
         logger.error(f"Failed to get unnotified achievements: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "get_unnotified_achievements")
 
 
 @router.post("/user/{user_id}/mark-notified")
-async def mark_achievements_notified(user_id: str, achievement_ids: List[str] = None):
+async def mark_achievements_notified(user_id: str, achievement_ids: List[str] = None, current_user: dict = Depends(get_current_user)):
     """Mark achievements as notified (user has seen them)."""
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     logger.info(f"Marking achievements as notified for user: {user_id}")
 
     try:
@@ -334,7 +344,7 @@ async def mark_achievements_notified(user_id: str, achievement_ids: List[str] = 
 
     except Exception as e:
         logger.error(f"Failed to mark achievements as notified: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "mark_achievements_notified")
 
 
 # ============================================
@@ -342,8 +352,10 @@ async def mark_achievements_notified(user_id: str, achievement_ids: List[str] = 
 # ============================================
 
 @router.get("/user/{user_id}/streaks", response_model=List[UserStreak])
-async def get_user_streaks(user_id: str):
+async def get_user_streaks(user_id: str, current_user: dict = Depends(get_current_user)):
     """Get all streak data for a user."""
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     logger.info(f"Getting streaks for user: {user_id}")
 
     try:
@@ -367,16 +379,18 @@ async def get_user_streaks(user_id: str):
 
     except Exception as e:
         logger.error(f"Failed to get user streaks: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "get_user_streaks")
 
 
 @router.post("/user/{user_id}/streaks/{streak_type}/update")
-async def update_streak(user_id: str, streak_type: str, request: Request):
+async def update_streak(user_id: str, streak_type: str, request: Request, current_user: dict = Depends(get_current_user)):
     """
     Update a user's streak. Called when the user completes an activity.
 
     Returns any new achievements unlocked by this streak update.
     """
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     logger.info(f"Updating {streak_type} streak for user: {user_id}")
 
     try:
@@ -464,7 +478,7 @@ async def update_streak(user_id: str, streak_type: str, request: Request):
             endpoint=f"/api/v1/achievements/user/{user_id}/streaks/{streak_type}/update",
             status_code=500
         )
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "update_streak")
 
 
 async def _check_streak_achievements(db, user_id: str, streak_type: str, streak_count: int) -> List[dict]:
@@ -527,8 +541,10 @@ async def _check_streak_achievements(db, user_id: str, streak_type: str, streak_
 # ============================================
 
 @router.get("/user/{user_id}/prs", response_model=List[PersonalRecord])
-async def get_user_prs(user_id: str, exercise_name: Optional[str] = None):
+async def get_user_prs(user_id: str, exercise_name: Optional[str] = None, current_user: dict = Depends(get_current_user)):
     """Get personal records for a user, optionally filtered by exercise."""
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     logger.info(f"Getting PRs for user: {user_id}")
 
     try:
@@ -561,7 +577,7 @@ async def get_user_prs(user_id: str, exercise_name: Optional[str] = None):
 
     except Exception as e:
         logger.error(f"Failed to get user PRs: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "get_user_prs")
 
 
 @router.post("/user/{user_id}/prs/check")
@@ -571,13 +587,16 @@ async def check_and_record_pr(
     record_type: str,  # 'weight', 'reps', 'time', 'distance'
     value: float,
     unit: str,
-    workout_id: Optional[str] = None
+    workout_id: Optional[str] = None,
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Check if a value is a new PR and record it if so.
 
     Returns the new PR if one was set, or None if not a PR.
     """
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     logger.info(f"Checking PR for user {user_id}: {exercise_name} {value} {unit}")
 
     try:
@@ -660,7 +679,7 @@ async def check_and_record_pr(
 
     except Exception as e:
         logger.error(f"Failed to check/record PR: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "check_and_record_pr")
 
 
 async def _award_pr_achievement(db, user_id: str, exercise_name: str, value: float, previous_value: float):

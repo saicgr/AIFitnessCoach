@@ -25,7 +25,9 @@ ENDPOINTS:
 - GET  /api/v1/strain-prevention/{user_id}/volume-caps - Get muscle volume caps
 """
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
+from core.auth import get_current_user
+from core.exceptions import safe_internal_error
 from pydantic import BaseModel, Field
 from typing import Optional, List, Dict, Any
 from datetime import datetime, date, timedelta
@@ -220,7 +222,9 @@ def get_default_volume_caps() -> Dict[str, int]:
 # =============================================================================
 
 @router.get("/{user_id}/risk-assessment", response_model=RiskAssessmentResponse)
-async def get_risk_assessment(user_id: str):
+async def get_risk_assessment(user_id: str,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Get current strain risk assessment for a user.
 
@@ -323,7 +327,7 @@ async def get_risk_assessment(user_id: str):
 
     except Exception as e:
         logger.error(f"Failed to get risk assessment for user {user_id}: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "strain_prevention")
 
 
 @router.get("/{user_id}/volume-history", response_model=VolumeHistoryResponse)
@@ -331,6 +335,7 @@ async def get_volume_history(
     user_id: str,
     weeks: int = Query(default=8, ge=1, le=52, description="Number of weeks to include"),
     muscle_group: Optional[str] = Query(default=None, description="Filter by muscle group"),
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Get weekly volume history for a user.
@@ -376,11 +381,13 @@ async def get_volume_history(
 
     except Exception as e:
         logger.error(f"Failed to get volume history for user {user_id}: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "strain_prevention")
 
 
 @router.post("/record-strain", response_model=RecordStrainResponse)
-async def record_strain(request: RecordStrainRequest):
+async def record_strain(request: RecordStrainRequest,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Record a strain incident.
 
@@ -438,11 +445,13 @@ async def record_strain(request: RecordStrainRequest):
         raise
     except Exception as e:
         logger.error(f"Failed to record strain: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "strain_prevention")
 
 
 @router.post("/adjust-workout", response_model=AdjustWorkoutResponse)
-async def adjust_workout(request: AdjustWorkoutRequest):
+async def adjust_workout(request: AdjustWorkoutRequest,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Adjust a workout based on volume concerns.
 
@@ -480,13 +489,14 @@ async def adjust_workout(request: AdjustWorkoutRequest):
 
     except Exception as e:
         logger.error(f"Failed to adjust workout: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "strain_prevention")
 
 
 @router.get("/{user_id}/alerts", response_model=VolumeAlertsResponse)
 async def get_volume_alerts(
     user_id: str,
     include_acknowledged: bool = Query(default=False, description="Include acknowledged alerts"),
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Get unacknowledged volume alerts for a user.
@@ -531,11 +541,13 @@ async def get_volume_alerts(
 
     except Exception as e:
         logger.error(f"Failed to get volume alerts: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "strain_prevention")
 
 
 @router.post("/alerts/{alert_id}/acknowledge")
-async def acknowledge_alert(alert_id: str):
+async def acknowledge_alert(alert_id: str,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Acknowledge a volume alert.
 
@@ -560,11 +572,13 @@ async def acknowledge_alert(alert_id: str):
         raise
     except Exception as e:
         logger.error(f"Failed to acknowledge alert: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "strain_prevention")
 
 
 @router.get("/{user_id}/volume-caps", response_model=VolumeCapResponse)
-async def get_volume_caps(user_id: str):
+async def get_volume_caps(user_id: str,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Get muscle volume caps for a user.
 
@@ -630,4 +644,4 @@ async def get_volume_caps(user_id: str):
 
     except Exception as e:
         logger.error(f"Failed to get volume caps: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "strain_prevention")

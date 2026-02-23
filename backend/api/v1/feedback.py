@@ -7,7 +7,7 @@ for both overall workout and individual exercises.
 Also includes AI Coach feedback using RAG for personalized workout analysis.
 """
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends, Request
 from typing import List, Optional
 from datetime import datetime
 from pydantic import BaseModel
@@ -29,17 +29,23 @@ from services.feedback_analysis_service import (
     get_exercises_ready_for_progression,
     record_progression_response,
 )
+from core.auth import get_current_user
+from core.exceptions import safe_internal_error
+from core.rate_limiter import limiter
 
 router = APIRouter()
 logger = get_logger(__name__)
-
 
 # ============================================
 # Workout Feedback Endpoints
 # ============================================
 
 @router.post("/workout/{workout_id}", response_model=WorkoutFeedbackWithExercises)
-async def submit_workout_feedback(workout_id: str, feedback: WorkoutFeedbackCreate):
+async def submit_workout_feedback(
+    workout_id: str,
+    feedback: WorkoutFeedbackCreate,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Submit feedback for a completed workout.
 
@@ -48,6 +54,8 @@ async def submit_workout_feedback(workout_id: str, feedback: WorkoutFeedbackCrea
 
     Also stores exercise ratings in ChromaDB for AI workout adaptation.
     """
+    if str(current_user["id"]) != str(feedback.user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     logger.info(f"📝 [Feedback] Received feedback submission for workout={workout_id}")
     logger.info(f"📝 [Feedback] User: {feedback.user_id}")
     logger.info(f"📝 [Feedback] Overall rating: {feedback.overall_rating}/5, difficulty: {feedback.overall_difficulty}")
@@ -92,7 +100,7 @@ async def submit_workout_feedback(workout_id: str, feedback: WorkoutFeedbackCrea
             ).execute()
             if not result.data:
                 logger.error(f"❌ [Feedback] Failed to insert workout_feedback")
-                raise HTTPException(status_code=500, detail="Failed to create workout feedback")
+                raise HTTPException(status_code=500, detail="Failed to insert workout feedback")
             workout_feedback_id = result.data[0]["id"]
             logger.info(f"✅ [Feedback] Inserted new workout_feedback record: {workout_feedback_id}")
 
@@ -240,12 +248,17 @@ async def submit_workout_feedback(workout_id: str, feedback: WorkoutFeedbackCrea
             metadata={"workout_id": workout_id},
             status_code=500
         )
-        raise HTTPException(status_code=500, detail=str(e))
-
+        raise safe_internal_error(e, "endpoint")
 
 @router.get("/workout/{workout_id}", response_model=WorkoutFeedbackWithExercises)
-async def get_workout_feedback(workout_id: str, user_id: str):
+async def get_workout_feedback(
+    workout_id: str,
+    user_id: str,
+    current_user: dict = Depends(get_current_user),
+):
     """Get feedback for a specific workout."""
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     logger.info(f"Getting workout feedback: workout_id={workout_id}")
 
     try:
@@ -300,12 +313,17 @@ async def get_workout_feedback(workout_id: str, user_id: str):
         raise
     except Exception as e:
         logger.error(f"Failed to get workout feedback: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
-
+        raise safe_internal_error(e, "endpoint")
 
 @router.get("/user/{user_id}/recent", response_model=List[WorkoutFeedback])
-async def get_user_recent_feedback(user_id: str, limit: int = 10):
+async def get_user_recent_feedback(
+    user_id: str,
+    limit: int = 10,
+    current_user: dict = Depends(get_current_user),
+):
     """Get recent workout feedback for a user."""
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     logger.info(f"Getting recent feedback for user: {user_id}")
 
     try:
@@ -333,12 +351,16 @@ async def get_user_recent_feedback(user_id: str, limit: int = 10):
 
     except Exception as e:
         logger.error(f"Failed to get user feedback: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
-
+        raise safe_internal_error(e, "endpoint")
 
 @router.get("/user/{user_id}/stats")
-async def get_user_feedback_stats(user_id: str):
+async def get_user_feedback_stats(
+    user_id: str,
+    current_user: dict = Depends(get_current_user),
+):
     """Get feedback statistics for a user."""
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     logger.info(f"Getting feedback stats for user: {user_id}")
 
     try:
@@ -391,11 +413,14 @@ async def get_user_feedback_stats(user_id: str):
 
     except Exception as e:
         logger.error(f"Failed to get feedback stats: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
-
+        raise safe_internal_error(e, "endpoint")
 
 @router.get("/exercise/{exercise_name}/stats")
-async def get_exercise_feedback_stats(exercise_name: str, user_id: str = None):
+async def get_exercise_feedback_stats(
+    exercise_name: str,
+    user_id: str = None,
+    current_user: dict = Depends(get_current_user),
+):
     """Get feedback statistics for a specific exercise."""
     logger.info(f"Getting feedback stats for exercise: {exercise_name}")
 
@@ -441,8 +466,7 @@ async def get_exercise_feedback_stats(exercise_name: str, user_id: str = None):
 
     except Exception as e:
         logger.error(f"Failed to get exercise feedback stats: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
-
+        raise safe_internal_error(e, "endpoint")
 
 # ============================================
 # AI Coach Feedback Endpoints (RAG-powered)
@@ -453,7 +477,6 @@ class SetDetail(BaseModel):
     reps: int
     weight_kg: float
 
-
 class ExercisePerformance(BaseModel):
     """Exercise performance data for a workout session."""
     name: str
@@ -463,14 +486,12 @@ class ExercisePerformance(BaseModel):
     time_seconds: int = 0  # Time spent on this exercise
     set_details: List[SetDetail] = []  # Individual set data
 
-
 class PlannedExercise(BaseModel):
     """Planned exercise from workout definition (for skip detection)."""
     name: str
     target_sets: int = 3
     target_reps: int = 10
     target_weight_kg: float = 0.0
-
 
 class AICoachFeedbackRequest(BaseModel):
     """Request body for AI Coach feedback generation."""
@@ -499,18 +520,15 @@ class AICoachFeedbackRequest(BaseModel):
     total_workouts_completed: Optional[int] = None
     next_milestone: Optional[dict] = None
 
-
 class AICoachFeedbackResponse(BaseModel):
     """Response from AI Coach feedback generation."""
     feedback: str
     indexed: bool = False
     workout_log_id: str
 
-
 # Singleton services (lazy initialization)
 _gemini_service: Optional[GeminiService] = None
 _feedback_rag_service: Optional[WorkoutFeedbackRAGService] = None
-
 
 def get_gemini_service() -> GeminiService:
     """Get or create Gemini service singleton."""
@@ -519,7 +537,6 @@ def get_gemini_service() -> GeminiService:
         _gemini_service = GeminiService()
     return _gemini_service
 
-
 def get_feedback_rag_service() -> WorkoutFeedbackRAGService:
     """Get or create Workout Feedback RAG service singleton."""
     global _feedback_rag_service
@@ -527,9 +544,13 @@ def get_feedback_rag_service() -> WorkoutFeedbackRAGService:
         _feedback_rag_service = WorkoutFeedbackRAGService(get_gemini_service())
     return _feedback_rag_service
 
-
 @router.post("/ai-coach", response_model=AICoachFeedbackResponse)
-async def generate_ai_coach_feedback(request: AICoachFeedbackRequest):
+@limiter.limit("5/minute")
+async def generate_ai_coach_feedback(
+    http_request: Request,
+    request: AICoachFeedbackRequest,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Generate AI Coach feedback for a completed workout.
 
@@ -544,6 +565,8 @@ async def generate_ai_coach_feedback(request: AICoachFeedbackRequest):
     - Rest pattern analysis
     - Motivational note
     """
+    if str(current_user["id"]) != str(request.user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     logger.info(f"📝 [AI Coach] Generating feedback for user {request.user_id}, workout {request.workout_name}")
     logger.info(f"📝 [AI Coach] Completed exercises: {len(request.exercises)}")
     logger.info(f"📝 [AI Coach] Planned exercises: {len(request.planned_exercises)}")
@@ -658,17 +681,22 @@ async def generate_ai_coach_feedback(request: AICoachFeedbackRequest):
 
     except Exception as e:
         logger.error(f"Failed to generate AI Coach feedback: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
-
+        raise safe_internal_error(e, "endpoint")
 
 @router.get("/ai-coach/history/{user_id}")
-async def get_ai_coach_workout_history(user_id: str, limit: int = 10):
+async def get_ai_coach_workout_history(
+    user_id: str,
+    limit: int = 10,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Get user's workout history stored in the RAG system.
 
     This allows the frontend to display past workout summaries
     and the AI Coach's analysis of workout patterns.
     """
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     logger.info(f"Getting AI Coach workout history for user {user_id}")
 
     try:
@@ -705,17 +733,23 @@ async def get_ai_coach_workout_history(user_id: str, limit: int = 10):
 
     except Exception as e:
         logger.error(f"Failed to get AI Coach workout history: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
-
+        raise safe_internal_error(e, "endpoint")
 
 @router.get("/ai-coach/exercise-progress/{user_id}/{exercise_name}")
-async def get_exercise_progress(user_id: str, exercise_name: str, limit: int = 10):
+async def get_exercise_progress(
+    user_id: str,
+    exercise_name: str,
+    limit: int = 10,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Get weight progression history for a specific exercise.
 
     This allows the frontend to display charts showing
     how the user has progressed on specific exercises over time.
     """
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     logger.info(f"Getting exercise progress for user {user_id}, exercise {exercise_name}")
 
     try:
@@ -736,22 +770,23 @@ async def get_exercise_progress(user_id: str, exercise_name: str, limit: int = 1
 
     except Exception as e:
         logger.error(f"Failed to get exercise progress: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
-
+        raise safe_internal_error(e, "endpoint")
 
 @router.get("/ai-coach/stats")
-async def get_ai_coach_rag_stats():
+async def get_ai_coach_rag_stats(current_user: dict = Depends(get_current_user)):
     """Get statistics for the AI Coach RAG system."""
     try:
         rag_service = get_feedback_rag_service()
         return rag_service.get_stats()
     except Exception as e:
         logger.error(f"Failed to get AI Coach stats: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
-
+        raise safe_internal_error(e, "endpoint")
 
 @router.get("/ai-coach/achievements/{user_id}")
-async def get_user_achievements(user_id: str):
+async def get_user_achievements(
+    user_id: str,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Get user personal records and achievements from workout history.
 
@@ -761,6 +796,8 @@ async def get_user_achievements(user_id: str):
     - New PRs achieved in the current session
     - Workout streaks and milestones
     """
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     logger.info(f"Getting achievements for user {user_id}")
 
     try:
@@ -836,8 +873,7 @@ async def get_user_achievements(user_id: str):
 
     except Exception as e:
         logger.error(f"Failed to get user achievements: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
-
+        raise safe_internal_error(e, "endpoint")
 
 # ============================================
 # Progression Suggestion Endpoints
@@ -851,7 +887,6 @@ class ProgressionSuggestionResponse(BaseModel):
     difficulty_increase: Optional[float] = None
     chain_id: Optional[str] = None
 
-
 class ProgressionResponseRequest(BaseModel):
     """Request body for responding to a progression suggestion."""
     user_id: str
@@ -860,9 +895,11 @@ class ProgressionResponseRequest(BaseModel):
     accepted: bool
     decline_reason: Optional[str] = None
 
-
 @router.get("/progression-suggestions/{user_id}", response_model=List[ProgressionSuggestionResponse])
-async def get_progression_suggestions(user_id: str):
+async def get_progression_suggestions(
+    user_id: str,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Get exercise progression suggestions for a user.
 
@@ -877,6 +914,8 @@ async def get_progression_suggestions(user_id: str):
     - Respects declined progressions (won't spam)
     - Only returns exercises with valid next variants in chain
     """
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     logger.info(f"Getting progression suggestions for user {user_id}")
 
     try:
@@ -896,11 +935,13 @@ async def get_progression_suggestions(user_id: str):
 
     except Exception as e:
         logger.error(f"Failed to get progression suggestions: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
-
+        raise safe_internal_error(e, "endpoint")
 
 @router.post("/progression-response")
-async def respond_to_progression(request: ProgressionResponseRequest):
+async def respond_to_progression(
+    request: ProgressionResponseRequest,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Record user's response to a progression suggestion.
 
@@ -920,6 +961,8 @@ async def respond_to_progression(request: ProgressionResponseRequest):
     Returns:
         Success status and any updated information
     """
+    if str(current_user["id"]) != str(request.user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     logger.info(
         f"Recording progression response: {request.exercise_name} -> "
         f"{request.new_exercise_name}, accepted={request.accepted}"
@@ -979,8 +1022,7 @@ async def respond_to_progression(request: ProgressionResponseRequest):
             },
             status_code=500
         )
-        raise HTTPException(status_code=500, detail=str(e))
-
+        raise safe_internal_error(e, "endpoint")
 
 # ============================================
 # Challenge Exercise Feedback Endpoints
@@ -995,7 +1037,6 @@ class ChallengeExerciseFeedbackRequest(BaseModel):
     workout_id: Optional[str] = None
     performance_data: Optional[dict] = None  # {sets_completed, total_reps, avg_weight}
 
-
 class ChallengeExerciseFeedbackResponse(BaseModel):
     """Response from challenge exercise feedback submission."""
     success: bool
@@ -1004,9 +1045,11 @@ class ChallengeExerciseFeedbackResponse(BaseModel):
     ready_for_main_workout: bool
     message: str
 
-
 @router.post("/challenge-exercise", response_model=ChallengeExerciseFeedbackResponse)
-async def submit_challenge_exercise_feedback(request: ChallengeExerciseFeedbackRequest):
+async def submit_challenge_exercise_feedback(
+    request: ChallengeExerciseFeedbackRequest,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Submit feedback for a challenge exercise completion.
 
@@ -1028,6 +1071,8 @@ async def submit_challenge_exercise_feedback(request: ChallengeExerciseFeedbackR
     Returns:
         Updated mastery status including whether exercise is ready for main workout
     """
+    if str(current_user["id"]) != str(request.user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     logger.info(
         f"Recording challenge exercise feedback: {request.exercise_name} "
         f"for user {request.user_id}, completed={request.completed}, "
@@ -1099,17 +1144,21 @@ async def submit_challenge_exercise_feedback(request: ChallengeExerciseFeedbackR
             metadata={"exercise_name": request.exercise_name},
             status_code=500
         )
-        raise HTTPException(status_code=500, detail=str(e))
-
+        raise safe_internal_error(e, "endpoint")
 
 @router.get("/challenge-mastery/{user_id}")
-async def get_user_challenge_mastery(user_id: str):
+async def get_user_challenge_mastery(
+    user_id: str,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Get all challenge exercise mastery data for a user.
 
     Returns which challenge exercises the user has attempted,
     their success rates, and which ones are ready for main workouts.
     """
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     logger.info(f"Getting challenge mastery for user {user_id}")
 
     try:
@@ -1146,4 +1195,4 @@ async def get_user_challenge_mastery(user_id: str):
 
     except Exception as e:
         logger.error(f"Failed to get challenge mastery: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "endpoint")

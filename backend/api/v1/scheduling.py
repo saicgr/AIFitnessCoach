@@ -16,7 +16,9 @@ ENDPOINTS:
 - GET  /api/v1/scheduling/history - Get scheduling action history
 """
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
+from core.auth import get_current_user
+from core.exceptions import safe_internal_error
 from typing import List, Optional
 from datetime import datetime, date, timedelta
 from pydantic import BaseModel, Field
@@ -170,7 +172,8 @@ async def get_missed_workouts(
     user_id: str = Query(..., description="User ID"),
     days_back: int = Query(7, ge=1, le=30, description="Days to look back"),
     include_scheduled: bool = Query(True, description="Include past scheduled workouts not yet marked missed"),
-    timezone_offset: int = Query(0, description="User's timezone offset in minutes from UTC")
+    timezone_offset: int = Query(0, description="User's timezone offset in minutes from UTC"),
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Get list of missed workouts from the past N days.
@@ -267,11 +270,13 @@ async def get_missed_workouts(
     except Exception as e:
         logger.error(f"Error getting missed workouts: {e}")
         log_user_error(user_id, "get_missed_workouts", str(e))
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "scheduling")
 
 
 @router.post("/reschedule", response_model=RescheduleResponse)
-async def reschedule_workout(request: RescheduleRequest):
+async def reschedule_workout(request: RescheduleRequest,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Reschedule a missed or scheduled workout to a new date.
 
@@ -394,11 +399,13 @@ async def reschedule_workout(request: RescheduleRequest):
         raise
     except Exception as e:
         logger.error(f"Error rescheduling workout: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "scheduling")
 
 
 @router.post("/skip", response_model=SkipResponse)
-async def skip_workout(request: SkipRequest):
+async def skip_workout(request: SkipRequest,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Mark a workout as skipped with an optional reason.
 
@@ -475,13 +482,14 @@ async def skip_workout(request: SkipRequest):
         raise
     except Exception as e:
         logger.error(f"Error skipping workout: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "scheduling")
 
 
 @router.get("/suggestions", response_model=SchedulingSuggestionsResponse)
 async def get_scheduling_suggestions(
     workout_id: str = Query(..., description="ID of the missed workout"),
     user_id: str = Query(..., description="User ID"),
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Get AI-generated suggestions for rescheduling a missed workout.
@@ -642,11 +650,13 @@ async def get_scheduling_suggestions(
         raise
     except Exception as e:
         logger.error(f"Error getting scheduling suggestions: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "scheduling")
 
 
 @router.get("/skip-reasons", response_model=List[SkipReasonCategory])
-async def get_skip_reasons():
+async def get_skip_reasons(
+    current_user: dict = Depends(get_current_user),
+):
     """
     Get available skip reason categories.
     """
@@ -679,13 +689,14 @@ async def get_skip_reasons():
 
     except Exception as e:
         logger.error(f"Error getting skip reasons: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "scheduling")
 
 
 @router.post("/detect-missed")
 async def detect_missed_workouts(
     user_id: str = Query(..., description="User ID"),
-    timezone_offset: int = Query(0, description="User's timezone offset in minutes from UTC (e.g., -480 for PST)")
+    timezone_offset: int = Query(0, description="User's timezone offset in minutes from UTC (e.g., -480 for PST)"),
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Trigger missed workout detection for a user.
@@ -737,11 +748,13 @@ async def detect_missed_workouts(
 
     except Exception as e:
         logger.error(f"Error detecting missed workouts: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "scheduling")
 
 
 @router.get("/preferences", response_model=SchedulingPreferences)
-async def get_scheduling_preferences(user_id: str = Query(..., description="User ID")):
+async def get_scheduling_preferences(user_id: str = Query(..., description="User ID"),
+    current_user: dict = Depends(get_current_user),
+):
     """
     Get user's scheduling preferences.
     """
@@ -770,13 +783,14 @@ async def get_scheduling_preferences(user_id: str = Query(..., description="User
 
     except Exception as e:
         logger.error(f"Error getting scheduling preferences: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "scheduling")
 
 
 @router.put("/preferences", response_model=SchedulingPreferences)
 async def update_scheduling_preferences(
     user_id: str = Query(..., description="User ID"),
     preferences: SchedulingPreferences = None,
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Update user's scheduling preferences.
@@ -807,7 +821,7 @@ async def update_scheduling_preferences(
 
     except Exception as e:
         logger.error(f"Error updating scheduling preferences: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "scheduling")
 
 
 @router.get("/history", response_model=SchedulingHistoryResponse)
@@ -815,6 +829,7 @@ async def get_scheduling_history(
     user_id: str = Query(..., description="User ID"),
     limit: int = Query(20, ge=1, le=100, description="Number of records to return"),
     offset: int = Query(0, ge=0, description="Offset for pagination"),
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Get scheduling action history for a user.
@@ -883,4 +898,4 @@ async def get_scheduling_history(
 
     except Exception as e:
         logger.error(f"Error getting scheduling history: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "scheduling")

@@ -24,7 +24,9 @@ from typing import Optional, List
 from collections import Counter
 from pydantic import BaseModel, Field
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
+from core.auth import get_current_user
+from core.exceptions import safe_internal_error
 
 from core.supabase_db import get_supabase_db
 from core.db import get_supabase_db as get_db
@@ -75,7 +77,9 @@ VALID_REASONS = {
 
 
 @router.post("/{workout_id}/sets/adjust", response_model=SetAdjustmentResponse)
-async def adjust_sets(workout_id: str, request: SetAdjustmentRequest):
+async def adjust_sets(workout_id: str, request: SetAdjustmentRequest,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Record a set adjustment during an active workout.
 
@@ -224,11 +228,13 @@ async def adjust_sets(workout_id: str, request: SetAdjustmentRequest):
         raise
     except Exception as e:
         logger.error(f"Failed to record set adjustment: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "set_adjustments")
 
 
 @router.post("/{workout_id}/sets/{set_number}/edit", response_model=EditSetResponse)
-async def edit_set(workout_id: str, set_number: int, request: EditSetRequest):
+async def edit_set(workout_id: str, set_number: int, request: EditSetRequest,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Edit a completed set's reps and/or weight.
 
@@ -363,7 +369,7 @@ async def edit_set(workout_id: str, set_number: int, request: EditSetRequest):
         raise
     except Exception as e:
         logger.error(f"Failed to edit set: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "set_adjustments")
 
 
 @router.delete("/{workout_id}/sets/{set_number}", response_model=DeleteSetResponse)
@@ -371,6 +377,7 @@ async def delete_set(
     workout_id: str,
     set_number: int,
     exercise_index: int = Query(..., ge=0, description="Index of the exercise in the workout"),
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Delete a completed set from a workout.
@@ -499,11 +506,13 @@ async def delete_set(
         raise
     except Exception as e:
         logger.error(f"Failed to delete set: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "set_adjustments")
 
 
 @router.get("/{workout_id}/adjustments", response_model=WorkoutAdjustmentsResponse)
-async def get_workout_adjustments(workout_id: str):
+async def get_workout_adjustments(workout_id: str,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Get all set adjustments made during a workout.
 
@@ -589,13 +598,14 @@ async def get_workout_adjustments(workout_id: str):
         raise
     except Exception as e:
         logger.error(f"Failed to get workout adjustments: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "set_adjustments")
 
 
 @router.get("/users/{user_id}/set-adjustment-patterns", response_model=UserSetAdjustmentPatternsResponse)
 async def get_user_set_adjustment_patterns(
     user_id: str,
     days: int = Query(default=90, ge=7, le=365, description="Number of days to analyze"),
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Get user's set adjustment patterns for AI personalization.
@@ -795,7 +805,7 @@ async def get_user_set_adjustment_patterns(
         raise
     except Exception as e:
         logger.error(f"Failed to get user set adjustment patterns: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "set_adjustments")
 
 
 # =============================================================================

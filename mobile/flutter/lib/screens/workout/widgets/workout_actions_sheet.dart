@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../widgets/app_dialog.dart';
 import '../../../widgets/glass_sheet.dart';
 import '../../../data/models/workout.dart';
 import '../../../data/repositories/workout_repository.dart';
@@ -238,26 +239,12 @@ class _WorkoutActionsSheetState extends ConsumerState<_WorkoutActionsSheet> {
   }
 
   Future<void> _handleRegenerate(BuildContext context) async {
-    final confirm = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: AppColors.nearBlack,
-        title: const Text('Regenerate Workout?'),
-        content: const Text(
-          'This will create a new workout plan for this day. The current workout will be saved in version history.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(context, true),
-            style: ElevatedButton.styleFrom(backgroundColor: AppColors.cyan),
-            child: const Text('Regenerate'),
-          ),
-        ],
-      ),
+    final confirm = await AppDialog.confirm(
+      context,
+      title: 'Regenerate Workout?',
+      message: 'This will create a new workout plan for this day. The current workout will be saved in version history.',
+      confirmText: 'Regenerate',
+      icon: Icons.refresh_rounded,
     );
 
     if (confirm == true && mounted) {
@@ -441,24 +428,11 @@ class _WorkoutActionsSheetState extends ConsumerState<_WorkoutActionsSheet> {
   }
 
   Future<void> _handleDelete(BuildContext context) async {
-    final confirm = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: AppColors.nearBlack,
-        title: const Text('Delete Workout?'),
-        content: const Text('This action cannot be undone.'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(context, true),
-            style: ElevatedButton.styleFrom(backgroundColor: AppColors.error),
-            child: const Text('Delete'),
-          ),
-        ],
-      ),
+    final confirm = await AppDialog.destructive(
+      context,
+      title: 'Delete Workout?',
+      message: 'This action cannot be undone.',
+      icon: Icons.delete_rounded,
     );
 
     if (confirm == true && mounted) {
@@ -697,26 +671,12 @@ class _VersionHistorySheet extends ConsumerWidget {
                               )
                             : TextButton(
                                 onPressed: () async {
-                                  final confirm = await showDialog<bool>(
-                                    context: context,
-                                    builder: (context) => AlertDialog(
-                                      backgroundColor: AppColors.nearBlack,
-                                      title: const Text('Revert to this version?'),
-                                      content: Text('Restore "$name"?'),
-                                      actions: [
-                                        TextButton(
-                                          onPressed: () => Navigator.pop(context, false),
-                                          child: const Text('Cancel'),
-                                        ),
-                                        ElevatedButton(
-                                          onPressed: () => Navigator.pop(context, true),
-                                          style: ElevatedButton.styleFrom(
-                                            backgroundColor: AppColors.cyan,
-                                          ),
-                                          child: const Text('Revert'),
-                                        ),
-                                      ],
-                                    ),
+                                  final confirm = await AppDialog.confirm(
+                                    context,
+                                    title: 'Revert to this version?',
+                                    message: 'Restore "$name"?',
+                                    confirmText: 'Revert',
+                                    icon: Icons.restore_rounded,
                                   );
 
                                   if (confirm == true) {

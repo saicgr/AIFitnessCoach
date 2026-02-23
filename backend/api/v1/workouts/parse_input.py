@@ -9,7 +9,9 @@ This module handles AI-powered parsing of natural language workout input:
 import json
 from typing import List, Optional
 
-from fastapi import APIRouter, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException, Request
+from core.auth import get_current_user
+from core.exceptions import safe_internal_error
 from pydantic import BaseModel, Field
 
 from core.supabase_db import get_supabase_db
@@ -136,7 +138,9 @@ class BatchAddExercisesRequest(BaseModel):
 
 @router.post("/parse-input", response_model=ParseWorkoutInputResponse)
 @limiter.limit("20/minute")
-async def parse_workout_input(request: Request, body: ParseWorkoutInputRequest):
+async def parse_workout_input(request: Request, body: ParseWorkoutInputRequest,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Parse natural language workout input using AI.
 
@@ -194,12 +198,14 @@ async def parse_workout_input(request: Request, body: ParseWorkoutInputRequest):
 
     except Exception as e:
         logger.error(f"❌ [ParseInput] Failed to parse input: {e}")
-        raise HTTPException(status_code=500, detail=f"Failed to parse workout input: {str(e)}")
+        raise safe_internal_error(e, "parse_workout_input")
 
 
 @router.post("/parse-input-v2", response_model=ParseWorkoutInputV2Response)
 @limiter.limit("20/minute")
-async def parse_workout_input_v2(request: Request, body: ParseWorkoutInputV2Request):
+async def parse_workout_input_v2(request: Request, body: ParseWorkoutInputV2Request,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Parse workout input with dual-mode support.
 
@@ -309,12 +315,14 @@ async def parse_workout_input_v2(request: Request, body: ParseWorkoutInputV2Requ
 
     except Exception as e:
         logger.error(f"❌ [ParseInputV2] Failed to parse input: {e}")
-        raise HTTPException(status_code=500, detail=f"Failed to parse workout input: {str(e)}")
+        raise safe_internal_error(e, "parse_workout_input_v2")
 
 
 @router.post("/add-exercises-batch", response_model=Workout)
 @limiter.limit("10/minute")
-async def add_exercises_batch(request: Request, body: BatchAddExercisesRequest):
+async def add_exercises_batch(request: Request, body: BatchAddExercisesRequest,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Add multiple parsed exercises to an existing workout.
 
@@ -416,4 +424,4 @@ async def add_exercises_batch(request: Request, body: BatchAddExercisesRequest):
         raise
     except Exception as e:
         logger.error(f"❌ [BatchAdd] Failed to add exercises: {e}")
-        raise HTTPException(status_code=500, detail=f"Failed to add exercises: {str(e)}")
+        raise safe_internal_error(e, "batch_add_exercises")

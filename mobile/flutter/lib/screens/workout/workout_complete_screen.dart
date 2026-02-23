@@ -103,6 +103,8 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
   final Map<int, String> _exerciseDifficulties = {};
   // Whether to show exercise feedback section
   bool _showExerciseFeedback = false;
+  // Whether to show detailed feedback (difficulty, per-exercise, subjective)
+  bool _showDetailedFeedback = false;
 
   // Achievements state
   Map<String, dynamic>? _achievements;
@@ -1447,44 +1449,6 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
 
                   const SizedBox(height: 16),
 
-                  // Difficulty Section
-                  Text(
-                    'How was the difficulty?',
-                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      _DifficultyOption(
-                        label: 'Too Easy',
-                        icon: Icons.sentiment_very_satisfied,
-                        isSelected: _difficulty == 'too_easy',
-                        onTap: () => setState(() => _difficulty = 'too_easy'),
-                        color: AppColors.success,
-                      ),
-                      const SizedBox(width: 8),
-                      _DifficultyOption(
-                        label: 'Just Right',
-                        icon: Icons.sentiment_satisfied,
-                        isSelected: _difficulty == 'just_right',
-                        onTap: () => setState(() => _difficulty = 'just_right'),
-                        color: AppColors.cyan,
-                      ),
-                      const SizedBox(width: 8),
-                      _DifficultyOption(
-                        label: 'Too Hard',
-                        icon: Icons.sentiment_dissatisfied,
-                        isSelected: _difficulty == 'too_hard',
-                        onTap: () => setState(() => _difficulty = 'too_hard'),
-                        color: AppColors.error,
-                      ),
-                    ],
-                  ).animate().fadeIn(delay: 500.ms),
-
-                  const SizedBox(height: 16),
-
                   // Trophies Section - Shows PRs and achievements earned (animation handled in method)
                   _buildTrophiesSection(elevated),
 
@@ -1596,14 +1560,14 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
                         color: textSecondary.withOpacity(0.3),
                       ),
                       TextButton.icon(
-                        onPressed: () => setState(() => _showExerciseFeedback = !_showExerciseFeedback),
+                        onPressed: () => setState(() => _showDetailedFeedback = !_showDetailedFeedback),
                         icon: Icon(
-                          _showExerciseFeedback ? Icons.expand_less : Icons.expand_more,
+                          _showDetailedFeedback ? Icons.expand_less : Icons.rate_review_outlined,
                           size: 16,
                         ),
-                        label: const Text(
-                          'Rate Exercises',
-                          style: TextStyle(fontSize: 13),
+                        label: Text(
+                          _showDetailedFeedback ? 'Less' : 'Detailed feedback',
+                          style: const TextStyle(fontSize: 13),
                         ),
                         style: TextButton.styleFrom(
                           foregroundColor: AppColors.purple,
@@ -1612,8 +1576,55 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
                     ],
                   ).animate().fadeIn(delay: 700.ms),
 
-                  // Expandable Exercise Feedback (shown in bottom sheet if tapped)
-                  if (_showExerciseFeedback) ...[
+                  // Detailed feedback section (gated behind toggle)
+                  if (_showDetailedFeedback) ...[
+                    const SizedBox(height: 16),
+
+                    // Difficulty Section
+                    Text(
+                      'How was the difficulty?',
+                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        _DifficultyOption(
+                          label: 'Too Easy',
+                          icon: Icons.sentiment_very_satisfied,
+                          isSelected: _difficulty == 'too_easy',
+                          onTap: () => setState(() => _difficulty = 'too_easy'),
+                          color: AppColors.success,
+                        ),
+                        const SizedBox(width: 8),
+                        _DifficultyOption(
+                          label: 'Just Right',
+                          icon: Icons.sentiment_satisfied,
+                          isSelected: _difficulty == 'just_right',
+                          onTap: () => setState(() => _difficulty = 'just_right'),
+                          color: AppColors.cyan,
+                        ),
+                        const SizedBox(width: 8),
+                        _DifficultyOption(
+                          label: 'Too Hard',
+                          icon: Icons.sentiment_dissatisfied,
+                          isSelected: _difficulty == 'too_hard',
+                          onTap: () => setState(() => _difficulty = 'too_hard'),
+                          color: AppColors.error,
+                        ),
+                      ],
+                    ),
+
+                    const SizedBox(height: 16),
+
+                    // Per-exercise feedback
+                    Text(
+                      'Rate exercises',
+                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
                     const SizedBox(height: 8),
                     Container(
                       constraints: const BoxConstraints(maxHeight: 200),

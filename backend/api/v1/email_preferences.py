@@ -12,7 +12,9 @@ ENDPOINTS:
 
 from datetime import datetime
 from typing import Optional
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
+from core.auth import get_current_user
+from core.exceptions import safe_internal_error
 from pydantic import BaseModel
 
 from core.supabase_client import get_supabase
@@ -95,7 +97,7 @@ def _get_default_preferences(user_id: str) -> dict:
 
 
 @router.get("/{user_id}", response_model=EmailPreferencesResponse)
-async def get_email_preferences(user_id: str):
+async def get_email_preferences(user_id: str, current_user: dict = Depends(get_current_user)):
     """
     Get current email preferences for a user.
 
@@ -109,6 +111,8 @@ async def get_email_preferences(user_id: str):
     Returns:
         EmailPreferencesResponse: Current email preference settings
     """
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     logger.info(f"Getting email preferences for user {user_id}")
 
     try:
@@ -167,11 +171,11 @@ async def get_email_preferences(user_id: str):
             endpoint=f"/api/v1/email-preferences/{user_id}",
             status_code=500
         )
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "email_preferences")
 
 
 @router.put("/{user_id}", response_model=EmailPreferencesResponse)
-async def update_email_preferences(user_id: str, preferences: EmailPreferencesUpdate):
+async def update_email_preferences(user_id: str, preferences: EmailPreferencesUpdate, current_user: dict = Depends(get_current_user)):
     """
     Update email preferences for a user.
 
@@ -185,6 +189,8 @@ async def update_email_preferences(user_id: str, preferences: EmailPreferencesUp
     Returns:
         EmailPreferencesResponse: Updated email preference settings
     """
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     logger.info(f"Updating email preferences for user {user_id}")
     logger.debug(f"Update payload: {preferences.model_dump(exclude_none=True)}")
 
@@ -262,11 +268,11 @@ async def update_email_preferences(user_id: str, preferences: EmailPreferencesUp
             endpoint=f"/api/v1/email-preferences/{user_id}",
             status_code=500
         )
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "email_preferences")
 
 
 @router.post("/{user_id}/unsubscribe-marketing", response_model=UnsubscribeMarketingResponse)
-async def unsubscribe_from_marketing(user_id: str):
+async def unsubscribe_from_marketing(user_id: str, current_user: dict = Depends(get_current_user)):
     """
     Quick action to unsubscribe from all marketing/non-essential emails.
 
@@ -281,6 +287,8 @@ async def unsubscribe_from_marketing(user_id: str):
     Returns:
         UnsubscribeMarketingResponse: Confirmation and updated preferences
     """
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     logger.info(f"Unsubscribing user {user_id} from all marketing emails")
 
     try:
@@ -362,17 +370,19 @@ async def unsubscribe_from_marketing(user_id: str):
             endpoint=f"/api/v1/email-preferences/{user_id}/unsubscribe-marketing",
             status_code=500
         )
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "email_preferences")
 
 
 @router.post("/{user_id}/subscribe-all")
-async def subscribe_to_all(user_id: str):
+async def subscribe_to_all(user_id: str, current_user: dict = Depends(get_current_user)):
     """
     Quick action to subscribe to all email types (opt back in).
 
     Returns:
         EmailPreferencesResponse: Updated preferences with all enabled
     """
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     logger.info(f"Subscribing user {user_id} to all email types")
 
     try:
@@ -440,4 +450,4 @@ async def subscribe_to_all(user_id: str):
             endpoint=f"/api/v1/email-preferences/{user_id}/subscribe-all",
             status_code=500
         )
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "email_preferences")

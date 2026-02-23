@@ -7,7 +7,9 @@ This module handles social summary operations:
 """
 from datetime import datetime, timezone
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
+from core.auth import get_current_user
+from core.exceptions import safe_internal_error
 
 from models.social import (
     ActivityFeedItem, ActivityType,
@@ -51,7 +53,9 @@ def _generate_simple_summary(activity: ActivityFeedItem) -> str:
 
 
 @router.get("/summary/{user_id}", response_model=SocialFeedSummary)
-async def get_social_summary(user_id: str):
+async def get_social_summary(user_id: str,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Get comprehensive social summary for user (for normal mode).
 
@@ -103,7 +107,9 @@ async def get_social_summary(user_id: str):
 
 
 @router.get("/summary/senior/{user_id}", response_model=SeniorSocialSummary)
-async def get_senior_social_summary(user_id: str):
+async def get_senior_social_summary(user_id: str,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Get simplified social summary for senior mode.
 

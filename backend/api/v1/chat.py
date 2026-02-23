@@ -27,6 +27,8 @@ from core.supabase_db import get_supabase_db
 from core.supabase_client import get_supabase
 from core.rate_limiter import limiter
 from core.activity_logger import log_user_activity, log_user_error
+from core.auth import get_current_user
+from core.exceptions import safe_internal_error
 
 router = APIRouter()
 logger = get_logger(__name__)
@@ -125,6 +127,7 @@ async def send_message(
     request: Request,  # Must be named 'request' for slowapi rate limiter
     chat_request: ChatRequest,
     background_tasks: BackgroundTasks,
+    current_user: dict = Depends(get_current_user),
     coach: LangGraphCoachService = Depends(get_coach_service),
 ):
     """
@@ -138,6 +141,8 @@ async def send_message(
     5. Records analytics with AI settings snapshot (background)
     6. Returns action data for workout modifications
     """
+    if str(current_user["id"]) != str(chat_request.user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     logger.info(f"Chat request from user {chat_request.user_id}: {chat_request.message[:50]}...")
     if chat_request.current_workout:
         logger.debug(f"Current workout: {chat_request.current_workout.name} (id={chat_request.current_workout.id})")
@@ -199,7 +204,7 @@ async def send_message(
             duration_ms=int((time.time() - start_time) * 1000),
             status_code=500
         )
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "chat_send_message")
 
 
 class ChatHistoryItem(BaseModel):
@@ -217,6 +222,7 @@ class ChatHistoryItem(BaseModel):
 async def get_chat_history(
     request: Request,
     user_id: str,
+    current_user: dict = Depends(get_current_user),
     limit: int = Query(default=50, ge=1, le=200, description="Maximum number of messages to return"),
     offset: int = Query(default=0, ge=0, description="Number of messages to skip"),
 ):
@@ -231,6 +237,8 @@ async def get_chat_history(
         limit: Max messages to return (default 50, max 200)
         offset: Number of messages to skip (default 0)
     """
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     logger.info(f"Fetching chat history for user {user_id}, limit={limit}, offset={offset}")
     try:
         db = get_supabase_db()
@@ -286,8 +294,7 @@ async def get_chat_history(
         logger.info(f"Returning {len(messages)} chat messages for user {user_id}")
         return messages
     except Exception as e:
-        logger.error(f"Failed to fetch chat history: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "get_chat_history")
 
 
 class ExtractIntentRequest(BaseModel):
@@ -316,6 +323,7 @@ def get_gemini_service_dep() -> GeminiService:
 async def extract_intent(
     request: ExtractIntentRequest,
     http_request: Request,
+    current_user: dict = Depends(get_current_user),
     gemini: GeminiService = Depends(get_gemini_service_dep),
 ):
     """
@@ -333,8 +341,7 @@ async def extract_intent(
             bodyPart=extraction.body_part if extraction.body_part else None,
         )
     except Exception as e:
-        logger.error(f"Failed to extract intent: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "extract_intent")
 
 
 class RAGSearchRequest(BaseModel):
@@ -357,6 +364,7 @@ class RAGSearchResult(BaseModel):
 async def search_similar(
     request: RAGSearchRequest,
     http_request: Request,
+    current_user: dict = Depends(get_current_user),
     rag: RAGService = Depends(get_rag_service),
 ):
     """
@@ -381,18 +389,17 @@ async def search_similar(
             for r in results
         ]
     except Exception as e:
-        logger.error(f"RAG search failed: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "rag_search")
 
 
 @router.get("/rag/stats")
-async def get_rag_stats(rag: RAGService = Depends(get_rag_service)):
+async def get_rag_stats(current_user: dict = Depends(get_current_user), rag: RAGService = Depends(get_rag_service)):
     """Get RAG system statistics."""
     return rag.get_stats()
 
 
 @router.delete("/rag/clear")
-async def clear_rag(rag: RAGService = Depends(get_rag_service)):
+async def clear_rag(current_user: dict = Depends(get_current_user), rag: RAGService = Depends(get_rag_service)):
     """Clear all RAG data. USE WITH CAUTION!"""
     logger.warning("Clearing all RAG data")
     await rag.clear_all()

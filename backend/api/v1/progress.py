@@ -8,7 +8,9 @@ Provides endpoints for:
 - User context logging for analytics
 """
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
+from core.auth import get_current_user
+from core.exceptions import safe_internal_error
 from typing import List, Optional, Dict, Any
 from datetime import datetime, date, timedelta
 from pydantic import BaseModel, Field
@@ -143,7 +145,8 @@ class ChartViewLogRequest(BaseModel):
 async def get_strength_over_time(
     user_id: str = Query(..., description="User ID"),
     time_range: TimeRange = Query(TimeRange.TWELVE_WEEKS, description="Time range for data"),
-    muscle_group: Optional[str] = Query(None, description="Filter by muscle group")
+    muscle_group: Optional[str] = Query(None, description="Filter by muscle group"),
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Get weekly strength progression per muscle group.
@@ -210,13 +213,14 @@ async def get_strength_over_time(
 
     except Exception as e:
         logger.error(f"Failed to get strength progression: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "progress")
 
 
 @router.get("/volume-over-time", response_model=VolumeProgressionResponse)
 async def get_volume_over_time(
     user_id: str = Query(..., description="User ID"),
-    time_range: TimeRange = Query(TimeRange.TWELVE_WEEKS, description="Time range for data")
+    time_range: TimeRange = Query(TimeRange.TWELVE_WEEKS, description="Time range for data"),
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Get weekly total volume progression (sets x reps x weight).
@@ -277,14 +281,15 @@ async def get_volume_over_time(
 
     except Exception as e:
         logger.error(f"Failed to get volume progression: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "progress")
 
 
 @router.get("/exercise/{exercise_name}", response_model=ExerciseProgressionResponse)
 async def get_exercise_progression(
     exercise_name: str,
     user_id: str = Query(..., description="User ID"),
-    time_range: TimeRange = Query(TimeRange.TWELVE_WEEKS, description="Time range for data")
+    time_range: TimeRange = Query(TimeRange.TWELVE_WEEKS, description="Time range for data"),
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Get strength progression for a specific exercise.
@@ -342,12 +347,13 @@ async def get_exercise_progression(
 
     except Exception as e:
         logger.error(f"Failed to get exercise progression: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "progress")
 
 
 @router.get("/summary", response_model=ProgressSummaryResponse)
 async def get_progress_summary(
-    user_id: str = Query(..., description="User ID")
+    user_id: str = Query(..., description="User ID"),
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Get overall progress summary statistics.
@@ -442,11 +448,13 @@ async def get_progress_summary(
 
     except Exception as e:
         logger.error(f"Failed to get progress summary: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "progress")
 
 
 @router.post("/log-view")
-async def log_chart_view(request: ChartViewLogRequest):
+async def log_chart_view(request: ChartViewLogRequest,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Log when a user views progress charts for analytics.
 
@@ -475,7 +483,9 @@ async def log_chart_view(request: ChartViewLogRequest):
 
 
 @router.get("/muscle-groups/{user_id}")
-async def get_available_muscle_groups(user_id: str):
+async def get_available_muscle_groups(user_id: str,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Get list of muscle groups the user has trained.
 
@@ -502,7 +512,7 @@ async def get_available_muscle_groups(user_id: str):
 
     except Exception as e:
         logger.error(f"Failed to get muscle groups: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "progress")
 
 
 # ============================================

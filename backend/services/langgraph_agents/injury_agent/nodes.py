@@ -18,7 +18,7 @@ from ..tools import (
     get_active_injuries,
     update_injury_status,
 )
-from ..personality import build_personality_prompt
+from ..personality import build_personality_prompt, sanitize_coach_name
 from models.chat import AISettings
 from services.gemini_service import GeminiService
 from core.config import get_settings
@@ -85,8 +85,8 @@ def get_injury_system_prompt(ai_settings: Dict[str, Any] = None) -> str:
     """Build the full system prompt with personality customization."""
     settings_obj = AISettings(**ai_settings) if ai_settings else None
 
-    # Get the coach name from settings or use default
-    coach_name = settings_obj.coach_name if settings_obj and settings_obj.coach_name else "Recovery"
+    # Get the coach name from settings or use default (sanitized)
+    coach_name = sanitize_coach_name(settings_obj.coach_name, default="Recovery") if settings_obj and settings_obj.coach_name else "Recovery"
 
     # Build the base prompt with the coach name
     base_prompt = INJURY_BASE_PROMPT_TEMPLATE.format(coach_name=coach_name)

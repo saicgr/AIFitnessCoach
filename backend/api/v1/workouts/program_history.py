@@ -9,7 +9,9 @@ Allows users to:
 """
 from datetime import datetime, date
 from typing import List, Optional
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
+from core.auth import get_current_user
+from core.exceptions import safe_internal_error
 from pydantic import BaseModel, Field
 
 from core.supabase_db import get_supabase_db
@@ -73,7 +75,9 @@ class RestoreProgramResponse(BaseModel):
 # ===== API Endpoints =====
 
 @router.post("/save", response_model=ProgramHistoryItem)
-async def save_program_snapshot(request: ProgramSnapshotRequest):
+async def save_program_snapshot(request: ProgramSnapshotRequest,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Save current program configuration as a snapshot.
 
@@ -115,11 +119,13 @@ async def save_program_snapshot(request: ProgramSnapshotRequest):
 
     except Exception as e:
         logger.error(f"❌ Failed to save program snapshot: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "program_history")
 
 
 @router.get("/list/{user_id}", response_model=ProgramHistoryListResponse)
-async def list_program_history(user_id: str, limit: int = 20, offset: int = 0):
+async def list_program_history(user_id: str, limit: int = 20, offset: int = 0,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Get list of all program snapshots for a user, ordered by most recent first.
 
@@ -156,11 +162,13 @@ async def list_program_history(user_id: str, limit: int = 20, offset: int = 0):
 
     except Exception as e:
         logger.error(f"❌ Failed to list program history: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "program_history")
 
 
 @router.post("/restore", response_model=RestoreProgramResponse)
-async def restore_program(request: RestoreProgramRequest):
+async def restore_program(request: RestoreProgramRequest,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Restore a previous program configuration.
 
@@ -232,11 +240,13 @@ async def restore_program(request: RestoreProgramRequest):
         raise
     except Exception as e:
         logger.error(f"❌ Failed to restore program: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "program_history")
 
 
 @router.delete("/{program_id}")
-async def delete_program_snapshot(program_id: str, user_id: str):
+async def delete_program_snapshot(program_id: str, user_id: str,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Delete a program snapshot.
 
@@ -278,4 +288,4 @@ async def delete_program_snapshot(program_id: str, user_id: str):
         raise
     except Exception as e:
         logger.error(f"❌ Failed to delete program: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "program_history")

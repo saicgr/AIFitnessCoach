@@ -132,6 +132,9 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet> {
   FoodMood? _moodAfter;
   int _energyLevel = 3;
 
+  // "More details" toggle for optional inputs (mood, energy, food items, micronutrients)
+  bool _showMealDetails = false;
+
   // Food browser state
   FoodBrowserFilter _browserFilter = FoodBrowserFilter.recent;
   String _searchQuery = '';
@@ -1881,42 +1884,72 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet> {
                 ),
                 const SizedBox(height: 12),
 
-                // Mood tracking
-                _MoodTrackingSection(
-                  moodBefore: _moodBefore,
-                  moodAfter: _moodAfter,
-                  energyLevel: _energyLevel,
-                  onMoodBeforeChanged: (mood) => setState(() => _moodBefore = mood),
-                  onMoodAfterChanged: (mood) => setState(() => _moodAfter = mood),
-                  onEnergyLevelChanged: (level) => setState(() => _energyLevel = level),
-                  isDark: isDark,
+                // "More details" toggle
+                GestureDetector(
+                  onTap: () => setState(() => _showMealDetails = !_showMealDetails),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        _showMealDetails ? Icons.expand_less : Icons.expand_more,
+                        size: 18,
+                        color: textSecondary,
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        _showMealDetails ? 'Less details' : 'More details',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w500,
+                          color: textSecondary,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-                const SizedBox(height: 12),
 
-                // Collapsible food items
-                if (response.foodItems.isNotEmpty)
-                  _CollapsibleFoodItemsSection(
-                    foodItems: response.foodItemsRanked,
-                    isDark: isDark,
-                    onItemWeightChanged: (index, updatedItem) => _handleFoodItemWeightChange(index, updatedItem),
-                  ),
-                if (response.foodItems.isNotEmpty) const SizedBox(height: 12),
+                // Optional sections gated behind "More details"
+                if (_showMealDetails) ...[
+                  const SizedBox(height: 12),
 
-                // Micronutrients
-                if (_hasMicronutrients(response))
-                  _MicronutrientsSection(response: response, isDark: isDark),
-                if (_hasMicronutrients(response)) const SizedBox(height: 12),
-
-                // AI Suggestion
-                if (response.aiSuggestion != null || (response.encouragements != null && response.encouragements!.isNotEmpty) || (response.warnings != null && response.warnings!.isNotEmpty))
-                  _AISuggestionCard(
-                    suggestion: response.aiSuggestion,
-                    encouragements: response.encouragements,
-                    warnings: response.warnings,
-                    recommendedSwap: response.recommendedSwap,
+                  // Mood tracking
+                  _MoodTrackingSection(
+                    moodBefore: _moodBefore,
+                    moodAfter: _moodAfter,
+                    energyLevel: _energyLevel,
+                    onMoodBeforeChanged: (mood) => setState(() => _moodBefore = mood),
+                    onMoodAfterChanged: (mood) => setState(() => _moodAfter = mood),
+                    onEnergyLevelChanged: (level) => setState(() => _energyLevel = level),
                     isDark: isDark,
                   ),
+                  const SizedBox(height: 12),
 
+                  // Collapsible food items
+                  if (response.foodItems.isNotEmpty)
+                    _CollapsibleFoodItemsSection(
+                      foodItems: response.foodItemsRanked,
+                      isDark: isDark,
+                      onItemWeightChanged: (index, updatedItem) => _handleFoodItemWeightChange(index, updatedItem),
+                    ),
+                  if (response.foodItems.isNotEmpty) const SizedBox(height: 12),
+
+                  // Micronutrients
+                  if (_hasMicronutrients(response))
+                    _MicronutrientsSection(response: response, isDark: isDark),
+                  if (_hasMicronutrients(response)) const SizedBox(height: 12),
+
+                  // AI Suggestion
+                  if (response.aiSuggestion != null || (response.encouragements != null && response.encouragements!.isNotEmpty) || (response.warnings != null && response.warnings!.isNotEmpty))
+                    _AISuggestionCard(
+                      suggestion: response.aiSuggestion,
+                      encouragements: response.encouragements,
+                      warnings: response.warnings,
+                      recommendedSwap: response.recommendedSwap,
+                      isDark: isDark,
+                    ),
+                ],
+
+                const SizedBox(height: 8),
                 Text('AI estimates based on your description', style: TextStyle(fontSize: 11, color: textMuted, fontStyle: FontStyle.italic), textAlign: TextAlign.center),
               ],
             ),

@@ -7,6 +7,7 @@ from datetime import date, datetime, timedelta
 from typing import Optional, List
 from core.supabase_db import get_supabase_db
 from core.auth import get_current_user
+from core.exceptions import safe_internal_error
 from core.timezone_utils import resolve_timezone, get_user_today, local_date_to_utc_range
 
 router = APIRouter(prefix="/xp", tags=["XP & Progression"])
@@ -128,7 +129,7 @@ async def process_daily_login(
                 print(f"❌ [XP] Failed to parse RPC response: {parse_error}")
 
         print(f"❌ [XP] daily-login error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "xp")
 
 
 @router.get("/login-streak", response_model=LoginStreakInfo)
@@ -154,11 +155,13 @@ async def get_login_streak(
             )
 
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "xp")
 
 
 @router.get("/active-events", response_model=List[XPEvent])
-async def get_active_events():
+async def get_active_events(
+    current_user: dict = Depends(get_current_user),
+):
     """Get all currently active XP events (Double XP, etc.)."""
     try:
         db = get_supabase_db()
@@ -166,12 +169,13 @@ async def get_active_events():
         return result.data or []
 
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "xp")
 
 
 @router.get("/events", response_model=List[XPEvent])
 async def get_all_events(
     include_inactive: bool = Query(False, description="Include past/inactive events"),
+    current_user: dict = Depends(get_current_user),
 ):
     """Get all XP events (admin view)."""
     try:
@@ -185,7 +189,7 @@ async def get_all_events(
         return result.data or []
 
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "xp")
 
 
 @router.post("/events/enable-double-xp")
@@ -218,7 +222,7 @@ async def enable_double_xp_event(
         }
 
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "xp")
 
 
 @router.delete("/events/{event_id}")
@@ -237,11 +241,13 @@ async def disable_event(
         return {"message": "Event disabled", "event_id": event_id}
 
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "xp")
 
 
 @router.get("/bonus-templates", response_model=List[BonusTemplate])
-async def get_bonus_templates():
+async def get_bonus_templates(
+    current_user: dict = Depends(get_current_user),
+):
     """Get all XP bonus templates (for reference/admin)."""
     try:
         db = get_supabase_db()
@@ -249,7 +255,7 @@ async def get_bonus_templates():
         return result.data or []
 
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "xp")
 
 
 @router.put("/bonus-templates/{bonus_type}")
@@ -275,7 +281,7 @@ async def update_bonus_template(
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "xp")
 
 
 @router.get("/checkpoint-progress")
@@ -375,7 +381,7 @@ async def get_all_checkpoint_progress(
 
     except Exception as e:
         print(f"Error getting all checkpoint progress: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "xp")
 
 
 @router.post("/increment-checkpoint-workout")
@@ -420,7 +426,7 @@ async def increment_checkpoint_workout(
 
     except Exception as e:
         print(f"❌ [XP] Error incrementing checkpoint workout: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "xp")
 
 
 class AwardGoalXPRequest(BaseModel):
@@ -553,7 +559,7 @@ async def award_goal_xp(
         raise
     except Exception as e:
         print(f"❌ [XP] Error awarding goal XP: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "xp")
 
 
 class DailyGoalsStatusResponse(BaseModel):
@@ -601,7 +607,7 @@ async def get_daily_goals_status(
 
     except Exception as e:
         print(f"Error getting daily goals status: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "xp")
 
 
 # =============================================================================
@@ -740,7 +746,7 @@ async def award_first_time_bonus(
         raise
     except Exception as e:
         print(f"❌ [XP] Error awarding first-time bonus: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "xp")
 
 
 @router.get("/first-time-bonuses", response_model=List[FirstTimeBonusInfo])
@@ -771,7 +777,7 @@ async def get_first_time_bonuses(
 
     except Exception as e:
         print(f"❌ [XP] Error getting first-time bonuses: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "xp")
 
 
 @router.get("/available-first-time-bonuses")
@@ -807,7 +813,7 @@ async def get_available_first_time_bonuses(
 
     except Exception as e:
         print(f"❌ [XP] Error getting available first-time bonuses: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "xp")
 
 
 # =============================================================================
@@ -872,7 +878,7 @@ async def get_consumables(
 
     except Exception as e:
         print(f"❌ [XP] Error getting consumables: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "xp")
 
 
 @router.post("/use-consumable")
@@ -943,7 +949,7 @@ async def use_consumable(
         raise
     except Exception as e:
         print(f"❌ [XP] Error using consumable: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "xp")
 
 
 # Crate reward definitions
@@ -1054,7 +1060,7 @@ async def open_crate(
         raise
     except Exception as e:
         print(f"❌ [XP] Error opening crate: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "xp")
 
 
 # =============================================================================
@@ -1125,7 +1131,7 @@ async def get_daily_crates(
 
     except Exception as e:
         print(f"❌ [XP] Error getting daily crates: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "xp")
 
 
 @router.post("/claim-daily-crate", response_model=ClaimDailyCrateResponse)
@@ -1217,7 +1223,7 @@ async def claim_daily_crate(
                 print(f"❌ [XP] Failed to parse RPC response: {parse_error}")
 
         print(f"❌ [XP] Error claiming daily crate: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "xp")
 
 
 @router.post("/unlock-activity-crate")
@@ -1245,7 +1251,7 @@ async def unlock_activity_crate(
 
     except Exception as e:
         print(f"❌ [XP] Error unlocking activity crate: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "xp")
 
 
 # =============================================================================
@@ -1297,7 +1303,7 @@ async def get_weekly_checkpoints(
 
     except Exception as e:
         print(f"❌ [XP] Error getting weekly checkpoints: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "xp")
 
 
 @router.post("/increment-weekly-checkpoint")
@@ -1345,7 +1351,7 @@ async def increment_weekly_checkpoint(
         raise
     except Exception as e:
         print(f"❌ [XP] Error incrementing weekly checkpoint: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "xp")
 
 
 @router.post("/update-weekly-habits")
@@ -1370,7 +1376,7 @@ async def update_weekly_habits(
 
     except Exception as e:
         print(f"❌ [XP] Error updating weekly habits: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "xp")
 
 
 # =============================================================================
@@ -1424,7 +1430,7 @@ async def get_monthly_achievements(
 
     except Exception as e:
         print(f"❌ [XP] Error getting monthly achievements: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "xp")
 
 
 @router.post("/increment-monthly-achievement")
@@ -1480,7 +1486,7 @@ async def increment_monthly_achievement(
         raise
     except Exception as e:
         print(f"❌ [XP] Error incrementing monthly achievement: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "xp")
 
 
 @router.post("/update-monthly-goal-progress")
@@ -1505,7 +1511,7 @@ async def update_monthly_goal_progress(
 
     except Exception as e:
         print(f"❌ [XP] Error updating monthly goal progress: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "xp")
 
 
 @router.post("/update-monthly-consistency")
@@ -1537,7 +1543,7 @@ async def update_monthly_consistency(
 
     except Exception as e:
         print(f"❌ [XP] Error updating monthly consistency: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "xp")
 
 
 @router.post("/update-monthly-weight-status")
@@ -1562,7 +1568,7 @@ async def update_monthly_weight_status(
 
     except Exception as e:
         print(f"❌ [XP] Error updating monthly weight status: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "xp")
 
 
 @router.post("/update-monthly-habits")
@@ -1587,7 +1593,7 @@ async def update_monthly_habits_endpoint(
 
     except Exception as e:
         print(f"❌ [XP] Error updating monthly habits: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "xp")
 
 
 @router.post("/evaluate-month-end")
@@ -1616,7 +1622,7 @@ async def evaluate_month_end(
 
     except Exception as e:
         print(f"❌ [XP] Error evaluating month-end: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "xp")
 
 
 # =============================================================================
@@ -1665,7 +1671,7 @@ async def get_daily_social_xp(
 
     except Exception as e:
         print(f"❌ [XP] Error getting daily social XP: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "xp")
 
 
 @router.post("/award-social-xp")
@@ -1713,7 +1719,7 @@ async def award_social_xp(
         raise
     except Exception as e:
         print(f"❌ [XP] Error awarding social XP: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "xp")
 
 
 # =============================================================================
@@ -1781,6 +1787,7 @@ def _get_xp_title(level: int) -> str:
 @router.get("/level-info")
 async def get_level_info(
     level: int = Query(..., ge=1, le=250, description="Level number (1-250)"),
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Get XP requirements and rewards for a specific level.

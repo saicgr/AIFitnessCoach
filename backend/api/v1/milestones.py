@@ -12,7 +12,9 @@ Provides endpoints for:
 - GET /api/v1/progress/milestones/definitions - Get all milestone definitions
 """
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
+from core.auth import get_current_user
+from core.exceptions import safe_internal_error
 from typing import Optional, List
 from datetime import datetime
 
@@ -46,6 +48,7 @@ async def get_milestone_definitions(
     category: Optional[MilestoneCategory] = Query(
         None, description="Filter by category"
     ),
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Get all milestone definitions.
@@ -61,7 +64,7 @@ async def get_milestone_definitions(
         return definitions
     except Exception as e:
         logger.error(f"Error getting milestone definitions: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "milestones")
 
 
 # ============================================
@@ -69,7 +72,9 @@ async def get_milestone_definitions(
 # ============================================
 
 @router.get("/milestones/{user_id}", response_model=MilestonesResponse)
-async def get_user_milestones(user_id: str):
+async def get_user_milestones(user_id: str,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Get complete milestone progress for a user.
 
@@ -110,11 +115,13 @@ async def get_user_milestones(user_id: str):
             endpoint=f"/api/v1/progress/milestones/{user_id}",
             status_code=500,
         )
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "milestones")
 
 
 @router.get("/milestones/{user_id}/uncelebrated", response_model=List[UserMilestone])
-async def get_uncelebrated_milestones(user_id: str):
+async def get_uncelebrated_milestones(user_id: str,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Get milestones that haven't been celebrated yet.
 
@@ -128,13 +135,14 @@ async def get_uncelebrated_milestones(user_id: str):
         return uncelebrated
     except Exception as e:
         logger.error(f"Error getting uncelebrated milestones: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "milestones")
 
 
 @router.post("/milestones/{user_id}/celebrate")
 async def mark_milestones_celebrated(
     user_id: str,
     request: MarkMilestoneCelebratedRequest,
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Mark milestones as celebrated (user has seen celebration dialog).
@@ -165,13 +173,14 @@ async def mark_milestones_celebrated(
         return {"success": success}
     except Exception as e:
         logger.error(f"Error marking milestones celebrated: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "milestones")
 
 
 @router.post("/milestones/{user_id}/share")
 async def record_milestone_share(
     user_id: str,
     request: MilestoneShareRequest,
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Record that a user shared a milestone.
@@ -214,11 +223,13 @@ async def record_milestone_share(
         return {"success": success}
     except Exception as e:
         logger.error(f"Error recording milestone share: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "milestones")
 
 
 @router.post("/milestones/{user_id}/check", response_model=MilestoneCheckResult)
-async def check_milestones(user_id: str):
+async def check_milestones(user_id: str,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Manually trigger a milestone check.
 
@@ -250,7 +261,7 @@ async def check_milestones(user_id: str):
         return result
     except Exception as e:
         logger.error(f"Error checking milestones: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "milestones")
 
 
 # ============================================
@@ -263,6 +274,7 @@ async def get_roi_metrics(
     recalculate: bool = Query(
         False, description="Force recalculation of metrics"
     ),
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Get detailed ROI metrics for a user.
@@ -299,11 +311,13 @@ async def get_roi_metrics(
         return metrics
     except Exception as e:
         logger.error(f"Error getting ROI metrics: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "milestones")
 
 
 @router.get("/roi/{user_id}/summary", response_model=ROISummary)
-async def get_roi_summary(user_id: str):
+async def get_roi_summary(user_id: str,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Get a compact ROI summary for the home screen.
 
@@ -323,7 +337,7 @@ async def get_roi_summary(user_id: str):
         return summary
     except Exception as e:
         logger.error(f"Error getting ROI summary: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "milestones")
 
 
 # ============================================
@@ -331,7 +345,9 @@ async def get_roi_summary(user_id: str):
 # ============================================
 
 @router.get("/{user_id}")
-async def get_progress_overview(user_id: str):
+async def get_progress_overview(user_id: str,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Get complete progress overview including milestones and ROI.
 
@@ -351,4 +367,4 @@ async def get_progress_overview(user_id: str):
         }
     except Exception as e:
         logger.error(f"Error getting progress overview: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "milestones")

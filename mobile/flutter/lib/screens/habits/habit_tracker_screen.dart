@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants/app_colors.dart';
+import '../../widgets/app_loading.dart';
+import '../../widgets/app_snackbar.dart';
 import '../../data/models/habit.dart';
 import '../../data/providers/habit_provider.dart';
 import '../../data/repositories/auth_repository.dart';
@@ -28,8 +30,8 @@ class _HabitTrackerScreenState extends ConsumerState<HabitTrackerScreen> {
     final userId = authState.user?.id;
 
     if (userId == null) {
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
+      return Scaffold(
+        body: AppLoading.fullScreen(),
       );
     }
 
@@ -68,8 +70,8 @@ class _HabitTrackerScreenState extends ConsumerState<HabitTrackerScreen> {
 
             // Habits list
             if (habitsState.isLoading && habitsState.habits.isEmpty)
-              const SliverFillRemaining(
-                child: Center(child: CircularProgressIndicator()),
+              SliverFillRemaining(
+                child: AppLoading.fullScreen(),
               )
             else if (habitsState.habits.isEmpty)
               SliverFillRemaining(
@@ -283,12 +285,7 @@ class _HabitTrackerScreenState extends ConsumerState<HabitTrackerScreen> {
 
   void _showHabitDetail(BuildContext context, HabitWithStatus habit) {
     // TODO: Navigate to habit detail screen
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Streak: ${habit.currentStreak} days'),
-        duration: const Duration(seconds: 2),
-      ),
-    );
+    AppSnackBar.info(context, 'Streak: ${habit.currentStreak} days');
   }
 
   void _editHabit(BuildContext context, String userId, HabitWithStatus habit) {

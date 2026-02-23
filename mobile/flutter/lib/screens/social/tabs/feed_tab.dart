@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/theme_colors.dart';
+import '../../../widgets/app_loading.dart';
+import '../../../widgets/app_snackbar.dart';
 import '../../../data/providers/social_provider.dart';
 import '../../../data/providers/admin_provider.dart';
 import '../../../data/repositories/auth_repository.dart';
@@ -52,7 +54,7 @@ class _FeedTabState extends ConsumerState<FeedTab> {
     return Stack(
       children: [
         activityFeedAsync.when(
-          loading: () => const Center(child: CircularProgressIndicator()),
+          loading: () => AppLoading.fullScreen(),
           error: (error, stack) {
             debugPrint('Error loading feed: $error');
             return SocialEmptyState(
@@ -216,9 +218,7 @@ class _FeedTabState extends ConsumerState<FeedTab> {
       debugPrint('Error handling reaction: $e');
       // Show error snackbar
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Failed to update reaction. Please try again.')),
-        );
+        AppSnackBar.error(context, 'Failed to update reaction. Please try again.');
       }
     }
   }
@@ -230,9 +230,7 @@ class _FeedTabState extends ConsumerState<FeedTab> {
 
     // Placeholder: Show coming soon message
     if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Comments feature coming soon!')),
-      );
+      AppSnackBar.info(context, 'Comments feature coming soon!');
     }
   }
 
@@ -245,23 +243,12 @@ class _FeedTabState extends ConsumerState<FeedTab> {
       if (currentlyPinned) {
         await socialService.unpinPost(userId: userId, activityId: activityId);
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Post unpinned'),
-              behavior: SnackBarBehavior.floating,
-            ),
-          );
+          AppSnackBar.info(context, 'Post unpinned');
         }
       } else {
         await socialService.pinPost(userId: userId, activityId: activityId);
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: const Text('Post pinned to top of feed'),
-              backgroundColor: ref.colors(context).accent,
-              behavior: SnackBarBehavior.floating,
-            ),
-          );
+          AppSnackBar.success(context, 'Post pinned to top of feed');
         }
       }
 
@@ -270,12 +257,7 @@ class _FeedTabState extends ConsumerState<FeedTab> {
     } catch (e) {
       debugPrint('Error toggling pin: $e');
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to ${currentlyPinned ? 'unpin' : 'pin'} post. Please try again.'),
-            backgroundColor: Colors.red,
-          ),
-        );
+        AppSnackBar.error(context, 'Failed to ${currentlyPinned ? 'unpin' : 'pin'} post. Please try again.');
       }
     }
   }

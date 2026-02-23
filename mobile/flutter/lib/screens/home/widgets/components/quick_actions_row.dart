@@ -4,7 +4,6 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/models/quick_action.dart';
 import '../../../../data/providers/fasting_provider.dart';
-import '../../../../data/providers/local_layout_provider.dart';
 import '../../../../data/providers/quick_action_provider.dart';
 import '../../../../data/repositories/hydration_repository.dart';
 import '../../../../data/services/api_client.dart';
@@ -1022,18 +1021,13 @@ class _WaterSizeOption extends StatelessWidget {
   }
 }
 
-/// QuickActionsRow: switches between compact (Minimalist) and classic (Old Default) modes
-class QuickActionsRow extends ConsumerWidget {
+/// QuickActionsRow: always uses compact mode (Minimalist)
+class QuickActionsRow extends StatelessWidget {
   const QuickActionsRow({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final collapseBanners = ref.watch(collapseBannersProvider);
-
-    if (collapseBanners) {
-      return const CompactQuickActionsRow();
-    }
-    return const QuickActionsGrid();
+  Widget build(BuildContext context) {
+    return const CompactQuickActionsRow();
   }
 }
 

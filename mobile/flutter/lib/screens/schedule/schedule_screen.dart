@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/constants/app_colors.dart';
+import '../../widgets/app_snackbar.dart';
 import '../../core/providers/user_provider.dart';
 import '../../core/theme/theme_colors.dart';
 import '../../data/models/schedule_item.dart';
@@ -264,21 +265,11 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
       // Refresh the schedule
       ref.read(scheduleRefreshProvider.notifier).state++;
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Added "${item.title}" to schedule'),
-            backgroundColor: colors.success,
-          ),
-        );
+        AppSnackBar.success(context, 'Added "${item.title}" to schedule');
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to add item: $e'),
-            backgroundColor: colors.error,
-          ),
-        );
+        AppSnackBar.error(context, 'Failed to add item: $e');
       }
     }
   }
@@ -681,21 +672,11 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
       await repository.completeItem(userId, item.id);
       ref.read(scheduleRefreshProvider.notifier).state++;
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Completed "${item.title}"'),
-            backgroundColor: colors.success,
-          ),
-        );
+        AppSnackBar.success(context, 'Completed "${item.title}"');
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to complete: $e'),
-            backgroundColor: colors.error,
-          ),
-        );
+        AppSnackBar.error(context, 'Failed to complete: $e');
       }
     }
   }
@@ -741,24 +722,14 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
         ref.invalidate(workoutsProvider);
 
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Workout moved to ${DateFormat('EEEE, MMM d').format(newDate)}'),
-              backgroundColor: colors.success,
-            ),
-          );
+          AppSnackBar.success(context, 'Workout moved to ${DateFormat('EEEE, MMM d').format(newDate)}');
         }
       } else {
         throw Exception('Failed to reschedule');
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to reschedule: $e'),
-            backgroundColor: colors.error,
-          ),
-        );
+        AppSnackBar.error(context, 'Failed to reschedule: $e');
       }
     }
   }

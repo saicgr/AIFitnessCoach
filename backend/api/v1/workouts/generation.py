@@ -18,7 +18,9 @@ import uuid
 from datetime import datetime, timedelta
 from typing import List, AsyncGenerator, Dict, Any, Optional
 
-from fastapi import APIRouter, BackgroundTasks, HTTPException, Request
+from fastapi import APIRouter, Depends, BackgroundTasks, HTTPException, Request
+from core.auth import get_current_user
+from core.exceptions import safe_internal_error
 from fastapi.responses import StreamingResponse
 
 from core.supabase_db import get_supabase_db
@@ -191,7 +193,9 @@ async def generate_next_day_background(user_id: str, target_date: str):
 # =============================================================================
 
 @router.get("/comeback-status")
-async def check_comeback_status(user_id: str):
+async def check_comeback_status(user_id: str,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Lightweight endpoint to check if a user is in comeback mode.
 
@@ -338,7 +342,9 @@ def normalize_exercise_numeric_fields(exercises: List[Dict[str, Any]]) -> List[D
 
 
 @router.post("/generate", response_model=Workout)
-async def generate_workout(request: GenerateWorkoutRequest, background_tasks: BackgroundTasks):
+async def generate_workout(request: GenerateWorkoutRequest, background_tasks: BackgroundTasks,
+    current_user: dict = Depends(get_current_user),
+):
     """Generate a new workout for a user based on their preferences."""
     logger.info(f"Generating workout for user {request.user_id}")
 
@@ -1191,12 +1197,14 @@ async def generate_workout(request: GenerateWorkoutRequest, background_tasks: Ba
             except Exception:
                 pass
         logger.error(f"Failed to generate workout: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "generation")
 
 
 @router.post("/generate-stream")
 @user_limiter.limit("15/minute")  # User-based rate limit (more reliable than IP behind proxies)
-async def generate_workout_streaming(request: Request, body: GenerateWorkoutRequest):
+async def generate_workout_streaming(request: Request, body: GenerateWorkoutRequest,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Generate a workout with streaming response for faster perceived performance.
 
@@ -1829,7 +1837,9 @@ class MoodWorkoutRequest(BaseModel):
 
 @router.post("/generate-from-mood-stream")
 @limiter.limit("10/minute")
-async def generate_mood_workout_streaming(request: Request, body: MoodWorkoutRequest):
+async def generate_mood_workout_streaming(request: Request, body: MoodWorkoutRequest,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Generate a quick workout based on user's current mood.
 
@@ -2159,7 +2169,9 @@ async def generate_mood_workout_streaming(request: Request, body: MoodWorkoutReq
 
 
 @router.get("/moods")
-async def get_available_moods():
+async def get_available_moods(
+    current_user: dict = Depends(get_current_user),
+):
     """Get all available mood options with display info."""
     return {
         "moods": mood_workout_service.get_all_moods(),
@@ -2247,6 +2259,7 @@ async def get_mood_history(
     offset: int = 0,
     start_date: Optional[str] = None,
     end_date: Optional[str] = None,
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Get user's mood check-in history.
@@ -2325,13 +2338,14 @@ async def get_mood_history(
 
     except Exception as e:
         logger.error(f"Failed to get mood history: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "generation")
 
 
 @router.get("/{user_id}/mood-analytics", response_model=MoodAnalyticsResponse)
 async def get_mood_analytics(
     user_id: str,
     days: int = 30,
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Get mood analytics and patterns for a user.
@@ -2569,11 +2583,13 @@ async def get_mood_analytics(
 
     except Exception as e:
         logger.error(f"Failed to get mood analytics: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "generation")
 
 
 @router.put("/{user_id}/mood-checkins/{checkin_id}/complete")
-async def mark_mood_workout_completed(user_id: str, checkin_id: str):
+async def mark_mood_workout_completed(user_id: str, checkin_id: str,
+    current_user: dict = Depends(get_current_user),
+):
     """Mark a mood check-in's workout as completed."""
     logger.info(f"Marking mood workout completed: user={user_id}, checkin={checkin_id}")
 
@@ -2603,11 +2619,13 @@ async def mark_mood_workout_completed(user_id: str, checkin_id: str):
         raise
     except Exception as e:
         logger.error(f"Failed to mark mood workout completed: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "generation")
 
 
 @router.get("/{user_id}/mood-today")
-async def get_today_mood(user_id: str):
+async def get_today_mood(user_id: str,
+    current_user: dict = Depends(get_current_user),
+):
     """Get user's mood check-in for today (if any)."""
     logger.info(f"Fetching today's mood for user {user_id}")
 
@@ -2648,11 +2666,13 @@ async def get_today_mood(user_id: str):
 
     except Exception as e:
         logger.error(f"Failed to get today's mood: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "generation")
 
 
 @router.get("/{user_id}/mood-weekly", response_model=MoodWeeklyResponse)
-async def get_mood_weekly(user_id: str):
+async def get_mood_weekly(user_id: str,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Get user's mood data for the last 7 days.
 
@@ -2793,11 +2813,13 @@ async def get_mood_weekly(user_id: str):
 
     except Exception as e:
         logger.error(f"Failed to get weekly mood data: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "generation")
 
 
 @router.get("/{user_id}/mood-calendar", response_model=MoodCalendarResponse)
-async def get_mood_calendar(user_id: str, month: int, year: int):
+async def get_mood_calendar(user_id: str, month: int, year: int,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Get user's mood data for a specific month.
 
@@ -2915,11 +2937,13 @@ async def get_mood_calendar(user_id: str, month: int, year: int):
         raise
     except Exception as e:
         logger.error(f"Failed to get mood calendar data: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "generation")
 
 
 @router.post("/swap")
-async def swap_workout_date(request: SwapWorkoutsRequest):
+async def swap_workout_date(request: SwapWorkoutsRequest,
+    current_user: dict = Depends(get_current_user),
+):
     """Move a workout to a new date, swapping if another workout exists there."""
     logger.info(f"Swapping workout {request.workout_id} to {request.new_date}")
     try:
@@ -2949,11 +2973,13 @@ async def swap_workout_date(request: SwapWorkoutsRequest):
         raise
     except Exception as e:
         logger.error(f"Failed to swap workout: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "generation")
 
 
 @router.post("/swap-exercise", response_model=Workout)
-async def swap_exercise_in_workout(request: SwapExerciseRequest, background_tasks: BackgroundTasks):
+async def swap_exercise_in_workout(request: SwapExerciseRequest, background_tasks: BackgroundTasks,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Swap an exercise within a workout with a new exercise from the library.
 
@@ -3104,11 +3130,13 @@ async def swap_exercise_in_workout(request: SwapExerciseRequest, background_task
         raise
     except Exception as e:
         logger.error(f"Failed to swap exercise: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "generation")
 
 
 @router.post("/add-exercise", response_model=Workout)
-async def add_exercise_to_workout(request: AddExerciseRequest, background_tasks: BackgroundTasks):
+async def add_exercise_to_workout(request: AddExerciseRequest, background_tasks: BackgroundTasks,
+    current_user: dict = Depends(get_current_user),
+):
     """Add a new exercise to an existing workout."""
     section = request.section or "main"
     logger.info(f"Adding exercise '{request.exercise_name}' to workout {request.workout_id} (section: {section})")
@@ -3303,11 +3331,13 @@ async def add_exercise_to_workout(request: AddExerciseRequest, background_tasks:
         raise
     except Exception as e:
         logger.error(f"Failed to add exercise: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "generation")
 
 
 @router.post("/extend", response_model=Workout)
-async def extend_workout(request: ExtendWorkoutRequest):
+async def extend_workout(request: ExtendWorkoutRequest,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Extend an existing workout with additional AI-generated exercises.
 
@@ -3516,7 +3546,7 @@ Generate exactly {request.additional_exercises} exercises that complement the ex
         raise
     except Exception as e:
         logger.error(f"Failed to extend workout: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "generation")
 
 
 # =============================================================================
@@ -3540,7 +3570,9 @@ class OnboardingGenerateRequest(BaseModel):
 
 @router.post("/generate-onboarding")
 @limiter.limit("10/minute")
-async def generate_onboarding_workout_streaming(request: Request, body: OnboardingGenerateRequest):
+async def generate_onboarding_workout_streaming(request: Request, body: OnboardingGenerateRequest,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Generate a workout during onboarding using inline profile data.
 

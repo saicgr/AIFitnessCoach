@@ -17,13 +17,15 @@ Endpoints:
 - DELETE /goals/invites/{id} - Cancel sent invite
 """
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query, Depends
 from datetime import datetime, date, timedelta, timezone
 from typing import Optional, List
 
 from core.supabase_db import get_supabase_db
 from core.logger import get_logger
 from core.activity_logger import log_user_activity, log_user_error
+from core.auth import get_current_user
+from core.exceptions import safe_internal_error
 from models.goal_suggestions import (
     GoalFriendsResponse, GoalLeaderboardEntry, FriendGoalProgress,
     GoalInvite, GoalInviteCreate, GoalInviteWithDetails,
@@ -51,13 +53,16 @@ def get_iso_week_boundaries(for_date: date) -> tuple[date, date]:
 
 @router.get("/goals/{goal_id}/friends", response_model=GoalFriendsResponse)
 async def get_goal_friends(
-    user_id: str,
     goal_id: str,
+    user_id: str = Query(..., description="User ID"),
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Get friends who have the same exercise/goal_type combination this week.
     Returns mini-leaderboard sorted by progress.
     """
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     logger.info(f"Getting friends on goal: {goal_id} for user: {user_id}")
 
     try:
@@ -170,7 +175,7 @@ async def get_goal_friends(
         raise
     except Exception as e:
         logger.error(f"Failed to get goal friends: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "goal_social")
 
 
 # ============================================================
@@ -179,13 +184,16 @@ async def get_goal_friends(
 
 @router.post("/goals/{goal_id}/join", response_model=WeeklyPersonalGoal)
 async def join_goal(
-    user_id: str,
     goal_id: str,
+    user_id: str = Query(..., description="User ID"),
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Join a friend's goal by creating your own copy with same exercise/type/target.
     Creates shared_goals record to link them.
     """
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     logger.info(f"User {user_id} joining goal: {goal_id}")
 
     try:
@@ -301,7 +309,7 @@ async def join_goal(
             endpoint=f"/api/v1/goal-social/goals/{goal_id}/join",
             status_code=500
         )
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "goal_social")
 
 
 # ============================================================
@@ -310,11 +318,14 @@ async def join_goal(
 
 @router.post("/goals/{goal_id}/invite", response_model=GoalInvite)
 async def invite_to_goal(
-    user_id: str,
     goal_id: str,
     request: GoalInviteCreate,
+    user_id: str = Query(..., description="User ID"),
+    current_user: dict = Depends(get_current_user),
 ):
     """Invite a friend to join your goal."""
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     logger.info(f"User {user_id} inviting {request.invitee_id} to goal {goal_id}")
 
     try:
@@ -412,7 +423,7 @@ async def invite_to_goal(
             endpoint=f"/api/v1/goal-social/goals/{goal_id}/invite",
             status_code=500
         )
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "goal_social")
 
 
 # ============================================================
@@ -421,10 +432,13 @@ async def invite_to_goal(
 
 @router.get("/goals/invites", response_model=List[GoalInviteWithDetails])
 async def get_goal_invites(
-    user_id: str,
+    user_id: str = Query(..., description="User ID"),
     status: Optional[InviteStatus] = Query(None, description="Filter by status"),
+    current_user: dict = Depends(get_current_user),
 ):
     """Get all goal invites for the user (received)."""
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     logger.info(f"Getting goal invites for user: {user_id}")
 
     try:
@@ -482,7 +496,7 @@ async def get_goal_invites(
 
     except Exception as e:
         logger.error(f"Failed to get goal invites: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "goal_social")
 
 
 # ============================================================
@@ -491,11 +505,14 @@ async def get_goal_invites(
 
 @router.post("/goals/invites/{invite_id}/respond", response_model=GoalInviteResponse)
 async def respond_to_invite(
-    user_id: str,
     invite_id: str,
     request: InviteResponseRequest,
+    user_id: str = Query(..., description="User ID"),
+    current_user: dict = Depends(get_current_user),
 ):
     """Accept or decline a goal invite."""
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     logger.info(f"User {user_id} responding to invite {invite_id}: accept={request.accept}")
 
     try:
@@ -646,7 +663,7 @@ async def respond_to_invite(
         raise
     except Exception as e:
         logger.error(f"Failed to respond to invite: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "goal_social")
 
 
 # ============================================================
@@ -655,10 +672,13 @@ async def respond_to_invite(
 
 @router.delete("/goals/invites/{invite_id}")
 async def cancel_invite(
-    user_id: str,
     invite_id: str,
+    user_id: str = Query(..., description="User ID"),
+    current_user: dict = Depends(get_current_user),
 ):
     """Cancel a sent invite."""
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     logger.info(f"User {user_id} canceling invite {invite_id}")
 
     try:
@@ -699,7 +719,7 @@ async def cancel_invite(
             endpoint=f"/api/v1/goal-social/goals/invites/{invite_id}",
             status_code=500
         )
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "goal_social")
 
 
 # ============================================================
@@ -707,8 +727,13 @@ async def cancel_invite(
 # ============================================================
 
 @router.get("/goals/invites/pending-count", response_model=PendingInvitesSummary)
-async def get_pending_invites_count(user_id: str):
+async def get_pending_invites_count(
+    user_id: str = Query(..., description="User ID"),
+    current_user: dict = Depends(get_current_user),
+):
     """Get count of pending invites for badge display."""
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     logger.info(f"Getting pending invites count for user: {user_id}")
 
     try:
@@ -743,7 +768,7 @@ async def get_pending_invites_count(user_id: str):
 
     except Exception as e:
         logger.error(f"Failed to get pending invites count: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "goal_social")
 
 
 # ============================================================

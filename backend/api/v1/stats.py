@@ -11,6 +11,8 @@ Provides endpoints for:
 """
 
 from fastapi import APIRouter, HTTPException, Depends, Request
+from core.auth import get_current_user
+from core.exceptions import safe_internal_error
 from typing import List, Optional, Dict, Any
 from datetime import datetime, date, timedelta
 from pydantic import BaseModel
@@ -103,7 +105,9 @@ class ComprehensiveStatsResponse(BaseModel):
 # ============================================
 
 @router.get("/overview/{user_id}", response_model=ComprehensiveStatsResponse)
-async def get_comprehensive_stats(user_id: str, request: Request):
+async def get_comprehensive_stats(user_id: str, request: Request,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Get comprehensive stats overview for a user.
     Includes quick stats, achievements, PRs, and measurements.
@@ -175,11 +179,13 @@ async def get_comprehensive_stats(user_id: str, request: Request):
 
     except Exception as e:
         logger.error(f"Failed to get comprehensive stats: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "stats")
 
 
 @router.get("/quick/{user_id}", response_model=QuickStatsResponse)
-async def get_quick_stats(user_id: str, request: Request):
+async def get_quick_stats(user_id: str, request: Request,
+    current_user: dict = Depends(get_current_user),
+):
     """Get quick overview statistics."""
     logger.info(f"Getting quick stats for user {user_id}")
 
@@ -190,11 +196,13 @@ async def get_quick_stats(user_id: str, request: Request):
 
     except Exception as e:
         logger.error(f"Failed to get quick stats: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "stats")
 
 
 @router.get("/workout-frequency/{user_id}", response_model=List[WorkoutFrequencyData])
-async def get_workout_frequency(user_id: str, request: Request, weeks: int = 12):
+async def get_workout_frequency(user_id: str, request: Request, weeks: int = 12,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Get workout frequency by week for graphing.
     Returns last N weeks of workout data.
@@ -243,11 +251,13 @@ async def get_workout_frequency(user_id: str, request: Request, weeks: int = 12)
 
     except Exception as e:
         logger.error(f"Failed to get workout frequency: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "stats")
 
 
 @router.get("/weight-trend/{user_id}", response_model=List[WeightTrendData])
-async def get_weight_trend(user_id: str, request: Request, days: int = 90):
+async def get_weight_trend(user_id: str, request: Request, days: int = 90,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Get weight tracking trend over time.
     Returns measurements from last N days.
@@ -279,11 +289,13 @@ async def get_weight_trend(user_id: str, request: Request, days: int = 90):
 
     except Exception as e:
         logger.error(f"Failed to get weight trend: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "stats")
 
 
 @router.get("/nutrition/{user_id}", response_model=NutritionStatsResponse)
-async def get_nutrition_stats(user_id: str, request: Request, days: int = 7):
+async def get_nutrition_stats(user_id: str, request: Request, days: int = 7,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Get nutrition statistics (averages over last N days).
     """
@@ -339,11 +351,13 @@ async def get_nutrition_stats(user_id: str, request: Request, days: int = 7):
 
     except Exception as e:
         logger.error(f"Failed to get nutrition stats: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "stats")
 
 
 @router.get("/volume-progress/{user_id}", response_model=List[VolumeProgressData])
-async def get_volume_progress(user_id: str, request: Request, days: int = 30):
+async def get_volume_progress(user_id: str, request: Request, days: int = 30,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Get training volume progression over time.
     """
@@ -396,7 +410,7 @@ async def get_volume_progress(user_id: str, request: Request, days: int = 30):
 
     except Exception as e:
         logger.error(f"Failed to get volume progress: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "stats")
 
 
 # ============================================

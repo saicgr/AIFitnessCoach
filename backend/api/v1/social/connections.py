@@ -10,7 +10,9 @@ This module handles user connection operations:
 """
 from typing import List, Optional
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
+from core.auth import get_current_user
+from core.exceptions import safe_internal_error
 
 from models.social import (
     UserConnection, UserConnectionCreate, UserConnectionWithProfile, UserProfile,
@@ -26,6 +28,7 @@ router = APIRouter()
 async def create_connection(
     user_id: str,
     connection: UserConnectionCreate,
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Create a new user connection (follow someone).
@@ -73,6 +76,7 @@ async def create_connection(
 async def delete_connection(
     user_id: str,
     following_id: str,
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Delete a connection (unfollow someone).
@@ -114,6 +118,7 @@ async def get_followers(
     connection_type: Optional[ConnectionType] = None,
     cursor: Optional[str] = None,
     limit: int = Query(50, ge=1, le=100),
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Get followers for a user with cursor-based pagination.
@@ -175,6 +180,7 @@ async def get_following(
     connection_type: Optional[ConnectionType] = None,
     cursor: Optional[str] = None,
     limit: int = Query(50, ge=1, le=100),
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Get users that a user is following with cursor-based pagination.
@@ -231,7 +237,9 @@ async def get_following(
 
 
 @router.get("/connections/friends/{user_id}", response_model=List[UserProfile])
-async def get_friends(user_id: str):
+async def get_friends(user_id: str,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Get mutual friends (users who follow each other).
 

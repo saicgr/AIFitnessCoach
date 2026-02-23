@@ -11,5 +11,6 @@ export 'interval_picker_tile.dart';
 export 'section_header.dart';
 export 'setting_switch_tile.dart';
 export 'setting_tile.dart';
+export 'inline_theme_selector.dart';
 export 'settings_card.dart';
 export 'time_picker_tile.dart';

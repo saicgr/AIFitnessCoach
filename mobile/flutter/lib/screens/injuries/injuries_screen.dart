@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
+import '../../widgets/app_loading.dart';
+import '../../widgets/app_snackbar.dart';
 import '../../data/models/injury.dart';
 import '../../widgets/glass_back_button.dart';
 import '../../widgets/segmented_tab_bar.dart';
@@ -171,12 +173,7 @@ class _InjuriesScreenState extends ConsumerState<InjuriesScreen>
 
   void _showCheckInDialog(Injury injury) {
     // TODO: Implement check-in dialog
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Check-in for ${injury.bodyPartDisplay}'),
-        backgroundColor: AppColors.cyan,
-      ),
-    );
+    AppSnackBar.info(context, 'Check-in for ${injury.bodyPartDisplay}');
   }
 
   @override
@@ -224,7 +221,7 @@ class _InjuriesScreenState extends ConsumerState<InjuriesScreen>
           ),
           Expanded(
             child: _isLoading
-          ? const Center(child: CircularProgressIndicator())
+          ? AppLoading.fullScreen()
           : _error != null
               ? _buildErrorState(textPrimary, textSecondary)
               : _buildContent(textPrimary, textSecondary, textMuted, elevated, cardBorder),

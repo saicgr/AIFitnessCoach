@@ -13,6 +13,7 @@ from fastapi import APIRouter, HTTPException, Query
 
 from core.supabase_db import get_supabase_db
 from core.logger import get_logger
+from core.exceptions import safe_internal_error
 
 from .models import LibraryProgram, ProgramsByCategory
 from .utils import row_to_library_program
@@ -51,7 +52,7 @@ async def get_program_categories():
 
     except Exception as e:
         logger.error(f"Error getting program categories: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "programs")
 
 
 @router.get("/programs", response_model=List[LibraryProgram])
@@ -92,7 +93,7 @@ async def list_programs(
 
     except Exception as e:
         logger.error(f"Error listing programs: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "programs")
 
 
 @router.get("/programs/grouped", response_model=List[ProgramsByCategory])
@@ -137,7 +138,7 @@ async def get_programs_grouped(
 
     except Exception as e:
         logger.error(f"Error getting grouped programs: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "programs")
 
 
 @router.get("/programs/{program_id}", response_model=Dict[str, Any])
@@ -183,4 +184,4 @@ async def get_program(program_id: str):
         raise
     except Exception as e:
         logger.error(f"Error getting program {program_id}: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "programs")

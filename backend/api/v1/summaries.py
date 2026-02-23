@@ -7,13 +7,16 @@ Generates AI-powered weekly workout summaries with:
 - Tips for the next week
 """
 
-from fastapi import APIRouter, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException, Request
 from typing import List, Optional
 from datetime import datetime, date, timedelta
 import json
 
 from core.supabase_db import get_supabase_db
 from core.logger import get_logger
+from core.auth import get_current_user
+from core.rate_limiter import limiter
+from core.exceptions import safe_internal_error
 from core.timezone_utils import resolve_timezone, get_user_today
 from services.gemini_service import GeminiService
 from models.schemas import (
@@ -30,13 +33,16 @@ logger = get_logger(__name__)
 # ============================================
 
 @router.post("/generate/{user_id}", response_model=WeeklySummary)
-async def generate_weekly_summary(user_id: str, request: Request, week_start: Optional[str] = None):
+@limiter.limit("5/minute")
+async def generate_weekly_summary(user_id: str, request: Request, week_start: Optional[str] = None, current_user: dict = Depends(get_current_user)):
     """
     Generate a weekly summary for a user.
 
     If week_start is not provided, generates for the previous week.
     The summary includes AI-generated content with highlights and encouragement.
     """
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     logger.info(f"Generating weekly summary for user: {user_id}")
 
     try:
@@ -111,12 +117,15 @@ async def generate_weekly_summary(user_id: str, request: Request, week_start: Op
         raise
     except Exception as e:
         logger.error(f"Failed to generate weekly summary: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "generate_weekly_summary")
 
 
 @router.get("/user/{user_id}", response_model=List[WeeklySummary])
-async def get_user_summaries(user_id: str, limit: int = 12):
+@limiter.limit("5/minute")
+async def get_user_summaries(user_id: str, request: Request, limit: int = 12, current_user: dict = Depends(get_current_user)):
     """Get weekly summaries for a user."""
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     logger.info(f"Getting summaries for user: {user_id}")
 
     try:
@@ -130,12 +139,14 @@ async def get_user_summaries(user_id: str, limit: int = 12):
 
     except Exception as e:
         logger.error(f"Failed to get user summaries: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "get_user_summaries")
 
 
 @router.get("/user/{user_id}/latest", response_model=Optional[WeeklySummary])
-async def get_latest_summary(user_id: str):
+async def get_latest_summary(user_id: str, current_user: dict = Depends(get_current_user)):
     """Get the most recent weekly summary for a user."""
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     logger.info(f"Getting latest summary for user: {user_id}")
 
     try:
@@ -151,7 +162,7 @@ async def get_latest_summary(user_id: str):
 
     except Exception as e:
         logger.error(f"Failed to get latest summary: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "get_latest_summary")
 
 
 # ============================================
@@ -159,8 +170,10 @@ async def get_latest_summary(user_id: str):
 # ============================================
 
 @router.get("/preferences/{user_id}", response_model=NotificationPreferences)
-async def get_notification_preferences(user_id: str):
+async def get_notification_preferences(user_id: str, current_user: dict = Depends(get_current_user)):
     """Get notification preferences for a user."""
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     logger.info(f"Getting notification preferences for user: {user_id}")
 
     try:
@@ -198,12 +211,14 @@ async def get_notification_preferences(user_id: str):
 
     except Exception as e:
         logger.error(f"Failed to get notification preferences: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "get_notification_preferences")
 
 
 @router.put("/preferences/{user_id}", response_model=NotificationPreferences)
-async def update_notification_preferences(user_id: str, prefs: NotificationPreferencesUpdate):
+async def update_notification_preferences(user_id: str, prefs: NotificationPreferencesUpdate, current_user: dict = Depends(get_current_user)):
     """Update notification preferences for a user."""
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     logger.info(f"Updating notification preferences for user: {user_id}")
 
     try:
@@ -257,7 +272,7 @@ async def update_notification_preferences(user_id: str, prefs: NotificationPrefe
         raise
     except Exception as e:
         logger.error(f"Failed to update notification preferences: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "update_notification_preferences")
 
 
 # ============================================

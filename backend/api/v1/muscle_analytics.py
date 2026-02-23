@@ -9,7 +9,9 @@ Provides endpoints for:
 - Muscle training history over time
 """
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
+from core.auth import get_current_user
+from core.exceptions import safe_internal_error
 from typing import List, Optional, Dict, Any
 from datetime import datetime, date, timedelta
 from pydantic import BaseModel, Field
@@ -229,6 +231,7 @@ def get_balance_status(ratio: float, ideal_min: float, ideal_max: float) -> tupl
 async def get_muscle_heatmap_data(
     user_id: str = Query(..., description="User ID"),
     time_range: TimeRange = Query(TimeRange.FOUR_WEEKS, description="Time range for heatmap"),
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Get muscle heatmap data for body diagram visualization.
@@ -336,12 +339,13 @@ async def get_muscle_heatmap_data(
 
     except Exception as e:
         logger.error(f"Error getting muscle heatmap: {e}")
-        raise HTTPException(status_code=500, detail=f"Failed to get muscle heatmap: {str(e)}")
+        raise safe_internal_error(e, "muscle_heatmap")
 
 
 @router.get("/frequency", response_model=MuscleFrequencyResponse)
 async def get_muscle_training_frequency(
     user_id: str = Query(..., description="User ID"),
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Get training frequency for each muscle group.
@@ -404,12 +408,13 @@ async def get_muscle_training_frequency(
 
     except Exception as e:
         logger.error(f"Error getting muscle frequency: {e}")
-        raise HTTPException(status_code=500, detail=f"Failed to get muscle frequency: {str(e)}")
+        raise safe_internal_error(e, "muscle_frequency")
 
 
 @router.get("/balance", response_model=MuscleBalanceResponse)
 async def get_muscle_balance(
     user_id: str = Query(..., description="User ID"),
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Get muscle balance analysis.
@@ -554,13 +559,14 @@ async def get_muscle_balance(
 
     except Exception as e:
         logger.error(f"Error getting muscle balance: {e}")
-        raise HTTPException(status_code=500, detail=f"Failed to get muscle balance: {str(e)}")
+        raise safe_internal_error(e, "muscle_balance")
 
 
 @router.get("/muscle/{muscle_group}/exercises", response_model=MuscleExercisesResponse)
 async def get_exercises_for_muscle(
     muscle_group: str,
     user_id: str = Query(..., description="User ID"),
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Get all exercises performed for a specific muscle group.
@@ -662,7 +668,7 @@ async def get_exercises_for_muscle(
 
     except Exception as e:
         logger.error(f"Error getting exercises for muscle: {e}")
-        raise HTTPException(status_code=500, detail=f"Failed to get exercises: {str(e)}")
+        raise safe_internal_error(e, "muscle_exercises")
 
 
 @router.get("/muscle/{muscle_group}/history", response_model=MuscleHistoryResponse)
@@ -670,6 +676,7 @@ async def get_muscle_history(
     muscle_group: str,
     user_id: str = Query(..., description="User ID"),
     time_range: TimeRange = Query(TimeRange.TWELVE_WEEKS, description="Time range for history"),
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Get historical training data for a specific muscle group.
@@ -744,11 +751,13 @@ async def get_muscle_history(
 
     except Exception as e:
         logger.error(f"Error getting muscle history: {e}")
-        raise HTTPException(status_code=500, detail=f"Failed to get muscle history: {str(e)}")
+        raise safe_internal_error(e, "muscle_history")
 
 
 @router.post("/log-view")
-async def log_muscle_analytics_view(request: ViewLogRequest):
+async def log_muscle_analytics_view(request: ViewLogRequest,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Log when a user views muscle analytics for tracking engagement.
     """

@@ -2,7 +2,7 @@
 fastapi==0.109.0
 uvicorn[standard]==0.27.0
 gunicorn>=21.2.0
-python-multipart==0.0.6
+python-multipart>=0.0.18
 
 # Gemini AI (new unified SDK)
 # google-genai>=1.56.0 required by langchain-google-genai 4.x for Gemini 3 thought_signature support

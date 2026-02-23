@@ -22,7 +22,9 @@ ENDPOINTS:
 - PUT  /api/v1/progression-settings/{user_id}/category-paces - Update category-specific paces
 """
 
-from fastapi import APIRouter, HTTPException, Query, Request
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
+from core.auth import get_current_user
+from core.exceptions import safe_internal_error
 from pydantic import BaseModel, Field
 from typing import Optional, List, Dict, Any
 from datetime import datetime, date, timedelta
@@ -374,7 +376,9 @@ def generate_recommendation(analysis: Dict[str, Any]) -> PaceRecommendation:
 # =============================================================================
 
 @router.get("/pace-definitions", response_model=ProgressionPaceDefinitionsResponse)
-async def get_progression_pace_definitions():
+async def get_progression_pace_definitions(
+    current_user: dict = Depends(get_current_user),
+):
     """Get all available progression pace definitions."""
     logger.info("Getting progression pace definitions")
 
@@ -391,7 +395,9 @@ async def get_progression_pace_definitions():
 
 
 @router.get("/{user_id}", response_model=ProgressionPreferences)
-async def get_progression_preferences(user_id: str):
+async def get_progression_preferences(user_id: str,
+    current_user: dict = Depends(get_current_user),
+):
     """Get user's current progression preferences."""
     logger.info(f"Getting progression preferences for user {user_id}")
 
@@ -428,11 +434,13 @@ async def get_progression_preferences(user_id: str):
 
     except Exception as e:
         logger.error(f"Failed to get progression preferences: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "progression_settings")
 
 
 @router.put("/{user_id}", response_model=ProgressionPreferences)
-async def update_progression_preferences(user_id: str, update: ProgressionPreferencesUpdate):
+async def update_progression_preferences(user_id: str, update: ProgressionPreferencesUpdate,
+    current_user: dict = Depends(get_current_user),
+):
     """Update user's progression preferences."""
     logger.info(f"Updating progression preferences for user {user_id}")
 
@@ -497,11 +505,13 @@ async def update_progression_preferences(user_id: str, update: ProgressionPrefer
         raise
     except Exception as e:
         logger.error(f"Failed to update progression preferences: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "progression_settings")
 
 
 @router.get("/{user_id}/recommendation", response_model=PaceRecommendationResponse)
-async def get_pace_recommendation(user_id: str, request: Request):
+async def get_pace_recommendation(user_id: str, request: Request,
+    current_user: dict = Depends(get_current_user),
+):
     """Get AI-recommended progression pace based on user profile."""
     logger.info(f"Generating pace recommendation for user {user_id}")
 
@@ -555,11 +565,13 @@ async def get_pace_recommendation(user_id: str, request: Request):
 
     except Exception as e:
         logger.error(f"Failed to generate recommendation: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "progression_settings")
 
 
 @router.post("/{user_id}/apply-recommendation", response_model=ApplyRecommendationResponse)
-async def apply_pace_recommendation(user_id: str, request: Request):
+async def apply_pace_recommendation(user_id: str, request: Request,
+    current_user: dict = Depends(get_current_user),
+):
     """Apply AI-recommended progression pace settings."""
     logger.info(f"Applying pace recommendation for user {user_id}")
 
@@ -588,11 +600,13 @@ async def apply_pace_recommendation(user_id: str, request: Request):
         raise
     except Exception as e:
         logger.error(f"Failed to apply recommendation: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "progression_settings")
 
 
 @router.get("/{user_id}/category-paces", response_model=CategoryPacesResponse)
-async def get_category_paces(user_id: str):
+async def get_category_paces(user_id: str,
+    current_user: dict = Depends(get_current_user),
+):
     """Get progression pace by category."""
     logger.info(f"Getting category paces for user {user_id}")
 
@@ -627,11 +641,13 @@ async def get_category_paces(user_id: str):
 
     except Exception as e:
         logger.error(f"Failed to get category paces: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "progression_settings")
 
 
 @router.put("/{user_id}/category-paces", response_model=CategoryPacesResponse)
-async def update_category_paces(user_id: str, update: CategoryPacesUpdate):
+async def update_category_paces(user_id: str, update: CategoryPacesUpdate,
+    current_user: dict = Depends(get_current_user),
+):
     """Update category-specific progression paces."""
     logger.info(f"Updating category paces for user {user_id}")
 
@@ -653,4 +669,4 @@ async def update_category_paces(user_id: str, update: CategoryPacesUpdate):
         raise
     except Exception as e:
         logger.error(f"Failed to update category paces: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "progression_settings")

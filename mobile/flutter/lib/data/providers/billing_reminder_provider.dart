@@ -91,7 +91,7 @@ final upcomingRenewalProvider = FutureProvider<UpcomingRenewal>((ref) async {
 });
 
 /// Provider for dismissing the renewal banner
-final dismissRenewalBannerProvider = FutureProvider.family<bool, String>((ref, userId) async {
+final dismissRenewalBannerProvider = FutureProvider.autoDispose.family<bool, String>((ref, userId) async {
   final apiClient = ref.read(apiClientProvider);
 
   try {
@@ -106,7 +106,7 @@ final dismissRenewalBannerProvider = FutureProvider.family<bool, String>((ref, u
 });
 
 /// Provider for updating billing notification preferences
-final updateBillingPreferencesProvider = FutureProvider.family<bool, ({String userId, bool enabled})>((ref, params) async {
+final updateBillingPreferencesProvider = FutureProvider.autoDispose.family<bool, ({String userId, bool enabled})>((ref, params) async {
   final apiClient = ref.read(apiClientProvider);
 
   try {

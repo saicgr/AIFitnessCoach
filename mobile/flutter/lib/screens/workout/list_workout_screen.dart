@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
+import '../../widgets/app_dialog.dart';
 import '../../data/models/workout.dart';
 import '../../data/repositories/workout_repository.dart';
 import '../../data/services/api_client.dart';
@@ -193,26 +194,13 @@ class _ListWorkoutScreenState extends ConsumerState<ListWorkoutScreen> {
 
     if (totalCompletedSets == 0) {
       // Show confirmation dialog
-      final confirm = await showDialog<bool>(
-        context: context,
-        builder: (ctx) => AlertDialog(
-          backgroundColor: AppColors.glassSurface,
-          title: const Text('No Sets Completed', style: TextStyle(color: AppColors.textPrimary)),
-          content: const Text(
-            'You haven\'t completed any sets. Are you sure you want to finish?',
-            style: TextStyle(color: AppColors.textSecondary),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(ctx, false),
-              child: const Text('Cancel'),
-            ),
-            TextButton(
-              onPressed: () => Navigator.pop(ctx, true),
-              child: const Text('Finish Anyway', style: TextStyle(color: AppColors.orange)),
-            ),
-          ],
-        ),
+      final confirm = await AppDialog.confirm(
+        context,
+        title: 'No Sets Completed',
+        message: 'You haven\'t completed any sets. Are you sure you want to finish?',
+        confirmText: 'Finish Anyway',
+        confirmColor: AppColors.warning,
+        icon: Icons.warning_amber_rounded,
       );
       if (confirm != true) return;
     }

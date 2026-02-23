@@ -16,7 +16,7 @@ ENDPOINTS:
 - GET  /api/v1/gym-profiles/active - Get user's currently active profile
 """
 from datetime import datetime
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query, Depends
 from typing import Optional, List
 
 from core.supabase_client import get_supabase
@@ -32,6 +32,8 @@ from models.gym_profile import (
     DuplicateProfileRequest,
     ActivateProfileResponse,
 )
+from core.auth import get_current_user
+from core.exceptions import safe_internal_error
 
 
 router = APIRouter()
@@ -219,6 +221,7 @@ async def create_default_profile_if_needed(user_id: str) -> Optional[GymProfile]
 async def list_gym_profiles(
     user_id: str = Query(..., description="User ID"),
     include_stats: bool = Query(False, description="Include workout stats per profile"),
+    current_user: dict = Depends(get_current_user),
 ):
     """
     List all gym profiles for a user.
@@ -280,7 +283,7 @@ async def list_gym_profiles(
 
     except Exception as e:
         logger.error(f"❌ [GymProfile] Failed to list profiles: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "endpoint")
 
 
 # =============================================================================
@@ -291,6 +294,7 @@ async def list_gym_profiles(
 @router.get("/active", response_model=Optional[GymProfile])
 async def get_active_profile(
     user_id: str = Query(..., description="User ID"),
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Get the user's currently active gym profile.
@@ -381,7 +385,7 @@ async def get_active_profile(
             default_profile = await create_default_profile_if_needed(user_id)
             return default_profile
         logger.error(f"❌ [GymProfile] Failed to get active profile: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "endpoint")
 
 
 # =============================================================================
@@ -393,6 +397,7 @@ async def get_active_profile(
 async def create_gym_profile(
     user_id: str = Query(..., description="User ID"),
     profile: GymProfileCreate = ...,
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Create a new gym profile for a user.
@@ -467,7 +472,7 @@ async def create_gym_profile(
             .execute()
 
         if not result.data:
-            raise HTTPException(status_code=500, detail="Failed to create profile")
+            raise safe_internal_error(e, "endpoint")
 
         created_profile = row_to_gym_profile(result.data[0])
 
@@ -501,7 +506,7 @@ async def create_gym_profile(
         raise
     except Exception as e:
         logger.error(f"❌ [GymProfile] Failed to create profile: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "endpoint")
 
 
 # =============================================================================
@@ -510,7 +515,10 @@ async def create_gym_profile(
 
 
 @router.get("/{profile_id}", response_model=GymProfile)
-async def get_gym_profile(profile_id: str):
+async def get_gym_profile(
+    profile_id: str,
+    current_user: dict = Depends(get_current_user),
+):
     """Get a single gym profile by ID."""
     logger.info(f"🔍 [GymProfile] Fetching profile {profile_id}")
 
@@ -534,7 +542,7 @@ async def get_gym_profile(profile_id: str):
         if "0 rows" in str(e).lower() or "no rows" in str(e).lower():
             raise HTTPException(status_code=404, detail="Profile not found")
         logger.error(f"❌ [GymProfile] Failed to get profile: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "endpoint")
 
 
 # =============================================================================
@@ -543,7 +551,10 @@ async def get_gym_profile(profile_id: str):
 
 
 @router.put("/{profile_id}", response_model=GymProfile)
-async def update_gym_profile(profile_id: str, update: GymProfileUpdate):
+async def update_gym_profile(
+    profile_id: str, update: GymProfileUpdate,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Update a gym profile.
 
@@ -622,7 +633,7 @@ async def update_gym_profile(profile_id: str, update: GymProfileUpdate):
             .execute()
 
         if not result.data:
-            raise HTTPException(status_code=500, detail="Failed to update profile")
+            raise safe_internal_error(e, "endpoint")
 
         updated_profile = row_to_gym_profile(result.data[0])
 
@@ -660,7 +671,7 @@ async def update_gym_profile(profile_id: str, update: GymProfileUpdate):
         if "0 rows" in str(e).lower() or "no rows" in str(e).lower():
             raise HTTPException(status_code=404, detail="Profile not found")
         logger.error(f"❌ [GymProfile] Failed to update profile: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "endpoint")
 
 
 # =============================================================================
@@ -669,7 +680,10 @@ async def update_gym_profile(profile_id: str, update: GymProfileUpdate):
 
 
 @router.delete("/{profile_id}")
-async def delete_gym_profile(profile_id: str):
+async def delete_gym_profile(
+    profile_id: str,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Delete a gym profile.
 
@@ -757,7 +771,7 @@ async def delete_gym_profile(profile_id: str):
         raise
     except Exception as e:
         logger.error(f"❌ [GymProfile] Failed to delete profile: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "endpoint")
 
 
 # =============================================================================
@@ -766,7 +780,10 @@ async def delete_gym_profile(profile_id: str):
 
 
 @router.post("/{profile_id}/activate", response_model=ActivateProfileResponse)
-async def activate_gym_profile(profile_id: str):
+async def activate_gym_profile(
+    profile_id: str,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Activate (switch to) a gym profile.
 
@@ -854,7 +871,7 @@ async def activate_gym_profile(profile_id: str):
         raise
     except Exception as e:
         logger.error(f"❌ [GymProfile] Failed to activate profile: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "endpoint")
 
 
 # =============================================================================
@@ -871,6 +888,7 @@ async def activate_gym_profile(profile_id: str):
 async def duplicate_gym_profile(
     profile_id: str,
     request: Optional[DuplicateProfileRequest] = None,
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Duplicate an existing gym profile.
@@ -969,7 +987,7 @@ async def duplicate_gym_profile(
             .execute()
 
         if not result.data:
-            raise HTTPException(status_code=500, detail="Failed to duplicate profile")
+            raise safe_internal_error(e, "endpoint")
 
         duplicated_profile = row_to_gym_profile(result.data[0])
 
@@ -996,7 +1014,7 @@ async def duplicate_gym_profile(
         raise
     except Exception as e:
         logger.error(f"❌ [GymProfile] Failed to duplicate profile: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "endpoint")
 
 
 # =============================================================================
@@ -1008,6 +1026,7 @@ async def duplicate_gym_profile(
 async def reorder_gym_profiles(
     user_id: str = Query(..., description="User ID"),
     request: ReorderProfilesRequest = ...,
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Update the display order of gym profiles.
@@ -1063,4 +1082,4 @@ async def reorder_gym_profiles(
         raise
     except Exception as e:
         logger.error(f"❌ [GymProfile] Failed to reorder profiles: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "endpoint")

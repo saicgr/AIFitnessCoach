@@ -12,7 +12,9 @@ This module handles friend request operations:
 from typing import List, Optional
 from datetime import datetime, timezone
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
+from core.auth import get_current_user
+from core.exceptions import safe_internal_error
 
 from models.friend_request import (
     FriendRequest, FriendRequestCreate, FriendRequestWithUser,
@@ -74,6 +76,7 @@ async def create_social_notification(
 async def send_friend_request(
     user_id: str = Query(..., description="Current user ID"),
     request: FriendRequestCreate = ...,
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Send a friend request to another user.
@@ -164,6 +167,7 @@ async def send_friend_request(
 async def get_received_requests(
     user_id: str = Query(..., description="Current user ID"),
     status: Optional[FriendRequestStatus] = Query(None, description="Filter by status"),
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Get friend requests received by the current user.
@@ -212,6 +216,7 @@ async def get_received_requests(
 async def get_sent_requests(
     user_id: str = Query(..., description="Current user ID"),
     status: Optional[FriendRequestStatus] = Query(None, description="Filter by status"),
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Get friend requests sent by the current user.
@@ -259,6 +264,7 @@ async def get_sent_requests(
 @router.get("/pending-count")
 async def get_pending_count(
     user_id: str = Query(..., description="Current user ID"),
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Get count of pending friend requests for current user.
@@ -282,6 +288,7 @@ async def get_pending_count(
 async def accept_friend_request(
     request_id: str,
     user_id: str = Query(..., description="Current user ID"),
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Accept a friend request.
@@ -379,6 +386,7 @@ async def accept_friend_request(
 async def decline_friend_request(
     request_id: str,
     user_id: str = Query(..., description="Current user ID"),
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Decline a friend request.
@@ -428,6 +436,7 @@ async def decline_friend_request(
 async def cancel_friend_request(
     request_id: str,
     user_id: str = Query(..., description="Current user ID"),
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Cancel a sent friend request.

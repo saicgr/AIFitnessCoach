@@ -29,7 +29,7 @@ Fasting Scores:
 - GET  /api/v1/fasting/score/{user_id}/current - Get current/latest score
 - GET  /api/v1/fasting/score/trend/{user_id} - Get score trend vs last week
 """
-from fastapi import APIRouter, HTTPException, Query, Request
+from fastapi import APIRouter, HTTPException, Query, Request, Depends
 from typing import List, Optional
 from datetime import datetime, date, timedelta
 from decimal import Decimal
@@ -41,6 +41,8 @@ from core.supabase_db import get_supabase_db
 from core.logger import get_logger
 from core.activity_logger import log_user_activity, log_user_error
 from core.timezone_utils import resolve_timezone, get_user_today
+from core.auth import get_current_user
+from core.exceptions import safe_internal_error
 
 router = APIRouter()
 logger = get_logger(__name__)
@@ -428,7 +430,7 @@ async def update_streak(user_id: str, completed_goal: bool, completion_percentag
 # ==================== Fasting Records Endpoints ====================
 
 @router.post("/start", response_model=FastingRecordResponse)
-async def start_fast(data: StartFastRequest):
+async def start_fast(data: StartFastRequest, current_user: dict = Depends(get_current_user)):
     """
     Start a new fast.
 
@@ -438,6 +440,8 @@ async def start_fast(data: StartFastRequest):
     - Extended: '24h', '36h', '48h'
     - Custom: Any duration
     """
+    if str(current_user["id"]) != str(data.user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     logger.info(f"Starting fast for user {data.user_id} with protocol {data.protocol}")
 
     try:
@@ -504,12 +508,14 @@ async def start_fast(data: StartFastRequest):
             endpoint="/api/v1/fasting/start",
             status_code=500
         )
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "start_fast")
 
 
 @router.post("/{fast_id}/end", response_model=FastEndResultResponse)
-async def end_fast(fast_id: str, data: EndFastRequest, http_request: Request):
+async def end_fast(fast_id: str, data: EndFastRequest, http_request: Request, current_user: dict = Depends(get_current_user)):
     """End an active fast and calculate results."""
+    if str(current_user["id"]) != str(data.user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     logger.info(f"Ending fast {fast_id} for user {data.user_id}")
 
     try:
@@ -593,12 +599,14 @@ async def end_fast(fast_id: str, data: EndFastRequest, http_request: Request):
             endpoint=f"/api/v1/fasting/{fast_id}/end",
             status_code=500
         )
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "end_fast")
 
 
 @router.post("/{fast_id}/cancel")
-async def cancel_fast(fast_id: str, data: CancelFastRequest):
+async def cancel_fast(fast_id: str, data: CancelFastRequest, current_user: dict = Depends(get_current_user)):
     """Cancel an active fast without credit."""
+    if str(current_user["id"]) != str(data.user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     logger.info(f"Cancelling fast {fast_id} for user {data.user_id}")
 
     try:
@@ -619,13 +627,14 @@ async def cancel_fast(fast_id: str, data: CancelFastRequest):
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error cancelling fast: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "cancel_fast")
 
 
 @router.get("/active/{user_id}", response_model=Optional[FastingRecordResponse])
-async def get_active_fast(user_id: str):
+async def get_active_fast(user_id: str, current_user: dict = Depends(get_current_user)):
     """Get the current active fast for a user."""
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     logger.info(f"Getting active fast for user {user_id}")
 
     try:
@@ -641,19 +650,21 @@ async def get_active_fast(user_id: str):
         return row_to_fasting_record(result.data[0])
 
     except Exception as e:
-        logger.error(f"Error getting active fast: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "get_active_fast")
 
 
 @router.get("/history/{user_id}", response_model=List[FastingRecordResponse])
 async def get_fasting_history(
     user_id: str,
+    current_user: dict = Depends(get_current_user),
     limit: int = Query(default=50, ge=1, le=200),
     offset: int = Query(default=0, ge=0),
     from_date: Optional[str] = Query(None, description="Start date YYYY-MM-DD"),
     to_date: Optional[str] = Query(None, description="End date YYYY-MM-DD"),
 ):
     """Get fasting history for a user."""
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     logger.info(f"Getting fasting history for user {user_id}")
 
     try:
@@ -673,13 +684,14 @@ async def get_fasting_history(
         return [row_to_fasting_record(row) for row in (result.data or [])]
 
     except Exception as e:
-        logger.error(f"Error getting fasting history: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "get_fasting_history")
 
 
 @router.put("/{fast_id}", response_model=FastingRecordResponse)
-async def update_fast_record(fast_id: str, data: UpdateFastRequest):
+async def update_fast_record(fast_id: str, data: UpdateFastRequest, current_user: dict = Depends(get_current_user)):
     """Update a fasting record (notes, mood, etc.)."""
+    if str(current_user["id"]) != str(data.user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     logger.info(f"Updating fast {fast_id}")
 
     try:
@@ -707,15 +719,16 @@ async def update_fast_record(fast_id: str, data: UpdateFastRequest):
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error updating fast: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "update_fast_record")
 
 
 # ==================== Fasting Preferences Endpoints ====================
 
 @router.get("/preferences/{user_id}", response_model=Optional[FastingPreferencesResponse])
-async def get_preferences(user_id: str):
+async def get_preferences(user_id: str, current_user: dict = Depends(get_current_user)):
     """Get user's fasting preferences."""
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     logger.info(f"Getting fasting preferences for user {user_id}")
 
     try:
@@ -731,13 +744,14 @@ async def get_preferences(user_id: str):
         return row_to_preferences(result.data[0])
 
     except Exception as e:
-        logger.error(f"Error getting preferences: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "get_preferences")
 
 
 @router.put("/preferences/{user_id}", response_model=FastingPreferencesResponse)
-async def update_preferences(user_id: str, data: FastingPreferencesRequest):
+async def update_preferences(user_id: str, data: FastingPreferencesRequest, current_user: dict = Depends(get_current_user)):
     """Update fasting preferences (upsert)."""
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     logger.info(f"Updating fasting preferences for user {user_id}")
 
     try:
@@ -783,13 +797,14 @@ async def update_preferences(user_id: str, data: FastingPreferencesRequest):
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error updating preferences: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "update_preferences")
 
 
 @router.post("/onboarding/complete")
-async def complete_onboarding(data: CompleteOnboardingRequest):
+async def complete_onboarding(data: CompleteOnboardingRequest, current_user: dict = Depends(get_current_user)):
     """Complete fasting onboarding."""
+    if str(current_user["id"]) != str(data.user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     logger.info(f"Completing fasting onboarding for user {data.user_id}")
 
     try:
@@ -832,15 +847,16 @@ async def complete_onboarding(data: CompleteOnboardingRequest):
         return {"status": "completed", "user_id": data.user_id}
 
     except Exception as e:
-        logger.error(f"Error completing onboarding: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "complete_onboarding")
 
 
 # ==================== Streak & Stats Endpoints ====================
 
 @router.get("/streak/{user_id}", response_model=FastingStreakResponse)
-async def get_streak(user_id: str):
+async def get_streak(user_id: str, current_user: dict = Depends(get_current_user)):
     """Get user's fasting streak."""
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     logger.info(f"Getting fasting streak for user {user_id}")
 
     try:
@@ -876,16 +892,18 @@ async def get_streak(user_id: str):
         )
 
     except Exception as e:
-        logger.error(f"Error getting streak: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "get_streak")
 
 
 @router.get("/stats/{user_id}", response_model=FastingStatsResponse)
 async def get_stats(
     user_id: str,
+    current_user: dict = Depends(get_current_user),
     period: str = Query(default="month", description="'week', 'month', 'year', 'all'"),
 ):
     """Get fasting statistics for a user."""
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     logger.info(f"Getting fasting stats for user {user_id} (period: {period})")
 
     try:
@@ -963,14 +981,13 @@ async def get_stats(
         )
 
     except Exception as e:
-        logger.error(f"Error getting stats: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "get_stats")
 
 
 # ==================== Safety Endpoints ====================
 
 @router.get("/safety-check/{user_id}", response_model=SafetyCheckResponse)
-async def check_safety_eligibility(user_id: str):
+async def check_safety_eligibility(user_id: str, current_user: dict = Depends(get_current_user)):
     """
     Check if user can safely use fasting features.
 
@@ -981,6 +998,8 @@ async def check_safety_eligibility(user_id: str):
     - Type 1 diabetes
     - Underweight (BMI < 18.5)
     """
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     logger.info(f"Checking safety eligibility for user {user_id}")
 
     try:
@@ -1049,13 +1068,14 @@ async def check_safety_eligibility(user_id: str):
         )
 
     except Exception as e:
-        logger.error(f"Error checking safety: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "check_safety_eligibility")
 
 
 @router.post("/safety-screening")
-async def save_safety_screening(data: SafetyScreeningRequest):
+async def save_safety_screening(data: SafetyScreeningRequest, current_user: dict = Depends(get_current_user)):
     """Save safety screening responses."""
+    if str(current_user["id"]) != str(data.user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     logger.info(f"Saving safety screening for user {data.user_id}")
 
     try:
@@ -1073,8 +1093,7 @@ async def save_safety_screening(data: SafetyScreeningRequest):
         return {"status": "saved", "user_id": data.user_id}
 
     except Exception as e:
-        logger.error(f"Error saving safety screening: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "save_safety_screening")
 
 
 # ==================== User Context Logging Endpoints ====================
@@ -1096,7 +1115,7 @@ class LogFastingContextRequest(BaseModel):
 
 
 @router.post("/context/log")
-async def log_fasting_context(data: LogFastingContextRequest):
+async def log_fasting_context(data: LogFastingContextRequest, current_user: dict = Depends(get_current_user)):
     """
     Log user context during fasting for AI coaching and analytics.
 
@@ -1108,6 +1127,8 @@ async def log_fasting_context(data: LogFastingContextRequest):
     - note_added: When user adds a note
     - mood_logged: When user logs their mood/energy
     """
+    if str(current_user["id"]) != str(data.user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     logger.info(f"Logging fasting context for user {data.user_id}: {data.context_type}")
 
     try:
@@ -1155,6 +1176,7 @@ async def log_fasting_context(data: LogFastingContextRequest):
 @router.get("/context/{user_id}")
 async def get_fasting_context(
     user_id: str,
+    current_user: dict = Depends(get_current_user),
     limit: int = Query(default=50, ge=1, le=200),
     context_type: Optional[str] = Query(None, description="Filter by context type"),
 ):
@@ -1164,6 +1186,8 @@ async def get_fasting_context(
     This provides context for the AI coach about the user's fasting patterns,
     moods, energy levels, and notes.
     """
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     logger.info(f"Getting fasting context for user {user_id}")
 
     try:
@@ -1189,12 +1213,14 @@ async def get_fasting_context(
 # ==================== Fasting Score Endpoints ====================
 
 @router.post("/score")
-async def save_fasting_score(request: FastingScoreCreateRequest, http_request: Request):
+async def save_fasting_score(request: FastingScoreCreateRequest, http_request: Request, current_user: dict = Depends(get_current_user)):
     """
     Save or update today's fasting score for a user.
 
     Uses upsert to update today's score if already exists (one score per user per day).
     """
+    if str(current_user["id"]) != str(request.user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     logger.info(f"Saving fasting score for user {request.user_id}: {request.score}")
 
     try:
@@ -1231,14 +1257,14 @@ async def save_fasting_score(request: FastingScoreCreateRequest, http_request: R
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error saving fasting score: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "save_fasting_score")
 
 
 @router.get("/score/history/{user_id}")
 async def get_fasting_score_history(
     user_id: str,
     http_request: Request,
+    current_user: dict = Depends(get_current_user),
     days: int = Query(30, ge=1, le=365, description="Number of days of history to retrieve"),
 ):
     """
@@ -1246,6 +1272,8 @@ async def get_fasting_score_history(
 
     Returns scores for the specified number of days, ordered by most recent first.
     """
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     logger.info(f"Getting fasting score history for user {user_id} (last {days} days)")
 
     try:
@@ -1266,17 +1294,18 @@ async def get_fasting_score_history(
         return result.data or []
 
     except Exception as e:
-        logger.error(f"Error getting fasting score history: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "get_fasting_score_history")
 
 
 @router.get("/score/{user_id}/current")
-async def get_current_fasting_score(user_id: str):
+async def get_current_fasting_score(user_id: str, current_user: dict = Depends(get_current_user)):
     """
     Get the most recent fasting score for a user.
 
     Returns 404 if no score exists for the user.
     """
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     logger.info(f"Getting current fasting score for user {user_id}")
 
     try:
@@ -1298,12 +1327,11 @@ async def get_current_fasting_score(user_id: str):
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error getting current fasting score: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "get_current_fasting_score")
 
 
 @router.get("/score/trend/{user_id}")
-async def get_fasting_score_trend(user_id: str):
+async def get_fasting_score_trend(user_id: str, current_user: dict = Depends(get_current_user)):
     """
     Get fasting score trend comparing current score vs last week.
 
@@ -1315,6 +1343,8 @@ async def get_fasting_score_trend(user_id: str):
 
     Returns default values (0, 0, 0, 'stable') if no scores exist.
     """
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     logger.info(f"Getting fasting score trend for user {user_id}")
 
     try:

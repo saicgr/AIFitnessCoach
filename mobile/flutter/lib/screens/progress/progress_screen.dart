@@ -7,6 +7,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../core/constants/app_colors.dart';
+import '../../widgets/app_loading.dart';
 import '../../data/models/progress_photos.dart';
 import '../../core/animations/app_animations.dart';
 import '../../data/models/scores.dart';
@@ -201,7 +202,7 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen>
           ],
         ),
         body: _isLoading || _userId == null
-            ? const Center(child: CircularProgressIndicator())
+            ? AppLoading.fullScreen()
             : Column(
                 children: [
                   SegmentedTabBar(

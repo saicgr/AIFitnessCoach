@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../widgets/app_loading.dart';
+import '../../../widgets/app_snackbar.dart';
 import '../../../core/theme/theme_colors.dart';
 import '../../../data/services/leaderboard_service.dart';
 import '../../../data/services/challenges_service.dart';
@@ -148,7 +150,7 @@ class _LeaderboardTabState extends ConsumerState<LeaderboardTab>
     final backgroundColor = isDark ? AppColors.pureBlack : AppColorsLight.pureWhite;
 
     if (_isLoading) {
-      return const Center(child: CircularProgressIndicator());
+      return AppLoading.fullScreen();
     }
 
     // Show locked state if global leaderboard not unlocked
@@ -370,9 +372,7 @@ class _LeaderboardTabState extends ConsumerState<LeaderboardTab>
                   onTap: () {
                     Navigator.pop(sheetContext);
                     // TODO: Show ChallengeFriendsDialog
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Feature coming soon!')),
-                    );
+                    AppSnackBar.info(context, 'Feature coming soon!');
                   },
                 ),
                 const Divider(),
@@ -410,21 +410,11 @@ class _LeaderboardTabState extends ConsumerState<LeaderboardTab>
       );
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Challenge created! Beat $targetUserName\'s record!'),
-            backgroundColor: AppColors.green,
-          ),
-        );
+        AppSnackBar.success(context, 'Challenge created! Beat $targetUserName\'s record!');
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to create challenge: $e'),
-            backgroundColor: AppColors.red,
-          ),
-        );
+        AppSnackBar.error(context, 'Failed to create challenge: $e');
       }
     }
   }

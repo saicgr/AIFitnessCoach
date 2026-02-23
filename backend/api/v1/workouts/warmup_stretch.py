@@ -9,7 +9,9 @@ This module handles warmup and cool-down stretch operations:
 - POST /{workout_id}/warmup-and-stretches - Create both
 """
 from typing import Optional
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
+from core.auth import get_current_user
+from core.exceptions import safe_internal_error
 
 from core.supabase_db import get_supabase_db
 from core.logger import get_logger
@@ -60,7 +62,9 @@ def get_user_warmup_stretch_preferences(user_id: str) -> tuple[int, int]:
 
 
 @router.get("/{workout_id}/warmup")
-async def get_workout_warmup(workout_id: str):
+async def get_workout_warmup(workout_id: str,
+    current_user: dict = Depends(get_current_user),
+):
     """Get warmup exercises for a workout."""
     logger.info(f"Getting warmup for workout {workout_id}")
     try:
@@ -76,11 +80,13 @@ async def get_workout_warmup(workout_id: str):
         raise
     except Exception as e:
         logger.error(f"Failed to get warmup: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "warmup_stretch")
 
 
 @router.get("/{workout_id}/stretches")
-async def get_workout_stretches(workout_id: str):
+async def get_workout_stretches(workout_id: str,
+    current_user: dict = Depends(get_current_user),
+):
     """Get cool-down stretches for a workout."""
     logger.info(f"Getting stretches for workout {workout_id}")
     try:
@@ -96,11 +102,13 @@ async def get_workout_stretches(workout_id: str):
         raise
     except Exception as e:
         logger.error(f"Failed to get stretches: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "warmup_stretch")
 
 
 @router.post("/{workout_id}/warmup")
-async def create_workout_warmup(workout_id: str, duration_minutes: Optional[int] = None):
+async def create_workout_warmup(workout_id: str, duration_minutes: Optional[int] = None,
+    current_user: dict = Depends(get_current_user),
+):
     """Generate and create warmup exercises for an existing workout with variety tracking.
 
     If duration_minutes is not provided, uses the user's preference or default (5 minutes).
@@ -138,11 +146,13 @@ async def create_workout_warmup(workout_id: str, duration_minutes: Optional[int]
         raise
     except Exception as e:
         logger.error(f"Failed to create warmup: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "warmup_stretch")
 
 
 @router.post("/{workout_id}/stretches")
-async def create_workout_stretches(workout_id: str, duration_minutes: Optional[int] = None):
+async def create_workout_stretches(workout_id: str, duration_minutes: Optional[int] = None,
+    current_user: dict = Depends(get_current_user),
+):
     """Generate and create cool-down stretches for an existing workout with variety tracking.
 
     If duration_minutes is not provided, uses the user's preference or default (5 minutes).
@@ -180,14 +190,15 @@ async def create_workout_stretches(workout_id: str, duration_minutes: Optional[i
         raise
     except Exception as e:
         logger.error(f"Failed to create stretches: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "warmup_stretch")
 
 
 @router.post("/{workout_id}/warmup-and-stretches")
 async def create_workout_warmup_and_stretches(
     workout_id: str,
     warmup_duration: Optional[int] = None,
-    stretch_duration: Optional[int] = None
+    stretch_duration: Optional[int] = None,
+    current_user: dict = Depends(get_current_user),
 ):
     """Generate and create both warmup and stretches for an existing workout with variety tracking.
 
@@ -229,4 +240,4 @@ async def create_workout_warmup_and_stretches(
         raise
     except Exception as e:
         logger.error(f"Failed to create warmup and stretches: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "warmup_stretch")

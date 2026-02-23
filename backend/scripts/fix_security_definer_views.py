@@ -7,6 +7,7 @@ which bypasses RLS. SECURITY INVOKER (the default) runs with the permissions of 
 querying user, which is safer.
 """
 
+import os
 import sys
 import psycopg2
 
@@ -15,7 +16,9 @@ DATABASE_HOST = "db.hpbzfahijszqmgsybuor.supabase.co"
 DATABASE_PORT = 5432
 DATABASE_NAME = "postgres"
 DATABASE_USER = "postgres"
-DATABASE_PASSWORD = "d2nHU5oLZ1GCz63B"
+DATABASE_PASSWORD = os.environ.get("DATABASE_PASSWORD")
+if not DATABASE_PASSWORD:
+    raise SystemExit("DATABASE_PASSWORD environment variable is required")
 
 # Views to fix
 VIEWS_TO_FIX = [

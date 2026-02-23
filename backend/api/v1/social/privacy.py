@@ -7,7 +7,9 @@ This module handles privacy settings:
 """
 from datetime import datetime, timezone
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
+from core.auth import get_current_user
+from core.exceptions import safe_internal_error
 
 from models.social import (
     UserPrivacySettings, UserPrivacySettingsUpdate, Visibility,
@@ -18,7 +20,9 @@ router = APIRouter()
 
 
 @router.get("/privacy/{user_id}", response_model=UserPrivacySettings)
-async def get_privacy_settings(user_id: str):
+async def get_privacy_settings(user_id: str,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Get user's privacy settings.
 
@@ -46,6 +50,7 @@ async def get_privacy_settings(user_id: str):
 async def update_privacy_settings(
     user_id: str,
     update: UserPrivacySettingsUpdate,
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Update user's privacy settings.

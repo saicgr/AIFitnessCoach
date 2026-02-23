@@ -1,125 +1,278 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import '../../core/constants/api_constants.dart';
 import '../../core/constants/app_colors.dart';
-import '../../widgets/glass_sheet.dart';
 import '../../core/theme/theme_colors.dart';
 import '../../data/repositories/auth_repository.dart';
+import '../../data/repositories/onboarding_repository.dart';
 import '../../data/services/api_client.dart';
 import '../../data/services/haptic_service.dart';
-import '../workouts/widgets/exercise_preferences_card.dart';
+import '../../widgets/app_snackbar.dart';
 import '../../widgets/dismissed_banners_section.dart';
+import '../../widgets/glass_sheet.dart';
+import '../settings/sections/logout_section.dart';
+import '../workouts/widgets/exercise_preferences_card.dart';
 import 'widgets/nutrition_fasting_card.dart';
 import 'widgets/widgets.dart';
 
 /// Main profile screen displaying user information, stats, and settings.
-class ProfileScreen extends ConsumerWidget {
-  const ProfileScreen({super.key});
+///
+/// Redesigned to match settings screen design language: AppBar, section labels,
+/// settings-style group cards, and consistent row patterns.
+class ProfileScreen extends ConsumerStatefulWidget {
+  /// Optional section to auto-scroll to (e.g. 'preferences').
+  final String? scrollTo;
+
+  const ProfileScreen({super.key, this.scrollTo});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final authState = ref.watch(authStateProvider);
-    final user = authState.user;
+  ConsumerState<ProfileScreen> createState() => _ProfileScreenState();
+}
 
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final backgroundColor = isDark ? AppColors.pureBlack : AppColorsLight.pureWhite;
+class _ProfileScreenState extends ConsumerState<ProfileScreen> {
+  final _scrollController = ScrollController();
+  final _preferencesKey = GlobalKey();
 
-    return Scaffold(
-      key: const ValueKey('profile_scaffold'),
-      backgroundColor: backgroundColor,
-      body: SafeArea(
-        child: Stack(
-          fit: StackFit.expand,
+  @override
+  void initState() {
+    super.initState();
+    if (widget.scrollTo == 'preferences') {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        final keyContext = _preferencesKey.currentContext;
+        if (keyContext != null) {
+          Scrollable.ensureVisible(
+            keyContext,
+            duration: const Duration(milliseconds: 400),
+            curve: Curves.easeOutCubic,
+          );
+        }
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  // --- Section label (matches settings screen pattern) ---
+  Widget _buildSectionLabel(String label, Color color) {
+    return Padding(
+      padding: const EdgeInsets.only(left: 4),
+      child: Text(
+        label,
+        style: TextStyle(
+          fontSize: 13,
+          fontWeight: FontWeight.w600,
+          color: color,
+          letterSpacing: 0.5,
+        ),
+      ),
+    );
+  }
+
+  // --- User card (horizontal layout matching settings _buildUserCard) ---
+  Widget _buildUserCard(
+    dynamic user,
+    bool isDark,
+    Color elevated,
+    Color cardBorder,
+    Color textPrimary,
+    Color textMuted,
+  ) {
+    final userName =
+        user?.displayName ?? user?.name ?? user?.username ?? 'User';
+    final userEmail = user?.email ?? '';
+    final photoUrl = user?.photoUrl;
+
+    return GestureDetector(
+      onTap: () => _showEditPersonalInfoSheet(context),
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: elevated,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: cardBorder),
+        ),
+        child: Row(
           children: [
-            _buildScrollableContent(context, ref, user, isDark),
-            _buildFloatingHeader(context, isDark),
+            Container(
+              width: 52,
+              height: 52,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: (isDark ? AppColors.cyan : AppColorsLight.cyan)
+                    .withValues(alpha: 0.15),
+                image: photoUrl != null && photoUrl.isNotEmpty
+                    ? DecorationImage(
+                        image: NetworkImage(photoUrl),
+                        fit: BoxFit.cover,
+                      )
+                    : null,
+              ),
+              child: photoUrl == null || photoUrl.isEmpty
+                  ? Icon(
+                      Icons.person,
+                      color: isDark ? AppColors.cyan : AppColorsLight.cyan,
+                      size: 28,
+                    )
+                  : null,
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    userName,
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w700,
+                      color: textPrimary,
+                    ),
+                  ),
+                  if (userEmail.isNotEmpty) ...[
+                    const SizedBox(height: 2),
+                    Text(
+                      userEmail,
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: textMuted,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ],
+              ),
+            ),
+            Icon(Icons.chevron_right, color: textMuted, size: 20),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildScrollableContent(
-    BuildContext context,
-    WidgetRef ref,
-    dynamic user,
+  // --- Account group card (settings-style rows with icons) ---
+  Widget _buildAccountGroupCard(
     bool isDark,
+    Color elevated,
+    Color cardBorder,
+    Color textPrimary,
+    Color textMuted,
   ) {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.only(left: 16, right: 16, bottom: 16, top: 0),
+    final rows = [
+      _AccountRowData(
+        icon: Icons.bar_chart_rounded,
+        iconColor: isDark ? AppColors.cyan : AppColorsLight.cyan,
+        title: 'Stats',
+        onTap: () => context.push('/stats'),
+      ),
+      _AccountRowData(
+        icon: Icons.inventory_2_outlined,
+        iconColor: isDark ? AppColors.orange : AppColorsLight.orange,
+        title: 'Inventory',
+        onTap: () => context.push('/inventory'),
+      ),
+      _AccountRowData(
+        icon: Icons.shield_outlined,
+        iconColor: AppColors.info,
+        title: 'AI Privacy',
+        onTap: () => context.push('/settings/ai-data-usage'),
+      ),
+      _AccountRowData(
+        icon: Icons.menu_book,
+        iconColor: isDark ? AppColors.purple : AppColorsLight.purple,
+        title: 'Glossary',
+        onTap: () => context.push('/glossary'),
+      ),
+      _AccountRowData(
+        icon: Icons.card_membership,
+        iconColor: isDark ? AppColors.success : AppColorsLight.success,
+        title: 'Manage Membership',
+        onTap: () => context.push('/paywall-pricing'),
+      ),
+      _AccountRowData(
+        icon: Icons.person_outline,
+        iconColor: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
+        title: 'Edit Profile',
+        onTap: () => _showEditPersonalInfoSheet(context),
+      ),
+    ];
+
+    return Container(
+      decoration: BoxDecoration(
+        color: elevated,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: cardBorder),
+      ),
+      clipBehavior: Clip.antiAlias,
       child: Column(
         children: [
-          const SizedBox(height: 88),
-          ProfileHeader(
-            name: user?.displayName ?? 'User',
-            username: user?.username,
-            email: user?.email ?? '',
-            photoUrl: user?.photoUrl,
-            onEditTap: () => _showEditPersonalInfoSheet(context),
-          ).animate().fadeIn().slideY(begin: 0.1),
-          const SizedBox(height: 32),
-          _buildFitnessProfileSection(user),
-          const SizedBox(height: 24),
-          _buildTrainingSetupSection(context, ref, user),
-          const SizedBox(height: 32),
-          _buildExercisePreferencesSection(context, ref),
-          const SizedBox(height: 32),
-          _buildNutritionFastingSection(),
-          const SizedBox(height: 32),
-          _buildAccountSection(context, ref),
-          const SizedBox(height: 24),
-          const DismissedBannersSection(),
-          const SizedBox(height: 24),
-          _buildAIPrivacyCard(context),
-          const SizedBox(height: 32),
-          _buildReferencesSection(context, ref),
-          const SizedBox(height: 100),
+          for (int i = 0; i < rows.length; i++) ...[
+            _buildAccountRow(rows[i], textPrimary, textMuted),
+            if (i < rows.length - 1)
+              Divider(height: 1, indent: 52, color: cardBorder),
+          ],
         ],
       ),
     );
   }
 
-  Widget _buildFitnessProfileSection(dynamic user) {
-    return Column(
-      children: [
-        const SectionHeader(title: 'FITNESS PROFILE'),
-        const SizedBox(height: 12),
-        EditableFitnessCard(user: user).animate().fadeIn(delay: 160.ms),
-      ],
+  Widget _buildAccountRow(
+    _AccountRowData row,
+    Color textPrimary,
+    Color textMuted,
+  ) {
+    return InkWell(
+      onTap: () {
+        HapticFeedback.lightImpact();
+        row.onTap();
+      },
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        child: Row(
+          children: [
+            Container(
+              width: 32,
+              height: 32,
+              decoration: BoxDecoration(
+                color: row.iconColor.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Icon(row.icon, color: row.iconColor, size: 18),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                row.title,
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w500,
+                  color: textPrimary,
+                ),
+              ),
+            ),
+            Icon(Icons.chevron_right, color: textMuted, size: 18),
+          ],
+        ),
+      ),
     );
   }
 
-  Widget _buildTrainingSetupSection(BuildContext context, WidgetRef ref, dynamic user) {
-    return Column(
-      children: [
-        const SectionHeader(title: 'TRAINING SETUP'),
-        const SizedBox(height: 12),
-        TrainingSetupCard(
-          user: user,
-          onCustomEquipment: () {
-            HapticService.selection();
-            _showCustomEquipmentSheet(context, ref);
-          },
-        ).animate().fadeIn(delay: 180.ms),
-      ],
+  // --- Sheet launchers ---
+
+  void _showEditPersonalInfoSheet(BuildContext context) {
+    showGlassSheet(
+      context: context,
+      builder: (context) => const EditPersonalInfoSheet(),
     );
   }
 
-  Widget _buildExercisePreferencesSection(BuildContext context, WidgetRef ref) {
-    return Column(
-      children: [
-        // Use the same ExercisePreferencesCard from Workouts tab for consistency
-        // Pass zero margin since profile screen already has 16px padding
-        const ExercisePreferencesCard(margin: EdgeInsets.zero),
-        const SizedBox(height: 12),
-        const _TrainingFocusCard(),
-      ],
-    ).animate().fadeIn(delay: 190.ms);
-  }
-
-  void _showCustomEquipmentSheet(BuildContext context, WidgetRef ref) {
+  void _showCustomEquipmentSheet(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     showGlassSheet(
       context: context,
@@ -138,14 +291,19 @@ class ProfileScreen extends ConsumerWidget {
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   child: Row(
                     children: [
-                      Icon(Icons.fitness_center, color: isDark ? AppColors.textPrimary : AppColorsLight.textPrimary),
+                      Icon(Icons.fitness_center,
+                          color: isDark
+                              ? AppColors.textPrimary
+                              : AppColorsLight.textPrimary),
                       const SizedBox(width: 12),
                       Text(
                         'My Custom Equipment',
                         style: TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
-                          color: isDark ? Colors.white : AppColorsLight.textPrimary,
+                          color: isDark
+                              ? Colors.white
+                              : AppColorsLight.textPrimary,
                         ),
                       ),
                     ],
@@ -158,7 +316,9 @@ class ProfileScreen extends ConsumerWidget {
                     'Add equipment that will be used when generating your workouts.',
                     style: TextStyle(
                       fontSize: 14,
-                      color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
+                      color: isDark
+                          ? AppColors.textMuted
+                          : AppColorsLight.textMuted,
                     ),
                   ),
                 ),
@@ -177,74 +337,84 @@ class ProfileScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildNutritionFastingSection() {
-    return Column(
-      children: [
-        const SectionHeader(title: 'NUTRITION & FASTING'),
-        const SizedBox(height: 12),
-        const NutritionFastingCard(),
-      ],
-    ).animate().fadeIn(delay: 200.ms);
-  }
+  // --- Delete account ---
 
-  Widget _buildAccountSection(BuildContext context, WidgetRef ref) {
-    return Column(
-      children: [
-        const SectionHeader(title: 'ACCOUNT'),
-        const SizedBox(height: 12),
-        SettingsCard(
-          items: [
-            SettingItem(
-              icon: Icons.bar_chart_rounded,
-              title: 'Stats',
-              onTap: () => context.push('/stats'),
-            ),
-            SettingItem(
-              icon: Icons.inventory_2_outlined,
-              title: 'Inventory',
-              onTap: () => context.push('/inventory'),
-            ),
-            SettingItem(
-              icon: Icons.person_outline,
-              title: 'Edit Profile',
-              onTap: () => _showEditPersonalInfoSheet(context),
-            ),
-            SettingItem(
-              icon: Icons.card_membership,
-              title: 'Manage Membership',
-              onTap: () => context.push('/paywall-pricing'),
-            ),
-            SettingItem(
-              icon: Icons.logout,
-              title: 'Sign Out',
-              iconColor: AppColors.red,
-              textColor: AppColors.red,
-              onTap: () => _showLogoutDialog(context, ref),
-            ),
-          ],
-        ).animate().fadeIn(delay: 250.ms),
-      ],
-    );
-  }
-
-  void _showLogoutDialog(BuildContext context, WidgetRef ref) {
+  void _showDeleteAccountDialog() {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: isDark ? AppColors.elevated : AppColorsLight.elevated,
-        title: Text(
-          'Sign Out?',
-          style: TextStyle(
-            color: isDark ? AppColors.textPrimary : AppColorsLight.textPrimary,
-          ),
+        title: Row(
+          children: [
+            Icon(Icons.delete_forever, color: AppColors.error, size: 24),
+            const SizedBox(width: 12),
+            Text(
+              'Delete Account?',
+              style: TextStyle(
+                color: isDark
+                    ? AppColors.textPrimary
+                    : AppColorsLight.textPrimary,
+              ),
+            ),
+          ],
         ),
-        content: Text(
-          'Are you sure you want to sign out? You can sign back in anytime.',
-          style: TextStyle(
-            color: isDark ? AppColors.textSecondary : AppColorsLight.textSecondary,
-          ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: AppColors.error.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(8),
+                border:
+                    Border.all(color: AppColors.error.withValues(alpha: 0.3)),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.warning_amber_rounded,
+                      color: AppColors.error, size: 20),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'This action cannot be undone!',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.error,
+                        fontSize: 13,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'This will permanently delete:',
+              style: TextStyle(
+                fontWeight: FontWeight.w600,
+                color: isDark
+                    ? AppColors.textPrimary
+                    : AppColorsLight.textPrimary,
+              ),
+            ),
+            const SizedBox(height: 12),
+            _buildBulletPoint('Your account and profile', isDark),
+            _buildBulletPoint('All workout history', isDark),
+            _buildBulletPoint('All saved preferences', isDark),
+            const SizedBox(height: 16),
+            Text(
+              'You will need to sign up again to use the app.',
+              style: TextStyle(
+                fontSize: 13,
+                color: isDark
+                    ? AppColors.textSecondary
+                    : AppColorsLight.textSecondary,
+              ),
+            ),
+          ],
         ),
         actions: [
           TextButton(
@@ -257,14 +427,13 @@ class ProfileScreen extends ConsumerWidget {
             ),
           ),
           TextButton(
-            onPressed: () {
+            onPressed: () async {
               Navigator.pop(context);
-              ref.read(authStateProvider.notifier).signOut();
-              context.go('/stats-welcome');
+              await _deleteAccount();
             },
             child: const Text(
-              'Sign Out',
-              style: TextStyle(color: AppColors.red),
+              'Delete Account',
+              style: TextStyle(color: AppColors.error),
             ),
           ),
         ],
@@ -272,221 +441,237 @@ class ProfileScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildAIPrivacyCard(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
-    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
-
-    return GestureDetector(
-      onTap: () {
-        HapticFeedback.lightImpact();
-        context.push('/settings/ai-data-usage');
-      },
-      child: Container(
-        decoration: BoxDecoration(
-          color: elevated,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: cardBorder),
-        ),
-        padding: const EdgeInsets.all(16),
-        child: Row(
-          children: [
-            Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                color: AppColors.info.withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Icon(
-                Icons.shield_outlined,
-                color: AppColors.info,
-                size: 20,
+  Widget _buildBulletPoint(String text, bool isDark) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 6),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            margin: const EdgeInsets.only(top: 6),
+            width: 6,
+            height: 6,
+            decoration: BoxDecoration(
+              color: AppColors.error,
+              shape: BoxShape.circle,
+            ),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              text,
+              style: TextStyle(
+                fontSize: 14,
+                color: isDark
+                    ? AppColors.textSecondary
+                    : AppColorsLight.textSecondary,
               ),
             ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'AI Privacy',
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _deleteAccount() async {
+    final navigator = Navigator.of(context);
+    final scaffoldMessenger = ScaffoldMessenger.of(context);
+    final router = GoRouter.of(context);
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) => const Center(
+        child: CircularProgressIndicator(color: AppColors.cyan),
+      ),
+    );
+
+    try {
+      final apiClient = ref.read(apiClientProvider);
+      final authState = ref.read(authStateProvider);
+      final userId = authState.user?.id;
+
+      if (userId == null || userId.isEmpty) {
+        throw Exception('User not found');
+      }
+
+      final response = await apiClient.delete(
+        '${ApiConstants.users}/$userId/reset',
+      );
+
+      navigator.pop();
+
+      if (response.statusCode == 200) {
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.clear();
+        ref.read(onboardingStateProvider.notifier).reset();
+        await ref.read(authStateProvider.notifier).signOut();
+        router.go('/stats-welcome');
+      } else {
+        throw Exception('Failed to delete account: ${response.statusCode}');
+      }
+    } catch (e) {
+      try {
+        navigator.pop();
+      } catch (_) {}
+
+      scaffoldMessenger.showSnackBar(
+        SnackBar(
+          content: Text('Error: ${e.toString()}'),
+          backgroundColor: AppColors.error,
+        ),
+      );
+    }
+  }
+
+  // --- Build ---
+
+  @override
+  Widget build(BuildContext context) {
+    final authState = ref.watch(authStateProvider);
+    final user = authState.user;
+
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final backgroundColor =
+        isDark ? AppColors.pureBlack : AppColorsLight.pureWhite;
+    final textPrimary =
+        isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final cardBorder =
+        isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+
+    return Scaffold(
+      key: const ValueKey('profile_scaffold'),
+      backgroundColor: backgroundColor,
+      appBar: AppBar(
+        backgroundColor: backgroundColor,
+        elevation: 0,
+        automaticallyImplyLeading: false,
+        title: Text(
+          'Profile',
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            color: textPrimary,
+          ),
+        ),
+        centerTitle: true,
+        actions: [
+          IconButton(
+            onPressed: () {
+              HapticService.selection();
+              context.push('/stats');
+            },
+            icon: Icon(
+              Icons.bar_chart_rounded,
+              color: textMuted,
+              size: 22,
+            ),
+          ),
+          IconButton(
+            onPressed: () {
+              HapticService.selection();
+              context.push('/settings');
+            },
+            icon: Icon(
+              Icons.settings_outlined,
+              color: textMuted,
+              size: 22,
+            ),
+          ),
+        ],
+      ),
+      body: SafeArea(
+        child: SingleChildScrollView(
+          controller: _scrollController,
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // User card
+              _buildUserCard(
+                  user, isDark, elevated, cardBorder, textPrimary, textMuted),
+              const SizedBox(height: 24),
+
+              // FITNESS
+              _buildSectionLabel('FITNESS', textMuted),
+              const SizedBox(height: 8),
+              EditableFitnessCard(user: user),
+              const SizedBox(height: 24),
+
+              // TRAINING
+              _buildSectionLabel('TRAINING', textMuted),
+              const SizedBox(height: 8),
+              TrainingSetupCard(
+                user: user,
+                onCustomEquipment: () {
+                  HapticService.selection();
+                  _showCustomEquipmentSheet(context);
+                },
+              ),
+              const SizedBox(height: 12),
+              ExercisePreferencesCard(key: _preferencesKey, margin: EdgeInsets.zero),
+              const SizedBox(height: 12),
+              const _TrainingFocusCard(),
+              const SizedBox(height: 24),
+
+              // NUTRITION
+              _buildSectionLabel('NUTRITION', textMuted),
+              const SizedBox(height: 8),
+              const NutritionFastingCard(),
+              const SizedBox(height: 24),
+
+              // ACCOUNT
+              _buildSectionLabel('ACCOUNT', textMuted),
+              const SizedBox(height: 8),
+              _buildAccountGroupCard(
+                  isDark, elevated, cardBorder, textPrimary, textMuted),
+              const SizedBox(height: 24),
+
+              // Dismissed banners
+              const DismissedBannersSection(),
+              const SizedBox(height: 12),
+
+              // Sign Out
+              const LogoutSection(),
+              const SizedBox(height: 12),
+
+              // Delete Account
+              Center(
+                child: TextButton(
+                  onPressed: _showDeleteAccountDialog,
+                  child: Text(
+                    'Delete Account',
                     style: TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w500,
-                      color: textPrimary,
+                      color: (isDark ? AppColors.error : AppColorsLight.error)
+                          .withValues(alpha: 0.7),
+                      fontSize: 14,
                     ),
                   ),
-                  Text(
-                    'Your data is anonymized before AI processing',
-                    style: TextStyle(fontSize: 12, color: textMuted),
-                  ),
-                ],
+                ),
               ),
-            ),
-            Icon(Icons.chevron_right, color: textMuted),
-          ],
-        ),
-      ),
-    ).animate().fadeIn(delay: 260.ms);
-  }
-
-  Widget _buildReferencesSection(BuildContext context, WidgetRef ref) {
-    return Column(
-      children: [
-        const SectionHeader(title: 'REFERENCES'),
-        const SizedBox(height: 12),
-        SettingsCard(
-          items: [
-            SettingItem(
-              icon: Icons.menu_book,
-              title: 'Glossary',
-              onTap: () => context.push('/glossary'),
-            ),
-          ],
-        ).animate().fadeIn(delay: 270.ms),
-      ],
-    );
-  }
-
-  Widget _buildFloatingHeader(BuildContext context, bool isDark) {
-    return Positioned(
-      top: 16,
-      left: 16,
-      right: 16,
-      child: Row(
-        children: [
-          Expanded(child: _buildTitlePill(context, isDark)),
-          const SizedBox(width: 12),
-          _buildStatsButton(context, isDark),
-          const SizedBox(width: 8),
-          _buildSettingsButton(context, isDark),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildTitlePill(BuildContext context, bool isDark) {
-    return Container(
-      height: 56,
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1C1C1E) : AppColorsLight.elevated,
-        borderRadius: BorderRadius.circular(28),
-        border: isDark
-            ? null
-            : Border.all(color: AppColorsLight.cardBorder.withOpacity(0.3)),
-        boxShadow: [
-          BoxShadow(
-            color: isDark
-                ? Colors.black.withOpacity(0.4)
-                : Colors.black.withOpacity(0.08),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
+              const SizedBox(height: 100),
+            ],
           ),
-        ],
-      ),
-      child: Center(
-        child: Text(
-          'Profile',
-          style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.w600,
-                color: isDark ? AppColors.textPrimary : AppColorsLight.textPrimary,
-              ),
         ),
       ),
     );
   }
+}
 
-  Widget _buildStatsButton(BuildContext context, bool isDark) {
-    return GestureDetector(
-      onTap: () {
-        HapticService.selection();
-        context.push('/stats');
-      },
-      child: Container(
-        height: 56,
-        padding: const EdgeInsets.symmetric(horizontal: 16),
-        decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF1C1C1E) : AppColorsLight.elevated,
-          borderRadius: BorderRadius.circular(28),
-          border: isDark
-              ? null
-              : Border.all(color: AppColorsLight.cardBorder.withOpacity(0.3)),
-          boxShadow: [
-            BoxShadow(
-              color: isDark
-                  ? Colors.black.withOpacity(0.4)
-                  : Colors.black.withOpacity(0.08),
-              blurRadius: 12,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              Icons.bar_chart_rounded,
-              color: isDark ? AppColors.textSecondary : AppColorsLight.textSecondary,
-              size: 20,
-            ),
-            const SizedBox(width: 6),
-            Text(
-              'Stats',
-              style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                    fontWeight: FontWeight.w600,
-                    color: isDark ? AppColors.textPrimary : AppColorsLight.textPrimary,
-                  ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
+/// Helper data class for account group card rows.
+class _AccountRowData {
+  final IconData icon;
+  final Color iconColor;
+  final String title;
+  final VoidCallback onTap;
 
-  Widget _buildSettingsButton(BuildContext context, bool isDark) {
-    return GestureDetector(
-      onTap: () {
-        HapticService.selection();
-        context.push('/settings');
-      },
-      child: Container(
-        width: 56,
-        height: 56,
-        decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF1C1C1E) : AppColorsLight.elevated,
-          borderRadius: BorderRadius.circular(28),
-          border: isDark
-              ? null
-              : Border.all(color: AppColorsLight.cardBorder.withOpacity(0.3)),
-          boxShadow: [
-            BoxShadow(
-              color: isDark
-                  ? Colors.black.withOpacity(0.4)
-                  : Colors.black.withOpacity(0.08),
-              blurRadius: 12,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
-        child: Icon(
-          Icons.settings_outlined,
-          color: isDark ? AppColors.textSecondary : AppColorsLight.textSecondary,
-          size: 24,
-        ),
-      ),
-    );
-  }
-
-  void _showEditPersonalInfoSheet(BuildContext context) {
-    showGlassSheet(
-      context: context,
-      builder: (context) => const EditPersonalInfoSheet(),
-    );
-  }
+  const _AccountRowData({
+    required this.icon,
+    required this.iconColor,
+    required this.title,
+    required this.onTap,
+  });
 }
 
 /// Widget to manage custom equipment from profile
@@ -500,7 +685,8 @@ class _CustomEquipmentManager extends StatefulWidget {
   });
 
   @override
-  State<_CustomEquipmentManager> createState() => _CustomEquipmentManagerState();
+  State<_CustomEquipmentManager> createState() =>
+      _CustomEquipmentManagerState();
 }
 
 class _CustomEquipmentManagerState extends State<_CustomEquipmentManager> {
@@ -546,11 +732,13 @@ class _CustomEquipmentManagerState extends State<_CustomEquipmentManager> {
         if (customEquipmentData != null) {
           if (customEquipmentData is List) {
             equipment = customEquipmentData.cast<String>();
-          } else if (customEquipmentData is String && customEquipmentData.isNotEmpty) {
+          } else if (customEquipmentData is String &&
+              customEquipmentData.isNotEmpty) {
             try {
               final parsed = List<String>.from(
                 (customEquipmentData).isNotEmpty
-                    ? List.from(Uri.decodeComponent(customEquipmentData).split(','))
+                    ? List.from(
+                        Uri.decodeComponent(customEquipmentData).split(','))
                     : [],
               );
               equipment = parsed;
@@ -560,7 +748,8 @@ class _CustomEquipmentManagerState extends State<_CustomEquipmentManager> {
           }
         }
 
-        debugPrint('✅ [CustomEquipment] Loaded ${equipment.length} custom equipment items');
+        debugPrint(
+            '✅ [CustomEquipment] Loaded ${equipment.length} custom equipment items');
         setState(() {
           _customEquipment = equipment;
           _isLoading = false;
@@ -578,7 +767,8 @@ class _CustomEquipmentManagerState extends State<_CustomEquipmentManager> {
     if (_userId == null) return;
 
     setState(() => _isSaving = true);
-    debugPrint('💾 [CustomEquipment] Saving ${_customEquipment.length} items...');
+    debugPrint(
+        '💾 [CustomEquipment] Saving ${_customEquipment.length} items...');
 
     try {
       final apiClient = widget.ref.read(apiClientProvider);
@@ -592,13 +782,7 @@ class _CustomEquipmentManagerState extends State<_CustomEquipmentManager> {
     } catch (e) {
       debugPrint('❌ [CustomEquipment] Error saving: $e');
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to save: $e'),
-            behavior: SnackBarBehavior.floating,
-            backgroundColor: AppColors.red,
-          ),
-        );
+        AppSnackBar.error(context, 'Failed to save: $e');
       }
     } finally {
       if (mounted) {
@@ -612,12 +796,7 @@ class _CustomEquipmentManagerState extends State<_CustomEquipmentManager> {
 
     final trimmed = name.trim();
     if (_customEquipment.contains(trimmed)) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('$trimmed is already in your list'),
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
+      AppSnackBar.info(context, '$trimmed is already in your list');
       return;
     }
 
@@ -629,13 +808,7 @@ class _CustomEquipmentManagerState extends State<_CustomEquipmentManager> {
     await _saveCustomEquipment();
 
     if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Added "$trimmed" to your equipment'),
-          behavior: SnackBarBehavior.floating,
-          backgroundColor: AppColors.success,
-        ),
-      );
+      AppSnackBar.success(context, 'Added "$trimmed" to your equipment');
     }
   }
 
@@ -647,12 +820,7 @@ class _CustomEquipmentManagerState extends State<_CustomEquipmentManager> {
     await _saveCustomEquipment();
 
     if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Removed "$name"'),
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
+      AppSnackBar.info(context, 'Removed "$name"');
     }
   }
 
@@ -660,9 +828,11 @@ class _CustomEquipmentManagerState extends State<_CustomEquipmentManager> {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+    final cardBorder =
+        isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
     // Monochrome accent
-    final accentColor = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final accentColor =
+        isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
 
     if (_isLoading) {
       return Center(child: CircularProgressIndicator(color: accentColor));
@@ -682,7 +852,8 @@ class _CustomEquipmentManagerState extends State<_CustomEquipmentManager> {
                     hintText: 'Enter equipment name...',
                     hintStyle: TextStyle(color: textMuted),
                     filled: true,
-                    fillColor: isDark ? AppColors.pureBlack : AppColorsLight.pureWhite,
+                    fillColor:
+                        isDark ? AppColors.pureBlack : AppColorsLight.pureWhite,
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                       borderSide: BorderSide(color: cardBorder),
@@ -767,7 +938,9 @@ class _CustomEquipmentManagerState extends State<_CustomEquipmentManager> {
                     return Container(
                       margin: const EdgeInsets.only(bottom: 8),
                       decoration: BoxDecoration(
-                        color: isDark ? AppColors.pureBlack : AppColorsLight.pureWhite,
+                        color: isDark
+                            ? AppColors.pureBlack
+                            : AppColorsLight.pureWhite,
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(color: cardBorder),
                       ),
@@ -817,9 +990,11 @@ class _TrainingFocusCard extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
-    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textPrimary =
+        isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+    final cardBorder =
+        isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
     final accent = ref.colors(context).accent;
 
     return GestureDetector(

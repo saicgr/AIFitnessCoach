@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/theme/accent_color_provider.dart';
-import '../../../../data/providers/daily_xp_strip_provider.dart';
 import '../../../../data/providers/xp_provider.dart';
 import '../../../../data/services/haptic_service.dart';
 import 'package:go_router/go_router.dart';

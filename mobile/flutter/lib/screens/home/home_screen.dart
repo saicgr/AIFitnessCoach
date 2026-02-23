@@ -31,7 +31,6 @@ import 'widgets/daily_activity_card.dart';
 import 'widgets/renewal_reminder_banner.dart';
 import 'widgets/missed_workout_banner.dart';
 import 'widgets/contextual_banner.dart';
-import 'widgets/watch_install_banner.dart';
 import 'widgets/tile_factory.dart';
 import 'widgets/my_program_summary_card.dart';
 import 'widgets/hero_workout_card.dart';
@@ -43,22 +42,21 @@ import 'widgets/body_metrics_section.dart';
 import 'widgets/achievements_section.dart';
 import '../../data/providers/consistency_provider.dart';
 import '../../data/providers/xp_provider.dart' as xp_provider;
-import '../../data/providers/xp_provider.dart' show xpProvider, xpCurrentStreakProvider, levelUpEventProvider, streakMilestoneProvider, xpEarnedEventProvider, XPEarnedAnimationEvent;
+import '../../data/providers/xp_provider.dart' show xpProvider, xpCurrentStreakProvider, levelUpEventProvider, streakMilestoneProvider, xpEarnedEventProvider, XPEarnedAnimationEvent, activeDoubleXPEventProvider, showDailyCrateBannerProvider;
 import '../../data/models/user_xp.dart';
 import '../../widgets/double_xp_banner.dart';
-import '../../widgets/xp_level_bar.dart';
 import '../../widgets/level_up_dialog.dart';
 import '../../widgets/streak_milestone_dialog.dart';
 import '../../widgets/xp_earned_animation.dart';
 import '../../data/models/level_reward.dart';
-import 'widgets/gym_profile_switcher.dart';
 import 'widgets/daily_crate_banner.dart';
 import 'widgets/minimal_header.dart';
-import 'widgets/collapsed_banner_strip.dart';
 import '../../widgets/health_connect_sheet.dart';
 import '../../data/providers/health_import_provider.dart';
 import '../../data/repositories/nutrition_repository.dart';
 import '../../data/repositories/hydration_repository.dart';
+import '../../data/providers/billing_reminder_provider.dart';
+import '../../data/providers/scheduling_provider.dart';
 
 /// The main home screen displaying workouts, progress, and quick actions
 class HomeScreen extends ConsumerStatefulWidget {
@@ -1126,11 +1124,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
           ElevatedButton(
             onPressed: () async {
               Navigator.pop(ctx);
-              // Apply preset to local layout (tiles + SharedPreferences for header/banners)
+              // Apply preset to local layout (tiles only, header is always minimal)
               await ref.read(localLayoutProvider.notifier).applyPreset(preset);
-              // Reload header style and collapse banners from SharedPreferences
-              await ref.read(headerStyleProvider.notifier).reload();
-              await ref.read(collapseBannersProvider.notifier).reload();
               HapticService.success();
               if (mounted) {
                 ScaffoldMessenger.of(context).showSnackBar(
@@ -1204,8 +1199,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                 (p) => p.id == 'minimalist',
               );
               await ref.read(localLayoutProvider.notifier).applyPreset(minimalistPreset);
-              await ref.read(headerStyleProvider.notifier).reload();
-              await ref.read(collapseBannersProvider.notifier).reload();
               HapticService.success();
               if (mounted) {
                 ScaffoldMessenger.of(context).showSnackBar(
@@ -1500,26 +1493,34 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     }
 
     // Define section groups and their tile types
+    const nutritionTileTypes = {TileType.caloriesSummary, TileType.macroRings, TileType.fasting};
     const insightsTiles = {TileType.aiCoachTip, TileType.personalRecords, TileType.fitnessScore};
     const goalsTiles = {TileType.weeklyGoals, TileType.weekChanges};
     const trackingTiles = {TileType.habits, TileType.bodyWeight, TileType.achievements, TileType.dailyStats, TileType.quickLogWeight, TileType.quickLogMeasurements, TileType.todayStats};
+    const wellnessTiles = {TileType.moodPicker};
 
     // Group tiles by section
     final workoutTiles = <HomeTile>[];  // nextWorkout, quickStart, quickActions
+    final nutritionTilesList = <HomeTile>[];
     final insightTilesList = <HomeTile>[];
     final goalsTilesList = <HomeTile>[];
     final trackingTilesList = <HomeTile>[];
+    final wellnessTilesList = <HomeTile>[];
     final otherTiles = <HomeTile>[];
 
     for (final tile in visibleTiles) {
       if (tile.type == TileType.nextWorkout || tile.type == TileType.quickStart || tile.type == TileType.quickActions) {
         workoutTiles.add(tile);
+      } else if (nutritionTileTypes.contains(tile.type)) {
+        nutritionTilesList.add(tile);
       } else if (insightsTiles.contains(tile.type)) {
         insightTilesList.add(tile);
       } else if (goalsTiles.contains(tile.type)) {
         goalsTilesList.add(tile);
       } else if (trackingTiles.contains(tile.type)) {
         trackingTilesList.add(tile);
+      } else if (wellnessTiles.contains(tile.type)) {
+        wellnessTilesList.add(tile);
       } else {
         otherTiles.add(tile);
       }
@@ -1614,6 +1615,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       renderTileGroup(workoutTiles);
     }
 
+    // Render nutrition section (right after workout for prominence)
+    if (nutritionTilesList.isNotEmpty) {
+      slivers.add(SliverToBoxAdapter(
+        child: _buildHomeSectionHeader('Nutrition', isDark, icon: Icons.restaurant),
+      ));
+      renderTileGroup(nutritionTilesList);
+    }
+
     // Render insights section
     if (insightTilesList.isNotEmpty) {
       slivers.add(SliverToBoxAdapter(
@@ -1636,6 +1645,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
         child: _buildHomeSectionHeader('Tracking', isDark, icon: Icons.timeline),
       ));
       renderTileGroup(trackingTilesList);
+    }
+
+    // Render wellness section
+    if (wellnessTilesList.isNotEmpty) {
+      slivers.add(SliverToBoxAdapter(
+        child: _buildHomeSectionHeader('Wellness', isDark, icon: Icons.spa),
+      ));
+      renderTileGroup(wellnessTilesList);
     }
 
     // Render other tiles if any
@@ -1679,12 +1696,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
 
   @override
   Widget build(BuildContext context) {
-    // Performance fix 1.5: use .select() to only rebuild when user changes
-    final user = ref.watch(authStateProvider.select((s) => s.user));
-    // Use todayWorkoutProvider for lazy loading (only fetches today's/next workout)
+    // M12: Use .select() for granular rebuilds - only rebuild when the specific data changes
     final todayWorkoutState = ref.watch(todayWorkoutProvider);
     final isAIGenerating = ref.watch(aiGeneratingWorkoutProvider);
-    final activeLayoutState = ref.watch(activeLayoutProvider);
     // Watch local layout for tile visibility settings
     final localLayoutState = ref.watch(localLayoutProvider);
 
@@ -1692,17 +1706,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     final backgroundColor =
         isDark ? AppColors.pureBlack : AppColorsLight.pureWhite;
     final elevatedColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
-
-    // Watch the current streak from XP provider (login streak)
-    final currentStreak = ref.watch(xpCurrentStreakProvider);
-
-    // Watch header style and banner collapse preferences
-    final headerStyle = ref.watch(headerStyleProvider);
-    final collapseBanners = ref.watch(collapseBannersProvider);
-
-    // Get responsive padding based on window mode
-    final horizontalPadding = responsiveHorizontalPadding;
-    final verticalPadding = responsiveVerticalPadding;
 
     // Listen for level-up events and show celebration dialog
     ref.listen<LevelUpEvent?>(levelUpEventProvider, (previous, next) {
@@ -1785,47 +1788,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
           child: SafeArea(
             child: CustomScrollView(
             slivers: [
-              // Header: Minimal or Classic based on preset
-              if (headerStyle == HeaderStyle.minimal)
-                SliverToBoxAdapter(
-                  child: MinimalHeader(),
-                )
-              else
-                SliverToBoxAdapter(
-                  child: _buildCombinedHeader(
-                    context,
-                    currentStreak,
-                    isDark,
-                    isCompact: isInSplitScreen || isNarrowLayout,
-                  ),
-                ),
+              // Header: Always minimal
+              const SliverToBoxAdapter(
+                child: MinimalHeader(),
+              ),
 
-              // Banners: Collapsed strip or full individual banners
-              if (collapseBanners)
-                const SliverToBoxAdapter(
-                  child: CollapsedBannerStrip(),
-                )
-              else ...[
-                // Daily XP Strip - Shows daily goals progress
-                const SliverToBoxAdapter(
-                  child: Padding(
-                    padding: EdgeInsets.only(top: 8, bottom: 8),
-                    child: DailyXPStrip(),
-                  ),
-                ),
-                // Contextual Banner - Personalized, dismissible tips
-                SliverToBoxAdapter(
-                  child: ContextualBanner(isDark: isDark),
-                ),
-                // Double XP Banner - Shows when Double XP event is active
-                const SliverToBoxAdapter(
-                  child: DoubleXPBanner(),
-                ),
-                // Daily Crate Banner - Shows when user has unclaimed daily crates
-                const SliverToBoxAdapter(
-                  child: DailyCrateBanner(),
-                ),
-              ],
+              // Priority banner: show only the highest-priority applicable banner
+              const SliverToBoxAdapter(
+                child: _PriorityBanner(),
+              ),
 
               // Dynamic tiles from local layout
               ...localLayoutState.when(
@@ -3403,124 +3374,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     ];
   }
 
-  /// Combined header with Gym Profile Switcher and icons on same row
-  Widget _buildCombinedHeader(
-    BuildContext context,
-    int currentStreak,
-    bool isDark, {
-    bool isCompact = false,
-  }) {
-    final padding = isCompact ? 10.0 : 16.0;
-    final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
-
-    return Padding(
-      padding: EdgeInsets.symmetric(horizontal: padding, vertical: 8),
-      child: Row(
-        children: [
-          // Gym Profile Switcher - takes remaining space
-          const Expanded(
-            child: GymProfileSwitcher(collapsed: true),
-          ),
-          // Edit Home Screen button
-          GestureDetector(
-            onTap: () {
-              HapticService.selection();
-              context.push('/settings/homescreen');
-            },
-            child: Container(
-              width: 36,
-              height: 36,
-              margin: const EdgeInsets.only(right: 4),
-              decoration: BoxDecoration(
-                color: isDark
-                    ? AppColors.glassSurface
-                    : AppColorsLight.glassSurface,
-                borderRadius: BorderRadius.circular(18),
-              ),
-              child: Icon(
-                Icons.edit_outlined,
-                size: 18,
-                color: textSecondary,
-              ),
-            ),
-          ),
-          // Calendar Button
-          CalendarIconButton(isDark: isDark),
-          // Notification Bell
-          NotificationBellButton(isDark: isDark),
-          const SizedBox(width: 4),
-          // Streak Badge - Consolidated metric
-          _StreakBadge(streak: currentStreak, isDark: isDark, isCompact: isCompact),
-          // XP Level Progress - Compact version in header (after streak)
-          if (!isCompact) ...[
-            const SizedBox(width: 8),
-            const XPLevelBarCompact(),
-          ],
-        ],
-      ),
-    );
-  }
-
-  Widget _buildHeader(
-    BuildContext context,
-    String userName,
-    int currentStreak,
-    bool isDark, {
-    bool isCompact = false,
-  }) {
-    // Reduce padding and spacing in compact/split-screen mode
-    final padding = isCompact ? 10.0 : 16.0;
-    final spacing = isCompact ? 4.0 : 8.0;
-
-    return Padding(
-      padding: EdgeInsets.all(padding),
-      child: Row(
-        children: [
-          // Greeting and name - takes remaining space
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Hide greeting in very compact mode to save space
-                if (!isCompact)
-                  Text(
-                    _getGreeting(),
-                    style: Theme.of(context).textTheme.bodyMedium,
-                  ),
-                Text(
-                  userName,
-                  style: Theme.of(context)
-                      .textTheme
-                      .headlineMedium
-                      ?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        // Slightly smaller in compact mode
-                        fontSize: isCompact ? 20 : null,
-                      ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ],
-            ),
-          ),
-          SizedBox(width: spacing),
-          // Calendar Button
-          CalendarIconButton(isDark: isDark),
-          // Notification Bell
-          NotificationBellButton(isDark: isDark),
-          const SizedBox(width: 4),
-          // Streak Badge - Consolidated metric
-          _StreakBadge(streak: currentStreak, isDark: isDark, isCompact: isCompact),
-          // XP Level Progress - Compact version in header (after streak)
-          if (!isCompact) ...[
-            const SizedBox(width: 8),
-            const XPLevelBarCompact(),
-          ],
-        ],
-      ),
-    );
-  }
-
   Widget _buildNextWorkoutSection(
     BuildContext context,
     AsyncValue workoutsState,
@@ -3591,259 +3444,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     );
   }
 }
-
-/// Consolidated profile menu button with notification badge
-class _ProfileMenuButton extends StatelessWidget {
-  final bool isDark;
-  final bool isCompact;
-
-  const _ProfileMenuButton({
-    required this.isDark,
-    this.isCompact = false,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final iconSize = isCompact ? 20.0 : 24.0;
-
-    return Stack(
-      clipBehavior: Clip.none,
-      children: [
-        IconButton(
-          onPressed: () {
-            HapticService.light();
-            _showProfileMenu(context);
-          },
-          icon: Icon(
-            Icons.person_outline,
-            color: AppColors.purple,
-            size: iconSize,
-          ),
-          tooltip: 'Menu',
-          padding: EdgeInsets.zero,
-          constraints: const BoxConstraints(),
-        ),
-        // Notification indicator
-        // Positioned(
-        //   top: -2,
-        //   right: -2,
-        //   child: Container(
-        //     width: 8,
-        //     height: 8,
-        //     decoration: BoxDecoration(
-        //       color: AppColors.orange,
-        //       shape: BoxShape.circle,
-        //       border: Border.all(
-        //         color: isDark ? AppColors.background : AppColorsLight.background,
-        //         width: 1.5,
-        //       ),
-        //     ),
-        //   ),
-        // ),
-      ],
-    );
-  }
-
-  void _showProfileMenu(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
-    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
-    final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
-
-    showGlassSheet(
-      context: context,
-      builder: (context) => GlassSheet(
-        child: SafeArea(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const SizedBox(height: 24),
-
-              // Profile option
-              _MenuOption(
-                icon: Icons.person_outline,
-                label: 'Profile',
-                onTap: () {
-                  Navigator.pop(context);
-                  context.push('/profile');
-                },
-                isDark: isDark,
-              ),
-
-              // Notifications option
-              _MenuOption(
-                icon: Icons.notifications_outlined,
-                label: 'Notifications',
-                badge: 0, // TODO: Connect to actual notification count
-                onTap: () {
-                  Navigator.pop(context);
-                  // TODO: Navigate to notifications
-                },
-                isDark: isDark,
-              ),
-
-              // Settings option
-              _MenuOption(
-                icon: Icons.settings_outlined,
-                label: 'Settings',
-                onTap: () {
-                  Navigator.pop(context);
-                  context.push('/settings');
-                },
-                isDark: isDark,
-              ),
-
-              const SizedBox(height: 12),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _MenuOption extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final VoidCallback onTap;
-  final bool isDark;
-  final int? badge;
-
-  const _MenuOption({
-    required this.icon,
-    required this.label,
-    required this.onTap,
-    required this.isDark,
-    this.badge,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
-    final glassSurface = isDark ? AppColors.glassSurface : AppColorsLight.glassSurface;
-
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: () {
-          HapticService.light();
-          onTap();
-        },
-        borderRadius: BorderRadius.circular(12),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-          child: Container(
-            padding: const EdgeInsets.all(16),
-            child: Row(
-              children: [
-                Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    color: glassSurface,
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Icon(icon, size: 20, color: AppColors.purple),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Text(
-                    label,
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w500,
-                      color: textPrimary,
-                    ),
-                  ),
-                ),
-                if (badge != null && badge! > 0)
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                    decoration: BoxDecoration(
-                      color: AppColors.orange,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Text(
-                      badge! > 99 ? '99+' : '$badge',
-                      style: const TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ),
-                Icon(Icons.chevron_right, color: textSecondary, size: 20),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-/// A badge showing the current workout streak with fire icon
-class _StreakBadge extends StatelessWidget {
-  final int streak;
-  final bool isDark;
-  final bool isCompact;
-
-  const _StreakBadge({
-    required this.streak,
-    required this.isDark,
-    this.isCompact = false,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final elevatedColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
-    final textColor = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-
-    // Reduce size in compact mode
-    final horizontalPadding = isCompact ? 6.0 : 10.0;
-    final verticalPadding = isCompact ? 4.0 : 6.0;
-    final iconSize = isCompact ? 14.0 : 16.0;
-    final fontSize = isCompact ? 12.0 : 14.0;
-
-    return Tooltip(
-      message: streak > 0 ? '$streak day streak!' : 'Start your streak!',
-      child: Container(
-        padding: EdgeInsets.symmetric(horizontal: horizontalPadding, vertical: verticalPadding),
-        decoration: BoxDecoration(
-          color: elevatedColor,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: streak > 0
-                ? AppColors.orange.withOpacity(0.5)
-                : (isDark ? AppColors.cardBorder : AppColorsLight.cardBorder),
-          ),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              Icons.local_fire_department,
-              size: iconSize,
-              color: streak > 0 ? AppColors.orange : (isDark ? AppColors.textMuted : AppColorsLight.textMuted),
-            ),
-            SizedBox(width: isCompact ? 2 : 4),
-            Text(
-              '$streak',
-              style: TextStyle(
-                fontSize: fontSize,
-                fontWeight: FontWeight.bold,
-                color: streak > 0 ? AppColors.orange : textColor,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
 
 /// Dummy animation controller for backwards compatibility with deprecated edit mode code
 class _DummyAnimationController extends ChangeNotifier {
@@ -4086,5 +3686,50 @@ class _CategoryPill extends StatelessWidget {
         ),
       ),
     );
+  }
+}
+
+/// Shows only the highest-priority banner that is currently applicable.
+///
+/// Priority (highest first):
+/// 1. Renewal reminder (subscription renewing soon)
+/// 2. Missed workout
+/// 3. Daily crate (unclaimed)
+/// 4. Double XP event active
+/// 5. Contextual tip (lowest)
+class _PriorityBanner extends ConsumerWidget {
+  const _PriorityBanner();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    // 1. Renewal reminder (highest priority)
+    final renewalState = ref.watch(upcomingRenewalProvider);
+    final showRenewal = renewalState.whenOrNull(data: (r) => r.showBanner) ?? false;
+    if (showRenewal) {
+      return const RenewalReminderBanner();
+    }
+
+    // 2. Missed workout
+    final hasMissed = ref.watch(hasMissedWorkoutsProvider);
+    if (hasMissed) {
+      return const MissedWorkoutBanner();
+    }
+
+    // 3. Daily crate
+    final showCrate = ref.watch(showDailyCrateBannerProvider);
+    if (showCrate) {
+      return const DailyCrateBanner();
+    }
+
+    // 4. Double XP event
+    final doubleXP = ref.watch(activeDoubleXPEventProvider);
+    if (doubleXP != null) {
+      return const DoubleXPBanner();
+    }
+
+    // 5. Contextual banner (lowest priority)
+    return ContextualBanner(isDark: isDark);
   }
 }

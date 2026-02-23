@@ -125,7 +125,7 @@ List<OfflineExercise> filterExercises(
           exEquip.contains('none') ||
           exEquip.isEmpty) {
         // Always allowed
-      } else if (!equipmentSet.any((eq) => exEquip.contains(eq))) {
+      } else if (!_matchesEquipment(exEquip, equipmentSet)) {
         return false;
       }
     }
@@ -349,6 +349,40 @@ OfflineExercise? selectForSlotWeighted(
   }
 
   return available.last;
+}
+
+/// Equipment alias map: user-facing equipment name → keywords to match
+/// against exercise equipment strings in the library.
+const _equipmentAliases = <String, List<String>>{
+  'dumbbells': ['dumbbell'],
+  'barbell': ['barbell', 'bar'],
+  'cable machine': ['cable'],
+  'machines': ['machine'],
+  'smith machine': ['smith'],
+  'ez bar': ['ez bar', 'ez_bar'],
+  'resistance bands': ['resistance band', 'loop resistance band', 'resistance_band'],
+  'pull-up bar': ['pull up bar', 'pull-up bar', 'pull_up_bar', 'pull up'],
+  'kettlebell': ['kettlebell'],
+  'suspension trainer': ['suspension trainer', 'trx'],
+  'exercise ball': ['exercise ball'],
+  'sandbag': ['sandbag'],
+  'battle ropes': ['battle rope'],
+  'yoga mat': ['yoga mat'],
+  'dip station': ['dip'],
+};
+
+/// Check if exercise equipment string matches any of the user's selected equipment.
+bool _matchesEquipment(String exEquip, Set<String> equipmentSet) {
+  for (final eq in equipmentSet) {
+    final aliases = _equipmentAliases[eq];
+    if (aliases != null) {
+      if (aliases.any((alias) => exEquip.contains(alias))) return true;
+    } else {
+      // Direct contains fallback
+      if (exEquip.contains(eq)) return true;
+    }
+  }
+  return false;
 }
 
 /// Heuristic to detect compound exercises by name patterns.

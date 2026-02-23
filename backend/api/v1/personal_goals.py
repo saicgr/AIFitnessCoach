@@ -20,7 +20,9 @@ Endpoints:
 - POST /goals/suggestions/{id}/accept - Create goal from suggestion
 """
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
+from core.auth import get_current_user
+from core.exceptions import safe_internal_error
 from datetime import datetime, date, timedelta, timezone
 from typing import Optional
 
@@ -58,7 +60,9 @@ def get_iso_week_boundaries(for_date: date) -> tuple[date, date]:
 # ============================================================
 
 @router.post("/goals", response_model=WeeklyPersonalGoal)
-async def create_goal(user_id: str, request: CreateGoalRequest):
+async def create_goal(user_id: str, request: CreateGoalRequest,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Create a new weekly personal goal.
 
@@ -150,7 +154,7 @@ async def create_goal(user_id: str, request: CreateGoalRequest):
             endpoint="/api/v1/personal-goals/goals",
             status_code=500
         )
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "personal_goals")
 
 
 # ============================================================
@@ -158,7 +162,9 @@ async def create_goal(user_id: str, request: CreateGoalRequest):
 # ============================================================
 
 @router.get("/goals/current", response_model=GoalsResponse)
-async def get_current_goals(user_id: str):
+async def get_current_goals(user_id: str,
+    current_user: dict = Depends(get_current_user),
+):
     """Get all goals for the current week."""
     logger.info(f"Getting current goals for user: {user_id}")
 
@@ -224,7 +230,7 @@ async def get_current_goals(user_id: str):
 
     except Exception as e:
         logger.error(f"Failed to get current goals: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "personal_goals")
 
 
 # ============================================================
@@ -232,7 +238,9 @@ async def get_current_goals(user_id: str):
 # ============================================================
 
 @router.post("/goals/{goal_id}/attempt", response_model=WeeklyPersonalGoal)
-async def record_attempt(user_id: str, goal_id: str, request: RecordAttemptRequest):
+async def record_attempt(user_id: str, goal_id: str, request: RecordAttemptRequest,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Record an attempt for a single_max goal.
 
@@ -303,7 +311,7 @@ async def record_attempt(user_id: str, goal_id: str, request: RecordAttemptReque
         raise
     except Exception as e:
         logger.error(f"Failed to record attempt: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "personal_goals")
 
 
 # ============================================================
@@ -311,7 +319,9 @@ async def record_attempt(user_id: str, goal_id: str, request: RecordAttemptReque
 # ============================================================
 
 @router.post("/goals/{goal_id}/volume", response_model=WeeklyPersonalGoal)
-async def add_volume(user_id: str, goal_id: str, request: AddVolumeRequest):
+async def add_volume(user_id: str, goal_id: str, request: AddVolumeRequest,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Add volume to a weekly_volume goal.
 
@@ -369,7 +379,7 @@ async def add_volume(user_id: str, goal_id: str, request: AddVolumeRequest):
         raise
     except Exception as e:
         logger.error(f"Failed to add volume: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "personal_goals")
 
 
 # ============================================================
@@ -377,7 +387,9 @@ async def add_volume(user_id: str, goal_id: str, request: AddVolumeRequest):
 # ============================================================
 
 @router.post("/goals/{goal_id}/complete", response_model=WeeklyPersonalGoal)
-async def complete_goal(user_id: str, goal_id: str):
+async def complete_goal(user_id: str, goal_id: str,
+    current_user: dict = Depends(get_current_user),
+):
     """Manually mark a goal as completed."""
     logger.info(f"Completing goal: {goal_id}")
 
@@ -417,7 +429,7 @@ async def complete_goal(user_id: str, goal_id: str):
         raise
     except Exception as e:
         logger.error(f"Failed to complete goal: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "personal_goals")
 
 
 # ============================================================
@@ -425,7 +437,9 @@ async def complete_goal(user_id: str, goal_id: str):
 # ============================================================
 
 @router.post("/goals/{goal_id}/abandon", response_model=WeeklyPersonalGoal)
-async def abandon_goal(user_id: str, goal_id: str):
+async def abandon_goal(user_id: str, goal_id: str,
+    current_user: dict = Depends(get_current_user),
+):
     """Abandon a goal (mark as abandoned)."""
     logger.info(f"Abandoning goal: {goal_id}")
 
@@ -458,7 +472,7 @@ async def abandon_goal(user_id: str, goal_id: str):
         raise
     except Exception as e:
         logger.error(f"Failed to abandon goal: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "personal_goals")
 
 
 # ============================================================
@@ -471,6 +485,7 @@ async def get_goal_history(
     exercise_name: str,
     goal_type: GoalType,
     limit: int = Query(12, ge=1, le=52),
+    current_user: dict = Depends(get_current_user),
 ):
     """Get historical goals for a specific exercise/goal_type combination."""
     logger.info(f"Getting goal history: user={user_id}, exercise={exercise_name}, type={goal_type.value}")
@@ -506,7 +521,7 @@ async def get_goal_history(
 
     except Exception as e:
         logger.error(f"Failed to get goal history: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "personal_goals")
 
 
 # ============================================================
@@ -514,7 +529,9 @@ async def get_goal_history(
 # ============================================================
 
 @router.get("/records", response_model=PersonalRecordsResponse)
-async def get_personal_records(user_id: str):
+async def get_personal_records(user_id: str,
+    current_user: dict = Depends(get_current_user),
+):
     """Get all personal records for a user."""
     logger.info(f"Getting personal records for user: {user_id}")
 
@@ -532,7 +549,7 @@ async def get_personal_records(user_id: str):
 
     except Exception as e:
         logger.error(f"Failed to get personal records: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "personal_goals")
 
 
 # ============================================================
@@ -540,7 +557,9 @@ async def get_personal_records(user_id: str):
 # ============================================================
 
 @router.get("/summary", response_model=GoalSummary)
-async def get_goals_summary(user_id: str):
+async def get_goals_summary(user_id: str,
+    current_user: dict = Depends(get_current_user),
+):
     """Get a quick summary of current week's goals."""
     logger.info(f"Getting goals summary for user: {user_id}")
 
@@ -581,7 +600,7 @@ async def get_goals_summary(user_id: str):
 
     except Exception as e:
         logger.error(f"Failed to get goals summary: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "personal_goals")
 
 
 # ============================================================
@@ -589,7 +608,9 @@ async def get_goals_summary(user_id: str):
 # ============================================================
 
 @router.post("/workout-sync", response_model=WorkoutSyncResponse)
-async def sync_workout_with_goals(user_id: str, request: WorkoutSyncRequest):
+async def sync_workout_with_goals(user_id: str, request: WorkoutSyncRequest,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Sync a completed workout with weekly personal goals.
 
@@ -745,7 +766,7 @@ async def sync_workout_with_goals(user_id: str, request: WorkoutSyncRequest):
             endpoint="/api/v1/personal-goals/workout-sync",
             status_code=500
         )
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "personal_goals")
 
 
 # ============================================================
@@ -779,6 +800,7 @@ def _build_goal_response(row: dict, today: date) -> WeeklyPersonalGoal:
 async def get_goal_suggestions(
     user_id: str,
     force_refresh: bool = Query(False, description="Force regenerate suggestions"),
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Get AI-generated goal suggestions organized by category.
@@ -882,7 +904,7 @@ async def get_goal_suggestions(
 
     except Exception as e:
         logger.error(f"Failed to get goal suggestions: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "personal_goals")
 
 
 @router.post("/goals/suggestions/{suggestion_id}/dismiss")
@@ -890,6 +912,7 @@ async def dismiss_suggestion(
     user_id: str,
     suggestion_id: str,
     request: Optional[DismissSuggestionRequest] = None,
+    current_user: dict = Depends(get_current_user),
 ):
     """Mark a suggestion as dismissed so it won't appear again."""
     logger.info(f"Dismissing suggestion: {suggestion_id} for user: {user_id}")
@@ -918,7 +941,7 @@ async def dismiss_suggestion(
         raise
     except Exception as e:
         logger.error(f"Failed to dismiss suggestion: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "personal_goals")
 
 
 @router.post("/goals/suggestions/{suggestion_id}/accept", response_model=WeeklyPersonalGoal)
@@ -926,6 +949,7 @@ async def accept_suggestion(
     user_id: str,
     suggestion_id: str,
     request: Optional[AcceptSuggestionRequest] = None,
+    current_user: dict = Depends(get_current_user),
 ):
     """Create a new goal from a suggestion."""
     logger.info(f"Accepting suggestion: {suggestion_id} for user: {user_id}")
@@ -1014,11 +1038,13 @@ async def accept_suggestion(
         raise
     except Exception as e:
         logger.error(f"Failed to accept suggestion: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "personal_goals")
 
 
 @router.get("/goals/suggestions/summary", response_model=GoalSuggestionsSummary)
-async def get_suggestions_summary(user_id: str):
+async def get_suggestions_summary(user_id: str,
+    current_user: dict = Depends(get_current_user),
+):
     """Get a quick summary of available suggestions."""
     logger.info(f"Getting suggestions summary for user: {user_id}")
 
@@ -1053,7 +1079,7 @@ async def get_suggestions_summary(user_id: str):
 
     except Exception as e:
         logger.error(f"Failed to get suggestions summary: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "personal_goals")
 
 
 # ============================================================
@@ -1359,7 +1385,9 @@ def _extract_friends_preview(source_data: dict) -> list:
 # ============================================================
 
 @router.post("/workout-sync", response_model=WorkoutSyncResponse)
-async def sync_workout_with_goals(user_id: str, request: WorkoutSyncRequest):
+async def sync_workout_with_goals(user_id: str, request: WorkoutSyncRequest,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Sync workout data with personal weekly goals.
 
@@ -1507,4 +1535,4 @@ async def sync_workout_with_goals(user_id: str, request: WorkoutSyncRequest):
             endpoint="/api/v1/personal-goals/workout-sync",
             status_code=500
         )
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "personal_goals")

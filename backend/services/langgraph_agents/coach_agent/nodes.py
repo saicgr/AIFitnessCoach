@@ -11,7 +11,7 @@ from datetime import datetime
 import pytz
 
 from .state import CoachAgentState
-from ..personality import build_personality_prompt
+from ..personality import build_personality_prompt, sanitize_coach_name
 from models.chat import AISettings, CoachIntent
 from services.gemini_service import GeminiService
 from core.logger import get_logger
@@ -49,8 +49,8 @@ def get_coach_system_prompt(ai_settings: Dict[str, Any] = None) -> str:
     """Build the full system prompt with personality customization."""
     settings_obj = AISettings(**ai_settings) if ai_settings else None
 
-    # Get the coach name from settings or use default
-    coach_name = settings_obj.coach_name if settings_obj and settings_obj.coach_name else "Coach"
+    # Get the coach name from settings or use default (sanitized)
+    coach_name = sanitize_coach_name(settings_obj.coach_name, default="Coach") if settings_obj and settings_obj.coach_name else "Coach"
 
     # Build the base prompt with the coach name
     base_prompt = COACH_BASE_PROMPT_TEMPLATE.format(coach_name=coach_name)

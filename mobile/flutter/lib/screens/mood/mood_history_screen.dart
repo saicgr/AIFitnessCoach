@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../../core/constants/app_colors.dart';
+import '../../widgets/app_loading.dart';
 import '../../data/providers/mood_history_provider.dart';
 import 'widgets/mood_analytics_card.dart';
 import 'widgets/mood_calendar_heatmap.dart';
@@ -65,7 +66,7 @@ class _MoodHistoryScreenState extends ConsumerState<MoodHistoryScreen> {
         ],
       ),
       body: state.isLoading
-          ? const Center(child: CircularProgressIndicator())
+          ? AppLoading.fullScreen()
           : RefreshIndicator(
               onRefresh: () => ref.read(moodHistoryProvider.notifier).refresh(),
               child: CustomScrollView(

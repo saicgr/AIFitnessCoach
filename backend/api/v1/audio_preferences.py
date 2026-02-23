@@ -13,7 +13,7 @@ ENDPOINTS:
 - POST /api/v1/audio-preferences/{user_id} - Create default preferences if none exist
 """
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 from typing import Optional
 from datetime import datetime
@@ -21,6 +21,8 @@ from datetime import datetime
 from core.supabase_client import get_supabase
 from core.logger import get_logger
 from core.activity_logger import log_user_activity, log_user_error
+from core.auth import get_current_user
+from core.exceptions import safe_internal_error
 
 router = APIRouter()
 logger = get_logger(__name__)
@@ -99,13 +101,15 @@ def get_default_preferences() -> dict:
 # ============================================
 
 @router.get("/{user_id}", response_model=AudioPreferencesResponse)
-async def get_audio_preferences(user_id: str):
+async def get_audio_preferences(user_id: str, current_user: dict = Depends(get_current_user)):
     """
     Get user's audio preferences.
 
     Returns the user's audio preferences if they exist,
     otherwise returns default preferences.
     """
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     logger.info(f"Getting audio preferences for user {user_id}")
 
     try:
@@ -141,17 +145,19 @@ async def get_audio_preferences(user_id: str):
 
     except Exception as e:
         logger.error(f"Failed to get audio preferences for user {user_id}: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "get_audio_preferences")
 
 
 @router.put("/{user_id}", response_model=AudioPreferencesResponse)
-async def update_audio_preferences(user_id: str, update: AudioPreferencesUpdate):
+async def update_audio_preferences(user_id: str, update: AudioPreferencesUpdate, current_user: dict = Depends(get_current_user)):
     """
     Update user's audio preferences.
 
     Only updates the fields that are provided.
     Creates preferences if they don't exist.
     """
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     logger.info(f"Updating audio preferences for user {user_id}")
 
     try:
@@ -254,17 +260,19 @@ async def update_audio_preferences(user_id: str, update: AudioPreferencesUpdate)
             endpoint=f"/api/v1/audio-preferences/{user_id}",
             status_code=500
         )
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "update_audio_preferences")
 
 
 @router.post("/{user_id}", response_model=AudioPreferencesResponse)
-async def create_audio_preferences(user_id: str, preferences: Optional[AudioPreferences] = None):
+async def create_audio_preferences(user_id: str, preferences: Optional[AudioPreferences] = None, current_user: dict = Depends(get_current_user)):
     """
     Create default audio preferences for a user.
 
     If preferences already exist, returns the existing ones.
     If custom preferences are provided, uses those instead of defaults.
     """
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     logger.info(f"Creating audio preferences for user {user_id}")
 
     try:
@@ -360,4 +368,4 @@ async def create_audio_preferences(user_id: str, preferences: Optional[AudioPref
             endpoint=f"/api/v1/audio-preferences/{user_id}",
             status_code=500
         )
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "create_audio_preferences")

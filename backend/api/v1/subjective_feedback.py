@@ -8,7 +8,9 @@ This feature addresses the user's desire to "feel their results"
 beyond just physical metrics.
 """
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
+from core.auth import get_current_user
+from core.exceptions import safe_internal_error
 from typing import List, Optional
 from datetime import datetime, timedelta, date
 from pydantic import BaseModel, Field
@@ -168,7 +170,9 @@ def _get_energy_emoji(level: int) -> str:
 # ============================================
 
 @router.post("/pre-checkin", response_model=SubjectiveFeedback)
-async def create_pre_workout_checkin(checkin: PreWorkoutCheckinCreate):
+async def create_pre_workout_checkin(checkin: PreWorkoutCheckinCreate,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Log a pre-workout check-in.
 
@@ -249,7 +253,7 @@ async def create_pre_workout_checkin(checkin: PreWorkoutCheckinCreate):
             endpoint="/api/v1/subjective-feedback/pre-checkin",
             status_code=500
         )
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "subjective_feedback")
 
 
 # ============================================
@@ -257,7 +261,9 @@ async def create_pre_workout_checkin(checkin: PreWorkoutCheckinCreate):
 # ============================================
 
 @router.post("/workouts/{workout_id}/post-checkin", response_model=SubjectiveFeedback)
-async def create_post_workout_checkin(workout_id: str, checkin: PostWorkoutCheckinCreate):
+async def create_post_workout_checkin(workout_id: str, checkin: PostWorkoutCheckinCreate,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Log a post-workout check-in.
 
@@ -387,7 +393,7 @@ async def create_post_workout_checkin(workout_id: str, checkin: PostWorkoutCheck
             metadata={"workout_id": workout_id},
             status_code=500
         )
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "subjective_feedback")
 
 
 # ============================================
@@ -397,7 +403,8 @@ async def create_post_workout_checkin(workout_id: str, checkin: PostWorkoutCheck
 @router.get("/progress/subjective-trends", response_model=SubjectiveTrendsResponse)
 async def get_subjective_trends(
     user_id: str,
-    days: int = Query(30, ge=7, le=365, description="Number of days to analyze")
+    days: int = Query(30, ge=7, le=365, description="Number of days to analyze"),
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Get mood/energy trends over time.
@@ -542,11 +549,13 @@ async def get_subjective_trends(
 
     except Exception as e:
         logger.error(f"Failed to get subjective trends: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "subjective_feedback")
 
 
 @router.get("/progress/feel-results", response_model=FeelResultsSummary)
-async def get_feel_results_summary(user_id: str):
+async def get_feel_results_summary(user_id: str,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Get high-level "Feel Results" summary.
 
@@ -652,7 +661,7 @@ async def get_feel_results_summary(user_id: str):
 
     except Exception as e:
         logger.error(f"Failed to get feel results summary: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "subjective_feedback")
 
 
 # ============================================
@@ -663,7 +672,8 @@ async def get_feel_results_summary(user_id: str):
 async def get_subjective_history(
     user_id: str,
     limit: int = Query(20, ge=1, le=100),
-    offset: int = Query(0, ge=0)
+    offset: int = Query(0, ge=0),
+    current_user: dict = Depends(get_current_user),
 ):
     """Get user's subjective feedback history."""
     logger.info(f"Getting subjective history for user {user_id}")
@@ -702,11 +712,13 @@ async def get_subjective_history(
 
     except Exception as e:
         logger.error(f"Failed to get subjective history: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "subjective_feedback")
 
 
 @router.get("/workouts/{workout_id}", response_model=Optional[SubjectiveFeedback])
-async def get_workout_subjective_feedback(workout_id: str, user_id: str):
+async def get_workout_subjective_feedback(workout_id: str, user_id: str,
+    current_user: dict = Depends(get_current_user),
+):
     """Get subjective feedback for a specific workout."""
     logger.info(f"Getting subjective feedback for workout {workout_id}")
 
@@ -744,7 +756,7 @@ async def get_workout_subjective_feedback(workout_id: str, user_id: str):
 
     except Exception as e:
         logger.error(f"Failed to get workout subjective feedback: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "subjective_feedback")
 
 
 # ============================================
@@ -752,7 +764,9 @@ async def get_workout_subjective_feedback(workout_id: str, user_id: str):
 # ============================================
 
 @router.get("/quick-stats")
-async def get_quick_subjective_stats(user_id: str):
+async def get_quick_subjective_stats(user_id: str,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Get quick stats for display on home screen or profile.
 
@@ -808,4 +822,4 @@ async def get_quick_subjective_stats(user_id: str):
 
     except Exception as e:
         logger.error(f"Failed to get quick subjective stats: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "subjective_feedback")

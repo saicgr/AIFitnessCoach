@@ -14,6 +14,7 @@ from google.genai import types
 from typing import List, Dict, Optional
 import json
 import logging
+import re
 import asyncio
 import time
 from core.config import get_settings
@@ -46,6 +47,17 @@ from core.ai_response_parser import parse_ai_json
 
 settings = get_settings()
 logger = logging.getLogger("gemini")
+
+
+def _sanitize_for_prompt(text: str, max_len: int = 1000) -> str:
+    """Sanitize user input before inserting into AI prompts.
+
+    Strips characters commonly used for prompt injection and truncates
+    to prevent overly long inputs from dominating the context window.
+    """
+    if not text:
+        return ""
+    return re.sub(r'[\'\"\\`]', '', text)[:max_len]
 
 
 # ===========================================================================
@@ -1086,7 +1098,7 @@ Create engaging, creative names that:
             ),
             types.SafetySetting(
                 category="HARM_CATEGORY_DANGEROUS_CONTENT",
-                threshold="BLOCK_ONLY_HIGH",
+                threshold="BLOCK_MEDIUM_AND_ABOVE",
             ),
         ]
 
@@ -1171,7 +1183,7 @@ HYDRATION EXTRACTION:
 - "track 2 glasses" -> hydration_amount=2
 - If no number specified, default to hydration_amount=1
 
-User message: "''' + user_message + '"'
+User message: "''' + _sanitize_for_prompt(user_message) + '"'
 
         # Check intent cache first (common intents like greetings hit this often)
         try:
@@ -1240,7 +1252,7 @@ User message: "''' + user_message + '"'
         """
         extraction_prompt = f'''Extract ALL exercise names mentioned in this fitness coach response.
 
-Response: "{ai_response}"
+Response: "{_sanitize_for_prompt(ai_response, max_len=5000)}"
 
 Return a JSON object with an "exercises" array containing the exercise names:
 {{"exercises": ["Exercise 1", "Exercise 2", ...]}}

@@ -8,7 +8,9 @@ This module handles reaction operations:
 """
 from typing import Optional
 
-from fastapi import APIRouter, BackgroundTasks, HTTPException
+from fastapi import APIRouter, Depends, BackgroundTasks, HTTPException
+from core.auth import get_current_user
+from core.exceptions import safe_internal_error
 
 from models.social import (
     ActivityReaction, ActivityReactionCreate, ReactionsSummary, ReactionType,
@@ -61,6 +63,7 @@ async def add_reaction(
     user_id: str,
     reaction: ActivityReactionCreate,
     background_tasks: BackgroundTasks,
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Add a reaction to an activity.
@@ -115,6 +118,7 @@ async def remove_reaction(
     user_id: str,
     activity_id: str,
     background_tasks: BackgroundTasks,
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Remove user's reaction from an activity.
@@ -155,6 +159,7 @@ async def remove_reaction(
 async def get_reactions(
     activity_id: str,
     user_id: Optional[str] = None,
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Get all reactions for an activity.

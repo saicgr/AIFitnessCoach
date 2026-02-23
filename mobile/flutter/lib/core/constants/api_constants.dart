@@ -34,9 +34,15 @@ class ApiConstants {
   static const String googleWebClientId =
       '843677137160-h1jh9t4d0s6mui2eqsek2h0rnq27n19o.apps.googleusercontent.com';
 
-  /// RevenueCat API Keys (Public SDK keys - safe for client apps)
-  static const String revenueCatAppleApiKey = 'test_vYc0UpSGFVdQBcuHxeIUEaztDAJ'; // TODO: Add iOS key when available
-  static const String revenueCatGoogleApiKey = 'goog_lnoRpFUioBNbTpTzsRsIKswnIWj';
+  /// RevenueCat API Keys - supplied via --dart-define at build time
+  static const String revenueCatAppleApiKey = String.fromEnvironment(
+    'REVENUECAT_APPLE_KEY',
+    defaultValue: 'test_key_placeholder',
+  );
+  static const String revenueCatGoogleApiKey = String.fromEnvironment(
+    'REVENUECAT_GOOGLE_KEY',
+    defaultValue: 'test_key_placeholder',
+  );
 
   /// Google Maps API Key (for gym location picker)
   /// To set up:

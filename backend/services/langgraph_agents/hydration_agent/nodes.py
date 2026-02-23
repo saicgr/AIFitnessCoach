@@ -8,7 +8,7 @@ import re
 from typing import Dict, Any, Literal
 
 from .state import HydrationAgentState
-from ..personality import build_personality_prompt
+from ..personality import build_personality_prompt, sanitize_coach_name
 from models.chat import AISettings, CoachIntent
 from services.gemini_service import GeminiService
 from core.logger import get_logger
@@ -61,8 +61,8 @@ def get_hydration_system_prompt(ai_settings: Dict[str, Any] = None) -> str:
     """Build the full system prompt with personality customization."""
     settings_obj = AISettings(**ai_settings) if ai_settings else None
 
-    # Get the coach name from settings or use default
-    coach_name = settings_obj.coach_name if settings_obj and settings_obj.coach_name else "Aqua"
+    # Get the coach name from settings or use default (sanitized)
+    coach_name = sanitize_coach_name(settings_obj.coach_name, default="Aqua") if settings_obj and settings_obj.coach_name else "Aqua"
 
     # Build the base prompt with the coach name
     base_prompt = HYDRATION_BASE_PROMPT_TEMPLATE.format(coach_name=coach_name)

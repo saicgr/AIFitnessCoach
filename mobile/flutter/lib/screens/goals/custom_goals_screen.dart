@@ -3,9 +3,11 @@ import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants/app_colors.dart';
+import '../../widgets/app_snackbar.dart';
 import '../../data/models/custom_goal.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../../data/services/api_client.dart';
+import '../../widgets/app_dialog.dart';
 import '../../widgets/glass_back_button.dart';
 import '../../widgets/glass_sheet.dart';
 
@@ -88,12 +90,7 @@ class _CustomGoalsScreenState extends ConsumerState<CustomGoalsScreen> {
   Future<void> _createGoal(String goalText) async {
     if (goalText.trim().isEmpty) return;
     if (_goals.length >= 5) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Maximum 5 custom goals allowed'),
-          backgroundColor: AppColors.error,
-        ),
-      );
+      AppSnackBar.error(context, 'Maximum 5 custom goals allowed');
       return;
     }
 
@@ -129,12 +126,7 @@ class _CustomGoalsScreenState extends ConsumerState<CustomGoalsScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to create goal: $e'),
-            backgroundColor: AppColors.error,
-          ),
-        );
+        AppSnackBar.error(context, 'Failed to create goal: $e');
       }
     } finally {
       setState(() => _isCreating = false);
@@ -260,30 +252,11 @@ class _CustomGoalsScreenState extends ConsumerState<CustomGoalsScreen> {
   }
 
   Future<void> _deleteGoal(CustomGoal goal) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: AppColors.elevated,
-        title: const Text(
-          'Delete Goal?',
-          style: TextStyle(color: AppColors.textPrimary),
-        ),
-        content: Text(
-          'Are you sure you want to delete "${goal.goalText}"?',
-          style: const TextStyle(color: AppColors.textSecondary),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            style: TextButton.styleFrom(foregroundColor: AppColors.error),
-            child: const Text('Delete'),
-          ),
-        ],
-      ),
+    final confirmed = await AppDialog.destructive(
+      context,
+      title: 'Delete Goal?',
+      message: 'Are you sure you want to delete "${goal.goalText}"?',
+      icon: Icons.delete_rounded,
     );
 
     if (confirmed != true) return;
@@ -297,21 +270,11 @@ class _CustomGoalsScreenState extends ConsumerState<CustomGoalsScreen> {
       });
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Goal deleted'),
-            backgroundColor: AppColors.success,
-          ),
-        );
+        AppSnackBar.success(context, 'Goal deleted');
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to delete: $e'),
-            backgroundColor: AppColors.error,
-          ),
-        );
+        AppSnackBar.error(context, 'Failed to delete: $e');
       }
     }
   }
@@ -334,12 +297,7 @@ class _CustomGoalsScreenState extends ConsumerState<CustomGoalsScreen> {
       });
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to update priority: $e'),
-            backgroundColor: AppColors.error,
-          ),
-        );
+        AppSnackBar.error(context, 'Failed to update priority: $e');
       }
     }
   }

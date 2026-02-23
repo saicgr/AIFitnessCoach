@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../data/services/api_client.dart';
 import '../../../data/services/food_search_service.dart';
+import '../../../widgets/glass_sheet.dart';
 
 /// Shows the food report bottom sheet for correcting nutrition data.
 Future<void> showFoodReportDialog(
@@ -10,13 +11,13 @@ Future<void> showFoodReportDialog(
   required FoodSearchResult food,
   required ApiClient apiClient,
 }) {
-  return showModalBottomSheet(
+  return showGlassSheet(
     context: context,
-    isScrollControlled: true,
-    backgroundColor: Colors.transparent,
-    builder: (context) => _FoodReportSheet(
-      food: food,
-      apiClient: apiClient,
+    builder: (context) => GlassSheet(
+      child: _FoodReportSheet(
+        food: food,
+        apiClient: apiClient,
+      ),
     ),
   );
 }

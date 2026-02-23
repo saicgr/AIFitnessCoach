@@ -8,7 +8,9 @@ Tracks bodyweight skill progressions like:
 - Handstand progressions (wall hold -> freestanding -> handstand pushup)
 """
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
+from core.auth import get_current_user
+from core.exceptions import safe_internal_error
 from typing import List, Optional
 from datetime import datetime
 import uuid
@@ -141,6 +143,7 @@ def _check_unlock_criteria(
 @router.get("/chains", response_model=List[ProgressionChain])
 async def get_all_progression_chains(
     category: Optional[SkillCategory] = None,
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Get all available progression chains.
@@ -162,11 +165,13 @@ async def get_all_progression_chains(
 
     except Exception as e:
         logger.error(f"Failed to get progression chains: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "skill_progressions")
 
 
 @router.get("/chains/{chain_id}", response_model=ProgressionChainWithSteps)
-async def get_progression_chain(chain_id: str):
+async def get_progression_chain(chain_id: str,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Get a specific progression chain with all its steps.
     """
@@ -201,11 +206,13 @@ async def get_progression_chain(chain_id: str):
         raise
     except Exception as e:
         logger.error(f"Failed to get progression chain: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "skill_progressions")
 
 
 @router.get("/chains/{chain_id}/steps", response_model=List[ProgressionStep])
-async def get_chain_steps(chain_id: str):
+async def get_chain_steps(chain_id: str,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Get all steps for a progression chain.
     """
@@ -233,7 +240,7 @@ async def get_chain_steps(chain_id: str):
         raise
     except Exception as e:
         logger.error(f"Failed to get chain steps: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "skill_progressions")
 
 
 # ============================================
@@ -244,6 +251,7 @@ async def get_chain_steps(chain_id: str):
 async def get_user_skill_progress(
     user_id: str,
     active_only: bool = False,
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Get user's progress on all chains they've started.
@@ -299,11 +307,13 @@ async def get_user_skill_progress(
 
     except Exception as e:
         logger.error(f"Failed to get user skill progress: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "skill_progressions")
 
 
 @router.get("/user/{user_id}/progress/{chain_id}", response_model=UserSkillProgressWithHistory)
-async def get_user_chain_progress(user_id: str, chain_id: str):
+async def get_user_chain_progress(user_id: str, chain_id: str,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Get user's progress on a specific chain, including recent attempt history.
     """
@@ -368,11 +378,13 @@ async def get_user_chain_progress(user_id: str, chain_id: str):
         raise
     except Exception as e:
         logger.error(f"Failed to get user chain progress: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "skill_progressions")
 
 
 @router.get("/user/{user_id}/summary", response_model=UserSkillsSummary)
-async def get_user_skills_summary(user_id: str):
+async def get_user_skills_summary(user_id: str,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Get a summary of all user's skill progressions.
     """
@@ -446,7 +458,7 @@ async def get_user_skills_summary(user_id: str):
 
     except Exception as e:
         logger.error(f"Failed to get user skills summary: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "skill_progressions")
 
 
 # ============================================
@@ -454,7 +466,9 @@ async def get_user_skills_summary(user_id: str):
 # ============================================
 
 @router.post("/user/{user_id}/start-chain/{chain_id}", response_model=StartChainResponse)
-async def start_progression_chain(user_id: str, chain_id: str):
+async def start_progression_chain(user_id: str, chain_id: str,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Start tracking a new progression chain for a user.
 
@@ -548,7 +562,7 @@ async def start_progression_chain(user_id: str, chain_id: str):
             endpoint=f"/api/v1/skill-progressions/user/{user_id}/start-chain/{chain_id}",
             status_code=500
         )
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "skill_progressions")
 
 
 @router.post("/user/{user_id}/progress/{chain_id}/log-attempt", response_model=LogAttemptResponse)
@@ -556,6 +570,7 @@ async def log_skill_attempt(
     user_id: str,
     chain_id: str,
     request: LogAttemptRequest,
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Log an attempt at the current progression level.
@@ -674,11 +689,13 @@ async def log_skill_attempt(
         raise
     except Exception as e:
         logger.error(f"Failed to log skill attempt: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "skill_progressions")
 
 
 @router.post("/user/{user_id}/progress/{chain_id}/unlock-next", response_model=UnlockNextResponse)
-async def unlock_next_step(user_id: str, chain_id: str):
+async def unlock_next_step(user_id: str, chain_id: str,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Unlock the next step in the progression (when criteria is met).
 
@@ -815,11 +832,13 @@ async def unlock_next_step(user_id: str, chain_id: str):
             endpoint=f"/api/v1/skill-progressions/user/{user_id}/progress/{chain_id}/unlock-next",
             status_code=500
         )
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "skill_progressions")
 
 
 @router.put("/user/{user_id}/progress/{chain_id}/toggle-active")
-async def toggle_progression_active(user_id: str, chain_id: str, is_active: bool):
+async def toggle_progression_active(user_id: str, chain_id: str, is_active: bool,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Toggle whether a progression is actively being worked on.
 
@@ -864,11 +883,13 @@ async def toggle_progression_active(user_id: str, chain_id: str, is_active: bool
         raise
     except Exception as e:
         logger.error(f"Failed to toggle progression active status: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "skill_progressions")
 
 
 @router.delete("/user/{user_id}/progress/{chain_id}")
-async def delete_progression_progress(user_id: str, chain_id: str):
+async def delete_progression_progress(user_id: str, chain_id: str,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Delete user's progress on a progression chain.
 
@@ -913,4 +934,4 @@ async def delete_progression_progress(user_id: str, chain_id: str):
         raise
     except Exception as e:
         logger.error(f"Failed to delete progression progress: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "skill_progressions")

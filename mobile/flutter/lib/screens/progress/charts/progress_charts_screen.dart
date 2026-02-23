@@ -3,6 +3,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../data/models/progress_charts.dart';
+import '../../../widgets/app_loading.dart';
 import '../../../data/providers/progress_charts_provider.dart';
 import '../../../data/services/api_client.dart';
 import 'widgets/volume_chart.dart';
@@ -81,7 +82,7 @@ class _ProgressChartsScreenState extends ConsumerState<ProgressChartsScreen>
         ],
       ),
       body: _userId == null || state.isLoading
-          ? const Center(child: CircularProgressIndicator())
+          ? AppLoading.fullScreen()
           : state.error != null
               ? _buildErrorState(state.error!)
               : Column(
@@ -132,7 +133,7 @@ class _ProgressChartsScreenState extends ConsumerState<ProgressChartsScreen>
 
   Widget _buildVolumeTab(ProgressChartsState state) {
     if (state.isLoadingVolume) {
-      return const Center(child: CircularProgressIndicator());
+      return AppLoading.fullScreen();
     }
 
     if (!state.hasVolumeData) {
@@ -164,7 +165,7 @@ class _ProgressChartsScreenState extends ConsumerState<ProgressChartsScreen>
 
   Widget _buildStrengthTab(ProgressChartsState state) {
     if (state.isLoadingStrength) {
-      return const Center(child: CircularProgressIndicator());
+      return AppLoading.fullScreen();
     }
 
     return SingleChildScrollView(

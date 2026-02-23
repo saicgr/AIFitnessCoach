@@ -8,7 +8,7 @@ This module allows users to:
 4. Share exercises publicly with other users
 5. Search both library and custom exercises
 """
-from fastapi import APIRouter, HTTPException, Query, UploadFile, File
+from fastapi import APIRouter, Depends, HTTPException, Query, UploadFile, File
 from pydantic import BaseModel, Field
 from typing import List, Optional, Dict, Any
 from datetime import datetime
@@ -16,6 +16,8 @@ import logging
 import uuid
 
 from core.supabase_db import get_supabase_db
+from core.auth import get_current_user
+from core.exceptions import safe_internal_error
 from services.custom_exercise_media_service import get_custom_exercise_media_service
 
 logger = logging.getLogger(__name__)
@@ -147,8 +149,11 @@ async def get_user_custom_exercises(
     equipment: Optional[str] = Query(default=None, description="Filter by equipment"),
     exercise_type: Optional[str] = Query(default=None, description="Filter by type"),
     include_public: bool = Query(default=False, description="Include public exercises from others"),
+    current_user: dict = Depends(get_current_user),
 ):
     """Get all custom exercises for a user."""
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     db = get_supabase_db()
 
     try:
@@ -173,12 +178,14 @@ async def get_user_custom_exercises(
 
     except Exception as e:
         logger.error(f"❌ Failed to get custom exercises for {user_id}: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "custom_exercises")
 
 
 @router.get("/{user_id}/{exercise_id}", response_model=CustomExerciseResponse)
-async def get_custom_exercise(user_id: str, exercise_id: str):
+async def get_custom_exercise(user_id: str, exercise_id: str, current_user: dict = Depends(get_current_user)):
     """Get a specific custom exercise."""
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     db = get_supabase_db()
 
     try:
@@ -201,12 +208,14 @@ async def get_custom_exercise(user_id: str, exercise_id: str):
         raise
     except Exception as e:
         logger.error(f"❌ Failed to get custom exercise {exercise_id}: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "custom_exercises")
 
 
 @router.post("/{user_id}", response_model=CustomExerciseResponse)
-async def create_custom_exercise(user_id: str, request: CustomExerciseCreate):
+async def create_custom_exercise(user_id: str, request: CustomExerciseCreate, current_user: dict = Depends(get_current_user)):
     """Create a new custom exercise."""
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     db = get_supabase_db()
 
     try:
@@ -248,12 +257,14 @@ async def create_custom_exercise(user_id: str, request: CustomExerciseCreate):
         # Check for unique constraint violation
         if "duplicate key" in str(e).lower() or "unique" in str(e).lower():
             raise HTTPException(status_code=400, detail="Exercise with this name already exists")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "custom_exercises")
 
 
 @router.put("/{user_id}/{exercise_id}", response_model=CustomExerciseResponse)
-async def update_custom_exercise(user_id: str, exercise_id: str, request: CustomExerciseUpdate):
+async def update_custom_exercise(user_id: str, exercise_id: str, request: CustomExerciseUpdate, current_user: dict = Depends(get_current_user)):
     """Update a custom exercise."""
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     db = get_supabase_db()
 
     try:
@@ -291,12 +302,14 @@ async def update_custom_exercise(user_id: str, exercise_id: str, request: Custom
         raise
     except Exception as e:
         logger.error(f"❌ Failed to update custom exercise {exercise_id}: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "custom_exercises")
 
 
 @router.delete("/{user_id}/{exercise_id}")
-async def delete_custom_exercise(user_id: str, exercise_id: str):
+async def delete_custom_exercise(user_id: str, exercise_id: str, current_user: dict = Depends(get_current_user)):
     """Delete a custom exercise and its associated media."""
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     db = get_supabase_db()
 
     try:
@@ -327,7 +340,7 @@ async def delete_custom_exercise(user_id: str, exercise_id: str):
         raise
     except Exception as e:
         logger.error(f"❌ Failed to delete custom exercise {exercise_id}: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "custom_exercises")
 
 
 @router.get("/{user_id}/search/combined", response_model=List[ExerciseSearchResult])
@@ -336,8 +349,11 @@ async def search_combined_exercises(
     query: str = Query(..., min_length=1, description="Search query"),
     equipment: Optional[str] = Query(default=None, description="Filter by equipment"),
     limit: int = Query(default=20, ge=1, le=100),
+    current_user: dict = Depends(get_current_user),
 ):
     """Search both exercise library and custom exercises."""
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     db = get_supabase_db()
 
     try:
@@ -400,11 +416,11 @@ async def search_combined_exercises(
 
     except Exception as e:
         logger.error(f"❌ Failed to search exercises: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "custom_exercises")
 
 
 @router.get("/equipment/list")
-async def list_equipment_with_exercises():
+async def list_equipment_with_exercises(current_user: dict = Depends(get_current_user)):
     """List all equipment types that have exercises (library or custom)."""
     db = get_supabase_db()
 
@@ -429,7 +445,7 @@ async def list_equipment_with_exercises():
 
     except Exception as e:
         logger.error(f"❌ Failed to list equipment: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "custom_exercises")
 
 
 # =============================================================================
@@ -442,6 +458,7 @@ async def get_presigned_upload_url(
     exercise_id: str,
     media_type: str = Query(..., description="'image' or 'video'"),
     content_type: str = Query(..., description="MIME type (e.g., 'image/jpeg', 'video/mp4')"),
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Get a presigned URL for direct client upload to S3.
@@ -449,6 +466,8 @@ async def get_presigned_upload_url(
     This allows the Flutter app to upload directly to S3 without going through the backend.
     After upload, call the update endpoint to save the S3 key.
     """
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     db = get_supabase_db()
 
     try:
@@ -485,7 +504,7 @@ async def get_presigned_upload_url(
         raise
     except Exception as e:
         logger.error(f"❌ Failed to generate presigned URL: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "custom_exercises")
 
 
 @router.post("/{user_id}/{exercise_id}/upload/image", response_model=MediaUploadResponse)
@@ -493,12 +512,15 @@ async def upload_exercise_image(
     user_id: str,
     exercise_id: str,
     file: UploadFile = File(..., description="Image file (JPEG, PNG, GIF, WebP)"),
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Upload an image for a custom exercise via the backend.
 
     For large files or better performance, use the presigned URL endpoint instead.
     """
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     db = get_supabase_db()
 
     try:
@@ -547,7 +569,7 @@ async def upload_exercise_image(
         raise
     except Exception as e:
         logger.error(f"❌ Failed to upload image: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "custom_exercises")
 
 
 @router.post("/{user_id}/{exercise_id}/upload/video", response_model=MediaUploadResponse)
@@ -555,12 +577,15 @@ async def upload_exercise_video(
     user_id: str,
     exercise_id: str,
     file: UploadFile = File(..., description="Video file (MP4, MOV, WebM)"),
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Upload a video for a custom exercise via the backend.
 
     Note: For videos >10MB, use the presigned URL endpoint instead.
     """
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     db = get_supabase_db()
 
     try:
@@ -609,12 +634,14 @@ async def upload_exercise_video(
         raise
     except Exception as e:
         logger.error(f"❌ Failed to upload video: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "custom_exercises")
 
 
 @router.delete("/{user_id}/{exercise_id}/media")
-async def delete_exercise_media(user_id: str, exercise_id: str):
+async def delete_exercise_media(user_id: str, exercise_id: str, current_user: dict = Depends(get_current_user)):
     """Delete all media (image, video, thumbnail) for a custom exercise."""
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     db = get_supabase_db()
 
     try:
@@ -648,7 +675,7 @@ async def delete_exercise_media(user_id: str, exercise_id: str):
         raise
     except Exception as e:
         logger.error(f"❌ Failed to delete media: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "custom_exercises")
 
 
 @router.post("/{user_id}/{exercise_id}/confirm-upload")
@@ -657,12 +684,15 @@ async def confirm_presigned_upload(
     exercise_id: str,
     s3_key: str = Query(..., description="S3 key from presigned upload"),
     media_type: str = Query(..., description="'image' or 'video'"),
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Confirm a presigned upload was successful and update the exercise record.
 
     Call this after uploading via presigned URL to save the S3 key to the database.
     """
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     db = get_supabase_db()
 
     try:
@@ -703,4 +733,4 @@ async def confirm_presigned_upload(
         raise
     except Exception as e:
         logger.error(f"❌ Failed to confirm upload: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "custom_exercises")

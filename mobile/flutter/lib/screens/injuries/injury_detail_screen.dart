@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../../core/constants/app_colors.dart';
+import '../../widgets/app_loading.dart';
 import '../../data/models/injury.dart';
 import '../../widgets/glass_back_button.dart';
 import '../../widgets/glass_sheet.dart';
@@ -216,7 +217,7 @@ class _InjuryDetailScreenState extends ConsumerState<InjuryDetailScreen> {
         ],
       ),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
+          ? AppLoading.fullScreen()
           : _error != null
               ? _buildErrorState(textPrimary, textSecondary)
               : _injury == null

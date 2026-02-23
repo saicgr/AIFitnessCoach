@@ -9,7 +9,9 @@ This module allows users to:
 5. Specify preferred stretches to always include
 6. Specify avoided stretches to never include
 """
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
+from core.auth import get_current_user
+from core.exceptions import safe_internal_error
 from pydantic import BaseModel, Field
 from typing import List, Optional, Dict, Any
 from datetime import datetime
@@ -64,7 +66,9 @@ class WarmupPreferencesResponse(BaseModel):
 # =============================================================================
 
 @router.get("/{user_id}", response_model=WarmupPreferencesResponse)
-async def get_warmup_preferences(user_id: str):
+async def get_warmup_preferences(user_id: str,
+    current_user: dict = Depends(get_current_user),
+):
     """Get user's warmup/stretch preferences."""
     db = get_supabase_db()
 
@@ -93,11 +97,13 @@ async def get_warmup_preferences(user_id: str):
 
     except Exception as e:
         logger.error(f"❌ Failed to get warmup preferences for {user_id}: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "warmup_preferences")
 
 
 @router.put("/{user_id}", response_model=WarmupPreferencesResponse)
-async def update_warmup_preferences(user_id: str, request: WarmupPreferencesUpdate):
+async def update_warmup_preferences(user_id: str, request: WarmupPreferencesUpdate,
+    current_user: dict = Depends(get_current_user),
+):
     """Update user's warmup/stretch preferences (upsert)."""
     db = get_supabase_db()
 
@@ -151,11 +157,13 @@ async def update_warmup_preferences(user_id: str, request: WarmupPreferencesUpda
         raise
     except Exception as e:
         logger.error(f"❌ Failed to update warmup preferences for {user_id}: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "warmup_preferences")
 
 
 @router.post("/{user_id}/pre-workout", response_model=WarmupPreferencesResponse)
-async def add_pre_workout_exercise(user_id: str, exercise: ExerciseRoutineItem):
+async def add_pre_workout_exercise(user_id: str, exercise: ExerciseRoutineItem,
+    current_user: dict = Depends(get_current_user),
+):
     """Add an exercise to the pre-workout routine."""
     db = get_supabase_db()
 
@@ -198,11 +206,13 @@ async def add_pre_workout_exercise(user_id: str, exercise: ExerciseRoutineItem):
         raise
     except Exception as e:
         logger.error(f"❌ Failed to add pre-workout exercise: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "warmup_preferences")
 
 
 @router.post("/{user_id}/post-exercise", response_model=WarmupPreferencesResponse)
-async def add_post_exercise(user_id: str, exercise: ExerciseRoutineItem):
+async def add_post_exercise(user_id: str, exercise: ExerciseRoutineItem,
+    current_user: dict = Depends(get_current_user),
+):
     """Add an exercise to the post-exercise (cooldown) routine."""
     db = get_supabase_db()
 
@@ -245,11 +255,13 @@ async def add_post_exercise(user_id: str, exercise: ExerciseRoutineItem):
         raise
     except Exception as e:
         logger.error(f"❌ Failed to add post-exercise: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "warmup_preferences")
 
 
 @router.delete("/{user_id}/pre-workout/{index}")
-async def remove_pre_workout_exercise(user_id: str, index: int):
+async def remove_pre_workout_exercise(user_id: str, index: int,
+    current_user: dict = Depends(get_current_user),
+):
     """Remove an exercise from the pre-workout routine by index."""
     db = get_supabase_db()
 
@@ -282,11 +294,13 @@ async def remove_pre_workout_exercise(user_id: str, index: int):
         raise
     except Exception as e:
         logger.error(f"❌ Failed to remove pre-workout exercise: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "warmup_preferences")
 
 
 @router.delete("/{user_id}/post-exercise/{index}")
-async def remove_post_exercise(user_id: str, index: int):
+async def remove_post_exercise(user_id: str, index: int,
+    current_user: dict = Depends(get_current_user),
+):
     """Remove an exercise from the post-exercise routine by index."""
     db = get_supabase_db()
 
@@ -319,11 +333,13 @@ async def remove_post_exercise(user_id: str, index: int):
         raise
     except Exception as e:
         logger.error(f"❌ Failed to remove post-exercise: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "warmup_preferences")
 
 
 @router.delete("/{user_id}")
-async def clear_warmup_preferences(user_id: str):
+async def clear_warmup_preferences(user_id: str,
+    current_user: dict = Depends(get_current_user),
+):
     """Clear all warmup/stretch preferences for a user."""
     db = get_supabase_db()
 
@@ -337,4 +353,4 @@ async def clear_warmup_preferences(user_id: str):
 
     except Exception as e:
         logger.error(f"❌ Failed to clear warmup preferences: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "warmup_preferences")

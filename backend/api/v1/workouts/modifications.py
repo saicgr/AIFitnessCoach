@@ -9,7 +9,9 @@ import json
 from datetime import datetime
 from typing import List, Optional
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
+from core.auth import get_current_user
+from core.exceptions import safe_internal_error
 from pydantic import BaseModel, Field
 
 from core.supabase_db import get_supabase_db
@@ -210,6 +212,7 @@ def exercise_targets_body_part(
 async def exclude_body_parts_from_workout(
     workout_id: str,
     request: ExcludeBodyPartsRequest,
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Remove exercises targeting specified body parts from an active workout.
@@ -332,13 +335,14 @@ async def exclude_body_parts_from_workout(
         raise
     except Exception as e:
         logger.error(f"❌ Failed to exclude body parts: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "modifications")
 
 
 @router.post("/{workout_id}/replace-exercise", response_model=ReplaceExerciseResponse)
 async def replace_exercise_in_workout(
     workout_id: str,
     request: ReplaceExerciseRequest,
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Replace an exercise with a safe alternative that avoids a specific body part.
@@ -476,7 +480,7 @@ async def replace_exercise_in_workout(
         raise
     except Exception as e:
         logger.error(f"❌ Failed to replace exercise: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "modifications")
 
 
 async def find_safe_alternative(
@@ -589,7 +593,8 @@ async def find_safe_alternative(
 @router.get("/{workout_id}/modification-history")
 async def get_modification_history(
     workout_id: str,
-    limit: int = Query(default=20, ge=1, le=100)
+    limit: int = Query(default=20, ge=1, le=100),
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Get the modification history for a workout.
@@ -619,4 +624,4 @@ async def get_modification_history(
 
     except Exception as e:
         logger.error(f"Error fetching modification history: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "modifications")

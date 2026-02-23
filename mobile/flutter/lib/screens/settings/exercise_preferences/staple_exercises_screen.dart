@@ -16,9 +16,11 @@ import '../../../widgets/staple_choice_sheet.dart';
 import '../../library/components/exercise_detail_sheet.dart';
 import 'widgets/exercise_picker_sheet.dart';
 
-/// Screen for managing staple exercises (core lifts that never rotate)
+/// Screen for managing staple exercises (core lifts that never rotate).
+/// When [embedded] is true, renders without Scaffold/AppBar for use inside tabs.
 class StapleExercisesScreen extends ConsumerWidget {
-  const StapleExercisesScreen({super.key});
+  final bool embedded;
+  const StapleExercisesScreen({super.key, this.embedded = false});
 
   Future<void> _showAddExercisePicker(BuildContext context, WidgetRef ref) async {
     HapticFeedback.lightImpact();
@@ -80,6 +82,30 @@ class StapleExercisesScreen extends ConsumerWidget {
 
     final staplesState = ref.watch(staplesProvider);
 
+    final body = Stack(
+      children: [
+        staplesState.isLoading
+            ? const Center(child: CircularProgressIndicator())
+            : staplesState.staples.isEmpty
+                ? _buildEmptyState(context, ref, textMuted)
+                : _buildStaplesList(
+                    context,
+                    ref,
+                    staplesState.staples,
+                    isDark,
+                    textPrimary,
+                    textMuted,
+                    elevated,
+                  ),
+
+        // Regeneration overlay
+        if (staplesState.isRegenerating)
+          _buildRegenerationOverlay(context, staplesState.regenerationMessage, isDark),
+      ],
+    );
+
+    if (embedded) return body;
+
     return Scaffold(
       backgroundColor: backgroundColor,
       appBar: AppBar(
@@ -107,27 +133,7 @@ class StapleExercisesScreen extends ConsumerWidget {
               backgroundColor: AppColors.cyan,
               child: const Icon(Icons.add, color: Colors.white),
             ),
-      body: Stack(
-        children: [
-          staplesState.isLoading
-              ? const Center(child: CircularProgressIndicator())
-              : staplesState.staples.isEmpty
-                  ? _buildEmptyState(context, ref, textMuted)
-                  : _buildStaplesList(
-                      context,
-                      ref,
-                      staplesState.staples,
-                      isDark,
-                      textPrimary,
-                      textMuted,
-                      elevated,
-                    ),
-
-          // Regeneration overlay
-          if (staplesState.isRegenerating)
-            _buildRegenerationOverlay(context, staplesState.regenerationMessage, isDark),
-        ],
-      ),
+      body: body,
     );
   }
 

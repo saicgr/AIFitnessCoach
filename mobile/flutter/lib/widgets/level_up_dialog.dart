@@ -946,11 +946,11 @@ Future<void> showLevelUpDialog(
     barrierDismissible: false,
     barrierColor: Colors.transparent,
     transitionDuration: const Duration(milliseconds: 200),
-    pageBuilder: (context, animation, secondaryAnimation) {
+    pageBuilder: (dialogContext, animation, secondaryAnimation) {
       return LevelUpDialog(
         event: event,
         onDismiss: () {
-          Navigator.of(context).pop();
+          Navigator.of(dialogContext).pop();
           onDismiss();
         },
       );

@@ -23,7 +23,9 @@ import asyncio
 import json
 import uuid
 from datetime import datetime
-from fastapi import APIRouter, BackgroundTasks, HTTPException, UploadFile, File, Request, Form
+from fastapi import APIRouter, Depends, BackgroundTasks, HTTPException, UploadFile, File, Request, Form
+from core.auth import get_current_user
+from core.exceptions import safe_internal_error
 from fastapi.responses import StreamingResponse
 from typing import Optional, List
 from pydantic import BaseModel
@@ -204,7 +206,9 @@ def row_to_user(row: dict, is_new_user: bool = False, support_friend_added: bool
 
 @router.post("/auth/google", response_model=User)
 @limiter.limit("5/minute")
-async def google_auth(request: Request, body: GoogleAuthRequest):
+async def google_auth(request: Request, body: GoogleAuthRequest,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Authenticate with Google OAuth via Supabase.
 
@@ -299,12 +303,14 @@ async def google_auth(request: Request, body: GoogleAuthRequest):
         full_traceback = traceback.format_exc()
         logger.error(f"Google auth failed: {e}")
         logger.error(f"Full traceback: {full_traceback}")
-        raise HTTPException(status_code=500, detail=f"Google auth error: {str(e)}")
+        raise safe_internal_error(e, "google_auth")
 
 
 @router.post("/auth/email", response_model=User)
 @limiter.limit("5/minute")
-async def email_auth(request: Request, body: EmailAuthRequest):
+async def email_auth(request: Request, body: EmailAuthRequest,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Authenticate with email and password via Supabase.
 
@@ -403,7 +409,9 @@ async def email_auth(request: Request, body: EmailAuthRequest):
 
 @router.post("/auth/email/signup", response_model=User)
 @limiter.limit("5/minute")
-async def email_signup(request: Request, body: EmailSignupRequest):
+async def email_signup(request: Request, body: EmailSignupRequest,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Create a new account with email and password via Supabase.
 
@@ -500,7 +508,9 @@ async def email_signup(request: Request, body: EmailSignupRequest):
 
 @router.post("/auth/forgot-password")
 @limiter.limit("3/minute")
-async def forgot_password(request: Request, body: ForgotPasswordRequest):
+async def forgot_password(request: Request, body: ForgotPasswordRequest,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Send password reset email via Supabase.
 
@@ -530,7 +540,9 @@ async def forgot_password(request: Request, body: ForgotPasswordRequest):
 
 @router.post("/auth/reset-password")
 @limiter.limit("5/minute")
-async def reset_password(request: Request, body: ResetPasswordRequest):
+async def reset_password(request: Request, body: ResetPasswordRequest,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Reset password using the token from reset email.
 
@@ -671,7 +683,9 @@ def merge_extended_fields_into_preferences(
 
 @router.post("/", response_model=User)
 @limiter.limit("5/minute")
-async def create_user(request: Request, user: UserCreate):
+async def create_user(request: Request, user: UserCreate,
+    current_user: dict = Depends(get_current_user),
+):
     """Create a new user."""
     logger.info(f"Creating user: level={user.fitness_level}")
 
@@ -724,11 +738,13 @@ async def create_user(request: Request, user: UserCreate):
 
     except Exception as e:
         logger.error(f"Failed to create user: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "users")
 
 
 @router.get("/", response_model=List[User])
-async def get_all_users():
+async def get_all_users(
+    current_user: dict = Depends(get_current_user),
+):
     """Get all users."""
     logger.info("Fetching all users")
     try:
@@ -737,11 +753,13 @@ async def get_all_users():
         return [row_to_user(row) for row in rows]
     except Exception as e:
         logger.error(f"Failed to get users: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "users")
 
 
 @router.get("/by-auth/{auth_id}", response_model=User)
-async def get_user_by_auth(auth_id: str):
+async def get_user_by_auth(auth_id: str,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Get a user by their Supabase auth_id.
 
@@ -764,11 +782,13 @@ async def get_user_by_auth(auth_id: str):
         raise
     except Exception as e:
         logger.error(f"Failed to get user by auth_id: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "users")
 
 
 @router.get("/{user_id}", response_model=User)
-async def get_user(user_id: str):
+async def get_user(user_id: str,
+    current_user: dict = Depends(get_current_user),
+):
     """Get a user by ID."""
     logger.info(f"Fetching user: id={user_id}")
     try:
@@ -786,11 +806,13 @@ async def get_user(user_id: str):
         raise
     except Exception as e:
         logger.error(f"Failed to get user: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "users")
 
 
 @router.get("/{user_id}/program-preferences", response_model=ProgramPreferences)
-async def get_program_preferences(user_id: str):
+async def get_program_preferences(user_id: str,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Get user's current program preferences for the customize program sheet.
 
@@ -876,7 +898,7 @@ async def get_program_preferences(user_id: str):
         raise
     except Exception as e:
         logger.error(f"Failed to get program preferences: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "users")
 
 
 def _get_workout_days(base_prefs: dict, latest_regen: Optional[dict]) -> List[str]:
@@ -996,7 +1018,9 @@ class UserPreferencesRequest(BaseModel):
 
 
 @router.post("/{user_id}/preferences")
-async def save_user_preferences(user_id: str, request: UserPreferencesRequest):
+async def save_user_preferences(user_id: str, request: UserPreferencesRequest,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Save user preferences from pre-auth quiz.
 
@@ -1116,11 +1140,13 @@ async def save_user_preferences(user_id: str, request: UserPreferencesRequest):
             endpoint=f"/api/v1/users/{user_id}/preferences",
             status_code=500
         )
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "users")
 
 
 @router.put("/{user_id}", response_model=User)
-async def update_user(user_id: str, user: UserUpdate):
+async def update_user(user_id: str, user: UserUpdate,
+    current_user: dict = Depends(get_current_user),
+):
     """Update a user."""
     logger.info(f"Updating user: id={user_id}")
     # DEBUG: Log incoming data
@@ -1433,11 +1459,13 @@ async def update_user(user_id: str, user: UserUpdate):
             endpoint=f"/api/v1/users/{user_id}",
             status_code=500
         )
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "users")
 
 
 @router.delete("/{user_id}")
-async def delete_user(user_id: str):
+async def delete_user(user_id: str,
+    current_user: dict = Depends(get_current_user),
+):
     """Delete a user."""
     logger.info(f"Deleting user: id={user_id}")
     try:
@@ -1474,11 +1502,13 @@ async def delete_user(user_id: str):
             endpoint=f"/api/v1/users/{user_id}",
             status_code=500
         )
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "users")
 
 
 @router.post("/{user_id}/reset-onboarding")
-async def reset_onboarding(user_id: str):
+async def reset_onboarding(user_id: str,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Reset onboarding - clears workouts and resets onboarding status.
 
@@ -1542,11 +1572,13 @@ async def reset_onboarding(user_id: str):
         raise
     except Exception as e:
         logger.error(f"Failed to reset onboarding: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "users")
 
 
 @router.delete("/{user_id}/reset")
-async def full_reset(user_id: str):
+async def full_reset(user_id: str,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Full reset - delete ALL user data and return to fresh state.
 
@@ -1586,7 +1618,7 @@ async def full_reset(user_id: str):
         raise
     except Exception as e:
         logger.error(f"Failed to reset user: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "users")
 
 
 # ==================== DATA EXPORT/IMPORT ====================
@@ -1598,6 +1630,7 @@ async def export_user_data(
     format: str = "csv",
     start_date: Optional[str] = None,
     end_date: Optional[str] = None,
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Export all user data in the specified format.
@@ -1688,7 +1721,7 @@ async def export_user_data(
     except Exception as e:
         elapsed = time.time() - start_time
         logger.error(f"Failed to export user data after {elapsed:.2f}s: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "users")
 
 
 @router.get("/{user_id}/export-text")
@@ -1696,6 +1729,7 @@ async def export_user_data_text(
     user_id: str,
     start_date: Optional[str] = None,
     end_date: Optional[str] = None,
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Export workout logs as a plain text file.
@@ -1757,11 +1791,13 @@ async def export_user_data_text(
     except Exception as e:
         elapsed = time.time() - start_time
         logger.error(f"Failed to export user data as text after {elapsed:.2f}s: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "users")
 
 
 @router.post("/{user_id}/import")
-async def import_user_data(user_id: str, file: UploadFile = File(...)):
+async def import_user_data(user_id: str, file: UploadFile = File(...),
+    current_user: dict = Depends(get_current_user),
+):
     """
     Import user data from a previously exported ZIP file.
 
@@ -1813,7 +1849,7 @@ async def import_user_data(user_id: str, file: UploadFile = File(...)):
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
         logger.error(f"Failed to import user data: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "users")
 
 
 # =============================================================================
@@ -1836,7 +1872,9 @@ class FavoriteExercise(BaseModel):
 
 
 @router.get("/{user_id}/favorite-exercises", response_model=List[FavoriteExercise])
-async def get_favorite_exercises(user_id: str):
+async def get_favorite_exercises(user_id: str,
+    current_user: dict = Depends(get_current_user),
+):
     """Get all favorite exercises for a user.
 
     Used by the workout generation system to prioritize exercises
@@ -1874,11 +1912,13 @@ async def get_favorite_exercises(user_id: str):
         raise
     except Exception as e:
         logger.error(f"Failed to get favorite exercises: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "users")
 
 
 @router.post("/{user_id}/favorite-exercises", response_model=FavoriteExercise)
-async def add_favorite_exercise(user_id: str, request: FavoriteExerciseRequest):
+async def add_favorite_exercise(user_id: str, request: FavoriteExerciseRequest,
+    current_user: dict = Depends(get_current_user),
+):
     """Add an exercise to user's favorites.
 
     Favorited exercises get a 50% boost in similarity score during
@@ -1929,11 +1969,13 @@ async def add_favorite_exercise(user_id: str, request: FavoriteExerciseRequest):
         raise
     except Exception as e:
         logger.error(f"Failed to add favorite exercise: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "users")
 
 
 @router.delete("/{user_id}/favorite-exercises/{exercise_name}")
-async def remove_favorite_exercise(user_id: str, exercise_name: str):
+async def remove_favorite_exercise(user_id: str, exercise_name: str,
+    current_user: dict = Depends(get_current_user),
+):
     """Remove an exercise from user's favorites.
 
     The exercise_name is URL-encoded, so spaces become %20.
@@ -1967,7 +2009,7 @@ async def remove_favorite_exercise(user_id: str, exercise_name: str):
         raise
     except Exception as e:
         logger.error(f"Failed to remove favorite exercise: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "users")
 
 
 # =============================================================================
@@ -1996,7 +2038,9 @@ class QueuedExercise(BaseModel):
 
 
 @router.get("/{user_id}/exercise-queue", response_model=List[QueuedExercise])
-async def get_exercise_queue(user_id: str):
+async def get_exercise_queue(user_id: str,
+    current_user: dict = Depends(get_current_user),
+):
     """Get all queued exercises for a user.
 
     Only returns active (not expired, not used) exercises.
@@ -2042,11 +2086,13 @@ async def get_exercise_queue(user_id: str):
         raise
     except Exception as e:
         logger.error(f"Failed to get exercise queue: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "users")
 
 
 @router.post("/{user_id}/exercise-queue", response_model=QueuedExercise)
-async def add_to_exercise_queue(user_id: str, request: QueueExerciseRequest):
+async def add_to_exercise_queue(user_id: str, request: QueueExerciseRequest,
+    current_user: dict = Depends(get_current_user),
+):
     """Add an exercise to user's workout queue.
 
     Queued exercises are included in the next matching workout.
@@ -2106,11 +2152,13 @@ async def add_to_exercise_queue(user_id: str, request: QueueExerciseRequest):
         raise
     except Exception as e:
         logger.error(f"Failed to add to exercise queue: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "users")
 
 
 @router.delete("/{user_id}/exercise-queue/{exercise_name}")
-async def remove_from_exercise_queue(user_id: str, exercise_name: str):
+async def remove_from_exercise_queue(user_id: str, exercise_name: str,
+    current_user: dict = Depends(get_current_user),
+):
     """Remove an exercise from user's workout queue."""
     from urllib.parse import unquote
     decoded_name = unquote(exercise_name)
@@ -2140,7 +2188,7 @@ async def remove_from_exercise_queue(user_id: str, exercise_name: str):
         raise
     except Exception as e:
         logger.error(f"Failed to remove from exercise queue: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "users")
 
 
 # =============================================================================
@@ -2183,7 +2231,9 @@ class NutritionMetricsResponse(BaseModel):
 
 
 @router.post("/{user_id}/calculate-nutrition-targets", response_model=NutritionMetricsResponse)
-async def calculate_nutrition_targets(user_id: str, request: NutritionCalculationRequest, background_tasks: BackgroundTasks):
+async def calculate_nutrition_targets(user_id: str, request: NutritionCalculationRequest, background_tasks: BackgroundTasks,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Calculate and save all nutrition metrics for a user.
 
@@ -2304,11 +2354,13 @@ async def calculate_nutrition_targets(user_id: str, request: NutritionCalculatio
             endpoint=f"/api/v1/users/{user_id}/calculate-nutrition-targets",
             status_code=500
         )
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "users")
 
 
 @router.get("/{user_id}/nutrition-targets", response_model=NutritionMetricsResponse)
-async def get_nutrition_targets(user_id: str):
+async def get_nutrition_targets(user_id: str,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Get the user's calculated nutrition targets.
 
@@ -2364,7 +2416,7 @@ async def get_nutrition_targets(user_id: str):
         raise
     except Exception as e:
         logger.error(f"Failed to get nutrition targets: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "users")
 
 
 class SyncFastingRequest(BaseModel):
@@ -2382,7 +2434,9 @@ class SyncFastingResponse(BaseModel):
 
 
 @router.post("/{user_id}/sync-fasting-preferences", response_model=SyncFastingResponse)
-async def sync_fasting_preferences(user_id: str, request: SyncFastingRequest):
+async def sync_fasting_preferences(user_id: str, request: SyncFastingRequest,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Sync fasting preferences from onboarding quiz to fasting_preferences table.
 
@@ -2459,7 +2513,7 @@ async def sync_fasting_preferences(user_id: str, request: SyncFastingRequest):
         raise
     except Exception as e:
         logger.error(f"Failed to sync fasting preferences: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "users")
 
 
 # =============================================================================
@@ -2670,6 +2724,7 @@ class ProfilePhotoResponse(BaseModel):
 async def upload_profile_photo(
     id: str,
     file: UploadFile = File(...),
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Upload a profile photo for a user.
@@ -2737,11 +2792,13 @@ async def upload_profile_photo(
         raise
     except Exception as e:
         logger.error(f"❌ [ProfilePhoto] Upload failed: {e}")
-        raise HTTPException(status_code=500, detail=f"Failed to upload profile photo: {str(e)}")
+        raise safe_internal_error(e, "profile_photo_upload")
 
 
 @router.delete("/{id}/photo")
-async def delete_profile_photo(id: str):
+async def delete_profile_photo(id: str,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Delete a user's profile photo.
 
@@ -2785,4 +2842,4 @@ async def delete_profile_photo(id: str):
         raise
     except Exception as e:
         logger.error(f"❌ [ProfilePhoto] Delete failed: {e}")
-        raise HTTPException(status_code=500, detail=f"Failed to delete profile photo: {str(e)}")
+        raise safe_internal_error(e, "profile_photo_delete")

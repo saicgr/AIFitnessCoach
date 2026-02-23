@@ -9,7 +9,9 @@ Endpoints:
 - POST /async-challenge - Create async "Beat Their Best" challenge
 """
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
+from core.auth import get_current_user
+from core.exceptions import safe_internal_error
 from typing import Optional
 from datetime import datetime, timezone, timedelta
 
@@ -38,6 +40,7 @@ async def get_leaderboard(
     country_code: Optional[str] = Query(None),
     limit: int = Query(100, ge=1, le=500),
     offset: int = Query(0, ge=0),
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Get leaderboard data with filtering and pagination.
@@ -159,6 +162,7 @@ async def get_user_rank(
     user_id: str,
     leaderboard_type: LeaderboardType = Query(LeaderboardType.challenge_masters),
     country_filter: Optional[str] = Query(None),
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Get user's rank in specified leaderboard.
@@ -201,7 +205,9 @@ async def get_user_rank(
 # ============================================================
 
 @router.get("/unlock-status", response_model=LeaderboardUnlockStatus)
-async def get_unlock_status(user_id: str):
+async def get_unlock_status(user_id: str,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Check if user has unlocked global leaderboard.
 
@@ -244,7 +250,9 @@ async def get_unlock_status(user_id: str):
 # ============================================================
 
 @router.get("/stats", response_model=LeaderboardStats)
-async def get_leaderboard_stats():
+async def get_leaderboard_stats(
+    current_user: dict = Depends(get_current_user),
+):
     """
     Get overall leaderboard statistics.
 
@@ -271,6 +279,7 @@ async def get_leaderboard_stats():
 async def create_async_challenge(
     user_id: str,
     request: AsyncChallengeRequest,
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Create async 'Beat Their Best' challenge from leaderboard.
@@ -304,7 +313,7 @@ async def create_async_challenge(
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to create challenge: {str(e)}")
+        raise safe_internal_error(e, "leaderboard_challenge")
 
 
 # ============================================================

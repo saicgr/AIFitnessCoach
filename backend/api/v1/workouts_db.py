@@ -16,7 +16,9 @@ RATE LIMITS:
 - /suggest: 5 requests/minute (AI-intensive)
 - Other endpoints: default global limit
 """
-from fastapi import APIRouter, HTTPException, Query, BackgroundTasks, Request
+from fastapi import APIRouter, Depends, HTTPException, Query, BackgroundTasks, Request
+from core.auth import get_current_user
+from core.exceptions import safe_internal_error
 from fastapi.responses import StreamingResponse
 from typing import List, Optional, AsyncGenerator
 from datetime import datetime, timedelta
@@ -309,7 +311,9 @@ def row_to_workout(row: dict) -> Workout:
 
 
 @router.post("/", response_model=Workout)
-async def create_workout(workout: WorkoutCreate):
+async def create_workout(workout: WorkoutCreate,
+    current_user: dict = Depends(get_current_user),
+):
     """Create a new workout."""
     logger.info(f"Creating workout for user {workout.user_id}: {workout.name}")
     try:
@@ -348,7 +352,7 @@ async def create_workout(workout: WorkoutCreate):
 
     except Exception as e:
         logger.error(f"Failed to create workout: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "workouts_db")
 
 
 @router.get("/", response_model=List[Workout])
@@ -359,6 +363,7 @@ async def list_workouts(
     to_date: Optional[datetime] = None,
     limit: int = Query(default=50, ge=1, le=200),
     offset: int = Query(default=0, ge=0),
+    current_user: dict = Depends(get_current_user),
 ):
     """List workouts for a user with optional filters."""
     logger.info(f"Listing workouts for user {user_id}")
@@ -377,11 +382,13 @@ async def list_workouts(
 
     except Exception as e:
         logger.error(f"Failed to list workouts: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "workouts_db")
 
 
 @router.get("/{workout_id}", response_model=Workout)
-async def get_workout(workout_id: str):
+async def get_workout(workout_id: str,
+    current_user: dict = Depends(get_current_user),
+):
     """Get a workout by ID."""
     logger.debug(f"Fetching workout: id={workout_id}")
     try:
@@ -398,11 +405,13 @@ async def get_workout(workout_id: str):
         raise
     except Exception as e:
         logger.error(f"Failed to get workout: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "workouts_db")
 
 
 @router.put("/{workout_id}", response_model=Workout)
-async def update_workout(workout_id: str, workout: WorkoutUpdate):
+async def update_workout(workout_id: str, workout: WorkoutUpdate,
+    current_user: dict = Depends(get_current_user),
+):
     """Update a workout."""
     logger.info(f"Updating workout: id={workout_id}")
     try:
@@ -454,11 +463,13 @@ async def update_workout(workout_id: str, workout: WorkoutUpdate):
         raise
     except Exception as e:
         logger.error(f"Failed to update workout: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "workouts_db")
 
 
 @router.delete("/{workout_id}")
-async def delete_workout(workout_id: str):
+async def delete_workout(workout_id: str,
+    current_user: dict = Depends(get_current_user),
+):
     """Delete a workout and all related records."""
     logger.info(f"Deleting workout: id={workout_id}")
     try:
@@ -481,11 +492,13 @@ async def delete_workout(workout_id: str):
         raise
     except Exception as e:
         logger.error(f"Failed to delete workout: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "workouts_db")
 
 
 @router.post("/{workout_id}/complete", response_model=Workout)
-async def complete_workout(workout_id: str, background_tasks: BackgroundTasks):
+async def complete_workout(workout_id: str, background_tasks: BackgroundTasks,
+    current_user: dict = Depends(get_current_user),
+):
     """Mark a workout as completed."""
     logger.info(f"Completing workout: id={workout_id}")
     try:
@@ -543,7 +556,7 @@ async def complete_workout(workout_id: str, background_tasks: BackgroundTasks):
         raise
     except Exception as e:
         logger.error(f"Failed to complete workout: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "workouts_db")
 
 
 async def _background_log_generation(user_id: str, workout_id: str, workout_name: str, workout_type: str, exercises_count: int, duration_minutes: int):
@@ -576,7 +589,9 @@ async def _background_index_rag(workout: Workout):
 
 @router.post("/generate", response_model=Workout)
 @limiter.limit("5/minute")
-async def generate_workout(http_request: Request, request: GenerateWorkoutRequest, background_tasks: BackgroundTasks):
+async def generate_workout(http_request: Request, request: GenerateWorkoutRequest, background_tasks: BackgroundTasks,
+    current_user: dict = Depends(get_current_user),
+):
     """Generate a new workout for a user based on their preferences."""
     logger.info(f"Generating workout for user {request.user_id}")
 
@@ -711,12 +726,14 @@ async def generate_workout(http_request: Request, request: GenerateWorkoutReques
             metadata={"workout_type": request.workout_type},
             status_code=500
         )
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "workouts_db")
 
 
 @router.post("/generate-stream")
 @limiter.limit("5/minute")
-async def generate_workout_streaming(http_request: Request, request: GenerateWorkoutRequest):
+async def generate_workout_streaming(http_request: Request, request: GenerateWorkoutRequest,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Generate a workout with streaming response for faster perceived performance.
 
@@ -846,7 +863,10 @@ async def generate_workout_streaming(http_request: Request, request: GenerateWor
 
 
 @router.post("/swap")
-async def swap_workout_date(request: SwapWorkoutsRequest):
+@limiter.limit("5/minute")
+async def swap_workout_date(request: SwapWorkoutsRequest,
+    current_user: dict = Depends(get_current_user),
+):
     """Move a workout to a new date, swapping if another workout exists there."""
     logger.info(f"Swapping workout {request.workout_id} to {request.new_date}")
     try:
@@ -876,11 +896,13 @@ async def swap_workout_date(request: SwapWorkoutsRequest):
         raise
     except Exception as e:
         logger.error(f"Failed to swap workout: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "workouts_db")
 
 
 @router.post("/swap-exercise", response_model=Workout)
-async def swap_exercise_in_workout(request: SwapExerciseRequest):
+async def swap_exercise_in_workout(request: SwapExerciseRequest,
+    current_user: dict = Depends(get_current_user),
+):
     """Swap an exercise within a workout with a new exercise from the library."""
     logger.info(f"Swapping exercise '{request.old_exercise_name}' with '{request.new_exercise_name}' in workout {request.workout_id}")
     try:
@@ -962,7 +984,7 @@ async def swap_exercise_in_workout(request: SwapExerciseRequest):
         raise
     except Exception as e:
         logger.error(f"Failed to swap exercise: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "workouts_db")
 
 
 def get_workout_focus(split: str, selected_days: List[int]) -> dict:
@@ -1016,7 +1038,9 @@ def get_workout_focus(split: str, selected_days: List[int]) -> dict:
 
 @router.post("/regenerate", response_model=Workout)
 @limiter.limit("5/minute")
-async def regenerate_workout(http_request: Request, request: RegenerateWorkoutRequest, background_tasks: BackgroundTasks):
+async def regenerate_workout(http_request: Request, request: RegenerateWorkoutRequest, background_tasks: BackgroundTasks,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Regenerate a workout with new settings while preserving version history (SCD2).
 
@@ -1327,7 +1351,7 @@ async def regenerate_workout(http_request: Request, request: RegenerateWorkoutRe
             metadata={"workout_id": request.workout_id},
             status_code=500
         )
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "workouts_db")
 
 
 # ==================== AI WORKOUT SUGGESTIONS ====================
@@ -1360,7 +1384,9 @@ class WorkoutSuggestionsResponse(BaseModel):
 
 @router.post("/suggest", response_model=WorkoutSuggestionsResponse)
 @limiter.limit("5/minute")
-async def get_workout_suggestions(http_request: Request, request: WorkoutSuggestionRequest):
+async def get_workout_suggestions(http_request: Request, request: WorkoutSuggestionRequest,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Get AI-powered workout suggestions for regeneration.
 
@@ -1506,11 +1532,14 @@ Example format: {{"suggestions": [...]}}"""
         raise
     except Exception as e:
         logger.error(f"Failed to get workout suggestions: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "workouts_db")
 
 
 @router.get("/{workout_id}/versions", response_model=List[WorkoutVersionInfo])
-async def get_workout_versions(workout_id: str):
+@limiter.limit("5/minute")
+async def get_workout_versions(request: Request, workout_id: str,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Get all versions of a workout (version history).
 
@@ -1552,11 +1581,13 @@ async def get_workout_versions(workout_id: str):
         raise
     except Exception as e:
         logger.error(f"Failed to get workout versions: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "workouts_db")
 
 
 @router.post("/revert", response_model=Workout)
-async def revert_workout(request: RevertWorkoutRequest):
+async def revert_workout(request: RevertWorkoutRequest,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Revert a workout to a previous version.
 
@@ -1593,13 +1624,15 @@ async def revert_workout(request: RevertWorkoutRequest):
         raise HTTPException(status_code=404, detail=str(e))
     except Exception as e:
         logger.error(f"Failed to revert workout: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "workouts_db")
 
 
 # ==================== AI SUMMARY ENDPOINT ====================
 
 @router.get("/{workout_id}/summary")
-async def get_workout_ai_summary(workout_id: str, force_regenerate: bool = False):
+async def get_workout_ai_summary(workout_id: str, force_regenerate: bool = False,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Generate an AI summary/description of a workout explaining the intention and benefits.
 
@@ -1702,13 +1735,15 @@ async def get_workout_ai_summary(workout_id: str, force_regenerate: bool = False
         raise
     except Exception as e:
         logger.error(f"Failed to generate workout summary: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "workouts_db")
 
 
 # ==================== WARMUP & STRETCHES ENDPOINTS ====================
 
 @router.get("/{workout_id}/warmup")
-async def get_workout_warmup(workout_id: str):
+async def get_workout_warmup(workout_id: str,
+    current_user: dict = Depends(get_current_user),
+):
     """Get warmup exercises for a workout."""
     logger.info(f"Getting warmup for workout {workout_id}")
     try:
@@ -1724,11 +1759,13 @@ async def get_workout_warmup(workout_id: str):
         raise
     except Exception as e:
         logger.error(f"Failed to get warmup: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "workouts_db")
 
 
 @router.get("/{workout_id}/stretches")
-async def get_workout_stretches(workout_id: str):
+async def get_workout_stretches(workout_id: str,
+    current_user: dict = Depends(get_current_user),
+):
     """Get cool-down stretches for a workout."""
     logger.info(f"Getting stretches for workout {workout_id}")
     try:
@@ -1744,11 +1781,13 @@ async def get_workout_stretches(workout_id: str):
         raise
     except Exception as e:
         logger.error(f"Failed to get stretches: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "workouts_db")
 
 
 @router.post("/{workout_id}/warmup")
-async def create_workout_warmup(workout_id: str, duration_minutes: int = 5):
+async def create_workout_warmup(workout_id: str, duration_minutes: int = 5,
+    current_user: dict = Depends(get_current_user),
+):
     """Generate and create warmup exercises for an existing workout with variety tracking."""
     logger.info(f"Creating warmup for workout {workout_id}")
     try:
@@ -1776,11 +1815,13 @@ async def create_workout_warmup(workout_id: str, duration_minutes: int = 5):
         raise
     except Exception as e:
         logger.error(f"Failed to create warmup: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "workouts_db")
 
 
 @router.post("/{workout_id}/stretches")
-async def create_workout_stretches(workout_id: str, duration_minutes: int = 5):
+async def create_workout_stretches(workout_id: str, duration_minutes: int = 5,
+    current_user: dict = Depends(get_current_user),
+):
     """Generate and create cool-down stretches for an existing workout with variety tracking."""
     logger.info(f"Creating stretches for workout {workout_id}")
     try:
@@ -1808,14 +1849,15 @@ async def create_workout_stretches(workout_id: str, duration_minutes: int = 5):
         raise
     except Exception as e:
         logger.error(f"Failed to create stretches: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "workouts_db")
 
 
 @router.post("/{workout_id}/warmup-and-stretches")
 async def create_workout_warmup_and_stretches(
     workout_id: str,
     warmup_duration: int = 5,
-    stretch_duration: int = 5
+    stretch_duration: int = 5,
+    current_user: dict = Depends(get_current_user),
 ):
     """Generate and create both warmup and stretches for an existing workout with variety tracking."""
     logger.info(f"Creating warmup and stretches for workout {workout_id}")
@@ -1841,13 +1883,15 @@ async def create_workout_warmup_and_stretches(
         raise
     except Exception as e:
         logger.error(f"Failed to create warmup and stretches: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "workouts_db")
 
 
 # ============================================
 # Background Workout Generation
 @router.get("/user/{user_id}/exit-stats")
-async def get_user_exit_stats(user_id: str):
+async def get_user_exit_stats(user_id: str,
+    current_user: dict = Depends(get_current_user),
+):
     """Get exit statistics for a user - helpful for understanding workout completion patterns."""
     logger.info(f"Getting exit stats for user {user_id}")
 
@@ -1886,7 +1930,7 @@ async def get_user_exit_stats(user_id: str):
 
     except Exception as e:
         logger.error(f"Failed to get user exit stats: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "workouts_db")
 
 
 # ============================================
@@ -1896,7 +1940,9 @@ async def get_user_exit_stats(user_id: str):
 
 @router.post("/update-program", response_model=UpdateProgramResponse)
 @limiter.limit("5/minute")
-async def update_program(http_request: Request, request: UpdateProgramRequest):
+async def update_program(http_request: Request, request: UpdateProgramRequest,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Update user's program preferences and delete future incomplete workouts.
 
@@ -2056,13 +2102,15 @@ async def update_program(http_request: Request, request: UpdateProgramRequest):
             endpoint="/api/v1/workouts-db/update-program",
             status_code=500
         )
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "workouts_db")
 
 
 # ==================== WORKOUT GENERATION PARAMETERS ENDPOINT ====================
 
 @router.get("/{workout_id}/generation-params")
-async def get_workout_generation_params(workout_id: str):
+async def get_workout_generation_params(workout_id: str,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Get the generation parameters and AI reasoning for a workout.
 
@@ -2257,7 +2305,7 @@ async def get_workout_generation_params(workout_id: str):
         raise
     except Exception as e:
         logger.error(f"Failed to get workout generation params: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "workouts_db")
 
 
 def _build_exercise_reasoning(

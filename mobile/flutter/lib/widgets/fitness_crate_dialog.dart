@@ -606,11 +606,11 @@ Future<void> showFitnessCrateDialog(
     barrierDismissible: false,
     barrierColor: Colors.transparent,
     transitionDuration: const Duration(milliseconds: 200),
-    pageBuilder: (context, animation, secondaryAnimation) {
+    pageBuilder: (dialogContext, animation, secondaryAnimation) {
       return FitnessCrateDialog(
         tier: tier,
         onDismiss: () {
-          Navigator.of(context).pop();
+          Navigator.of(dialogContext).pop();
           onDismiss();
         },
         onOpenCrate: onOpenCrate,

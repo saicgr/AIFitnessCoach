@@ -5,7 +5,7 @@ Tracks flexibility test results and progress over time.
 Provides personalized stretch recommendations based on assessment results.
 """
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query, Depends
 from typing import List, Optional
 from datetime import datetime
 import uuid
@@ -13,6 +13,8 @@ import uuid
 from core.supabase_db import get_supabase_db
 from core.logger import get_logger
 from core.activity_logger import log_user_activity, log_user_error
+from core.auth import get_current_user
+from core.exceptions import safe_internal_error
 from services.flexibility import (
     evaluate_flexibility,
     get_recommendations,
@@ -111,7 +113,7 @@ async def _get_user_profile(user_id: str) -> dict:
 # ============================================
 
 @router.get("/tests", response_model=List[FlexibilityTest])
-async def get_all_flexibility_tests():
+async def get_all_flexibility_tests(current_user: dict = Depends(get_current_user)):
     """
     Get all available flexibility tests with their instructions.
 
@@ -141,7 +143,7 @@ async def get_all_flexibility_tests():
 
 
 @router.get("/tests/{test_id}", response_model=FlexibilityTest)
-async def get_flexibility_test(test_id: str):
+async def get_flexibility_test(test_id: str, current_user: dict = Depends(get_current_user)):
     """
     Get a specific flexibility test by ID.
 
@@ -171,11 +173,11 @@ async def get_flexibility_test(test_id: str):
         raise
     except Exception as e:
         logger.error(f"Failed to get flexibility test: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "flexibility")
 
 
 @router.get("/tests/by-muscle/{muscle}")
-async def get_tests_by_muscle(muscle: str):
+async def get_tests_by_muscle(muscle: str, current_user: dict = Depends(get_current_user)):
     """
     Get flexibility tests that target a specific muscle group.
 
@@ -194,7 +196,7 @@ async def get_tests_by_muscle(muscle: str):
 
     except Exception as e:
         logger.error(f"Failed to get tests by muscle: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "flexibility")
 
 
 # ============================================
@@ -205,6 +207,7 @@ async def get_tests_by_muscle(muscle: str):
 async def record_flexibility_assessment(
     user_id: str,
     request: RecordAssessmentRequest,
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Record a new flexibility assessment for a user.
@@ -212,6 +215,8 @@ async def record_flexibility_assessment(
     Evaluates the measurement against age and gender norms,
     calculates percentile, and provides personalized recommendations.
     """
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     logger.info(f"Recording flexibility assessment for user {user_id}: {request.test_type}")
 
     try:
@@ -346,7 +351,7 @@ async def record_flexibility_assessment(
             endpoint=f"/api/v1/flexibility/user/{user_id}/assessment",
             status_code=500
         )
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "flexibility")
 
 
 async def _update_stretch_plan(db, user_id: str, test_type: str, rating: str, stretches: list):
@@ -383,12 +388,15 @@ async def get_user_assessments(
     test_type: Optional[str] = Query(default=None, description="Filter by test type"),
     limit: int = Query(default=50, ge=1, le=200, description="Maximum records to return"),
     days: Optional[int] = Query(default=None, ge=1, le=365, description="Filter by days ago"),
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Get a user's flexibility assessment history.
 
     Optionally filter by test type and date range.
     """
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     logger.info(f"Getting flexibility assessments for user {user_id}")
 
     try:
@@ -410,16 +418,18 @@ async def get_user_assessments(
 
     except Exception as e:
         logger.error(f"Failed to get user assessments: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "flexibility")
 
 
 @router.get("/user/{user_id}/assessments/latest")
-async def get_latest_assessments(user_id: str):
+async def get_latest_assessments(user_id: str, current_user: dict = Depends(get_current_user)):
     """
     Get the latest assessment for each test type.
 
     Useful for showing current flexibility status across all tests.
     """
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     logger.info(f"Getting latest assessments for user {user_id}")
 
     try:
@@ -450,16 +460,18 @@ async def get_latest_assessments(user_id: str):
 
     except Exception as e:
         logger.error(f"Failed to get latest assessments: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "flexibility")
 
 
 @router.delete("/user/{user_id}/assessment/{assessment_id}")
-async def delete_assessment(user_id: str, assessment_id: str):
+async def delete_assessment(user_id: str, assessment_id: str, current_user: dict = Depends(get_current_user)):
     """
     Delete a flexibility assessment.
 
     Users can only delete their own assessments.
     """
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     logger.info(f"Deleting assessment {assessment_id} for user {user_id}")
 
     try:
@@ -483,7 +495,7 @@ async def delete_assessment(user_id: str, assessment_id: str):
         raise
     except Exception as e:
         logger.error(f"Failed to delete assessment: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "flexibility")
 
 
 # ============================================
@@ -495,12 +507,15 @@ async def get_flexibility_progress(
     user_id: str,
     test_type: str,
     days: int = Query(default=90, ge=7, le=365, description="Number of days to include"),
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Get flexibility progress for a specific test type.
 
     Shows trend data with improvement calculations.
     """
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     logger.info(f"Getting flexibility progress for user {user_id}, test: {test_type}")
 
     try:
@@ -584,16 +599,18 @@ async def get_flexibility_progress(
         raise
     except Exception as e:
         logger.error(f"Failed to get flexibility progress: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "flexibility")
 
 
 @router.get("/user/{user_id}/summary", response_model=FlexibilitySummary)
-async def get_flexibility_summary(user_id: str):
+async def get_flexibility_summary(user_id: str, current_user: dict = Depends(get_current_user)):
     """
     Get overall flexibility summary for a user.
 
     Includes overall score, ratings by category, and improvement priorities.
     """
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     logger.info(f"Getting flexibility summary for user {user_id}")
 
     try:
@@ -650,16 +667,18 @@ async def get_flexibility_summary(user_id: str):
 
     except Exception as e:
         logger.error(f"Failed to get flexibility summary: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "flexibility")
 
 
 @router.get("/user/{user_id}/score", response_model=FlexibilityScoreResponse)
-async def get_flexibility_score(user_id: str):
+async def get_flexibility_score(user_id: str, current_user: dict = Depends(get_current_user)):
     """
     Get the overall flexibility score for a user.
 
     Uses the database function for efficient calculation.
     """
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     logger.info(f"Getting flexibility score for user {user_id}")
 
     try:
@@ -687,7 +706,7 @@ async def get_flexibility_score(user_id: str):
 
     except Exception as e:
         logger.error(f"Failed to get flexibility score: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "flexibility")
 
 
 # ============================================
@@ -695,12 +714,14 @@ async def get_flexibility_score(user_id: str):
 # ============================================
 
 @router.get("/user/{user_id}/stretch-plans")
-async def get_user_stretch_plans(user_id: str):
+async def get_user_stretch_plans(user_id: str, current_user: dict = Depends(get_current_user)):
     """
     Get all active stretch plans for a user.
 
     Returns personalized stretch recommendations based on flexibility assessments.
     """
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     logger.info(f"Getting stretch plans for user {user_id}")
 
     try:
@@ -729,16 +750,18 @@ async def get_user_stretch_plans(user_id: str):
 
     except Exception as e:
         logger.error(f"Failed to get stretch plans: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "flexibility")
 
 
 @router.get("/user/{user_id}/stretch-plan/{test_type}")
-async def get_stretch_plan_for_test(user_id: str, test_type: str):
+async def get_stretch_plan_for_test(user_id: str, test_type: str, current_user: dict = Depends(get_current_user)):
     """
     Get the stretch plan for a specific test type.
 
     If no plan exists, generates one based on a default fair rating.
     """
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     logger.info(f"Getting stretch plan for user {user_id}, test: {test_type}")
 
     try:
@@ -773,7 +796,7 @@ async def get_stretch_plan_for_test(user_id: str, test_type: str):
 
     except Exception as e:
         logger.error(f"Failed to get stretch plan: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "flexibility")
 
 
 # ============================================
@@ -786,6 +809,7 @@ async def evaluate_measurement(
     measurement: float,
     gender: str,
     age: int,
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Evaluate a flexibility measurement without saving.
@@ -811,11 +835,11 @@ async def evaluate_measurement(
         raise
     except Exception as e:
         logger.error(f"Failed to evaluate measurement: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "flexibility")
 
 
 @router.get("/recommendations/{test_type}/{rating}")
-async def get_stretch_recommendations(test_type: str, rating: str):
+async def get_stretch_recommendations(test_type: str, rating: str, current_user: dict = Depends(get_current_user)):
     """
     Get stretch recommendations for a specific test type and rating.
 
@@ -845,4 +869,4 @@ async def get_stretch_recommendations(test_type: str, rating: str):
 
     except Exception as e:
         logger.error(f"Failed to get recommendations: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "flexibility")

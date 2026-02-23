@@ -14,7 +14,7 @@ from core.gemini_client import get_langchain_llm
 from ..state import OnboardingState
 from ..prompts import ONBOARDING_AGENT_SYSTEM_PROMPT, FIELD_ORDER, QUICK_REPLIES
 from .utils import ensure_string, detect_field_from_response
-from ...personality import build_personality_prompt
+from ...personality import build_personality_prompt, sanitize_coach_name
 from models.chat import AISettings
 from core.config import get_settings
 from core.logger import get_logger
@@ -108,8 +108,8 @@ async def onboarding_agent_node(state: OnboardingState) -> Dict[str, Any]:
     personality_prompt = ""
     if ai_settings_dict:
         try:
-            # Get coach name from settings
-            coach_name = ai_settings_dict.get("coach_name", "Coach")
+            # Get coach name from settings (sanitized)
+            coach_name = sanitize_coach_name(ai_settings_dict.get("coach_name", ""), default="Coach")
 
             # Create AISettings model from dict
             ai_settings_model = AISettings(

@@ -14,7 +14,9 @@ ENDPOINTS:
 - GET  /api/v1/window-mode/{user_id}/stats - Get user's window mode statistics
 """
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
+from core.auth import get_current_user
+from core.exceptions import safe_internal_error
 from pydantic import BaseModel, Field, field_validator
 from typing import Optional, Literal
 from datetime import datetime
@@ -126,7 +128,9 @@ class WindowModeStatsResponse(BaseModel):
 # ============================================
 
 @router.post("/{user_id}/log", response_model=WindowModeLogResponse)
-async def log_window_mode(user_id: str, request: WindowModeLogRequest):
+async def log_window_mode(user_id: str, request: WindowModeLogRequest,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Log a window mode change.
 
@@ -240,11 +244,13 @@ async def log_window_mode(user_id: str, request: WindowModeLogRequest):
             endpoint=f"/api/v1/window-mode/{user_id}/log",
             status_code=500
         )
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "window_mode")
 
 
 @router.get("/{user_id}/stats", response_model=WindowModeStatsResponse)
-async def get_window_mode_stats(user_id: str):
+async def get_window_mode_stats(user_id: str,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Get window mode statistics for a user.
 
@@ -313,4 +319,4 @@ async def get_window_mode_stats(user_id: str):
 
     except Exception as e:
         logger.error(f"Failed to get window mode stats for user {user_id}: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "window_mode")

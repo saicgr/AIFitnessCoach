@@ -12,7 +12,9 @@ import time
 from datetime import datetime
 from typing import List, Optional, AsyncGenerator
 
-from fastapi import APIRouter, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException, Request
+from core.auth import get_current_user
+from core.exceptions import safe_internal_error
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
@@ -193,7 +195,9 @@ def _apply_difficulty_scaling(exercises: list, difficulty: str) -> list:
 
 
 @router.post("/regenerate", response_model=Workout)
-async def regenerate_workout(request: RegenerateWorkoutRequest):
+async def regenerate_workout(request: RegenerateWorkoutRequest,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Regenerate a workout with new settings while preserving version history (SCD2).
 
@@ -364,10 +368,7 @@ async def regenerate_workout(request: RegenerateWorkoutRequest):
 
         except Exception as ai_error:
             logger.error(f"AI workout regeneration failed: {ai_error}")
-            raise HTTPException(
-                status_code=500,
-                detail=f"Failed to generate new workout: {str(ai_error)}"
-            )
+            raise safe_internal_error(ai_error, "versioning_ai_generation")
 
         # Track if RAG was used for metadata
         used_rag = rag_exercises is not None and len(rag_exercises) > 0
@@ -499,12 +500,14 @@ async def regenerate_workout(request: RegenerateWorkoutRequest):
         raise
     except Exception as e:
         logger.error(f"Failed to regenerate workout: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "versioning")
 
 
 @router.post("/regenerate-stream")
 @limiter.limit("5/minute")
-async def regenerate_workout_streaming(request: Request, body: RegenerateWorkoutRequest):
+async def regenerate_workout_streaming(request: Request, body: RegenerateWorkoutRequest,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Regenerate a workout with streaming progress updates via SSE.
 
@@ -792,7 +795,9 @@ async def regenerate_workout_streaming(request: Request, body: RegenerateWorkout
 
 
 @router.get("/{workout_id}/versions", response_model=List[WorkoutVersionInfo])
-async def get_workout_versions(workout_id: str):
+async def get_workout_versions(workout_id: str,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Get all versions of a workout (version history).
 
@@ -834,11 +839,13 @@ async def get_workout_versions(workout_id: str):
         raise
     except Exception as e:
         logger.error(f"Failed to get workout versions: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "versioning")
 
 
 @router.post("/revert", response_model=Workout)
-async def revert_workout(request: RevertWorkoutRequest):
+async def revert_workout(request: RevertWorkoutRequest,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Revert a workout to a previous version.
 
@@ -875,4 +882,4 @@ async def revert_workout(request: RevertWorkoutRequest):
         raise HTTPException(status_code=404, detail=str(e))
     except Exception as e:
         logger.error(f"Failed to revert workout: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "versioning")

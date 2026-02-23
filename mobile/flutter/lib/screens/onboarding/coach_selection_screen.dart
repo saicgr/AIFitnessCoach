@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/constants/app_colors.dart';
+import '../../widgets/app_dialog.dart';
 import '../../core/providers/window_mode_provider.dart';
 import '../../core/theme/accent_color_provider.dart';
 import '../../data/models/coach_persona.dart';
@@ -834,53 +835,12 @@ class _CoachSelectionScreenState extends ConsumerState<CoachSelectionScreen> {
     HapticFeedback.mediumImpact();
 
     // Show confirmation dialog
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: Theme.of(context).brightness == Brightness.dark
-            ? AppColors.elevated
-            : AppColorsLight.elevated,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Text(
-          'Start Over?',
-          style: TextStyle(
-            color: Theme.of(context).brightness == Brightness.dark
-                ? AppColors.textPrimary
-                : AppColorsLight.textPrimary,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        content: Text(
-          'This will reset your progress and take you back to the welcome screen. You\'ll need to retake the quiz.',
-          style: TextStyle(
-            color: Theme.of(context).brightness == Brightness.dark
-                ? AppColors.textSecondary
-                : AppColorsLight.textSecondary,
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: Text(
-              'Cancel',
-              style: TextStyle(color: AppColors.textSecondary),
-            ),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            style: TextButton.styleFrom(
-              backgroundColor: AppColors.accent.withValues(alpha: 0.1),
-            ),
-            child: Text(
-              'Start Over',
-              style: TextStyle(
-                color: AppColors.accent,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
-        ],
-      ),
+    final confirmed = await AppDialog.destructive(
+      context,
+      title: 'Start Over?',
+      message: 'This will reset your progress and take you back to the welcome screen. You\'ll need to retake the quiz.',
+      confirmText: 'Start Over',
+      icon: Icons.restart_alt_rounded,
     );
 
     if (confirmed != true) return;

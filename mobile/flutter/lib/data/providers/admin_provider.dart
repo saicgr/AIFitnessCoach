@@ -1,20 +1,9 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../repositories/auth_repository.dart';
 
-/// Provider to check if current user is an admin
+/// Provider to check if current user is an admin.
+/// Use `.select()` for granular access:
+///   ref.watch(isAdminProvider) — admin check (bool)
 final isAdminProvider = Provider<bool>((ref) {
-  final authState = ref.watch(authStateProvider);
-  return authState.user?.isAdmin ?? false;
-});
-
-/// Provider to check if current user is a super admin
-final isSuperAdminProvider = Provider<bool>((ref) {
-  final authState = ref.watch(authStateProvider);
-  return authState.user?.isSuperAdmin ?? false;
-});
-
-/// Provider to get admin role string
-final adminRoleProvider = Provider<String?>((ref) {
-  final authState = ref.watch(authStateProvider);
-  return authState.user?.role;
+  return ref.watch(authStateProvider.select((s) => s.user?.isAdmin ?? false));
 });

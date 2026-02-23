@@ -179,7 +179,7 @@ const quickActionRegistry = <String, QuickAction>{
 };
 
 const defaultQuickActionOrder = [
-  'weight', 'food', 'water', 'quick_workout', 'photo', 'fasting', 'measure', 'mood', 'history',
-  'steps', 'workout', 'library', 'settings', 'chat', 'schedule', 'habits',
+  'quick_workout', 'food', 'water', 'chat', 'weight', 'photo', 'fasting', 'measure', 'mood',
+  'history', 'steps', 'workout', 'library', 'settings', 'schedule', 'habits',
   'progress', 'achievements', 'hydration', 'summaries',
 ];

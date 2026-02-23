@@ -15,13 +15,15 @@ CUSTOM EXERCISE ENDPOINTS:
 - POST /api/v1/exercises/custom/{user_id} - Create a custom exercise for user
 - DELETE /api/v1/exercises/custom/{user_id}/{exercise_id} - Delete user's custom exercise
 """
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query, Depends
 from typing import List, Optional
 from pydantic import BaseModel, Field
 import uuid
 
 from core.supabase_db import get_supabase_db
 from core.logger import get_logger
+from core.auth import get_current_user
+from core.exceptions import safe_internal_error
 from models.schemas import Exercise, ExerciseCreate
 from services.exercise_rag_service import get_exercise_rag_service
 from services.user_context_service import UserContextService, EventType
@@ -66,7 +68,7 @@ def row_to_exercise(row: dict) -> Exercise:
 
 
 @router.post("/", response_model=Exercise)
-async def create_exercise(exercise: ExerciseCreate):
+async def create_exercise(exercise: ExerciseCreate, current_user: dict = Depends(get_current_user)):
     """Create a new exercise."""
     try:
         db = get_supabase_db()
@@ -107,7 +109,7 @@ async def create_exercise(exercise: ExerciseCreate):
 
     except Exception as e:
         logger.error(f"Error creating exercise: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "exercises")
 
 
 @router.get("/", response_model=List[Exercise])
@@ -118,6 +120,7 @@ async def list_exercises(
     difficulty_level: Optional[int] = None,
     limit: int = Query(default=50, ge=1, le=200),
     offset: int = Query(default=0, ge=0),
+    current_user: dict = Depends(get_current_user),
 ):
     """List exercises with optional filters."""
     try:
@@ -135,11 +138,11 @@ async def list_exercises(
 
     except Exception as e:
         logger.error(f"Error listing exercises: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "exercises")
 
 
 @router.get("/{exercise_id}", response_model=Exercise)
-async def get_exercise(exercise_id: int):
+async def get_exercise(exercise_id: int, current_user: dict = Depends(get_current_user)):
     """Get an exercise by ID."""
     try:
         db = get_supabase_db()
@@ -154,11 +157,11 @@ async def get_exercise(exercise_id: int):
         raise
     except Exception as e:
         logger.error(f"Error getting exercise: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "exercises")
 
 
 @router.get("/external/{external_id}", response_model=Exercise)
-async def get_exercise_by_external_id(external_id: str):
+async def get_exercise_by_external_id(external_id: str, current_user: dict = Depends(get_current_user)):
     """Get an exercise by external ID."""
     try:
         db = get_supabase_db()
@@ -173,11 +176,11 @@ async def get_exercise_by_external_id(external_id: str):
         raise
     except Exception as e:
         logger.error(f"Error getting exercise: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "exercises")
 
 
 @router.delete("/{exercise_id}")
-async def delete_exercise(exercise_id: int):
+async def delete_exercise(exercise_id: int, current_user: dict = Depends(get_current_user)):
     """Delete an exercise."""
     try:
         db = get_supabase_db()
@@ -195,11 +198,11 @@ async def delete_exercise(exercise_id: int):
         raise
     except Exception as e:
         logger.error(f"Error deleting exercise: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "exercises")
 
 
 @router.post("/index")
-async def index_exercises_for_rag():
+async def index_exercises_for_rag(current_user: dict = Depends(get_current_user)):
     """
     Index all exercises from exercise_library into the RAG vector store.
 
@@ -223,11 +226,11 @@ async def index_exercises_for_rag():
 
     except Exception as e:
         logger.error(f"❌ Failed to index exercises: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "exercises")
 
 
 @router.get("/rag/stats")
-async def get_rag_stats():
+async def get_rag_stats(current_user: dict = Depends(get_current_user)):
     """
     Get statistics about the exercise RAG index.
 
@@ -245,11 +248,11 @@ async def get_rag_stats():
 
     except Exception as e:
         logger.error(f"Error getting RAG stats: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "exercises")
 
 
 @router.get("/library/by-name/{name}")
-async def get_exercise_from_library_by_name(name: str):
+async def get_exercise_from_library_by_name(name: str, current_user: dict = Depends(get_current_user)):
     """
     Get full exercise details from exercise_library by name (case-insensitive fuzzy match).
 
@@ -288,7 +291,7 @@ async def get_exercise_from_library_by_name(name: str):
         raise
     except Exception as e:
         logger.error(f"Error getting exercise from library: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "exercises")
 
 
 # ============================================================================
@@ -320,8 +323,10 @@ class CustomExerciseResponse(BaseModel):
 
 
 @router.get("/custom/{user_id}", response_model=List[CustomExerciseResponse])
-async def get_user_custom_exercises(user_id: str):
+async def get_user_custom_exercises(user_id: str, current_user: dict = Depends(get_current_user)):
     """Get all custom exercises created by a user."""
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     logger.info(f"🏋️ [Custom Exercises] GET request - Fetching custom exercises for user: {user_id}")
     try:
         db = get_supabase_db()
@@ -355,12 +360,14 @@ async def get_user_custom_exercises(user_id: str):
 
     except Exception as e:
         logger.error(f"❌ [Custom Exercises] Error getting custom exercises for user {user_id}: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "exercises")
 
 
 @router.post("/custom/{user_id}", response_model=CustomExerciseResponse)
-async def create_custom_exercise(user_id: str, exercise: CustomExerciseCreate):
+async def create_custom_exercise(user_id: str, exercise: CustomExerciseCreate, current_user: dict = Depends(get_current_user)):
     """Create a new custom exercise for a user."""
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     logger.info(f"🏋️ [Custom Exercises] POST request - Creating custom exercise for user: {user_id}")
     logger.info(f"🏋️ [Custom Exercises] Exercise details - name: {exercise.name}, muscle: {exercise.primary_muscle}, equipment: {exercise.equipment}")
     logger.info(f"🏋️ [Custom Exercises] Exercise params - sets: {exercise.default_sets}, reps: {exercise.default_reps}, compound: {exercise.is_compound}")
@@ -465,12 +472,14 @@ async def create_custom_exercise(user_id: str, exercise: CustomExerciseCreate):
         raise
     except Exception as e:
         logger.error(f"❌ [Custom Exercises] Error creating custom exercise: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "exercises")
 
 
 @router.delete("/custom/{user_id}/{exercise_id}")
-async def delete_custom_exercise(user_id: str, exercise_id: str):
+async def delete_custom_exercise(user_id: str, exercise_id: str, current_user: dict = Depends(get_current_user)):
     """Delete a user's custom exercise."""
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     logger.info(f"🏋️ [Custom Exercises] DELETE request - Deleting exercise {exercise_id} for user: {user_id}")
 
     try:
@@ -522,7 +531,7 @@ async def delete_custom_exercise(user_id: str, exercise_id: str):
         raise
     except Exception as e:
         logger.error(f"❌ [Custom Exercises] Error deleting custom exercise: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "exercises")
 
 
 # ============================================================================
@@ -601,8 +610,10 @@ class CustomExerciseFullResponse(BaseModel):
 
 
 @router.get("/custom/{user_id}/all", response_model=List[CustomExerciseFullResponse])
-async def get_all_user_exercises(user_id: str):
+async def get_all_user_exercises(user_id: str, current_user: dict = Depends(get_current_user)):
     """Get all custom exercises for a user including composite exercises with usage stats."""
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     logger.info(f"🏋️ [Custom Exercises] GET ALL - Fetching all custom exercises for user: {user_id}")
     try:
         db = get_supabase_db()
@@ -689,11 +700,11 @@ async def get_all_user_exercises(user_id: str):
 
     except Exception as e:
         logger.error(f"❌ [Custom Exercises] Error getting all custom exercises: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "exercises")
 
 
 @router.post("/custom/{user_id}/composite", response_model=CompositeExerciseResponse)
-async def create_composite_exercise(user_id: str, exercise: CompositeExerciseCreate):
+async def create_composite_exercise(user_id: str, exercise: CompositeExerciseCreate, current_user: dict = Depends(get_current_user)):
     """
     Create a new composite/combo exercise for a user.
 
@@ -702,6 +713,8 @@ async def create_composite_exercise(user_id: str, exercise: CompositeExerciseCre
     - "Squat to Press" (complex)
     - "Burpee with Push-up" (hybrid)
     """
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     logger.info(f"🏋️ [Composite Exercise] Creating '{exercise.name}' for user: {user_id}")
     logger.info(f"🏋️ [Composite Exercise] Components: {[c.name for c in exercise.component_exercises]}")
 
@@ -838,12 +851,14 @@ async def create_composite_exercise(user_id: str, exercise: CompositeExerciseCre
         raise
     except Exception as e:
         logger.error(f"❌ [Composite Exercise] Error creating: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "exercises")
 
 
 @router.put("/custom/{user_id}/{exercise_id}", response_model=CustomExerciseFullResponse)
-async def update_custom_exercise(user_id: str, exercise_id: str, updates: dict):
+async def update_custom_exercise(user_id: str, exercise_id: str, updates: dict, current_user: dict = Depends(get_current_user)):
     """Update a custom exercise."""
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     logger.info(f"🏋️ [Custom Exercises] UPDATE - Exercise {exercise_id} for user: {user_id}")
 
     try:
@@ -937,7 +952,7 @@ async def update_custom_exercise(user_id: str, exercise_id: str, updates: dict):
         raise
     except Exception as e:
         logger.error(f"❌ [Custom Exercises] Error updating: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "exercises")
 
 
 @router.post("/custom/{user_id}/{exercise_id}/log-usage")
@@ -947,8 +962,11 @@ async def log_custom_exercise_usage(
     workout_id: Optional[str] = None,
     rating: Optional[int] = None,
     notes: Optional[str] = None,
+    current_user: dict = Depends(get_current_user),
 ):
     """Log usage of a custom exercise (called when user completes it in a workout)."""
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     logger.info(f"🏋️ [Custom Exercises] Logging usage of {exercise_id} for user: {user_id}")
 
     try:
@@ -1002,12 +1020,14 @@ async def log_custom_exercise_usage(
         raise
     except Exception as e:
         logger.error(f"❌ [Custom Exercises] Error logging usage: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "exercises")
 
 
 @router.get("/custom/{user_id}/stats")
-async def get_custom_exercise_stats(user_id: str):
+async def get_custom_exercise_stats(user_id: str, current_user: dict = Depends(get_current_user)):
     """Get statistics for user's custom exercises."""
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     logger.info(f"🏋️ [Custom Exercises] Getting stats for user: {user_id}")
 
     try:
@@ -1048,13 +1068,14 @@ async def get_custom_exercise_stats(user_id: str):
 
     except Exception as e:
         logger.error(f"❌ [Custom Exercises] Error getting stats: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "exercises")
 
 
 @router.get("/library/search")
 async def search_exercise_library(
     query: str = Query(..., min_length=2, max_length=100),
     limit: int = Query(default=20, ge=1, le=50),
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Search the exercise library for exercises to use as combo components.
@@ -1090,4 +1111,4 @@ async def search_exercise_library(
 
     except Exception as e:
         logger.error(f"❌ [Exercise Library] Search error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "exercises")

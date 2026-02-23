@@ -11,7 +11,9 @@ S3 Bucket Structure:
 """
 from typing import List
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
+from core.auth import get_current_user
+from core.exceptions import safe_internal_error
 from pydantic import BaseModel
 import boto3
 from botocore.exceptions import ClientError
@@ -53,7 +55,9 @@ def check_exercise_variant_exists(db, exercise_name: str) -> bool:
 
 
 @router.get("/videos/by-exercise/{exercise_name:path}")
-async def get_video_by_exercise_name(exercise_name: str, gender: str = None):
+async def get_video_by_exercise_name(exercise_name: str, gender: str = None,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Get presigned video URL by exercise name.
 
@@ -148,7 +152,7 @@ async def get_video_by_exercise_name(exercise_name: str, gender: str = None):
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to get video URL: {str(e)}")
+        raise safe_internal_error(e, "video_url_by_exercise")
 
 
 def normalize_exercise_name(name: str) -> str:
@@ -311,7 +315,9 @@ def search_s3_for_image(exercise_name: str, gender: str = None) -> str:
 
 
 @router.get("/exercise-images/{exercise_name:path}")
-async def get_image_by_exercise_name(exercise_name: str, gender: str = None):
+async def get_image_by_exercise_name(exercise_name: str, gender: str = None,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Get presigned image URL by exercise name.
 
@@ -439,7 +445,7 @@ async def get_image_by_exercise_name(exercise_name: str, gender: str = None):
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to get image URL: {str(e)}")
+        raise safe_internal_error(e, "image_url_by_exercise")
 
 
 class BatchImageRequest(BaseModel):
@@ -447,7 +453,9 @@ class BatchImageRequest(BaseModel):
 
 
 @router.post("/exercise-images/batch")
-async def batch_get_image_urls(request: BatchImageRequest):
+async def batch_get_image_urls(request: BatchImageRequest,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Batch resolve exercise names to presigned image URLs.
 
@@ -495,14 +503,13 @@ async def batch_get_image_urls(request: BatchImageRequest):
         return {"urls": urls, "resolved": len(urls), "requested": len(names)}
 
     except Exception as e:
-        raise HTTPException(
-            status_code=500,
-            detail=f"Batch image resolve failed: {str(e)}",
-        )
+        raise safe_internal_error(e, "batch_image_resolve")
 
 
 @router.get("/videos/list/")
-async def list_videos(subfolder: str = ""):
+async def list_videos(subfolder: str = "",
+    current_user: dict = Depends(get_current_user),
+):
     """
     List all videos in S3 bucket under "VERTICAL VIDEOS/" folder.
 
@@ -551,11 +558,13 @@ async def list_videos(subfolder: str = ""):
         }
 
     except ClientError as e:
-        raise HTTPException(status_code=500, detail=f"Failed to list videos: {str(e)}")
+        raise safe_internal_error(e, "video_list")
 
 
 @router.get("/videos/folders/")
-async def list_folders():
+async def list_folders(
+    current_user: dict = Depends(get_current_user),
+):
     """
     List all subfolders under "VERTICAL VIDEOS/" in S3.
 
@@ -584,12 +593,14 @@ async def list_folders():
         }
 
     except ClientError as e:
-        raise HTTPException(status_code=500, detail=f"Failed to list folders: {str(e)}")
+        raise safe_internal_error(e, "video_folders")
 
 
 # This catch-all route must be LAST
 @router.get("/videos/{video_path:path}")
-async def get_video_url(video_path: str):
+async def get_video_url(video_path: str,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Generate a presigned URL for a video in S3.
 
@@ -628,4 +639,4 @@ async def get_video_url(video_path: str):
         if error_code == 'NoSuchKey':
             raise HTTPException(status_code=404, detail=f"Video not found: {full_key}")
         else:
-            raise HTTPException(status_code=500, detail=f"Failed to generate video URL: {str(e)}")
+            raise safe_internal_error(e, "video_presigned_url")

@@ -11,6 +11,7 @@ import '../../../data/providers/today_workout_provider.dart';
 import '../../../data/services/haptic_service.dart';
 import '../../../data/services/api_client.dart';
 import '../../../data/services/image_url_cache.dart';
+import '../../../widgets/app_dialog.dart';
 import '../../../widgets/glass_sheet.dart';
 import 'regenerate_workout_sheet.dart';
 import '../../workout/widgets/exercise_add_sheet.dart';
@@ -93,6 +94,16 @@ class _HeroWorkoutCardState extends ConsumerState<HeroWorkoutCard> {
     if (mounted) setState(() => _isLoadingImage = false);
   }
 
+  bool _isQuickWorkout(Workout w) {
+    final method = w.generationMethod?.toLowerCase() ?? '';
+    if (method == 'quick_rule_based' || method == 'ai_quick_workout') {
+      return true;
+    }
+    // Heuristic: short duration + few exercises = quick workout
+    final duration = w.durationMinutes ?? w.durationMinutesMax ?? 0;
+    return duration > 0 && duration <= 15 && w.exerciseCount <= 5;
+  }
+
   String _getWorkoutTypeLabel(String? type) {
     const typeLabels = {
       'push': 'Push Day',
@@ -155,44 +166,12 @@ class _HeroWorkoutCardState extends ConsumerState<HeroWorkoutCard> {
   }
 
   Future<void> _skipWorkout() async {
-    final confirm = await showDialog<bool>(
-      context: context,
-      barrierDismissible: true,
-      barrierColor: Colors.black54,
-      builder: (dialogContext) {
-        final isDark = Theme.of(dialogContext).brightness == Brightness.dark;
-        return AlertDialog(
-          backgroundColor: isDark ? const Color(0xFF1E1E1E) : Colors.white,
-          surfaceTintColor: Colors.transparent,
-          title: Text(
-            'Skip Workout?',
-            style: TextStyle(
-              color: isDark ? Colors.white : Colors.black87,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          content: Text(
-            'This workout will be marked as skipped.',
-            style: TextStyle(color: isDark ? Colors.white70 : Colors.black54),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(dialogContext, false),
-              child: Text(
-                'Cancel',
-                style: TextStyle(
-                  color: isDark ? Colors.white60 : Colors.black45,
-                ),
-              ),
-            ),
-            TextButton(
-              onPressed: () => Navigator.pop(dialogContext, true),
-              style: TextButton.styleFrom(foregroundColor: AppColors.error),
-              child: const Text('Skip'),
-            ),
-          ],
-        );
-      },
+    final confirm = await AppDialog.destructive(
+      context,
+      title: 'Skip Workout?',
+      message: 'This workout will be marked as skipped.',
+      confirmText: 'Skip',
+      icon: Icons.skip_next_rounded,
     );
 
     if (confirm != true) return;
@@ -238,47 +217,16 @@ class _HeroWorkoutCardState extends ConsumerState<HeroWorkoutCard> {
         ? 'This will mark the workout as completed without tracking sets.'
         : 'Mark workout for $dateLabel as done? This will mark it as completed without tracking sets.';
 
-    final confirm = await showDialog<bool>(
-      context: context,
-      barrierDismissible: true,
-      barrierColor: Colors.black54,
-      builder: (dialogContext) {
-        final isDark = Theme.of(dialogContext).brightness == Brightness.dark;
-        return AlertDialog(
-          backgroundColor: isDark ? const Color(0xFF1E1E1E) : Colors.white,
-          surfaceTintColor: Colors.transparent,
-          title: Text(
-            'Mark as Done?',
-            style: TextStyle(
-              color: isDark ? Colors.white : Colors.black87,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          content: Text(
-            dialogMessage,
-            style: TextStyle(color: isDark ? Colors.white70 : Colors.black54),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(dialogContext, false),
-              child: Text(
-                'Cancel',
-                style: TextStyle(
-                  color: isDark ? Colors.white60 : Colors.black45,
-                ),
-              ),
-            ),
-            TextButton(
-              onPressed: () => Navigator.pop(dialogContext, true),
-              style: TextButton.styleFrom(foregroundColor: AppColors.success),
-              child: const Text('Mark Done'),
-            ),
-          ],
-        );
-      },
+    final confirm = await AppDialog.confirm(
+      context,
+      title: 'Mark as Done?',
+      message: dialogMessage,
+      confirmText: 'Mark Done',
+      confirmColor: AppColors.success,
+      icon: Icons.check_circle_rounded,
     );
 
-    if (confirm != true) return;
+    if (!confirm) return;
 
     setState(() => _isMarkingDone = true);
 
@@ -363,44 +311,12 @@ class _HeroWorkoutCardState extends ConsumerState<HeroWorkoutCard> {
   }
 
   Future<void> _markAsUndone() async {
-    final confirm = await showDialog<bool>(
-      context: context,
-      barrierDismissible: true,
-      barrierColor: Colors.black54,
-      builder: (dialogContext) {
-        final isDark = Theme.of(dialogContext).brightness == Brightness.dark;
-        return AlertDialog(
-          backgroundColor: isDark ? const Color(0xFF1E1E1E) : Colors.white,
-          surfaceTintColor: Colors.transparent,
-          title: Text(
-            'Undo Completion?',
-            style: TextStyle(
-              color: isDark ? Colors.white : Colors.black87,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          content: Text(
-            'This will mark the workout as not done.',
-            style: TextStyle(color: isDark ? Colors.white70 : Colors.black54),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(dialogContext, false),
-              child: Text(
-                'Cancel',
-                style: TextStyle(
-                  color: isDark ? Colors.white60 : Colors.black45,
-                ),
-              ),
-            ),
-            TextButton(
-              onPressed: () => Navigator.pop(dialogContext, true),
-              style: TextButton.styleFrom(foregroundColor: AppColors.error),
-              child: const Text('Undo'),
-            ),
-          ],
-        );
-      },
+    final confirm = await AppDialog.destructive(
+      context,
+      title: 'Undo Completion?',
+      message: 'This will mark the workout as not done.',
+      confirmText: 'Undo',
+      icon: Icons.undo_rounded,
     );
 
     if (confirm != true) return;
@@ -820,6 +736,29 @@ class _HeroWorkoutCardState extends ConsumerState<HeroWorkoutCard> {
                                   fontWeight: FontWeight.w700,
                                   letterSpacing: 0.5,
                                   color: isDark ? Colors.white : Colors.black87,
+                                ),
+                              ),
+                            ),
+                          ],
+                          // Quick workout badge
+                          if (_isQuickWorkout(workout)) ...[
+                            const SizedBox(width: 6),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                              decoration: BoxDecoration(
+                                color: accentColor.withValues(alpha: isDark ? 0.4 : 0.15),
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(
+                                  color: accentColor.withValues(alpha: 0.3),
+                                ),
+                              ),
+                              child: Text(
+                                'Quick',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w700,
+                                  letterSpacing: 0.5,
+                                  color: isDark ? accentColor : accentColor,
                                 ),
                               ),
                             ),

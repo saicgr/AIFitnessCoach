@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:share_plus/share_plus.dart';
 import '../../core/constants/app_colors.dart';
+import '../../widgets/app_loading.dart';
 import '../../data/models/milestone.dart';
 import '../../data/providers/milestones_provider.dart';
 import '../../data/repositories/auth_repository.dart';
@@ -84,7 +85,7 @@ class _MilestonesScreenState extends ConsumerState<MilestonesScreen>
           ),
           Expanded(
             child: state.isLoading
-                ? const Center(child: CircularProgressIndicator())
+                ? AppLoading.fullScreen()
                 : TabBarView(
                     controller: _tabController,
                     children: [

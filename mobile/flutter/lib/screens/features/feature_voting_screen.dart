@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../models/feature_request.dart';
+import '../../widgets/app_loading.dart';
 import '../../data/providers/feature_provider.dart';
 import '../../widgets/glass_sheet.dart';
 import '../../widgets/segmented_tab_bar.dart';
@@ -72,7 +73,7 @@ class _FeatureVotingScreenState extends ConsumerState<FeatureVotingScreen>
           ),
           Expanded(
             child: featuresAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
+        loading: () => AppLoading.fullScreen(),
         error: (error, _) => Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,

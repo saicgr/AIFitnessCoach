@@ -20,7 +20,7 @@ Cardio Sessions:
 
 from datetime import datetime, date, timedelta
 from typing import Optional, List, Dict, Any
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
 from decimal import Decimal
 
@@ -45,6 +45,9 @@ from models.cardio_session import (
     CardioTypeStats,
     CardioSessionStatsResponse,
 )
+
+from core.auth import get_current_user
+from core.exceptions import safe_internal_error
 
 import logging
 logger = logging.getLogger(__name__)
@@ -128,6 +131,7 @@ class CardioMetricsHistoryResponse(BaseModel):
 async def get_hr_zones(
     user_id: str,
     use_resting_hr: bool = Query(True, description="Use Karvonen formula if resting HR available"),
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Get personalized heart rate training zones for a user.
@@ -146,6 +150,8 @@ async def get_hr_zones(
     - Zone 4 (Threshold): 80-90% - Lactate threshold
     - Zone 5 (VO2 Max): 90-100% - Peak performance
     """
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     db = get_supabase_db()
 
     # Get user data including DOB and resting HR
@@ -228,6 +234,7 @@ async def get_hr_zones(
 @router.get("/metrics/{user_id}", response_model=CardioMetricsResponse, tags=["Cardio"])
 async def get_cardio_metrics_endpoint(
     user_id: str,
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Get comprehensive cardio metrics for a user.
@@ -245,6 +252,8 @@ async def get_cardio_metrics_endpoint(
     Fitness age represents the age of an average person with
     the same cardiovascular fitness level.
     """
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     db = get_supabase_db()
 
     # Get user data
@@ -326,6 +335,7 @@ async def get_cardio_metrics_endpoint(
 @router.post("/metrics", response_model=CardioMetricsResponse, tags=["Cardio"])
 async def save_cardio_metrics(
     request: SaveCardioMetricsRequest,
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Save measured cardio metrics for a user.
@@ -337,6 +347,8 @@ async def save_cardio_metrics(
 
     Measured values are more accurate than calculated estimates.
     """
+    if str(current_user["id"]) != str(request.user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     db = get_supabase_db()
 
     # Verify user exists and get their data
@@ -385,7 +397,7 @@ async def save_cardio_metrics(
     response = db.client.table("cardio_metrics").insert(record_data).execute()
 
     if not response.data:
-        raise HTTPException(status_code=500, detail="Failed to save cardio metrics")
+        raise safe_internal_error(Exception("Failed to save cardio metrics"), "save_cardio_metrics")
 
     # Calculate full metrics for response
     metrics = get_cardio_metrics(
@@ -418,6 +430,7 @@ async def save_cardio_metrics(
 async def get_cardio_metrics_history(
     user_id: str,
     days: int = Query(90, ge=7, le=365, description="Number of days of history to retrieve"),
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Get cardio metrics history for a user.
@@ -425,6 +438,8 @@ async def get_cardio_metrics_history(
     Returns historical entries and trend analysis.
     Useful for tracking improvements in resting HR over time.
     """
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     db = get_supabase_db()
 
     # Verify user exists
@@ -535,6 +550,7 @@ def _parse_cardio_session_summary(data: dict) -> CardioSessionSummary:
 @router.post("/sessions", response_model=CardioSession, tags=["Cardio Sessions"])
 async def create_cardio_session(
     request: CardioSessionCreate,
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Create a new cardio session.
@@ -543,6 +559,8 @@ async def create_cardio_session(
     pace, heart rate, and other metrics. Sessions can optionally be linked
     to a workout.
     """
+    if str(current_user["id"]) != str(request.user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     db = get_supabase_db()
 
     # Verify user exists
@@ -597,7 +615,7 @@ async def create_cardio_session(
     response = db.client.table("cardio_sessions").insert(session_data).execute()
 
     if not response.data:
-        raise HTTPException(status_code=500, detail="Failed to create cardio session")
+        raise safe_internal_error(Exception("Failed to create cardio session"), "create_cardio_session")
 
     logger.info(f"Created cardio session for user {request.user_id}: {response.data[0]['id']}")
 
@@ -613,6 +631,7 @@ async def list_cardio_sessions(
     end_date: Optional[str] = Query(None, description="Filter sessions until this date (YYYY-MM-DD)"),
     page: int = Query(1, ge=1, description="Page number"),
     page_size: int = Query(20, ge=1, le=100, description="Number of sessions per page"),
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Get a list of cardio sessions for a user.
@@ -620,6 +639,8 @@ async def list_cardio_sessions(
     Supports filtering by cardio type, location, and date range.
     Results are paginated and ordered by most recent first.
     """
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     db = get_supabase_db()
 
     # Verify user exists
@@ -670,6 +691,7 @@ async def list_cardio_sessions(
 async def get_cardio_session_stats(
     user_id: str,
     days: int = Query(30, ge=1, le=365, description="Number of days to analyze"),
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Get aggregate statistics for a user's cardio sessions.
@@ -677,6 +699,8 @@ async def get_cardio_session_stats(
     Returns totals, averages, per-type breakdowns, trends compared to
     the previous period, and best performances.
     """
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     db = get_supabase_db()
 
     # Verify user exists
@@ -851,12 +875,15 @@ async def get_cardio_session_stats(
 async def get_cardio_session(
     user_id: str,
     session_id: str,
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Get a specific cardio session by ID.
 
     Returns full details of the requested session.
     """
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     db = get_supabase_db()
 
     # Get the session
@@ -876,6 +903,7 @@ async def get_cardio_session(
 async def update_cardio_session(
     session_id: str,
     request: CardioSessionUpdate,
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Update an existing cardio session.
@@ -893,6 +921,8 @@ async def update_cardio_session(
         raise HTTPException(status_code=404, detail="Cardio session not found")
 
     existing = existing_response.data
+    if str(current_user["id"]) != str(existing["user_id"]):
+        raise HTTPException(status_code=403, detail="Access denied")
 
     # Build update data - only include fields that are provided
     update_data = {}
@@ -969,7 +999,7 @@ async def update_cardio_session(
     ).eq("id", session_id).execute()
 
     if not response.data:
-        raise HTTPException(status_code=500, detail="Failed to update cardio session")
+        raise safe_internal_error(Exception("Failed to update cardio session"), "update_cardio_session")
 
     logger.info(f"Updated cardio session {session_id}")
 
@@ -979,6 +1009,7 @@ async def update_cardio_session(
 @router.delete("/sessions/{session_id}", tags=["Cardio Sessions"])
 async def delete_cardio_session(
     session_id: str,
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Delete a cardio session.
@@ -994,6 +1025,9 @@ async def delete_cardio_session(
 
     if not existing_response.data:
         raise HTTPException(status_code=404, detail="Cardio session not found")
+
+    if str(current_user["id"]) != str(existing_response.data["user_id"]):
+        raise HTTPException(status_code=403, detail="Access denied")
 
     # Delete session
     response = db.client.table("cardio_sessions").delete().eq(

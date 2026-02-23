@@ -12,7 +12,7 @@ from collections import defaultdict
 from datetime import datetime, timezone
 from typing import List, Optional
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query, Depends
 
 from models.social import (
     Challenge, ChallengeCreate, ChallengeParticipant,
@@ -20,6 +20,8 @@ from models.social import (
     ChallengeWithParticipation, ChallengeLeaderboard, ChallengeLeaderboardEntry,
     ChallengeType, ChallengeStatus,
 )
+from core.auth import get_current_user
+from core.exceptions import safe_internal_error
 from .utils import get_supabase_client
 
 router = APIRouter()
@@ -29,6 +31,7 @@ router = APIRouter()
 async def create_challenge(
     user_id: str,
     challenge: ChallengeCreate,
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Create a new challenge.
@@ -40,6 +43,9 @@ async def create_challenge(
     Returns:
         Created challenge
     """
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
+
     supabase = get_supabase_client()
 
     result = supabase.table("challenges").insert({
@@ -66,6 +72,7 @@ async def get_challenges(
     challenge_type: Optional[ChallengeType] = None,
     is_public: Optional[bool] = None,
     active_only: bool = True,
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Get challenges (public or user's challenges).
@@ -147,6 +154,7 @@ async def get_challenges(
 async def join_challenge(
     user_id: str,
     participation: ChallengeParticipantCreate,
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Join a challenge.
@@ -158,6 +166,9 @@ async def join_challenge(
     Returns:
         Created participation
     """
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
+
     supabase = get_supabase_client()
 
     # Check if already participating
@@ -187,6 +198,7 @@ async def update_challenge_progress(
     user_id: str,
     challenge_id: str,
     update: ChallengeParticipantUpdate,
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Update user's progress in a challenge.
@@ -199,6 +211,9 @@ async def update_challenge_progress(
     Returns:
         Updated participation
     """
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
+
     supabase = get_supabase_client()
 
     # Get challenge goal
@@ -234,6 +249,7 @@ async def get_challenge_leaderboard(
     challenge_id: str,
     user_id: Optional[str] = None,
     limit: int = Query(100, ge=1, le=500),
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Get leaderboard for a challenge.

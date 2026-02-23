@@ -9,10 +9,12 @@ RATE LIMITS:
 
 Updated: 2025-12-21 - Trigger Render redeploy for swap exercise feature
 """
-from fastapi import APIRouter, HTTPException, Request
+from fastapi import APIRouter, HTTPException, Request, Depends
 from typing import List, Optional, Dict, Any
 from pydantic import BaseModel
 
+from core.auth import get_current_user
+from core.exceptions import safe_internal_error
 from services.langgraph_agents.exercise_suggestion import (
     ExerciseSuggestionState,
     build_exercise_suggestion_graph,
@@ -80,7 +82,7 @@ class SuggestionResponse(BaseModel):
 
 @router.post("/suggest", response_model=SuggestionResponse)
 @limiter.limit("5/minute")
-async def get_exercise_suggestions(request: Request, body: SuggestionRequest):
+async def get_exercise_suggestions(request: Request, body: SuggestionRequest, current_user: dict = Depends(get_current_user)):
     """
     Get AI-powered exercise suggestions.
 
@@ -95,6 +97,8 @@ async def get_exercise_suggestions(request: Request, body: SuggestionRequest):
     - "I want something easier" -> finds lower difficulty alternatives
     - "Give me variety" -> finds different exercises targeting same muscle
     """
+    if str(current_user["id"]) != str(body.user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     logger.info(f"Exercise suggestion request: {body.message[:50]}...")
 
     try:
@@ -153,7 +157,7 @@ async def get_exercise_suggestions(request: Request, body: SuggestionRequest):
 
     except Exception as e:
         logger.error(f"Exercise suggestion failed: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "exercise_suggestions")
 
 
 # ==================== Fast Suggestion Endpoint ====================
@@ -178,7 +182,7 @@ class FastExerciseSuggestion(BaseModel):
 
 
 @router.post("/suggest-fast", response_model=List[FastExerciseSuggestion])
-async def get_fast_exercise_suggestions(body: FastSuggestionRequest):
+async def get_fast_exercise_suggestions(body: FastSuggestionRequest, current_user: dict = Depends(get_current_user)):
     """
     Get exercise suggestions using fast database queries (no AI).
     Returns 8 similar exercises based on muscle group and equipment.
@@ -186,6 +190,8 @@ async def get_fast_exercise_suggestions(body: FastSuggestionRequest):
     This endpoint is ~20x faster than /suggest (~500ms vs ~10s) because
     it uses direct database queries instead of AI analysis.
     """
+    if str(current_user["id"]) != str(body.user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     from core.supabase_db import get_supabase_db
     import random
 
@@ -311,4 +317,4 @@ async def get_fast_exercise_suggestions(body: FastSuggestionRequest):
 
     except Exception as e:
         logger.error(f"Fast suggestion failed: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "exercise_suggestions")

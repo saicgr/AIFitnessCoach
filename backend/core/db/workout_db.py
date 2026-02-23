@@ -46,11 +46,14 @@ class WorkoutDB(BaseDB):
         offset: int = 0,
         order_asc: bool = False,
         gym_profile_id: Optional[str] = None,
+        allow_multiple_per_date: bool = False,
     ) -> List[Dict[str, Any]]:
         """
         List workouts for a user with filters.
 
-        Only returns current (non-superseded) workouts and deduplicates by scheduled_date.
+        Only returns current (non-superseded) workouts. By default deduplicates
+        by scheduled_date (one workout per day). Set allow_multiple_per_date=True
+        to return all workouts including multiple per day (e.g. quick workouts).
 
         Args:
             user_id: User's UUID
@@ -60,6 +63,7 @@ class WorkoutDB(BaseDB):
             limit: Maximum workouts to return
             offset: Number of workouts to skip
             gym_profile_id: Filter by gym profile (optional)
+            allow_multiple_per_date: If True, skip per-date deduplication
 
         Returns:
             List of workout records
@@ -86,6 +90,16 @@ class WorkoutDB(BaseDB):
         if to_date:
             effective_to = to_date + "T23:59:59.999999+00:00" if len(to_date) == 10 else to_date
             query = query.lte("scheduled_date", effective_to)
+
+        if allow_multiple_per_date:
+            # No dedup needed — return raw results with pagination
+            result = (
+                query.order("scheduled_date", desc=not order_asc)
+                .order("created_at", desc=not order_asc)
+                .range(offset, offset + limit - 1)
+                .execute()
+            )
+            return result.data or []
 
         # Fetch more than needed to account for duplicates, then deduplicate
         fetch_limit = (limit + offset) * 3

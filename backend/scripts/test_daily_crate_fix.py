@@ -6,6 +6,7 @@ This script tests the claim_daily_crate RPC function directly against Supabase
 to verify that the flattened JSON response is properly serialized.
 """
 
+import os
 import sys
 from pathlib import Path
 
@@ -20,11 +21,15 @@ DATABASE_HOST = "db.hpbzfahijszqmgsybuor.supabase.co"
 DATABASE_PORT = 5432
 DATABASE_NAME = "postgres"
 DATABASE_USER = "postgres"
-DATABASE_PASSWORD = "d2nHU5oLZ1GCz63B"
+DATABASE_PASSWORD = os.environ.get("DATABASE_PASSWORD")
+if not DATABASE_PASSWORD:
+    raise SystemExit("DATABASE_PASSWORD environment variable is required")
 
 # Supabase client
 SUPABASE_URL = "https://hpbzfahijszqmgsybuor.supabase.co"
-SUPABASE_SERVICE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhwYnpmYWhpanN6cW1nc3lidW9yIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTczMjE1NTkyNywiZXhwIjoyMDQ3NzMxOTI3fQ.NrC6AGu-GEfhPqqL3_bbbHCIbPO_bxLS2YNBXVV9gLQ"
+SUPABASE_SERVICE_KEY = os.environ.get("SUPABASE_KEY")
+if not SUPABASE_SERVICE_KEY:
+    raise SystemExit("SUPABASE_KEY environment variable is required")
 
 
 def test_rpc_directly():

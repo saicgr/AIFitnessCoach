@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/animations/app_animations.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../widgets/app_loading.dart';
 import '../../../core/theme/theme_colors.dart';
 import '../../../data/providers/social_provider.dart';
 import '../../../data/repositories/auth_repository.dart';
@@ -215,7 +216,7 @@ class _FriendsTabState extends ConsumerState<FriendsTab>
           SizedBox(
             height: 140,
             child: _isLoadingPending
-                ? const Center(child: CircularProgressIndicator())
+                ? AppLoading.fullScreen()
                 : ListView.builder(
                     scrollDirection: Axis.horizontal,
                     itemCount: _pendingRequests.length,
@@ -241,13 +242,13 @@ class _FriendsTabState extends ConsumerState<FriendsTab>
 
   Widget _buildFriendsList(BuildContext context, bool isDark) {
     if (_userId == null) {
-      return const Center(child: CircularProgressIndicator());
+      return AppLoading.fullScreen();
     }
 
     final friendsAsync = ref.watch(friendsListProvider(_userId!));
 
     return friendsAsync.when(
-      loading: () => const Center(child: CircularProgressIndicator()),
+      loading: () => AppLoading.fullScreen(),
       error: (error, stack) {
         debugPrint('Error loading friends: $error');
         return SocialEmptyState(
@@ -300,13 +301,13 @@ class _FriendsTabState extends ConsumerState<FriendsTab>
 
   Widget _buildFollowersList(BuildContext context, bool isDark) {
     if (_userId == null) {
-      return const Center(child: CircularProgressIndicator());
+      return AppLoading.fullScreen();
     }
 
     final followersAsync = ref.watch(followersListProvider(_userId!));
 
     return followersAsync.when(
-      loading: () => const Center(child: CircularProgressIndicator()),
+      loading: () => AppLoading.fullScreen(),
       error: (error, stack) {
         debugPrint('Error loading followers: $error');
         return SocialEmptyState(
@@ -360,13 +361,13 @@ class _FriendsTabState extends ConsumerState<FriendsTab>
 
   Widget _buildFollowingList(BuildContext context, bool isDark) {
     if (_userId == null) {
-      return const Center(child: CircularProgressIndicator());
+      return AppLoading.fullScreen();
     }
 
     final followingAsync = ref.watch(followingListProvider(_userId!));
 
     return followingAsync.when(
-      loading: () => const Center(child: CircularProgressIndicator()),
+      loading: () => AppLoading.fullScreen(),
       error: (error, stack) {
         debugPrint('Error loading following: $error');
         return SocialEmptyState(

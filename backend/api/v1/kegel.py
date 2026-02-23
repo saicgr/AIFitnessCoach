@@ -3,7 +3,9 @@ Kegel/Pelvic Floor API Endpoints
 API routes for kegel preferences, session tracking, and pelvic floor exercises.
 """
 
-from fastapi import APIRouter, HTTPException, Query, Request
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
+from core.auth import get_current_user
+from core.exceptions import safe_internal_error
 from typing import Optional, List
 from datetime import date, datetime, timedelta
 from uuid import UUID
@@ -25,7 +27,9 @@ router = APIRouter(prefix="/kegel", tags=["Kegel/Pelvic Floor"])
 # ============================================================================
 
 @router.get("/preferences/{user_id}", response_model=Optional[KegelPreferences])
-async def get_kegel_preferences(user_id: UUID):
+async def get_kegel_preferences(user_id: UUID,
+    current_user: dict = Depends(get_current_user),
+):
     """Get user's kegel preferences."""
     print(f"🔍 [Kegel] Fetching preferences for user {user_id}")
 
@@ -42,11 +46,13 @@ async def get_kegel_preferences(user_id: UUID):
 
     except Exception as e:
         print(f"❌ [Kegel] Error fetching preferences: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "kegel")
 
 
 @router.put("/preferences/{user_id}", response_model=KegelPreferences)
-async def upsert_kegel_preferences(user_id: UUID, preferences: KegelPreferencesUpdate):
+async def upsert_kegel_preferences(user_id: UUID, preferences: KegelPreferencesUpdate,
+    current_user: dict = Depends(get_current_user),
+):
     """Create or update user's kegel preferences."""
     print(f"🔍 [Kegel] Upserting preferences for user {user_id}")
 
@@ -83,11 +89,13 @@ async def upsert_kegel_preferences(user_id: UUID, preferences: KegelPreferencesU
 
     except Exception as e:
         print(f"❌ [Kegel] Error upserting preferences: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "kegel")
 
 
 @router.delete("/preferences/{user_id}")
-async def delete_kegel_preferences(user_id: UUID):
+async def delete_kegel_preferences(user_id: UUID,
+    current_user: dict = Depends(get_current_user),
+):
     """Delete user's kegel preferences."""
     print(f"🔍 [Kegel] Deleting preferences for user {user_id}")
 
@@ -99,7 +107,7 @@ async def delete_kegel_preferences(user_id: UUID):
 
     except Exception as e:
         print(f"❌ [Kegel] Error deleting preferences: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "kegel")
 
 
 # ============================================================================
@@ -107,7 +115,9 @@ async def delete_kegel_preferences(user_id: UUID):
 # ============================================================================
 
 @router.post("/sessions/{user_id}", response_model=KegelSession)
-async def create_kegel_session(user_id: UUID, session: KegelSessionCreate):
+async def create_kegel_session(user_id: UUID, session: KegelSessionCreate,
+    current_user: dict = Depends(get_current_user),
+):
     """Log a completed kegel session."""
     print(f"🔍 [Kegel] Creating session for user {user_id}")
 
@@ -132,7 +142,7 @@ async def create_kegel_session(user_id: UUID, session: KegelSessionCreate):
 
     except Exception as e:
         print(f"❌ [Kegel] Error creating session: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "kegel")
 
 
 @router.get("/sessions/{user_id}", response_model=List[KegelSession])
@@ -140,7 +150,8 @@ async def get_kegel_sessions(
     user_id: UUID,
     start_date: Optional[date] = Query(None),
     end_date: Optional[date] = Query(None),
-    limit: int = Query(50, ge=1, le=365)
+    limit: int = Query(50, ge=1, le=365),
+    current_user: dict = Depends(get_current_user),
 ):
     """Get kegel sessions for a user with optional date range."""
     print(f"🔍 [Kegel] Fetching sessions for user {user_id}")
@@ -162,11 +173,13 @@ async def get_kegel_sessions(
 
     except Exception as e:
         print(f"❌ [Kegel] Error fetching sessions: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "kegel")
 
 
 @router.get("/sessions/{user_id}/today", response_model=List[KegelSession])
-async def get_today_kegel_sessions(user_id: UUID, request: Request):
+async def get_today_kegel_sessions(user_id: UUID, request: Request,
+    current_user: dict = Depends(get_current_user),
+):
     """Get today's kegel sessions."""
     print(f"🔍 [Kegel] Fetching today's sessions for user {user_id}")
 
@@ -182,7 +195,7 @@ async def get_today_kegel_sessions(user_id: UUID, request: Request):
 
     except Exception as e:
         print(f"❌ [Kegel] Error fetching today's sessions: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "kegel")
 
 
 # ============================================================================
@@ -190,7 +203,9 @@ async def get_today_kegel_sessions(user_id: UUID, request: Request):
 # ============================================================================
 
 @router.get("/stats/{user_id}", response_model=KegelStats)
-async def get_kegel_stats(user_id: UUID, request: Request):
+async def get_kegel_stats(user_id: UUID, request: Request,
+    current_user: dict = Depends(get_current_user),
+):
     """Get kegel exercise statistics for a user."""
     print(f"🔍 [Kegel] Calculating stats for user {user_id}")
 
@@ -276,11 +291,13 @@ async def get_kegel_stats(user_id: UUID, request: Request):
 
     except Exception as e:
         print(f"❌ [Kegel] Error calculating stats: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "kegel")
 
 
 @router.get("/daily-goal/{user_id}", response_model=KegelDailyGoal)
-async def check_daily_goal(user_id: UUID, request: Request, check_date: date = Query(default=None)):
+async def check_daily_goal(user_id: UUID, request: Request, check_date: date = Query(default=None),
+    current_user: dict = Depends(get_current_user),
+):
     """Check if user has met their daily kegel goal."""
     print(f"🔍 [Kegel] Checking daily goal for user {user_id}")
 
@@ -316,7 +333,7 @@ async def check_daily_goal(user_id: UUID, request: Request, check_date: date = Q
 
     except Exception as e:
         print(f"❌ [Kegel] Error checking daily goal: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "kegel")
 
 
 # ============================================================================
@@ -327,7 +344,8 @@ async def check_daily_goal(user_id: UUID, request: Request, check_date: date = Q
 async def get_kegel_exercises(
     target_audience: Optional[str] = Query(None, description="Filter by 'all', 'male', or 'female'"),
     difficulty: Optional[KegelLevel] = Query(None),
-    focus_area: Optional[KegelFocusArea] = Query(None)
+    focus_area: Optional[KegelFocusArea] = Query(None),
+    current_user: dict = Depends(get_current_user),
 ):
     """Get list of pelvic floor exercises."""
     print(f"🔍 [Kegel] Fetching exercises")
@@ -364,11 +382,13 @@ async def get_kegel_exercises(
 
     except Exception as e:
         print(f"❌ [Kegel] Error fetching exercises: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "kegel")
 
 
 @router.get("/exercises/{exercise_id}", response_model=KegelExercise)
-async def get_kegel_exercise(exercise_id: UUID):
+async def get_kegel_exercise(exercise_id: UUID,
+    current_user: dict = Depends(get_current_user),
+):
     """Get a specific kegel exercise by ID."""
     print(f"🔍 [Kegel] Fetching exercise {exercise_id}")
 
@@ -385,11 +405,13 @@ async def get_kegel_exercise(exercise_id: UUID):
         raise
     except Exception as e:
         print(f"❌ [Kegel] Error fetching exercise: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "kegel")
 
 
 @router.get("/exercises/by-name/{name}", response_model=KegelExercise)
-async def get_kegel_exercise_by_name(name: str):
+async def get_kegel_exercise_by_name(name: str,
+    current_user: dict = Depends(get_current_user),
+):
     """Get a kegel exercise by name."""
     print(f"🔍 [Kegel] Fetching exercise by name: {name}")
 
@@ -406,7 +428,7 @@ async def get_kegel_exercise_by_name(name: str):
         raise
     except Exception as e:
         print(f"❌ [Kegel] Error fetching exercise: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "kegel")
 
 
 # ============================================================================
@@ -416,7 +438,8 @@ async def get_kegel_exercise_by_name(name: str):
 @router.get("/for-workout/{user_id}")
 async def get_kegels_for_workout(
     user_id: UUID,
-    placement: str = Query(..., description="'warmup', 'cooldown', or 'standalone'")
+    placement: str = Query(..., description="'warmup', 'cooldown', or 'standalone'"),
+    current_user: dict = Depends(get_current_user),
 ):
     """Get kegel exercises to include in a workout based on user preferences."""
     print(f"🔍 [Kegel] Getting kegels for {placement} for user {user_id}")
@@ -472,7 +495,7 @@ async def get_kegels_for_workout(
 
     except Exception as e:
         print(f"❌ [Kegel] Error getting kegels for workout: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "kegel")
 
 
 @router.post("/log-from-workout/{user_id}")
@@ -482,7 +505,8 @@ async def log_kegels_from_workout(
     workout_id: UUID,
     placement: str = Query(..., description="'warmup' or 'cooldown'"),
     duration_seconds: int = Query(..., ge=1),
-    exercises_completed: List[str] = Query(default=[])
+    exercises_completed: List[str] = Query(default=[]),
+    current_user: dict = Depends(get_current_user),
 ):
     """Log kegel exercises completed as part of a workout."""
     print(f"🔍 [Kegel] Logging kegels from workout {workout_id} for user {user_id}")
@@ -510,4 +534,4 @@ async def log_kegels_from_workout(
 
     except Exception as e:
         print(f"❌ [Kegel] Error logging from workout: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "kegel")

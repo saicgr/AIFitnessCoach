@@ -26,7 +26,9 @@ ENDPOINTS:
 - GET  /api/v1/senior-fitness/{user_id}/prompt-context - Get AI context for seniors
 """
 
-from fastapi import APIRouter, HTTPException, Query, Request
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
+from core.auth import get_current_user
+from core.exceptions import safe_internal_error
 from pydantic import BaseModel, Field
 from typing import Optional, List, Dict, Any
 from datetime import datetime, date, timedelta
@@ -451,7 +453,9 @@ def get_low_impact_alternatives() -> Dict[str, Dict[str, Any]]:
 # =============================================================================
 
 @router.get("/{user_id}/settings", response_model=SeniorFitnessSettings)
-async def get_senior_settings(user_id: str):
+async def get_senior_settings(user_id: str,
+    current_user: dict = Depends(get_current_user),
+):
     """Get senior fitness settings for a user."""
     logger.info(f"Getting senior fitness settings for user {user_id}")
 
@@ -520,11 +524,13 @@ async def get_senior_settings(user_id: str):
 
     except Exception as e:
         logger.error(f"Failed to get senior settings: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "senior_fitness")
 
 
 @router.put("/{user_id}/settings", response_model=SeniorFitnessSettings)
-async def update_senior_settings(user_id: str, update: SeniorSettingsUpdate):
+async def update_senior_settings(user_id: str, update: SeniorSettingsUpdate,
+    current_user: dict = Depends(get_current_user),
+):
     """Update senior fitness settings for a user."""
     logger.info(f"Updating senior fitness settings for user {user_id}")
 
@@ -590,11 +596,13 @@ async def update_senior_settings(user_id: str, update: SeniorSettingsUpdate):
         raise
     except Exception as e:
         logger.error(f"Failed to update senior settings: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "senior_fitness")
 
 
 @router.get("/{user_id}/recovery-status", response_model=RecoveryStatus)
-async def get_recovery_status(user_id: str, request: Request):
+async def get_recovery_status(user_id: str, request: Request,
+    current_user: dict = Depends(get_current_user),
+):
     """Get recovery status and recommendations for a senior user."""
     logger.info(f"Getting recovery status for user {user_id}")
 
@@ -663,11 +671,13 @@ async def get_recovery_status(user_id: str, request: Request):
 
     except Exception as e:
         logger.error(f"Failed to get recovery status: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "senior_fitness")
 
 
 @router.get("/{user_id}/is-senior", response_model=IsSeniorResponse)
-async def check_is_senior(user_id: str):
+async def check_is_senior(user_id: str,
+    current_user: dict = Depends(get_current_user),
+):
     """Check if a user qualifies as a senior (55+)."""
     logger.info(f"Checking senior status for user {user_id}")
 
@@ -711,12 +721,13 @@ async def check_is_senior(user_id: str):
 
     except Exception as e:
         logger.error(f"Failed to check senior status: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "senior_fitness")
 
 
 @router.get("/mobility-exercises", response_model=List[MobilityExercise])
 async def get_mobility_exercises(
     target_area: Optional[str] = Query(default=None, description="Filter by target area"),
+    current_user: dict = Depends(get_current_user),
 ):
     """Get library of mobility exercises for seniors."""
     logger.info("Getting mobility exercises")
@@ -732,6 +743,7 @@ async def get_mobility_exercises(
 @router.get("/balance-exercises", response_model=List[BalanceExercise])
 async def get_balance_exercises(
     difficulty: Optional[str] = Query(default=None, description="Filter by difficulty"),
+    current_user: dict = Depends(get_current_user),
 ):
     """Get library of balance exercises for seniors."""
     logger.info("Getting balance exercises")
@@ -745,7 +757,9 @@ async def get_balance_exercises(
 
 
 @router.get("/low-impact-alternative/{exercise_name}", response_model=LowImpactAlternative)
-async def get_low_impact_alternative(exercise_name: str):
+async def get_low_impact_alternative(exercise_name: str,
+    current_user: dict = Depends(get_current_user),
+):
     """Get a low-impact alternative for a high-impact exercise."""
     logger.info(f"Getting low-impact alternative for: {exercise_name}")
 
@@ -769,7 +783,9 @@ async def get_low_impact_alternative(exercise_name: str):
 
 
 @router.post("/apply-workout-modifications", response_model=WorkoutModificationResponse)
-async def apply_workout_modifications(request: WorkoutModificationRequest):
+async def apply_workout_modifications(request: WorkoutModificationRequest,
+    current_user: dict = Depends(get_current_user),
+):
     """Apply senior modifications to a workout."""
     logger.info(f"Applying senior modifications for user {request.user_id}")
 
@@ -843,11 +859,13 @@ async def apply_workout_modifications(request: WorkoutModificationRequest):
 
     except Exception as e:
         logger.error(f"Failed to apply workout modifications: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "senior_fitness")
 
 
 @router.get("/{user_id}/prompt-context", response_model=PromptContextResponse)
-async def get_prompt_context(user_id: str):
+async def get_prompt_context(user_id: str,
+    current_user: dict = Depends(get_current_user),
+):
     """Get AI prompt context for senior users."""
     logger.info(f"Getting prompt context for user {user_id}")
 
@@ -904,4 +922,4 @@ async def get_prompt_context(user_id: str):
 
     except Exception as e:
         logger.error(f"Failed to get prompt context: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "senior_fitness")

@@ -20,6 +20,10 @@ logger = get_logger(__name__)
 # Supported export versions
 SUPPORTED_VERSIONS = ["1.0"]
 
+# ZIP bomb protection limits
+_MAX_UNCOMPRESSED_SIZE = 200 * 1024 * 1024  # 200 MB
+_MAX_FILE_COUNT = 100
+
 
 def import_user_data(user_id: str, zip_content: bytes) -> Dict[str, int]:
     """
@@ -50,7 +54,8 @@ def import_user_data(user_id: str, zip_content: bytes) -> Dict[str, int]:
     Raises:
         ValueError: If the ZIP file is invalid or incompatible
     """
-    logger.info(f"Starting data import for user: {user_id}")
+    truncated_uid = f"...{user_id[-4:]}" if user_id and len(user_id) > 4 else user_id
+    logger.info(f"Starting data import for user: {truncated_uid}")
 
     db = get_supabase_db()
 
@@ -65,6 +70,21 @@ def import_user_data(user_id: str, zip_content: bytes) -> Dict[str, int]:
         with zipfile.ZipFile(zip_buffer, 'r') as zip_file:
             # List files in ZIP
             file_list = zip_file.namelist()
+
+            # ZIP bomb protection: check file count
+            if len(file_list) > _MAX_FILE_COUNT:
+                raise ValueError(f"ZIP contains too many files ({len(file_list)}), max {_MAX_FILE_COUNT}")
+
+            # ZIP bomb protection: check total uncompressed size
+            total_size = sum(info.file_size for info in zip_file.infolist())
+            if total_size > _MAX_UNCOMPRESSED_SIZE:
+                raise ValueError(f"ZIP uncompressed size too large ({total_size} bytes), max {_MAX_UNCOMPRESSED_SIZE}")
+
+            # Path traversal protection: reject filenames with ..
+            for name in file_list:
+                if ".." in name or name.startswith("/"):
+                    raise ValueError(f"ZIP contains unsafe filename: {name}")
+
             logger.info(f"ZIP contains {len(file_list)} files: {file_list}")
 
             # Metadata is optional but recommended for version checking
@@ -137,7 +157,7 @@ def import_user_data(user_id: str, zip_content: bytes) -> Dict[str, int]:
         logger.error(f"Import error: {e}")
         raise
 
-    logger.info(f"Data import complete for user {user_id}: {counts}")
+    logger.info(f"Data import complete for user {truncated_uid}: {counts}")
     return counts
 
 

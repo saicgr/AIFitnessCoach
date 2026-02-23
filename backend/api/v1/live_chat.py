@@ -12,7 +12,9 @@ Allows users to:
 This provides a real-time human support option when AI chat is insufficient.
 """
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
+from core.auth import get_current_user
+from core.exceptions import safe_internal_error
 from typing import Optional
 from datetime import datetime
 import asyncio
@@ -169,7 +171,9 @@ async def _check_if_user_is_agent(user_id: str) -> bool:
 # =============================================================================
 
 @router.post("/start", response_model=LiveChatStartResponse)
-async def start_live_chat(request: LiveChatStartRequest):
+async def start_live_chat(request: LiveChatStartRequest,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Start a new live chat session.
 
@@ -303,7 +307,7 @@ async def start_live_chat(request: LiveChatStartRequest):
             metadata={"category": request.category.value},
             status_code=500
         )
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "live_chat")
 
 
 # =============================================================================
@@ -311,7 +315,9 @@ async def start_live_chat(request: LiveChatStartRequest):
 # =============================================================================
 
 @router.post("/escalate/{ticket_id}", response_model=LiveChatEscalateResponse)
-async def escalate_to_live_chat(ticket_id: str, request: LiveChatEscalateRequest):
+async def escalate_to_live_chat(ticket_id: str, request: LiveChatEscalateRequest,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Escalate an existing support ticket to live chat mode.
 
@@ -445,7 +451,7 @@ async def escalate_to_live_chat(ticket_id: str, request: LiveChatEscalateRequest
             metadata={"ticket_id": ticket_id},
             status_code=500
         )
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "live_chat")
 
 
 # =============================================================================
@@ -453,7 +459,9 @@ async def escalate_to_live_chat(ticket_id: str, request: LiveChatEscalateRequest
 # =============================================================================
 
 @router.get("/queue-position/{ticket_id}", response_model=QueuePositionResponse)
-async def get_queue_position(ticket_id: str, user_id: str):
+async def get_queue_position(ticket_id: str, user_id: str,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Get current queue position for a live chat session.
 
@@ -502,7 +510,7 @@ async def get_queue_position(ticket_id: str, user_id: str):
         raise
     except Exception as e:
         logger.error(f"Failed to get queue position: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "live_chat")
 
 
 # =============================================================================
@@ -510,7 +518,9 @@ async def get_queue_position(ticket_id: str, user_id: str):
 # =============================================================================
 
 @router.post("/{ticket_id}/message", response_model=LiveChatMessageResponse)
-async def send_message(ticket_id: str, request: LiveChatMessageRequest):
+async def send_message(ticket_id: str, request: LiveChatMessageRequest,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Send a message in a live chat session.
 
@@ -616,7 +626,7 @@ async def send_message(ticket_id: str, request: LiveChatMessageRequest):
             metadata={"ticket_id": ticket_id},
             status_code=500
         )
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "live_chat")
 
 
 # =============================================================================
@@ -624,7 +634,9 @@ async def send_message(ticket_id: str, request: LiveChatMessageRequest):
 # =============================================================================
 
 @router.post("/{ticket_id}/typing", response_model=LiveChatTypingResponse)
-async def update_typing_indicator(ticket_id: str, request: LiveChatTypingRequest):
+async def update_typing_indicator(ticket_id: str, request: LiveChatTypingRequest,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Update typing indicator for a live chat session.
 
@@ -669,7 +681,7 @@ async def update_typing_indicator(ticket_id: str, request: LiveChatTypingRequest
         raise
     except Exception as e:
         logger.error(f"Failed to update typing indicator: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "live_chat")
 
 
 # =============================================================================
@@ -677,7 +689,9 @@ async def update_typing_indicator(ticket_id: str, request: LiveChatTypingRequest
 # =============================================================================
 
 @router.post("/{ticket_id}/read", response_model=LiveChatReadResponse)
-async def mark_messages_read(ticket_id: str, request: LiveChatReadRequest):
+async def mark_messages_read(ticket_id: str, request: LiveChatReadRequest,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Mark messages as read in a live chat session.
 
@@ -721,7 +735,7 @@ async def mark_messages_read(ticket_id: str, request: LiveChatReadRequest):
         raise
     except Exception as e:
         logger.error(f"Failed to mark messages as read: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "live_chat")
 
 
 # =============================================================================
@@ -729,7 +743,9 @@ async def mark_messages_read(ticket_id: str, request: LiveChatReadRequest):
 # =============================================================================
 
 @router.post("/{ticket_id}/end", response_model=LiveChatEndResponse)
-async def end_live_chat(ticket_id: str, request: LiveChatEndRequest):
+async def end_live_chat(ticket_id: str, request: LiveChatEndRequest,
+    current_user: dict = Depends(get_current_user),
+):
     """
     End a live chat session.
 
@@ -840,7 +856,7 @@ async def end_live_chat(ticket_id: str, request: LiveChatEndRequest):
             metadata={"ticket_id": ticket_id},
             status_code=500
         )
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "live_chat")
 
 
 # =============================================================================
@@ -848,7 +864,9 @@ async def end_live_chat(ticket_id: str, request: LiveChatEndRequest):
 # =============================================================================
 
 @router.get("/availability", response_model=AvailabilityResponse)
-async def check_availability():
+async def check_availability(
+    current_user: dict = Depends(get_current_user),
+):
     """
     Check if live chat support is available.
 

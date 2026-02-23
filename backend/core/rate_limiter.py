@@ -24,6 +24,7 @@ Note: The limiter must be attached to the FastAPI app in main.py:
     app.state.limiter = limiter
 """
 import json
+import os
 import time
 from slowapi import Limiter
 from starlette.requests import Request
@@ -33,26 +34,20 @@ def get_real_client_ip(request: Request) -> str:
     """
     Extract the real client IP address, handling reverse proxies.
 
-    When deployed behind a reverse proxy (like Render, AWS ALB, etc.),
-    the request.client.host will be the proxy's IP, not the real client.
-    We need to check X-Forwarded-For header for the real client IP.
+    Only trusts X-Forwarded-For when running behind Render's reverse proxy
+    (detected via the RENDER environment variable). This prevents IP spoofing
+    when the app is accessed directly.
     """
-    # Check X-Forwarded-For header first (set by reverse proxies)
-    forwarded_for = request.headers.get("X-Forwarded-For")
-    if forwarded_for:
-        # Take the first IP (original client)
-        return forwarded_for.split(",")[0].strip()
+    # Only trust proxy headers when running behind Render's reverse proxy
+    if os.environ.get("RENDER"):
+        forwarded_for = request.headers.get("X-Forwarded-For")
+        if forwarded_for:
+            return forwarded_for.split(",")[0].strip()
 
-    # Check X-Real-IP header (used by some proxies)
-    real_ip = request.headers.get("X-Real-IP")
-    if real_ip:
-        return real_ip.strip()
-
-    # Fallback to direct client IP (may be None behind proxy)
+    # Use direct client IP
     if request.client and request.client.host:
         return request.client.host
 
-    # Ultimate fallback - use a default to prevent errors
     return "127.0.0.1"
 
 

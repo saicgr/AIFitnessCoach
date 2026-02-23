@@ -11,7 +11,9 @@ This is a pre-workout weight suggestion (auto-fill), distinct from the
 real-time weight_suggestions.py which provides intra-workout adjustments.
 """
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
+from core.auth import get_current_user
+from core.exceptions import safe_internal_error
 from typing import Optional, List
 from datetime import datetime, timedelta
 from pydantic import BaseModel
@@ -373,6 +375,7 @@ async def get_smart_weight(
     target_reps: int = Query(default=10, ge=1, le=50),
     goal: TrainingGoal = Query(default=TrainingGoal.HYPERTROPHY),
     equipment: str = Query(default="dumbbell"),
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Get smart weight suggestion for an exercise.
@@ -502,7 +505,7 @@ async def get_smart_weight(
 
     except Exception as e:
         logger.error(f"Smart weight calculation failed: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "smart_weights")
 
 
 @router.get("/smart-weight/by-name/{user_id}", response_model=SmartWeightResponse)
@@ -512,6 +515,7 @@ async def get_smart_weight_by_name(
     target_reps: int = Query(default=10, ge=1, le=50),
     goal: TrainingGoal = Query(default=TrainingGoal.HYPERTROPHY),
     equipment: str = Query(default="dumbbell"),
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Get smart weight suggestion by exercise name (no exercise_id required).

@@ -5,6 +5,9 @@ import '../../../../core/constants/app_colors.dart';
 import '../../../../core/theme/theme_colors.dart';
 import '../../../../data/models/home_layout.dart';
 import '../../../../data/providers/ai_insights_provider.dart';
+import '../../../../data/providers/nutrition_preferences_provider.dart';
+import '../../../../data/providers/scores_provider.dart';
+import '../../../../data/repositories/nutrition_repository.dart';
 import '../../../../data/repositories/workout_repository.dart';
 import '../../../../data/services/haptic_service.dart';
 
@@ -150,12 +153,9 @@ class PersonalRecordsCard extends ConsumerWidget {
     final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
     final accentColor = ref.colors(context).accent;
 
-    // TODO: Connect to actual PR data from provider
-    final mockPRs = [
-      {'exercise': 'Bench Press', 'value': '100kg', 'date': '2 days ago'},
-      {'exercise': 'Squat', 'value': '140kg', 'date': '1 week ago'},
-      {'exercise': 'Deadlift', 'value': '180kg', 'date': '2 weeks ago'},
-    ];
+    final scoresState = ref.watch(scoresProvider);
+    final prStats = scoresState.prStats;
+    final recentPrs = prStats?.recentPrs ?? [];
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
@@ -204,32 +204,77 @@ class PersonalRecordsCard extends ConsumerWidget {
             ],
           ),
           const SizedBox(height: 12),
-          ...mockPRs.take(size == TileSize.half ? 2 : 3).map((pr) => Padding(
-                padding: const EdgeInsets.only(bottom: 8),
-                child: Row(
-                  children: [
-                    Icon(Icons.military_tech, color: accentColor, size: 16),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        pr['exercise']!,
-                        style: TextStyle(fontSize: 14, color: textColor),
-                      ),
-                    ),
-                    Text(
-                      pr['value']!,
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
-                        color: accentColor,
-                      ),
-                    ),
-                  ],
+          if (scoresState.isLoading && recentPrs.isEmpty)
+            Center(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                child: SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: accentColor,
+                  ),
                 ),
-              )),
+              ),
+            )
+          else if (recentPrs.isEmpty)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              child: Text(
+                'Complete workouts to earn PRs',
+                style: TextStyle(fontSize: 14, color: textMuted),
+              ),
+            )
+          else
+            ...recentPrs.take(size == TileSize.half ? 2 : 3).map((pr) => Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: Row(
+                    children: [
+                      Icon(Icons.military_tech, color: accentColor, size: 16),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              pr.exerciseDisplayName,
+                              style: TextStyle(fontSize: 14, color: textColor),
+                            ),
+                            Text(
+                              _timeAgo(pr.achievedAt),
+                              style: TextStyle(fontSize: 11, color: textMuted),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Text(
+                        pr.liftDescription,
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                          color: accentColor,
+                        ),
+                      ),
+                    ],
+                  ),
+                )),
         ],
       ),
     );
+  }
+
+  static String _timeAgo(String isoDate) {
+    final date = DateTime.tryParse(isoDate);
+    if (date == null) return '';
+    final diff = DateTime.now().difference(date);
+    if (diff.inDays == 0) return 'Today';
+    if (diff.inDays == 1) return 'Yesterday';
+    if (diff.inDays < 7) return '${diff.inDays} days ago';
+    if (diff.inDays < 14) return '1 week ago';
+    if (diff.inDays < 30) return '${(diff.inDays / 7).floor()} weeks ago';
+    if (diff.inDays < 60) return '1 month ago';
+    return '${(diff.inDays / 30).floor()} months ago';
   }
 }
 
@@ -419,10 +464,12 @@ class CaloriesSummaryCard extends ConsumerWidget {
     final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
     final accentColor = ref.colors(context).accent;
 
-    // TODO: Connect to nutrition provider
-    const consumed = 1850;
-    const target = 2200;
-    final progress = consumed / target;
+    final nutritionState = ref.watch(nutritionProvider);
+    final prefsState = ref.watch(nutritionPreferencesProvider);
+    final consumed = nutritionState.todaySummary?.totalCalories ?? 0;
+    final target = prefsState.currentCalorieTarget;
+    final progress = target > 0 ? consumed.toDouble() / target : 0.0;
+    final remaining = target - consumed;
 
     return Container(
       margin: size == TileSize.full
@@ -487,7 +534,7 @@ class CaloriesSummaryCard extends ConsumerWidget {
           ),
           const SizedBox(height: 4),
           Text(
-            '${target - consumed} kcal remaining',
+            remaining > 0 ? '$remaining kcal remaining' : '${(-remaining)} kcal over',
             style: TextStyle(fontSize: 11, color: textMuted),
           ),
         ],
@@ -518,12 +565,13 @@ class MacroRingsCard extends ConsumerWidget {
     final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
     final accentColor = ref.colors(context).accent;
 
-    // TODO: Connect to nutrition provider
-    // Use accent color with varying opacity for visual distinction
+    final nutritionState = ref.watch(nutritionProvider);
+    final prefsState = ref.watch(nutritionPreferencesProvider);
+    final summary = nutritionState.todaySummary;
     final macros = [
-      {'name': 'Protein', 'current': 120, 'target': 150, 'color': accentColor},
-      {'name': 'Carbs', 'current': 180, 'target': 250, 'color': accentColor.withValues(alpha: 0.7)},
-      {'name': 'Fat', 'current': 55, 'target': 70, 'color': accentColor.withValues(alpha: 0.4)},
+      {'name': 'Protein', 'current': (summary?.totalProteinG ?? 0).round(), 'target': prefsState.currentProteinTarget, 'color': accentColor},
+      {'name': 'Carbs', 'current': (summary?.totalCarbsG ?? 0).round(), 'target': prefsState.currentCarbsTarget, 'color': accentColor.withValues(alpha: 0.7)},
+      {'name': 'Fat', 'current': (summary?.totalFatG ?? 0).round(), 'target': prefsState.currentFatTarget, 'color': accentColor.withValues(alpha: 0.4)},
     ];
 
     return Container(
@@ -557,7 +605,8 @@ class MacroRingsCard extends ConsumerWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: macros.map((macro) {
-              final progress = (macro['current'] as int) / (macro['target'] as int);
+              final target = macro['target'] as int;
+              final progress = target > 0 ? (macro['current'] as int).toDouble() / target : 0.0;
               final color = macro['color'] as Color;
 
               return Column(

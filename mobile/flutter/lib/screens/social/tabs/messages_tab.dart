@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../widgets/app_loading.dart';
 import '../../../core/theme/theme_colors.dart';
 import '../../../data/repositories/auth_repository.dart';
 import '../../../data/providers/social_provider.dart';
@@ -38,7 +39,7 @@ class _MessagesTabState extends ConsumerState<MessagesTab> {
     final conversationsAsync = ref.watch(conversationsProvider(userId));
 
     return conversationsAsync.when(
-      loading: () => const Center(child: CircularProgressIndicator()),
+      loading: () => AppLoading.fullScreen(),
       error: (error, stack) {
         debugPrint('Error loading conversations: $error');
         return SocialEmptyState(

@@ -21,6 +21,30 @@ import '../../navigation/app_router.dart';
 class DeepLinkService {
   static const String scheme = 'fitwiz';
 
+  /// Validate UUID format for IDs
+  static bool _isValidUuid(String value) {
+    final uuidRegex = RegExp(
+      r'^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$',
+    );
+    return uuidRegex.hasMatch(value);
+  }
+
+  /// Validate numeric range
+  static bool _isValidNumericRange(String value, {int min = 0, int max = 10000}) {
+    final num = int.tryParse(value);
+    return num != null && num >= min && num <= max;
+  }
+
+  /// Sanitize text input
+  static String _sanitizeText(String text, {int maxLength = 500}) {
+    final cleaned = text.replaceAll(RegExp(r'[<>\"\\]'), '');
+    return cleaned.substring(0, cleaned.length.clamp(0, maxLength));
+  }
+
+  static const List<String> _validMealTypes = ['breakfast', 'lunch', 'dinner', 'snack'];
+  static const List<String> _validInputModes = ['text', 'photo', 'barcode', 'saved'];
+  static const List<String> _validAgentTypes = ['coach', 'nutrition', 'workout', 'injury', 'hydration'];
+
   /// Initialize deep link listening from home widgets
   static void initialize(WidgetRef ref) {
     // Listen for widget clicks when app is already running
@@ -58,11 +82,19 @@ class DeepLinkService {
       // Workout routes
       case String p when p.startsWith('workout/start/'):
         final workoutId = p.replaceFirst('workout/start/', '');
+        if (!_isValidUuid(workoutId)) {
+          debugPrint('DeepLinkService: Invalid workout UUID: $workoutId');
+          return;
+        }
         _navigateToStartWorkout(router, workoutId, ref);
         break;
 
       case String p when p.startsWith('workout/'):
         final workoutId = p.replaceFirst('workout/', '');
+        if (!_isValidUuid(workoutId)) {
+          debugPrint('DeepLinkService: Invalid workout UUID: $workoutId');
+          return;
+        }
         router.go('/workout/$workoutId');
         break;
 
@@ -75,7 +107,12 @@ class DeepLinkService {
 
       // Hydration routes
       case 'hydration/add':
-        final amount = int.tryParse(queryParams['amount'] ?? '') ?? 250;
+        final rawAmount = queryParams['amount'] ?? '250';
+        if (!_isValidNumericRange(rawAmount, min: 1, max: 5000)) {
+          debugPrint('DeepLinkService: Invalid hydration amount: $rawAmount');
+          return;
+        }
+        final amount = int.parse(rawAmount);
         _quickAddWater(amount, ref);
         router.go('/hydration');
         break;
@@ -88,6 +125,10 @@ class DeepLinkService {
       case 'nutrition/log':
         final meal = queryParams['meal'] ?? 'snack';
         final mode = queryParams['mode'] ?? 'text';
+        if (!_validMealTypes.contains(meal) || !_validInputModes.contains(mode)) {
+          debugPrint('DeepLinkService: Invalid nutrition params: meal=$meal, mode=$mode');
+          return;
+        }
         _openFoodLogger(router, meal, mode);
         break;
 
@@ -97,8 +138,13 @@ class DeepLinkService {
 
       // Chat routes
       case 'chat':
-        final prompt = queryParams['prompt'];
+        final rawPrompt = queryParams['prompt'];
         final agent = queryParams['agent'];
+        if (agent != null && !_validAgentTypes.contains(agent)) {
+          debugPrint('DeepLinkService: Invalid agent type: $agent');
+          return;
+        }
+        final prompt = rawPrompt != null ? _sanitizeText(rawPrompt) : null;
         _openChat(router, prompt: prompt, agent: agent);
         break;
 
@@ -129,6 +175,10 @@ class DeepLinkService {
 
       case 'social/share':
         final shareType = queryParams['type'] ?? 'workout';
+        if (!const ['workout', 'achievement'].contains(shareType)) {
+          debugPrint('DeepLinkService: Invalid share type: $shareType');
+          return;
+        }
         _openShareSheet(router, shareType);
         break;
 
@@ -158,18 +208,19 @@ class DeepLinkService {
   /// Open food logger with specific meal and input mode
   static void _openFoodLogger(GoRouter router, String meal, String mode) {
     debugPrint('DeepLinkService: Opening food logger for $meal via $mode');
-    // Navigate to nutrition screen
-    // The mode could be: text, photo, barcode, saved
-    router.go('/nutrition');
-    // TODO: Trigger specific input mode via a provider
+    // Navigate to nutrition screen with meal param to auto-open log sheet
+    router.go('/nutrition?meal=$meal');
   }
 
   /// Open chat screen with optional prompt or agent
   static void _openChat(GoRouter router, {String? prompt, String? agent}) {
     debugPrint('DeepLinkService: Opening chat with prompt=$prompt, agent=$agent');
-    // Navigate to chat - could pass prompt/agent via extra
-    router.go('/chat');
-    // TODO: Pass prompt to chat screen to pre-fill or auto-send
+    // Pass prompt via query parameter so the route extracts it
+    final params = <String, String>{};
+    if (prompt != null) params['prompt'] = Uri.encodeComponent(prompt);
+    if (agent != null) params['agent'] = agent;
+    final query = params.entries.map((e) => '${e.key}=${e.value}').join('&');
+    router.go('/chat${query.isNotEmpty ? '?$query' : ''}');
   }
 
   /// Open share sheet for specific content type

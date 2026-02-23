@@ -5,6 +5,8 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../data/models/consistency.dart';
+import '../../widgets/app_loading.dart';
+import '../../widgets/app_snackbar.dart';
 import '../../data/providers/consistency_provider.dart';
 import '../../data/services/api_client.dart';
 
@@ -71,7 +73,7 @@ class _ConsistencyScreenState extends ConsumerState<ConsistencyScreen>
         surfaceTintColor: Colors.transparent,
       ),
       body: _isLoading || _userId == null
-          ? const Center(child: CircularProgressIndicator())
+          ? AppLoading.fullScreen()
           : RefreshIndicator(
               onRefresh: () => ref
                   .read(consistencyProvider.notifier)
@@ -952,13 +954,7 @@ class _ConsistencyScreenState extends ConsumerState<ConsistencyScreen>
     );
 
     if (response != null && mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(response.motivationQuote ?? response.message),
-          backgroundColor: Theme.of(context).colorScheme.primary,
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
+      AppSnackBar.success(context, response.motivationQuote ?? response.message);
       // Navigate to workout or home
       Navigator.of(context).pop();
     }

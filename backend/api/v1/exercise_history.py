@@ -9,7 +9,9 @@ Provides endpoints for:
 - Exercise chart data for visualizations
 """
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query, Depends
+from core.auth import get_current_user
+from core.exceptions import safe_internal_error
 from typing import List, Optional, Dict, Any
 from datetime import datetime, date, timedelta
 from pydantic import BaseModel, Field
@@ -197,7 +199,8 @@ async def get_exercise_history(
     user_id: str = Query(..., description="User ID"),
     time_range: TimeRange = Query(TimeRange.TWELVE_WEEKS, description="Time range for data"),
     page: int = Query(1, ge=1, description="Page number"),
-    limit: int = Query(20, ge=1, le=100, description="Items per page")
+    limit: int = Query(20, ge=1, le=100, description="Items per page"),
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Get paginated workout history for a specific exercise.
@@ -205,6 +208,8 @@ async def get_exercise_history(
     Returns every session where the exercise was performed with
     sets, reps, volume, weight, and estimated 1RM.
     """
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     try:
         db = get_supabase_db()
         days_back = get_days_for_time_range(time_range)
@@ -326,7 +331,7 @@ async def get_exercise_history(
 
     except Exception as e:
         logger.error(f"Error getting exercise history: {e}")
-        raise HTTPException(status_code=500, detail=f"Failed to get exercise history: {str(e)}")
+        raise safe_internal_error(e, "exercise_history")
 
 
 @router.get("/{exercise_name}/chart", response_model=ExerciseChartDataResponse)
@@ -334,6 +339,7 @@ async def get_exercise_chart_data(
     exercise_name: str,
     user_id: str = Query(..., description="User ID"),
     time_range: TimeRange = Query(TimeRange.TWELVE_WEEKS, description="Time range for chart"),
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Get chart data for visualizing exercise progression over time.
@@ -341,6 +347,8 @@ async def get_exercise_chart_data(
     Returns data points with weight, volume, and 1RM progression,
     along with trend analysis.
     """
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     try:
         db = get_supabase_db()
         days_back = get_days_for_time_range(time_range)
@@ -422,13 +430,14 @@ async def get_exercise_chart_data(
 
     except Exception as e:
         logger.error(f"Error getting exercise chart data: {e}")
-        raise HTTPException(status_code=500, detail=f"Failed to get chart data: {str(e)}")
+        raise safe_internal_error(e, "exercise_history")
 
 
 @router.get("/{exercise_name}/prs", response_model=ExercisePersonalRecordsResponse)
 async def get_exercise_personal_records(
     exercise_name: str,
     user_id: str = Query(..., description="User ID"),
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Get personal records for a specific exercise.
@@ -436,6 +445,8 @@ async def get_exercise_personal_records(
     Returns all current PRs including max weight, max volume,
     max reps, and best estimated 1RM.
     """
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     try:
         db = get_supabase_db()
 
@@ -491,13 +502,14 @@ async def get_exercise_personal_records(
 
     except Exception as e:
         logger.error(f"Error getting exercise PRs: {e}")
-        raise HTTPException(status_code=500, detail=f"Failed to get PRs: {str(e)}")
+        raise safe_internal_error(e, "exercise_history")
 
 
 @router.get("/most-performed", response_model=MostPerformedExercisesResponse)
 async def get_most_performed_exercises(
     user_id: str = Query(..., description="User ID"),
     limit: int = Query(10, ge=1, le=50, description="Number of exercises to return"),
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Get the most performed exercises for a user.
@@ -505,6 +517,8 @@ async def get_most_performed_exercises(
     Returns exercises sorted by times performed, with volume
     and weight statistics.
     """
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     try:
         db = get_supabase_db()
 
@@ -592,16 +606,18 @@ async def get_most_performed_exercises(
 
         except Exception as e2:
             logger.error(f"Fallback also failed: {e2}")
-            raise HTTPException(status_code=500, detail=f"Failed to get exercises: {str(e)}")
+            raise safe_internal_error(e, "exercise_history")
 
 
 @router.post("/log-view")
-async def log_exercise_history_view(request: ViewLogRequest):
+async def log_exercise_history_view(request: ViewLogRequest, current_user: dict = Depends(get_current_user)):
     """
     Log when a user views exercise history for analytics.
 
     This helps track user engagement with the exercise history feature.
     """
+    if str(current_user["id"]) != str(request.user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     try:
         db = get_supabase_db()
 

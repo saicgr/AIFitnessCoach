@@ -11,7 +11,9 @@ import asyncio
 import json
 from concurrent.futures import ThreadPoolExecutor
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
+from core.auth import get_current_user
+from core.exceptions import safe_internal_error
 from pydantic import BaseModel
 
 from core.supabase_db import get_supabase_db
@@ -121,6 +123,7 @@ def _get_active_gym_profile_id(db, user_id: str) -> Optional[str]:
 @router.get("/screen-summary", response_model=WorkoutScreenSummary)
 async def get_workout_screen_summary(
     user_id: str = Query(..., description="User ID"),
+    current_user: dict = Depends(get_current_user),
 ) -> WorkoutScreenSummary:
     """
     Get lightweight summary data for the Workouts screen.
@@ -192,4 +195,4 @@ async def get_workout_screen_summary(
 
     except Exception as e:
         logger.error(f"Failed to get workout screen summary: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "screen_summary")

@@ -36,7 +36,7 @@ class Settings(BaseSettings):
     # Server Configuration
     host: str = "0.0.0.0"
     port: int = 8000
-    debug: bool = True
+    debug: bool = False
 
     # Supabase Configuration
     supabase_url: str
@@ -98,8 +98,6 @@ class Settings(BaseSettings):
     # Specific allowed origins - do not use ["*"] with allow_credentials=True
     cors_origins: list[str] = [
         "https://fitwiz-zqi3.onrender.com",
-        "http://localhost:3000",
-        "http://localhost:8000",
     ]
 
     class Config:

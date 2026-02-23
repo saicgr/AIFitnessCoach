@@ -11,7 +11,10 @@ Provides intelligent rest duration suggestions during active workouts based on:
 Uses Gemini AI to generate personalized reasoning for suggestions.
 """
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
+from core.auth import get_current_user
+from core.rate_limiter import limiter
+from core.exceptions import safe_internal_error
 from typing import List, Optional
 from pydantic import BaseModel, Field
 
@@ -237,7 +240,10 @@ Return ONLY the reasoning text, nothing else."""
 
 
 @router.post("/rest-suggestion", response_model=RestSuggestionResponse)
-async def get_rest_suggestion(request: RestSuggestionRequest):
+@limiter.limit("5/minute")
+async def get_rest_suggestion(request: RestSuggestionRequest,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Get an AI-powered rest time suggestion.
 
@@ -285,11 +291,13 @@ async def get_rest_suggestion(request: RestSuggestionRequest):
 
     except Exception as e:
         logger.error(f"Rest suggestion failed: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "rest_suggestions")
 
 
 @router.get("/rest-suggestion/ranges")
-async def get_rest_ranges():
+async def get_rest_ranges(
+    current_user: dict = Depends(get_current_user),
+):
     """
     Get the standard rest time ranges used for suggestions.
 

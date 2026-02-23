@@ -15,6 +15,7 @@ import '../data/services/widget_action_service.dart';
 import '../screens/admin_support/admin_support_provider.dart';
 import '../screens/ai_settings/ai_settings_screen.dart';
 import '../screens/nutrition/quick_log_overlay.dart';
+import '../screens/workout/widgets/quick_workout_sheet.dart';
 import 'coach_avatar.dart';
 import 'floating_chat/floating_chat_overlay.dart';
 import 'offline_banner.dart';
@@ -222,13 +223,7 @@ class MainShell extends ConsumerWidget {
             ),
           ),
           // Note: Workout mini player is now handled globally in app.dart
-          // Samsung-style edge handle for AI Coach access
-          _EdgePanelHandle(
-            onTap: () {
-              HapticFeedback.mediumImpact();
-              showChatBottomSheet(context, ref);
-            },
-          ),
+          // Edge handle removed to reduce UI clutter (chat accessible via nav bar + floating overlay)
         ],
       ),
     );

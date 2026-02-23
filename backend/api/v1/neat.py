@@ -18,7 +18,9 @@ Endpoints:
 
 from datetime import datetime, date, time, timedelta
 from typing import Optional, List, Dict, Any
-from fastapi import APIRouter, HTTPException, Query, BackgroundTasks
+from fastapi import APIRouter, Depends, HTTPException, Query, BackgroundTasks
+from core.auth import get_current_user
+from core.exceptions import safe_internal_error
 from collections import defaultdict
 import logging
 import random
@@ -286,6 +288,7 @@ def get_motivation_message_for_dashboard(
 async def get_neat_goals(
     user_id: str,
     background_tasks: BackgroundTasks,
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Get current NEAT goals and today's progress.
@@ -398,13 +401,14 @@ async def get_neat_goals(
 
     except Exception as e:
         logger.error(f"Error fetching NEAT goals: {e}")
-        raise HTTPException(status_code=500, detail=f"Failed to fetch NEAT goals: {str(e)}")
+        raise safe_internal_error(e, "neat_goals_fetch")
 
 
 @router.put("/goals/{user_id}", response_model=NEATGoal, tags=["NEAT Goals"])
 async def update_neat_goals(
     user_id: str,
     request: UpdateGoalRequest,
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Update the user's NEAT goals.
@@ -456,13 +460,14 @@ async def update_neat_goals(
         raise
     except Exception as e:
         logger.error(f"Error updating NEAT goals: {e}")
-        raise HTTPException(status_code=500, detail=f"Failed to update NEAT goals: {str(e)}")
+        raise safe_internal_error(e, "neat_goals_update")
 
 
 @router.post("/goals/{user_id}/calculate-progressive", response_model=ProgressiveGoalResponse, tags=["NEAT Goals"])
 async def calculate_progressive_goal(
     user_id: str,
     request: ProgressiveGoalRequest,
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Calculate and optionally apply a progressive step goal.
@@ -558,7 +563,7 @@ async def calculate_progressive_goal(
 
     except Exception as e:
         logger.error(f"Error calculating progressive goal: {e}")
-        raise HTTPException(status_code=500, detail=f"Failed to calculate progressive goal: {str(e)}")
+        raise safe_internal_error(e, "neat_progressive_goal")
 
 
 # ============================================================================
@@ -569,6 +574,7 @@ async def calculate_progressive_goal(
 async def record_hourly_activity(
     user_id: str,
     activity: HourlyActivityInput,
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Record hourly activity data from health sync.
@@ -621,13 +627,14 @@ async def record_hourly_activity(
         raise
     except Exception as e:
         logger.error(f"Error recording hourly activity: {e}")
-        raise HTTPException(status_code=500, detail=f"Failed to record hourly activity: {str(e)}")
+        raise safe_internal_error(e, "neat_hourly_record")
 
 
 @router.get("/hourly/{user_id}/{activity_date}", response_model=HourlyBreakdown, tags=["NEAT Hourly Activity"])
 async def get_hourly_breakdown(
     user_id: str,
     activity_date: date,
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Get hourly activity breakdown for a specific date.
@@ -684,13 +691,14 @@ async def get_hourly_breakdown(
 
     except Exception as e:
         logger.error(f"Error fetching hourly breakdown: {e}")
-        raise HTTPException(status_code=500, detail=f"Failed to fetch hourly breakdown: {str(e)}")
+        raise safe_internal_error(e, "neat_hourly_breakdown")
 
 
 @router.post("/hourly/{user_id}/batch", response_model=BatchHourlyActivityResponse, tags=["NEAT Hourly Activity"])
 async def batch_sync_hourly_activity(
     user_id: str,
     batch: BatchHourlyActivityInput,
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Batch sync multiple hours of activity data.
@@ -762,7 +770,7 @@ async def batch_sync_hourly_activity(
 
     except Exception as e:
         logger.error(f"Error batch syncing hourly activity: {e}")
-        raise HTTPException(status_code=500, detail=f"Failed to batch sync hourly activity: {str(e)}")
+        raise safe_internal_error(e, "neat_hourly_batch")
 
 
 # ============================================================================
@@ -770,7 +778,9 @@ async def batch_sync_hourly_activity(
 # ============================================================================
 
 @router.get("/score/{user_id}/today", response_model=Optional[NEATScore], tags=["NEAT Score"])
-async def get_today_neat_score(user_id: str):
+async def get_today_neat_score(user_id: str,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Get today's NEAT score.
 
@@ -815,7 +825,7 @@ async def get_today_neat_score(user_id: str):
 
     except Exception as e:
         logger.error(f"Error fetching today's NEAT score: {e}")
-        raise HTTPException(status_code=500, detail=f"Failed to fetch today's NEAT score: {str(e)}")
+        raise safe_internal_error(e, "neat_score_today")
 
 
 @router.get("/score/{user_id}/history", response_model=NEATScoreHistory, tags=["NEAT Score"])
@@ -824,6 +834,7 @@ async def get_neat_score_history(
     start_date: Optional[date] = Query(None, description="Start date for history"),
     end_date: Optional[date] = Query(None, description="End date for history"),
     limit: int = Query(30, ge=1, le=365, description="Max number of records"),
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Get NEAT score history with date range filtering.
@@ -909,13 +920,14 @@ async def get_neat_score_history(
 
     except Exception as e:
         logger.error(f"Error fetching NEAT score history: {e}")
-        raise HTTPException(status_code=500, detail=f"Failed to fetch NEAT score history: {str(e)}")
+        raise safe_internal_error(e, "neat_score_history")
 
 
 @router.post("/score/{user_id}/calculate", response_model=NEATScore, tags=["NEAT Score"])
 async def calculate_neat_score(
     user_id: str,
     request: CalculateScoreRequest,
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Calculate and save today's NEAT score.
@@ -1031,7 +1043,7 @@ async def calculate_neat_score(
         raise
     except Exception as e:
         logger.error(f"Error calculating NEAT score: {e}")
-        raise HTTPException(status_code=500, detail=f"Failed to calculate NEAT score: {str(e)}")
+        raise safe_internal_error(e, "neat_score_calculate")
 
 
 # ============================================================================
@@ -1039,7 +1051,9 @@ async def calculate_neat_score(
 # ============================================================================
 
 @router.get("/streaks/{user_id}", response_model=StreaksResponse, tags=["NEAT Streaks"])
-async def get_neat_streaks(user_id: str):
+async def get_neat_streaks(user_id: str,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Get all NEAT streak types for a user.
 
@@ -1074,11 +1088,13 @@ async def get_neat_streaks(user_id: str):
 
     except Exception as e:
         logger.error(f"Error fetching NEAT streaks: {e}")
-        raise HTTPException(status_code=500, detail=f"Failed to fetch NEAT streaks: {str(e)}")
+        raise safe_internal_error(e, "neat_streaks")
 
 
 @router.get("/streaks/{user_id}/summary", response_model=StreakSummary, tags=["NEAT Streaks"])
-async def get_streak_summary(user_id: str):
+async def get_streak_summary(user_id: str,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Get a compact streak summary for display.
 
@@ -1134,7 +1150,7 @@ async def get_streak_summary(user_id: str):
 
     except Exception as e:
         logger.error(f"Error fetching streak summary: {e}")
-        raise HTTPException(status_code=500, detail=f"Failed to fetch streak summary: {str(e)}")
+        raise safe_internal_error(e, "neat_streak_summary")
 
 
 # ============================================================================
@@ -1142,7 +1158,9 @@ async def get_streak_summary(user_id: str):
 # ============================================================================
 
 @router.get("/achievements/{user_id}", response_model=AchievementsResponse, tags=["NEAT Achievements"])
-async def get_neat_achievements(user_id: str):
+async def get_neat_achievements(user_id: str,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Get all earned NEAT achievements for a user.
 
@@ -1193,11 +1211,13 @@ async def get_neat_achievements(user_id: str):
 
     except Exception as e:
         logger.error(f"Error fetching NEAT achievements: {e}")
-        raise HTTPException(status_code=500, detail=f"Failed to fetch NEAT achievements: {str(e)}")
+        raise safe_internal_error(e, "neat_achievements")
 
 
 @router.get("/achievements/{user_id}/available", response_model=AvailableAchievementsResponse, tags=["NEAT Achievements"])
-async def get_available_achievements(user_id: str):
+async def get_available_achievements(user_id: str,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Get available achievements with progress toward each.
 
@@ -1280,11 +1300,13 @@ async def get_available_achievements(user_id: str):
 
     except Exception as e:
         logger.error(f"Error fetching available achievements: {e}")
-        raise HTTPException(status_code=500, detail=f"Failed to fetch available achievements: {str(e)}")
+        raise safe_internal_error(e, "neat_available_achievements")
 
 
 @router.post("/achievements/{user_id}/check", response_model=AchievementCheckResult, tags=["NEAT Achievements"])
-async def check_neat_achievements(user_id: str):
+async def check_neat_achievements(user_id: str,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Check and award any new NEAT achievements.
 
@@ -1397,7 +1419,7 @@ async def check_neat_achievements(user_id: str):
 
     except Exception as e:
         logger.error(f"Error checking NEAT achievements: {e}")
-        raise HTTPException(status_code=500, detail=f"Failed to check NEAT achievements: {str(e)}")
+        raise safe_internal_error(e, "neat_check_achievements")
 
 
 # ============================================================================
@@ -1405,7 +1427,9 @@ async def check_neat_achievements(user_id: str):
 # ============================================================================
 
 @router.get("/reminders/{user_id}/preferences", response_model=ReminderPreferences, tags=["NEAT Reminders"])
-async def get_reminder_preferences(user_id: str):
+async def get_reminder_preferences(user_id: str,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Get the user's movement reminder preferences.
 
@@ -1448,13 +1472,14 @@ async def get_reminder_preferences(user_id: str):
 
     except Exception as e:
         logger.error(f"Error fetching reminder preferences: {e}")
-        raise HTTPException(status_code=500, detail=f"Failed to fetch reminder preferences: {str(e)}")
+        raise safe_internal_error(e, "neat_reminder_preferences")
 
 
 @router.put("/reminders/{user_id}/preferences", response_model=ReminderPreferences, tags=["NEAT Reminders"])
 async def update_reminder_preferences(
     user_id: str,
     request: UpdateReminderPreferencesRequest,
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Update the user's movement reminder preferences.
@@ -1511,11 +1536,13 @@ async def update_reminder_preferences(
         raise
     except Exception as e:
         logger.error(f"Error updating reminder preferences: {e}")
-        raise HTTPException(status_code=500, detail=f"Failed to update reminder preferences: {str(e)}")
+        raise safe_internal_error(e, "neat_reminder_update")
 
 
 @router.get("/reminders/{user_id}/should-remind", response_model=ShouldRemindResponse, tags=["NEAT Reminders"])
-async def should_send_reminder(user_id: str):
+async def should_send_reminder(user_id: str,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Check if a movement reminder should be sent now.
 
@@ -1634,7 +1661,7 @@ async def should_send_reminder(user_id: str):
 
     except Exception as e:
         logger.error(f"Error checking should remind: {e}")
-        raise HTTPException(status_code=500, detail=f"Failed to check reminder status: {str(e)}")
+        raise safe_internal_error(e, "neat_should_remind")
 
 
 # ============================================================================
@@ -1645,6 +1672,7 @@ async def should_send_reminder(user_id: str):
 async def get_neat_dashboard(
     user_id: str,
     background_tasks: BackgroundTasks,
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Get combined NEAT dashboard data.
@@ -1722,7 +1750,7 @@ async def get_neat_dashboard(
 
     except Exception as e:
         logger.error(f"Error fetching NEAT dashboard: {e}")
-        raise HTTPException(status_code=500, detail=f"Failed to fetch NEAT dashboard: {str(e)}")
+        raise safe_internal_error(e, "neat_dashboard")
 
 
 # ============================================================================
@@ -1730,7 +1758,9 @@ async def get_neat_dashboard(
 # ============================================================================
 
 @router.post("/scheduler/send-movement-reminders", response_model=SendRemindersResponse, tags=["NEAT Scheduler"])
-async def send_movement_reminders(request: SendRemindersRequest):
+async def send_movement_reminders(request: SendRemindersRequest,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Send movement reminders to sedentary users.
 
@@ -1799,11 +1829,13 @@ async def send_movement_reminders(request: SendRemindersRequest):
 
     except Exception as e:
         logger.error(f"Error in movement reminder scheduler: {e}")
-        raise HTTPException(status_code=500, detail=f"Reminder scheduler failed: {str(e)}")
+        raise safe_internal_error(e, "neat_reminder_scheduler")
 
 
 @router.post("/scheduler/calculate-daily-scores", response_model=CalculateDailyScoresResponse, tags=["NEAT Scheduler"])
-async def calculate_daily_scores(request: CalculateDailyScoresRequest):
+async def calculate_daily_scores(request: CalculateDailyScoresRequest,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Calculate end-of-day NEAT scores for all users.
 
@@ -1856,11 +1888,13 @@ async def calculate_daily_scores(request: CalculateDailyScoresRequest):
 
     except Exception as e:
         logger.error(f"Error in daily score calculator: {e}")
-        raise HTTPException(status_code=500, detail=f"Daily score calculator failed: {str(e)}")
+        raise safe_internal_error(e, "neat_daily_scores")
 
 
 @router.post("/scheduler/adjust-weekly-goals", response_model=AdjustWeeklyGoalsResponse, tags=["NEAT Scheduler"])
-async def adjust_weekly_goals(request: AdjustWeeklyGoalsRequest):
+async def adjust_weekly_goals(request: AdjustWeeklyGoalsRequest,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Adjust progressive goals weekly.
 
@@ -1933,4 +1967,4 @@ async def adjust_weekly_goals(request: AdjustWeeklyGoalsRequest):
 
     except Exception as e:
         logger.error(f"Error in weekly goal adjustment: {e}")
-        raise HTTPException(status_code=500, detail=f"Weekly goal adjustment failed: {str(e)}")
+        raise safe_internal_error(e, "neat_weekly_goals")

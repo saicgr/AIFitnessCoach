@@ -4,6 +4,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
+import '../../widgets/app_dialog.dart';
 import '../../core/providers/window_mode_provider.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../../data/services/api_client.dart';
@@ -96,56 +97,19 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen> {
   }
 
   Future<bool> _showHealthWarningDialog() async {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     final direction = _weightDirection == 'lose' ? 'lose' : 'gain';
 
-    return await showDialog<bool>(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => AlertDialog(
-        backgroundColor: isDark ? AppColors.glassSurface : AppColorsLight.glassSurface,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Row(
-          children: [
-            Icon(Icons.warning_amber_rounded, color: AppColors.warning, size: 28),
-            const SizedBox(width: 12),
-            const Expanded(
-              child: Text(
-                'Are you sure?',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
-              ),
-            ),
-          ],
-        ),
-        content: Text(
-          'This goal may not be healthy for your body type. '
+    return await AppDialog.confirm(
+      context,
+      title: 'Are you sure?',
+      message: 'This goal may not be healthy for your body type. '
           'We recommend consulting with a healthcare professional before '
           'attempting to $direction this much weight.',
-          style: TextStyle(
-            color: isDark ? AppColors.textSecondary : AppColorsLight.textSecondary,
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: Text(
-              'Adjust Goal',
-              style: TextStyle(
-                color: isDark ? AppColors.textSecondary : AppColorsLight.textSecondary,
-              ),
-            ),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.warning,
-              foregroundColor: Colors.white,
-            ),
-            child: const Text('I Understand'),
-          ),
-        ],
-      ),
-    ) ?? false;
+      confirmText: 'I Understand',
+      cancelText: 'Adjust Goal',
+      confirmColor: AppColors.warning,
+      icon: Icons.warning_amber_rounded,
+    );
   }
 
   Future<void> _saveAndContinue() async {

@@ -553,7 +553,7 @@ final computedFastingZoneProvider = Provider<FastingZone>((ref) {
 // ============================================
 
 /// Provider to check if user can use fasting features
-final fastingSafetyCheckProvider = FutureProvider.family<SafetyScreeningResult, String>((ref, userId) async {
+final fastingSafetyCheckProvider = FutureProvider.autoDispose.family<SafetyScreeningResult, String>((ref, userId) async {
   final repository = ref.watch(fastingRepositoryProvider);
   return repository.checkSafetyEligibility(userId);
 });

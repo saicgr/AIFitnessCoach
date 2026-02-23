@@ -4,7 +4,7 @@ Daily Activity API Router.
 Provides endpoints for storing and retrieving daily activity data
 from Health Connect (Android) / Apple Health (iOS).
 """
-from fastapi import APIRouter, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel, Field
 from typing import Optional, List
 from datetime import date, datetime
@@ -13,6 +13,8 @@ from core.supabase_db import get_supabase_db
 from core.logger import get_logger
 from core.activity_logger import log_user_activity, log_user_error
 from core.timezone_utils import resolve_timezone, get_user_today
+from core.auth import get_current_user
+from core.exceptions import safe_internal_error
 
 router = APIRouter(prefix="/activity", tags=["Activity"])
 logger = get_logger(__name__)
@@ -122,12 +124,14 @@ def row_to_activity_response(row: dict) -> DailyActivityResponse:
 
 
 @router.post("/sync", response_model=DailyActivityResponse)
-async def sync_daily_activity(input: DailyActivityInput):
+async def sync_daily_activity(input: DailyActivityInput, current_user: dict = Depends(get_current_user)):
     """
     Sync daily activity data from Health Connect / Apple Health.
 
     Uses upsert to update existing record for the same date or create new one.
     """
+    if str(current_user["id"]) != str(input.user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     logger.info(f"Syncing activity for user {input.user_id} on {input.activity_date}")
 
     db = get_supabase_db()
@@ -183,8 +187,10 @@ async def sync_daily_activity(input: DailyActivityInput):
 
 
 @router.get("/today/{user_id}", response_model=Optional[DailyActivityResponse])
-async def get_today_activity(user_id: str, request: Request):
+async def get_today_activity(user_id: str, request: Request, current_user: dict = Depends(get_current_user)):
     """Get today's activity for a user."""
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     logger.info(f"Fetching today's activity for user {user_id}")
 
     db = get_supabase_db()
@@ -199,8 +205,10 @@ async def get_today_activity(user_id: str, request: Request):
 
 
 @router.get("/date/{user_id}/{activity_date}", response_model=Optional[DailyActivityResponse])
-async def get_activity_by_date(user_id: str, activity_date: date):
+async def get_activity_by_date(user_id: str, activity_date: date, current_user: dict = Depends(get_current_user)):
     """Get activity for a specific date."""
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     logger.info(f"Fetching activity for user {user_id} on {activity_date}")
 
     db = get_supabase_db()
@@ -217,13 +225,16 @@ async def get_activity_history(
     user_id: str,
     from_date: Optional[date] = None,
     to_date: Optional[date] = None,
-    limit: int = 30
+    limit: int = 30,
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Get activity history for a user.
 
     Returns activity records ordered by date descending.
     """
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     logger.info(f"Fetching activity history for user {user_id}")
 
     db = get_supabase_db()
@@ -238,12 +249,14 @@ async def get_activity_history(
 
 
 @router.get("/summary/{user_id}", response_model=ActivitySummaryResponse)
-async def get_activity_summary(user_id: str, days: int = 7):
+async def get_activity_summary(user_id: str, days: int = 7, current_user: dict = Depends(get_current_user)):
     """
     Get activity summary over a period.
 
     Returns aggregated stats for the specified number of days.
     """
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     logger.info(f"Fetching {days}-day activity summary for user {user_id}")
 
     db = get_supabase_db()
@@ -262,8 +275,10 @@ async def get_activity_summary(user_id: str, days: int = 7):
 
 
 @router.delete("/{user_id}/{activity_date}")
-async def delete_activity(user_id: str, activity_date: date):
+async def delete_activity(user_id: str, activity_date: date, current_user: dict = Depends(get_current_user)):
     """Delete activity for a specific date."""
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     logger.info(f"Deleting activity for user {user_id} on {activity_date}")
 
     db = get_supabase_db()
@@ -286,7 +301,7 @@ async def delete_activity(user_id: str, activity_date: date):
 
 
 @router.post("/sync-batch")
-async def sync_batch_activity(activities: List[DailyActivityInput]):
+async def sync_batch_activity(activities: List[DailyActivityInput], current_user: dict = Depends(get_current_user)):
     """
     Sync multiple days of activity data at once.
 
@@ -296,6 +311,8 @@ async def sync_batch_activity(activities: List[DailyActivityInput]):
         return {"synced": 0, "results": []}
 
     user_id = activities[0].user_id
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     logger.info(f"Batch syncing {len(activities)} activity records for user {user_id}")
 
     db = get_supabase_db()

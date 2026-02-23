@@ -13,12 +13,15 @@ import json
 import hashlib
 from datetime import datetime, timedelta
 from typing import List, Optional, Dict, Any
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query, Depends, Request
 from pydantic import BaseModel
 
 from core.supabase_db import get_supabase_db
 from core.activity_logger import log_user_activity, log_user_error
 from services.gemini_service import gemini_service
+from core.auth import get_current_user
+from core.exceptions import safe_internal_error
+from core.rate_limiter import limiter
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/insights", tags=["insights"])
@@ -60,7 +63,8 @@ class InsightsResponse(BaseModel):
 async def get_user_insights(
     user_id: str,
     limit: int = Query(default=5, ge=1, le=20),
-    include_expired: bool = False
+    include_expired: bool = False,
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Get AI-generated micro-insights for a user.
@@ -99,11 +103,14 @@ async def get_user_insights(
 
     except Exception as e:
         logger.error(f"Failed to fetch insights: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "endpoint")
 
 
 @router.post("/{user_id}/generate")
-async def generate_insights(user_id: str, force_refresh: bool = False):
+async def generate_insights(
+    user_id: str, force_refresh: bool = False,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Generate new AI micro-insights for a user based on their workout history.
     Insights are cached and only regenerated if stale or force_refresh=True.
@@ -256,11 +263,14 @@ async def generate_insights(user_id: str, force_refresh: bool = False):
         raise
     except Exception as e:
         logger.error(f"Failed to generate insights: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "endpoint")
 
 
 @router.post("/{user_id}/dismiss/{insight_id}")
-async def dismiss_insight(user_id: str, insight_id: str):
+async def dismiss_insight(
+    user_id: str, insight_id: str,
+    current_user: dict = Depends(get_current_user),
+):
     """Dismiss (hide) an insight."""
     try:
         db = get_supabase_db()
@@ -273,11 +283,14 @@ async def dismiss_insight(user_id: str, insight_id: str):
 
     except Exception as e:
         logger.error(f"Failed to dismiss insight: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "endpoint")
 
 
 @router.get("/{user_id}/weekly-progress")
-async def get_weekly_progress(user_id: str, weeks: int = Query(default=4, ge=1, le=12)):
+async def get_weekly_progress(
+    user_id: str, weeks: int = Query(default=4, ge=1, le=12),
+    current_user: dict = Depends(get_current_user),
+):
     """Get weekly progress history for a user."""
     try:
         db = get_supabase_db()
@@ -290,11 +303,14 @@ async def get_weekly_progress(user_id: str, weeks: int = Query(default=4, ge=1, 
 
     except Exception as e:
         logger.error(f"Failed to get weekly progress: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "endpoint")
 
 
 @router.post("/{user_id}/update-weekly-progress")
-async def update_weekly_progress(user_id: str):
+async def update_weekly_progress(
+    user_id: str,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Calculate and update the current week's progress.
     Called after workout completion or on HomeScreen load.
@@ -370,7 +386,7 @@ async def update_weekly_progress(user_id: str):
 
     except Exception as e:
         logger.error(f"Failed to update weekly progress: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "endpoint")
 
 
 # ==================== AI-POWERED INSIGHTS ====================
@@ -466,7 +482,10 @@ Response (JSON only):"""
 
 
 @router.get("/{user_id}/weight-insight")
-async def get_weight_insight(user_id: str, force_refresh: bool = False):
+async def get_weight_insight(
+    user_id: str, force_refresh: bool = False,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Get AI-generated insight about the user's weight trend.
     Cached for 24 hours unless force_refresh=True.
@@ -559,7 +578,12 @@ async def get_weight_insight(user_id: str, force_refresh: bool = False):
 
 
 @router.get("/{user_id}/daily-tip")
-async def get_daily_tip(user_id: str, force_refresh: bool = False):
+@limiter.limit("10/minute")
+async def get_daily_tip(
+    request: Request,
+    user_id: str, force_refresh: bool = False,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Get AI-generated daily coaching tip.
     Cached for 24 hours unless force_refresh=True.
@@ -653,7 +677,12 @@ async def get_daily_tip(user_id: str, force_refresh: bool = False):
 
 
 @router.get("/{user_id}/habit-suggestions")
-async def get_habit_suggestions(user_id: str, force_refresh: bool = False):
+@limiter.limit("10/minute")
+async def get_habit_suggestions(
+    request: Request,
+    user_id: str, force_refresh: bool = False,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Get AI-generated habit suggestions based on user's goals and current habits.
     """

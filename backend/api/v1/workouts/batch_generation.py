@@ -10,7 +10,9 @@ If fewer days than requested exist, the client knows to trigger generation when 
 from datetime import date, datetime, timedelta
 from typing import List, Optional
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
+from core.auth import get_current_user
+from core.exceptions import safe_internal_error
 from pydantic import BaseModel
 
 from core.supabase_db import get_supabase_db
@@ -53,6 +55,7 @@ async def get_upcoming_workouts(
     user_id: str = Query(..., description="User ID"),
     days: int = Query(default=14, ge=1, le=30, description="Number of days to look ahead (max 30)"),
     gym_profile_id: Optional[str] = Query(default=None, description="Filter by gym profile ID"),
+    current_user: dict = Depends(get_current_user),
 ) -> BatchUpcomingResponse:
     """
     Get upcoming pre-generated workouts for offline pre-caching.
@@ -141,4 +144,4 @@ async def get_upcoming_workouts(
         raise
     except Exception as e:
         logger.error(f"[BATCH] Failed to fetch upcoming workouts: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "batch_generation")

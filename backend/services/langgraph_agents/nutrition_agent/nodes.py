@@ -14,7 +14,7 @@ from langchain_core.messages import HumanMessage, SystemMessage, AIMessage, Tool
 from core.gemini_client import get_langchain_llm
 from .state import NutritionAgentState
 from ..tools import analyze_food_image, get_nutrition_summary, get_recent_meals, log_food_from_text
-from ..personality import build_personality_prompt
+from ..personality import build_personality_prompt, sanitize_coach_name
 from models.chat import AISettings
 from services.gemini_service import GeminiService
 from core.config import get_settings
@@ -61,8 +61,8 @@ def get_nutrition_system_prompt(ai_settings: Dict[str, Any] = None) -> str:
     # Convert dict to AISettings if provided
     settings_obj = AISettings(**ai_settings) if ai_settings else None
 
-    # Get the coach name from settings or use default
-    coach_name = settings_obj.coach_name if settings_obj and settings_obj.coach_name else "Nutri"
+    # Get the coach name from settings or use default (sanitized)
+    coach_name = sanitize_coach_name(settings_obj.coach_name, default="Nutri") if settings_obj and settings_obj.coach_name else "Nutri"
 
     # Build the base prompt with the coach name
     base_prompt = NUTRITION_BASE_PROMPT_TEMPLATE.format(coach_name=coach_name)

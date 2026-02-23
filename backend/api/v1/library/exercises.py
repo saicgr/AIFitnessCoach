@@ -18,6 +18,7 @@ from fastapi import APIRouter, HTTPException, Query, Response
 
 from core.supabase_db import get_supabase_db
 from core.logger import get_logger
+from core.exceptions import safe_internal_error
 
 from .models import LibraryExercise, ExercisesByBodyPart
 from .utils import (
@@ -115,7 +116,7 @@ async def get_filter_options():
 
     except Exception as e:
         logger.error(f"Error getting filter options: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "exercises")
 
 
 @router.get("/exercises/equipment", response_model=List[Dict[str, Any]])
@@ -151,7 +152,7 @@ async def get_equipment_types():
 
     except Exception as e:
         logger.error(f"Error getting equipment types: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "exercises")
 
 
 @router.get("/exercises/types", response_model=List[Dict[str, Any]])
@@ -185,7 +186,7 @@ async def get_exercise_types():
 
     except Exception as e:
         logger.error(f"Error getting exercise types: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "exercises")
 
 
 @router.get("/exercises/body-parts", response_model=List[Dict[str, Any]])
@@ -219,7 +220,7 @@ async def get_body_parts():
 
     except Exception as e:
         logger.error(f"Error getting body parts: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "exercises")
 
 
 def _extract_best_correction(search_term: str, top_rows: list) -> str | None:
@@ -418,7 +419,7 @@ async def list_exercises(
 
     except Exception as e:
         logger.error(f"Error listing exercises: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "exercises")
 
 
 @router.get("/exercises/grouped", response_model=List[ExercisesByBodyPart])
@@ -464,7 +465,7 @@ async def get_exercises_grouped(
 
     except Exception as e:
         logger.error(f"Error getting grouped exercises: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "exercises")
 
 
 @router.get("/exercises/{exercise_id}", response_model=LibraryExercise)
@@ -493,4 +494,4 @@ async def get_exercise(exercise_id: str):
         raise
     except Exception as e:
         logger.error(f"Error getting exercise {exercise_id}: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "exercises")

@@ -10,7 +10,9 @@ Endpoints for AI-powered recipe suggestions based on:
 
 import logging
 from typing import List, Optional
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
+from core.auth import get_current_user
+from core.exceptions import safe_internal_error
 from pydantic import BaseModel, Field
 
 from services.recipe_suggestion_service import (
@@ -120,7 +122,9 @@ class UpdatePreferencesRequest(BaseModel):
 
 
 @router.post("/{user_id}/suggest", response_model=SuggestRecipesResponse)
-async def suggest_recipes(user_id: str, request: SuggestRecipesRequest):
+async def suggest_recipes(user_id: str, request: SuggestRecipesRequest,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Generate personalized recipe suggestions based on user's:
     - Body type
@@ -215,7 +219,7 @@ async def suggest_recipes(user_id: str, request: SuggestRecipesRequest):
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
         logger.error(f"❌ [API] Recipe suggestion error: {e}")
-        raise HTTPException(status_code=500, detail="Failed to generate recipe suggestions")
+        raise safe_internal_error(e, "recipe_suggestions")
 
 
 @router.get("/{user_id}/suggestions", response_model=List[RecipeSuggestionResponse])
@@ -223,6 +227,7 @@ async def get_saved_suggestions(
     user_id: str,
     limit: int = Query(default=20, ge=1, le=100),
     saved_only: bool = Query(default=False),
+    current_user: dict = Depends(get_current_user),
 ):
     """Get user's previous recipe suggestions."""
     logger.info(f"🍳 [API] Getting suggestions for user {user_id}, saved_only={saved_only}")
@@ -268,11 +273,13 @@ async def get_saved_suggestions(
 
     except Exception as e:
         logger.error(f"❌ [API] Error getting suggestions: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "recipe_suggestions")
 
 
 @router.post("/{user_id}/suggestions/{suggestion_id}/rate")
-async def rate_suggestion(user_id: str, suggestion_id: str, request: RateSuggestionRequest):
+async def rate_suggestion(user_id: str, suggestion_id: str, request: RateSuggestionRequest,
+    current_user: dict = Depends(get_current_user),
+):
     """Rate a recipe suggestion (1-5 stars)."""
     logger.info(f"🍳 [API] Rating suggestion {suggestion_id} with {request.rating} stars")
 
@@ -306,7 +313,9 @@ async def rate_suggestion(user_id: str, suggestion_id: str, request: RateSuggest
 
 
 @router.post("/{user_id}/suggestions/{suggestion_id}/save")
-async def save_suggestion(user_id: str, suggestion_id: str):
+async def save_suggestion(user_id: str, suggestion_id: str,
+    current_user: dict = Depends(get_current_user),
+):
     """Save/favorite a recipe suggestion."""
     logger.info(f"🍳 [API] Saving suggestion {suggestion_id}")
 
@@ -337,7 +346,9 @@ async def save_suggestion(user_id: str, suggestion_id: str):
 
 
 @router.post("/{user_id}/suggestions/{suggestion_id}/cooked")
-async def mark_cooked(user_id: str, suggestion_id: str):
+async def mark_cooked(user_id: str, suggestion_id: str,
+    current_user: dict = Depends(get_current_user),
+):
     """Mark a recipe suggestion as cooked."""
     logger.info(f"🍳 [API] Marking suggestion {suggestion_id} as cooked")
 
@@ -368,7 +379,9 @@ async def mark_cooked(user_id: str, suggestion_id: str):
 
 
 @router.post("/{user_id}/suggestions/{suggestion_id}/convert")
-async def convert_to_recipe(user_id: str, suggestion_id: str):
+async def convert_to_recipe(user_id: str, suggestion_id: str,
+    current_user: dict = Depends(get_current_user),
+):
     """Convert a suggestion to a user recipe in the recipe library."""
     logger.info(f"🍳 [API] Converting suggestion {suggestion_id} to user recipe")
 
@@ -384,21 +397,27 @@ async def convert_to_recipe(user_id: str, suggestion_id: str):
 
 
 @router.get("/cuisines", response_model=List[CuisineResponse])
-async def get_cuisines():
+async def get_cuisines(
+    current_user: dict = Depends(get_current_user),
+):
     """Get list of available cuisines for preference selection."""
     cuisines = await recipe_suggestion_service.get_cuisines_list()
     return [CuisineResponse(**c) for c in cuisines]
 
 
 @router.get("/body-types", response_model=List[BodyTypeResponse])
-async def get_body_types():
+async def get_body_types(
+    current_user: dict = Depends(get_current_user),
+):
     """Get list of body types with descriptions."""
     body_types = await recipe_suggestion_service.get_body_types_list()
     return [BodyTypeResponse(**b) for b in body_types]
 
 
 @router.put("/{user_id}/preferences")
-async def update_recipe_preferences(user_id: str, request: UpdatePreferencesRequest):
+async def update_recipe_preferences(user_id: str, request: UpdatePreferencesRequest,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Update user's recipe-related preferences (body type, cuisines, spice tolerance).
     """
@@ -439,4 +458,4 @@ async def update_recipe_preferences(user_id: str, request: UpdatePreferencesRequ
 
     except Exception as e:
         logger.error(f"❌ [API] Error updating preferences: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "recipe_suggestions")

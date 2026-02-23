@@ -6,6 +6,7 @@ from typing import Optional, Literal
 from core.auth import get_current_user
 from core.supabase_client import get_supabase
 from core.logger import get_logger
+from core.exceptions import safe_internal_error
 
 logger = get_logger(__name__)
 router = APIRouter(prefix="/sound-preferences", tags=["Sound Preferences"])
@@ -67,7 +68,7 @@ async def get_sound_preferences(user=Depends(get_current_user)):
 
     except Exception as e:
         logger.error(f"❌ Failed to get sound preferences: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "sound_preferences")
 
 
 @router.put("", response_model=SoundPreferences)
@@ -120,7 +121,7 @@ async def update_sound_preferences(
         raise
     except Exception as e:
         logger.error(f"❌ Failed to update sound preferences: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "sound_preferences")
 
 
 @router.post("/reset")
@@ -139,4 +140,4 @@ async def reset_sound_preferences(user=Depends(get_current_user)):
 
     except Exception as e:
         logger.error(f"❌ Failed to reset sound preferences: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "sound_preferences")

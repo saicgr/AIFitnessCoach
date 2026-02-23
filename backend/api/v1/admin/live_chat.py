@@ -18,6 +18,7 @@ from datetime import datetime, timedelta
 from core.supabase_db import get_supabase_db
 from core.supabase_client import get_supabase
 from core.logger import get_logger
+from core.exceptions import safe_internal_error
 from core.activity_logger import log_user_activity
 from models.admin import (
     AdminLoginRequest,
@@ -451,7 +452,7 @@ async def get_live_chats(
         raise
     except Exception as e:
         logger.error(f"Failed to get live chats: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "admin_live_chat")
 
 
 # =============================================================================
@@ -547,7 +548,7 @@ async def get_live_chat_detail(
         raise
     except Exception as e:
         logger.error(f"Failed to get live chat detail: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "admin_live_chat")
 
 
 # =============================================================================
@@ -655,7 +656,7 @@ async def reply_to_live_chat(
         raise
     except Exception as e:
         logger.error(f"Failed to reply to live chat: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "admin_live_chat")
 
 
 # =============================================================================
@@ -748,7 +749,7 @@ async def assign_chat(
         raise
     except Exception as e:
         logger.error(f"Failed to assign chat: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "admin_live_chat")
 
 
 # =============================================================================
@@ -842,7 +843,7 @@ async def close_chat(
         raise
     except Exception as e:
         logger.error(f"Failed to close chat: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "admin_live_chat")
 
 
 # =============================================================================
@@ -951,7 +952,7 @@ async def get_support_tickets(
         raise
     except Exception as e:
         logger.error(f"Failed to get support tickets: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "admin_live_chat")
 
 
 # =============================================================================
@@ -1040,7 +1041,7 @@ async def get_chat_reports(
         raise
     except Exception as e:
         logger.error(f"Failed to get chat reports: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "admin_live_chat")
 
 
 # =============================================================================
@@ -1209,7 +1210,7 @@ async def get_dashboard_stats(
         raise
     except Exception as e:
         logger.error(f"Failed to get dashboard stats: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "admin_live_chat")
 
 
 # =============================================================================
@@ -1250,4 +1251,4 @@ async def update_presence(
 
     except Exception as e:
         logger.error(f"Failed to update presence: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise safe_internal_error(e, "admin_live_chat")
