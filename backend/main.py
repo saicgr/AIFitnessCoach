@@ -207,7 +207,7 @@ async def _check_exercise_rag_index():
 
 
 async def _check_chromadb_dimensions():
-    """Check ChromaDB embedding dimensions (can run after server starts)."""
+    """Check ChromaDB embedding dimensions and auto-heal mismatches."""
     logger.info("Checking ChromaDB embedding dimensions...")
     try:
         from core.chroma_cloud import get_chroma_cloud_client
@@ -217,16 +217,15 @@ async def _check_chromadb_dimensions():
         if dim_check["healthy"]:
             logger.info("ChromaDB embedding dimensions OK (768-dim Gemini embeddings)")
         else:
-            logger.error("=" * 60)
-            logger.error("CHROMADB EMBEDDING DIMENSION MISMATCH DETECTED!")
-            logger.error("   Some collections have wrong embedding dimensions.")
-            logger.error("   This will cause 'dimension mismatch' errors.")
-            logger.error("")
+            logger.warning("ChromaDB dimension mismatch detected — auto-healing...")
             for m in dim_check["mismatches"]:
-                logger.error(f"   - {m['name']}: has {m['actual_dim']} dims, expected {m['expected_dim']}")
-            logger.error("")
-            logger.error("   FIX: Run 'python scripts/reindex_chromadb.py' to reindex")
-            logger.error("=" * 60)
+                name = m["name"]
+                logger.warning(f"   Deleting {name} (has {m['actual_dim']} dims, expected {m['expected_dim']})")
+                try:
+                    chroma_client.delete_collection(name)
+                    logger.info(f"   Recreated {name} (will repopulate with 768-dim on next use)")
+                except Exception as del_err:
+                    logger.error(f"   Failed to delete {name}: {del_err}")
     except Exception as e:
         logger.warning(f"Could not check ChromaDB dimensions: {e}")
 
@@ -258,14 +257,15 @@ async def _resume_pending_jobs():
                 logger.info(f"  - Resuming job {job_id} for user {truncated_uid} (status: {status})")
 
                 # Create an async task to resume the job
-                asyncio.create_task(
+                _create_safe_task(
                     _run_background_generation(
                         job_id=str(job_id),
                         user_id=str(user_id),
                         month_start_date=str(job.get("month_start_date")),
                         duration_minutes=job.get("duration_minutes", 45),
                         selected_days=job.get("selected_days", [0, 2, 4])
-                    )
+                    ),
+                    name=f"resume-job-{job_id}",
                 )
         else:
             logger.info("No pending workout generation jobs")
@@ -288,6 +288,21 @@ async def get_langgraph_service() -> LangGraphCoachService:
         _langgraph_service = LangGraphCoachService()
         chat_module.langgraph_coach_service = _langgraph_service
     return _langgraph_service
+
+
+def _create_safe_task(coro, name: str = None):
+    """Create an asyncio task with exception logging to prevent silent failures."""
+    task = asyncio.create_task(coro, name=name)
+
+    def _on_done(t):
+        if t.cancelled():
+            return
+        exc = t.exception()
+        if exc:
+            logger.error(f"Background task '{name}' failed: {exc}", exc_info=exc)
+
+    task.add_done_callback(_on_done)
+    return task
 
 
 @asynccontextmanager
@@ -334,10 +349,10 @@ async def lifespan(app: FastAPI):
     # ── Phase 3: Background tasks (server starts serving immediately) ──
     # These can run after the server is already accepting requests.
     logger.info("Starting Phase 3: background initialization tasks...")
-    asyncio.create_task(_init_cache_manager())
-    asyncio.create_task(_check_exercise_rag_index())
-    asyncio.create_task(_check_chromadb_dimensions())
-    asyncio.create_task(_resume_pending_jobs())
+    _create_safe_task(_init_cache_manager(), name="init-cache-manager")
+    _create_safe_task(_check_exercise_rag_index(), name="check-exercise-rag-index")
+    _create_safe_task(_check_chromadb_dimensions(), name="check-chromadb-dimensions")
+    _create_safe_task(_resume_pending_jobs(), name="resume-pending-jobs")
 
     total_startup = time.time() - startup_start
     logger.info(f"Startup complete in {total_startup:.2f}s (server ready, background tasks running)")

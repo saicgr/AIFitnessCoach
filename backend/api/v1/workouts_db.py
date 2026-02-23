@@ -767,7 +767,7 @@ async def generate_workout_streaming(http_request: Request, request: GenerateWor
                 equipment = request.equipment or user.get("equipment", [])
 
             gemini_service = GeminiService()
-            full_content = ""
+            content_chunks = []
 
             # Stream the generation
             async for chunk in gemini_service.generate_workout_plan_streaming(
@@ -777,11 +777,12 @@ async def generate_workout_streaming(http_request: Request, request: GenerateWor
                 duration_minutes=request.duration_minutes or 45,
                 focus_areas=request.focus_areas
             ):
-                full_content += chunk
+                content_chunks.append(chunk)
                 # Send chunk event
                 yield f"event: chunk\ndata: {json.dumps({'chunk': chunk})}\n\n"
 
             # Parse the complete response
+            full_content = "".join(content_chunks)
             content = full_content.strip()
             if content.startswith("```json"):
                 content = content[7:]

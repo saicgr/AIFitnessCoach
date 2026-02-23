@@ -1,12 +1,13 @@
 """
 Sync endpoints for batch processing and import of offline sync data.
 """
-from fastapi import APIRouter, Depends, HTTPException
-from pydantic import BaseModel
+from fastapi import APIRouter, Depends, HTTPException, Request
+from pydantic import BaseModel, Field
 from typing import List, Optional
 import logging
 
 from core.auth import get_current_user
+from core.rate_limiter import limiter
 from core.supabase_client import get_supabase
 
 logger = logging.getLogger(__name__)
@@ -25,7 +26,7 @@ class SyncBulkItem(BaseModel):
 
 
 class SyncBulkRequest(BaseModel):
-    items: List[SyncBulkItem]
+    items: List[SyncBulkItem] = Field(..., max_length=100)
 
 
 class SyncBulkResultItem(BaseModel):
@@ -42,12 +43,14 @@ class SyncBulkResponse(BaseModel):
 
 class SyncImportRequest(BaseModel):
     exported_at: str
-    items: List[SyncBulkItem]
+    items: List[SyncBulkItem] = Field(..., max_length=100)
 
 
 @router.post("/bulk", response_model=SyncBulkResponse)
+@limiter.limit("10/minute")
 async def bulk_sync(
-    request: SyncBulkRequest,
+    request: Request,
+    body: SyncBulkRequest,
     user: dict = Depends(get_current_user),
 ):
     """
@@ -63,7 +66,7 @@ async def bulk_sync(
 
     supabase = get_supabase()
 
-    for item in request.items:
+    for item in body.items:
         try:
             # Route based on entity_type
             if item.entity_type == "workout_log":
@@ -118,8 +121,10 @@ async def bulk_sync(
 
 
 @router.post("/import")
+@limiter.limit("10/minute")
 async def import_sync_data(
-    request: SyncImportRequest,
+    request: Request,
+    body: SyncImportRequest,
     user: dict = Depends(get_current_user),
 ):
     """
@@ -130,7 +135,7 @@ async def import_sync_data(
     user_id = user["id"]
     logger.info(
         f"Sync import received from user {user_id}: "
-        f"{len(request.items)} items, exported at {request.exported_at}"
+        f"{len(body.items)} items, exported at {body.exported_at}"
     )
 
     # Store for manual processing
@@ -139,9 +144,9 @@ async def import_sync_data(
         supabase.client.table("sync_imports").insert(
             {
                 "user_id": user_id,
-                "exported_at": request.exported_at,
-                "item_count": len(request.items),
-                "items": [item.model_dump() for item in request.items],
+                "exported_at": body.exported_at,
+                "item_count": len(body.items),
+                "items": [item.model_dump() for item in body.items],
             }
         ).execute()
     except Exception as e:
@@ -150,8 +155,8 @@ async def import_sync_data(
         # The data was received; storage is best-effort
 
     return {
-        "message": f"Imported {len(request.items)} items for processing",
-        "item_count": len(request.items),
+        "message": f"Imported {len(body.items)} items for processing",
+        "item_count": len(body.items),
     }
 
 

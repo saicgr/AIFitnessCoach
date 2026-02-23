@@ -11,6 +11,7 @@ This service routes messages to specialized domain agents:
 Performance: Simple messages (greetings, thanks, goodbye) are handled via
 a fast-path that skips intent extraction, RAG lookup, and agent execution.
 """
+import asyncio
 import re
 import time
 from typing import Optional, Dict, Any, Tuple
@@ -420,7 +421,13 @@ class LangGraphCoachService:
             agent_graph = self.agents[selected_agent]
             start_time = time.time()
             try:
-                final_state = await agent_graph.ainvoke(agent_state)
+                final_state = await asyncio.wait_for(
+                    agent_graph.ainvoke(agent_state),
+                    timeout=120.0,
+                )
+            except asyncio.TimeoutError:
+                logger.error(f"Agent {selected_agent.value} timed out after 120s")
+                raise Exception(f"AI agent timed out. Please try again.")
             except Exception as agent_error:
                 error_msg = str(agent_error).lower()
                 if "thought_signature" in error_msg or "function call is missing" in error_msg:
@@ -429,7 +436,13 @@ class LangGraphCoachService:
                     if "messages" in agent_state:
                         agent_state["messages"] = []
                     try:
-                        final_state = await agent_graph.ainvoke(agent_state)
+                        final_state = await asyncio.wait_for(
+                            agent_graph.ainvoke(agent_state),
+                            timeout=120.0,
+                        )
+                    except asyncio.TimeoutError:
+                        logger.error(f"Agent {selected_agent.value} retry timed out after 120s")
+                        raise Exception(f"AI agent timed out on retry. Please try again.")
                     except Exception as retry_error:
                         logger.error(f"Retry also failed: {retry_error}")
                         raise retry_error

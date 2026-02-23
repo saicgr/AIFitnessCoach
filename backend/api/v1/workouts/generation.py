@@ -114,7 +114,7 @@ router = APIRouter()
 logger = get_logger(__name__)
 
 # Semaphore to limit concurrent background generations (prevent overloading Gemini)
-_background_gen_semaphore = asyncio.Semaphore(50)
+_background_gen_semaphore = asyncio.Semaphore(10)
 
 
 async def generate_next_day_background(user_id: str, target_date: str):
@@ -1434,7 +1434,8 @@ async def generate_workout_streaming(request: Request, body: GenerateWorkoutRequ
             yield f"event: chunk\ndata: {json.dumps({'status': 'started', 'ttfb_ms': first_chunk_time})}\n\n"
 
             # Stream the workout generation
-            accumulated_text = ""
+            accumulated_chunks = []
+            total_chars = 0
             chunk_count = 0
 
             # Equipment guard: filter out "All Profiles" staples whose equipment isn't available
@@ -1491,17 +1492,19 @@ async def generate_workout_streaming(request: Request, body: GenerateWorkoutRequ
                     generator_kwargs["strength_history"] = strength_history
 
                 async for chunk in generator_func(**generator_kwargs):
-                    accumulated_text += chunk
+                    accumulated_chunks.append(chunk)
+                    total_chars += len(chunk)
                     chunk_count += 1
 
                     # Send progress updates every few chunks
                     if chunk_count % 3 == 0:
                         elapsed_ms = (datetime.now() - start_time).total_seconds() * 1000
-                        yield f"event: chunk\ndata: {json.dumps({'status': 'generating', 'progress': len(accumulated_text), 'elapsed_ms': elapsed_ms})}\n\n"
+                        yield f"event: chunk\ndata: {json.dumps({'status': 'generating', 'progress': total_chars, 'elapsed_ms': elapsed_ms})}\n\n"
 
+                accumulated_text = "".join(accumulated_chunks)
                 logger.info(f"✅ [Streaming] Stream completed: {chunk_count} chunks, {len(accumulated_text)} total chars")
             except Exception as stream_error:
-                logger.error(f"❌ [Streaming] Stream error after {chunk_count} chunks, {len(accumulated_text)} chars: {stream_error}")
+                logger.error(f"❌ [Streaming] Stream error after {chunk_count} chunks, {total_chars} chars: {stream_error}")
                 yield f"event: error\ndata: {json.dumps({'error': f'Streaming failed: {str(stream_error)}'})}\n\n"
                 return
 
@@ -3679,7 +3682,8 @@ async def generate_onboarding_workout_streaming(request: Request, body: Onboardi
 
             # Stream the workout generation (no user preferences - this is onboarding)
             gemini_service = GeminiService()
-            accumulated_text = ""
+            accumulated_chunks = []
+            total_chars = 0
             chunk_count = 0
 
             settings = get_settings()
@@ -3716,13 +3720,15 @@ async def generate_onboarding_workout_streaming(request: Request, body: Onboardi
                     generator_kwargs["strength_history"] = None
 
                 async for chunk in generator_func(**generator_kwargs):
-                    accumulated_text += chunk
+                    accumulated_chunks.append(chunk)
+                    total_chars += len(chunk)
                     chunk_count += 1
 
                     if chunk_count % 3 == 0:
                         elapsed_ms = (datetime.now() - start_time).total_seconds() * 1000
-                        yield f"event: chunk\ndata: {json.dumps({'status': 'generating', 'progress': len(accumulated_text), 'elapsed_ms': elapsed_ms})}\n\n"
+                        yield f"event: chunk\ndata: {json.dumps({'status': 'generating', 'progress': total_chars, 'elapsed_ms': elapsed_ms})}\n\n"
 
+                accumulated_text = "".join(accumulated_chunks)
                 logger.info(f"✅ [Onboarding] Stream completed: {chunk_count} chunks, {len(accumulated_text)} total chars")
             except Exception as stream_error:
                 logger.error(f"❌ [Onboarding] Stream error after {chunk_count} chunks: {stream_error}")

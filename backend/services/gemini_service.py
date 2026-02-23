@@ -416,6 +416,9 @@ class GeminiService:
         """
         refresh_interval = 45 * 60  # 45 minutes
 
+        # Create one instance outside the loop to avoid leaking on each iteration
+        service = cls()
+
         while True:
             try:
                 await asyncio.sleep(refresh_interval)
@@ -426,9 +429,6 @@ class GeminiService:
 
                     if age_seconds >= 2700:  # 45 minutes - proactively refresh
                         logger.info(f"[CacheManager] Proactively refreshing cache (age: {age_seconds:.0f}s)")
-
-                        # Create new cache
-                        service = cls()
 
                         # Force refresh by clearing old cache reference
                         old_cache = cls._workout_cache
@@ -455,7 +455,6 @@ class GeminiService:
                 else:
                     # No cache exists, create one
                     logger.info("[CacheManager] No cache exists, creating...")
-                    service = cls()
                     await service._get_or_create_workout_cache()
 
             except asyncio.CancelledError:

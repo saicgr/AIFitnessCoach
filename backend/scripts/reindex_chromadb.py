@@ -4,6 +4,8 @@ Reindex ChromaDB with Gemini embeddings and CLEANED exercise names.
 IMPORTANT: This script deletes existing collections and recreates them
 with Gemini embeddings (768 dimensions) instead of OpenAI (1536 dimensions).
 
+Dynamically discovers all collections from ChromaDB — no hardcoded list to go stale.
+
 Uses exercise_library_cleaned view which:
 - Removes "_Male" and "_Female" suffixes from names
 - Removes "360 degrees" metadata noise
@@ -30,76 +32,66 @@ from core.chroma_cloud import get_chroma_cloud_client
 
 async def main():
     print("=" * 60)
-    print("🔄 CHROMADB REINDEX WITH GEMINI EMBEDDINGS")
-    print("   (768 dimensions instead of OpenAI's 1536)")
+    print("CHROMADB REINDEX WITH GEMINI EMBEDDINGS")
+    print("   (768 dimensions)")
     print("=" * 60)
 
-    # All collections that may have wrong embedding dimensions
-    all_collections = [
-        "fitness_exercises",
-        "fitness_rag_knowledge",
-        "workout_plans",
-        "custom_workout_inputs",
-        "exercise_library",
-        "workout_performance_feedback",
-        "workout_changes",
-        "saved_foods",
-        "food_logs",
-        "social_challenges",
-        "nutrition_logs",
-    ]
-
-    # Show current state
     chroma_client = get_chroma_cloud_client()
-    print(f"\n📊 Current Collections: {chroma_client.list_collections()}")
 
-    for name in all_collections:
-        count = chroma_client.get_collection_count(name)
-        if count > 0:
-            print(f"   • {name}: {count} documents")
+    # Dynamically discover all collections instead of hardcoding
+    all_collections = chroma_client.list_collections()
+    print(f"\nFound {len(all_collections)} collections: {all_collections}")
 
-    # Confirmation prompt
-    print("\n⚠️  WARNING: This will delete ALL collections and their embeddings!")
-    print("   User data in Supabase is safe - only vector embeddings are deleted.")
-    print("   Collections will be recreated with 768-dim Gemini embeddings.")
-    confirm = input("\n   Type 'yes' to continue: ")
+    # Check dimensions and show current state
+    dim_check = chroma_client.check_embedding_dimensions(expected_dim=768)
+    for col in dim_check["collections_checked"]:
+        status = "OK" if col["matches"] else f"MISMATCH ({col['dimension']} dims)"
+        print(f"   - {col['name']}: {status}")
+
+    if dim_check["healthy"]:
+        print("\nAll collections have correct dimensions (768).")
+        confirm = input("Reindex anyway? Type 'yes' to continue: ")
+    else:
+        mismatched = [m["name"] for m in dim_check["mismatches"]]
+        print(f"\nMismatched collections: {mismatched}")
+        print("\nWARNING: This will delete ALL collections and their embeddings!")
+        print("   User data in Supabase is safe - only vector embeddings are deleted.")
+        print("   Collections will be recreated with 768-dim Gemini embeddings.")
+        confirm = input("\n   Type 'yes' to continue: ")
+
     if confirm.lower() != 'yes':
-        print("\n❌ Aborted.")
+        print("\nAborted.")
         return
 
-    # Delete all collections with wrong dimensions (1536 dim -> 768 dim)
-    print("\n🗑️  Deleting collections with wrong dimensions (1536 dim -> 768 dim)...")
+    # Delete all collections
+    print("\nDeleting collections...")
     for collection_name in all_collections:
         try:
             chroma_client.delete_collection(collection_name)
-            print(f"   ✅ Deleted {collection_name} collection")
+            print(f"   Deleted {collection_name}")
         except Exception as e:
-            print(f"   ⚠️  Could not delete {collection_name}: {e}")
+            print(f"   Could not delete {collection_name}: {e}")
 
     # Initialize services
-    print("\n🤖 Initializing Gemini service...")
+    print("\nInitializing Gemini service...")
     gemini_service = GeminiService()
 
     # Reindex exercises - this will create new collection with 768 dims
-    print("\n🏋️ Reindexing exercise library with Gemini embeddings...")
-    print("   📂 Using exercise_library_cleaned view (cleaned names, no duplicates)")
+    print("\nReindexing exercise library with Gemini embeddings...")
+    print("   Using exercise_library_cleaned view (cleaned names, no duplicates)")
     exercise_rag = ExerciseRAGService(gemini_service)
     indexed_count = await exercise_rag.index_all_exercises()
 
-    print(f"\n✅ Indexed {indexed_count} exercises with Gemini embeddings!")
-    print("   ✅ Names are cleaned (no '_Male'/'_Female' suffixes)")
-    print("   ✅ No '360 degrees' metadata noise")
-    print("   ✅ Exercises deduplicated")
+    print(f"\nIndexed {indexed_count} exercises with Gemini embeddings!")
 
     # Show new state
-    print("\n📊 Final state:")
-    for name in all_collections:
+    print("\nFinal state:")
+    for name in chroma_client.list_collections():
         count = chroma_client.get_collection_count(name)
-        if count > 0:
-            print(f"   • {name}: {count} documents")
+        print(f"   - {name}: {count} documents")
 
     print("\n" + "=" * 60)
-    print("✅ REINDEX COMPLETE!")
+    print("REINDEX COMPLETE!")
     print("=" * 60)
 
 if __name__ == "__main__":
