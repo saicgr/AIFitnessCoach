@@ -10,7 +10,7 @@ Endpoints for:
 """
 from typing import Dict, List, Optional
 from datetime import datetime
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from core.auth import get_current_user
 from core.rate_limiter import limiter
 from core.exceptions import safe_internal_error
@@ -186,7 +186,8 @@ class ExerciseSuggestionResponse(BaseModel):
 
 @router.post("/training/1rm", response_model=UserExercise1RMResponse)
 @limiter.limit("5/minute")
-async def set_user_1rm(request: Set1RMRequest,
+async def set_user_1rm(body: Set1RMRequest,
+    request: Request = None,
     current_user: dict = Depends(get_current_user),
 ):
     """
@@ -202,22 +203,22 @@ async def set_user_1rm(request: Set1RMRequest,
         service = PercentageTrainingService(supabase)
 
         result = await service.set_user_1rm(
-            user_id=request.user_id,
-            exercise_name=request.exercise_name,
-            one_rep_max_kg=request.one_rep_max_kg,
-            source=request.source,
-            confidence=request.confidence,
-            last_tested_at=request.last_tested_at,
+            user_id=body.user_id,
+            exercise_name=body.exercise_name,
+            one_rep_max_kg=body.one_rep_max_kg,
+            source=body.source,
+            confidence=body.confidence,
+            last_tested_at=body.last_tested_at,
         )
 
         # Log user activity to database
         await log_user_activity(
-            user_id=request.user_id,
+            user_id=body.user_id,
             action="set_1rm",
             details={
-                "exercise_name": request.exercise_name,
-                "one_rep_max_kg": request.one_rep_max_kg,
-                "source": request.source,
+                "exercise_name": body.exercise_name,
+                "one_rep_max_kg": body.one_rep_max_kg,
+                "source": body.source,
             }
         )
 
@@ -225,12 +226,12 @@ async def set_user_1rm(request: Set1RMRequest,
         try:
             rag_service = get_rag_service()
             await rag_service.index_training_settings(
-                user_id=request.user_id,
+                user_id=body.user_id,
                 action="set_1rm",
                 one_rms=[{
-                    "exercise_name": request.exercise_name,
-                    "one_rep_max_kg": request.one_rep_max_kg,
-                    "source": request.source,
+                    "exercise_name": body.exercise_name,
+                    "one_rep_max_kg": body.one_rep_max_kg,
+                    "source": body.source,
                 }],
             )
         except Exception as rag_error:

@@ -11,7 +11,7 @@ Provides intelligent rest duration suggestions during active workouts based on:
 Uses Gemini AI to generate personalized reasoning for suggestions.
 """
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from core.auth import get_current_user
 from core.rate_limiter import limiter
 from core.exceptions import safe_internal_error
@@ -241,7 +241,8 @@ Return ONLY the reasoning text, nothing else."""
 
 @router.post("/rest-suggestion", response_model=RestSuggestionResponse)
 @limiter.limit("5/minute")
-async def get_rest_suggestion(request: RestSuggestionRequest,
+async def get_rest_suggestion(body: RestSuggestionRequest,
+    request: Request = None,
     current_user: dict = Depends(get_current_user),
 ):
     """
@@ -259,14 +260,14 @@ async def get_rest_suggestion(request: RestSuggestionRequest,
     Falls back to rule-based suggestions with generic reasoning if AI is unavailable.
     """
     logger.info(
-        f"Rest suggestion request: exercise_type={request.exercise_type}, "
-        f"rpe={request.rpe}, is_compound={request.is_compound}, "
-        f"sets_remaining={request.sets_remaining}"
+        f"Rest suggestion request: exercise_type={body.exercise_type}, "
+        f"rpe={body.rpe}, is_compound={body.is_compound}, "
+        f"sets_remaining={body.sets_remaining}"
     )
 
     try:
         # First, generate rule-based suggestion (always works)
-        rule_based = generate_rule_based_suggestion(request)
+        rule_based = generate_rule_based_suggestion(body)
 
         logger.info(
             f"Rule-based suggestion: {rule_based.suggested_seconds}s "
@@ -276,7 +277,7 @@ async def get_rest_suggestion(request: RestSuggestionRequest,
         # Try to enhance with AI-generated reasoning
         try:
             gemini = get_gemini_service()
-            suggestion = await generate_ai_suggestion(gemini, request, rule_based)
+            suggestion = await generate_ai_suggestion(gemini, body, rule_based)
 
             logger.info(
                 f"AI suggestion: {suggestion.suggested_seconds}s, "

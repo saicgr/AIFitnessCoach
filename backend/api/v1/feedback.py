@@ -547,8 +547,8 @@ def get_feedback_rag_service() -> WorkoutFeedbackRAGService:
 @router.post("/ai-coach", response_model=AICoachFeedbackResponse)
 @limiter.limit("5/minute")
 async def generate_ai_coach_feedback(
-    http_request: Request,
-    request: AICoachFeedbackRequest,
+    request: Request,
+    body: AICoachFeedbackRequest,
     current_user: dict = Depends(get_current_user),
 ):
     """
@@ -565,11 +565,11 @@ async def generate_ai_coach_feedback(
     - Rest pattern analysis
     - Motivational note
     """
-    if str(current_user["id"]) != str(request.user_id):
+    if str(current_user["id"]) != str(body.user_id):
         raise HTTPException(status_code=403, detail="Access denied")
-    logger.info(f"📝 [AI Coach] Generating feedback for user {request.user_id}, workout {request.workout_name}")
-    logger.info(f"📝 [AI Coach] Completed exercises: {len(request.exercises)}")
-    logger.info(f"📝 [AI Coach] Planned exercises: {len(request.planned_exercises)}")
+    logger.info(f"📝 [AI Coach] Generating feedback for user {body.user_id}, workout {body.workout_name}")
+    logger.info(f"📝 [AI Coach] Completed exercises: {len(body.exercises)}")
+    logger.info(f"📝 [AI Coach] Planned exercises: {len(body.planned_exercises)}")
 
     try:
         gemini_service = get_gemini_service()
@@ -585,7 +585,7 @@ async def generate_ai_coach_feedback(
                 "time_seconds": ex.time_seconds,
                 "set_details": [{"reps": s.reps, "weight_kg": s.weight_kg} for s in ex.set_details],
             }
-            for ex in request.exercises
+            for ex in body.exercises
         ]
 
         # Convert planned exercises to dict format
@@ -596,24 +596,24 @@ async def generate_ai_coach_feedback(
                 "target_reps": ex.target_reps,
                 "target_weight_kg": ex.target_weight_kg,
             }
-            for ex in request.planned_exercises
+            for ex in body.planned_exercises
         ]
 
         # Prepare current session data
         current_session = {
-            "workout_log_id": request.workout_log_id,
-            "workout_id": request.workout_id,
-            "workout_name": request.workout_name,
-            "workout_type": request.workout_type,
+            "workout_log_id": body.workout_log_id,
+            "workout_id": body.workout_id,
+            "workout_name": body.workout_name,
+            "workout_type": body.workout_type,
             "exercises": exercises_data,
             "planned_exercises": planned_exercises_data,  # For skip detection
-            "total_time_seconds": request.total_time_seconds,
-            "total_rest_seconds": request.total_rest_seconds,
-            "avg_rest_seconds": request.avg_rest_seconds,
-            "calories_burned": request.calories_burned,
-            "total_sets": request.total_sets,
-            "total_reps": request.total_reps,
-            "total_volume_kg": request.total_volume_kg,
+            "total_time_seconds": body.total_time_seconds,
+            "total_rest_seconds": body.total_rest_seconds,
+            "avg_rest_seconds": body.avg_rest_seconds,
+            "calories_burned": body.calories_burned,
+            "total_sets": body.total_sets,
+            "total_reps": body.total_reps,
+            "total_volume_kg": body.total_volume_kg,
             "completed_at": datetime.utcnow().isoformat(),
         }
 
@@ -621,17 +621,17 @@ async def generate_ai_coach_feedback(
         feedback = await generate_workout_feedback(
             gemini_service=gemini_service,
             rag_service=rag_service,
-            user_id=request.user_id,
+            user_id=body.user_id,
             current_session=current_session,
-            coach_name=request.coach_name,
-            coaching_style=request.coaching_style,
-            communication_tone=request.communication_tone,
-            encouragement_level=request.encouragement_level,
+            coach_name=body.coach_name,
+            coaching_style=body.coaching_style,
+            communication_tone=body.communication_tone,
+            encouragement_level=body.encouragement_level,
             # Trophy/achievement context
-            earned_prs=request.earned_prs,
-            earned_achievements=request.earned_achievements,
-            total_workouts_completed=request.total_workouts_completed,
-            next_milestone=request.next_milestone,
+            earned_prs=body.earned_prs,
+            earned_achievements=body.earned_achievements,
+            total_workouts_completed=body.total_workouts_completed,
+            next_milestone=body.next_milestone,
         )
 
         # Index the workout session for future RAG retrieval
@@ -644,24 +644,24 @@ async def generate_ai_coach_feedback(
                 get_user_1rm_data,
             )
 
-            training_intensity = await get_user_training_intensity(request.user_id)
-            progression_pace = await get_user_progression_pace(request.user_id)
-            user_1rm_data = await get_user_1rm_data(request.user_id)
+            training_intensity = await get_user_training_intensity(body.user_id)
+            progression_pace = await get_user_progression_pace(body.user_id)
+            user_1rm_data = await get_user_1rm_data(body.user_id)
 
             await rag_service.index_workout_session(
-                workout_log_id=request.workout_log_id,
-                workout_id=request.workout_id,
-                user_id=request.user_id,
-                workout_name=request.workout_name,
-                workout_type=request.workout_type,
+                workout_log_id=body.workout_log_id,
+                workout_id=body.workout_id,
+                user_id=body.user_id,
+                workout_name=body.workout_name,
+                workout_type=body.workout_type,
                 exercises=exercises_data,
-                total_time_seconds=request.total_time_seconds,
-                total_rest_seconds=request.total_rest_seconds,
-                avg_rest_seconds=request.avg_rest_seconds,
-                calories_burned=request.calories_burned,
-                total_sets=request.total_sets,
-                total_reps=request.total_reps,
-                total_volume_kg=request.total_volume_kg,
+                total_time_seconds=body.total_time_seconds,
+                total_rest_seconds=body.total_rest_seconds,
+                avg_rest_seconds=body.avg_rest_seconds,
+                calories_burned=body.calories_burned,
+                total_sets=body.total_sets,
+                total_reps=body.total_reps,
+                total_volume_kg=body.total_volume_kg,
                 completed_at=current_session["completed_at"],
                 # Pass user preferences for RAG context
                 training_intensity_percent=training_intensity,
@@ -669,14 +669,14 @@ async def generate_ai_coach_feedback(
                 has_1rm_data=bool(user_1rm_data),
             )
             indexed = True
-            logger.info(f"Indexed workout session {request.workout_log_id} for RAG (intensity={training_intensity}%, pace={progression_pace})")
+            logger.info(f"Indexed workout session {body.workout_log_id} for RAG (intensity={training_intensity}%, pace={progression_pace})")
         except Exception as e:
             logger.warning(f"Failed to index workout session: {e}")
 
         return AICoachFeedbackResponse(
             feedback=feedback,
             indexed=indexed,
-            workout_log_id=request.workout_log_id,
+            workout_log_id=body.workout_log_id,
         )
 
     except Exception as e:

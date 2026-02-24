@@ -589,11 +589,11 @@ async def _background_index_rag(workout: Workout):
 
 @router.post("/generate", response_model=Workout)
 @limiter.limit("5/minute")
-async def generate_workout(http_request: Request, request: GenerateWorkoutRequest, background_tasks: BackgroundTasks,
+async def generate_workout(request: Request, body: GenerateWorkoutRequest, background_tasks: BackgroundTasks,
     current_user: dict = Depends(get_current_user),
 ):
     """Generate a new workout for a user based on their preferences."""
-    logger.info(f"Generating workout for user {request.user_id}")
+    logger.info(f"Generating workout for user {body.user_id}")
 
     try:
         db = get_supabase_db()
@@ -602,18 +602,18 @@ async def generate_workout(http_request: Request, request: GenerateWorkoutReques
         primary_goal = None
         muscle_focus_points = None
 
-        if request.fitness_level and request.goals and request.equipment:
-            fitness_level = request.fitness_level
-            goals = request.goals
-            equipment = request.equipment
+        if body.fitness_level and body.goals and body.equipment:
+            fitness_level = body.fitness_level
+            goals = body.goals
+            equipment = body.equipment
         else:
-            user = db.get_user(request.user_id)
+            user = db.get_user(body.user_id)
             if not user:
                 raise HTTPException(status_code=404, detail="User not found")
 
-            fitness_level = request.fitness_level or user.get("fitness_level")
-            goals = request.goals or user.get("goals", [])
-            equipment = request.equipment or user.get("equipment", [])
+            fitness_level = body.fitness_level or user.get("fitness_level")
+            goals = body.goals or user.get("goals", [])
+            equipment = body.equipment or user.get("equipment", [])
             primary_goal = user.get("primary_goal")
             muscle_focus_points = user.get("muscle_focus_points")
 
@@ -622,22 +622,22 @@ async def generate_workout(http_request: Request, request: GenerateWorkoutReques
             "fitness_level": fitness_level,
             "goals": goals if isinstance(goals, list) else [],
             "equipment": equipment if isinstance(equipment, list) else [],
-            "duration_minutes": request.duration_minutes or 45,
-            "focus_areas": request.focus_areas,
-            "workout_type": request.workout_type,
+            "duration_minutes": body.duration_minutes or 45,
+            "focus_areas": body.focus_areas,
+            "workout_type": body.workout_type,
             "primary_goal": primary_goal,
             "muscle_focus_points": muscle_focus_points,
         }
-        cache_key = generation_cache_key(request.user_id, cache_params)
+        cache_key = generation_cache_key(body.user_id, cache_params)
         cached_workout_data = await get_cached_generation(cache_key)
 
         if cached_workout_data:
             # Cache hit - reuse previously generated workout data
             exercises = cached_workout_data.get("exercises", [])
             workout_name = cached_workout_data.get("name", "Generated Workout")
-            workout_type = cached_workout_data.get("type", request.workout_type or "strength")
+            workout_type = cached_workout_data.get("type", body.workout_type or "strength")
             difficulty = cached_workout_data.get("difficulty", "medium")
-            logger.info(f"Using cached workout generation for user {request.user_id}")
+            logger.info(f"Using cached workout generation for user {body.user_id}")
         else:
             # Cache miss - generate via AI
             gemini_service = GeminiService()
@@ -647,8 +647,8 @@ async def generate_workout(http_request: Request, request: GenerateWorkoutReques
                     fitness_level=fitness_level or "intermediate",
                     goals=goals if isinstance(goals, list) else [],
                     equipment=equipment if isinstance(equipment, list) else [],
-                    duration_minutes=request.duration_minutes or 45,
-                    focus_areas=request.focus_areas,
+                    duration_minutes=body.duration_minutes or 45,
+                    focus_areas=body.focus_areas,
                     primary_goal=primary_goal,
                     muscle_focus_points=muscle_focus_points,
                 )
@@ -658,7 +658,7 @@ async def generate_workout(http_request: Request, request: GenerateWorkoutReques
 
                 exercises = workout_data.get("exercises", [])
                 workout_name = workout_data.get("name", "Generated Workout")
-                workout_type = workout_data.get("type", request.workout_type or "strength")
+                workout_type = workout_data.get("type", body.workout_type or "strength")
                 difficulty = workout_data.get("difficulty", "medium")
 
                 # Cache the successful generation result
@@ -672,13 +672,13 @@ async def generate_workout(http_request: Request, request: GenerateWorkoutReques
                 )
 
         workout_db_data = {
-            "user_id": request.user_id,
+            "user_id": body.user_id,
             "name": workout_name,
             "type": workout_type,
             "difficulty": difficulty,
             "scheduled_date": datetime.now().isoformat(),
             "exercises_json": exercises,
-            "duration_minutes": request.duration_minutes or 45,
+            "duration_minutes": body.duration_minutes or 45,
             "generation_method": "ai",
             "generation_source": "gemini_generation",
         }
@@ -689,7 +689,7 @@ async def generate_workout(http_request: Request, request: GenerateWorkoutReques
         # Log workout change synchronously (quick local write, important for audit)
         log_workout_change(
             workout_id=created['id'],
-            user_id=request.user_id,
+            user_id=body.user_id,
             change_type="generated",
             change_source="ai_generation",
             new_value={"name": workout_name, "exercises_count": len(exercises)}
@@ -703,12 +703,12 @@ async def generate_workout(http_request: Request, request: GenerateWorkoutReques
         )
         background_tasks.add_task(
             _background_log_generation,
-            user_id=request.user_id,
+            user_id=body.user_id,
             workout_id=created['id'],
             workout_name=workout_name,
             workout_type=workout_type,
             exercises_count=len(exercises),
-            duration_minutes=request.duration_minutes or 45,
+            duration_minutes=body.duration_minutes or 45,
         )
 
         return generated_workout
@@ -719,11 +719,11 @@ async def generate_workout(http_request: Request, request: GenerateWorkoutReques
         logger.error(f"Failed to generate workout: {e}")
         # Log error (still inline since we need it for error tracking)
         await log_user_error(
-            user_id=request.user_id,
+            user_id=body.user_id,
             action="workout_generation",
             error=e,
             endpoint="/api/v1/workouts-db/generate",
-            metadata={"workout_type": request.workout_type},
+            metadata={"workout_type": body.workout_type},
             status_code=500
         )
         raise safe_internal_error(e, "workouts_db")
@@ -731,7 +731,7 @@ async def generate_workout(http_request: Request, request: GenerateWorkoutReques
 
 @router.post("/generate-stream")
 @limiter.limit("5/minute")
-async def generate_workout_streaming(http_request: Request, request: GenerateWorkoutRequest,
+async def generate_workout_streaming(request: Request, body: GenerateWorkoutRequest,
     current_user: dict = Depends(get_current_user),
 ):
     """
@@ -745,26 +745,26 @@ async def generate_workout_streaming(http_request: Request, request: GenerateWor
     The client can start displaying exercises as they arrive instead of
     waiting for the full response (3-8 seconds faster perceived time).
     """
-    logger.info(f"[Streaming] Generating workout for user {request.user_id}")
+    logger.info(f"[Streaming] Generating workout for user {body.user_id}")
 
     async def generate_sse() -> AsyncGenerator[str, None]:
         try:
             db = get_supabase_db()
 
             # Get user data if not provided
-            if request.fitness_level and request.goals and request.equipment:
-                fitness_level = request.fitness_level
-                goals = request.goals
-                equipment = request.equipment
+            if body.fitness_level and body.goals and body.equipment:
+                fitness_level = body.fitness_level
+                goals = body.goals
+                equipment = body.equipment
             else:
-                user = db.get_user(request.user_id)
+                user = db.get_user(body.user_id)
                 if not user:
                     yield f"event: error\ndata: {json.dumps({'error': 'User not found'})}\n\n"
                     return
 
-                fitness_level = request.fitness_level or user.get("fitness_level")
-                goals = request.goals or user.get("goals", [])
-                equipment = request.equipment or user.get("equipment", [])
+                fitness_level = body.fitness_level or user.get("fitness_level")
+                goals = body.goals or user.get("goals", [])
+                equipment = body.equipment or user.get("equipment", [])
 
             gemini_service = GeminiService()
             content_chunks = []
@@ -774,8 +774,8 @@ async def generate_workout_streaming(http_request: Request, request: GenerateWor
                 fitness_level=fitness_level or "intermediate",
                 goals=goals if isinstance(goals, list) else [],
                 equipment=equipment if isinstance(equipment, list) else [],
-                duration_minutes=request.duration_minutes or 45,
-                focus_areas=request.focus_areas
+                duration_minutes=body.duration_minutes or 45,
+                focus_areas=body.focus_areas
             ):
                 content_chunks.append(chunk)
                 # Send chunk event
@@ -805,13 +805,13 @@ async def generate_workout_streaming(http_request: Request, request: GenerateWor
 
             # Save to database
             workout_db_data = {
-                "user_id": request.user_id,
+                "user_id": body.user_id,
                 "name": workout_data.get("name", "Generated Workout"),
-                "type": workout_data.get("type", request.workout_type or "strength"),
+                "type": workout_data.get("type", body.workout_type or "strength"),
                 "difficulty": workout_data.get("difficulty", "medium"),
                 "scheduled_date": datetime.now().isoformat(),
                 "exercises_json": workout_data.get("exercises", []),
-                "duration_minutes": request.duration_minutes or 45,
+                "duration_minutes": body.duration_minutes or 45,
                 "generation_method": "ai",
                 "generation_source": "gemini_streaming",
             }
@@ -821,7 +821,7 @@ async def generate_workout_streaming(http_request: Request, request: GenerateWor
 
             log_workout_change(
                 workout_id=created['id'],
-                user_id=request.user_id,
+                user_id=body.user_id,
                 change_type="generated",
                 change_source="ai_streaming",
                 new_value={"name": workout_data.get("name"), "exercises_count": len(workout_data.get("exercises", []))}
@@ -865,15 +865,16 @@ async def generate_workout_streaming(http_request: Request, request: GenerateWor
 
 @router.post("/swap")
 @limiter.limit("5/minute")
-async def swap_workout_date(request: SwapWorkoutsRequest,
+async def swap_workout_date(body: SwapWorkoutsRequest,
+    request: Request = None,
     current_user: dict = Depends(get_current_user),
 ):
     """Move a workout to a new date, swapping if another workout exists there."""
-    logger.info(f"Swapping workout {request.workout_id} to {request.new_date}")
+    logger.info(f"Swapping workout {body.workout_id} to {body.new_date}")
     try:
         db = get_supabase_db()
 
-        workout = db.get_workout(request.workout_id)
+        workout = db.get_workout(body.workout_id)
         if not workout:
             raise HTTPException(status_code=404, detail="Workout not found")
 
@@ -881,17 +882,17 @@ async def swap_workout_date(request: SwapWorkoutsRequest,
         user_id = workout.get("user_id")
 
         # Check for existing workout on new date
-        existing_workouts = db.get_workouts_by_date_range(user_id, request.new_date, request.new_date)
+        existing_workouts = db.get_workouts_by_date_range(user_id, body.new_date, body.new_date)
 
         if existing_workouts:
             existing = existing_workouts[0]
             db.update_workout(existing["id"], {"scheduled_date": old_date, "last_modified_method": "date_swap"})
-            log_workout_change(existing["id"], user_id, "date_swap", "scheduled_date", request.new_date, old_date)
+            log_workout_change(existing["id"], user_id, "date_swap", "scheduled_date", body.new_date, old_date)
 
-        db.update_workout(request.workout_id, {"scheduled_date": request.new_date, "last_modified_method": "date_swap"})
-        log_workout_change(request.workout_id, user_id, "date_swap", "scheduled_date", old_date, request.new_date)
+        db.update_workout(body.workout_id, {"scheduled_date": body.new_date, "last_modified_method": "date_swap"})
+        log_workout_change(body.workout_id, user_id, "date_swap", "scheduled_date", old_date, body.new_date)
 
-        return {"success": True, "old_date": old_date, "new_date": request.new_date}
+        return {"success": True, "old_date": old_date, "new_date": body.new_date}
 
     except HTTPException:
         raise
@@ -1039,7 +1040,7 @@ def get_workout_focus(split: str, selected_days: List[int]) -> dict:
 
 @router.post("/regenerate", response_model=Workout)
 @limiter.limit("5/minute")
-async def regenerate_workout(http_request: Request, request: RegenerateWorkoutRequest, background_tasks: BackgroundTasks,
+async def regenerate_workout(request: Request, body: RegenerateWorkoutRequest, background_tasks: BackgroundTasks,
     current_user: dict = Depends(get_current_user),
 ):
     """
@@ -1053,41 +1054,41 @@ async def regenerate_workout(http_request: Request, request: RegenerateWorkoutRe
 
     The old workout is NOT deleted - it's kept for history/revert.
     """
-    logger.info(f"Regenerating workout {request.workout_id} for user {request.user_id}")
+    logger.info(f"Regenerating workout {body.workout_id} for user {body.user_id}")
 
     try:
         db = get_supabase_db()
 
         # Get existing workout
-        existing = db.get_workout(request.workout_id)
+        existing = db.get_workout(body.workout_id)
         if not existing:
             raise HTTPException(status_code=404, detail="Workout not found")
 
         # Get user data for generation
-        user = db.get_user(request.user_id)
+        user = db.get_user(body.user_id)
         if not user:
             raise HTTPException(status_code=404, detail="User not found")
 
         # Determine generation parameters
         # Use user-selected settings if provided, otherwise fall back to user profile
-        fitness_level = request.fitness_level or user.get("fitness_level") or "intermediate"
+        fitness_level = body.fitness_level or user.get("fitness_level") or "intermediate"
         # IMPORTANT: Use explicit None check so empty list [] is respected
-        equipment = request.equipment if request.equipment is not None else parse_json_field(user.get("equipment"), [])
+        equipment = body.equipment if body.equipment is not None else parse_json_field(user.get("equipment"), [])
         goals = normalize_goals_list(user.get("goals"))
         preferences = parse_json_field(user.get("preferences"), {})
         # Get equipment counts - use request if provided, otherwise fall back to user preferences
-        dumbbell_count = request.dumbbell_count if request.dumbbell_count is not None else preferences.get("dumbbell_count", 2)
-        kettlebell_count = request.kettlebell_count if request.kettlebell_count is not None else preferences.get("kettlebell_count", 1)
+        dumbbell_count = body.dumbbell_count if body.dumbbell_count is not None else preferences.get("dumbbell_count", 2)
+        kettlebell_count = body.kettlebell_count if body.kettlebell_count is not None else preferences.get("kettlebell_count", 1)
 
         # Get age and activity level for personalized workouts
         user_age = user.get("age")
         user_activity_level = user.get("activity_level")
 
         # Get user-selected difficulty (easy/medium/hard) - will override AI-generated difficulty
-        user_difficulty = request.difficulty
+        user_difficulty = body.difficulty
 
         # Get injuries from request (user-selected) or fall back to user profile
-        injuries = request.injuries or []
+        injuries = body.injuries or []
         if not injuries:
             # Check user's active injuries from profile
             user_injuries = parse_json_field(user.get("active_injuries"), [])
@@ -1098,20 +1099,20 @@ async def regenerate_workout(http_request: Request, request: RegenerateWorkoutRe
             logger.info(f"🩹 Regenerating workout avoiding exercises for injuries: {injuries}")
 
         # Get workout type from request
-        workout_type_override = request.workout_type
+        workout_type_override = body.workout_type
         if workout_type_override:
             logger.info(f"🏋️ Regenerating with workout type override: {workout_type_override}")
 
         # Determine focus area from existing workout or request
-        focus_areas = request.focus_areas or []
+        focus_areas = body.focus_areas or []
 
         logger.info(f"🎯 Regenerating workout with: fitness_level={fitness_level}")
-        logger.info(f"  - equipment={equipment} (from request: {request.equipment})")
-        logger.info(f"  - dumbbell_count={dumbbell_count} (from request: {request.dumbbell_count})")
-        logger.info(f"  - kettlebell_count={kettlebell_count} (from request: {request.kettlebell_count})")
+        logger.info(f"  - equipment={equipment} (from request: {body.equipment})")
+        logger.info(f"  - dumbbell_count={dumbbell_count} (from request: {body.dumbbell_count})")
+        logger.info(f"  - kettlebell_count={kettlebell_count} (from request: {body.kettlebell_count})")
         logger.info(f"  - difficulty={user_difficulty}")
         logger.info(f"  - workout_type={workout_type_override}")
-        logger.info(f"  - duration_minutes={request.duration_minutes}")
+        logger.info(f"  - duration_minutes={body.duration_minutes}")
         logger.info(f"  - injuries={injuries}")
         logger.info(f"  - focus_areas={focus_areas}")
 
@@ -1137,7 +1138,7 @@ async def regenerate_workout(http_request: Request, request: RegenerateWorkoutRe
         # Calculate exercise count based on duration
         # Rule: ~7 minutes per exercise (including rest) for a balanced workout
         # Shorter workouts = fewer exercises, longer workouts = more exercises
-        target_duration = request.duration_minutes or 45
+        target_duration = body.duration_minutes or 45
         exercise_count = max(3, min(10, target_duration // 7))  # 3-10 exercises
         logger.info(f"🎯 Target duration: {target_duration} mins -> {exercise_count} exercises")
 
@@ -1163,7 +1164,7 @@ async def regenerate_workout(http_request: Request, request: RegenerateWorkoutRe
                     exercises=rag_exercises,
                     fitness_level=fitness_level,
                     goals=goals if isinstance(goals, list) else [],
-                    duration_minutes=request.duration_minutes or 45,
+                    duration_minutes=body.duration_minutes or 45,
                     focus_areas=focus_areas if focus_areas else [focus_area],
                     age=user_age,
                     activity_level=user_activity_level
@@ -1175,7 +1176,7 @@ async def regenerate_workout(http_request: Request, request: RegenerateWorkoutRe
 
             exercises = workout_data.get("exercises", [])
             # Use provided workout_name if specified (e.g., from AI suggestion), otherwise use AI-generated name
-            workout_name = request.workout_name or workout_data.get("name", "Regenerated Workout")
+            workout_name = body.workout_name or workout_data.get("name", "Regenerated Workout")
             # Use user-selected workout type if provided, otherwise use AI-generated or existing
             workout_type = workout_type_override or workout_data.get("type", existing.get("type", "strength"))
             # Use user-selected difficulty if provided, otherwise use AI-generated or default
@@ -1193,19 +1194,19 @@ async def regenerate_workout(http_request: Request, request: RegenerateWorkoutRe
 
         # Prepare new workout data for the SCD2 supersede operation
         new_workout_data = {
-            "user_id": request.user_id,
+            "user_id": body.user_id,
             "name": workout_name,
             "type": workout_type,
             "difficulty": difficulty,
             "scheduled_date": existing.get("scheduled_date"),  # Keep same date
             "exercises_json": exercises,
-            "duration_minutes": request.duration_minutes or 45,
+            "duration_minutes": body.duration_minutes or 45,
             "equipment": json.dumps(equipment) if equipment else "[]",  # Store user-selected equipment
             "is_completed": False,  # Reset completion on regenerate
             "generation_method": "rag_regenerate" if used_rag else "ai_regenerate",
             "generation_source": "regenerate_endpoint",
             "generation_metadata": json.dumps({
-                "regenerated_from": request.workout_id,
+                "regenerated_from": body.workout_id,
                 "previous_version": existing.get("version_number", 1),
                 "fitness_level": fitness_level,
                 "equipment": equipment,
@@ -1219,18 +1220,18 @@ async def regenerate_workout(http_request: Request, request: RegenerateWorkoutRe
         }
 
         # Use SCD2 supersede to create new version
-        new_workout = db.supersede_workout(request.workout_id, new_workout_data)
-        logger.info(f"Workout regenerated: old_id={request.workout_id}, new_id={new_workout['id']}, version={new_workout.get('version_number')}")
+        new_workout = db.supersede_workout(body.workout_id, new_workout_data)
+        logger.info(f"Workout regenerated: old_id={body.workout_id}, new_id={new_workout['id']}, version={new_workout.get('version_number')}")
 
         log_workout_change(
             workout_id=new_workout["id"],
-            user_id=request.user_id,
+            user_id=body.user_id,
             change_type="regenerated",
             change_source="regenerate_endpoint",
             new_value={
                 "name": workout_name,
                 "exercises_count": len(exercises),
-                "previous_workout_id": request.workout_id
+                "previous_workout_id": body.workout_id
             }
         )
 
@@ -1269,11 +1270,11 @@ async def regenerate_workout(http_request: Request, request: RegenerateWorkoutRe
                             break
 
                 db.record_workout_regeneration(
-                    user_id=request.user_id,
-                    original_workout_id=request.workout_id,
+                    user_id=body.user_id,
+                    original_workout_id=body.workout_id,
                     new_workout_id=new_workout["id"],
                     difficulty=user_difficulty,
-                    duration_minutes=request.duration_minutes,
+                    duration_minutes=body.duration_minutes,
                     workout_type=workout_type_override,
                     equipment=equipment if isinstance(equipment, list) else [],
                     focus_areas=focus_areas if focus_areas else [],
@@ -1296,7 +1297,7 @@ async def regenerate_workout(http_request: Request, request: RegenerateWorkoutRe
                             await custom_rag.index_custom_input(
                                 input_type="focus_area",
                                 input_value=custom_focus_area,
-                                user_id=request.user_id,
+                                user_id=body.user_id,
                             )
                             logger.info(f"Background: Indexed custom focus area to ChromaDB: {custom_focus_area}")
 
@@ -1304,7 +1305,7 @@ async def regenerate_workout(http_request: Request, request: RegenerateWorkoutRe
                             await custom_rag.index_custom_input(
                                 input_type="injury",
                                 input_value=custom_injury,
-                                user_id=request.user_id,
+                                user_id=body.user_id,
                             )
                             logger.info(f"Background: Indexed custom injury to ChromaDB: {custom_injury}")
                     except Exception as chroma_error:
@@ -1318,15 +1319,15 @@ async def regenerate_workout(http_request: Request, request: RegenerateWorkoutRe
         async def _bg_log_regeneration():
             try:
                 await log_user_activity(
-                    user_id=request.user_id,
+                    user_id=body.user_id,
                     action="workout_regeneration",
                     endpoint="/api/v1/workouts-db/regenerate",
                     message=f"Regenerated workout: {workout_name}",
                     metadata={
-                        "original_workout_id": request.workout_id,
+                        "original_workout_id": body.workout_id,
                         "new_workout_id": new_workout["id"],
                         "difficulty": user_difficulty,
-                        "duration_minutes": request.duration_minutes,
+                        "duration_minutes": body.duration_minutes,
                         "workout_type": workout_type_override,
                         "exercises_count": len(exercises),
                         "used_rag": used_rag,
@@ -1345,11 +1346,11 @@ async def regenerate_workout(http_request: Request, request: RegenerateWorkoutRe
     except Exception as e:
         logger.error(f"Failed to regenerate workout: {e}")
         await log_user_error(
-            user_id=request.user_id,
+            user_id=body.user_id,
             action="workout_regeneration",
             error=e,
             endpoint="/api/v1/workouts-db/regenerate",
-            metadata={"workout_id": request.workout_id},
+            metadata={"workout_id": body.workout_id},
             status_code=500
         )
         raise safe_internal_error(e, "workouts_db")
@@ -1385,7 +1386,7 @@ class WorkoutSuggestionsResponse(BaseModel):
 
 @router.post("/suggest", response_model=WorkoutSuggestionsResponse)
 @limiter.limit("5/minute")
-async def get_workout_suggestions(http_request: Request, request: WorkoutSuggestionRequest,
+async def get_workout_suggestions(request: Request, body: WorkoutSuggestionRequest,
     current_user: dict = Depends(get_current_user),
 ):
     """
@@ -1396,18 +1397,18 @@ async def get_workout_suggestions(http_request: Request, request: WorkoutSuggest
     - User's fitness profile
     - Optional natural language prompt from user
     """
-    logger.info(f"Getting workout suggestions for workout {request.workout_id}")
+    logger.info(f"Getting workout suggestions for workout {body.workout_id}")
 
     try:
         db = get_supabase_db()
 
         # Get existing workout
-        existing = db.get_workout(request.workout_id)
+        existing = db.get_workout(body.workout_id)
         if not existing:
             raise HTTPException(status_code=404, detail="Workout not found")
 
         # Get user data
-        user = db.get_user(request.user_id)
+        user = db.get_user(body.user_id)
         if not user:
             raise HTTPException(status_code=404, detail="User not found")
 
@@ -1418,7 +1419,7 @@ async def get_workout_suggestions(http_request: Request, request: WorkoutSuggest
         injuries = parse_json_field(user.get("active_injuries"), [])
 
         # Get current workout info
-        current_type = request.current_workout_type or existing.get("type") or "Strength"
+        current_type = body.current_workout_type or existing.get("type") or "Strength"
         current_duration = existing.get("duration_minutes") or 45
 
         # Build prompt for AI
@@ -1458,7 +1459,7 @@ Return a JSON object with a "suggestions" array containing exactly 4 suggestions
 
 Example format: {{"suggestions": [...]}}"""
 
-        user_prompt = request.prompt if request.prompt else "Give me some workout alternatives"
+        user_prompt = body.prompt if body.prompt else "Give me some workout alternatives"
 
         from google.genai import types
         from core.config import get_settings
@@ -1941,7 +1942,7 @@ async def get_user_exit_stats(user_id: str,
 
 @router.post("/update-program", response_model=UpdateProgramResponse)
 @limiter.limit("5/minute")
-async def update_program(http_request: Request, request: UpdateProgramRequest,
+async def update_program(request: Request, body: UpdateProgramRequest,
     current_user: dict = Depends(get_current_user),
 ):
     """
@@ -1956,13 +1957,13 @@ async def update_program(http_request: Request, request: UpdateProgramRequest,
     SAFETY: Never deletes completed workouts or past workouts.
     The frontend should trigger workout regeneration after this succeeds.
     """
-    logger.info(f"Updating program for user {request.user_id}")
+    logger.info(f"Updating program for user {body.user_id}")
 
     try:
         db = get_supabase_db()
 
         # Verify user exists
-        user = db.get_user(request.user_id)
+        user = db.get_user(body.user_id)
         if not user:
             raise HTTPException(status_code=404, detail="User not found")
 
@@ -1977,34 +1978,34 @@ async def update_program(http_request: Request, request: UpdateProgramRequest,
         # Build updated preferences
         updated_prefs = dict(current_prefs)
 
-        if request.difficulty is not None:
-            updated_prefs["intensity_preference"] = request.difficulty
-        if request.duration_minutes is not None:
-            updated_prefs["workout_duration"] = request.duration_minutes
-        if request.workout_type is not None:
-            updated_prefs["training_split"] = request.workout_type
-        if request.workout_days is not None:
+        if body.difficulty is not None:
+            updated_prefs["intensity_preference"] = body.difficulty
+        if body.duration_minutes is not None:
+            updated_prefs["workout_duration"] = body.duration_minutes
+        if body.workout_type is not None:
+            updated_prefs["training_split"] = body.workout_type
+        if body.workout_days is not None:
             # Store both days_per_week and selected_days
-            updated_prefs["days_per_week"] = len(request.workout_days)
+            updated_prefs["days_per_week"] = len(body.workout_days)
             # Convert day names to indices (Mon=0, Tue=1, etc.)
             day_map = {"Mon": 0, "Tue": 1, "Wed": 2, "Thu": 3, "Fri": 4, "Sat": 5, "Sun": 6}
-            selected_indices = [day_map.get(d, 0) for d in request.workout_days]
+            selected_indices = [day_map.get(d, 0) for d in body.workout_days]
             updated_prefs["selected_days"] = sorted(selected_indices)
-        if request.dumbbell_count is not None:
-            updated_prefs["dumbbell_count"] = request.dumbbell_count
-        if request.kettlebell_count is not None:
-            updated_prefs["kettlebell_count"] = request.kettlebell_count
+        if body.dumbbell_count is not None:
+            updated_prefs["dumbbell_count"] = body.dumbbell_count
+        if body.kettlebell_count is not None:
+            updated_prefs["kettlebell_count"] = body.kettlebell_count
 
         # Update user preferences and equipment/injuries
         update_data = {"preferences": updated_prefs}
 
-        if request.equipment is not None:
-            update_data["equipment"] = request.equipment
-        if request.injuries is not None:
-            update_data["active_injuries"] = request.injuries
+        if body.equipment is not None:
+            update_data["equipment"] = body.equipment
+        if body.injuries is not None:
+            update_data["active_injuries"] = body.injuries
 
-        db.update_user(request.user_id, update_data)
-        logger.info(f"Updated preferences for user {request.user_id}")
+        db.update_user(body.user_id, update_data)
+        logger.info(f"Updated preferences for user {body.user_id}")
 
         # Delete only future incomplete workouts
         # CRITICAL: Never delete completed workouts or past workouts
@@ -2012,7 +2013,7 @@ async def update_program(http_request: Request, request: UpdateProgramRequest,
         today = date.today().isoformat()
 
         # Get all workouts for user
-        all_workouts = db.list_workouts(request.user_id, limit=1000)
+        all_workouts = db.list_workouts(body.user_id, limit=1000)
 
         # Filter to only future incomplete workouts
         workouts_to_delete = []
@@ -2048,38 +2049,38 @@ async def update_program(http_request: Request, request: UpdateProgramRequest,
             except Exception as e:
                 logger.error(f"Failed to delete workout {w['id']}: {e}")
 
-        logger.info(f"Deleted {deleted_count} future incomplete workouts for user {request.user_id}")
+        logger.info(f"Deleted {deleted_count} future incomplete workouts for user {body.user_id}")
 
         # Index preference changes to RAG for AI context
         try:
             rag_service = get_workout_rag_service()
             await rag_service.index_program_preferences(
-                user_id=request.user_id,
-                difficulty=request.difficulty,
-                duration_minutes=request.duration_minutes,
-                workout_type=request.workout_type,
-                workout_days=request.workout_days,
-                equipment=request.equipment,
-                focus_areas=request.focus_areas,
-                injuries=request.injuries,
-                workout_environment=request.workout_environment,
+                user_id=body.user_id,
+                difficulty=body.difficulty,
+                duration_minutes=body.duration_minutes,
+                workout_type=body.workout_type,
+                workout_days=body.workout_days,
+                equipment=body.equipment,
+                focus_areas=body.focus_areas,
+                injuries=body.injuries,
+                workout_environment=body.workout_environment,
                 change_reason="program_customization",
             )
-            logger.info(f"Indexed program preferences to RAG for user {request.user_id}")
+            logger.info(f"Indexed program preferences to RAG for user {body.user_id}")
         except Exception as e:
             logger.warning(f"Could not index preferences to RAG: {e}")
 
         # Log program customization
         await log_user_activity(
-            user_id=request.user_id,
+            user_id=body.user_id,
             action="program_customization",
             endpoint="/api/v1/workouts-db/update-program",
             message=f"Updated program, deleted {deleted_count} future workouts",
             metadata={
-                "difficulty": request.difficulty,
-                "duration_minutes": request.duration_minutes,
-                "workout_type": request.workout_type,
-                "workout_days": request.workout_days,
+                "difficulty": body.difficulty,
+                "duration_minutes": body.duration_minutes,
+                "workout_type": body.workout_type,
+                "workout_days": body.workout_days,
                 "workouts_deleted": deleted_count,
             },
             status_code=200
@@ -2097,7 +2098,7 @@ async def update_program(http_request: Request, request: UpdateProgramRequest,
     except Exception as e:
         logger.error(f"Failed to update program: {e}")
         await log_user_error(
-            user_id=request.user_id,
+            user_id=body.user_id,
             action="program_customization",
             error=e,
             endpoint="/api/v1/workouts-db/update-program",

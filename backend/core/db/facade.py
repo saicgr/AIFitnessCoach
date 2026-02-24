@@ -186,6 +186,7 @@ class SupabaseDB:
         offset: int = 0,
         order_asc: bool = False,
         gym_profile_id: Optional[str] = None,
+        allow_multiple_per_date: bool = False,
     ) -> List[Dict[str, Any]]:
         """List workouts for a user with filters.
 
@@ -193,9 +194,10 @@ class SupabaseDB:
             order_asc: If True, sort by earliest date first (for getting next workout).
                        If False (default), sort by latest date first.
             gym_profile_id: Filter by gym profile (optional).
+            allow_multiple_per_date: If True, return multiple workouts per date.
         """
         return self._workout_db.list_workouts(
-            user_id, is_completed, from_date, to_date, limit, offset, order_asc, gym_profile_id
+            user_id, is_completed, from_date, to_date, limit, offset, order_asc, gym_profile_id, allow_multiple_per_date
         )
 
     def create_workout(self, data: Dict[str, Any]) -> Optional[Dict[str, Any]]:
@@ -227,10 +229,11 @@ class SupabaseDB:
         to_date: Optional[str] = None,
         limit: int = 50,
         offset: int = 0,
+        gym_profile_id: Optional[str] = None,
     ) -> List[Dict[str, Any]]:
         """List only current (active) workouts for a user."""
         return self._workout_db.list_current_workouts(
-            user_id, is_completed, from_date, to_date, limit, offset
+            user_id, is_completed, from_date, to_date, limit, offset, gym_profile_id
         )
 
     def get_workout_versions(self, workout_id: str) -> List[Dict[str, Any]]:
@@ -572,16 +575,16 @@ class SupabaseDB:
         )
 
     def get_daily_nutrition_summary(
-        self, user_id: str, date: str, timezone_str: str = None
+        self, user_id: str, date: str, timezone_str: Optional[str] = None
     ) -> Dict[str, Any]:
         """Get nutrition totals for a specific day."""
         return self._nutrition_db.get_daily_nutrition_summary(user_id, date, timezone_str=timezone_str)
 
     def get_weekly_nutrition_summary(
-        self, user_id: str, start_date: str
+        self, user_id: str, start_date: str, timezone_str: Optional[str] = None
     ) -> List[Dict[str, Any]]:
         """Get nutrition totals for a week."""
-        return self._nutrition_db.get_weekly_nutrition_summary(user_id, start_date)
+        return self._nutrition_db.get_weekly_nutrition_summary(user_id, start_date, timezone_str=timezone_str)
 
     def delete_food_log(self, log_id: str) -> bool:
         """Delete a food log entry."""

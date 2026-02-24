@@ -10,7 +10,7 @@ Provides real-time weight suggestions during active workouts based on:
 Uses Gemini AI to generate intelligent, personalized suggestions.
 """
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from core.auth import get_current_user
 from core.rate_limiter import limiter
 from core.exceptions import safe_internal_error
@@ -560,7 +560,8 @@ IMPORTANT:
 
 @router.post("/weight-suggestion", response_model=WeightSuggestionResponse)
 @limiter.limit("5/minute")
-async def get_weight_suggestion(request: WeightSuggestionRequest,
+async def get_weight_suggestion(body: WeightSuggestionRequest,
+    request: Request = None,
     current_user: dict = Depends(get_current_user),
 ):
     """
@@ -578,16 +579,16 @@ async def get_weight_suggestion(request: WeightSuggestionRequest,
     Falls back to rule-based suggestions if AI is unavailable.
     """
     logger.info(
-        f"Weight suggestion request: user={request.user_id}, "
-        f"exercise={request.exercise_name}, "
-        f"set={request.current_set.set_number}/{request.total_sets}"
+        f"Weight suggestion request: user={body.user_id}, "
+        f"exercise={body.exercise_name}, "
+        f"set={body.current_set.set_number}/{body.total_sets}"
     )
 
     # Validate input - reject obviously invalid data
-    if request.current_set.reps_completed <= 0:
+    if body.current_set.reps_completed <= 0:
         logger.info("Invalid data: 0 reps completed, returning prompt to enter data")
         return WeightSuggestionResponse(
-            suggested_weight=request.current_set.weight_kg,
+            suggested_weight=body.current_set.weight_kg,
             weight_delta=0,
             suggestion_type="invalid",
             reason="Please enter valid reps to get personalized suggestions",
@@ -598,23 +599,23 @@ async def get_weight_suggestion(request: WeightSuggestionRequest,
 
     try:
         # Get equipment-specific increment
-        equipment_increment = get_equipment_increment(request.equipment)
+        equipment_increment = get_equipment_increment(body.equipment)
 
         # Check if we have intensity data for AI suggestion
         has_intensity_data = (
-            request.current_set.rpe is not None or
-            request.current_set.rir is not None
+            body.current_set.rpe is not None or
+            body.current_set.rir is not None
         )
 
         if not has_intensity_data:
             # Without RPE/RIR, use rule-based
             logger.info("No intensity data provided, using rule-based suggestion")
-            return generate_rule_based_suggestion(request, equipment_increment)
+            return generate_rule_based_suggestion(body, equipment_increment)
 
         # Fetch exercise history
         history = await get_exercise_history(
-            user_id=request.user_id,
-            exercise_name=request.exercise_name,
+            user_id=body.user_id,
+            exercise_name=body.exercise_name,
             limit=5
         )
 
@@ -623,7 +624,7 @@ async def get_weight_suggestion(request: WeightSuggestionRequest,
             gemini = get_gemini_service()
             suggestion = await generate_ai_suggestion(
                 gemini=gemini,
-                request=request,
+                request=body,
                 history=history,
                 equipment_increment=equipment_increment
             )
@@ -635,7 +636,7 @@ async def get_weight_suggestion(request: WeightSuggestionRequest,
 
         except Exception as ai_error:
             logger.warning(f"AI suggestion failed, falling back to rules: {ai_error}")
-            return generate_rule_based_suggestion(request, equipment_increment)
+            return generate_rule_based_suggestion(body, equipment_increment)
 
     except Exception as e:
         logger.error(f"Weight suggestion failed: {e}")

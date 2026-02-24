@@ -136,7 +136,7 @@ async def _log_weekly_plan_event(user_id: str, week_start_iso: str, workout_days
 
 @router.post("/generate", response_model=WeeklyPlanResponse)
 @limiter.limit("5/minute")
-async def generate_weekly_plan(request: GenerateWeeklyPlanRequest, http_request: Request, background_tasks: BackgroundTasks,
+async def generate_weekly_plan(body: GenerateWeeklyPlanRequest, request: Request, background_tasks: BackgroundTasks,
     current_user: dict = Depends(get_current_user),
 ):
     """
@@ -148,34 +148,34 @@ async def generate_weekly_plan(request: GenerateWeeklyPlanRequest, http_request:
     - Fasting windows that work with workout timing
     - Coordination warnings for any conflicts
     """
-    logger.info(f"Generating weekly plan for user {request.user_id}")
+    logger.info(f"Generating weekly plan for user {body.user_id}")
 
     try:
         service = get_holistic_plan_service()
 
         # Parse week start date
-        if request.week_start:
-            week_start = date.fromisoformat(request.week_start)
+        if body.week_start:
+            week_start = date.fromisoformat(body.week_start)
         else:
             # Default to current week's Monday
-            user_tz = resolve_timezone(http_request, None, request.user_id)
+            user_tz = resolve_timezone(request, None, body.user_id)
             today = date.fromisoformat(get_user_today(user_tz))
             week_start = today - timedelta(days=today.weekday())
 
         # Parse preferred workout time
         preferred_time = None
-        if request.preferred_workout_time:
-            parts = request.preferred_workout_time.split(":")
+        if body.preferred_workout_time:
+            parts = body.preferred_workout_time.split(":")
             preferred_time = time(int(parts[0]), int(parts[1]))
 
         # Generate the plan
         plan = await service.generate_weekly_plan(
-            user_id=request.user_id,
+            user_id=body.user_id,
             week_start=week_start,
-            workout_days=request.workout_days,
-            fasting_protocol=request.fasting_protocol,
-            nutrition_strategy=request.nutrition_strategy,
-            goals=request.goals,
+            workout_days=body.workout_days,
+            fasting_protocol=body.fasting_protocol,
+            nutrition_strategy=body.nutrition_strategy,
+            goals=body.goals,
             preferred_workout_time=preferred_time,
         )
 
@@ -186,14 +186,14 @@ async def generate_weekly_plan(request: GenerateWeeklyPlanRequest, http_request:
         # Log the event in background (non-critical, don't block the response)
         background_tasks.add_task(
             _log_weekly_plan_event,
-            user_id=request.user_id,
+            user_id=body.user_id,
             week_start_iso=week_start.isoformat(),
-            workout_days=request.workout_days,
-            fasting_protocol=request.fasting_protocol,
-            nutrition_strategy=request.nutrition_strategy,
+            workout_days=body.workout_days,
+            fasting_protocol=body.fasting_protocol,
+            nutrition_strategy=body.nutrition_strategy,
         )
 
-        logger.info(f"Generated weekly plan {plan_id} for user {request.user_id}")
+        logger.info(f"Generated weekly plan {plan_id} for user {body.user_id}")
 
         return WeeklyPlanResponse(
             id=plan.id,
@@ -515,7 +515,7 @@ async def update_daily_entry(
 
 @router.post("/meal-suggestions", response_model=MealSuggestionsResponse)
 @limiter.limit("10/minute")
-async def generate_meal_suggestions(request: GenerateMealSuggestionsRequest, http_request: Request,
+async def generate_meal_suggestions(body: GenerateMealSuggestionsRequest, request: Request,
     current_user: dict = Depends(get_current_user),
 ):
     """
@@ -527,7 +527,7 @@ async def generate_meal_suggestions(request: GenerateMealSuggestionsRequest, htt
     - Include pre/post workout meals on training days
     - Respect dietary restrictions
     """
-    logger.info(f"Generating meal suggestions for user {request.user_id}, date {request.plan_date}")
+    logger.info(f"Generating meal suggestions for user {body.user_id}, date {body.plan_date}")
 
     try:
         # Import Gemini service for AI generation
@@ -535,28 +535,28 @@ async def generate_meal_suggestions(request: GenerateMealSuggestionsRequest, htt
         gemini = GeminiService()
 
         # Parse times
-        eating_start = request.eating_window_start or "12:00"
-        eating_end = request.eating_window_end or "20:00"
-        workout_time = request.workout_time
+        eating_start = body.eating_window_start or "12:00"
+        eating_end = body.eating_window_end or "20:00"
+        workout_time = body.workout_time
 
         # Build prompt for AI
-        prompt = f"""Generate a meal plan for a {request.day_type} day with these requirements:
+        prompt = f"""Generate a meal plan for a {body.day_type} day with these requirements:
 
 NUTRITION TARGETS:
-- Calories: {request.calorie_target} kcal
-- Protein: {request.protein_target_g}g
-- Carbs: {request.carbs_target_g}g
-- Fat: {request.fat_target_g}g
+- Calories: {body.calorie_target} kcal
+- Protein: {body.protein_target_g}g
+- Carbs: {body.carbs_target_g}g
+- Fat: {body.fat_target_g}g
 
 EATING WINDOW: {eating_start} - {eating_end}
 {"WORKOUT TIME: " + workout_time if workout_time else "REST DAY"}
 
-DIETARY RESTRICTIONS: {', '.join(request.dietary_restrictions) if request.dietary_restrictions else 'None'}
+DIETARY RESTRICTIONS: {', '.join(body.dietary_restrictions) if body.dietary_restrictions else 'None'}
 
 Generate 3-4 meals that:
 1. Fit within the eating window
 2. Total approximately the target macros
-3. {"Include a pre-workout meal 2-3h before workout and post-workout meal within 1h after" if request.day_type == "training" and workout_time else "Spread evenly across eating window"}
+3. {"Include a pre-workout meal 2-3h before workout and post-workout meal within 1h after" if body.day_type == "training" and workout_time else "Spread evenly across eating window"}
 
 Return JSON only:
 {{
@@ -595,16 +595,16 @@ Return JSON only:
             data = json.loads(content.strip())
 
             # Log success in background (non-critical, don't block the response)
-            # Note: http_request is available from the endpoint parameter
+            # Note: request is available from the endpoint parameter
             async def _log_meal_event():
                 try:
                     await user_context_service.log_event(
-                        user_id=request.user_id,
+                        user_id=body.user_id,
                         event_type=EventType.FEATURE_INTERACTION,
                         metadata={
                             "feature": "meal_suggestions_generated",
-                            "date": request.plan_date,
-                            "day_type": request.day_type,
+                            "date": body.plan_date,
+                            "day_type": body.day_type,
                             "meal_count": len(data.get("meals", [])),
                         },
                     )
@@ -687,7 +687,7 @@ async def save_meal_suggestions_to_daily(
             workout_time=entry.get("workout_time"),
         )
 
-        suggestions = await generate_meal_suggestions(meal_request, http_request)
+        suggestions = await generate_meal_suggestions(meal_request, request)
 
         # Save to daily entry
         db.client.table("daily_plan_entries").update({

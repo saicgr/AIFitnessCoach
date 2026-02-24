@@ -96,7 +96,7 @@ async def get_habits(
 
     except Exception as e:
         logger.error(f"❌ Error getting habits: {e}")
-        log_user_error(user_id, "get_habits", str(e))
+        await log_user_error(user_id, "get_habits", str(e))
         raise safe_internal_error(e, "endpoint")
 
 
@@ -208,7 +208,7 @@ async def get_today_habits(
 
     except Exception as e:
         logger.error(f"❌ Error getting today's habits: {e}")
-        log_user_error(user_id, "get_today_habits", str(e))
+        await log_user_error(user_id, "get_today_habits", str(e))
         raise safe_internal_error(e, "endpoint")
 
 
@@ -259,7 +259,7 @@ async def create_habit(
         created_habit = result.data[0]
 
         # Log activity
-        log_user_activity(user_id, "habit_created", {
+        await log_user_activity(user_id, "habit_created", {
             "habit_id": created_habit["id"],
             "habit_name": habit.name,
             "category": habit.category,
@@ -273,7 +273,7 @@ async def create_habit(
         raise
     except Exception as e:
         logger.error(f"❌ Error creating habit: {e}")
-        log_user_error(user_id, "create_habit", str(e))
+        await log_user_error(user_id, "create_habit", str(e))
         raise safe_internal_error(e, "endpoint")
 
 
@@ -352,7 +352,7 @@ async def update_habit(
         raise
     except Exception as e:
         logger.error(f"❌ Error updating habit: {e}")
-        log_user_error(user_id, "update_habit", str(e))
+        await log_user_error(user_id, "update_habit", str(e))
         raise safe_internal_error(e, "endpoint")
 
 
@@ -400,7 +400,7 @@ async def delete_habit(
             ).eq("user_id", user_id).execute()
             message = f"Habit '{habit_name}' archived"
 
-        log_user_activity(user_id, "habit_deleted", {
+        await log_user_activity(user_id, "habit_deleted", {
             "habit_id": habit_id,
             "habit_name": habit_name,
             "hard_delete": hard_delete,
@@ -413,7 +413,7 @@ async def delete_habit(
         raise
     except Exception as e:
         logger.error(f"❌ Error deleting habit: {e}")
-        log_user_error(user_id, "delete_habit", str(e))
+        await log_user_error(user_id, "delete_habit", str(e))
         raise safe_internal_error(e, "endpoint")
 
 
@@ -501,7 +501,7 @@ async def log_habit(
         log_entry = result.data[0]
 
         # Log activity
-        log_user_activity(user_id, "habit_logged", {
+        await log_user_activity(user_id, "habit_logged", {
             "habit_id": str(log.habit_id),
             "habit_name": habit.data[0]["name"],
             "log_date": log.log_date.isoformat(),
@@ -516,7 +516,7 @@ async def log_habit(
         raise
     except Exception as e:
         logger.error(f"❌ Error logging habit: {e}")
-        log_user_error(user_id, "log_habit", str(e))
+        await log_user_error(user_id, "log_habit", str(e))
         raise safe_internal_error(e, "endpoint")
 
 
@@ -583,7 +583,7 @@ async def update_habit_log(
         raise
     except Exception as e:
         logger.error(f"❌ Error updating habit log: {e}")
-        log_user_error(user_id, "update_habit_log", str(e))
+        await log_user_error(user_id, "update_habit_log", str(e))
         raise safe_internal_error(e, "endpoint")
 
 
@@ -643,7 +643,7 @@ async def get_habit_logs(
         raise
     except Exception as e:
         logger.error(f"❌ Error getting habit logs: {e}")
-        log_user_error(user_id, "get_habit_logs", str(e))
+        await log_user_error(user_id, "get_habit_logs", str(e))
         raise safe_internal_error(e, "endpoint")
 
 
@@ -726,7 +726,7 @@ async def get_all_streaks(
 
     except Exception as e:
         logger.error(f"❌ Error getting streaks: {e}")
-        log_user_error(user_id, "get_all_streaks", str(e))
+        await log_user_error(user_id, "get_all_streaks", str(e))
         raise safe_internal_error(e, "endpoint")
 
 
@@ -763,7 +763,7 @@ async def get_habit_streak(
         raise
     except Exception as e:
         logger.error(f"❌ Error getting streak: {e}")
-        log_user_error(user_id, "get_habit_streak", str(e))
+        await log_user_error(user_id, "get_habit_streak", str(e))
         raise safe_internal_error(e, "endpoint")
 
 
@@ -833,7 +833,7 @@ async def get_habits_summary(
 
     except Exception as e:
         logger.error(f"❌ Error getting habits summary: {e}")
-        log_user_error(user_id, "get_habits_summary", str(e))
+        await log_user_error(user_id, "get_habits_summary", str(e))
         raise safe_internal_error(e, "endpoint")
 
 
@@ -883,7 +883,7 @@ async def get_weekly_summary(
 
     except Exception as e:
         logger.error(f"❌ Error getting weekly summary: {e}")
-        log_user_error(user_id, "get_weekly_summary", str(e))
+        await log_user_error(user_id, "get_weekly_summary", str(e))
         raise safe_internal_error(e, "endpoint")
 
 
@@ -989,7 +989,7 @@ async def get_habits_calendar(
         raise
     except Exception as e:
         logger.error(f"❌ Error getting calendar: {e}")
-        log_user_error(user_id, "get_habits_calendar", str(e))
+        await log_user_error(user_id, "get_habits_calendar", str(e))
         raise safe_internal_error(e, "endpoint")
 
 
@@ -1082,7 +1082,7 @@ async def create_habit_from_template(
         raise
     except Exception as e:
         logger.error(f"❌ Error creating from template: {e}")
-        log_user_error(user_id, "create_habit_from_template", str(e))
+        await log_user_error(user_id, "create_habit_from_template", str(e))
         raise safe_internal_error(e, "endpoint")
 
 
@@ -1146,7 +1146,7 @@ async def get_ai_suggestions(
         )
     except Exception as e:
         logger.error(f"❌ Error getting AI suggestions: {e}")
-        log_user_error(user_id, "get_ai_suggestions", str(e))
+        await log_user_error(user_id, "get_ai_suggestions", str(e))
         raise safe_internal_error(e, "endpoint")
 
 
@@ -1229,5 +1229,5 @@ async def get_habit_insights(
 
     except Exception as e:
         logger.error(f"❌ Error getting insights: {e}")
-        log_user_error(user_id, "get_habit_insights", str(e))
+        await log_user_error(user_id, "get_habit_insights", str(e))
         raise safe_internal_error(e, "endpoint")

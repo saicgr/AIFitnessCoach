@@ -95,7 +95,7 @@ async def create_schedule_item(user_id: str, item: ScheduleItemCreate, current_u
 
         created = result.data[0]
 
-        log_user_activity(user_id, "schedule_item_created", metadata={
+        await log_user_activity(user_id, "schedule_item_created", metadata={
             "item_id": created["id"],
             "item_type": item.item_type,
             "title": item.title,
@@ -108,7 +108,7 @@ async def create_schedule_item(user_id: str, item: ScheduleItemCreate, current_u
         raise
     except Exception as e:
         logger.error(f"Error creating schedule item: {e}")
-        log_user_error(user_id, "create_schedule_item", str(e))
+        await log_user_error(user_id, "create_schedule_item", str(e))
         raise safe_internal_error(e, "daily_schedule")
 
 
@@ -157,7 +157,7 @@ async def list_schedule_items(
 
     except Exception as e:
         logger.error(f"Error listing schedule items: {e}")
-        log_user_error(user_id, "list_schedule_items", str(e))
+        await log_user_error(user_id, "list_schedule_items", str(e))
         raise safe_internal_error(e, "daily_schedule")
 
 
@@ -193,7 +193,7 @@ async def get_schedule_item(user_id: str, item_id: str, current_user: dict = Dep
         raise
     except Exception as e:
         logger.error(f"Error getting schedule item: {e}")
-        log_user_error(user_id, "get_schedule_item", str(e))
+        await log_user_error(user_id, "get_schedule_item", str(e))
         raise safe_internal_error(e, "daily_schedule")
 
 
@@ -252,7 +252,7 @@ async def update_schedule_item(user_id: str, item_id: str, item: ScheduleItemUpd
         raise
     except Exception as e:
         logger.error(f"Error updating schedule item: {e}")
-        log_user_error(user_id, "update_schedule_item", str(e))
+        await log_user_error(user_id, "update_schedule_item", str(e))
         raise safe_internal_error(e, "daily_schedule")
 
 
@@ -289,7 +289,7 @@ async def delete_schedule_item(user_id: str, item_id: str, current_user: dict = 
             "id", item_id
         ).eq("user_id", user_id).execute()
 
-        log_user_activity(user_id, "schedule_item_deleted", metadata={
+        await log_user_activity(user_id, "schedule_item_deleted", metadata={
             "item_id": item_id,
             "title": title,
         })
@@ -301,7 +301,7 @@ async def delete_schedule_item(user_id: str, item_id: str, current_user: dict = 
         raise
     except Exception as e:
         logger.error(f"Error deleting schedule item: {e}")
-        log_user_error(user_id, "delete_schedule_item", str(e))
+        await log_user_error(user_id, "delete_schedule_item", str(e))
         raise safe_internal_error(e, "daily_schedule")
 
 
@@ -363,7 +363,7 @@ async def get_daily_schedule(
 
     except Exception as e:
         logger.error(f"Error getting daily schedule: {e}")
-        log_user_error(user_id, "get_daily_schedule", str(e))
+        await log_user_error(user_id, "get_daily_schedule", str(e))
         raise safe_internal_error(e, "daily_schedule")
 
 
@@ -416,7 +416,7 @@ async def get_up_next(
 
     except Exception as e:
         logger.error(f"Error getting up-next: {e}")
-        log_user_error(user_id, "get_up_next", str(e))
+        await log_user_error(user_id, "get_up_next", str(e))
         raise safe_internal_error(e, "daily_schedule")
 
 
@@ -461,7 +461,7 @@ async def complete_schedule_item(user_id: str, item_id: str, current_user: dict 
             raise HTTPException(status_code=500, detail="Failed to complete schedule item")
 
         title = existing.data[0].get("title", "Unknown")
-        log_user_activity(user_id, "schedule_item_completed", metadata={
+        await log_user_activity(user_id, "schedule_item_completed", metadata={
             "item_id": item_id,
             "title": title,
         })
@@ -473,7 +473,7 @@ async def complete_schedule_item(user_id: str, item_id: str, current_user: dict 
         raise
     except Exception as e:
         logger.error(f"Error completing schedule item: {e}")
-        log_user_error(user_id, "complete_schedule_item", str(e))
+        await log_user_error(user_id, "complete_schedule_item", str(e))
         raise safe_internal_error(e, "daily_schedule")
 
 
@@ -589,7 +589,7 @@ async def auto_populate_schedule(user_id: str, request: AutoPopulateRequest, cur
                 if result.data:
                     created_items.append(result.data[0])
 
-        log_user_activity(user_id, "schedule_auto_populated", metadata={
+        await log_user_activity(user_id, "schedule_auto_populated", metadata={
             "date": target_date,
             "items_created": len(created_items),
         })
@@ -599,7 +599,7 @@ async def auto_populate_schedule(user_id: str, request: AutoPopulateRequest, cur
 
     except Exception as e:
         logger.error(f"Error auto-populating schedule: {e}")
-        log_user_error(user_id, "auto_populate_schedule", str(e))
+        await log_user_error(user_id, "auto_populate_schedule", str(e))
         raise safe_internal_error(e, "daily_schedule")
 
 
@@ -632,7 +632,7 @@ async def connect_google_calendar(user_id: str, request: GoogleCalendarConnectRe
             calendar_id=request.calendar_id,
         )
 
-        log_user_activity(user_id, "gcal_connected", metadata={
+        await log_user_activity(user_id, "gcal_connected", metadata={
             "calendar_id": request.calendar_id or "primary",
         })
 
@@ -643,7 +643,7 @@ async def connect_google_calendar(user_id: str, request: GoogleCalendarConnectRe
         raise
     except Exception as e:
         logger.error(f"Error connecting Google Calendar: {e}")
-        log_user_error(user_id, "connect_google_calendar", str(e))
+        await log_user_error(user_id, "connect_google_calendar", str(e))
         raise safe_internal_error(e, "daily_schedule")
 
 
@@ -682,7 +682,7 @@ async def get_gcal_busy_times(
         raise
     except Exception as e:
         logger.error(f"Error getting busy times: {e}")
-        log_user_error(user_id, "get_gcal_busy_times", str(e))
+        await log_user_error(user_id, "get_gcal_busy_times", str(e))
         raise safe_internal_error(e, "daily_schedule")
 
 
@@ -729,7 +729,7 @@ async def push_to_google_calendar(user_id: str, request: GoogleCalendarPushReque
             "sync_to_google_calendar": True,
         }).eq("id", str(request.item_id)).eq("user_id", user_id).execute()
 
-        log_user_activity(user_id, "gcal_event_pushed", metadata={
+        await log_user_activity(user_id, "gcal_event_pushed", metadata={
             "item_id": str(request.item_id),
             "gcal_event_id": event.get("id"),
         })
@@ -741,5 +741,5 @@ async def push_to_google_calendar(user_id: str, request: GoogleCalendarPushReque
         raise
     except Exception as e:
         logger.error(f"Error pushing to Google Calendar: {e}")
-        log_user_error(user_id, "push_to_google_calendar", str(e))
+        await log_user_error(user_id, "push_to_google_calendar", str(e))
         raise safe_internal_error(e, "daily_schedule")

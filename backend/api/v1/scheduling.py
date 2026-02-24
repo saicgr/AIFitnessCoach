@@ -269,7 +269,7 @@ async def get_missed_workouts(
 
     except Exception as e:
         logger.error(f"Error getting missed workouts: {e}")
-        log_user_error(user_id, "get_missed_workouts", str(e))
+        await log_user_error(user_id, "get_missed_workouts", str(e))
         raise safe_internal_error(e, "scheduling")
 
 
@@ -378,7 +378,7 @@ async def reschedule_workout(request: RescheduleRequest,
             logger.warning(f"Could not log scheduling history: {e}")
 
         # Log activity
-        log_user_activity(
+        await log_user_activity(
             user_id,
             "workout_rescheduled",
             {"workout_id": request.workout_id, "new_date": new_date.isoformat()}
@@ -464,7 +464,7 @@ async def skip_workout(request: SkipRequest,
             logger.warning(f"Could not log scheduling history: {e}")
 
         # Log activity
-        log_user_activity(
+        await log_user_activity(
             user_id,
             "workout_skipped",
             {"workout_id": request.workout_id, "reason_category": request.reason_category}

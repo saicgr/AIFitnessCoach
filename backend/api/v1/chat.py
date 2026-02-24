@@ -321,17 +321,17 @@ def get_gemini_service_dep() -> GeminiService:
 @router.post("/extract-intent", response_model=ExtractIntentResponse)
 @limiter.limit("10/minute")
 async def extract_intent(
-    request: ExtractIntentRequest,
-    http_request: Request,
+    body: ExtractIntentRequest,
+    request: Request,
     current_user: dict = Depends(get_current_user),
     gemini: GeminiService = Depends(get_gemini_service_dep),
 ):
     """
     Extract intent and structured data from a user message.
     """
-    logger.debug(f"Extracting intent from: {request.message[:50]}...")
+    logger.debug(f"Extracting intent from: {body.message[:50]}...")
     try:
-        extraction = await gemini.extract_intent(request.message)
+        extraction = await gemini.extract_intent(body.message)
         logger.debug(f"Intent extracted: {extraction.intent.value}")
         return ExtractIntentResponse(
             intent=extraction.intent.value,
@@ -362,20 +362,20 @@ class RAGSearchResult(BaseModel):
 @router.post("/rag/search", response_model=List[RAGSearchResult])
 @limiter.limit("20/minute")
 async def search_similar(
-    request: RAGSearchRequest,
-    http_request: Request,
+    body: RAGSearchRequest,
+    request: Request,
     current_user: dict = Depends(get_current_user),
     rag: RAGService = Depends(get_rag_service),
 ):
     """
     Search for similar past conversations in RAG system.
     """
-    logger.debug(f"RAG search: {request.query[:50]}...")
+    logger.debug(f"RAG search: {body.query[:50]}...")
     try:
         results = await rag.find_similar(
-            query=request.query,
-            n_results=request.n_results,
-            user_id=request.user_id,
+            query=body.query,
+            n_results=body.n_results,
+            user_id=body.user_id,
         )
         logger.debug(f"RAG found {len(results)} results")
 
