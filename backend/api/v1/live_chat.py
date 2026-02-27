@@ -15,7 +15,7 @@ This provides a real-time human support option when AI chat is insufficient.
 from fastapi import APIRouter, Depends, HTTPException
 from core.auth import get_current_user
 from core.exceptions import safe_internal_error
-from typing import Optional
+from typing import List, Optional
 from datetime import datetime
 import asyncio
 
