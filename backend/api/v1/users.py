@@ -24,7 +24,7 @@ import json
 import uuid
 from datetime import datetime
 from fastapi import APIRouter, Depends, BackgroundTasks, HTTPException, UploadFile, File, Request, Form
-from core.auth import get_current_user
+from core.auth import get_current_user, get_verified_auth_token
 from core.exceptions import safe_internal_error
 from fastapi.responses import StreamingResponse
 from typing import Optional, List
@@ -207,7 +207,7 @@ def row_to_user(row: dict, is_new_user: bool = False, support_friend_added: bool
 @router.post("/auth/google", response_model=User)
 @limiter.limit("5/minute")
 async def google_auth(request: Request, body: GoogleAuthRequest,
-    current_user: dict = Depends(get_current_user),
+    verified_token: dict = Depends(get_verified_auth_token),
 ):
     """
     Authenticate with Google OAuth via Supabase.
@@ -215,6 +215,9 @@ async def google_auth(request: Request, body: GoogleAuthRequest,
     - Verifies the access token with Supabase
     - Gets or creates user in our database
     - Returns user object with onboarding status
+
+    Uses get_verified_auth_token (not get_current_user) because new Google
+    sign-in users won't have a row in the `users` table yet.
     """
     logger.info("Google OAuth authentication attempt")
 
@@ -309,7 +312,7 @@ async def google_auth(request: Request, body: GoogleAuthRequest,
 @router.post("/auth/email", response_model=User)
 @limiter.limit("5/minute")
 async def email_auth(request: Request, body: EmailAuthRequest,
-    current_user: dict = Depends(get_current_user),
+    verified_token: dict = Depends(get_verified_auth_token),
 ):
     """
     Authenticate with email and password via Supabase.
@@ -317,6 +320,9 @@ async def email_auth(request: Request, body: EmailAuthRequest,
     - Signs in with Supabase Auth
     - Gets or creates user in our database
     - Returns user object with onboarding status
+
+    Uses get_verified_auth_token (not get_current_user) because new email
+    sign-in users won't have a row in the `users` table yet.
     """
     logger.info(f"Email authentication attempt for: {body.email}")
 
@@ -410,7 +416,7 @@ async def email_auth(request: Request, body: EmailAuthRequest,
 @router.post("/auth/email/signup", response_model=User)
 @limiter.limit("5/minute")
 async def email_signup(request: Request, body: EmailSignupRequest,
-    current_user: dict = Depends(get_current_user),
+    verified_token: dict = Depends(get_verified_auth_token),
 ):
     """
     Create a new account with email and password via Supabase.
@@ -418,6 +424,9 @@ async def email_signup(request: Request, body: EmailSignupRequest,
     - Creates user in Supabase Auth
     - Creates user in our database
     - Returns user object
+
+    Uses get_verified_auth_token (not get_current_user) because signup users
+    will never have a row in the `users` table yet.
     """
     logger.info(f"Email signup attempt for: {body.email}")
 
