@@ -517,14 +517,12 @@ async def email_signup(request: Request, body: EmailSignupRequest,
 
 @router.post("/auth/forgot-password")
 @limiter.limit("3/minute")
-async def forgot_password(request: Request, body: ForgotPasswordRequest,
-    current_user: dict = Depends(get_current_user),
-):
+async def forgot_password(request: Request, body: ForgotPasswordRequest):
     """
     Send password reset email via Supabase.
 
-    - Triggers Supabase to send reset email
-    - Returns success regardless of whether email exists (security)
+    No auth required — the user forgot their password and can't authenticate.
+    Returns success regardless of whether email exists (security).
     """
     logger.info(f"Password reset requested for: {body.email}")
 
@@ -550,14 +548,13 @@ async def forgot_password(request: Request, body: ForgotPasswordRequest,
 @router.post("/auth/reset-password")
 @limiter.limit("5/minute")
 async def reset_password(request: Request, body: ResetPasswordRequest,
-    current_user: dict = Depends(get_current_user),
+    verified_token: dict = Depends(get_verified_auth_token),
 ):
     """
     Reset password using the token from reset email.
 
-    - Verifies the reset token
-    - Updates the password
-    - Returns success message
+    Uses get_verified_auth_token (not get_current_user) because the user
+    authenticates with a reset token, not a regular session.
     """
     logger.info("Password reset attempt with token")
 

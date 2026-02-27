@@ -22,6 +22,9 @@ export default function MarketingNav() {
     { label: 'Features', to: '/features', type: 'link' as const },
     { label: 'Pricing', to: '/pricing', type: 'link' as const },
     { label: 'Store', to: '/store', type: 'link' as const },
+    { label: 'Privacy', to: '/privacy', type: 'link' as const },
+    { label: 'Terms', to: '/terms', type: 'link' as const },
+    { label: 'Refunds', to: '/refunds', type: 'link' as const },
   ];
 
   return (
