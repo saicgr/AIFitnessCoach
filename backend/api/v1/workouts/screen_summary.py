@@ -115,8 +115,8 @@ def _get_active_gym_profile_id(db, user_id: str) -> Optional[str]:
             .execute()
         if result.data:
             return result.data.get("id")
-    except Exception:
-        pass
+    except Exception as e:
+        logger.warning(f"Failed to get active gym profile: {e}")
     return None
 
 

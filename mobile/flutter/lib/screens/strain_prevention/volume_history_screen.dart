@@ -2,9 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
+import '../../data/services/api_client.dart';
 import '../../widgets/glass_back_button.dart';
 
-final volumeHistoryProvider = StateNotifierProvider<VolumeHistoryNotifier, VolumeHistoryState>((ref) => VolumeHistoryNotifier());
+final volumeHistoryProvider = StateNotifierProvider<VolumeHistoryNotifier, VolumeHistoryState>((ref) => VolumeHistoryNotifier(ref));
 
 class VolumeHistoryState {
   final List<WeeklyVolume> history;
@@ -23,18 +24,63 @@ class WeeklyVolume {
 }
 
 class VolumeHistoryNotifier extends StateNotifier<VolumeHistoryState> {
-  VolumeHistoryNotifier() : super(const VolumeHistoryState());
-  Future<void> loadHistory() async {
+  final Ref _ref;
+  VolumeHistoryNotifier(this._ref) : super(const VolumeHistoryState());
+
+  Future<void> loadHistory({String? muscleGroup}) async {
     state = state.copyWith(isLoading: true, error: null);
     try {
-      await Future.delayed(const Duration(milliseconds: 500));
-      final now = DateTime.now();
-      final history = List.generate(8, (i) => WeeklyVolume(
-        weekStart: now.subtract(Duration(days: i * 7)),
-        totalSets: 50 + (i % 3) * 10 - (i == 4 ? 25 : 0),
-        muscleVolumes: {'Chest': 10 + i, 'Back': 12 + i, 'Legs': 15 + i},
-        wasDeload: i == 4,
-      ));
+      final apiClient = _ref.read(apiClientProvider);
+      final userId = await apiClient.getUserId();
+      if (userId == null) {
+        state = state.copyWith(error: 'Not authenticated', isLoading: false);
+        return;
+      }
+
+      final queryParams = <String, dynamic>{'weeks': 8};
+      if (muscleGroup != null) {
+        queryParams['muscle_group'] = muscleGroup;
+      }
+
+      final response = await apiClient.get(
+        '/strain-prevention/$userId/volume-history',
+        queryParameters: queryParams,
+      );
+      final data = response.data as Map<String, dynamic>;
+      final historyEntries = data['history'] as List<dynamic>? ?? [];
+
+      // Group entries by week_start, aggregate across muscle groups
+      final weekMap = <String, Map<String, dynamic>>{};
+      for (final entry in historyEntries) {
+        final e = entry as Map<String, dynamic>;
+        final weekStart = e['week_start'] as String;
+        if (!weekMap.containsKey(weekStart)) {
+          weekMap[weekStart] = {
+            'weekStart': DateTime.parse(weekStart),
+            'totalSets': 0,
+            'muscleVolumes': <String, int>{},
+          };
+        }
+        final week = weekMap[weekStart]!;
+        final sets = (e['total_sets'] as num?)?.toInt() ?? 0;
+        week['totalSets'] = (week['totalSets'] as int) + sets;
+        final muscle = e['muscle_group'] as String? ?? 'Unknown';
+        final muscleDisplay = muscle.replaceAll('_', ' ').split(' ').map((w) => w.isNotEmpty ? '${w[0].toUpperCase()}${w.substring(1)}' : '').join(' ');
+        (week['muscleVolumes'] as Map<String, int>)[muscleDisplay] = sets;
+      }
+
+      // Convert to list and sort by date descending
+      final history = weekMap.values.map((w) {
+        final totalSets = w['totalSets'] as int;
+        return WeeklyVolume(
+          weekStart: w['weekStart'] as DateTime,
+          totalSets: totalSets,
+          muscleVolumes: w['muscleVolumes'] as Map<String, int>,
+          wasDeload: totalSets < 20, // heuristic for deload weeks
+        );
+      }).toList();
+      history.sort((a, b) => b.weekStart.compareTo(a.weekStart));
+
       state = state.copyWith(history: history, isLoading: false);
     } catch (e) {
       state = state.copyWith(error: e.toString(), isLoading: false);
@@ -51,7 +97,7 @@ class VolumeHistoryScreen extends ConsumerStatefulWidget {
 
 class _VolumeHistoryScreenState extends ConsumerState<VolumeHistoryScreen> {
   @override
-  void initState() { super.initState(); WidgetsBinding.instance.addPostFrameCallback((_) => ref.read(volumeHistoryProvider.notifier).loadHistory()); }
+  void initState() { super.initState(); WidgetsBinding.instance.addPostFrameCallback((_) => ref.read(volumeHistoryProvider.notifier).loadHistory(muscleGroup: widget.initialMuscleGroup)); }
 
   @override
   Widget build(BuildContext context) {
@@ -70,9 +116,9 @@ class _VolumeHistoryScreenState extends ConsumerState<VolumeHistoryScreen> {
 
   Widget _buildContent(bool d, Color tp, Color tm, Color el, VolumeHistoryState st) {
     if (st.isLoading) return const Center(child: CircularProgressIndicator());
-    if (st.error != null) return Center(child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [Icon(Icons.error_outline, color: AppColors.error, size: 48), const SizedBox(height: 16), Text('Failed to load', style: TextStyle(color: tm)), TextButton(onPressed: () => ref.read(volumeHistoryProvider.notifier).loadHistory(), child: const Text('Retry'))]));
+    if (st.error != null) return Center(child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [Icon(Icons.error_outline, color: AppColors.error, size: 48), const SizedBox(height: 16), Text('Failed to load', style: TextStyle(color: tm)), TextButton(onPressed: () => ref.read(volumeHistoryProvider.notifier).loadHistory(muscleGroup: widget.initialMuscleGroup), child: const Text('Retry'))]));
     if (st.history.isEmpty) return Center(child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [Icon(Icons.history, color: tm, size: 48), const SizedBox(height: 16), Text('No history yet', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: tp)), const SizedBox(height: 8), Text('Complete workouts to see volume trends', style: TextStyle(color: tm))]));
-    return RefreshIndicator(onRefresh: () => ref.read(volumeHistoryProvider.notifier).loadHistory(), child: ListView.separated(padding: const EdgeInsets.all(16), itemCount: st.history.length, separatorBuilder: (_, __) => const SizedBox(height: 12), itemBuilder: (c, i) => _buildWeekCard(st.history[i], d, tp, tm, el)));
+    return RefreshIndicator(onRefresh: () => ref.read(volumeHistoryProvider.notifier).loadHistory(muscleGroup: widget.initialMuscleGroup), child: ListView.separated(padding: const EdgeInsets.all(16), itemCount: st.history.length, separatorBuilder: (_, __) => const SizedBox(height: 12), itemBuilder: (c, i) => _buildWeekCard(st.history[i], d, tp, tm, el)));
   }
 
   Widget _buildWeekCard(WeeklyVolume week, bool d, Color tp, Color tm, Color el) {

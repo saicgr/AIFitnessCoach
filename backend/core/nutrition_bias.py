@@ -101,11 +101,11 @@ async def get_user_calorie_bias(user_id: str) -> int:
             db.client.table("nutrition_preferences")
             .select("calorie_estimate_bias")
             .eq("user_id", user_id)
-            .maybeSingle()
+            .limit(1)
             .execute()
         )
         if result.data:
-            bias = result.data.get("calorie_estimate_bias", 0)
+            bias = result.data[0].get("calorie_estimate_bias", 0)
             if bias is not None and isinstance(bias, int) and -2 <= bias <= 2:
                 return bias
         return 0

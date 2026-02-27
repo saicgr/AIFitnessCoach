@@ -373,8 +373,8 @@ async def add_staple_exercise(request: StapleExerciseCreate, current_user: dict 
                 if profile_result.data:
                     gym_profile_name = profile_result.data[0].get("name")
                     gym_profile_color = profile_result.data[0].get("color")
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug(f"Failed to get gym profile info: {e}")
 
         return StapleExerciseResponse(
             id=row["id"],

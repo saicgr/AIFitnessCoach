@@ -13,7 +13,7 @@ from langchain_core.messages import HumanMessage, SystemMessage, AIMessage, Tool
 
 from core.gemini_client import get_langchain_llm
 from .state import NutritionAgentState
-from ..tools import analyze_food_image, get_nutrition_summary, get_recent_meals, log_food_from_text
+from ..tools import analyze_food_image, analyze_multi_food_images, parse_app_screenshot, parse_nutrition_label, get_nutrition_summary, get_recent_meals, log_food_from_text
 from ..personality import build_personality_prompt, sanitize_coach_name
 from models.chat import AISettings
 from services.gemini_service import GeminiService
@@ -26,6 +26,9 @@ settings = get_settings()
 # Nutrition agent tools
 NUTRITION_TOOLS = [
     analyze_food_image,
+    analyze_multi_food_images,
+    parse_app_screenshot,
+    parse_nutrition_label,
     get_nutrition_summary,
     get_recent_meals,
     log_food_from_text,
@@ -90,12 +93,24 @@ def should_use_tools(state: NutritionAgentState) -> Literal["agent", "respond"]:
     - Meal suggestions
     """
     has_image = state.get("image_base64") is not None
+    has_multi_images = bool(state.get("media_refs"))
     intent = state.get("intent")
     message = state.get("user_message", "").lower()
+
+    # Multi-image analysis requires tool
+    if has_multi_images:
+        logger.info("[Nutrition Router] Multi-images present -> agent (multi-food analysis)")
+        return "agent"
 
     # Food image analysis requires tool
     if has_image:
         logger.info("[Nutrition Router] Image present -> agent (food analysis)")
+        return "agent"
+
+    # Check for media_content_type from classifier
+    media_content_type = state.get("media_content_type")
+    if media_content_type in ("app_screenshot", "nutrition_label"):
+        logger.info(f"[Nutrition Router] media_content_type={media_content_type} -> agent")
         return "agent"
 
     # Check for food logging intent (user describing what they ate)
@@ -183,7 +198,15 @@ AVAILABLE TOOLS:
   * IMPORTANT: When user describes food they ate (e.g., "I ate biryani", "had eggs for breakfast"), call this tool
   * food_description: the food the user mentioned
   * meal_type: optional (breakfast/lunch/dinner/snack), auto-detected if not provided
-- analyze_food_image(user_id, image_base64, user_message) - Analyze food image to log calories and macros
+- analyze_food_image(user_id, image_base64, user_message) - Analyze a single food image to log calories and macros
+- analyze_multi_food_images(user_id, s3_keys, mime_types, user_message, analysis_mode) - Analyze multiple food images (plates, buffets, menus)
+  * s3_keys: list of S3 object keys from media_refs
+  * mime_types: list of MIME types from media_refs
+  * analysis_mode: "auto" (let AI detect), "plate", "buffet", or "menu"
+- parse_app_screenshot(user_id, s3_keys, mime_types, image_base64, user_message)
+  * Parse a nutrition app screenshot to extract and log food entries
+- parse_nutrition_label(user_id, s3_keys, mime_types, image_base64, servings_consumed, user_message)
+  * Read a nutrition facts label and log the food entry
 - get_nutrition_summary(user_id, date, period) - Get nutrition totals for a day or week
 - get_recent_meals(user_id, limit) - Get recent meal logs
 
@@ -191,8 +214,14 @@ EXAMPLES:
 - "I ate thalapakattu mutton biryani" → Call log_food_from_text(user_id="{state['user_id']}", food_description="thalapakattu mutton biryani")
 - "Had 2 eggs for breakfast" → Call log_food_from_text(user_id="{state['user_id']}", food_description="2 eggs", meal_type="breakfast")
 
-{f'HAS_IMAGE: true - User sent a food image. Call analyze_food_image.' if state.get('image_base64') else 'HAS_IMAGE: false'}
-{f'IMAGE_BASE64: {state["image_base64"][:100]}...' if state.get('image_base64') else ''}
+{f'HAS_MULTI_IMAGES: true - User sent multiple food images via media_refs. Call analyze_multi_food_images with the s3_keys and mime_types from the media_refs.' if state.get('media_refs') else ''}
+{f'MEDIA_REFS: {json.dumps([{"s3_key": r.get("s3_key"), "mime_type": r.get("mime_type"), "media_type": r.get("media_type")} for r in state.get("media_refs", [])])}' if state.get('media_refs') else ''}
+{f'HAS_IMAGE: true - User sent a food image. Call analyze_food_image.' if state.get('image_base64') and not state.get('media_refs') else 'HAS_IMAGE: false'}
+{f'IMAGE_BASE64: {state["image_base64"][:100]}...' if state.get('image_base64') and not state.get('media_refs') else ''}
+
+{f'MEDIA_CONTENT_TYPE: {state.get("media_content_type")}' if state.get('media_content_type') else 'MEDIA_CONTENT_TYPE: none'}
+{f'ACTION REQUIRED: This is an app screenshot. Call parse_app_screenshot with the s3_keys and mime_types from media_refs.' if state.get('media_content_type') == 'app_screenshot' else ''}
+{f'ACTION REQUIRED: This is a nutrition label. Call parse_nutrition_label with the s3_keys and mime_types from media_refs.' if state.get('media_content_type') == 'nutrition_label' else ''}
 
 USER_ID: {state['user_id']}"""
 
@@ -264,6 +293,15 @@ async def nutrition_tool_executor_node(state: NutritionAgentState) -> Dict[str, 
         # Inject image if analyzing food
         if tool_name == "analyze_food_image" and state.get("image_base64"):
             tool_args["image_base64"] = state["image_base64"]
+
+        # Inject media for app screenshot and nutrition label tools
+        if tool_name in ("parse_app_screenshot", "parse_nutrition_label"):
+            if state.get("media_refs"):
+                refs = state["media_refs"]
+                tool_args.setdefault("s3_keys", [r.get("s3_key") for r in refs])
+                tool_args.setdefault("mime_types", [r.get("mime_type", "image/jpeg") for r in refs])
+            if state.get("image_base64"):
+                tool_args.setdefault("image_base64", state["image_base64"])
 
         if tool_name in tools_map:
             logger.info(f"[Nutrition Tool Executor] Running: {tool_name}")
@@ -427,6 +465,28 @@ async def nutrition_action_data_node(state: NutritionAgentState) -> Dict[str, An
                 "food_log_id": result.get("food_log_id"),
                 "meal_type": result.get("meal_type"),
                 "total_calories": result.get("total_calories"),
+                "success": result.get("success", False),
+            }
+        elif action == "analyze_multi_food_images":
+            analysis_type = result.get("analysis_type", "plate")
+            action_data = {
+                "action": f"food_analysis_{analysis_type}",
+                "analysis_type": analysis_type,
+                "success": result.get("success", False),
+            }
+            # For plate mode, include food_log_id
+            inner_result = result.get("result", {})
+            if analysis_type == "plate" and inner_result.get("food_log_id"):
+                action_data["food_log_id"] = inner_result["food_log_id"]
+                action_data["total_calories"] = inner_result.get("total_calories", 0)
+                action_data["meal_type"] = inner_result.get("meal_type", "snack")
+        elif action in ("parse_app_screenshot", "parse_nutrition_label"):
+            action_data = {
+                "action": "food_logged",
+                "food_log_id": result.get("food_log_id"),
+                "meal_type": result.get("meal_type"),
+                "total_calories": result.get("total_calories"),
+                "source_type": action,
                 "success": result.get("success", False),
             }
         elif action == "get_nutrition_summary":

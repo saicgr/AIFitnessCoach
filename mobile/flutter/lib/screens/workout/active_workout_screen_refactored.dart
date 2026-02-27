@@ -14,6 +14,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:ui';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
@@ -35,6 +36,7 @@ import '../../data/rest_messages.dart';
 import '../../widgets/glass_sheet.dart';
 import '../../widgets/log_1rm_sheet.dart';
 import '../../widgets/weight_increments_sheet.dart';
+import '../../widgets/app_snackbar.dart';
 import '../ai_settings/ai_settings_screen.dart';
 
 // Import modular components
@@ -77,6 +79,8 @@ import '../../data/repositories/hydration_repository.dart';
 import '../../core/services/fatigue_service.dart';
 import '../../core/providers/user_provider.dart';
 import '../../core/providers/warmup_duration_provider.dart';
+import '../../data/providers/gym_profile_provider.dart';
+import '../../data/providers/scores_provider.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../../data/repositories/exercise_preferences_repository.dart';
 import '../settings/equipment/environment_list_screen.dart';
@@ -970,8 +974,8 @@ class _ActiveWorkoutScreenState
         rpe: _lastSetRpe,
         rir: _lastSetRir,
         isLastSet: isLastSet,
-        fitnessLevel: 'intermediate', // TODO: Get from user profile
-        goals: [], // TODO: Get from user profile
+        fitnessLevel: ref.read(scoresProvider).fitnessScore?.level.name ?? 'intermediate',
+        goals: ref.read(activeGymProfileProvider)?.goals ?? [],
         // Pass AI settings for personalized coaching
         coachingStyle: aiSettings?.coachingStyle ?? 'motivational',
         communicationTone: aiSettings?.communicationTone ?? 'encouraging',
@@ -986,14 +990,14 @@ class _ActiveWorkoutScreenState
           _currentWeightSuggestion = aiSuggestion;
           _isLoadingWeightSuggestion = false;
         });
-        print('✅ [AI Weight] Got AI suggestion: ${aiSuggestion.type} '
+        debugPrint('✅ [AI Weight] Got AI suggestion: ${aiSuggestion.type} '
             'to ${aiSuggestion.suggestedWeight}kg');
       } else {
         // AI failed - use rule-based fallback
         _useRuleBasedSuggestion(setLog, exercise, isLastSet, equipmentIncrement);
       }
     } catch (e) {
-      print('❌ [AI Weight] Error fetching suggestion: $e');
+      debugPrint('❌ [AI Weight] Error fetching suggestion: $e');
       if (!mounted) return;
       _useRuleBasedSuggestion(setLog, exercise, isLastSet, equipmentIncrement);
     }
@@ -1883,7 +1887,9 @@ class _ActiveWorkoutScreenState
         exerciseId: exercise.exerciseId ?? exercise.libraryId ?? '',
         exerciseName: exercise.name,
         targetReps: exercise.reps ?? 10,
-        goal: TrainingGoal.hypertrophy, // TODO: Get from user settings
+        goal: TrainingGoal.fromString(
+          ref.read(activeGymProfileProvider)?.goals.firstOrNull ?? 'hypertrophy',
+        ),
         equipment: exercise.equipment ?? 'dumbbell',
       );
 
@@ -2723,10 +2729,12 @@ class _ActiveWorkoutScreenState
       await _logWorkoutExit(result.reason, result.notes);
       if (mounted) {
         context.pop();
-        // Prompt injury report if user quit due to pain/injury
+        // Show guidance if user quit due to pain/injury
         if (result.reason == 'injury') {
           Future.delayed(const Duration(milliseconds: 300), () {
-            if (mounted) context.push('/injuries/report');
+            if (mounted) {
+              AppSnackBar.info(context, 'Take it easy! Chat with your AI coach for injury advice.');
+            }
           });
         }
       }
@@ -6192,12 +6200,6 @@ class _ActiveWorkoutScreenState
       },
       onAddExercise: () {
         // TODO: Open exercise add sheet
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Add exercise feature coming soon'),
-            duration: Duration(seconds: 2),
-          ),
-        );
       },
     );
   }
@@ -6503,13 +6505,6 @@ class _ActiveWorkoutScreenState
       },
       onAddToSuperset: () {
         // TODO: Implement superset functionality
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Superset feature coming soon'),
-            duration: Duration(seconds: 2),
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
       },
       onRemoveAndDontRecommend: () {
         _removeExerciseFromWorkout(exerciseIndex);

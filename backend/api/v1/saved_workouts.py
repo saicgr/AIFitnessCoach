@@ -29,6 +29,51 @@ def get_supabase_client():
 router = APIRouter(prefix="/saved-workouts")
 
 
+async def _notify_workout_interaction(
+    supabase, source_user_id: str, actor_user_id: str,
+    activity_id: str, workout_name: str,
+    action: str, title: str, body: str, extra_data: dict = None,
+):
+    """Send notification to workout author when someone interacts with their shared workout."""
+    if source_user_id == actor_user_id:
+        return  # Don't notify yourself
+
+    # Get actor info
+    actor = supabase.table("users").select("name, avatar_url").eq("id", actor_user_id).execute()
+    actor_name = actor.data[0]["name"] if actor.data else "Someone"
+    actor_avatar = actor.data[0].get("avatar_url") if actor.data else None
+
+    # Check privacy
+    privacy = supabase.table("user_privacy_settings").select(
+        "notify_friend_activity"
+    ).eq("user_id", source_user_id).execute()
+    should_notify = privacy.data[0].get("notify_friend_activity", True) if privacy.data else True
+
+    if not should_notify:
+        return
+
+    data = {"action": action, "workout_name": workout_name}
+    if extra_data:
+        data.update(extra_data)
+
+    try:
+        supabase.table("social_notifications").insert({
+            "user_id": source_user_id,
+            "type": "workout_shared",
+            "from_user_id": actor_user_id,
+            "from_user_name": actor_name,
+            "from_user_avatar": actor_avatar,
+            "reference_id": activity_id,
+            "reference_type": "activity",
+            "title": title,
+            "body": body,
+            "data": data,
+            "is_read": False,
+        }).execute()
+    except Exception as e:
+        logger.warning(f" [Notifications] Failed to notify {action}: {e}")
+
+
 # ============================================================
 # CHALLENGE TRACKING
 # ============================================================
@@ -103,9 +148,32 @@ async def track_challenge_click(
             ids=[f"challenge_{user_id}_{activity_id}_{datetime.now().timestamp()}"],
         )
     except Exception as e:
-        print(f"⚠️ [Challenge] Failed to log to ChromaDB: {e}")
+        logger.warning(f" [Challenge] Failed to log to ChromaDB: {e}")
 
-    print(f"✅ [Challenge] User {user_id} challenged activity {activity_id} (count: {new_count})")
+    logger.info(f" [Challenge] User {user_id} challenged activity {activity_id} (count: {new_count})")
+
+    # Notify the workout author
+    try:
+        # Get source user from activity or shares
+        source_user_id = None
+        if shares_result.data:
+            source_user_id = shares_result.data[0].get("shared_by")
+        if not source_user_id:
+            act_result = supabase.table("activity_feed").select("user_id").eq("id", activity_id).execute()
+            if act_result.data:
+                source_user_id = act_result.data[0]["user_id"]
+        if source_user_id:
+            # Get actor name for notification body
+            actor_info = supabase.table("users").select("name").eq("id", user_id).execute()
+            actor_display = actor_info.data[0]["name"] if actor_info.data else "Someone"
+            await _notify_workout_interaction(
+                supabase, source_user_id=source_user_id, actor_user_id=user_id,
+                activity_id=activity_id, workout_name="",
+                action="challenge_accepted", title="Challenge Accepted!",
+                body=f"{actor_display} accepted your workout challenge",
+            )
+    except Exception as e:
+        logger.warning(f" [Challenge] Failed to send notification: {e}")
 
     # Log challenge click
     await log_user_activity(
@@ -312,11 +380,24 @@ async def save_workout_from_activity(
             }],
             ids=[f"save_{saved_workout.id}"],
         )
-        print(f"✅ [Saved Workouts] Logged save to ChromaDB")
+        logger.info(f" [Saved Workouts] Logged save to ChromaDB")
     except Exception as e:
-        print(f"⚠️ [Saved Workouts] Failed to log to ChromaDB: {e}")
+        logger.warning(f" [Saved Workouts] Failed to log to ChromaDB: {e}")
 
-    print(f"✅ [Saved Workouts] User {user_id} saved workout from activity {request.activity_id}")
+    logger.info(f" [Saved Workouts] User {user_id} saved workout from activity {request.activity_id}")
+
+    # Notify the workout author
+    try:
+        actor_info = supabase.table("users").select("name").eq("id", user_id).execute()
+        actor_display = actor_info.data[0]["name"] if actor_info.data else "Someone"
+        await _notify_workout_interaction(
+            supabase, source_user_id=activity["user_id"], actor_user_id=user_id,
+            activity_id=request.activity_id, workout_name=workout_name,
+            action="saved", title="Workout Saved",
+            body=f'{actor_display} saved your workout "{workout_name}"',
+        )
+    except Exception as e:
+        logger.warning(f" [Saved Workouts] Failed to send notification: {e}")
 
     # Log workout save
     await log_user_activity(
@@ -511,7 +592,7 @@ async def do_workout_now(
         "source_id": saved_workout_id,
     }
 
-    print(f"✅ [Saved Workouts] User {user_id} starting workout {saved_workout_id}")
+    logger.info(f" [Saved Workouts] User {user_id} starting workout {saved_workout_id}")
 
     # Log workout start
     await log_user_activity(
@@ -612,7 +693,27 @@ async def schedule_workout(
     if not result.data:
         raise HTTPException(status_code=500, detail="Failed to schedule workout")
 
-    print(f"✅ [Scheduled Workouts] User {user_id} scheduled workout for {request.scheduled_date}")
+    logger.info(f" [Scheduled Workouts] User {user_id} scheduled workout for {request.scheduled_date}")
+
+    # Notify the workout author (only when scheduling from an activity)
+    if request.activity_id:
+        try:
+            activity_for_notify = supabase.table("activity_feed").select("user_id").eq(
+                "id", request.activity_id
+            ).execute()
+            if activity_for_notify.data:
+                source_uid = activity_for_notify.data[0]["user_id"]
+                actor_info = supabase.table("users").select("name").eq("id", user_id).execute()
+                actor_display = actor_info.data[0]["name"] if actor_info.data else "Someone"
+                await _notify_workout_interaction(
+                    supabase, source_user_id=source_uid, actor_user_id=user_id,
+                    activity_id=request.activity_id, workout_name=workout_name,
+                    action="scheduled", title="Workout Scheduled",
+                    body=f'{actor_display} scheduled your workout "{workout_name}" for {request.scheduled_date}',
+                    extra_data={"scheduled_date": str(request.scheduled_date)},
+                )
+        except Exception as e:
+            logger.warning(f" [Scheduled Workouts] Failed to send notification: {e}")
 
     # Log workout scheduling
     await log_user_activity(
@@ -625,6 +726,38 @@ async def schedule_workout(
     )
 
     return ScheduledWorkout(**result.data[0])
+
+
+@router.get("/scheduled/by-date")
+async def get_scheduled_by_date(
+    user_id: str,
+    date: str = Query(..., description="Date in YYYY-MM-DD"),
+    current_user: dict = Depends(get_current_user),
+):
+    """Check for existing workouts scheduled on a specific date."""
+    supabase = get_supabase_client()
+
+    # Check scheduled_workouts table
+    scheduled = supabase.table("scheduled_workouts").select(
+        "id, workout_name, scheduled_time, status"
+    ).eq("user_id", user_id).eq(
+        "scheduled_date", date
+    ).eq("status", "scheduled").execute()
+
+    # Also check regular workouts table for that date
+    workouts = supabase.table("workouts").select(
+        "id, name"
+    ).eq("user_id", user_id).eq(
+        "scheduled_date", date
+    ).execute()
+
+    results = []
+    for s in (scheduled.data or []):
+        results.append({"workout_name": s["workout_name"], "source": "scheduled"})
+    for w in (workouts.data or []):
+        results.append({"workout_name": w["name"], "source": "plan"})
+
+    return results
 
 
 @router.get("/scheduled/upcoming", response_model=ScheduledWorkoutsResponse)

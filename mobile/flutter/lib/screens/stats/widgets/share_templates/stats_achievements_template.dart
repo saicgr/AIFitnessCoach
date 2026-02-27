@@ -65,7 +65,7 @@ class StatsAchievementsTemplate extends StatelessWidget {
 
                 // Trophy icon
                 Container(
-                  padding: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
                       colors: [
@@ -77,26 +77,26 @@ class StatsAchievementsTemplate extends StatelessWidget {
                     boxShadow: [
                       BoxShadow(
                         color: Colors.amber.withOpacity(0.4),
-                        blurRadius: 20,
-                        spreadRadius: 5,
+                        blurRadius: 16,
+                        spreadRadius: 3,
                       ),
                     ],
                   ),
                   child: const Icon(
                     Icons.emoji_events,
                     color: Colors.white,
-                    size: 40,
+                    size: 32,
                   ),
                 ),
 
-                const SizedBox(height: 24),
+                const SizedBox(height: 16),
 
                 // Achievement count
                 Text(
                   '${achievements.length}',
                   style: const TextStyle(
                     color: Colors.white,
-                    fontSize: 48,
+                    fontSize: 40,
                     fontWeight: FontWeight.bold,
                     height: 1,
                   ),
@@ -111,17 +111,18 @@ class StatsAchievementsTemplate extends StatelessWidget {
 
                 const SizedBox(height: 24),
 
-                // Achievement badges (show up to 4)
-                Wrap(
-                  alignment: WrapAlignment.center,
-                  spacing: 12,
-                  runSpacing: 12,
-                  children: achievements.take(4).map((achievement) {
-                    return _AchievementBadge(achievement: achievement);
+                // Achievement badges (show up to 3 in a row)
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: achievements.take(3).map((achievement) {
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 6),
+                      child: _AchievementBadge(achievement: achievement),
+                    );
                   }).toList(),
                 ),
 
-                const Spacer(),
+                const SizedBox(height: 8),
 
                 // Milestone stats
                 Container(
@@ -148,7 +149,7 @@ class StatsAchievementsTemplate extends StatelessWidget {
                         icon: Icons.fitness_center,
                         value: '$totalWorkouts',
                         label: 'Workouts',
-                        color: AppColors.cyan,
+                        color: AppColors.purple,
                       ),
                     ],
                   ),

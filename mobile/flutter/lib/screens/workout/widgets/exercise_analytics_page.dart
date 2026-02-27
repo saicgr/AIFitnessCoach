@@ -203,8 +203,6 @@ class _ExerciseAnalyticsPageState extends State<ExerciseAnalyticsPage>
               ),
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: 32),
-            _buildComingSoonBadge(isDark),
             const SizedBox(height: 24),
             // Invite friends button
             OutlinedButton.icon(
@@ -225,38 +223,6 @@ class _ExerciseAnalyticsPageState extends State<ExerciseAnalyticsPage>
             ),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _buildComingSoonBadge(bool isDark) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      decoration: BoxDecoration(
-        color: AppColors.orange.withOpacity(0.15),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: AppColors.orange.withOpacity(0.3),
-        ),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            Icons.rocket_launch_rounded,
-            size: 16,
-            color: AppColors.orange,
-          ),
-          const SizedBox(width: 8),
-          Text(
-            'Coming Soon',
-            style: TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
-              color: AppColors.orange,
-            ),
-          ),
-        ],
       ),
     );
   }

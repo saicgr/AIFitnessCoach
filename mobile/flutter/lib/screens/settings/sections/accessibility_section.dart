@@ -122,26 +122,6 @@ class _AppModeCard extends ConsumerWidget {
                     },
                   ),
                 ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: _AppModeButton(
-                    label: 'Kids',
-                    icon: Icons.child_care,
-                    description: 'Coming soon',
-                    isSelected: false,
-                    isDisabled: true,
-                    color: AppColors.orange,
-                    onTap: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: const Text('Kids Mode coming soon!'),
-                          backgroundColor: elevatedColor,
-                          behavior: SnackBarBehavior.floating,
-                        ),
-                      );
-                    },
-                  ),
-                ),
               ],
             ),
           ),
@@ -304,28 +284,15 @@ class _AccessibilitySettingsCard extends ConsumerWidget {
                   ],
                 ),
                 const SizedBox(height: 12),
-                SliderTheme(
-                  data: SliderTheme.of(context).copyWith(
-                    activeTrackColor: AppColors.cyan,
-                    inactiveTrackColor: cardBorder,
-                    thumbColor: AppColors.cyan,
-                    overlayColor: AppColors.cyan.withOpacity(0.2),
-                  ),
-                  child: Slider(
-                    value: accessibilitySettings.fontScale,
-                    min: 0.85,
-                    max: 1.5,
-                    divisions: 13,
-                    onChanged: (value) {
-                      ref.read(accessibilityProvider.notifier).setFontScale(value);
-                    },
-                  ),
-                ),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
                   children: [
-                    Text('Aa', style: TextStyle(fontSize: 12, color: textMuted)),
-                    Text('Aa', style: TextStyle(fontSize: 20, color: textMuted)),
+                    _fontPresetChip('Small', 0.85, accessibilitySettings.fontScale, ref),
+                    _fontPresetChip('Normal', 1.0, accessibilitySettings.fontScale, ref),
+                    _fontPresetChip('Large', 1.15, accessibilitySettings.fontScale, ref),
+                    _fontPresetChip('XL', 1.3, accessibilitySettings.fontScale, ref),
+                    _fontPresetChip('Max', 1.5, accessibilitySettings.fontScale, ref),
                   ],
                 ),
               ],
@@ -384,12 +351,33 @@ class _AccessibilitySettingsCard extends ConsumerWidget {
     );
   }
 
+  Widget _fontPresetChip(String label, double value, double current, WidgetRef ref) {
+    const presets = [0.85, 1.0, 1.15, 1.3, 1.5];
+    final closestPreset = presets.reduce((a, b) => (a - current).abs() < (b - current).abs() ? a : b);
+    final isSelected = value == closestPreset;
+    return ChoiceChip(
+      label: Text(label),
+      selected: isSelected,
+      onSelected: (_) {
+        ref.read(accessibilityProvider.notifier).setFontScale(value);
+      },
+      selectedColor: AppColors.cyan.withValues(alpha: 0.2),
+      checkmarkColor: AppColors.cyan,
+    );
+  }
+
   String _getFontSizeLabel(double scale) {
-    if (scale <= 0.9) return 'Small';
-    if (scale <= 1.05) return 'Normal';
-    if (scale <= 1.2) return 'Large';
-    if (scale <= 1.35) return 'Extra Large';
-    return 'Maximum';
+    final presets = {0.85: 'Small', 1.0: 'Normal', 1.15: 'Large', 1.3: 'XL', 1.5: 'Maximum'};
+    double closest = 1.0;
+    double minDist = double.infinity;
+    for (final key in presets.keys) {
+      final dist = (scale - key).abs();
+      if (dist < minDist) {
+        minDist = dist;
+        closest = key;
+      }
+    }
+    return presets[closest] ?? 'Normal';
   }
 }
 

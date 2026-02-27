@@ -39,7 +39,8 @@ class CustomInputsRAGService:
 
         try:
             _count = self.collection.count()
-        except Exception:
+        except Exception as e:
+            logger.warning(f"Failed to get collection count: {e}")
             _count = "unknown"
         logger.info(f"CustomInputsRAG initialized with {_count} custom inputs")
 
@@ -83,8 +84,8 @@ class CustomInputsRAGService:
             # Upsert to collection
             try:
                 self.collection.delete(ids=[doc_id])
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug(f"ChromaDB delete before upsert: {e}")
 
             self.collection.add(
                 ids=[doc_id],
@@ -170,8 +171,8 @@ class CustomInputsRAGService:
                     # Delete existing to avoid duplicates
                     try:
                         self.collection.delete(ids=ids)
-                    except Exception:
-                        pass
+                    except Exception as e:
+                        logger.debug(f"ChromaDB batch delete: {e}")
 
                     self.collection.add(
                         ids=ids,
@@ -383,7 +384,8 @@ If it doesn't fit any category, create a simple 1-3 word normalized form."""
         try:
             c = self.collection.count()
             total = c if c >= 0 else -1
-        except Exception:
+        except Exception as e:
+            logger.warning(f"Failed to get inputs count: {e}")
             total = -1
         return {
             "total_indexed": total,

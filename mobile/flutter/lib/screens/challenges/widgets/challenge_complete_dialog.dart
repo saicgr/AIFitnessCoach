@@ -10,7 +10,9 @@ class ChallengeCompleteDialog extends StatelessWidget {
   final bool didBeat;
   final Map<String, dynamic> yourStats;
   final Map<String, dynamic> theirStats;
+  final String? challengeId;
   final VoidCallback? onViewFeed; // Optional: Navigate to see the post
+  final VoidCallback? onViewDetails; // Navigate to compare screen
   final VoidCallback? onDismiss;
 
   const ChallengeCompleteDialog({
@@ -20,7 +22,9 @@ class ChallengeCompleteDialog extends StatelessWidget {
     required this.didBeat,
     required this.yourStats,
     required this.theirStats,
+    this.challengeId,
     this.onViewFeed,
+    this.onViewDetails,
     this.onDismiss,
   });
 
@@ -358,6 +362,33 @@ class ChallengeCompleteDialog extends StatelessWidget {
           ),
 
         if (didBeat && onViewFeed != null) const SizedBox(height: 10),
+
+        // View full comparison button
+        if (onViewDetails != null) ...[
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              onPressed: () {
+                HapticFeedback.lightImpact();
+                Navigator.pop(context);
+                onViewDetails?.call();
+              },
+              icon: const Icon(Icons.compare_arrows_rounded, size: 18),
+              label: const Text(
+                'View Full Comparison',
+                style: TextStyle(fontWeight: FontWeight.w600),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.orange,
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 10),
+        ],
 
         // Continue button
         SizedBox(

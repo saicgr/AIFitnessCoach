@@ -15,6 +15,7 @@ import '../../data/providers/guest_mode_provider.dart';
 import '../../data/providers/guest_usage_limits_provider.dart';
 import '../../data/providers/scores_provider.dart';
 import '../../data/providers/xp_provider.dart';
+import '../../data/repositories/measurements_repository.dart';
 import '../../data/repositories/progress_photos_repository.dart';
 import '../../data/services/api_client.dart';
 import '../../widgets/glass_sheet.dart';
@@ -68,8 +69,9 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen>
         _userId = userId;
         _isLoading = false;
       });
-      // Load photos data
+      // Load photos and measurements data
       ref.read(progressPhotosNotifierProvider(userId).notifier).loadAll();
+      ref.read(measurementsProvider.notifier).loadAllMeasurements(userId);
     }
   }
 
@@ -1013,46 +1015,196 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen>
   // ============================================
 
   Widget _buildMeasurementsTab() {
-    // TODO: Implement measurements tab with body_measurements data
+    final measState = ref.watch(measurementsProvider);
     final colorScheme = Theme.of(context).colorScheme;
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(32),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+
+    if (measState.isLoading) {
+      return AppLoading.fullScreen();
+    }
+
+    if (measState.error != null && measState.historyByType.isEmpty) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(32),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.cloud_off_rounded, size: 64, color: colorScheme.outline),
+              const SizedBox(height: 16),
+              Text('Failed to load measurements',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: colorScheme.onSurface)),
+              const SizedBox(height: 8),
+              Text('Please try again.',
+                style: TextStyle(fontSize: 14, color: colorScheme.onSurfaceVariant)),
+              const SizedBox(height: 24),
+              ElevatedButton.icon(
+                onPressed: () {
+                  if (_userId != null) {
+                    ref.read(measurementsProvider.notifier).loadAllMeasurements(_userId!);
+                  }
+                },
+                icon: const Icon(Icons.refresh),
+                label: const Text('Retry'),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    final summary = measState.summary;
+    final latestByType = summary?.latestByType ?? {};
+    final changeFromPrevious = summary?.changeFromPrevious ?? {};
+
+    if (latestByType.isEmpty) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(32),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.straighten_outlined, size: 80, color: colorScheme.outline),
+              const SizedBox(height: 16),
+              Text('Body Measurements',
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: colorScheme.onSurface)),
+              const SizedBox(height: 8),
+              Text('Track your body measurements to see detailed progress beyond the scale.',
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 14, color: colorScheme.onSurfaceVariant)),
+              const SizedBox(height: 24),
+              ElevatedButton.icon(
+                onPressed: _showAddMeasurementSheet,
+                icon: const Icon(Icons.add),
+                label: const Text('Log Measurements'),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    // Group measurement types by body area
+    const coreTypes = [
+      MeasurementType.weight, MeasurementType.bodyFat,
+      MeasurementType.chest, MeasurementType.waist, MeasurementType.hips,
+      MeasurementType.neck, MeasurementType.shoulders,
+    ];
+    const armTypes = [
+      MeasurementType.bicepsLeft, MeasurementType.bicepsRight,
+      MeasurementType.forearmLeft, MeasurementType.forearmRight,
+    ];
+    const legTypes = [
+      MeasurementType.thighLeft, MeasurementType.thighRight,
+      MeasurementType.calfLeft, MeasurementType.calfRight,
+    ];
+
+    return ListView(
+      padding: const EdgeInsets.all(16),
+      children: [
+        // Last updated info
+        if (latestByType.values.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 16),
+            child: Text(
+              'Last updated ${DateFormat('MMM d, yyyy').format(latestByType.values.first.recordedAt)}',
+              style: TextStyle(fontSize: 13, color: colorScheme.onSurfaceVariant),
+            ),
+          ),
+
+        _buildMeasurementSection('Core', Icons.accessibility, coreTypes, latestByType, changeFromPrevious),
+        const SizedBox(height: 16),
+        _buildMeasurementSection('Arms', Icons.fitness_center, armTypes, latestByType, changeFromPrevious),
+        const SizedBox(height: 16),
+        _buildMeasurementSection('Legs', Icons.directions_walk, legTypes, latestByType, changeFromPrevious),
+
+        const SizedBox(height: 100), // Bottom padding for FAB
+      ],
+    );
+  }
+
+  Widget _buildMeasurementSection(
+    String title,
+    IconData icon,
+    List<MeasurementType> types,
+    Map<MeasurementType, MeasurementEntry> latestByType,
+    Map<MeasurementType, double> changeFromPrevious,
+  ) {
+    final colorScheme = Theme.of(context).colorScheme;
+    // Only show types that have data
+    final typesWithData = types.where((t) => latestByType.containsKey(t)).toList();
+    if (typesWithData.isEmpty) return const SizedBox.shrink();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
           children: [
-            Icon(
-              Icons.straighten_outlined,
-              size: 80,
-              color: colorScheme.outline,
+            Icon(icon, size: 20, color: colorScheme.primary),
+            const SizedBox(width: 8),
+            Text(title,
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: colorScheme.onSurface)),
+          ],
+        ),
+        const SizedBox(height: 12),
+        ...typesWithData.map((type) {
+          final entry = latestByType[type]!;
+          final change = changeFromPrevious[type];
+          return _buildMeasurementRow2(entry, change);
+        }),
+      ],
+    );
+  }
+
+  Widget _buildMeasurementRow2(MeasurementEntry entry, double? change) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final valueStr = entry.value % 1 == 0
+        ? entry.value.toInt().toString()
+        : entry.value.toStringAsFixed(1);
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        decoration: BoxDecoration(
+          color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: Text(entry.type.displayName,
+                style: TextStyle(fontSize: 15, fontWeight: FontWeight.w500, color: colorScheme.onSurface)),
             ),
-            const SizedBox(height: 16),
-            Text(
-              'Body Measurements',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: colorScheme.onSurface,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Track your body measurements to see detailed progress beyond the scale.',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 14,
-                color: colorScheme.onSurfaceVariant,
-              ),
-            ),
-            const SizedBox(height: 24),
-            ElevatedButton.icon(
-              onPressed: _showAddMeasurementSheet,
-              icon: const Icon(Icons.add),
-              label: const Text('Log Measurements'),
-            ),
+            Text('$valueStr ${entry.unit}',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: colorScheme.onSurface)),
+            if (change != null && change != 0) ...[
+              const SizedBox(width: 8),
+              _buildChangeIndicator(change, entry.unit),
+            ],
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildChangeIndicator(double change, String unit) {
+    // For waist/body fat, decrease is good. For most others, increase could be good.
+    // Use neutral colors - just show direction.
+    final isPositive = change > 0;
+    final color = isPositive ? Colors.orange : Colors.green;
+    final icon = isPositive ? Icons.arrow_upward : Icons.arrow_downward;
+    final changeStr = change.abs() % 1 == 0
+        ? change.abs().toInt().toString()
+        : change.abs().toStringAsFixed(1);
+
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, size: 14, color: color),
+        const SizedBox(width: 2),
+        Text('$changeStr$unit',
+          style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: color)),
+      ],
     );
   }
 

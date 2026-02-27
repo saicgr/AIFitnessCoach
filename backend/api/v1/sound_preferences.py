@@ -109,8 +109,8 @@ async def update_sound_preferences(
                 "activity_type": "sound_preferences_updated",
                 "metadata": update_data
             }).execute()
-        except Exception:
-            pass  # Don't fail if logging fails
+        except Exception as e:
+            logger.debug(f"Failed to log activity: {e}")
 
         logger.info(f"✅ Updated sound preferences for user {user_id}: {update_data}")
 

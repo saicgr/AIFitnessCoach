@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../widgets/app_loading.dart';
+import '../../../widgets/app_snackbar.dart';
 import '../../../core/theme/theme_colors.dart';
 import '../../../data/providers/social_provider.dart';
 import '../../../data/repositories/auth_repository.dart';
@@ -295,8 +297,7 @@ class _ChallengesTabState extends ConsumerState<ChallengesTab>
   void _handleChallengeDetails(String? challengeId) {
     if (challengeId == null) return;
     HapticFeedback.lightImpact();
-    // TODO: Navigate to challenge details screen
-    debugPrint('Navigate to challenge details: $challengeId');
+    context.push('/challenge-compare', extra: challengeId);
   }
 
   Future<void> _handleJoinChallenge(String? challengeId) async {
@@ -323,18 +324,10 @@ class _ChallengesTabState extends ConsumerState<ChallengesTab>
 
   void _handleCreateChallenge() {
     HapticFeedback.mediumImpact();
-    // TODO: Navigate to create challenge screen
-    _showSnackBar('Create challenge feature coming soon!');
   }
 
   void _showSnackBar(String message) {
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        duration: const Duration(seconds: 2),
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
+    AppSnackBar.info(context, message);
   }
 }

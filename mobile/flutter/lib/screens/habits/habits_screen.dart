@@ -81,6 +81,8 @@ class HabitsScreenNotifier extends StateNotifier<HabitsScreenState> {
   // Local storage key for habit order
   static const String _orderKey = 'habit_order';
 
+  DateTime? _lastLoadTime;
+
   HabitsScreenNotifier(
     this._repository,
     this._userId,
@@ -90,14 +92,29 @@ class HabitsScreenNotifier extends StateNotifier<HabitsScreenState> {
     loadHabits();
   }
 
-  Future<void> loadHabits() async {
-    state = state.copyWith(isLoading: true, error: null);
-    try {
-      final todayResponse = await _repository.getTodayHabits(_userId);
-      final templates = await _repository.getHabitTemplates();
+  Future<void> loadHabits({bool force = false}) async {
+    // Skip reload if data was loaded recently (within 30s) unless forced
+    if (!force && _lastLoadTime != null &&
+        DateTime.now().difference(_lastLoadTime!).inSeconds < 30 &&
+        state.unifiedHabits.isNotEmpty) {
+      return;
+    }
 
-      // Load saved order from local storage
-      final savedOrder = await _loadSavedOrder();
+    // Only show loading spinner on first load (not refreshes)
+    final isFirstLoad = state.unifiedHabits.isEmpty;
+    if (isFirstLoad) {
+      state = state.copyWith(isLoading: true, error: null);
+    }
+
+    try {
+      // Parallelize API + local storage calls
+      final results = await Future.wait([
+        _repository.getTodayHabits(_userId),
+        _loadSavedOrder(),
+      ]);
+
+      final todayResponse = results[0] as dynamic;
+      final savedOrder = results[1] as List<String>;
 
       // Build unified habit list with saved order
       final unified = await _buildUnifiedList(
@@ -106,6 +123,7 @@ class HabitsScreenNotifier extends StateNotifier<HabitsScreenState> {
         savedOrder,
       );
 
+      _lastLoadTime = DateTime.now();
       state = state.copyWith(
         isLoading: false,
         customHabits: todayResponse.habits,
@@ -113,7 +131,7 @@ class HabitsScreenNotifier extends StateNotifier<HabitsScreenState> {
         totalHabits: todayResponse.totalHabits,
         completedToday: todayResponse.completedToday,
         completionPercentage: todayResponse.completionPercentage,
-        templates: templates,
+        templates: HabitTemplate.defaults,
       );
     } catch (e) {
       state = state.copyWith(isLoading: false, error: e.toString());
@@ -400,15 +418,14 @@ class HabitsScreenState {
 
 /// Provider for habits screen state
 final habitsScreenProvider = StateNotifierProvider.autoDispose<HabitsScreenNotifier, HabitsScreenState>((ref) {
+  // Keep alive so data persists across navigation (no re-fetch on every visit)
+  ref.keepAlive();
+
   final repository = ref.watch(habitRepositoryProvider);
   final authState = ref.watch(authStateProvider);
   final userId = authState.user?.id ?? '';
 
-  // Watch the accent color - use orange as default for icon coloring
-  // The actual accent color will be applied in the UI via accentColorProvider
   final accentColorEnum = ref.watch(accentColorProvider);
-  // Use a visible color for auto-tracked habits - get the actual color value
-  // We assume light mode here; the actual theme-aware color is applied in the UI
   final accentColor = accentColorEnum.getColor(false);
 
   return HabitsScreenNotifier(
@@ -453,7 +470,7 @@ class HabitsScreen extends ConsumerWidget {
         children: [
           // Main content
           RefreshIndicator(
-            onRefresh: habitsNotifier.loadHabits,
+            onRefresh: () => habitsNotifier.loadHabits(force: true),
             child: CustomScrollView(
               slivers: [
                 SliverPadding(
@@ -466,16 +483,6 @@ class HabitsScreen extends ConsumerWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // Title
-                        Text(
-                          'Your Habits',
-                          style: TextStyle(
-                            fontSize: 28,
-                            fontWeight: FontWeight.bold,
-                            color: textPrimary,
-                          ),
-                        ),
-                        const SizedBox(height: 20),
                         // Summary card
                         _buildSummaryCard(
                           context,
@@ -565,15 +572,33 @@ class HabitsScreen extends ConsumerWidget {
             ),
           ),
 
-          // Floating back button
+          // Top bar: back button + centered title
           Positioned(
             top: MediaQuery.of(context).padding.top + 8,
             left: 16,
-            child: GlassBackButton(
-              onTap: () {
-                HapticService.light();
-                context.pop();
-              },
+            right: 16,
+            child: Row(
+              children: [
+                GlassBackButton(
+                  onTap: () {
+                    HapticService.light();
+                    context.pop();
+                  },
+                ),
+                Expanded(
+                  child: Text(
+                    'Your Habits',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w700,
+                      color: textPrimary,
+                    ),
+                  ),
+                ),
+                // Invisible spacer matching back button width for centering
+                const SizedBox(width: 40),
+              ],
             ),
           ),
 
@@ -729,57 +754,50 @@ class HabitsScreen extends ConsumerWidget {
                         size: 20,
                       ),
                       const SizedBox(width: 8),
-                      // Checkbox for custom habits / check icon for auto
-                      if (habit.isAutoTracked)
-                        Container(
-                          width: 28,
-                          height: 28,
-                          decoration: BoxDecoration(
-                            color: habit.todayCompleted
-                                ? effectiveColor.withValues(alpha: 0.15)
-                                : Colors.transparent,
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(
-                              color: habit.todayCompleted
-                                  ? effectiveColor
-                                  : cardBorder,
-                              width: 2,
-                            ),
-                          ),
-                          child: habit.todayCompleted
-                              ? Icon(Icons.check, color: effectiveColor, size: 18)
-                              : null,
-                        )
-                      else
-                        GestureDetector(
-                          onTap: () {
-                            HapticService.medium();
+                      // Checkbox / log button
+                      GestureDetector(
+                        onTap: () {
+                          HapticService.medium();
+                          if (habit.isAutoTracked) {
+                            // Auto-tracked: navigate to the relevant screen to log
+                            if (habit.route != null) {
+                              context.push(habit.route!);
+                            }
+                          } else {
+                            // Custom: toggle completion via API
                             ref.read(habitsScreenProvider.notifier).toggleHabit(
                               habit.id,
                               !habit.todayCompleted,
                             );
-                          },
-                          child: AnimatedContainer(
-                            duration: const Duration(milliseconds: 200),
-                            width: 28,
-                            height: 28,
-                            decoration: BoxDecoration(
-                              color: habit.todayCompleted
-                                  ? effectiveColor
-                                  : Colors.transparent,
-                              borderRadius: BorderRadius.circular(8),
-                              border: Border.all(
-                                color: habit.todayCompleted
-                                    ? effectiveColor
-                                    : cardBorder,
-                                width: 2,
+                          }
+                        },
+                        child: habit.todayCompleted
+                            ? AnimatedContainer(
+                                duration: const Duration(milliseconds: 200),
+                                width: 28,
+                                height: 28,
+                                decoration: BoxDecoration(
+                                  color: effectiveColor,
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Icon(Icons.check, color: isDark ? Colors.black : Colors.white, size: 18),
+                              )
+                            : Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+                                decoration: BoxDecoration(
+                                  color: effectiveColor.withValues(alpha: 0.15),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Text(
+                                  habit.isAutoTracked ? '+ Log' : 'Log',
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w600,
+                                    color: effectiveColor,
+                                  ),
+                                ),
                               ),
-                            ),
-                            child: habit.todayCompleted
-                                ? const Icon(Icons.check, color: Colors.white, size: 18)
-                                : null,
-                          ),
-                        ),
+                      ),
                       const SizedBox(width: 12),
                       // Icon
                       Container(
@@ -1078,14 +1096,8 @@ class HabitsScreen extends ConsumerWidget {
     final accentColorEnum = ref.read(accentColorProvider);
     final accentColor = accentColorEnum.getColor(isDark);
 
-    // Use local templates if API returned empty
-    final displayTemplates = templates.isEmpty ? HabitTemplate.defaults : templates;
-
-    // Group by category
-    final grouped = <HabitCategory, List<HabitTemplate>>{};
-    for (final t in displayTemplates) {
-      grouped.putIfAbsent(t.category, () => []).add(t);
-    }
+    // Always use hardcoded defaults (API templates have duplicates)
+    final allTemplates = HabitTemplate.defaults;
 
     showGlassSheet(
       context: context,
@@ -1094,203 +1106,35 @@ class HabitsScreen extends ConsumerWidget {
         return GlassSheet(
           maxHeightFraction: 0.85,
           child: SafeArea(
-            child: Column(
-              children: [
-                Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Row(
-                    children: [
-                      Text(
-                        'Add Habit',
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.w700,
-                          color: textPrimary,
-                        ),
-                      ),
-                      const Spacer(),
-                      IconButton(
-                        icon: Icon(Icons.close, color: textSecondary),
-                        onPressed: () => Navigator.pop(context),
-                      ),
-                    ],
-                  ),
-                ),
-                Expanded(
-                  child: ListView(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    children: [
-                      // Create Custom section at top
-                      GestureDetector(
-                        onTap: () {
-                          HapticService.medium();
-                          Navigator.pop(context);
-                          _showCreateCustomHabitSheet(context, ref);
-                        },
-                        child: Container(
-                          padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              colors: [
-                                accentColor.withValues(alpha: 0.15),
-                                accentColor.withValues(alpha: 0.05),
-                              ],
-                            ),
-                            borderRadius: BorderRadius.circular(14),
-                            border: Border.all(color: accentColor.withValues(alpha: 0.3)),
-                          ),
-                          child: Row(
-                            children: [
-                              Container(
-                                width: 44,
-                                height: 44,
-                                decoration: BoxDecoration(
-                                  color: accentColor,
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                child: Icon(
-                                  Icons.edit_outlined,
-                                  color: isDark ? Colors.black : Colors.white,
-                                  size: 22,
-                                ),
-                              ),
-                              const SizedBox(width: 14),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      'Create Custom Habit',
-                                      style: TextStyle(
-                                        fontSize: 15,
-                                        fontWeight: FontWeight.w600,
-                                        color: textPrimary,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 2),
-                                    Text(
-                                      'Define your own habit with custom name & icon',
-                                      style: TextStyle(
-                                        fontSize: 12,
-                                        color: textSecondary,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              Icon(Icons.arrow_forward_ios, color: accentColor, size: 16),
-                            ],
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 24),
-
-                      // Templates section header
-                      Text(
-                        'OR CHOOSE A TEMPLATE',
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                          color: textSecondary,
-                          letterSpacing: 0.5,
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-
-                      // Templates by category
-                      for (final category in HabitCategory.values)
-                        if (grouped.containsKey(category)) ...[
-                          Padding(
-                            padding: const EdgeInsets.only(top: 8, bottom: 12),
-                            child: Text(
-                              category.label.toUpperCase(),
-                              style: TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w600,
-                                color: textSecondary.withValues(alpha: 0.7),
-                                letterSpacing: 0.5,
-                              ),
-                            ),
-                          ),
-                          ...grouped[category]!.map((template) {
-                            final templateColor = _parseColor(template.color, AppColors.accent);
-                            return Padding(
-                              padding: const EdgeInsets.only(bottom: 8),
-                              child: GestureDetector(
-                                onTap: () async {
-                                  HapticService.medium();
-                                  Navigator.pop(context);
-                                  await ref.read(habitsScreenProvider.notifier)
-                                      .createHabitFromTemplate(template.id);
-                                  if (context.mounted) {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
-                                        content: Text('Added "${template.name}"'),
-                                        behavior: SnackBarBehavior.floating,
-                                      ),
-                                    );
-                                  }
-                                },
-                                child: Container(
-                                  padding: const EdgeInsets.all(12),
-                                  decoration: BoxDecoration(
-                                    color: cardBg,
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                  child: Row(
-                                    children: [
-                                      Container(
-                                        width: 40,
-                                        height: 40,
-                                        decoration: BoxDecoration(
-                                          color: templateColor.withValues(alpha: 0.15),
-                                          borderRadius: BorderRadius.circular(10),
-                                        ),
-                                        child: Icon(
-                                          _getIconFromName(template.icon),
-                                          color: templateColor,
-                                          size: 20,
-                                        ),
-                                      ),
-                                      const SizedBox(width: 12),
-                                      Expanded(
-                                        child: Column(
-                                          crossAxisAlignment: CrossAxisAlignment.start,
-                                          children: [
-                                            Text(
-                                              template.name,
-                                              style: TextStyle(
-                                                fontSize: 14,
-                                                fontWeight: FontWeight.w600,
-                                                color: textPrimary,
-                                              ),
-                                            ),
-                                            Text(
-                                              template.description,
-                                              style: TextStyle(
-                                                fontSize: 12,
-                                                color: textSecondary,
-                                              ),
-                                              maxLines: 1,
-                                              overflow: TextOverflow.ellipsis,
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                      Icon(Icons.add_circle_outline,
-                                        color: templateColor, size: 24),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            );
-                          }),
-                        ],
-                      const SizedBox(height: 32),
-                    ],
-                  ),
-                ),
-              ],
+            child: _AddHabitSheetContent(
+              allTemplates: allTemplates,
+              textPrimary: textPrimary,
+              textSecondary: textSecondary,
+              cardBg: cardBg,
+              accentColor: accentColor,
+              isDark: isDark,
+              ref: ref,
+              onCreateCustom: () {
+                HapticService.medium();
+                Navigator.pop(context);
+                _showCreateCustomHabitSheet(context, ref);
+              },
+              onAddTemplate: (template) async {
+                HapticService.medium();
+                Navigator.pop(context);
+                await ref.read(habitsScreenProvider.notifier)
+                    .createHabitFromTemplate(template.id);
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Added "${template.name}"'),
+                      behavior: SnackBarBehavior.floating,
+                    ),
+                  );
+                }
+              },
+              parseColor: _parseColor,
+              getIconFromName: _getIconFromName,
             ),
           ),
         );
@@ -1303,12 +1147,28 @@ class HabitsScreen extends ConsumerWidget {
     final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
     final cardBg = isDark ? AppColors.elevated : AppColorsLight.elevated;
-    final sheetBg = isDark ? AppColors.pureBlack : Colors.white;
     final accentColorEnum = ref.read(accentColorProvider);
     final accentColor = accentColorEnum.getColor(isDark);
 
     final nameController = TextEditingController();
     String selectedIcon = 'check_circle';
+    String selectedColor = '#06B6D4'; // Default cyan
+
+    // Color palette for habits
+    const colorOptions = [
+      '#06B6D4', // Cyan
+      '#8B5CF6', // Purple
+      '#F97316', // Orange
+      '#10B981', // Emerald
+      '#EF4444', // Red
+      '#3B82F6', // Blue
+      '#EC4899', // Pink
+      '#F59E0B', // Amber
+      '#14B8A6', // Teal
+      '#6366F1', // Indigo
+      '#84CC16', // Lime
+      '#A855F7', // Violet
+    ];
 
     showGlassSheet(
       context: context,
@@ -1317,17 +1177,16 @@ class HabitsScreen extends ConsumerWidget {
         return GlassSheet(
           child: StatefulBuilder(
           builder: (context, setSheetState) {
+            final currentColor = _parseColor(selectedColor, accentColor);
             return SafeArea(
               child: Padding(
                 padding: EdgeInsets.only(
                   bottom: MediaQuery.of(context).viewInsets.bottom,
                 ),
-                child: Padding(
+                child: ListView(
+                  shrinkWrap: true,
                   padding: const EdgeInsets.all(20),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
+                  children: [
                       // Header with back button
                       Row(
                         children: [
@@ -1360,6 +1219,7 @@ class HabitsScreen extends ConsumerWidget {
                       TextField(
                         controller: nameController,
                         style: TextStyle(color: textPrimary),
+                        onChanged: (_) => setSheetState(() {}),
                         decoration: InputDecoration(
                           labelText: 'Habit Name',
                           labelStyle: TextStyle(color: textSecondary),
@@ -1373,9 +1233,52 @@ class HabitsScreen extends ConsumerWidget {
                           ),
                           focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide(color: accentColor),
+                            borderSide: BorderSide(color: currentColor),
                           ),
                         ),
+                      ),
+                      const SizedBox(height: 20),
+
+                      // Color selection
+                      Text(
+                        'Choose Color',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: textPrimary,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      Wrap(
+                        spacing: 10,
+                        runSpacing: 10,
+                        children: colorOptions.map((hex) {
+                          final color = _parseColor(hex, accentColor);
+                          final isSelected = selectedColor == hex;
+                          return GestureDetector(
+                            onTap: () {
+                              HapticService.selection();
+                              setSheetState(() => selectedColor = hex);
+                            },
+                            child: Container(
+                              width: 40,
+                              height: 40,
+                              decoration: BoxDecoration(
+                                color: color,
+                                shape: BoxShape.circle,
+                                border: isSelected
+                                    ? Border.all(color: Colors.white, width: 2.5)
+                                    : null,
+                                boxShadow: isSelected
+                                    ? [BoxShadow(color: color.withValues(alpha: 0.5), blurRadius: 8, spreadRadius: 1)]
+                                    : null,
+                              ),
+                              child: isSelected
+                                  ? const Icon(Icons.check, color: Colors.white, size: 20)
+                                  : null,
+                            ),
+                          );
+                        }).toList(),
                       ),
                       const SizedBox(height: 20),
 
@@ -1406,7 +1309,7 @@ class HabitsScreen extends ConsumerWidget {
                               width: 44,
                               height: 44,
                               decoration: BoxDecoration(
-                                color: isSelected ? accentColor : cardBg,
+                                color: isSelected ? currentColor : cardBg,
                                 borderRadius: BorderRadius.circular(10),
                                 border: isSelected ? null : Border.all(
                                   color: textSecondary.withValues(alpha: 0.2),
@@ -1415,7 +1318,7 @@ class HabitsScreen extends ConsumerWidget {
                               child: Icon(
                                 _getIconFromName(iconName),
                                 color: isSelected
-                                    ? (isDark ? Colors.black : Colors.white)
+                                    ? Colors.white
                                     : textSecondary,
                                 size: 22,
                               ),
@@ -1424,6 +1327,55 @@ class HabitsScreen extends ConsumerWidget {
                         }).toList(),
                       ),
                       const SizedBox(height: 24),
+
+                      // Preview
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: cardBg,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Row(
+                          children: [
+                            Container(
+                              width: 40,
+                              height: 40,
+                              decoration: BoxDecoration(
+                                color: currentColor.withValues(alpha: 0.15),
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: Icon(
+                                _getIconFromName(selectedIcon),
+                                color: currentColor,
+                                size: 20,
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Text(
+                                nameController.text.isEmpty ? 'Preview' : nameController.text,
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                  color: nameController.text.isEmpty
+                                      ? textSecondary.withValues(alpha: 0.5)
+                                      : textPrimary,
+                                ),
+                              ),
+                            ),
+                            Container(
+                              width: 28,
+                              height: 28,
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(color: currentColor),
+                              ),
+                              child: Icon(Icons.check, color: currentColor, size: 16),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 20),
 
                       // Create button
                       SizedBox(
@@ -1440,25 +1392,50 @@ class HabitsScreen extends ConsumerWidget {
                               return;
                             }
                             HapticService.medium();
+                            final messenger = ScaffoldMessenger.of(context);
+                            final habitName = nameController.text.trim();
                             Navigator.pop(context);
 
-                            // Check for first habit XP bonus
-                            final xpAwarded = await ref.read(xpProvider.notifier).checkFirstHabitBonus();
+                            try {
+                              // Create the habit via API
+                              final habit = HabitCreate(
+                                name: habitName,
+                                icon: selectedIcon,
+                                color: selectedColor,
+                              );
+                              await ref.read(habitRepositoryProvider).createHabit(
+                                ref.read(authStateProvider).user?.id ?? '',
+                                habit,
+                              );
 
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text(
-                                  xpAwarded > 0
-                                    ? 'Created "${nameController.text}" +$xpAwarded XP bonus!'
-                                    : 'Created "${nameController.text}"',
+                              // Reload habits list
+                              await ref.read(habitsScreenProvider.notifier).loadHabits(force: true);
+
+                              // Check for first habit XP bonus
+                              final xpAwarded = await ref.read(xpProvider.notifier).checkFirstHabitBonus();
+
+                              messenger.showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                    xpAwarded > 0
+                                      ? 'Created "$habitName" +$xpAwarded XP bonus!'
+                                      : 'Created "$habitName"',
+                                  ),
+                                  behavior: SnackBarBehavior.floating,
                                 ),
-                                behavior: SnackBarBehavior.floating,
-                              ),
-                            );
+                              );
+                            } catch (e) {
+                              messenger.showSnackBar(
+                                SnackBar(
+                                  content: Text('Failed to create habit: $e'),
+                                  behavior: SnackBarBehavior.floating,
+                                ),
+                              );
+                            }
                           },
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: accentColor,
-                            foregroundColor: isDark ? Colors.black : Colors.white,
+                            backgroundColor: currentColor,
+                            foregroundColor: Colors.white,
                             padding: const EdgeInsets.symmetric(vertical: 16),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12),
@@ -1475,7 +1452,6 @@ class HabitsScreen extends ConsumerWidget {
                       ),
                     ],
                   ),
-                ),
               ),
             );
           },
@@ -1524,5 +1500,413 @@ class HabitsScreen extends ConsumerWidget {
       'star': Icons.star,
     };
     return iconMap[iconName] ?? Icons.check_circle;
+  }
+}
+
+/// Stateful content for the Add Habit sheet with search and category filter.
+class _AddHabitSheetContent extends StatefulWidget {
+  final List<HabitTemplate> allTemplates;
+  final Color textPrimary;
+  final Color textSecondary;
+  final Color cardBg;
+  final Color accentColor;
+  final bool isDark;
+  final WidgetRef ref;
+  final VoidCallback onCreateCustom;
+  final Future<void> Function(HabitTemplate) onAddTemplate;
+  final Color Function(String, Color) parseColor;
+  final IconData Function(String) getIconFromName;
+
+  const _AddHabitSheetContent({
+    required this.allTemplates,
+    required this.textPrimary,
+    required this.textSecondary,
+    required this.cardBg,
+    required this.accentColor,
+    required this.isDark,
+    required this.ref,
+    required this.onCreateCustom,
+    required this.onAddTemplate,
+    required this.parseColor,
+    required this.getIconFromName,
+  });
+
+  @override
+  State<_AddHabitSheetContent> createState() => _AddHabitSheetContentState();
+}
+
+class _AddHabitSheetContentState extends State<_AddHabitSheetContent>
+    with SingleTickerProviderStateMixin {
+  final _searchController = TextEditingController();
+  String _searchQuery = '';
+  HabitCategory? _selectedCategory; // null = All
+  late AnimationController _shimmerController;
+
+  @override
+  void initState() {
+    super.initState();
+    _shimmerController = AnimationController(
+      duration: const Duration(milliseconds: 3500),
+      vsync: this,
+    )..repeat();
+  }
+
+  @override
+  void dispose() {
+    _shimmerController.dispose();
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  List<HabitTemplate> get _filteredTemplates {
+    var list = widget.allTemplates;
+    if (_selectedCategory != null) {
+      list = list.where((t) => t.category == _selectedCategory).toList();
+    }
+    if (_searchQuery.isNotEmpty) {
+      final q = _searchQuery.toLowerCase();
+      list = list.where((t) =>
+        t.name.toLowerCase().contains(q) ||
+        t.description.toLowerCase().contains(q)
+      ).toList();
+    }
+    return list;
+  }
+
+  Map<HabitCategory, List<HabitTemplate>> get _groupedTemplates {
+    final grouped = <HabitCategory, List<HabitTemplate>>{};
+    for (final t in _filteredTemplates) {
+      grouped.putIfAbsent(t.category, () => []).add(t);
+    }
+    return grouped;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final grouped = _groupedTemplates;
+    final hasResults = grouped.isNotEmpty;
+
+    return Column(
+      children: [
+        // Header
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+          child: Row(
+            children: [
+              Text(
+                'Add Habit',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w700,
+                  color: widget.textPrimary,
+                ),
+              ),
+              const Spacer(),
+              IconButton(
+                icon: Icon(Icons.close, color: widget.textSecondary),
+                onPressed: () => Navigator.pop(context),
+              ),
+            ],
+          ),
+        ),
+
+        // Search bar
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+          child: TextField(
+            controller: _searchController,
+            style: TextStyle(color: widget.textPrimary, fontSize: 14),
+            onChanged: (v) => setState(() => _searchQuery = v.trim()),
+            decoration: InputDecoration(
+              hintText: 'Search habits...',
+              hintStyle: TextStyle(color: widget.textSecondary.withValues(alpha: 0.5), fontSize: 14),
+              prefixIcon: Icon(Icons.search, color: widget.textSecondary, size: 20),
+              suffixIcon: _searchQuery.isNotEmpty
+                  ? GestureDetector(
+                      onTap: () {
+                        _searchController.clear();
+                        setState(() => _searchQuery = '');
+                      },
+                      child: Icon(Icons.close, color: widget.textSecondary, size: 18),
+                    )
+                  : null,
+              filled: true,
+              fillColor: widget.cardBg,
+              contentPadding: const EdgeInsets.symmetric(vertical: 10),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide.none,
+              ),
+            ),
+          ),
+        ),
+
+        // Category filter chips
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+          child: SizedBox(
+            height: 34,
+            child: ListView(
+              scrollDirection: Axis.horizontal,
+              children: [
+                _buildCategoryChip(null, 'All'),
+                ...HabitCategory.values.map(
+                  (c) => _buildCategoryChip(c, c.label),
+                ),
+              ],
+            ),
+          ),
+        ),
+
+        // Scrollable content
+        Expanded(
+          child: ListView(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            children: [
+              // Create Custom — only show when not searching
+              if (_searchQuery.isEmpty && _selectedCategory == null) ...[
+                GestureDetector(
+                  onTap: widget.onCreateCustom,
+                  child: AnimatedBuilder(
+                    animation: _shimmerController,
+                    builder: (context, child) {
+                      final t = _shimmerController.value;
+                      // Shimmer sweeps during first 35% of cycle, idle the rest
+                      final shimmerProgress = t < 0.35 ? t / 0.35 : -1.0;
+                      return ClipRRect(
+                        borderRadius: BorderRadius.circular(14),
+                        child: Stack(
+                          children: [
+                            child!,
+                            if (shimmerProgress >= 0)
+                              Positioned.fill(
+                                child: IgnorePointer(
+                                  child: FractionallySizedBox(
+                                    widthFactor: 0.4,
+                                    alignment: Alignment(-1.0 + 2.4 * shimmerProgress, 0),
+                                    child: Container(
+                                      decoration: BoxDecoration(
+                                        gradient: LinearGradient(
+                                          colors: [
+                                            Colors.white.withValues(alpha: 0),
+                                            Colors.white.withValues(alpha: widget.isDark ? 0.12 : 0.25),
+                                            Colors.white.withValues(alpha: 0),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                          ],
+                        ),
+                      );
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            widget.accentColor.withValues(alpha: 0.15),
+                            widget.accentColor.withValues(alpha: 0.05),
+                          ],
+                        ),
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(color: widget.accentColor.withValues(alpha: 0.3)),
+                      ),
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 44,
+                            height: 44,
+                            decoration: BoxDecoration(
+                              color: widget.accentColor,
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Icon(
+                              Icons.edit_outlined,
+                              color: widget.isDark ? Colors.black : Colors.white,
+                              size: 22,
+                            ),
+                          ),
+                          const SizedBox(width: 14),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Create Custom Habit',
+                                  style: TextStyle(
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w600,
+                                    color: widget.textPrimary,
+                                  ),
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  'Define your own habit with custom name & icon',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: widget.textSecondary,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          Icon(Icons.arrow_forward_ios, color: widget.accentColor, size: 16),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 24),
+
+                Text(
+                  'OR CHOOSE A TEMPLATE',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: widget.textSecondary,
+                    letterSpacing: 0.5,
+                  ),
+                ),
+                const SizedBox(height: 16),
+              ],
+
+              // Empty state
+              if (!hasResults)
+                Padding(
+                  padding: const EdgeInsets.only(top: 40),
+                  child: Center(
+                    child: Column(
+                      children: [
+                        Icon(Icons.search_off, color: widget.textSecondary.withValues(alpha: 0.4), size: 40),
+                        const SizedBox(height: 12),
+                        Text(
+                          'No habits found',
+                          style: TextStyle(color: widget.textSecondary, fontSize: 14),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+
+              // Templates by category
+              for (final category in HabitCategory.values)
+                if (grouped.containsKey(category)) ...[
+                  Padding(
+                    padding: const EdgeInsets.only(top: 8, bottom: 12),
+                    child: Text(
+                      category.label.toUpperCase(),
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: widget.textSecondary.withValues(alpha: 0.7),
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                  ),
+                  ...grouped[category]!.map((template) {
+                    final templateColor = widget.parseColor(template.color, AppColors.accent);
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 8),
+                      child: GestureDetector(
+                        onTap: () => widget.onAddTemplate(template),
+                        child: Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: widget.cardBg,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Row(
+                            children: [
+                              Container(
+                                width: 40,
+                                height: 40,
+                                decoration: BoxDecoration(
+                                  color: templateColor.withValues(alpha: 0.15),
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: Icon(
+                                  widget.getIconFromName(template.icon),
+                                  color: templateColor,
+                                  size: 20,
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      template.name,
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w600,
+                                        color: widget.textPrimary,
+                                      ),
+                                    ),
+                                    Text(
+                                      template.description,
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        color: widget.textSecondary,
+                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              Icon(Icons.add_circle_outline,
+                                color: templateColor, size: 24),
+                            ],
+                          ),
+                        ),
+                      ),
+                    );
+                  }),
+                ],
+              const SizedBox(height: 32),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildCategoryChip(HabitCategory? category, String label) {
+    final isSelected = _selectedCategory == category;
+    return Padding(
+      padding: const EdgeInsets.only(right: 8),
+      child: GestureDetector(
+        onTap: () {
+          HapticService.selection();
+          setState(() => _selectedCategory = category);
+        },
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+          decoration: BoxDecoration(
+            color: isSelected
+                ? widget.accentColor
+                : widget.cardBg,
+            borderRadius: BorderRadius.circular(17),
+            border: isSelected
+                ? null
+                : Border.all(color: widget.textSecondary.withValues(alpha: 0.15)),
+          ),
+          child: Text(
+            label,
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: isSelected
+                  ? (widget.isDark ? Colors.black : Colors.white)
+                  : widget.textSecondary,
+            ),
+          ),
+        ),
+      ),
+    );
   }
 }

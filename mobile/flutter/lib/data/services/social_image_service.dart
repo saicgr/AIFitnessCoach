@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
@@ -53,6 +54,9 @@ class SocialImageService {
       try {
         final request = await httpClient.putUrl(Uri.parse(uploadUrl));
         request.headers.set('Content-Type', 'image/jpeg');
+        // Must set contentLength explicitly — otherwise Dart uses chunked
+        // transfer encoding which S3 presigned URLs don't support (causes 501).
+        request.contentLength = bytes.length;
         request.add(bytes);
         final response = await request.close();
 
@@ -60,7 +64,8 @@ class SocialImageService {
           debugPrint('[SocialImage] Presigned upload successful: $publicUrl');
           return publicUrl;
         } else {
-          debugPrint('[SocialImage] S3 upload failed: ${response.statusCode}');
+          final body = await response.transform(utf8.decoder).join();
+          debugPrint('[SocialImage] S3 upload failed: ${response.statusCode} - $body');
           return null;
         }
       } finally {

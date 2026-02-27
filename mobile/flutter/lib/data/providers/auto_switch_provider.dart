@@ -7,6 +7,8 @@ import '../services/location_service.dart';
 import 'gym_profile_provider.dart';
 import 'location_permission_provider.dart';
 import 'time_slot_provider.dart';
+import '../repositories/workout_repository.dart';
+import 'today_workout_provider.dart';
 
 /// Key for storing auto-switch enabled preference
 const String _autoSwitchEnabledKey = 'auto_switch_enabled';
@@ -189,6 +191,12 @@ class AutoSwitchNotifier extends StateNotifier<AutoSwitchState> {
 
     try {
       await _ref.read(gymProfilesProvider.notifier).activateProfile(suggested.id);
+
+      // Reset generation state and invalidate workout providers for new profile
+      TodayWorkoutNotifier.resetGenerationState();
+      _ref.invalidate(todayWorkoutProvider);
+      _ref.invalidate(workoutsProvider);
+
       state = state.copyWith(clearSuggested: true);
     } catch (e) {
       debugPrint('❌ [AutoSwitchNotifier] Failed to switch: $e');

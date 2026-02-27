@@ -3624,8 +3624,8 @@ class UserContextService:
                     lifetime_purchase_date = datetime.fromisoformat(
                         subscription["lifetime_purchase_date"].replace("Z", "+00:00")
                     )
-                except (ValueError, TypeError):
-                    pass
+                except (ValueError, TypeError) as e:
+                    logger.debug(f"Failed to parse purchase date: {e}")
 
             # Calculate days as member
             days_as_member = 0
@@ -6346,8 +6346,8 @@ class UserContextService:
                         patterns.diagnosis_date = date.fromisoformat(
                             latest_profile["diagnosis_date"]
                         )
-                    except (ValueError, TypeError):
-                        pass
+                    except (ValueError, TypeError) as e:
+                        logger.debug(f"Failed to parse diagnosis date: {e}")
                 patterns.target_glucose_min = latest_profile.get("target_glucose_min", 70.0)
                 patterns.target_glucose_max = latest_profile.get("target_glucose_max", 180.0)
 
@@ -6373,8 +6373,8 @@ class UserContextService:
                     patterns.latest_glucose_time = datetime.fromisoformat(
                         glucose_events[0]["created_at"].replace("Z", "+00:00")
                     )
-                except (ValueError, TypeError):
-                    pass
+                except (ValueError, TypeError) as e:
+                    logger.debug(f"Failed to parse glucose time: {e}")
 
             # Analyze insulin doses from today
             insulin_events = [
@@ -6407,8 +6407,8 @@ class UserContextService:
                 if latest_a1c.get("test_date"):
                     try:
                         patterns.a1c_date = date.fromisoformat(latest_a1c["test_date"])
-                    except (ValueError, TypeError):
-                        pass
+                    except (ValueError, TypeError) as e:
+                        logger.debug(f"Failed to parse A1C date: {e}")
 
             # Count hypo/hyper events in last 7 days
             alert_events = [
@@ -6982,8 +6982,8 @@ class UserContextService:
                             context.current_cycle_phase = "ovulation"
                         else:
                             context.current_cycle_phase = "luteal"
-                    except (ValueError, TypeError):
-                        pass
+                    except (ValueError, TypeError) as e:
+                        logger.debug(f"Failed to parse cycle phase: {e}")
 
             # Get recent hormone logs for symptoms
             now = datetime.now()

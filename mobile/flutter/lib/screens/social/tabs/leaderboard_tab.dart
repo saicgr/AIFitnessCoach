@@ -363,20 +363,6 @@ class _LeaderboardTabState extends ConsumerState<LeaderboardTab>
               ),
               const SizedBox(height: 24),
 
-              if (isFriend) ...[
-                // Direct challenge for friends
-                ListTile(
-                  leading: Icon(Icons.emoji_events, color: accentColor),
-                  title: const Text('Challenge Directly'),
-                  subtitle: const Text('Send a direct challenge notification'),
-                  onTap: () {
-                    Navigator.pop(sheetContext);
-                    // TODO: Show ChallengeFriendsDialog
-                    AppSnackBar.info(context, 'Feature coming soon!');
-                  },
-                ),
-                const Divider(),
-              ],
 
               // Async challenge (Beat Their Best)
               ListTile(

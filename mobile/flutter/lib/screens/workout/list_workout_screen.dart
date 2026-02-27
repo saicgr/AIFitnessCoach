@@ -91,28 +91,75 @@ class _ListWorkoutScreenState extends ConsumerState<ListWorkoutScreen> {
   }
 
   Future<void> _fetchPreviousSessionData() async {
-    // TODO: Implement fetching from /api/v1/performance-db/logs
-    // For now, simulate some previous data
-    await Future.delayed(const Duration(milliseconds: 500));
+    try {
+      final apiClient = ref.read(apiClientProvider);
+      final userId = await apiClient.getUserId();
 
-    // Mock previous data for demonstration
-    final mockPrevious = <int, List<PreviousSetData>>{};
-    for (int i = 0; i < widget.workout.exercises.length; i++) {
-      final exercise = widget.workout.exercises[i];
-      mockPrevious[i] = [
-        PreviousSetData(setNumber: 1, weight: (exercise.weight ?? 20) * 0.5, reps: 15, isWarmup: true),
-        PreviousSetData(setNumber: 2, weight: (exercise.weight ?? 20) * 0.75, reps: 10, isWarmup: true),
-        PreviousSetData(setNumber: 1, weight: exercise.weight ?? 20, reps: 10),
-        PreviousSetData(setNumber: 2, weight: (exercise.weight ?? 20) * 1.2, reps: 10),
-        PreviousSetData(setNumber: 3, weight: (exercise.weight ?? 20) * 1.4, reps: 8),
-      ];
+      if (userId == null) {
+        if (mounted) setState(() => _isLoadingPrevious = false);
+        return;
+      }
+
+      final fetchedPrevious = <int, List<PreviousSetData>>{};
+
+      // Fetch previous session data for each exercise in parallel
+      final futures = <Future<void>>[];
+      for (int i = 0; i < widget.workout.exercises.length; i++) {
+        final exercise = widget.workout.exercises[i];
+        futures.add(_fetchExerciseHistory(apiClient, userId, exercise.name, i, fetchedPrevious));
+      }
+
+      await Future.wait(futures);
+
+      if (mounted) {
+        setState(() {
+          _previousSets = fetchedPrevious;
+          _isLoadingPrevious = false;
+        });
+      }
+    } catch (e) {
+      debugPrint('Error fetching previous session data: $e');
+      if (mounted) {
+        setState(() => _isLoadingPrevious = false);
+      }
     }
+  }
 
-    if (mounted) {
-      setState(() {
-        _previousSets = mockPrevious;
-        _isLoadingPrevious = false;
-      });
+  Future<void> _fetchExerciseHistory(
+    ApiClient apiClient,
+    String userId,
+    String exerciseName,
+    int exerciseIndex,
+    Map<int, List<PreviousSetData>> results,
+  ) async {
+    try {
+      final encodedName = Uri.encodeComponent(exerciseName);
+      final response = await apiClient.get(
+        '/performance/exercise-last-performance/$encodedName',
+        queryParameters: {'user_id': userId},
+      );
+
+      if (response.statusCode == 200 && response.data != null) {
+        final data = response.data as Map<String, dynamic>;
+        final sets = data['sets'] as List<dynamic>? ?? [];
+
+        final previousSets = sets.map<PreviousSetData>((s) {
+          final setMap = s as Map<String, dynamic>;
+          final setType = setMap['set_type'] as String? ?? 'working';
+          return PreviousSetData(
+            setNumber: (setMap['set_number'] as num?)?.toInt() ?? 1,
+            weight: (setMap['weight_kg'] as num?)?.toDouble() ?? 0.0,
+            reps: (setMap['reps_completed'] as num?)?.toInt() ?? 0,
+            isWarmup: setType == 'warmup',
+          );
+        }).toList();
+
+        if (previousSets.isNotEmpty) {
+          results[exerciseIndex] = previousSets;
+        }
+      }
+    } catch (e) {
+      debugPrint('Failed to fetch history for exercise $exerciseName: $e');
     }
   }
 

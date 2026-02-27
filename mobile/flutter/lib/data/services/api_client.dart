@@ -1,12 +1,10 @@
 import 'dart:async';
 import 'dart:io';
 import 'package:dio/dio.dart';
-import 'package:dio/io.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:pretty_dio_logger/pretty_dio_logger.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' hide MultipartFile;
 import '../../core/constants/api_constants.dart';
@@ -74,30 +72,7 @@ class ApiClient with WidgetsBindingObserver {
       ),
     );
 
-    // Certificate pinning for release builds
-    if (kReleaseMode) {
-      // SHA-256 SPKI pins for aifitnesscoach-zqi3.onrender.com
-      // Update these when the server certificate is rotated.
-      const pinnedSha256Fingerprints = <String>[
-        // TODO: Replace with production certificate SHA-256 SPKI pins
-        // Run: openssl s_client -connect aifitnesscoach-zqi3.onrender.com:443 | openssl x509 -pubkey -noout | openssl pkey -pubin -outform der | openssl dgst -sha256 -binary | openssl enc -base64
-        // 'sha256/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=',
-      ];
-
-      if (pinnedSha256Fingerprints.isNotEmpty) {
-        final adapter = _dio.httpClientAdapter;
-        if (adapter is IOHttpClientAdapter) {
-          adapter.createHttpClient = () {
-            final client = HttpClient();
-            client.badCertificateCallback = (cert, host, port) {
-              // Reject all bad certificates in release mode
-              return false;
-            };
-            return client;
-          };
-        }
-      }
-    }
+    // Certificate pinning: disabled for Render's rotating certificates. TLS is enforced by network_security_config.xml.
 
     // 307/308 redirect interceptor for POST/PUT/DELETE
     // Dio 5.x only follows redirects for GET/HEAD, so we manually handle
@@ -218,17 +193,16 @@ class ApiClient with WidgetsBindingObserver {
       ),
     );
 
-    // Logging (debug only)
+    // Logging (debug only) — uses Dio's built-in interceptor, no extra package
     if (kDebugMode) {
       _dio.interceptors.add(
-        PrettyDioLogger(
+        LogInterceptor(
           requestHeader: true,
           requestBody: true,
           responseBody: true,
           responseHeader: false,
           error: true,
-          compact: true,
-          maxWidth: 90,
+          logPrint: (obj) => debugPrint(obj.toString()),
         ),
       );
     }

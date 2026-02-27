@@ -18,11 +18,13 @@ import json
 
 from core.config import get_settings
 from core.chroma_cloud import get_chroma_cloud_client
+from core.logger import get_logger
 from services.gemini_service import GeminiService
 from services.langgraph_agents.personality import build_personality_prompt
 from models.chat import AISettings
 
 settings = get_settings()
+logger = get_logger(__name__)
 
 
 class WorkoutFeedbackRAGService:
@@ -52,9 +54,10 @@ class WorkoutFeedbackRAGService:
 
         try:
             _count = self.collection.count()
-        except Exception:
+        except Exception as e:
+            logger.warning(f"Failed to get collection count: {e}")
             _count = "unknown"
-        print(f"✅ Workout Feedback RAG initialized: {_count} sessions")
+        logger.info(f"Workout Feedback RAG initialized: {_count} sessions")
 
     async def index_workout_session(
         self,
@@ -136,8 +139,8 @@ class WorkoutFeedbackRAGService:
         # Upsert to collection
         try:
             self.collection.delete(ids=[doc_id])
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug(f"ChromaDB delete before upsert: {e}")
 
         self.collection.add(
             ids=[doc_id],
@@ -166,7 +169,7 @@ class WorkoutFeedbackRAGService:
             }],
         )
 
-        print(f"🏋️ Indexed workout session: {workout_name} for user {user_id} (intensity={training_intensity_percent}%, pace={progression_pace})")
+        logger.info(f"Indexed workout session: {workout_name} for user {user_id} (intensity={training_intensity_percent}%, pace={progression_pace})")
         return doc_id
 
     async def get_user_workout_history(
@@ -206,8 +209,8 @@ class WorkoutFeedbackRAGService:
             if meta.get("exercises_json"):
                 try:
                     exercises = json.loads(meta["exercises_json"])
-                except json.JSONDecodeError:
-                    pass
+                except json.JSONDecodeError as e:
+                    logger.debug(f"Failed to parse exercises JSON: {e}")
 
             sessions.append({
                 "id": doc_id,
@@ -257,8 +260,8 @@ class WorkoutFeedbackRAGService:
                 if meta.get("exercises_json"):
                     try:
                         exercises = json.loads(meta["exercises_json"])
-                    except json.JSONDecodeError:
-                        pass
+                    except json.JSONDecodeError as e:
+                        logger.debug(f"Failed to parse exercises JSON: {e}")
 
                 # Check if exercise is actually in this session
                 has_exercise = any(
@@ -542,8 +545,8 @@ WORKOUT COMPLETION ANALYSIS:
         # Delete existing feedback for this workout
         try:
             self.collection.delete(ids=[doc_id])
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug(f"ChromaDB delete before upsert: {e}")
 
         # Store in ChromaDB
         self.collection.add(
@@ -563,7 +566,7 @@ WORKOUT COMPLETION ANALYSIS:
             }],
         )
 
-        print(f"🎯 Indexed workout feedback: rating={overall_rating}, difficulty={overall_difficulty}")
+        logger.info(f"Indexed workout feedback: rating={overall_rating}, difficulty={overall_difficulty}")
         return doc_id
 
     async def get_user_exercise_feedback(
@@ -707,8 +710,8 @@ WORKOUT COMPLETION ANALYSIS:
 
                         if ex.get("would_do_again", True):
                             exercise_difficulties[ex_name]["would_do_again_yes"] += 1
-            except json.JSONDecodeError:
-                pass
+            except json.JSONDecodeError as e:
+                logger.debug(f"Failed to parse exercise ratings: {e}")
 
         # Calculate average rating
         avg_rating = total_rating / rating_count if rating_count > 0 else 0
@@ -757,7 +760,8 @@ WORKOUT COMPLETION ANALYSIS:
         try:
             c = self.collection.count()
             total = c if c >= 0 else -1
-        except Exception:
+        except Exception as e:
+            logger.warning(f"Failed to get feedback count: {e}")
             total = -1
         return {
             "total_sessions": total,
@@ -915,7 +919,7 @@ Remember: Be specific, encouraging, and brief! If they earned trophies, CELEBRAT
 
     if not feedback:
         feedback = "Great workout! Keep up the momentum!"
-    print(f"🎯 Generated feedback for user {user_id}: {feedback[:50]}...")
+    logger.info(f"Generated feedback for user {user_id}: {feedback[:50]}...")
 
     return feedback
 

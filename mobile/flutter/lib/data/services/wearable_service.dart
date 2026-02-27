@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
 /// Service for communicating with Wear OS watch.
@@ -26,9 +27,9 @@ class WearableService {
         .map((event) => _parseEvent(event as Map))
         .listen(
           (event) => _eventController.add(event),
-          onError: (error) => print('❌ Wearable event error: $error'),
+          onError: (error) => debugPrint('❌ Wearable event error: $error'),
         );
-    print('✅ WearableService initialized');
+    debugPrint('✅ WearableService initialized');
   }
 
   /// Dispose resources
@@ -51,7 +52,7 @@ class WearableService {
       final result = await _methodChannel.invokeMethod<bool>('isWatchConnected');
       return result ?? false;
     } catch (e) {
-      print('❌ Error checking watch connection: $e');
+      debugPrint('❌ Error checking watch connection: $e');
       return false;
     }
   }
@@ -63,7 +64,7 @@ class WearableService {
       final result = await _methodChannel.invokeMethod<bool>('hasConnectedWearDevice');
       return result ?? false;
     } catch (e) {
-      print('❌ Error checking for Wear device: $e');
+      debugPrint('❌ Error checking for Wear device: $e');
       return false;
     }
   }
@@ -75,7 +76,7 @@ class WearableService {
       final result = await _methodChannel.invokeMethod<bool>('isWatchAppInstalled');
       return result ?? false;
     } catch (e) {
-      print('❌ Error checking watch app installation: $e');
+      debugPrint('❌ Error checking watch app installation: $e');
       return false;
     }
   }
@@ -87,11 +88,11 @@ class WearableService {
     try {
       final result = await _methodChannel.invokeMethod<bool>('promptWatchAppInstall');
       if (result == true) {
-        print('✅ Prompted watch app installation');
+        debugPrint('✅ Prompted watch app installation');
       }
       return result ?? false;
     } catch (e) {
-      print('❌ Error prompting watch app install: $e');
+      debugPrint('❌ Error prompting watch app install: $e');
       return false;
     }
   }
@@ -112,7 +113,7 @@ class WearableService {
 
       return WatchConnectionStatus.connected();
     } catch (e) {
-      print('❌ Error getting watch connection status: $e');
+      debugPrint('❌ Error getting watch connection status: $e');
       return WatchConnectionStatus.error(e.toString());
     }
   }
@@ -126,10 +127,10 @@ class WearableService {
         'sendWorkoutToWatch',
         {'workout': jsonEncode(workout)},
       );
-      print('✅ Workout sent to watch');
+      debugPrint('✅ Workout sent to watch');
       return result ?? false;
     } catch (e) {
-      print('❌ Error sending workout to watch: $e');
+      debugPrint('❌ Error sending workout to watch: $e');
       return false;
     }
   }
@@ -141,10 +142,10 @@ class WearableService {
         'sendNutritionSummaryToWatch',
         {'summary': jsonEncode(summary)},
       );
-      print('✅ Nutrition summary sent to watch');
+      debugPrint('✅ Nutrition summary sent to watch');
       return result ?? false;
     } catch (e) {
-      print('❌ Error sending nutrition summary to watch: $e');
+      debugPrint('❌ Error sending nutrition summary to watch: $e');
       return false;
     }
   }
@@ -156,10 +157,10 @@ class WearableService {
         'sendHealthGoalsToWatch',
         {'goals': jsonEncode(goals)},
       );
-      print('✅ Health goals sent to watch');
+      debugPrint('✅ Health goals sent to watch');
       return result ?? false;
     } catch (e) {
-      print('❌ Error sending health goals to watch: $e');
+      debugPrint('❌ Error sending health goals to watch: $e');
       return false;
     }
   }
@@ -171,10 +172,10 @@ class WearableService {
         'sendHealthDataToWatch',
         {'health': jsonEncode(healthData)},
       );
-      print('✅ Health data sent to watch');
+      debugPrint('✅ Health data sent to watch');
       return result ?? false;
     } catch (e) {
-      print('❌ Error sending health data to watch: $e');
+      debugPrint('❌ Error sending health data to watch: $e');
       return false;
     }
   }
@@ -186,10 +187,10 @@ class WearableService {
         'sendUserProfileToWatch',
         {'profile': jsonEncode(profile)},
       );
-      print('✅ User profile sent to watch');
+      debugPrint('✅ User profile sent to watch');
       return result ?? false;
     } catch (e) {
-      print('❌ Error sending user profile to watch: $e');
+      debugPrint('❌ Error sending user profile to watch: $e');
       return false;
     }
   }
@@ -202,7 +203,7 @@ class WearableService {
       final result = await _methodChannel.invokeMethod<bool>('notifySyncComplete');
       return result ?? false;
     } catch (e) {
-      print('❌ Error notifying sync complete: $e');
+      debugPrint('❌ Error notifying sync complete: $e');
       return false;
     }
   }
@@ -213,7 +214,7 @@ class WearableService {
       final result = await _methodChannel.invokeMethod<bool>('notifyWorkoutUpdated');
       return result ?? false;
     } catch (e) {
-      print('❌ Error notifying workout updated: $e');
+      debugPrint('❌ Error notifying workout updated: $e');
       return false;
     }
   }
@@ -232,7 +233,7 @@ class WearableService {
       // Check if watch is connected first
       final connected = await isWatchConnected();
       if (!connected) {
-        print('⚠️ Watch not connected, skipping credential sync');
+        debugPrint('⚠️ Watch not connected, skipping credential sync');
         return false;
       }
 
@@ -245,10 +246,10 @@ class WearableService {
           if (expiryMs != null) 'expiryMs': expiryMs,
         },
       );
-      print('✅ User credentials synced to watch');
+      debugPrint('✅ User credentials synced to watch');
       return result ?? false;
     } catch (e) {
-      print('❌ Error syncing credentials to watch: $e');
+      debugPrint('❌ Error syncing credentials to watch: $e');
       return false;
     }
   }

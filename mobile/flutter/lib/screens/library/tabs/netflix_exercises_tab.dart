@@ -1179,26 +1179,6 @@ class _NetflixExercisesTabState extends ConsumerState<NetflixExercisesTab> {
                     ),
                   ),
                 ),
-                // "+" button for custom exercises
-                GestureDetector(
-                  onTap: () {
-                    HapticService.medium();
-                    _showAddCustomExercise(context);
-                  },
-                  child: Container(
-                    width: 36,
-                    height: 36,
-                    decoration: BoxDecoration(
-                      color: orange.withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(18),
-                    ),
-                    child: Icon(
-                      Icons.add,
-                      color: orange,
-                      size: 20,
-                    ),
-                  ),
-                ),
               ],
             ),
           ),
@@ -1231,7 +1211,7 @@ class _NetflixExercisesTabState extends ConsumerState<NetflixExercisesTab> {
             ),
             const SizedBox(height: 16),
             Text(
-              'Custom Exercises Coming Soon',
+              'Custom Exercises',
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
@@ -1240,7 +1220,7 @@ class _NetflixExercisesTabState extends ConsumerState<NetflixExercisesTab> {
             ),
             const SizedBox(height: 8),
             Text(
-              'You\'ll be able to add your own exercises with custom reps, sets, and instructions.',
+              'Add your own exercises with custom reps, sets, and instructions.',
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 14,

@@ -673,10 +673,6 @@ class HealthService {
     // Body measurements
     HealthDataType.WEIGHT,
     HealthDataType.BODY_FAT_PERCENTAGE,
-    HealthDataType.HEIGHT,
-    HealthDataType.BODY_MASS_INDEX,
-    HealthDataType.BODY_TEMPERATURE,
-    HealthDataType.BODY_WATER_MASS,
 
     // Heart
     HealthDataType.HEART_RATE,
@@ -695,12 +691,6 @@ class HealthService {
     // Workout
     HealthDataType.WORKOUT,
 
-    // Vitals
-    HealthDataType.BLOOD_OXYGEN,
-    HealthDataType.BLOOD_PRESSURE_SYSTOLIC,
-    HealthDataType.BLOOD_PRESSURE_DIASTOLIC,
-    HealthDataType.RESPIRATORY_RATE,
-
     // Sleep
     HealthDataType.SLEEP_ASLEEP,
     HealthDataType.SLEEP_IN_BED,
@@ -712,23 +702,16 @@ class HealthService {
     HealthDataType.SLEEP_OUT_OF_BED,
     HealthDataType.SLEEP_SESSION,
 
-    // Hydration
-    HealthDataType.WATER,
-
-    // Diabetic metrics (Blood glucose & insulin)
+    // Diabetic metrics
     HealthDataType.BLOOD_GLUCOSE,
-    HealthDataType.INSULIN_DELIVERY,
   ];
 
   // Data types we want to write to Health Connect
   static final List<HealthDataType> _writeTypes = [
     HealthDataType.WEIGHT,
     HealthDataType.BODY_FAT_PERCENTAGE,
-    HealthDataType.HEIGHT,
     HealthDataType.WORKOUT,
     HealthDataType.ACTIVE_ENERGY_BURNED,
-    HealthDataType.NUTRITION,
-    HealthDataType.WATER,
   ];
 
   /// Check if Health Connect is available on the device
@@ -846,7 +829,6 @@ class HealthService {
     HealthDataType.SLEEP_LIGHT,
     HealthDataType.SLEEP_REM,
     HealthDataType.HEART_RATE_VARIABILITY_RMSSD,
-    HealthDataType.BODY_WATER_MASS,
     HealthDataType.SLEEP_AWAKE,
     HealthDataType.SLEEP_AWAKE_IN_BED,
     HealthDataType.SLEEP_OUT_OF_BED,

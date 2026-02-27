@@ -6,6 +6,8 @@ import 'package:drift/native.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
+import 'package:sqlcipher_flutter_libs/sqlcipher_flutter_libs.dart';
+import 'package:sqlite3/open.dart';
 
 import 'daos/embedding_dao.dart';
 import 'daos/exercise_1rm_dao.dart';
@@ -140,10 +142,19 @@ Future<String> _getOrCreateDbKey() async {
 
 LazyDatabase _openConnection() {
   return LazyDatabase(() async {
+    // Configure sqlite3 to use SQLCipher native library on Android
+    await applyWorkaroundToOpenSqlCipherOnOldAndroidVersions();
+    open.overrideFor(OperatingSystem.android, openCipherOnAndroid);
+
     final dbFolder = await getApplicationDocumentsDirectory();
     final file = File(p.join(dbFolder.path, 'fitwiz_offline.db'));
     final encryptionKey = await _getOrCreateDbKey();
-    return NativeDatabase.createInBackground(
+    // Use NativeDatabase (not createInBackground) because
+    // open.overrideFor() only applies to the current isolate.
+    // createInBackground spawns a new isolate where the SQLCipher
+    // override isn't set, causing "libsqlite3.so not found" errors
+    // (especially in WorkManager background isolates).
+    return NativeDatabase(
       file,
       setup: (rawDb) {
         rawDb.execute("PRAGMA key = '$encryptionKey'");

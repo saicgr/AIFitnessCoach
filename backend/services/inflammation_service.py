@@ -259,7 +259,8 @@ class InflammationService:
         if isinstance(created_at_str, str):
             try:
                 created_at = datetime.fromisoformat(created_at_str.replace("Z", "+00:00"))
-            except:
+            except (ValueError, TypeError) as e:
+                logger.debug(f"Failed to parse created_at: {e}")
                 created_at = datetime.utcnow()
         else:
             created_at = created_at_str
@@ -359,8 +360,8 @@ class InflammationService:
             if data.get("last_scan_at"):
                 try:
                     last_scan_at = datetime.fromisoformat(data["last_scan_at"].replace("Z", "+00:00"))
-                except:
-                    pass
+                except (ValueError, TypeError) as e:
+                    logger.debug(f"Failed to parse last_scan_at: {e}")
 
             return UserInflammationStatsResponse(
                 user_id=user_id,

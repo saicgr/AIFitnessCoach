@@ -37,8 +37,6 @@ class EquipmentOfflinePage extends ConsumerWidget {
               WarmupSettingsSection(),
               SizedBox(height: 16),
               SupersetSettingsSection(),
-              SizedBox(height: 16),
-              OfflineModeSection(),
               SizedBox(height: 32),
             ],
           ),

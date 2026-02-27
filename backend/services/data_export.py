@@ -435,21 +435,24 @@ def _export_profile(user: Dict[str, Any]) -> str:
     if isinstance(goals, str):
         try:
             goals = json.loads(goals)
-        except:
+        except Exception as e:
+            logger.debug(f"Failed to parse goals JSON during export: {e}")
             goals = []
 
     equipment = user.get("equipment", [])
     if isinstance(equipment, str):
         try:
             equipment = json.loads(equipment)
-        except:
+        except Exception as e:
+            logger.debug(f"Failed to parse equipment JSON during export: {e}")
             equipment = []
 
     active_injuries = user.get("active_injuries", [])
     if isinstance(active_injuries, str):
         try:
             active_injuries = json.loads(active_injuries)
-        except:
+        except Exception as e:
+            logger.debug(f"Failed to parse active_injuries JSON during export: {e}")
             active_injuries = []
 
     # Data row
@@ -551,7 +554,8 @@ def _export_workout_logs(logs: List[Dict[str, Any]]) -> str:
         if isinstance(sets_json, str):
             try:
                 sets_json = json.loads(sets_json)
-            except:
+            except Exception as e:
+                logger.debug(f"Failed to parse sets_json during workout log export: {e}")
                 sets_json = []
 
         total_sets = len(sets_json) if sets_json else 0

@@ -317,6 +317,7 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
         'exercises_count': widget.exercisesPerformance?.length ?? 0,
         'total_sets': widget.totalSets ?? 0,
         'total_reps': widget.totalReps ?? 0,
+        'exercises_performance': widget.exercisesPerformance,
       };
 
       debugPrint('🏆 [Challenge] Completing challenge ${widget.challengeId}');
@@ -349,10 +350,17 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
                 didBeat: didBeat,
                 yourStats: challengedStats,
                 theirStats: workoutData,
+                challengeId: widget.challengeId,
                 onViewFeed: () {
                   // Navigate to social feed
                   if (mounted) {
                     context.go('/social');
+                  }
+                },
+                onViewDetails: () {
+                  // Navigate to challenge compare screen
+                  if (mounted && widget.challengeId != null) {
+                    context.push('/challenge-compare', extra: widget.challengeId);
                   }
                 },
                 onDismiss: () {

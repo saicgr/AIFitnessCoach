@@ -21,6 +21,7 @@ class FitnessCoachState(TypedDict):
     workout_schedule: Optional[Dict[str, Any]]  # yesterday, today, tomorrow, thisWeek, recentCompleted
     conversation_history: List[Dict[str, str]]
     image_base64: Optional[str]  # Base64 encoded image for food analysis
+    media_ref: Optional[Dict[str, Any]]  # S3 media reference for form analysis
 
     # Intent extraction results
     intent: Optional[CoachIntent]
@@ -63,3 +64,6 @@ class FitnessCoachState(TypedDict):
 
     # Agent routing - which agent was @mentioned
     mentioned_agent: Optional[str]  # "coach", "nutrition", "workout", "injury", "hydration"
+
+    # Media classification (set by media classifier before agent routing)
+    media_content_type: Optional[str]  # "food_plate", "food_menu", "exercise_form", etc.

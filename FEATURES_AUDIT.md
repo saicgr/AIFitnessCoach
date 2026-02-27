@@ -507,3 +507,36 @@ This document provides detailed implementation locations for all features in FEA
 | Settings | `screens/settings/settings_screen.dart` | 100+ | Settings hub |
 | TTS | `data/services/tts_service.dart` | 195 | Voice coach |
 | Sound | `data/services/sound_service.dart` | 284 | Sound effects |
+
+---
+
+## NEW: February 2026 Features (18 Features)
+
+> Added in the February 2026 development cycle. Includes chat enhancements, form video analysis, fitness wrapped, social improvements, and infrastructure.
+
+| # | Feature | Impl | Comp | BE Loc | FE Loc |
+|---|---------|:----:|------|--------|--------|
+| 1 | Chat Quick Actions (10 Pills) | ✅ | MF❌Fb❌Hv❌Gr❌ | — | `screens/chat/widgets/chat_quick_pills.dart` |
+| 2 | Chat Features Info Sheet | ✅ | MF❌Fb❌Hv❌Gr❌ | — | `screens/chat/widgets/chat_features_info_sheet.dart` |
+| 3 | Enhanced Chat Empty State | ✅ | MF❌Fb❌Hv❌Gr❌ | — | `screens/chat/widgets/enhanced_empty_state.dart` |
+| 4 | Food Analysis Result Card | ✅ | MF❌Fb❌Hv❌Gr❌ | — | `screens/chat/widgets/food_analysis_result_card.dart` |
+| 5 | Media Picker + Preview Strip | ✅ | MF❌Fb✅Hv❌Gr❌ | — | `screens/chat/widgets/media_picker_helper.dart`, `media_preview_strip.dart` |
+| 6 | Single Video Form Check | ✅ | MF❌Fb✅Hv❌Gr❌ | `services/form_analysis_service.py`, `services/keyframe_extractor.py` | `screens/chat/widgets/form_check_result_card.dart` |
+| 7 | Multi-Video Form Comparison | ✅ | MF❌Fb❌Hv❌Gr❌ | `services/form_analysis_service.py` | `screens/chat/widgets/form_comparison_result_card.dart` |
+| 8 | Async Media Job Processing | ✅ | MF❌Fb❌Hv❌Gr❌ | `services/media_job_service.py`, `services/media_job_runner.py` | — |
+| 9 | Monthly Fitness Wrapped | ✅ | MF❌Fb❌Hv❌Gr❌ | `api/v1/wrapped.py`, `services/wrapped_service.py` | `screens/wrapped/` |
+| 10 | Shared Workout Detail Screen | ✅ | MF❌Fb❌Hv✅Gr❌ | — | `screens/social/shared_workout_detail_screen.dart` |
+| 11 | Activity Share System | ✅ | MF❌Fb❌Hv✅Gr✅ | — | `screens/social/widgets/activity_share_card.dart`, `activity_share_sheet.dart` |
+| 12 | Social Comments Sheet | ✅ | MF❌Fb❌Hv✅Gr✅ | — | `screens/social/widgets/comments_sheet.dart` |
+| 13 | Schedule Workout from Feed | ✅ | MF❌Fb❌Hv❌Gr❌ | — | `screens/social/widgets/schedule_workout_dialog.dart` |
+| 14 | Beast Mode API | ✅ | MF❌Fb❌Hv❌Gr❌ | `api/v1/beast_mode.py` | — |
+| 15 | Unified Notifications Provider | ✅ | MF❌Fb❌Hv❌Gr❌ | — | `data/providers/unified_notifications_provider.dart` |
+| 16 | Smart Media Classifier | ✅ | MF❌Fb❌Hv❌Gr❌ | `services/vision_service.py:classify_media_content()` | — |
+
+### Coming Soon
+
+| # | Feature | Impl | Comp | BE Loc | FE Loc |
+|---|---------|:----:|------|--------|--------|
+| 17 | Event-Based Workouts | 🔄 | MF❌Fb❌Hv❌Gr❌ | — | `screens/profile/widgets/event_based_workout_card.dart` (placeholder) |
+| 18 | App Screenshot Parsing | ❌ | MF❌Fb❌Hv❌Gr❌ | `services/vision_service.py` (classifier only, no OCR tool) | — |
+| 19 | Offline Mode | 🔄 | MF❌Fb❌Hv❌Gr❌ | — | `screens/settings/sections/offline_mode_section.dart` (Coming Soon placeholder) |

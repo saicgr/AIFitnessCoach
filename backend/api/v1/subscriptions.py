@@ -8,6 +8,7 @@ ENDPOINTS:
 - POST /api/v1/subscriptions/webhook/revenuecat - RevenueCat webhook handler
 - POST /api/v1/subscriptions/{user_id}/paywall-impression - Track paywall interaction
 - GET  /api/v1/subscriptions/{user_id}/usage-stats - Get feature usage stats
+- GET  /api/v1/subscriptions/{user_id}/feature-limits - Get all 5 AI feature limits + usage
 - GET  /api/v1/subscriptions/{user_id}/history - Get subscription change history
 - GET  /api/v1/subscriptions/{user_id}/upcoming-renewal - Get upcoming renewal info
 - POST /api/v1/subscriptions/{user_id}/request-refund - Submit refund request
@@ -285,8 +286,8 @@ def _get_next_tier(current_tier: str) -> str:
         idx = tiers.index(current_tier)
         if idx < len(tiers) - 1:
             return tiers[idx + 1]
-    except ValueError:
-        pass
+    except ValueError as e:
+        logger.debug(f"Tier not found in list: {e}")
     return "premium"
 
 
@@ -486,6 +487,128 @@ async def get_usage_stats(user_id: str, feature_key: Optional[str] = None, curre
 
     except Exception as e:
         raise safe_internal_error(e, "get_usage_stats")
+
+
+# ==================== BULK FEATURE LIMITS ====================
+
+# The 5 AI feature keys we expose in the bulk endpoint
+_PREMIUM_FEATURE_KEYS = [
+    "ai_workout_generation",
+    "food_scanning",
+    "form_video_analysis",
+    "text_to_calories",
+    "ai_meal_plan",
+]
+
+
+@router.get("/{user_id}/feature-limits")
+async def get_feature_limits(user_id: str, current_user: dict = Depends(get_current_user)):
+    """
+    Return all 5 AI feature gates with current usage computed.
+
+    For premium users every limit is null (unlimited).
+    For free users, remaining counts are calculated based on reset_period:
+      - 'daily'   -> usage today
+      - 'monthly' -> usage this calendar month
+      - null       -> feature locked (free_limit = 0 means premium-only)
+    """
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
+
+    try:
+        supabase = get_supabase()
+
+        # 1. Get user tier
+        try:
+            sub_result = supabase.client.table("user_subscriptions")\
+                .select("tier")\
+                .eq("user_id", user_id)\
+                .single()\
+                .execute()
+            user_tier = sub_result.data["tier"] if sub_result.data else "free"
+        except Exception as e:
+            logger.warning(f"Failed to fetch user tier: {e}")
+            user_tier = "free"
+
+        is_premium = user_tier in ("premium", "premium_plus")
+
+        # 2. Fetch all 5 gates in one query
+        gates_result = supabase.client.table("feature_gates")\
+            .select("feature_key, display_name, free_limit, reset_period, minimum_tier, is_enabled")\
+            .in_("feature_key", _PREMIUM_FEATURE_KEYS)\
+            .execute()
+
+        gates_by_key = {g["feature_key"]: g for g in (gates_result.data or [])}
+
+        # 3. Fetch all usage records for this user for relevant feature keys this month
+        today = date.today()
+        first_of_month = today.replace(day=1).isoformat()
+        usage_result = supabase.client.table("feature_usage")\
+            .select("feature_key, usage_date, usage_count")\
+            .eq("user_id", user_id)\
+            .in_("feature_key", _PREMIUM_FEATURE_KEYS)\
+            .gte("usage_date", first_of_month)\
+            .execute()
+
+        # 4. Compute usage per feature based on reset_period
+        # Build lookup: feature_key -> list of (usage_date, usage_count)
+        usage_rows = {}
+        for row in (usage_result.data or []):
+            usage_rows.setdefault(row["feature_key"], []).append(row)
+
+        limits = {}
+        for fk in _PREMIUM_FEATURE_KEYS:
+            gate = gates_by_key.get(fk)
+            if not gate:
+                # Gate not in DB yet - treat as unlimited
+                limits[fk] = {"limit": None, "used": 0, "remaining": None, "reset_period": None, "resets_at": None}
+                continue
+
+            if is_premium:
+                limits[fk] = {"limit": None, "used": 0, "remaining": None, "reset_period": gate.get("reset_period"), "resets_at": None}
+                continue
+
+            free_limit = gate.get("free_limit")
+            reset_period = gate.get("reset_period")
+
+            # Compute used count
+            used = 0
+            rows = usage_rows.get(fk, [])
+            if reset_period == "daily":
+                today_str = today.isoformat()
+                used = sum(r["usage_count"] for r in rows if r["usage_date"] == today_str)
+            elif reset_period == "monthly":
+                used = sum(r["usage_count"] for r in rows)
+            # null reset_period with free_limit=0 means premium-only, used is irrelevant
+
+            remaining = max(0, free_limit - used) if free_limit is not None else None
+
+            # Compute resets_at
+            resets_at = None
+            if reset_period == "daily":
+                tomorrow = today + timedelta(days=1)
+                resets_at = datetime(tomorrow.year, tomorrow.month, tomorrow.day).isoformat() + "Z"
+            elif reset_period == "monthly":
+                if today.month == 12:
+                    next_month = datetime(today.year + 1, 1, 1)
+                else:
+                    next_month = datetime(today.year, today.month + 1, 1)
+                resets_at = next_month.isoformat() + "Z"
+
+            limits[fk] = {
+                "limit": free_limit,
+                "used": used,
+                "remaining": remaining,
+                "reset_period": reset_period,
+                "resets_at": resets_at,
+            }
+
+        return {"limits": limits, "is_premium": is_premium}
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise safe_internal_error(e, "get_feature_limits")
 
 
 # ==================== REVENUECAT WEBHOOK ====================
@@ -1053,8 +1176,8 @@ async def get_upcoming_renewal(user_id: str, current_user: dict = Depends(get_cu
                 period_end = datetime.fromisoformat(sub["current_period_end"].replace("Z", "+00:00"))
                 now = datetime.now(period_end.tzinfo) if period_end.tzinfo else datetime.utcnow()
                 days_until_renewal = max(0, (period_end - now).days)
-            except (ValueError, TypeError):
-                pass
+            except (ValueError, TypeError) as e:
+                logger.debug(f"Failed to parse renewal date: {e}")
 
         # Determine renewal status message
         is_trial = sub.get("is_trial", False)
@@ -1667,8 +1790,8 @@ async def get_trial_status(user_id: str, current_user: dict = Depends(get_curren
                 )
                 now = datetime.now(trial_end.tzinfo) if trial_end.tzinfo else datetime.utcnow()
                 days_remaining = max(0, (trial_end - now).days)
-            except (ValueError, TypeError):
-                pass
+            except (ValueError, TypeError) as e:
+                logger.debug(f"Failed to parse trial end date: {e}")
 
         # Get pricing for conversion
         pricing = {
@@ -1907,8 +2030,8 @@ async def get_lifetime_status(user_id: str, current_user: dict = Depends(get_cur
                     f"Treat them as a long-term committed customer who has invested in their fitness journey. "
                     f"They have full access to all features and should receive premium support."
                 )
-            except (ValueError, TypeError):
-                pass
+            except (ValueError, TypeError) as e:
+                logger.debug(f"Failed to format lifetime date: {e}")
 
         return LifetimeStatusResponse(
             user_id=user_id,
@@ -2675,8 +2798,8 @@ async def accept_retention_offer(user_id: str, request: AcceptOfferRequest, curr
                         .update({"current_period_end": new_end.isoformat()})\
                         .eq("user_id", user_id)\
                         .execute()
-                except (ValueError, TypeError):
-                    pass
+                except (ValueError, TypeError) as e:
+                    logger.warning(f"Failed to extend subscription: {e}")
 
             message = f"{extension_days} free days have been added to your subscription."
 

@@ -551,8 +551,8 @@ class AIResponseParser:
             if obj_match:
                 try:
                     result[field_name] = json.loads(obj_match.group(1))
-                except json.JSONDecodeError:
-                    pass
+                except json.JSONDecodeError as e:
+                    logger.debug(f"Failed to parse field '{field_name}': {e}")
 
         # Only return if we found at least some fields
         return result if result else None

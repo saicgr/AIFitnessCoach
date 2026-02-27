@@ -94,7 +94,7 @@ class _WarmupSettingsCard extends ConsumerWidget {
 
           Divider(height: 1, color: cardBorder, indent: 16, endIndent: 16),
 
-          // Warmup duration slider (only shown when enabled)
+          // Warmup duration presets (only shown when enabled)
           if (warmupState.warmupEnabled)
             Padding(
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
@@ -117,22 +117,6 @@ class _WarmupSettingsCard extends ConsumerWidget {
                         color: textPrimary,
                       ),
                     ),
-                    const Spacer(),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: orange.withValues(alpha: 0.15),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Text(
-                        '${warmupState.warmupDurationMinutes} min',
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          color: orange,
-                        ),
-                      ),
-                    ),
                   ],
                 ),
                 const SizedBox(height: 4),
@@ -141,44 +125,15 @@ class _WarmupSettingsCard extends ConsumerWidget {
                   style: TextStyle(fontSize: 12, color: textMuted),
                 ),
                 const SizedBox(height: 12),
-                SliderTheme(
-                  data: SliderTheme.of(context).copyWith(
-                    activeTrackColor: orange,
-                    inactiveTrackColor: orange.withValues(alpha: 0.2),
-                    thumbColor: orange,
-                    overlayColor: orange.withValues(alpha: 0.2),
-                    trackHeight: 4,
-                    thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 10),
-                  ),
-                  child: Slider(
-                    value: warmupState.warmupDurationMinutes.toDouble(),
-                    min: 1,
-                    max: 15,
-                    divisions: 14,
-                    onChanged: warmupState.isLoading
-                        ? null
-                        : (value) {
-                            HapticFeedback.selectionClick();
-                          },
-                    onChangeEnd: warmupState.isLoading
-                        ? null
-                        : (value) async {
-                            HapticFeedback.lightImpact();
-                            await ref
-                                .read(warmupDurationProvider.notifier)
-                                .setWarmupDuration(value.round());
-                          },
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 8),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text('1 min', style: TextStyle(fontSize: 11, color: textMuted)),
-                      Text('15 min', style: TextStyle(fontSize: 11, color: textMuted)),
-                    ],
-                  ),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    _buildPresetChip(context, ref, 'Quick', 3, warmupState.warmupDurationMinutes, orange, isWarmup: true),
+                    _buildPresetChip(context, ref, 'Standard', 5, warmupState.warmupDurationMinutes, orange, isWarmup: true),
+                    _buildPresetChip(context, ref, 'Extended', 10, warmupState.warmupDurationMinutes, orange, isWarmup: true),
+                    _buildPresetChip(context, ref, 'Max', 15, warmupState.warmupDurationMinutes, orange, isWarmup: true),
+                  ],
                 ),
               ],
             ),
@@ -235,7 +190,7 @@ class _WarmupSettingsCard extends ConsumerWidget {
           if (warmupState.stretchEnabled)
             Divider(height: 1, color: cardBorder, indent: 16, endIndent: 16),
 
-          // Stretch duration slider (only shown when enabled)
+          // Stretch duration presets (only shown when enabled)
           if (warmupState.stretchEnabled)
             Padding(
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
@@ -258,22 +213,6 @@ class _WarmupSettingsCard extends ConsumerWidget {
                         color: textPrimary,
                       ),
                     ),
-                    const Spacer(),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: cyan.withValues(alpha: 0.15),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Text(
-                        '${warmupState.stretchDurationMinutes} min',
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          color: cyan,
-                        ),
-                      ),
-                    ),
                   ],
                 ),
                 const SizedBox(height: 4),
@@ -282,44 +221,15 @@ class _WarmupSettingsCard extends ConsumerWidget {
                   style: TextStyle(fontSize: 12, color: textMuted),
                 ),
                 const SizedBox(height: 12),
-                SliderTheme(
-                  data: SliderTheme.of(context).copyWith(
-                    activeTrackColor: cyan,
-                    inactiveTrackColor: cyan.withValues(alpha: 0.2),
-                    thumbColor: cyan,
-                    overlayColor: cyan.withValues(alpha: 0.2),
-                    trackHeight: 4,
-                    thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 10),
-                  ),
-                  child: Slider(
-                    value: warmupState.stretchDurationMinutes.toDouble(),
-                    min: 1,
-                    max: 15,
-                    divisions: 14,
-                    onChanged: warmupState.isLoading
-                        ? null
-                        : (value) {
-                            HapticFeedback.selectionClick();
-                          },
-                    onChangeEnd: warmupState.isLoading
-                        ? null
-                        : (value) async {
-                            HapticFeedback.lightImpact();
-                            await ref
-                                .read(warmupDurationProvider.notifier)
-                                .setStretchDuration(value.round());
-                          },
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 8),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text('1 min', style: TextStyle(fontSize: 11, color: textMuted)),
-                      Text('15 min', style: TextStyle(fontSize: 11, color: textMuted)),
-                    ],
-                  ),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    _buildPresetChip(context, ref, 'Quick', 3, warmupState.stretchDurationMinutes, cyan, isWarmup: false),
+                    _buildPresetChip(context, ref, 'Standard', 5, warmupState.stretchDurationMinutes, cyan, isWarmup: false),
+                    _buildPresetChip(context, ref, 'Extended', 10, warmupState.stretchDurationMinutes, cyan, isWarmup: false),
+                    _buildPresetChip(context, ref, 'Max', 15, warmupState.stretchDurationMinutes, cyan, isWarmup: false),
+                  ],
                 ),
               ],
             ),
@@ -375,6 +285,51 @@ class _WarmupSettingsCard extends ConsumerWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildPresetChip(
+    BuildContext context,
+    WidgetRef ref,
+    String label,
+    int minutes,
+    int currentMinutes,
+    Color accentColor, {
+    required bool isWarmup,
+  }) {
+    final isSelected = currentMinutes == minutes;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+
+    return ChoiceChip(
+      label: Text(
+        '$label ($minutes min)',
+        style: TextStyle(
+          fontSize: 13,
+          fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+          color: isSelected ? accentColor : textMuted,
+        ),
+      ),
+      selected: isSelected,
+      onSelected: (_) {
+        HapticFeedback.lightImpact();
+        if (isWarmup) {
+          ref.read(warmupDurationProvider.notifier).setWarmupDuration(minutes);
+        } else {
+          ref.read(warmupDurationProvider.notifier).setStretchDuration(minutes);
+        }
+      },
+      selectedColor: accentColor.withValues(alpha: 0.15),
+      backgroundColor: isDark
+          ? Colors.white.withValues(alpha: 0.05)
+          : Colors.black.withValues(alpha: 0.04),
+      checkmarkColor: accentColor,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(10),
+        side: BorderSide(
+          color: isSelected ? accentColor.withValues(alpha: 0.3) : Colors.transparent,
+        ),
       ),
     );
   }

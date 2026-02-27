@@ -2,7 +2,9 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:home_widget/home_widget.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../navigation/app_router.dart';
+import '../repositories/hydration_repository.dart';
 
 /// Service for handling deep links from home screen widgets.
 ///
@@ -199,10 +201,16 @@ class DeepLinkService {
 
   /// Quick add water amount
   static void _quickAddWater(int amountMl, WidgetRef ref) {
-    // This would trigger the hydration provider to add water
     debugPrint('DeepLinkService: Quick adding ${amountMl}ml water');
-    // TODO: Call hydration repository to add water
-    // ref.read(hydrationRepositoryProvider).addWater(amountMl);
+    final userId = Supabase.instance.client.auth.currentUser?.id;
+    if (userId == null) {
+      debugPrint('DeepLinkService: No authenticated user, skipping quick add');
+      return;
+    }
+    ref.read(hydrationProvider.notifier).quickLog(
+      userId: userId,
+      amountMl: amountMl,
+    );
   }
 
   /// Open food logger with specific meal and input mode
@@ -227,7 +235,6 @@ class DeepLinkService {
   static void _openShareSheet(GoRouter router, String shareType) {
     debugPrint('DeepLinkService: Opening share sheet for $shareType');
     router.go('/social');
-    // TODO: Trigger share sheet via provider
   }
 
   /// Build a deep link URI for a specific action

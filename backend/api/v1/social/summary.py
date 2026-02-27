@@ -5,11 +5,14 @@ This module handles social summary operations:
 - GET /summary/{user_id} - Get comprehensive social summary (normal mode)
 - GET /summary/senior/{user_id} - Get simplified summary (senior mode)
 """
+import logging
 from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends
 from core.auth import get_current_user
 from core.exceptions import safe_internal_error
+
+logger = logging.getLogger(__name__)
 
 from models.social import (
     ActivityFeedItem, ActivityType,
@@ -98,10 +101,12 @@ async def get_social_summary(user_id: str,
         completed_challenges=completed_challenges_result.count or 0,
     )
 
+    logger.info("friend_suggestions not yet implemented - returning empty list for user %s", user_id)
+
     return SocialFeedSummary(
         activity_feed=feed_response.items,
         suggested_challenges=suggested_challenges,
-        friend_suggestions=[],  # TODO: Implement friend suggestions algorithm
+        friend_suggestions=[],
         social_stats=social_stats,
     )
 
@@ -124,6 +129,18 @@ async def get_senior_social_summary(user_id: str,
     # Get recent activities (simplified)
     feed_response = await get_activity_feed(user_id, page=1, page_size=5)
 
+    # Check which activities the current user has already cheered/reacted to
+    cheered_activity_ids = set()
+    activity_ids = [item.id for item in feed_response.items if item.id]
+    if activity_ids:
+        try:
+            reactions_result = supabase.table("activity_reactions").select("activity_id").eq(
+                "user_id", user_id
+            ).in_("activity_id", activity_ids).execute()
+            cheered_activity_ids = {row["activity_id"] for row in (reactions_result.data or [])}
+        except Exception as e:
+            logger.warning("Failed to fetch user cheer status, defaulting to False: %s", e)
+
     simplified_activities = []
     for item in feed_response.items:
         summary_text = _generate_simple_summary(item)
@@ -135,7 +152,7 @@ async def get_senior_social_summary(user_id: str,
             summary_text=summary_text,
             created_at=item.created_at,
             can_cheer=True,
-            has_cheered=False,  # TODO: Check if user has reacted
+            has_cheered=item.id in cheered_activity_ids,
         ))
 
     # Get user's challenges (simplified)

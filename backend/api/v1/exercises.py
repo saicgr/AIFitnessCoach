@@ -653,7 +653,8 @@ async def get_all_user_exercises(user_id: str, current_user: dict = Depends(get_
                 import json
                 try:
                     component_exercises = json.loads(component_exercises)
-                except:
+                except Exception as e:
+                    logger.debug(f"Failed to parse component_exercises JSON: {e}")
                     component_exercises = []
 
             # Parse secondary_muscles
@@ -662,7 +663,8 @@ async def get_all_user_exercises(user_id: str, current_user: dict = Depends(get_
                 import json
                 try:
                     secondary_muscles = json.loads(secondary_muscles)
-                except:
+                except Exception as e:
+                    logger.debug(f"Failed to parse secondary_muscles JSON: {e}")
                     secondary_muscles = []
 
             # Parse tags
@@ -671,7 +673,8 @@ async def get_all_user_exercises(user_id: str, current_user: dict = Depends(get_
                 import json
                 try:
                     tags = json.loads(tags)
-                except:
+                except Exception as e:
+                    logger.debug(f"Failed to parse tags JSON: {e}")
                     tags = []
 
             exercises.append(CustomExerciseFullResponse(
@@ -908,21 +911,24 @@ async def update_custom_exercise(user_id: str, exercise_id: str, updates: dict, 
         if isinstance(component_exercises, str):
             try:
                 component_exercises = json.loads(component_exercises)
-            except:
+            except Exception as e:
+                logger.debug(f"Failed to parse component_exercises JSON on update: {e}")
                 component_exercises = []
 
         secondary_muscles = row.get("secondary_muscles", [])
         if isinstance(secondary_muscles, str):
             try:
                 secondary_muscles = json.loads(secondary_muscles)
-            except:
+            except Exception as e:
+                logger.debug(f"Failed to parse secondary_muscles JSON on update: {e}")
                 secondary_muscles = []
 
         tags = row.get("tags", [])
         if isinstance(tags, str):
             try:
                 tags = json.loads(tags)
-            except:
+            except Exception as e:
+                logger.debug(f"Failed to parse tags JSON on update: {e}")
                 tags = []
 
         logger.info(f"✅ [Custom Exercises] Updated exercise {exercise_id}")

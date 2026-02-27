@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../data/services/challenges_service.dart';
 import '../../../data/services/saved_workouts_service.dart';
 import '../../../widgets/glass_sheet.dart';
 import '../../../data/services/api_client.dart';
@@ -27,6 +29,7 @@ enum ReactionType {
 class ActivityCard extends StatefulWidget {
   final String activityId; // Activity ID for saving/scheduling
   final String currentUserId; // Current logged-in user ID
+  final String postUserId; // Post author's user ID
   final String userName;
   final String? userAvatar;
   final String activityType;
@@ -38,6 +41,9 @@ class ActivityCard extends StatefulWidget {
   final String? userReactionType; // Type of user's reaction (if any)
   final Function(String reactionType) onReact; // Changed to accept reaction type
   final VoidCallback onComment;
+  final VoidCallback? onDelete; // Callback to delete the post (own only)
+  final VoidCallback? onEdit; // Callback to edit the post (own only)
+  final VoidCallback? onShare; // Callback to share the post
   final List<Map<String, dynamic>>? badges; // Optional workout badges (TRENDING, HALL OF FAME, etc.)
   final bool isPinned; // Whether this post is pinned to top of feed
   final bool isCurrentUserAdmin; // Whether current user is admin (can pin/unpin)
@@ -47,6 +53,7 @@ class ActivityCard extends StatefulWidget {
     super.key,
     required this.activityId,
     required this.currentUserId,
+    required this.postUserId,
     required this.userName,
     this.userAvatar,
     required this.activityType,
@@ -58,6 +65,9 @@ class ActivityCard extends StatefulWidget {
     this.userReactionType,
     required this.onReact,
     required this.onComment,
+    this.onDelete,
+    this.onEdit,
+    this.onShare,
     this.badges,
     this.isPinned = false,
     this.isCurrentUserAdmin = false,
@@ -68,9 +78,12 @@ class ActivityCard extends StatefulWidget {
   State<ActivityCard> createState() => _ActivityCardState();
 }
 
-class _ActivityCardState extends State<ActivityCard> {
-  bool _isExpanded = false;
+class _ActivityCardState extends State<ActivityCard> with SingleTickerProviderStateMixin {
   late final SavedWorkoutsService _savedWorkoutsService;
+  final _reactButtonKey = GlobalKey();
+  OverlayEntry? _reactionOverlay;
+  late AnimationController _reactionAnimController;
+  late Animation<double> _reactionScaleAnim;
 
   @override
   void initState() {
@@ -80,6 +93,26 @@ class _ActivityCardState extends State<ActivityCard> {
       iOptions: IOSOptions(accessibility: KeychainAccessibility.first_unlock),
     );
     _savedWorkoutsService = SavedWorkoutsService(ApiClient(storage));
+    _reactionAnimController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 250),
+    );
+    _reactionScaleAnim = CurvedAnimation(
+      parent: _reactionAnimController,
+      curve: Curves.easeOutBack,
+    );
+  }
+
+  @override
+  void dispose() {
+    _dismissReactionOverlay();
+    _reactionAnimController.dispose();
+    super.dispose();
+  }
+
+  void _dismissReactionOverlay() {
+    _reactionOverlay?.remove();
+    _reactionOverlay = null;
   }
 
   @override
@@ -92,7 +125,7 @@ class _ActivityCardState extends State<ActivityCard> {
       decoration: BoxDecoration(
         color: elevated,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: cardBorder.withValues(alpha: 0.3)),
+        border: Border.all(color: cardBorder.withValues(alpha: isDark ? 0.3 : 0.6)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -140,14 +173,14 @@ class _ActivityCardState extends State<ActivityCard> {
                 // Avatar
                 CircleAvatar(
                   radius: 20,
-                  backgroundColor: AppColors.cyan.withValues(alpha: 0.2),
+                  backgroundColor: _flairCyan.withValues(alpha: 0.2),
                   backgroundImage: widget.userAvatar != null ? NetworkImage(widget.userAvatar!) : null,
                   child: widget.userAvatar == null
                       ? Text(
                           widget.userName.isNotEmpty ? widget.userName[0].toUpperCase() : '?',
                           style: const TextStyle(
                             fontWeight: FontWeight.bold,
-                            color: AppColors.cyan,
+                            color: _flairCyan,
                           ),
                         )
                       : null,
@@ -199,13 +232,14 @@ class _ActivityCardState extends State<ActivityCard> {
             color: cardBorder.withValues(alpha: 0.3),
           ),
 
-          // Actions (Reactions & Comments)
+          // Actions (React, Comment, Share)
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
             child: Row(
               children: [
                 // React button with long-press support
                 Expanded(
+                  key: _reactButtonKey,
                   child: GestureDetector(
                     onTap: () {
                       // Quick tap - toggle default reaction (heart)
@@ -213,9 +247,9 @@ class _ActivityCardState extends State<ActivityCard> {
                       widget.onReact(widget.hasUserReacted ? 'remove' : 'heart');
                     },
                     onLongPress: () {
-                      // Long press - show emoji picker
+                      // Long press - show inline emoji picker above button
                       HapticFeedback.mediumImpact();
-                      _showReactionPicker(context);
+                      _showInlineReactionPicker();
                     },
                     child: Container(
                       padding: const EdgeInsets.symmetric(vertical: 8),
@@ -229,19 +263,19 @@ class _ActivityCardState extends State<ActivityCard> {
                           if (widget.hasUserReacted && widget.userReactionType != null)
                             Text(
                               _getReactionEmoji(widget.userReactionType!),
-                              style: const TextStyle(fontSize: 20),
+                              style: const TextStyle(fontSize: 18),
                             )
                           else
                             Icon(
                               widget.hasUserReacted ? Icons.favorite : Icons.favorite_border,
-                              size: 20,
+                              size: 18,
                               color: widget.hasUserReacted ? AppColors.pink : AppColors.textMuted,
                             ),
-                          const SizedBox(width: 6),
+                          const SizedBox(width: 4),
                           Text(
                             widget.reactionCount > 0 ? '${widget.reactionCount}' : 'React',
                             style: TextStyle(
-                              fontSize: 14,
+                              fontSize: 13,
                               fontWeight: FontWeight.w600,
                               color: widget.hasUserReacted ? _getReactionColor(widget.userReactionType) : AppColors.textMuted,
                             ),
@@ -271,14 +305,54 @@ class _ActivityCardState extends State<ActivityCard> {
                         children: [
                           const Icon(
                             Icons.chat_bubble_outline,
-                            size: 20,
+                            size: 18,
                             color: AppColors.textMuted,
                           ),
-                          const SizedBox(width: 6),
+                          const SizedBox(width: 4),
                           Text(
                             widget.commentCount > 0 ? '${widget.commentCount}' : 'Comment',
                             style: const TextStyle(
-                              fontSize: 14,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.textMuted,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+
+                // Divider
+                Container(
+                  height: 24,
+                  width: 1,
+                  color: cardBorder.withValues(alpha: 0.3),
+                ),
+
+                // Share button
+                Expanded(
+                  child: InkWell(
+                    onTap: () {
+                      HapticFeedback.lightImpact();
+                      widget.onShare?.call();
+                    },
+                    borderRadius: BorderRadius.circular(8),
+                    child: const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 8),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.share_outlined,
+                            size: 18,
+                            color: AppColors.textMuted,
+                          ),
+                          SizedBox(width: 4),
+                          Text(
+                            'Share',
+                            style: TextStyle(
+                              fontSize: 13,
                               fontWeight: FontWeight.w600,
                               color: AppColors.textMuted,
                             ),
@@ -296,11 +370,12 @@ class _ActivityCardState extends State<ActivityCard> {
     );
   }
 
+  /// Whether the current user owns this post
+  bool get _isOwnPost => widget.currentUserId == widget.postUserId;
+
   /// Show post options menu (3-dot menu)
   void _showPostOptionsMenu(BuildContext context) {
     HapticFeedback.lightImpact();
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
 
     showGlassSheet(
       context: context,
@@ -311,21 +386,33 @@ class _ActivityCardState extends State<ActivityCard> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // Copy link option
-            ListTile(
-              leading: const Icon(Icons.link_rounded),
-              title: const Text('Copy Link'),
-              onTap: () {
-                Navigator.pop(context);
-                HapticFeedback.lightImpact();
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Link copied to clipboard'),
-                    behavior: SnackBarBehavior.floating,
-                  ),
-                );
-              },
-            ),
+            // === OWN POST OPTIONS ===
+            if (_isOwnPost) ...[
+              // Edit option (own post only, manual_post type)
+              if (widget.activityType == 'manual_post' && widget.onEdit != null)
+                ListTile(
+                  leading: const Icon(Icons.edit_rounded),
+                  title: const Text('Edit Post'),
+                  onTap: () {
+                    Navigator.pop(context);
+                    HapticFeedback.lightImpact();
+                    widget.onEdit!();
+                  },
+                ),
+
+              // Delete option (own post only)
+              if (widget.onDelete != null)
+                ListTile(
+                  leading: const Icon(Icons.delete_outline_rounded, color: AppColors.red),
+                  title: const Text('Delete Post', style: TextStyle(color: AppColors.red)),
+                  onTap: () {
+                    Navigator.pop(context);
+                    _showDeleteConfirmDialog(context);
+                  },
+                ),
+            ],
+
+            // === SHARED OPTIONS (both own and others) ===
 
             // Share option
             ListTile(
@@ -334,9 +421,21 @@ class _ActivityCardState extends State<ActivityCard> {
               onTap: () {
                 Navigator.pop(context);
                 HapticFeedback.lightImpact();
+                widget.onShare?.call();
+              },
+            ),
+
+            // Copy link option
+            ListTile(
+              leading: const Icon(Icons.link_rounded),
+              title: const Text('Copy Link'),
+              onTap: () {
+                Navigator.pop(context);
+                HapticFeedback.lightImpact();
+                Clipboard.setData(const ClipboardData(text: 'https://fitwiz.app/post'));
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
-                    content: Text('Share feature coming soon!'),
+                    content: Text('Link copied to clipboard'),
                     behavior: SnackBarBehavior.floating,
                   ),
                 );
@@ -361,22 +460,55 @@ class _ActivityCardState extends State<ActivityCard> {
                 },
               ),
 
-            // Report option (only show if not own post)
-            ListTile(
-              leading: Icon(Icons.flag_rounded, color: AppColors.textMuted),
-              title: Text('Report', style: TextStyle(color: AppColors.textMuted)),
-              onTap: () {
-                Navigator.pop(context);
-                HapticFeedback.lightImpact();
-                _showReportDialog(context);
-              },
-            ),
+            // === OTHERS' POST OPTIONS ===
+            if (!_isOwnPost)
+              ListTile(
+                leading: Icon(Icons.flag_rounded, color: AppColors.textMuted),
+                title: Text('Report', style: TextStyle(color: AppColors.textMuted)),
+                onTap: () {
+                  Navigator.pop(context);
+                  HapticFeedback.lightImpact();
+                  _showReportDialog(context);
+                },
+              ),
 
             // Bottom padding for safe area + floating nav bar (80px nav + 16px extra)
             SizedBox(height: MediaQuery.of(context).padding.bottom + 96),
           ],
         ),
       ),
+      ),
+    );
+  }
+
+  /// Show delete confirmation dialog
+  void _showDeleteConfirmDialog(BuildContext context) {
+    HapticFeedback.mediumImpact();
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: elevated,
+        title: const Text('Delete Post'),
+        content: const Text(
+          'Are you sure you want to delete this post? This action cannot be undone.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              widget.onDelete?.call();
+            },
+            style: TextButton.styleFrom(foregroundColor: AppColors.red),
+            child: const Text('Delete'),
+          ),
+        ],
       ),
     );
   }
@@ -441,113 +573,111 @@ class _ActivityCardState extends State<ActivityCard> {
     );
   }
 
-  /// Show reaction picker bottom sheet
-  void _showReactionPicker(BuildContext context) {
+  /// Show inline reaction picker floating above the react button
+  void _showInlineReactionPicker() {
+    _dismissReactionOverlay();
+
+    final renderBox = _reactButtonKey.currentContext?.findRenderObject() as RenderBox?;
+    if (renderBox == null) return;
+
+    final buttonPos = renderBox.localToGlobal(Offset.zero);
+    final buttonSize = renderBox.size;
+
+    final overlay = Overlay.of(context);
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
 
-    showGlassSheet(
-      context: context,
-      useRootNavigator: true,
-      builder: (context) => GlassSheet(
-        child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 20),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
+    _reactionOverlay = OverlayEntry(
+      builder: (context) {
+        // Pill width for 5 emojis
+        const pillWidth = 280.0;
+        const pillHeight = 52.0;
+        // Center pill horizontally over the button, clamp to screen
+        final screenWidth = MediaQuery.of(context).size.width;
+        double left = buttonPos.dx + (buttonSize.width / 2) - (pillWidth / 2);
+        if (left < 12) left = 12;
+        if (left + pillWidth > screenWidth - 12) left = screenWidth - pillWidth - 12;
+        // Position above the button
+        final top = buttonPos.dy - pillHeight - 12;
+
+        return Stack(
           children: [
-            // Title
-            Text(
-              'React to this post',
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-            ),
-            const SizedBox(height: 20),
-
-            // Reaction options
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: ReactionType.values.map((reaction) {
-                final isSelected = widget.userReactionType == reaction.value;
-                return _buildReactionButton(
-                  context,
-                  reaction: reaction,
-                  isSelected: isSelected,
-                  onTap: () {
-                    Navigator.pop(context);
-                    HapticFeedback.mediumImpact();
-                    widget.onReact(reaction.value);
-                  },
-                );
-              }).toList(),
-            ),
-
-            const SizedBox(height: 20),
-
-            // Remove reaction button (if user has reacted)
-            if (widget.hasUserReacted)
-              TextButton.icon(
-                onPressed: () {
-                  Navigator.pop(context);
-                  HapticFeedback.lightImpact();
-                  widget.onReact('remove');
+            // Tap-away barrier
+            Positioned.fill(
+              child: GestureDetector(
+                onTap: () {
+                  _reactionAnimController.reverse().then((_) => _dismissReactionOverlay());
                 },
-                icon: const Icon(Icons.close, size: 18),
-                label: const Text('Remove Reaction'),
-                style: TextButton.styleFrom(
-                  foregroundColor: AppColors.textMuted,
+                behavior: HitTestBehavior.opaque,
+                child: const SizedBox.expand(),
+              ),
+            ),
+            // Reaction pill
+            Positioned(
+              left: left,
+              top: top,
+              child: ScaleTransition(
+                scale: _reactionScaleAnim,
+                alignment: Alignment.bottomCenter,
+                child: Material(
+                  elevation: 8,
+                  shadowColor: Colors.black45,
+                  borderRadius: BorderRadius.circular(28),
+                  color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+                  child: Container(
+                    width: pillWidth,
+                    height: pillHeight,
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(28),
+                      border: Border.all(
+                        color: isDark
+                            ? Colors.white.withValues(alpha: 0.1)
+                            : Colors.black.withValues(alpha: 0.08),
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: ReactionType.values.map((reaction) {
+                        final isSelected = widget.userReactionType == reaction.value;
+                        return GestureDetector(
+                          onTap: () {
+                            HapticFeedback.mediumImpact();
+                            _reactionAnimController.reverse().then((_) {
+                              _dismissReactionOverlay();
+                              widget.onReact(reaction.value);
+                            });
+                          },
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 150),
+                            width: 44,
+                            height: 44,
+                            decoration: BoxDecoration(
+                              color: isSelected
+                                  ? reaction.color.withValues(alpha: 0.2)
+                                  : Colors.transparent,
+                              shape: BoxShape.circle,
+                            ),
+                            child: Center(
+                              child: Text(
+                                reaction.emoji,
+                                style: TextStyle(fontSize: isSelected ? 26 : 24),
+                              ),
+                            ),
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                  ),
                 ),
               ),
+            ),
           ],
-        ),
-      ),
-      ),
+        );
+      },
     );
-  }
 
-  Widget _buildReactionButton(
-    BuildContext context, {
-    required ReactionType reaction,
-    required bool isSelected,
-    required VoidCallback onTap,
-  }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: isSelected
-              ? reaction.color.withValues(alpha: 0.2)
-              : Colors.transparent,
-          shape: BoxShape.circle,
-          border: Border.all(
-            color: isSelected
-                ? reaction.color
-                : Colors.transparent,
-            width: 2,
-          ),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              reaction.emoji,
-              style: const TextStyle(fontSize: 32),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              reaction.label,
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                color: isSelected ? reaction.color : AppColors.textMuted,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
+    overlay.insert(_reactionOverlay!);
+    _reactionAnimController.forward(from: 0);
   }
 
   String _getReactionEmoji(String reactionType) {
@@ -574,6 +704,7 @@ class _ActivityCardState extends State<ActivityCard> {
   Widget _buildActivityContent(BuildContext context) {
     switch (widget.activityType) {
       case 'workout_completed':
+      case 'workout_shared':
         return _buildWorkoutContent(context);
       case 'achievement_earned':
         return _buildAchievementContent(context);
@@ -596,40 +727,43 @@ class _ActivityCardState extends State<ActivityCard> {
 
   Widget _buildManualPostContent(BuildContext context) {
     final caption = widget.activityData['caption'] as String? ?? '';
-    final postType = widget.activityData['post_type'] as String?;
+    final flairs = (widget.activityData['flairs'] as List<dynamic>?)?.cast<String>() ?? [];
     final hasImage = widget.activityData['has_image'] as bool? ?? false;
     final imageUrl = widget.activityData['image_url'] as String?;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Post type badge if applicable
-        if (postType != null && postType != 'progress') ...[
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            decoration: BoxDecoration(
-              color: _getPostTypeColor(postType).withValues(alpha: 0.15),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  _getPostTypeIcon(postType),
-                  size: 14,
-                  color: _getPostTypeColor(postType),
+        // Flair tags
+        if (flairs.isNotEmpty) ...[
+          Wrap(
+            spacing: 6,
+            runSpacing: 6,
+            children: flairs.map((flair) {
+              final color = _getFlairColor(flair);
+              return Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: color.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(12),
                 ),
-                const SizedBox(width: 4),
-                Text(
-                  _getPostTypeLabel(postType),
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: _getPostTypeColor(postType),
-                  ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(_getFlairIcon(flair), size: 14, color: color),
+                    const SizedBox(width: 4),
+                    Text(
+                      _getFlairLabel(flair),
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: color,
+                      ),
+                    ),
+                  ],
                 ),
-              ],
-            ),
+              );
+            }).toList(),
           ),
           const SizedBox(height: 8),
         ],
@@ -651,6 +785,18 @@ class _ActivityCardState extends State<ActivityCard> {
               width: double.infinity,
               height: 200,
               fit: BoxFit.cover,
+              loadingBuilder: (context, child, progress) {
+                if (progress == null) return child;
+                return Container(
+                  width: double.infinity,
+                  height: 200,
+                  decoration: BoxDecoration(
+                    color: AppColors.textMuted.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Center(child: CircularProgressIndicator(strokeWidth: 2)),
+                );
+              },
               errorBuilder: (context, error, stackTrace) {
                 return Container(
                   width: double.infinity,
@@ -673,595 +819,137 @@ class _ActivityCardState extends State<ActivityCard> {
     );
   }
 
-  Color _getPostTypeColor(String postType) {
-    switch (postType) {
+  /// Vibrant flair colors — always colorful regardless of monochrome theme
+  static const Color _flairCyan = Color(0xFF06B6D4);
+  static const Color _flairGreen = Color(0xFF22C55E);
+  static const Color _flairOrange = Color(0xFFF97316);
+  static const Color _flairPurple = Color(0xFFA855F7);
+  static const Color _flairYellow = Color(0xFFEAB308);
+  static const Color _flairBlue = Color(0xFF3B82F6);
+
+  Color _getFlairColor(String flair) {
+    switch (flair) {
+      case 'fitness':
+        return _flairCyan;
+      case 'progress':
+        return _flairGreen;
       case 'milestone':
-        return AppColors.orange;
-      case 'photo':
-        return AppColors.purple;
+        return _flairOrange;
+      case 'nutrition':
+        return _flairPurple;
+      case 'motivation':
+        return _flairYellow;
+      case 'question':
+        return _flairBlue;
       default:
-        return AppColors.cyan;
+        return _flairCyan;
     }
   }
 
-  IconData _getPostTypeIcon(String postType) {
-    switch (postType) {
+  IconData _getFlairIcon(String flair) {
+    switch (flair) {
+      case 'fitness':
+        return Icons.fitness_center_rounded;
+      case 'progress':
+        return Icons.trending_up_rounded;
       case 'milestone':
         return Icons.emoji_events_rounded;
-      case 'photo':
-        return Icons.photo_camera_rounded;
+      case 'nutrition':
+        return Icons.restaurant_rounded;
+      case 'motivation':
+        return Icons.bolt_rounded;
+      case 'question':
+        return Icons.help_outline_rounded;
       default:
-        return Icons.trending_up_rounded;
+        return Icons.tag_rounded;
     }
   }
 
-  String _getPostTypeLabel(String postType) {
-    switch (postType) {
+  String _getFlairLabel(String flair) {
+    switch (flair) {
+      case 'fitness':
+        return 'Fitness';
+      case 'progress':
+        return 'Progress';
       case 'milestone':
         return 'Milestone';
-      case 'photo':
-        return 'Photo';
+      case 'nutrition':
+        return 'Nutrition';
+      case 'motivation':
+        return 'Motivation';
+      case 'question':
+        return 'Question';
       default:
-        return 'Progress Update';
+        return flair[0].toUpperCase() + flair.substring(1);
     }
   }
 
   Widget _buildWorkoutContent(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     final workoutName = widget.activityData['workout_name'] ?? 'a workout';
     final duration = widget.activityData['duration_minutes'] ?? 0;
     final exercises = widget.activityData['exercises_count'] ?? 0;
     final totalVolume = widget.activityData['total_volume'];
-    final exercisesList = widget.activityData['exercises_performance'] as List<dynamic>?;
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // Display badges if available
-        if (widget.badges != null && widget.badges!.isNotEmpty) ...[
-          _buildBadges(context, widget.badges!),
-          const SizedBox(height: 8),
-        ],
+    final verb = widget.activityType == 'workout_shared' ? 'shared' : 'completed';
 
-        RichText(
-          text: TextSpan(
-            style: DefaultTextStyle.of(context).style,
-            children: [
-              const TextSpan(text: 'completed '),
-              TextSpan(
-                text: workoutName,
-                style: const TextStyle(fontWeight: FontWeight.bold),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 8),
-        Wrap(
-          spacing: 16,
-          runSpacing: 8,
-          children: [
-            _buildStat(Icons.timer_outlined, '$duration min'),
-            _buildStat(Icons.fitness_center_outlined, '$exercises exercises'),
-            if (totalVolume != null)
-              _buildStat(Icons.trending_up_outlined, '${totalVolume.toStringAsFixed(0)} lbs'),
-          ],
-        ),
-
-        // Challenge button - always visible and prominent
-        const SizedBox(height: 12),
-        SizedBox(
-          width: double.infinity,
-          child: ElevatedButton.icon(
-            onPressed: () {
-              HapticFeedback.mediumImpact();
-              _showBeatWorkoutDialog(context);
-            },
-            icon: const Icon(Icons.emoji_events, size: 20),
-            label: const Text(
-              'Challenge',
-              style: TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.orange,
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(vertical: 12),
-              elevation: 2,
-            ),
-          ),
-        ),
-
-        // Show exercises button if exercise data is available
-        if (exercisesList != null && exercisesList.isNotEmpty) ...[
-          const SizedBox(height: 12),
-          InkWell(
-            onTap: () {
-              HapticFeedback.lightImpact();
-              setState(() {
-                _isExpanded = !_isExpanded;
-              });
-            },
-            borderRadius: BorderRadius.circular(8),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 4),
-              child: Row(
-                children: [
-                  Icon(
-                    _isExpanded ? Icons.expand_less : Icons.expand_more,
-                    size: 20,
-                    color: AppColors.cyan,
-                  ),
-                  const SizedBox(width: 4),
-                  Text(
-                    _isExpanded ? 'Hide workout details' : 'Show workout details',
-                    style: const TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.cyan,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-
-          // Expanded exercise details
-          if (_isExpanded) ...[
-            const SizedBox(height: 12),
-            _buildExerciseDetails(context, exercisesList, isDark),
-          ],
-        ],
-      ],
-    );
-  }
-
-  Widget _buildExerciseDetails(BuildContext context, List<dynamic> exercises, bool isDark) {
-    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
-    final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
-
-    return Container(
-      decoration: BoxDecoration(
-        color: elevated,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: cardBorder.withValues(alpha: 0.3),
-        ),
-      ),
+    return GestureDetector(
+      onTap: () {
+        HapticFeedback.lightImpact();
+        context.push('/shared-workout', extra: {
+          'activityId': widget.activityId,
+          'currentUserId': widget.currentUserId,
+          'posterName': widget.userName,
+          'posterAvatar': widget.userAvatar,
+          'activityType': widget.activityType,
+          'activityData': widget.activityData,
+          'savedWorkoutsService': _savedWorkoutsService,
+        });
+      },
+      behavior: HitTestBehavior.opaque,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header
-          Padding(
-            padding: const EdgeInsets.all(12),
-            child: Row(
-              children: [
-                const Icon(
-                  Icons.fitness_center,
-                  size: 16,
-                  color: AppColors.cyan,
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  'Workout Details',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                    color: isDark ? Colors.white : Colors.black,
+          // Display badges if available
+          if (widget.badges != null && widget.badges!.isNotEmpty) ...[
+            _buildBadges(context, widget.badges!),
+            const SizedBox(height: 8),
+          ],
+
+          Row(
+            children: [
+              Expanded(
+                child: RichText(
+                  text: TextSpan(
+                    style: DefaultTextStyle.of(context).style,
+                    children: [
+                      TextSpan(text: '$verb '),
+                      TextSpan(
+                        text: workoutName,
+                        style: const TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                    ],
                   ),
                 ),
-              ],
-            ),
-          ),
-
-          Divider(height: 1, color: cardBorder.withValues(alpha: 0.3)),
-
-          // Exercise list
-          ListView.separated(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            padding: const EdgeInsets.all(12),
-            itemCount: exercises.length,
-            separatorBuilder: (context, index) => const SizedBox(height: 12),
-            itemBuilder: (context, index) {
-              final exercise = exercises[index] as Map<String, dynamic>;
-              final name = exercise['name'] ?? 'Exercise ${index + 1}';
-              final sets = exercise['sets'] ?? 0;
-              final reps = exercise['reps'] ?? 0;
-              final weightKg = exercise['weight_kg'] ?? 0.0;
-              final weightLbs = (weightKg * 2.20462).toStringAsFixed(0);
-
-              return Row(
-                children: [
-                  // Exercise number
-                  Container(
-                    width: 24,
-                    height: 24,
-                    decoration: BoxDecoration(
-                      color: AppColors.cyan.withValues(alpha: 0.2),
-                      shape: BoxShape.circle,
-                    ),
-                    child: Center(
-                      child: Text(
-                        '${index + 1}',
-                        style: const TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
-                          color: AppColors.cyan,
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-
-                  // Exercise info
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          name,
-                          style: const TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          '$sets sets × $reps reps @ $weightLbs lbs',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: AppColors.textMuted,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              );
-            },
-          ),
-
-          // Workout action buttons
-          Divider(height: 1, color: cardBorder.withValues(alpha: 0.3)),
-          Padding(
-            padding: const EdgeInsets.all(12),
-            child: Column(
-              children: [
-                // BEAT THIS button - prominent and viral
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton.icon(
-                    onPressed: () {
-                      HapticFeedback.mediumImpact();
-                      _showBeatWorkoutDialog(context);
-                    },
-                    icon: const Icon(Icons.emoji_events, size: 20),
-                    label: const Text(
-                      'BEAT THIS WORKOUT 💪',
-                      style: TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: 0.5,
-                      ),
-                    ),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.orange,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      elevation: 2,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 8),
-
-                // Secondary actions row
-                Row(
-                  children: [
-                    // Save button
-                    Expanded(
-                      child: OutlinedButton.icon(
-                        onPressed: () {
-                          HapticFeedback.lightImpact();
-                          _showSaveWorkoutDialog(context);
-                        },
-                        icon: const Icon(Icons.bookmark_outline, size: 16),
-                        label: const Text('Save', style: TextStyle(fontSize: 13)),
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: AppColors.cyan,
-                          side: BorderSide(color: AppColors.cyan.withValues(alpha: 0.5)),
-                          padding: const EdgeInsets.symmetric(vertical: 10),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-
-                    // Schedule button
-                    Expanded(
-                      child: OutlinedButton.icon(
-                        onPressed: () {
-                          HapticFeedback.lightImpact();
-                          _showScheduleWorkoutDialog(context);
-                        },
-                        icon: const Icon(Icons.calendar_today, size: 16),
-                        label: const Text('Schedule', style: TextStyle(fontSize: 13)),
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: AppColors.textMuted,
-                          side: BorderSide(color: cardBorder.withValues(alpha: 0.5)),
-                          padding: const EdgeInsets.symmetric(vertical: 10),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  /// Show save workout dialog
-  void _showSaveWorkoutDialog(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
-
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: elevated,
-        title: const Text('Save Workout'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Save "${widget.activityData['workout_name']}" to your library?',
-              style: const TextStyle(fontSize: 14),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              'You can access it anytime from the Library tab.',
-              style: TextStyle(
-                fontSize: 12,
+              ),
+              Icon(
+                Icons.chevron_right_rounded,
+                size: 22,
                 color: AppColors.textMuted,
               ),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
+            ],
           ),
-          ElevatedButton(
-            onPressed: () async {
-              Navigator.pop(context);
-
-              // Show loading
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Saving workout...'),
-                  duration: Duration(seconds: 1),
-                  behavior: SnackBarBehavior.floating,
-                ),
-              );
-
-              try {
-                // Call API to save workout
-                await _savedWorkoutsService.saveWorkoutFromActivity(
-                  userId: widget.currentUserId,
-                  activityId: widget.activityId,
-                  folder: 'From Friends',
-                );
-
-                if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Workout saved to Library!'),
-                      backgroundColor: AppColors.cyan,
-                      behavior: SnackBarBehavior.floating,
-                    ),
-                  );
-                }
-              } catch (e) {
-                debugPrint('Error saving workout: $e');
-                if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('Failed to save workout: $e'),
-                      backgroundColor: Colors.red,
-                      behavior: SnackBarBehavior.floating,
-                    ),
-                  );
-                }
-              }
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.cyan,
-            ),
-            child: const Text('Save'),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 16,
+            runSpacing: 8,
+            children: [
+              _buildStat(Icons.timer_outlined, '$duration min'),
+              _buildStat(Icons.fitness_center_outlined, '$exercises exercises'),
+              if (totalVolume != null)
+                _buildStat(Icons.trending_up_outlined, '${totalVolume.toStringAsFixed(0)} lbs'),
+            ],
           ),
         ],
-      ),
-    );
-  }
-
-  /// Show beat workout dialog with competitive messaging
-  void _showBeatWorkoutDialog(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
-    final workoutName = widget.activityData['workout_name'] ?? 'this workout';
-    final duration = widget.activityData['duration_minutes'] ?? 0;
-    final totalVolume = widget.activityData['total_volume'];
-
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: elevated,
-        title: Row(
-          children: [
-            const Icon(Icons.emoji_events, color: AppColors.orange, size: 28),
-            const SizedBox(width: 12),
-            const Expanded(
-              child: Text(
-                'BEAT THIS WORKOUT',
-                style: TextStyle(fontWeight: FontWeight.bold),
-              ),
-            ),
-          ],
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            RichText(
-              text: TextSpan(
-                style: DefaultTextStyle.of(context).style,
-                children: [
-                  TextSpan(
-                    text: widget.userName,
-                    style: const TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                  const TextSpan(text: ' crushed '),
-                  TextSpan(
-                    text: workoutName,
-                    style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.orange),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 16),
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: AppColors.orange.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: AppColors.orange.withValues(alpha: 0.3)),
-              ),
-              child: Column(
-                children: [
-                  _buildChallengeStat('Time', '$duration min'),
-                  if (totalVolume != null) ...[
-                    const SizedBox(height: 8),
-                    _buildChallengeStat('Total Volume', '${totalVolume.toStringAsFixed(0)} lbs'),
-                  ],
-                ],
-              ),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              'Can you beat their performance? Start now!',
-              style: TextStyle(
-                fontSize: 13,
-                color: AppColors.textMuted,
-                fontStyle: FontStyle.italic,
-              ),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Not Today'),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              Navigator.pop(context);
-
-              // Show loading
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Accepting challenge...'),
-                  duration: Duration(seconds: 1),
-                  behavior: SnackBarBehavior.floating,
-                ),
-              );
-
-              try {
-                // Call API to accept challenge (tracks click, saves workout, returns session)
-                final workoutSession = await _savedWorkoutsService.acceptChallenge(
-                  userId: widget.currentUserId,
-                  activityId: widget.activityId,
-                );
-
-                if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Challenge accepted! Starting workout...'),
-                      backgroundColor: AppColors.orange,
-                      behavior: SnackBarBehavior.floating,
-                      duration: Duration(seconds: 2),
-                    ),
-                  );
-
-                  // TODO: Navigate to ActiveWorkoutScreen with workoutSession data
-                  // Navigator.push(context, MaterialPageRoute(
-                  //   builder: (context) => ActiveWorkoutScreen(
-                  //     workoutData: workoutSession,
-                  //     isChallengeMode: true,
-                  //   ),
-                  // ));
-                }
-              } catch (e) {
-                debugPrint('Error accepting challenge: $e');
-                if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('Failed to start challenge: $e'),
-                      backgroundColor: Colors.red,
-                      behavior: SnackBarBehavior.floating,
-                    ),
-                  );
-                }
-              }
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.orange,
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-            ),
-            child: const Text(
-              'ACCEPT CHALLENGE',
-              style: TextStyle(fontWeight: FontWeight.bold),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildChallengeStat(String label, String value) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text(label, style: const TextStyle(fontSize: 13)),
-        Text(
-          value,
-          style: const TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.bold,
-            color: AppColors.orange,
-          ),
-        ),
-      ],
-    );
-  }
-
-  /// Show schedule workout dialog
-  void _showScheduleWorkoutDialog(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
-
-    showDialog(
-      context: context,
-      builder: (context) => _ScheduleWorkoutDialog(
-        activityId: widget.activityId,
-        currentUserId: widget.currentUserId,
-        workoutName: widget.activityData['workout_name'] ?? 'this workout',
-        savedWorkoutsService: _savedWorkoutsService,
-        elevated: elevated,
       ),
     );
   }
@@ -1513,6 +1201,9 @@ class _ActivityCardState extends State<ActivityCard> {
             ],
           ),
         ),
+
+        // Mini leaderboard
+        _ChallengeLeaderboard(activityId: widget.activityId),
       ],
     );
   }
@@ -1734,6 +1425,9 @@ class _ActivityCardState extends State<ActivityCard> {
             ],
           ),
         ),
+
+        // Mini leaderboard
+        _ChallengeLeaderboard(activityId: widget.activityId),
       ],
     );
   }
@@ -1873,129 +1567,162 @@ class _ActivityCardState extends State<ActivityCard> {
   }
 }
 
-/// Schedule Workout Dialog - Stateful to handle date selection
-class _ScheduleWorkoutDialog extends StatefulWidget {
+/// Mini leaderboard widget shown on challenge_victory / challenge_completed activity cards.
+/// Fetches data lazily and only shows if there are 2+ entries.
+class _ChallengeLeaderboard extends StatefulWidget {
   final String activityId;
-  final String currentUserId;
-  final String workoutName;
-  final SavedWorkoutsService savedWorkoutsService;
-  final Color elevated;
 
-  const _ScheduleWorkoutDialog({
-    required this.activityId,
-    required this.currentUserId,
-    required this.workoutName,
-    required this.savedWorkoutsService,
-    required this.elevated,
-  });
+  const _ChallengeLeaderboard({required this.activityId});
 
   @override
-  State<_ScheduleWorkoutDialog> createState() => _ScheduleWorkoutDialogState();
+  State<_ChallengeLeaderboard> createState() => _ChallengeLeaderboardState();
 }
 
-class _ScheduleWorkoutDialogState extends State<_ScheduleWorkoutDialog> {
-  late DateTime _selectedDate;
+class _ChallengeLeaderboardState extends State<_ChallengeLeaderboard> {
+  List<Map<String, dynamic>>? _entries;
+  bool _loading = true;
+  bool _error = false;
 
   @override
   void initState() {
     super.initState();
-    _selectedDate = DateTime.now().add(const Duration(days: 1));
+    _fetchLeaderboard();
+  }
+
+  Future<void> _fetchLeaderboard() async {
+    try {
+      final storage = const FlutterSecureStorage(
+        aOptions: AndroidOptions(encryptedSharedPreferences: true),
+        iOptions: IOSOptions(accessibility: KeychainAccessibility.first_unlock),
+      );
+      final service = ChallengesService(ApiClient(storage));
+      final entries = await service.getActivityLeaderboard(activityId: widget.activityId);
+      if (mounted) {
+        setState(() {
+          _entries = entries;
+          _loading = false;
+        });
+      }
+    } catch (e) {
+      debugPrint('❌ [ChallengeLeaderboard] Error: $e');
+      if (mounted) {
+        setState(() {
+          _error = true;
+          _loading = false;
+        });
+      }
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    return AlertDialog(
-      backgroundColor: widget.elevated,
-      title: const Text('Schedule Workout'),
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Schedule "${widget.workoutName}" for:',
-            style: const TextStyle(fontSize: 14),
+    if (_loading) return const SizedBox.shrink();
+    if (_error || _entries == null || _entries!.length < 2) return const SizedBox.shrink();
+
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
+
+    return Padding(
+      padding: const EdgeInsets.only(top: 12),
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.03),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: AppColors.textMuted.withValues(alpha: 0.2),
           ),
-          const SizedBox(height: 16),
-          OutlinedButton.icon(
-            onPressed: () async {
-              final date = await showDatePicker(
-                context: context,
-                initialDate: _selectedDate,
-                firstDate: DateTime.now(),
-                lastDate: DateTime.now().add(const Duration(days: 365)),
-              );
-              if (date != null) {
-                setState(() {
-                  _selectedDate = date;
-                });
-              }
-            },
-            icon: const Icon(Icons.calendar_today, size: 18),
-            label: Text(
-              '${_selectedDate.year}-${_selectedDate.month.toString().padLeft(2, '0')}-${_selectedDate.day.toString().padLeft(2, '0')}',
-            ),
-            style: OutlinedButton.styleFrom(
-              foregroundColor: AppColors.cyan,
-            ),
-          ),
-        ],
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(context),
-          child: const Text('Cancel'),
         ),
-        ElevatedButton(
-          onPressed: () async {
-            Navigator.pop(context);
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(Icons.leaderboard_rounded, size: 16, color: AppColors.orange),
+                const SizedBox(width: 6),
+                Text(
+                  'Leaderboard',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.orange,
+                    letterSpacing: 0.5,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            ..._entries!.asMap().entries.map((entry) {
+              final index = entry.key;
+              final data = entry.value;
+              final name = data['user_name'] as String? ?? 'Unknown';
+              final didBeat = data['did_beat'] as bool? ?? false;
+              final duration = data['duration_minutes'];
+              final volume = data['total_volume'];
 
-            // Show loading
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Scheduling workout...'),
-                duration: Duration(seconds: 1),
-                behavior: SnackBarBehavior.floating,
-              ),
-            );
-
-            try {
-              // Call API to schedule workout
-              await widget.savedWorkoutsService.saveAndSchedule(
-                userId: widget.currentUserId,
-                activityId: widget.activityId,
-                scheduledDate: _selectedDate,
-              );
-
-              if (context.mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(
-                      'Workout scheduled for ${_selectedDate.month}/${_selectedDate.day}!',
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 4),
+                child: Row(
+                  children: [
+                    // Position
+                    SizedBox(
+                      width: 24,
+                      child: Text(
+                        '${index + 1}.',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.bold,
+                          color: index == 0 ? const Color(0xFFFFD700) : AppColors.textMuted,
+                        ),
+                      ),
                     ),
-                    backgroundColor: AppColors.orange,
-                    behavior: SnackBarBehavior.floating,
-                  ),
-                );
-              }
-            } catch (e) {
-              debugPrint('Error scheduling workout: $e');
-              if (context.mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('Failed to schedule workout: $e'),
-                    backgroundColor: Colors.red,
-                    behavior: SnackBarBehavior.floating,
-                  ),
-                );
-              }
-            }
-          },
-          style: ElevatedButton.styleFrom(
-            backgroundColor: AppColors.orange,
-          ),
-          child: const Text('Schedule'),
+                    // Name
+                    Expanded(
+                      child: Text(
+                        name,
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w500,
+                          color: isDark ? AppColors.textPrimary : AppColorsLight.textPrimary,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    // Beat indicator
+                    if (didBeat)
+                      Padding(
+                        padding: const EdgeInsets.only(right: 8),
+                        child: Icon(Icons.check_circle, size: 14, color: Colors.green),
+                      ),
+                    // Stats
+                    if (duration != null)
+                      Text(
+                        '${duration}m',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: AppColors.textMuted,
+                        ),
+                      ),
+                    if (duration != null && volume != null)
+                      Text(
+                        ' | ',
+                        style: TextStyle(fontSize: 12, color: AppColors.textMuted),
+                      ),
+                    if (volume != null)
+                      Text(
+                        '${volume is double ? volume.toStringAsFixed(0) : volume} lbs',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: AppColors.textMuted,
+                        ),
+                      ),
+                  ],
+                ),
+              );
+            }),
+          ],
         ),
-      ],
+      ),
     );
   }
 }

@@ -4,6 +4,7 @@
 /// and get AI-recommended parameters for the next set.
 library;
 
+import 'package:flutter/foundation.dart';
 import 'package:dio/dio.dart';
 
 import '../../screens/workout/widgets/fatigue_alert_modal.dart';
@@ -53,7 +54,7 @@ class FatigueService {
     int? targetReps,
   }) async {
     try {
-      print('🔍 [FatigueService] Checking fatigue with ${setsData.length} sets');
+      debugPrint('🔍 [FatigueService] Checking fatigue with ${setsData.length} sets');
 
       final response = await dio.post(
         '/workouts/fatigue-check',
@@ -69,19 +70,19 @@ class FatigueService {
         final alertData = FatigueAlertData.fromJson(
           response.data as Map<String, dynamic>,
         );
-        print('✅ [FatigueService] Fatigue check complete: '
+        debugPrint('✅ [FatigueService] Fatigue check complete: '
             'detected=${alertData.fatigueDetected}, '
             'severity=${alertData.severityLabel}');
         return alertData;
       }
 
-      print('⚠️ [FatigueService] Unexpected response: ${response.statusCode}');
+      debugPrint('⚠️ [FatigueService] Unexpected response: ${response.statusCode}');
       return null;
     } on DioException catch (e) {
-      print('❌ [FatigueService] DioException: ${e.message}');
+      debugPrint('❌ [FatigueService] DioException: ${e.message}');
       return null;
     } catch (e) {
-      print('❌ [FatigueService] Error checking fatigue: $e');
+      debugPrint('❌ [FatigueService] Error checking fatigue: $e');
       return null;
     }
   }
@@ -101,7 +102,7 @@ class FatigueService {
     double targetIntensity = 0.75,
   }) async {
     try {
-      print('🔍 [FatigueService] Getting next set preview for set '
+      debugPrint('🔍 [FatigueService] Getting next set preview for set '
           '${currentSetNumber + 1}/$totalSets');
 
       final response = await dio.post(
@@ -121,18 +122,18 @@ class FatigueService {
         final previewData = NextSetPreviewData.fromJson(
           response.data as Map<String, dynamic>,
         );
-        print('✅ [FatigueService] Next set preview: '
+        debugPrint('✅ [FatigueService] Next set preview: '
             '${previewData.recommendedWeight}kg x ${previewData.recommendedReps}');
         return previewData;
       }
 
-      print('⚠️ [FatigueService] Unexpected response: ${response.statusCode}');
+      debugPrint('⚠️ [FatigueService] Unexpected response: ${response.statusCode}');
       return null;
     } on DioException catch (e) {
-      print('❌ [FatigueService] DioException: ${e.message}');
+      debugPrint('❌ [FatigueService] DioException: ${e.message}');
       return null;
     } catch (e) {
-      print('❌ [FatigueService] Error getting next set preview: $e');
+      debugPrint('❌ [FatigueService] Error getting next set preview: $e');
       return null;
     }
   }
@@ -151,7 +152,7 @@ class FatigueService {
     int? targetReps,
   }) async {
     try {
-      print('🔍 [FatigueService] Combined check for set '
+      debugPrint('🔍 [FatigueService] Combined check for set '
           '${currentSetNumber + 1}/$totalSets');
 
       final response = await dio.post(
@@ -186,20 +187,20 @@ class FatigueService {
           );
         }
 
-        print('✅ [FatigueService] Combined check complete: '
+        debugPrint('✅ [FatigueService] Combined check complete: '
             'fatigue=${fatigueData?.fatigueDetected ?? false}, '
             'preview=${previewData?.recommendedWeight ?? 0}kg');
 
         return (fatigue: fatigueData, preview: previewData);
       }
 
-      print('⚠️ [FatigueService] Unexpected response: ${response.statusCode}');
+      debugPrint('⚠️ [FatigueService] Unexpected response: ${response.statusCode}');
       return (fatigue: null, preview: null);
     } on DioException catch (e) {
-      print('❌ [FatigueService] DioException: ${e.message}');
+      debugPrint('❌ [FatigueService] DioException: ${e.message}');
       return (fatigue: null, preview: null);
     } catch (e) {
-      print('❌ [FatigueService] Error in combined check: $e');
+      debugPrint('❌ [FatigueService] Error in combined check: $e');
       return (fatigue: null, preview: null);
     }
   }

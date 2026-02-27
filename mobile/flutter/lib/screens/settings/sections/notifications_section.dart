@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/animations/app_animations.dart';
@@ -368,57 +369,59 @@ class _NotificationsCardState extends ConsumerState<_NotificationsCard> {
               ),
             ),
           ),
-          Divider(height: 1, color: cardBorder, indent: 50),
+          if (kDebugMode) ...[
+            Divider(height: 1, color: cardBorder, indent: 50),
 
-          // All Notification Tests Link
-          InkWell(
-            onTap: () {
-              Navigator.push(
-                context,
-                AppPageRoute(
-                  builder: (context) => const NotificationTestScreen(),
-                ),
-              );
-            },
-            borderRadius: const BorderRadius.vertical(bottom: Radius.circular(16)),
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Row(
-                children: [
-                  Icon(
-                    Icons.notifications_active,
-                    color: AppColors.purple,
-                    size: 22,
+            // All Notification Tests Link
+            InkWell(
+              onTap: () {
+                Navigator.push(
+                  context,
+                  AppPageRoute(
+                    builder: (context) => const NotificationTestScreen(),
                   ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'All Notification Tests',
-                          style: TextStyle(
-                            fontSize: 15,
-                          ),
-                        ),
-                        Text(
-                          'Test workout, nutrition, hydration & more',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: textMuted,
-                          ),
-                        ),
-                      ],
+                );
+              },
+              borderRadius: const BorderRadius.vertical(bottom: Radius.circular(16)),
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.notifications_active,
+                      color: AppColors.purple,
+                      size: 22,
                     ),
-                  ),
-                  Icon(
-                    Icons.chevron_right,
-                    color: textMuted,
-                  ),
-                ],
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'All Notification Tests',
+                            style: TextStyle(
+                              fontSize: 15,
+                            ),
+                          ),
+                          Text(
+                            'Test workout, nutrition, hydration & more',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: textMuted,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Icon(
+                      Icons.chevron_right,
+                      color: textMuted,
+                    ),
+                  ],
+                ),
               ),
             ),
-          ),
+          ],
         ],
       ),
     );

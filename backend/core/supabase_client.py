@@ -48,20 +48,20 @@ class SupabaseManager:
             )
             self._supabase.auth._http_client = auth_http_client
 
-            # Configure PostgREST client with retry-enabled HTTP transport.
-            # Supabase's edge proxy can close idle connections, causing
-            # "Server disconnected" errors on the next request. httpx's
-            # HTTPTransport(retries=N) automatically retries on connection-
-            # level failures (disconnect, reset, refused) which fixes this.
+            # Configure PostgREST client with retry-enabled HTTP/1.1 transport.
+            # Supabase's edge proxy can close idle HTTP/2 connections, causing
+            # "Server disconnected" errors when multiple threads share one
+            # multiplexed connection. HTTP/1.1 uses separate connections per
+            # concurrent request, so a single drop doesn't cascade.
+            # retries=3 automatically retries on connection-level failures.
             pg = self._supabase.postgrest  # trigger lazy init
             old_session = pg.session
             pg.session = httpx.Client(
                 base_url=str(old_session.base_url),
                 headers=dict(old_session.headers),
                 timeout=old_session.timeout,
-                transport=httpx.HTTPTransport(retries=3, http2=True),
+                transport=httpx.HTTPTransport(retries=3),
                 follow_redirects=True,
-                http2=True,
             )
             old_session.close()
 

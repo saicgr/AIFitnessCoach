@@ -20,6 +20,9 @@ from pydantic import BaseModel, Field
 from supabase import Client
 
 from core.supabase_client import get_supabase
+from core.logger import get_logger
+
+logger = get_logger(__name__)
 
 router = APIRouter(prefix="/subscription-transparency", tags=["subscription-transparency"])
 
@@ -171,7 +174,7 @@ async def log_transparency_event(
         )
     except Exception as e:
         # Log but don't fail - transparency tracking shouldn't block user flow
-        print(f"❌ Failed to log transparency event: {e}")
+        logger.error(f"Failed to log transparency event: {e}")
         return TransparencyEventResponse(
             id=event_id,
             event_type=request.event_type.value,
@@ -221,7 +224,7 @@ async def get_trial_status(
             is_active=is_active
         )
     except Exception as e:
-        print(f"❌ Failed to get trial status: {e}")
+        logger.error(f"Failed to get trial status: {e}")
         return TrialStatusResponse(
             user_id=user_id,
             is_active=False
@@ -290,7 +293,7 @@ async def start_trial(
     except HTTPException:
         raise
     except Exception as e:
-        print(f"❌ Failed to start trial: {e}")
+        logger.error(f"Failed to start trial: {e}")
         raise safe_internal_error(e, "subscription_start_trial")
 
 
@@ -361,7 +364,7 @@ async def check_pricing_shown(
             free_tier_explained=len(free_tier_result.data) > 0
         )
     except Exception as e:
-        print(f"❌ Failed to check pricing shown: {e}")
+        logger.error(f"Failed to check pricing shown: {e}")
         return PricingShownResponse(
             user_id=user_id,
             device_id=device_id,
@@ -394,7 +397,7 @@ async def log_conversion_trigger(
 
         return {"success": True, "message": "Conversion trigger logged"}
     except Exception as e:
-        print(f"❌ Failed to log conversion trigger: {e}")
+        logger.error(f"Failed to log conversion trigger: {e}")
         return {"success": False, "error": str(e)}
 
 
@@ -429,7 +432,7 @@ async def log_plan_preview(
 
         return {"success": True, "message": "Plan preview logged"}
     except Exception as e:
-        print(f"❌ Failed to log plan preview: {e}")
+        logger.error(f"Failed to log plan preview: {e}")
         return {"success": False, "error": str(e)}
 
 
@@ -456,7 +459,7 @@ async def log_try_workout(
 
         return {"success": True, "message": "Try workout session started"}
     except Exception as e:
-        print(f"❌ Failed to log try workout: {e}")
+        logger.error(f"Failed to log try workout: {e}")
         return {"success": False, "error": str(e)}
 
 
@@ -493,5 +496,5 @@ async def update_try_workout(
 
         return {"success": True, "message": "Try workout session updated"}
     except Exception as e:
-        print(f"❌ Failed to update try workout: {e}")
+        logger.error(f"Failed to update try workout: {e}")
         return {"success": False, "error": str(e)}

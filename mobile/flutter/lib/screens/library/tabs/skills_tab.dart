@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
 
-/// Tab displaying skill progressions - Coming Soon
+/// Tab displaying skill progressions
 class SkillsTab extends StatelessWidget {
   const SkillsTab({super.key});
 
@@ -41,25 +41,6 @@ class SkillsTab extends StatelessWidget {
               style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                     fontWeight: FontWeight.bold,
                   ),
-            ),
-            const SizedBox(height: 12),
-
-            // Coming Soon badge
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              decoration: BoxDecoration(
-                color: cyan.withOpacity(0.15),
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: cyan.withOpacity(0.3)),
-              ),
-              child: Text(
-                'Coming Soon',
-                style: TextStyle(
-                  color: cyan,
-                  fontWeight: FontWeight.w600,
-                  fontSize: 14,
-                ),
-              ),
             ),
             const SizedBox(height: 24),
 

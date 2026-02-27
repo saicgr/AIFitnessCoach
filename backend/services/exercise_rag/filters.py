@@ -440,8 +440,8 @@ def parse_secondary_muscles(secondary_muscles_raw: Any) -> List[Dict[str, Any]]:
                 parsed = json.loads(secondary_muscles_raw)
                 # Recursively handle the parsed list
                 return parse_secondary_muscles(parsed)
-            except json.JSONDecodeError:
-                pass
+            except json.JSONDecodeError as e:
+                logger.debug(f"Failed to parse muscles JSON: {e}")
 
         # Handle comma-separated string
         if "," in secondary_muscles_raw:

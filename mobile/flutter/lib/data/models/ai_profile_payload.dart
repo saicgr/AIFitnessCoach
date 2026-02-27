@@ -296,7 +296,7 @@ class AIProfilePayloadBuilder {
     for (final field in requiredFields) {
       if (!payload.containsKey(field) || payload[field] == null) {
         if (kDebugMode) {
-          print('❌ [Payload] Missing required field: $field');
+          debugPrint('❌ [Payload] Missing required field: $field');
         }
         return false;
       }
@@ -304,7 +304,7 @@ class AIProfilePayloadBuilder {
       // Check for empty lists
       if (payload[field] is List && (payload[field] as List).isEmpty) {
         if (kDebugMode) {
-          print('❌ [Payload] Empty list for required field: $field');
+          debugPrint('❌ [Payload] Empty list for required field: $field');
         }
         return false;
       }

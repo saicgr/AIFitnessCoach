@@ -8,7 +8,11 @@ The coach agent is autonomous - it handles:
 """
 from typing import Dict, Any, Literal
 from datetime import datetime
+import base64
 import pytz
+
+from google.genai import types
+from core.gemini_client import get_genai_client
 
 from .state import CoachAgentState
 from ..personality import build_personality_prompt, sanitize_coach_name
@@ -39,6 +43,7 @@ CAPABILITIES:
 5. **Nutrition**: Provide dietary advice and meal suggestions
 6. **Injury/Recovery**: Help with pain and recovery questions
 7. **Hydration**: Guide water intake and hydration
+8. **Vision**: Analyze progress photos, identify gym equipment, read fitness documents and workout plans
 
 You are a comprehensive fitness coach who can handle ALL aspects of fitness and wellness.
 Do NOT tell users to ask other agents or use @mentions - YOU handle everything!
@@ -274,11 +279,96 @@ Be personable, encouraging, and adapt to their fitness level!"""
         for msg in state.get("conversation_history", [])
     ]
 
-    response = await gemini_service.chat(
-        user_message=state["user_message"],
-        system_prompt=system_prompt,
-        conversation_history=conversation_history,
+    # Check if media is present for vision-aware response
+    has_media = (
+        state.get("image_base64")
+        or state.get("media_ref")
+        or state.get("media_refs")
     )
+
+    if has_media:
+        # Vision-aware response using multimodal Gemini
+        media_content_type = state.get("media_content_type", "unknown")
+        vision_hints = {
+            "progress_photo": "Analyze the physique in this progress photo. Note visible muscle development, body composition, and provide encouraging, constructive feedback. Compare to fitness goals if known.",
+            "gym_equipment": "Identify the gym equipment or machine in this image. Explain proper usage, suggest exercises that can be done with it, and provide safety tips.",
+            "document": "Read and analyze this fitness-related document (workout plan, medical note, etc.). Provide relevant coaching advice based on its contents.",
+        }
+        vision_hint = vision_hints.get(media_content_type, "Analyze the image and provide relevant coaching advice.")
+
+        # Add vision hint to system prompt
+        vision_system_prompt = f"""{system_prompt}
+
+VISION CONTEXT:
+You have been sent an image. {vision_hint}
+Respond naturally as a coach who can see the image."""
+
+        # Resolve image bytes
+        image_bytes = None
+        image_mime = "image/jpeg"
+        try:
+            if state.get("image_base64"):
+                image_bytes = base64.b64decode(state["image_base64"])
+            elif state.get("media_refs"):
+                ref = state["media_refs"][0]
+                s3_key = ref.get("s3_key")
+                image_mime = ref.get("mime_type", "image/jpeg")
+                if s3_key:
+                    from services.vision_service import get_vision_service
+                    vision_svc = get_vision_service()
+                    image_bytes = await vision_svc._download_image_from_s3(s3_key)
+            elif state.get("media_ref"):
+                ref = state["media_ref"]
+                s3_key = ref.get("s3_key")
+                image_mime = ref.get("mime_type", "image/jpeg")
+                if s3_key:
+                    from services.vision_service import get_vision_service
+                    vision_svc = get_vision_service()
+                    image_bytes = await vision_svc._download_image_from_s3(s3_key)
+        except Exception as e:
+            logger.warning(f"[Coach Response] Failed to resolve image: {e}")
+
+        if image_bytes:
+            # Build multimodal content
+            image_part = types.Part.from_bytes(data=image_bytes, mime_type=image_mime)
+
+            # Build conversation as text
+            conv_text = ""
+            for msg in conversation_history:
+                role = msg.get("role", "user")
+                conv_text += f"{role}: {msg.get('content', '')}\n"
+
+            gemini_client = get_genai_client()
+            from core.config import get_settings as get_app_settings
+            app_settings = get_app_settings()
+
+            vision_response = await gemini_client.aio.models.generate_content(
+                model=app_settings.gemini_model,
+                contents=[
+                    f"{vision_system_prompt}\n\nConversation:\n{conv_text}\n\nUser: {state['user_message']}",
+                    image_part,
+                ],
+                config=types.GenerateContentConfig(
+                    temperature=0.7,
+                    max_output_tokens=2000,
+                ),
+            )
+            response = vision_response.text
+            logger.info(f"[Coach Response] Vision response: {response[:100]}...")
+        else:
+            # Fallback to text-only if image resolution failed
+            logger.warning("[Coach Response] Media indicated but image bytes not resolved, falling back to text")
+            response = await gemini_service.chat(
+                user_message=state["user_message"],
+                system_prompt=system_prompt,
+                conversation_history=conversation_history,
+            )
+    else:
+        response = await gemini_service.chat(
+            user_message=state["user_message"],
+            system_prompt=system_prompt,
+            conversation_history=conversation_history,
+        )
 
     logger.info(f"[Coach Response] Response: {response[:100]}...")
 

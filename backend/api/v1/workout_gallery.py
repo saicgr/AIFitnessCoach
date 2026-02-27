@@ -13,6 +13,9 @@ from core.auth import get_current_user
 from core.exceptions import safe_internal_error
 
 from core.supabase_db import get_supabase_db
+from core.logger import get_logger
+
+logger = get_logger(__name__)
 from models.workout_gallery import (
     DeleteImageResponse,
     ShareToFeedRequest,
@@ -58,7 +61,7 @@ async def upload_gallery_image(
                 base64.b64decode(request.user_photo_base64)  # Validate
                 user_photo_url = f"data:image/png;base64,{request.user_photo_base64}"
             except Exception as e:
-                print(f"User photo validation warning: {e}")
+                logger.warning(f"User photo validation warning: {e}")
 
         # Insert into database
         gallery_data = {
@@ -95,7 +98,7 @@ async def upload_gallery_image(
     except HTTPException:
         raise
     except Exception as e:
-        print(f"Error uploading gallery image: {e}")
+        logger.error(f"Error uploading gallery image: {e}")
         raise safe_internal_error(e, "workout_gallery")
 
 
@@ -141,7 +144,7 @@ async def list_gallery_images(
         )
 
     except Exception as e:
-        print(f"Error listing gallery images: {e}")
+        logger.error(f"Error listing gallery images: {e}")
         raise safe_internal_error(e, "workout_gallery")
 
 
@@ -173,7 +176,7 @@ async def get_gallery_image(
     except HTTPException:
         raise
     except Exception as e:
-        print(f"Error getting gallery image: {e}")
+        logger.error(f"Error getting gallery image: {e}")
         raise safe_internal_error(e, "workout_gallery")
 
 
@@ -218,7 +221,7 @@ async def delete_gallery_image(
     except HTTPException:
         raise
     except Exception as e:
-        print(f"Error deleting gallery image: {e}")
+        logger.error(f"Error deleting gallery image: {e}")
         raise safe_internal_error(e, "workout_gallery")
 
 
@@ -293,7 +296,7 @@ async def share_image_to_feed(
     except HTTPException:
         raise
     except Exception as e:
-        print(f"Error sharing to feed: {e}")
+        logger.error(f"Error sharing to feed: {e}")
         raise safe_internal_error(e, "workout_gallery")
 
 
@@ -342,5 +345,5 @@ async def track_external_share(
     except HTTPException:
         raise
     except Exception as e:
-        print(f"Error tracking external share: {e}")
+        logger.error(f"Error tracking external share: {e}")
         raise safe_internal_error(e, "workout_gallery")

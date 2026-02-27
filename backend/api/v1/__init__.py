@@ -74,6 +74,9 @@ from api.v1 import custom_exercises  # User-defined custom exercises with media 
 from api.v1 import daily_schedule  # Daily schedule planner
 from api.v1 import sync  # Offline sync bulk upload and import
 from api.v1 import exercise_popularity  # Collaborative filtering exercise scores
+from api.v1 import beast_mode  # Beast mode custom training preferences
+from api.v1 import wrapped  # Fitness Wrapped monthly recap cards
+from api.v1 import plateau  # Plateau detection (exercise + weight stalling)
 
 # Create v1 router
 router = APIRouter(prefix="/v1")
@@ -297,7 +300,7 @@ router.include_router(weekly_plans.router, prefix="/weekly-plans", tags=["Weekly
 router.include_router(chat_reports.router, prefix="/chat", tags=["Chat Reports"])
 
 # Live chat support with human agents
-router.include_router(live_chat.router, prefix="/live-chat", tags=["Live Chat"])
+router.include_router(live_chat.router, prefix="/support/live-chat", tags=["Live Chat"])
 
 # Food inflammation analysis from barcode scans
 router.include_router(inflammation.router, prefix="/inflammation", tags=["Inflammation Analysis"])
@@ -337,3 +340,12 @@ router.include_router(sync.router, tags=["Sync"])
 
 # Exercise popularity scores for collaborative filtering
 router.include_router(exercise_popularity.router, tags=["Exercise Popularity"])
+
+# Beast mode custom training preferences (sets, reps, rest, intensity)
+router.include_router(beast_mode.router, prefix="/beast-mode", tags=["Beast Mode"])
+
+# Fitness Wrapped monthly recap cards (Spotify-Wrapped-style)
+router.include_router(wrapped.router, prefix="/wrapped", tags=["Wrapped"])
+
+# Plateau detection (exercise + weight stalling, recommendations)
+router.include_router(plateau.router, prefix="/plateau", tags=["Plateau Detection"])

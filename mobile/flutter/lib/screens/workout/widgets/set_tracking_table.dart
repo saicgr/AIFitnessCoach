@@ -600,7 +600,7 @@ class _SetTrackingTableState extends State<SetTrackingTable> {
                 width: 56,
                 child: isEditing
                     ? _DarkInputField(
-                        controller: _editRepsController!, // TODO: use right controller
+                        controller: _editRepsController!, // L/R mode shares a single reps value in the model
                         onSubmitted: (_) => _saveEditing(),
                         isDark: isDark,
                         hintText: 'R',
@@ -612,7 +612,7 @@ class _SetTrackingTableState extends State<SetTrackingTable> {
                             hintText: 'R',
                           )
                         : _CompletedValueCell(
-                            value: set.actualReps?.toString() ?? '', // TODO: use right reps
+                            value: set.actualReps?.toString() ?? '', // L/R mode shares a single reps value in the model
                             isCompleted: set.isCompleted,
                             isDark: isDark,
                             label: 'R',
@@ -998,62 +998,64 @@ class _AutoTargetCell extends StatelessWidget {
       targetString = targetReps ?? '—';
     }
 
-    return Padding(
-      padding: const EdgeInsets.only(right: 8),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Target weight x reps (no truncation - important to see full target)
-          Text(
-            targetString,
-            style: WorkoutDesign.autoTargetStyle.copyWith(
-              color: isDark ? WorkoutDesign.textSecondary : Colors.grey.shade700,
-              fontSize: 12, // Slightly smaller to fit
+    return ClipRect(
+      child: Padding(
+        padding: const EdgeInsets.only(right: 8),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Target weight x reps
+            Text(
+              targetString,
+              style: WorkoutDesign.autoTargetStyle.copyWith(
+                color: isDark ? WorkoutDesign.textSecondary : Colors.grey.shade700,
+                fontSize: 12, // Slightly smaller to fit
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
-            maxLines: 1,
-            overflow: TextOverflow.visible,
-          ),
-          // RIR pill with info icon - only ? icon is tappable
-          if (targetRir != null)
-            Padding(
-              padding: const EdgeInsets.only(top: 4),
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                decoration: BoxDecoration(
-                  color: WorkoutDesign.getRirColor(targetRir!),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      WorkoutDesign.getRirLabel(targetRir!),
-                      style: TextStyle(
-                        fontSize: 10,
-                        fontWeight: FontWeight.w600,
-                        color: WorkoutDesign.getRirTextColor(targetRir!),
-                      ),
-                    ),
-                    const SizedBox(width: 2),
-                    // Only the ? icon triggers the explanation - larger tap area
-                    GestureDetector(
-                      behavior: HitTestBehavior.opaque,
-                      onTap: () => _showRirExplanation(context),
-                      child: Padding(
-                        padding: const EdgeInsets.all(4), // Larger tap target
-                        child: Icon(
-                          Icons.help_outline,
-                          size: 14,
-                          color: WorkoutDesign.getRirTextColor(targetRir!).withOpacity(0.7),
+            // RIR pill with info icon - only ? icon is tappable
+            if (targetRir != null)
+              Padding(
+                padding: const EdgeInsets.only(top: 4),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: WorkoutDesign.getRirColor(targetRir!),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        WorkoutDesign.getRirLabel(targetRir!),
+                        style: TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w600,
+                          color: WorkoutDesign.getRirTextColor(targetRir!),
                         ),
                       ),
-                    ),
-                  ],
+                      const SizedBox(width: 2),
+                      // Only the ? icon triggers the explanation - larger tap area
+                      GestureDetector(
+                        behavior: HitTestBehavior.opaque,
+                        onTap: () => _showRirExplanation(context),
+                        child: Padding(
+                          padding: const EdgeInsets.all(4), // Larger tap target
+                          child: Icon(
+                            Icons.help_outline,
+                            size: 14,
+                            color: WorkoutDesign.getRirTextColor(targetRir!).withOpacity(0.7),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
-            ),
-        ],
+          ],
+        ),
       ),
     );
   }

@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -6,6 +7,7 @@ import '../../core/constants/api_constants.dart';
 import '../../core/theme/theme_provider.dart';
 import '../../navigation/app_router.dart';
 import '../../screens/ai_settings/ai_settings_screen.dart';
+import '../../screens/chat/widgets/media_picker_helper.dart';
 import '../../services/offline_coach_service.dart';
 import '../models/chat_message.dart';
 import '../models/user.dart';
@@ -16,6 +18,7 @@ import '../providers/unified_state_provider.dart';
 import 'workout_repository.dart';
 import 'auth_repository.dart';
 import 'hydration_repository.dart';
+import 'nutrition_repository.dart';
 
 /// Chat repository provider
 final chatRepositoryProvider = Provider<ChatRepository>((ref) {
@@ -35,6 +38,7 @@ final chatMessagesProvider =
   final themeNotifier = ref.watch(themeModeProvider.notifier);
   final router = ref.watch(routerProvider);
   final hydrationNotifier = ref.watch(hydrationProvider.notifier);
+  final nutritionNotifier = ref.watch(nutritionProvider.notifier);
   // Pass a callback to get fresh AI settings on each message instead of caching stale settings
   AISettings getAISettings() => ref.read(aiSettingsProvider);
   // Pass a callback to set AI generating state (triggers home screen rebuild)
@@ -44,7 +48,7 @@ final chatMessagesProvider =
   // Offline coach dependencies
   final offlineCoach = ref.watch(offlineCoachServiceProvider);
   bool isOnline() => ref.read(isOnlineProvider);
-  return ChatMessagesNotifier(repository, apiClient, workoutsNotifier, workoutRepository, authState.user, themeNotifier, router, hydrationNotifier, getAISettings, setAIGenerating, getUnifiedContext, offlineCoach, isOnline);
+  return ChatMessagesNotifier(repository, apiClient, workoutsNotifier, workoutRepository, authState.user, themeNotifier, router, hydrationNotifier, nutritionNotifier, getAISettings, setAIGenerating, getUnifiedContext, offlineCoach, isOnline);
 });
 
 /// Chat repository for API calls
@@ -78,6 +82,118 @@ class ChatRepository {
     }
   }
 
+  /// Get a presigned URL for S3 media upload
+  Future<Map<String, dynamic>> getPresignedUrl({
+    required String filename,
+    required String contentType,
+    required String mediaType,
+    required int expectedSizeBytes,
+  }) async {
+    try {
+      debugPrint('🔍 [Chat] Getting presigned URL for $filename ($contentType, $expectedSizeBytes bytes)');
+      final response = await _apiClient.post(
+        '${ApiConstants.chat}/media/presign',
+        data: {
+          'filename': filename,
+          'content_type': contentType,
+          'media_type': mediaType,
+          'expected_size_bytes': expectedSizeBytes,
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final data = response.data as Map<String, dynamic>;
+        debugPrint('✅ [Chat] Got presigned URL, s3_key: ${data['s3_key']}');
+        return data;
+      }
+      throw Exception('Failed to get presigned URL: ${response.statusCode}');
+    } catch (e) {
+      debugPrint('❌ [Chat] Error getting presigned URL: $e');
+      rethrow;
+    }
+  }
+
+  /// Get batch presigned URLs for multiple media uploads
+  Future<List<Map<String, dynamic>>> getBatchPresignedUrls({
+    required List<Map<String, dynamic>> files,
+  }) async {
+    try {
+      debugPrint('🔍 [Chat] Getting batch presigned URLs for ${files.length} files');
+      final response = await _apiClient.post(
+        '${ApiConstants.chat}/media/presign-batch',
+        data: {'files': files},
+      );
+
+      if (response.statusCode == 200) {
+        final data = response.data as Map<String, dynamic>;
+        final items = (data['items'] as List).cast<Map<String, dynamic>>();
+        debugPrint('✅ [Chat] Got ${items.length} presigned URLs');
+        return items;
+      }
+      throw Exception('Failed to get batch presigned URLs: ${response.statusCode}');
+    } catch (e) {
+      debugPrint('❌ [Chat] Error getting batch presigned URLs: $e');
+      rethrow;
+    }
+  }
+
+  /// Upload a file directly to S3 using the presigned URL
+  /// Uses a standalone Dio instance (not the API client) for direct S3 PUT
+  Future<bool> uploadToS3({
+    required String presignedUrl,
+    required Map<String, dynamic>? fields,
+    required File file,
+    required String contentType,
+  }) async {
+    try {
+      debugPrint('🔍 [Chat] Uploading to S3...');
+      final fileBytes = await file.readAsBytes();
+
+      // Use a standalone Dio for S3 upload (no auth interceptor)
+      final s3Dio = Dio();
+
+      if (fields != null && fields.isNotEmpty) {
+        // POST with multipart form data (for presigned POST)
+        final formData = FormData.fromMap({
+          ...fields.map((k, v) => MapEntry(k, v.toString())),
+          'file': MultipartFile.fromBytes(
+            fileBytes,
+            filename: file.path.split('/').last,
+          ),
+        });
+        final response = await s3Dio.post(
+          presignedUrl,
+          data: formData,
+          options: Options(
+            receiveTimeout: const Duration(minutes: 5),
+            sendTimeout: const Duration(minutes: 5),
+          ),
+        );
+        debugPrint('✅ [Chat] S3 upload complete: ${response.statusCode}');
+        return response.statusCode == 200 || response.statusCode == 204;
+      } else {
+        // PUT with raw bytes (for presigned PUT URL)
+        final response = await s3Dio.put(
+          presignedUrl,
+          data: Stream.fromIterable(fileBytes.map((e) => [e])),
+          options: Options(
+            headers: {
+              'Content-Type': contentType,
+              'Content-Length': fileBytes.length,
+            },
+            receiveTimeout: const Duration(minutes: 5),
+            sendTimeout: const Duration(minutes: 5),
+          ),
+        );
+        debugPrint('✅ [Chat] S3 upload complete: ${response.statusCode}');
+        return response.statusCode == 200 || response.statusCode == 204;
+      }
+    } catch (e) {
+      debugPrint('❌ [Chat] Error uploading to S3: $e');
+      return false;
+    }
+  }
+
   /// Send a message to the AI coach
   Future<ChatResponse> sendMessage({
     required String message,
@@ -88,6 +204,8 @@ class ChatRepository {
     List<Map<String, dynamic>>? conversationHistory,
     Map<String, dynamic>? aiSettings,
     String? unifiedContext,
+    Map<String, dynamic>? mediaRef,
+    List<Map<String, dynamic>>? mediaRefs,
   }) async {
     try {
       debugPrint('🔍 [Chat] Sending message: ${message.substring(0, message.length.clamp(0, 50))}...');
@@ -109,6 +227,8 @@ class ChatRepository {
           conversationHistory: conversationHistory,
           aiSettings: aiSettings,
           unifiedContext: unifiedContext,
+          mediaRef: mediaRef,
+          mediaRefs: mediaRefs,
         ).toJson(),
       );
 
@@ -197,6 +317,7 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
   final ThemeModeNotifier _themeNotifier;
   final GoRouter _router;
   final HydrationNotifier _hydrationNotifier;
+  final NutritionNotifier _nutritionNotifier;
   final AISettings Function() _getAISettings; // Callback to get fresh settings
   final void Function(bool) _setAIGenerating; // Callback to set AI generating state
   final String Function() _getUnifiedContext; // Callback to get unified fasting/nutrition/workout context
@@ -233,7 +354,7 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
     'train like a fighter', 'want to fight',
   ];
 
-  ChatMessagesNotifier(this._repository, this._apiClient, this._workoutsNotifier, this._workoutRepository, this._user, this._themeNotifier, this._router, this._hydrationNotifier, this._getAISettings, this._setAIGenerating, this._getUnifiedContext, this._offlineCoach, this._isOnline)
+  ChatMessagesNotifier(this._repository, this._apiClient, this._workoutsNotifier, this._workoutRepository, this._user, this._themeNotifier, this._router, this._hydrationNotifier, this._nutritionNotifier, this._getAISettings, this._setAIGenerating, this._getUnifiedContext, this._offlineCoach, this._isOnline)
       : super(const AsyncValue.data([]));
 
   bool get isLoading => _isLoading;
@@ -526,6 +647,329 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
     }
   }
 
+  /// Send a message with media attachment (image or video).
+  /// Orchestrates: compress -> presign -> upload to S3 -> send message with media_ref.
+  Future<void> sendMessageWithMedia(String message, PickedMedia media) async {
+    if (_isLoading) {
+      debugPrint('⚠️ [Chat] Already loading, ignoring message');
+      return;
+    }
+
+    final userId = await _apiClient.getUserId();
+    if (userId == null) {
+      debugPrint('❌ [Chat] No user ID - user not authenticated');
+      return;
+    }
+
+    final currentMessages = state.valueOrNull ?? [];
+
+    // Add user message immediately (with placeholder for media)
+    final userMessage = ChatMessage(
+      role: 'user',
+      content: message.isNotEmpty ? message : (media.type == ChatMediaType.video ? 'Check my form' : 'What do you see?'),
+      createdAt: DateTime.now().toIso8601String(),
+      mediaType: media.type == ChatMediaType.video ? 'video' : 'image',
+    );
+    final messagesWithUser = [...currentMessages, userMessage];
+    state = AsyncValue.data(messagesWithUser);
+
+    _isLoading = true;
+
+    try {
+      // Step 1: Show upload progress system message
+      final uploadMsg = ChatMessage(
+        role: 'system',
+        content: media.type == ChatMediaType.video
+            ? 'Uploading video (${media.formattedSize})...'
+            : 'Uploading image (${media.formattedSize})...',
+        createdAt: DateTime.now().toIso8601String(),
+      );
+      state = AsyncValue.data([...messagesWithUser, uploadMsg]);
+
+      // Step 2: Get presigned URL
+      final filename = media.file.path.split('/').last;
+      final presignData = await _repository.getPresignedUrl(
+        filename: filename,
+        contentType: media.mimeType,
+        mediaType: media.type == ChatMediaType.video ? 'video' : 'image',
+        expectedSizeBytes: media.sizeBytes,
+      );
+
+      final presignedUrl = presignData['presigned_url'] as String? ?? presignData['url'] as String;
+      final s3Key = presignData['s3_key'] as String;
+      final fields = presignData['fields'] as Map<String, dynamic>?;
+
+      // Step 3: Upload to S3
+      final uploadSuccess = await _repository.uploadToS3(
+        presignedUrl: presignedUrl,
+        fields: fields,
+        file: media.file,
+        contentType: media.mimeType,
+      );
+
+      if (!uploadSuccess) {
+        throw Exception('Failed to upload media to storage');
+      }
+
+      // Step 4: Show analyzing system message
+      final analyzingMsg = ChatMessage(
+        role: 'system',
+        content: media.type == ChatMediaType.video
+            ? 'Analyzing your form...'
+            : 'Analyzing image...',
+        createdAt: DateTime.now().toIso8601String(),
+      );
+      // Remove upload msg, add analyzing msg
+      final msgsAfterUpload = state.valueOrNull ?? [];
+      final filteredMsgs = msgsAfterUpload.where((m) =>
+          !(m.role == 'system' && (m.content.contains('Uploading') || m.content.contains('Analyzing')))).toList();
+      state = AsyncValue.data([...filteredMsgs, analyzingMsg]);
+
+      // Step 5: Build media_ref and send message
+      final mediaRef = {
+        's3_key': s3Key,
+        'media_type': media.type == ChatMediaType.video ? 'video' : 'image',
+        'content_type': media.mimeType,
+        'filename': filename,
+      };
+
+      // Build conversation history
+      final history = currentMessages.map((m) => {
+        'role': m.role,
+        'content': m.content,
+      }).toList();
+
+      // Build user profile
+      Map<String, dynamic>? userProfile;
+      if (_user != null) {
+        userProfile = {
+          'id': _user.id,
+          'fitness_level': _user.fitnessLevel ?? 'beginner',
+          'goals': _user.goalsList,
+          'equipment': _user.equipmentList,
+          'active_injuries': _user.injuriesList,
+        };
+      }
+
+      final currentAISettings = _getAISettings();
+      final unifiedContext = _getUnifiedContext();
+
+      final response = await _repository.sendMessage(
+        message: message.isNotEmpty ? message : (media.type == ChatMediaType.video ? 'Check my form' : 'What do you see?'),
+        userId: userId,
+        userProfile: userProfile,
+        conversationHistory: history,
+        aiSettings: currentAISettings.toJson(),
+        unifiedContext: unifiedContext,
+        mediaRef: mediaRef,
+      );
+
+      // Process action_data
+      await _processActionData(response.actionData);
+
+      // Remove system messages (upload/analyzing) and add the assistant response
+      final finalMsgs = (state.valueOrNull ?? []).where((m) =>
+          !(m.role == 'system' && (m.content.contains('Uploading') || m.content.contains('Analyzing')))).toList();
+
+      final assistantMessage = ChatMessage(
+        role: 'assistant',
+        content: response.message,
+        intent: response.intent,
+        agentType: response.agentType,
+        createdAt: DateTime.now().toIso8601String(),
+        actionData: response.actionData,
+      );
+
+      final newMessages = [...finalMsgs, assistantMessage];
+      state = AsyncValue.data(newMessages);
+
+      await _saveToCache(userId, newMessages);
+    } catch (e, stackTrace) {
+      debugPrint('❌ [Chat] Error sending message with media: $e');
+      debugPrint('❌ [Chat] Stack trace: $stackTrace');
+
+      // Remove system messages, add error
+      final errorMsgs = (state.valueOrNull ?? []).where((m) =>
+          !(m.role == 'system' && (m.content.contains('Uploading') || m.content.contains('Analyzing')))).toList();
+
+      final errorMessage = ChatMessage(
+        role: 'error',
+        content: 'Failed to send media: ${e.toString().replaceAll('Exception: ', '')}',
+        createdAt: DateTime.now().toIso8601String(),
+      );
+      state = AsyncValue.data([...errorMsgs, errorMessage]);
+    } finally {
+      _isLoading = false;
+    }
+  }
+
+  /// Send a message with multiple media attachments (images/videos).
+  /// Orchestrates: batch presign -> parallel S3 upload -> send message with media_refs.
+  Future<void> sendMessageWithMultiMedia(String message, List<PickedMedia> mediaList) async {
+    if (_isLoading || mediaList.isEmpty) return;
+
+    final userId = await _apiClient.getUserId();
+    if (userId == null) {
+      debugPrint('❌ [Chat] No user ID - user not authenticated');
+      return;
+    }
+
+    final currentMessages = state.valueOrNull ?? [];
+
+    // Determine default message based on media mix
+    final hasVideo = mediaList.any((m) => m.type == ChatMediaType.video);
+    final imageCount = mediaList.where((m) => m.type == ChatMediaType.image).length;
+    String defaultMessage;
+    if (hasVideo && mediaList.length > 1) {
+      defaultMessage = 'Compare my form across these videos';
+    } else if (hasVideo) {
+      defaultMessage = 'Check my form';
+    } else if (imageCount > 1) {
+      defaultMessage = 'What do you see in these photos?';
+    } else {
+      defaultMessage = 'What do you see?';
+    }
+    final actualMessage = message.isNotEmpty ? message : defaultMessage;
+
+    // Add user message immediately
+    final userMessage = ChatMessage(
+      role: 'user',
+      content: actualMessage,
+      createdAt: DateTime.now().toIso8601String(),
+      mediaType: hasVideo ? 'video' : 'image',
+    );
+    final messagesWithUser = [...currentMessages, userMessage];
+    state = AsyncValue.data(messagesWithUser);
+    _saveToCache(userId, messagesWithUser);
+
+    _isLoading = true;
+
+    try {
+      // Step 1: Upload progress message
+      final uploadMsg = ChatMessage(
+        role: 'system',
+        content: 'Uploading ${mediaList.length} files...',
+        createdAt: DateTime.now().toIso8601String(),
+      );
+      state = AsyncValue.data([...messagesWithUser, uploadMsg]);
+
+      // Step 2: Get batch presigned URLs
+      final fileSpecs = mediaList.map((m) => <String, dynamic>{
+        'filename': m.file.path.split('/').last,
+        'content_type': m.mimeType,
+        'media_type': m.type == ChatMediaType.video ? 'video' : 'image',
+        'expected_size_bytes': m.sizeBytes,
+      }).toList();
+
+      final presignedItems = await _repository.getBatchPresignedUrls(files: fileSpecs);
+
+      // Step 3: Upload all to S3 in parallel
+      final uploadFutures = <Future<bool>>[];
+      for (int i = 0; i < mediaList.length; i++) {
+        final media = mediaList[i];
+        final presigned = presignedItems[i];
+        uploadFutures.add(_repository.uploadToS3(
+          presignedUrl: presigned['presigned_url'] as String,
+          fields: presigned['presigned_fields'] as Map<String, dynamic>?,
+          file: media.file,
+          contentType: media.mimeType,
+        ));
+      }
+
+      final uploadResults = await Future.wait(uploadFutures);
+      if (uploadResults.any((success) => !success)) {
+        throw Exception('Some files failed to upload');
+      }
+
+      // Step 4: Show analyzing message
+      final analyzingMsg = ChatMessage(
+        role: 'system',
+        content: hasVideo ? 'Analyzing your form...' : 'Analyzing ${mediaList.length} images...',
+        createdAt: DateTime.now().toIso8601String(),
+      );
+      final msgsAfterUpload = state.valueOrNull ?? [];
+      final filteredMsgs = msgsAfterUpload.where((m) =>
+          !(m.role == 'system' && (m.content.contains('Uploading') || m.content.contains('Analyzing')))).toList();
+      state = AsyncValue.data([...filteredMsgs, analyzingMsg]);
+
+      // Step 5: Build media_refs and send
+      final mediaRefs = <Map<String, dynamic>>[];
+      for (int i = 0; i < mediaList.length; i++) {
+        final media = mediaList[i];
+        mediaRefs.add({
+          's3_key': presignedItems[i]['s3_key'] as String,
+          'media_type': media.type == ChatMediaType.video ? 'video' : 'image',
+          'mime_type': media.mimeType,
+          if (media.duration != null) 'duration_seconds': media.duration!.inSeconds.toDouble(),
+        });
+      }
+
+      // Build context
+      final history = currentMessages.map((m) => {
+        'role': m.role,
+        'content': m.content,
+      }).toList();
+
+      Map<String, dynamic>? userProfile;
+      if (_user != null) {
+        userProfile = {
+          'id': _user.id,
+          'fitness_level': _user.fitnessLevel ?? 'beginner',
+          'goals': _user.goalsList,
+          'equipment': _user.equipmentList,
+          'active_injuries': _user.injuriesList,
+        };
+      }
+
+      final currentAISettings = _getAISettings();
+      final unifiedContext = _getUnifiedContext();
+
+      final response = await _repository.sendMessage(
+        message: actualMessage,
+        userId: userId,
+        userProfile: userProfile,
+        conversationHistory: history,
+        aiSettings: currentAISettings.toJson(),
+        unifiedContext: unifiedContext,
+        mediaRefs: mediaRefs,
+      );
+
+      await _processActionData(response.actionData);
+
+      // Remove system messages and add response
+      final finalMsgs = (state.valueOrNull ?? []).where((m) =>
+          !(m.role == 'system' && (m.content.contains('Uploading') || m.content.contains('Analyzing')))).toList();
+
+      final assistantMessage = ChatMessage(
+        role: 'assistant',
+        content: response.message,
+        intent: response.intent,
+        agentType: response.agentType,
+        createdAt: DateTime.now().toIso8601String(),
+        actionData: response.actionData,
+      );
+
+      final newMessages = [...finalMsgs, assistantMessage];
+      state = AsyncValue.data(newMessages);
+      await _saveToCache(userId, newMessages);
+    } catch (e, stackTrace) {
+      debugPrint('❌ [Chat] Error sending multi-media message: $e');
+      debugPrint('❌ [Chat] Stack trace: $stackTrace');
+
+      final errorMsgs = (state.valueOrNull ?? []).where((m) =>
+          !(m.role == 'system' && (m.content.contains('Uploading') || m.content.contains('Analyzing')))).toList();
+
+      final errorMessage = ChatMessage(
+        role: 'error',
+        content: 'Failed to analyze media: ${e.toString().replaceAll('Exception: ', '')}',
+        createdAt: DateTime.now().toIso8601String(),
+      );
+      state = AsyncValue.data([...errorMsgs, errorMessage]);
+    } finally {
+      _isLoading = false;
+    }
+  }
+
   /// Clear messages and invalidate cache
   Future<void> clear() async {
     state = const AsyncValue.data([]);
@@ -647,6 +1091,17 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
       case 'delete_workout':
         await _handleWorkoutModified(actionData);
         break;
+      case 'food_logged':
+        debugPrint('🍽️ [Chat] Food logged via chat - refreshing nutrition data');
+        try {
+          final userId = await _apiClient.getUserId();
+          if (userId != null) {
+            await _nutritionNotifier.refreshAll(userId);
+          }
+        } catch (e) {
+          debugPrint('🍽️ [Chat] Failed to refresh nutrition: $e');
+        }
+        break;
       default:
         debugPrint('🤖 [Chat] Unknown action: $action');
     }
@@ -685,19 +1140,34 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
 
     // Map destination names to routes
     final routes = {
+      // Main tabs
       'home': '/home',
-      'library': '/library',
+      'nutrition': '/nutrition',
       'profile': '/profile',
+      // Feature screens
+      'library': '/library',
+      'chat': '/chat',
+      'settings': '/settings',
       'achievements': '/achievements',
       'hydration': '/hydration',
-      'nutrition': '/nutrition',
       'summaries': '/summaries',
+      'stats': '/stats',
+      'progress': '/stats',
+      'schedule': '/schedule',
+      'fasting': '/nutrition',
+      'neat': '/neat',
+      'metrics': '/metrics',
+      'support': '/help',
+      // Settings sub-pages
+      'workout_settings': '/settings/workout-settings',
+      'ai_coach': '/settings/ai-coach',
+      'appearance': '/settings/appearance',
     };
 
     final route = routes[destination];
     if (route != null) {
       // Use go for main tabs, push for nested screens
-      if (['home', 'library', 'profile'].contains(destination)) {
+      if ({'home', 'nutrition', 'profile'}.contains(destination)) {
         _router.go(route);
       } else {
         _router.push(route);

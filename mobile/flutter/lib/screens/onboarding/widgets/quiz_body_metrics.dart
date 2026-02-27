@@ -734,7 +734,7 @@ class _QuizBodyMetricsState extends State<QuizBodyMetrics> {
       context: context,
       initialDate: initialDate,
       firstDate: DateTime(1920),
-      lastDate: DateTime(now.year - 13, now.month, now.day), // Min 13 years old
+      lastDate: DateTime(now.year - 16, now.month, now.day), // Min 16 years old (health data + AI + payments)
       helpText: 'SELECT YOUR DATE OF BIRTH',
       cancelText: 'CANCEL',
       confirmText: 'OK',

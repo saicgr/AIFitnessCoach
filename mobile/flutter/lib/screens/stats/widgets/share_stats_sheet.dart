@@ -15,10 +15,13 @@ import '../../../utils/image_capture_utils.dart';
 import 'share_templates/stats_overview_template.dart';
 import 'share_templates/stats_achievements_template.dart';
 import 'share_templates/stats_prs_template.dart';
+import 'share_templates/stats_streak_fire_template.dart';
+import 'share_templates/stats_weekly_report_template.dart';
+import 'share_templates/stats_level_up_template.dart';
 
 /// Share Stats Bottom Sheet
 ///
-/// Shows a carousel of 3 shareable stats templates and options to:
+/// Shows a carousel of 6 shareable stats templates and options to:
 /// - Share to Instagram Stories (deep link)
 /// - Share via system share sheet
 /// - Post to app's social feed
@@ -47,8 +50,8 @@ class _ShareStatsSheetState extends ConsumerState<ShareStatsSheet> {
   String? _userId;
   bool _showWatermark = true;
 
-  // Capture keys for each template (3 templates)
-  final List<GlobalKey> _captureKeys = List.generate(3, (_) => GlobalKey());
+  // Capture keys for each template (6 templates)
+  final List<GlobalKey> _captureKeys = List.generate(6, (_) => GlobalKey());
 
   @override
   void initState() {
@@ -69,7 +72,7 @@ class _ShareStatsSheetState extends ConsumerState<ShareStatsSheet> {
     super.dispose();
   }
 
-  List<String> get _templateNames => ['Overview', 'Achievements', 'PRs'];
+  List<String> get _templateNames => ['Overview', 'Achievements', 'PRs', 'Streak', 'Weekly', 'Level Up'];
 
   StatsTemplateType get _currentTemplateType {
     switch (_currentPage) {
@@ -79,6 +82,12 @@ class _ShareStatsSheetState extends ConsumerState<ShareStatsSheet> {
         return StatsTemplateType.achievements;
       case 2:
         return StatsTemplateType.prs;
+      case 3:
+        return StatsTemplateType.streakFire;
+      case 4:
+        return StatsTemplateType.weeklyReport;
+      case 5:
+        return StatsTemplateType.levelUp;
       default:
         return StatsTemplateType.overview;
     }
@@ -386,7 +395,9 @@ class _ShareStatsSheetState extends ConsumerState<ShareStatsSheet> {
                   Icon(
                     Icons.branding_watermark_rounded,
                     size: 18,
-                    color: _showWatermark ? AppColors.cyan : Colors.grey,
+                    color: _showWatermark
+                        ? (isDark ? AppColors.accent : AppColorsLight.accent)
+                        : Colors.grey,
                   ),
                   const SizedBox(width: 8),
                   Text(
@@ -403,8 +414,8 @@ class _ShareStatsSheetState extends ConsumerState<ShareStatsSheet> {
                       HapticFeedback.lightImpact();
                       setState(() => _showWatermark = value);
                     },
-                    activeTrackColor: AppColors.cyan,
-                    activeThumbColor: Colors.white,
+                    activeTrackColor: isDark ? AppColors.accent : AppColorsLight.accent,
+                    activeThumbColor: isDark ? AppColors.accentContrast : AppColorsLight.accentContrast,
                   ),
                 ],
               ),
@@ -418,41 +429,48 @@ class _ShareStatsSheetState extends ConsumerState<ShareStatsSheet> {
             // Page indicators
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 12),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: List.generate(3, (index) {
-                  final isActive = _currentPage == index;
-                  return GestureDetector(
-                    onTap: () {
-                      _pageController.animateToPage(
-                        index,
-                        duration: const Duration(milliseconds: 300),
-                        curve: Curves.easeInOut,
-                      );
-                    },
-                    child: Container(
-                      margin: const EdgeInsets.symmetric(horizontal: 4),
-                      padding: EdgeInsets.symmetric(
-                        horizontal: isActive ? 12 : 10,
-                        vertical: 6,
-                      ),
-                      decoration: BoxDecoration(
-                        color: isActive
-                            ? AppColors.cyan
-                            : Colors.grey.withOpacity(0.3),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Text(
-                        _templateNames[index],
-                        style: TextStyle(
-                          color: isActive ? Colors.white : Colors.grey,
-                          fontSize: 12,
-                          fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: List.generate(_templateNames.length, (index) {
+                    final isActive = _currentPage == index;
+                    final accent = isDark ? AppColors.accent : AppColorsLight.accent;
+                    final accentContrast = isDark ? AppColors.accentContrast : AppColorsLight.accentContrast;
+                    return GestureDetector(
+                      onTap: () {
+                        _pageController.animateToPage(
+                          index,
+                          duration: const Duration(milliseconds: 300),
+                          curve: Curves.easeInOut,
+                        );
+                      },
+                      child: Container(
+                        margin: const EdgeInsets.symmetric(horizontal: 3),
+                        padding: EdgeInsets.symmetric(
+                          horizontal: isActive ? 12 : 10,
+                          vertical: 6,
+                        ),
+                        decoration: BoxDecoration(
+                          color: isActive
+                              ? accent
+                              : isDark ? Colors.white12 : Colors.black.withValues(alpha: 0.08),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Text(
+                          _templateNames[index],
+                          style: TextStyle(
+                            color: isActive
+                                ? accentContrast
+                                : isDark ? Colors.white70 : Colors.black54,
+                            fontSize: 12,
+                            fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
+                          ),
                         ),
                       ),
-                    ),
-                  );
-                }),
+                    );
+                  }),
+                ),
               ),
             ),
 
@@ -537,6 +555,12 @@ class _ShareStatsSheetState extends ConsumerState<ShareStatsSheet> {
         return const [Color(0xFF1A1A2E), Color(0xFF2D1B4E), Color(0xFF1A1A2E)];
       case 2: // PRs - blue/dark gradient
         return const [Color(0xFF1A1A2E), Color(0xFF16213E), Color(0xFF0F3460)];
+      case 3: // Streak Fire - orange/red/dark
+        return const [Color(0xFF1C1917), Color(0xFF7F1D1D), Color(0xFF1C1917)];
+      case 4: // Weekly Report - navy
+        return const [Color(0xFF0F172A), Color(0xFF1E293B), Color(0xFF0F172A)];
+      case 5: // Level Up - purple/indigo
+        return const [Color(0xFF1E1045), Color(0xFF2E1065), Color(0xFF0F0A2E)];
       default:
         return const [Color(0xFF1A2634), Color(0xFF0F1922), Color(0xFF0A0F14)];
     }
@@ -648,6 +672,59 @@ class _ShareStatsSheetState extends ConsumerState<ShareStatsSheet> {
             ),
           ),
         ),
+
+        // Streak Fire Template
+        Center(
+          child: CapturableWidget(
+            captureKey: _captureKeys[3],
+            child: InstagramStoryWrapper(
+              backgroundGradient: _getGradientForTemplate(3),
+              child: StatsStreakFireTemplate(
+                currentStreak: consistencyState.currentStreak,
+                longestStreak: consistencyState.longestStreak,
+                totalWorkouts: insights?.monthWorkoutsCompleted ?? workoutsNotifier.completedCount,
+                showWatermark: _showWatermark,
+              ),
+            ),
+          ),
+        ),
+
+        // Weekly Report Template
+        Center(
+          child: CapturableWidget(
+            captureKey: _captureKeys[4],
+            child: InstagramStoryWrapper(
+              backgroundGradient: _getGradientForTemplate(4),
+              child: StatsWeeklyReportTemplate(
+                weeklyCompleted: weeklyProgress.$1,
+                weeklyGoal: weeklyProgress.$2,
+                currentStreak: consistencyState.currentStreak,
+                totalTimeFormatted: formatTotalTime(null),
+                dateRangeLabel: _dateRangeLabel,
+                totalWorkouts: insights?.monthWorkoutsCompleted ?? workoutsNotifier.completedCount,
+                showWatermark: _showWatermark,
+              ),
+            ),
+          ),
+        ),
+
+        // Level Up Template
+        Center(
+          child: CapturableWidget(
+            captureKey: _captureKeys[5],
+            child: InstagramStoryWrapper(
+              backgroundGradient: _getGradientForTemplate(5),
+              child: StatsLevelUpTemplate(
+                totalWorkouts: insights?.monthWorkoutsCompleted ?? workoutsNotifier.completedCount,
+                currentStreak: consistencyState.currentStreak,
+                weeklyCompleted: weeklyProgress.$1,
+                weeklyGoal: weeklyProgress.$2,
+                longestStreak: consistencyState.longestStreak,
+                showWatermark: _showWatermark,
+              ),
+            ),
+          ),
+        ),
       ],
     );
   }
@@ -659,24 +736,29 @@ class _ShareStatsSheetState extends ConsumerState<ShareStatsSheet> {
     required bool isPrimary,
     required bool isLoading,
   }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final accent = isDark ? AppColors.accent : AppColorsLight.accent;
+    final accentContrast = isDark ? AppColors.accentContrast : AppColorsLight.accentContrast;
+    final textColor = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+
     if (isPrimary) {
       return ElevatedButton(
         onPressed: isLoading ? null : onPressed,
         style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.cyan,
-          foregroundColor: Colors.white,
+          backgroundColor: accent,
+          foregroundColor: accentContrast,
           padding: const EdgeInsets.symmetric(vertical: 16),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
         ),
         child: isLoading
-            ? const SizedBox(
+            ? SizedBox(
                 width: 20,
                 height: 20,
                 child: CircularProgressIndicator(
                   strokeWidth: 2,
-                  valueColor: AlwaysStoppedAnimation(Colors.white),
+                  valueColor: AlwaysStoppedAnimation(accentContrast),
                 ),
               )
             : Row(
@@ -696,8 +778,8 @@ class _ShareStatsSheetState extends ConsumerState<ShareStatsSheet> {
     return OutlinedButton(
       onPressed: isLoading ? null : onPressed,
       style: OutlinedButton.styleFrom(
-        foregroundColor: AppColors.cyan,
-        side: BorderSide(color: AppColors.cyan.withOpacity(0.5)),
+        foregroundColor: textColor,
+        side: BorderSide(color: isDark ? Colors.white.withValues(alpha: 0.2) : Colors.black.withValues(alpha: 0.2)),
         padding: const EdgeInsets.symmetric(vertical: 16),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12),
@@ -709,7 +791,7 @@ class _ShareStatsSheetState extends ConsumerState<ShareStatsSheet> {
               height: 20,
               child: CircularProgressIndicator(
                 strokeWidth: 2,
-                valueColor: AlwaysStoppedAnimation(AppColors.cyan),
+                valueColor: AlwaysStoppedAnimation(textColor),
               ),
             )
           : Row(

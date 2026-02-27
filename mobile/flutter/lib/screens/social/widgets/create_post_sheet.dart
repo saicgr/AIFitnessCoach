@@ -8,8 +8,10 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/theme/theme_colors.dart';
 import '../../../data/providers/social_provider.dart';
 import '../../../data/repositories/auth_repository.dart';
+import '../../../data/repositories/hydration_repository.dart';
 import '../../../data/services/social_service.dart' show PostVisibility, SocialActivityType;
 import '../../../data/services/social_image_service.dart';
+import '../../../widgets/app_snackbar.dart';
 
 /// UI representation for post visibility options
 enum PostVisibilityOption {
@@ -26,22 +28,37 @@ enum PostVisibilityOption {
 
 /// Reddit-style flair tags for posts
 enum PostFlair {
-  fitness('Fitness', Icons.fitness_center_rounded),
-  progress('Progress', Icons.trending_up_rounded),
-  milestone('Milestone', Icons.emoji_events_rounded),
-  nutrition('Nutrition', Icons.restaurant_rounded),
-  motivation('Motivation', Icons.bolt_rounded),
-  question('Question', Icons.help_outline_rounded);
+  fitness('Fitness', Icons.fitness_center_rounded, Color(0xFF06B6D4)),
+  progress('Progress', Icons.trending_up_rounded, Color(0xFF22C55E)),
+  milestone('Milestone', Icons.emoji_events_rounded, Color(0xFFF97316)),
+  nutrition('Nutrition', Icons.restaurant_rounded, Color(0xFFA855F7)),
+  motivation('Motivation', Icons.bolt_rounded, Color(0xFFEAB308)),
+  question('Question', Icons.help_outline_rounded, Color(0xFF3B82F6));
 
   final String label;
   final IconData icon;
+  final Color color;
 
-  const PostFlair(this.label, this.icon);
+  const PostFlair(this.label, this.icon, this.color);
 }
 
-/// Create Post Sheet - Bottom sheet for creating manual posts
+/// Create Post Sheet - Bottom sheet for creating or editing manual posts
+///
+/// Also supports sharing a workout to the social feed via [workoutPreFill].
 class CreatePostSheet extends ConsumerStatefulWidget {
-  const CreatePostSheet({super.key});
+  /// If provided, the sheet operates in edit mode with pre-populated fields.
+  final Map<String, dynamic>? existingActivity;
+
+  /// If provided, pre-fills the sheet with workout data for sharing to social.
+  /// Expected keys: 'name', 'type', 'difficulty', 'duration_minutes',
+  /// 'exercises_count', 'workout_id'.
+  final Map<String, dynamic>? workoutPreFill;
+
+  const CreatePostSheet({
+    super.key,
+    this.existingActivity,
+    this.workoutPreFill,
+  });
 
   @override
   ConsumerState<CreatePostSheet> createState() => _CreatePostSheetState();
@@ -57,6 +74,15 @@ class _CreatePostSheetState extends ConsumerState<CreatePostSheet> {
   bool _isPosting = false;
   String? _userId;
 
+  // Workout stats state
+  bool _exercisesExpanded = false;
+  final Set<String> _enabledStats = {'volume', 'duration', 'exercises'};
+  int? _waterMl;
+  bool _loadingWater = false;
+
+  bool get _isEditMode => widget.existingActivity != null;
+  bool get _isWorkoutShare => widget.workoutPreFill != null;
+
   @override
   void initState() {
     super.initState();
@@ -67,6 +93,41 @@ class _CreatePostSheetState extends ConsumerState<CreatePostSheet> {
         setState(() => _userId = userId);
       }
     });
+
+    // Pre-populate fields in edit mode
+    if (_isEditMode) {
+      final data = widget.existingActivity!['activity_data'] as Map<String, dynamic>? ?? {};
+      _captionController.text = data['caption'] as String? ?? '';
+
+      final flairNames = (data['flairs'] as List<dynamic>?)?.cast<String>() ?? [];
+      _selectedFlairs.clear();
+      for (final name in flairNames) {
+        try {
+          _selectedFlairs.add(PostFlair.values.firstWhere((f) => f.name == name));
+        } catch (_) {}
+      }
+      if (_selectedFlairs.isEmpty) _selectedFlairs.add(PostFlair.fitness);
+    }
+
+    // Pre-populate fields for workout share
+    if (_isWorkoutShare) {
+      final w = widget.workoutPreFill!;
+      final name = w['name'] as String? ?? 'Workout';
+      final type = w['type'] as String? ?? '';
+      final duration = w['duration_minutes'] as int?;
+      final exerciseCount = w['exercises_count'] as int?;
+
+      final parts = <String>[];
+      if (type.isNotEmpty) parts.add(type);
+      if (duration != null) parts.add('$duration min');
+      if (exerciseCount != null) parts.add('$exerciseCount exercises');
+      final details = parts.isNotEmpty ? ' (${parts.join(' · ')})' : '';
+
+      _captionController.text = 'Check out my $name workout$details 🔥';
+      _selectedFlairs
+        ..clear()
+        ..add(PostFlair.fitness);
+    }
   }
 
   @override
@@ -91,7 +152,7 @@ class _CreatePostSheetState extends ConsumerState<CreatePostSheet> {
       }
     } catch (e) {
       debugPrint('Error picking image: $e');
-      _showSnackBar('Failed to pick image');
+      _showSnackBar('Failed to pick image', isError: true);
     }
   }
 
@@ -104,13 +165,13 @@ class _CreatePostSheetState extends ConsumerState<CreatePostSheet> {
 
   Future<void> _createPost() async {
     if (_userId == null) {
-      _showSnackBar('Please log in to post');
+      _showSnackBar('Please log in to post', isError: true);
       return;
     }
 
     final caption = _captionController.text.trim();
-    if (caption.isEmpty && _selectedImage == null) {
-      _showSnackBar('Please add some content to your post');
+    if (caption.isEmpty && _selectedImage == null && !_isEditMode) {
+      _showSnackBar('Please add some content to your post', isError: true);
       return;
     }
 
@@ -126,6 +187,23 @@ class _CreatePostSheetState extends ConsumerState<CreatePostSheet> {
         'flairs': _selectedFlairs.map((f) => f.name).toList(),
       };
 
+      if (_isEditMode) {
+        // Edit mode: update existing activity
+        final activityId = widget.existingActivity!['id'] as String;
+        await socialService.editActivity(
+          userId: _userId!,
+          activityId: activityId,
+          activityData: activityData,
+        );
+
+        if (mounted) {
+          AppSnackBar.success(context, 'Post updated!');
+          Navigator.pop(context, true);
+        }
+        return;
+      }
+
+      // Create mode
       if (_selectedImage != null) {
         _showSnackBar('Uploading image...');
 
@@ -140,42 +218,75 @@ class _CreatePostSheetState extends ConsumerState<CreatePostSheet> {
           activityData['image_url'] = imageUrl;
         } else {
           if (mounted) {
-            _showSnackBar('Failed to upload image. Please try again.');
+            _showSnackBar('Failed to upload image. Please try again.', isError: true);
             setState(() => _isPosting = false);
           }
           return;
         }
       }
 
+      // If sharing a workout, include workout metadata in activity data
+      if (_isWorkoutShare) {
+        final w = widget.workoutPreFill!;
+        activityData['workout_name'] = w['name'] as String? ?? 'Workout';
+        activityData['workout_type'] = w['type'] as String? ?? '';
+        activityData['duration_minutes'] = w['duration_minutes'];
+        activityData['exercises_count'] = w['exercises_count'];
+        activityData['difficulty'] = w['difficulty'] as String? ?? '';
+
+        // Include exercises performance data
+        final exercises = w['exercises'] as List<Map<String, dynamic>>?;
+        if (exercises != null && exercises.isNotEmpty) {
+          activityData['exercises_performance'] = exercises;
+        }
+
+        // Include stats gated by user toggle
+        if (_enabledStats.contains('volume')) {
+          activityData['total_volume_lbs'] = w['total_volume_lbs'];
+        }
+        if (_enabledStats.contains('sets')) {
+          activityData['total_sets'] = w['total_sets'];
+        }
+        if (_enabledStats.contains('reps')) {
+          activityData['total_reps'] = w['total_reps'];
+        }
+        if (_enabledStats.contains('water') && _waterMl != null) {
+          activityData['water_ml'] = _waterMl;
+        }
+      }
+
       await socialService.createActivity(
         userId: _userId!,
-        activityType: SocialActivityType.manualPost,
+        activityType: _isWorkoutShare
+            ? SocialActivityType.workoutShared
+            : SocialActivityType.manualPost,
         activityData: activityData,
         visibility: _visibility.serviceValue,
       );
 
       if (mounted) {
-        _showSnackBar('Post created successfully!');
+        AppSnackBar.success(
+          context,
+          _isWorkoutShare ? 'Workout shared!' : 'Post created successfully!',
+        );
         Navigator.pop(context, true);
       }
     } catch (e) {
-      debugPrint('Error creating post: $e');
+      debugPrint('Error ${_isEditMode ? 'editing' : 'creating'} post: $e');
       if (mounted) {
-        _showSnackBar('Failed to create post. Please try again.');
+        _showSnackBar('Failed to ${_isEditMode ? 'update' : 'create'} post. Please try again.', isError: true);
         setState(() => _isPosting = false);
       }
     }
   }
 
-  void _showSnackBar(String message) {
+  void _showSnackBar(String message, {bool isError = false}) {
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        duration: const Duration(seconds: 2),
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
+    if (isError) {
+      AppSnackBar.error(context, message);
+    } else {
+      AppSnackBar.info(context, message);
+    }
   }
 
   @override
@@ -231,9 +342,13 @@ class _CreatePostSheetState extends ConsumerState<CreatePostSheet> {
                         ),
                       ),
                     ),
-                    const Text(
-                      'Create Post',
-                      style: TextStyle(
+                    Text(
+                      _isEditMode
+                          ? 'Edit Post'
+                          : _isWorkoutShare
+                              ? 'Share Workout'
+                              : 'Create Post',
+                      style: const TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
                       ),
@@ -254,7 +369,7 @@ class _CreatePostSheetState extends ConsumerState<CreatePostSheet> {
                                 color: Colors.white,
                               ),
                             )
-                          : const Text('Post'),
+                          : Text(_isEditMode ? 'Save' : 'Post'),
                     ),
                   ],
                 ),
@@ -274,18 +389,26 @@ class _CreatePostSheetState extends ConsumerState<CreatePostSheet> {
 
                       const SizedBox(height: 16),
 
+                      // Workout stats (only for workout shares)
+                      if (_isWorkoutShare) ...[
+                        _buildWorkoutStats(isDark, cardBorder),
+                        const SizedBox(height: 16),
+                      ],
+
                       // Flair tags
                       _buildFlairTags(isDark, cardBorder),
 
                       const SizedBox(height: 16),
 
-                      // Image section
-                      _buildImageSection(isDark, cardBorder),
+                      // Image section (hidden in edit mode — can't change image)
+                      if (!_isEditMode) ...[
+                        _buildImageSection(isDark, cardBorder),
 
-                      const SizedBox(height: 16),
+                        const SizedBox(height: 16),
 
-                      // Visibility selector
-                      _buildVisibilitySelector(isDark, cardBorder),
+                        // Visibility selector
+                        _buildVisibilitySelector(isDark, cardBorder),
+                      ],
 
                       // Bottom padding for keyboard
                       SizedBox(height: MediaQuery.of(context).viewInsets.bottom + 16),
@@ -348,8 +471,252 @@ class _CreatePostSheetState extends ConsumerState<CreatePostSheet> {
     );
   }
 
+  Future<void> _fetchWater() async {
+    if (_loadingWater) return;
+    setState(() => _loadingWater = true);
+
+    try {
+      final hydrationState = ref.read(hydrationProvider);
+      int? totalMl = hydrationState.todaySummary?.totalMl;
+
+      if (totalMl == null && _userId != null) {
+        await ref.read(hydrationProvider.notifier).loadTodaySummary(_userId!);
+        totalMl = ref.read(hydrationProvider).todaySummary?.totalMl;
+      }
+
+      if (mounted) {
+        setState(() {
+          _waterMl = totalMl ?? 0;
+          _loadingWater = false;
+        });
+      }
+    } catch (e) {
+      debugPrint('Error fetching water: $e');
+      if (mounted) {
+        setState(() {
+          _waterMl = 0;
+          _loadingWater = false;
+        });
+      }
+    }
+  }
+
+  Widget _buildWorkoutStats(bool isDark, Color cardBorder) {
+    final w = widget.workoutPreFill!;
+    final textColor = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final exercises = w['exercises'] as List<Map<String, dynamic>>? ?? [];
+
+    final volume = w['total_volume_lbs'] as int? ?? 0;
+    final duration = w['duration_minutes'] as int? ?? 0;
+    final exerciseCount = w['exercises_count'] as int? ?? exercises.length;
+    final totalSets = w['total_sets'] as int? ?? 0;
+    final totalReps = w['total_reps'] as int? ?? 0;
+
+    String formatVolume(int lbs) {
+      if (lbs >= 1000) {
+        return '${(lbs / 1000).toStringAsFixed(1)}k lbs';
+      }
+      return '$lbs lbs';
+    }
+
+    final stats = <_StatPillData>[
+      _StatPillData('volume', Icons.fitness_center_rounded, formatVolume(volume)),
+      _StatPillData('duration', Icons.timer_rounded, '$duration min'),
+      _StatPillData('exercises', Icons.list_rounded, '$exerciseCount exercises'),
+      _StatPillData('sets', Icons.repeat_rounded, '$totalSets sets'),
+      _StatPillData('reps', Icons.numbers_rounded, '$totalReps reps'),
+      _StatPillData(
+        'water',
+        Icons.water_drop_rounded,
+        _loadingWater
+            ? '...'
+            : _waterMl != null
+                ? '$_waterMl ml'
+                : 'Water',
+      ),
+    ];
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Workout Stats',
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            color: textColor,
+          ),
+        ),
+        const SizedBox(height: 8),
+
+        // Stats pills row
+        SizedBox(
+          height: 36,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            itemCount: stats.length,
+            separatorBuilder: (_, __) => const SizedBox(width: 8),
+            itemBuilder: (context, index) {
+              final stat = stats[index];
+              final isEnabled = _enabledStats.contains(stat.key);
+              return _buildStatPill(stat, isEnabled, isDark, cardBorder);
+            },
+          ),
+        ),
+
+        // Collapsible exercise list
+        if (exercises.isNotEmpty) ...[
+          const SizedBox(height: 12),
+          GestureDetector(
+            onTap: () {
+              HapticFeedback.selectionClick();
+              setState(() => _exercisesExpanded = !_exercisesExpanded);
+            },
+            child: Row(
+              children: [
+                Icon(
+                  _exercisesExpanded
+                      ? Icons.expand_less_rounded
+                      : Icons.expand_more_rounded,
+                  size: 18,
+                  color: textMuted,
+                ),
+                const SizedBox(width: 4),
+                Text(
+                  _exercisesExpanded ? 'Hide exercises' : 'Show exercises',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: textMuted,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          if (_exercisesExpanded) ...[
+            const SizedBox(height: 8),
+            ConstrainedBox(
+              constraints: const BoxConstraints(maxHeight: 200),
+              child: ListView.builder(
+                shrinkWrap: true,
+                padding: EdgeInsets.zero,
+                itemCount: exercises.length,
+                itemBuilder: (context, index) {
+                  final ex = exercises[index];
+                  final name = ex['name'] as String? ?? 'Exercise';
+                  final sets = ex['sets'] as int?;
+                  final reps = ex['reps'] as int?;
+                  final weightKg = ex['weight_kg'] as double?;
+
+                  final details = <String>[];
+                  if (sets != null && reps != null) {
+                    details.add('${sets}x$reps');
+                  }
+                  if (weightKg != null && weightKg > 0) {
+                    final lbs = (weightKg * 2.20462).round();
+                    details.add('@ $lbs lbs');
+                  }
+
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 3),
+                    child: Row(
+                      children: [
+                        SizedBox(
+                          width: 22,
+                          child: Text(
+                            '${index + 1}.',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: textMuted,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                        Expanded(
+                          child: Text(
+                            name,
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: textColor,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        if (details.isNotEmpty)
+                          Text(
+                            details.join(' '),
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: textMuted,
+                            ),
+                          ),
+                      ],
+                    ),
+                  );
+                },
+              ),
+            ),
+          ],
+        ],
+      ],
+    );
+  }
+
+  Widget _buildStatPill(_StatPillData stat, bool isEnabled, bool isDark, Color cardBorder) {
+    final cyanAccent = isDark ? AppColors.macroCarbs : AppColorsLight.macroCarbs;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+
+    return GestureDetector(
+      onTap: () {
+        HapticFeedback.selectionClick();
+        setState(() {
+          if (isEnabled) {
+            _enabledStats.remove(stat.key);
+          } else {
+            _enabledStats.add(stat.key);
+            // Fetch water on first enable
+            if (stat.key == 'water' && _waterMl == null) {
+              _fetchWater();
+            }
+          }
+        });
+      },
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        decoration: BoxDecoration(
+          color: isEnabled ? cyanAccent.withValues(alpha: 0.15) : Colors.transparent,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: isEnabled ? cyanAccent : cardBorder.withValues(alpha: 0.5),
+            width: isEnabled ? 1.5 : 1,
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              stat.icon,
+              size: 14,
+              color: isEnabled ? cyanAccent : textMuted,
+            ),
+            const SizedBox(width: 4),
+            Text(
+              stat.label,
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: isEnabled ? FontWeight.w600 : FontWeight.normal,
+                color: isEnabled ? cyanAccent : textMuted,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildFlairTags(bool isDark, Color cardBorder) {
-    final accentColor = ref.colors(context).accent;
     final textColor = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
 
@@ -370,6 +737,7 @@ class _CreatePostSheetState extends ConsumerState<CreatePostSheet> {
           runSpacing: 8,
           children: PostFlair.values.map((flair) {
             final isSelected = _selectedFlairs.contains(flair);
+            final flairColor = flair.color;
             return GestureDetector(
               onTap: () {
                 HapticFeedback.selectionClick();
@@ -385,10 +753,10 @@ class _CreatePostSheetState extends ConsumerState<CreatePostSheet> {
                 duration: const Duration(milliseconds: 150),
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
-                  color: isSelected ? accentColor.withValues(alpha: 0.15) : Colors.transparent,
+                  color: isSelected ? flairColor.withValues(alpha: 0.15) : Colors.transparent,
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(
-                    color: isSelected ? accentColor : cardBorder.withValues(alpha: 0.5),
+                    color: isSelected ? flairColor : cardBorder.withValues(alpha: 0.5),
                     width: isSelected ? 1.5 : 1,
                   ),
                 ),
@@ -398,7 +766,7 @@ class _CreatePostSheetState extends ConsumerState<CreatePostSheet> {
                     Icon(
                       flair.icon,
                       size: 14,
-                      color: isSelected ? accentColor : textMuted,
+                      color: isSelected ? flairColor : textMuted,
                     ),
                     const SizedBox(width: 4),
                     Text(
@@ -406,7 +774,7 @@ class _CreatePostSheetState extends ConsumerState<CreatePostSheet> {
                       style: TextStyle(
                         fontSize: 12,
                         fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-                        color: isSelected ? accentColor : textMuted,
+                        color: isSelected ? flairColor : textMuted,
                       ),
                     ),
                   ],
@@ -604,4 +972,13 @@ class _CreatePostSheetState extends ConsumerState<CreatePostSheet> {
       ],
     );
   }
+}
+
+/// Simple data holder for stat pill rendering.
+class _StatPillData {
+  final String key;
+  final IconData icon;
+  final String label;
+
+  const _StatPillData(this.key, this.icon, this.label);
 }

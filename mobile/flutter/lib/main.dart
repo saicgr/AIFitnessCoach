@@ -1,4 +1,6 @@
+import 'dart:ui';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -16,6 +18,8 @@ import 'data/services/widget_action_headless_service.dart';
 import 'data/services/background_sync_service.dart';
 import 'data/local/database_provider.dart';
 import 'package:flutter_gemma/flutter_gemma.dart';
+import 'core/services/analytics_service.dart';
+import 'data/services/analytics_service.dart' as prod_analytics;
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -35,6 +39,13 @@ void main() async {
       anonKey: ApiConstants.supabaseAnonKey,
     ),
   ]);
+
+  // Wire up Crashlytics error handlers
+  FlutterError.onError = FirebaseCrashlytics.instance.recordFlutterFatalError;
+  PlatformDispatcher.instance.onError = (error, stack) {
+    FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
+    return true;
+  };
 
   // NotificationService instance (constructor is synchronous; initialize() is deferred below)
   final notificationService = NotificationService();
@@ -62,6 +73,9 @@ void main() async {
       ),
     ],
   );
+
+  // Wire onboarding analytics stub to production Supabase analytics service
+  AnalyticsService.init(container.read(prod_analytics.analyticsServiceProvider));
 
   // --- Launch the app immediately to start rendering UI ---
   runApp(

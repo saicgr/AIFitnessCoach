@@ -21,6 +21,9 @@ import os
 import re
 from dotenv import load_dotenv
 from core.supabase_db import get_supabase_db
+from core.logger import get_logger
+
+logger = get_logger(__name__)
 
 # Load .env file to ensure credentials are available
 load_dotenv()
@@ -310,7 +313,7 @@ def search_s3_for_image(exercise_name: str, gender: str = None) -> str:
         return None
 
     except Exception as e:
-        print(f"Error searching S3 for image: {e}")
+        logger.error(f"Error searching S3 for image: {e}")
         return None
 
 
@@ -497,8 +500,8 @@ async def batch_get_image_urls(request: BatchImageRequest,
                     Params={'Bucket': BUCKET_NAME, 'Key': key},
                     ExpiresIn=PRESIGNED_URL_EXPIRATION,
                 )
-            except Exception:
-                pass
+            except Exception as e:
+                logger.warning(f"Failed to generate presigned URL: {e}")
 
         return {"urls": urls, "resolved": len(urls), "requested": len(names)}
 

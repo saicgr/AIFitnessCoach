@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../../core/constants/api_constants.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../widgets/app_snackbar.dart';
 import '../../../widgets/glass_sheet.dart';
 import '../../../data/repositories/auth_repository.dart';
 import '../../../data/services/api_client.dart';
@@ -105,12 +106,7 @@ class _EditPersonalInfoSheetState extends ConsumerState<EditPersonalInfoSheet> {
     } catch (e) {
       debugPrint('❌ [EditProfile] Error picking image: $e');
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to pick image: $e'),
-            backgroundColor: AppColors.error,
-          ),
-        );
+        AppSnackBar.error(context, 'Failed to pick image: $e');
       }
     }
   }
@@ -166,8 +162,9 @@ class _EditPersonalInfoSheetState extends ConsumerState<EditPersonalInfoSheet> {
     });
   }
 
-  Future<void> _uploadPhoto() async {
-    if (_selectedPhotoFile == null) return;
+  /// Upload photo to S3. Returns true on success, false on failure.
+  Future<bool> _uploadPhoto() async {
+    if (_selectedPhotoFile == null) return false;
 
     setState(() => _isUploadingPhoto = true);
 
@@ -179,29 +176,39 @@ class _EditPersonalInfoSheetState extends ConsumerState<EditPersonalInfoSheet> {
         throw Exception('User not found');
       }
 
+      debugPrint('🔍 [EditProfile] Uploading photo to ${ApiConstants.users}/$userId/photo');
       final response = await apiClient.uploadFile(
         '${ApiConstants.users}/$userId/photo',
         _selectedPhotoFile!,
         fieldName: 'file',
       );
 
-      if (response.data != null && response.data['photo_url'] != null) {
-        setState(() {
-          _currentPhotoUrl = response.data['photo_url'];
-          _selectedPhotoFile = null;
-        });
-        debugPrint('✅ [EditProfile] Photo uploaded successfully');
+      debugPrint('🔍 [EditProfile] Upload response status: ${response.statusCode}');
+      debugPrint('🔍 [EditProfile] Upload response data: ${response.data}');
+
+      if (response.data != null) {
+        final data = response.data as Map<String, dynamic>;
+        final photoUrl = data['photo_url'] as String?;
+        if (photoUrl != null && photoUrl.isNotEmpty) {
+          setState(() {
+            _currentPhotoUrl = photoUrl;
+            _selectedPhotoFile = null;
+          });
+          debugPrint('✅ [EditProfile] Photo uploaded successfully: $photoUrl');
+          return true;
+        }
       }
+      debugPrint('⚠️ [EditProfile] Upload response missing photo_url');
+      if (mounted) {
+        AppSnackBar.error(context, 'Photo upload failed — no URL returned');
+      }
+      return false;
     } catch (e) {
       debugPrint('❌ [EditProfile] Error uploading photo: $e');
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to upload photo: $e'),
-            backgroundColor: AppColors.error,
-          ),
-        );
+        AppSnackBar.error(context, 'Failed to upload photo: $e');
       }
+      return false;
     } finally {
       if (mounted) {
         setState(() => _isUploadingPhoto = false);
@@ -220,6 +227,15 @@ class _EditPersonalInfoSheetState extends ConsumerState<EditPersonalInfoSheet> {
 
       if (userId == null) {
         throw Exception('User not found');
+      }
+
+      // Auto-upload photo if user picked one but hasn't uploaded yet
+      if (_selectedPhotoFile != null) {
+        debugPrint('🔍 [EditProfile] Auto-uploading photo before save...');
+        final uploadSuccess = await _uploadPhoto();
+        if (!uploadSuccess) {
+          debugPrint('⚠️ [EditProfile] Photo upload failed, continuing with profile save');
+        }
       }
 
       final data = <String, dynamic>{
@@ -247,25 +263,18 @@ class _EditPersonalInfoSheetState extends ConsumerState<EditPersonalInfoSheet> {
       );
 
       await ref.read(authStateProvider.notifier).refreshUser();
+      debugPrint('✅ [EditProfile] Profile saved and user refreshed');
 
       if (mounted) {
+        // Show snackbar BEFORE popping so it attaches to a valid scaffold
+        AppSnackBar.success(context, 'Profile updated successfully');
         Navigator.pop(context, true);
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Profile updated successfully'),
-            backgroundColor: AppColors.success,
-          ),
-        );
       }
     } catch (e) {
+      debugPrint('❌ [EditProfile] Save profile error: $e');
       if (mounted) {
         setState(() => _isSaving = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to update profile: $e'),
-            backgroundColor: AppColors.error,
-          ),
-        );
+        AppSnackBar.error(context, 'Failed to update profile: $e');
       }
     }
   }

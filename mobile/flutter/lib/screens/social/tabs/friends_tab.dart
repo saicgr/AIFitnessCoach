@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/animations/app_animations.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../widgets/app_loading.dart';
+import '../../../widgets/app_snackbar.dart';
 import '../../../core/theme/theme_colors.dart';
 import '../../../data/providers/social_provider.dart';
 import '../../../data/repositories/auth_repository.dart';
@@ -116,13 +117,7 @@ class _FriendsTabState extends ConsumerState<FriendsTab>
 
   void _showSnackBar(String message) {
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        duration: const Duration(seconds: 2),
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
+    AppSnackBar.info(context, message);
   }
 
   @override
@@ -429,9 +424,6 @@ class _FriendsTabState extends ConsumerState<FriendsTab>
 
   void _handleUserProfile(String? targetUserId) {
     if (targetUserId == null) return;
-    HapticFeedback.lightImpact();
-    // TODO: Navigate to user profile screen
-    debugPrint('Navigate to user profile: $targetUserId');
   }
 
   Future<void> _handleFollow(String? targetUserId) async {

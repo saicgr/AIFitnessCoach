@@ -22,10 +22,8 @@ import '../settings/sections/nutrition_fasting_section.dart';
 import '../ai_settings/ai_settings_screen.dart';
 import 'pre_auth_quiz_screen.dart';
 import 'widgets/coach_profile_card.dart';
-import 'widgets/custom_coach_form.dart';
 import 'widgets/foldable_quiz_scaffold.dart';
 import '../../data/models/ai_profile_payload.dart';
-import '../../widgets/glass_back_button.dart';
 
 /// Coach Selection Screen - Choose your AI coach persona before onboarding
 /// Also used for changing coach from AI settings (with fromSettings=true)
@@ -53,11 +51,11 @@ class _CoachSelectionScreenState extends ConsumerState<CoachSelectionScreen> {
   late final PageController _pageController;
   int _currentPageIndex = 0;
 
-  // Custom coach settings
-  String _customName = '';
-  String _customStyle = 'motivational';
-  String _customTone = 'encouraging';
-  double _customEncouragement = 0.7;
+  // Custom coach settings (kept for future use)
+  final String _customName = '';
+  final String _customStyle = 'motivational';
+  final String _customTone = 'encouraging';
+  final double _customEncouragement = 0.7;
 
   @override
   void initState() {
@@ -83,33 +81,408 @@ class _CoachSelectionScreenState extends ConsumerState<CoachSelectionScreen> {
     ref.read(accentColorProvider.notifier).setAccent(coach.appAccentColor);
   }
 
-  void _toggleCustomMode() {
-    HapticFeedback.selectionClick();
-    setState(() {
-      _isCustomMode = !_isCustomMode;
-      if (_isCustomMode) {
-        _selectedCoach = null;
-        // Custom coach uses orange accent
-        ref.read(accentColorProvider.notifier).setAccent(AccentColor.orange);
-      } else {
-        _selectedCoach = CoachPersona.predefinedCoaches.first;
-        ref.read(accentColorProvider.notifier).setAccent(_selectedCoach!.appAccentColor);
-      }
-    });
+  void _showCustomCoachPreview() {
+    HapticFeedback.mediumImpact();
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final surface = isDark ? AppColors.surface : AppColorsLight.surface;
+    const exampleColor = Color(0xFFEC4899); // Pink for the example coach
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => DraggableScrollableSheet(
+        initialChildSize: 0.85,
+        maxChildSize: 0.92,
+        minChildSize: 0.5,
+        builder: (context, scrollController) => Container(
+          decoration: BoxDecoration(
+            color: surface,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+          ),
+          child: Stack(
+            children: [
+              SingleChildScrollView(
+                controller: scrollController,
+                padding: const EdgeInsets.fromLTRB(24, 16, 24, 100),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Drag handle
+                    Center(
+                      child: Container(
+                        width: 36,
+                        height: 4,
+                        decoration: BoxDecoration(
+                          color: textSecondary.withValues(alpha: 0.3),
+                          borderRadius: BorderRadius.circular(2),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+
+                    // Title + subtitle
+                    Row(
+                      children: [
+                        Container(
+                          width: 40,
+                          height: 40,
+                          decoration: BoxDecoration(
+                            gradient: const LinearGradient(
+                              colors: [exampleColor, Color(0xFFA855F7)],
+                            ),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: const Icon(Icons.auto_awesome, color: Colors.white, size: 22),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Create Your Own Coach',
+                                style: TextStyle(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold,
+                                  color: textPrimary,
+                                ),
+                              ),
+                              Text(
+                                'Design a coach that matches your vibe',
+                                style: TextStyle(fontSize: 13, color: textSecondary),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 24),
+
+                    // Example coach preview card
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: elevated,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: exampleColor.withValues(alpha: 0.3)),
+                      ),
+                      child: Column(
+                        children: [
+                          // AI-generated avatar mockup + name
+                          Row(
+                            children: [
+                              // Avatar with AI sparkle badge
+                              Stack(
+                                clipBehavior: Clip.none,
+                                children: [
+                                  Container(
+                                    width: 64,
+                                    height: 64,
+                                    decoration: BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      gradient: LinearGradient(
+                                        begin: Alignment.topLeft,
+                                        end: Alignment.bottomRight,
+                                        colors: [
+                                          exampleColor.withValues(alpha: 0.25),
+                                          const Color(0xFFA855F7).withValues(alpha: 0.25),
+                                        ],
+                                      ),
+                                      border: Border.all(color: exampleColor, width: 2.5),
+                                    ),
+                                    child: Center(
+                                      child: Icon(Icons.person, size: 34, color: exampleColor.withValues(alpha: 0.7)),
+                                    ),
+                                  ),
+                                  // AI generated badge
+                                  Positioned(
+                                    bottom: -2,
+                                    right: -2,
+                                    child: Container(
+                                      padding: const EdgeInsets.all(4),
+                                      decoration: BoxDecoration(
+                                        color: elevated,
+                                        shape: BoxShape.circle,
+                                        border: Border.all(color: exampleColor, width: 1.5),
+                                      ),
+                                      child: const Icon(Icons.auto_awesome, size: 12, color: exampleColor),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(width: 14),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        Text(
+                                          'Coach Ace',
+                                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: textPrimary),
+                                        ),
+                                        const SizedBox(width: 8),
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                          decoration: BoxDecoration(
+                                            color: exampleColor.withValues(alpha: 0.15),
+                                            borderRadius: BorderRadius.circular(6),
+                                          ),
+                                          child: const Text('CUSTOM', style: TextStyle(fontSize: 9, fontWeight: FontWeight.w700, color: exampleColor, letterSpacing: 0.5)),
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 2),
+                                    Text(
+                                      'Motivational & Encouraging',
+                                      style: TextStyle(fontSize: 12, color: textSecondary),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    // AI avatar label
+                                    Row(
+                                      children: [
+                                        Icon(Icons.image_outlined, size: 11, color: textSecondary.withValues(alpha: 0.7)),
+                                        const SizedBox(width: 4),
+                                        Text(
+                                          'AI-generated avatar',
+                                          style: TextStyle(fontSize: 10, color: textSecondary.withValues(alpha: 0.7), fontStyle: FontStyle.italic),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 16),
+
+                          // Appearance selection mockup
+                          Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: surface,
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text('Appearance', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: textPrimary)),
+                                const SizedBox(height: 10),
+                                // Gender row
+                                Row(
+                                  children: [
+                                    Text('Gender', style: TextStyle(fontSize: 11, color: textSecondary)),
+                                    const SizedBox(width: 10),
+                                    Expanded(
+                                      child: SingleChildScrollView(
+                                        scrollDirection: Axis.horizontal,
+                                        child: Row(
+                                          children: [('Male', true), ('Female', false), ('Non-binary', false)].map((item) {
+                                            return Padding(
+                                              padding: const EdgeInsets.only(right: 6),
+                                              child: Container(
+                                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                                                decoration: BoxDecoration(
+                                                  color: item.$2 ? exampleColor.withValues(alpha: 0.15) : Colors.transparent,
+                                                  borderRadius: BorderRadius.circular(8),
+                                                  border: Border.all(
+                                                    color: item.$2 ? exampleColor : (isDark ? AppColors.cardBorder : AppColorsLight.cardBorder),
+                                                  ),
+                                                ),
+                                                child: Text(
+                                                  item.$1,
+                                                  style: TextStyle(fontSize: 11, fontWeight: item.$2 ? FontWeight.w600 : FontWeight.normal, color: item.$2 ? exampleColor : textSecondary),
+                                                ),
+                                              ),
+                                            );
+                                          }).toList(),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 10),
+                                // Ethnicity row
+                                Row(
+                                  children: [
+                                    Text('Look', style: TextStyle(fontSize: 11, color: textSecondary)),
+                                    const SizedBox(width: 18),
+                                    Expanded(
+                                      child: SingleChildScrollView(
+                                        scrollDirection: Axis.horizontal,
+                                        child: Row(
+                                          children: [('Asian', false), ('Black', true), ('Hispanic', false), ('White', false), ('Middle Eastern', false)].map((item) {
+                                            return Padding(
+                                              padding: const EdgeInsets.only(right: 6),
+                                              child: Container(
+                                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                                                decoration: BoxDecoration(
+                                                  color: item.$2 ? exampleColor.withValues(alpha: 0.15) : Colors.transparent,
+                                                  borderRadius: BorderRadius.circular(8),
+                                                  border: Border.all(
+                                                    color: item.$2 ? exampleColor : (isDark ? AppColors.cardBorder : AppColorsLight.cardBorder),
+                                                  ),
+                                                ),
+                                                child: Text(
+                                                  item.$1,
+                                                  style: TextStyle(fontSize: 11, fontWeight: item.$2 ? FontWeight.w600 : FontWeight.normal, color: item.$2 ? exampleColor : textSecondary),
+                                                ),
+                                              ),
+                                            );
+                                          }).toList(),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 10),
+                                // Body type row
+                                Row(
+                                  children: [
+                                    Text('Build', style: TextStyle(fontSize: 11, color: textSecondary)),
+                                    const SizedBox(width: 16),
+                                    Expanded(
+                                      child: SingleChildScrollView(
+                                        scrollDirection: Axis.horizontal,
+                                        child: Row(
+                                          children: [('Athletic', true), ('Lean', false), ('Muscular', false), ('Average', false)].map((item) {
+                                            return Padding(
+                                              padding: const EdgeInsets.only(right: 6),
+                                              child: Container(
+                                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                                                decoration: BoxDecoration(
+                                                  color: item.$2 ? exampleColor.withValues(alpha: 0.15) : Colors.transparent,
+                                                  borderRadius: BorderRadius.circular(8),
+                                                  border: Border.all(
+                                                    color: item.$2 ? exampleColor : (isDark ? AppColors.cardBorder : AppColorsLight.cardBorder),
+                                                  ),
+                                                ),
+                                                child: Text(
+                                                  item.$1,
+                                                  style: TextStyle(fontSize: 11, fontWeight: item.$2 ? FontWeight.w600 : FontWeight.normal, color: item.$2 ? exampleColor : textSecondary),
+                                                ),
+                                              ),
+                                            );
+                                          }).toList(),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 14),
+
+                          // Personality traits
+                          Wrap(
+                            spacing: 6,
+                            runSpacing: 6,
+                            children: ['Hype Beast', 'Casual', 'High Energy', 'Emoji Lover'].map((trait) {
+                              return Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                                decoration: BoxDecoration(
+                                  color: exampleColor.withValues(alpha: 0.1),
+                                  borderRadius: BorderRadius.circular(8),
+                                  border: Border.all(color: exampleColor.withValues(alpha: 0.2)),
+                                ),
+                                child: Text(trait, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: exampleColor)),
+                              );
+                            }).toList(),
+                          ),
+                          const SizedBox(height: 14),
+
+                          // Sample chat bubble
+                          Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: exampleColor.withValues(alpha: 0.08),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: exampleColor.withValues(alpha: 0.15)),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    Icon(Icons.chat_bubble_outline, size: 13, color: exampleColor),
+                                    const SizedBox(width: 6),
+                                    Text('Sample Message', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: exampleColor)),
+                                  ],
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  "LET'S GOOO! Time to crush those gains today! You've been on a 5-day streak and I'm not letting you break it. Ready to make some magic happen?",
+                                  style: TextStyle(fontSize: 13, color: textPrimary, height: 1.4),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+
+                    // Feature highlights
+                    Text(
+                      'What you\'ll be able to customize',
+                      style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: textPrimary),
+                    ),
+                    const SizedBox(height: 12),
+                    _buildFeatureRow(Icons.face_outlined, 'AI-Generated Avatar', 'A unique AI-generated image created from your preferences', textPrimary, textSecondary, exampleColor),
+                    _buildFeatureRow(Icons.diversity_3_outlined, 'Appearance & Identity', 'Choose gender, ethnicity, body type, age, and style', textPrimary, textSecondary, exampleColor),
+                    _buildFeatureRow(Icons.badge_outlined, 'Name & Persona', 'Give your coach a unique name and backstory', textPrimary, textSecondary, exampleColor),
+                    _buildFeatureRow(Icons.psychology_outlined, 'Coaching Style', 'Motivational, Drill Sergeant, Zen Master, Scientist...', textPrimary, textSecondary, exampleColor),
+                    _buildFeatureRow(Icons.record_voice_over_outlined, 'Communication Tone', 'Casual, Formal, Gen-Z, Sarcastic, Roast Mode...', textPrimary, textSecondary, exampleColor),
+                    _buildFeatureRow(Icons.tune, 'Encouragement Level', 'From gentle nudges to maximum hype', textPrimary, textSecondary, exampleColor),
+                    _buildFeatureRow(Icons.palette_outlined, 'Theme Color', 'Pick your coach\'s signature color across the app', textPrimary, textSecondary, exampleColor),
+                    _buildFeatureRow(Icons.emoji_emotions_outlined, 'Emoji & Catchphrases', 'Custom reactions and signature phrases', textPrimary, textSecondary, exampleColor),
+                  ],
+                ),
+              ),
+
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
-  void _updateCustomCoach({
-    String? name,
-    String? style,
-    String? tone,
-    double? encouragement,
-  }) {
-    setState(() {
-      if (name != null) _customName = name;
-      if (style != null) _customStyle = style;
-      if (tone != null) _customTone = tone;
-      if (encouragement != null) _customEncouragement = encouragement;
-    });
+  Widget _buildFeatureRow(IconData icon, String title, String subtitle, Color textPrimary, Color textSecondary, Color accent) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 14),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 36,
+            height: 36,
+            decoration: BoxDecoration(
+              color: accent.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(icon, size: 18, color: accent),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(title, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: textPrimary)),
+                const SizedBox(height: 2),
+                Text(subtitle, style: TextStyle(fontSize: 12, color: textSecondary, height: 1.3)),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   Future<void> _continue() async {
@@ -198,11 +571,11 @@ class _CoachSelectionScreenState extends ConsumerState<CoachSelectionScreen> {
 
         // Log payload for debugging (remove in production)
         if (kDebugMode) {
-          print(AIProfilePayloadBuilder.toReadableString(aiPayload));
+          debugPrint(AIProfilePayloadBuilder.toReadableString(aiPayload));
 
           // Validate required fields
           final isValid = AIProfilePayloadBuilder.validateRequiredFields(aiPayload);
-          print('🔍 [Payload] Validation: ${isValid ? '✅ Valid' : '❌ Invalid'}');
+          debugPrint('🔍 [Payload] Validation: ${isValid ? '✅ Valid' : '❌ Invalid'}');
         }
 
         // Build full preferences payload (includes personal info + coach)
@@ -738,7 +1111,6 @@ class _CoachSelectionScreenState extends ConsumerState<CoachSelectionScreen> {
                       setState(() {
                         _currentPageIndex = index;
                         _selectedCoach = coach;
-                        _isCustomMode = false;
                       });
                       // Update app accent color to match the swiped-to coach
                       ref.read(accentColorProvider.notifier).setAccent(coach.appAccentColor);
@@ -751,7 +1123,7 @@ class _CoachSelectionScreenState extends ConsumerState<CoachSelectionScreen> {
                         scale: index == _currentPageIndex ? 1.0 : 0.9,
                         child: CoachProfileCard(
                           coach: coach,
-                          isSelected: !_isCustomMode && _selectedCoach?.id == coach.id,
+                          isSelected: _selectedCoach?.id == coach.id,
                           onTap: () => _selectCoach(coach),
                         ),
                       ).animate(delay: (100 + index * 50).ms).fadeIn();
@@ -798,28 +1170,6 @@ class _CoachSelectionScreenState extends ConsumerState<CoachSelectionScreen> {
                     ),
                   ).animate().fadeIn(delay: 300.ms),
                 ),
-
-                // Custom Coach toggle (compact)
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 24),
-                  child: _buildCompactCustomToggle(isDark, textPrimary, textSecondary),
-                ),
-
-                // Custom Coach Form (if enabled)
-                if (_isCustomMode)
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 24),
-                    child: CustomCoachForm(
-                      name: _customName,
-                      coachingStyle: _customStyle,
-                      communicationTone: _customTone,
-                      encouragementLevel: _customEncouragement,
-                      onNameChanged: (name) => _updateCustomCoach(name: name),
-                      onStyleChanged: (style) => _updateCustomCoach(style: style),
-                      onToneChanged: (tone) => _updateCustomCoach(tone: tone),
-                      onEncouragementChanged: (level) => _updateCustomCoach(encouragement: level),
-                    ).animate().fadeIn(delay: 100.ms).slideY(begin: 0.05),
-                  ),
 
                 const SizedBox(height: 8),
               ],
@@ -897,11 +1247,8 @@ class _CoachSelectionScreenState extends ConsumerState<CoachSelectionScreen> {
       children: [
         Row(
           children: [
-            // Back button when coming from settings
-            if (widget.fromSettings) ...[
-              GlassBackButton(onTap: () => context.pop()),
-              const SizedBox(width: 12),
-            ] else ...[
+            // Icon or coach avatar (back button is in headerOverlay)
+            if (!widget.fromSettings) ...[
               AnimatedContainer(
                 duration: const Duration(milliseconds: 300),
                 curve: Curves.easeInOut,
@@ -986,42 +1333,30 @@ class _CoachSelectionScreenState extends ConsumerState<CoachSelectionScreen> {
     final coachColor = _selectedCoach?.primaryColor ?? const Color(0xFFF97316);
 
     return GestureDetector(
-      onTap: _toggleCustomMode,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
+      onTap: _showCustomCoachPreview,
+      child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(
-          color: _isCustomMode
-              ? coachColor
-              : (isDark ? AppColors.glassSurface : AppColorsLight.glassSurface),
+          color: isDark ? AppColors.glassSurface : AppColorsLight.glassSurface,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: _isCustomMode ? coachColor : cardBorder,
-            width: _isCustomMode ? 2 : 1,
-          ),
+          border: Border.all(color: cardBorder),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(
               Icons.auto_awesome,
-              color: _isCustomMode ? Colors.white : coachColor,
+              color: coachColor,
               size: 18,
             ),
             const SizedBox(width: 8),
             Text(
-              _isCustomMode ? 'Custom Coach Selected' : 'Or Create Your Own Coach',
+              'Create Your Own Coach',
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
-                color: _isCustomMode ? Colors.white : textPrimary,
+                color: textPrimary,
               ),
-            ),
-            const SizedBox(width: 8),
-            Icon(
-              _isCustomMode ? Icons.check_circle : Icons.arrow_forward_ios,
-              color: _isCustomMode ? Colors.white : textSecondary,
-              size: 16,
             ),
           ],
         ),

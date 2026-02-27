@@ -539,7 +539,8 @@ def _get_week_number(date_str: str) -> int:
     try:
         d = datetime.fromisoformat(date_str.replace("Z", "+00:00"))
         return d.isocalendar()[1]
-    except:
+    except Exception as e:
+        logger.debug(f"Failed to parse week number from date string '{date_str}': {e}")
         return 0
 
 
@@ -548,7 +549,8 @@ def _get_year(date_str: str) -> int:
     try:
         d = datetime.fromisoformat(date_str.replace("Z", "+00:00"))
         return d.year
-    except:
+    except Exception as e:
+        logger.debug(f"Failed to parse year from date string '{date_str}': {e}")
         return datetime.now().year
 
 

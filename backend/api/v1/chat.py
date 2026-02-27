@@ -3,21 +3,26 @@ Chat API endpoints.
 
 ENDPOINTS:
 - POST /api/v1/chat/send - Send a message to the AI coach
+- POST /api/v1/chat/media/presign - Get presigned S3 URL for media upload
+- POST /api/v1/chat/media/presign-batch - Get batch presigned S3 URLs
 - GET  /api/v1/chat/history/{user_id} - Get chat history for a user
 - GET  /api/v1/chat/rag/stats - Get RAG system statistics
 - POST /api/v1/chat/rag/search - Search similar past conversations
 
 RATE LIMITS:
 - /send: 10 requests/minute (AI-intensive)
+- /media/presign: 3 requests/minute
+- /media/presign-batch: 3 requests/minute
 - /extract-intent: 10 requests/minute (AI-intensive)
 - /rag/search: 20 requests/minute
 - /history: 30 requests/minute
 """
 import json
 import time
+import uuid
 from fastapi import APIRouter, HTTPException, Depends, Request, BackgroundTasks, Query
-from typing import List, Optional
-from pydantic import BaseModel
+from typing import Dict, List, Optional
+from pydantic import BaseModel, Field
 from models.chat import ChatRequest, ChatResponse
 from services.gemini_service import GeminiService
 from services.rag_service import RAGService
@@ -29,6 +34,7 @@ from core.rate_limiter import limiter
 from core.activity_logger import log_user_activity, log_user_error
 from core.auth import get_current_user
 from core.exceptions import safe_internal_error
+from core.config import get_settings
 
 router = APIRouter()
 logger = get_logger(__name__)
@@ -149,6 +155,28 @@ async def send_message(
     if chat_request.workout_schedule:
         logger.debug(f"Workout schedule: yesterday={chat_request.workout_schedule.yesterday is not None}, today={chat_request.workout_schedule.today is not None}, tomorrow={chat_request.workout_schedule.tomorrow is not None}, thisWeek={len(chat_request.workout_schedule.thisWeek)}")
 
+    # Premium gate checks for food scanning and text-to-calories
+    # Only check gates when the request actually involves these features
+    from core.premium_gate import check_premium_gate, track_premium_usage
+    _chat_gate_feature = None  # Track which gate was checked for post-success usage increment
+
+    has_image_media = bool(
+        chat_request.image_base64
+        or (chat_request.media_ref and chat_request.media_ref.media_type == "image")
+        or (chat_request.media_refs and any(m.media_type == "image" for m in chat_request.media_refs))
+    )
+
+    if has_image_media:
+        await check_premium_gate(chat_request.user_id, "food_scanning")
+        _chat_gate_feature = "food_scanning"
+    else:
+        # Check for text-to-calories intent (calorie/nutrition text queries without images)
+        msg_lower = chat_request.message.lower()
+        calorie_keywords = ["calorie", "calories", "kcal", "how many cal", "nutrition info", "macros for", "macros in", "how much protein"]
+        if any(kw in msg_lower for kw in calorie_keywords):
+            await check_premium_gate(chat_request.user_id, "text_to_calories")
+            _chat_gate_feature = "text_to_calories"
+
     # Track response time for analytics
     start_time = time.time()
 
@@ -156,6 +184,10 @@ async def send_message(
         response = await coach.process_message(chat_request)
         response_time_ms = int((time.time() - start_time) * 1000)
         logger.info(f"Chat response sent: intent={response.intent}, rag_used={response.rag_context_used}, time={response_time_ms}ms")
+
+        # Track premium gate usage after successful processing
+        if _chat_gate_feature:
+            background_tasks.add_task(track_premium_usage, chat_request.user_id, _chat_gate_feature)
 
         # Move DB writes to background tasks - these don't block the response.
         # Chat history is only read on subsequent requests (GET /history), not in this flow.
@@ -404,3 +436,285 @@ async def clear_rag(current_user: dict = Depends(get_current_user), rag: RAGServ
     logger.warning("Clearing all RAG data")
     await rag.clear_all()
     return {"status": "cleared", "message": "All RAG data has been deleted"}
+
+
+# ── Media Upload (Presigned S3 POST) ────────────────────────────────
+
+# Allowed MIME types for media upload
+ALLOWED_CONTENT_TYPES = {
+    # Images
+    "image/jpeg", "image/png", "image/webp",
+    # Videos
+    "video/mp4", "video/quicktime", "video/webm",
+}
+
+# Size limits in bytes
+MAX_IMAGE_SIZE = 10 * 1024 * 1024   # 10 MB
+MAX_VIDEO_SIZE = 50 * 1024 * 1024   # 50 MB
+
+# Presigned URL expiry
+PRESIGN_EXPIRY_SECONDS = 300  # 5 minutes
+
+# Extension map for content types
+EXT_MAP = {
+    "image/jpeg": "jpg",
+    "image/png": "png",
+    "image/webp": "webp",
+    "video/mp4": "mp4",
+    "video/quicktime": "mov",
+    "video/webm": "webm",
+}
+
+
+class MediaPresignRequest(BaseModel):
+    """Request body for generating a presigned S3 upload URL."""
+    filename: str = Field(..., min_length=1, max_length=255, description="Original filename")
+    content_type: str = Field(..., max_length=50, description="MIME type (e.g., 'video/mp4', 'image/jpeg')")
+    media_type: str = Field(..., max_length=10, description="'image' or 'video'")
+    expected_size_bytes: int = Field(..., gt=0, description="Expected file size in bytes")
+
+
+class MediaPresignResponse(BaseModel):
+    """Response with presigned S3 POST URL and fields."""
+    presigned_url: str = Field(..., description="URL to POST the file to")
+    presigned_fields: Dict[str, str] = Field(..., description="Form fields to include in the POST")
+    s3_key: str = Field(..., description="S3 object key for referencing in ChatRequest.media_ref")
+    expires_in: int = Field(..., description="Seconds until the presigned URL expires")
+
+
+def _validate_media_file(content_type: str, media_type: str, expected_size_bytes: int):
+    """Validate a single media file's content type and size. Raises HTTPException on failure."""
+    if content_type not in ALLOWED_CONTENT_TYPES:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Unsupported content type: {content_type}. Allowed: {', '.join(sorted(ALLOWED_CONTENT_TYPES))}"
+        )
+    if media_type == "video" and not content_type.startswith("video/"):
+        raise HTTPException(status_code=400, detail="media_type 'video' requires a video/* content_type")
+    if media_type == "image" and not content_type.startswith("image/"):
+        raise HTTPException(status_code=400, detail="media_type 'image' requires an image/* content_type")
+    max_size = MAX_VIDEO_SIZE if media_type == "video" else MAX_IMAGE_SIZE
+    if expected_size_bytes > max_size:
+        max_mb = max_size // (1024 * 1024)
+        raise HTTPException(
+            status_code=400,
+            detail=f"{media_type.title()} too large. Maximum size: {max_mb}MB"
+        )
+
+
+def _generate_presigned_post(s3_client, bucket: str, s3_key: str, content_type: str, media_type: str) -> dict:
+    """Generate a presigned S3 POST for a single file."""
+    max_size = MAX_VIDEO_SIZE if media_type == "video" else MAX_IMAGE_SIZE
+    return s3_client.generate_presigned_post(
+        Bucket=bucket,
+        Key=s3_key,
+        Fields={"Content-Type": content_type},
+        Conditions=[
+            {"Content-Type": content_type},
+            ["content-length-range", 1, max_size],
+        ],
+        ExpiresIn=PRESIGN_EXPIRY_SECONDS,
+    )
+
+
+@router.post("/media/presign", response_model=MediaPresignResponse)
+@limiter.limit("3/minute")
+async def presign_media_upload(
+    request: Request,
+    body: MediaPresignRequest,
+    current_user: dict = Depends(get_current_user),
+):
+    """
+    Generate a presigned S3 POST URL for uploading media (video/image)
+    for exercise form analysis.
+
+    The client uploads directly to S3 using the returned URL and fields,
+    then includes the s3_key in the ChatRequest.media_ref.
+    """
+    user_id = str(current_user["id"])
+
+    _validate_media_file(body.content_type, body.media_type, body.expected_size_bytes)
+
+    ext = EXT_MAP.get(body.content_type, "bin")
+    s3_key = f"chat_media/{user_id}/{uuid.uuid4().hex}.{ext}"
+
+    logger.info(f"Generating presigned POST for user {user_id}: {s3_key} ({body.content_type}, {body.expected_size_bytes} bytes)")
+
+    try:
+        settings = get_settings()
+
+        if not settings.s3_bucket_name:
+            raise HTTPException(status_code=503, detail="Media upload not configured")
+
+        import boto3
+        s3_client = boto3.client(
+            "s3",
+            aws_access_key_id=settings.aws_access_key_id,
+            aws_secret_access_key=settings.aws_secret_access_key,
+            region_name=settings.aws_default_region,
+        )
+
+        presigned = _generate_presigned_post(s3_client, settings.s3_bucket_name, s3_key, body.content_type, body.media_type)
+
+        return MediaPresignResponse(
+            presigned_url=presigned["url"],
+            presigned_fields=presigned["fields"],
+            s3_key=s3_key,
+            expires_in=PRESIGN_EXPIRY_SECONDS,
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to generate presigned URL for user {user_id}: {e}")
+        raise safe_internal_error(e, "media_presign")
+
+
+# ── Batch Media Upload (Presigned S3 POST) ──────────────────────────
+
+class BatchPresignFileRequest(BaseModel):
+    """Single file in a batch presign request."""
+    filename: str = Field(..., min_length=1, max_length=255)
+    content_type: str = Field(..., max_length=50)
+    media_type: str = Field(..., max_length=10)
+    expected_size_bytes: int = Field(..., gt=0)
+
+
+class BatchPresignRequest(BaseModel):
+    """Request body for batch presigned S3 upload URLs."""
+    files: List[BatchPresignFileRequest] = Field(..., min_length=1, max_length=5)
+
+
+class BatchPresignResponseItem(BaseModel):
+    """Single item in a batch presign response."""
+    presigned_url: str
+    presigned_fields: Dict[str, str]
+    s3_key: str
+    expires_in: int
+
+
+class BatchPresignResponse(BaseModel):
+    """Response with batch presigned S3 POST URLs."""
+    items: List[BatchPresignResponseItem]
+
+
+@router.post("/media/presign-batch", response_model=BatchPresignResponse)
+@limiter.limit("3/minute")
+async def presign_media_upload_batch(
+    request: Request,
+    body: BatchPresignRequest,
+    current_user: dict = Depends(get_current_user),
+):
+    """
+    Generate presigned S3 POST URLs for uploading multiple media files.
+
+    Validates:
+    - Each file's content type and size
+    - Total batch: max 5 files
+    - Max 5 images, max 3 videos
+    - Total size: max 25MB for images-only, max 50MB if contains video
+    """
+    user_id = str(current_user["id"])
+
+    # Count media types
+    image_count = sum(1 for f in body.files if f.media_type == "image")
+    video_count = sum(1 for f in body.files if f.media_type == "video")
+    has_video = video_count > 0
+
+    # Validate counts
+    if image_count > 5:
+        raise HTTPException(status_code=400, detail="Maximum 5 images per batch")
+    if video_count > 3:
+        raise HTTPException(status_code=400, detail="Maximum 3 videos per batch")
+
+    # Validate total size
+    total_size = sum(f.expected_size_bytes for f in body.files)
+    max_total = 50 * 1024 * 1024 if has_video else 25 * 1024 * 1024
+    if total_size > max_total:
+        max_total_mb = max_total // (1024 * 1024)
+        raise HTTPException(
+            status_code=400,
+            detail=f"Total batch size ({total_size // (1024 * 1024)}MB) exceeds maximum ({max_total_mb}MB)"
+        )
+
+    # Validate each file individually
+    for f in body.files:
+        _validate_media_file(f.content_type, f.media_type, f.expected_size_bytes)
+
+    logger.info(f"Generating batch presigned POST for user {user_id}: {len(body.files)} files ({image_count} images, {video_count} videos)")
+
+    try:
+        settings = get_settings()
+
+        if not settings.s3_bucket_name:
+            raise HTTPException(status_code=503, detail="Media upload not configured")
+
+        import boto3
+        s3_client = boto3.client(
+            "s3",
+            aws_access_key_id=settings.aws_access_key_id,
+            aws_secret_access_key=settings.aws_secret_access_key,
+            region_name=settings.aws_default_region,
+        )
+
+        items = []
+        for f in body.files:
+            ext = EXT_MAP.get(f.content_type, "bin")
+            s3_key = f"chat_media/{user_id}/{uuid.uuid4().hex}.{ext}"
+
+            presigned = _generate_presigned_post(
+                s3_client, settings.s3_bucket_name, s3_key, f.content_type, f.media_type
+            )
+
+            items.append(BatchPresignResponseItem(
+                presigned_url=presigned["url"],
+                presigned_fields=presigned["fields"],
+                s3_key=s3_key,
+                expires_in=PRESIGN_EXPIRY_SECONDS,
+            ))
+
+        return BatchPresignResponse(items=items)
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to generate batch presigned URLs for user {user_id}: {e}")
+        raise safe_internal_error(e, "media_presign_batch")
+
+
+# ── Media Analysis Job Polling ──────────────────────────────────────────────
+
+
+@router.get("/media/job/{job_id}")
+@limiter.limit("30/minute")
+async def get_media_job_status(
+    request: Request,
+    job_id: str,
+    user_id: str = Depends(get_current_user),
+):
+    """
+    Poll status of a background media analysis job.
+
+    Returns job status, result (if completed), or error message (if failed).
+    """
+    from services.media_job_service import get_media_job_service
+
+    service = get_media_job_service()
+    job = service.get_job(job_id)
+
+    if not job:
+        raise HTTPException(status_code=404, detail="Job not found")
+
+    # Ensure user can only see their own jobs
+    if job.get("user_id") != user_id:
+        raise HTTPException(status_code=404, detail="Job not found")
+
+    return {
+        "job_id": job.get("id", job_id),
+        "status": job.get("status"),
+        "job_type": job.get("job_type"),
+        "result": job.get("result"),
+        "error_message": job.get("error_message"),
+        "created_at": job.get("created_at"),
+        "retry_count": job.get("retry_count", 0),
+    }

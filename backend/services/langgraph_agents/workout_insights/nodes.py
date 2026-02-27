@@ -171,7 +171,7 @@ Rules: headline 3-5 words, each section content 6-10 words, exactly 2 sections. 
                     response_mime_type="application/json",
                     response_schema=WorkoutInsightsResponse,
                     temperature=0.7,
-                    max_output_tokens=2048,
+                    max_output_tokens=8192,  # High to account for thinking model token budget
                 ),
             )
 
@@ -206,8 +206,8 @@ Rules: headline 3-5 words, each section content 6-10 words, exactly 2 sections. 
                             logger.info("[Generate Node] Direct json.loads succeeded on raw text")
                         else:
                             insights = None
-                    except (json.JSONDecodeError, ValueError):
-                        pass
+                    except (json.JSONDecodeError, ValueError) as e:
+                        logger.debug(f"Direct JSON parse failed: {e}")
 
                 # Fallback 2: Use centralized AI response parser
                 if insights is None and raw_text:

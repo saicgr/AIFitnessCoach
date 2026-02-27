@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -169,18 +168,6 @@ class _SignInScreenState extends ConsumerState<SignInScreen>
         duration: const Duration(seconds: 5),
         margin: const EdgeInsets.all(16),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      ),
-    );
-  }
-
-  Future<void> _signInWithApple() async {
-    HapticFeedback.lightImpact();
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: const Text('Apple Sign-In coming soon!'),
-        behavior: SnackBarBehavior.floating,
-        backgroundColor: AppColors.purple,
-        duration: const Duration(seconds: 2),
       ),
     );
   }
@@ -640,45 +627,6 @@ class _SignInScreenState extends ConsumerState<SignInScreen>
                   ),
           ),
         ).animate().fadeIn(delay: 600.ms).slideY(begin: 0.1),
-
-        const SizedBox(height: 12),
-
-        // Apple Sign In button
-        SizedBox(
-          width: double.infinity,
-          height: 54,
-          child: ElevatedButton(
-            onPressed: _isLoading ? null : _signInWithApple,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: isDark ? Colors.white : Colors.black,
-              foregroundColor: isDark ? Colors.black : Colors.white,
-              elevation: isDark ? 0 : 2,
-              disabledBackgroundColor: (isDark ? Colors.white : Colors.black).withOpacity(0.6),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(27),
-              ),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  Icons.apple,
-                  size: 24,
-                  color: isDark ? Colors.black : Colors.white,
-                ),
-                const SizedBox(width: 12),
-                Text(
-                  'Continue with Apple',
-                  style: TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
-                    color: isDark ? Colors.black : Colors.white,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ).animate().fadeIn(delay: 700.ms).slideY(begin: 0.1),
 
         const SizedBox(height: 16),
 

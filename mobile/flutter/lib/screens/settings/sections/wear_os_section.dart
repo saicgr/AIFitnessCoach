@@ -1,10 +1,10 @@
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
 import '../widgets/section_header.dart';
 
 /// The Wear OS section for connecting to smartwatch.
-/// Currently showing "Coming Soon" status.
 /// Only visible on Android devices.
 class WearOSSection extends StatelessWidget {
   const WearOSSection({super.key});
@@ -27,7 +27,7 @@ class WearOSSection extends StatelessWidget {
   }
 }
 
-/// Coming Soon card for WearOS feature.
+/// Card for WearOS feature.
 class _WearOSComingSoonCard extends StatelessWidget {
   const _WearOSComingSoonCard();
 
@@ -65,45 +65,18 @@ class _WearOSComingSoonCard extends StatelessWidget {
                 ),
                 const SizedBox(width: 12),
 
-                // Title and Coming Soon badge
+                // Title
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Row(
-                        children: [
-                          Text(
-                            'Smartwatch',
-                            style: TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.w500,
-                              color: textPrimary,
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 3,
-                            ),
-                            decoration: BoxDecoration(
-                              color: AppColors.orange.withValues(alpha: 0.15),
-                              borderRadius: BorderRadius.circular(6),
-                              border: Border.all(
-                                color: AppColors.orange.withValues(alpha: 0.3),
-                              ),
-                            ),
-                            child: const Text(
-                              'COMING SOON',
-                              style: TextStyle(
-                                fontSize: 9,
-                                fontWeight: FontWeight.bold,
-                                color: AppColors.orange,
-                                letterSpacing: 0.5,
-                              ),
-                            ),
-                          ),
-                        ],
+                      Text(
+                        'Smartwatch',
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w500,
+                          color: textPrimary,
+                        ),
                       ),
                       const SizedBox(height: 2),
                       Text(
@@ -550,7 +523,7 @@ class _WearOSCardState extends ConsumerState<_WearOSCard> {
         }
       }
     } catch (e) {
-      print('❌ Error installing on watch: $e');
+      debugPrint('❌ Error installing on watch: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(

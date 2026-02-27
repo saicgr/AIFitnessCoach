@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:equatable/equatable.dart';
 import 'package:json_annotation/json_annotation.dart';
 import 'exercise.dart';
@@ -136,7 +137,7 @@ class Workout extends Equatable {
       return result;
     } catch (e) {
       // Log the actual error for debugging
-      print('❌ [Workout.exercises] Parse error: $e');
+      debugPrint('❌ [Workout.exercises] Parse error: $e');
       return const [];
     }
   }

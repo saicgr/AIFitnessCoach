@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../data/models/strain_prevention.dart';
+import '../../data/services/api_client.dart';
 import 'widgets/strain_risk_card.dart';
 import 'widgets/volume_alert_card.dart';
 import 'volume_history_screen.dart';
@@ -15,7 +16,7 @@ import '../../widgets/glass_sheet.dart';
 /// Provider for strain dashboard data
 final strainDashboardProvider =
     StateNotifierProvider<StrainDashboardNotifier, StrainDashboardState>(
-        (ref) => StrainDashboardNotifier());
+        (ref) => StrainDashboardNotifier(ref));
 
 class StrainDashboardState {
   final StrainDashboardData? data;
@@ -41,88 +42,100 @@ class StrainDashboardState {
 }
 
 class StrainDashboardNotifier extends StateNotifier<StrainDashboardState> {
-  StrainDashboardNotifier() : super(const StrainDashboardState());
+  final Ref _ref;
+  StrainDashboardNotifier(this._ref) : super(const StrainDashboardState());
 
   Future<void> loadData() async {
     state = state.copyWith(isLoading: true, error: null);
     try {
-      // TODO: Replace with actual API call when backend is ready
-      await Future.delayed(const Duration(milliseconds: 500));
+      final apiClient = _ref.read(apiClientProvider);
+      final userId = await apiClient.getUserId();
+      if (userId == null) {
+        state = state.copyWith(error: 'Not authenticated', isLoading: false);
+        return;
+      }
 
-      // Sample data for UI development
+      // Fetch risk assessment and alerts in parallel
+      final results = await Future.wait([
+        apiClient.get('/strain-prevention/$userId/risk-assessment'),
+        apiClient.get('/strain-prevention/$userId/alerts'),
+      ]);
+
+      final riskData = results[0].data as Map<String, dynamic>;
+      final alertsData = results[1].data as Map<String, dynamic>;
+
+      // Map risk assessment muscle_volumes to MuscleGroupRisk list
+      final muscleVolumes = riskData['muscle_volumes'] as List<dynamic>? ?? [];
+      final muscleRisks = muscleVolumes.map((mv) {
+        final m = mv as Map<String, dynamic>;
+        final increasePercent = (m['volume_increase_percent'] as num?)?.toDouble() ?? 0;
+        final riskScore = (m['strain_risk_score'] as num?)?.toDouble() ?? 0;
+        String riskLevel;
+        if (riskScore >= 0.7) {
+          riskLevel = 'critical';
+        } else if (riskScore >= 0.5 || increasePercent > 20) {
+          riskLevel = 'danger';
+        } else if (increasePercent > 10) {
+          riskLevel = 'warning';
+        } else {
+          riskLevel = 'safe';
+        }
+        return MuscleGroupRisk(
+          muscleGroup: m['muscle_group'] as String? ?? '',
+          riskLevel: riskLevel,
+          currentVolumeKg: (m['current_week_sets'] as num?)?.toDouble() ?? 0,
+          volumeCapKg: (m['recommended_max_sets'] as num?)?.toDouble() ?? 0,
+          weeklyIncreasePercent: increasePercent,
+          recommendedMaxIncrease: 10,
+          hasActiveAlert: m['is_at_risk'] as bool? ?? false,
+          alertMessage: (m['is_at_risk'] == true)
+              ? 'Volume increased ${increasePercent.toStringAsFixed(0)}% this week.'
+              : null,
+        );
+      }).toList();
+
+      // Parse alerts
+      final alertsList = (alertsData['alerts'] as List<dynamic>? ?? []).map((a) {
+        final alert = a as Map<String, dynamic>;
+        return VolumeAlert(
+          id: alert['id']?.toString() ?? '',
+          muscleGroup: alert['muscle_group'] as String? ?? '',
+          alertType: alert['alert_type'] as String? ?? 'warning',
+          increasePercent: (alert['increase_percent'] as num?)?.toDouble() ?? 0,
+          currentVolumeKg: (alert['current_volume'] as num?)?.toDouble() ?? 0,
+          previousVolumeKg: (alert['previous_volume'] as num?)?.toDouble() ?? 0,
+          message: 'Volume increased by ${((alert['increase_percent'] as num?)?.toDouble() ?? 0).toStringAsFixed(0)}% for ${alert['muscle_group']}.',
+          recommendation: 'Consider reducing volume or taking a deload.',
+          createdAt: DateTime.tryParse(alert['created_at']?.toString() ?? '') ?? DateTime.now(),
+        );
+      }).toList();
+
+      // Determine overall risk level
+      final overallRiskLevel = riskData['overall_risk_level'] as String? ?? 'safe';
+      // Map backend levels to frontend levels
+      String mappedRiskLevel;
+      switch (overallRiskLevel) {
+        case 'low':
+          mappedRiskLevel = 'safe';
+          break;
+        case 'moderate':
+          mappedRiskLevel = 'warning';
+          break;
+        case 'high':
+          mappedRiskLevel = 'danger';
+          break;
+        case 'critical':
+          mappedRiskLevel = 'critical';
+          break;
+        default:
+          mappedRiskLevel = 'safe';
+      }
+
       final data = StrainDashboardData(
-        muscleRisks: [
-          const MuscleGroupRisk(
-            muscleGroup: 'chest',
-            riskLevel: 'warning',
-            currentVolumeKg: 4500,
-            volumeCapKg: 5000,
-            weeklyIncreasePercent: 15,
-            recommendedMaxIncrease: 10,
-            hasActiveAlert: true,
-            alertMessage:
-                'Volume increased 15% this week. Consider a deload.',
-          ),
-          const MuscleGroupRisk(
-            muscleGroup: 'back',
-            riskLevel: 'safe',
-            currentVolumeKg: 3200,
-            volumeCapKg: 5500,
-            weeklyIncreasePercent: 5,
-            recommendedMaxIncrease: 10,
-          ),
-          const MuscleGroupRisk(
-            muscleGroup: 'shoulders',
-            riskLevel: 'danger',
-            currentVolumeKg: 2800,
-            volumeCapKg: 2500,
-            weeklyIncreasePercent: 25,
-            recommendedMaxIncrease: 10,
-            hasActiveAlert: true,
-            alertMessage: 'Over volume cap! Reduce shoulder work this week.',
-          ),
-          const MuscleGroupRisk(
-            muscleGroup: 'quadriceps',
-            riskLevel: 'safe',
-            currentVolumeKg: 6000,
-            volumeCapKg: 8000,
-            weeklyIncreasePercent: 3,
-            recommendedMaxIncrease: 10,
-          ),
-          const MuscleGroupRisk(
-            muscleGroup: 'hamstrings',
-            riskLevel: 'safe',
-            currentVolumeKg: 3000,
-            volumeCapKg: 5000,
-            weeklyIncreasePercent: -2,
-            recommendedMaxIncrease: 10,
-          ),
-          const MuscleGroupRisk(
-            muscleGroup: 'biceps',
-            riskLevel: 'warning',
-            currentVolumeKg: 1800,
-            volumeCapKg: 2000,
-            weeklyIncreasePercent: 12,
-            recommendedMaxIncrease: 10,
-          ),
-        ],
-        unacknowledgedAlerts: [
-          VolumeAlert(
-            id: '1',
-            muscleGroup: 'shoulders',
-            alertType: 'danger',
-            increasePercent: 25,
-            currentVolumeKg: 2800,
-            previousVolumeKg: 2240,
-            message:
-                'Your shoulder volume has increased by 25% this week, exceeding the recommended 10% limit.',
-            recommendation:
-                'Consider reducing shoulder exercises or taking a deload week to prevent potential strain.',
-            createdAt: DateTime.now().subtract(const Duration(hours: 2)),
-          ),
-        ],
-        overallRiskLevel: 'warning',
-        totalAlertsCount: 2,
+        muscleRisks: muscleRisks,
+        unacknowledgedAlerts: alertsList,
+        overallRiskLevel: mappedRiskLevel,
+        totalAlertsCount: alertsList.length,
       );
 
       state = state.copyWith(data: data, isLoading: false);
@@ -132,8 +145,12 @@ class StrainDashboardNotifier extends StateNotifier<StrainDashboardState> {
   }
 
   Future<void> acknowledgeAlert(String alertId) async {
-    // TODO: Implement API call to acknowledge alert
-    await Future.delayed(const Duration(milliseconds: 300));
+    try {
+      final apiClient = _ref.read(apiClientProvider);
+      await apiClient.post('/strain-prevention/alerts/$alertId/acknowledge');
+    } catch (e) {
+      // Silently fail; refresh will show current state
+    }
     await loadData();
   }
 }

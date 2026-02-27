@@ -147,7 +147,8 @@ async def create_default_profile_if_needed(user_id: str) -> Optional[GymProfile]
         if isinstance(user_equipment, str):
             try:
                 user_equipment = json.loads(user_equipment)
-            except:
+            except Exception as e:
+                logger.debug(f"Failed to parse user equipment JSON: {e}")
                 user_equipment = []
 
         # Get workout environment

@@ -43,6 +43,10 @@ extension WorkoutGenerationModeExtension on WorkoutGenerationMode {
 }
 
 /// Persists and manages the workout generation mode preference.
+///
+/// Offline Mode is Coming Soon — on-device AI and rule-based modes are
+/// disabled. [setMode] silently ignores non-cloud modes until Offline Mode
+/// launches.
 class GenerationModeNotifier extends StateNotifier<WorkoutGenerationMode> {
   static const String _prefsKey = 'workout_generation_mode';
 
@@ -51,24 +55,21 @@ class GenerationModeNotifier extends StateNotifier<WorkoutGenerationMode> {
   }
 
   Future<void> _loadSavedMode() async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      final savedValue = prefs.getString(_prefsKey);
-      if (savedValue != null) {
-        final mode = WorkoutGenerationMode.values.firstWhere(
-          (m) => m.name == savedValue,
-          orElse: () => WorkoutGenerationMode.cloudAI,
-        );
-        state = mode;
-        debugPrint('🔍 [GenerationMode] Loaded saved mode: ${mode.name}');
-      }
-    } catch (e) {
-      debugPrint('❌ [GenerationMode] Error loading saved mode: $e');
-    }
+    // Offline Mode is Coming Soon — always use cloudAI regardless of
+    // any previously-saved preference.
+    state = WorkoutGenerationMode.cloudAI;
   }
 
   /// Set the generation mode and persist it.
+  ///
+  /// While Offline Mode is Coming Soon, only [WorkoutGenerationMode.cloudAI]
+  /// is accepted. Other modes are silently ignored.
   Future<void> setMode(WorkoutGenerationMode mode) async {
+    // Offline Mode is Coming Soon — only cloud AI is available.
+    if (mode != WorkoutGenerationMode.cloudAI) {
+      debugPrint('⚠️ [GenerationMode] Offline modes are Coming Soon — staying on cloudAI');
+      return;
+    }
     state = mode;
     try {
       final prefs = await SharedPreferences.getInstance();

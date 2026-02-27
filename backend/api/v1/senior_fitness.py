@@ -476,8 +476,8 @@ async def get_senior_settings(user_id: str,
                         str(user_result.data[0].get("date_of_birth")).replace("Z", "+00:00")
                     )
                     age = (datetime.now(dob.tzinfo) - dob).days // 365
-                except Exception:
-                    pass
+                except Exception as e:
+                    logger.debug(f"Failed to parse date of birth: {e}")
 
         is_senior = age is not None and age >= 55
         age_bracket = get_age_bracket(age) if age else None
@@ -698,8 +698,8 @@ async def check_is_senior(user_id: str,
                         str(user_result.data[0].get("date_of_birth")).replace("Z", "+00:00")
                     )
                     age = (datetime.now(dob.tzinfo) - dob).days // 365
-                except Exception:
-                    pass
+                except Exception as e:
+                    logger.debug(f"Failed to parse date of birth: {e}")
 
         is_senior = age is not None and age >= 55
         age_bracket = get_age_bracket(age) if age else None

@@ -35,6 +35,7 @@ final habitsProvider = Provider<List<HabitData>>((ref) {
       last30Days: workoutDays,
       currentStreak: workoutStreak,
       route: '/workouts',
+      todayCompleted: workoutDays.isNotEmpty && workoutDays.last,
     ),
     HabitData(
       name: 'Food Log',
@@ -42,6 +43,7 @@ final habitsProvider = Provider<List<HabitData>>((ref) {
       last30Days: foodLogDays,
       currentStreak: foodStreak,
       route: '/nutrition',
+      todayCompleted: foodLogDays.isNotEmpty && foodLogDays.last,
     ),
     HabitData(
       name: 'Water',
@@ -49,6 +51,7 @@ final habitsProvider = Provider<List<HabitData>>((ref) {
       last30Days: waterDays,
       currentStreak: waterStreak,
       route: '/hydration',
+      todayCompleted: waterDays.isNotEmpty && waterDays.last,
     ),
   ];
 });

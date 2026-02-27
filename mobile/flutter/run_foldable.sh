@@ -56,7 +56,7 @@ if [ -n "$FOLD_SERIAL" ]; then
     echo -e "${GREEN}Foldable emulator already running on $FOLD_SERIAL${NC}"
 else
     echo -e "${YELLOW}Starting foldable emulator: $FOLD_AVD${NC}"
-    $EMULATOR_PATH -avd "$FOLD_AVD" -no-snapshot-save -gpu auto &
+    $EMULATOR_PATH -avd "$FOLD_AVD" -gpu auto &
 
     # Wait for any emulator device to appear
     echo -e "${YELLOW}Waiting for emulator to connect...${NC}"

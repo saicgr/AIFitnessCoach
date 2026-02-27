@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/kegel.dart';
 import '../services/api_client.dart';
@@ -19,7 +20,7 @@ class KegelRepository {
       if (response.data == null) return null;
       return KegelPreferences.fromJson(response.data as Map<String, dynamic>);
     } catch (e) {
-      print('Error fetching kegel preferences: $e');
+      debugPrint('Error fetching kegel preferences: $e');
       return null;
     }
   }
@@ -36,7 +37,7 @@ class KegelRepository {
       );
       return KegelPreferences.fromJson(response.data as Map<String, dynamic>);
     } catch (e) {
-      print('Error upserting kegel preferences: $e');
+      debugPrint('Error upserting kegel preferences: $e');
       rethrow;
     }
   }
@@ -46,7 +47,7 @@ class KegelRepository {
     try {
       await _apiClient.delete('/kegel/preferences/$userId');
     } catch (e) {
-      print('Error deleting kegel preferences: $e');
+      debugPrint('Error deleting kegel preferences: $e');
       rethrow;
     }
   }
@@ -67,7 +68,7 @@ class KegelRepository {
       );
       return KegelSession.fromJson(response.data as Map<String, dynamic>);
     } catch (e) {
-      print('Error creating kegel session: $e');
+      debugPrint('Error creating kegel session: $e');
       rethrow;
     }
   }
@@ -101,7 +102,7 @@ class KegelRepository {
       }
       return [];
     } catch (e) {
-      print('Error fetching kegel sessions: $e');
+      debugPrint('Error fetching kegel sessions: $e');
       return [];
     }
   }
@@ -117,7 +118,7 @@ class KegelRepository {
       }
       return [];
     } catch (e) {
-      print('Error fetching today\'s kegel sessions: $e');
+      debugPrint('Error fetching today\'s kegel sessions: $e');
       return [];
     }
   }
@@ -133,7 +134,7 @@ class KegelRepository {
       if (response.data == null) return null;
       return KegelStats.fromJson(response.data as Map<String, dynamic>);
     } catch (e) {
-      print('Error fetching kegel stats: $e');
+      debugPrint('Error fetching kegel stats: $e');
       return null;
     }
   }
@@ -153,7 +154,7 @@ class KegelRepository {
       if (response.data == null) return null;
       return KegelDailyGoal.fromJson(response.data as Map<String, dynamic>);
     } catch (e) {
-      print('Error checking daily kegel goal: $e');
+      debugPrint('Error checking daily kegel goal: $e');
       return null;
     }
   }
@@ -192,7 +193,7 @@ class KegelRepository {
       }
       return [];
     } catch (e) {
-      print('Error fetching kegel exercises: $e');
+      debugPrint('Error fetching kegel exercises: $e');
       return [];
     }
   }
@@ -204,7 +205,7 @@ class KegelRepository {
       if (response.data == null) return null;
       return KegelExercise.fromJson(response.data as Map<String, dynamic>);
     } catch (e) {
-      print('Error fetching kegel exercise: $e');
+      debugPrint('Error fetching kegel exercise: $e');
       return null;
     }
   }
@@ -216,7 +217,7 @@ class KegelRepository {
       if (response.data == null) return null;
       return KegelExercise.fromJson(response.data as Map<String, dynamic>);
     } catch (e) {
-      print('Error fetching kegel exercise by name: $e');
+      debugPrint('Error fetching kegel exercise by name: $e');
       return null;
     }
   }
@@ -237,7 +238,7 @@ class KegelRepository {
       );
       return response.data as Map<String, dynamic>?;
     } catch (e) {
-      print('Error fetching kegels for workout: $e');
+      debugPrint('Error fetching kegels for workout: $e');
       return null;
     }
   }
@@ -267,7 +268,7 @@ class KegelRepository {
       if (response.data == null) return null;
       return KegelSession.fromJson(response.data as Map<String, dynamic>);
     } catch (e) {
-      print('Error logging kegels from workout: $e');
+      debugPrint('Error logging kegels from workout: $e');
       rethrow;
     }
   }

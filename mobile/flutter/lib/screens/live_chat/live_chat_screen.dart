@@ -1,10 +1,10 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/constants/app_colors.dart';
+import '../../data/models/live_chat_session.dart';
+import '../../data/providers/live_chat_provider.dart';
 import '../../data/services/haptic_service.dart';
 import 'widgets/agent_info_header.dart';
 import 'widgets/live_chat_input_bar.dart';
@@ -14,238 +14,7 @@ import 'widgets/live_chat_message_bubble.dart';
 import 'widgets/queue_position_card.dart';
 import 'widgets/typing_indicator.dart';
 
-/// Connection status for the live chat
-enum LiveChatStatus {
-  disconnected,
-  connecting,
-  queued,
-  connected,
-  ended,
-}
-
-/// Model for a live chat message
-class LiveChatMessage {
-  final String id;
-  final String content;
-  final bool isFromUser;
-  final DateTime timestamp;
-  final bool isRead;
-  final String? agentName;
-  final String? agentAvatarUrl;
-
-  const LiveChatMessage({
-    required this.id,
-    required this.content,
-    required this.isFromUser,
-    required this.timestamp,
-    this.isRead = false,
-    this.agentName,
-    this.agentAvatarUrl,
-  });
-}
-
-/// Model for agent info
-class AgentInfo {
-  final String id;
-  final String name;
-  final String? avatarUrl;
-  final bool isOnline;
-
-  const AgentInfo({
-    required this.id,
-    required this.name,
-    this.avatarUrl,
-    this.isOnline = true,
-  });
-}
-
-/// Live chat state notifier
-class LiveChatNotifier extends StateNotifier<LiveChatState> {
-  LiveChatNotifier() : super(LiveChatState.initial());
-
-  Timer? _typingTimer;
-
-  void connect() {
-    state = state.copyWith(status: LiveChatStatus.connecting);
-
-    // Simulate connection delay then queue
-    Future.delayed(const Duration(seconds: 1), () {
-      if (mounted) {
-        state = state.copyWith(
-          status: LiveChatStatus.queued,
-          queuePosition: 3,
-          estimatedWaitMinutes: 5,
-        );
-      }
-    });
-  }
-
-  void simulateAgentConnect() {
-    state = state.copyWith(
-      status: LiveChatStatus.connected,
-      agent: const AgentInfo(
-        id: 'agent_1',
-        name: 'Sarah',
-        isOnline: true,
-      ),
-      queuePosition: null,
-      estimatedWaitMinutes: null,
-    );
-
-    // Add welcome message from agent
-    _addMessage(LiveChatMessage(
-      id: 'msg_${DateTime.now().millisecondsSinceEpoch}',
-      content: 'Hi! I\'m Sarah from the FitWiz support team. How can I help you today?',
-      isFromUser: false,
-      timestamp: DateTime.now(),
-      agentName: 'Sarah',
-    ));
-  }
-
-  void sendMessage(String content) {
-    if (content.trim().isEmpty) return;
-
-    final message = LiveChatMessage(
-      id: 'msg_${DateTime.now().millisecondsSinceEpoch}',
-      content: content.trim(),
-      isFromUser: true,
-      timestamp: DateTime.now(),
-      isRead: false,
-    );
-
-    _addMessage(message);
-
-    // Simulate agent typing
-    Future.delayed(const Duration(milliseconds: 500), () {
-      if (mounted) {
-        state = state.copyWith(isAgentTyping: true);
-      }
-    });
-
-    // Simulate agent response
-    Future.delayed(const Duration(seconds: 2), () {
-      if (mounted) {
-        state = state.copyWith(isAgentTyping: false);
-        _addMessage(LiveChatMessage(
-          id: 'msg_${DateTime.now().millisecondsSinceEpoch}',
-          content: 'Thank you for your message. Let me look into that for you.',
-          isFromUser: false,
-          timestamp: DateTime.now(),
-          agentName: state.agent?.name,
-        ));
-      }
-    });
-  }
-
-  void _addMessage(LiveChatMessage message) {
-    state = state.copyWith(
-      messages: [...state.messages, message],
-    );
-  }
-
-  void setUserTyping(bool isTyping) {
-    _typingTimer?.cancel();
-    if (isTyping) {
-      _typingTimer = Timer(const Duration(seconds: 3), () {
-        // Typing timeout - user stopped typing
-      });
-    }
-  }
-
-  void markMessagesAsRead() {
-    final updatedMessages = state.messages.map((msg) {
-      if (!msg.isFromUser && !msg.isRead) {
-        return LiveChatMessage(
-          id: msg.id,
-          content: msg.content,
-          isFromUser: msg.isFromUser,
-          timestamp: msg.timestamp,
-          isRead: true,
-          agentName: msg.agentName,
-          agentAvatarUrl: msg.agentAvatarUrl,
-        );
-      }
-      return msg;
-    }).toList();
-
-    state = state.copyWith(messages: updatedMessages);
-  }
-
-  void endChat() {
-    state = state.copyWith(
-      status: LiveChatStatus.ended,
-      isAgentTyping: false,
-    );
-
-    _addMessage(LiveChatMessage(
-      id: 'msg_${DateTime.now().millisecondsSinceEpoch}',
-      content: 'Chat ended. Thank you for contacting FitWiz support!',
-      isFromUser: false,
-      timestamp: DateTime.now(),
-      agentName: 'System',
-    ));
-  }
-
-  void cancelQueue() {
-    state = LiveChatState.initial();
-  }
-
-  @override
-  void dispose() {
-    _typingTimer?.cancel();
-    super.dispose();
-  }
-}
-
-/// Live chat state
-class LiveChatState {
-  final LiveChatStatus status;
-  final List<LiveChatMessage> messages;
-  final AgentInfo? agent;
-  final int? queuePosition;
-  final int? estimatedWaitMinutes;
-  final bool isAgentTyping;
-
-  const LiveChatState({
-    required this.status,
-    required this.messages,
-    this.agent,
-    this.queuePosition,
-    this.estimatedWaitMinutes,
-    this.isAgentTyping = false,
-  });
-
-  factory LiveChatState.initial() => const LiveChatState(
-        status: LiveChatStatus.disconnected,
-        messages: [],
-      );
-
-  LiveChatState copyWith({
-    LiveChatStatus? status,
-    List<LiveChatMessage>? messages,
-    AgentInfo? agent,
-    int? queuePosition,
-    int? estimatedWaitMinutes,
-    bool? isAgentTyping,
-  }) {
-    return LiveChatState(
-      status: status ?? this.status,
-      messages: messages ?? this.messages,
-      agent: agent ?? this.agent,
-      queuePosition: queuePosition,
-      estimatedWaitMinutes: estimatedWaitMinutes,
-      isAgentTyping: isAgentTyping ?? this.isAgentTyping,
-    );
-  }
-}
-
-/// Provider for live chat
-final liveChatProvider =
-    StateNotifierProvider<LiveChatNotifier, LiveChatState>((ref) {
-  return LiveChatNotifier();
-});
-
-/// Live Chat Screen
+/// Live Chat Screen - wired to real backend API via LiveChatNotifier
 class LiveChatScreen extends ConsumerStatefulWidget {
   const LiveChatScreen({super.key});
 
@@ -262,8 +31,14 @@ class _LiveChatScreenState extends ConsumerState<LiveChatScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      // Start connection when screen opens
-      ref.read(liveChatProvider.notifier).connect();
+      // Start a new chat session when the screen opens
+      final session = ref.read(liveChatProvider).valueOrNull;
+      if (session == null || session.hasEnded) {
+        ref.read(liveChatProvider.notifier).startChat(
+              category: 'general',
+              initialMessage: 'I need help',
+            );
+      }
     });
   }
 
@@ -298,7 +73,9 @@ class _LiveChatScreenState extends ConsumerState<LiveChatScreen> {
   }
 
   void _onTextChanged(String text) {
-    ref.read(liveChatProvider.notifier).setUserTyping(text.isNotEmpty);
+    if (text.isNotEmpty) {
+      ref.read(liveChatProvider.notifier).onUserTyping();
+    }
   }
 
   void _showEndChatDialog() {
@@ -391,7 +168,7 @@ class _LiveChatScreenState extends ConsumerState<LiveChatScreen> {
           ],
         ),
         content: const Text(
-          'Connect with our support team for real-time assistance. Our agents are available 24/7 to help with any questions or issues.',
+          'Connect with our support team for real-time assistance. Our agents are available during business hours to help with any questions or issues.',
         ),
         actions: [
           TextButton(
@@ -403,51 +180,112 @@ class _LiveChatScreenState extends ConsumerState<LiveChatScreen> {
     );
   }
 
+  /// Determine the effective status from the session state
+  _ScreenStatus _getScreenStatus(AsyncValue<LiveChatSession?> sessionAsync) {
+    return sessionAsync.when(
+      loading: () => _ScreenStatus.connecting,
+      error: (_, __) => _ScreenStatus.error,
+      data: (session) {
+        if (session == null) return _ScreenStatus.disconnected;
+        if (session.isQueued) return _ScreenStatus.queued;
+        if (session.isActive) return _ScreenStatus.connected;
+        if (session.hasEnded) return _ScreenStatus.ended;
+        return _ScreenStatus.disconnected;
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    final chatState = ref.watch(liveChatProvider);
+    final sessionAsync = ref.watch(liveChatProvider);
+    final session = sessionAsync.valueOrNull;
+    final screenStatus = _getScreenStatus(sessionAsync);
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final backgroundColor = isDark ? AppColors.pureBlack : AppColorsLight.pureWhite;
 
     // Scroll to bottom when messages change
     ref.listen(liveChatProvider, (previous, next) {
-      if (previous?.messages.length != next.messages.length) {
+      final prevCount = previous?.valueOrNull?.messages.length ?? 0;
+      final nextCount = next.valueOrNull?.messages.length ?? 0;
+      if (prevCount != nextCount) {
         _scrollToBottom();
       }
     });
 
     return Scaffold(
       backgroundColor: backgroundColor,
-      appBar: _buildAppBar(chatState),
+      appBar: _buildAppBar(session, screenStatus),
       body: Column(
         children: [
           // Connection status indicator
-          _buildConnectionStatus(chatState),
+          _buildConnectionStatus(screenStatus),
 
+          // Error state
+          if (screenStatus == _ScreenStatus.error)
+            Expanded(
+              child: Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.error_outline, color: AppColors.error, size: 48),
+                      const SizedBox(height: 16),
+                      Text(
+                        'Failed to connect to support',
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: AppColors.textPrimary,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        sessionAsync.error?.toString() ?? 'Unknown error',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+                      ElevatedButton(
+                        onPressed: () {
+                          ref.read(liveChatProvider.notifier).startChat(
+                                category: 'general',
+                                initialMessage: 'I need help',
+                              );
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.cyan,
+                          foregroundColor: Colors.white,
+                        ),
+                        child: const Text('Try Again'),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            )
           // Queue position card (when waiting)
-          if (chatState.status == LiveChatStatus.queued)
+          else if (screenStatus == _ScreenStatus.queued)
             Expanded(
               child: Center(
                 child: Padding(
                   padding: const EdgeInsets.all(24),
                   child: QueuePositionCard(
-                    position: chatState.queuePosition ?? 1,
-                    estimatedWaitMinutes: chatState.estimatedWaitMinutes ?? 5,
+                    position: session?.queuePosition ?? 1,
+                    estimatedWaitMinutes: session?.estimatedWaitMinutes ?? 5,
                     onCancel: () {
                       HapticService.medium();
-                      ref.read(liveChatProvider.notifier).cancelQueue();
+                      ref.read(liveChatProvider.notifier).endChat();
                       context.pop();
-                    },
-                    onSimulateConnect: () {
-                      // For demo purposes - simulate agent connection
-                      HapticService.success();
-                      ref.read(liveChatProvider.notifier).simulateAgentConnect();
                     },
                   ),
                 ),
               ),
             )
-          else if (chatState.status == LiveChatStatus.connecting)
+          else if (screenStatus == _ScreenStatus.connecting)
             const Expanded(
               child: Center(
                 child: Column(
@@ -469,16 +307,20 @@ class _LiveChatScreenState extends ConsumerState<LiveChatScreen> {
               child: ListView.builder(
                 controller: _scrollController,
                 padding: const EdgeInsets.all(16),
-                itemCount: chatState.messages.length +
-                    (chatState.isAgentTyping ? 1 : 0),
+                itemCount: (session?.messages.length ?? 0) +
+                    ((session?.isAgentTyping ?? false) ? 1 : 0),
                 itemBuilder: (context, index) {
-                  if (index == chatState.messages.length &&
-                      chatState.isAgentTyping) {
+                  final messages = session?.messages ?? [];
+                  if (index == messages.length &&
+                      (session?.isAgentTyping ?? false)) {
                     return AgentTypingIndicator(
-                      agentName: chatState.agent?.name ?? 'Agent',
+                      agentName: session?.agentName ?? 'Agent',
                     );
                   }
-                  final message = chatState.messages[index];
+                  if (index >= messages.length) {
+                    return const SizedBox.shrink();
+                  }
+                  final message = messages[index];
                   return LiveChatMessageBubble(
                     message: message,
                     showAgentInfo: !message.isFromUser,
@@ -491,7 +333,7 @@ class _LiveChatScreenState extends ConsumerState<LiveChatScreen> {
             LiveChatInputBar(
               controller: _textController,
               focusNode: _focusNode,
-              enabled: chatState.status == LiveChatStatus.connected,
+              enabled: screenStatus == _ScreenStatus.connected,
               onSend: _sendMessage,
               onTextChanged: _onTextChanged,
             ),
@@ -501,28 +343,30 @@ class _LiveChatScreenState extends ConsumerState<LiveChatScreen> {
     );
   }
 
-  PreferredSizeWidget _buildAppBar(LiveChatState chatState) {
+  PreferredSizeWidget _buildAppBar(
+      LiveChatSession? session, _ScreenStatus screenStatus) {
     return AppBar(
       backgroundColor: AppColors.pureBlack,
       automaticallyImplyLeading: false,
       leading: GlassBackButton(
         onTap: () {
           HapticService.light();
-          if (chatState.status == LiveChatStatus.connected) {
+          if (screenStatus == _ScreenStatus.connected) {
             _showEndChatDialog();
           } else {
             context.pop();
           }
         },
       ),
-      title: chatState.status == LiveChatStatus.connected && chatState.agent != null
+      title: screenStatus == _ScreenStatus.connected && session?.agentName != null
           ? AgentInfoHeader(
-              agent: chatState.agent!,
-              isTyping: chatState.isAgentTyping,
+              agentName: session!.agentName!,
+              isTyping: session.isAgentTyping,
+              isOnline: true,
             )
           : const Text('Live Chat'),
       actions: [
-        if (chatState.status == LiveChatStatus.connected)
+        if (screenStatus == _ScreenStatus.connected)
           IconButton(
             icon: const Icon(Icons.more_vert),
             onPressed: () {
@@ -534,36 +378,41 @@ class _LiveChatScreenState extends ConsumerState<LiveChatScreen> {
     );
   }
 
-  Widget _buildConnectionStatus(LiveChatState chatState) {
+  Widget _buildConnectionStatus(_ScreenStatus status) {
     Color statusColor;
     String statusText;
     IconData statusIcon;
 
-    switch (chatState.status) {
-      case LiveChatStatus.disconnected:
+    switch (status) {
+      case _ScreenStatus.disconnected:
         statusColor = AppColors.textMuted;
         statusText = 'Disconnected';
         statusIcon = Icons.cloud_off;
         break;
-      case LiveChatStatus.connecting:
+      case _ScreenStatus.connecting:
         statusColor = AppColors.orange;
         statusText = 'Connecting...';
         statusIcon = Icons.sync;
         break;
-      case LiveChatStatus.queued:
+      case _ScreenStatus.queued:
         statusColor = AppColors.warning;
         statusText = 'In Queue';
         statusIcon = Icons.hourglass_empty;
         break;
-      case LiveChatStatus.connected:
+      case _ScreenStatus.connected:
         statusColor = AppColors.success;
         statusText = 'Connected';
         statusIcon = Icons.check_circle;
         break;
-      case LiveChatStatus.ended:
+      case _ScreenStatus.ended:
         statusColor = AppColors.textMuted;
         statusText = 'Chat Ended';
         statusIcon = Icons.chat_bubble_outline;
+        break;
+      case _ScreenStatus.error:
+        statusColor = AppColors.error;
+        statusText = 'Connection Error';
+        statusIcon = Icons.error_outline;
         break;
     }
 
@@ -588,4 +437,14 @@ class _LiveChatScreenState extends ConsumerState<LiveChatScreen> {
       ),
     );
   }
+}
+
+/// Internal screen status enum
+enum _ScreenStatus {
+  disconnected,
+  connecting,
+  queued,
+  connected,
+  ended,
+  error,
 }

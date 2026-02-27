@@ -3,20 +3,16 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/utils/difficulty_utils.dart';
 import '../../../data/models/branded_program.dart';
 import 'info_badge.dart';
-import 'coming_soon_overlay.dart';
 import '../components/program_detail_sheet.dart';
 import '../../../widgets/glass_sheet.dart';
-import '../components/coming_soon_bottom_sheet.dart';
 
 /// Card widget displaying program info in a list format
 class ProgramCard extends StatelessWidget {
   final BrandedProgram program;
-  final bool showComingSoon;
 
   const ProgramCard({
     super.key,
     required this.program,
-    this.showComingSoon = true, // Default to true - show all as coming soon
   });
 
   Color _getCategoryColor(String? category, bool isDark) {
@@ -46,19 +42,10 @@ class ProgramCard extends StatelessWidget {
   }
 
   void _handleProgramTap(BuildContext context) {
-    if (showComingSoon) {
-      // Show coming soon modal
-      showGlassSheet(
-        context: context,
-        builder: (context) => ComingSoonBottomSheet(program: program),
-      );
-    } else {
-      // Show program detail sheet (normal behavior)
-      showGlassSheet(
-        context: context,
-        builder: (context) => ProgramDetailSheet(program: program),
-      );
-    }
+    showGlassSheet(
+      context: context,
+      builder: (context) => ProgramDetailSheet(program: program),
+    );
   }
 
   @override
@@ -178,9 +165,6 @@ class ProgramCard extends StatelessWidget {
                 ],
               ),
             ),
-
-            // Coming Soon label
-            if (showComingSoon) const ComingSoonOverlay(),
           ],
         ),
       ),

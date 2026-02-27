@@ -8,7 +8,7 @@ export default function TermsOfService() {
 
       <section className="pt-28 pb-20 px-6">
         <div className="max-w-[800px] mx-auto">
-          <p className="text-[13px] text-[var(--color-text-muted)] mb-4">Last updated: February 16, 2026</p>
+          <p className="text-[13px] text-[var(--color-text-muted)] mb-4">Last updated: February 26, 2026</p>
 
           <h1
             className="text-[36px] sm:text-[48px] font-semibold tracking-[-0.02em] mb-8"
@@ -32,7 +32,7 @@ export default function TermsOfService() {
                 1. Eligibility
               </h2>
               <p>
-                You must be at least 13 years old to use FitWiz. If you are under 18, you must have parental or guardian consent. By creating an account, you represent that the information you provide is accurate and that you meet these eligibility requirements.
+                You must be at least 16 years old to use FitWiz. If you are between 16 and 18, you should review these Terms with a parent or guardian before using the Service. By creating an account, you represent that you are at least 16 years of age, that the information you provide is accurate, and that you meet these eligibility requirements. FitWiz collects sensitive health and fitness data and uses AI-powered services, which require the legal capacity to consent to data processing under applicable laws.
               </p>
             </div>
 

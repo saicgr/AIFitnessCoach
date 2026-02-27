@@ -37,8 +37,6 @@ class HealthDevicesPage extends ConsumerWidget {
               HealthSyncSection(),
               SizedBox(height: 16),
               BleHeartRateSection(),
-              SizedBox(height: 16),
-              WearOSSection(),
               SizedBox(height: 32),
             ],
           ),

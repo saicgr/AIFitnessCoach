@@ -14,6 +14,7 @@
 /// - AI-powered suggestions via backend (smart, uses history)
 library;
 
+import 'package:flutter/foundation.dart';
 import 'package:dio/dio.dart';
 import '../constants/app_colors.dart';
 import '../../data/models/rest_suggestion.dart';
@@ -217,7 +218,7 @@ class WeightSuggestionService {
 
     // Check cache first (unless force refresh)
     if (!forceRefresh && _smartWeightCache.containsKey(cacheKey)) {
-      print('✅ [SmartWeight] Cache hit for $cacheKey');
+      debugPrint('✅ [SmartWeight] Cache hit for $cacheKey');
       return _smartWeightCache[cacheKey];
     }
 
@@ -245,11 +246,11 @@ class WeightSuggestionService {
           'equipment': equipment,
         };
       } else {
-        print('❌ [SmartWeight] No exercise ID or name provided');
+        debugPrint('❌ [SmartWeight] No exercise ID or name provided');
         return null;
       }
 
-      print('🔍 [SmartWeight] Fetching for $exerciseName (reps: $targetReps, goal: ${goal.value})');
+      debugPrint('🔍 [SmartWeight] Fetching for $exerciseName (reps: $targetReps, goal: ${goal.value})');
 
       final response = await dio.get(
         endpoint,
@@ -264,19 +265,19 @@ class WeightSuggestionService {
         // Cache the result
         _smartWeightCache[cacheKey] = suggestion;
 
-        print('✅ [SmartWeight] Got suggestion: ${suggestion.suggestedWeight}kg '
+        debugPrint('✅ [SmartWeight] Got suggestion: ${suggestion.suggestedWeight}kg '
             '(confidence: ${(suggestion.confidence * 100).toStringAsFixed(0)}%)');
 
         return suggestion;
       }
 
-      print('⚠️ [SmartWeight] API returned status ${response.statusCode}');
+      debugPrint('⚠️ [SmartWeight] API returned status ${response.statusCode}');
       return null;
     } on DioException catch (e) {
-      print('❌ [SmartWeight] Network error: ${e.message}');
+      debugPrint('❌ [SmartWeight] Network error: ${e.message}');
       return null;
     } catch (e) {
-      print('❌ [SmartWeight] Error: $e');
+      debugPrint('❌ [SmartWeight] Error: $e');
       return null;
     }
   }
@@ -351,7 +352,7 @@ class WeightSuggestionService {
       return null;
     } catch (e) {
       // Log error and fall back to rule-based
-      print('❌ [WeightSuggestion] AI suggestion failed: $e');
+      debugPrint('❌ [WeightSuggestion] AI suggestion failed: $e');
       return null;
     }
   }
@@ -669,7 +670,7 @@ class WeightSuggestionService {
       return null;
     } catch (e) {
       // Log error and fall back to rule-based
-      print('❌ [RestSuggestion] AI suggestion failed: $e');
+      debugPrint('❌ [RestSuggestion] AI suggestion failed: $e');
       return null;
     }
   }

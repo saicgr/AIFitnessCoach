@@ -57,9 +57,10 @@ class RAGService:
 
         try:
             _count = self.collection.count()
-        except Exception:
+        except Exception as e:
+            _rag_logger.warning(f"Failed to get collection count: {e}")
             _count = "unknown"
-        print(f"✅ RAG initialized with {_count} documents")
+        _rag_logger.info(f"RAG initialized with {_count} documents")
 
     async def add_qa_pair(
         self,
@@ -106,9 +107,10 @@ class RAGService:
 
         try:
             _count = self.collection.count()
-        except Exception:
+        except Exception as e:
+            _rag_logger.warning(f"Failed to get collection count: {e}")
             _count = "unknown"
-        print(f"📚 Stored Q&A pair: {doc_id[:8]}... (total: {_count})")
+        _rag_logger.info(f"Stored Q&A pair: {doc_id[:8]}... (total: {_count})")
         return doc_id
 
     async def _get_embedding_cached(self, text: str) -> List[float]:
@@ -185,7 +187,7 @@ class RAGService:
         # Cache the results
         await _query_cache.set(query_cache_key, similar_docs)
 
-        print(f"🔍 Found {len(similar_docs)} similar docs for: '{query[:50]}...'")
+        _rag_logger.info(f"Found {len(similar_docs)} similar docs for: '{query[:50]}...'")
         return similar_docs
 
     def format_context(self, similar_docs: List[Dict[str, Any]]) -> str:
@@ -218,7 +220,8 @@ class RAGService:
         try:
             c = self.collection.count()
             total = c if c >= 0 else -1
-        except Exception:
+        except Exception as e:
+            _rag_logger.warning(f"Failed to get document count: {e}")
             total = -1
         return {
             "total_documents": total,
@@ -230,7 +233,7 @@ class RAGService:
         """Clear all stored documents (use carefully!)."""
         self.chroma_client.delete_collection(self.chroma_client.rag_collection_name)
         self.collection = self.chroma_client.get_rag_collection()
-        print("🗑️ Cleared all RAG documents")
+        _rag_logger.info("Cleared all RAG documents")
 
 
 class WorkoutRAGService:
@@ -259,13 +262,15 @@ class WorkoutRAGService:
 
         try:
             _w_count = self.workout_collection.count()
-        except Exception:
+        except Exception as e:
+            _rag_logger.warning(f"Failed to get workout count: {e}")
             _w_count = "unknown"
         try:
             _c_count = self.changes_collection.count()
-        except Exception:
+        except Exception as e:
+            _rag_logger.warning(f"Failed to get changes count: {e}")
             _c_count = "unknown"
-        print(f"✅ Workout RAG initialized: {_w_count} workouts, {_c_count} changes")
+        _rag_logger.info(f"Workout RAG initialized: {_w_count} workouts, {_c_count} changes")
 
     async def index_workout(
         self,
@@ -320,8 +325,8 @@ class WorkoutRAGService:
         # Upsert to collection (update if exists)
         try:
             self.workout_collection.delete(ids=[doc_id])
-        except Exception:
-            pass  # Document might not exist
+        except Exception as e:
+            _rag_logger.debug(f"ChromaDB delete before upsert: {e}")
 
         self.workout_collection.add(
             ids=[doc_id],
@@ -340,7 +345,7 @@ class WorkoutRAGService:
             }],
         )
 
-        print(f"🏋️ Indexed workout: {name} (ID: {workout_id})")
+        _rag_logger.info(f"Indexed workout: {name} (ID: {workout_id})")
         return doc_id
 
     async def index_workout_change(
@@ -393,7 +398,7 @@ class WorkoutRAGService:
             }],
         )
 
-        print(f"📝 Indexed change: {change_type} for workout {workout_id}")
+        _rag_logger.info(f"Indexed change: {change_type} for workout {workout_id}")
         return doc_id
 
     async def _get_embedding_cached(self, text: str) -> List[float]:
@@ -467,7 +472,7 @@ class WorkoutRAGService:
         # Cache the results
         await _query_cache.set(query_cache_key, similar_workouts)
 
-        print(f"🔍 Found {len(similar_workouts)} similar workouts for: '{query[:50]}...'")
+        _rag_logger.info(f"Found {len(similar_workouts)} similar workouts for: '{query[:50]}...'")
         return similar_workouts
 
     async def get_workout_changes(
@@ -663,10 +668,10 @@ class WorkoutRAGService:
                 }],
             )
 
-            print(f"📝 Indexed program preferences for user {user_id}: {change_reason}")
+            _rag_logger.info(f"Indexed program preferences for user {user_id}: {change_reason}")
             return doc_id
         except Exception as e:
-            print(f"❌ Failed to index program preferences: {e}")
+            _rag_logger.error(f"Failed to index program preferences: {e}")
             return ""
 
     async def index_training_settings(
@@ -804,10 +809,10 @@ class WorkoutRAGService:
                 metadatas=[metadata],
             )
 
-            print(f"📝 Indexed training settings for user {user_id}: {action}")
+            _rag_logger.info(f"Indexed training settings for user {user_id}: {action}")
             return doc_id
         except Exception as e:
-            print(f"❌ Failed to index training settings: {e}")
+            _rag_logger.error(f"Failed to index training settings: {e}")
             return ""
 
     def get_recent_training_settings(
@@ -946,8 +951,8 @@ class WorkoutRAGService:
                                 try:
                                     weight_val = float(weight.replace("kg", "").strip())
                                     consolidated["one_rms"][exercise] = weight_val
-                                except ValueError:
-                                    pass
+                                except ValueError as e:
+                                    _rag_logger.debug(f"Failed to parse 1RM weight: {e}")
 
             # Build context text for AI
             context_parts = []
@@ -978,11 +983,11 @@ class WorkoutRAGService:
             consolidated["context_text"] = "\n".join(context_parts)
             consolidated["has_settings"] = bool(context_parts)
 
-            print(f"📊 Retrieved training settings for user {user_id}: {len(valid_entries)} recent entries")
+            _rag_logger.info(f"Retrieved training settings for user {user_id}: {len(valid_entries)} recent entries")
             return consolidated
 
         except Exception as e:
-            print(f"❌ Failed to retrieve training settings: {e}")
+            _rag_logger.error(f"Failed to retrieve training settings: {e}")
             return {
                 "one_rms": {},
                 "global_intensity_percent": None,
@@ -1013,12 +1018,14 @@ class WorkoutRAGService:
         try:
             c = self.workout_collection.count()
             total_workouts = c if c >= 0 else -1
-        except Exception:
+        except Exception as e:
+            _rag_logger.warning(f"Failed to get workout count: {e}")
             total_workouts = -1
         try:
             c = self.changes_collection.count()
             total_changes = c if c >= 0 else -1
-        except Exception:
+        except Exception as e:
+            _rag_logger.warning(f"Failed to get changes count: {e}")
             total_changes = -1
         return {
             "total_workouts": total_workouts,
@@ -1050,9 +1057,10 @@ class NutritionRAGService:
 
         try:
             _count = self.food_collection.count()
-        except Exception:
+        except Exception as e:
+            _rag_logger.warning(f"Failed to get food log count: {e}")
             _count = "unknown"
-        print(f"✅ Nutrition RAG initialized: {_count} food logs")
+        _rag_logger.info(f"Nutrition RAG initialized: {_count} food logs")
 
     async def index_food_log(
         self,
@@ -1112,8 +1120,8 @@ class NutritionRAGService:
         # Upsert to collection (update if exists)
         try:
             self.food_collection.delete(ids=[doc_id])
-        except Exception:
-            pass  # Document might not exist
+        except Exception as e:
+            _rag_logger.debug(f"ChromaDB delete before upsert: {e}")
 
         self.food_collection.add(
             ids=[doc_id],
@@ -1133,7 +1141,7 @@ class NutritionRAGService:
             }],
         )
 
-        print(f"🍽️ Indexed food log: {meal_type} - {food_summary} (ID: {food_log_id})")
+        _rag_logger.info(f"Indexed food log: {meal_type} - {food_summary} (ID: {food_log_id})")
         return doc_id
 
     async def _get_embedding_cached(self, text: str) -> List[float]:
@@ -1207,7 +1215,7 @@ class NutritionRAGService:
         # Cache the results
         await _query_cache.set(query_cache_key, similar_meals)
 
-        print(f"🔍 Found {len(similar_meals)} similar meals for: '{query[:50]}...'")
+        _rag_logger.info(f"Found {len(similar_meals)} similar meals for: '{query[:50]}...'")
         return similar_meals
 
     async def get_user_nutrition_history(
@@ -1266,7 +1274,8 @@ class NutritionRAGService:
         try:
             c = self.food_collection.count()
             total = c if c >= 0 else -1
-        except Exception:
+        except Exception as e:
+            _rag_logger.warning(f"Failed to get food log count: {e}")
             total = -1
         return {
             "total_food_logs": total,

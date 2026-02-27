@@ -8,7 +8,7 @@ export default function PrivacyPolicy() {
 
       <section className="pt-28 pb-20 px-6">
         <div className="max-w-[800px] mx-auto">
-          <p className="text-[13px] text-[var(--color-text-muted)] mb-4">Last updated: February 16, 2026</p>
+          <p className="text-[13px] text-[var(--color-text-muted)] mb-4">Last updated: February 26, 2026</p>
 
           <h1
             className="text-[36px] sm:text-[48px] font-semibold tracking-[-0.02em] mb-8"
@@ -150,10 +150,23 @@ export default function PrivacyPolicy() {
                 className="text-[24px] font-semibold text-[var(--color-text)] mb-4"
                 style={{ fontFamily: 'var(--font-heading)' }}
               >
-                7. Children's Privacy
+                7. Children's Privacy & Age Requirements
               </h2>
+              <p className="mb-4">
+                FitWiz is designed for users aged 16 and older. The Service is not directed at children under 16 years of age, and we do not knowingly collect personal information from anyone under 16.
+              </p>
+              <p className="mb-4">
+                This age requirement exists because FitWiz collects and processes sensitive health and fitness data, uses AI-powered services (Google Gemini) to generate personalized recommendations, and offers in-app purchases through subscription plans. These features require a level of maturity and legal capacity to consent to data processing under applicable laws, including the U.S. Children's Online Privacy Protection Act (COPPA) and the EU General Data Protection Regulation (GDPR).
+              </p>
+              <p className="mb-4">
+                If we discover that we have inadvertently collected personal data from a user under 16, we will take immediate steps to delete that information and terminate the associated account. If you are a parent or guardian and believe your child has provided us with personal information, please contact us at{' '}
+                <a href="mailto:privacy@fitwiz.app" className="text-emerald-400 hover:underline">
+                  privacy@fitwiz.app
+                </a>{' '}
+                so we can take appropriate action.
+              </p>
               <p>
-                FitWiz is not intended for children under 13 years of age. We do not knowingly collect personal information from children under 13. If we discover that we have collected data from a child under 13, we will promptly delete it.
+                Users between the ages of 16 and 18 should review these terms with a parent or guardian before using the Service.
               </p>
             </div>
 

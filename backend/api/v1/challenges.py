@@ -8,8 +8,12 @@ Endpoints:
 - POST /accept/{id} - Accept a challenge
 - POST /decline/{id} - Decline a challenge
 - POST /complete/{id} - Mark challenge as completed with results
+- POST /abandon/{id} - Abandon a challenge midway
 - GET /notifications - Get challenge notifications
 - GET /stats/{user_id} - Get challenge statistics
+- POST /accept-from-feed - Create + accept challenge from a feed post
+- GET /{challenge_id} - Fetch a single challenge with user joins
+- GET /activity/{activity_id}/leaderboard - Completed challenges leaderboard for a feed post
 """
 
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -125,7 +129,7 @@ async def send_challenges(
                         }],
                         ids=[f"challenge_retry_{challenge_id}"],
                     )
-                    print(f"🔄 [Challenges] Retry logged: {challenger_name} -> {to_user_name} for {request.workout_name}")
+                    logger.info(f"[Challenges] Retry logged: {challenger_name} -> {to_user_name} for {request.workout_name}")
                 else:
                     # New challenge
                     collection.add(
@@ -141,7 +145,7 @@ async def send_challenges(
                         ids=[f"challenge_sent_{challenge_id}"],
                     )
             except Exception as e:
-                print(f"⚠️ [Challenges] Failed to log to ChromaDB: {e}")
+                logger.warning(f"[Challenges] Failed to log to ChromaDB: {e}")
 
     logger.info(f"✅ [Challenges] User {user_id} sent {len(challenge_ids)} challenges")
 
@@ -336,9 +340,9 @@ async def accept_challenge(
             ids=[f"challenge_accepted_{challenge_id}_{datetime.now().timestamp()}"],
         )
     except Exception as e:
-        print(f"⚠️ [Challenges] Failed to log to ChromaDB: {e}")
+        logger.warning(f"[Challenges] Failed to log to ChromaDB: {e}")
 
-    print(f"✅ [Challenges] User {user_id} accepted challenge {challenge_id}")
+    logger.info(f"[Challenges] User {user_id} accepted challenge {challenge_id}")
 
     return WorkoutChallenge(**update_result.data[0])
 
@@ -380,7 +384,7 @@ async def decline_challenge(
         "declined_at": datetime.now(timezone.utc).isoformat(),
     }).eq("id", challenge_id).execute()
 
-    print(f"✅ [Challenges] User {user_id} declined challenge {challenge_id}")
+    logger.info(f"[Challenges] User {user_id} declined challenge {challenge_id}")
 
     return {"message": "Challenge declined"}
 
@@ -482,9 +486,9 @@ async def complete_challenge(
                 "visibility": "friends",  # Default to friends
             }).execute()
 
-            print(f"✅ [Challenges] Posted challenge result to activity feed (beat: {did_beat})")
+            logger.info(f"[Challenges] Posted challenge result to activity feed (beat: {did_beat})")
         except Exception as e:
-            print(f"⚠️ [Challenges] Failed to post to activity feed: {e}")
+            logger.warning(f"[Challenges] Failed to post to activity feed: {e}")
             # Don't fail the challenge completion if posting fails
 
     # Log to ChromaDB
@@ -507,9 +511,9 @@ async def complete_challenge(
             ids=[f"challenge_completed_{challenge_id}"],
         )
     except Exception as e:
-        print(f"⚠️ [Challenges] Failed to log to ChromaDB: {e}")
+        logger.warning(f"[Challenges] Failed to log to ChromaDB: {e}")
 
-    print(f"✅ [Challenges] User {user_id} completed challenge {challenge_id} (beat: {did_beat})")
+    logger.info(f"[Challenges] User {user_id} completed challenge {challenge_id} (beat: {did_beat})")
 
     return WorkoutChallenge(**update_result.data[0])
 
@@ -576,9 +580,9 @@ async def abandon_challenge(
         # For now, we DON'T auto-post abandonments to feed (too harsh)
         # But we DO notify the challenger via challenge_notifications (trigger handles this)
 
-        print(f"🐔 [Challenges] User {user_id} abandoned challenge {challenge_id}: {request.quit_reason}")
+        logger.info(f"[Challenges] User {user_id} abandoned challenge {challenge_id}: {request.quit_reason}")
     except Exception as e:
-        print(f"⚠️ [Challenges] Error processing abandonment: {e}")
+        logger.warning(f"[Challenges] Error processing abandonment: {e}")
 
     # Log to ChromaDB for AI insights
     try:
@@ -604,7 +608,7 @@ async def abandon_challenge(
             ids=[f"challenge_abandoned_{challenge_id}"],
         )
     except Exception as e:
-        print(f"⚠️ [Challenges] Failed to log to ChromaDB: {e}")
+        logger.warning(f"[Challenges] Failed to log to ChromaDB: {e}")
 
     return WorkoutChallenge(**update_result.data[0])
 
@@ -761,3 +765,212 @@ async def get_challenge_stats(user_id: str, current_user: dict = Depends(get_cur
         retry_win_rate=round(retry_win_rate, 2),
         most_retried_workout=most_retried_workout,
     )
+
+
+# ============================================================
+# ACCEPT FROM FEED (one-tap challenge from activity feed)
+# ============================================================
+
+@router.post("/accept-from-feed", response_model=WorkoutChallenge)
+async def accept_challenge_from_feed(
+    activity_id: str = Query(..., description="Activity feed post ID"),
+    current_user: dict = Depends(get_current_user),
+):
+    user_id = str(current_user["id"])
+    """
+    Atomically create + accept a challenge from a feed post.
+
+    When a user sees a friend's workout in the feed and taps "Challenge",
+    this creates the challenge already in accepted state so they can
+    immediately start the workout.
+
+    Args:
+        activity_id: The activity_feed row ID
+        current_user: Authenticated user
+
+    Returns:
+        The new challenge row (already accepted)
+    """
+    supabase = get_supabase_client()
+
+    # Fetch the activity feed post
+    activity_result = supabase.table("activity_feed").select(
+        "id, user_id, activity_type, activity_data"
+    ).eq("id", activity_id).execute()
+
+    if not activity_result.data:
+        raise HTTPException(status_code=404, detail="Activity post not found")
+
+    activity = activity_result.data[0]
+    poster_id = activity["user_id"]
+    activity_type = activity["activity_type"]
+    activity_data = activity.get("activity_data") or {}
+
+    # Only allow challenges from workout posts
+    if activity_type not in ("workout_completed", "workout_shared"):
+        raise HTTPException(
+            status_code=400,
+            detail="Can only challenge from workout posts",
+        )
+
+    # Prevent self-challenge
+    if poster_id == user_id:
+        raise HTTPException(status_code=400, detail="Cannot challenge yourself")
+
+    # Check for duplicate active challenge (same activity + same user)
+    dup_result = supabase.table("workout_challenges").select(
+        "id", count="exact"
+    ).eq("activity_id", activity_id).eq(
+        "to_user_id", user_id
+    ).in_("status", ["pending", "accepted"]).execute()
+
+    if (dup_result.count or 0) > 0:
+        raise HTTPException(
+            status_code=409,
+            detail="You already have an active challenge for this workout",
+        )
+
+    # Build challenge row
+    now_iso = datetime.now(timezone.utc).isoformat()
+    challenge_data = {
+        "from_user_id": poster_id,
+        "to_user_id": user_id,
+        "activity_id": activity_id,
+        "workout_name": activity_data.get("workout_name", "Workout"),
+        "workout_data": activity_data.get("workout_data", activity_data),
+        "status": "accepted",
+        "accepted_at": now_iso,
+    }
+
+    result = supabase.table("workout_challenges").insert(challenge_data).execute()
+
+    if not result.data:
+        raise HTTPException(status_code=500, detail="Failed to create challenge")
+
+    challenge_row = result.data[0]
+
+    # Log to ChromaDB
+    try:
+        social_rag = get_social_rag_service()
+        user_result = supabase.table("users").select("name").eq("id", user_id).execute()
+        user_name = user_result.data[0]["name"] if user_result.data else "User"
+        poster_result = supabase.table("users").select("name").eq("id", poster_id).execute()
+        poster_name = poster_result.data[0]["name"] if poster_result.data else "User"
+
+        collection = social_rag.get_social_collection()
+        collection.add(
+            documents=[f"{user_name} accepted a feed challenge from {poster_name} for '{challenge_row['workout_name']}'"],
+            metadatas=[{
+                "user_id": user_id,
+                "from_user_id": poster_id,
+                "challenge_id": challenge_row["id"],
+                "activity_id": activity_id,
+                "interaction_type": "challenge_accepted_from_feed",
+                "created_at": now_iso,
+            }],
+            ids=[f"challenge_feed_{challenge_row['id']}"],
+        )
+    except Exception as e:
+        logger.warning(f"[Challenges] Failed to log feed-accept to ChromaDB: {e}")
+
+    logger.info(f"✅ [Challenges] User {user_id} accepted feed challenge {challenge_row['id']} from activity {activity_id}")
+
+    return WorkoutChallenge(**challenge_row)
+
+
+# ============================================================
+# ACTIVITY LEADERBOARD (all completed challenges for a feed post)
+# NOTE: Must be registered BEFORE /{challenge_id} wildcard route
+# ============================================================
+
+@router.get("/activity/{activity_id}/leaderboard")
+async def get_activity_leaderboard(
+    activity_id: str,
+    current_user: dict = Depends(get_current_user),
+):
+    """
+    Get leaderboard of all completed challenges for a specific activity post.
+
+    Returns users who completed the challenge ordered by whether they beat
+    the original poster's stats.
+
+    Args:
+        activity_id: The activity_feed post ID
+        current_user: Authenticated user
+
+    Returns:
+        List of leaderboard entries with position, user info, stats, did_beat
+    """
+    supabase = get_supabase_client()
+
+    result = supabase.table("workout_challenges").select(
+        "id, to_user_id, challenged_stats, did_beat, completed_at, "
+        "to_user:users!to_user_id(name, avatar_url)"
+    ).eq("activity_id", activity_id).eq(
+        "status", "completed"
+    ).order("did_beat", desc=True).order("completed_at").execute()
+
+    leaderboard = []
+    for idx, row in enumerate(result.data):
+        to_user = row.get("to_user") or {}
+        leaderboard.append({
+            "position": idx + 1,
+            "challenge_id": row["id"],
+            "user_id": row["to_user_id"],
+            "user_name": to_user.get("name"),
+            "user_avatar": to_user.get("avatar_url"),
+            "stats": row.get("challenged_stats"),
+            "did_beat": row.get("did_beat", False),
+            "completed_at": row.get("completed_at"),
+        })
+
+    return {"activity_id": activity_id, "leaderboard": leaderboard, "total": len(leaderboard)}
+
+
+# ============================================================
+# GET SINGLE CHALLENGE (with user joins)
+# NOTE: Wildcard route - must be LAST among GET routes
+# ============================================================
+
+@router.get("/{challenge_id}", response_model=WorkoutChallenge)
+async def get_challenge(
+    challenge_id: str,
+    current_user: dict = Depends(get_current_user),
+):
+    user_id = str(current_user["id"])
+    """
+    Fetch a single challenge with from_user and to_user joins.
+
+    Only participants (challenger or challenged) may view.
+
+    Args:
+        challenge_id: Challenge ID
+        current_user: Authenticated user
+
+    Returns:
+        Challenge data with user info
+    """
+    supabase = get_supabase_client()
+
+    result = supabase.table("workout_challenges").select(
+        "*, from_user:users!from_user_id(name, avatar_url), to_user:users!to_user_id(name, avatar_url)"
+    ).eq("id", challenge_id).execute()
+
+    if not result.data:
+        raise HTTPException(status_code=404, detail="Challenge not found")
+
+    row = result.data[0]
+
+    # Only participants may view
+    if row["from_user_id"] != user_id and row["to_user_id"] != user_id:
+        raise HTTPException(status_code=403, detail="Access denied")
+
+    challenge = WorkoutChallenge(**row)
+    if row.get("from_user"):
+        challenge.from_user_name = row["from_user"].get("name")
+        challenge.from_user_avatar = row["from_user"].get("avatar_url")
+    if row.get("to_user"):
+        challenge.to_user_name = row["to_user"].get("name")
+        challenge.to_user_avatar = row["to_user"].get("avatar_url")
+
+    return challenge

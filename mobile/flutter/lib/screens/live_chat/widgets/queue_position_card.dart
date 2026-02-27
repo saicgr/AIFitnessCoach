@@ -11,14 +11,12 @@ class QueuePositionCard extends StatelessWidget {
   final int position;
   final int estimatedWaitMinutes;
   final VoidCallback onCancel;
-  final VoidCallback? onSimulateConnect;
 
   const QueuePositionCard({
     super.key,
     required this.position,
     required this.estimatedWaitMinutes,
     required this.onCancel,
-    this.onSimulateConnect,
   });
 
   @override
@@ -132,47 +130,24 @@ class QueuePositionCard extends StatelessWidget {
 
           const SizedBox(height: 32),
 
-          // Action buttons
-          Row(
-            children: [
-              // Cancel button
-              Expanded(
-                child: OutlinedButton(
-                  onPressed: () {
-                    HapticService.medium();
-                    onCancel();
-                  },
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: AppColors.error,
-                    side: BorderSide(color: AppColors.error.withOpacity(0.5)),
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  child: const Text('Cancel'),
+          // Cancel button
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton(
+              onPressed: () {
+                HapticService.medium();
+                onCancel();
+              },
+              style: OutlinedButton.styleFrom(
+                foregroundColor: AppColors.error,
+                side: BorderSide(color: AppColors.error.withOpacity(0.5)),
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
                 ),
               ),
-
-              // Demo connect button (for testing)
-              if (onSimulateConnect != null) ...[
-                const SizedBox(width: 12),
-                Expanded(
-                  child: ElevatedButton(
-                    onPressed: onSimulateConnect,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.cyan,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                    child: const Text('Connect Now'),
-                  ),
-                ),
-              ],
-            ],
+              child: const Text('Cancel'),
+            ),
           ),
         ],
       ),

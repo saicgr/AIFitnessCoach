@@ -7,6 +7,9 @@ from typing import Optional, List, Dict, Any
 from supabase import Client
 
 from core.supabase_client import get_supabase, SupabaseManager
+from core.logger import get_logger
+
+logger = get_logger(__name__)
 
 
 class BaseDB:
@@ -66,7 +69,7 @@ class BaseDB:
                 return result.data[0] if result.data else None
             return result.data or []
         except Exception as e:
-            print(f"[{table}] Query error: {e}")
+            logger.error(f"[{table}] Query error: {e}")
             raise
 
     def _build_filtered_query(

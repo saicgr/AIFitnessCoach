@@ -20,7 +20,10 @@ from models.friend_request import (
     FriendRequest, FriendRequestCreate, FriendRequestWithUser,
     FriendRequestStatus, SocialNotificationType,
 )
+from core.logger import get_logger
 from .utils import get_supabase_client
+
+logger = get_logger(__name__)
 
 router = APIRouter(prefix="/friend-requests")
 
@@ -69,7 +72,7 @@ async def create_social_notification(
             }).execute()
     except Exception as e:
         # Don't fail the request if notification fails
-        print(f"Failed to create notification: {e}")
+        logger.error(f"Failed to create notification: {e}")
 
 
 @router.post("", response_model=FriendRequest)
@@ -343,8 +346,8 @@ async def accept_friend_request(
             "connection_type": "friend",
             "status": "active",
         }).execute()
-    except Exception:
-        pass  # May already exist
+    except Exception as e:
+        logger.debug(f"Connection may already exist: {e}")
 
     # Create connection: recipient follows requester
     try:
@@ -354,8 +357,8 @@ async def accept_friend_request(
             "connection_type": "friend",
             "status": "active",
         }).execute()
-    except Exception:
-        pass  # May already exist
+    except Exception as e:
+        logger.debug(f"Connection may already exist: {e}")
 
     # Get recipient's profile for notification
     recipient = supabase.table("users").select("name, avatar_url").eq("id", user_id).single().execute()

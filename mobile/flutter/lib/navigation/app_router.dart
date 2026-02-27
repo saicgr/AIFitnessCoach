@@ -5,12 +5,14 @@ import '../data/models/workout.dart';
 import '../data/models/user.dart' as app_user;
 import '../data/repositories/auth_repository.dart';
 import '../screens/achievements/achievements_screen.dart';
+import '../screens/challenges/challenge_compare_screen.dart';
 import '../screens/auth/stats_welcome_screen.dart';
 import '../screens/auth/sign_in_screen.dart';
 import '../screens/auth/email_sign_in_screen.dart';
 import '../screens/auth/pricing_preview_screen.dart';
 import '../screens/chat/chat_screen.dart';
 import '../screens/features/feature_voting_screen.dart';
+import '../screens/coming_soon/coming_soon_screen.dart';
 import '../screens/home/home_screen.dart';
 import '../screens/home/senior_home_screen.dart';
 import '../screens/hydration/hydration_screen.dart';
@@ -31,7 +33,9 @@ import '../screens/onboarding/weight_projection_screen.dart';
 import '../screens/onboarding/workout_generation_screen.dart';
 import '../screens/profile/profile_screen.dart';
 import '../screens/summaries/weekly_summary_screen.dart';
+import '../data/services/saved_workouts_service.dart';
 import '../screens/social/social_screen.dart';
+import '../screens/social/shared_workout_detail_screen.dart';
 import '../screens/workouts/workouts_screen.dart';
 import '../screens/metrics/metrics_dashboard_screen.dart';
 import '../screens/workout/active_workout_screen_refactored.dart';
@@ -116,17 +120,20 @@ import '../screens/injuries/injury_detail_screen.dart';
 import '../screens/strain_prevention/strain_dashboard_screen.dart';
 import '../screens/strain_prevention/volume_history_screen.dart';
 import '../screens/strain_prevention/report_strain_screen.dart';
+import '../screens/diabetes/diabetes_dashboard_screen.dart';
+import '../screens/plateau/plateau_dashboard_screen.dart';
 import '../screens/settings/senior_fitness_screen.dart';
 import '../screens/settings/progression_pace_screen.dart';
 import '../screens/settings/training_focus_screen.dart';
-import '../screens/settings/beast_mode_screen.dart';
+import '../screens/settings/beast_mode/beast_mode_screen.dart';
 import '../screens/settings/exercise_science_research_screen.dart';
 import '../screens/weekly_plan/weekly_plan_screen.dart';
 import '../screens/hormonal_health/hormonal_health_screen.dart';
 import '../screens/hormonal_health/hormonal_health_settings_screen.dart';
 import '../screens/kegel/kegel_session_screen.dart';
-import '../screens/habits/habit_tracker_screen.dart';
+import '../screens/habits/habits_screen.dart';
 import '../screens/habits/habit_detail_screen.dart';
+import '../screens/wrapped/wrapped_viewer_screen.dart';
 
 /// Listenable for auth, language, and accessibility state changes to trigger router refresh
 class _AuthStateNotifier extends ChangeNotifier {
@@ -994,7 +1001,12 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/exercise-detail',
         builder: (context, state) {
-          final exercise = state.extra as WorkoutExercise?;
+          WorkoutExercise? exercise;
+          if (state.extra is WorkoutExercise) {
+            exercise = state.extra as WorkoutExercise;
+          } else if (state.extra is Map<String, dynamic>) {
+            exercise = WorkoutExercise.fromJson(state.extra as Map<String, dynamic>);
+          }
           if (exercise == null) {
             return Scaffold(
               body: Center(
@@ -1022,15 +1034,27 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/active-workout',
         builder: (context, state) {
-          // Handle both Workout object and Map<String, dynamic> (from serialization)
+          // Handle Workout object, Map with challenge data, or Map<String, dynamic> (from serialization)
           Workout? workout;
+          String? challengeId;
+          Map<String, dynamic>? challengeData;
+
           if (state.extra is Workout) {
             workout = state.extra as Workout;
           } else if (state.extra is Map<String, dynamic>) {
-            try {
-              workout = Workout.fromJson(state.extra as Map<String, dynamic>);
-            } catch (e) {
-              debugPrint('❌ [Router] Failed to parse workout from Map: $e');
+            final map = state.extra as Map<String, dynamic>;
+            // Check if it's a challenge map with embedded Workout object
+            if (map.containsKey('workout') && map['workout'] is Workout) {
+              workout = map['workout'] as Workout;
+              challengeId = map['challengeId'] as String?;
+              challengeData = map['challengeData'] as Map<String, dynamic>?;
+            } else {
+              // Legacy: try parsing as Workout JSON
+              try {
+                workout = Workout.fromJson(map);
+              } catch (e) {
+                debugPrint('❌ [Router] Failed to parse workout from Map: $e');
+              }
             }
           }
           if (workout == null) {
@@ -1087,7 +1111,37 @@ final routerProvider = Provider<GoRouter>((ref) {
             );
           }
           // Use video-based workout screen with set tracking overlay
-          return ActiveWorkoutScreen(workout: workout);
+          return ActiveWorkoutScreen(
+            workout: workout,
+            challengeId: challengeId,
+            challengeData: challengeData,
+          );
+        },
+      ),
+
+      // Challenge compare screen (side-by-side results)
+      GoRoute(
+        path: '/challenge-compare',
+        builder: (context, state) {
+          final challengeId = state.extra as String;
+          return ChallengeCompareScreen(challengeId: challengeId);
+        },
+      ),
+
+      // Shared workout detail (from social feed)
+      GoRoute(
+        path: '/shared-workout',
+        builder: (context, state) {
+          final data = state.extra as Map<String, dynamic>? ?? {};
+          return SharedWorkoutDetailScreen(
+            activityId: data['activityId'] as String? ?? '',
+            currentUserId: data['currentUserId'] as String? ?? '',
+            posterName: data['posterName'] as String? ?? '',
+            posterAvatar: data['posterAvatar'] as String?,
+            activityType: data['activityType'] as String? ?? 'workout_shared',
+            activityData: data['activityData'] as Map<String, dynamic>? ?? {},
+            savedWorkoutsService: data['savedWorkoutsService'] as SavedWorkoutsService,
+          );
         },
       ),
 
@@ -1243,6 +1297,12 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/features',
         builder: (context, state) => const FeatureVotingScreen(),
+      ),
+
+      // Coming Soon
+      GoRoute(
+        path: '/coming-soon',
+        builder: (context, state) => const ComingSoonScreen(),
       ),
 
       // Library (Exercise database, programs) - Full screen outside shell
@@ -1640,43 +1700,46 @@ final routerProvider = Provider<GoRouter>((ref) {
         ),
       ),
 
-      // Injuries List - View and manage all injuries
+      // Diabetes Dashboard
+      GoRoute(
+        path: '/diabetes',
+        builder: (context, state) => const DiabetesDashboardScreen(),
+      ),
+
+      // Injuries
       GoRoute(
         path: '/injuries',
         builder: (context, state) => const InjuriesListScreen(),
       ),
-
-      // Report Injury - Report a new injury
       GoRoute(
         path: '/injuries/report',
         builder: (context, state) => const ReportInjuryScreen(),
       ),
-
-      // Injury Detail - View details of a specific injury
       GoRoute(
         path: '/injuries/:id',
-        builder: (context, state) {
-          final injuryId = state.pathParameters['id']!;
-          return InjuryDetailScreen(injuryId: injuryId);
-        },
+        builder: (context, state) => InjuryDetailScreen(
+          injuryId: state.pathParameters['id']!,
+        ),
       ),
 
-      // Strain Prevention Dashboard - Volume tracking and strain prevention
+      // Strain Prevention
       GoRoute(
         path: '/strain-prevention',
         builder: (context, state) => const StrainDashboardScreen(),
       ),
-
-      // Volume History - Historical volume data
       GoRoute(
-        path: '/strain-prevention/history',
+        path: '/strain-prevention/volume-history',
         builder: (context, state) => const VolumeHistoryScreen(),
       ),
-
-      // Report Strain - Report muscle strain or fatigue
       GoRoute(
         path: '/strain-prevention/report',
         builder: (context, state) => const ReportStrainScreen(),
+      ),
+
+      // Plateau Detection Dashboard
+      GoRoute(
+        path: '/plateau',
+        builder: (context, state) => const PlateauDashboardScreen(),
       ),
 
       // Senior Fitness Settings - Age-adapted workout settings (for users 60+)
@@ -1795,7 +1858,7 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/habits',
         pageBuilder: (context, state) => CustomTransitionPage(
           key: state.pageKey,
-          child: const HabitTrackerScreen(),
+          child: const HabitsScreen(),
           transitionDuration: const Duration(milliseconds: 400),
           reverseTransitionDuration: const Duration(milliseconds: 300),
           transitionsBuilder: (context, animation, secondaryAnimation, child) {
@@ -1814,6 +1877,30 @@ final routerProvider = Provider<GoRouter>((ref) {
             );
           },
         ),
+      ),
+      // Fitness Wrapped - Monthly recap story viewer
+      GoRoute(
+        path: '/wrapped/:periodKey',
+        pageBuilder: (context, state) {
+          final periodKey = state.pathParameters['periodKey']!;
+          return CustomTransitionPage(
+            key: state.pageKey,
+            child: WrappedViewerScreen(periodKey: periodKey),
+            transitionDuration: const Duration(milliseconds: 500),
+            reverseTransitionDuration: const Duration(milliseconds: 300),
+            transitionsBuilder: (context, animation, secondaryAnimation, child) {
+              return FadeTransition(
+                opacity: animation,
+                child: ScaleTransition(
+                  scale: Tween<double>(begin: 0.95, end: 1.0).animate(
+                    CurvedAnimation(parent: animation, curve: Curves.easeOutCubic),
+                  ),
+                  child: child,
+                ),
+              );
+            },
+          );
+        },
       ),
     ],
     errorBuilder: (context, state) => Scaffold(

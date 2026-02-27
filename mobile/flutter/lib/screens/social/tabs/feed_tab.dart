@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../core/constants/app_colors.dart';
 import '../../../core/theme/theme_colors.dart';
 import '../../../widgets/app_loading.dart';
 import '../../../widgets/app_snackbar.dart';
@@ -12,6 +13,8 @@ import '../../../widgets/main_shell.dart';
 import '../widgets/activity_card.dart';
 import '../widgets/empty_state.dart';
 import '../widgets/create_post_sheet.dart';
+import '../widgets/comments_sheet.dart';
+import '../widgets/activity_share_sheet.dart';
 
 /// Activity Feed Tab - Shows recent workouts, achievements, and PRs from friends
 class FeedTab extends ConsumerStatefulWidget {
@@ -23,6 +26,7 @@ class FeedTab extends ConsumerStatefulWidget {
 
 class _FeedTabState extends ConsumerState<FeedTab> {
   final ScrollController _scrollController = ScrollController();
+  bool _showMyPostsOnly = false;
 
   @override
   void dispose() {
@@ -36,7 +40,6 @@ class _FeedTabState extends ConsumerState<FeedTab> {
     final authState = ref.watch(authStateProvider);
     final userId = authState.user?.id;
     final isAdmin = ref.watch(isAdminProvider);
-
     // If no userId, show error
     if (userId == null) {
       return SocialEmptyState(
@@ -69,69 +72,159 @@ class _FeedTabState extends ConsumerState<FeedTab> {
           },
           data: (feedData) {
             // Backend returns 'items' key for activity list
-            final activities = (feedData['items'] as List?) ?? [];
+            final allActivities = (feedData['items'] as List?) ?? [];
+
+            // Apply My Posts filter
+            final activities = _showMyPostsOnly
+                ? allActivities.where((a) => (a as Map<String, dynamic>)['user_id'] == userId).toList()
+                : allActivities;
             final hasActivities = activities.isNotEmpty;
 
-            if (!hasActivities) {
-              return SocialEmptyState(
-                icon: Icons.people_outline_rounded,
-                title: 'No Activity Yet',
-                description: 'Complete workouts to see them shared here!\nFollow friends to see their workouts too.',
-                actionLabel: 'Create Post',
-                onAction: () => _showCreatePostSheet(userId),
-              );
-            }
-
-            return CustomScrollView(
-              controller: _scrollController,
-              slivers: [
-                // Activity Feed List
-                SliverPadding(
-                  padding: const EdgeInsets.all(16),
-                  sliver: SliverList(
-                    delegate: SliverChildBuilderDelegate(
-                      (context, index) {
-                        final activity = activities[index] as Map<String, dynamic>;
-
-                        return Padding(
-                          padding: const EdgeInsets.only(bottom: 16),
-                          child: ActivityCard(
-                            activityId: activity['id'] as String? ?? '',
-                            currentUserId: userId,
-                            userName: activity['user_name'] as String? ?? 'User',
-                            userAvatar: activity['user_avatar'] as String?,
-                            activityType: activity['activity_type'] as String? ?? 'workout_completed',
-                            activityData: activity['activity_data'] as Map<String, dynamic>? ?? {},
-                            timestamp: _parseTimestamp(activity['created_at']),
-                            reactionCount: activity['reaction_count'] as int? ?? 0,
-                            commentCount: activity['comment_count'] as int? ?? 0,
-                            hasUserReacted: activity['user_has_reacted'] as bool? ?? false,
-                            userReactionType: activity['user_reaction_type'] as String?,
-                            onReact: (reactionType) => _handleReaction(activity['id'] as String, reactionType, userId),
-                            onComment: () => _handleComment(activity['id'] as String),
-                            isPinned: activity['is_pinned'] as bool? ?? false,
-                            isCurrentUserAdmin: isAdmin,
-                            onPin: isAdmin ? () => _handlePinToggle(activity['id'] as String, activity['is_pinned'] as bool? ?? false, userId) : null,
+            return RefreshIndicator(
+              onRefresh: () async {
+                HapticFeedback.mediumImpact();
+                ref.invalidate(activityFeedProvider(userId));
+                // Wait for the provider to complete
+                await ref.read(activityFeedProvider(userId).future);
+              },
+              color: ref.colors(context).accent,
+              child: !hasActivities && allActivities.isEmpty
+                  ? ListView(
+                      children: [
+                        SizedBox(
+                          height: MediaQuery.of(context).size.height * 0.6,
+                          child: SocialEmptyState(
+                            icon: Icons.people_outline_rounded,
+                            title: 'No Activity Yet',
+                            description: 'Complete workouts to see them shared here!\nFollow friends to see their workouts too.',
+                            actionLabel: 'Create Post',
+                            onAction: () => _showCreatePostSheet(userId),
                           ),
-                        );
-                      },
-                      childCount: activities.length,
-                    ),
-                  ),
-                ),
+                        ),
+                      ],
+                    )
+                  : CustomScrollView(
+                      controller: _scrollController,
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      slivers: [
+                        // My Posts / All toggle
+                        SliverToBoxAdapter(
+                          child: Padding(
+                            padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+                            child: SegmentedButton<bool>(
+                              segments: const [
+                                ButtonSegment(
+                                  value: false,
+                                  label: Text('All'),
+                                  icon: Icon(Icons.public_rounded, size: 18),
+                                ),
+                                ButtonSegment(
+                                  value: true,
+                                  label: Text('My Posts'),
+                                  icon: Icon(Icons.person_rounded, size: 18),
+                                ),
+                              ],
+                              selected: {_showMyPostsOnly},
+                              onSelectionChanged: (value) {
+                                HapticFeedback.selectionClick();
+                                setState(() => _showMyPostsOnly = value.first);
+                              },
+                              style: ButtonStyle(
+                                visualDensity: VisualDensity.compact,
+                              ),
+                            ),
+                          ),
+                        ),
 
-                // Bottom spacing for floating nav bar and FAB
-                const SliverToBoxAdapter(
-                  child: SizedBox(height: 120),
-                ),
-              ],
+                        // Empty state for filtered view
+                        if (!hasActivities && _showMyPostsOnly)
+                          SliverFillRemaining(
+                            child: Center(
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    Icons.post_add_rounded,
+                                    size: 48,
+                                    color: AppColors.textMuted.withValues(alpha: 0.5),
+                                  ),
+                                  const SizedBox(height: 12),
+                                  Text(
+                                    'No posts yet',
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w600,
+                                      color: AppColors.textMuted,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    'Create your first post!',
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      color: AppColors.textMuted.withValues(alpha: 0.7),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+
+                        // Activity Feed List
+                        if (hasActivities)
+                          SliverPadding(
+                            padding: const EdgeInsets.all(16),
+                            sliver: SliverList(
+                              delegate: SliverChildBuilderDelegate(
+                                (context, index) {
+                                  final activity = activities[index] as Map<String, dynamic>;
+                                  final activityId = activity['id'] as String? ?? '';
+                                  final postUserId = activity['user_id'] as String? ?? '';
+
+                                  return Padding(
+                                    padding: const EdgeInsets.only(bottom: 16),
+                                    child: ActivityCard(
+                                      activityId: activityId,
+                                      currentUserId: userId,
+                                      postUserId: postUserId,
+                                      userName: activity['user_name'] as String? ?? 'User',
+                                      userAvatar: activity['user_avatar'] as String?,
+                                      activityType: activity['activity_type'] as String? ?? 'workout_completed',
+                                      activityData: activity['activity_data'] as Map<String, dynamic>? ?? {},
+                                      timestamp: _parseTimestamp(activity['created_at']),
+                                      reactionCount: activity['reaction_count'] as int? ?? 0,
+                                      commentCount: activity['comment_count'] as int? ?? 0,
+                                      hasUserReacted: activity['user_has_reacted'] as bool? ?? false,
+                                      userReactionType: activity['user_reaction_type'] as String?,
+                                      onReact: (reactionType) => _handleReaction(activityId, reactionType, userId),
+                                      onComment: () => _handleComment(activityId),
+                                      onDelete: postUserId == userId ? () => _handleDelete(activityId, userId) : null,
+                                      onEdit: postUserId == userId ? () => _handleEdit(activity, userId) : null,
+                                      onShare: () => _handleShare(activity),
+                                      isPinned: activity['is_pinned'] as bool? ?? false,
+                                      isCurrentUserAdmin: isAdmin,
+                                      onPin: isAdmin ? () => _handlePinToggle(activityId, activity['is_pinned'] as bool? ?? false, userId) : null,
+                                    ),
+                                  );
+                                },
+                                childCount: activities.length,
+                              ),
+                            ),
+                          ),
+
+                        // Bottom spacing for floating nav bar and FAB
+                        const SliverToBoxAdapter(
+                          child: SizedBox(height: 120),
+                        ),
+                      ],
+                    ),
             );
           },
         ),
 
         // Floating Action Button for creating posts
         Positioned(
-          bottom: 80, // Above the bottom nav bar
+          bottom: MediaQuery.of(context).padding.bottom + 72,
           right: 16,
           child: Builder(
             builder: (context) {
@@ -189,34 +282,40 @@ class _FeedTabState extends ConsumerState<FeedTab> {
     try {
       final socialService = ref.read(socialServiceProvider);
 
-      // Toggle reaction: if already reacted with this type, remove it; otherwise add/update
-      final activity = ref.read(activityFeedProvider(userId)).value?['items']
-          ?.firstWhere((a) => a['id'] == activityId, orElse: () => null);
-
-      if (activity != null &&
-          activity['user_has_reacted'] == true &&
-          activity['user_reaction_type'] == reactionType) {
-        // Remove reaction
+      // 'remove' is a special signal from the UI to remove the reaction
+      if (reactionType == 'remove') {
         await socialService.removeReaction(
           userId: userId,
           activityId: activityId,
         );
-        debugPrint('Removed reaction: $reactionType');
+        debugPrint('Removed reaction');
       } else {
-        // Add or update reaction
-        await socialService.addReaction(
-          userId: userId,
-          activityId: activityId,
-          reactionType: reactionType,
-        );
-        debugPrint('Added reaction: $reactionType');
+        // Toggle: if already reacted with same type, remove; otherwise add/update
+        final activity = ref.read(activityFeedProvider(userId)).value?['items']
+            ?.firstWhere((a) => a['id'] == activityId, orElse: () => null);
+
+        if (activity != null &&
+            activity['user_has_reacted'] == true &&
+            activity['user_reaction_type'] == reactionType) {
+          await socialService.removeReaction(
+            userId: userId,
+            activityId: activityId,
+          );
+          debugPrint('Toggled off reaction: $reactionType');
+        } else {
+          await socialService.addReaction(
+            userId: userId,
+            activityId: activityId,
+            reactionType: reactionType,
+          );
+          debugPrint('Added reaction: $reactionType');
+        }
       }
 
       // Refresh the feed to show updated reaction counts
       ref.invalidate(activityFeedProvider(userId));
     } catch (e) {
       debugPrint('Error handling reaction: $e');
-      // Show error snackbar
       if (mounted) {
         AppSnackBar.error(context, 'Failed to update reaction. Please try again.');
       }
@@ -225,13 +324,69 @@ class _FeedTabState extends ConsumerState<FeedTab> {
 
   void _handleComment(String activityId) {
     HapticFeedback.lightImpact();
-    // TODO: Show comment bottom sheet
-    debugPrint('Comment on activity: $activityId');
+    ref.read(floatingNavBarVisibleProvider.notifier).state = false;
+    showGlassSheet(
+      context: context,
+      useRootNavigator: true,
+      builder: (context) => CommentsSheet(activityId: activityId),
+    ).then((_) {
+      ref.read(floatingNavBarVisibleProvider.notifier).state = true;
+    });
+  }
 
-    // Placeholder: Show coming soon message
-    if (mounted) {
-      AppSnackBar.info(context, 'Comments feature coming soon!');
+  Future<void> _handleDelete(String activityId, String userId) async {
+    HapticFeedback.mediumImpact();
+
+    try {
+      final socialService = ref.read(socialServiceProvider);
+      await socialService.deleteActivity(userId: userId, activityId: activityId);
+
+      if (mounted) {
+        AppSnackBar.success(context, 'Post deleted');
+      }
+
+      ref.invalidate(activityFeedProvider(userId));
+    } catch (e) {
+      debugPrint('Error deleting post: $e');
+      if (mounted) {
+        AppSnackBar.error(context, 'Failed to delete post');
+      }
     }
+  }
+
+  void _handleEdit(Map<String, dynamic> activity, String userId) {
+    HapticFeedback.lightImpact();
+    ref.read(floatingNavBarVisibleProvider.notifier).state = false;
+    showGlassSheet(
+      context: context,
+      useRootNavigator: true,
+      builder: (context) => CreatePostSheet(existingActivity: activity),
+    ).then((result) {
+      ref.read(floatingNavBarVisibleProvider.notifier).state = true;
+      if (result == true) {
+        ref.invalidate(activityFeedProvider(userId));
+      }
+    });
+  }
+
+  void _handleShare(Map<String, dynamic> activity) {
+    HapticFeedback.lightImpact();
+    ref.read(floatingNavBarVisibleProvider.notifier).state = false;
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      useRootNavigator: true,
+      barrierColor: Colors.black.withValues(alpha: 0.2),
+      builder: (context) => ActivityShareSheet(
+        userName: activity['user_name'] as String? ?? 'Someone',
+        activityType: activity['activity_type'] as String? ?? 'manual_post',
+        activityData: activity['activity_data'] as Map<String, dynamic>? ?? {},
+        timestamp: _parseTimestamp(activity['created_at']),
+      ),
+    ).then((_) {
+      ref.read(floatingNavBarVisibleProvider.notifier).state = true;
+    });
   }
 
   Future<void> _handlePinToggle(String activityId, bool currentlyPinned, String userId) async {

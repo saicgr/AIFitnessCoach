@@ -3,6 +3,8 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
+import '../../data/services/api_client.dart';
+import 'strain_dashboard_screen.dart';
 
 class ReportStrainScreen extends ConsumerStatefulWidget {
   const ReportStrainScreen({super.key});
@@ -27,9 +29,41 @@ class _ReportStrainScreenState extends ConsumerState<ReportStrainScreen> {
     if (_selectedMuscles.isEmpty) { ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Select at least one muscle group'))); return; }
     setState(() => _isSubmitting = true);
     try {
-      await Future.delayed(const Duration(seconds: 1));
-      if (mounted) { context.pop(); ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Strain report submitted'))); }
-    } catch (e) { if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e'))); } finally { if (mounted) setState(() => _isSubmitting = false); }
+      final apiClient = ref.read(apiClientProvider);
+      final userId = await apiClient.getUserId();
+      if (userId == null) throw Exception('Not authenticated');
+
+      // Determine severity from fatigue + soreness
+      String severity;
+      final avgLevel = (_fatigueLevel + _sorenessLevel) / 2;
+      if (avgLevel <= 3) {
+        severity = 'mild';
+      } else if (avgLevel <= 6) {
+        severity = 'moderate';
+      } else {
+        severity = 'severe';
+      }
+
+      // Submit one strain report per selected muscle group
+      for (final muscle in _selectedMuscles) {
+        await apiClient.post(
+          '/strain-prevention/record-strain',
+          data: {
+            'user_id': userId,
+            'body_part': muscle.toLowerCase(),
+            'muscle_group': muscle.toLowerCase(),
+            'severity': severity,
+            'pain_level': _sorenessLevel,
+            if (_notesController.text.isNotEmpty) 'notes': _notesController.text,
+          },
+        );
+      }
+
+      // Refresh the dashboard
+      ref.read(strainDashboardProvider.notifier).loadData();
+
+      if (mounted) { context.pop(); ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Strain report submitted'), backgroundColor: AppColors.success)); }
+    } catch (e) { if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e'), backgroundColor: AppColors.error)); } finally { if (mounted) setState(() => _isSubmitting = false); }
   }
 
   @override

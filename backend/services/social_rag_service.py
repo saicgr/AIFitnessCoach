@@ -15,6 +15,9 @@ from typing import List, Dict, Optional
 from uuid import uuid4
 
 from core.chroma_cloud import get_chroma_cloud_client
+from core.logger import get_logger
+
+logger = get_logger(__name__)
 
 
 class SocialRAGService:
@@ -80,7 +83,7 @@ class SocialRAGService:
             ids=[f"activity_{activity_id}"],
         )
 
-        print(f"✅ Added activity {activity_id} to social RAG")
+        logger.info(f"Added activity {activity_id} to social RAG")
 
     def add_reaction_to_rag(
         self,
@@ -124,16 +127,16 @@ class SocialRAGService:
             ids=[f"reaction_{reaction_id}"],
         )
 
-        print(f"✅ Added reaction {reaction_id} to social RAG")
+        logger.info(f"Added reaction {reaction_id} to social RAG")
 
     def remove_reaction_from_rag(self, reaction_id: str) -> None:
         """Remove a reaction from ChromaDB when deleted."""
         try:
             collection = self.get_social_collection()
             collection.delete(ids=[f"reaction_{reaction_id}"])
-            print(f"✅ Removed reaction {reaction_id} from social RAG")
+            logger.info(f"Removed reaction {reaction_id} from social RAG")
         except Exception as e:
-            print(f"⚠️ Failed to remove reaction {reaction_id}: {e}")
+            logger.warning(f"Failed to remove reaction {reaction_id}: {e}")
 
     def get_user_recent_activities(
         self,
@@ -250,9 +253,9 @@ class SocialRAGService:
         try:
             collection = self.get_social_collection()
             collection.delete(ids=[f"activity_{activity_id}"])
-            print(f"✅ Removed activity {activity_id} from social RAG")
+            logger.info(f"Removed activity {activity_id} from social RAG")
         except Exception as e:
-            print(f"⚠️ Failed to remove activity {activity_id}: {e}")
+            logger.warning(f"Failed to remove activity {activity_id}: {e}")
 
     def _build_activity_document(
         self,

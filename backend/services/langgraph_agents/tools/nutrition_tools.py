@@ -14,6 +14,7 @@ from langchain_core.tools import tool
 from core.supabase_db import get_supabase_db
 from core.logger import get_logger
 from core.nutrition_bias import apply_calorie_bias, get_user_calorie_bias
+from services.media_job_service import get_media_job_service
 from .base import get_vision_service, run_async_in_sync
 
 logger = get_logger(__name__)
@@ -172,6 +173,544 @@ def analyze_food_image(
             "action": "analyze_food_image",
             "user_id": user_id,
             "message": f"Failed to analyze food image: {str(e)}"
+        }
+
+
+@tool
+def analyze_multi_food_images(
+    user_id: str,
+    s3_keys: List[str],
+    mime_types: List[str],
+    user_message: Optional[str] = None,
+    analysis_mode: str = "auto",
+) -> Dict[str, Any]:
+    """
+    Analyze multiple food images for nutrition estimation.
+    Supports plates, buffets, and restaurant menus.
+
+    Args:
+        user_id: User's UUID
+        s3_keys: List of S3 object keys for the images
+        mime_types: List of MIME types for each image
+        user_message: Optional user context
+        analysis_mode: "auto", "plate", "buffet", or "menu"
+
+    Returns:
+        Nutrition analysis with food items, recommendations, and traffic-light ratings
+    """
+    logger.info(f"Tool: Analyzing {len(s3_keys)} food images for user {user_id}, mode={analysis_mode}")
+
+    # Buffet and menu modes are dispatched to background queue (expensive OCR/analysis)
+    if analysis_mode in ("buffet", "menu"):
+        try:
+            from services.media_job_service import get_media_job_service
+            from services.media_job_runner import run_media_job
+            import asyncio
+
+            job_service = get_media_job_service()
+            params = {"analysis_mode": analysis_mode}
+            if user_message:
+                params["user_context"] = user_message
+
+            job_id = job_service.create_job(
+                user_id=user_id,
+                job_type="food_analysis",
+                s3_keys=s3_keys,
+                mime_types=mime_types,
+                media_types=["image"] * len(s3_keys),
+                params=params,
+            )
+
+            # Kick off the background job
+            try:
+                loop = asyncio.get_event_loop()
+                if loop.is_running():
+                    loop.create_task(run_media_job(job_id))
+            except RuntimeError as e:
+                logger.debug(f"No running loop for async job: {e}")
+
+            logger.info(f"Dispatched async food_analysis ({analysis_mode}) job {job_id} for user {user_id}")
+            return {
+                "success": True,
+                "async_job": True,
+                "action": "analyze_multi_food_images",
+                "job_id": job_id,
+                "user_id": user_id,
+                "message": f"Analyzing the {analysis_mode} in the background. Results will be ready shortly.",
+            }
+        except Exception as e:
+            logger.warning(f"Failed to dispatch async food analysis, falling back to sync: {e}")
+            # Fall through to synchronous path
+
+    try:
+        db = get_supabase_db()
+        vision_service = get_vision_service()
+
+        # Get user from DB for nutrition targets
+        user = db.get_user(user_id)
+        nutrition_context = None
+        if user:
+            targets = {
+                "daily_calorie_target": user.get("daily_calorie_target"),
+                "daily_protein_target_g": user.get("daily_protein_target_g"),
+                "daily_carbs_target_g": user.get("daily_carbs_target_g"),
+                "daily_fat_target_g": user.get("daily_fat_target_g"),
+            }
+            targets = {k: v for k, v in targets.items() if v is not None}
+
+            # Get today's nutrition summary for remaining budget
+            today = datetime.now().strftime("%Y-%m-%d")
+            daily_summary = db.get_daily_nutrition_summary(user_id, today)
+
+            if targets:
+                nutrition_context = {"targets": targets}
+                if daily_summary and daily_summary.get("total_calories"):
+                    consumed = {
+                        "calories_consumed": daily_summary.get("total_calories", 0),
+                        "protein_consumed_g": daily_summary.get("total_protein_g", 0),
+                        "carbs_consumed_g": daily_summary.get("total_carbs_g", 0),
+                        "fat_consumed_g": daily_summary.get("total_fat_g", 0),
+                    }
+                    remaining = {}
+                    if targets.get("daily_calorie_target"):
+                        remaining["calories"] = targets["daily_calorie_target"] - consumed["calories_consumed"]
+                    if targets.get("daily_protein_target_g"):
+                        remaining["protein_g"] = targets["daily_protein_target_g"] - consumed["protein_consumed_g"]
+                    nutrition_context["consumed_today"] = consumed
+                    nutrition_context["remaining"] = remaining
+
+        # Call vision service for multi-image analysis
+        analysis_result = run_async_in_sync(
+            vision_service.analyze_food_from_s3_keys(
+                s3_keys=s3_keys,
+                mime_types=mime_types,
+                user_context=user_message,
+                analysis_mode=analysis_mode,
+                nutrition_context=nutrition_context,
+            ),
+            timeout=90,
+        )
+
+        if not analysis_result:
+            return {
+                "success": False,
+                "action": "analyze_multi_food_images",
+                "user_id": user_id,
+                "message": "Failed to analyze food images - no results returned",
+            }
+
+        actual_mode = analysis_result.get("analysis_type", analysis_mode)
+
+        # For plate mode: apply calorie bias and auto-save
+        if actual_mode == "plate":
+            # Apply calorie estimate bias
+            bias = run_async_in_sync(get_user_calorie_bias(user_id), timeout=10)
+            if bias != 0:
+                analysis_result = apply_calorie_bias(analysis_result, bias)
+
+            # Auto-save to food_log
+            food_items = analysis_result.get("food_items", [])
+            if food_items:
+                meal_type = analysis_result.get("meal_type", "snack")
+                total_calories = analysis_result.get("total_calories", 0)
+                protein_g = analysis_result.get("total_protein_g", 0) or analysis_result.get("protein_g", 0)
+                carbs_g = analysis_result.get("total_carbs_g", 0) or analysis_result.get("carbs_g", 0)
+                fat_g = analysis_result.get("total_fat_g", 0) or analysis_result.get("fat_g", 0)
+                fiber_g = analysis_result.get("total_fiber_g", 0) or analysis_result.get("fiber_g", 0)
+                health_score = analysis_result.get("health_score", 5)
+                ai_feedback = analysis_result.get("feedback", "")
+
+                food_log = db.create_food_log(
+                    user_id=user_id,
+                    meal_type=meal_type,
+                    food_items=food_items,
+                    total_calories=total_calories,
+                    protein_g=protein_g,
+                    carbs_g=carbs_g,
+                    fat_g=fat_g,
+                    fiber_g=fiber_g,
+                    health_score=health_score,
+                    ai_feedback=ai_feedback,
+                )
+                analysis_result["food_log_id"] = food_log.get("id") if food_log else None
+
+            # Format plate mode message
+            food_list = ", ".join([
+                f"{item.get('name', 'Unknown')} ({item.get('amount', '')})"
+                for item in food_items
+            ])
+            message = (
+                f"**{analysis_result.get('meal_type', 'Meal').title()} Logged!**\n\n"
+                f"**Food Items:** {food_list}\n\n"
+                f"**Nutrition:**\n"
+                f"- Calories: {analysis_result.get('total_calories', 0)} kcal\n"
+                f"- Protein: {analysis_result.get('total_protein_g', 0)}g\n"
+                f"- Carbs: {analysis_result.get('total_carbs_g', 0)}g\n"
+                f"- Fat: {analysis_result.get('total_fat_g', 0)}g\n\n"
+                f"**Health Score:** {analysis_result.get('health_score', 5)}/10\n\n"
+                f"**Coach Feedback:** {analysis_result.get('feedback', '')}"
+            )
+
+        elif actual_mode == "buffet":
+            # Format buffet mode message (do NOT auto-log)
+            dishes = analysis_result.get("dishes", [])
+            suggested_plate = analysis_result.get("suggested_plate", {})
+            tips = analysis_result.get("tips", [])
+
+            message = "**Buffet Analysis**\n\n"
+            message += f"Found {len(dishes)} dishes:\n\n"
+            for dish in dishes:
+                rating_emoji = {"green": "+", "yellow": "~", "red": "-"}.get(dish.get("rating", "yellow"), "~")
+                message += f"[{rating_emoji}] **{dish.get('name', 'Unknown')}** - {dish.get('calories', 0)} kcal ({dish.get('serving_description', '')})\n"
+                message += f"    {dish.get('rating_reason', '')}\n"
+
+            if suggested_plate and suggested_plate.get("items"):
+                message += "\n**Suggested Plate:**\n"
+                for item in suggested_plate["items"]:
+                    message += f"- {item.get('name', '')} ({item.get('serving', '')}): {item.get('calories', 0)} kcal\n"
+                message += f"\nTotal: {suggested_plate.get('total_calories', 0)} kcal, {suggested_plate.get('total_protein_g', 0):.1f}g protein\n"
+
+            if tips:
+                message += "\n**Tips:**\n"
+                for tip in tips:
+                    message += f"- {tip}\n"
+
+        elif actual_mode == "menu":
+            # Format menu mode message (do NOT auto-log)
+            sections = analysis_result.get("sections", [])
+            recommended = analysis_result.get("recommended_order", {})
+            tips = analysis_result.get("tips", [])
+            restaurant = analysis_result.get("restaurant_name")
+
+            message = f"**Menu Analysis{f' - {restaurant}' if restaurant else ''}**\n\n"
+            for section in sections:
+                message += f"**{section.get('section_name', 'Section')}:**\n"
+                for dish in section.get("dishes", []):
+                    rating_emoji = {"green": "+", "yellow": "~", "red": "-"}.get(dish.get("rating", "yellow"), "~")
+                    price_str = f" ({dish.get('price', '')})" if dish.get("price") else ""
+                    message += f"  [{rating_emoji}] {dish.get('name', 'Unknown')}{price_str} - {dish.get('calories', 0)} kcal\n"
+                message += "\n"
+
+            if recommended and recommended.get("items"):
+                message += "**Recommended Order:**\n"
+                for item in recommended["items"]:
+                    message += f"- {item.get('name', '')}: {item.get('calories', 0)} kcal\n"
+                message += f"\nTotal: {recommended.get('total_calories', 0)} kcal, {recommended.get('total_protein_g', 0):.1f}g protein\n"
+
+            if tips:
+                message += "\n**Tips:**\n"
+                for tip in tips:
+                    message += f"- {tip}\n"
+        else:
+            message = json.dumps(analysis_result, indent=2)
+
+        return {
+            "success": True,
+            "action": "analyze_multi_food_images",
+            "analysis_type": actual_mode,
+            "user_id": user_id,
+            "result": analysis_result,
+            "message": message,
+        }
+
+    except Exception as e:
+        logger.error(f"Analyze multi food images failed: {e}")
+        return {
+            "success": False,
+            "action": "analyze_multi_food_images",
+            "user_id": user_id,
+            "message": f"Failed to analyze food images: {str(e)}",
+        }
+
+
+@tool
+def parse_app_screenshot(
+    user_id: str,
+    s3_keys: List[str] = None,
+    mime_types: List[str] = None,
+    image_base64: str = None,
+    user_message: str = None,
+) -> Dict[str, Any]:
+    """
+    Parse a screenshot from a nutrition app (MyFitnessPal, Cronometer, etc.).
+    Extracts food items, calories, macros via OCR and saves to food log.
+    Use when user sends a screenshot of a nutrition/fitness tracking app.
+
+    Args:
+        user_id: The user's ID (UUID string)
+        s3_keys: List of S3 object keys for the screenshot images
+        mime_types: List of MIME types for each image
+        image_base64: Base64 encoded image data (alternative to s3_keys)
+        user_message: Optional context from the user
+
+    Returns:
+        Result dict with parsed nutrition data and saved food log
+    """
+    logger.info(f"Tool: Parsing app screenshot for user {user_id}")
+
+    try:
+        db = get_supabase_db()
+        vision_service = get_vision_service()
+
+        # Resolve image source
+        s3_key = s3_keys[0] if s3_keys else None
+        mime_type = mime_types[0] if mime_types else "image/jpeg"
+
+        # Analyze the screenshot
+        analysis_result = run_async_in_sync(
+            vision_service.analyze_app_screenshot(
+                image_base64=image_base64,
+                s3_key=s3_key,
+                mime_type=mime_type,
+                user_context=user_message,
+            ),
+            timeout=60,
+        )
+
+        if not analysis_result or not analysis_result.get("food_items"):
+            return {
+                "success": False,
+                "action": "parse_app_screenshot",
+                "user_id": user_id,
+                "message": "Could not extract food entries from the screenshot. Please try a clearer image.",
+            }
+
+        # Apply calorie bias
+        bias = run_async_in_sync(get_user_calorie_bias(user_id), timeout=10)
+        if bias != 0:
+            analysis_result = apply_calorie_bias(analysis_result, bias)
+
+        # Extract nutrition data
+        meal_type = analysis_result.get("meal_type", "snack")
+        food_items = analysis_result.get("food_items", [])
+        total_calories = analysis_result.get("total_calories", 0)
+        protein_g = analysis_result.get("total_protein_g", 0) or analysis_result.get("protein_g", 0)
+        carbs_g = analysis_result.get("total_carbs_g", 0) or analysis_result.get("carbs_g", 0)
+        fat_g = analysis_result.get("total_fat_g", 0) or analysis_result.get("fat_g", 0)
+        fiber_g = analysis_result.get("total_fiber_g", 0) or analysis_result.get("fiber_g", 0)
+        health_score = analysis_result.get("health_score", 5)
+        ai_feedback = analysis_result.get("feedback", "")
+        source_app = analysis_result.get("source_app", "unknown")
+
+        # Save to database
+        food_log = db.create_food_log(
+            user_id=user_id,
+            meal_type=meal_type,
+            food_items=food_items,
+            total_calories=total_calories,
+            protein_g=protein_g,
+            carbs_g=carbs_g,
+            fat_g=fat_g,
+            fiber_g=fiber_g,
+            health_score=health_score,
+            ai_feedback=ai_feedback,
+        )
+
+        food_log_id = food_log.get("id") if food_log else None
+
+        # Get daily summary
+        today = datetime.now().strftime("%Y-%m-%d")
+        daily_summary = db.get_daily_nutrition_summary(user_id, today)
+
+        # Format response
+        food_list = ", ".join([
+            f"{item.get('name', 'Unknown')} ({item.get('amount', '')})"
+            for item in food_items
+        ])
+
+        message = (
+            f"**Screenshot Imported from {source_app.title()}!**\n\n"
+            f"**Food Items:** {food_list}\n\n"
+            f"**Nutrition:**\n"
+            f"- Calories: {total_calories} kcal\n"
+            f"- Protein: {protein_g}g\n"
+            f"- Carbs: {carbs_g}g\n"
+            f"- Fat: {fat_g}g\n"
+            f"- Fiber: {fiber_g}g\n\n"
+            f"**Health Score:** {health_score}/10\n\n"
+            f"**Coach Feedback:** {ai_feedback}"
+        )
+
+        if daily_summary and daily_summary.get("total_calories"):
+            message += (
+                f"\n\n**Today's Total:**\n"
+                f"- Calories: {daily_summary.get('total_calories', 0)} kcal\n"
+                f"- Protein: {daily_summary.get('total_protein_g', 0):.1f}g\n"
+                f"- Carbs: {daily_summary.get('total_carbs_g', 0):.1f}g\n"
+                f"- Fat: {daily_summary.get('total_fat_g', 0):.1f}g"
+            )
+
+        return {
+            "success": True,
+            "action": "parse_app_screenshot",
+            "user_id": user_id,
+            "food_log_id": food_log_id,
+            "meal_type": meal_type,
+            "food_items": food_items,
+            "total_calories": total_calories,
+            "protein_g": protein_g,
+            "carbs_g": carbs_g,
+            "fat_g": fat_g,
+            "fiber_g": fiber_g,
+            "health_score": health_score,
+            "source_app": source_app,
+            "daily_summary": daily_summary,
+            "message": message,
+        }
+
+    except Exception as e:
+        logger.error(f"Parse app screenshot failed: {e}")
+        return {
+            "success": False,
+            "action": "parse_app_screenshot",
+            "user_id": user_id,
+            "message": f"Failed to parse app screenshot: {str(e)}",
+        }
+
+
+@tool
+def parse_nutrition_label(
+    user_id: str,
+    s3_keys: List[str] = None,
+    mime_types: List[str] = None,
+    image_base64: str = None,
+    servings_consumed: float = 1.0,
+    user_message: str = None,
+) -> Dict[str, Any]:
+    """
+    Parse a nutrition facts label from food packaging.
+    Reads per-serving macros, multiplies by servings_consumed, and saves to food log.
+    Use when user sends a photo of a nutrition label on packaging.
+
+    Args:
+        user_id: The user's ID (UUID string)
+        s3_keys: List of S3 object keys for the label images
+        mime_types: List of MIME types for each image
+        image_base64: Base64 encoded image data (alternative to s3_keys)
+        servings_consumed: Number of servings eaten (default 1.0)
+        user_message: Optional context from the user
+
+    Returns:
+        Result dict with parsed nutrition data and saved food log
+    """
+    logger.info(f"Tool: Parsing nutrition label for user {user_id} ({servings_consumed} servings)")
+
+    try:
+        db = get_supabase_db()
+        vision_service = get_vision_service()
+
+        # Resolve image source
+        s3_key = s3_keys[0] if s3_keys else None
+        mime_type = mime_types[0] if mime_types else "image/jpeg"
+
+        # Analyze the nutrition label
+        analysis_result = run_async_in_sync(
+            vision_service.analyze_nutrition_label(
+                image_base64=image_base64,
+                s3_key=s3_key,
+                mime_type=mime_type,
+                servings_consumed=servings_consumed,
+                user_context=user_message,
+            ),
+            timeout=60,
+        )
+
+        if not analysis_result or not analysis_result.get("food_items"):
+            return {
+                "success": False,
+                "action": "parse_nutrition_label",
+                "user_id": user_id,
+                "message": "Could not read the nutrition label. Please try a clearer photo.",
+            }
+
+        # Apply calorie bias
+        bias = run_async_in_sync(get_user_calorie_bias(user_id), timeout=10)
+        if bias != 0:
+            analysis_result = apply_calorie_bias(analysis_result, bias)
+
+        # Extract nutrition data
+        meal_type = analysis_result.get("meal_type", "snack")
+        food_items = analysis_result.get("food_items", [])
+        total_calories = analysis_result.get("total_calories", 0)
+        protein_g = analysis_result.get("total_protein_g", 0) or analysis_result.get("protein_g", 0)
+        carbs_g = analysis_result.get("total_carbs_g", 0) or analysis_result.get("carbs_g", 0)
+        fat_g = analysis_result.get("total_fat_g", 0) or analysis_result.get("fat_g", 0)
+        fiber_g = analysis_result.get("total_fiber_g", 0) or analysis_result.get("fiber_g", 0)
+        health_score = analysis_result.get("health_score", 5)
+        ai_feedback = analysis_result.get("feedback", "")
+        product_name = analysis_result.get("product_name", "unknown")
+        serving_size = analysis_result.get("serving_size", "unknown")
+
+        # Save to database
+        food_log = db.create_food_log(
+            user_id=user_id,
+            meal_type=meal_type,
+            food_items=food_items,
+            total_calories=total_calories,
+            protein_g=protein_g,
+            carbs_g=carbs_g,
+            fat_g=fat_g,
+            fiber_g=fiber_g,
+            health_score=health_score,
+            ai_feedback=ai_feedback,
+        )
+
+        food_log_id = food_log.get("id") if food_log else None
+
+        # Get daily summary
+        today = datetime.now().strftime("%Y-%m-%d")
+        daily_summary = db.get_daily_nutrition_summary(user_id, today)
+
+        # Format response
+        servings_str = f" ({servings_consumed} servings)" if servings_consumed != 1.0 else ""
+        message = (
+            f"**Nutrition Label Logged: {product_name.title()}{servings_str}**\n\n"
+            f"**Serving Size:** {serving_size}\n\n"
+            f"**Nutrition:**\n"
+            f"- Calories: {total_calories} kcal\n"
+            f"- Protein: {protein_g}g\n"
+            f"- Carbs: {carbs_g}g\n"
+            f"- Fat: {fat_g}g\n"
+            f"- Fiber: {fiber_g}g\n\n"
+            f"**Health Score:** {health_score}/10\n\n"
+            f"**Coach Feedback:** {ai_feedback}"
+        )
+
+        if daily_summary and daily_summary.get("total_calories"):
+            message += (
+                f"\n\n**Today's Total:**\n"
+                f"- Calories: {daily_summary.get('total_calories', 0)} kcal\n"
+                f"- Protein: {daily_summary.get('total_protein_g', 0):.1f}g\n"
+                f"- Carbs: {daily_summary.get('total_carbs_g', 0):.1f}g\n"
+                f"- Fat: {daily_summary.get('total_fat_g', 0):.1f}g"
+            )
+
+        return {
+            "success": True,
+            "action": "parse_nutrition_label",
+            "user_id": user_id,
+            "food_log_id": food_log_id,
+            "meal_type": meal_type,
+            "food_items": food_items,
+            "total_calories": total_calories,
+            "protein_g": protein_g,
+            "carbs_g": carbs_g,
+            "fat_g": fat_g,
+            "fiber_g": fiber_g,
+            "health_score": health_score,
+            "product_name": product_name,
+            "serving_size": serving_size,
+            "daily_summary": daily_summary,
+            "message": message,
+        }
+
+    except Exception as e:
+        logger.error(f"Parse nutrition label failed: {e}")
+        return {
+            "success": False,
+            "action": "parse_nutrition_label",
+            "user_id": user_id,
+            "message": f"Failed to parse nutrition label: {str(e)}",
         }
 
 

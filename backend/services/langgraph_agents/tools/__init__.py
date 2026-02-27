@@ -5,6 +5,7 @@ This package contains modular tool definitions organized by domain:
 - workout_tools: Exercise and workout modification tools
 - injury_tools: Injury reporting and management tools
 - nutrition_tools: Food analysis and nutrition tracking tools
+- form_tools: Exercise form analysis and comparison tools
 """
 
 from .workout_tools import (
@@ -26,12 +27,20 @@ from .injury_tools import (
 
 from .nutrition_tools import (
     analyze_food_image,
+    analyze_multi_food_images,
+    parse_app_screenshot,
+    parse_nutrition_label,
     get_nutrition_summary,
     get_recent_meals,
     log_food_from_text,
 )
 
-from .base import get_vision_service
+from .form_tools import (
+    check_exercise_form,
+    compare_exercise_form,
+)
+
+from .base import get_vision_service, get_form_analysis_service
 
 # Registry of all available tools
 ALL_TOOLS = [
@@ -50,9 +59,15 @@ ALL_TOOLS = [
     update_injury_status,
     # Nutrition tools
     analyze_food_image,
+    analyze_multi_food_images,
+    parse_app_screenshot,
+    parse_nutrition_label,
     get_nutrition_summary,
     get_recent_meals,
     log_food_from_text,
+    # Form analysis tools
+    check_exercise_form,
+    compare_exercise_form,
 ]
 
 # Tool name to function mapping
@@ -74,11 +89,18 @@ __all__ = [
     "update_injury_status",
     # Nutrition tools
     "analyze_food_image",
+    "analyze_multi_food_images",
+    "parse_app_screenshot",
+    "parse_nutrition_label",
     "get_nutrition_summary",
     "get_recent_meals",
     "log_food_from_text",
+    # Form analysis tools
+    "check_exercise_form",
+    "compare_exercise_form",
     # Utilities
     "get_vision_service",
+    "get_form_analysis_service",
     # Registry
     "ALL_TOOLS",
     "TOOLS_MAP",

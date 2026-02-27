@@ -213,26 +213,26 @@ def _import_profile(db, user_id: str, profile: Dict[str, str]) -> None:
     if profile.get("height_cm"):
         try:
             update_data["height_cm"] = float(profile["height_cm"])
-        except:
-            pass
+        except (ValueError, TypeError) as e:
+            logger.debug(f"Failed to parse height_cm: {e}")
 
     if profile.get("weight_kg"):
         try:
             update_data["weight_kg"] = float(profile["weight_kg"])
-        except:
-            pass
+        except (ValueError, TypeError) as e:
+            logger.debug(f"Failed to parse weight_kg: {e}")
 
     if profile.get("target_weight_kg"):
         try:
             update_data["target_weight_kg"] = float(profile["target_weight_kg"])
-        except:
-            pass
+        except (ValueError, TypeError) as e:
+            logger.debug(f"Failed to parse target_weight_kg: {e}")
 
     if profile.get("age"):
         try:
             update_data["age"] = int(profile["age"])
-        except:
-            pass
+        except (ValueError, TypeError) as e:
+            logger.debug(f"Failed to parse age: {e}")
 
     if profile.get("gender"):
         update_data["gender"] = profile["gender"]
@@ -264,8 +264,8 @@ def _import_body_metrics(db, user_id: str, metrics: List[Dict[str, str]]) -> int
                         # Map body_fat_percent to body_fat_measured
                         db_field = "body_fat_measured" if field == "body_fat_percent" else field
                         data[db_field] = float(m[field])
-                    except:
-                        pass
+                    except (ValueError, TypeError) as e:
+                        logger.debug(f"Failed to parse metric {field}: {e}")
 
             db.create_user_metrics(data)
             count += 1
@@ -288,7 +288,8 @@ def _import_workouts(db, user_id: str, workouts: List[Dict[str, str]]) -> tuple:
             exercises_json = w.get("exercises_json", "[]")
             try:
                 exercises = json.loads(exercises_json)
-            except:
+            except (json.JSONDecodeError, TypeError) as e:
+                logger.debug(f"Failed to parse exercises JSON: {e}")
                 exercises = []
 
             data = {
@@ -308,7 +309,8 @@ def _import_workouts(db, user_id: str, workouts: List[Dict[str, str]]) -> tuple:
             if w.get("duration_minutes"):
                 try:
                     data["duration_minutes"] = int(w["duration_minutes"])
-                except:
+                except (ValueError, TypeError) as e:
+                    logger.debug(f"Failed to parse duration: {e}")
                     data["duration_minutes"] = 45
 
             result = db.create_workout(data)
@@ -347,8 +349,8 @@ def _import_workout_logs(db, user_id: str, logs: List[Dict[str, str]], workout_i
             if log.get("total_time_seconds"):
                 try:
                     data["total_time_seconds"] = int(log["total_time_seconds"])
-                except:
-                    pass
+                except (ValueError, TypeError) as e:
+                    logger.debug(f"Failed to parse total_time: {e}")
 
             result = db.create_workout_log(data)
             if result:
@@ -386,26 +388,27 @@ def _import_exercise_sets(db, user_id: str, sets: List[Dict[str, str]], log_id_m
             if s.get("set_number"):
                 try:
                     data["set_number"] = int(s["set_number"])
-                except:
+                except (ValueError, TypeError) as e:
+                    logger.debug(f"Failed to parse set_number: {e}")
                     data["set_number"] = 1
 
             if s.get("reps_completed"):
                 try:
                     data["reps_completed"] = int(s["reps_completed"])
-                except:
-                    pass
+                except (ValueError, TypeError) as e:
+                    logger.debug(f"Failed to parse reps: {e}")
 
             if s.get("weight_kg"):
                 try:
                     data["weight_kg"] = float(s["weight_kg"])
-                except:
-                    pass
+                except (ValueError, TypeError) as e:
+                    logger.debug(f"Failed to parse set weight: {e}")
 
             if s.get("rpe"):
                 try:
                     data["rpe"] = float(s["rpe"])
-                except:
-                    pass
+                except (ValueError, TypeError) as e:
+                    logger.debug(f"Failed to parse RPE: {e}")
 
             data["is_completed"] = s.get("is_completed", "true").lower() == "true"
 
@@ -435,20 +438,20 @@ def _import_strength_records(db, user_id: str, records: List[Dict[str, str]]) ->
             if r.get("weight_kg"):
                 try:
                     data["weight_kg"] = float(r["weight_kg"])
-                except:
-                    pass
+                except (ValueError, TypeError) as e:
+                    logger.debug(f"Failed to parse record weight: {e}")
 
             if r.get("reps"):
                 try:
                     data["reps"] = int(r["reps"])
-                except:
-                    pass
+                except (ValueError, TypeError) as e:
+                    logger.debug(f"Failed to parse record reps: {e}")
 
             if r.get("estimated_1rm"):
                 try:
                     data["estimated_1rm"] = float(r["estimated_1rm"])
-                except:
-                    pass
+                except (ValueError, TypeError) as e:
+                    logger.debug(f"Failed to parse estimated 1RM: {e}")
 
             data["is_pr"] = r.get("is_pr", "false").lower() == "true"
 
@@ -496,8 +499,8 @@ def _import_achievements(db, user_id: str, achievements: List[Dict[str, str]]) -
             if a.get("trigger_value"):
                 try:
                     data["trigger_value"] = float(a["trigger_value"])
-                except:
-                    pass
+                except (ValueError, TypeError) as e:
+                    logger.debug(f"Failed to parse trigger_value: {e}")
 
             db.client.table("user_achievements").insert(data).execute()
             count += 1

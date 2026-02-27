@@ -469,6 +469,7 @@ class WorkoutRepository {
     List<String>? focusAreas,
     String? scheduledDate,  // YYYY-MM-DD format for specific date generation
     bool? skipComeback,
+    String? gymProfileId,
   }) async* {
     debugPrint('🚀 [Workout] Starting streaming workout generation for $userId');
     final startTime = DateTime.now();
@@ -512,6 +513,7 @@ class WorkoutRepository {
           if (focusAreas != null && focusAreas.isNotEmpty) 'focus_areas': focusAreas,
           if (scheduledDate != null) 'scheduled_date': scheduledDate,
           if (skipComeback != null) 'skip_comeback': skipComeback,
+          if (gymProfileId != null) 'gym_profile_id': gymProfileId,
         },
         options: Options(
           responseType: ResponseType.stream,

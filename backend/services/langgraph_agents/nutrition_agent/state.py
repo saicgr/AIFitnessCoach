@@ -16,6 +16,7 @@ class NutritionAgentState(TypedDict):
     user_profile: Optional[Dict[str, Any]]
     conversation_history: List[Dict[str, str]]
     image_base64: Optional[str]  # Base64 encoded image for food analysis
+    media_refs: Optional[List[Dict[str, Any]]]  # Multi-media references for batch analysis
 
     # AI personality settings
     ai_settings: Optional[Dict[str, Any]]
@@ -41,6 +42,9 @@ class NutritionAgentState(TypedDict):
     action_data: Optional[Dict[str, Any]]
     rag_context_used: bool
     similar_questions: List[str]
+
+    # Media classification (from media classifier)
+    media_content_type: Optional[str]
 
     # Error handling
     error: Optional[str]

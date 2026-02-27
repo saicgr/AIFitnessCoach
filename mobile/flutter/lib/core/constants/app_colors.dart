@@ -45,6 +45,11 @@ class AppColors {
   static const Color red = Color(0xFFEF4444);
   static const Color pink = Color(0xFFF472B6);
 
+  // Macro nutrient colors (consistent app-wide)
+  static const Color macroProtein = Color(0xFFA855F7); // Purple
+  static const Color macroCarbs = Color(0xFF06B6D4);   // Vivid cyan
+  static const Color macroFat = Color(0xFFF97316);     // Orange
+
   // Surface colors
   static const Color surface = Color(0xFF121212);
   static const Color background = Color(0xFF000000);
@@ -232,6 +237,11 @@ class AppColorsLight {
   static const Color coral = Color(0xFFDC2626);
   static const Color magenta = Color(0xFFDB2777);
   static const Color green = Color(0xFF16A34A);
+
+  // Macro nutrient colors (consistent app-wide)
+  static const Color macroProtein = Color(0xFF9333EA); // Purple (darker for light bg)
+  static const Color macroCarbs = Color(0xFF0891B2);   // Vivid cyan (darker for light bg)
+  static const Color macroFat = Color(0xFFEA580C);     // Orange (darker for light bg)
 
   // Semantic Colors
   static const Color success = Color(0xFF16A34A);

@@ -9,40 +9,26 @@
 > **Note:** Guest Mode (try without account) - Coming Soon based on user feedback
 
 ### Tier Pricing
-| Tier | Monthly | Yearly | One-Time |
-|------|---------|--------|----------|
-| **Free** | $0 | - | - |
-| **Premium** | $5.99 | $47.99 (33% off) | - |
-| **Premium Plus** | $9.99 | $79.99 (33% off) | - |
-| **Lifetime** | - | - | $99.99 |
+| Tier | Monthly | Yearly |
+|------|---------|--------|
+| **Free** | $0 | — |
+| **Premium** | $5.99 | $39.99 |
 
 ### Feature Availability by Tier
 
-| Feature Category | Free | Premium | Premium Plus | Lifetime |
-|------------------|:----:|:-------:|:------------:|:--------:|
-| **Workout Generation** | 4/month | Daily | Unlimited | Unlimited |
-| **Edit Workouts** | - | Yes | Yes | Yes |
-| **Save Favorites** | - | 5 | Unlimited | Unlimited |
-| **Custom Templates** | - | - | Yes | Yes |
-| **Food Photo Scans** | - | 5/day | 10/day | 10/day |
-| **Full Macro Tracking** | - | Yes | Yes | Yes |
-| **Exercise Library** | 50 | Unlimited | Unlimited | Unlimited |
-| **Progress Tracking** | 7 days | Full | Full | Full |
-| **Fasting Tracker** | Yes | Yes | Yes | Yes |
-| **Streak Tracking** | Yes | Yes | Yes | Yes |
-| **1RM Calculator** | - | Yes | Yes | Yes |
-| **PR Tracking** | - | Yes | Yes | Yes |
-| **Strength Standards** | - | - | Yes | Yes |
-| **Social Sharing** | - | Yes | Yes | Yes |
-| **Friends/Leaderboards** | - | - | Yes | Yes |
-| **Export (CSV/PDF)** | - | Yes | Yes | Yes |
-| **Priority Support** | - | - | Yes | Yes |
-| **Ads** | Yes | No | No | No |
+| Feature Category | Free | Premium ($5.99/mo) |
+|---|---|---|
+| AI Coach Chat | Unlimited | Unlimited |
+| Workout Generation | 2/month | Unlimited |
+| Food Photo Scans | 1/day | Unlimited |
+| Form Video Analysis | — | Unlimited |
+| Text-to-Calories | 3/day | Unlimited |
+| AI Meal Planning | — | Unlimited |
+| Everything else | Full access | Full access |
 
 ### Tier Badges Used in This Document
 - `[FREE]` - Available to all users including free tier
-- `[PREMIUM]` - Requires Premium subscription or higher
-- `[PREMIUM PLUS]` - Requires Premium Plus or Lifetime subscription
+- `[PREMIUM]` - Requires Premium subscription or Lifetime
 
 > **Note:** Most features are available to all tiers with quantity/time limits. See section-specific tier tables for details on limits per feature category. Features without limits are generally FREE to all users.
 
@@ -3177,6 +3163,30 @@ A comprehensive feature allowing users to set weekly challenges like "How many p
 | 29 | Workout Modification | Modify today's workout via chat | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ | Fully Implemented | User | Active Workout |
 | 30 | Nutrition Logging via Chat | Log meals by describing in chat | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ | Fully Implemented | User | Backend system |
 
+### Chat Enhancements (February 2026)
+
+| # | Feature | Impl | Comp | BE Loc | FE Loc |
+|---|---------|:----:|------|--------|--------|
+| 1 | Chat Quick Actions (10 Pills) | ✅ | Unique | — | `screens/chat/widgets/chat_quick_pills.dart` |
+| 2 | Chat Features Info Sheet | ✅ | Unique | — | `screens/chat/widgets/chat_features_info_sheet.dart` |
+| 3 | Enhanced Chat Empty State | ✅ | Unique | — | `screens/chat/widgets/enhanced_empty_state.dart` |
+| 4 | Food Analysis Result Card | ✅ | Unique | — | `screens/chat/widgets/food_analysis_result_card.dart` |
+| 5 | Media Picker + Preview Strip | ✅ | Fb✅ | — | `screens/chat/widgets/media_picker_helper.dart` |
+
+### Form Video Analysis (February 2026)
+
+| # | Feature | Impl | Comp | BE Loc | FE Loc |
+|---|---------|:----:|------|--------|--------|
+| 1 | Single Video Form Check | ✅ | Fb✅ | `services/form_analysis_service.py` | `screens/chat/widgets/form_check_result_card.dart` |
+| 2 | Multi-Video Form Comparison | ✅ | Unique | `services/form_analysis_service.py` | `screens/chat/widgets/form_comparison_result_card.dart` |
+| 3 | Async Media Job Processing | ✅ | Unique | `services/media_job_service.py` | — |
+
+### Fitness Wrapped (February 2026)
+
+| # | Feature | Impl | Comp | BE Loc | FE Loc |
+|---|---------|:----:|------|--------|--------|
+| 1 | Monthly Fitness Wrapped | ✅ | Unique | `api/v1/wrapped.py`, `services/wrapped_service.py` | `screens/wrapped/` |
+
 ### 8. Nutrition Tracking (99 Features)
 
 **Tier Availability:**
@@ -3571,6 +3581,15 @@ Track daily habits beyond workouts - like "no DoorDash," "eat healthy," "walk 10
 - `conversations` - Stores conversation metadata
 - `conversation_participants` - Links users to conversations
 - `direct_messages` - Stores individual messages
+
+### Social Enhancements (February 2026)
+
+| # | Feature | Impl | Comp | BE Loc | FE Loc |
+|---|---------|:----:|------|--------|--------|
+| 1 | Shared Workout Detail Screen | ✅ | Hv✅ | — | `screens/social/shared_workout_detail_screen.dart` |
+| 2 | Activity Share System (5 templates) | ✅ | Hv✅Gr✅ | — | `screens/social/widgets/activity_share_card.dart` |
+| 3 | Social Comments Sheet | ✅ | Hv✅Gr✅ | — | `screens/social/widgets/comments_sheet.dart` |
+| 4 | Schedule Workout from Feed | ✅ | Unique | — | `screens/social/widgets/schedule_workout_dialog.dart` |
 
 ### 13. Achievements & Gamification (38 Features)
 
@@ -6050,4 +6069,29 @@ Full context logging for analytics and AI personalization:
 
 ---
 
-*Last Updated: January 2026*
+### Infrastructure (February 2026)
+
+| # | Feature | Impl | Comp | BE Loc | FE Loc |
+|---|---------|:----:|------|--------|--------|
+| 1 | Beast Mode API | ✅ | Unique | `api/v1/beast_mode.py` | — |
+| 2 | Unified Notifications Provider | ✅ | Unique | — | `data/providers/unified_notifications_provider.dart` |
+| 3 | Smart Media Classifier | ✅ | Unique | `services/vision_service.py` | — |
+
+---
+
+## Coming Soon
+
+Features planned or in early development:
+
+| Feature | Status | Notes |
+|---------|--------|-------|
+| Offline Mode | ❌ Coming Soon | On-device AI (Gemma), pre-cached workouts, exercise video downloads, background sync, rule-based generation. Settings UI shows placeholder. |
+| Event-Based Workouts | 🔄 Placeholder UI | Train for marathons, obstacle races. FE: `screens/profile/widgets/event_based_workout_card.dart` |
+| App Screenshot Parsing | ❌ Classifier only | Upload MyFitnessPal screenshots, AI extracts nutrition. Classifier routes but no OCR tool yet. |
+| Apple Sign-In | ❌ Not started | iOS native authentication |
+| Floating Music Mini Player | ❌ Not started | Spotify/Apple Music/YouTube Music controls during workouts |
+| Apple Watch Companion | ❌ Not started | Workout tracking on watchOS (WearOS companion exists) |
+
+---
+
+*Last Updated: February 2026*

@@ -18,6 +18,9 @@ from core.config import get_settings
 from core.auth import get_current_user
 from core.exceptions import safe_internal_error
 from core.rate_limiter import limiter
+from core.logger import get_logger
+
+logger = get_logger(__name__)
 
 PRESIGNED_URL_EXPIRATION = 3600  # 1 hour
 
@@ -145,8 +148,8 @@ def _presign_photo(photo: dict) -> dict:
                 Params={'Bucket': settings.s3_bucket_name, 'Key': storage_key},
                 ExpiresIn=PRESIGNED_URL_EXPIRATION,
             )
-        except Exception:
-            pass  # keep original URL as fallback
+        except Exception as e:
+            logger.debug(f"Presigned URL generation failed: {e}")
     return photo
 
 
@@ -192,7 +195,7 @@ async def delete_photo_from_s3(storage_key: str) -> bool:
         )
         return True
     except Exception as e:
-        print(f"Error deleting from S3: {e}")
+        logger.error(f"Error deleting from S3: {e}")
         return False
 
 

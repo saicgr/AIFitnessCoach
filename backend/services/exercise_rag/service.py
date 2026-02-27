@@ -306,7 +306,8 @@ class ExerciseRAGService:
 
         try:
             _count = self.collection.count()
-        except Exception:
+        except Exception as e:
+            logger.warning(f"Failed to get collection count: {e}")
             _count = "unknown"
         logger.info(f"Exercise RAG initialized with {_count} exercises")
 
@@ -415,8 +416,8 @@ class ExerciseRAGService:
                 try:
                     try:
                         self.collection.delete(ids=ids)
-                    except Exception:
-                        pass
+                    except Exception as e:
+                        logger.debug(f"ChromaDB batch delete: {e}")
 
                     self.collection.add(
                         ids=ids,
@@ -1925,7 +1926,8 @@ Select exactly {count} UNIQUE exercises that are SAFE for this user."""
         try:
             c = self.collection.count()
             total = c if c >= 0 else -1
-        except Exception:
+        except Exception as e:
+            logger.warning(f"Failed to get exercise count: {e}")
             total = -1
         return {
             "total_exercises": total,

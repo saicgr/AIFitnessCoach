@@ -690,7 +690,7 @@ IMPORTANT:
             return response.data or []
         except Exception as e:
             logger.error(f"❌ [RecipeSuggestion] Error getting cuisines: {e}")
-            # Return hardcoded fallback
+            logger.warning("Using hardcoded fallback cuisine list - DB query failed")
             return [
                 {"code": "indian", "name": "Indian", "region": "South Asia"},
                 {"code": "italian", "name": "Italian", "region": "Europe"},

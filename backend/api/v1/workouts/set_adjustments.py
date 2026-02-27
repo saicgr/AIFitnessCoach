@@ -711,8 +711,8 @@ async def get_user_set_adjustment_patterns(
                     time_of_day["evening"] += 1
                 else:
                     time_of_day["night"] += 1
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug(f"Failed to parse adjustment time: {e}")
 
         # Build frequently adjusted exercises list (sorted by count)
         frequently_adjusted = []
@@ -1202,7 +1202,8 @@ async def get_fatigue_history(
                     timestamp = datetime.fromisoformat(
                         row["created_at"].replace("Z", "+00:00")
                     ) if row.get("created_at") else datetime.now()
-                except Exception:
+                except Exception as e:
+                    logger.debug(f"Failed to parse fatigue timestamp: {e}")
                     timestamp = datetime.now()
 
                 fatigue_events.append(

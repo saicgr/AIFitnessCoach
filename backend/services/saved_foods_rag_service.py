@@ -9,7 +9,10 @@ This service stores saved food embeddings in ChromaDB for:
 
 from typing import List, Dict, Any, Optional
 from core.chroma_cloud import get_chroma_cloud_client
+from core.logger import get_logger
 from services.gemini_service import GeminiService
+
+logger = get_logger(__name__)
 
 
 SAVED_FOODS_COLLECTION_NAME = "saved_foods"
@@ -28,9 +31,10 @@ class SavedFoodsRAGService:
         self.collection = self.chroma_client.get_saved_foods_collection()
         try:
             _count = self.collection.count()
-        except Exception:
+        except Exception as e:
+            logger.warning(f"Failed to get collection count: {e}")
             _count = "unknown"
-        print(f"SavedFoodsRAG initialized with {_count} documents")
+        logger.info(f"SavedFoodsRAG initialized with {_count} documents")
 
     async def save_food(
         self,
@@ -89,9 +93,10 @@ class SavedFoodsRAGService:
 
         try:
             _count = self.collection.count()
-        except Exception:
+        except Exception as e:
+            logger.warning(f"Failed to get collection count: {e}")
             _count = "unknown"
-        print(f"Saved food to ChromaDB: {saved_food_id[:8]}... (total: {_count})")
+        logger.info(f"Saved food to ChromaDB: {saved_food_id[:8]}... (total: {_count})")
         return saved_food_id
 
     async def search_similar(
@@ -172,10 +177,10 @@ class SavedFoodsRAGService:
         """
         try:
             self.collection.delete(ids=[saved_food_id])
-            print(f"Deleted saved food from ChromaDB: {saved_food_id[:8]}...")
+            logger.info(f"Deleted saved food from ChromaDB: {saved_food_id[:8]}...")
             return True
         except Exception as e:
-            print(f"Failed to delete saved food from ChromaDB: {e}")
+            logger.error(f"Failed to delete saved food from ChromaDB: {e}")
             return False
 
     async def update_food(
@@ -220,7 +225,8 @@ class SavedFoodsRAGService:
         try:
             c = self.collection.count()
             return c if c >= 0 else -1
-        except Exception:
+        except Exception as e:
+            logger.warning(f"Failed to get saved foods count: {e}")
             return -1
 
     def get_user_food_count(self, user_id: str) -> int:
@@ -231,7 +237,8 @@ class SavedFoodsRAGService:
                 include=[]
             )
             return len(results.get("ids", []))
-        except Exception:
+        except Exception as e:
+            logger.warning(f"Failed to get user food count: {e}")
             return 0
 
 

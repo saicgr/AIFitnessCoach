@@ -21,6 +21,8 @@ from ..tools import (
     reschedule_workout,
     delete_workout,
     generate_quick_workout,
+    check_exercise_form,
+    compare_exercise_form,
 )
 from ..personality import build_personality_prompt, sanitize_coach_name
 from models.chat import AISettings
@@ -40,19 +42,25 @@ WORKOUT_TOOLS = [
     reschedule_workout,
     delete_workout,
     generate_quick_workout,
+    check_exercise_form,
+    compare_exercise_form,
 ]
 
 # Workout expertise base prompt template (coach name is inserted dynamically)
 WORKOUT_BASE_PROMPT_TEMPLATE = """You are {coach_name}, an expert AI personal trainer and workout coach. You specialize in:
 - Creating and modifying workout plans
 - Explaining proper exercise form and technique
+- Analyzing exercise form from video/image uploads
+- Comparing form across multiple videos to track progression
 - Providing exercise alternatives and progressions
 - Helping users schedule and organize their training
 - Motivating and pushing users to reach their potential
 
 CAPABILITIES:
 1. **With Tools**: Modify workouts, add/remove exercises, change intensity, reschedule
-2. **Without Tools**: Explain exercises, suggest progressions, answer form questions, provide workout advice
+2. **Form Analysis**: Analyze uploaded video/image of exercises to check form, count reps, and provide corrections
+3. **Form Comparison**: Compare form across multiple videos to track improvements or fatigue
+4. **Without Tools**: Explain exercises, suggest progressions, answer form questions, provide workout advice
 
 When you DON'T need tools:
 - "How do I do a proper squat?"
@@ -67,6 +75,8 @@ When you DO need tools:
 - "Make my workout harder"
 - "Move tomorrow's workout to Friday"
 - "Change this to a back workout"
+- User sends a video/image -> Use check_exercise_form to analyze
+- User sends multiple videos -> Use compare_exercise_form to compare
 """
 
 
@@ -142,6 +152,19 @@ def should_use_tools(state: WorkoutAgentState) -> Literal["agent", "respond"]:
     SIMPLE: Always give the LLM access to tools. Let the AI decide.
     The LLM is smart enough to know when to modify workouts vs just answer questions.
     """
+    # If media is attached, always route to agent for form analysis tool
+    if state.get("media_ref"):
+        logger.info("[Workout Router] -> agent (media attached, form analysis)")
+        return "agent"
+
+    # If multiple media refs attached, always route to agent for comparison
+    if state.get("media_refs"):
+        media_refs = state["media_refs"]
+        video_refs = [r for r in media_refs if r.get("media_type") == "video"]
+        if len(video_refs) > 1:
+            logger.info("[Workout Router] -> agent (multi-video, form comparison)")
+            return "agent"
+
     # Always route to agent - let the LLM decide whether to use tools
     logger.info("[Workout Router] -> agent (LLM decides)")
     return "agent"
@@ -187,6 +210,52 @@ async def workout_agent_node(state: WorkoutAgentState) -> Dict[str, Any]:
     if state.get("rag_context_formatted"):
         context_parts.append(f"\nPrevious context:\n{state['rag_context_formatted']}")
 
+    # Media context for form analysis (single media)
+    media_ref = state.get("media_ref")
+    if media_ref:
+        media_type = media_ref.get("media_type", "media")
+        context_parts.append(f"\nHAS_MEDIA: The user has uploaded a {media_type} for form analysis.")
+        context_parts.append(f"S3 key: {media_ref.get('s3_key')}")
+        context_parts.append(f"MIME type: {media_ref.get('mime_type')}")
+        context_parts.append(f"Media type: {media_type}")
+        if media_ref.get("duration_seconds"):
+            context_parts.append(f"Duration: {media_ref['duration_seconds']:.1f}s")
+        context_parts.append("You MUST call check_exercise_form to analyze their form.")
+
+    # Multi-media context for form comparison
+    media_refs = state.get("media_refs")
+    has_multi_videos = False
+    if media_refs:
+        video_refs = [r for r in media_refs if r.get("media_type") == "video"]
+        if len(video_refs) > 1:
+            has_multi_videos = True
+            context_parts.append(f"\nHAS_MULTI_VIDEOS: The user has uploaded {len(video_refs)} videos for form comparison.")
+            for i, vref in enumerate(video_refs):
+                dur = f" ({vref['duration_seconds']:.1f}s)" if vref.get("duration_seconds") else ""
+                context_parts.append(f"  Video {i+1}: s3_key={vref.get('s3_key')}, mime={vref.get('mime_type')}{dur}")
+            context_parts.append("You MUST call compare_exercise_form to compare their form across videos.")
+
+    # Beast mode configuration
+    beast_config = state.get("beast_mode_config")
+    if beast_config and beast_config.get("enabled"):
+        beast_parts = ["\nBEAST MODE ACTIVE - User's custom training preferences:"]
+        if beast_config.get("target_sets"):
+            beast_parts.append(f"- Target sets per exercise: {beast_config['target_sets']}")
+        if beast_config.get("target_reps"):
+            beast_parts.append(f"- Target reps per set: {beast_config['target_reps']}")
+        if beast_config.get("rest_seconds"):
+            beast_parts.append(f"- Rest between sets: {beast_config['rest_seconds']}s")
+        if beast_config.get("intensity_level"):
+            beast_parts.append(f"- Intensity level: {beast_config['intensity_level']}")
+        if beast_config.get("preferred_exercises"):
+            beast_parts.append(f"- Preferred exercises: {', '.join(beast_config['preferred_exercises'])}")
+        if beast_config.get("avoided_exercises"):
+            beast_parts.append(f"- Avoided exercises: {', '.join(beast_config['avoided_exercises'])}")
+        if beast_config.get("notes"):
+            beast_parts.append(f"- Notes: {beast_config['notes']}")
+        beast_parts.append("Apply these preferences when creating or modifying workouts.")
+        context_parts.extend(beast_parts)
+
     context = "\n".join(context_parts)
 
     # Detect if this is a workout CREATION request (not just a question)
@@ -209,8 +278,20 @@ async def workout_agent_node(state: WorkoutAgentState) -> Dict[str, Any]:
     # Create LLM with workout tools bound
     llm = get_langchain_llm(temperature=0.7)
 
-    # If it's a workout creation request, force the LLM to use generate_quick_workout
-    if is_workout_creation:
+    # Force tool choice based on context
+    if media_ref:
+        # Single media attached -> force form analysis
+        llm_with_tools = llm.bind_tools(
+            WORKOUT_TOOLS,
+            tool_choice="check_exercise_form"
+        )
+    elif has_multi_videos:
+        # Multiple videos attached -> force form comparison
+        llm_with_tools = llm.bind_tools(
+            WORKOUT_TOOLS,
+            tool_choice="compare_exercise_form"
+        )
+    elif is_workout_creation:
         llm_with_tools = llm.bind_tools(
             WORKOUT_TOOLS,
             tool_choice="generate_quick_workout"
@@ -237,6 +318,8 @@ AVAILABLE TOOLS:
 - delete_workout(workout_id, reason) - Delete/cancel a workout
 - generate_quick_workout(user_id, workout_id, duration_minutes, workout_type, intensity) - Generate a quick workout. ALWAYS pass user_id. If no workout exists, omit workout_id to create a new one.
   workout_type options: "full_body", "upper", "lower", "cardio", "core", "boxing", "hyrox", "crossfit", "martial_arts", "hiit", "strength", "endurance", "flexibility", "mobility", "cricket", "football", "basketball", "tennis"
+- check_exercise_form(user_id, s3_key, mime_type, media_type, exercise_name, user_message) - Analyze exercise form from uploaded video/image. Pass the media details from context.
+- compare_exercise_form(user_id, s3_keys, mime_types, exercise_name, user_message) - Compare form across multiple videos. Pass comma-separated S3 keys and MIME types from context.
 
 CRITICAL INSTRUCTIONS:
 - User ID is: {user_id}
@@ -331,6 +414,15 @@ async def workout_tool_executor_node(state: WorkoutAgentState) -> Dict[str, Any]
         if w and w.get("id"):
             valid_workout_ids.add(w.get("id"))
 
+    # Get media_ref and media_refs for form analysis tool injection
+    media_ref = state.get("media_ref")
+    media_refs = state.get("media_refs")
+    user_id_for_tools = None
+    if state.get("user_profile"):
+        user_id_for_tools = state["user_profile"].get("id")
+    if not user_id_for_tools:
+        user_id_for_tools = state.get("user_id")
+
     tools_map = {tool.name: tool for tool in WORKOUT_TOOLS}
 
     for tool_call in tool_calls:
@@ -338,13 +430,34 @@ async def workout_tool_executor_node(state: WorkoutAgentState) -> Dict[str, Any]
         tool_args = tool_call.get("args", {}).copy()
         tool_id = tool_call.get("id", tool_name)
 
-        # Validate/inject workout_id
+        # Auto-inject media_ref fields for check_exercise_form
+        if tool_name == "check_exercise_form" and media_ref:
+            tool_args["s3_key"] = media_ref.get("s3_key", tool_args.get("s3_key", ""))
+            tool_args["mime_type"] = media_ref.get("mime_type", tool_args.get("mime_type", ""))
+            tool_args["media_type"] = media_ref.get("media_type", tool_args.get("media_type", ""))
+            if "user_id" not in tool_args or not tool_args["user_id"]:
+                tool_args["user_id"] = str(user_id_for_tools) if user_id_for_tools else ""
+            if not tool_args.get("user_message"):
+                tool_args["user_message"] = state.get("user_message", "")
+
+        # Auto-inject media_refs fields for compare_exercise_form
+        if tool_name == "compare_exercise_form" and media_refs:
+            video_refs = [r for r in media_refs if r.get("media_type") == "video"]
+            if video_refs:
+                tool_args["s3_keys"] = ",".join(r.get("s3_key", "") for r in video_refs)
+                tool_args["mime_types"] = ",".join(r.get("mime_type", "") for r in video_refs)
+            if "user_id" not in tool_args or not tool_args["user_id"]:
+                tool_args["user_id"] = str(user_id_for_tools) if user_id_for_tools else ""
+            if not tool_args.get("user_message"):
+                tool_args["user_message"] = state.get("user_message", "")
+
+        # Validate/inject workout_id (skip for form analysis tools)
         if "workout_id" in tool_args:
             ai_workout_id = tool_args["workout_id"]
             if ai_workout_id not in valid_workout_ids and current_workout_id:
                 logger.warning(f"[Workout Tool Executor] Invalid workout_id {ai_workout_id}, using {current_workout_id}")
                 tool_args["workout_id"] = current_workout_id
-        elif current_workout_id:
+        elif tool_name not in ("check_exercise_form", "compare_exercise_form") and current_workout_id:
             tool_args["workout_id"] = current_workout_id
 
         if tool_name in tools_map:
@@ -593,6 +706,29 @@ async def workout_action_data_node(state: WorkoutAgentState) -> Dict[str, Any]:
                 "exercise_count": result.get("exercise_count"),
             }
             logger.info(f"[Workout Action Data] Built generate_quick_workout action_data: workout_id={workout_id}")
+        elif action == "check_exercise_form":
+            action_data = {
+                "action": "check_exercise_form",
+                "exercise_identified": result.get("exercise_identified"),
+                "form_score": result.get("form_score"),
+                "rep_count": result.get("rep_count", 0),
+                "overall_assessment": result.get("overall_assessment"),
+                "issues": result.get("issues", []),
+                "positives": result.get("positives", []),
+                "recommendations": result.get("recommendations", []),
+                "media_type": result.get("media_type"),
+            }
+            logger.info(f"[Workout Action Data] Built check_exercise_form action_data: score={result.get('form_score')}")
+        elif action == "compare_exercise_form":
+            action_data = {
+                "action": "compare_exercise_form",
+                "exercise_identified": result.get("exercise_identified"),
+                "video_count": result.get("video_count", 0),
+                "comparison": result.get("comparison", {}),
+                "videos": result.get("videos", []),
+                "recommendations": result.get("recommendations", []),
+            }
+            logger.info(f"[Workout Action Data] Built compare_exercise_form action_data: {result.get('video_count')} videos")
 
     logger.info(f"[Workout Action Data] Final action_data: {action_data}")
     return {"action_data": action_data}

@@ -145,8 +145,8 @@ async def _send_admin_webhook(
     if metadata:
         logger.info(f"  - Metadata: {metadata}")
 
-    # TODO: Implement actual webhook call
-    # Will be connected to Discord/Slack or custom admin panel
+    # Webhook not yet connected to Discord/Slack or custom admin panel
+    logger.warning("Admin webhook not configured - message not forwarded (event=%s, ticket=%s)", event_type, ticket_id)
 
 
 async def _check_if_user_is_agent(user_id: str) -> bool:
@@ -856,6 +856,70 @@ async def end_live_chat(ticket_id: str, request: LiveChatEndRequest,
             metadata={"ticket_id": ticket_id},
             status_code=500
         )
+        raise safe_internal_error(e, "live_chat")
+
+
+# =============================================================================
+# Get Messages
+# =============================================================================
+
+@router.get("/{ticket_id}/messages", response_model=List[LiveChatMessage])
+async def get_messages(
+    ticket_id: str,
+    user_id: str,
+    limit: int = 50,
+    before_id: Optional[str] = None,
+    current_user: dict = Depends(get_current_user),
+):
+    """
+    Get messages for a live chat session.
+
+    Returns messages ordered by created_at ascending.
+    Supports pagination via before_id.
+    """
+    logger.info(f"Getting messages for ticket {ticket_id}")
+
+    try:
+        db = get_supabase_db()
+
+        # Verify ticket exists and user has access
+        ticket_result = db.client.table("support_tickets").select("id, user_id").eq(
+            "id", ticket_id
+        ).execute()
+
+        if not ticket_result.data:
+            raise HTTPException(status_code=404, detail="Ticket not found")
+
+        ticket_data = ticket_result.data[0]
+        is_agent = await _check_if_user_is_agent(user_id)
+
+        if not is_agent and ticket_data["user_id"] != user_id:
+            raise HTTPException(status_code=403, detail="Not authorized for this chat")
+
+        # Build query
+        query = db.client.table("live_chat_messages").select("*").eq(
+            "ticket_id", ticket_id
+        )
+
+        if before_id:
+            # Get the created_at of the before_id message for cursor pagination
+            before_result = db.client.table("live_chat_messages").select("created_at").eq(
+                "id", before_id
+            ).execute()
+            if before_result.data:
+                query = query.lt("created_at", before_result.data[0]["created_at"])
+
+        result = query.order("created_at", desc=False).limit(limit).execute()
+
+        messages = [_parse_live_chat_message(row) for row in (result.data or [])]
+
+        logger.info(f"Retrieved {len(messages)} messages for ticket {ticket_id}")
+        return messages
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to get messages: {e}")
         raise safe_internal_error(e, "live_chat")
 
 

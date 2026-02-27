@@ -46,6 +46,20 @@ class CoachIntent(str, Enum):
     GENERATE_WEEKLY_PLAN = "generate_weekly_plan"
     ADJUST_PLAN = "adjust_plan"
     EXPLAIN_PLAN = "explain_plan"
+    # Form analysis intent
+    CHECK_EXERCISE_FORM = "check_exercise_form"
+    # Multi-media intents
+    ANALYZE_MENU = "analyze_menu"
+    ANALYZE_BUFFET = "analyze_buffet"
+    COMPARE_EXERCISE_FORM = "compare_exercise_form"
+
+
+class MediaRef(BaseModel):
+    """Reference to media uploaded to S3 for form analysis."""
+    s3_key: str = Field(..., max_length=500, description="S3 object key for the uploaded media")
+    media_type: str = Field(..., max_length=10, description="'image' or 'video'")
+    mime_type: str = Field(..., max_length=50, description="MIME type (e.g., 'video/mp4', 'image/jpeg')")
+    duration_seconds: Optional[float] = Field(default=None, ge=0, le=300, description="Video duration in seconds (null for images)")
 
 
 class AISettings(BaseModel):
@@ -156,6 +170,15 @@ class ChatRequest(BaseModel):
         default=None,
         max_length=17_800_000,
         description="Base64 encoded image for food analysis (max ~10MB decoded, ~13.3MB base64)"
+    )
+    media_ref: Optional[MediaRef] = Field(
+        default=None,
+        description="Reference to S3-uploaded media for form analysis (video/image)"
+    )
+    media_refs: Optional[List[MediaRef]] = Field(
+        default=None,
+        max_length=5,
+        description="List of media references for multi-media analysis (max 5)"
     )
     ai_settings: Optional[AISettings] = Field(
         default=None,

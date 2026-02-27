@@ -392,7 +392,7 @@ async def invite_to_goal(
         if not result.data:
             raise HTTPException(status_code=500, detail="Failed to create invite")
 
-        # TODO: Send push notification to invitee
+        logger.info("Push notification not implemented: goal invite from %s to %s for goal %s", user_id, request.invitee_id, goal_id)
 
         logger.info(f"✅ Created invite for goal {goal_id} to user {request.invitee_id}")
 

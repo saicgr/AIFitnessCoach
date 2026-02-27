@@ -8,8 +8,11 @@ from typing import Optional, Dict, List, Any
 from datetime import datetime, timezone
 
 from core.supabase_client import get_supabase
+from core.logger import get_logger
 from services.social_rag_service import get_social_rag_service
 from models.leaderboard import LeaderboardType, LeaderboardFilter
+
+logger = get_logger(__name__)
 
 
 def get_supabase_client():
@@ -48,17 +51,23 @@ class LeaderboardService:
 
     def check_unlock_status(self, user_id: str) -> Dict[str, Any]:
         """Check if user has unlocked global leaderboard."""
-        result = self.supabase.rpc("check_leaderboard_unlock", {"p_user_id": user_id}).execute()
+        result = (
+            self.supabase.table("workouts")
+            .select("id", count="exact")
+            .eq("user_id", user_id)
+            .eq("is_completed", True)
+            .execute()
+        )
 
-        if not result.data:
-            return {
-                "is_unlocked": False,
-                "workouts_completed": 0,
-                "workouts_needed": 10,
-                "days_active": 0,
-            }
+        workouts_completed = result.count or 0
+        is_unlocked = workouts_completed >= 10
 
-        return result.data[0]
+        return {
+            "is_unlocked": is_unlocked,
+            "workouts_completed": workouts_completed,
+            "workouts_needed": max(10 - workouts_completed, 0),
+            "days_active": 0,
+        }
 
     # ============================================================
     # GET LEADERBOARD DATA
@@ -287,6 +296,6 @@ class LeaderboardService:
                 }],
                 ids=[f"async_challenge_{challenge_id}"],
             )
-            print(f"🏆 [Leaderboard] Async challenge logged: {challenger_name} vs {target_name}")
+            logger.info(f"[Leaderboard] Async challenge logged: {challenger_name} vs {target_name}")
         except Exception as e:
-            print(f"⚠️ [Leaderboard] Failed to log to ChromaDB: {e}")
+            logger.warning(f"[Leaderboard] Failed to log to ChromaDB: {e}")

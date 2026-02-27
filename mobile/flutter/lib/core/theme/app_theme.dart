@@ -285,6 +285,8 @@ class AppTheme {
           borderRadius: BorderRadius.circular(12),
         ),
         behavior: SnackBarBehavior.floating,
+        // Clear the floating nav bar (52px + bottom safe area + gap)
+        insetPadding: const EdgeInsets.only(left: 16, right: 16, bottom: 80, top: 8),
       ),
 
       // Dialog

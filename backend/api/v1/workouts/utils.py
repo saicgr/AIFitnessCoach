@@ -1950,8 +1950,8 @@ async def get_user_readiness_score(user_id: str) -> Optional[int]:
 
                     if age_hours > 24:
                         logger.info(f"🔍 [Readiness] Score for user {user_id} is {age_hours:.1f} hours old, may be stale")
-                except Exception:
-                    pass
+                except Exception as e:
+                    logger.debug(f"Failed to parse readiness timestamp: {e}")
 
             logger.info(f"✅ [Readiness] User {user_id} readiness score: {score}")
             return score
@@ -2640,8 +2640,8 @@ async def get_user_comeback_status(user_id: str) -> dict:
                         "days_since_last_workout": None,
                         "reason": f"Account only {account_age_days} days old (< 14 day threshold)"
                     }
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug(f"Failed to parse account age: {e}")
 
         preferences = user.get("preferences", {})
         if isinstance(preferences, str):
@@ -2697,8 +2697,8 @@ async def get_user_comeback_status(user_id: str) -> dict:
                         "days_since_last_workout": days_since,
                         "reason": f"Last workout {days_since} days ago (< 14 day threshold)"
                     }
-            except Exception:
-                pass
+            except Exception as e:
+                logger.warning(f"Failed to check workout history: {e}")
 
         return {
             "in_comeback_mode": False,
@@ -3417,9 +3417,9 @@ async def get_all_muscles_for_exercise(exercise_name: str) -> List[Dict[str, Any
                     })
                 logger.debug(f"Found {len(muscles)} muscles from exercise_muscle_mappings for '{exercise_name}'")
                 return muscles
-        except Exception:
+        except Exception as e:
             # Table might not exist, fall back to exercise library
-            pass
+            logger.debug(f"Muscle mapping lookup failed: {e}")
 
         # Fall back to exercise_library_cleaned
         result = db.client.table("exercise_library_cleaned").select(

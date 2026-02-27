@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/constants/app_colors.dart';
+import '../../data/providers/unified_notifications_provider.dart';
 import '../../widgets/glass_back_button.dart';
 
 /// Model for a notification item
@@ -153,7 +154,7 @@ class NotificationsNotifier extends StateNotifier<List<NotificationItem>> {
 class NotificationsScreen extends ConsumerWidget {
   const NotificationsScreen({super.key});
 
-  void _navigateForNotificationType(BuildContext context, String type) {
+  void _navigateForNotificationType(BuildContext context, String type, {String? challengeId}) {
     switch (type) {
       case 'ai_coach':
         context.push('/chat');
@@ -174,6 +175,25 @@ class NotificationsScreen extends ConsumerWidget {
       case 'weekly_summary':
         context.push('/summaries');
         break;
+      case 'challenge_received':
+        context.push('/challenges');
+        break;
+      case 'challenge_accepted':
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Your friend is doing your workout!'),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+        break;
+      case 'challenge_completed':
+      case 'challenge_beaten':
+        if (challengeId != null) {
+          context.push('/challenge-compare', extra: challengeId);
+        } else {
+          context.push('/challenges');
+        }
+        break;
       case 'test':
         // Test notifications stay on this screen
         break;
@@ -192,7 +212,7 @@ class NotificationsScreen extends ConsumerWidget {
     final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
 
-    final notifications = ref.watch(notificationsProvider);
+    final unifiedState = ref.watch(unifiedNotificationsProvider);
 
     return Scaffold(
       backgroundColor: backgroundColor,
@@ -209,52 +229,76 @@ class NotificationsScreen extends ConsumerWidget {
           ),
         ),
         actions: [
-          if (notifications.isNotEmpty)
-            PopupMenuButton<String>(
-              icon: Icon(Icons.more_vert, color: textMuted),
-              color: elevatedColor,
-              onSelected: (value) {
-                if (value == 'mark_all_read') {
-                  ref.read(notificationsProvider.notifier).markAllAsRead();
-                } else if (value == 'clear_all') {
-                  ref.read(notificationsProvider.notifier).clearAll();
-                }
-              },
-              itemBuilder: (context) => [
-                PopupMenuItem(
-                  value: 'mark_all_read',
-                  child: Row(
-                    children: [
-                      Icon(Icons.done_all, size: 20, color: AppColors.cyan),
-                      const SizedBox(width: 12),
-                      const Text('Mark all as read'),
-                    ],
-                  ),
+          PopupMenuButton<String>(
+            icon: Icon(Icons.more_vert, color: textMuted),
+            color: elevatedColor,
+            onSelected: (value) {
+              if (value == 'mark_all_read') {
+                ref.read(notificationsProvider.notifier).markAllAsRead();
+              } else if (value == 'clear_all') {
+                ref.read(notificationsProvider.notifier).clearAll();
+              }
+            },
+            itemBuilder: (context) => [
+              PopupMenuItem(
+                value: 'mark_all_read',
+                child: Row(
+                  children: [
+                    Icon(Icons.done_all, size: 20, color: AppColors.cyan),
+                    const SizedBox(width: 12),
+                    const Text('Mark all as read'),
+                  ],
                 ),
-                PopupMenuItem(
-                  value: 'clear_all',
-                  child: Row(
-                    children: [
-                      Icon(Icons.clear_all, size: 20, color: AppColors.error),
-                      const SizedBox(width: 12),
-                      const Text('Clear all'),
-                    ],
-                  ),
+              ),
+              PopupMenuItem(
+                value: 'clear_all',
+                child: Row(
+                  children: [
+                    Icon(Icons.clear_all, size: 20, color: AppColors.error),
+                    const SizedBox(width: 12),
+                    const Text('Clear all'),
+                  ],
                 ),
-              ],
-            ),
+              ),
+            ],
+          ),
         ],
       ),
-      body: notifications.isEmpty
-          ? _EmptyNotificationsView(isDark: isDark)
-          : ListView.builder(
+      body: unifiedState.when(
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (e, _) => Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.error_outline, size: 48, color: textMuted),
+              const SizedBox(height: 16),
+              Text('Failed to load notifications', style: TextStyle(color: textMuted)),
+              const SizedBox(height: 8),
+              TextButton(
+                onPressed: () => ref.read(unifiedNotificationsProvider.notifier).refresh(),
+                child: const Text('Retry'),
+              ),
+            ],
+          ),
+        ),
+        data: (notifications) {
+          if (notifications.isEmpty) {
+            return _EmptyNotificationsView(isDark: isDark);
+          }
+          return RefreshIndicator(
+            onRefresh: () => ref.read(unifiedNotificationsProvider.notifier).refresh(),
+            child: ListView.builder(
               padding: const EdgeInsets.all(16),
               itemCount: notifications.length,
               itemBuilder: (context, index) {
                 final notification = notifications[index];
+                final isChallengeNotification = notification.id.startsWith('challenge_');
+
                 return Dismissible(
                   key: Key(notification.id),
-                  direction: DismissDirection.endToStart,
+                  direction: isChallengeNotification
+                      ? DismissDirection.none
+                      : DismissDirection.endToStart,
                   background: Container(
                     alignment: Alignment.centerRight,
                     padding: const EdgeInsets.only(right: 16),
@@ -267,18 +311,30 @@ class NotificationsScreen extends ConsumerWidget {
                   onDismissed: (_) {
                     ref.read(notificationsProvider.notifier).deleteNotification(notification.id);
                   },
-                  child: _NotificationCard(
+                  child: _UnifiedNotificationCard(
                     notification: notification,
                     isDark: isDark,
                     onTap: () {
-                      ref.read(notificationsProvider.notifier).markAsRead(notification.id);
-                      // Navigate based on notification type
-                      _navigateForNotificationType(context, notification.type);
+                      // Mark as read
+                      if (isChallengeNotification) {
+                        ref.read(unifiedNotificationsProvider.notifier)
+                            .markChallengeNotificationRead(notification.id);
+                      } else {
+                        ref.read(notificationsProvider.notifier).markAsRead(notification.id);
+                      }
+                      _navigateForNotificationType(
+                        context,
+                        notification.type,
+                        challengeId: notification.challengeId,
+                      );
                     },
                   ),
                 );
               },
             ),
+          );
+        },
+      ),
     );
   }
 }
@@ -451,6 +507,14 @@ class _NotificationCard extends StatelessWidget {
         return Icons.water_drop;
       case 'test':
         return Icons.science;
+      case 'challenge_received':
+        return Icons.emoji_events;
+      case 'challenge_accepted':
+        return Icons.check_circle;
+      case 'challenge_completed':
+        return Icons.flag;
+      case 'challenge_beaten':
+        return Icons.military_tech;
       default:
         return Icons.notifications;
     }
@@ -474,6 +538,14 @@ class _NotificationCard extends StatelessWidget {
         return Colors.blue;
       case 'test':
         return AppColors.cyan;
+      case 'challenge_received':
+        return AppColors.orange;
+      case 'challenge_accepted':
+        return AppColors.cyan;
+      case 'challenge_completed':
+        return AppColors.success;
+      case 'challenge_beaten':
+        return const Color(0xFFFFD700);
       default:
         return AppColors.cyan;
     }
@@ -552,6 +624,214 @@ class _NotificationCard extends StatelessWidget {
                     color: typeColor,
                   ),
                 ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(
+                            child: Text(
+                              notification.title,
+                              style: TextStyle(
+                                fontWeight: notification.isRead
+                                    ? FontWeight.w500
+                                    : FontWeight.w600,
+                                color: textPrimary,
+                              ),
+                            ),
+                          ),
+                          if (!notification.isRead)
+                            Container(
+                              width: 8,
+                              height: 8,
+                              margin: const EdgeInsets.only(left: 8, top: 4),
+                              decoration: BoxDecoration(
+                                color: typeColor,
+                                shape: BoxShape.circle,
+                              ),
+                            ),
+                        ],
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        notification.body,
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: textSecondary,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        _formatTimestamp(notification.timestamp),
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: textMuted,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Notification card that works with UnifiedNotification (challenge + local)
+class _UnifiedNotificationCard extends StatelessWidget {
+  final UnifiedNotification notification;
+  final bool isDark;
+  final VoidCallback onTap;
+
+  const _UnifiedNotificationCard({
+    required this.notification,
+    required this.isDark,
+    required this.onTap,
+  });
+
+  IconData _getIconForType(String type) {
+    switch (type) {
+      case 'workout_reminder':
+        return Icons.fitness_center;
+      case 'ai_coach':
+        return Icons.auto_awesome;
+      case 'streak_alert':
+        return Icons.local_fire_department;
+      case 'achievement':
+        return Icons.emoji_events;
+      case 'weekly_summary':
+        return Icons.insights;
+      case 'nutrition_reminder':
+        return Icons.restaurant;
+      case 'hydration_reminder':
+        return Icons.water_drop;
+      case 'challenge_received':
+        return Icons.emoji_events;
+      case 'challenge_accepted':
+        return Icons.check_circle;
+      case 'challenge_completed':
+        return Icons.flag;
+      case 'challenge_beaten':
+        return Icons.military_tech;
+      default:
+        return Icons.notifications;
+    }
+  }
+
+  Color _getColorForType(String type) {
+    switch (type) {
+      case 'workout_reminder':
+        return AppColors.cyan;
+      case 'ai_coach':
+        return AppColors.purple;
+      case 'streak_alert':
+        return AppColors.orange;
+      case 'achievement':
+        return AppColors.success;
+      case 'weekly_summary':
+        return AppColors.purple;
+      case 'nutrition_reminder':
+        return AppColors.success;
+      case 'hydration_reminder':
+        return Colors.blue;
+      case 'challenge_received':
+        return AppColors.orange;
+      case 'challenge_accepted':
+        return AppColors.cyan;
+      case 'challenge_completed':
+        return AppColors.success;
+      case 'challenge_beaten':
+        return const Color(0xFFFFD700);
+      default:
+        return AppColors.cyan;
+    }
+  }
+
+  String _formatTimestamp(DateTime timestamp) {
+    final now = DateTime.now();
+    final diff = now.difference(timestamp);
+    final today = DateTime(now.year, now.month, now.day);
+    final notifDate = DateTime(timestamp.year, timestamp.month, timestamp.day);
+
+    final hour = timestamp.hour > 12 ? timestamp.hour - 12 : (timestamp.hour == 0 ? 12 : timestamp.hour);
+    final minute = timestamp.minute.toString().padLeft(2, '0');
+    final amPm = timestamp.hour >= 12 ? 'PM' : 'AM';
+    final timeStr = '$hour:$minute $amPm';
+
+    if (notifDate == today) {
+      if (diff.inMinutes < 1) {
+        return 'Just now';
+      } else if (diff.inMinutes < 60) {
+        return '${diff.inMinutes}m ago';
+      } else {
+        return 'Today at $timeStr';
+      }
+    } else if (notifDate == today.subtract(const Duration(days: 1))) {
+      return 'Yesterday at $timeStr';
+    } else if (diff.inDays < 7) {
+      const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+      return '${days[timestamp.weekday - 1]} at $timeStr';
+    } else {
+      return '${timestamp.month}/${timestamp.day} at $timeStr';
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final elevatedColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final typeColor = _getColorForType(notification.type);
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Material(
+        color: elevatedColor,
+        borderRadius: BorderRadius.circular(12),
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(12),
+          child: Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              border: notification.isRead
+                  ? null
+                  : Border.all(color: typeColor.withOpacity(0.3)),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Avatar for challenge notifications, icon for others
+                if (notification.fromUserAvatar != null)
+                  CircleAvatar(
+                    radius: 20,
+                    backgroundColor: typeColor.withOpacity(0.2),
+                    backgroundImage: NetworkImage(notification.fromUserAvatar!),
+                  )
+                else
+                  Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: typeColor.withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Icon(
+                      _getIconForType(notification.type),
+                      size: 20,
+                      color: typeColor,
+                    ),
+                  ),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Column(

@@ -43,9 +43,10 @@ class NutritionRAGService:
         self.collection = self.chroma_client.get_or_create_collection(NUTRITION_COLLECTION_NAME)
         try:
             _count = self.collection.count()
-        except Exception:
+        except Exception as e:
+            logger.warning(f"Failed to get collection count: {e}")
             _count = "unknown"
-        print(f"✅ NutritionRAG initialized with {_count} documents")
+        logger.info(f"NutritionRAG initialized with {_count} documents")
 
     @property
     def nutrition_db(self) -> Optional[NutritionDB]:
@@ -98,9 +99,10 @@ class NutritionRAGService:
 
         try:
             _count = self.collection.count()
-        except Exception:
+        except Exception as e:
+            logger.warning(f"Failed to get collection count: {e}")
             _count = "unknown"
-        print(f"📚 Added nutrition knowledge: {doc_id[:8]}... (total: {_count})")
+        logger.info(f"Added nutrition knowledge: {doc_id[:8]}... (total: {_count})")
         return doc_id
 
     async def get_context_for_goals(
@@ -241,7 +243,8 @@ class NutritionRAGService:
         try:
             c = self.collection.count()
             return c if c >= 0 else -1
-        except Exception:
+        except Exception as e:
+            logger.warning(f"Failed to get nutrition count: {e}")
             return -1
 
 
@@ -429,10 +432,10 @@ async def seed_nutrition_knowledge():
 
     # Check if already seeded
     if service.get_collection_count() > 0:
-        print(f"⚠️ Nutrition knowledge collection already has {service.get_collection_count()} documents. Skipping seed.")
+        logger.warning(f"Nutrition knowledge collection already has {service.get_collection_count()} documents. Skipping seed.")
         return
 
-    print(f"🌱 Seeding nutrition knowledge collection with {len(NUTRITION_KNOWLEDGE_DATA)} documents...")
+    logger.info(f"Seeding nutrition knowledge collection with {len(NUTRITION_KNOWLEDGE_DATA)} documents...")
 
     for item in NUTRITION_KNOWLEDGE_DATA:
         await service.add_knowledge(
@@ -441,7 +444,7 @@ async def seed_nutrition_knowledge():
             category=item["category"],
         )
 
-    print(f"✅ Seeded nutrition knowledge collection with {service.get_collection_count()} documents")
+    logger.info(f"Seeded nutrition knowledge collection with {service.get_collection_count()} documents")
 
 
 # ============================================
@@ -492,8 +495,8 @@ class UserNutritionProfileService:
         # Delete existing if present (upsert)
         try:
             self.collection.delete(ids=[doc_id])
-        except Exception:
-            pass  # Document may not exist
+        except Exception as e:
+            logger.debug(f"ChromaDB delete before upsert: {e}")
 
         # Add the updated profile
         self.collection.add(
@@ -502,7 +505,7 @@ class UserNutritionProfileService:
             ids=[doc_id],
         )
 
-        print(f"✅ Indexed nutrition profile to RAG for user {user_id}")
+        logger.info(f"Indexed nutrition profile to RAG for user {user_id}")
 
     def _build_nutrition_profile_document(self, metrics: Dict[str, Any]) -> str:
         """Build a natural language document for nutrition profile embedding."""
@@ -562,7 +565,7 @@ class UserNutritionProfileService:
             return None
 
         except Exception as e:
-            print(f"⚠️ Could not retrieve nutrition profile for user {user_id}: {e}")
+            logger.warning(f"Could not retrieve nutrition profile for user {user_id}: {e}")
             return None
 
     def delete_user_profile(self, user_id: str) -> None:
@@ -574,9 +577,9 @@ class UserNutritionProfileService:
         """
         try:
             self.collection.delete(ids=[f"nutrition_profile_{user_id}"])
-            print(f"✅ Deleted nutrition profile from RAG for user {user_id}")
+            logger.info(f"Deleted nutrition profile from RAG for user {user_id}")
         except Exception as e:
-            print(f"⚠️ Could not delete nutrition profile for user {user_id}: {e}")
+            logger.warning(f"Could not delete nutrition profile for user {user_id}: {e}")
 
 
 # Singleton instance for user profiles

@@ -184,6 +184,28 @@ class SavedWorkoutsService {
     }
   }
 
+  /// Check for existing scheduled workouts on a specific date
+  Future<List<Map<String, dynamic>>> getScheduledForDate({
+    required String userId,
+    required DateTime date,
+  }) async {
+    try {
+      final dateStr = '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+      final response = await _apiClient.get(
+        '/social/saved-workouts/scheduled/by-date',
+        queryParameters: {'user_id': userId, 'date': dateStr},
+      );
+
+      if (response.statusCode == 200) {
+        return List<Map<String, dynamic>>.from(response.data ?? []);
+      }
+      return [];
+    } catch (e) {
+      debugPrint('⚠️ [Saved Workouts] Error checking schedule conflicts: $e');
+      return [];
+    }
+  }
+
   /// Update scheduled workout status
   Future<void> updateScheduledWorkoutStatus({
     required String userId,

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../../core/constants/app_colors.dart';
 import '../../../data/providers/xp_provider.dart';
 import '../../../data/repositories/hydration_repository.dart';
 import '../../../data/repositories/nutrition_repository.dart';
@@ -133,9 +134,9 @@ class _GoalsPill extends ConsumerWidget {
 class _CaloriesPill extends ConsumerWidget {
   const _CaloriesPill({super.key});
 
-  static const Color _proteinColor = Color(0xFFEAB308);
-  static const Color _carbsColor = Color(0xFF22C55E);
-  static const Color _fatColor = Color(0xFFEF4444);
+  static const Color _proteinColor = AppColors.macroProtein;
+  static const Color _carbsColor = AppColors.macroCarbs;
+  static const Color _fatColor = AppColors.macroFat;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {

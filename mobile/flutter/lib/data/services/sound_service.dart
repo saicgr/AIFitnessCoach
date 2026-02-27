@@ -18,6 +18,7 @@
 library;
 
 import 'package:audioplayers/audioplayers.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
 /// Service for playing workout sound effects.
@@ -78,9 +79,9 @@ class SoundService {
       );
 
       _isInitialized = true;
-      print('✅ [SoundService] Initialized with audio playback');
+      debugPrint('✅ [SoundService] Initialized with audio playback');
     } catch (e) {
-      print('❌ [SoundService] Initialization failed: $e');
+      debugPrint('❌ [SoundService] Initialization failed: $e');
       // Fall back to haptic-only mode
       _isInitialized = true;
     }
@@ -135,9 +136,9 @@ class SoundService {
 
       await _countdownPlayer?.setVolume(soundEffectsVolume);
       await _countdownPlayer?.play(AssetSource(assetPath));
-      print('🔊 [SoundService] Countdown: $count ($countdownSoundType)');
+      debugPrint('🔊 [SoundService] Countdown: $count ($countdownSoundType)');
     } catch (e) {
-      print('⚠️ [SoundService] Countdown sound error: $e');
+      debugPrint('⚠️ [SoundService] Countdown sound error: $e');
     }
   }
 
@@ -157,10 +158,10 @@ class SoundService {
           'audio/exercise_complete/$exerciseCompletionSoundType.mp3';
       await _exerciseCompletePlayer?.setVolume(soundEffectsVolume);
       await _exerciseCompletePlayer?.play(AssetSource(assetPath));
-      print(
+      debugPrint(
           '🔊 [SoundService] Exercise complete ($exerciseCompletionSoundType)');
     } catch (e) {
-      print('⚠️ [SoundService] Exercise completion sound error: $e');
+      debugPrint('⚠️ [SoundService] Exercise completion sound error: $e');
     }
   }
 
@@ -176,9 +177,9 @@ class SoundService {
       final assetPath = 'audio/workout_complete/$completionSoundType.mp3';
       await _workoutCompletePlayer?.setVolume(soundEffectsVolume);
       await _workoutCompletePlayer?.play(AssetSource(assetPath));
-      print('🔊 [SoundService] Workout complete ($completionSoundType)');
+      debugPrint('🔊 [SoundService] Workout complete ($completionSoundType)');
     } catch (e) {
-      print('⚠️ [SoundService] Workout completion sound error: $e');
+      debugPrint('⚠️ [SoundService] Workout completion sound error: $e');
     }
   }
 
@@ -194,9 +195,9 @@ class SoundService {
       final assetPath = 'audio/rest_end/$restTimerSoundType.mp3';
       await _restEndPlayer?.setVolume(soundEffectsVolume);
       await _restEndPlayer?.play(AssetSource(assetPath));
-      print('🔊 [SoundService] Rest timer end ($restTimerSoundType)');
+      debugPrint('🔊 [SoundService] Rest timer end ($restTimerSoundType)');
     } catch (e) {
-      print('⚠️ [SoundService] Rest timer sound error: $e');
+      debugPrint('⚠️ [SoundService] Rest timer sound error: $e');
     }
   }
 
@@ -239,9 +240,9 @@ class SoundService {
       await player?.setVolume(soundEffectsVolume);
       await player?.play(AssetSource(assetPath));
       HapticFeedback.selectionClick();
-      print('🔊 [SoundService] Preview: $category/$soundType');
+      debugPrint('🔊 [SoundService] Preview: $category/$soundType');
     } catch (e) {
-      print('⚠️ [SoundService] Preview sound error: $e');
+      debugPrint('⚠️ [SoundService] Preview sound error: $e');
     }
   }
 
@@ -265,7 +266,7 @@ class SoundService {
       await _workoutCompletePlayer?.stop();
       await _restEndPlayer?.stop();
     } catch (e) {
-      print('⚠️ [SoundService] Stop error: $e');
+      debugPrint('⚠️ [SoundService] Stop error: $e');
     }
   }
 

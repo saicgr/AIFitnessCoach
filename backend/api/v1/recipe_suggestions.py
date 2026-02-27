@@ -306,8 +306,8 @@ async def rate_suggestion(user_id: str, suggestion_id: str, request: RateSuggest
                 "rating": request.rating,
             },
         )
-    except Exception:
-        pass
+    except Exception as e:
+        logger.debug(f"Failed to log rating context: {e}")
 
     return {"success": True, "message": "Rating saved"}
 
@@ -339,8 +339,8 @@ async def save_suggestion(user_id: str, suggestion_id: str,
                 "suggestion_id": suggestion_id,
             },
         )
-    except Exception:
-        pass
+    except Exception as e:
+        logger.debug(f"Failed to log save context: {e}")
 
     return {"success": True, "message": "Recipe saved to favorites"}
 
@@ -372,8 +372,8 @@ async def mark_cooked(user_id: str, suggestion_id: str,
                 "suggestion_id": suggestion_id,
             },
         )
-    except Exception:
-        pass
+    except Exception as e:
+        logger.debug(f"Failed to log cooked context: {e}")
 
     return {"success": True, "message": "Marked as cooked"}
 

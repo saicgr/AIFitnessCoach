@@ -2,18 +2,21 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
 import '../../../core/constants/app_colors.dart';
-import '../live_chat_screen.dart';
 
 /// Agent info header widget for the app bar
 /// Shows agent name, avatar, and online status
 class AgentInfoHeader extends StatelessWidget {
-  final AgentInfo agent;
+  final String agentName;
+  final String? avatarUrl;
   final bool isTyping;
+  final bool isOnline;
 
   const AgentInfoHeader({
     super.key,
-    required this.agent,
+    required this.agentName,
+    this.avatarUrl,
     this.isTyping = false,
+    this.isOnline = true,
   });
 
   @override
@@ -34,10 +37,10 @@ class AgentInfoHeader extends StatelessWidget {
                   end: Alignment.bottomRight,
                 ),
               ),
-              child: agent.avatarUrl != null
+              child: avatarUrl != null
                   ? ClipOval(
                       child: Image.network(
-                        agent.avatarUrl!,
+                        avatarUrl!,
                         fit: BoxFit.cover,
                         errorBuilder: (context, error, stack) => _buildInitial(),
                       ),
@@ -49,7 +52,7 @@ class AgentInfoHeader extends StatelessWidget {
             Positioned(
               bottom: 0,
               right: 0,
-              child: _OnlineIndicator(isOnline: agent.isOnline),
+              child: _OnlineIndicator(isOnline: isOnline),
             ),
           ],
         ),
@@ -63,7 +66,7 @@ class AgentInfoHeader extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(
-                agent.name,
+                agentName,
                 style: const TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
@@ -73,7 +76,7 @@ class AgentInfoHeader extends StatelessWidget {
               const SizedBox(height: 2),
               _StatusText(
                 isTyping: isTyping,
-                isOnline: agent.isOnline,
+                isOnline: isOnline,
               ),
             ],
           ),
@@ -85,7 +88,7 @@ class AgentInfoHeader extends StatelessWidget {
   Widget _buildInitial() {
     return Center(
       child: Text(
-        agent.name.isNotEmpty ? agent.name[0].toUpperCase() : 'A',
+        agentName.isNotEmpty ? agentName[0].toUpperCase() : 'A',
         style: const TextStyle(
           color: Colors.white,
           fontWeight: FontWeight.bold,
@@ -225,11 +228,13 @@ class ConnectedBadge extends StatelessWidget {
 
 /// Full agent info card (for display in chat area)
 class AgentInfoCard extends StatelessWidget {
-  final AgentInfo agent;
+  final String agentName;
+  final String? avatarUrl;
 
   const AgentInfoCard({
     super.key,
-    required this.agent,
+    required this.agentName,
+    this.avatarUrl,
   });
 
   @override
@@ -262,7 +267,7 @@ class AgentInfoCard extends StatelessWidget {
             ),
             child: Center(
               child: Text(
-                agent.name.isNotEmpty ? agent.name[0].toUpperCase() : 'A',
+                agentName.isNotEmpty ? agentName[0].toUpperCase() : 'A',
                 style: const TextStyle(
                   color: Colors.white,
                   fontWeight: FontWeight.bold,
@@ -282,7 +287,7 @@ class AgentInfoCard extends StatelessWidget {
                 Row(
                   children: [
                     Text(
-                      agent.name,
+                      agentName,
                       style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w600,

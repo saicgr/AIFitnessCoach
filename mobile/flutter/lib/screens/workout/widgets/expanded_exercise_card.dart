@@ -878,8 +878,6 @@ class _ExpandedExerciseCardState extends ConsumerState<ExpandedExerciseCard> {
                           _shortenEquipment(exercise.equipment!),
                           accentColor,
                         ),
-                      // Breathing guidance chip
-                      _buildBreathingChip(context),
                       // Alternating hands chip (for single-dumbbell exercises)
                       if (exercise.alternatingHands == true)
                         _buildAlternatingHandsChip(),

@@ -218,17 +218,6 @@ class _CustomContentCard extends ConsumerWidget {
     );
   }
 
-  void _showComingSoonSnackbar(BuildContext context, String feature) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('$feature coming soon!'),
-        behavior: SnackBarBehavior.floating,
-        backgroundColor: Theme.of(context).brightness == Brightness.dark
-            ? AppColors.elevated
-            : AppColorsLight.elevated,
-      ),
-    );
-  }
 }
 
 /// Tile for each custom content type

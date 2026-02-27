@@ -610,38 +610,9 @@ class SubscriptionNotifier extends StateNotifier<SubscriptionState> {
         debugPrint('✅ Purchase successful: $productId');
         return true;
       } else {
-        // Fallback: simulate purchase for testing (remove in production)
-        debugPrint('⚠️ RevenueCat not configured, simulating purchase');
-
-        SubscriptionTier newTier;
-        switch (productId) {
-          case premiumMonthlyId:
-          case premiumYearlyId:
-            newTier = SubscriptionTier.premium;
-            break;
-          case premiumPlusMonthlyId:
-          case premiumPlusYearlyId:
-            newTier = SubscriptionTier.premiumPlus;
-            break;
-          case lifetimeId:
-            newTier = SubscriptionTier.lifetime;
-            break;
-          default:
-            newTier = SubscriptionTier.free;
-        }
-
-        await _saveToLocalStorage(newTier);
-
-        state = state.copyWith(
-          tier: newTier,
-          isLoading: false,
-          isTrialActive: productId.contains('yearly'),
-          trialEndDate: productId.contains('yearly')
-            ? DateTime.now().add(const Duration(days: 7))
-            : null,
-        );
-
-        return true;
+        debugPrint('⚠️ RevenueCat not configured — purchase unavailable');
+        state = state.copyWith(isLoading: false, error: 'Purchase service not configured');
+        return false;
       }
     } catch (e) {
       debugPrint('❌ Purchase failed: $e');
@@ -746,28 +717,11 @@ class ProductPricing {
       'trialDays': 0,
     },
     'premium_yearly': {
-      'price': 47.99,
+      'price': 39.99,
       'period': 'year',
-      'monthlyEquivalent': 4.00,
-      'savings': '33%',
+      'monthlyEquivalent': 3.33,
+      'savings': '44%',
       'trialDays': 7,
-    },
-    'premium_plus_monthly': {
-      'price': 9.99,
-      'period': 'month',
-      'trialDays': 0,
-    },
-    'premium_plus_yearly': {
-      'price': 79.99,
-      'period': 'year',
-      'monthlyEquivalent': 6.67,
-      'savings': '33%',
-      'trialDays': 7,
-    },
-    'lifetime': {
-      'price': 99.99,
-      'period': 'lifetime',
-      'trialDays': 0,
     },
   };
 }

@@ -1015,14 +1015,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         label: 'CONNECTIONS',
         rows: [
           _SettingsRow(
-            icon: Icons.cloud_off,
-            iconColor: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
-            title: 'Offline Mode',
-            value: 'Sync & AI models',
-            route: '/settings/offline-mode',
-            sectionKeys: const ['offline_mode'],
-          ),
-          _SettingsRow(
             icon: Icons.favorite_outline,
             iconColor: isDark ? AppColors.error : AppColorsLight.error,
             title: 'Health & Devices',
@@ -1050,6 +1042,27 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             value: 'Sharing, export, email',
             route: '/settings/privacy-data',
             sectionKeys: const ['social_privacy', 'email_preferences', 'data_management'],
+          ),
+        ],
+      ),
+      _SettingsSection(
+        label: 'COMMUNITY',
+        rows: [
+          _SettingsRow(
+            icon: Icons.lightbulb_outline,
+            iconColor: isDark ? AppColors.yellow : AppColors.yellow,
+            title: 'Feature Requests',
+            value: 'Vote & suggest features',
+            route: '/features',
+            sectionKeys: const ['feature_requests'],
+          ),
+          _SettingsRow(
+            icon: Icons.rocket_launch_outlined,
+            iconColor: isDark ? AppColors.orange : AppColorsLight.orange,
+            title: 'Coming Soon',
+            value: 'See what\'s next',
+            route: '/coming-soon',
+            sectionKeys: const ['coming_soon'],
           ),
         ],
       ),

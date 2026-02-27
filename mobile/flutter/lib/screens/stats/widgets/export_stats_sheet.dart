@@ -8,6 +8,7 @@ import 'package:share_plus/share_plus.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../data/providers/consistency_provider.dart';
+import '../../../data/providers/scores_provider.dart';
 import '../../../data/repositories/workout_repository.dart';
 import '../../../data/services/haptic_service.dart';
 import '../../../data/services/pdf_export_service.dart';
@@ -143,6 +144,15 @@ class _ExportStatsSheetState extends ConsumerState<ExportStatsSheet> {
       final workoutsNotifier = ref.read(workoutsProvider.notifier);
       final weeklyProgress = workoutsNotifier.weeklyProgress;
 
+      // Map real PR data from scores provider
+      final prStats = ref.read(prStatsProvider);
+      final realPRs = prStats?.recentPrs.map((pr) => PdfPRData(
+        exerciseName: pr.exerciseDisplayName,
+        value: '${pr.weightKg.toStringAsFixed(1)} kg x ${pr.reps}',
+        type: 'weight',
+        date: DateTime.tryParse(pr.achievedAt),
+      )).toList();
+
       // Generate PDF
       final pdfBytes = await PdfExportService.generateStatsReport(
         totalWorkouts: consistencyState.insights?.monthWorkoutsCompleted ??
@@ -152,32 +162,8 @@ class _ExportStatsSheetState extends ConsumerState<ExportStatsSheet> {
         weeklyCompleted: weeklyProgress.$1,
         weeklyGoal: weeklyProgress.$2,
         dateRange: _dateRangeLabel,
-        // TODO: Add real PRs and achievements data when available
-        recentPRs: [
-          PdfPRData(
-            exerciseName: 'Bench Press',
-            value: '100 kg',
-            type: 'weight',
-            date: DateTime.now().subtract(const Duration(days: 7)),
-          ),
-          PdfPRData(
-            exerciseName: 'Squat',
-            value: '140 kg',
-            type: 'weight',
-            date: DateTime.now().subtract(const Duration(days: 14)),
-          ),
-          PdfPRData(
-            exerciseName: 'Deadlift',
-            value: '160 kg',
-            type: 'weight',
-            date: DateTime.now().subtract(const Duration(days: 21)),
-          ),
-        ],
-        achievements: [
-          const PdfAchievementData(name: 'First Workout'),
-          const PdfAchievementData(name: '7 Day Streak'),
-          const PdfAchievementData(name: '100 Workouts'),
-        ],
+        recentPRs: realPRs ?? [],
+        achievements: [],
       );
 
       // Save to temp file
@@ -220,6 +206,15 @@ class _ExportStatsSheetState extends ConsumerState<ExportStatsSheet> {
       final workoutsNotifier = ref.read(workoutsProvider.notifier);
       final weeklyProgress = workoutsNotifier.weeklyProgress;
 
+      // Map real PR data from scores provider
+      final prStats = ref.read(prStatsProvider);
+      final realPRs = prStats?.recentPrs.map((pr) => PdfPRData(
+        exerciseName: pr.exerciseDisplayName,
+        value: '${pr.weightKg.toStringAsFixed(1)} kg x ${pr.reps}',
+        type: 'weight',
+        date: DateTime.tryParse(pr.achievedAt),
+      )).toList();
+
       // Generate text summary
       final textSummary = PdfExportService.generateTextSummary(
         totalWorkouts: consistencyState.insights?.monthWorkoutsCompleted ??
@@ -229,21 +224,7 @@ class _ExportStatsSheetState extends ConsumerState<ExportStatsSheet> {
         weeklyCompleted: weeklyProgress.$1,
         weeklyGoal: weeklyProgress.$2,
         dateRange: _dateRangeLabel,
-        // TODO: Add real PRs data when available
-        recentPRs: [
-          PdfPRData(
-            exerciseName: 'Bench Press',
-            value: '100 kg',
-            type: 'weight',
-            date: DateTime.now().subtract(const Duration(days: 7)),
-          ),
-          PdfPRData(
-            exerciseName: 'Squat',
-            value: '140 kg',
-            type: 'weight',
-            date: DateTime.now().subtract(const Duration(days: 14)),
-          ),
-        ],
+        recentPRs: realPRs ?? [],
       );
 
       // Share the text

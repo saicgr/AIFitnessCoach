@@ -649,13 +649,48 @@ class SettingsCard extends ConsumerWidget {
       context: context,
       useRootNavigator: true,
       builder: (context) => GlassSheet(
-        child: _VariationSliderSheet(
-        initialValue: currentPercentage,
-        onSave: (value) {
-          ref.read(variationProvider.notifier).setVariation(value);
-        },
+        child: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text('Weekly Variety', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: isDark ? Colors.white : AppColorsLight.textPrimary)),
+                const SizedBox(height: 8),
+                Text('How much exercise variety each week?', style: TextStyle(fontSize: 14, color: isDark ? AppColors.textMuted : AppColorsLight.textMuted)),
+                const SizedBox(height: 20),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    _varietyChip('Low', 25, currentPercentage, context, ref),
+                    _varietyChip('Medium', 50, currentPercentage, context, ref),
+                    _varietyChip('High', 75, currentPercentage, context, ref),
+                  ],
+                ),
+                const SizedBox(height: 16),
+              ],
+            ),
+          ),
+        ),
       ),
-      ),
+    );
+  }
+
+  Widget _varietyChip(String label, int value, int current, BuildContext context, WidgetRef ref) {
+    final presets = [25, 50, 75];
+    final closestPreset = presets.reduce((a, b) => (a - current).abs() < (b - current).abs() ? a : b);
+    final isSelected = value == closestPreset;
+    return ChoiceChip(
+      label: Text('$label ($value%)'),
+      selected: isSelected,
+      onSelected: (_) {
+        HapticFeedback.selectionClick();
+        ref.read(variationProvider.notifier).setVariation(value);
+        Navigator.pop(context);
+      },
+      selectedColor: AppColors.cyan.withValues(alpha: 0.2),
+      checkmarkColor: AppColors.cyan,
     );
   }
 
@@ -696,13 +731,49 @@ class SettingsCard extends ConsumerWidget {
       context: context,
       useRootNavigator: true,
       builder: (context) => GlassSheet(
-        child: _TrainingIntensitySheet(
-        initialValue: currentIntensity,
-        onSave: (value) {
-          ref.read(trainingIntensityProvider.notifier).setGlobalIntensity(value);
-        },
+        child: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text('Training Intensity', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: isDark ? Colors.white : AppColorsLight.textPrimary)),
+                const SizedBox(height: 8),
+                Text('How hard should your workouts be?', style: TextStyle(fontSize: 14, color: isDark ? AppColors.textMuted : AppColorsLight.textMuted)),
+                const SizedBox(height: 20),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    _intensityChip('Light', 60, currentIntensity, context, ref),
+                    _intensityChip('Moderate', 70, currentIntensity, context, ref),
+                    _intensityChip('Heavy', 80, currentIntensity, context, ref),
+                    _intensityChip('Max', 90, currentIntensity, context, ref),
+                  ],
+                ),
+                const SizedBox(height: 16),
+              ],
+            ),
+          ),
+        ),
       ),
-      ),
+    );
+  }
+
+  Widget _intensityChip(String label, int value, int current, BuildContext context, WidgetRef ref) {
+    final presets = [60, 70, 80, 90];
+    final closestPreset = presets.reduce((a, b) => (a - current).abs() < (b - current).abs() ? a : b);
+    final isSelected = value == closestPreset;
+    return ChoiceChip(
+      label: Text('$label ($value%)'),
+      selected: isSelected,
+      onSelected: (_) {
+        HapticFeedback.selectionClick();
+        ref.read(trainingIntensityProvider.notifier).setGlobalIntensity(value);
+        Navigator.pop(context);
+      },
+      selectedColor: AppColors.cyan.withValues(alpha: 0.2),
+      checkmarkColor: AppColors.cyan,
     );
   }
 
@@ -807,46 +878,33 @@ class SettingsCard extends ConsumerWidget {
       useRootNavigator: true,
       builder: (context) => GlassSheet(
         child: SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Text(
-                'Accent Color',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w600,
-                  color: isDark ? Colors.white : AppColorsLight.textPrimary,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Text('Accent Color', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: isDark ? Colors.white : AppColorsLight.textPrimary)),
+              ),
+              const SizedBox(height: 8),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Text('Choose an accent color for buttons and highlights', style: TextStyle(fontSize: 14, color: isDark ? AppColors.textMuted : AppColorsLight.textMuted)),
+              ),
+              const SizedBox(height: 24),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: _AccentColorGrid(
+                  currentAccent: currentAccent,
+                  onColorSelected: (accent) {
+                    ref.read(accentColorProvider.notifier).setAccent(accent);
+                    Navigator.pop(context);
+                  },
                 ),
               ),
-            ),
-            const SizedBox(height: 8),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Text(
-                'Choose an accent color for buttons and highlights',
-                style: TextStyle(
-                  fontSize: 14,
-                  color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
-                ),
-              ),
-            ),
-            const SizedBox(height: 24),
-            // Color Palette
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: _AccentColorPalette(
-                currentAccent: currentAccent,
-                onColorSelected: (accent) {
-                  ref.read(accentColorProvider.notifier).setAccent(accent);
-                },
-              ),
-            ),
-            const SizedBox(height: 24),
-          ],
+              const SizedBox(height: 24),
+            ],
+          ),
         ),
-      ),
       ),
     );
   }
@@ -1479,6 +1537,59 @@ class SettingsCard extends ConsumerWidget {
   }
 }
 
+/// Simple 4x3 grid of preset accent colors.
+class _AccentColorGrid extends StatelessWidget {
+  final AccentColor currentAccent;
+  final ValueChanged<AccentColor> onColorSelected;
+  const _AccentColorGrid({required this.currentAccent, required this.onColorSelected});
+
+  @override
+  Widget build(BuildContext context) {
+    return GridView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 4,
+        mainAxisSpacing: 16,
+        crossAxisSpacing: 16,
+      ),
+      itemCount: AccentColor.values.length,
+      itemBuilder: (context, index) {
+        final accent = AccentColor.values[index];
+        final isSelected = accent == currentAccent;
+        final isDark = Theme.of(context).brightness == Brightness.dark;
+        return GestureDetector(
+          onTap: () {
+            HapticFeedback.selectionClick();
+            onColorSelected(accent);
+          },
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 48,
+                height: 48,
+                decoration: BoxDecoration(
+                  color: accent.previewColor,
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: isSelected ? (isDark ? Colors.white : Colors.black) : Colors.transparent,
+                    width: 3,
+                  ),
+                  boxShadow: isSelected ? [BoxShadow(color: accent.previewColor.withValues(alpha: 0.4), blurRadius: 8, spreadRadius: 2)] : null,
+                ),
+                child: isSelected ? const Icon(Icons.check, color: Colors.white, size: 24) : null,
+              ),
+              const SizedBox(height: 4),
+              Text(accent.displayName, style: TextStyle(fontSize: 10, color: isDark ? AppColors.textMuted : AppColorsLight.textMuted), textAlign: TextAlign.center),
+            ],
+          ),
+        );
+      },
+    );
+  }
+}
+
 /// A tile for timezone selection in the bottom sheet.
 class _TimezoneOptionTile extends StatelessWidget {
   final TimezoneData timezone;
@@ -1535,304 +1646,6 @@ class _TimezoneOptionTile extends StatelessWidget {
       ),
     );
   }
-}
-
-/// HSV Color Picker with saturation/brightness area and hue slider
-class _AccentColorPalette extends StatefulWidget {
-  final AccentColor currentAccent;
-  final ValueChanged<AccentColor> onColorSelected;
-
-  const _AccentColorPalette({
-    required this.currentAccent,
-    required this.onColorSelected,
-  });
-
-  @override
-  State<_AccentColorPalette> createState() => _AccentColorPaletteState();
-}
-
-class _AccentColorPaletteState extends State<_AccentColorPalette> {
-  late double _hue;        // 0-360
-  late double _saturation; // 0-1
-  late double _brightness; // 0-1
-  late AccentColor? _matchedPreset;
-
-  @override
-  void initState() {
-    super.initState();
-    _initFromAccentColor(widget.currentAccent);
-  }
-
-  void _initFromAccentColor(AccentColor accent) {
-    final color = accent.previewColor;
-    final hsv = HSVColor.fromColor(color);
-    _hue = hsv.hue;
-    _saturation = hsv.saturation;
-    _brightness = hsv.value;
-    _matchedPreset = accent;
-  }
-
-  Color get _currentColor => HSVColor.fromAHSV(1.0, _hue, _saturation, _brightness).toColor();
-
-  /// Find the closest AccentColor preset to the current HSV selection
-  AccentColor _findClosestPreset() {
-    final currentColor = _currentColor;
-    AccentColor closest = AccentColor.orange;
-    double minDistance = double.infinity;
-
-    for (final accent in AccentColor.values) {
-      final presetColor = accent.previewColor;
-      // Calculate color distance (simple RGB distance using new API)
-      final dr = ((currentColor.r - presetColor.r) * 255).abs();
-      final dg = ((currentColor.g - presetColor.g) * 255).abs();
-      final db = ((currentColor.b - presetColor.b) * 255).abs();
-      final distance = dr + dg + db;
-
-      if (distance < minDistance) {
-        minDistance = distance;
-        closest = accent;
-      }
-    }
-
-    return closest;
-  }
-
-  void _onColorChanged() {
-    final closest = _findClosestPreset();
-    setState(() => _matchedPreset = closest);
-    widget.onColorSelected(closest);
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
-
-    return Column(
-      children: [
-        // Saturation/Brightness picker area
-        Container(
-          height: 200,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: cardBorder, width: 1),
-          ),
-          clipBehavior: Clip.antiAlias,
-          child: LayoutBuilder(
-            builder: (context, constraints) {
-              return GestureDetector(
-                onPanStart: (details) => _updateSaturationBrightness(details.localPosition, constraints),
-                onPanUpdate: (details) => _updateSaturationBrightness(details.localPosition, constraints),
-                onTapDown: (details) => _updateSaturationBrightness(details.localPosition, constraints),
-                child: Stack(
-                  children: [
-                    // Background: saturation/brightness gradient
-                    CustomPaint(
-                      size: Size(constraints.maxWidth, constraints.maxHeight),
-                      painter: _SaturationBrightnessPainter(hue: _hue),
-                    ),
-                    // Selection indicator (circle)
-                    Positioned(
-                      left: _saturation * constraints.maxWidth - 12,
-                      top: (1 - _brightness) * constraints.maxHeight - 12,
-                      child: Container(
-                        width: 24,
-                        height: 24,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: _currentColor,
-                          border: Border.all(color: Colors.white, width: 3),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.3),
-                              blurRadius: 4,
-                              offset: const Offset(0, 2),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              );
-            },
-          ),
-        ),
-        const SizedBox(height: 16),
-
-        // Hue slider with preview circle
-        Row(
-          children: [
-            // Color preview circle
-            Container(
-              width: 48,
-              height: 48,
-              decoration: BoxDecoration(
-                color: _currentColor,
-                shape: BoxShape.circle,
-                border: Border.all(
-                  color: isDark ? Colors.white.withValues(alpha: 0.3) : Colors.black.withValues(alpha: 0.2),
-                  width: 2,
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: _currentColor.withValues(alpha: 0.4),
-                    blurRadius: 12,
-                    spreadRadius: 2,
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(width: 12),
-            // Hue slider
-            Expanded(
-              child: Container(
-                height: 32,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: cardBorder, width: 1),
-                ),
-                clipBehavior: Clip.antiAlias,
-                child: LayoutBuilder(
-                  builder: (context, constraints) {
-                    return GestureDetector(
-                      onPanStart: (details) => _updateHue(details.localPosition.dx, constraints.maxWidth),
-                      onPanUpdate: (details) => _updateHue(details.localPosition.dx, constraints.maxWidth),
-                      onTapDown: (details) => _updateHue(details.localPosition.dx, constraints.maxWidth),
-                      child: Stack(
-                        children: [
-                          // Hue gradient background
-                          CustomPaint(
-                            size: Size(constraints.maxWidth, 32),
-                            painter: _HueGradientPainter(),
-                          ),
-                          // Hue indicator
-                          Positioned(
-                            left: (_hue / 360) * constraints.maxWidth - 8,
-                            top: 0,
-                            bottom: 0,
-                            child: Center(
-                              child: Container(
-                                width: 16,
-                                height: 28,
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(4),
-                                  color: HSVColor.fromAHSV(1.0, _hue, 1.0, 1.0).toColor(),
-                                  border: Border.all(color: Colors.white, width: 2),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: Colors.black.withValues(alpha: 0.3),
-                                      blurRadius: 4,
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    );
-                  },
-                ),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 16),
-
-        // Matched preset indicator
-        if (_matchedPreset != null)
-          Text(
-            'Matched: ${_matchedPreset!.displayName}',
-            style: TextStyle(
-              fontSize: 12,
-              color: textMuted,
-            ),
-          ),
-      ],
-    );
-  }
-
-  void _updateSaturationBrightness(Offset position, BoxConstraints constraints) {
-    HapticFeedback.selectionClick();
-    setState(() {
-      _saturation = (position.dx / constraints.maxWidth).clamp(0.0, 1.0);
-      _brightness = 1.0 - (position.dy / constraints.maxHeight).clamp(0.0, 1.0);
-    });
-    _onColorChanged();
-  }
-
-  void _updateHue(double x, double width) {
-    HapticFeedback.selectionClick();
-    setState(() {
-      _hue = ((x / width) * 360).clamp(0.0, 360.0);
-    });
-    _onColorChanged();
-  }
-}
-
-/// Painter for the saturation/brightness gradient area
-class _SaturationBrightnessPainter extends CustomPainter {
-  final double hue;
-
-  _SaturationBrightnessPainter({required this.hue});
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final rect = Offset.zero & size;
-
-    // Base color (full saturation, full brightness at the given hue)
-    final baseColor = HSVColor.fromAHSV(1.0, hue, 1.0, 1.0).toColor();
-
-    // Horizontal gradient: white to base color (saturation)
-    final saturationGradient = LinearGradient(
-      begin: Alignment.centerLeft,
-      end: Alignment.centerRight,
-      colors: [Colors.white, baseColor],
-    );
-
-    // Vertical gradient: transparent to black (brightness)
-    final brightnessGradient = const LinearGradient(
-      begin: Alignment.topCenter,
-      end: Alignment.bottomCenter,
-      colors: [Colors.transparent, Colors.black],
-    );
-
-    // Draw saturation gradient first
-    final satPaint = Paint()..shader = saturationGradient.createShader(rect);
-    canvas.drawRect(rect, satPaint);
-
-    // Overlay brightness gradient
-    final brightPaint = Paint()..shader = brightnessGradient.createShader(rect);
-    canvas.drawRect(rect, brightPaint);
-  }
-
-  @override
-  bool shouldRepaint(_SaturationBrightnessPainter oldDelegate) {
-    return oldDelegate.hue != hue;
-  }
-}
-
-/// Custom painter for the rainbow hue gradient strip
-class _HueGradientPainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final rect = Offset.zero & size;
-
-    // Create hue gradient (full spectrum)
-    final colors = List.generate(
-      13,
-      (i) => HSVColor.fromAHSV(1.0, i * 30.0, 1.0, 1.0).toColor(),
-    );
-
-    final gradient = LinearGradient(colors: colors);
-    final paint = Paint()..shader = gradient.createShader(rect);
-    canvas.drawRect(rect, paint);
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
 /// A tile for progression pace selection in the bottom sheet.
@@ -2427,239 +2240,6 @@ class _ConsistencyModeOptionTile extends StatelessWidget {
   }
 }
 
-/// A bottom sheet for selecting variation percentage.
-class _VariationSliderSheet extends StatefulWidget {
-  final int initialValue;
-  final ValueChanged<int> onSave;
-
-  const _VariationSliderSheet({
-    required this.initialValue,
-    required this.onSave,
-  });
-
-  @override
-  State<_VariationSliderSheet> createState() => _VariationSliderSheetState();
-}
-
-class _VariationSliderSheetState extends State<_VariationSliderSheet> {
-  late double _value;
-
-  @override
-  void initState() {
-    super.initState();
-    _value = widget.initialValue.toDouble();
-  }
-
-  String _getDescription(int percentage) {
-    if (percentage == 0) {
-      return 'Same exercises every week';
-    } else if (percentage <= 25) {
-      return 'Minimal variety - mostly consistent';
-    } else if (percentage <= 50) {
-      return 'Balanced variety';
-    } else if (percentage <= 75) {
-      return 'High variety - frequent changes';
-    } else {
-      return 'Maximum variety - new exercises each week';
-    }
-  }
-
-  String _getLabel(int percentage) {
-    if (percentage <= 20) return 'Consistent';
-    if (percentage <= 40) return 'Balanced';
-    if (percentage <= 60) return 'Varied';
-    if (percentage <= 80) return 'Fresh';
-    return 'All New';
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    final percentage = _value.round();
-
-    return SafeArea(
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const SizedBox(height: 8),
-            Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: textMuted,
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-            const SizedBox(height: 24),
-            Text(
-              'Weekly Exercise Variety',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
-                color: isDark ? Colors.white : AppColorsLight.textPrimary,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'How much should exercises change each week?',
-              style: TextStyle(
-                fontSize: 14,
-                color: textMuted,
-              ),
-            ),
-            const SizedBox(height: 32),
-
-            // Large percentage display
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                Text(
-                  '$percentage',
-                  style: TextStyle(
-                    fontSize: 64,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.cyan,
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 12),
-                  child: Text(
-                    '%',
-                    style: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.cyan,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            Text(
-              _getLabel(percentage),
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w500,
-                color: AppColors.cyan,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              _getDescription(percentage),
-              style: TextStyle(
-                fontSize: 13,
-                color: textMuted,
-              ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 32),
-
-            // Slider
-            Slider(
-              value: _value,
-              min: 0,
-              max: 100,
-              divisions: 20,
-              activeColor: AppColors.cyan,
-              inactiveColor: AppColors.cyan.withValues(alpha: 0.2),
-              onChanged: (value) {
-                HapticFeedback.selectionClick();
-                setState(() => _value = value);
-              },
-            ),
-
-            // Labels
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    'Consistent',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: textMuted,
-                    ),
-                  ),
-                  Text(
-                    'Fresh',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: textMuted,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 16),
-
-            // Info banner
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: AppColors.cyan.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: AppColors.cyan.withValues(alpha: 0.3),
-                ),
-              ),
-              child: Row(
-                children: [
-                  Icon(
-                    Icons.info_outline,
-                    color: AppColors.cyan,
-                    size: 20,
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      'Staple exercises are never affected by this setting.',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: isDark ? Colors.white : AppColorsLight.textPrimary,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 24),
-
-            // Save button
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: () {
-                  widget.onSave(percentage);
-                  Navigator.pop(context);
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.cyan,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                child: const Text(
-                  'Save',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
 /// A bottom sheet for selecting workout days with quick change capability.
 class _WorkoutDaysSelectorSheet extends ConsumerStatefulWidget {
   final List<int> initialDays;
@@ -2967,241 +2547,6 @@ class _WorkoutDaysSelectorSheetState
       if (!b.contains(item)) return false;
     }
     return true;
-  }
-}
-
-/// A bottom sheet for selecting training intensity percentage.
-class _TrainingIntensitySheet extends StatefulWidget {
-  final int initialValue;
-  final ValueChanged<int> onSave;
-
-  const _TrainingIntensitySheet({
-    required this.initialValue,
-    required this.onSave,
-  });
-
-  @override
-  State<_TrainingIntensitySheet> createState() => _TrainingIntensitySheetState();
-}
-
-class _TrainingIntensitySheetState extends State<_TrainingIntensitySheet> {
-  late double _value;
-
-  @override
-  void initState() {
-    super.initState();
-    _value = widget.initialValue.toDouble();
-  }
-
-  String _getLabel(int percentage) {
-    if (percentage <= 60) return 'Light';
-    if (percentage <= 70) return 'Moderate';
-    if (percentage <= 80) return 'Working';
-    if (percentage <= 90) return 'Heavy';
-    return 'Max';
-  }
-
-  String _getDescription(int percentage) {
-    if (percentage <= 60) return 'Recovery / Deload week';
-    if (percentage <= 70) return 'Endurance / Volume focus';
-    if (percentage <= 80) return 'Hypertrophy / Building muscle';
-    if (percentage <= 90) return 'Strength / Power focus';
-    return 'Near max / Peaking';
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    final percentage = _value.round();
-
-    return SafeArea(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const SizedBox(height: 8),
-            Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: textMuted,
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-            const SizedBox(height: 24),
-            Text(
-              'Training Intensity',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
-                color: isDark ? Colors.white : AppColorsLight.textPrimary,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'What percentage of your 1RM do you want to train at?',
-              style: TextStyle(
-                fontSize: 14,
-                color: textMuted,
-              ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 32),
-
-            // Large percentage display
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                Text(
-                  '$percentage',
-                  style: TextStyle(
-                    fontSize: 64,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.cyan,
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 12),
-                  child: Text(
-                    '%',
-                    style: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.cyan,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            Text(
-              _getLabel(percentage),
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w500,
-                color: AppColors.cyan,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              _getDescription(percentage),
-              style: TextStyle(
-                fontSize: 13,
-                color: textMuted,
-              ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 32),
-
-            // Slider
-            Slider(
-              value: _value,
-              min: 50,
-              max: 100,
-              divisions: 10,
-              activeColor: AppColors.cyan,
-              inactiveColor: AppColors.cyan.withValues(alpha: 0.2),
-              onChanged: (value) {
-                HapticFeedback.selectionClick();
-                setState(() => _value = value);
-              },
-            ),
-
-            // Labels
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    '50%',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: textMuted,
-                    ),
-                  ),
-                  Text(
-                    '75%',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: textMuted,
-                    ),
-                  ),
-                  Text(
-                    '100%',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: textMuted,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 16),
-
-            // Info banner
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: AppColors.cyan.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: AppColors.cyan.withValues(alpha: 0.3),
-                ),
-              ),
-              child: Row(
-                children: [
-                  Icon(
-                    Icons.info_outline,
-                    color: AppColors.cyan,
-                    size: 20,
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      'This applies to exercises where you have logged a 1RM.',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: isDark ? Colors.white : AppColorsLight.textPrimary,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 24),
-
-            // Save button
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: () {
-                  widget.onSave(percentage);
-                  Navigator.pop(context);
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.cyan,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                child: const Text(
-                  'Save',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
   }
 }
 

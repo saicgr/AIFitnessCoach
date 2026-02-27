@@ -14,6 +14,9 @@ logger = get_logger(__name__)
 # Singleton vision service
 _vision_service: Optional[VisionService] = None
 
+# Singleton form analysis service
+_form_analysis_service = None
+
 
 def get_vision_service() -> VisionService:
     """Get or create the vision service singleton."""
@@ -21,6 +24,15 @@ def get_vision_service() -> VisionService:
     if _vision_service is None:
         _vision_service = VisionService()
     return _vision_service
+
+
+def get_form_analysis_service():
+    """Get or create the form analysis service singleton."""
+    global _form_analysis_service
+    if _form_analysis_service is None:
+        from services.form_analysis_service import FormAnalysisService
+        _form_analysis_service = FormAnalysisService()
+    return _form_analysis_service
 
 
 def run_async_in_sync(coro, timeout: int = 30):

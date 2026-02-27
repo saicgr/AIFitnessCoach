@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:dio/dio.dart';
+import '../../core/constants/api_constants.dart';
 import '../models/nutrition.dart';
 import '../models/micronutrients.dart';
 import '../models/nutrition_preferences.dart';
@@ -500,6 +501,9 @@ class NutritionRepository {
           'description': description,
           'meal_type': mealType,
         },
+        options: Options(
+          receiveTimeout: ApiConstants.aiReceiveTimeout,
+        ),
       );
       final result = LogFoodResponse.fromJson(response.data);
 

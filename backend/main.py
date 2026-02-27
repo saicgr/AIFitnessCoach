@@ -275,6 +275,15 @@ async def _resume_pending_jobs():
         # Don't fail startup if job recovery fails
 
 
+async def _resume_pending_media_jobs():
+    """Resume pending media analysis jobs on server startup."""
+    try:
+        from services.media_job_runner import resume_pending_media_jobs
+        await resume_pending_media_jobs()
+    except Exception as e:
+        logger.error(f"Failed to resume pending media jobs: {e}")
+
+
 async def get_langgraph_service() -> LangGraphCoachService:
     """
     Lazy getter for LangGraph service.
@@ -353,6 +362,7 @@ async def lifespan(app: FastAPI):
     _create_safe_task(_check_exercise_rag_index(), name="check-exercise-rag-index")
     _create_safe_task(_check_chromadb_dimensions(), name="check-chromadb-dimensions")
     _create_safe_task(_resume_pending_jobs(), name="resume-pending-jobs")
+    _create_safe_task(_resume_pending_media_jobs(), name="resume-pending-media-jobs")
 
     total_startup = time.time() - startup_start
     logger.info(f"Startup complete in {total_startup:.2f}s (server ready, background tasks running)")

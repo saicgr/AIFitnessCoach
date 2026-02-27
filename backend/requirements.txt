@@ -57,6 +57,9 @@ pandas==2.1.4
 openpyxl==3.1.2
 pyarrow>=14.0.0
 
+# Media / Video Processing
+imageio-ffmpeg>=0.5.1
+
 # Rate Limiting
 slowapi==0.1.9
 

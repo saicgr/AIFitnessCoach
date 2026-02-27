@@ -386,7 +386,11 @@ class _ChatBottomSheetState extends ConsumerState<_ChatBottomSheet> {
                     padding: const EdgeInsets.only(bottom: 4),
                     child: GestureDetector(
                       onTap: () {
-                        // TODO: attachment menu
+                        HapticService.light();
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Media attachments available in full chat')),
+                        );
+                        context.push('/chat');
                       },
                       child: Container(
                         width: 32,

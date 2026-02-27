@@ -15,8 +15,6 @@ class ProgramsIntroSheet extends StatelessWidget {
     final accentColor = ThemeColors.of(context).accent;
     final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
-    final orange = isDark ? AppColors.orange : AppColorsLight.orange;
-
     return ClipRRect(
       borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
       child: BackdropFilter(
@@ -91,25 +89,6 @@ class ProgramsIntroSheet extends StatelessWidget {
                                 fontSize: 20,
                                 fontWeight: FontWeight.bold,
                                 color: textPrimary,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                              decoration: BoxDecoration(
-                                color: orange.withValues(alpha: 0.2),
-                                borderRadius: BorderRadius.circular(6),
-                                border: Border.all(
-                                  color: orange.withValues(alpha: 0.3),
-                                ),
-                              ),
-                              child: Text(
-                                'In Development',
-                                style: TextStyle(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w600,
-                                  color: orange,
-                                ),
                               ),
                             ),
                           ],
@@ -202,55 +181,6 @@ class ProgramsIntroSheet extends StatelessWidget {
                       _buildCategoryChip('HIIT', accentColor),
                       _buildCategoryChip('Yoga', accentColor),
                     ],
-                  ),
-
-                  const SizedBox(height: 24),
-
-                  // Current status with glassmorphic style
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(12),
-                    child: BackdropFilter(
-                      filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
-                      child: Container(
-                        padding: const EdgeInsets.all(14),
-                        decoration: BoxDecoration(
-                          color: orange.withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(
-                            color: orange.withValues(alpha: 0.3),
-                            width: 1,
-                          ),
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              children: [
-                                Icon(Icons.schedule_rounded, color: orange, size: 18),
-                                const SizedBox(width: 8),
-                                Text(
-                                  'Coming Soon',
-                                  style: TextStyle(
-                                    fontSize: 15,
-                                    fontWeight: FontWeight.bold,
-                                    color: orange,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              'Programs are being finalized with exercise videos and detailed instructions.',
-                              style: TextStyle(
-                                fontSize: 13,
-                                color: textSecondary,
-                                height: 1.4,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
                   ),
 
                   const SizedBox(height: 24),

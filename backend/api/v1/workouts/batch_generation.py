@@ -91,8 +91,8 @@ async def get_upcoming_workouts(
                 if active_result.data:
                     profile_filter = active_result.data.get("id")
                     logger.info(f"[BATCH] Using active gym profile: {profile_filter}")
-            except Exception:
-                pass  # No active profile, query without filter
+            except Exception as e:
+                logger.debug(f"No active gym profile found: {e}")
 
         # Query workouts in date range, ordered by scheduled_date ASC
         rows = db.list_workouts(

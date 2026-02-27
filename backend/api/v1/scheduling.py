@@ -234,7 +234,8 @@ async def get_missed_workouts(
             if isinstance(exercises_json, str):
                 try:
                     exercises_json = json.loads(exercises_json)
-                except:
+                except Exception as e:
+                    logger.debug(f"Failed to parse exercises JSON: {e}")
                     exercises_json = []
             exercises_count = len(exercises_json) if isinstance(exercises_json, list) else 0
 
@@ -676,8 +677,9 @@ async def get_skip_reasons(
                 )
                 for row in response.data or []
             ]
-        except Exception:
+        except Exception as e:
             # If table doesn't exist, return defaults
+            logger.debug(f"Skip reasons table lookup failed: {e}")
             return [
                 SkipReasonCategory(id="too_busy", display_name="Too Busy", emoji="📅"),
                 SkipReasonCategory(id="feeling_unwell", display_name="Feeling Unwell", emoji="🤒"),
@@ -775,8 +777,8 @@ async def get_scheduling_preferences(user_id: str = Query(..., description="User
                     prefer_swap_similar_type=response.data.get("prefer_swap_similar_type", True),
                     track_skip_patterns=response.data.get("track_skip_patterns", True),
                 )
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug(f"Failed to fetch scheduling prefs: {e}")
 
         # Return defaults if not found
         return SchedulingPreferences()

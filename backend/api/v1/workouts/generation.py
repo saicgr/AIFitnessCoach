@@ -155,8 +155,8 @@ async def generate_next_day_background(user_id: str, target_date: str):
                 if generating_check.data:
                     logger.info(f"[NEXT-DAY] Workout already being generated for {user_id} on {target_date}, skipping")
                     return
-            except Exception:
-                pass
+            except Exception as e:
+                logger.warning(f"Dedup check for pre-cache failed: {e}")
 
             # Use the existing generate_workout function
             from models.schemas import GenerateWorkoutRequest
@@ -171,8 +171,8 @@ async def generate_next_day_background(user_id: str, target_date: str):
                 ).single().execute()
                 if active_result.data:
                     gym_profile_id = active_result.data.get("id")
-            except Exception:
-                pass
+            except Exception as e:
+                logger.warning(f"Failed to get active gym profile: {e}")
 
             request = GenerateWorkoutRequest(
                 user_id=user_id,
@@ -235,8 +235,8 @@ def ensure_parsed_dict(value) -> Dict[str, Any]:
             parsed = json.loads(value)
             if isinstance(parsed, dict):
                 return parsed
-        except (json.JSONDecodeError, ValueError):
-            pass
+        except (json.JSONDecodeError, ValueError) as e:
+            logger.debug(f"Failed to parse dict from string: {e}")
     return {}
 
 
@@ -323,8 +323,8 @@ def normalize_exercise_numeric_fields(exercises: List[Dict[str, Any]]) -> List[D
             if field in exercise and exercise[field] is not None:
                 try:
                     exercise[field] = int(exercise[field])
-                except (ValueError, TypeError):
-                    pass
+                except (ValueError, TypeError) as e:
+                    logger.debug(f"Failed to convert {field} to int: {e}")
 
         # Convert set_targets if present
         if 'set_targets' in exercise and exercise['set_targets']:
@@ -335,8 +335,8 @@ def normalize_exercise_numeric_fields(exercises: List[Dict[str, Any]]) -> List[D
                     if field in target and target[field] is not None:
                         try:
                             target[field] = int(target[field])
-                        except (ValueError, TypeError):
-                            pass
+                        except (ValueError, TypeError) as e:
+                            logger.debug(f"Failed to convert target {field} to int: {e}")
 
     return exercises
 
@@ -351,39 +351,61 @@ async def generate_workout(request: GenerateWorkoutRequest, background_tasks: Ba
     try:
         db = get_supabase_db()
 
-        # Duplicate check: return existing workout if one already exists for this date
+        # Resolve gym_profile_id early for dedup checks
+        dedup_gym_profile_id = request.gym_profile_id
+        if not dedup_gym_profile_id:
+            try:
+                active_result = db.client.table("gym_profiles").select("id").eq(
+                    "user_id", request.user_id
+                ).eq("is_active", True).single().execute()
+                if active_result.data:
+                    dedup_gym_profile_id = active_result.data.get("id")
+            except Exception as e:
+                logger.warning(f"Failed to get active gym profile: {e}")
+
+        # Duplicate check: return existing workout if one already exists for this date+profile
         placeholder_id = None
         if request.scheduled_date:
             try:
                 sched = request.scheduled_date
                 end_of_day = sched + "T23:59:59.999999+00:00" if len(sched) == 10 else sched
-                existing = db.client.table("workouts").select("*").eq(
+                query = db.client.table("workouts").select("*").eq(
                     "user_id", request.user_id
                 ).gte(
                     "scheduled_date", sched
                 ).lte(
                     "scheduled_date", end_of_day
-                ).neq("status", "cancelled").limit(1).execute()
+                ).neq("status", "cancelled")
+                if dedup_gym_profile_id:
+                    query = query.eq("gym_profile_id", dedup_gym_profile_id)
+                existing = query.limit(1).execute()
                 if existing.data:
-                    logger.info(f"✅ [Dedup] Workout already exists for {request.user_id} on {request.scheduled_date}, returning existing")
+                    logger.info(f"✅ [Dedup] Workout already exists for {request.user_id} on {request.scheduled_date} (profile={dedup_gym_profile_id}), returning existing")
                     return row_to_workout(existing.data[0])
             except Exception as dedup_err:
                 logger.warning(f"Dedup check failed, proceeding with generation: {dedup_err}")
+
+            # Premium gate check: enforce free-tier workout generation limits
+            from core.premium_gate import check_premium_gate
+            await check_premium_gate(request.user_id, "ai_workout_generation")
 
             # Insert placeholder with status='generating' to prevent concurrent generation
             # This lets the streaming endpoint detect generation is already in progress
             try:
                 import uuid
                 placeholder_id = str(uuid.uuid4())
-                db.client.table("workouts").insert({
+                placeholder_data = {
                     "id": placeholder_id,
                     "user_id": request.user_id,
                     "scheduled_date": request.scheduled_date,
                     "status": "generating",
                     "name": "Generating...",
                     "exercises_json": [],
-                }).execute()
-                logger.info(f"🔒 [Dedup] Inserted placeholder {placeholder_id} for {request.user_id} on {request.scheduled_date}")
+                }
+                if dedup_gym_profile_id:
+                    placeholder_data["gym_profile_id"] = dedup_gym_profile_id
+                db.client.table("workouts").insert(placeholder_data).execute()
+                logger.info(f"🔒 [Dedup] Inserted placeholder {placeholder_id} for {request.user_id} on {request.scheduled_date} (profile={dedup_gym_profile_id})")
             except Exception as ph_err:
                 logger.warning(f"Placeholder insert failed: {ph_err}")
                 placeholder_id = None
@@ -432,9 +454,9 @@ async def generate_workout(request: GenerateWorkoutRequest, background_tasks: Ba
                     gym_profile = active_result.data if active_result.data else None
                     if gym_profile:
                         logger.info(f"🏋️ [GymProfile] Using active profile: {gym_profile.get('name')} ({gym_profile.get('id')})")
-                except Exception:
+                except Exception as e:
                     # No active profile found - will use user defaults
-                    pass
+                    logger.debug(f"No active gym profile found: {e}")
 
             if gym_profile:
                 # Load settings from gym profile
@@ -739,6 +761,7 @@ async def generate_workout(request: GenerateWorkoutRequest, background_tasks: Ba
                     focus_areas=request.focus_areas if request.focus_areas else [focus_area],
                     intensity_preference=intensity_preference,
                     workout_type_preference=request.workout_type,
+                    user_dob=user.get("date_of_birth") if user else None,
                 )
             else:
                 # Fallback to free-form generation if RAG returns no exercises
@@ -769,6 +792,7 @@ async def generate_workout(request: GenerateWorkoutRequest, background_tasks: Ba
                     plank_capacity=plank_capacity,
                     squat_capacity=squat_capacity,
                     cardio_capacity=cardio_capacity,
+                    user_dob=user.get("date_of_birth") if user else None,
                 )
 
             # Ensure workout_data is a dict (guard against Gemini returning a string)
@@ -1156,8 +1180,8 @@ async def generate_workout(request: GenerateWorkoutRequest, background_tasks: Ba
             try:
                 db.client.table("workouts").delete().eq("id", placeholder_id).execute()
                 logger.info(f"🔓 [Dedup] Deleted placeholder {placeholder_id}")
-            except Exception:
-                pass
+            except Exception as e:
+                logger.warning(f"Failed to delete placeholder: {e}")
 
         # Log workout change synchronously (quick, important for audit trail)
         log_workout_change(
@@ -1179,6 +1203,10 @@ async def generate_workout(request: GenerateWorkoutRequest, background_tasks: Ba
 
         background_tasks.add_task(_bg_index_rag)
 
+        # Track premium gate usage after successful generation
+        from core.premium_gate import track_premium_usage
+        background_tasks.add_task(track_premium_usage, request.user_id, "ai_workout_generation")
+
         return generated_workout
 
     except HTTPException:
@@ -1186,16 +1214,16 @@ async def generate_workout(request: GenerateWorkoutRequest, background_tasks: Ba
         if placeholder_id:
             try:
                 db.client.table("workouts").delete().eq("id", placeholder_id).execute()
-            except Exception:
-                pass
+            except Exception as e:
+                logger.warning(f"Placeholder cleanup failed: {e}")
         raise
     except Exception as e:
         # Clean up placeholder on error
         if placeholder_id:
             try:
                 db.client.table("workouts").delete().eq("id", placeholder_id).execute()
-            except Exception:
-                pass
+            except Exception as cleanup_err:
+                logger.warning(f"Placeholder cleanup failed: {cleanup_err}")
         logger.error(f"Failed to generate workout: {e}")
         raise safe_internal_error(e, "generation")
 
@@ -1222,32 +1250,50 @@ async def generate_workout_streaming(request: Request, body: GenerateWorkoutRequ
     db = get_supabase_db()
     scheduled_date = body.scheduled_date or datetime.now().strftime("%Y-%m-%d")
 
+    # Resolve gym_profile_id early for dedup checks
+    stream_gym_profile_id = body.gym_profile_id or None
+    if not stream_gym_profile_id:
+        try:
+            active_result = db.client.table("gym_profiles").select("id").eq(
+                "user_id", body.user_id
+            ).eq("is_active", True).single().execute()
+            if active_result.data:
+                stream_gym_profile_id = active_result.data.get("id")
+        except Exception as e:
+            logger.warning(f"Failed to get active gym profile: {e}")
+
     try:
-        existing_generating = db.client.table("workouts").select("id").eq(
+        generating_query = db.client.table("workouts").select("id").eq(
             "user_id", body.user_id
         ).eq(
             "scheduled_date", scheduled_date
         ).eq(
             "status", "generating"
-        ).execute()
+        )
+        if stream_gym_profile_id:
+            generating_query = generating_query.eq("gym_profile_id", stream_gym_profile_id)
+        existing_generating = generating_query.execute()
 
         if existing_generating.data:
             workout_id = existing_generating.data[0]["id"]
-            logger.info(f"⏳ [Idempotency] Workout already generating for {body.user_id} on {scheduled_date}: {workout_id}")
+            logger.info(f"⏳ [Idempotency] Workout already generating for {body.user_id} on {scheduled_date} (profile={stream_gym_profile_id}): {workout_id}")
 
             async def already_generating_sse():
                 yield f"event: already_generating\ndata: {json.dumps({'status': 'already_generating', 'workout_id': workout_id, 'message': 'Workout generation already in progress'})}\n\n"
 
             return StreamingResponse(already_generating_sse(), media_type="text/event-stream")
 
-        # Duplicate check: If a completed/active workout already exists for this user+date, return it
-        existing_workout = db.client.table("workouts").select("id,name,status").eq(
+        # Duplicate check: If a completed/active workout already exists for this user+date+profile, return it
+        duplicate_query = db.client.table("workouts").select("id,name,status").eq(
             "user_id", body.user_id
         ).eq(
             "scheduled_date", scheduled_date
         ).neq(
             "status", "generating"
-        ).limit(1).execute()
+        )
+        if stream_gym_profile_id:
+            duplicate_query = duplicate_query.eq("gym_profile_id", stream_gym_profile_id)
+        existing_workout = duplicate_query.limit(1).execute()
 
         if existing_workout.data:
             workout_id = existing_workout.data[0]["id"]
@@ -1261,6 +1307,10 @@ async def generate_workout_streaming(request: Request, body: GenerateWorkoutRequ
     except Exception as e:
         # Log but don't fail - idempotency check is a nice-to-have
         logger.warning(f"⚠️ [Idempotency] Check failed: {e}")
+
+    # Premium gate check: enforce free-tier workout generation limits
+    from core.premium_gate import check_premium_gate
+    await check_premium_gate(body.user_id, "ai_workout_generation")
 
     async def generate_sse() -> AsyncGenerator[str, None]:
         start_time = datetime.now()
@@ -1292,8 +1342,8 @@ async def generate_workout_streaming(request: Request, body: GenerateWorkoutRequ
                         profile_result = db.client.table("gym_profiles").select("*").eq("id", body.gym_profile_id).single().execute()
                         gym_profile = profile_result.data if profile_result.data else None
                         logger.info(f"🏋️ [GymProfile] Using requested profile: {body.gym_profile_id}")
-                    except Exception:
-                        pass
+                    except Exception as e:
+                        logger.warning(f"Failed to fetch gym profile: {e}")
                 else:
                     # Try to get active profile
                     try:
@@ -1301,8 +1351,8 @@ async def generate_workout_streaming(request: Request, body: GenerateWorkoutRequ
                         gym_profile = active_result.data if active_result.data else None
                         if gym_profile:
                             logger.info(f"🏋️ [GymProfile] Using active profile: {gym_profile.get('name')} ({gym_profile.get('id')})")
-                    except Exception:
-                        pass
+                    except Exception as e:
+                        logger.debug(f"No active gym profile found: {e}")
 
                 if gym_profile:
                     # Load settings from gym profile
@@ -1485,6 +1535,7 @@ async def generate_workout_streaming(request: Request, body: GenerateWorkoutRequ
                     "coach_style": ai_coach_settings.get("coaching_style") if ai_coach_settings else None,
                     "coach_tone": ai_coach_settings.get("communication_tone") if ai_coach_settings else None,
                     "scheduled_date": scheduled_date,
+                    "user_dob": user.get("date_of_birth") if user else None,
                 }
 
                 # Add strength_history for cached version
@@ -1802,6 +1853,13 @@ async def generate_workout_streaming(request: Request, body: GenerateWorkoutRequ
                 "comeback_detected": comeback_status.get("in_comeback_mode", False),
                 "days_since_last_workout": comeback_status.get("days_since_last_workout"),
             }
+
+            # Track premium gate usage after successful streaming generation
+            try:
+                from core.premium_gate import track_premium_usage
+                await track_premium_usage(body.user_id, "ai_workout_generation")
+            except Exception as usage_err:
+                logger.warning(f"Failed to track workout generation usage: {usage_err}")
 
             yield f"event: done\ndata: {json.dumps(workout_response)}\n\n"
 
@@ -2448,8 +2506,8 @@ async def get_mood_analytics(
                 try:
                     dt = datetime.fromisoformat(check_in_time.replace("Z", "+00:00"))
                     checkin_dates.add(dt.date())
-                except (ValueError, AttributeError):
-                    pass
+                except (ValueError, AttributeError) as e:
+                    logger.debug(f"Failed to parse check-in date: {e}")
 
         sorted_dates = sorted(checkin_dates, reverse=True)
 
@@ -3697,6 +3755,10 @@ async def generate_onboarding_workout_streaming(request: Request, body: Onboardi
                     else gemini_service.generate_workout_plan_streaming
                 )
 
+                # Try to get user DOB for birthday theming
+                onboarding_user = db.get_user(body.user_id)
+                onboarding_dob = onboarding_user.get("date_of_birth") if onboarding_user else None
+
                 generator_kwargs = {
                     "fitness_level": fitness_level,
                     "goals": goals,
@@ -3714,6 +3776,7 @@ async def generate_onboarding_workout_streaming(request: Request, body: Onboardi
                     "coach_style": None,
                     "coach_tone": None,
                     "scheduled_date": scheduled_date,
+                    "user_dob": onboarding_dob,
                 }
 
                 if use_cached:

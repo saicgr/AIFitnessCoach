@@ -27,6 +27,7 @@ class ConnectionStatus(str, Enum):
 class ActivityType(str, Enum):
     """Activity feed item types."""
     WORKOUT_COMPLETED = "workout_completed"
+    WORKOUT_SHARED = "workout_shared"
     ACHIEVEMENT_EARNED = "achievement_earned"
     PERSONAL_RECORD = "personal_record"
     WEIGHT_MILESTONE = "weight_milestone"

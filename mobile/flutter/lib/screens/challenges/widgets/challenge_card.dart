@@ -175,6 +175,12 @@ class ChallengeCard extends StatelessWidget {
                 ),
               ],
 
+              // Expiry countdown for pending challenges
+              if (status == 'pending' && challenge['expires_at'] != null) ...[
+                const SizedBox(height: 12),
+                _buildExpiryCountdown(DateTime.parse(challenge['expires_at'] as String)),
+              ],
+
               // Action buttons for pending challenges
               if (status == 'pending' && isReceived) ...[
                 const SizedBox(height: 12),
@@ -344,5 +350,76 @@ class ChallengeCard extends StatelessWidget {
       default:
         return status.toUpperCase();
     }
+  }
+
+  Widget _buildExpiryCountdown(DateTime expiresAt) {
+    final now = DateTime.now();
+    final remaining = expiresAt.difference(now);
+
+    if (remaining.isNegative) {
+      return Row(
+        children: [
+          Icon(Icons.timer_off, size: 14, color: Colors.red),
+          const SizedBox(width: 4),
+          Text(
+            'Expired',
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: Colors.red,
+            ),
+          ),
+        ],
+      );
+    }
+
+    final days = remaining.inDays;
+    final hours = remaining.inHours % 24;
+    final minutes = remaining.inMinutes % 60;
+
+    // Color based on urgency
+    Color countdownColor;
+    if (remaining.inHours < 24) {
+      countdownColor = Colors.red;
+    } else if (remaining.inHours < 48) {
+      countdownColor = AppColors.orange;
+    } else {
+      countdownColor = AppColors.textMuted;
+    }
+
+    String timeText;
+    if (days > 0) {
+      timeText = '${days}d ${hours}h remaining';
+    } else if (hours > 0) {
+      timeText = '${hours}h ${minutes}m remaining';
+    } else {
+      timeText = '${minutes}m remaining';
+    }
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: countdownColor.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: countdownColor.withValues(alpha: 0.3),
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.timer_outlined, size: 14, color: countdownColor),
+          const SizedBox(width: 4),
+          Text(
+            timeText,
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: countdownColor,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }

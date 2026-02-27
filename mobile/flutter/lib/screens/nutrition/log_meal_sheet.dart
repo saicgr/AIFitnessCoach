@@ -1876,9 +1876,9 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet> {
                   child: Row(
                     children: [
                       _AnimatedCalorieChip(calories: response.totalCalories, color: AppColors.coral),
-                      _CompactMacroChip(icon: Icons.fitness_center, value: '${response.proteinG.toStringAsFixed(0)}g', unit: 'Protein', color: AppColors.yellow),
-                      _CompactMacroChip(icon: Icons.grain, value: '${response.carbsG.toStringAsFixed(0)}g', unit: 'Carbs', color: AppColors.green),
-                      _CompactMacroChip(icon: Icons.opacity, value: '${response.fatG.toStringAsFixed(0)}g', unit: 'Fat', color: AppColors.quickActionWater),
+                      _CompactMacroChip(icon: Icons.fitness_center, value: '${response.proteinG.toStringAsFixed(0)}g', unit: 'Protein', color: AppColors.macroProtein),
+                      _CompactMacroChip(icon: Icons.grain, value: '${response.carbsG.toStringAsFixed(0)}g', unit: 'Carbs', color: AppColors.macroCarbs),
+                      _CompactMacroChip(icon: Icons.opacity, value: '${response.fatG.toStringAsFixed(0)}g', unit: 'Fat', color: AppColors.macroFat),
                     ],
                   ),
                 ),

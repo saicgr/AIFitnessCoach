@@ -56,6 +56,7 @@ import '../../data/repositories/nutrition_repository.dart';
 import '../../data/repositories/hydration_repository.dart';
 import '../../data/providers/billing_reminder_provider.dart';
 import '../../data/providers/scheduling_provider.dart';
+import '../../widgets/usage_counter_strip.dart';
 
 /// The main home screen displaying workouts, progress, and quick actions
 class HomeScreen extends ConsumerStatefulWidget {
@@ -1684,6 +1685,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
           child: QuickActionsRow(),
         ),
       ),
+      // Free-tier usage counters (hidden for premium)
+      const SliverToBoxAdapter(
+        child: Padding(
+          padding: EdgeInsets.only(bottom: 8),
+          child: UsageCounterStrip(),
+        ),
+      ),
       // Habits section
       const SliverToBoxAdapter(child: HabitsSection()),
       // Body metrics section
@@ -2173,6 +2181,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
         child: Padding(
           padding: EdgeInsets.only(top: 8, bottom: 8),
           child: QuickActionsRow(),
+        ),
+      ),
+
+      // Free-tier usage counters (hidden for premium)
+      const SliverToBoxAdapter(
+        child: Padding(
+          padding: EdgeInsets.only(bottom: 8),
+          child: UsageCounterStrip(),
         ),
       ),
 
@@ -3167,6 +3183,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
         child: Padding(
           padding: EdgeInsets.only(top: 8, bottom: 8),
           child: QuickActionsRow(),
+        ),
+      ),
+
+      // Free-tier usage counters (hidden for premium)
+      const SliverToBoxAdapter(
+        child: Padding(
+          padding: EdgeInsets.only(bottom: 8),
+          child: UsageCounterStrip(),
         ),
       ),
 

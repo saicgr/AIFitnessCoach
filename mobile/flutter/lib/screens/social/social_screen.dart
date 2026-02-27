@@ -12,7 +12,6 @@ import 'tabs/challenges_tab.dart';
 import 'tabs/leaderboard_tab.dart';
 import 'tabs/friends_tab.dart';
 import 'tabs/messages_tab.dart';
-import 'senior/senior_social_screen.dart';
 import '../../widgets/glass_back_button.dart';
 import 'friend_search_screen.dart';
 
@@ -45,12 +44,8 @@ class _SocialScreenState extends ConsumerState<SocialScreen>
   Widget build(BuildContext context) {
     final accessibilitySettings = ref.watch(accessibilityProvider);
 
-    // Show senior mode layout if in senior mode
-    if (accessibilitySettings.isSeniorMode) {
-      return const SeniorSocialScreen();
-    }
-
-    // Normal mode layout
+    // Senior social screen hidden until data providers are connected.
+    // All users see the normal social layout for now.
     return _buildNormalLayout(context);
   }
 

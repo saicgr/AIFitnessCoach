@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../data/repositories/nutrition_repository.dart';
 import '../../../data/services/food_search_service.dart';
 
 /// Filter options for food search
@@ -79,7 +80,8 @@ class _FoodSearchBarState extends ConsumerState<FoodSearchBar> {
 
   void _onSearchChanged(String query) {
     final searchService = ref.read(foodSearchServiceProvider);
-    searchService.search(query, widget.userId);
+    final cachedLogs = ref.read(nutritionProvider).recentLogs;
+    searchService.search(query, widget.userId, cachedLogs: cachedLogs);
     widget.onSearch?.call(query);
   }
 
@@ -355,7 +357,8 @@ class _FoodSearchBarCompactState extends ConsumerState<FoodSearchBarCompact> {
 
   void _onSearchChanged(String query) {
     final searchService = ref.read(foodSearchServiceProvider);
-    searchService.search(query, widget.userId);
+    final cachedLogs = ref.read(nutritionProvider).recentLogs;
+    searchService.search(query, widget.userId, cachedLogs: cachedLogs);
     widget.onSearch?.call(query);
   }
 

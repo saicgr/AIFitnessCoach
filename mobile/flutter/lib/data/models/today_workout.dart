@@ -1,6 +1,8 @@
 /// Models for the today's workout quick start feature
 library;
 
+import 'package:flutter/foundation.dart';
+
 import 'exercise.dart';
 import 'workout.dart';
 
@@ -50,7 +52,7 @@ class TodayWorkoutSummary {
   factory TodayWorkoutSummary.fromJson(Map<String, dynamic> json) {
     // Parse exercises from JSON array
     final exercisesJson = json['exercises'] as List<dynamic>? ?? [];
-    print('🔍 [TodayWorkoutSummary.fromJson] workout_id=${json['id']}, '
+    debugPrint('🔍 [TodayWorkoutSummary.fromJson] workout_id=${json['id']}, '
         'exercises_count=${exercisesJson.length}, '
         'exercise_count_field=${json['exercise_count']}');
 

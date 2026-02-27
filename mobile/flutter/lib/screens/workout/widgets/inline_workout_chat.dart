@@ -10,6 +10,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
+import 'package:image_picker/image_picker.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../data/models/exercise.dart';
@@ -17,6 +18,8 @@ import '../../../data/models/chat_message.dart';
 import '../../../data/models/coach_persona.dart';
 import '../../../data/repositories/chat_repository.dart';
 import '../../../screens/ai_settings/ai_settings_screen.dart';
+import '../../../screens/chat/widgets/media_picker_helper.dart';
+import '../../../screens/chat/widgets/media_preview_strip.dart';
 import '../../../widgets/coach_avatar.dart';
 
 /// Quick prompt for workout context
@@ -69,6 +72,7 @@ class _InlineWorkoutChatState extends ConsumerState<InlineWorkoutChat> {
   bool _isWaitingForResponse = false;
   bool _isExpanded = true;
   int _lastMessageCount = 0;
+  List<PickedMedia> _selectedMedia = [];
 
   List<_QuickPrompt> get _quickPrompts => [
         _QuickPrompt(
@@ -156,6 +160,78 @@ User question: $message
   void _sendQuickPrompt(_QuickPrompt prompt) {
     HapticFeedback.selectionClick();
     _sendMessage(prompt.prompt);
+  }
+
+  void _pickMedia() async {
+    try {
+      final result = await MediaPickerHelper.showMediaPickerSheet(context);
+      if (result != null && result.isNotEmpty && mounted) {
+        setState(() {
+          final combined = [..._selectedMedia, ...result.media];
+          _selectedMedia = combined.take(5).toList();
+        });
+      }
+    } on MediaValidationException catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(e.message), backgroundColor: AppColors.error),
+        );
+      }
+    }
+  }
+
+  void _pickImageFromCamera() async {
+    try {
+      final media = await MediaPickerHelper.pickImage(ImageSource.camera);
+      if (media != null && mounted) {
+        setState(() {
+          final combined = [..._selectedMedia, media];
+          _selectedMedia = combined.take(5).toList();
+        });
+      }
+    } on MediaValidationException catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(e.message), backgroundColor: AppColors.error),
+        );
+      }
+    }
+  }
+
+  void _handleSend() {
+    if (_selectedMedia.isNotEmpty) {
+      final mediaList = List<PickedMedia>.from(_selectedMedia);
+      final message = _messageController.text.trim();
+      setState(() {
+        _selectedMedia = [];
+        _isWaitingForResponse = true;
+        _isTyping = false;
+      });
+      _messageController.clear();
+      final defaultMsg = message.isNotEmpty ? message : 'Check my form on ${widget.currentExercise.name}';
+      if (mediaList.length == 1) {
+        ref.read(chatMessagesProvider.notifier).sendMessageWithMedia(
+          defaultMsg,
+          mediaList.first,
+        );
+      } else {
+        ref.read(chatMessagesProvider.notifier).sendMessageWithMultiMedia(
+          defaultMsg,
+          mediaList,
+        );
+      }
+      Future.delayed(const Duration(milliseconds: 100), () {
+        if (_scrollController.hasClients) {
+          _scrollController.animateTo(
+            _scrollController.position.maxScrollExtent,
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeOut,
+          );
+        }
+      });
+    } else {
+      _sendMessage(_messageController.text);
+    }
   }
 
   void _toggleExpanded() {
@@ -532,8 +608,9 @@ User question: $message
   }
 
   Widget _buildInputField(bool isDark) {
+    final canSend = _isTyping || _selectedMedia.isNotEmpty;
+
     return Container(
-      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: isDark ? AppColors.elevated : Colors.grey.shade50,
         border: Border(
@@ -544,71 +621,129 @@ User question: $message
           ),
         ),
       ),
-      child: Row(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Expanded(
-            child: TextField(
-              controller: _messageController,
-              focusNode: _focusNode,
-              textCapitalization: TextCapitalization.sentences,
-              style: TextStyle(
-                color: isDark ? Colors.white : Colors.black,
-                fontSize: 14,
-              ),
-              decoration: InputDecoration(
-                hintText: 'Ask about your workout...',
-                hintStyle: TextStyle(
-                  color: isDark ? AppColors.textMuted : Colors.black38,
-                ),
-                filled: true,
-                fillColor: isDark
-                    ? Colors.white.withOpacity(0.08)
-                    : Colors.white,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(20),
-                  borderSide: BorderSide.none,
-                ),
-                contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 10,
-                ),
-                isDense: true,
-              ),
-              onChanged: (value) {
-                setState(() => _isTyping = value.isNotEmpty);
-              },
-              onSubmitted: _sendMessage,
+          // Media preview strip
+          if (_selectedMedia.isNotEmpty)
+            MediaPreviewStrip(
+              mediaList: _selectedMedia,
+              onRemoveAt: (index) => setState(() => _selectedMedia.removeAt(index)),
+              onAddMore: _pickMedia,
             ),
-          ),
-          const SizedBox(width: 8),
-          GestureDetector(
-            onTap: _isTyping
-                ? () => _sendMessage(_messageController.text)
-                : null,
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                gradient: _isTyping
-                    ? const LinearGradient(
-                        colors: [AppColors.cyan, AppColors.electricBlue],
-                      )
-                    : null,
-                color: _isTyping
-                    ? null
-                    : (isDark
-                        ? Colors.white.withOpacity(0.1)
-                        : Colors.black.withOpacity(0.05)),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(
-                Icons.send_rounded,
-                color: _isTyping
-                    ? Colors.white
-                    : (isDark ? AppColors.textMuted : Colors.black26),
-                size: 20,
-              ),
+
+          Padding(
+            padding: const EdgeInsets.all(12),
+            child: Row(
+              children: [
+                // Camera button (compact)
+                GestureDetector(
+                  onTap: _pickImageFromCamera,
+                  child: Container(
+                    width: 32,
+                    height: 32,
+                    decoration: BoxDecoration(
+                      color: isDark
+                          ? Colors.white.withOpacity(0.08)
+                          : Colors.black.withOpacity(0.05),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      Icons.camera_alt_outlined,
+                      size: 14,
+                      color: isDark ? AppColors.textMuted : Colors.black38,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 4),
+
+                // Attach button (compact)
+                GestureDetector(
+                  onTap: _pickMedia,
+                  child: Container(
+                    width: 32,
+                    height: 32,
+                    decoration: BoxDecoration(
+                      color: isDark
+                          ? Colors.white.withOpacity(0.08)
+                          : Colors.black.withOpacity(0.05),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      Icons.attach_file_outlined,
+                      size: 14,
+                      color: isDark ? AppColors.textMuted : Colors.black38,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 6),
+
+                Expanded(
+                  child: TextField(
+                    controller: _messageController,
+                    focusNode: _focusNode,
+                    textCapitalization: TextCapitalization.sentences,
+                    style: TextStyle(
+                      color: isDark ? Colors.white : Colors.black,
+                      fontSize: 14,
+                    ),
+                    decoration: InputDecoration(
+                      hintText: _selectedMedia.isNotEmpty
+                          ? 'Add a message...'
+                          : 'Ask about your workout...',
+                      hintStyle: TextStyle(
+                        color: isDark ? AppColors.textMuted : Colors.black38,
+                      ),
+                      filled: true,
+                      fillColor: isDark
+                          ? Colors.white.withOpacity(0.08)
+                          : Colors.white,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(20),
+                        borderSide: BorderSide.none,
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 10,
+                      ),
+                      isDense: true,
+                    ),
+                    onChanged: (value) {
+                      setState(() => _isTyping = value.isNotEmpty);
+                    },
+                    onSubmitted: (_) => _handleSend(),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                GestureDetector(
+                  onTap: canSend ? _handleSend : null,
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      gradient: canSend
+                          ? const LinearGradient(
+                              colors: [AppColors.cyan, AppColors.electricBlue],
+                            )
+                          : null,
+                      color: canSend
+                          ? null
+                          : (isDark
+                              ? Colors.white.withOpacity(0.1)
+                              : Colors.black.withOpacity(0.05)),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      Icons.send_rounded,
+                      color: canSend
+                          ? Colors.white
+                          : (isDark ? AppColors.textMuted : Colors.black26),
+                      size: 20,
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
         ],

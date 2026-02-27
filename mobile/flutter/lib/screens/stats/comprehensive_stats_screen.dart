@@ -22,7 +22,7 @@ import '../../data/services/haptic_service.dart';
 import '../../widgets/activity_heatmap.dart';
 import '../../widgets/exercise_search_results.dart';
 import '../../widgets/glass_sheet.dart';
-import '../../widgets/segmented_tab_bar.dart';
+import 'package:flutter/services.dart';
 import '../../widgets/workout_day_detail_sheet.dart';
 import '../progress/comparison_gallery.dart';
 import '../progress/comparison_view.dart';
@@ -104,6 +104,82 @@ class _ComprehensiveStatsScreenState extends ConsumerState<ComprehensiveStatsScr
     }
   }
 
+  static const _tabLabels = ['Overview', 'Photos', 'Strength', 'Body', 'Nutrition', 'Mood'];
+  static const _tabColors = [
+    Color(0xFF3B82F6), // Overview - Blue
+    Color(0xFFA855F7), // Photos - Purple
+    Color(0xFFF97316), // Strength - Orange
+    Color(0xFF22C55E), // Body - Green
+    Color(0xFFEF4444), // Nutrition - Red
+    Color(0xFFEC4899), // Mood - Pink
+  ];
+
+  Widget _buildPillTabBar() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final mutedText = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+
+    return AnimatedBuilder(
+      animation: _tabController,
+      builder: (context, _) {
+        return SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          child: Row(
+            children: List.generate(_tabLabels.length, (i) {
+              final animValue = _tabController.animation?.value ?? 0.0;
+              final progress = (1.0 - (animValue - i).abs()).clamp(0.0, 1.0);
+              final isSelected = _tabController.index == i;
+              final pillColor = _tabColors[i];
+
+              final bg = Color.lerp(
+                isDark ? Colors.white.withValues(alpha: 0.06) : Colors.black.withValues(alpha: 0.05),
+                pillColor,
+                progress,
+              )!;
+              final fg = Color.lerp(mutedText, Colors.white, progress)!;
+
+              return Padding(
+                padding: EdgeInsets.only(right: i < _tabLabels.length - 1 ? 8 : 0),
+                child: GestureDetector(
+                  onTap: () {
+                    HapticFeedback.lightImpact();
+                    _tabController.animateTo(i);
+                  },
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    curve: Curves.easeOutCubic,
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: bg,
+                      borderRadius: BorderRadius.circular(20),
+                      boxShadow: isSelected
+                          ? [
+                              BoxShadow(
+                                color: pillColor.withValues(alpha: 0.4),
+                                blurRadius: 8,
+                                offset: const Offset(0, 2),
+                              ),
+                            ]
+                          : null,
+                    ),
+                    child: Text(
+                      _tabLabels[i],
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                        color: fg,
+                      ),
+                    ),
+                  ),
+                ),
+              );
+            }),
+          ),
+        );
+      },
+    );
+  }
+
   @override
   void dispose() {
     _tabController.dispose();
@@ -178,19 +254,8 @@ class _ComprehensiveStatsScreenState extends ConsumerState<ComprehensiveStatsScr
       ),
       body: Column(
         children: [
-          // Tab Bar
-          SegmentedTabBar(
-            controller: _tabController,
-            showIcons: false,
-            tabs: const [
-              SegmentedTabItem(label: 'Overview'),
-              SegmentedTabItem(label: 'Photos'),
-              SegmentedTabItem(label: 'Strength'),
-              SegmentedTabItem(label: 'Body'),
-              SegmentedTabItem(label: 'Nutrition'),
-              SegmentedTabItem(label: 'Mood'),
-            ],
-          ),
+          // Pill Tab Bar
+          _buildPillTabBar(),
 
           // Tab content
           Expanded(
@@ -1094,11 +1159,12 @@ class _PhotosTabState extends ConsumerState<_PhotosTab>
       child: Padding(
         padding: const EdgeInsets.all(32),
         child: Column(
+          mainAxisSize: MainAxisSize.min,
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(
               Icons.photo_camera_outlined,
-              size: 80,
+              size: 64,
               color: colorScheme.outline,
             ),
             const SizedBox(height: 16),
@@ -3144,13 +3210,6 @@ class _PlaceholderGraph extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 4),
-            Text(
-              '(Coming soon)',
-              style: TextStyle(
-                fontSize: 12,
-                color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
-              ),
-            ),
           ],
         ),
       ),

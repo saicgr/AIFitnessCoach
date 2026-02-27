@@ -4,6 +4,7 @@ import 'api_client.dart';
 /// Activity type enum for social posts
 enum SocialActivityType {
   workoutCompleted('workout_completed'),
+  workoutShared('workout_shared'),
   achievementEarned('achievement_earned'),
   personalRecord('personal_record'),
   weightMilestone('weight_milestone'),
@@ -203,6 +204,115 @@ class SocialService {
   }
 
   // ============================================================
+  // COMMENTS
+  // ============================================================
+
+  /// Get comments for an activity
+  Future<Map<String, dynamic>> getComments({
+    required String activityId,
+    int page = 1,
+    int pageSize = 50,
+  }) async {
+    try {
+      final response = await _apiClient.get(
+        '/social/comments/$activityId',
+        queryParameters: {
+          'page': page.toString(),
+          'page_size': pageSize.toString(),
+        },
+      );
+
+      if (response.statusCode == 200) {
+        return response.data as Map<String, dynamic>;
+      } else {
+        throw Exception('Failed to get comments: ${response.statusCode}');
+      }
+    } catch (e) {
+      debugPrint('❌ [Social] Error getting comments: $e');
+      rethrow;
+    }
+  }
+
+  /// Add a comment to an activity
+  Future<Map<String, dynamic>> addComment({
+    required String userId,
+    required String activityId,
+    required String text,
+  }) async {
+    try {
+      final response = await _apiClient.post(
+        '/social/comments',
+        queryParameters: {'user_id': userId},
+        data: {
+          'activity_id': activityId,
+          'comment_text': text,
+        },
+      );
+
+      if (response.statusCode == 200) {
+        debugPrint('✅ [Social] Comment added');
+        return response.data as Map<String, dynamic>;
+      } else {
+        throw Exception('Failed to add comment: ${response.statusCode}');
+      }
+    } catch (e) {
+      debugPrint('❌ [Social] Error adding comment: $e');
+      rethrow;
+    }
+  }
+
+  /// Delete a comment
+  Future<void> deleteComment({
+    required String userId,
+    required String commentId,
+  }) async {
+    try {
+      final response = await _apiClient.delete(
+        '/social/comments/$commentId',
+        queryParameters: {'user_id': userId},
+      );
+
+      if (response.statusCode == 200) {
+        debugPrint('✅ [Social] Comment deleted: $commentId');
+      } else {
+        throw Exception('Failed to delete comment: ${response.statusCode}');
+      }
+    } catch (e) {
+      debugPrint('❌ [Social] Error deleting comment: $e');
+      rethrow;
+    }
+  }
+
+  // ============================================================
+  // EDIT ACTIVITY
+  // ============================================================
+
+  /// Edit an activity's data (caption, flairs)
+  Future<Map<String, dynamic>> editActivity({
+    required String userId,
+    required String activityId,
+    required Map<String, dynamic> activityData,
+  }) async {
+    try {
+      final response = await _apiClient.put(
+        '/social/feed/$activityId',
+        queryParameters: {'user_id': userId},
+        data: activityData,
+      );
+
+      if (response.statusCode == 200) {
+        debugPrint('✅ [Social] Activity edited: $activityId');
+        return response.data as Map<String, dynamic>;
+      } else {
+        throw Exception('Failed to edit activity: ${response.statusCode}');
+      }
+    } catch (e) {
+      debugPrint('❌ [Social] Error editing activity: $e');
+      rethrow;
+    }
+  }
+
+  // ============================================================
   // PRIVACY SETTINGS
   // ============================================================
 
@@ -277,6 +387,7 @@ class SocialService {
 
       switch (activityType) {
         case SocialActivityType.workoutCompleted:
+        case SocialActivityType.workoutShared:
           return settings['show_workouts'] ?? true;
         case SocialActivityType.achievementEarned:
           return settings['show_achievements'] ?? true;

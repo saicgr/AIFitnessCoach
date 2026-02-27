@@ -38,8 +38,14 @@ _db_executor = ThreadPoolExecutor(max_workers=15)
 # Background auto-generation tracking
 # =============================================================================
 # Tracks in-flight background generation tasks to prevent duplicate calls.
-# Key: "user_id:date_str", Value: True while generating.
+# Key: "user_id:date_str:gym_profile_id", Value: True while generating.
 _active_background_generations: Set[str] = set()
+
+# Cooldown for scheduling background generation per user.
+# Prevents /today polls (every 3-15s) from re-queuing generation tasks.
+# Key: user_id, Value: timestamp of last scheduled generation.
+_last_bg_gen_schedule: dict = {}
+_BG_GEN_SCHEDULE_COOLDOWN = 30  # seconds
 
 
 def _get_active_gym_profile_id(db, user_id: str) -> Optional[str]:
@@ -56,9 +62,9 @@ def _get_active_gym_profile_id(db, user_id: str) -> Optional[str]:
             .execute()
         if result.data:
             return result.data.get("id")
-    except Exception:
+    except Exception as e:
         # No active profile found (single() raises if no match)
-        pass
+        logger.debug(f"No active gym profile found: {e}")
     return None
 
 router = APIRouter()
@@ -307,9 +313,9 @@ async def auto_generate_workout(user_id: str, target_date: date, gym_profile_id:
     - Tracks in-flight generations to prevent duplicate calls
     - Catches all exceptions so background tasks never crash the server
     """
-    generation_key = f"{user_id}:{target_date.isoformat()}"
+    generation_key = f"{user_id}:{target_date.isoformat()}:{gym_profile_id or 'default'}"
 
-    # Prevent duplicate in-flight generation for same user+date
+    # Prevent duplicate in-flight generation for same user+date+profile
     if generation_key in _active_background_generations:
         logger.info(f"[BG-GEN] Already generating for {generation_key}, skipping")
         return
@@ -336,7 +342,7 @@ async def auto_generate_workout(user_id: str, target_date: date, gym_profile_id:
         try:
             target_str = target_date.isoformat()
             end_of_day = target_str + "T23:59:59.999999+00:00"
-            generating_check = db.client.table("workouts").select("id").eq(
+            gen_query = db.client.table("workouts").select("id").eq(
                 "user_id", user_id
             ).gte(
                 "scheduled_date", target_str
@@ -344,12 +350,15 @@ async def auto_generate_workout(user_id: str, target_date: date, gym_profile_id:
                 "scheduled_date", end_of_day
             ).eq(
                 "status", "generating"
-            ).execute()
+            )
+            if gym_profile_id:
+                gen_query = gen_query.eq("gym_profile_id", gym_profile_id)
+            generating_check = gen_query.execute()
             if generating_check.data:
-                logger.info(f"[BG-GEN] Workout already being generated for {generation_key}, skipping")
+                logger.info(f"[BG-GEN] Workout already being generated for {generation_key} (profile={gym_profile_id}), skipping")
                 return
-        except Exception:
-            pass  # Non-critical check, proceed with generation
+        except Exception as e:
+            logger.debug(f"Dedup check failed, proceeding: {e}")
 
         # Determine per-day focus area for workout variety
         focus_for_day = None
@@ -584,31 +593,34 @@ async def get_today_workout(
             logger.info(f"User completed today's workout: {completed_workout_summary.name}")
 
         # ================================================================
-        # Proactive Background Generation
+        # Proactive Background Generation (with cooldown)
         # ================================================================
-        # Always check for missing upcoming workouts and pre-generate them.
-        # This runs on every /today call so the user always has workouts
-        # ready for the next 7 scheduled days.
-        upcoming_missing = _get_upcoming_dates_needing_generation(
-            db=db,
-            user_id=user_id,
-            selected_days=selected_days,
-            active_profile_id=active_profile_id,
-            max_dates=7,
-            user_today_str=today_str,
-        )
-        if upcoming_missing:
-            logger.info(f"[BG-GEN] Scheduling SEQUENTIAL background generation for {len(upcoming_missing)} dates: "
-                       f"{[d.isoformat() for d in upcoming_missing]}")
-            # Generate sequentially so each workout sees previous ones' exercises
-            # via get_recently_used_exercises, ensuring variety across adjacent days
-            background_tasks.add_task(
-                _sequential_generate_workouts,
+        # Check for missing upcoming workouts and pre-generate them.
+        # Cooldown prevents /today polls (every 3-15s) from re-queuing tasks.
+        now_ts = datetime.now().timestamp()
+        last_scheduled = _last_bg_gen_schedule.get(user_id, 0)
+        if now_ts - last_scheduled >= _BG_GEN_SCHEDULE_COOLDOWN:
+            upcoming_missing = _get_upcoming_dates_needing_generation(
+                db=db,
                 user_id=user_id,
-                dates=upcoming_missing,
-                gym_profile_id=active_profile_id,
                 selected_days=selected_days,
+                active_profile_id=active_profile_id,
+                max_dates=7,
+                user_today_str=today_str,
             )
+            if upcoming_missing:
+                _last_bg_gen_schedule[user_id] = now_ts
+                logger.info(f"[BG-GEN] Scheduling SEQUENTIAL background generation for {len(upcoming_missing)} dates: "
+                           f"{[d.isoformat() for d in upcoming_missing]}")
+                # Generate sequentially so each workout sees previous ones' exercises
+                # via get_recently_used_exercises, ensuring variety across adjacent days
+                background_tasks.add_task(
+                    _sequential_generate_workouts,
+                    user_id=user_id,
+                    dates=upcoming_missing,
+                    gym_profile_id=active_profile_id,
+                    selected_days=selected_days,
+                )
 
         # Backfill: tag orphaned workouts (gym_profile_id IS NULL) with the active profile
         if active_profile_id:

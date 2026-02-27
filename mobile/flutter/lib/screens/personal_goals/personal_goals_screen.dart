@@ -389,7 +389,9 @@ class _PersonalGoalsScreenState extends ConsumerState<PersonalGoalsScreen> {
               if (records.length > 5)
                 TextButton(
                   onPressed: () {
-                    // TODO: Show all records screen
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Full records view coming in a future update')),
+                    );
                   },
                   child: Text('View all ${records.length} records'),
                 ),

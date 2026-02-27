@@ -135,9 +135,6 @@ class _EnvironmentListScreenState extends ConsumerState<EnvironmentListScreen> {
           onSave: (name, icon) {
             // TODO: Save custom environment
             Navigator.pop(context);
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Custom environments coming soon!')),
-            );
           },
         ),
       )),

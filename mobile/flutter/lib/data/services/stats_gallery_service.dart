@@ -9,7 +9,10 @@ import 'api_client.dart';
 enum StatsTemplateType {
   overview('overview'),
   achievements('achievements'),
-  prs('prs');
+  prs('prs'),
+  streakFire('streak_fire'),
+  weeklyReport('weekly_report'),
+  levelUp('level_up');
 
   final String value;
   const StatsTemplateType(this.value);

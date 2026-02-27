@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
 import '../../../core/constants/app_colors.dart';
-import '../live_chat_screen.dart';
+import '../../../data/models/live_chat_session.dart';
 
 /// Message bubble widget for live chat messages
 /// Supports different styling for user vs agent messages
@@ -21,6 +21,14 @@ class LiveChatMessageBubble extends StatelessWidget {
     final isUser = message.isFromUser;
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
+    // System messages get special treatment
+    if (message.isSystemMessage) {
+      return SystemMessageBubble(
+        message: message.message,
+        timestamp: message.createdAt,
+      );
+    }
+
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Row(
@@ -30,10 +38,7 @@ class LiveChatMessageBubble extends StatelessWidget {
         children: [
           // Agent avatar (left side)
           if (!isUser && showAgentInfo) ...[
-            _AgentAvatar(
-              name: message.agentName ?? 'Agent',
-              avatarUrl: message.agentAvatarUrl,
-            ),
+            _AgentAvatar(name: 'Agent'),
             const SizedBox(width: 8),
           ],
 
@@ -43,12 +48,12 @@ class LiveChatMessageBubble extends StatelessWidget {
               crossAxisAlignment:
                   isUser ? CrossAxisAlignment.end : CrossAxisAlignment.start,
               children: [
-                // Agent name (for agent messages)
-                if (!isUser && showAgentInfo && message.agentName != null)
+                // Agent label for agent messages
+                if (!isUser && showAgentInfo)
                   Padding(
                     padding: const EdgeInsets.only(left: 4, bottom: 4),
                     child: Text(
-                      message.agentName!,
+                      message.senderRole == SenderRole.agent ? 'Agent' : 'System',
                       style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
@@ -87,7 +92,7 @@ class LiveChatMessageBubble extends StatelessWidget {
                     children: [
                       // Message text
                       Text(
-                        message.content,
+                        message.message,
                         style: TextStyle(
                           fontSize: 15,
                           height: 1.4,
@@ -106,7 +111,7 @@ class LiveChatMessageBubble extends StatelessWidget {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Text(
-                            _formatTime(message.timestamp),
+                            message.formattedTime,
                             style: TextStyle(
                               fontSize: 10,
                               color: isUser
@@ -137,12 +142,6 @@ class LiveChatMessageBubble extends StatelessWidget {
           duration: 200.ms,
           curve: Curves.easeOut,
         );
-  }
-
-  String _formatTime(DateTime time) {
-    final hour = time.hour.toString().padLeft(2, '0');
-    final minute = time.minute.toString().padLeft(2, '0');
-    return '$hour:$minute';
   }
 }
 

@@ -277,7 +277,8 @@ async def get_all_trophies(
                     earned_at = datetime.fromisoformat(
                         earned_map[trophy_id]["earned_at"].replace("Z", "+00:00")
                     )
-                except:
+                except Exception as e:
+                    logger.debug(f"Failed to parse earned_at date: {e}")
                     earned_at = None
 
             result.append(TrophyProgress(
@@ -357,8 +358,8 @@ async def get_earned_trophies(user_id: str,
                     earned_at = datetime.fromisoformat(
                         row["achieved_at"].replace("Z", "+00:00")
                     )
-                except:
-                    pass
+                except Exception as e:
+                    logger.debug(f"Failed to parse achieved_at date: {e}")
 
             result.append(UserTrophy(
                 id=row.get("id", ""),
@@ -439,8 +440,8 @@ async def get_recent_trophies(
                     earned_at = datetime.fromisoformat(
                         row["achieved_at"].replace("Z", "+00:00")
                     )
-                except:
-                    pass
+                except Exception as e:
+                    logger.debug(f"Failed to parse achieved_at date: {e}")
 
             result.append(UserTrophy(
                 id=row.get("id", ""),

@@ -18,6 +18,9 @@ from models.hormonal_health import (
 )
 from core.supabase_client import get_supabase
 from core.timezone_utils import resolve_timezone, get_user_today
+from core.logger import get_logger
+
+logger = get_logger(__name__)
 
 router = APIRouter(prefix="/kegel", tags=["Kegel/Pelvic Floor"])
 
@@ -31,21 +34,21 @@ async def get_kegel_preferences(user_id: UUID,
     current_user: dict = Depends(get_current_user),
 ):
     """Get user's kegel preferences."""
-    print(f"🔍 [Kegel] Fetching preferences for user {user_id}")
+    logger.info(f"[Kegel] Fetching preferences for user {user_id}")
 
     try:
         supabase = get_supabase().client
         result = supabase.table("kegel_preferences").select("*").eq("user_id", str(user_id)).execute()
 
         if not result.data:
-            print(f"ℹ️ [Kegel] No preferences found for user {user_id}")
+            logger.info(f"[Kegel] No preferences found for user {user_id}")
             return None
 
-        print(f"✅ [Kegel] Preferences retrieved for user {user_id}")
+        logger.info(f"[Kegel] Preferences retrieved for user {user_id}")
         return result.data[0]
 
     except Exception as e:
-        print(f"❌ [Kegel] Error fetching preferences: {e}")
+        logger.error(f"[Kegel] Error fetching preferences: {e}")
         raise safe_internal_error(e, "kegel")
 
 
@@ -54,7 +57,7 @@ async def upsert_kegel_preferences(user_id: UUID, preferences: KegelPreferencesU
     current_user: dict = Depends(get_current_user),
 ):
     """Create or update user's kegel preferences."""
-    print(f"🔍 [Kegel] Upserting preferences for user {user_id}")
+    logger.info(f"[Kegel] Upserting preferences for user {user_id}")
 
     try:
         supabase = get_supabase().client
@@ -84,11 +87,11 @@ async def upsert_kegel_preferences(user_id: UUID, preferences: KegelPreferencesU
             pref_data["created_at"] = datetime.utcnow().isoformat()
             result = supabase.table("kegel_preferences").insert(pref_data).execute()
 
-        print(f"✅ [Kegel] Preferences upserted for user {user_id}")
+        logger.info(f"[Kegel] Preferences upserted for user {user_id}")
         return result.data[0]
 
     except Exception as e:
-        print(f"❌ [Kegel] Error upserting preferences: {e}")
+        logger.error(f"[Kegel] Error upserting preferences: {e}")
         raise safe_internal_error(e, "kegel")
 
 
@@ -97,16 +100,16 @@ async def delete_kegel_preferences(user_id: UUID,
     current_user: dict = Depends(get_current_user),
 ):
     """Delete user's kegel preferences."""
-    print(f"🔍 [Kegel] Deleting preferences for user {user_id}")
+    logger.info(f"[Kegel] Deleting preferences for user {user_id}")
 
     try:
         supabase = get_supabase().client
         supabase.table("kegel_preferences").delete().eq("user_id", str(user_id)).execute()
-        print(f"✅ [Kegel] Preferences deleted for user {user_id}")
+        logger.info(f"[Kegel] Preferences deleted for user {user_id}")
         return {"message": "Preferences deleted successfully"}
 
     except Exception as e:
-        print(f"❌ [Kegel] Error deleting preferences: {e}")
+        logger.error(f"[Kegel] Error deleting preferences: {e}")
         raise safe_internal_error(e, "kegel")
 
 
@@ -119,7 +122,7 @@ async def create_kegel_session(user_id: UUID, session: KegelSessionCreate,
     current_user: dict = Depends(get_current_user),
 ):
     """Log a completed kegel session."""
-    print(f"🔍 [Kegel] Creating session for user {user_id}")
+    logger.info(f"[Kegel] Creating session for user {user_id}")
 
     try:
         supabase = get_supabase().client
@@ -137,11 +140,11 @@ async def create_kegel_session(user_id: UUID, session: KegelSessionCreate,
 
         result = supabase.table("kegel_sessions").insert(session_data).execute()
 
-        print(f"✅ [Kegel] Session created for user {user_id}")
+        logger.info(f"[Kegel] Session created for user {user_id}")
         return result.data[0]
 
     except Exception as e:
-        print(f"❌ [Kegel] Error creating session: {e}")
+        logger.error(f"[Kegel] Error creating session: {e}")
         raise safe_internal_error(e, "kegel")
 
 
@@ -154,7 +157,7 @@ async def get_kegel_sessions(
     current_user: dict = Depends(get_current_user),
 ):
     """Get kegel sessions for a user with optional date range."""
-    print(f"🔍 [Kegel] Fetching sessions for user {user_id}")
+    logger.info(f"[Kegel] Fetching sessions for user {user_id}")
 
     try:
         supabase = get_supabase().client
@@ -168,11 +171,11 @@ async def get_kegel_sessions(
 
         result = query.order("session_date", desc=True).order("session_time", desc=True).limit(limit).execute()
 
-        print(f"✅ [Kegel] Retrieved {len(result.data)} sessions for user {user_id}")
+        logger.info(f"[Kegel] Retrieved {len(result.data)} sessions for user {user_id}")
         return result.data
 
     except Exception as e:
-        print(f"❌ [Kegel] Error fetching sessions: {e}")
+        logger.error(f"[Kegel] Error fetching sessions: {e}")
         raise safe_internal_error(e, "kegel")
 
 
@@ -181,7 +184,7 @@ async def get_today_kegel_sessions(user_id: UUID, request: Request,
     current_user: dict = Depends(get_current_user),
 ):
     """Get today's kegel sessions."""
-    print(f"🔍 [Kegel] Fetching today's sessions for user {user_id}")
+    logger.info(f"[Kegel] Fetching today's sessions for user {user_id}")
 
     try:
         supabase = get_supabase().client
@@ -194,7 +197,7 @@ async def get_today_kegel_sessions(user_id: UUID, request: Request,
         return result.data
 
     except Exception as e:
-        print(f"❌ [Kegel] Error fetching today's sessions: {e}")
+        logger.error(f"[Kegel] Error fetching today's sessions: {e}")
         raise safe_internal_error(e, "kegel")
 
 
@@ -207,7 +210,7 @@ async def get_kegel_stats(user_id: UUID, request: Request,
     current_user: dict = Depends(get_current_user),
 ):
     """Get kegel exercise statistics for a user."""
-    print(f"🔍 [Kegel] Calculating stats for user {user_id}")
+    logger.info(f"[Kegel] Calculating stats for user {user_id}")
 
     try:
         supabase = get_supabase().client
@@ -290,7 +293,7 @@ async def get_kegel_stats(user_id: UUID, request: Request,
         )
 
     except Exception as e:
-        print(f"❌ [Kegel] Error calculating stats: {e}")
+        logger.error(f"[Kegel] Error calculating stats: {e}")
         raise safe_internal_error(e, "kegel")
 
 
@@ -299,7 +302,7 @@ async def check_daily_goal(user_id: UUID, request: Request, check_date: date = Q
     current_user: dict = Depends(get_current_user),
 ):
     """Check if user has met their daily kegel goal."""
-    print(f"🔍 [Kegel] Checking daily goal for user {user_id}")
+    logger.info(f"[Kegel] Checking daily goal for user {user_id}")
 
     try:
         supabase = get_supabase().client
@@ -332,7 +335,7 @@ async def check_daily_goal(user_id: UUID, request: Request, check_date: date = Q
         )
 
     except Exception as e:
-        print(f"❌ [Kegel] Error checking daily goal: {e}")
+        logger.error(f"[Kegel] Error checking daily goal: {e}")
         raise safe_internal_error(e, "kegel")
 
 
@@ -348,7 +351,7 @@ async def get_kegel_exercises(
     current_user: dict = Depends(get_current_user),
 ):
     """Get list of pelvic floor exercises."""
-    print(f"🔍 [Kegel] Fetching exercises")
+    logger.info(f"[Kegel] Fetching exercises")
 
     try:
         supabase = get_supabase().client
@@ -377,11 +380,11 @@ async def get_kegel_exercises(
                 target = focus_area_map[focus_area]
                 exercises = [e for e in exercises if e.get("target_audience") in ["all", target]]
 
-        print(f"✅ [Kegel] Retrieved {len(exercises)} exercises")
+        logger.info(f"[Kegel] Retrieved {len(exercises)} exercises")
         return exercises
 
     except Exception as e:
-        print(f"❌ [Kegel] Error fetching exercises: {e}")
+        logger.error(f"[Kegel] Error fetching exercises: {e}")
         raise safe_internal_error(e, "kegel")
 
 
@@ -390,7 +393,7 @@ async def get_kegel_exercise(exercise_id: UUID,
     current_user: dict = Depends(get_current_user),
 ):
     """Get a specific kegel exercise by ID."""
-    print(f"🔍 [Kegel] Fetching exercise {exercise_id}")
+    logger.info(f"[Kegel] Fetching exercise {exercise_id}")
 
     try:
         supabase = get_supabase().client
@@ -404,7 +407,7 @@ async def get_kegel_exercise(exercise_id: UUID,
     except HTTPException:
         raise
     except Exception as e:
-        print(f"❌ [Kegel] Error fetching exercise: {e}")
+        logger.error(f"[Kegel] Error fetching exercise: {e}")
         raise safe_internal_error(e, "kegel")
 
 
@@ -413,7 +416,7 @@ async def get_kegel_exercise_by_name(name: str,
     current_user: dict = Depends(get_current_user),
 ):
     """Get a kegel exercise by name."""
-    print(f"🔍 [Kegel] Fetching exercise by name: {name}")
+    logger.info(f"[Kegel] Fetching exercise by name: {name}")
 
     try:
         supabase = get_supabase().client
@@ -427,7 +430,7 @@ async def get_kegel_exercise_by_name(name: str,
     except HTTPException:
         raise
     except Exception as e:
-        print(f"❌ [Kegel] Error fetching exercise: {e}")
+        logger.error(f"[Kegel] Error fetching exercise: {e}")
         raise safe_internal_error(e, "kegel")
 
 
@@ -442,7 +445,7 @@ async def get_kegels_for_workout(
     current_user: dict = Depends(get_current_user),
 ):
     """Get kegel exercises to include in a workout based on user preferences."""
-    print(f"🔍 [Kegel] Getting kegels for {placement} for user {user_id}")
+    logger.info(f"[Kegel] Getting kegels for {placement} for user {user_id}")
 
     try:
         supabase = get_supabase().client
@@ -494,7 +497,7 @@ async def get_kegels_for_workout(
         }
 
     except Exception as e:
-        print(f"❌ [Kegel] Error getting kegels for workout: {e}")
+        logger.error(f"[Kegel] Error getting kegels for workout: {e}")
         raise safe_internal_error(e, "kegel")
 
 
@@ -509,7 +512,7 @@ async def log_kegels_from_workout(
     current_user: dict = Depends(get_current_user),
 ):
     """Log kegel exercises completed as part of a workout."""
-    print(f"🔍 [Kegel] Logging kegels from workout {workout_id} for user {user_id}")
+    logger.info(f"[Kegel] Logging kegels from workout {workout_id} for user {user_id}")
 
     try:
         supabase = get_supabase().client
@@ -529,9 +532,9 @@ async def log_kegels_from_workout(
 
         result = supabase.table("kegel_sessions").insert(session_data).execute()
 
-        print(f"✅ [Kegel] Logged kegels from workout for user {user_id}")
+        logger.info(f"[Kegel] Logged kegels from workout for user {user_id}")
         return result.data[0]
 
     except Exception as e:
-        print(f"❌ [Kegel] Error logging from workout: {e}")
+        logger.error(f"[Kegel] Error logging from workout: {e}")
         raise safe_internal_error(e, "kegel")

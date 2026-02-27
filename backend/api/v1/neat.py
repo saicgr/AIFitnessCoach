@@ -1802,13 +1802,7 @@ async def send_movement_reminders(request: SendRemindersRequest,
                     continue
 
                 if not request.dry_run:
-                    # TODO: Send push notification
-                    # await notification_service.send_push(user_id, {
-                    #     "title": "Time to Move!",
-                    #     "body": should_remind.suggested_message,
-                    #     "data": {"type": "neat_reminder"}
-                    # })
-                    pass
+                    logger.info("Push notification not implemented: NEAT movement reminder for user %s (message: %s)", user_id, should_remind.suggested_message)
 
                 reminders_sent += 1
 
@@ -1869,8 +1863,8 @@ async def calculate_daily_scores(request: CalculateDailyScoresRequest,
                 await calculate_neat_score(user_id, score_request)
                 scores_calculated += 1
 
-                # TODO: Update streaks based on score
-                # This would check if goals were met and update streak counts
+                # Streak updates based on score not yet implemented
+                logger.info("Streak update not implemented: skipping streak check for user %s after score calculation", user_id)
 
             except Exception as e:
                 logger.error(f"Error calculating score for user {user_id}: {e}")

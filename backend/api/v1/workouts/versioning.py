@@ -338,6 +338,7 @@ async def regenerate_workout(request: RegenerateWorkoutRequest,
                     intensity_preference=user_difficulty,
                     workout_type_preference=workout_type_override,
                     custom_program_description=request.ai_prompt if request.ai_prompt else None,
+                    user_dob=user.get("date_of_birth") if user else None,
                 )
             else:
                 # No fallback - RAG must return exercises
@@ -648,6 +649,7 @@ async def regenerate_workout_streaming(request: Request, body: RegenerateWorkout
                 intensity_preference=user_difficulty,
                 workout_type_preference=workout_type_override,
                 custom_program_description=body.ai_prompt if body.ai_prompt else None,
+                user_dob=user.get("date_of_birth") if user else None,
             )
 
             # Ensure workout_data is a dict (guard against Gemini returning a string)
@@ -819,7 +821,8 @@ async def get_workout_versions(workout_id: str,
             if isinstance(exercises, str):
                 try:
                     exercises = json.loads(exercises)
-                except:
+                except Exception as e:
+                    logger.debug(f"Failed to parse exercises_json for workout version: {e}")
                     exercises = []
 
             version_infos.append(WorkoutVersionInfo(

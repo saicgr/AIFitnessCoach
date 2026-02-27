@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/hormonal_health.dart';
 import '../services/api_client.dart';
@@ -19,7 +20,7 @@ class HormonalHealthRepository {
       if (response.data == null) return null;
       return HormonalProfile.fromJson(response.data as Map<String, dynamic>);
     } catch (e) {
-      print('Error fetching hormonal profile: $e');
+      debugPrint('Error fetching hormonal profile: $e');
       return null;
     }
   }
@@ -36,7 +37,7 @@ class HormonalHealthRepository {
       );
       return HormonalProfile.fromJson(response.data as Map<String, dynamic>);
     } catch (e) {
-      print('Error upserting hormonal profile: $e');
+      debugPrint('Error upserting hormonal profile: $e');
       rethrow;
     }
   }
@@ -46,7 +47,7 @@ class HormonalHealthRepository {
     try {
       await _apiClient.delete('/hormonal-health/profile/$userId');
     } catch (e) {
-      print('Error deleting hormonal profile: $e');
+      debugPrint('Error deleting hormonal profile: $e');
       rethrow;
     }
   }
@@ -64,7 +65,7 @@ class HormonalHealthRepository {
       );
       return HormoneLog.fromJson(response.data as Map<String, dynamic>);
     } catch (e) {
-      print('Error creating hormone log: $e');
+      debugPrint('Error creating hormone log: $e');
       rethrow;
     }
   }
@@ -98,7 +99,7 @@ class HormonalHealthRepository {
       }
       return [];
     } catch (e) {
-      print('Error fetching hormone logs: $e');
+      debugPrint('Error fetching hormone logs: $e');
       return [];
     }
   }
@@ -110,7 +111,7 @@ class HormonalHealthRepository {
       if (response.data == null) return null;
       return HormoneLog.fromJson(response.data as Map<String, dynamic>);
     } catch (e) {
-      print('Error fetching today\'s hormone log: $e');
+      debugPrint('Error fetching today\'s hormone log: $e');
       return null;
     }
   }
@@ -126,7 +127,7 @@ class HormonalHealthRepository {
       if (response.data == null) return null;
       return CyclePhaseInfo.fromJson(response.data as Map<String, dynamic>);
     } catch (e) {
-      print('Error fetching cycle phase: $e');
+      debugPrint('Error fetching cycle phase: $e');
       return null;
     }
   }
@@ -144,7 +145,7 @@ class HormonalHealthRepository {
         queryParameters: queryParams,
       );
     } catch (e) {
-      print('Error logging period start: $e');
+      debugPrint('Error logging period start: $e');
       rethrow;
     }
   }
@@ -179,7 +180,7 @@ class HormonalHealthRepository {
       }
       return [];
     } catch (e) {
-      print('Error fetching hormone-supportive foods: $e');
+      debugPrint('Error fetching hormone-supportive foods: $e');
       return [];
     }
   }
@@ -192,7 +193,7 @@ class HormonalHealthRepository {
       );
       return response.data as Map<String, dynamic>?;
     } catch (e) {
-      print('Error fetching food recommendations: $e');
+      debugPrint('Error fetching food recommendations: $e');
       return null;
     }
   }
@@ -207,7 +208,7 @@ class HormonalHealthRepository {
       final response = await _apiClient.get('/hormonal-health/insights/$userId');
       return response.data as Map<String, dynamic>?;
     } catch (e) {
-      print('Error fetching hormonal insights: $e');
+      debugPrint('Error fetching hormonal insights: $e');
       return null;
     }
   }

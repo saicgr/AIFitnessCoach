@@ -601,11 +601,16 @@ async def generate_workout(request: Request, body: GenerateWorkoutRequest, backg
         # Initialize training customization fields
         primary_goal = None
         muscle_focus_points = None
+        user_dob = None
 
         if body.fitness_level and body.goals and body.equipment:
             fitness_level = body.fitness_level
             goals = body.goals
             equipment = body.equipment
+            # Still fetch DOB for birthday theming
+            user = db.get_user(body.user_id)
+            if user:
+                user_dob = user.get("date_of_birth")
         else:
             user = db.get_user(body.user_id)
             if not user:
@@ -616,6 +621,7 @@ async def generate_workout(request: Request, body: GenerateWorkoutRequest, backg
             equipment = body.equipment or user.get("equipment", [])
             primary_goal = user.get("primary_goal")
             muscle_focus_points = user.get("muscle_focus_points")
+            user_dob = user.get("date_of_birth")
 
         # Check in-memory cache for identical generation parameters
         cache_params = {
@@ -651,6 +657,7 @@ async def generate_workout(request: Request, body: GenerateWorkoutRequest, backg
                     focus_areas=body.focus_areas,
                     primary_goal=primary_goal,
                     muscle_focus_points=muscle_focus_points,
+                    user_dob=user_dob,
                 )
 
                 # Guard against Gemini returning a string instead of dict
@@ -752,10 +759,14 @@ async def generate_workout_streaming(request: Request, body: GenerateWorkoutRequ
             db = get_supabase_db()
 
             # Get user data if not provided
+            user_dob = None
             if body.fitness_level and body.goals and body.equipment:
                 fitness_level = body.fitness_level
                 goals = body.goals
                 equipment = body.equipment
+                user = db.get_user(body.user_id)
+                if user:
+                    user_dob = user.get("date_of_birth")
             else:
                 user = db.get_user(body.user_id)
                 if not user:
@@ -765,6 +776,7 @@ async def generate_workout_streaming(request: Request, body: GenerateWorkoutRequ
                 fitness_level = body.fitness_level or user.get("fitness_level")
                 goals = body.goals or user.get("goals", [])
                 equipment = body.equipment or user.get("equipment", [])
+                user_dob = user.get("date_of_birth")
 
             gemini_service = GeminiService()
             content_chunks = []
@@ -775,7 +787,8 @@ async def generate_workout_streaming(request: Request, body: GenerateWorkoutRequ
                 goals=goals if isinstance(goals, list) else [],
                 equipment=equipment if isinstance(equipment, list) else [],
                 duration_minutes=body.duration_minutes or 45,
-                focus_areas=body.focus_areas
+                focus_areas=body.focus_areas,
+                user_dob=user_dob,
             ):
                 content_chunks.append(chunk)
                 # Send chunk event
@@ -1080,9 +1093,10 @@ async def regenerate_workout(request: Request, body: RegenerateWorkoutRequest, b
         dumbbell_count = body.dumbbell_count if body.dumbbell_count is not None else preferences.get("dumbbell_count", 2)
         kettlebell_count = body.kettlebell_count if body.kettlebell_count is not None else preferences.get("kettlebell_count", 1)
 
-        # Get age and activity level for personalized workouts
+        # Get age, activity level, and DOB for personalized workouts
         user_age = user.get("age")
         user_activity_level = user.get("activity_level")
+        user_dob = user.get("date_of_birth")
 
         # Get user-selected difficulty (easy/medium/hard) - will override AI-generated difficulty
         user_difficulty = body.difficulty
@@ -1167,7 +1181,8 @@ async def regenerate_workout(request: Request, body: RegenerateWorkoutRequest, b
                     duration_minutes=body.duration_minutes or 45,
                     focus_areas=focus_areas if focus_areas else [focus_area],
                     age=user_age,
-                    activity_level=user_activity_level
+                    activity_level=user_activity_level,
+                    user_dob=user_dob,
                 )
             else:
                 # No fallback - RAG must return exercises
@@ -1563,7 +1578,8 @@ async def get_workout_versions(request: Request, workout_id: str,
             if isinstance(exercises, str):
                 try:
                     exercises = json.loads(exercises)
-                except:
+                except Exception as e:
+                    logger.debug(f"Failed to parse exercises_json for workout version: {e}")
                     exercises = []
 
             version_infos.append(WorkoutVersionInfo(

@@ -1118,48 +1118,7 @@ class _SetTrackingOverlayState extends State<SetTrackingOverlay> {
               ),
               const SizedBox(height: 20),
 
-              // Coming soon placeholder
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(24),
-                decoration: BoxDecoration(
-                  color: isDark
-                      ? Colors.white.withOpacity(0.05)
-                      : Colors.black.withOpacity(0.03),
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(
-                    color: isDark
-                        ? Colors.white.withOpacity(0.1)
-                        : Colors.black.withOpacity(0.08),
-                  ),
-                ),
-                child: Column(
-                  children: [
-                    Icon(
-                      Icons.show_chart_rounded,
-                      size: 48,
-                      color: textMuted.withOpacity(0.5),
-                    ),
-                    const SizedBox(height: 12),
-                    Text(
-                      'Progress Charts Coming Soon',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                        color: textPrimary,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'Track your strength gains over time',
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: textMuted,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+              const SizedBox.shrink(),
 
               SizedBox(height: MediaQuery.of(ctx).padding.bottom + 16),
             ],

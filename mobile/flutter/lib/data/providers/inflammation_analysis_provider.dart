@@ -76,7 +76,7 @@ class InflammationAnalysisNotifier extends StateNotifier<InflammationAnalysisSta
 
     try {
       if (kDebugMode) {
-        print('🔍 [Inflammation] Starting analysis for ${_params.productName ?? "unknown product"}...');
+        debugPrint('🔍 [Inflammation] Starting analysis for ${_params.productName ?? "unknown product"}...');
       }
 
       final analysis = await _repository.analyzeIngredients(
@@ -87,13 +87,13 @@ class InflammationAnalysisNotifier extends StateNotifier<InflammationAnalysisSta
       );
 
       if (kDebugMode) {
-        print('✅ [Inflammation] Analysis complete: score=${analysis.overallScore}');
+        debugPrint('✅ [Inflammation] Analysis complete: score=${analysis.overallScore}');
       }
 
       state = InflammationAnalysisState.success(analysis);
     } catch (e) {
       if (kDebugMode) {
-        print('❌ [Inflammation] Analysis failed: $e');
+        debugPrint('❌ [Inflammation] Analysis failed: $e');
       }
       state = InflammationAnalysisState.error(e.toString());
     }
@@ -144,7 +144,7 @@ class InflammationByIngredientsNotifier extends StateNotifier<InflammationAnalys
 
     try {
       if (kDebugMode) {
-        print('🔍 [Inflammation] Starting analysis...');
+        debugPrint('🔍 [Inflammation] Starting analysis...');
       }
 
       final analysis = await _repository.analyzeIngredients(
@@ -155,13 +155,13 @@ class InflammationByIngredientsNotifier extends StateNotifier<InflammationAnalys
       );
 
       if (kDebugMode) {
-        print('✅ [Inflammation] Analysis complete: score=${analysis.overallScore}');
+        debugPrint('✅ [Inflammation] Analysis complete: score=${analysis.overallScore}');
       }
 
       state = InflammationAnalysisState.success(analysis);
     } catch (e) {
       if (kDebugMode) {
-        print('❌ [Inflammation] Analysis failed: $e');
+        debugPrint('❌ [Inflammation] Analysis failed: $e');
       }
       state = InflammationAnalysisState.error(e.toString());
     }

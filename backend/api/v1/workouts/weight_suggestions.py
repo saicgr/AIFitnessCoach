@@ -204,7 +204,8 @@ async def get_exercise_history(
                 import json
                 try:
                     sets_json = json.loads(sets_json)
-                except:
+                except Exception as e:
+                    logger.debug(f"Failed to parse sets_json for weight suggestion history: {e}")
                     continue
 
             # sets_json structure: {exercise_name: [{reps, weight, rpe, rir, ...}]}

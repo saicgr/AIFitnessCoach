@@ -62,6 +62,10 @@ class _GymProfileSwitcherState extends ConsumerState<GymProfileSwitcher> {
         '✅ [GymProfileSwitcher] activateProfile completed successfully',
       );
 
+      // Reset generation state BEFORE invalidation so the new provider instance
+      // can trigger generation for the new profile (static flags survive invalidation)
+      TodayWorkoutNotifier.resetGenerationState();
+
       // Invalidate workout providers to refetch for new profile
       ref.invalidate(todayWorkoutProvider);
       ref.invalidate(workoutsProvider);

@@ -1,7 +1,7 @@
-import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants/app_colors.dart';
+import '../../data/providers/diabetes_provider.dart';
 import '../../data/services/haptic_service.dart';
 import '../../widgets/glass_sheet.dart';
 
@@ -248,97 +248,111 @@ class DiabetesState {
   }
 }
 
-/// Diabetes State Notifier
+/// Diabetes State Notifier - wired to real API providers
 class DiabetesNotifier extends StateNotifier<DiabetesState> {
-  DiabetesNotifier() : super(const DiabetesState());
+  final Ref _ref;
 
-  /// Load all diabetes data
+  DiabetesNotifier(this._ref) : super(const DiabetesState());
+
+  /// Load all diabetes data from the real API providers
   Future<void> loadData() async {
     state = state.copyWith(isLoading: true, clearError: true);
 
     try {
-      // Simulate API call delay
-      await Future.delayed(const Duration(milliseconds: 600));
+      // Trigger the auto-loading provider which sets user IDs and loads all data
+      await _ref.read(diabetesDataProvider.future);
 
-      // Generate sample data
+      final glucoseState = _ref.read(glucoseReadingsProvider);
+      final insulinState = _ref.read(insulinDosesProvider);
+      final analyticsState = _ref.read(diabetesAnalyticsProvider);
+
       final now = DateTime.now();
-      final random = math.Random();
 
-      // Current glucose
-      final currentGlucose = GlucoseReading(
-        id: 'current',
-        valueMgDl: 95 + random.nextDouble() * 60, // 95-155
-        timestamp: now.subtract(Duration(minutes: random.nextInt(30))),
-        source: 'cgm',
-      );
-
-      // Recent readings
-      final recentReadings = List.generate(10, (index) {
-        return GlucoseReading(
-          id: 'reading_$index',
-          valueMgDl: 70 + random.nextDouble() * 120, // 70-190
-          timestamp: now.subtract(Duration(hours: index * 2 + 1)),
-          source: index % 3 == 0 ? 'manual' : 'cgm',
+      // Map latest glucose reading to local UI model
+      GlucoseReading? currentGlucose;
+      if (glucoseState.latestReading != null) {
+        final r = glucoseState.latestReading!;
+        currentGlucose = GlucoseReading(
+          id: r.id,
+          valueMgDl: r.glucoseValue.toDouble(),
+          timestamp: r.recordedAt,
+          notes: r.notes,
+          source: r.readingType,
         );
-      });
+      }
 
-      // Time in range
-      final timeInRange = TimeInRangeData(
-        percentInRange: 65 + random.nextDouble() * 20, // 65-85%
-        percentBelow: 2 + random.nextDouble() * 5, // 2-7%
-        percentAbove: 10 + random.nextDouble() * 15, // 10-25%
-        calculatedAt: now,
-        daysIncluded: 7,
-      );
+      // Map recent readings
+      final recentReadings = glucoseState.readings.take(10).map((r) {
+        return GlucoseReading(
+          id: r.id,
+          valueMgDl: r.glucoseValue.toDouble(),
+          timestamp: r.recordedAt,
+          notes: r.notes,
+          source: r.readingType,
+        );
+      }).toList();
 
-      // A1C records
-      final latestA1C = A1CRecord(
-        value: 6.2 + random.nextDouble() * 1.5, // 6.2-7.7
-        measuredAt: now.subtract(const Duration(days: 45)),
-        isEstimated: false,
-      );
+      // Map time in range from analytics
+      TimeInRangeData? timeInRange;
+      final weekSummary = analyticsState.weekSummary;
+      if (weekSummary != null) {
+        timeInRange = TimeInRangeData(
+          percentInRange: weekSummary.timeInRangePercent,
+          percentBelow: weekSummary.timeBelowRangePercent,
+          percentAbove: weekSummary.timeAboveRangePercent,
+          calculatedAt: now,
+          daysIncluded: 7,
+        );
+      }
 
-      final estimatedA1C = A1CRecord(
-        value: latestA1C.value + (random.nextDouble() - 0.5) * 0.3,
-        measuredAt: now,
-        isEstimated: true,
-      );
+      // Map A1C data from analytics dashboard
+      final dashboard = analyticsState.dashboard;
+      A1CRecord? latestA1C;
+      A1CRecord? estimatedA1C;
+      if (dashboard != null) {
+        if (dashboard.latestA1c != null) {
+          latestA1C = A1CRecord(
+            value: dashboard.latestA1c!,
+            measuredAt: dashboard.a1cDate ?? now.subtract(const Duration(days: 45)),
+            isEstimated: false,
+          );
+        }
+        if (dashboard.estimatedA1c != null) {
+          estimatedA1C = A1CRecord(
+            value: dashboard.estimatedA1c!,
+            measuredAt: now,
+            isEstimated: true,
+          );
+        }
+      }
 
-      // Today's insulin doses
-      final todayInsulinDoses = [
-        InsulinDose(
-          id: 'dose_1',
-          units: 4 + random.nextDouble() * 4, // 4-8 units
-          type: 'rapid',
-          timestamp: now.subtract(const Duration(hours: 8)),
-          notes: 'Breakfast',
-        ),
-        InsulinDose(
-          id: 'dose_2',
-          units: 3 + random.nextDouble() * 3, // 3-6 units
-          type: 'rapid',
-          timestamp: now.subtract(const Duration(hours: 4)),
-          notes: 'Lunch',
-        ),
-        InsulinDose(
-          id: 'dose_3',
-          units: 12 + random.nextDouble() * 6, // 12-18 units
-          type: 'long',
-          timestamp: now.subtract(const Duration(hours: 10)),
-          notes: 'Basal insulin',
-        ),
-      ];
+      // Map insulin doses
+      final todayInsulinDoses = insulinState.doses.map((d) {
+        String type = 'rapid';
+        if (d.isBasal) type = 'long';
+        if (d.insulinTypeEnum.value == 'mixed') type = 'mixed';
+        return InsulinDose(
+          id: d.id,
+          units: d.units,
+          type: type,
+          timestamp: d.administeredAt,
+          notes: d.notes,
+        );
+      }).toList();
 
-      final todayInsulinSummary = InsulinSummary(
-        totalRapidUnits: todayInsulinDoses
-            .where((d) => d.type == 'rapid')
-            .fold(0.0, (sum, d) => sum + d.units),
-        totalLongUnits: todayInsulinDoses
-            .where((d) => d.type == 'long')
-            .fold(0.0, (sum, d) => sum + d.units),
-        doseCount: todayInsulinDoses.length,
-        lastDoseAt: todayInsulinDoses.last.timestamp,
-      );
+      InsulinSummary? todayInsulinSummary;
+      if (todayInsulinDoses.isNotEmpty) {
+        todayInsulinSummary = InsulinSummary(
+          totalRapidUnits: todayInsulinDoses
+              .where((d) => d.type == 'rapid')
+              .fold(0.0, (sum, d) => sum + d.units),
+          totalLongUnits: todayInsulinDoses
+              .where((d) => d.type == 'long')
+              .fold(0.0, (sum, d) => sum + d.units),
+          doseCount: todayInsulinDoses.length,
+          lastDoseAt: todayInsulinDoses.last.timestamp,
+        );
+      }
 
       state = state.copyWith(
         currentGlucose: currentGlucose,
@@ -359,13 +373,24 @@ class DiabetesNotifier extends StateNotifier<DiabetesState> {
     }
   }
 
-  /// Sync with Health Connect
+  /// Sync with Health Connect (refresh data from server)
   Future<void> syncHealthConnect() async {
     state = state.copyWith(isSyncing: true, clearError: true);
 
     try {
-      // Simulate sync delay
-      await Future.delayed(const Duration(seconds: 2));
+      // Refresh all providers from the server
+      final glucoseNotifier = _ref.read(glucoseReadingsProvider.notifier);
+      final insulinNotifier = _ref.read(insulinDosesProvider.notifier);
+      final analyticsNotifier = _ref.read(diabetesAnalyticsProvider.notifier);
+
+      await Future.wait([
+        glucoseNotifier.refresh(),
+        insulinNotifier.refresh(),
+        analyticsNotifier.refresh(),
+      ]);
+
+      // Reload the UI state from refreshed providers
+      await loadData();
 
       state = state.copyWith(
         isSyncing: false,
@@ -379,65 +404,86 @@ class DiabetesNotifier extends StateNotifier<DiabetesState> {
     }
   }
 
-  /// Log a new glucose reading
+  /// Log a new glucose reading via real API
   Future<bool> logGlucose({
     required double valueMgDl,
     String? notes,
   }) async {
     try {
-      final newReading = GlucoseReading(
-        id: 'reading_${DateTime.now().millisecondsSinceEpoch}',
-        valueMgDl: valueMgDl,
-        timestamp: DateTime.now(),
+      final glucoseNotifier = _ref.read(glucoseReadingsProvider.notifier);
+      final reading = await glucoseNotifier.addReading(
+        glucoseValue: valueMgDl.toInt(),
+        mealContext: 'other',
         notes: notes,
-        source: 'manual',
       );
 
-      state = state.copyWith(
-        currentGlucose: newReading,
-        recentReadings: [newReading, ...state.recentReadings],
-      );
-
-      return true;
+      if (reading != null) {
+        // Map the new reading to the local UI model and update state
+        final newReading = GlucoseReading(
+          id: reading.id,
+          valueMgDl: reading.glucoseValue.toDouble(),
+          timestamp: reading.recordedAt,
+          notes: reading.notes,
+          source: reading.readingType,
+        );
+        state = state.copyWith(
+          currentGlucose: newReading,
+          recentReadings: [newReading, ...state.recentReadings],
+        );
+        return true;
+      }
+      return false;
     } catch (e) {
       state = state.copyWith(error: 'Failed to log glucose: $e');
       return false;
     }
   }
 
-  /// Log a new insulin dose
+  /// Log a new insulin dose via real API
   Future<bool> logInsulin({
     required double units,
     required String type,
     String? notes,
   }) async {
     try {
-      final newDose = InsulinDose(
-        id: 'dose_${DateTime.now().millisecondsSinceEpoch}',
+      final insulinNotifier = _ref.read(insulinDosesProvider.notifier);
+      String insulinType = 'rapid_acting';
+      if (type == 'long') insulinType = 'long_acting';
+      if (type == 'mixed') insulinType = 'mixed';
+
+      final dose = await insulinNotifier.addDose(
+        insulinName: type == 'long' ? 'Basal Insulin' : 'Rapid Insulin',
+        insulinType: insulinType,
         units: units,
-        type: type,
-        timestamp: DateTime.now(),
         notes: notes,
       );
 
-      final updatedDoses = [...state.todayInsulinDoses, newDose];
-      final updatedSummary = InsulinSummary(
-        totalRapidUnits: updatedDoses
-            .where((d) => d.type == 'rapid')
-            .fold(0.0, (sum, d) => sum + d.units),
-        totalLongUnits: updatedDoses
-            .where((d) => d.type == 'long')
-            .fold(0.0, (sum, d) => sum + d.units),
-        doseCount: updatedDoses.length,
-        lastDoseAt: newDose.timestamp,
-      );
-
-      state = state.copyWith(
-        todayInsulinDoses: updatedDoses,
-        todayInsulinSummary: updatedSummary,
-      );
-
-      return true;
+      if (dose != null) {
+        final newDose = InsulinDose(
+          id: dose.id,
+          units: dose.units,
+          type: type,
+          timestamp: dose.administeredAt,
+          notes: dose.notes,
+        );
+        final updatedDoses = [...state.todayInsulinDoses, newDose];
+        final updatedSummary = InsulinSummary(
+          totalRapidUnits: updatedDoses
+              .where((d) => d.type == 'rapid')
+              .fold(0.0, (sum, d) => sum + d.units),
+          totalLongUnits: updatedDoses
+              .where((d) => d.type == 'long')
+              .fold(0.0, (sum, d) => sum + d.units),
+          doseCount: updatedDoses.length,
+          lastDoseAt: newDose.timestamp,
+        );
+        state = state.copyWith(
+          todayInsulinDoses: updatedDoses,
+          todayInsulinSummary: updatedSummary,
+        );
+        return true;
+      }
+      return false;
     } catch (e) {
       state = state.copyWith(error: 'Failed to log insulin: $e');
       return false;
@@ -450,10 +496,10 @@ class DiabetesNotifier extends StateNotifier<DiabetesState> {
   }
 }
 
-/// Diabetes Provider
+/// Diabetes Provider - wired to real API
 final diabetesProvider =
     StateNotifierProvider<DiabetesNotifier, DiabetesState>((ref) {
-  return DiabetesNotifier();
+  return DiabetesNotifier(ref);
 });
 
 // ============================================

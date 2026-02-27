@@ -520,6 +520,9 @@ async def get_consistency_patterns(
 
         avg_streak = total_streak_length / len(streak_history) if streak_history else 0
 
+        logger.info("has_seasonal_data not yet implemented for user %s - returning False", user_id)
+        logger.info("skip_reasons not yet implemented for user %s - returning empty dict", user_id)
+
         return ConsistencyPatterns(
             user_id=user_id,
             time_patterns=time_patterns,
@@ -527,9 +530,9 @@ async def get_consistency_patterns(
             day_patterns=day_patterns,
             most_consistent_day=best_day_name,
             least_consistent_day=worst_day_name,
-            has_seasonal_data=False,  # TODO: Implement seasonal analysis
+            has_seasonal_data=False,
             seasonal_notes=None,
-            skip_reasons={},  # TODO: Implement skip reason tracking
+            skip_reasons={},
             most_common_skip_reason=None,
             streak_history=streak_history,
             average_streak_length=round(avg_streak, 1),
@@ -882,6 +885,8 @@ async def get_day_detail(
             ).eq("workout_log_id", workout_log_id).execute()
             shared_images = [s["image_url"] for s in (share_response.data or []) if s.get("image_url")]
 
+        logger.info("coach_feedback not yet implemented for day detail (user=%s, date=%s)", user_id, date_str)
+
         return {
             "date": date_str,
             "status": "completed",
@@ -895,7 +900,7 @@ async def get_day_detail(
             "muscles_worked": list(muscles_set),
             "exercises": exercises_data,
             "shared_images": shared_images if shared_images else None,
-            "coach_feedback": None,  # TODO: Add coach feedback lookup
+            "coach_feedback": None,  # not yet implemented - coach feedback lookup pending
             "completed_at": log_data.get("completed_at"),
             "average_rpe": avg_rpe,
         }

@@ -1,9 +1,10 @@
 import 'package:flutter/foundation.dart';
+import '../../data/services/analytics_service.dart' as prod;
 
 /// Analytics service for tracking onboarding events and user behavior.
 ///
-/// STUB IMPLEMENTATION: This class currently logs to debug console only.
-/// TODO: Wire up to Firebase Analytics, Mixpanel, or other analytics platform.
+/// Forwards all calls to the production [prod.AnalyticsService] instance.
+/// Falls back to debug logging if the production service hasn't been initialized.
 ///
 /// Usage:
 /// ```dart
@@ -16,31 +17,30 @@ import 'package:flutter/foundation.dart';
 /// );
 /// ```
 class AnalyticsService {
+  static prod.AnalyticsService? _instance;
+
+  /// Initialize with the production analytics service instance.
+  /// Call this once after the ProviderContainer is created.
+  static void init(prod.AnalyticsService service) {
+    _instance = service;
+  }
+
   // ===== SCREEN TRACKING =====
 
   /// Logs a screen view event.
-  ///
-  /// Call this whenever a new onboarding screen is displayed.
-  /// Use descriptive screen names like "onboarding_screen_0", "plan_preview", etc.
   static void logScreenView(String screenName) {
     if (kDebugMode) {
-      print('📊 [Analytics] Screen View: $screenName');
+      debugPrint('[Analytics] Screen View: $screenName');
     }
-    // TODO: Implement Firebase Analytics logScreenView
-    // FirebaseAnalytics.instance.logScreenView(screenName: screenName);
+    _instance?.trackScreenView(
+      screenName: screenName,
+      screenClass: 'Onboarding',
+    );
   }
 
   // ===== ONBOARDING EVENTS =====
 
   /// Logs onboarding completion with detailed metrics.
-  ///
-  /// Call this when the user finishes the entire onboarding flow.
-  ///
-  /// Parameters:
-  /// - [totalScreens]: Total number of screens shown (including skipped)
-  /// - [skippedScreens]: Number of screens skipped (Phase 2/3 gates)
-  /// - [nutritionOptedIn]: Whether user opted into nutrition guidance
-  /// - [personalizationCompleted]: Whether user completed Phase 2 personalization
   static void logOnboardingCompleted({
     required int totalScreens,
     required int skippedScreens,
@@ -48,169 +48,141 @@ class AnalyticsService {
     required bool personalizationCompleted,
   }) {
     if (kDebugMode) {
-      print('📊 [Analytics] Onboarding Completed:');
-      print('  Total Screens: $totalScreens');
-      print('  Skipped: $skippedScreens');
-      print('  Nutrition Opted In: $nutritionOptedIn');
-      print('  Personalization: $personalizationCompleted');
+      debugPrint('[Analytics] Onboarding Completed:');
+      debugPrint('  Total Screens: $totalScreens');
+      debugPrint('  Skipped: $skippedScreens');
+      debugPrint('  Nutrition Opted In: $nutritionOptedIn');
+      debugPrint('  Personalization: $personalizationCompleted');
     }
-    // TODO: Implement Firebase Analytics logEvent
-    // FirebaseAnalytics.instance.logEvent(
-    //   name: 'onboarding_completed',
-    //   parameters: {
-    //     'total_screens': totalScreens,
-    //     'skipped_screens': skippedScreens,
-    //     'nutrition_opted_in': nutritionOptedIn,
-    //     'personalization_completed': personalizationCompleted,
-    //   },
-    // );
+    _instance?.trackOnboardingStep(
+      stepName: 'completed',
+      stepNumber: totalScreens,
+      completed: true,
+    );
+    _instance?.trackEvent(
+      eventName: 'onboarding_completed',
+      category: 'onboarding',
+      properties: {
+        'total_screens': totalScreens,
+        'skipped_screens': skippedScreens,
+        'nutrition_opted_in': nutritionOptedIn,
+        'personalization_completed': personalizationCompleted,
+      },
+    );
   }
 
   /// Logs nutrition opt-in decision.
-  ///
-  /// Call this when user interacts with the nutrition gate (Screen 10).
   static void logNutritionOptIn(bool optedIn) {
     if (kDebugMode) {
-      print('📊 [Analytics] Nutrition Opt-In: $optedIn');
+      debugPrint('[Analytics] Nutrition Opt-In: $optedIn');
     }
-    // TODO: Implement Firebase Analytics logEvent
-    // FirebaseAnalytics.instance.logEvent(
-    //   name: 'nutrition_opt_in',
-    //   parameters: {
-    //     'opted_in': optedIn,
-    //   },
-    // );
+    _instance?.trackEvent(
+      eventName: 'nutrition_opt_in',
+      category: 'onboarding',
+      properties: {'opted_in': optedIn},
+    );
   }
 
   /// Logs when user skips personalization (Phase 2).
-  ///
-  /// Call this when user taps "Skip for Now" on the personalization gate (Screen 6).
   static void logPersonalizationSkipped() {
     if (kDebugMode) {
-      print('📊 [Analytics] Personalization Skipped');
+      debugPrint('[Analytics] Personalization Skipped');
     }
-    // TODO: Implement Firebase Analytics logEvent
-    // FirebaseAnalytics.instance.logEvent(
-    //   name: 'personalization_skipped',
-    // );
+    _instance?.trackEvent(
+      eventName: 'personalization_skipped',
+      category: 'onboarding',
+    );
   }
 
   // ===== WORKOUT GENERATION EVENTS =====
 
   /// Logs successful workout generation.
-  ///
-  /// Call this when a workout is successfully generated from the AI API.
-  ///
-  /// Parameters:
-  /// - [primaryGoal]: The user's selected primary goal (e.g., "muscle_hypertrophy")
-  /// - [duration]: Workout duration in minutes
-  /// - [equipment]: List of equipment available
   static void logWorkoutGenerated({
     required String primaryGoal,
     required int duration,
     required List<String> equipment,
   }) {
     if (kDebugMode) {
-      print('📊 [Analytics] Workout Generated:');
-      print('  Primary Goal: $primaryGoal');
-      print('  Duration: $duration min');
-      print('  Equipment: $equipment');
+      debugPrint('[Analytics] Workout Generated:');
+      debugPrint('  Primary Goal: $primaryGoal');
+      debugPrint('  Duration: $duration min');
+      debugPrint('  Equipment: $equipment');
     }
-    // TODO: Implement Firebase Analytics logEvent
-    // FirebaseAnalytics.instance.logEvent(
-    //   name: 'workout_generated',
-    //   parameters: {
-    //     'primary_goal': primaryGoal,
-    //     'duration': duration,
-    //     'equipment': equipment.join(', '),
-    //     'equipment_count': equipment.length,
-    //   },
-    // );
+    _instance?.trackEvent(
+      eventName: 'workout_generated',
+      category: 'onboarding',
+      properties: {
+        'primary_goal': primaryGoal,
+        'duration': duration,
+        'equipment': equipment.join(', '),
+        'equipment_count': equipment.length,
+      },
+    );
   }
 
   // ===== USER PROPERTY TRACKING =====
 
   /// Sets user properties for segmentation and analytics.
-  ///
-  /// Call this after onboarding completion to tag user with relevant properties.
-  ///
-  /// Parameters:
-  /// - [fitnessLevel]: User's fitness level (beginner, intermediate, advanced)
-  /// - [goals]: List of user goals
-  /// - [workoutsPerWeek]: Number of workouts per week
   static void setUserProperties({
     required String fitnessLevel,
     required List<String> goals,
     required int workoutsPerWeek,
   }) {
     if (kDebugMode) {
-      print('📊 [Analytics] User Properties Set:');
-      print('  Fitness Level: $fitnessLevel');
-      print('  Goals: $goals');
-      print('  Workouts/Week: $workoutsPerWeek');
+      debugPrint('[Analytics] User Properties Set:');
+      debugPrint('  Fitness Level: $fitnessLevel');
+      debugPrint('  Goals: $goals');
+      debugPrint('  Workouts/Week: $workoutsPerWeek');
     }
-    // TODO: Implement Firebase Analytics setUserProperty
-    // FirebaseAnalytics.instance.setUserProperty(
-    //   name: 'fitness_level',
-    //   value: fitnessLevel,
-    // );
-    // FirebaseAnalytics.instance.setUserProperty(
-    //   name: 'primary_goal',
-    //   value: goals.isNotEmpty ? goals.first : 'none',
-    // );
-    // FirebaseAnalytics.instance.setUserProperty(
-    //   name: 'workouts_per_week',
-    //   value: workoutsPerWeek.toString(),
-    // );
+    _instance?.trackEvent(
+      eventName: 'user_properties_set',
+      category: 'profile',
+      properties: {
+        'fitness_level': fitnessLevel,
+        'goals': goals.join(', '),
+        'workouts_per_week': workoutsPerWeek,
+      },
+    );
   }
 
   // ===== DROP-OFF TRACKING =====
 
   /// Logs when a user exits onboarding without completing.
-  ///
-  /// Call this when user navigates away from onboarding before finishing.
-  ///
-  /// Parameters:
-  /// - [lastScreen]: The last screen the user was on before exiting
-  /// - [screenIndex]: The index of the last screen (0-11)
   static void logOnboardingDropOff({
     required String lastScreen,
     required int screenIndex,
   }) {
     if (kDebugMode) {
-      print('📊 [Analytics] Onboarding Drop-Off:');
-      print('  Last Screen: $lastScreen');
-      print('  Screen Index: $screenIndex');
+      debugPrint('[Analytics] Onboarding Drop-Off:');
+      debugPrint('  Last Screen: $lastScreen');
+      debugPrint('  Screen Index: $screenIndex');
     }
-    // TODO: Implement Firebase Analytics logEvent
-    // FirebaseAnalytics.instance.logEvent(
-    //   name: 'onboarding_drop_off',
-    //   parameters: {
-    //     'last_screen': lastScreen,
-    //     'screen_index': screenIndex,
-    //   },
-    // );
+    _instance?.trackOnboardingStep(
+      stepName: lastScreen,
+      stepNumber: screenIndex,
+      completed: false,
+    );
+    _instance?.trackFunnelEvent(
+      funnelName: 'onboarding',
+      stepName: lastScreen,
+      droppedOff: true,
+    );
   }
 
   // ===== TIMING EVENTS =====
 
   /// Logs time taken to complete onboarding.
-  ///
-  /// Call this with the elapsed time when onboarding is completed.
-  ///
-  /// Parameters:
-  /// - [durationSeconds]: Total time spent in onboarding (seconds)
   static void logOnboardingDuration(int durationSeconds) {
     if (kDebugMode) {
-      print('📊 [Analytics] Onboarding Duration: ${durationSeconds}s (${durationSeconds ~/ 60}m ${durationSeconds % 60}s)');
+      debugPrint('[Analytics] Onboarding Duration: ${durationSeconds}s (${durationSeconds ~/ 60}m ${durationSeconds % 60}s)');
     }
-    // TODO: Implement Firebase Analytics logEvent
-    // FirebaseAnalytics.instance.logEvent(
-    //   name: 'onboarding_duration',
-    //   parameters: {
-    //     'duration_seconds': durationSeconds,
-    //     'duration_minutes': (durationSeconds / 60).round(),
-    //   },
-    // );
+    _instance?.trackEvent(
+      eventName: 'onboarding_duration',
+      category: 'onboarding',
+      properties: {
+        'duration_seconds': durationSeconds,
+        'duration_minutes': (durationSeconds / 60).round(),
+      },
+    );
   }
 }

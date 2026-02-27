@@ -286,21 +286,24 @@ def _build_weekly_summary_response(ws: dict) -> WeeklySummary:
     if ws.get("pr_details"):
         try:
             pr_details = json.loads(ws["pr_details"]) if isinstance(ws["pr_details"], str) else ws["pr_details"]
-        except:
+        except Exception as e:
+            logger.debug(f"Failed to parse pr_details: {e}")
             pr_details = None
 
     ai_highlights = None
     if ws.get("ai_highlights"):
         try:
             ai_highlights = json.loads(ws["ai_highlights"]) if isinstance(ws["ai_highlights"], str) else ws["ai_highlights"]
-        except:
+        except Exception as e:
+            logger.debug(f"Failed to parse ai_highlights: {e}")
             ai_highlights = None
 
     ai_next_week_tips = None
     if ws.get("ai_next_week_tips"):
         try:
             ai_next_week_tips = json.loads(ws["ai_next_week_tips"]) if isinstance(ws["ai_next_week_tips"], str) else ws["ai_next_week_tips"]
-        except:
+        except Exception as e:
+            logger.debug(f"Failed to parse ai_next_week_tips: {e}")
             ai_next_week_tips = None
 
     return WeeklySummary(
@@ -357,8 +360,8 @@ async def _gather_week_stats(db, user_id: str, start_date: date, end_date: date)
             total_exercises += len(exercises)
             for ex in exercises:
                 total_sets += ex.get("sets", 3)
-        except:
-            pass
+        except Exception as e:
+            logger.debug(f"Failed to parse exercises JSON: {e}")
 
     # Estimate calories (rough: 5-8 cal/min for strength training)
     calories_estimate = total_time * 6

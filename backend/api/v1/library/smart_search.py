@@ -153,8 +153,8 @@ async def _run_semantic_search(
                 if key.replace("_", " ") in query_lower or key in query_lower:
                     expanded_query = f"{query} {expansion}"
                     break
-        except ImportError:
-            pass
+        except ImportError as e:
+            logger.debug(f"Focus area keywords not available: {e}")
 
         # Get embedding for the query
         embedding = await gemini.get_embedding_async(expanded_query)

@@ -120,6 +120,12 @@ class ChatMessage extends Equatable {
   final String? createdAt;
   @JsonKey(name: 'action_data')
   final Map<String, dynamic>? actionData;
+  @JsonKey(name: 'media_url')
+  final String? mediaUrl;
+  @JsonKey(name: 'media_type')
+  final String? mediaType; // 'image' or 'video'
+  @JsonKey(name: 'media_refs')
+  final List<Map<String, dynamic>>? mediaRefs;
 
   const ChatMessage({
     this.id,
@@ -130,6 +136,9 @@ class ChatMessage extends Equatable {
     this.agentType,
     this.createdAt,
     this.actionData,
+    this.mediaUrl,
+    this.mediaType,
+    this.mediaRefs,
   });
 
   factory ChatMessage.fromJson(Map<String, dynamic> json) =>
@@ -165,8 +174,20 @@ class ChatMessage extends Equatable {
     }
   }
 
+  /// Check if this message has media (image or video)
+  bool get hasMedia => mediaUrl != null && mediaUrl!.isNotEmpty;
+
+  /// Check if this message has a form check result from the AI
+  bool get hasFormCheckResult =>
+      actionData != null &&
+      actionData!['form_check_result'] != null;
+
+  /// Get the form check result data if available
+  Map<String, dynamic>? get formCheckResult =>
+      actionData?['form_check_result'] as Map<String, dynamic>?;
+
   @override
-  List<Object?> get props => [id, userId, role, content, agentType, createdAt, actionData];
+  List<Object?> get props => [id, userId, role, content, agentType, createdAt, actionData, mediaUrl, mediaType, mediaRefs];
 
   /// Check if this message has a generated workout
   bool get hasGeneratedWorkout =>
@@ -183,6 +204,22 @@ class ChatMessage extends Equatable {
 
   /// Get the workout name if available
   String? get workoutName => actionData?['workout_name'] as String?;
+
+  /// Check if this message has a buffet analysis result
+  bool get hasBuffetAnalysis =>
+      actionData != null &&
+      (actionData!['action'] == 'analyze_multi_food_images' ||
+       actionData!['action'] == 'analyze_buffet');
+
+  /// Check if this message has a menu analysis result
+  bool get hasMenuAnalysis =>
+      actionData != null &&
+      actionData!['action'] == 'analyze_menu';
+
+  /// Check if this message has a form comparison result
+  bool get hasFormComparison =>
+      actionData != null &&
+      actionData!['action'] == 'compare_exercise_form';
 }
 
 /// Chat request model
@@ -203,6 +240,10 @@ class ChatRequest {
   final Map<String, dynamic>? aiSettings;
   @JsonKey(name: 'unified_context')
   final String? unifiedContext;
+  @JsonKey(name: 'media_ref')
+  final Map<String, dynamic>? mediaRef;
+  @JsonKey(name: 'media_refs')
+  final List<Map<String, dynamic>>? mediaRefs;
 
   const ChatRequest({
     required this.message,
@@ -213,6 +254,8 @@ class ChatRequest {
     this.conversationHistory,
     this.aiSettings,
     this.unifiedContext,
+    this.mediaRef,
+    this.mediaRefs,
   });
 
   factory ChatRequest.fromJson(Map<String, dynamic> json) =>

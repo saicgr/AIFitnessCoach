@@ -172,6 +172,10 @@ class _ManageGymProfilesSheetState
     try {
       await ref.read(gymProfilesProvider.notifier).activateProfile(profile.id);
 
+      // Reset generation state BEFORE invalidation so the new provider instance
+      // can trigger generation for the new profile (static flags survive invalidation)
+      TodayWorkoutNotifier.resetGenerationState();
+
       // Invalidate workout providers
       ref.invalidate(todayWorkoutProvider);
       ref.invalidate(workoutsProvider);

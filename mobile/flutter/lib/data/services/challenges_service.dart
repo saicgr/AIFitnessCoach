@@ -312,6 +312,73 @@ class ChallengesService {
   }
 
   // ============================================================
+  // ACCEPT FROM FEED / GET CHALLENGE / LEADERBOARD
+  // ============================================================
+
+  /// Accept a challenge directly from a feed post (atomically creates + accepts)
+  Future<Map<String, dynamic>> acceptChallengeFromFeed({
+    required String activityId,
+  }) async {
+    try {
+      final response = await _apiClient.post(
+        '/social/challenges/accept-from-feed',
+        queryParameters: {'activity_id': activityId},
+      );
+
+      if (response.statusCode == 200) {
+        debugPrint('✅ [Challenges] Accepted challenge from feed post $activityId');
+        return response.data as Map<String, dynamic>;
+      } else {
+        throw Exception('Failed to accept challenge from feed: ${response.statusCode}');
+      }
+    } catch (e) {
+      debugPrint('❌ [Challenges] Error accepting challenge from feed: $e');
+      rethrow;
+    }
+  }
+
+  /// Get a single challenge by ID with user details
+  Future<Map<String, dynamic>> getChallenge({
+    required String challengeId,
+  }) async {
+    try {
+      final response = await _apiClient.get(
+        '/social/challenges/$challengeId',
+      );
+
+      if (response.statusCode == 200) {
+        return response.data as Map<String, dynamic>;
+      } else {
+        throw Exception('Failed to get challenge: ${response.statusCode}');
+      }
+    } catch (e) {
+      debugPrint('❌ [Challenges] Error getting challenge: $e');
+      rethrow;
+    }
+  }
+
+  /// Get leaderboard for a specific feed activity (all completed challenges)
+  Future<List<Map<String, dynamic>>> getActivityLeaderboard({
+    required String activityId,
+  }) async {
+    try {
+      final response = await _apiClient.get(
+        '/social/challenges/activity/$activityId/leaderboard',
+      );
+
+      if (response.statusCode == 200) {
+        final data = response.data as Map<String, dynamic>;
+        return List<Map<String, dynamic>>.from(data['leaderboard'] ?? []);
+      } else {
+        throw Exception('Failed to get activity leaderboard: ${response.statusCode}');
+      }
+    } catch (e) {
+      debugPrint('❌ [Challenges] Error getting activity leaderboard: $e');
+      rethrow;
+    }
+  }
+
+  // ============================================================
   // HELPER METHODS
   // ============================================================
 

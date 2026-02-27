@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -9,10 +10,12 @@ import '../../../data/services/api_client.dart';
 import '../../../data/services/haptic_service.dart';
 import '../../../data/providers/nutrition_preferences_provider.dart';
 import '../../../data/repositories/nutrition_preferences_repository.dart';
+import '../../../data/repositories/hydration_repository.dart';
 import '../../nutrition/log_meal_sheet.dart';
 
-/// Hero nutrition card - prominent action-focused nutrition display
-/// Shows daily calorie/macro progress with big LOG MEAL button
+/// Hero nutrition card with Apple Watch-style concentric macro rings.
+/// Outer = Protein, Middle = Carbs, Inner = Fat.
+/// Center shows calorie remaining count.
 class HeroNutritionCard extends ConsumerStatefulWidget {
   const HeroNutritionCard({super.key});
 
@@ -20,13 +23,30 @@ class HeroNutritionCard extends ConsumerStatefulWidget {
   ConsumerState<HeroNutritionCard> createState() => _HeroNutritionCardState();
 }
 
-class _HeroNutritionCardState extends ConsumerState<HeroNutritionCard> {
+class _HeroNutritionCardState extends ConsumerState<HeroNutritionCard>
+    with SingleTickerProviderStateMixin {
   bool _isLoading = true;
+  late AnimationController _animController;
+  late Animation<double> _ringAnimation;
 
   @override
   void initState() {
     super.initState();
+    _animController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1200),
+    );
+    _ringAnimation = CurvedAnimation(
+      parent: _animController,
+      curve: Curves.easeOutCubic,
+    );
     _loadData();
+  }
+
+  @override
+  void dispose() {
+    _animController.dispose();
+    super.dispose();
   }
 
   Future<void> _loadData() async {
@@ -36,6 +56,9 @@ class _HeroNutritionCardState extends ConsumerState<HeroNutritionCard> {
       await ref.read(nutritionProvider.notifier).loadTodaySummary(userId);
       await ref.read(nutritionProvider.notifier).loadTargets(userId);
 
+      // Load hydration data
+      ref.read(hydrationProvider.notifier).loadTodaySummary(userId);
+
       // Load dynamic targets (training/rest day adjustments)
       ref.read(nutritionPreferencesProvider.notifier).initialize(userId);
 
@@ -43,12 +66,12 @@ class _HeroNutritionCardState extends ConsumerState<HeroNutritionCard> {
       final nutritionState = ref.read(nutritionProvider);
       if (nutritionState.targets?.dailyCalorieTarget == null) {
         await _calculateTargetsFromProfile(userId, apiClient);
-        // Reload targets after calculation
         await ref.read(nutritionProvider.notifier).loadTargets(userId);
       }
 
       if (mounted) {
         setState(() => _isLoading = false);
+        _animController.forward();
       }
     }
   }
@@ -66,21 +89,17 @@ class _HeroNutritionCardState extends ConsumerState<HeroNutritionCard> {
     }
   }
 
-  /// Calculate nutrition targets from user profile if not already set
   Future<void> _calculateTargetsFromProfile(String userId, ApiClient apiClient) async {
     try {
       final authState = ref.read(authStateProvider);
       final user = authState.user;
       if (user == null) return;
 
-      // Only calculate if we have the required data
       if (user.weightKg == null || user.heightCm == null ||
           user.age == null || user.gender == null) {
-        debugPrint('⚠️ [HeroNutritionCard] Missing user profile data for nutrition calculation');
         return;
       }
 
-      // Determine weight direction based on target vs current weight
       String weightDirection = 'maintain';
       if (user.targetWeightKg != null && user.weightKg != null) {
         final diff = user.targetWeightKg! - user.weightKg!;
@@ -91,7 +110,6 @@ class _HeroNutritionCardState extends ConsumerState<HeroNutritionCard> {
         }
       }
 
-      // Map fitness goals to nutrition goals
       final nutritionGoals = user.goalsList.map((goal) {
         switch (goal) {
           case 'lose_weight':
@@ -105,7 +123,6 @@ class _HeroNutritionCardState extends ConsumerState<HeroNutritionCard> {
         }
       }).toList();
 
-      debugPrint('🔄 [HeroNutritionCard] Calculating nutrition targets for existing user...');
       await apiClient.post(
         '${ApiConstants.users}/$userId/calculate-nutrition-targets',
         data: {
@@ -121,7 +138,6 @@ class _HeroNutritionCardState extends ConsumerState<HeroNutritionCard> {
           'workout_days_per_week': user.workoutsPerWeek ?? 3,
         },
       );
-      debugPrint('✅ [HeroNutritionCard] Nutrition targets calculated and saved');
     } catch (e) {
       debugPrint('❌ [HeroNutritionCard] Failed to calculate nutrition targets: $e');
     }
@@ -134,281 +150,345 @@ class _HeroNutritionCardState extends ConsumerState<HeroNutritionCard> {
     final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
     final cardBg = isDark ? AppColors.elevated : AppColorsLight.elevated;
 
-    // Debug logging
-    debugPrint('🥗 [HeroNutritionCard] build() - isDark: $isDark, isLoading: $_isLoading');
-    debugPrint('🥗 [HeroNutritionCard] textPrimary: $textPrimary, textSecondary: $textSecondary');
-    debugPrint('🥗 [HeroNutritionCard] cardBg: $cardBg');
-
     final nutritionState = ref.watch(nutritionProvider);
     final summary = nutritionState.todaySummary;
     final targets = nutritionState.targets;
     final prefsState = ref.watch(nutritionPreferencesProvider);
     final dynamicTargets = prefsState.dynamicTargets;
-
-    debugPrint('🥗 [HeroNutritionCard] summary: $summary, targets: $targets');
+    final hydrationState = ref.watch(hydrationProvider);
+    final waterConsumedMl = hydrationState.todaySummary?.totalMl ?? 0;
+    final waterGoalMl = hydrationState.todaySummary?.goalMl ?? hydrationState.dailyGoalMl;
 
     final caloriesConsumed = summary?.totalCalories ?? 0;
     final calorieTarget = dynamicTargets?.targetCalories ?? targets?.dailyCalorieTarget ?? 2000;
-    final proteinConsumed = summary?.totalProteinG ?? 0;
-    final carbsConsumed = summary?.totalCarbsG ?? 0;
-    final fatConsumed = summary?.totalFatG ?? 0;
+    final proteinConsumed = (summary?.totalProteinG ?? 0).round();
+    final carbsConsumed = (summary?.totalCarbsG ?? 0).round();
+    final fatConsumed = (summary?.totalFatG ?? 0).round();
+
+    final proteinTarget = prefsState.currentProteinTarget;
+    final carbsTarget = prefsState.currentCarbsTarget;
+    final fatTarget = prefsState.currentFatTarget;
 
     final caloriesRemaining = calorieTarget - caloriesConsumed;
-    final calorieProgress = calorieTarget > 0
-        ? (caloriesConsumed / calorieTarget).clamp(0.0, 1.0)
+
+    // Centralized macro colors
+    final proteinColor = isDark ? AppColors.macroProtein : AppColorsLight.macroProtein;
+    final carbsRingColor = isDark ? AppColors.macroCarbs : AppColorsLight.macroCarbs;
+    final fatColor = isDark ? AppColors.macroFat : AppColorsLight.macroFat;
+    final buttonBg = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final buttonFg = isDark ? Colors.black : Colors.white;
+
+    // Progress values (clamped to 0..1 for ring drawing, but allow >1 for overshoot glow)
+    final proteinProgress = proteinTarget > 0
+        ? (proteinConsumed / proteinTarget).clamp(0.0, 1.5)
+        : 0.0;
+    final carbsProgress = carbsTarget > 0
+        ? (carbsConsumed / carbsTarget).clamp(0.0, 1.5)
+        : 0.0;
+    final fatProgress = fatTarget > 0
+        ? (fatConsumed / fatTarget).clamp(0.0, 1.5)
         : 0.0;
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
       child: Container(
         decoration: BoxDecoration(
           color: cardBg,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: AppColors.textPrimary.withValues(alpha: 0.4),
-            width: 2,
+            color: (isDark ? Colors.white : Colors.black).withValues(alpha: 0.08),
           ),
           boxShadow: [
             BoxShadow(
-              color: AppColors.textPrimary.withValues(alpha: 0.1),
+              color: (isDark ? Colors.black : Colors.black).withValues(alpha: 0.08),
               blurRadius: 20,
               offset: const Offset(0, 8),
             ),
           ],
         ),
-        child: Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  // Today badge
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: AppColors.textPrimary.withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(16),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(20, 12, 20, 4),
+          child: Column(
+            children: [
+              // Compact calorie header row
+              if (!_isLoading) ...[
+                Row(
+                  children: [
+                    Icon(
+                      Icons.local_fire_department,
+                      size: 16,
+                      color: fatColor,
                     ),
-                    child: const Text(
-                      'TODAY',
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.textPrimary,
-                        letterSpacing: 1.2,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-
-                  // Calories remaining
-                  if (_isLoading) ...[
-                    SizedBox(
-                      width: 24,
-                      height: 24,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        color: AppColors.textPrimary,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Loading...',
-                      style: TextStyle(
-                        fontSize: 16,
-                        color: textSecondary,
-                      ),
-                    ),
-                  ] else ...[
-                    Text(
-                      caloriesRemaining >= 0
-                          ? '$caloriesRemaining'
-                          : '+${caloriesRemaining.abs()}',
-                      style: TextStyle(
-                        fontSize: 42,
-                        fontWeight: FontWeight.bold,
-                        color: caloriesRemaining >= 0
-                            ? textPrimary
-                            : AppColors.error,
-                      ),
-                    ),
-                    Text(
-                      caloriesRemaining >= 0
-                          ? 'calories remaining'
-                          : 'calories over',
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: textSecondary,
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-
-                    // Progress bar
-                    Container(
-                      height: 6,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(3),
-                        color: isDark
-                            ? Colors.white.withValues(alpha: 0.1)
-                            : Colors.black.withValues(alpha: 0.05),
-                      ),
-                      child: FractionallySizedBox(
-                        alignment: Alignment.centerLeft,
-                        widthFactor: calorieProgress,
-                        child: Container(
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(3),
-                            color: calorieProgress < 1.0
-                                ? AppColors.textPrimary
-                                : AppColors.error,
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-
-                    // Consumed / Target
+                    const SizedBox(width: 4),
                     Text(
                       '$caloriesConsumed / $calorieTarget kcal',
                       style: TextStyle(
-                        fontSize: 12,
-                        color: textSecondary,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: textPrimary,
                       ),
                     ),
+                    const Spacer(),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: (caloriesConsumed > calorieTarget
+                                ? AppColors.error
+                                : (isDark ? AppColors.teal : AppColorsLight.teal))
+                            .withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Text(
+                        '${calorieTarget > 0 ? ((caloriesConsumed / calorieTarget) * 100).round() : 0}%',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                          color: caloriesConsumed > calorieTarget
+                              ? AppColors.error
+                              : (isDark ? AppColors.teal : AppColorsLight.teal),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                // Water consumed / goal row
+                Row(
+                  children: [
+                    Icon(
+                      Icons.water_drop_outlined,
+                      size: 16,
+                      color: const Color(0xFF38BDF8),
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      '${(waterConsumedMl / 1000).toStringAsFixed(1)} / ${(waterGoalMl / 1000).toStringAsFixed(1)} L',
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: textPrimary,
+                      ),
+                    ),
+                    const Spacer(),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF38BDF8).withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Text(
+                        '${waterGoalMl > 0 ? ((waterConsumedMl / waterGoalMl) * 100).round() : 0}%',
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                          color: Color(0xFF38BDF8),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                // Training/rest day adjustment badge
+                if (dynamicTargets != null &&
+                    dynamicTargets.adjustmentReason != 'base_targets') ...[
+                  const SizedBox(height: 4),
+                  Builder(builder: (context) {
+                    final teal = isDark ? AppColors.teal : AppColorsLight.teal;
+                    return Align(
+                      alignment: Alignment.centerLeft,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: teal.withValues(alpha: 0.15),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.info_outline, size: 11, color: teal),
+                            const SizedBox(width: 4),
+                            Text(
+                              _adjustmentLabel(dynamicTargets),
+                              style: TextStyle(fontSize: 10, color: teal, fontWeight: FontWeight.w500),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  }),
+                ],
+              ],
 
-                    // Training/rest day adjustment info
-                    if (dynamicTargets != null &&
-                        dynamicTargets.adjustmentReason != 'base_targets') ...[
-                      const SizedBox(height: 6),
-                      Builder(builder: (context) {
-                        final teal = isDark ? AppColors.teal : AppColorsLight.teal;
-                        return Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                          decoration: BoxDecoration(
-                            color: teal.withValues(alpha: 0.15),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
+              // Centered rings (hero element)
+              if (_isLoading)
+                const Expanded(
+                  child: Center(
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  ),
+                )
+              else
+                Expanded(
+                  child: Center(
+                    child: AnimatedBuilder(
+                      animation: _ringAnimation,
+                      builder: (context, _) {
+                        return SizedBox(
+                          height: 175,
+                          width: 175,
+                          child: Stack(
+                            alignment: Alignment.center,
                             children: [
-                              Icon(Icons.info_outline, size: 12, color: teal),
-                              const SizedBox(width: 4),
-                              Text(
-                                _adjustmentLabel(dynamicTargets),
-                                style: TextStyle(fontSize: 10, color: teal),
+                              CustomPaint(
+                                size: const Size(175, 175),
+                                painter: _MacroRingsPainter(
+                                  proteinProgress: proteinProgress * _ringAnimation.value,
+                                  carbsProgress: carbsProgress * _ringAnimation.value,
+                                  fatProgress: fatProgress * _ringAnimation.value,
+                                  proteinColor: proteinColor,
+                                  carbsColor: carbsRingColor,
+                                  fatColor: fatColor,
+                                  trackColor: isDark
+                                      ? Colors.white.withValues(alpha: 0.1)
+                                      : Colors.black.withValues(alpha: 0.08),
+                                ),
+                              ),
+                              Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(
+                                    caloriesRemaining >= 0
+                                        ? '$caloriesRemaining'
+                                        : '+${caloriesRemaining.abs()}',
+                                    style: TextStyle(
+                                      fontSize: 22,
+                                      fontWeight: FontWeight.w800,
+                                      color: caloriesRemaining >= 0
+                                          ? textPrimary
+                                          : AppColors.error,
+                                      height: 1.1,
+                                    ),
+                                  ),
+                                  Text(
+                                    caloriesRemaining >= 0 ? 'cal left' : 'cal over',
+                                    style: TextStyle(
+                                      fontSize: 10,
+                                      color: textSecondary,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ],
                               ),
                             ],
                           ),
                         );
-                      }),
-                    ],
-                    const SizedBox(height: 12),
-
-                    // Macros row
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        _MacroChip(
-                          label: 'Protein',
-                          value: '${proteinConsumed.round()}g',
-                          color: AppColors.purple,
-                          isDark: isDark,
-                        ),
-                        const SizedBox(width: 12),
-                        _MacroChip(
-                          label: 'Carbs',
-                          value: '${carbsConsumed.round()}g',
-                          color: AppColors.cyan,
-                          isDark: isDark,
-                        ),
-                        const SizedBox(width: 12),
-                        _MacroChip(
-                          label: 'Fat',
-                          value: '${fatConsumed.round()}g',
-                          color: AppColors.orange,
-                          isDark: isDark,
-                        ),
-                      ],
-                    ),
-                  ],
-                  const SizedBox(height: 16),
-
-                  // Big LOG MEAL button
-                  SizedBox(
-                    width: double.infinity,
-                    height: 48,
-                    child: ElevatedButton(
-                      onPressed: () {
-                        HapticService.medium();
-                        showLogMealSheet(context, ref);
                       },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.textPrimary,
-                        foregroundColor: Colors.white,
-                        elevation: 0,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14),
+                    ),
+                  ),
+                ),
+
+              // Horizontal macro progress bars
+              if (!_isLoading) ...[
+                _MacroProgressBar(
+                  label: 'Protein',
+                  consumed: proteinConsumed,
+                  target: proteinTarget,
+                  color: proteinColor,
+                  isDark: isDark,
+                ),
+                const SizedBox(height: 4),
+                _MacroProgressBar(
+                  label: 'Carbs',
+                  consumed: carbsConsumed,
+                  target: carbsTarget,
+                  color: carbsRingColor,
+                  isDark: isDark,
+                ),
+                const SizedBox(height: 4),
+                _MacroProgressBar(
+                  label: 'Fat',
+                  consumed: fatConsumed,
+                  target: fatTarget,
+                  color: fatColor,
+                  isDark: isDark,
+                ),
+                const SizedBox(height: 8),
+              ],
+
+              // LOG MEAL button
+              SizedBox(
+                width: double.infinity,
+                height: 44,
+                child: ElevatedButton(
+                  onPressed: () {
+                    HapticService.medium();
+                    showLogMealSheet(context, ref);
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: buttonBg,
+                    foregroundColor: buttonFg,
+                    elevation: 0,
+                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 0),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                  ),
+                  child: const Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.restaurant_outlined, size: 20),
+                      SizedBox(width: 8),
+                      Text(
+                        'Log Meal',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
                         ),
                       ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(Icons.restaurant_outlined, size: 20),
-                          const SizedBox(width: 8),
-                          const Text(
-                            'LOG MEAL',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                              letterSpacing: 0.8,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
+                    ],
                   ),
-                  const SizedBox(height: 8),
-
-                  // Secondary action - View Details
-                  TextButton.icon(
-                    onPressed: () {
-                      HapticService.light();
-                      context.push('/nutrition');
-                    },
-                    icon: Icon(
-                      Icons.insights_outlined,
-                      size: 16,
-                      color: textSecondary,
-                    ),
-                    label: Text(
-                      'View Details',
-                      style: TextStyle(
-                        color: textSecondary,
-                        fontSize: 12,
-                      ),
-                    ),
-                  ),
-                ],
+                ),
               ),
-            ),
-          ],
+              // View Details
+              GestureDetector(
+                onTap: () {
+                  HapticService.light();
+                  context.go('/nutrition');
+                },
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 6),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.insights_outlined, size: 13, color: textSecondary),
+                      const SizedBox(width: 4),
+                      Text(
+                        'View Details',
+                        style: TextStyle(color: textSecondary, fontSize: 11),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 }
 
-/// Macro chip showing label and value
-class _MacroChip extends StatelessWidget {
+/// Horizontal macro progress bar: dot + label + fill bar + consumed/target
+class _MacroProgressBar extends StatelessWidget {
   final String label;
-  final String value;
+  final int consumed;
+  final int target;
   final Color color;
   final bool isDark;
 
-  const _MacroChip({
+  const _MacroProgressBar({
     required this.label,
-    required this.value,
+    required this.consumed,
+    required this.target,
     required this.color,
     required this.isDark,
   });
@@ -416,27 +496,51 @@ class _MacroChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+    final progress = target > 0 ? (consumed / target).clamp(0.0, 1.0) : 0.0;
 
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.15),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Column(
+    return SizedBox(
+      height: 24,
+      child: Row(
         children: [
-          Text(
-            value,
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.bold,
+          Container(
+            width: 8,
+            height: 8,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
               color: color,
             ),
           ),
+          const SizedBox(width: 6),
+          SizedBox(
+            width: 52,
+            child: Text(
+              label,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: textSecondary,
+              ),
+            ),
+          ),
+          Expanded(
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(3),
+              child: LinearProgressIndicator(
+                value: progress,
+                minHeight: 6,
+                backgroundColor: isDark
+                    ? Colors.white.withValues(alpha: 0.08)
+                    : Colors.black.withValues(alpha: 0.06),
+                valueColor: AlwaysStoppedAnimation<Color>(color),
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
           Text(
-            label,
+            '${consumed}g / ${target}g',
             style: TextStyle(
               fontSize: 11,
+              fontWeight: FontWeight.w500,
               color: textSecondary,
             ),
           ),
@@ -445,3 +549,99 @@ class _MacroChip extends StatelessWidget {
     );
   }
 }
+
+/// Custom painter for Apple Watch-style concentric macro rings.
+/// Draws three rings (outer→inner): Protein, Carbs, Fat.
+/// Each ring has a muted track behind it and a colored arc for progress.
+/// Arcs have rounded StrokeCap and start from 12 o'clock (-π/2).
+class _MacroRingsPainter extends CustomPainter {
+  final double proteinProgress;
+  final double carbsProgress;
+  final double fatProgress;
+  final Color proteinColor;
+  final Color carbsColor;
+  final Color fatColor;
+  final Color trackColor;
+
+  _MacroRingsPainter({
+    required this.proteinProgress,
+    required this.carbsProgress,
+    required this.fatProgress,
+    required this.proteinColor,
+    required this.carbsColor,
+    required this.fatColor,
+    required this.trackColor,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final center = Offset(size.width / 2, size.height / 2);
+    const strokeWidth = 18.0;
+    const ringGap = 2.0;
+    const startAngle = -math.pi / 2; // 12 o'clock
+
+    // Outer ring (Protein): largest radius
+    final outerRadius = (size.width / 2) - strokeWidth / 2;
+    _drawRing(canvas, center, outerRadius, strokeWidth,
+        proteinProgress, proteinColor, startAngle);
+
+    // Middle ring (Carbs)
+    final middleRadius = outerRadius - strokeWidth - ringGap;
+    _drawRing(canvas, center, middleRadius, strokeWidth,
+        carbsProgress, carbsColor, startAngle);
+
+    // Inner ring (Fat)
+    final innerRadius = middleRadius - strokeWidth - ringGap;
+    _drawRing(canvas, center, innerRadius, strokeWidth,
+        fatProgress, fatColor, startAngle);
+  }
+
+  void _drawRing(Canvas canvas, Offset center, double radius,
+      double strokeWidth, double progress, Color color, double startAngle) {
+    final rect = Rect.fromCircle(center: center, radius: radius);
+
+    // Track (background ring)
+    final trackPaint = Paint()
+      ..color = trackColor
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = strokeWidth
+      ..strokeCap = StrokeCap.round;
+    canvas.drawCircle(center, radius, trackPaint);
+
+    // Always show at least a small arc so rings are never invisible
+    final effectiveProgress = progress <= 0 ? 0.02 : progress;
+
+    // Clamp to full circle for the main arc
+    final clampedProgress = effectiveProgress.clamp(0.0, 1.0);
+    final sweepAngle = 2 * math.pi * clampedProgress;
+
+    // Progress arc
+    final progressPaint = Paint()
+      ..color = color
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = strokeWidth
+      ..strokeCap = StrokeCap.round;
+    canvas.drawArc(rect, startAngle, sweepAngle, false, progressPaint);
+
+    // If over 100%, draw the overshoot portion with a brighter/lighter color
+    // wrapping around again from the start
+    if (progress > 1.0) {
+      final overshoot = (progress - 1.0).clamp(0.0, 0.5);
+      final overshootSweep = 2 * math.pi * overshoot;
+      final overshootPaint = Paint()
+        ..color = Color.lerp(color, Colors.white, 0.35)!
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = strokeWidth
+        ..strokeCap = StrokeCap.round;
+      canvas.drawArc(rect, startAngle, overshootSweep, false, overshootPaint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(_MacroRingsPainter oldDelegate) {
+    return proteinProgress != oldDelegate.proteinProgress ||
+        carbsProgress != oldDelegate.carbsProgress ||
+        fatProgress != oldDelegate.fatProgress;
+  }
+}
+

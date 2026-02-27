@@ -22,7 +22,7 @@ class GymLocationPickerScreen extends StatelessWidget {
         child: Padding(
           padding: EdgeInsets.all(24),
           child: Text(
-            'Map-based location picker coming soon.\nFor now, set your gym name in the profile.',
+            'Map-based location picker is not yet available.\nFor now, set your gym name in the profile.',
             textAlign: TextAlign.center,
           ),
         ),

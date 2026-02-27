@@ -182,7 +182,7 @@ class FoodSearchService {
 
   // Debounce timer
   Timer? _debounceTimer;
-  static const Duration _debounceDuration = Duration(milliseconds: 300);
+  static const Duration _debounceDuration = Duration(milliseconds: 200);
 
   // Stream controller for real-time search updates
   final _searchController = StreamController<FoodSearchState>.broadcast();
@@ -225,6 +225,10 @@ class FoodSearchService {
     return normalizedQuery;
   }
 
+  /// Minimum query length to trigger a search — shorter queries produce
+  /// too many generic/irrelevant results and waste network calls.
+  static const int _minQueryLength = 3;
+
   /// Search with debouncing
   /// Pass [cachedLogs] from NutritionState.recentLogs to avoid an API call
   /// for recent foods filtering.
@@ -238,6 +242,11 @@ class FoodSearchService {
     // Empty query - return to initial state
     if (normalizedQuery.isEmpty) {
       _searchController.add(const FoodSearchInitial());
+      return;
+    }
+
+    // Too-short queries — stay idle, no local match, no API call
+    if (normalizedQuery.length < _minQueryLength) {
       return;
     }
 
@@ -257,13 +266,42 @@ class FoodSearchService {
       return;
     }
 
-    // Show loading state immediately
-    _searchController.add(FoodSearchLoading(normalizedQuery));
+    // Show local recent matches instantly (no debounce, no network)
+    if (cachedLogs != null && cachedLogs.isNotEmpty) {
+      final instantRecent = _filterRecentFoodsSync(normalizedQuery, cachedLogs);
+      if (instantRecent.isNotEmpty) {
+        _searchController.add(FoodSearchResults(
+          query: normalizedQuery,
+          recent: instantRecent,
+          saved: const [],
+          foodDatabase: const [],
+        ));
+      } else {
+        _searchController.add(FoodSearchLoading(normalizedQuery));
+      }
+    } else {
+      _searchController.add(FoodSearchLoading(normalizedQuery));
+    }
 
-    // Debounce the actual API call
+    // Debounce the backend API call
     _debounceTimer = Timer(_debounceDuration, () {
       _performSearch(normalizedQuery, userId, cachedLogs: cachedLogs);
     });
+  }
+
+  /// Synchronous filter of cached food logs — runs instantly on the UI thread.
+  /// Reuses [_fuzzyMatch] but does no async work or API calls.
+  List<FoodSearchResult> _filterRecentFoodsSync(
+      String query, List<FoodLog> logs) {
+    final matching = <FoodSearchResult>[];
+    for (final log in logs) {
+      if (_fuzzyMatch(log.mealType, query) ||
+          log.foodItems.any((item) => _fuzzyMatch(item.name, query))) {
+        matching.add(FoodSearchResult.fromFoodLog(log));
+        if (matching.length >= 5) break;
+      }
+    }
+    return matching;
   }
 
   /// Per-source error isolation — one failing source doesn't kill all results

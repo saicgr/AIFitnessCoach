@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:url_launcher/url_launcher.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../widgets/glass_back_button.dart';
 import '../sections/sections.dart';
@@ -74,58 +73,6 @@ class AboutSupportPage extends ConsumerWidget {
                             ),
                             Text(
                               'Peer-reviewed papers behind your workouts',
-                              style: TextStyle(
-                                fontSize: 11,
-                                color: textMuted,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      Icon(Icons.chevron_right, color: textMuted, size: 18),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-              // Visit FitWiz Store navigation tile
-              InkWell(
-                onTap: () async {
-                  HapticFeedback.lightImpact();
-                  const storeUrl =
-                      'https://ai-fitness-coach.vercel.app/store';
-                  final uri = Uri.parse(storeUrl);
-                  if (await canLaunchUrl(uri)) {
-                    await launchUrl(uri,
-                        mode: LaunchMode.externalApplication);
-                  }
-                },
-                borderRadius: BorderRadius.circular(12),
-                child: Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: cardBorder),
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(Icons.shopping_bag,
-                          color: AppColors.success, size: 20),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Visit FitWiz Store',
-                              style: TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w500,
-                                color: textPrimary,
-                              ),
-                            ),
-                            Text(
-                              'Browse apparel, accessories & more',
                               style: TextStyle(
                                 fontSize: 11,
                                 color: textMuted,

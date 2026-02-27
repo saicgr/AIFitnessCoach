@@ -55,7 +55,7 @@ class StatsPRsTemplate extends StatelessWidget {
                 Text(
                   'PERSONAL RECORDS',
                   style: TextStyle(
-                    color: AppColors.cyan,
+                    color: AppColors.info,
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
                     letterSpacing: 3,
@@ -80,13 +80,13 @@ class StatsPRsTemplate extends StatelessWidget {
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
                       colors: [
-                        AppColors.cyan.withOpacity(0.3),
+                        AppColors.info.withOpacity(0.3),
                         AppColors.purple.withOpacity(0.3),
                       ],
                     ),
                     borderRadius: BorderRadius.circular(20),
                     border: Border.all(
-                      color: AppColors.cyan.withOpacity(0.5),
+                      color: AppColors.info.withOpacity(0.5),
                       width: 2,
                     ),
                   ),
@@ -186,7 +186,7 @@ class _PRCard extends StatelessWidget {
   Color get _typeColor {
     switch (pr.type) {
       case PRType.weight:
-        return AppColors.cyan;
+        return AppColors.info;
       case PRType.reps:
         return AppColors.purple;
       case PRType.time:

@@ -5,6 +5,8 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../../core/constants/app_colors.dart';
 import '../../data/models/injury.dart';
+import '../../data/services/api_client.dart';
+import 'injuries_list_screen.dart';
 import 'widgets/body_part_selector.dart';
 
 /// Screen for reporting a new injury
@@ -94,17 +96,24 @@ class _ReportInjuryScreenState extends ConsumerState<ReportInjuryScreen> {
     });
 
     try {
-      // TODO: Replace with actual API call
-      final request = InjuryReportRequest(
-        bodyPart: _selectedBodyPart!,
-        injuryType: _selectedInjuryType,
-        severity: _selectedSeverity,
-        painLevel: _painLevel,
-        occurredAt: _occurredAt,
-        notes: _notesController.text.isNotEmpty ? _notesController.text : null,
+      final apiClient = ref.read(apiClientProvider);
+      final userId = await apiClient.getUserId();
+      if (userId == null) throw Exception('Not authenticated');
+
+      await apiClient.post(
+        '/injuries/$userId/report',
+        data: {
+          'body_part': _selectedBodyPart!,
+          if (_selectedInjuryType != null) 'injury_type': _selectedInjuryType,
+          'severity': _selectedSeverity,
+          'pain_level': _painLevel,
+          'occurred_at': _occurredAt.toIso8601String().substring(0, 10),
+          if (_notesController.text.isNotEmpty) 'notes': _notesController.text,
+        },
       );
 
-      await Future.delayed(const Duration(seconds: 1));
+      // Refresh the injuries list
+      ref.read(injuriesListProvider.notifier).loadInjuries();
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

@@ -38,21 +38,17 @@ class GlassBackButton extends StatelessWidget {
               filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
               child: Container(
                 decoration: BoxDecoration(
-                  color: isDark
-                      ? Colors.white.withValues(alpha: 0.1)
-                      : Colors.black.withValues(alpha: 0.05),
+                  color: Colors.black.withValues(alpha: isDark ? 0.35 : 0.25),
                   shape: BoxShape.circle,
                   border: Border.all(
-                    color: isDark
-                        ? Colors.white.withValues(alpha: 0.15)
-                        : Colors.black.withValues(alpha: 0.08),
+                    color: Colors.white.withValues(alpha: isDark ? 0.15 : 0.1),
                     width: 1,
                   ),
                 ),
-                child: Center(
+                child: const Center(
                   child: Icon(
                     Icons.arrow_back_ios_new_rounded,
-                    color: isDark ? Colors.white : Colors.black87,
+                    color: Colors.white,
                     size: 18,
                   ),
                 ),

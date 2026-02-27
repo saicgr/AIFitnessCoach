@@ -24,7 +24,10 @@ from models.social import (
 )
 from services.social_rag_service import get_social_rag_service
 from services.admin_service import get_admin_service
+from core.logger import get_logger
 from .utils import get_supabase_client
+
+logger = get_logger(__name__)
 
 router = APIRouter()
 
@@ -94,7 +97,7 @@ async def get_presigned_upload_url(
             "public_url": public_url,
         }
     except Exception as e:
-        print(f"[Social] Error generating presigned URL: {e}")
+        logger.error(f"[Social] Error generating presigned URL: {e}")
         raise safe_internal_error(e, "feed_presign_url")
 
 
@@ -150,14 +153,14 @@ async def upload_post_image(
         # Generate public URL
         image_url = f"https://{settings.s3_bucket_name}.s3.{settings.aws_default_region}.amazonaws.com/{storage_key}"
 
-        print(f"[Social] Image uploaded: {storage_key}")
+        logger.info(f"[Social] Image uploaded: {storage_key}")
         return {
             "image_url": image_url,
             "storage_key": storage_key,
         }
 
     except Exception as e:
-        print(f"[Social] Error uploading image to S3: {e}")
+        logger.error(f"[Social] Error uploading image to S3: {e}")
         raise safe_internal_error(e, "feed_image_upload")
 
 
@@ -184,7 +187,7 @@ async def get_activity_feed(
     try:
         supabase = get_supabase_client()
     except Exception as e:
-        print(f"[Social] Error getting supabase client: {e}")
+        logger.error(f"[Social] Error getting supabase client: {e}")
         raise safe_internal_error(e, "feed_db_connection")
 
     offset = (page - 1) * page_size
@@ -198,7 +201,7 @@ async def get_activity_feed(
             "p_offset": offset,
         }).execute()
     except Exception as e:
-        print(f"[Social] Error fetching feed: {e}")
+        logger.error(f"[Social] Error fetching feed: {e}")
         raise safe_internal_error(e, "feed_fetch")
 
     # Extract total_count from the window function (same on every row)
@@ -218,17 +221,19 @@ async def get_activity_feed(
             }
             # Remove window-function column before model parsing
             row_data.pop("total_count", None)
-            # Remove nested 'users' if present
+            # Remove nested 'users' if present (legacy)
             users_data = row_data.pop("users", None)
 
             activity = ActivityFeedItem(**row_data)
-            if users_data:
+            # user_name/user_avatar now come directly from RPC join
+            # Fall back to nested 'users' for backwards compatibility
+            if not activity.user_name and users_data:
                 activity.user_name = users_data.get("name")
                 activity.user_avatar = users_data.get("avatar_url")
                 activity.is_support_user = users_data.get("is_support_user", False)
             activities.append(activity)
         except Exception as parse_error:
-            print(f"[Social] Error parsing activity row: {parse_error}, row: {row}")
+            logger.error(f"[Social] Error parsing activity row: {parse_error}, row: {row}")
             continue
 
     return {
@@ -257,9 +262,9 @@ def _bg_index_activity(activity_id: str, user_id: str, activity_type: str, activ
             visibility=visibility,
             created_at=created_at,
         )
-        print(f"[Social] Activity {activity_id} indexed in ChromaDB")
+        logger.info(f"[Social] Activity {activity_id} indexed in ChromaDB")
     except Exception as e:
-        print(f"[Social] Failed to index activity in ChromaDB: {e}")
+        logger.error(f"[Social] Failed to index activity in ChromaDB: {e}")
 
 
 def _bg_remove_activity(activity_id: str):
@@ -268,7 +273,7 @@ def _bg_remove_activity(activity_id: str):
         social_rag = get_social_rag_service()
         social_rag.delete_activity_from_rag(activity_id)
     except Exception as e:
-        print(f"[Social] Failed to remove activity from ChromaDB: {e}")
+        logger.error(f"[Social] Failed to remove activity from ChromaDB: {e}")
 
 
 @router.post("/feed", response_model=ActivityFeedItem)
@@ -351,6 +356,48 @@ async def delete_activity(
     background_tasks.add_task(_bg_remove_activity, activity_id)
 
     return {"message": "Activity deleted successfully"}
+
+
+@router.put("/feed/{activity_id}")
+async def update_activity(
+    activity_id: str,
+    user_id: str,
+    activity_data: dict,
+    current_user: dict = Depends(get_current_user),
+):
+    """
+    Update an activity's data (user can only update their own).
+    Only activity_data (caption, flairs) can be changed.
+
+    Args:
+        activity_id: Activity ID
+        user_id: User ID
+        activity_data: Updated activity data dict
+
+    Returns:
+        Updated activity
+    """
+    supabase = get_supabase_client()
+
+    # Verify ownership
+    check = supabase.table("activity_feed").select("user_id, activity_data").eq("id", activity_id).execute()
+    if not check.data:
+        raise HTTPException(status_code=404, detail="Activity not found")
+    if check.data[0]["user_id"] != user_id:
+        raise HTTPException(status_code=403, detail="Not authorized to update this activity")
+
+    # Merge new activity_data with existing (preserve image_url, has_image, etc.)
+    existing_data = check.data[0].get("activity_data", {}) or {}
+    existing_data.update(activity_data)
+
+    result = supabase.table("activity_feed").update({
+        "activity_data": existing_data,
+    }).eq("id", activity_id).execute()
+
+    if not result.data:
+        raise HTTPException(status_code=500, detail="Failed to update activity")
+
+    return result.data[0]
 
 
 @router.post("/feed/{activity_id}/pin")

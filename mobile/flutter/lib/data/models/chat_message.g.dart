@@ -15,6 +15,11 @@ ChatMessage _$ChatMessageFromJson(Map<String, dynamic> json) => ChatMessage(
   agentType: $enumDecodeNullable(_$AgentTypeEnumMap, json['agent_type']),
   createdAt: json['created_at'] as String?,
   actionData: json['action_data'] as Map<String, dynamic>?,
+  mediaUrl: json['media_url'] as String?,
+  mediaType: json['media_type'] as String?,
+  mediaRefs: (json['media_refs'] as List<dynamic>?)
+      ?.map((e) => e as Map<String, dynamic>)
+      .toList(),
 );
 
 Map<String, dynamic> _$ChatMessageToJson(ChatMessage instance) =>
@@ -27,6 +32,9 @@ Map<String, dynamic> _$ChatMessageToJson(ChatMessage instance) =>
       'agent_type': _$AgentTypeEnumMap[instance.agentType],
       'created_at': instance.createdAt,
       'action_data': instance.actionData,
+      'media_url': instance.mediaUrl,
+      'media_type': instance.mediaType,
+      'media_refs': instance.mediaRefs,
     };
 
 const _$AgentTypeEnumMap = {
@@ -48,6 +56,10 @@ ChatRequest _$ChatRequestFromJson(Map<String, dynamic> json) => ChatRequest(
       .toList(),
   aiSettings: json['ai_settings'] as Map<String, dynamic>?,
   unifiedContext: json['unified_context'] as String?,
+  mediaRef: json['media_ref'] as Map<String, dynamic>?,
+  mediaRefs: (json['media_refs'] as List<dynamic>?)
+      ?.map((e) => e as Map<String, dynamic>)
+      .toList(),
 );
 
 Map<String, dynamic> _$ChatRequestToJson(ChatRequest instance) =>
@@ -61,6 +73,8 @@ Map<String, dynamic> _$ChatRequestToJson(ChatRequest instance) =>
         'conversation_history': value,
       if (instance.aiSettings case final value?) 'ai_settings': value,
       if (instance.unifiedContext case final value?) 'unified_context': value,
+      if (instance.mediaRef case final value?) 'media_ref': value,
+      if (instance.mediaRefs case final value?) 'media_refs': value,
     };
 
 ChatResponse _$ChatResponseFromJson(Map<String, dynamic> json) => ChatResponse(

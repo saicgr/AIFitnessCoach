@@ -60,34 +60,38 @@ class StatsOverviewTemplate extends StatelessWidget {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'MY STATS',
-                          style: TextStyle(
-                            color: AppColors.cyan,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                            letterSpacing: 2,
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'MY STATS',
+                            style: TextStyle(
+                              color: AppColors.orange,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              letterSpacing: 2,
+                            ),
                           ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          dateRangeLabel,
-                          style: TextStyle(
-                            color: Colors.white.withOpacity(0.6),
-                            fontSize: 14,
+                          const SizedBox(height: 4),
+                          Text(
+                            dateRangeLabel,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              color: Colors.white.withOpacity(0.6),
+                              fontSize: 14,
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
+                    const SizedBox(width: 8),
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                       decoration: BoxDecoration(
-                        color: AppColors.cyan.withOpacity(0.2),
+                        color: AppColors.orange.withOpacity(0.2),
                         borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: AppColors.cyan.withOpacity(0.4)),
+                        border: Border.all(color: AppColors.orange.withOpacity(0.4)),
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
@@ -116,8 +120,8 @@ class StatsOverviewTemplate extends StatelessWidget {
                     children: [
                       Text(
                         '$totalWorkouts',
-                        style: TextStyle(
-                          color: AppColors.cyan,
+                        style: const TextStyle(
+                          color: Colors.white,
                           fontSize: 80,
                           fontWeight: FontWeight.bold,
                           height: 1,
@@ -227,7 +231,7 @@ class _HeatmapPatternPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = AppColors.cyan.withOpacity(0.03)
+      ..color = AppColors.orange.withOpacity(0.03)
       ..style = PaintingStyle.fill;
 
     const cellSize = 12.0;
@@ -237,7 +241,7 @@ class _HeatmapPatternPainter extends CustomPainter {
       for (double y = 100; y < 180; y += cellSize + gap) {
         // Random-ish opacity based on position
         final opacity = ((x + y) % 50) / 500;
-        paint.color = AppColors.cyan.withOpacity(0.02 + opacity);
+        paint.color = AppColors.orange.withOpacity(0.02 + opacity);
         canvas.drawRRect(
           RRect.fromRectAndRadius(
             Rect.fromLTWH(x, y, cellSize, cellSize),

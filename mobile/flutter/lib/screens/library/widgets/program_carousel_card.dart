@@ -3,7 +3,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/utils/difficulty_utils.dart';
 import '../../../data/models/branded_program.dart';
 import '../../../widgets/glass_sheet.dart';
-import '../components/coming_soon_bottom_sheet.dart';
+import '../components/program_detail_sheet.dart';
 
 /// Compact card for horizontal carousel display
 /// Netflix-style card optimized for horizontal scrolling
@@ -63,7 +63,7 @@ class ProgramCarouselCard extends StatelessWidget {
   void _handleTap(BuildContext context) {
     showGlassSheet(
       context: context,
-      builder: (context) => ComingSoonBottomSheet(program: program),
+      builder: (context) => ProgramDetailSheet(program: program),
     );
   }
 
@@ -207,26 +207,6 @@ class ProgramCarouselCard extends StatelessWidget {
               ],
             ),
 
-            // Coming Soon badge
-            Positioned(
-              top: 8,
-              right: 8,
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: Colors.orange,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: const Text(
-                  'Soon',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 10,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-            ),
           ],
         ),
       ),

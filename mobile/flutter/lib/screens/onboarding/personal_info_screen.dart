@@ -58,11 +58,25 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen> {
     });
   }
 
+  int? get _userAge {
+    if (_dateOfBirth == null) return null;
+    final now = DateTime.now();
+    int age = now.year - _dateOfBirth!.year;
+    if (now.month < _dateOfBirth!.month ||
+        (now.month == _dateOfBirth!.month && now.day < _dateOfBirth!.day)) {
+      age--;
+    }
+    return age;
+  }
+
   bool get _canContinue {
     // Require name, DOB, gender, height, weight, AND weight goal
+    // Also enforce minimum age of 16
     return _name != null &&
         _name!.isNotEmpty &&
         _dateOfBirth != null &&
+        _userAge != null &&
+        _userAge! >= 16 &&
         _gender != null &&
         _heightCm != null &&
         _heightCm! > 0 &&

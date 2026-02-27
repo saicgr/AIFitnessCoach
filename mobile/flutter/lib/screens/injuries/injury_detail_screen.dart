@@ -6,8 +6,10 @@ import 'package:intl/intl.dart';
 import '../../core/constants/app_colors.dart';
 import '../../widgets/app_loading.dart';
 import '../../data/models/injury.dart';
+import '../../data/services/api_client.dart';
 import '../../widgets/glass_back_button.dart';
 import '../../widgets/glass_sheet.dart';
+import 'injuries_list_screen.dart';
 import 'widgets/rehab_exercise_card.dart';
 
 /// Screen for viewing detailed information about an injury
@@ -39,58 +41,42 @@ class _InjuryDetailScreenState extends ConsumerState<InjuryDetailScreen> {
     });
 
     try {
-      // TODO: Replace with actual API call
-      await Future.delayed(const Duration(milliseconds: 500));
+      final apiClient = ref.read(apiClientProvider);
+      final response = await apiClient.get('/injuries/detail/${widget.injuryId}');
+      final data = response.data as Map<String, dynamic>;
 
-      // Sample data for demonstration
-      _injury = Injury(
-        id: widget.injuryId,
-        userId: 'user1',
-        bodyPart: 'shoulder',
-        injuryType: 'strain',
-        severity: 'moderate',
-        reportedAt: DateTime.now().subtract(const Duration(days: 7)),
-        occurredAt: DateTime.now().subtract(const Duration(days: 8)),
-        expectedRecoveryDate: DateTime.now().add(const Duration(days: 14)),
-        recoveryPhase: 'subacute',
-        painLevel: 4,
-        affectsExercises: ['overhead_press', 'bench_press', 'lateral_raise'],
-        affectsMuscles: ['deltoid', 'rotator_cuff'],
-        notes: 'Happened during heavy overhead press. Felt a sharp pain in the anterior deltoid area.',
-        status: 'active',
-        rehabExercises: [
-          const RehabExercise(
-            exerciseName: 'Shoulder Pendulum',
-            exerciseType: 'mobility',
-            sets: 3,
-            reps: 10,
-            frequencyPerDay: 2,
-            notes: 'Gentle swinging motion',
-          ),
-          const RehabExercise(
-            exerciseName: 'External Rotation Stretch',
-            exerciseType: 'stretch',
-            sets: 3,
-            holdSeconds: 30,
-            frequencyPerDay: 2,
-          ),
-          const RehabExercise(
-            exerciseName: 'Band External Rotation',
-            exerciseType: 'strength',
-            sets: 3,
-            reps: 15,
-            frequencyPerDay: 1,
-            notes: 'Use light resistance band',
-          ),
-        ],
-      );
+      // Parse the injury from the InjuryWithDetails response
+      _injury = Injury.fromJson(data);
 
-      _painHistory = [
-        PainHistoryEntry(date: DateTime.now().subtract(const Duration(days: 7)), painLevel: 7),
-        PainHistoryEntry(date: DateTime.now().subtract(const Duration(days: 5)), painLevel: 6),
-        PainHistoryEntry(date: DateTime.now().subtract(const Duration(days: 3)), painLevel: 5),
-        PainHistoryEntry(date: DateTime.now().subtract(const Duration(days: 1)), painLevel: 4),
-      ];
+      // Parse pain history from check-ins
+      final checkIns = data['check_ins'] as List<dynamic>? ?? [];
+      _painHistory = checkIns
+          .where((c) => c['pain_level'] != null)
+          .map((c) => PainHistoryEntry(
+                date: DateTime.parse(c['checked_at'] as String),
+                painLevel: c['pain_level'] as int,
+              ))
+          .toList();
+
+      // Add the initial pain level from the injury itself if available
+      if (_injury!.painLevel != null) {
+        _painHistory.add(PainHistoryEntry(
+          date: _injury!.reportedAt,
+          painLevel: _injury!.painLevel!,
+        ));
+      }
+
+      // Sort by date ascending
+      _painHistory.sort((a, b) => a.date.compareTo(b.date));
+
+      // Parse rehab exercises from the response if not already in injury model
+      if ((_injury!.rehabExercises == null || _injury!.rehabExercises!.isEmpty) &&
+          (data['rehab_exercises'] as List<dynamic>?)?.isNotEmpty == true) {
+        final rehabList = (data['rehab_exercises'] as List<dynamic>)
+            .map((e) => RehabExercise.fromJson(e as Map<String, dynamic>))
+            .toList();
+        _injury = _injury!.copyWith(rehabExercises: rehabList);
+      }
 
       if (mounted) {
         setState(() {
@@ -115,13 +101,33 @@ class _InjuryDetailScreenState extends ConsumerState<InjuryDetailScreen> {
         child: _CheckInSheet(
           injury: _injury!,
           onSubmit: (painLevel, notes) async {
-            // TODO: API call to log check-in
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Check-in logged successfully'),
-                backgroundColor: AppColors.success,
-              ),
-            );
+            try {
+              final apiClient = ref.read(apiClientProvider);
+              await apiClient.post(
+                '/injuries/${_injury!.id}/check-in',
+                data: {
+                  'pain_level': painLevel,
+                  if (notes != null) 'notes': notes,
+                },
+              );
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Check-in logged successfully'),
+                    backgroundColor: AppColors.success,
+                  ),
+                );
+              }
+            } catch (e) {
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Failed to log check-in: $e'),
+                    backgroundColor: AppColors.error,
+                  ),
+                );
+              }
+            }
             _loadInjuryDetails();
           },
         ),
@@ -162,14 +168,30 @@ class _InjuryDetailScreenState extends ConsumerState<InjuryDetailScreen> {
           ElevatedButton(
             onPressed: () async {
               Navigator.pop(context);
-              // TODO: API call to mark as healed
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Congratulations on your recovery!'),
-                  backgroundColor: AppColors.success,
-                ),
-              );
-              context.pop();
+              try {
+                final apiClient = ref.read(apiClientProvider);
+                await apiClient.delete('/injuries/${_injury!.id}');
+                // Refresh the injuries list
+                ref.read(injuriesListProvider.notifier).loadInjuries();
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Congratulations on your recovery!'),
+                      backgroundColor: AppColors.success,
+                    ),
+                  );
+                  context.pop();
+                }
+              } catch (e) {
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Failed to mark as healed: $e'),
+                      backgroundColor: AppColors.error,
+                    ),
+                  );
+                }
+              }
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.success,

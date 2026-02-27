@@ -69,7 +69,7 @@ class FastingImpactNotifier extends StateNotifier<FastingImpactState> {
 
     try {
       if (kDebugMode) {
-        print(
+        debugPrint(
             '🔍 [FastingImpact] Loading impact data for user $userId, period: ${targetPeriod.displayName}');
       }
 
@@ -90,7 +90,7 @@ class FastingImpactNotifier extends StateNotifier<FastingImpactState> {
       final analysisData = analysisResponse.data as Map<String, dynamic>;
 
       if (kDebugMode) {
-        print('✅ [FastingImpact] Analysis data received: ${analysisData.keys}');
+        debugPrint('✅ [FastingImpact] Analysis data received: ${analysisData.keys}');
       }
 
       // Fetch calendar data to get daily breakdown
@@ -111,7 +111,7 @@ class FastingImpactNotifier extends StateNotifier<FastingImpactState> {
         final days = calendarData['days'] as List<dynamic>? ?? [];
 
         if (kDebugMode) {
-          print(
+          debugPrint(
               '✅ [FastingImpact] Calendar data received: ${days.length} days');
         }
 
@@ -130,7 +130,7 @@ class FastingImpactNotifier extends StateNotifier<FastingImpactState> {
         }).toList();
       } else {
         if (kDebugMode) {
-          print(
+          debugPrint(
               '⚠️ [FastingImpact] Calendar data not available, using empty daily data');
         }
       }
@@ -150,13 +150,13 @@ class FastingImpactNotifier extends StateNotifier<FastingImpactState> {
       );
 
       if (kDebugMode) {
-        print(
+        debugPrint(
             '✅ [FastingImpact] Data loaded successfully. Fasting days: ${impactData.comparison.fastingDaysCount}');
       }
     } catch (e, stackTrace) {
       if (kDebugMode) {
-        print('❌ [FastingImpact] Error loading data: $e');
-        print('Stack: $stackTrace');
+        debugPrint('❌ [FastingImpact] Error loading data: $e');
+        debugPrint('Stack: $stackTrace');
       }
 
       // Set error state - NO mock data fallback

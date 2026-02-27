@@ -54,6 +54,10 @@ class AppSnackBar {
     required Color backgroundColor,
     required Duration duration,
   }) {
+    // Clear floating nav bar (52px pill + 10px offset + safe area padding)
+    final bottomPadding = MediaQuery.of(context).padding.bottom;
+    final bottomMargin = bottomPadding + 72.0;
+
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
       ..showSnackBar(
@@ -79,7 +83,7 @@ class AppSnackBar {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
-          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          margin: EdgeInsets.only(left: 16, right: 16, bottom: bottomMargin, top: 8),
           duration: duration,
           dismissDirection: DismissDirection.horizontal,
         ),

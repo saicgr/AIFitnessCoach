@@ -18,6 +18,9 @@ from models.hormonal_health import (
 )
 from core.supabase_client import get_supabase
 from core.auth import get_current_user
+from core.logger import get_logger
+
+logger = get_logger(__name__)
 from core.exceptions import safe_internal_error
 
 router = APIRouter(prefix="/hormonal-health", tags=["Hormonal Health"])
@@ -144,21 +147,21 @@ async def get_hormonal_profile(
     current_user: dict = Depends(get_current_user),
 ):
     """Get user's hormonal health profile."""
-    print(f"🔍 [Hormonal] Fetching profile for user {user_id}")
+    logger.info(f"[Hormonal] Fetching profile for user {user_id}")
 
     try:
         supabase = get_supabase().client
         result = supabase.table("hormonal_profiles").select("*").eq("user_id", str(user_id)).execute()
 
         if not result.data:
-            print(f"ℹ️ [Hormonal] No profile found for user {user_id}")
+            logger.info(f"[Hormonal] No profile found for user {user_id}")
             return None
 
-        print(f"✅ [Hormonal] Profile retrieved for user {user_id}")
+        logger.info(f"[Hormonal] Profile retrieved for user {user_id}")
         return result.data[0]
 
     except Exception as e:
-        print(f"❌ [Hormonal] Error fetching profile: {e}")
+        logger.error(f"[Hormonal] Error fetching profile: {e}")
         raise safe_internal_error(e, "endpoint")
 
 
@@ -168,7 +171,7 @@ async def upsert_hormonal_profile(
     current_user: dict = Depends(get_current_user),
 ):
     """Create or update user's hormonal health profile."""
-    print(f"🔍 [Hormonal] Upserting profile for user {user_id}")
+    logger.info(f"[Hormonal] Upserting profile for user {user_id}")
 
     try:
         supabase = get_supabase().client
@@ -200,11 +203,11 @@ async def upsert_hormonal_profile(
             profile_data["created_at"] = datetime.utcnow().isoformat()
             result = supabase.table("hormonal_profiles").insert(profile_data).execute()
 
-        print(f"✅ [Hormonal] Profile upserted for user {user_id}")
+        logger.info(f"[Hormonal] Profile upserted for user {user_id}")
         return result.data[0]
 
     except Exception as e:
-        print(f"❌ [Hormonal] Error upserting profile: {e}")
+        logger.error(f"[Hormonal] Error upserting profile: {e}")
         raise safe_internal_error(e, "endpoint")
 
 
@@ -214,16 +217,16 @@ async def delete_hormonal_profile(
     current_user: dict = Depends(get_current_user),
 ):
     """Delete user's hormonal health profile."""
-    print(f"🔍 [Hormonal] Deleting profile for user {user_id}")
+    logger.info(f"[Hormonal] Deleting profile for user {user_id}")
 
     try:
         supabase = get_supabase().client
         supabase.table("hormonal_profiles").delete().eq("user_id", str(user_id)).execute()
-        print(f"✅ [Hormonal] Profile deleted for user {user_id}")
+        logger.info(f"[Hormonal] Profile deleted for user {user_id}")
         return {"message": "Profile deleted successfully"}
 
     except Exception as e:
-        print(f"❌ [Hormonal] Error deleting profile: {e}")
+        logger.error(f"[Hormonal] Error deleting profile: {e}")
         raise safe_internal_error(e, "endpoint")
 
 
@@ -237,7 +240,7 @@ async def create_hormone_log(
     current_user: dict = Depends(get_current_user),
 ):
     """Create a hormone log entry."""
-    print(f"🔍 [Hormonal] Creating log for user {user_id} on {log.log_date}")
+    logger.info(f"[Hormonal] Creating log for user {user_id} on {log.log_date}")
 
     try:
         supabase = get_supabase().client
@@ -275,11 +278,11 @@ async def create_hormone_log(
             on_conflict="user_id,log_date"
         ).execute()
 
-        print(f"✅ [Hormonal] Log created for user {user_id}")
+        logger.info(f"[Hormonal] Log created for user {user_id}")
         return result.data[0]
 
     except Exception as e:
-        print(f"❌ [Hormonal] Error creating log: {e}")
+        logger.error(f"[Hormonal] Error creating log: {e}")
         raise safe_internal_error(e, "endpoint")
 
 
@@ -292,7 +295,7 @@ async def get_hormone_logs(
     current_user: dict = Depends(get_current_user),
 ):
     """Get hormone logs for a user with optional date range."""
-    print(f"🔍 [Hormonal] Fetching logs for user {user_id}")
+    logger.info(f"[Hormonal] Fetching logs for user {user_id}")
 
     try:
         supabase = get_supabase().client
@@ -306,11 +309,11 @@ async def get_hormone_logs(
 
         result = query.order("log_date", desc=True).limit(limit).execute()
 
-        print(f"✅ [Hormonal] Retrieved {len(result.data)} logs for user {user_id}")
+        logger.info(f"[Hormonal] Retrieved {len(result.data)} logs for user {user_id}")
         return result.data
 
     except Exception as e:
-        print(f"❌ [Hormonal] Error fetching logs: {e}")
+        logger.error(f"[Hormonal] Error fetching logs: {e}")
         raise safe_internal_error(e, "endpoint")
 
 
@@ -320,7 +323,7 @@ async def get_today_hormone_log(
     current_user: dict = Depends(get_current_user),
 ):
     """Get today's hormone log if it exists."""
-    print(f"🔍 [Hormonal] Fetching today's log for user {user_id}")
+    logger.info(f"[Hormonal] Fetching today's log for user {user_id}")
 
     try:
         supabase = get_supabase().client
@@ -333,7 +336,7 @@ async def get_today_hormone_log(
         return None
 
     except Exception as e:
-        print(f"❌ [Hormonal] Error fetching today's log: {e}")
+        logger.error(f"[Hormonal] Error fetching today's log: {e}")
         raise safe_internal_error(e, "endpoint")
 
 
@@ -347,7 +350,7 @@ async def get_cycle_phase(
     current_user: dict = Depends(get_current_user),
 ):
     """Get current cycle phase information for a user."""
-    print(f"🔍 [Hormonal] Getting cycle phase for user {user_id}")
+    logger.info(f"[Hormonal] Getting cycle phase for user {user_id}")
 
     try:
         supabase = get_supabase().client
@@ -407,7 +410,7 @@ async def get_cycle_phase(
         )
 
     except Exception as e:
-        print(f"❌ [Hormonal] Error getting cycle phase: {e}")
+        logger.error(f"[Hormonal] Error getting cycle phase: {e}")
         raise safe_internal_error(e, "endpoint")
 
 
@@ -429,7 +432,7 @@ async def log_period_start(
     current_user: dict = Depends(get_current_user),
 ):
     """Log the start of a new menstrual period."""
-    print(f"🔍 [Hormonal] Logging period start for user {user_id}")
+    logger.info(f"[Hormonal] Logging period start for user {user_id}")
 
     try:
         supabase = get_supabase().client
@@ -455,13 +458,13 @@ async def log_period_start(
             "created_at": datetime.utcnow().isoformat()
         }, on_conflict="user_id,log_date").execute()
 
-        print(f"✅ [Hormonal] Period logged for user {user_id} on {period_start}")
+        logger.info(f"[Hormonal] Period logged for user {user_id} on {period_start}")
         return {"message": "Period start logged", "date": period_start.isoformat()}
 
     except HTTPException:
         raise
     except Exception as e:
-        print(f"❌ [Hormonal] Error logging period: {e}")
+        logger.error(f"[Hormonal] Error logging period: {e}")
         raise safe_internal_error(e, "endpoint")
 
 
@@ -476,7 +479,7 @@ async def get_hormone_supportive_foods(
     current_user: dict = Depends(get_current_user),
 ):
     """Get hormone-supportive foods, optionally filtered by goal or cycle phase."""
-    print(f"🔍 [Hormonal] Fetching hormone-supportive foods")
+    logger.info(f"[Hormonal] Fetching hormone-supportive foods")
 
     try:
         supabase = get_supabase().client
@@ -505,11 +508,11 @@ async def get_hormone_supportive_foods(
             query = query.eq(phase_column_map[cycle_phase], True)
 
         result = query.execute()
-        print(f"✅ [Hormonal] Retrieved {len(result.data)} foods")
+        logger.info(f"[Hormonal] Retrieved {len(result.data)} foods")
         return result.data
 
     except Exception as e:
-        print(f"❌ [Hormonal] Error fetching foods: {e}")
+        logger.error(f"[Hormonal] Error fetching foods: {e}")
         raise safe_internal_error(e, "endpoint")
 
 
@@ -519,7 +522,7 @@ async def get_food_recommendations(
     current_user: dict = Depends(get_current_user),
 ):
     """Get personalized hormone-supportive food recommendations."""
-    print(f"🔍 [Hormonal] Getting food recommendations for user {user_id}")
+    logger.info(f"[Hormonal] Getting food recommendations for user {user_id}")
 
     try:
         supabase = get_supabase().client
@@ -611,7 +614,7 @@ async def get_food_recommendations(
         )
 
     except Exception as e:
-        print(f"❌ [Hormonal] Error getting food recommendations: {e}")
+        logger.error(f"[Hormonal] Error getting food recommendations: {e}")
         raise safe_internal_error(e, "endpoint")
 
 
@@ -625,7 +628,7 @@ async def get_hormonal_insights(
     current_user: dict = Depends(get_current_user),
 ):
     """Get comprehensive hormonal health insights for a user."""
-    print(f"🔍 [Hormonal] Getting comprehensive insights for user {user_id}")
+    logger.info(f"[Hormonal] Getting comprehensive insights for user {user_id}")
 
     try:
         supabase = get_supabase().client
@@ -713,5 +716,5 @@ async def get_hormonal_insights(
         )
 
     except Exception as e:
-        print(f"❌ [Hormonal] Error getting insights: {e}")
+        logger.error(f"[Hormonal] Error getting insights: {e}")
         raise safe_internal_error(e, "endpoint")

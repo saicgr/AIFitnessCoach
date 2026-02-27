@@ -1,16 +1,24 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../core/constants/app_colors.dart';
+import '../../../data/models/exercise_progression.dart';
+import '../../../data/providers/exercise_progression_provider.dart';
 import '../widgets/widgets.dart';
 
-/// The preferences section containing theme, timezone, and unit settings.
-///
-/// Allows users to choose between System, Light, or Dark theme.
-/// Timezone is auto-detected but can be overridden (e.g., when traveling).
-/// Weight unit can be set to kg or lbs.
-class PreferencesSection extends StatelessWidget {
+class PreferencesSection extends ConsumerWidget {
   const PreferencesSection({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final elevatedColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+
+    final repPrefs = ref.watch(repPreferencesProvider);
+    final currentFocus = repPrefs?.trainingFocus ?? TrainingFocus.hypertrophy;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -43,18 +51,63 @@ class PreferencesSection extends StatelessWidget {
               isWeightUnitSelector: true,
             ),
             SettingItemData(
-              icon: Icons.tune,
-              title: 'Weight Increments',
-              subtitle: 'Customize +/- step per equipment',
-              isWeightIncrementsSelector: true,
-            ),
-            SettingItemData(
               icon: Icons.bolt_outlined,
               title: 'Show Daily Goals',
               subtitle: 'XP progress strip on home screen',
               isDailyXPStripToggle: true,
             ),
           ],
+        ),
+        const SizedBox(height: 16),
+        // Training Focus card
+        Material(
+          color: elevatedColor,
+          borderRadius: BorderRadius.circular(16),
+          clipBehavior: Clip.antiAlias,
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Icon(Icons.track_changes, color: textSecondary, size: 22),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text('Training Focus', style: TextStyle(fontSize: 15)),
+                          Text(
+                            currentFocus.description,
+                            style: TextStyle(fontSize: 12, color: textMuted),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                SizedBox(
+                  width: double.infinity,
+                  child: SegmentedButton<TrainingFocus>(
+                    segments: TrainingFocus.values.map((focus) => ButtonSegment<TrainingFocus>(
+                      value: focus,
+                      label: Text(focus.displayName, style: const TextStyle(fontSize: 12)),
+                    )).toList(),
+                    selected: {currentFocus},
+                    onSelectionChanged: (selected) {
+                      HapticFeedback.selectionClick();
+                      ref.read(exerciseProgressionProvider.notifier).setTrainingFocus(selected.first);
+                    },
+                    style: const ButtonStyle(
+                      visualDensity: VisualDensity.compact,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
         ),
       ],
     );

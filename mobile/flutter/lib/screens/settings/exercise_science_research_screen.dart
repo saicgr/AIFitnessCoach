@@ -527,17 +527,6 @@ class _ExerciseScienceResearchScreenState
 
             const SizedBox(height: 24),
 
-            // Feed Data section
-            _buildFeedDataSection(
-              elevated: elevated,
-              cardBorder: cardBorder,
-              textPrimary: textPrimary,
-              textSecondary: textSecondary,
-              textMuted: textMuted,
-            ).animate().fadeIn(delay: 500.ms).slideY(begin: 0.03),
-
-            const SizedBox(height: 24),
-
             // Footer
             Center(
               child: Padding(
@@ -602,7 +591,7 @@ class _ExerciseScienceResearchScreenState
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header row with title + Coming Soon badge
+          // Header row with title
           Row(
             children: [
               Container(
@@ -625,24 +614,6 @@ class _ExerciseScienceResearchScreenState
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
                     color: textPrimary,
-                  ),
-                ),
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                decoration: BoxDecoration(
-                  color: AppColors.purple.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(
-                    color: AppColors.purple.withValues(alpha: 0.3),
-                  ),
-                ),
-                child: Text(
-                  'Coming Soon',
-                  style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.purple,
                   ),
                 ),
               ),
@@ -820,14 +791,6 @@ class _ExerciseScienceResearchScreenState
                           fontSize: 15,
                           fontWeight: FontWeight.w600,
                           color: AppColors.purple,
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        '(Coming Soon)',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: AppColors.purple.withValues(alpha: 0.7),
                         ),
                       ),
                     ],

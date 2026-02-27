@@ -427,8 +427,8 @@ class ComebackService:
                             recommended_comeback_weeks=0,
                             prompt_context=""
                         )
-                except Exception:
-                    pass
+                except Exception as e:
+                    logger.warning(f"Failed to update break status: {e}")
 
             in_comeback_mode = user.get("in_comeback_mode", False)
             comeback_week = user.get("comeback_week", 0)

@@ -12,6 +12,9 @@ import hashlib
 import json
 
 from core.db.base import BaseDB
+from core.logger import get_logger
+
+logger = get_logger(__name__)
 
 
 class AnalyticsDB(BaseDB):
@@ -103,7 +106,7 @@ class AnalyticsDB(BaseDB):
 
             return regeneration
         except Exception as e:
-            print(f"Warning: Failed to record regeneration analytics: {e}")
+            logger.warning(f"Failed to record regeneration analytics: {e}")
             return None
 
     def _upsert_custom_input(
@@ -143,7 +146,7 @@ class AnalyticsDB(BaseDB):
                     }
                 ).execute()
         except Exception as e:
-            print(f"Warning: Failed to upsert custom input: {e}")
+            logger.warning(f"Failed to upsert custom input: {e}")
 
     def _upsert_equipment_usage(self, user_id: str, equipment: List[str]) -> None:
         """
@@ -181,7 +184,7 @@ class AnalyticsDB(BaseDB):
                     }
                 ).execute()
         except Exception as e:
-            print(f"Warning: Failed to upsert equipment usage: {e}")
+            logger.warning(f"Failed to upsert equipment usage: {e}")
 
     def get_user_regeneration_analytics(
         self, user_id: str, limit: int = 50

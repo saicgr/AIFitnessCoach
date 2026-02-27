@@ -23,7 +23,10 @@ from pydantic import BaseModel, Field
 from supabase import Client
 
 from core.supabase_client import get_supabase
+from core.logger import get_logger
 from services.user_context_service import UserContextService
+
+logger = get_logger(__name__)
 
 router = APIRouter(prefix="/subscription-context", tags=["subscription-context"])
 
@@ -138,7 +141,7 @@ async def log_pricing_viewed(
 
         return {"success": True, "message": "Pricing view logged for AI context"}
     except Exception as e:
-        print(f"❌ Failed to log pricing viewed: {e}")
+        logger.error(f"Failed to log pricing viewed: {e}")
         return {"success": False, "error": str(e)}
 
 
@@ -166,7 +169,7 @@ async def log_trial_started(
 
         return {"success": True, "message": "Trial start logged for AI context"}
     except Exception as e:
-        print(f"❌ Failed to log trial started: {e}")
+        logger.error(f"Failed to log trial started: {e}")
         return {"success": False, "error": str(e)}
 
 
@@ -193,7 +196,7 @@ async def log_trial_reminder(
 
         return {"success": True, "message": "Trial reminder logged for AI context"}
     except Exception as e:
-        print(f"❌ Failed to log trial reminder: {e}")
+        logger.error(f"Failed to log trial reminder: {e}")
         return {"success": False, "error": str(e)}
 
 
@@ -220,7 +223,7 @@ async def log_free_plan_selected(
 
         return {"success": True, "message": "Free plan selection logged for AI context"}
     except Exception as e:
-        print(f"❌ Failed to log free plan selected: {e}")
+        logger.error(f"Failed to log free plan selected: {e}")
         return {"success": False, "error": str(e)}
 
 
@@ -252,7 +255,7 @@ async def log_demo_workout_viewed(
 
         return {"success": True, "message": "Demo workout logged for AI context"}
     except Exception as e:
-        print(f"❌ Failed to log demo workout: {e}")
+        logger.error(f"Failed to log demo workout: {e}")
         return {"success": False, "error": str(e)}
 
 
@@ -283,7 +286,7 @@ async def log_guest_session(
 
         return {"success": True, "message": "Guest session logged for AI context"}
     except Exception as e:
-        print(f"❌ Failed to log guest session: {e}")
+        logger.error(f"Failed to log guest session: {e}")
         return {"success": False, "error": str(e)}
 
 
@@ -309,7 +312,7 @@ async def log_guest_converted(
 
         return {"success": True, "message": "Guest conversion logged for AI context"}
     except Exception as e:
-        print(f"❌ Failed to log guest conversion: {e}")
+        logger.error(f"Failed to log guest conversion: {e}")
         return {"success": False, "error": str(e)}
 
 
@@ -338,7 +341,7 @@ async def log_feature_limit_hit(
 
         return {"success": True, "message": "Feature limit hit logged for AI context"}
     except Exception as e:
-        print(f"❌ Failed to log feature limit hit: {e}")
+        logger.error(f"Failed to log feature limit hit: {e}")
         return {"success": False, "error": str(e)}
 
 
@@ -366,7 +369,7 @@ async def log_plan_changed(
 
         return {"success": True, "message": "Plan change logged for AI context"}
     except Exception as e:
-        print(f"❌ Failed to log plan change: {e}")
+        logger.error(f"Failed to log plan change: {e}")
         return {"success": False, "error": str(e)}
 
 
@@ -410,7 +413,7 @@ async def get_subscription_context(
             "context_summary": _generate_context_summary(events, trial_result.data, subscription_result.data)
         }
     except Exception as e:
-        print(f"❌ Failed to get subscription context: {e}")
+        logger.error(f"Failed to get subscription context: {e}")
         return {
             "user_id": str(user_id),
             "recent_events": [],

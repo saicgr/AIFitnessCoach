@@ -11,9 +11,10 @@ import 'hero_nutrition_card.dart';
 import 'hero_fasting_card.dart';
 import 'week_calendar_strip.dart';
 import 'swipeable_hero_section.dart' show HomeFocus, homeFocusProvider;
+import '../../wrapped/widgets/wrapped_banner.dart';
 
-/// Sectioned hero area with tab pills (Workouts | Nutrition | Fasting)
-/// and animated content switching. Calendar strip only shows for Workouts.
+/// Sectioned hero area with tab pills (Workouts | Nutrition | Fasting).
+/// Calendar strip only shows for the Workouts tab.
 class SectionedHeroArea extends ConsumerStatefulWidget {
   final PageController carouselPageController;
   final ValueChanged<List<CarouselItem>>? onCarouselItemsChanged;
@@ -41,12 +42,8 @@ class SectionedHeroArea extends ConsumerStatefulWidget {
 }
 
 class _SectionedHeroAreaState extends ConsumerState<SectionedHeroArea> {
-  /// Track which tabs have been visited (for lazy building)
-  final Set<HomeFocus> _builtTabs = {HomeFocus.workout};
-
-  /// Keep built cards alive across tab switches
-  Widget? _nutritionCard;
-  Widget? _fastingCard;
+  // Fixed height: calendarStrip(61) + gap(8) + carousel(360) = 429
+  static const _kContentHeight = 429.0;
 
   @override
   Widget build(BuildContext context) {
@@ -55,14 +52,11 @@ class _SectionedHeroAreaState extends ConsumerState<SectionedHeroArea> {
     final accentColorEnum = ref.watch(accentColorProvider);
     final accentColor = accentColorEnum.getColor(isDark);
 
-    // Mark current tab as built
-    _builtTabs.add(currentFocus);
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const SizedBox(height: 16),
-        // Tab pills replacing the "WORKOUT" header
+        const WrappedBanner(),
+        // Tab pills
         _HeroTabPills(
           currentFocus: currentFocus,
           accentColor: accentColor,
@@ -73,26 +67,19 @@ class _SectionedHeroAreaState extends ConsumerState<SectionedHeroArea> {
           },
         ),
         const SizedBox(height: 8),
-        // Calendar strip - only visible for Workouts tab
-        AnimatedSize(
-          duration: const Duration(milliseconds: 250),
-          curve: Curves.easeInOut,
-          alignment: Alignment.topCenter,
-          child: AnimatedOpacity(
-            duration: const Duration(milliseconds: 200),
-            opacity: currentFocus == HomeFocus.workout ? 1.0 : 0.0,
-            child: currentFocus == HomeFocus.workout
-                ? _buildWeekCalendarStrip(isDark)
-                : const SizedBox(width: double.infinity, height: 0),
+        // Fixed height so all tabs occupy identical space — content
+        // below never shifts. Cards stretch via Expanded to fill.
+        SizedBox(
+          height: _kContentHeight,
+          child: Column(
+            children: [
+              if (currentFocus == HomeFocus.workout) ...[
+                _buildWeekCalendarStrip(isDark),
+                const SizedBox(height: 8),
+              ],
+              Expanded(child: _buildContent(currentFocus, isDark)),
+            ],
           ),
-        ),
-        const SizedBox(height: 8),
-        // Content area with animated height transition
-        AnimatedSize(
-          duration: const Duration(milliseconds: 300),
-          curve: Curves.easeInOut,
-          alignment: Alignment.topCenter,
-          child: _buildContent(currentFocus, isDark),
         ),
       ],
     );
@@ -101,55 +88,38 @@ class _SectionedHeroAreaState extends ConsumerState<SectionedHeroArea> {
   Widget _buildContent(HomeFocus focus, bool isDark) {
     switch (focus) {
       case HomeFocus.workout:
+      case HomeFocus.forYou:
         return _buildWorkoutContent(isDark);
       case HomeFocus.nutrition:
-        return _buildNutritionContent();
+        return const HeroNutritionCard();
       case HomeFocus.fasting:
-        return _buildFastingContent();
-      case HomeFocus.forYou:
-        // forYou defaults to workout view
-        return _buildWorkoutContent(isDark);
+        return const HeroFastingCard();
     }
   }
 
   Widget _buildWorkoutContent(bool isDark) {
-    Widget workoutContent;
-
     if (widget.isInitializing && !widget.todayWorkoutState.hasValue) {
-      workoutContent = const GeneratingHeroCard(
+      return const GeneratingHeroCard(
         message: 'Loading your workout...',
-      );
-    } else if ((widget.isAIGenerating ||
-            widget.todayWorkoutState.valueOrNull?.isGenerating == true) &&
-        widget.todayWorkoutState.valueOrNull?.hasDisplayableContent != true) {
-      workoutContent = GeneratingHeroCard(
-        message: widget.todayWorkoutState.valueOrNull?.generationMessage ??
-            'Generating your workout...',
-      );
-    } else {
-      workoutContent = HeroWorkoutCarousel(
-        externalPageController: widget.carouselPageController,
-        onCarouselItemsChanged: widget.onCarouselItemsChanged,
-        onPageChanged: widget.onPageChanged,
       );
     }
 
-    return workoutContent;
+    if ((widget.isAIGenerating ||
+            widget.todayWorkoutState.valueOrNull?.isGenerating == true) &&
+        widget.todayWorkoutState.valueOrNull?.hasDisplayableContent != true) {
+      return GeneratingHeroCard(
+        message: widget.todayWorkoutState.valueOrNull?.generationMessage ??
+            'Generating your workout...',
+      );
+    }
+
+    return HeroWorkoutCarousel(
+      externalPageController: widget.carouselPageController,
+      onCarouselItemsChanged: widget.onCarouselItemsChanged,
+      onPageChanged: widget.onPageChanged,
+    );
   }
 
-  Widget _buildNutritionContent() {
-    // Lazy build: create once, keep alive
-    _nutritionCard ??= const HeroNutritionCard(key: ValueKey('hero_nutrition'));
-    return _nutritionCard!;
-  }
-
-  Widget _buildFastingContent() {
-    // Lazy build: create once, keep alive
-    _fastingCard ??= const HeroFastingCard(key: ValueKey('hero_fasting'));
-    return _fastingCard!;
-  }
-
-  /// Build the week calendar strip widget (moved from home_screen)
   Widget _buildWeekCalendarStrip(bool isDark) {
     final userAsync = ref.watch(currentUserProvider);
     final workoutsAsync = ref.watch(workoutsProvider);
@@ -160,7 +130,6 @@ class _SectionedHeroAreaState extends ConsumerState<SectionedHeroArea> {
     final workoutDays = user.workoutDays;
     if (workoutDays.isEmpty) return const SizedBox.shrink();
 
-    // Build workout status map for the current week
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
     final todayIndex = today.weekday - 1;
@@ -206,7 +175,6 @@ class _HeroTabPills extends StatelessWidget {
   final bool isDark;
   final ValueChanged<HomeFocus> onTabSelected;
 
-  // Only show these three tabs (skip forYou)
   static const _tabs = [HomeFocus.workout, HomeFocus.nutrition, HomeFocus.fasting];
 
   const _HeroTabPills({
@@ -261,7 +229,6 @@ class _HeroTabPills extends StatelessWidget {
                         ),
                       ),
                     ),
-                    // Active underline indicator
                     AnimatedContainer(
                       duration: const Duration(milliseconds: 200),
                       height: 2,

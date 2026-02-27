@@ -371,13 +371,6 @@ class _ProgramDetailSheetState extends ConsumerState<ProgramDetailSheet> {
                   child: ElevatedButton(
                     onPressed: () {
                       Navigator.pop(context);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(
-                              'Program "${program.name}" selected! Feature coming soon.'),
-                          backgroundColor: cyan,
-                        ),
-                      );
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: cyan,

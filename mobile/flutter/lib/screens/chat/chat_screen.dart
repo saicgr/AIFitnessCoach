@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:image_picker/image_picker.dart';
 import 'dart:ui';
 import '../../core/constants/app_colors.dart';
 import '../../core/theme/theme_colors.dart';
@@ -19,7 +21,28 @@ import '../../widgets/glass_back_button.dart';
 import '../../widgets/floating_chat/floating_chat_overlay.dart';
 import '../../widgets/medical_disclaimer_banner.dart';
 import '../ai_settings/ai_settings_screen.dart';
+import 'widgets/food_analysis_result_card.dart';
+import 'widgets/form_check_result_card.dart';
+import 'widgets/form_comparison_result_card.dart';
+import 'widgets/media_picker_helper.dart';
+import 'widgets/media_preview_strip.dart';
 import 'widgets/report_message_sheet.dart';
+import 'widgets/chat_quick_pills.dart';
+import 'widgets/chat_features_info_sheet.dart';
+import 'widgets/enhanced_empty_state.dart';
+import '../../core/models/chat_quick_action.dart';
+import '../../core/providers/usage_tracking_provider.dart';
+import '../../widgets/upgrade_prompt_sheet.dart';
+
+/// Feature keys for premium gating
+const _kFoodScanning = 'food_scanning';
+const _kFormVideoAnalysis = 'form_video_analysis';
+
+/// Quick action IDs that require food_scanning gate
+const _foodScanActions = {'scan_food', 'analyze_menu', 'calorie_check'};
+
+/// Quick action IDs that require form_video_analysis gate
+const _formVideoActions = {'check_form', 'compare_form'};
 
 class ChatScreen extends ConsumerStatefulWidget {
   final String? initialMessage;
@@ -39,6 +62,114 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   final _focusNode = FocusNode();
   bool _isLoading = false;
   bool _initialMessageSent = false;
+
+  /// Callback for _InputBar to send single media message
+  Future<void> _sendMessageWithMedia(PickedMedia media) async {
+    final message = _textController.text.trim();
+    if (_isLoading) return;
+
+    // Determine which feature gate applies based on media type
+    final usageNotifier = ref.read(usageTrackingProvider.notifier);
+    final isVideo = media.type == ChatMediaType.video;
+    final gateKey = isVideo ? _kFormVideoAnalysis : _kFoodScanning;
+    final gateName = isVideo ? 'Form Video Analysis' : 'Food Scans';
+
+    if (!usageNotifier.hasAccess(gateKey)) {
+      showUpgradePromptSheet(context,
+          featureKey: gateKey, featureName: gateName);
+      return;
+    }
+
+    // Check if this is the last free use
+    final remaining = usageNotifier.remainingUses(gateKey);
+    final isLastUse = remaining != null && remaining == 1;
+
+    HapticService.medium();
+    _textController.clear();
+    setState(() => _isLoading = true);
+
+    try {
+      await ref.read(chatMessagesProvider.notifier).sendMessageWithMedia(message, media);
+      _scrollToBottom();
+      ref.read(xpProvider.notifier).checkFirstChatBonus();
+
+      // Optimistically decrement and show last-use snackbar
+      usageNotifier.decrementLocal(gateKey);
+      if (isLastUse && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('That was your last free ${gateName.toLowerCase()} for this period.'),
+            backgroundColor: AppColors.warning,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to send media: $e'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    } finally {
+      setState(() => _isLoading = false);
+      _scrollToBottom();
+    }
+  }
+
+  /// Callback for _InputBar to send multiple media messages
+  Future<void> _sendMessageWithMultiMedia(List<PickedMedia> mediaList) async {
+    final message = _textController.text.trim();
+    if (_isLoading) return;
+
+    // Gate check: determine if video or image media
+    final usageNotifier = ref.read(usageTrackingProvider.notifier);
+    final hasVideo = mediaList.any((m) => m.type == ChatMediaType.video);
+    final gateKey = hasVideo ? _kFormVideoAnalysis : _kFoodScanning;
+    final gateName = hasVideo ? 'Form Video Analysis' : 'Food Scans';
+
+    if (!usageNotifier.hasAccess(gateKey)) {
+      showUpgradePromptSheet(context,
+          featureKey: gateKey, featureName: gateName);
+      return;
+    }
+
+    final remaining = usageNotifier.remainingUses(gateKey);
+    final isLastUse = remaining != null && remaining == 1;
+
+    HapticService.medium();
+    _textController.clear();
+    setState(() => _isLoading = true);
+
+    try {
+      await ref.read(chatMessagesProvider.notifier).sendMessageWithMultiMedia(message, mediaList);
+      _scrollToBottom();
+      ref.read(xpProvider.notifier).checkFirstChatBonus();
+
+      usageNotifier.decrementLocal(gateKey);
+      if (isLastUse && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('That was your last free ${gateName.toLowerCase()} for this period.'),
+            backgroundColor: AppColors.warning,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to send media: $e'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    } finally {
+      setState(() => _isLoading = false);
+      _scrollToBottom();
+    }
+  }
 
   @override
   void initState() {
@@ -146,6 +277,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
       appBar: AppBar(
         backgroundColor: backgroundColor,
         automaticallyImplyLeading: false,
+        titleSpacing: 0,
         leading: GlassBackButton(
           onTap: () {
             HapticService.light();
@@ -160,17 +292,20 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
               showBorder: true,
               showShadow: false,
             ),
-            const SizedBox(width: 12),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  coachName,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    coachName,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                    maxLines: 1,
                   ),
-                ),
                 Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
@@ -187,32 +322,48 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                         shape: BoxShape.circle,
                       ),
                     ),
-                    Text(
-                      _isLoading
-                          ? 'Typing...'
-                          : offlineChatState.isAvailable
-                              ? 'Offline (${offlineChatState.modelName ?? "Local AI"})'
-                              : 'Online',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: _isLoading
-                            ? AppColors.orange
+                    Flexible(
+                      child: Text(
+                        _isLoading
+                            ? 'Typing...'
                             : offlineChatState.isAvailable
-                                ? Colors.amber
-                                : AppColors.success,
+                                ? 'Offline (${offlineChatState.modelName ?? "Local AI"})'
+                                : 'Online',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: _isLoading
+                              ? AppColors.orange
+                              : offlineChatState.isAvailable
+                                  ? Colors.amber
+                                  : AppColors.success,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                        maxLines: 1,
                       ),
                     ),
                   ],
                 ),
               ],
             ),
+            ),
           ],
         ),
         actions: [
+          // Info icon - shows features help sheet
+          IconButton(
+            icon: const Icon(Icons.info_outline, size: 20),
+            tooltip: 'Features',
+            visualDensity: VisualDensity.compact,
+            onPressed: () {
+              HapticService.light();
+              _showFeaturesInfoSheet();
+            },
+          ),
           // Swap coach button
           IconButton(
-            icon: const Icon(Icons.swap_horiz, size: 22),
+            icon: const Icon(Icons.swap_horiz, size: 20),
             tooltip: 'Change coach',
+            visualDensity: VisualDensity.compact,
             onPressed: () {
               HapticService.light();
               context.push('/coach-selection?fromSettings=true');
@@ -220,12 +371,14 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
           ),
           // Minimize button - animate back to floating chat overlay
           IconButton(
-            icon: const Icon(Icons.close_fullscreen, size: 22),
+            icon: const Icon(Icons.close_fullscreen, size: 20),
             tooltip: 'Minimize',
+            visualDensity: VisualDensity.compact,
             onPressed: () => _minimizeToFloatingChat(),
           ),
           IconButton(
-            icon: const Icon(Icons.more_vert),
+            icon: const Icon(Icons.more_vert, size: 20),
+            visualDensity: VisualDensity.compact,
             onPressed: () {
               HapticService.light();
               _showOptionsMenu(context);
@@ -273,7 +426,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                 ),
                 data: (messages) {
                   if (messages.isEmpty) {
-                    return _EmptyChat(
+                    return EnhancedEmptyState(
                       key: const ValueKey('empty'),
                       coach: coach,
                       onSuggestionTap: (suggestion) {
@@ -319,18 +472,241 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
           // Medical disclaimer
           const MedicalDisclaimerBanner(),
 
+          // Quick action pills
+          ChatQuickPills(
+            onSendPrompt: (prompt) {
+              _textController.text = prompt;
+              _sendMessage();
+            },
+            onOpenMediaPicker: (mode, contextPrompt) =>
+                _handleMediaFromPill(mode, contextPrompt),
+            isLoading: _isLoading,
+          ),
+
           // Input bar
           _InputBar(
             controller: _textController,
             focusNode: _focusNode,
             isLoading: _isLoading,
             onSend: _sendMessage,
+            onSendWithMedia: _sendMessageWithMedia,
+            onSendWithMultiMedia: _sendMessageWithMultiMedia,
             isOffline: offlineChatState.isAvailable,
             modelName: offlineChatState.modelName,
           ),
         ],
       ),
     );
+  }
+
+  void _showFeaturesInfoSheet() {
+    showGlassSheet(
+      context: context,
+      builder: (context) => ChatFeaturesInfoSheet(
+        onAction: (action) => _handleQuickAction(action),
+      ),
+    );
+  }
+
+  void _handleQuickAction(ChatQuickAction action) {
+    if (_isLoading) return;
+
+    // Premium gate: check form video analysis actions
+    if (_formVideoActions.contains(action.id)) {
+      final notifier = ref.read(usageTrackingProvider.notifier);
+      if (!notifier.hasAccess(_kFormVideoAnalysis)) {
+        showUpgradePromptSheet(context,
+            featureKey: _kFormVideoAnalysis,
+            featureName: 'Form Video Analysis');
+        return;
+      }
+    }
+
+    // Premium gate: check food scanning actions
+    if (_foodScanActions.contains(action.id)) {
+      final notifier = ref.read(usageTrackingProvider.notifier);
+      if (!notifier.hasAccess(_kFoodScanning)) {
+        showUpgradePromptSheet(context,
+            featureKey: _kFoodScanning, featureName: 'Food Scans');
+        return;
+      }
+    }
+
+    if (action.behavior == ChatActionBehavior.sendPrompt && action.prompt != null) {
+      _textController.text = action.prompt!;
+      _sendMessage();
+    } else if (action.behavior == ChatActionBehavior.openMediaPicker) {
+      _showMiniMediaChoiceForAction(action);
+    }
+  }
+
+  void _showMiniMediaChoiceForAction(ChatQuickAction action) {
+    final isVideo = action.mediaMode == ChatMediaMode.video;
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) {
+        final colors = ThemeColors.of(ctx);
+        final isDark = colors.isDark;
+
+        return Container(
+          decoration: BoxDecoration(
+            color: isDark ? AppColors.elevated : Colors.white,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+          ),
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
+          child: SafeArea(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      width: 36,
+                      height: 36,
+                      decoration: BoxDecoration(
+                        color: action.color.withOpacity(0.12),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Icon(action.icon, size: 18, color: action.color),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        action.label,
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: colors.textPrimary,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                _buildMiniPickerOption(
+                  ctx: ctx,
+                  icon: isVideo ? Icons.videocam_outlined : Icons.camera_alt_outlined,
+                  label: isVideo ? 'Record Video' : 'Take Photo',
+                  color: action.color,
+                  onTap: () {
+                    Navigator.pop(ctx);
+                    HapticService.selection();
+                    _handleMediaFromPill(
+                      isVideo ? ChatMediaMode.recordVideo : ChatMediaMode.camera,
+                      action.examplePrompt ?? '',
+                    );
+                  },
+                ),
+                const SizedBox(height: 8),
+                _buildMiniPickerOption(
+                  ctx: ctx,
+                  icon: isVideo ? Icons.video_library_outlined : Icons.photo_library_outlined,
+                  label: isVideo ? 'Choose Video' : 'Choose Photo',
+                  color: action.color,
+                  onTap: () {
+                    Navigator.pop(ctx);
+                    HapticService.selection();
+                    _handleMediaFromPill(
+                      isVideo ? ChatMediaMode.video : ChatMediaMode.gallery,
+                      action.examplePrompt ?? '',
+                    );
+                  },
+                ),
+                const SizedBox(height: 12),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildMiniPickerOption({
+    required BuildContext ctx,
+    required IconData icon,
+    required String label,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    final colors = ThemeColors.of(ctx);
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        decoration: BoxDecoration(
+          color: color.withOpacity(0.08),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: color.withOpacity(0.15)),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 36,
+              height: 36,
+              decoration: BoxDecoration(
+                color: color.withOpacity(0.12),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(icon, size: 18, color: color),
+            ),
+            const SizedBox(width: 12),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: colors.textPrimary,
+              ),
+            ),
+            const Spacer(),
+            Icon(Icons.chevron_right, color: colors.textMuted, size: 20),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _handleMediaFromPill(ChatMediaMode mode, String contextPrompt) async {
+    if (_isLoading) return;
+
+    // Set the context prompt before picking media
+    if (contextPrompt.isNotEmpty) {
+      _textController.text = contextPrompt;
+    }
+
+    try {
+      PickedMedia? media;
+      switch (mode) {
+        case ChatMediaMode.camera:
+          media = await MediaPickerHelper.pickImage(ImageSource.camera);
+          break;
+        case ChatMediaMode.gallery:
+          media = await MediaPickerHelper.pickImage(ImageSource.gallery);
+          break;
+        case ChatMediaMode.video:
+          media = await MediaPickerHelper.pickVideo(ImageSource.gallery);
+          break;
+        case ChatMediaMode.recordVideo:
+          media = await MediaPickerHelper.pickVideo(ImageSource.camera);
+          break;
+      }
+
+      if (media != null && mounted) {
+        await _sendMessageWithMedia(media);
+      }
+    } on MediaValidationException catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(e.message),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    }
   }
 
   void _showOptionsMenu(BuildContext context) {
@@ -478,158 +854,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────
-// Empty Chat State
-// ─────────────────────────────────────────────────────────────────
-
-class _EmptyChat extends StatelessWidget {
-  final Function(String) onSuggestionTap;
-  final CoachPersona coach;
-
-  const _EmptyChat({super.key, required this.onSuggestionTap, required this.coach});
-
-  static const _suggestions = [
-    ('What should I eat before a workout?', Icons.restaurant_outlined, AppColors.teal),
-    ('How can I improve my squat form?', Icons.fitness_center_outlined, AppColors.orange),
-    ('I feel tired today, should I still work out?', Icons.bedtime_outlined, AppColors.purple),
-    ('Create a quick 15-minute workout', Icons.timer_outlined, AppColors.cyan),
-  ];
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = ThemeColors.of(context);
-    final isDark = colors.isDark;
-
-    return SingleChildScrollView(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-      child: Column(
-        children: [
-          const SizedBox(height: 24),
-
-          // Coach avatar with subtle glow
-          Container(
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              boxShadow: [
-                BoxShadow(
-                  color: colors.accent.withOpacity(0.25),
-                  blurRadius: 32,
-                  spreadRadius: 4,
-                ),
-              ],
-            ),
-            child: CoachAvatar(
-              coach: coach,
-              size: 88,
-              showBorder: true,
-              borderWidth: 3,
-              showShadow: false,
-            ),
-          ),
-          const SizedBox(height: 20),
-
-          Text(
-            coach.name,
-            style: TextStyle(
-              fontSize: 22,
-              fontWeight: FontWeight.bold,
-              color: colors.textPrimary,
-            ),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            coach.tagline.isNotEmpty ? coach.tagline : 'Your personal fitness assistant',
-            style: TextStyle(
-              fontSize: 14,
-              color: colors.textSecondary,
-            ),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 32),
-
-          // Section label
-          Align(
-            alignment: Alignment.centerLeft,
-            child: Text(
-              'Try asking...',
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-                color: colors.textMuted,
-                letterSpacing: 0.5,
-              ),
-            ),
-          ),
-          const SizedBox(height: 12),
-
-          // Suggestion chips - glassmorphic style
-          ...List.generate(_suggestions.length, (index) {
-            final (text, icon, color) = _suggestions[index];
-            return Padding(
-              padding: const EdgeInsets.only(bottom: 10),
-              child: GestureDetector(
-                onTap: () {
-                  HapticService.selection();
-                  onSuggestionTap(text);
-                },
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(14),
-                  child: BackdropFilter(
-                    filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
-                    child: Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                      decoration: BoxDecoration(
-                        color: isDark
-                            ? Colors.white.withOpacity(0.06)
-                            : Colors.black.withOpacity(0.04),
-                        borderRadius: BorderRadius.circular(14),
-                        border: Border.all(
-                          color: isDark
-                              ? Colors.white.withOpacity(0.1)
-                              : Colors.black.withOpacity(0.08),
-                        ),
-                      ),
-                      child: Row(
-                        children: [
-                          Container(
-                            width: 36,
-                            height: 36,
-                            decoration: BoxDecoration(
-                              color: color.withOpacity(0.12),
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            child: Icon(icon, size: 18, color: color),
-                          ),
-                          const SizedBox(width: 14),
-                          Expanded(
-                            child: Text(
-                              text,
-                              style: TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w500,
-                                color: colors.textPrimary,
-                              ),
-                            ),
-                          ),
-                          Icon(
-                            Icons.arrow_forward_ios_rounded,
-                            size: 14,
-                            color: colors.textMuted,
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            );
-          }),
-        ],
-      ),
-    );
-  }
-}
+// _EmptyChat replaced by EnhancedEmptyState widget
 
 // ─────────────────────────────────────────────────────────────────
 // Message Bubble
@@ -700,6 +925,77 @@ class _MessageBubble extends StatelessWidget {
                 ],
               ),
             ),
+          // Show media thumbnail for user messages with media
+          if (isUser && message.hasMedia)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(10),
+                child: SizedBox(
+                  height: 150,
+                  child: Stack(
+                    children: [
+                      CachedNetworkImage(
+                        imageUrl: message.mediaUrl!,
+                        fit: BoxFit.cover,
+                        width: double.infinity,
+                        height: 150,
+                        placeholder: (_, __) => Container(
+                          color: Colors.black12,
+                          child: const Center(
+                            child: SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            ),
+                          ),
+                        ),
+                        errorWidget: (_, __, ___) => Container(
+                          color: Colors.black12,
+                          child: Center(
+                            child: Icon(
+                              message.mediaType == 'video' ? Icons.videocam : Icons.image,
+                              size: 32,
+                              color: Colors.white54,
+                            ),
+                          ),
+                        ),
+                      ),
+                      if (message.mediaType == 'video')
+                        const Positioned.fill(
+                          child: Center(
+                            child: Icon(Icons.play_circle_outline, color: Colors.white70, size: 40),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          // Show media indicator for user messages without URL (uploading)
+          if (isUser && !message.hasMedia && message.mediaType != null)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    message.mediaType == 'video' ? Icons.videocam : Icons.image,
+                    size: 14,
+                    color: AppColors.pureBlack.withOpacity(0.6),
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    message.mediaType == 'video' ? 'Video attached' : 'Image attached',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontStyle: FontStyle.italic,
+                      color: AppColors.pureBlack.withOpacity(0.6),
+                    ),
+                  ),
+                ],
+              ),
+            ),
           Text(
             message.content,
             style: TextStyle(
@@ -708,6 +1004,16 @@ class _MessageBubble extends StatelessWidget {
               height: 1.4,
             ),
           ),
+          // Show form check result card for assistant messages
+          if (!isUser && message.hasFormCheckResult)
+            FormCheckResultCard(result: message.formCheckResult!),
+          // Show multi-food/buffet/menu analysis result card
+          if (!isUser && (message.hasBuffetAnalysis || message.hasMenuAnalysis ||
+              (message.actionData?['action'] == 'analyze_multi_food_images')))
+            FoodAnalysisResultCard(data: message.actionData!),
+          // Show form comparison result card
+          if (!isUser && message.hasFormComparison)
+            FormComparisonResultCard(data: message.actionData!),
           // Show "Go to workout" button if AI generated a workout
           if (!isUser && message.hasGeneratedWorkout)
             Padding(
@@ -872,11 +1178,13 @@ class _TypingIndicator extends StatelessWidget {
 // Input Bar
 // ─────────────────────────────────────────────────────────────────
 
-class _InputBar extends StatelessWidget {
+class _InputBar extends StatefulWidget {
   final TextEditingController controller;
   final FocusNode focusNode;
   final bool isLoading;
   final VoidCallback onSend;
+  final Future<void> Function(PickedMedia media) onSendWithMedia;
+  final Future<void> Function(List<PickedMedia> mediaList) onSendWithMultiMedia;
   final bool isOffline;
   final String? modelName;
 
@@ -885,9 +1193,161 @@ class _InputBar extends StatelessWidget {
     required this.focusNode,
     required this.isLoading,
     required this.onSend,
+    required this.onSendWithMedia,
+    required this.onSendWithMultiMedia,
     this.isOffline = false,
     this.modelName,
   });
+
+  @override
+  State<_InputBar> createState() => _InputBarState();
+}
+
+class _InputBarState extends State<_InputBar> {
+  List<PickedMedia> _selectedMedia = [];
+
+  void _pickMedia() async {
+    try {
+      final result = await MediaPickerHelper.showMediaPickerSheet(context);
+      if (result != null && result.isNotEmpty && mounted) {
+        setState(() {
+          // Append picked media, enforce max 5
+          final combined = [..._selectedMedia, ...result.media];
+          _selectedMedia = combined.take(5).toList();
+        });
+      }
+    } on MediaValidationException catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(e.message),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    }
+  }
+
+  void _pickImageFromCamera() async {
+    try {
+      final media = await MediaPickerHelper.pickImage(ImageSource.camera);
+      if (media != null && mounted) {
+        setState(() {
+          final combined = [..._selectedMedia, media];
+          _selectedMedia = combined.take(5).toList();
+        });
+      }
+    } on MediaValidationException catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(e.message),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    }
+  }
+
+  void _pickVideo() {
+    final colors = ThemeColors.of(context);
+    final isDark = colors.isDark;
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => Container(
+        decoration: BoxDecoration(
+          color: isDark ? AppColors.elevated : Colors.white,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
+        child: SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Add Video',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: colors.textPrimary,
+                ),
+              ),
+              const SizedBox(height: 16),
+              _VideoPickerOption(
+                icon: Icons.videocam_outlined,
+                label: 'Record Video',
+                subtitle: 'Use camera (max 60s)',
+                color: const Color(0xFFF97316),
+                onTap: () async {
+                  Navigator.pop(ctx);
+                  HapticService.selection();
+                  try {
+                    final media = await MediaPickerHelper.pickVideo(ImageSource.camera);
+                    if (media != null && mounted) {
+                      setState(() {
+                        final combined = [..._selectedMedia, media];
+                        _selectedMedia = combined.take(5).toList();
+                      });
+                    }
+                  } on MediaValidationException catch (e) {
+                    if (mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text(e.message), backgroundColor: AppColors.error),
+                      );
+                    }
+                  }
+                },
+              ),
+              const SizedBox(height: 8),
+              _VideoPickerOption(
+                icon: Icons.video_library_outlined,
+                label: 'Choose Video',
+                subtitle: 'From gallery (max 60s)',
+                color: const Color(0xFFA855F7),
+                onTap: () async {
+                  Navigator.pop(ctx);
+                  HapticService.selection();
+                  try {
+                    final media = await MediaPickerHelper.pickVideo(ImageSource.gallery);
+                    if (media != null && mounted) {
+                      setState(() {
+                        final combined = [..._selectedMedia, media];
+                        _selectedMedia = combined.take(5).toList();
+                      });
+                    }
+                  } on MediaValidationException catch (e) {
+                    if (mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text(e.message), backgroundColor: AppColors.error),
+                      );
+                    }
+                  }
+                },
+              ),
+              const SizedBox(height: 12),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _handleSend() {
+    if (_selectedMedia.isNotEmpty) {
+      final mediaList = List<PickedMedia>.from(_selectedMedia);
+      setState(() => _selectedMedia = []);
+      if (mediaList.length == 1) {
+        widget.onSendWithMedia(mediaList.first);
+      } else {
+        widget.onSendWithMultiMedia(mediaList);
+      }
+    } else {
+      widget.onSend();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -897,7 +1357,7 @@ class _InputBar extends StatelessWidget {
     return Container(
       padding: EdgeInsets.fromLTRB(
         16,
-        12,
+        0,
         16,
         MediaQuery.of(context).padding.bottom + 12,
       ),
@@ -910,76 +1370,240 @@ class _InputBar extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          if (isOffline)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 4),
-              child: Row(
+          // Media preview strip
+          if (_selectedMedia.isNotEmpty)
+            MediaPreviewStrip(
+              mediaList: _selectedMedia,
+              onRemoveAt: (index) => setState(() => _selectedMedia.removeAt(index)),
+              onAddMore: _pickMedia,
+            ),
+
+          Padding(
+            padding: const EdgeInsets.only(top: 12),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (widget.isOffline)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 4),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.phone_android, size: 12, color: Colors.amber),
+                        const SizedBox(width: 4),
+                        Text(
+                          'Offline AI${widget.modelName != null ? ' \u00b7 ${widget.modelName}' : ''}',
+                          style: const TextStyle(fontSize: 11, color: Colors.amber),
+                        ),
+                      ],
+                    ),
+                  ),
+                Row(
+                  children: [
+                    // Camera button (quick image)
+                    GestureDetector(
+                      onTap: widget.isLoading ? null : _pickImageFromCamera,
+                      child: Container(
+                        width: 36,
+                        height: 36,
+                        decoration: BoxDecoration(
+                          color: isDark
+                              ? Colors.white.withOpacity(0.08)
+                              : Colors.black.withOpacity(0.05),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(
+                          Icons.camera_alt_outlined,
+                          size: 18,
+                          color: widget.isLoading
+                              ? colors.textMuted
+                              : colors.textSecondary,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+
+                    // Video button
+                    GestureDetector(
+                      onTap: widget.isLoading ? null : _pickVideo,
+                      child: Container(
+                        width: 36,
+                        height: 36,
+                        decoration: BoxDecoration(
+                          color: isDark
+                              ? Colors.white.withOpacity(0.08)
+                              : Colors.black.withOpacity(0.05),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(
+                          Icons.videocam_outlined,
+                          size: 18,
+                          color: widget.isLoading
+                              ? colors.textMuted
+                              : const Color(0xFFF97316),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+
+                    // Media picker button (gallery + video)
+                    GestureDetector(
+                      onTap: widget.isLoading ? null : _pickMedia,
+                      child: Container(
+                        width: 36,
+                        height: 36,
+                        decoration: BoxDecoration(
+                          color: isDark
+                              ? Colors.white.withOpacity(0.08)
+                              : Colors.black.withOpacity(0.05),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(
+                          Icons.attach_file_outlined,
+                          size: 18,
+                          color: widget.isLoading
+                              ? colors.textMuted
+                              : colors.textSecondary,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+
+                    // Text field
+                    Expanded(
+                      child: TextField(
+                        controller: widget.controller,
+                        focusNode: widget.focusNode,
+                        enabled: true,
+                        textCapitalization: TextCapitalization.sentences,
+                        maxLines: 1,
+                        minLines: 1,
+                        decoration: InputDecoration(
+                          hintText: _selectedMedia.isNotEmpty
+                              ? 'Add a message (optional)...'
+                              : (widget.isLoading ? 'Type your next message...' : 'Ask your AI coach...'),
+                          filled: true,
+                          fillColor: colors.glassSurface,
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(24),
+                            borderSide: BorderSide.none,
+                          ),
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 20,
+                            vertical: 12,
+                          ),
+                        ),
+                        onSubmitted: (_) => _handleSend(),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+
+                    // Send button
+                    Container(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: widget.isLoading
+                              ? [colors.textMuted, colors.textMuted]
+                              : [AppColors.cyan, AppColors.purple],
+                        ),
+                        shape: BoxShape.circle,
+                      ),
+                      child: IconButton(
+                        onPressed: widget.isLoading ? null : _handleSend,
+                        icon: widget.isLoading
+                            ? const SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Colors.white,
+                                ),
+                              )
+                            : const Icon(
+                                Icons.send_rounded,
+                                color: Colors.white,
+                              ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────
+// Video Picker Option (for _InputBar video button)
+// ─────────────────────────────────────────────────────────────────
+
+class _VideoPickerOption extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final String subtitle;
+  final Color color;
+  final VoidCallback onTap;
+
+  const _VideoPickerOption({
+    required this.icon,
+    required this.label,
+    required this.subtitle,
+    required this.color,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = ThemeColors.of(context);
+
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        decoration: BoxDecoration(
+          color: color.withOpacity(0.08),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: color.withOpacity(0.15)),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 36,
+              height: 36,
+              decoration: BoxDecoration(
+                color: color.withOpacity(0.12),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(icon, size: 18, color: color),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Icon(Icons.phone_android, size: 12, color: Colors.amber),
-                  const SizedBox(width: 4),
                   Text(
-                    'Offline AI${modelName != null ? ' \u00b7 $modelName' : ''}',
-                    style: const TextStyle(fontSize: 11, color: Colors.amber),
+                    label,
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: colors.textPrimary,
+                    ),
+                  ),
+                  Text(
+                    subtitle,
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: colors.textMuted,
+                    ),
                   ),
                 ],
               ),
             ),
-          Row(
-            children: [
-              Expanded(
-                child: TextField(
-                  controller: controller,
-                  focusNode: focusNode,
-                  enabled: true,
-                  textCapitalization: TextCapitalization.sentences,
-                  maxLines: 4,
-                  minLines: 1,
-                  decoration: InputDecoration(
-                    hintText: isLoading ? 'Type your next message...' : 'Ask your AI coach...',
-                    filled: true,
-                    fillColor: colors.glassSurface,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(24),
-                      borderSide: BorderSide.none,
-                    ),
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 20,
-                      vertical: 12,
-                    ),
-                  ),
-                  onSubmitted: (_) => onSend(),
-                ),
-              ),
-              const SizedBox(width: 8),
-              Container(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: isLoading
-                        ? [colors.textMuted, colors.textMuted]
-                        : [AppColors.cyan, AppColors.purple],
-                  ),
-                  shape: BoxShape.circle,
-                ),
-                child: IconButton(
-                  onPressed: isLoading ? null : onSend,
-                  icon: isLoading
-                      ? const SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: Colors.white,
-                          ),
-                        )
-                      : const Icon(
-                          Icons.send_rounded,
-                          color: Colors.white,
-                        ),
-                ),
-              ),
-            ],
-          ),
-        ],
+            Icon(Icons.chevron_right, color: colors.textMuted, size: 20),
+          ],
+        ),
       ),
     );
   }
@@ -1077,7 +1701,7 @@ class _EscalateToHumanDialogState extends ConsumerState<_EscalateToHumanDialog> 
           child: const Icon(Icons.support_agent, color: Colors.white, size: 24),
         ),
         const SizedBox(width: 12),
-        const Text('Talk to Human Support'),
+        const Flexible(child: Text('Talk to Human Support')),
       ],
     );
   }
@@ -1273,9 +1897,6 @@ class _EscalateToHumanDialogState extends ConsumerState<_EscalateToHumanDialog> 
             escalatedFromAi: true,
             aiContext: aiContext.isNotEmpty ? aiContext : null,
           );
-
-      // Get the session to retrieve ticket ID
-      final session = ref.read(liveChatProvider).valueOrNull;
 
       if (mounted) {
         Navigator.pop(context);

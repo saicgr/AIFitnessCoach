@@ -122,6 +122,26 @@ class HabitsSection extends ConsumerWidget {
                         context.push('/habits');
                       }
                     },
+                    onLog: () {
+                      if (habit.route != null) {
+                        // Auto-tracked habit — navigate to log screen
+                        context.push(habit.route!);
+                      } else {
+                        // Custom habit — toggle via API
+                        final authState = ref.read(authStateProvider);
+                        final userId = authState.user?.id;
+                        if (userId == null) return;
+                        // Find matching custom habit to get its ID
+                        final customHabits = customHabitsAsync.valueOrNull ?? [];
+                        final match = customHabits.where((h) => h.name == habit.name).firstOrNull;
+                        if (match != null) {
+                          final repository = ref.read(habitRepositoryProvider);
+                          repository.toggleTodayHabit(userId, match.id, !habit.todayCompleted).then((_) {
+                            ref.invalidate(customHabitsHomeProvider);
+                          });
+                        }
+                      }
+                    },
                   ),
                 );
               },
@@ -156,6 +176,7 @@ class HabitsSection extends ConsumerWidget {
       last30Days: last30Days,
       currentStreak: habit.currentStreak,
       route: null, // Custom habits don't have a specific route
+      todayCompleted: habit.todayCompleted,
     );
   }
 

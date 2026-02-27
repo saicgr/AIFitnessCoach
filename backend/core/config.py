@@ -32,6 +32,14 @@ class Settings(BaseSettings):
     gemini_cache_ttl_seconds: int = 3600
     # Enable/disable context caching (set to False to use non-cached generation)
     gemini_cache_enabled: bool = True
+    # Per-domain cache overrides (None = falls back to gemini_cache_enabled)
+    form_cache_enabled: Optional[bool] = None
+    nutrition_cache_enabled: Optional[bool] = None
+
+    # Key frame extraction for video analysis
+    keyframe_extraction_enabled: bool = True
+    keyframe_threshold_seconds: int = 30  # Use keyframes for videos longer than this
+    keyframe_default_count: int = 10  # Number of frames to extract per video
 
     # Server Configuration
     host: str = "0.0.0.0"
@@ -99,6 +107,18 @@ class Settings(BaseSettings):
     cors_origins: list[str] = [
         "https://fitwiz-zqi3.onrender.com",
     ]
+
+    def get_form_cache_enabled(self) -> bool:
+        """Whether form analysis caching is enabled (falls back to gemini_cache_enabled)."""
+        if self.form_cache_enabled is not None:
+            return self.form_cache_enabled
+        return self.gemini_cache_enabled
+
+    def get_nutrition_cache_enabled(self) -> bool:
+        """Whether nutrition analysis caching is enabled (falls back to gemini_cache_enabled)."""
+        if self.nutrition_cache_enabled is not None:
+            return self.nutrition_cache_enabled
+        return self.gemini_cache_enabled
 
     class Config:
         env_file = ".env"

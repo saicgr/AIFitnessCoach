@@ -24,10 +24,13 @@ Note: The limiter must be attached to the FastAPI app in main.py:
     app.state.limiter = limiter
 """
 import json
+import logging
 import os
 import time
 from slowapi import Limiter
 from starlette.requests import Request
+
+logger = logging.getLogger(__name__)
 
 
 def get_real_client_ip(request: Request) -> str:
@@ -116,8 +119,8 @@ async def get_user_id_from_request(request: Request) -> str:
         if user_id:
             return f"user:{user_id}"
 
-    except Exception:
-        pass
+    except Exception as e:
+        logger.debug(f"User ID extraction failed: {e}")
 
     # Fall back to IP-based limiting
     return get_real_client_ip(request)

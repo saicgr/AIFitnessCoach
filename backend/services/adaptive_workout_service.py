@@ -730,8 +730,8 @@ class AdaptiveWorkoutService:
                         recent_logs.append(log)
                     elif log_date.replace(tzinfo=None) > eight_weeks_ago:
                         previous_logs.append(log)
-                except (ValueError, AttributeError):
-                    pass
+                except (ValueError, AttributeError) as e:
+                    logger.debug(f"Failed to parse log date: {e}")
 
         if not recent_logs or not previous_logs:
             return {"trend": "insufficient_data", "message": "Need data from multiple weeks"}

@@ -28,7 +28,7 @@ class InflammationRepository {
   }) async {
     try {
       if (kDebugMode) {
-        print('🔍 [Inflammation] Analyzing barcode: $barcode');
+        debugPrint('🔍 [Inflammation] Analyzing barcode: $barcode');
       }
 
       final response = await _client.post(
@@ -44,7 +44,7 @@ class InflammationRepository {
       final analysis = InflammationAnalysis.fromJson(response.data);
 
       if (kDebugMode) {
-        print('✅ [Inflammation] Analysis complete: score=${analysis.overallScore}, '
+        debugPrint('✅ [Inflammation] Analysis complete: score=${analysis.overallScore}, '
             'inflammatory=${analysis.inflammatoryCount}, '
             'anti-inflammatory=${analysis.antiInflammatoryCount}');
       }
@@ -52,7 +52,7 @@ class InflammationRepository {
       return analysis;
     } catch (e) {
       if (kDebugMode) {
-        print('❌ [Inflammation] Analysis failed: $e');
+        debugPrint('❌ [Inflammation] Analysis failed: $e');
       }
       rethrow;
     }
@@ -82,7 +82,7 @@ class InflammationRepository {
       return items;
     } catch (e) {
       if (kDebugMode) {
-        print('❌ [Inflammation] Failed to get history: $e');
+        debugPrint('❌ [Inflammation] Failed to get history: $e');
       }
       rethrow;
     }
@@ -95,7 +95,7 @@ class InflammationRepository {
       return InflammationStats.fromJson(response.data);
     } catch (e) {
       if (kDebugMode) {
-        print('❌ [Inflammation] Failed to get stats: $e');
+        debugPrint('❌ [Inflammation] Failed to get stats: $e');
       }
       rethrow;
     }
@@ -116,7 +116,7 @@ class InflammationRepository {
       return true;
     } catch (e) {
       if (kDebugMode) {
-        print('❌ [Inflammation] Failed to update notes: $e');
+        debugPrint('❌ [Inflammation] Failed to update notes: $e');
       }
       return false;
     }
@@ -137,7 +137,7 @@ class InflammationRepository {
       return true;
     } catch (e) {
       if (kDebugMode) {
-        print('❌ [Inflammation] Failed to toggle favorite: $e');
+        debugPrint('❌ [Inflammation] Failed to toggle favorite: $e');
       }
       return false;
     }

@@ -21,6 +21,13 @@ class WorkoutAgentState(TypedDict):
     # AI personality settings
     ai_settings: Optional[Dict[str, Any]]
 
+    # Media reference for form analysis (S3 video/image)
+    media_ref: Optional[Dict[str, Any]]
+    media_refs: Optional[List[Dict[str, Any]]]  # Multi-media references for batch comparison
+
+    # Beast mode configuration
+    beast_mode_config: Optional[Dict[str, Any]]
+
     # Intent extraction results
     intent: Optional[CoachIntent]
     extracted_exercises: List[str]
@@ -45,6 +52,9 @@ class WorkoutAgentState(TypedDict):
     action_data: Optional[Dict[str, Any]]
     rag_context_used: bool
     similar_questions: List[str]
+
+    # Media classification (from media classifier)
+    media_content_type: Optional[str]
 
     # Error handling
     error: Optional[str]

@@ -1744,11 +1744,11 @@ class _LoggedMealsSection extends StatelessWidget {
                           children: [
                             _MacroChip(label: 'Cal', value: '${food.calories ?? 0}', color: teal),
                             const SizedBox(width: 8),
-                            _MacroChip(label: 'P', value: '${(food.proteinG ?? 0).toStringAsFixed(0)}g', color: AppColors.purple),
+                            _MacroChip(label: 'P', value: '${(food.proteinG ?? 0).toStringAsFixed(0)}g', color: AppColors.macroProtein),
                             const SizedBox(width: 8),
-                            _MacroChip(label: 'C', value: '${(food.carbsG ?? 0).toStringAsFixed(0)}g', color: AppColors.orange),
+                            _MacroChip(label: 'C', value: '${(food.carbsG ?? 0).toStringAsFixed(0)}g', color: AppColors.macroCarbs),
                             const SizedBox(width: 8),
-                            _MacroChip(label: 'F', value: '${(food.fatG ?? 0).toStringAsFixed(0)}g', color: AppColors.error),
+                            _MacroChip(label: 'F', value: '${(food.fatG ?? 0).toStringAsFixed(0)}g', color: AppColors.macroFat),
                           ],
                         ),
                         if (food.amount != null) ...[

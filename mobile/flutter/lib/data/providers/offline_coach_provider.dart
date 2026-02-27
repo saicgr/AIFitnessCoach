@@ -33,23 +33,18 @@ class OfflineChatState {
   }
 }
 
-/// Provider for offline chat state
+/// Provider for offline chat state.
+///
+/// Offline Mode is Coming Soon — always returns unavailable so no
+/// on-device AI or offline chat fallback is triggered.
 final offlineChatStateProvider = Provider<OfflineChatState>((ref) {
-  final isOnline = ref.watch(isOnlineProvider);
-  final gemmaService = ref.watch(onDeviceGemmaServiceProvider);
-
-  return OfflineChatState(
-    isAvailable: !isOnline && gemmaService.isModelLoaded,
-    isMultimodal: gemmaService.isMultimodal,
-    modelName: gemmaService.loadedModelType != null
-        ? GemmaModelInfo.fromType(gemmaService.loadedModelType!).displayName
-        : null,
-  );
+  // Offline Mode is Coming Soon — disabled until launch.
+  return const OfflineChatState(isAvailable: false);
 });
 
-/// Whether chat should use offline mode
+/// Whether chat should use offline mode.
+///
+/// Offline Mode is Coming Soon — always returns false.
 final shouldUseOfflineChatProvider = Provider<bool>((ref) {
-  final isOnline = ref.watch(isOnlineProvider);
-  final gemmaService = ref.watch(onDeviceGemmaServiceProvider);
-  return !isOnline && gemmaService.isModelLoaded;
+  return false;
 });

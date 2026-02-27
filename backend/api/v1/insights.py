@@ -702,8 +702,8 @@ async def get_habit_suggestions(
                 try:
                     suggestions = json.loads(cached.data[0]["insight"])
                     return {"suggestions": suggestions, "cached": True}
-                except json.JSONDecodeError:
-                    pass
+                except json.JSONDecodeError as e:
+                    logger.debug(f"Failed to parse cached suggestions: {e}")
 
         # Get user profile
         user_result = db.client.table("users").select("*").eq("id", user_id).execute()
@@ -852,7 +852,7 @@ def _parse_habit_suggestions(response: str) -> List[Dict]:
         if start >= 0 and end > start:
             json_str = response[start:end]
             return json.loads(json_str)
-    except (json.JSONDecodeError, ValueError):
-        pass
+    except (json.JSONDecodeError, ValueError) as e:
+        logger.debug(f"Failed to parse AI habit response: {e}")
 
     return _fallback_habit_suggestions()

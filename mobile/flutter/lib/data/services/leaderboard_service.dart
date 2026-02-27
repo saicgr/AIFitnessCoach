@@ -55,7 +55,7 @@ class LeaderboardService {
       }
 
       final response = await _apiClient.get(
-        '/social/leaderboard/',
+        '/leaderboard/',
         queryParameters: queryParams,
       );
 
@@ -92,7 +92,7 @@ class LeaderboardService {
       }
 
       final response = await _apiClient.get(
-        '/social/leaderboard/rank',
+        '/leaderboard/rank',
         queryParameters: queryParams,
       );
 
@@ -117,7 +117,7 @@ class LeaderboardService {
   }) async {
     try {
       final response = await _apiClient.get(
-        '/social/leaderboard/unlock-status',
+        '/leaderboard/unlock-status',
         queryParameters: {'user_id': userId},
       );
 
@@ -140,7 +140,7 @@ class LeaderboardService {
   Future<Map<String, dynamic>> getLeaderboardStats() async {
     try {
       final response = await _apiClient.get(
-        '/social/leaderboard/stats',
+        '/leaderboard/stats',
       );
 
       if (response.statusCode == 200) {
@@ -167,7 +167,7 @@ class LeaderboardService {
   }) async {
     try {
       final response = await _apiClient.post(
-        '/social/leaderboard/async-challenge',
+        '/leaderboard/async-challenge',
         queryParameters: {'user_id': userId},
         data: {
           'target_user_id': targetUserId,

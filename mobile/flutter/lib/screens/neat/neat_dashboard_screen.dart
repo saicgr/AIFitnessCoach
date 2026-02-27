@@ -1,7 +1,8 @@
-import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants/app_colors.dart';
+import '../../data/providers/neat_provider.dart' as real_neat;
+import '../../data/services/api_client.dart';
 import '../../data/services/haptic_service.dart';
 
 // ============================================
@@ -192,64 +193,79 @@ class NeatState {
   }
 }
 
-/// NEAT State Notifier
+/// NEAT State Notifier - wired to real API providers
 class NeatNotifier extends StateNotifier<NeatState> {
-  NeatNotifier() : super(const NeatState());
+  final Ref _ref;
 
-  /// Load NEAT data (simulated for now)
+  NeatNotifier(this._ref) : super(const NeatState());
+
+  /// Load NEAT data from the real API providers
   Future<void> loadNeatData() async {
     state = state.copyWith(isLoading: true, clearError: true);
 
     try {
-      // Simulate API call delay
-      await Future.delayed(const Duration(milliseconds: 500));
+      // Get user ID and trigger real API loading
+      final apiClient = _ref.read(apiClientProvider);
+      final userId = await apiClient.getUserId();
+      if (userId == null) {
+        state = state.copyWith(isLoading: false, error: 'Not logged in');
+        return;
+      }
 
-      // Generate sample hourly activity data
+      final realNotifier = _ref.read(real_neat.neatProvider.notifier);
+      realNotifier.setUserId(userId);
+      await realNotifier.loadDashboard();
+
+      final realState = _ref.read(real_neat.neatProvider);
+      final dashboard = realState.dashboard;
       final now = DateTime.now();
-      final hourlyActivity = List.generate(24, (hour) {
-        if (hour > now.hour) {
+
+      // Map hourly activity from real provider
+      List<HourlyActivity> hourlyActivity;
+      if (dashboard?.hourlyBreakdown != null) {
+        final breakdown = dashboard!.hourlyBreakdown!;
+        hourlyActivity = List.generate(24, (hour) {
+          final activity = breakdown.getHourActivity(hour);
+          return HourlyActivity(
+            hour: hour,
+            steps: activity?.steps ?? 0,
+          );
+        });
+      } else {
+        // Default empty hours
+        hourlyActivity = List.generate(24, (hour) {
           return HourlyActivity(hour: hour, steps: 0);
-        }
-        // Simulate varying activity levels
-        final random = math.Random(hour + now.day);
-        final baseSteps = hour >= 6 && hour <= 22 ? 150 : 20;
-        final variance = random.nextInt(300);
-        return HourlyActivity(hour: hour, steps: baseSteps + variance);
-      });
+        });
+      }
 
-      // Calculate totals
-      final totalSteps =
-          hourlyActivity.fold(0, (sum, h) => sum + h.steps);
-      final activeHours =
-          hourlyActivity.where((h) => h.isActive).length;
-      final stepGoal = 10000;
-
-      // Calculate NEAT score (weighted average of step progress and active hours)
-      final stepScore = (totalSteps / stepGoal * 50).clamp(0, 50);
-      final activeHoursScore = (activeHours / 10 * 50).clamp(0, 50);
-      final neatScore = (stepScore + activeHoursScore).round();
+      // Calculate totals from hourly data
+      final totalSteps = realState.currentSteps;
+      final activeHours = hourlyActivity.where((h) => h.isActive).length;
+      final stepGoal = realState.stepGoal;
+      final neatScoreValue = realState.todayScoreValue;
 
       final score = NeatScore(
-        score: neatScore.clamp(0, 100),
+        score: neatScoreValue.clamp(0, 100),
         steps: totalSteps,
         stepGoal: stepGoal,
         activeHours: activeHours,
         activeHoursGoal: 10,
         hourlyActivity: hourlyActivity,
-        isProgressiveGoal: true,
-        aiTip:
-            "You tend to be sedentary between 2-4pm. Try a 5-minute walk after lunch!",
+        isProgressiveGoal: dashboard?.stepGoal?.isProgressive ?? false,
+        aiTip: dashboard?.suggestions.isNotEmpty == true ? dashboard!.suggestions.first : null,
         date: now,
       );
 
-      // Sample streaks
-      const streaks = NeatStreak(
-        currentStepStreak: 5,
-        currentActiveHoursStreak: 3,
-        currentNeatScoreStreak: 7,
-        longestStepStreak: 14,
-        longestActiveHoursStreak: 10,
-        longestNeatScoreStreak: 21,
+      // Map streaks from real provider
+      final stepStreak = dashboard?.stepStreak;
+      final allGoalsStreak = dashboard?.allGoalsStreak;
+      final streaks = NeatStreak(
+        currentStepStreak: stepStreak?.currentStreak ?? 0,
+        currentActiveHoursStreak: 0, // No separate active hours streak in the real model
+        currentNeatScoreStreak: allGoalsStreak?.currentStreak ?? 0,
+        longestStepStreak: stepStreak?.longestStreak ?? 0,
+        longestActiveHoursStreak: 0,
+        longestNeatScoreStreak: allGoalsStreak?.longestStreak ?? 0,
       );
 
       state = state.copyWith(
@@ -265,61 +281,37 @@ class NeatNotifier extends StateNotifier<NeatState> {
     }
   }
 
-  /// Load achievements
+  /// Load achievements from real API
   Future<void> loadAchievements() async {
     state = state.copyWith(isLoadingAchievements: true);
 
     try {
-      await Future.delayed(const Duration(milliseconds: 300));
+      final apiClient = _ref.read(apiClientProvider);
+      final userId = await apiClient.getUserId();
+      if (userId == null) {
+        state = state.copyWith(isLoadingAchievements: false);
+        return;
+      }
 
-      // Sample achievements
-      final achievements = [
-        const NeatAchievement(
-          id: 'first_10k',
-          title: 'First 10K Steps',
-          description: 'Complete 10,000 steps in a single day',
-          icon: '10K',
-          isUnlocked: true,
-          progress: 1.0,
-          points: 50,
-        ),
-        const NeatAchievement(
-          id: 'week_warrior',
-          title: 'Week Warrior',
-          description: 'Hit step goal 7 days in a row',
-          icon: '7D',
-          isUnlocked: true,
-          progress: 1.0,
-          points: 100,
-        ),
-        const NeatAchievement(
-          id: 'active_champion',
-          title: 'Active Champion',
-          description: 'Maintain 10+ active hours for 5 days',
-          icon: 'AC',
-          isUnlocked: false,
-          progress: 0.6,
-          points: 75,
-        ),
-        const NeatAchievement(
-          id: 'neat_master',
-          title: 'NEAT Master',
-          description: 'Achieve 90+ NEAT score for 30 days',
-          icon: 'NM',
-          isUnlocked: false,
-          progress: 0.23,
-          points: 200,
-        ),
-        const NeatAchievement(
-          id: 'movement_guru',
-          title: 'Movement Guru',
-          description: 'Take 15,000+ steps in a day',
-          icon: 'MG',
-          isUnlocked: false,
-          progress: 0.75,
-          points: 75,
-        ),
-      ];
+      final realNotifier = _ref.read(real_neat.neatProvider.notifier);
+      await realNotifier.loadAchievements(userId: userId);
+
+      final realState = _ref.read(real_neat.neatProvider);
+      final realAchievements = realState.achievements;
+
+      // Map real achievements to local UI models
+      final achievements = realAchievements.map((a) {
+        return NeatAchievement(
+          id: a.id,
+          title: a.name,
+          description: a.description,
+          icon: a.iconName ?? a.name.substring(0, 2).toUpperCase(),
+          isUnlocked: a.isEarned,
+          progress: a.progressPercentage / 100.0,
+          unlockedAt: a.earnedAtDate,
+          points: a.points,
+        );
+      }).toList();
 
       final recentAchievements =
           achievements.where((a) => a.isUnlocked).take(2).toList();
@@ -346,9 +338,9 @@ class NeatNotifier extends StateNotifier<NeatState> {
   }
 }
 
-/// NEAT Provider
+/// NEAT Provider - wired to real API
 final neatProvider = StateNotifierProvider<NeatNotifier, NeatState>((ref) {
-  return NeatNotifier();
+  return NeatNotifier(ref);
 });
 
 // ============================================

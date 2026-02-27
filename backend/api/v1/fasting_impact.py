@@ -638,8 +638,8 @@ async def get_fasting_impact_analysis(
             try:
                 start = datetime.fromisoformat(record["start_time"].replace("Z", "+00:00")).date()
                 fasting_dates.add(start.isoformat())
-            except:
-                pass
+            except Exception as e:
+                logger.debug(f"Failed to parse fasting date: {e}")
 
         # Get weight logs
         weight_result = db.client.table("weight_logs").select("*").eq(
@@ -1029,8 +1029,8 @@ async def get_fasting_calendar(
                     "protocol": record.get("protocol"),
                     "completion_percent": record.get("completion_percentage"),
                 }
-            except:
-                pass
+            except Exception as e:
+                logger.debug(f"Failed to parse fasting record: {e}")
 
         # Get weight logs
         weight_result = db.client.table("weight_logs").select(

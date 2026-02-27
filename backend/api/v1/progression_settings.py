@@ -237,8 +237,8 @@ async def analyze_user_for_recommendation(user_id: str, user_tz: str = "UTC") ->
                 try:
                     dob = datetime.fromisoformat(str(user.get("date_of_birth")).replace("Z", "+00:00"))
                     age = (datetime.now(dob.tzinfo) - dob).days // 365
-                except Exception:
-                    pass
+                except Exception as e:
+                    logger.debug(f"Failed to parse date of birth: {e}")
 
             analysis["age"] = age
             analysis["is_senior"] = age is not None and age >= 55

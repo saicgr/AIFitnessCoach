@@ -9,6 +9,9 @@ from core.supabase_db import get_supabase_db
 from core.auth import get_current_user
 from core.exceptions import safe_internal_error
 from core.timezone_utils import resolve_timezone, get_user_today, local_date_to_utc_range
+from core.logger import get_logger
+
+logger = get_logger(__name__)
 
 router = APIRouter(prefix="/xp", tags=["XP & Progression"])
 
@@ -94,7 +97,7 @@ async def process_daily_login(
     try:
         db = get_supabase_db()
         user_id = current_user["id"]
-        print(f"🔍 [XP] daily-login called for user_id: {user_id}, auth_id: {current_user.get('auth_id')}")
+        logger.info(f"[XP] daily-login called for user_id: {user_id}, auth_id: {current_user.get('auth_id')}")
         result = db.client.rpc(
             "process_daily_login",
             {"p_user_id": user_id}
@@ -123,12 +126,12 @@ async def process_daily_login(
                 if details.startswith("b'") and details.endswith("'"):
                     json_str = details[2:-1]  # Remove b' and trailing '
                     data = json.loads(json_str)
-                    print(f"✅ [XP] daily-login extracted data from RPC response")
+                    logger.info(f"[XP] daily-login extracted data from RPC response")
                     return DailyLoginResponse(**data)
             except Exception as parse_error:
-                print(f"❌ [XP] Failed to parse RPC response: {parse_error}")
+                logger.error(f"[XP] Failed to parse RPC response: {parse_error}")
 
-        print(f"❌ [XP] daily-login error: {e}")
+        logger.error(f"[XP] daily-login error: {e}")
         raise safe_internal_error(e, "xp")
 
 
@@ -346,7 +349,7 @@ async def get_checkpoint_progress(
         }
 
     except Exception as e:
-        print(f"Error getting checkpoint progress: {e}")
+        logger.error(f"Error getting checkpoint progress: {e}")
         # Return empty progress on error with default 5 days/week targets
         default_days_per_week = 5
         return {
@@ -380,7 +383,7 @@ async def get_all_checkpoint_progress(
         return {"weekly": None, "monthly": None}
 
     except Exception as e:
-        print(f"Error getting all checkpoint progress: {e}")
+        logger.error(f"Error getting all checkpoint progress: {e}")
         raise safe_internal_error(e, "xp")
 
 
@@ -397,7 +400,7 @@ async def increment_checkpoint_workout(
         db = get_supabase_db()
         user_id = current_user["id"]
 
-        print(f"🎯 [XP] Incrementing checkpoint workout for user {user_id}")
+        logger.info(f"[XP] Incrementing checkpoint workout for user {user_id}")
 
         result = db.client.rpc(
             "increment_checkpoint_workout",
@@ -409,7 +412,7 @@ async def increment_checkpoint_workout(
             total_xp = (data.get("weekly_xp_awarded", 0) or 0) + (data.get("monthly_xp_awarded", 0) or 0)
 
             if total_xp > 0:
-                print(f"🎉 [XP] Checkpoint XP awarded: weekly={data.get('weekly_xp_awarded')}, monthly={data.get('monthly_xp_awarded')}")
+                logger.info(f"[XP] Checkpoint XP awarded: weekly={data.get('weekly_xp_awarded')}, monthly={data.get('monthly_xp_awarded')}")
 
             return {
                 "success": True,
@@ -425,7 +428,7 @@ async def increment_checkpoint_workout(
         return {"success": True, "weekly_xp_awarded": 0, "monthly_xp_awarded": 0, "total_xp_awarded": 0}
 
     except Exception as e:
-        print(f"❌ [XP] Error incrementing checkpoint workout: {e}")
+        logger.error(f"[XP] Error incrementing checkpoint workout: {e}")
         raise safe_internal_error(e, "xp")
 
 
@@ -460,13 +463,13 @@ async def award_goal_xp(
     try:
         db = get_supabase_db()
         user_id = current_user["id"]
-        print(f"🎯 [XP] award-goal-xp called: user_id={user_id}, goal_type={request.goal_type}")
+        logger.info(f"[XP] award-goal-xp called: user_id={user_id}, goal_type={request.goal_type}")
 
         # Resolve user timezone and get today's UTC range
         user_tz = resolve_timezone(http_request, db, user_id)
         today_str = get_user_today(user_tz)
         today_start_iso, today_end_iso = local_date_to_utc_range(today_str, user_tz)
-        print(f"🔍 [XP] Checking existing claims from {today_start_iso} to {today_end_iso}")
+        logger.info(f"[XP] Checking existing claims from {today_start_iso} to {today_end_iso}")
 
         # Define XP amounts for each goal type
         goal_xp_amounts = {
@@ -492,9 +495,9 @@ async def award_goal_xp(
                 "title": "Novice",
                 "trust_level": 1
             }, on_conflict="user_id", ignore_duplicates=True).execute()
-            print(f"✅ [XP] Ensured user_xp record exists for user {user_id}")
+            logger.info(f"[XP] Ensured user_xp record exists for user {user_id}")
         except Exception as init_err:
-            print(f"⚠️ [XP] Could not ensure user_xp record: {init_err}")
+            logger.warning(f"[XP] Could not ensure user_xp record: {init_err}")
 
         # Check if already awarded today (prevent double claiming)
         existing = db.client.table("xp_transactions").select("id").eq(
@@ -506,10 +509,10 @@ async def award_goal_xp(
         ).lt(
             "created_at", today_end_iso
         ).execute()
-        print(f"🔍 [XP] Existing claims found: {len(existing.data) if existing.data else 0}")
+        logger.info(f"[XP] Existing claims found: {len(existing.data) if existing.data else 0}")
 
         if existing.data and len(existing.data) > 0:
-            print(f"⚠️ [XP] Already claimed {request.goal_type} today, returning 0 XP")
+            logger.warning(f"[XP] Already claimed {request.goal_type} today, returning 0 XP")
             return AwardGoalXPResponse(
                 success=True,
                 xp_awarded=0,
@@ -518,7 +521,7 @@ async def award_goal_xp(
             )
 
         # Award XP using the award_xp function
-        print(f"🎯 [XP] Calling award_xp RPC with amount={xp_amount}, source={source}")
+        logger.info(f"[XP] Calling award_xp RPC with amount={xp_amount}, source={source}")
         result = db.client.rpc(
             "award_xp",
             {
@@ -530,7 +533,7 @@ async def award_goal_xp(
                 "p_is_verified": False
             }
         ).execute()
-        print(f"✅ [XP] award_xp RPC result: {result.data}")
+        logger.info(f"[XP] award_xp RPC result: {result.data}")
 
         # Get actual XP awarded from the result (accounts for trust_level multiplier)
         actual_xp_awarded = xp_amount
@@ -546,9 +549,9 @@ async def award_goal_xp(
                 if recent_tx.data and len(recent_tx.data) > 0:
                     actual_xp_awarded = recent_tx.data[0].get("xp_amount", xp_amount)
             except Exception as tx_err:
-                print(f"Warning: Could not fetch actual XP amount: {tx_err}")
+                logger.warning(f"Could not fetch actual XP amount: {tx_err}")
 
-        print(f"🎉 [XP] Successfully awarded {actual_xp_awarded} XP for {request.goal_type}")
+        logger.info(f"[XP] Successfully awarded {actual_xp_awarded} XP for {request.goal_type}")
         return AwardGoalXPResponse(
             success=True,
             xp_awarded=actual_xp_awarded,
@@ -558,7 +561,7 @@ async def award_goal_xp(
     except HTTPException:
         raise
     except Exception as e:
-        print(f"❌ [XP] Error awarding goal XP: {e}")
+        logger.error(f"[XP] Error awarding goal XP: {e}")
         raise safe_internal_error(e, "xp")
 
 
@@ -606,7 +609,7 @@ async def get_daily_goals_status(
         )
 
     except Exception as e:
-        print(f"Error getting daily goals status: {e}")
+        logger.error(f"Error getting daily goals status: {e}")
         raise safe_internal_error(e, "xp")
 
 
@@ -679,7 +682,7 @@ async def award_first_time_bonus(
         user_id = current_user["id"]
         bonus_type = request.bonus_type
 
-        print(f"🎁 [XP] First-time bonus request: user_id={user_id}, bonus_type={bonus_type}")
+        logger.info(f"[XP] First-time bonus request: user_id={user_id}, bonus_type={bonus_type}")
 
         if bonus_type not in FIRST_TIME_BONUSES:
             raise HTTPException(status_code=400, detail=f"Invalid bonus type: {bonus_type}")
@@ -694,7 +697,7 @@ async def award_first_time_bonus(
         ).execute()
 
         if existing.data and len(existing.data) > 0:
-            print(f"⚠️ [XP] First-time bonus {bonus_type} already awarded to user {user_id}")
+            logger.warning(f"[XP] First-time bonus {bonus_type} already awarded to user {user_id}")
             return FirstTimeBonusResponse(
                 awarded=False,
                 xp=0,
@@ -712,7 +715,7 @@ async def award_first_time_bonus(
                 "trust_level": 1
             }, on_conflict="user_id", ignore_duplicates=True).execute()
         except Exception as init_err:
-            print(f"⚠️ [XP] Could not ensure user_xp record: {init_err}")
+            logger.warning(f"[XP] Could not ensure user_xp record: {init_err}")
 
         # Record the bonus
         db.client.table("user_first_time_bonuses").insert({
@@ -734,7 +737,7 @@ async def award_first_time_bonus(
             }
         ).execute()
 
-        print(f"🎉 [XP] Awarded {xp_amount} XP for first-time bonus: {bonus_type}")
+        logger.info(f"[XP] Awarded {xp_amount} XP for first-time bonus: {bonus_type}")
         return FirstTimeBonusResponse(
             awarded=True,
             xp=xp_amount,
@@ -745,7 +748,7 @@ async def award_first_time_bonus(
     except HTTPException:
         raise
     except Exception as e:
-        print(f"❌ [XP] Error awarding first-time bonus: {e}")
+        logger.error(f"[XP] Error awarding first-time bonus: {e}")
         raise safe_internal_error(e, "xp")
 
 
@@ -776,7 +779,7 @@ async def get_first_time_bonuses(
         ]
 
     except Exception as e:
-        print(f"❌ [XP] Error getting first-time bonuses: {e}")
+        logger.error(f"[XP] Error getting first-time bonuses: {e}")
         raise safe_internal_error(e, "xp")
 
 
@@ -812,7 +815,7 @@ async def get_available_first_time_bonuses(
         return {"bonuses": bonuses}
 
     except Exception as e:
-        print(f"❌ [XP] Error getting available first-time bonuses: {e}")
+        logger.error(f"[XP] Error getting available first-time bonuses: {e}")
         raise safe_internal_error(e, "xp")
 
 
@@ -865,8 +868,8 @@ async def get_consumables(
                     parsed = dt.fromisoformat(active_until_dt.replace('Z', '+00:00'))
                     if parsed > datetime.utcnow().replace(tzinfo=parsed.tzinfo):
                         active_until = active_until_dt
-                except:
-                    pass
+                except Exception as e:
+                    logger.debug(f"Failed to parse 2x token date: {e}")
 
         return ConsumablesResponse(
             streak_shield=consumables.get("streak_shield", 0),
@@ -877,7 +880,7 @@ async def get_consumables(
         )
 
     except Exception as e:
-        print(f"❌ [XP] Error getting consumables: {e}")
+        logger.error(f"[XP] Error getting consumables: {e}")
         raise safe_internal_error(e, "xp")
 
 
@@ -897,7 +900,7 @@ async def use_consumable(
         user_id = current_user["id"]
         item_type = request.item_type
 
-        print(f"🎁 [XP] Use consumable request: user_id={user_id}, item_type={item_type}")
+        logger.info(f"[XP] Use consumable request: user_id={user_id}, item_type={item_type}")
 
         valid_types = ["streak_shield", "xp_token_2x", "fitness_crate", "premium_crate"]
         if item_type not in valid_types:
@@ -911,7 +914,7 @@ async def use_consumable(
             ).execute()
 
             if result.data:
-                print(f"✅ [XP] 2x XP token activated for user {user_id}")
+                logger.info(f"[XP] 2x XP token activated for user {user_id}")
                 return {
                     "success": True,
                     "item_type": item_type,
@@ -948,7 +951,7 @@ async def use_consumable(
     except HTTPException:
         raise
     except Exception as e:
-        print(f"❌ [XP] Error using consumable: {e}")
+        logger.error(f"[XP] Error using consumable: {e}")
         raise safe_internal_error(e, "xp")
 
 
@@ -989,7 +992,7 @@ async def open_crate(
         user_id = current_user["id"]
         crate_type = request.crate_type
 
-        print(f"🎁 [XP] Open crate request: user_id={user_id}, crate_type={crate_type}")
+        logger.info(f"[XP] Open crate request: user_id={user_id}, crate_type={crate_type}")
 
         if crate_type not in CRATE_REWARDS:
             raise HTTPException(status_code=400, detail=f"Invalid crate type: {crate_type}")
@@ -1043,7 +1046,7 @@ async def open_crate(
                 {"p_user_id": user_id, "p_item_type": reward_type, "p_quantity": reward_amount}
             ).execute()
 
-        print(f"🎉 [XP] Crate reward: {reward_amount} {reward_type}")
+        logger.info(f"[XP] Crate reward: {reward_amount} {reward_type}")
 
         return {
             "success": True,
@@ -1059,7 +1062,7 @@ async def open_crate(
     except HTTPException:
         raise
     except Exception as e:
-        print(f"❌ [XP] Error opening crate: {e}")
+        logger.error(f"[XP] Error opening crate: {e}")
         raise safe_internal_error(e, "xp")
 
 
@@ -1130,7 +1133,7 @@ async def get_daily_crates(
         return DailyCratesResponse(crate_date=today_str)
 
     except Exception as e:
-        print(f"❌ [XP] Error getting daily crates: {e}")
+        logger.error(f"[XP] Error getting daily crates: {e}")
         raise safe_internal_error(e, "xp")
 
 
@@ -1151,7 +1154,7 @@ async def claim_daily_crate(
         user_id = current_user["id"]
         crate_type = request.crate_type
 
-        print(f"🎁 [XP] Claim daily crate: user_id={user_id}, crate_type={crate_type}")
+        logger.info(f"[XP] Claim daily crate: user_id={user_id}, crate_type={crate_type}")
 
         valid_types = ["daily", "streak", "activity"]
         if crate_type not in valid_types:
@@ -1169,7 +1172,7 @@ async def claim_daily_crate(
                 reward_type = data.get("reward_type", "xp")
                 reward_amount = data.get("reward_amount", 0)
 
-                print(f"🎉 [XP] Daily crate reward: {reward_amount} {reward_type}")
+                logger.info(f"[XP] Daily crate reward: {reward_amount} {reward_type}")
 
                 return {
                     "success": True,
@@ -1204,7 +1207,7 @@ async def claim_daily_crate(
                 if details.startswith("b'") and details.endswith("'"):
                     json_str = details[2:-1]
                     data = json.loads(json_str)
-                    print(f"✅ [XP] claim-daily-crate extracted data from RPC response")
+                    logger.info(f"[XP] claim-daily-crate extracted data from RPC response")
                     # RPC returns flat structure (migration 230): reward_type, reward_amount
                     reward_type = data.get("reward_type", "xp")
                     reward_amount = data.get("reward_amount", 0)
@@ -1220,9 +1223,9 @@ async def claim_daily_crate(
                         message=data.get("message", "Crate opened!")
                     )
             except Exception as parse_error:
-                print(f"❌ [XP] Failed to parse RPC response: {parse_error}")
+                logger.error(f"[XP] Failed to parse RPC response: {parse_error}")
 
-        print(f"❌ [XP] Error claiming daily crate: {e}")
+        logger.error(f"[XP] Error claiming daily crate: {e}")
         raise safe_internal_error(e, "xp")
 
 
@@ -1244,13 +1247,13 @@ async def unlock_activity_crate(
         ).execute()
 
         if result.data:
-            print(f"✅ [XP] Activity crate unlocked for user {user_id}")
+            logger.info(f"[XP] Activity crate unlocked for user {user_id}")
             return {"success": True, "message": "Activity crate unlocked!"}
 
         return {"success": False, "message": "Activity crate not available or already claimed"}
 
     except Exception as e:
-        print(f"❌ [XP] Error unlocking activity crate: {e}")
+        logger.error(f"[XP] Error unlocking activity crate: {e}")
         raise safe_internal_error(e, "xp")
 
 
@@ -1302,7 +1305,7 @@ async def get_weekly_checkpoints(
         }
 
     except Exception as e:
-        print(f"❌ [XP] Error getting weekly checkpoints: {e}")
+        logger.error(f"[XP] Error getting weekly checkpoints: {e}")
         raise safe_internal_error(e, "xp")
 
 
@@ -1350,7 +1353,7 @@ async def increment_weekly_checkpoint(
     except HTTPException:
         raise
     except Exception as e:
-        print(f"❌ [XP] Error incrementing weekly checkpoint: {e}")
+        logger.error(f"[XP] Error incrementing weekly checkpoint: {e}")
         raise safe_internal_error(e, "xp")
 
 
@@ -1375,7 +1378,7 @@ async def update_weekly_habits(
         return result.data if result.data else {"success": True, "completion_percent": completion_percent}
 
     except Exception as e:
-        print(f"❌ [XP] Error updating weekly habits: {e}")
+        logger.error(f"[XP] Error updating weekly habits: {e}")
         raise safe_internal_error(e, "xp")
 
 
@@ -1429,7 +1432,7 @@ async def get_monthly_achievements(
         }
 
     except Exception as e:
-        print(f"❌ [XP] Error getting monthly achievements: {e}")
+        logger.error(f"[XP] Error getting monthly achievements: {e}")
         raise safe_internal_error(e, "xp")
 
 
@@ -1485,7 +1488,7 @@ async def increment_monthly_achievement(
     except HTTPException:
         raise
     except Exception as e:
-        print(f"❌ [XP] Error incrementing monthly achievement: {e}")
+        logger.error(f"[XP] Error incrementing monthly achievement: {e}")
         raise safe_internal_error(e, "xp")
 
 
@@ -1510,7 +1513,7 @@ async def update_monthly_goal_progress(
         return result.data if result.data else {"success": True, "progress": progress}
 
     except Exception as e:
-        print(f"❌ [XP] Error updating monthly goal progress: {e}")
+        logger.error(f"[XP] Error updating monthly goal progress: {e}")
         raise safe_internal_error(e, "xp")
 
 
@@ -1542,7 +1545,7 @@ async def update_monthly_consistency(
         return result.data if result.data else {"success": True}
 
     except Exception as e:
-        print(f"❌ [XP] Error updating monthly consistency: {e}")
+        logger.error(f"[XP] Error updating monthly consistency: {e}")
         raise safe_internal_error(e, "xp")
 
 
@@ -1567,7 +1570,7 @@ async def update_monthly_weight_status(
         return result.data if result.data else {"success": True, "on_track": on_track}
 
     except Exception as e:
-        print(f"❌ [XP] Error updating monthly weight status: {e}")
+        logger.error(f"[XP] Error updating monthly weight status: {e}")
         raise safe_internal_error(e, "xp")
 
 
@@ -1592,7 +1595,7 @@ async def update_monthly_habits_endpoint(
         return result.data if result.data else {"success": True, "completion_percent": completion_percent}
 
     except Exception as e:
-        print(f"❌ [XP] Error updating monthly habits: {e}")
+        logger.error(f"[XP] Error updating monthly habits: {e}")
         raise safe_internal_error(e, "xp")
 
 
@@ -1621,7 +1624,7 @@ async def evaluate_month_end(
         return result.data if result.data else {"success": True, "total_xp_awarded": 0}
 
     except Exception as e:
-        print(f"❌ [XP] Error evaluating month-end: {e}")
+        logger.error(f"[XP] Error evaluating month-end: {e}")
         raise safe_internal_error(e, "xp")
 
 
@@ -1670,7 +1673,7 @@ async def get_daily_social_xp(
         }
 
     except Exception as e:
-        print(f"❌ [XP] Error getting daily social XP: {e}")
+        logger.error(f"[XP] Error getting daily social XP: {e}")
         raise safe_internal_error(e, "xp")
 
 
@@ -1718,7 +1721,7 @@ async def award_social_xp(
     except HTTPException:
         raise
     except Exception as e:
-        print(f"❌ [XP] Error awarding social XP: {e}")
+        logger.error(f"[XP] Error awarding social XP: {e}")
         raise safe_internal_error(e, "xp")
 
 

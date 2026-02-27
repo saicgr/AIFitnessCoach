@@ -55,6 +55,10 @@ class TodayWorkoutNotifier extends StateNotifier<AsyncValue<TodayWorkoutResponse
   /// Static so it survives provider invalidation (prevents duplicate /generate-stream calls)
   static bool _isAutoGenerating = false;
 
+  /// STATIC: Tracks if generation has already been triggered for current cycle
+  /// Prevents poll-triggered re-generation (every 15s poll re-calling /generate-stream)
+  static bool _hasTriggeredGeneration = false;
+
   /// STATIC: Cooldown tracking for failed generation attempts
   /// Static so it survives provider invalidation (prevents 429 spam after failure)
   static DateTime? _lastGenerationFailure;
@@ -155,10 +159,10 @@ class TodayWorkoutNotifier extends StateNotifier<AsyncValue<TodayWorkoutResponse
       final repository = _ref.read(workoutRepositoryProvider);
       var response = await repository.getTodayWorkout();
 
-      // Handle generation polling
-      if (response?.isGenerating == true) {
+      // Handle generation polling (skip if background gen poll is already active to avoid dual timers)
+      if (response?.isGenerating == true && _backgroundGenPollTimer == null) {
         _handleGenerationPolling();
-      } else {
+      } else if (response?.isGenerating != true) {
         _cancelPolling();
         if (_generationPollCount > 0) {
           debugPrint('✅ [Generation] Complete after $_generationPollCount polls');
@@ -170,10 +174,12 @@ class TodayWorkoutNotifier extends StateNotifier<AsyncValue<TodayWorkoutResponse
       if (response?.needsGeneration == true && response?.nextWorkoutDate != null) {
         final hasAnyWorkout = response!.todayWorkout != null || response.nextWorkout != null;
 
-        if (!hasAnyWorkout) {
+        if (!hasAnyWorkout && !_hasTriggeredGeneration) {
           // No workouts at all - show generating UI and trigger streaming gen
-          debugPrint('🚀 [Auto-Gen] No workouts exist, triggering generation for date=${response.nextWorkoutDate}');
-          _triggerAutoGeneration(response.nextWorkoutDate!);
+          // Only trigger ONCE per cycle to prevent poll-triggered re-generation spam
+          debugPrint('🚀 [Auto-Gen] No workouts exist, triggering generation for date=${response.nextWorkoutDate} (profile=${response.gymProfileId})');
+          _hasTriggeredGeneration = true;
+          _triggerAutoGeneration(response.nextWorkoutDate!, gymProfileId: response.gymProfileId);
           _startBackgroundGenerationPolling();
 
           response = TodayWorkoutResponse(
@@ -189,6 +195,25 @@ class TodayWorkoutNotifier extends StateNotifier<AsyncValue<TodayWorkoutResponse
             generationMessage: 'Generating your workout...',
             needsGeneration: false,
             nextWorkoutDate: response.nextWorkoutDate,
+            gymProfileId: response.gymProfileId,
+          );
+        } else if (!hasAnyWorkout && _hasTriggeredGeneration) {
+          // Already triggered generation - just show generating UI without re-triggering
+          debugPrint('⏳ [Auto-Gen] Generation already triggered, waiting for completion');
+          response = TodayWorkoutResponse(
+            hasWorkoutToday: response.hasWorkoutToday,
+            todayWorkout: response.todayWorkout,
+            nextWorkout: response.nextWorkout,
+            daysUntilNext: response.daysUntilNext,
+            restDayMessage: response.restDayMessage,
+            completedToday: response.completedToday,
+            completedWorkout: response.completedWorkout,
+            extraTodayWorkouts: response.extraTodayWorkouts,
+            isGenerating: true,
+            generationMessage: 'Generating your workout...',
+            needsGeneration: false,
+            nextWorkoutDate: response.nextWorkoutDate,
+            gymProfileId: response.gymProfileId,
           );
         } else {
           // Workouts exist - backend background tasks handle remaining dates silently
@@ -300,9 +325,10 @@ class TodayWorkoutNotifier extends StateNotifier<AsyncValue<TodayWorkoutResponse
   void _startBackgroundGenerationPolling() {
     if (_disposed) return;
 
-    // Cancel any existing poll timers
+    // Cancel any existing poll timers (including generation polling to avoid dual timers)
     _backgroundGenPollTimer?.cancel();
     _backgroundGenTimeout?.cancel();
+    _cancelPolling();
 
     debugPrint('[TodayWorkout] Starting background generation polling (every 15s, 60s timeout)');
 
@@ -354,13 +380,27 @@ class TodayWorkoutNotifier extends StateNotifier<AsyncValue<TodayWorkoutResponse
   Future<void> invalidateAndRefresh() async {
     // Clear in-memory cache too
     _inMemoryCache = null;
+    _hasTriggeredGeneration = false; // Reset so new profile can trigger generation
     await DataCacheService.instance.invalidate(DataCacheService.todayWorkoutKey);
     await _fetchFromApi(showLoading: true);
+  }
+
+  /// Reset generation state (called on gym profile switch)
+  /// Must be called BEFORE invalidating the provider so the new instance
+  /// can trigger generation for the new profile without being blocked by stale flags.
+  static void resetGenerationState() {
+    _isAutoGenerating = false;
+    _hasTriggeredGeneration = false;
+    _lastGenerationFailure = null;
+    _inMemoryCache = null;
+    debugPrint('🔄 [TodayWorkout] Generation state reset (profile switch)');
   }
 
   /// Clear all caches (called on logout)
   static void clearCache() {
     _inMemoryCache = null;
+    _hasTriggeredGeneration = false;
+    _isAutoGenerating = false;
     debugPrint('🧹 [TodayWorkout] In-memory cache cleared');
   }
 
@@ -376,7 +416,7 @@ class TodayWorkoutNotifier extends StateNotifier<AsyncValue<TodayWorkoutResponse
   // Auto-generation and watch sync (same as before)
   // =====================================================
 
-  void _triggerAutoGeneration(String scheduledDate) {
+  void _triggerAutoGeneration(String scheduledDate, {String? gymProfileId}) {
     if (_isAutoGenerating || _disposed) {
       debugPrint('⏳ [Auto-Gen] Already generating or disposed, skipping request');
       return;
@@ -413,6 +453,7 @@ class TodayWorkoutNotifier extends StateNotifier<AsyncValue<TodayWorkoutResponse
         await for (final progress in repository.generateWorkoutStreaming(
           userId: userId,
           scheduledDate: scheduledDate,
+          gymProfileId: gymProfileId,
         )) {
           // Check if disposed during streaming
           if (_disposed) {
@@ -425,6 +466,7 @@ class TodayWorkoutNotifier extends StateNotifier<AsyncValue<TodayWorkoutResponse
           if (progress.status == WorkoutGenerationStatus.completed) {
             debugPrint('✅ [Auto-Gen] Workout generated successfully!');
             _lastGenerationFailure = null; // Clear cooldown on success
+            _hasTriggeredGeneration = false; // Reset for next cycle
             if (!_disposed) {
               refresh();
             }
@@ -435,6 +477,7 @@ class TodayWorkoutNotifier extends StateNotifier<AsyncValue<TodayWorkoutResponse
             debugPrint('❌ [Auto-Gen] Generation failed: ${progress.message}');
             // Set cooldown to prevent rapid retries (especially on 429 rate limit)
             _lastGenerationFailure = DateTime.now();
+            _hasTriggeredGeneration = false; // Reset so retry after cooldown works
             break;
           }
         }
@@ -442,6 +485,7 @@ class TodayWorkoutNotifier extends StateNotifier<AsyncValue<TodayWorkoutResponse
         debugPrint('❌ [Auto-Gen] Error: $e');
         // Set cooldown on error
         _lastGenerationFailure = DateTime.now();
+        _hasTriggeredGeneration = false; // Reset so retry after cooldown works
       } finally {
         _isAutoGenerating = false;
       }

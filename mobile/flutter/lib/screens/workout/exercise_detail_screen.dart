@@ -7,8 +7,11 @@ import 'package:video_player/video_player.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/theme/theme_colors.dart';
+import '../../core/providers/favorites_provider.dart';
+import '../../core/providers/staples_provider.dart';
+import '../../core/providers/exercise_queue_provider.dart';
+import '../../core/providers/avoided_provider.dart';
 import '../../widgets/glass_back_button.dart';
-import '../../core/providers/warmup_duration_provider.dart';
 import '../../data/models/exercise.dart';
 import '../../data/services/api_client.dart';
 
@@ -44,6 +47,13 @@ class PreviousSetData {
   });
 }
 
+class _CueItem {
+  final IconData icon;
+  final String label;
+  final String text;
+  const _CueItem({required this.icon, required this.label, required this.text});
+}
+
 class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen> {
   VideoPlayerController? _videoController;
   String? _imageUrl;
@@ -66,6 +76,8 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen> {
     super.initState();
     _loadMediaAndAutoplay();
     _loadPreviousPerformance();
+    // Avoided provider is lazy — ensure it's loaded so isAvoided() works
+    ref.read(avoidedProvider.notifier).ensureInitialized();
   }
 
   Future<void> _loadPreviousPerformance() async {
@@ -315,6 +327,10 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen> {
                           ),
                       ],
                     ),
+                  const SizedBox(height: 20),
+
+                  // Quick action buttons
+                  _buildActionRow(exercise, elevated, cardBorder, textMuted, accentColor),
                   const SizedBox(height: 24),
 
                   // Instructions
@@ -342,8 +358,12 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen> {
                   _buildSetTable(warmupSets, totalSets, repRange, exercise.weight, elevated, glassSurface, cardBorder, textPrimary, textMuted, textSecondary),
                   const SizedBox(height: 24),
 
-                  // Workout Preferences section
-                  _buildWorkoutPreferencesSection(elevated, cardBorder, textPrimary, textMuted),
+                  // Coaching cues (form, breathing, setup, tempo)
+                  _buildCoachingCuesSection(exercise, elevated, cardBorder, textPrimary, textSecondary, textMuted, accentColor),
+
+                  // Exercise info (difficulty, secondary muscles, substitution, notes)
+                  _buildExerciseInfoSection(exercise, elevated, cardBorder, textPrimary, textSecondary, textMuted, accentColor),
+
                   const SizedBox(height: 100),
                 ],
               ),
@@ -526,6 +546,128 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen> {
     );
   }
 
+  Widget _buildActionRow(WorkoutExercise exercise, Color elevated, Color cardBorder, Color textMuted, Color accentColor) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final favState = ref.watch(favoritesProvider);
+    final stapleState = ref.watch(staplesProvider);
+    final queueState = ref.watch(exerciseQueueProvider);
+    final avoidState = ref.watch(avoidedProvider);
+
+    final name = exercise.name;
+    final isFav = favState.isFavorite(name);
+    final isStaple = stapleState.isStaple(name);
+    final isQueued = queueState.isQueued(name);
+    final isAvoided = avoidState.isAvoided(name);
+
+    final red = isDark ? AppColors.error : AppColorsLight.error;
+    final cyan = isDark ? AppColors.cyan : AppColorsLight.cyan;
+    final orange = isDark ? AppColors.orange : AppColorsLight.orange;
+
+    Widget actionButton({
+      required IconData icon,
+      required IconData activeIcon,
+      required String label,
+      required bool active,
+      required Color activeColor,
+      required VoidCallback onTap,
+    }) {
+      return Expanded(
+        child: GestureDetector(
+          onTap: onTap,
+          behavior: HitTestBehavior.opaque,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              AnimatedSwitcher(
+                duration: const Duration(milliseconds: 200),
+                child: Icon(
+                  active ? activeIcon : icon,
+                  key: ValueKey(active),
+                  color: active ? activeColor : textMuted,
+                  size: 22,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: active ? FontWeight.w600 : FontWeight.w400,
+                  color: active ? activeColor : textMuted,
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 12),
+      decoration: BoxDecoration(
+        color: elevated,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: cardBorder),
+      ),
+      child: Row(
+        children: [
+          actionButton(
+            icon: Icons.favorite_border,
+            activeIcon: Icons.favorite,
+            label: 'Favorite',
+            active: isFav,
+            activeColor: red,
+            onTap: () {
+              HapticFeedback.lightImpact();
+              ref.read(favoritesProvider.notifier).toggleFavorite(name, exerciseId: exercise.exerciseId);
+            },
+          ),
+          actionButton(
+            icon: Icons.push_pin_outlined,
+            activeIcon: Icons.push_pin,
+            label: 'Staple',
+            active: isStaple,
+            activeColor: cyan,
+            onTap: () {
+              HapticFeedback.lightImpact();
+              ref.read(staplesProvider.notifier).toggleStaple(
+                name,
+                libraryId: exercise.libraryId,
+                muscleGroup: exercise.muscleGroup ?? exercise.primaryMuscle,
+              );
+            },
+          ),
+          actionButton(
+            icon: Icons.queue_outlined,
+            activeIcon: Icons.queue,
+            label: 'Queue',
+            active: isQueued,
+            activeColor: orange,
+            onTap: () {
+              HapticFeedback.lightImpact();
+              ref.read(exerciseQueueProvider.notifier).toggleQueue(
+                name,
+                exerciseId: exercise.exerciseId,
+                targetMuscleGroup: exercise.muscleGroup ?? exercise.primaryMuscle,
+              );
+            },
+          ),
+          actionButton(
+            icon: Icons.block_outlined,
+            activeIcon: Icons.block,
+            label: 'Avoid',
+            active: isAvoided,
+            activeColor: textMuted,
+            onTap: () {
+              HapticFeedback.lightImpact();
+              ref.read(avoidedProvider.notifier).toggleAvoided(name, exerciseId: exercise.exerciseId);
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildRestTimerCard(int defaultSeconds, Color elevated, Color textMuted, Color textPrimary) {
     final mins = defaultSeconds ~/ 60;
     final secs = defaultSeconds % 60;
@@ -609,17 +751,29 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen> {
     );
   }
 
-  Widget _buildWorkoutPreferencesSection(Color elevated, Color cardBorder, Color textPrimary, Color textMuted) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final orange = isDark ? AppColors.orange : AppColorsLight.orange;
-    final cyan = isDark ? AppColors.cyan : AppColorsLight.cyan;
-    final warmupState = ref.watch(warmupDurationProvider);
+  Widget _buildCoachingCuesSection(WorkoutExercise exercise, Color elevated, Color cardBorder, Color textPrimary, Color textSecondary, Color textMuted, Color accentColor) {
+    final cues = <_CueItem>[];
+
+    if (exercise.formCue != null && exercise.formCue!.isNotEmpty) {
+      cues.add(_CueItem(icon: Icons.sports_gymnastics, label: 'Form', text: exercise.formCue!));
+    }
+    if (exercise.breathingCue != null && exercise.breathingCue!.isNotEmpty) {
+      cues.add(_CueItem(icon: Icons.air, label: 'Breathing', text: exercise.breathingCue!));
+    }
+    if (exercise.setup != null && exercise.setup!.isNotEmpty) {
+      cues.add(_CueItem(icon: Icons.tune, label: 'Setup', text: exercise.setup!));
+    }
+    if (exercise.tempo != null && exercise.tempo!.isNotEmpty) {
+      cues.add(_CueItem(icon: Icons.speed, label: 'Tempo', text: exercise.tempo!));
+    }
+
+    if (cues.isEmpty) return const SizedBox.shrink();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'WORKOUT PREFERENCES',
+          'COACHING CUES',
           style: TextStyle(
             fontSize: 12,
             fontWeight: FontWeight.w600,
@@ -636,88 +790,143 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen> {
           ),
           child: Column(
             children: [
-              // Warmup toggle
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                child: Row(
-                  children: [
-                    Icon(Icons.whatshot, color: orange, size: 20),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Warmup Phase',
-                            style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w500,
-                              color: textPrimary,
+              for (int i = 0; i < cues.length; i++) ...[
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Icon(cues[i].icon, color: accentColor, size: 20),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              cues[i].label,
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                                color: textPrimary,
+                              ),
                             ),
-                          ),
-                          Text(
-                            'Dynamic warmup before workouts',
-                            style: TextStyle(fontSize: 11, color: textMuted),
-                          ),
-                        ],
-                      ),
-                    ),
-                    Switch.adaptive(
-                      value: warmupState.warmupEnabled,
-                      onChanged: warmupState.isLoading
-                          ? null
-                          : (value) {
-                              HapticFeedback.lightImpact();
-                              ref.read(warmupDurationProvider.notifier).setWarmupEnabled(value);
-                            },
-                      activeTrackColor: orange,
-                    ),
-                  ],
-                ),
-              ),
-              Divider(height: 1, color: cardBorder, indent: 48, endIndent: 16),
-              // Stretch toggle
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                child: Row(
-                  children: [
-                    Icon(Icons.self_improvement, color: cyan, size: 20),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Cooldown Stretch',
-                            style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w500,
-                              color: textPrimary,
+                            const SizedBox(height: 4),
+                            Text(
+                              cues[i].text,
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: textSecondary,
+                                height: 1.4,
+                              ),
                             ),
-                          ),
-                          Text(
-                            'Stretching after workouts',
-                            style: TextStyle(fontSize: 11, color: textMuted),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
-                    ),
-                    Switch.adaptive(
-                      value: warmupState.stretchEnabled,
-                      onChanged: warmupState.isLoading
-                          ? null
-                          : (value) {
-                              HapticFeedback.lightImpact();
-                              ref.read(warmupDurationProvider.notifier).setStretchEnabled(value);
-                            },
-                      activeTrackColor: cyan,
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
+                if (i < cues.length - 1)
+                  Divider(height: 1, color: cardBorder, indent: 48, endIndent: 16),
+              ],
             ],
           ),
         ),
+        const SizedBox(height: 24),
+      ],
+    );
+  }
+
+  Widget _buildExerciseInfoSection(WorkoutExercise exercise, Color elevated, Color cardBorder, Color textPrimary, Color textSecondary, Color textMuted, Color accentColor) {
+    final items = <_CueItem>[];
+
+    if (exercise.difficulty != null && exercise.difficulty!.isNotEmpty) {
+      items.add(_CueItem(icon: Icons.signal_cellular_alt, label: 'Difficulty', text: exercise.difficulty!));
+    }
+
+    // Secondary muscles
+    final secondaryMuscles = exercise.secondaryMuscles;
+    String? musclesText;
+    if (secondaryMuscles is List && secondaryMuscles.isNotEmpty) {
+      musclesText = secondaryMuscles.map((m) => m.toString()).join(', ');
+    } else if (secondaryMuscles is String && secondaryMuscles.isNotEmpty) {
+      musclesText = secondaryMuscles;
+    }
+    if (musclesText != null) {
+      items.add(_CueItem(icon: Icons.accessibility_new, label: 'Secondary Muscles', text: musclesText));
+    }
+
+    if (exercise.substitution != null && exercise.substitution!.isNotEmpty) {
+      items.add(_CueItem(icon: Icons.swap_horiz, label: 'Alternative', text: exercise.substitution!));
+    }
+    if (exercise.notes != null && exercise.notes!.isNotEmpty) {
+      items.add(_CueItem(icon: Icons.sticky_note_2_outlined, label: 'Notes', text: exercise.notes!));
+    }
+
+    if (items.isEmpty) return const SizedBox.shrink();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'EXERCISE INFO',
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+            color: textMuted,
+            letterSpacing: 1.5,
+          ),
+        ),
+        const SizedBox(height: 12),
+        Container(
+          decoration: BoxDecoration(
+            color: elevated,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: cardBorder),
+          ),
+          child: Column(
+            children: [
+              for (int i = 0; i < items.length; i++) ...[
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Icon(items[i].icon, color: textMuted, size: 20),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              items[i].label,
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                                color: textPrimary,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              items[i].text,
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: textSecondary,
+                                height: 1.4,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                if (i < items.length - 1)
+                  Divider(height: 1, color: cardBorder, indent: 48, endIndent: 16),
+              ],
+            ],
+          ),
+        ),
+        const SizedBox(height: 24),
       ],
     );
   }

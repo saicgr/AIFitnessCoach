@@ -4,9 +4,17 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/theme/theme_colors.dart';
 import '../../../../data/models/home_layout.dart';
+import '../../../../core/providers/auth_provider.dart';
 import '../../../../data/providers/ai_insights_provider.dart';
+import '../../../../data/providers/neat_provider.dart';
 import '../../../../data/providers/nutrition_preferences_provider.dart';
+import '../../../../data/providers/recovery_provider.dart';
 import '../../../../data/providers/scores_provider.dart';
+import '../../../../data/providers/social_provider.dart';
+import '../../../../data/models/user_xp.dart';
+import '../../../../data/providers/xp_provider.dart';
+import '../../../../data/repositories/hydration_repository.dart';
+import '../../../../data/repositories/measurements_repository.dart';
 import '../../../../data/repositories/nutrition_repository.dart';
 import '../../../../data/repositories/workout_repository.dart';
 import '../../../../data/services/haptic_service.dart';
@@ -569,9 +577,9 @@ class MacroRingsCard extends ConsumerWidget {
     final prefsState = ref.watch(nutritionPreferencesProvider);
     final summary = nutritionState.todaySummary;
     final macros = [
-      {'name': 'Protein', 'current': (summary?.totalProteinG ?? 0).round(), 'target': prefsState.currentProteinTarget, 'color': accentColor},
-      {'name': 'Carbs', 'current': (summary?.totalCarbsG ?? 0).round(), 'target': prefsState.currentCarbsTarget, 'color': accentColor.withValues(alpha: 0.7)},
-      {'name': 'Fat', 'current': (summary?.totalFatG ?? 0).round(), 'target': prefsState.currentFatTarget, 'color': accentColor.withValues(alpha: 0.4)},
+      {'name': 'Protein', 'current': (summary?.totalProteinG ?? 0).round(), 'target': prefsState.currentProteinTarget, 'color': AppColors.macroProtein},
+      {'name': 'Carbs', 'current': (summary?.totalCarbsG ?? 0).round(), 'target': prefsState.currentCarbsTarget, 'color': AppColors.macroCarbs},
+      {'name': 'Fat', 'current': (summary?.totalFatG ?? 0).round(), 'target': prefsState.currentFatTarget, 'color': AppColors.macroFat},
     ];
 
     return Container(
@@ -671,10 +679,10 @@ class BodyWeightCard extends ConsumerWidget {
     final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
     final accentColor = ref.colors(context).accent;
 
-    // TODO: Connect to measurements provider
-    const currentWeight = 75.5;
-    const previousWeight = 76.2;
-    final change = currentWeight - previousWeight;
+    final measureState = ref.watch(measurementsProvider);
+    final weightEntry = measureState.summary?.latestByType[MeasurementType.weight];
+    final currentWeight = weightEntry?.value;
+    final change = measureState.summary?.changeFromPrevious[MeasurementType.weight] ?? 0.0;
     final isDown = change < 0;
 
     return InkWell(
@@ -715,7 +723,7 @@ class BodyWeightCard extends ConsumerWidget {
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
                 Text(
-                  currentWeight.toStringAsFixed(1),
+                  currentWeight?.toStringAsFixed(1) ?? '--',
                   style: TextStyle(
                     fontSize: 28,
                     fontWeight: FontWeight.bold,
@@ -725,7 +733,7 @@ class BodyWeightCard extends ConsumerWidget {
                 const SizedBox(width: 4),
                 Padding(
                   padding: const EdgeInsets.only(bottom: 4),
-                  child: Text('kg', style: TextStyle(fontSize: 14, color: textMuted)),
+                  child: Text(weightEntry?.unit ?? 'kg', style: TextStyle(fontSize: 14, color: textMuted)),
                 ),
                 const Spacer(),
                 Container(
@@ -785,10 +793,17 @@ class LeaderboardRankCard extends ConsumerWidget {
     final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
     final accentColor = ref.colors(context).accent;
 
-    // TODO: Connect to leaderboard provider
-    const rank = 42;
-    const totalUsers = 1250;
-    final percentile = ((totalUsers - rank) / totalUsers * 100).toInt();
+    final xpState = ref.watch(xpProvider);
+    final userId = ref.watch(currentUserIdProvider);
+    final userEntry = userId != null
+        ? xpState.leaderboard.cast<XPLeaderboardEntry?>().firstWhere(
+              (e) => e!.userId == userId,
+              orElse: () => null,
+            )
+        : null;
+    final rank = userEntry?.rank ?? 0;
+    final totalUsers = xpState.leaderboard.length;
+    final percentile = totalUsers > 0 ? ((totalUsers - rank) / totalUsers * 100).toInt() : 0;
 
     return InkWell(
       onTap: () {
@@ -884,10 +899,10 @@ class WaterIntakeCard extends ConsumerWidget {
     final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
     final accentColor = ref.colors(context).accent;
 
-    // TODO: Connect to hydration provider
-    const glasses = 5;
-    const targetGlasses = 8;
-    final progress = glasses / targetGlasses;
+    final hydration = ref.watch(hydrationProvider);
+    final glasses = (hydration.todaySummary?.totalMl ?? 0) ~/ 250;
+    final targetGlasses = (hydration.todaySummary?.goalMl ?? hydration.dailyGoalMl ?? 2500) ~/ 250;
+    final progress = targetGlasses > 0 ? glasses / targetGlasses : 0.0;
 
     return InkWell(
       onTap: () {
@@ -952,7 +967,7 @@ class WaterIntakeCard extends ConsumerWidget {
 /// SLEEP SCORE CARD
 /// Last night's sleep quality
 /// ============================================================
-class SleepScoreCard extends StatelessWidget {
+class SleepScoreCard extends ConsumerWidget {
   final TileSize size;
   final bool isDark;
 
@@ -963,15 +978,16 @@ class SleepScoreCard extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final elevatedColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
     final textColor = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final purpleColor = const Color(0xFF7C4DFF);
 
-    // TODO: Connect to Health API
-    const sleepHours = 7.5;
-    const sleepScore = 85;
+    final sleepAsync = ref.watch(sleepProvider);
+    final sleepData = sleepAsync.valueOrNull;
+    final sleepHours = sleepData != null ? sleepData.totalMinutes / 60.0 : null;
+    final sleepQuality = sleepData?.quality ?? 'No data';
 
     return Container(
       margin: size == TileSize.full
@@ -1005,7 +1021,7 @@ class SleepScoreCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Text(
-                '${sleepHours}h',
+                sleepHours != null ? '${sleepHours.toStringAsFixed(1)}h' : '--',
                 style: TextStyle(
                   fontSize: 28,
                   fontWeight: FontWeight.bold,
@@ -1020,9 +1036,9 @@ class SleepScoreCard extends StatelessWidget {
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Text(
-                  '$sleepScore',
+                  sleepQuality,
                   style: TextStyle(
-                    fontSize: 16,
+                    fontSize: 14,
                     fontWeight: FontWeight.bold,
                     color: purpleColor,
                   ),
@@ -1032,7 +1048,7 @@ class SleepScoreCard extends StatelessWidget {
           ),
           const SizedBox(height: 4),
           Text(
-            'Good quality sleep',
+            sleepData != null ? '${sleepQuality} quality sleep' : 'Connect Health to track',
             style: TextStyle(fontSize: 11, color: textMuted),
           ),
         ],
@@ -1062,13 +1078,19 @@ class ActiveChallengeCard extends ConsumerWidget {
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final pinkColor = const Color(0xFFE91E63);
 
-    // TODO: Connect to challenges provider
-    const challengeName = '30-Day Push-up Challenge';
-    const currentDay = 12;
-    const totalDays = 30;
-    const todayReps = 0;
-    const targetReps = 50;
-    final progress = currentDay / totalDays;
+    final userId = ref.watch(currentUserIdProvider);
+    final challengesAsync = userId != null
+        ? ref.watch(userActiveChallengesProvider(userId))
+        : const AsyncValue<List<Map<String, dynamic>>>.data([]);
+    final challenges = challengesAsync.valueOrNull ?? [];
+    final activeChallenge = challenges.isNotEmpty ? challenges.first : null;
+    final challengeName = activeChallenge?['name'] as String? ?? 'No active challenge';
+    final participation = activeChallenge?['user_participation'] as Map<String, dynamic>?;
+    final currentDay = participation?['current_day'] as int? ?? 0;
+    final totalDays = participation?['total_days'] as int? ?? 1;
+    final todayReps = participation?['today_reps'] as int? ?? 0;
+    final targetReps = participation?['target_reps'] as int? ?? 0;
+    final progress = totalDays > 0 ? currentDay / totalDays : 0.0;
 
     return InkWell(
       onTap: () {
@@ -1266,12 +1288,15 @@ class WorkoutHistoryMiniCard extends ConsumerWidget {
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final cyanColor = ref.colors(context).accent;
 
-    // TODO: Connect to workout history provider
-    final recentWorkouts = [
-      {'name': 'Upper Body', 'date': 'Yesterday', 'duration': '45 min'},
-      {'name': 'Lower Body', 'date': '2 days ago', 'duration': '52 min'},
-      {'name': 'Push Day', 'date': '4 days ago', 'duration': '38 min'},
-    ];
+    final summaryAsync = ref.watch(workoutScreenSummaryProvider);
+    final summary = summaryAsync.valueOrNull;
+    final sessions = summary?.previousSessions ?? [];
+    final recentWorkouts = sessions.take(3).map((w) {
+      final date = DateTime.tryParse(w.scheduledDate);
+      final daysAgo = date != null ? DateTime.now().difference(date).inDays : 0;
+      final dateStr = daysAgo == 0 ? 'Today' : daysAgo == 1 ? 'Yesterday' : '$daysAgo days ago';
+      return {'name': w.name, 'date': dateStr, 'duration': '${w.durationMinutes} min'};
+    }).toList();
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
@@ -1358,7 +1383,7 @@ class WorkoutHistoryMiniCard extends ConsumerWidget {
 /// STEPS COUNTER CARD
 /// Today's step count from health API
 /// ============================================================
-class StepsCounterCard extends StatelessWidget {
+class StepsCounterCard extends ConsumerWidget {
   final TileSize size;
   final bool isDark;
 
@@ -1369,16 +1394,15 @@ class StepsCounterCard extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final elevatedColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
     final textColor = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final greenColor = AppColors.green;
 
-    // TODO: Connect to Health API
-    const steps = 7842;
-    const targetSteps = 10000;
-    final progress = steps / targetSteps;
+    final steps = ref.watch(currentStepsProvider);
+    final targetSteps = ref.watch(stepGoalProvider);
+    final progress = ref.watch(stepProgressProvider);
 
     return Container(
       margin: size == TileSize.full
@@ -1444,7 +1468,7 @@ class StepsCounterCard extends StatelessWidget {
 /// HEART RATE CARD
 /// Current/resting heart rate
 /// ============================================================
-class HeartRateCard extends StatelessWidget {
+class HeartRateCard extends ConsumerWidget {
   final TileSize size;
   final bool isDark;
 
@@ -1455,15 +1479,16 @@ class HeartRateCard extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final elevatedColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
     final textColor = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final redColor = AppColors.error;
 
-    // TODO: Connect to Health API
-    const currentBPM = 72;
-    const restingBPM = 62;
+    final recoveryAsync = ref.watch(recoveryProvider);
+    final recovery = recoveryAsync.valueOrNull;
+    final currentBPM = recovery?.restingHR;
+    final restingBPM = recovery?.restingHR;
 
     return Container(
       margin: size == TileSize.full
@@ -1497,7 +1522,7 @@ class HeartRateCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Text(
-                '$currentBPM',
+                currentBPM?.toString() ?? '--',
                 style: TextStyle(
                   fontSize: 28,
                   fontWeight: FontWeight.bold,
@@ -1513,7 +1538,7 @@ class HeartRateCard extends StatelessWidget {
           ),
           const SizedBox(height: 4),
           Text(
-            'Resting: $restingBPM BPM',
+            restingBPM != null ? 'Resting: $restingBPM BPM' : 'Connect Health to track',
             style: TextStyle(fontSize: 11, color: textMuted),
           ),
         ],

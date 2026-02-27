@@ -11,6 +11,7 @@ class HabitData {
   final List<bool> last30Days;
   final int currentStreak;
   final String? route;
+  final bool todayCompleted;
 
   const HabitData({
     required this.name,
@@ -18,19 +19,22 @@ class HabitData {
     required this.last30Days,
     this.currentStreak = 0,
     this.route,
+    this.todayCompleted = false,
   });
 }
 
-/// Square habit card with GitHub-style contribution grid
+/// Square habit card with GitHub-style contribution grid and optional log button
 class HabitCard extends ConsumerWidget {
   final HabitData habit;
   final VoidCallback? onTap;
+  final VoidCallback? onLog;
   final double size;
 
   const HabitCard({
     super.key,
     required this.habit,
     this.onTap,
+    this.onLog,
     this.size = 140,
   });
 
@@ -59,7 +63,12 @@ class HabitCard extends ConsumerWidget {
         decoration: BoxDecoration(
           color: cardBg,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: cardBorder),
+          border: Border.all(
+            color: habit.todayCompleted
+                ? accentColor.withValues(alpha: 0.4)
+                : cardBorder,
+            width: habit.todayCompleted ? 1.5 : 1,
+          ),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -84,7 +93,7 @@ class HabitCard extends ConsumerWidget {
             // Grid
             _buildGrid(accentColor, isDark),
             const Spacer(),
-            // Footer
+            // Footer with log button
             Row(
               children: [
                 Text(
@@ -106,6 +115,39 @@ class HabitCard extends ConsumerWidget {
                       fontWeight: FontWeight.w600,
                       color: accentColor,
                     ),
+                  ),
+                ],
+                if (onLog != null) ...[
+                  const SizedBox(width: 6),
+                  GestureDetector(
+                    onTap: () {
+                      HapticService.medium();
+                      onLog!();
+                    },
+                    child: habit.todayCompleted
+                        ? Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: accentColor,
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Icon(Icons.check, size: 14, color: isDark ? Colors.black : Colors.white),
+                          )
+                        : Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: accentColor.withValues(alpha: 0.15),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Text(
+                              '+ Log',
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600,
+                                color: accentColor,
+                              ),
+                            ),
+                          ),
                   ),
                 ],
               ],

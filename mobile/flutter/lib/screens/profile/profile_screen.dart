@@ -14,9 +14,12 @@ import '../../widgets/app_snackbar.dart';
 import '../../widgets/dismissed_banners_section.dart';
 import '../../widgets/glass_sheet.dart';
 import '../settings/sections/logout_section.dart';
+import '../settings/dialogs/export_dialog.dart';
+import '../settings/dialogs/import_dialog.dart';
 import '../workouts/widgets/exercise_preferences_card.dart';
 import 'widgets/nutrition_fasting_card.dart';
 import 'widgets/widgets.dart';
+import '../../data/providers/wrapped_provider.dart';
 
 /// Main profile screen displaying user information, stats, and settings.
 ///
@@ -105,19 +108,21 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               height: 52,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: (isDark ? AppColors.cyan : AppColorsLight.cyan)
-                    .withValues(alpha: 0.15),
+                color: const Color(0xFF06B6D4).withValues(alpha: 0.15),
                 image: photoUrl != null && photoUrl.isNotEmpty
                     ? DecorationImage(
                         image: NetworkImage(photoUrl),
                         fit: BoxFit.cover,
+                        onError: (exception, stackTrace) {
+                          debugPrint('❌ [Profile] Failed to load photo: $exception');
+                        },
                       )
                     : null,
               ),
               child: photoUrl == null || photoUrl.isEmpty
-                  ? Icon(
+                  ? const Icon(
                       Icons.person,
-                      color: isDark ? AppColors.cyan : AppColorsLight.cyan,
+                      color: Color(0xFF06B6D4),
                       size: 28,
                     )
                   : null,
@@ -222,6 +227,66 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     );
   }
 
+  // --- Health group card (settings-style rows with icons) ---
+  Widget _buildHealthGroupCard(
+    bool isDark,
+    Color elevated,
+    Color cardBorder,
+    Color textPrimary,
+    Color textMuted,
+  ) {
+    final rows = [
+      _AccountRowData(
+        icon: Icons.bloodtype_outlined,
+        iconColor: isDark ? AppColors.error : AppColorsLight.error,
+        title: 'Diabetes Dashboard',
+        onTap: () => context.push('/diabetes'),
+      ),
+      _AccountRowData(
+        icon: Icons.directions_walk_outlined,
+        iconColor: isDark ? AppColors.success : AppColorsLight.success,
+        title: 'Activity (NEAT)',
+        onTap: () => context.push('/neat'),
+      ),
+      _AccountRowData(
+        icon: Icons.healing_outlined,
+        iconColor: isDark ? AppColors.warning : AppColorsLight.warning,
+        title: 'Injury Tracker',
+        onTap: () => context.push('/injuries'),
+      ),
+      _AccountRowData(
+        icon: Icons.shield_outlined,
+        iconColor: isDark ? AppColors.orange : AppColorsLight.orange,
+        title: 'Strain Prevention',
+        onTap: () => context.push('/strain-prevention'),
+      ),
+      _AccountRowData(
+        icon: Icons.trending_flat_outlined,
+        iconColor: isDark ? AppColors.info : AppColorsLight.info,
+        title: 'Plateau Detection',
+        onTap: () => context.push('/plateau'),
+      ),
+    ];
+
+    return Container(
+      decoration: BoxDecoration(
+        color: elevated,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: cardBorder),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: Column(
+        children: [
+          for (int i = 0; i < rows.length; i++) ...[
+            _buildAccountRow(rows[i], textPrimary, textMuted),
+            if (i < rows.length - 1)
+              Divider(height: 1, indent: 52, color: cardBorder),
+          ],
+        ],
+      ),
+    );
+  }
+
   Widget _buildAccountRow(
     _AccountRowData row,
     Color textPrimary,
@@ -263,13 +328,68 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     );
   }
 
+  // --- Your Data group card ---
+  Widget _buildYourDataGroupCard(
+    bool isDark,
+    Color elevated,
+    Color cardBorder,
+    Color textPrimary,
+    Color textMuted,
+  ) {
+    final accentColor = isDark ? AppColors.info : AppColorsLight.info;
+
+    final rows = [
+      _AccountRowData(
+        icon: Icons.file_download_outlined,
+        iconColor: accentColor,
+        title: 'Export Data',
+        onTap: () => showExportDialog(context, ref),
+      ),
+      _AccountRowData(
+        icon: Icons.file_upload_outlined,
+        iconColor: isDark ? AppColors.purple : AppColorsLight.purple,
+        title: 'Import Data',
+        onTap: () => showImportDialog(context, ref),
+      ),
+      _AccountRowData(
+        icon: Icons.history_outlined,
+        iconColor: isDark ? AppColors.orange : AppColorsLight.orange,
+        title: 'Workout History Import',
+        onTap: () => context.push('/settings/workout-history-import'),
+      ),
+    ];
+
+    return Container(
+      decoration: BoxDecoration(
+        color: elevated,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: cardBorder),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: Column(
+        children: [
+          for (int i = 0; i < rows.length; i++) ...[
+            _buildAccountRow(rows[i], textPrimary, textMuted),
+            if (i < rows.length - 1)
+              Divider(height: 1, indent: 52, color: cardBorder),
+          ],
+        ],
+      ),
+    );
+  }
+
   // --- Sheet launchers ---
 
   void _showEditPersonalInfoSheet(BuildContext context) {
     showGlassSheet(
       context: context,
       builder: (context) => const EditPersonalInfoSheet(),
-    );
+    ).then((result) {
+      // Force refresh user data when sheet closes (in case photo was updated)
+      if (result == true) {
+        ref.read(authStateProvider.notifier).refreshUser();
+      }
+    });
   }
 
   void _showCustomEquipmentSheet(BuildContext context) {
@@ -615,16 +735,44 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               const _TrainingFocusCard(),
               const SizedBox(height: 24),
 
+              // MY WRAPPED
+              _buildSectionLabel('MY WRAPPED', textMuted),
+              const SizedBox(height: 8),
+              _WrappedPeriodsRow(
+                elevated: elevated,
+                cardBorder: cardBorder,
+                textPrimary: textPrimary,
+                textMuted: textMuted,
+              ),
+              const SizedBox(height: 24),
+
               // NUTRITION
               _buildSectionLabel('NUTRITION', textMuted),
               const SizedBox(height: 8),
               const NutritionFastingCard(),
               const SizedBox(height: 24),
 
+              // HEALTH
+              _buildSectionLabel('HEALTH', textMuted),
+              const SizedBox(height: 8),
+              _buildHealthGroupCard(
+                  isDark, elevated, cardBorder, textPrimary, textMuted),
+              const SizedBox(height: 24),
+
               // ACCOUNT
               _buildSectionLabel('ACCOUNT', textMuted),
               const SizedBox(height: 8),
               _buildAccountGroupCard(
+                  isDark, elevated, cardBorder, textPrimary, textMuted),
+              const SizedBox(height: 24),
+
+              // YOUR DATA
+              _buildSectionLabel(
+                'YOUR DATA',
+                isDark ? AppColors.info : AppColorsLight.info,
+              ),
+              const SizedBox(height: 8),
+              _buildYourDataGroupCard(
                   isDark, elevated, cardBorder, textPrimary, textMuted),
               const SizedBox(height: 24),
 
@@ -978,6 +1126,130 @@ class _CustomEquipmentManagerState extends State<_CustomEquipmentManager> {
                 ),
         ),
       ],
+    );
+  }
+}
+
+/// Horizontal scrollable row of month pills for accessing past Wrapped recaps.
+class _WrappedPeriodsRow extends ConsumerWidget {
+  final Color elevated;
+  final Color cardBorder;
+  final Color textPrimary;
+  final Color textMuted;
+
+  const _WrappedPeriodsRow({
+    required this.elevated,
+    required this.cardBorder,
+    required this.textPrimary,
+    required this.textMuted,
+  });
+
+  static const _monthAbbreviations = [
+    'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+  ];
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final periodsAsync = ref.watch(availableWrappedPeriodsProvider);
+
+    return periodsAsync.when(
+      loading: () => Container(
+        height: 56,
+        decoration: BoxDecoration(
+          color: elevated,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: cardBorder),
+        ),
+        child: Center(
+          child: SizedBox(
+            width: 20,
+            height: 20,
+            child: CircularProgressIndicator(
+              strokeWidth: 2,
+              color: textMuted,
+            ),
+          ),
+        ),
+      ),
+      error: (_, __) => const SizedBox.shrink(),
+      data: (periods) {
+        if (periods.isEmpty) {
+          return Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: elevated,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: cardBorder),
+            ),
+            child: Text(
+              'Complete workouts to unlock your monthly recap',
+              style: TextStyle(
+                fontSize: 13,
+                color: textMuted,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          );
+        }
+
+        return SizedBox(
+          height: 56,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            itemCount: periods.length,
+            separatorBuilder: (_, __) => const SizedBox(width: 10),
+            itemBuilder: (context, index) {
+              final period = periods[index];
+              final parts = period.split('-');
+              final year = parts.isNotEmpty ? parts[0] : '';
+              final monthIndex =
+                  parts.length > 1 ? (int.tryParse(parts[1]) ?? 1) - 1 : 0;
+              final monthAbbr = _monthAbbreviations[monthIndex.clamp(0, 11)];
+
+              return GestureDetector(
+                onTap: () {
+                  HapticService.selection();
+                  context.push('/wrapped/$period');
+                },
+                child: Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+                  decoration: BoxDecoration(
+                    color: elevated,
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(
+                      width: 1.5,
+                      color: const Color(0xFF9D4EDD).withValues(alpha: 0.5),
+                    ),
+                  ),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        monthAbbr,
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w700,
+                          color: textPrimary,
+                        ),
+                      ),
+                      Text(
+                        year,
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: textMuted,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            },
+          ),
+        );
+      },
     );
   }
 }

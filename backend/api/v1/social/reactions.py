@@ -16,7 +16,10 @@ from models.social import (
     ActivityReaction, ActivityReactionCreate, ReactionsSummary, ReactionType,
 )
 from services.social_rag_service import get_social_rag_service
+from core.logger import get_logger
 from .utils import get_supabase_client
+
+logger = get_logger(__name__)
 
 router = APIRouter()
 
@@ -44,9 +47,9 @@ def _bg_index_reaction(reaction_id: str, activity_id: str, user_id: str, reactio
                 activity_owner=activity_owner,
                 created_at=created_at,
             )
-            print(f"[Social] Reaction {reaction_id} indexed in ChromaDB")
+            logger.info(f"[Social] Reaction {reaction_id} indexed in ChromaDB")
     except Exception as e:
-        print(f"[Social] Failed to index reaction in ChromaDB: {e}")
+        logger.error(f"[Social] Failed to index reaction in ChromaDB: {e}")
 
 
 def _bg_remove_reaction(reaction_id: str):
@@ -55,7 +58,7 @@ def _bg_remove_reaction(reaction_id: str):
         social_rag = get_social_rag_service()
         social_rag.remove_reaction_from_rag(reaction_id)
     except Exception as e:
-        print(f"[Social] Failed to remove reaction from ChromaDB: {e}")
+        logger.error(f"[Social] Failed to remove reaction from ChromaDB: {e}")
 
 
 @router.post("/reactions", response_model=ActivityReaction)

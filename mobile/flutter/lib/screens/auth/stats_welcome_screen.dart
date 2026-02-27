@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
@@ -123,17 +122,7 @@ class _StatsWelcomeScreenState extends ConsumerState<StatsWelcomeScreen>
   void _selectLanguage(Language language) {
     HapticFeedback.lightImpact();
 
-    if (language.isComingSoon) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('${language.name} support coming soon!'),
-          behavior: SnackBarBehavior.floating,
-          backgroundColor: AppColors.teal,
-          duration: const Duration(seconds: 2),
-        ),
-      );
-      return;
-    }
+    if (language.isComingSoon) return;
 
     setState(() {
       _selectedLanguage = language;
@@ -170,17 +159,6 @@ class _StatsWelcomeScreenState extends ConsumerState<StatsWelcomeScreen>
     }
   }
 
-  Future<void> _signInWithApple() async {
-    HapticFeedback.lightImpact();
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: const Text('Apple Sign-In coming soon!'),
-        behavior: SnackBarBehavior.floating,
-        backgroundColor: AppColors.purple,
-        duration: const Duration(seconds: 2),
-      ),
-    );
-  }
 
   Future<void> _continueAsGuest() async {
     HapticFeedback.lightImpact();
@@ -1041,45 +1019,6 @@ class _StatsWelcomeScreenState extends ConsumerState<StatsWelcomeScreen>
           ),
         ),
 
-        const SizedBox(height: 10),
-
-        // Apple Sign In button
-        SizedBox(
-          width: double.infinity,
-          height: 50,
-          child: ElevatedButton(
-            onPressed: _isSigningIn ? null : _signInWithApple,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: isDark ? Colors.white : Colors.black,
-              foregroundColor: isDark ? Colors.black : Colors.white,
-              elevation: isDark ? 0 : 2,
-              disabledBackgroundColor: (isDark ? Colors.white : Colors.black).withOpacity(0.6),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(25),
-              ),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  Icons.apple,
-                  size: 22,
-                  color: isDark ? Colors.black : Colors.white,
-                ),
-                const SizedBox(width: 10),
-                Text(
-                  'Continue with Apple',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: isDark ? Colors.black : Colors.white,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-
         // Error message
         if (authState.status == AuthStatus.error && authState.errorMessage != null)
           Container(
@@ -1276,24 +1215,6 @@ class _StatsWelcomeScreenState extends ConsumerState<StatsWelcomeScreen>
                                         color: isSelected ? accentColor : textPrimary,
                                       ),
                                     ),
-                                    if (language.isComingSoon) ...[
-                                      const SizedBox(width: 8),
-                                      Container(
-                                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                        decoration: BoxDecoration(
-                                          color: accentColor.withOpacity(0.15),
-                                          borderRadius: BorderRadius.circular(4),
-                                        ),
-                                        child: Text(
-                                          'Coming Soon',
-                                          style: TextStyle(
-                                            fontSize: 9,
-                                            fontWeight: FontWeight.w600,
-                                            color: accentColor,
-                                          ),
-                                        ),
-                                      ),
-                                    ],
                                   ],
                                 ),
                                 if (language.nativeName != language.name)

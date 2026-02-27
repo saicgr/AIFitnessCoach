@@ -4,9 +4,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
 import '../../data/models/injury.dart';
+import '../../data/services/api_client.dart';
 import '../../widgets/glass_back_button.dart';
 
-final injuriesListProvider = StateNotifierProvider<InjuriesListNotifier, InjuriesListState>((ref) => InjuriesListNotifier());
+final injuriesListProvider = StateNotifierProvider<InjuriesListNotifier, InjuriesListState>((ref) => InjuriesListNotifier(ref));
 
 class InjuriesListState {
   final List<Injury> injuries;
@@ -22,16 +23,35 @@ class InjuriesListState {
 enum InjuryFilter { active, healed, all }
 
 class InjuriesListNotifier extends StateNotifier<InjuriesListState> {
-  InjuriesListNotifier() : super(const InjuriesListState());
+  final Ref _ref;
+  InjuriesListNotifier(this._ref) : super(const InjuriesListState());
+
   Future<void> loadInjuries() async {
     state = state.copyWith(isLoading: true, error: null);
     try {
-      await Future.delayed(const Duration(milliseconds: 500));
-      state = state.copyWith(injuries: [], isLoading: false);
+      final apiClient = _ref.read(apiClientProvider);
+      final userId = await apiClient.getUserId();
+      if (userId == null) {
+        state = state.copyWith(error: 'Not authenticated', isLoading: false);
+        return;
+      }
+      final response = await apiClient.get('/injuries/$userId');
+      final data = response.data as Map<String, dynamic>;
+      final injuriesList = (data['injuries'] as List<dynamic>?)?.map((e) {
+        final m = Map<String, dynamic>.from(e as Map<String, dynamic>);
+        // InjurySummary from backend omits some fields that Injury.fromJson requires
+        m.putIfAbsent('user_id', () => userId);
+        m.putIfAbsent('affects_exercises', () => <String>[]);
+        m.putIfAbsent('affects_muscles', () => <String>[]);
+        m.putIfAbsent('recovery_phase', () => m['recovery_phase'] ?? 'acute');
+        return Injury.fromJson(m);
+      }).toList() ?? [];
+      state = state.copyWith(injuries: injuriesList, isLoading: false);
     } catch (e) {
       state = state.copyWith(error: e.toString(), isLoading: false);
     }
   }
+
   void setFilter(InjuryFilter filter) => state = state.copyWith(filter: filter);
 }
 

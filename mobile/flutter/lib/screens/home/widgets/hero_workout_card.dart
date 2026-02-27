@@ -13,7 +13,9 @@ import '../../../data/services/api_client.dart';
 import '../../../data/services/image_url_cache.dart';
 import '../../../widgets/app_dialog.dart';
 import '../../../widgets/glass_sheet.dart';
+import '../../../widgets/main_shell.dart';
 import 'regenerate_workout_sheet.dart';
+import '../../social/widgets/create_post_sheet.dart';
 import '../../workout/widgets/exercise_add_sheet.dart';
 
 /// Hero workout card - Gravl-inspired design with background image
@@ -463,7 +465,7 @@ class _HeroWorkoutCardState extends ConsumerState<HeroWorkoutCard> {
                 ),
                 onTap: () {
                   Navigator.pop(sheetContext);
-                  context.push('/workout/${widget.workout.id}');
+                  _shareToSocial();
                 },
               ),
               // Mark as Done
@@ -507,6 +509,58 @@ class _HeroWorkoutCardState extends ConsumerState<HeroWorkoutCard> {
       ),
       ),
     );
+  }
+
+  void _shareToSocial() {
+    HapticService.light();
+    final workout = widget.workout;
+
+    // Compute aggregations from exercises
+    final exercises = workout.exercises;
+    double totalVolumeLbs = 0;
+    int totalSets = 0;
+    int totalReps = 0;
+
+    final exercisesList = <Map<String, dynamic>>[];
+    for (final e in exercises) {
+      final sets = e.sets ?? 0;
+      final reps = e.reps ?? 0;
+      final weightKg = e.weight ?? 0.0;
+      totalSets += sets;
+      totalReps += sets * reps;
+      totalVolumeLbs += sets * reps * weightKg * 2.20462;
+
+      exercisesList.add({
+        'name': e.name,
+        'sets': e.sets,
+        'reps': e.reps,
+        'weight_kg': e.weight,
+        'equipment': e.equipment,
+        'primary_muscle': e.primaryMuscle,
+      });
+    }
+
+    ref.read(floatingNavBarVisibleProvider.notifier).state = false;
+    showGlassSheet(
+      context: context,
+      useRootNavigator: true,
+      builder: (context) => CreatePostSheet(
+        workoutPreFill: {
+          'name': workout.name ?? 'Workout',
+          'type': workout.type ?? '',
+          'difficulty': workout.difficulty ?? '',
+          'duration_minutes': workout.estimatedDurationMinutes ?? workout.durationMinutes,
+          'exercises_count': workout.exercises.length,
+          'workout_id': workout.id,
+          'exercises': exercisesList,
+          'total_volume_lbs': totalVolumeLbs.round(),
+          'total_sets': totalSets,
+          'total_reps': totalReps,
+        },
+      ),
+    ).then((_) {
+      ref.read(floatingNavBarVisibleProvider.notifier).state = true;
+    });
   }
 
   void _showGlanceWorkout() {

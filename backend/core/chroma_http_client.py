@@ -2,8 +2,11 @@
 Thin synchronous HTTP client for Chroma Cloud REST API v2.
 Replaces the heavy chromadb Python package (~150MB) with direct HTTP calls via httpx.
 """
+import logging
 import httpx
 from typing import List, Dict, Optional, Any
+
+logger = logging.getLogger(__name__)
 
 
 class ChromaHTTPCollection:
@@ -101,16 +104,16 @@ class ChromaHTTPCollection:
             resp = self._client._http.get(url)
             if resp.status_code == 200:
                 return resp.json()
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug(f"Chroma count GET failed: {e}")
 
         # Attempt 2: POST (Chroma Cloud API v2 legacy)
         try:
             resp = self._client._http.post(url, json={})
             if resp.status_code == 200:
                 return resp.json()
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug(f"Chroma count POST failed: {e}")
 
         # Attempt 3: Probe via get() with limit=1 to check non-empty
         try:
@@ -118,8 +121,8 @@ class ChromaHTTPCollection:
             ids = result.get("ids", [])
             # Can't get exact count, but can tell if non-empty
             return len(ids) if ids else 0
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug(f"Chroma count probe failed: {e}")
 
         return -1
 

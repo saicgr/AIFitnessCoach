@@ -14,7 +14,8 @@ a fast-path that skips intent extraction, RAG lookup, and agent execution.
 import asyncio
 import re
 import time
-from typing import Optional, Dict, Any, Tuple
+from datetime import datetime, timezone
+from typing import Optional, Dict, Any, List, Tuple
 
 from models.chat import ChatRequest, ChatResponse, CoachIntent, AgentType
 from services.gemini_service import GeminiService
@@ -29,6 +30,7 @@ from services.langgraph_agents.coach_agent import build_coach_agent_graph
 
 from core.logger import get_logger
 from core.anonymize import anonymize_user_data
+from core.supabase_client import get_supabase
 
 
 def _ensure_str(content) -> str:
@@ -86,6 +88,14 @@ INTENT_TO_AGENT = {
     # Hydration agent
     CoachIntent.LOG_HYDRATION: AgentType.HYDRATION,
 
+    # Form analysis -> Workout agent
+    CoachIntent.CHECK_EXERCISE_FORM: AgentType.WORKOUT,
+    CoachIntent.COMPARE_EXERCISE_FORM: AgentType.WORKOUT,
+
+    # Multi-image nutrition intents
+    CoachIntent.ANALYZE_MENU: AgentType.NUTRITION,
+    CoachIntent.ANALYZE_BUFFET: AgentType.NUTRITION,
+
     # Coach agent (default for these)
     CoachIntent.QUESTION: AgentType.COACH,
     CoachIntent.CHANGE_SETTING: AgentType.COACH,
@@ -97,14 +107,16 @@ DOMAIN_KEYWORDS = {
     AgentType.NUTRITION: [
         "food", "eat", "ate", "meal", "calories", "protein", "carbs", "fat",
         "nutrition", "diet", "macros", "breakfast", "lunch", "dinner", "snack",
-        "hungry", "recipe", "cooking", "what should i eat"
+        "hungry", "recipe", "cooking", "what should i eat",
+        "menu", "buffet", "restaurant", "dishes", "options"
     ],
     AgentType.WORKOUT: [
         "exercise", "workout", "training", "gym", "lift", "squat", "bench",
         "deadlift", "muscle", "strength", "cardio", "hiit", "sets", "reps",
         "form", "technique", "how do i do", "quick", "create workout",
         "generate workout", "make workout", "give me a workout", "new workout",
-        "short workout"
+        "short workout", "form check", "check my form", "rep count",
+        "count reps", "posture", "compare form", "form comparison"
     ],
     AgentType.INJURY: [
         "hurt", "pain", "injury", "injured", "sore", "strain", "sprain",
@@ -115,6 +127,16 @@ DOMAIN_KEYWORDS = {
         "glasses", "cups", "fluid"
     ],
 }
+
+
+# ──────────────────────────────────────────────
+# Rate-limit / cost-protection constants
+MAX_MEDIA_PER_REQUEST = 5       # Max media items in a single request
+MAX_IMAGES_PER_REQUEST = 5      # Max images in a single request
+MAX_VIDEOS_PER_REQUEST = 3      # Max videos in a single request
+DAILY_MEDIA_CAP_FREE = 20       # Free-tier daily media analysis limit
+DAILY_MEDIA_CAP_PRO = 100       # Pro-tier daily media analysis limit
+_NUTRITION_SEMAPHORE = asyncio.Semaphore(10)  # Limit concurrent vision calls
 
 
 class LangGraphCoachService:
@@ -144,6 +166,94 @@ class LangGraphCoachService:
         self.gemini_service = GeminiService()
 
         logger.info("All domain agents initialized successfully")
+
+    # ── Rate-limit helpers ─────────────────────────
+
+    @staticmethod
+    def _validate_media_request(media_refs: Optional[List[Any]]) -> None:
+        """Validate per-request media limits.
+
+        Raises ValueError if limits are exceeded.
+        """
+        if not media_refs:
+            return
+
+        total = len(media_refs)
+        if total > MAX_MEDIA_PER_REQUEST:
+            raise ValueError(
+                f"Too many media items ({total}). Maximum is {MAX_MEDIA_PER_REQUEST} per request."
+            )
+
+        images = sum(1 for r in media_refs if getattr(r, "media_type", None) == "image")
+        videos = sum(1 for r in media_refs if getattr(r, "media_type", None) == "video")
+
+        if images > MAX_IMAGES_PER_REQUEST:
+            raise ValueError(
+                f"Too many images ({images}). Maximum is {MAX_IMAGES_PER_REQUEST} per request."
+            )
+        if videos > MAX_VIDEOS_PER_REQUEST:
+            raise ValueError(
+                f"Too many videos ({videos}). Maximum is {MAX_VIDEOS_PER_REQUEST} per request."
+            )
+
+    @staticmethod
+    async def _check_media_usage(user_id: str, media_count: int = 1) -> None:
+        """Check daily media usage cap for the user.
+
+        Queries the chat_media_usage table (or falls back gracefully)
+        and raises ValueError if the daily cap is exceeded.
+        """
+        try:
+            supabase = get_supabase().client
+            today_str = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+
+            # Get today's usage count
+            usage_result = supabase.table("chat_media_usage").select(
+                "media_count"
+            ).eq("user_id", user_id).eq("usage_date", today_str).maybe_single().execute()
+
+            current_count = 0
+            if usage_result and usage_result.data:
+                current_count = usage_result.data.get("media_count", 0)
+
+            # Check user tier for cap (default to free tier)
+            cap = DAILY_MEDIA_CAP_FREE
+            try:
+                tier_result = supabase.table("user_settings").select(
+                    "subscription_tier"
+                ).eq("user_id", user_id).maybe_single().execute()
+                if tier_result and tier_result.data:
+                    tier = tier_result.data.get("subscription_tier", "free")
+                    if tier in ("pro", "premium"):
+                        cap = DAILY_MEDIA_CAP_PRO
+            except Exception as e:
+                logger.warning(f"Failed to fetch subscription tier: {e}")
+
+            if current_count + media_count > cap:
+                raise ValueError(
+                    f"Daily media analysis limit reached ({current_count}/{cap}). "
+                    f"Please try again tomorrow or upgrade your plan."
+                )
+
+            # Increment usage
+            if usage_result and usage_result.data:
+                supabase.table("chat_media_usage").update(
+                    {"media_count": current_count + media_count}
+                ).eq("user_id", user_id).eq("usage_date", today_str).execute()
+            else:
+                supabase.table("chat_media_usage").insert({
+                    "user_id": user_id,
+                    "usage_date": today_str,
+                    "media_count": media_count,
+                }).execute()
+
+            logger.info(f"Media usage for {user_id}: {current_count + media_count}/{cap}")
+
+        except ValueError:
+            raise  # Re-raise usage limit errors
+        except Exception as e:
+            # Don't block requests if usage tracking fails
+            logger.warning(f"Media usage check failed (non-blocking): {e}")
 
     def _detect_agent_mention(self, message: str) -> Tuple[Optional[AgentType], str]:
         """
@@ -256,48 +366,159 @@ class LangGraphCoachService:
         combined_context = "\n\n".join(context_parts)
         return combined_context, rag_used, similar_questions
 
+    # Maps media content types to their target agent
+    _MEDIA_CONTENT_ROUTING = {
+        "exercise_form": AgentType.WORKOUT,
+        "food_plate": AgentType.NUTRITION,
+        "food_menu": AgentType.NUTRITION,
+        "food_buffet": AgentType.NUTRITION,
+        "nutrition_label": AgentType.NUTRITION,
+        "app_screenshot": AgentType.NUTRITION,
+        "progress_photo": AgentType.COACH,
+        "document": AgentType.COACH,
+        "gym_equipment": AgentType.COACH,
+    }
+
     def _select_agent(
         self,
         mentioned_agent: Optional[AgentType],
         intent: CoachIntent,
         message: str,
-        has_image: bool
+        has_image: bool,
+        has_video: bool = False,
+        has_multi_images: bool = False,
+        has_multi_videos: bool = False,
+        media_content_type: Optional[str] = None,
     ) -> AgentType:
         """
         Select the appropriate agent based on all available signals.
 
         Priority:
         1. Explicit @mention
-        2. Image present -> Nutrition (for food analysis)
-        3. Intent-based routing
-        4. Keyword-based routing
-        5. Default to Coach
+        2. Content-aware routing (media_content_type from classifier)
+        3. Type-based fallbacks (video->Workout, image->Nutrition) when classifier unavailable
+        4. Intent-based routing
+        5. Keyword-based routing
+        6. Default to Coach
         """
         # 1. Explicit @mention takes priority
         if mentioned_agent:
             logger.info(f"Agent selection: @mention -> {mentioned_agent.value}")
             return mentioned_agent
 
-        # 2. Image present -> Nutrition agent
+        # 2. Content-aware routing via media classifier
+        if media_content_type and media_content_type != "unknown":
+            routed_agent = self._MEDIA_CONTENT_ROUTING.get(media_content_type)
+            if routed_agent:
+                logger.info(f"Agent selection: media_content_type={media_content_type} -> {routed_agent.value}")
+                return routed_agent
+
+        # 3. Type-based fallbacks (when classifier returns None/unknown)
+        # 3a. Multi-video -> always Workout agent for form comparison
+        if has_multi_videos:
+            logger.info("Agent selection: multi-video -> workout (form comparison)")
+            return AgentType.WORKOUT
+
+        # 3b. Single video -> Workout agent for form analysis
+        if has_video:
+            logger.info("Agent selection: video present -> workout (form analysis)")
+            return AgentType.WORKOUT
+
+        # 3c. Multi-image -> Nutrition agent for batch food analysis
+        if has_multi_images:
+            logger.info("Agent selection: multi-image -> nutrition (batch food analysis)")
+            return AgentType.NUTRITION
+
+        # 3d. Single image -> check form keywords first, then default to Nutrition
         if has_image:
+            form_keywords = ["form", "check", "posture", "technique", "rep", "count"]
+            message_lower = message.lower()
+            if any(kw in message_lower for kw in form_keywords):
+                logger.info("Agent selection: image + form keywords -> workout (form analysis)")
+                return AgentType.WORKOUT
             logger.info("Agent selection: image present -> nutrition")
             return AgentType.NUTRITION
 
-        # 3. Intent-based routing
+        # 4. Intent-based routing
         agent_from_intent = self._infer_agent_from_intent(intent)
         if agent_from_intent != AgentType.COACH:
             logger.info(f"Agent selection: intent {intent.value} -> {agent_from_intent.value}")
             return agent_from_intent
 
-        # 4. Keyword-based routing
+        # 5. Keyword-based routing
         agent_from_keywords = self._infer_agent_from_keywords(message)
         if agent_from_keywords:
             logger.info(f"Agent selection: keywords -> {agent_from_keywords.value}")
             return agent_from_keywords
 
-        # 5. Default to Coach
+        # 6. Default to Coach
         logger.info("Agent selection: default -> coach")
         return AgentType.COACH
+
+    async def _classify_media(self, request: ChatRequest) -> Optional[str]:
+        """Classify media content for intelligent routing. Returns content type string."""
+        try:
+            from services.vision_service import VisionService
+            vision = VisionService()
+
+            # Direct base64 image
+            if request.image_base64:
+                return await vision.classify_media_content(image_base64=request.image_base64)
+
+            # S3-stored media references (plural or singular)
+            refs = []
+            if hasattr(request, "media_refs") and request.media_refs:
+                refs = list(request.media_refs)
+            elif hasattr(request, "media_ref") and request.media_ref:
+                refs = [request.media_ref]
+
+            if refs:
+                first_ref = refs[0]
+
+                # For video, extract first keyframe and classify that
+                if first_ref.media_type == "video":
+                    return await self._classify_video_media(first_ref, vision)
+
+                # For images, classify directly via S3
+                return await vision.classify_media_content(
+                    s3_key=first_ref.s3_key,
+                    mime_type=first_ref.mime_type,
+                )
+
+            return None
+        except Exception as e:
+            logger.warning(f"Media classification failed (falling back to type-based): {e}")
+            return None
+
+    async def _classify_video_media(self, media_ref, vision) -> Optional[str]:
+        """Extract first keyframe from video and classify it."""
+        try:
+            import tempfile
+            import os
+
+            # Download video from S3 to temp file
+            s3_data = await vision._download_image_from_s3(media_ref.s3_key)
+            suffix = ".mp4" if "mp4" in media_ref.mime_type else ".mov"
+            with tempfile.NamedTemporaryFile(suffix=suffix, delete=False) as tmp:
+                tmp.write(s3_data)
+                tmp_path = tmp.name
+
+            try:
+                from services.keyframe_extractor import extract_key_frames
+                frames = await extract_key_frames(tmp_path, num_frames=1)
+                if frames:
+                    frame_bytes, frame_mime = frames[0]
+                    return await vision.classify_media_content(
+                        image_data=frame_bytes,
+                        mime_type=frame_mime,
+                    )
+            finally:
+                os.unlink(tmp_path)
+
+            return None
+        except Exception as e:
+            logger.warning(f"Video keyframe classification failed: {e}")
+            return None
 
     def _build_agent_state(
         self,
@@ -308,7 +529,9 @@ class LangGraphCoachService:
         extraction_data: Dict[str, Any],
         rag_context: str,
         rag_used: bool,
-        similar_questions: list
+        similar_questions: list,
+        beast_mode_config: Optional[Dict[str, Any]] = None,
+        media_content_type: Optional[str] = None,
     ) -> Dict[str, Any]:
         """Build the state dictionary for the selected agent."""
         base_state = {
@@ -329,11 +552,22 @@ class LangGraphCoachService:
             "ai_settings": request.ai_settings.model_dump() if request.ai_settings else None,
             # Unified fasting/nutrition/workout context from frontend
             "unified_context": request.unified_context,
+            # Media classification from classifier
+            "media_content_type": media_content_type,
         }
+
+        # Normalize media_refs from request (combine singular + plural)
+        media_refs_dicts = None
+        if hasattr(request, "media_refs") and request.media_refs:
+            media_refs_dicts = [mr.model_dump() for mr in request.media_refs]
+        elif hasattr(request, "media_ref") and request.media_ref:
+            # Single media_ref -> wrap in list for backward compatibility
+            media_refs_dicts = [request.media_ref.model_dump()]
 
         # Add agent-specific fields
         if agent_type == AgentType.NUTRITION:
             base_state["image_base64"] = request.image_base64
+            base_state["media_refs"] = media_refs_dicts
             base_state["tool_calls"] = []
             base_state["tool_results"] = []
             base_state["tool_messages"] = []
@@ -345,6 +579,9 @@ class LangGraphCoachService:
             base_state["extracted_exercises"] = extraction_data.get("exercises", [])
             base_state["extracted_muscle_groups"] = extraction_data.get("muscle_groups", [])
             base_state["modification"] = extraction_data.get("modification")
+            base_state["media_ref"] = request.media_ref.model_dump() if hasattr(request, "media_ref") and request.media_ref else None
+            base_state["media_refs"] = media_refs_dicts
+            base_state["beast_mode_config"] = beast_mode_config
             base_state["tool_calls"] = []
             base_state["tool_results"] = []
             base_state["tool_messages"] = []
@@ -366,6 +603,9 @@ class LangGraphCoachService:
             base_state["setting_name"] = extraction_data.get("setting_name")
             base_state["setting_value"] = extraction_data.get("setting_value")
             base_state["destination"] = extraction_data.get("destination")
+            base_state["image_base64"] = request.image_base64
+            base_state["media_ref"] = request.media_ref.model_dump() if hasattr(request, "media_ref") and request.media_ref else None
+            base_state["media_refs"] = media_refs_dicts
 
         return base_state
 
@@ -386,6 +626,14 @@ class LangGraphCoachService:
         logger.info(f"Processing message: {request.message[:50]}...")
 
         try:
+            # 0. Validate media limits (per-request)
+            all_media = getattr(request, "media_refs", None) or []
+            if not all_media and getattr(request, "media_ref", None):
+                all_media = [request.media_ref]
+            if all_media:
+                self._validate_media_request(all_media)
+                await self._check_media_usage(request.user_id, len(all_media))
+
             # 1. Detect @mention
             mentioned_agent, cleaned_message = self._detect_agent_mention(request.message)
 
@@ -398,12 +646,62 @@ class LangGraphCoachService:
                 cleaned_message, request.user_id
             )
 
-            # 4. Select agent
+            # 4. Select agent - compute media signals
             has_image = request.image_base64 is not None
+            has_video = False
+            has_multi_images = False
+            has_multi_videos = False
+
+            # Check singular media_ref
+            if hasattr(request, "media_ref") and request.media_ref:
+                if request.media_ref.media_type == "video":
+                    has_video = True
+                elif request.media_ref.media_type == "image":
+                    has_image = True
+
+            # Check plural media_refs for multi-media signals
+            if hasattr(request, "media_refs") and request.media_refs:
+                image_refs = [r for r in request.media_refs if r.media_type == "image"]
+                video_refs = [r for r in request.media_refs if r.media_type == "video"]
+                if len(image_refs) > 1:
+                    has_multi_images = True
+                    has_image = True
+                if len(video_refs) > 1:
+                    has_multi_videos = True
+                    has_video = True
+                # Single items in media_refs also count
+                if len(image_refs) == 1:
+                    has_image = True
+                if len(video_refs) == 1:
+                    has_video = True
+
+            # 4a. Classify media content for intelligent routing (only when media is present)
+            media_content_type = None
+            if has_image or has_video or has_multi_images or has_multi_videos:
+                media_content_type = await self._classify_media(request)
+
             selected_agent = self._select_agent(
-                mentioned_agent, intent, cleaned_message, has_image
+                mentioned_agent, intent, cleaned_message, has_image,
+                has_video=has_video,
+                has_multi_images=has_multi_images,
+                has_multi_videos=has_multi_videos,
+                media_content_type=media_content_type,
             )
             logger.info(f"Selected agent: {selected_agent.value}")
+
+            # 4b. Fetch beast mode config from Supabase (if workout agent)
+            beast_mode_config = None
+            if selected_agent == AgentType.WORKOUT:
+                try:
+                    supabase = get_supabase().client
+                    bm_result = supabase.table("user_settings").select(
+                        "beast_mode_config"
+                    ).eq("user_id", request.user_id).maybe_single().execute()
+                    if bm_result and bm_result.data and bm_result.data.get("beast_mode_config"):
+                        beast_mode_config = bm_result.data["beast_mode_config"]
+                        logger.info(f"Beast mode config loaded for user {request.user_id}")
+                except Exception as bm_err:
+                    logger.warning(f"Failed to fetch beast mode config: {bm_err}")
 
             # 5. Build agent state
             agent_state = self._build_agent_state(
@@ -414,17 +712,33 @@ class LangGraphCoachService:
                 extraction_data,
                 rag_context,
                 rag_used,
-                similar_questions
+                similar_questions,
+                beast_mode_config=beast_mode_config,
+                media_content_type=media_content_type,
             )
 
             # 6. Execute agent with retry for thought_signature errors
+            # Apply concurrency semaphore for nutrition vision calls
+            use_nutrition_semaphore = (
+                selected_agent == AgentType.NUTRITION
+                and (has_image or has_multi_images)
+            )
+
             agent_graph = self.agents[selected_agent]
             start_time = time.time()
-            try:
-                final_state = await asyncio.wait_for(
+
+            async def _run_agent():
+                return await asyncio.wait_for(
                     agent_graph.ainvoke(agent_state),
                     timeout=120.0,
                 )
+
+            try:
+                if use_nutrition_semaphore:
+                    async with _NUTRITION_SEMAPHORE:
+                        final_state = await _run_agent()
+                else:
+                    final_state = await _run_agent()
             except asyncio.TimeoutError:
                 logger.error(f"Agent {selected_agent.value} timed out after 120s")
                 raise Exception(f"AI agent timed out. Please try again.")
@@ -436,10 +750,11 @@ class LangGraphCoachService:
                     if "messages" in agent_state:
                         agent_state["messages"] = []
                     try:
-                        final_state = await asyncio.wait_for(
-                            agent_graph.ainvoke(agent_state),
-                            timeout=120.0,
-                        )
+                        if use_nutrition_semaphore:
+                            async with _NUTRITION_SEMAPHORE:
+                                final_state = await _run_agent()
+                        else:
+                            final_state = await _run_agent()
                     except asyncio.TimeoutError:
                         logger.error(f"Agent {selected_agent.value} retry timed out after 120s")
                         raise Exception(f"AI agent timed out on retry. Please try again.")

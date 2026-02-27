@@ -18,6 +18,12 @@ class CoachAgentState(TypedDict):
     workout_schedule: Optional[Dict[str, Any]]
     conversation_history: List[Dict[str, str]]
 
+    # Media (for progress photos, documents, gym equipment)
+    image_base64: Optional[str]
+    media_ref: Optional[Dict[str, Any]]
+    media_refs: Optional[List[Dict[str, Any]]]
+    media_content_type: Optional[str]
+
     # AI personality settings
     ai_settings: Optional[Dict[str, Any]]
 

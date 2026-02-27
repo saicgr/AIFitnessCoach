@@ -16,19 +16,22 @@ Environment Variables:
 import os
 import sys
 import subprocess
+import logging
 from pathlib import Path
 
+logger = logging.getLogger(__name__)
+
 def main():
-    print("=" * 60)
-    print("🚀 PROGRAM GENERATION WORKER")
-    print("=" * 60)
+    logger.info("=" * 60)
+    logger.info("🚀 PROGRAM GENERATION WORKER")
+    logger.info("=" * 60)
 
     # Get configuration from environment
     priority = os.getenv("GENERATION_PRIORITY", "high")
     limit = os.getenv("GENERATION_LIMIT", "")
 
-    print(f"Priority: {priority}")
-    print(f"Limit: {limit if limit else 'unlimited'}")
+    logger.info(f"Priority: {priority}")
+    logger.info(f"Limit: {limit if limit else 'unlimited'}")
 
     # Build command
     script_path = Path(__file__).parent / "scripts" / "generate_programs.py"
@@ -43,8 +46,8 @@ def main():
     if limit:
         cmd.extend(["--limit", limit])
 
-    print(f"\nRunning: {' '.join(cmd)}")
-    print("=" * 60 + "\n")
+    logger.info(f"\nRunning: {' '.join(cmd)}")
+    logger.info("=" * 60 + "\n")
 
     # Run the generation script
     result = subprocess.run(cmd, cwd=str(Path(__file__).parent))

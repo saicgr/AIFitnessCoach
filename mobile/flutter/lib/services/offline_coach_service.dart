@@ -10,6 +10,9 @@ import 'workout_prompt_builder.dart';
 ///
 /// Uses the loaded Gemma model to respond to user messages when offline.
 /// Supports multimodal input (images) when Gemma 3n is loaded.
+///
+/// **Offline Mode is Coming Soon** — [isAvailable] always returns false
+/// until Offline Mode launches.
 class OfflineCoachService {
   final OnDeviceGemmaService _gemmaService;
   final WorkoutPromptBuilder _promptBuilder = WorkoutPromptBuilder();
@@ -17,7 +20,8 @@ class OfflineCoachService {
   OfflineCoachService(this._gemmaService);
 
   /// Whether the offline coach is available (model loaded).
-  bool get isAvailable => _gemmaService.isModelLoaded;
+  /// Offline Mode is Coming Soon — always returns false.
+  bool get isAvailable => false; // _gemmaService.isModelLoaded
 
   /// Whether the loaded model supports image input.
   bool get isMultimodal => _gemmaService.isMultimodal;

@@ -135,8 +135,11 @@ def should_use_tools(state: FitnessCoachState) -> Literal["agent", "respond"]:
     ]
     is_injury_intent = intent in injury_intents
 
-    if has_image:
-        logger.info("[Router] Image present -> agent (food analysis)")
+    media_content_type = state.get("media_content_type")
+    has_media = has_image or media_content_type is not None
+
+    if has_media:
+        logger.info(f"[Router] Media present (type={media_content_type}) -> agent")
         return "agent"
     elif has_workout:
         logger.info("[Router] Workout present -> agent (let LLM with tools decide)")

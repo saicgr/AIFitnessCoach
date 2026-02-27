@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -109,7 +110,7 @@ class _WatchInstallBannerState extends ConsumerState<WatchInstallBanner>
         });
       }
     } catch (e) {
-      print('❌ Error checking watch status: $e');
+      debugPrint('❌ Error checking watch status: $e');
       setState(() {
         _isLoading = false;
         _shouldShow = false;
@@ -159,7 +160,7 @@ class _WatchInstallBannerState extends ConsumerState<WatchInstallBanner>
         }
       }
     } catch (e) {
-      print('❌ Error prompting watch install: $e');
+      debugPrint('❌ Error prompting watch install: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(

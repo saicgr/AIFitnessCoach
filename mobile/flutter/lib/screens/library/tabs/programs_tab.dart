@@ -153,7 +153,6 @@ class _ProgramsTabState extends ConsumerState<ProgramsTab> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final cyan = isDark ? AppColors.cyan : AppColorsLight.cyan;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    final orange = isDark ? AppColors.orange : AppColorsLight.orange;
     final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
     final accentColor = ref.colors(context).accent;
     final bottomPadding = MediaQuery.of(context).padding.bottom;
@@ -169,19 +168,19 @@ class _ProgramsTabState extends ConsumerState<ProgramsTab> {
               margin: const EdgeInsets.fromLTRB(16, 12, 16, 0),
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               decoration: BoxDecoration(
-                color: orange.withValues(alpha: 0.1),
+                color: cyan.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Row(
                 children: [
-                  Icon(Icons.schedule_rounded, color: orange, size: 16),
+                  Icon(Icons.fitness_center_rounded, color: cyan, size: 16),
                   const SizedBox(width: 8),
                   Text(
-                    'Programs coming soon — tap any to learn more',
+                    'Tap any program to learn more',
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w500,
-                      color: orange,
+                      color: cyan,
                     ),
                   ),
                 ],
@@ -353,7 +352,6 @@ class _ProgramsTabState extends ConsumerState<ProgramsTab> {
                         final program = filtered[index];
                         return ProgramCard(
                           program: program,
-                          showComingSoon: true,
                         )
                             .animate()
                             .fadeIn(delay: Duration(milliseconds: index * 50));

@@ -84,12 +84,6 @@ class WorkoutSettingsPage extends ConsumerWidget {
                     isWorkoutDaysSelector: true,
                   ),
                   SettingItemData(
-                    icon: Icons.shuffle,
-                    title: 'Exercise Consistency',
-                    subtitle: 'Vary or keep same exercises',
-                    isConsistencyModeSelector: true,
-                  ),
-                  SettingItemData(
                     icon: Icons.tune,
                     title: 'Weekly Variety',
                     subtitle: 'How much exercises change each week',

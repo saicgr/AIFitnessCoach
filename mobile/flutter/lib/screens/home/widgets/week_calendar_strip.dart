@@ -58,12 +58,22 @@ class WeekCalendarStrip extends ConsumerWidget {
               final status = workoutStatusMap[index]; // null, true, or false
               final isPast = index < todayIndex;
 
+              // Check if previous day's workout was completed or missed (for today's badge)
+              final prevDayCompleted = isToday &&
+                  index > 0 &&
+                  workoutStatusMap[index - 1] == true;
+              final prevDayMissed = isToday &&
+                  index > 0 &&
+                  workoutStatusMap[index - 1] == false;
+
               return _DayCell(
                 dayLabel: shortDays[index],
                 dateNumber: date.day,
                 isToday: isToday,
                 isSelected: isSelected,
                 workoutStatus: status,
+                previousDayCompleted: prevDayCompleted,
+                previousDayMissed: prevDayMissed,
                 isPast: isPast,
                 accentColor: accentColor,
                 isDark: isDark,
@@ -80,7 +90,11 @@ class WeekCalendarStrip extends ConsumerWidget {
   }
 }
 
-/// Individual day cell in the week strip
+/// Individual day cell in the week strip.
+///
+/// Today's date is wrapped in a vertical rounded rectangle (pill) containing
+/// the day label + date number, with a small checkmark overlay when the
+/// previous day's workout is done. All other days keep a minimal layout.
 class _DayCell extends StatelessWidget {
   final String dayLabel;
   final int dateNumber;
@@ -88,6 +102,10 @@ class _DayCell extends StatelessWidget {
   final bool isSelected;
   /// null = not a workout day, true = completed, false = scheduled/missed
   final bool? workoutStatus;
+  /// Whether the *previous* day's workout was completed (drives checkmark)
+  final bool previousDayCompleted;
+  /// Whether the *previous* day's workout was missed (drives X mark)
+  final bool previousDayMissed;
   final bool isPast;
   final Color accentColor;
   final bool isDark;
@@ -99,6 +117,8 @@ class _DayCell extends StatelessWidget {
     required this.isToday,
     required this.isSelected,
     required this.workoutStatus,
+    this.previousDayCompleted = false,
+    this.previousDayMissed = false,
     required this.isPast,
     required this.accentColor,
     required this.isDark,
@@ -107,56 +127,141 @@ class _DayCell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Determine styling
-    Color? circleBg;
+    // --- Today: outlined rounded-rect pill wrapping day + date ---
+    if (isToday) {
+      return GestureDetector(
+        onTap: onTap,
+        behavior: HitTestBehavior.opaque,
+        child: SizedBox(
+          width: 42,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  Container(
+                    width: 38,
+                    padding: const EdgeInsets.symmetric(vertical: 6),
+                    decoration: BoxDecoration(
+                      color: Colors.transparent,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: accentColor, width: 2),
+                    ),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          dayLabel,
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                            color: accentColor,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          '$dateNumber',
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.bold,
+                            color: accentColor,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  // Checkmark badge when previous day's workout is complete
+                  if (previousDayCompleted)
+                    Positioned(
+                      bottom: -4,
+                      left: 0,
+                      right: 0,
+                      child: Center(
+                        child: Container(
+                          width: 16,
+                          height: 16,
+                          decoration: BoxDecoration(
+                            color: AppColors.success,
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: isDark ? AppColors.background : AppColorsLight.background,
+                              width: 2,
+                            ),
+                          ),
+                          child: const Icon(
+                            Icons.check,
+                            size: 10,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ),
+                  // X mark badge when previous day's workout was missed
+                  if (previousDayMissed)
+                    Positioned(
+                      bottom: -4,
+                      left: 0,
+                      right: 0,
+                      child: Center(
+                        child: Container(
+                          width: 16,
+                          height: 16,
+                          decoration: BoxDecoration(
+                            color: AppColors.error,
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: isDark ? AppColors.background : AppColorsLight.background,
+                              width: 2,
+                            ),
+                          ),
+                          child: const Icon(
+                            Icons.close,
+                            size: 10,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+              const SizedBox(height: 4),
+              // Status indicator below pill
+              _buildStatusIndicator(),
+            ],
+          ),
+        ),
+      );
+    }
+
+    // --- Non-today cells: original minimal layout ---
     Color dateColor;
     Color dayLabelColor;
     FontWeight dateFontWeight;
+    Color? cellBg;
 
-    if (isToday) {
-      // Today: filled accent circle
-      circleBg = accentColor;
-      dateColor = isDark ? Colors.black : Colors.white;
-      dayLabelColor = accentColor;
-      dateFontWeight = FontWeight.bold;
-    } else if (isSelected) {
-      // Selected but not today: subtle tint
-      circleBg = accentColor.withValues(alpha: 0.15);
+    if (isSelected) {
+      cellBg = accentColor.withValues(alpha: 0.15);
       dateColor = isDark ? Colors.white : Colors.black87;
       dayLabelColor = isDark ? Colors.white : Colors.black87;
       dateFontWeight = FontWeight.w600;
     } else if (workoutStatus != null) {
-      // Workout day (not selected, not today)
-      circleBg = null;
+      cellBg = null;
       dateColor = isDark ? Colors.white : Colors.black87;
       dayLabelColor = isDark ? Colors.white70 : Colors.black54;
       dateFontWeight = FontWeight.w500;
     } else {
-      // Non-workout day
-      circleBg = null;
+      cellBg = null;
       dateColor = isDark ? Colors.white38 : Colors.black26;
       dayLabelColor = isDark ? Colors.white38 : Colors.black26;
       dateFontWeight = FontWeight.normal;
-    }
-
-    // Dot color for workout status
-    Color? dotColor;
-    if (workoutStatus == true) {
-      // Completed
-      dotColor = AppColors.success;
-    } else if (workoutStatus == false && isPast) {
-      // Missed (past + incomplete)
-      dotColor = AppColors.error;
-    } else if (workoutStatus == false) {
-      // Future/today scheduled
-      dotColor = accentColor;
     }
 
     return GestureDetector(
       onTap: onTap,
       behavior: HitTestBehavior.opaque,
       child: SizedBox(
-        width: 40,
+        width: 42,
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -176,7 +281,7 @@ class _DayCell extends StatelessWidget {
               height: 32,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: circleBg,
+                color: cellBg,
               ),
               alignment: Alignment.center,
               child: Text(
@@ -189,21 +294,42 @@ class _DayCell extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 4),
-            // Status dot (6px)
-            if (dotColor != null)
-              Container(
-                width: 6,
-                height: 6,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: dotColor,
-                ),
-              )
-            else
-              const SizedBox(height: 6),
+            // Status indicator: X for missed, dot for others
+            _buildStatusIndicator(),
           ],
         ),
       ),
     );
+  }
+
+  /// Whether this day was missed (past + scheduled but not completed)
+  bool get _isMissed => workoutStatus == false && isPast;
+
+  /// Dot/indicator color for workout status
+  Color? get _dotColor {
+    if (workoutStatus == true) return AppColors.success;
+    if (_isMissed) return AppColors.error;
+    if (workoutStatus == false) return accentColor;
+    return null;
+  }
+
+  /// Build the status indicator: X mark for missed, dot for others
+  Widget _buildStatusIndicator() {
+    if (_isMissed) {
+      // X mark instead of red dot for missed workouts
+      return Icon(Icons.close, size: 10, color: AppColors.error);
+    }
+    final color = _dotColor;
+    if (color != null) {
+      return Container(
+        width: 6,
+        height: 6,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: color,
+        ),
+      );
+    }
+    return const SizedBox(height: 6);
   }
 }

@@ -138,6 +138,9 @@ class ImageCaptureUtils {
   /// Instagram Post optimal size (1:1 square)
   static const Size instagramPostSize = Size(1080, 1080);
 
+  /// Instagram Portrait optimal size (4:5 aspect ratio)
+  static const Size instagramPortraitSize = Size(1080, 1350);
+
   /// Standard share image size (16:9 landscape)
   static const Size standardShareSize = Size(1920, 1080);
 }
@@ -197,7 +200,12 @@ class InstagramStoryWrapper extends StatelessWidget {
             colors: backgroundGradient,
           ),
         ),
-        child: Center(child: child),
+        child: Center(
+          child: FittedBox(
+            fit: BoxFit.contain,
+            child: child,
+          ),
+        ),
       ),
     );
   }

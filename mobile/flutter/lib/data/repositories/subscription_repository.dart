@@ -271,8 +271,7 @@ class SubscriptionRepository {
       return data.map((json) => SubscriptionEvent.fromJson(json)).toList();
     } catch (e) {
       debugPrint('Error getting subscription history: $e');
-      // Return mock data for now if backend not implemented
-      return _getMockSubscriptionHistory();
+      return [];
     }
   }
 
@@ -288,8 +287,7 @@ class SubscriptionRepository {
       return null;
     } catch (e) {
       debugPrint('Error getting upcoming renewal: $e');
-      // Return mock data for testing
-      return _getMockUpcomingRenewal();
+      return null;
     }
   }
 
@@ -310,14 +308,7 @@ class SubscriptionRepository {
       return RefundRequest.fromJson(response.data);
     } catch (e) {
       debugPrint('Error requesting refund: $e');
-      // Return mock success for testing
-      return RefundRequest(
-        id: 'REF-${DateTime.now().millisecondsSinceEpoch}',
-        reason: reason,
-        comments: comments,
-        requestDate: DateTime.now(),
-        status: 'pending',
-      );
+      rethrow;
     }
   }
 
@@ -337,39 +328,6 @@ class SubscriptionRepository {
     }
   }
 
-  // Mock data for testing when backend is not implemented
-  List<SubscriptionEvent> _getMockSubscriptionHistory() {
-    return [
-      SubscriptionEvent(
-        id: '1',
-        eventType: SubscriptionEventType.purchased,
-        eventDate: DateTime.now().subtract(const Duration(days: 60)),
-        planName: 'Premium Yearly',
-        pricePaid: 47.99,
-        currency: 'USD',
-        details: 'Initial subscription',
-      ),
-      SubscriptionEvent(
-        id: '2',
-        eventType: SubscriptionEventType.upgraded,
-        eventDate: DateTime.now().subtract(const Duration(days: 30)),
-        planName: 'Premium Plus Yearly',
-        pricePaid: 32.00,
-        currency: 'USD',
-        details: 'Prorated upgrade from Premium',
-      ),
-    ];
-  }
-
-  UpcomingRenewal? _getMockUpcomingRenewal() {
-    return UpcomingRenewal(
-      planName: 'Premium Plus Yearly',
-      amount: 79.99,
-      currency: 'USD',
-      renewalDate: DateTime.now().add(const Duration(days: 30)),
-      isAutoRenew: true,
-    );
-  }
 }
 
 /// Subscription history state
