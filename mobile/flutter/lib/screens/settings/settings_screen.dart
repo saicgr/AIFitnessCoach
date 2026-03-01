@@ -4,7 +4,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../core/constants/api_constants.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/theme/theme_colors.dart';
@@ -100,6 +103,36 @@ const Map<String, List<String>> _settingsSearchIndex = {
     'who can see', 'hide profile', 'make private', 'share workouts',
     'connect with friends', 'social media', 'post workouts',
     'visible to', 'privacy settings', 'block', 'data privacy',
+  ],
+  'help_center': [
+    'help', 'support', 'help center', 'customer support',
+    'get help', 'need help', 'assistance', 'faq',
+    'how to', 'guide', 'tutorial', 'support center',
+    'ticket', 'tickets', 'support ticket',
+  ],
+  'report_issue': [
+    'report', 'issue', 'bug', 'problem', 'bug report',
+    'report bug', 'report issue', 'something broke', 'broken',
+    'not working', 'crash', 'error', 'glitch',
+  ],
+  'about_app': [
+    'about', 'app info', 'info', 'version', 'app version',
+    'update', 'changelog', 'what\'s new',
+    'check version', 'current version', 'app details',
+    'licenses', 'credits', 'about app', 'about fitwiz',
+  ],
+  'privacy_policy': [
+    'privacy', 'privacy policy', 'data policy',
+    'how we handle data', 'data protection', 'personal data',
+  ],
+  'terms_of_service': [
+    'terms', 'terms of service', 'tos', 'legal',
+    'legal documents', 'user agreement', 'legal info',
+  ],
+  'rate_app': [
+    'rate', 'rate app', 'review', 'star', 'stars',
+    'app store review', 'play store review', 'feedback',
+    'leave review', 'rate us',
   ],
   'support': [
     'legal', 'privacy', 'terms', 'policy', 'service',
@@ -252,6 +285,13 @@ const Map<String, List<String>> _settingsSearchIndex = {
 };
 
 /// A single row in the settings screen
+class _SocialIcon {
+  final IconData icon;
+  final Color color;
+  final String label;
+  const _SocialIcon(this.icon, this.color, this.label);
+}
+
 class _SettingsRow {
   final IconData icon;
   final Color? iconColor;
@@ -260,15 +300,17 @@ class _SettingsRow {
   final String route;
   final List<String> sectionKeys;
   final bool isThemeRow;
+  final VoidCallback? onTap;
 
   const _SettingsRow({
     required this.icon,
     this.iconColor,
     required this.title,
     this.value,
-    required this.route,
+    this.route = '',
     required this.sectionKeys,
     this.isThemeRow = false,
+    this.onTap,
   });
 }
 
@@ -533,6 +575,45 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     );
   }
 
+  // --- Social media icon row ---
+  Widget _buildSocialRow(bool isDark) {
+    const socials = [
+      _SocialIcon(FontAwesomeIcons.reddit, Color(0xFFFF4500), 'Reddit'),
+      _SocialIcon(FontAwesomeIcons.xTwitter, Color(0xFF14171A), 'X'),
+      _SocialIcon(FontAwesomeIcons.instagram, Color(0xFFE4405F), 'Instagram'),
+      _SocialIcon(FontAwesomeIcons.tiktok, Color(0xFF010101), 'TikTok'),
+      _SocialIcon(FontAwesomeIcons.snapchat, Color(0xFFFFFC00), 'Snapchat'),
+    ];
+
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: socials.map((s) {
+        final iconColor = isDark && s.color.computeLuminance() < 0.1
+            ? Colors.white
+            : s.color;
+        return Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 8),
+          child: GestureDetector(
+            onTap: () {
+              // TODO: add social media URLs
+            },
+            child: Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                color: iconColor.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Center(
+                child: FaIcon(s.icon, color: iconColor, size: 20),
+              ),
+            ),
+          ),
+        );
+      }).toList(),
+    );
+  }
+
   // --- Group card containing rows ---
   Widget _buildGroupCard(
     List<_SettingsRow> rows,
@@ -588,7 +669,11 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     return InkWell(
       onTap: () {
         HapticFeedback.lightImpact();
-        context.push(row.route);
+        if (row.onTap != null) {
+          row.onTap!();
+        } else {
+          context.push(row.route);
+        }
       },
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
@@ -889,6 +974,86 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     }
   }
 
+  void _launchExternalUrl(String url) async {
+    final uri = Uri.parse(url);
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    }
+  }
+
+  void _showAboutDialog(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: isDark ? AppColors.elevated : AppColorsLight.elevated,
+        title: Row(
+          children: [
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [AppColors.cyan, AppColors.purple],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: const Icon(
+                Icons.fitness_center,
+                color: Colors.white,
+                size: 24,
+              ),
+            ),
+            const SizedBox(width: 12),
+            const Text('FitWiz'),
+          ],
+        ),
+        content: FutureBuilder<PackageInfo>(
+          future: PackageInfo.fromPlatform(),
+          builder: (context, snapshot) {
+            final version = snapshot.hasData
+                ? 'Version ${snapshot.data!.version} (${snapshot.data!.buildNumber})'
+                : 'Loading version...';
+            return Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  version,
+                  style: TextStyle(
+                    color: isDark ? AppColors.textSecondary : AppColorsLight.textSecondary,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  'Your AI-powered personal fitness coach. Get personalized workout plans, track your progress, and achieve your fitness goals.',
+                  style: TextStyle(
+                    color: isDark ? AppColors.textSecondary : AppColorsLight.textSecondary,
+                    height: 1.5,
+                  ),
+                ),
+              ],
+            );
+          },
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(
+              'Close',
+              style: TextStyle(
+                color: isDark ? AppColors.cyan : AppColorsLight.cyan,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   void _onVersionTap() {
     final now = DateTime.now();
     final isBeastModeUnlocked = ref.read(beastModeProvider);
@@ -1046,8 +1211,16 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         ],
       ),
       _SettingsSection(
-        label: 'COMMUNITY',
+        label: 'HELP & SUPPORT',
         rows: [
+          _SettingsRow(
+            icon: Icons.confirmation_number_outlined,
+            iconColor: isDark ? AppColors.cyan : AppColorsLight.cyan,
+            title: 'Support',
+            value: 'Tickets & help',
+            route: '/support-tickets',
+            sectionKeys: const ['help_center', 'report_issue'],
+          ),
           _SettingsRow(
             icon: Icons.lightbulb_outline,
             iconColor: isDark ? AppColors.yellow : AppColors.yellow,
@@ -1056,6 +1229,55 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             route: '/features',
             sectionKeys: const ['feature_requests'],
           ),
+        ],
+      ),
+      _SettingsSection(
+        label: 'ABOUT',
+        rows: [
+          _SettingsRow(
+            icon: Icons.info_outline,
+            iconColor: textMuted,
+            title: 'About FitWiz',
+            sectionKeys: const ['about_app'],
+            onTap: () => _showAboutDialog(context),
+          ),
+          _SettingsRow(
+            icon: Icons.science_outlined,
+            iconColor: isDark ? AppColors.info : AppColorsLight.info,
+            title: 'Research & Science',
+            route: '/settings/research',
+            sectionKeys: const ['research'],
+          ),
+          _SettingsRow(
+            icon: Icons.privacy_tip_outlined,
+            iconColor: textMuted,
+            title: 'Privacy Policy',
+            sectionKeys: const ['privacy_policy', 'support'],
+            onTap: () => _launchExternalUrl('https://fitwiz.app/privacy'),
+          ),
+          _SettingsRow(
+            icon: Icons.description_outlined,
+            iconColor: textMuted,
+            title: 'Terms of Service',
+            sectionKeys: const ['terms_of_service', 'support'],
+            onTap: () => _launchExternalUrl('https://fitwiz.app/terms'),
+          ),
+          _SettingsRow(
+            icon: Icons.star_outline,
+            iconColor: isDark ? AppColors.warning : AppColorsLight.warning,
+            title: 'Rate App',
+            sectionKeys: const ['rate_app'],
+            onTap: () => _launchExternalUrl(
+              Platform.isIOS
+                  ? 'https://apps.apple.com/app/fitwiz'
+                  : 'https://play.google.com/store/apps/details?id=com.fitwiz.app',
+            ),
+          ),
+        ],
+      ),
+      _SettingsSection(
+        label: 'COMMUNITY',
+        rows: [
           _SettingsRow(
             icon: Icons.rocket_launch_outlined,
             iconColor: isDark ? AppColors.orange : AppColorsLight.orange,
@@ -1067,15 +1289,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         ],
       ),
     ];
-
-    // Standalone "About" section (no label)
-    final aboutRow = _SettingsRow(
-      icon: Icons.info_outline,
-      iconColor: textMuted,
-      title: 'About & Support',
-      route: '/settings/about-support',
-      sectionKeys: const ['support', 'app_info', 'research', 'shop'],
-    );
 
     return Scaffold(
       backgroundColor: backgroundColor,
@@ -1143,21 +1356,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     ],
                   ],
 
-                  // About standalone row
-                  if (_searchQuery.isEmpty ||
-                      aboutRow.sectionKeys.any((k) => _matchingSections.contains(k))) ...[
-                    _buildGroupCard(
-                      [aboutRow],
-                      isDark,
-                      elevated,
-                      cardBorder,
-                      textPrimary,
-                      textMuted,
-                      themeMode,
-                    ),
-                    const SizedBox(height: 24),
-                  ],
-
                   // Beast Mode row (only visible when unlocked)
                   if (ref.watch(beastModeProvider) &&
                       (_searchQuery.isEmpty ||
@@ -1181,6 +1379,12 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                       themeMode,
                     ),
                     const SizedBox(height: 32),
+                  ],
+
+                  // Social Media Icons
+                  if (_searchQuery.isEmpty) ...[
+                    _buildSocialRow(isDark),
+                    const SizedBox(height: 24),
                   ],
 
                   // Sign Out

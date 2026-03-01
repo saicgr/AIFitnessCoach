@@ -51,6 +51,22 @@ class MinimalHeader extends ConsumerWidget {
             tooltip: 'Edit Layout',
           ),
 
+          // Settings icon
+          IconButton(
+            onPressed: () {
+              HapticService.light();
+              context.push('/settings');
+            },
+            icon: Icon(
+              Icons.settings_outlined,
+              size: 22,
+              color: isDark ? Colors.white70 : Colors.black54,
+            ),
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+            tooltip: 'Settings',
+          ),
+
           // XP Level Badge with progress ring
           GestureDetector(
             onTap: () {

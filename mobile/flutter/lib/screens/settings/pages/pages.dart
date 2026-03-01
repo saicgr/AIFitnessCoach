@@ -8,4 +8,3 @@ export 'equipment_page.dart';
 export 'offline_mode_page.dart';
 export 'health_devices_page.dart';
 export 'privacy_data_page.dart';
-export 'about_support_page.dart';

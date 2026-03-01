@@ -737,7 +737,7 @@ class _WeightProjectionScreenState
         GestureDetector(
           onTap: () {
             HapticFeedback.mediumImpact();
-            context.go('/coach-selection');
+            context.go('/training-split');
           },
           child: Container(
             width: double.infinity,
@@ -1010,7 +1010,7 @@ class _WeightProjectionScreenState
                 GestureDetector(
                   onTap: () {
                     HapticFeedback.mediumImpact();
-                    context.go('/coach-selection');
+                    context.go('/training-split');
                   },
                   child: Container(
                     width: double.infinity,

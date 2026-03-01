@@ -1,0 +1,65 @@
+-- ============================================================================
+-- 290_overrides_bbq_chains.sql
+-- BBQ chains: Dickey's, Famous Dave's, Sonny's, City BBQ, Smokey Bones, Jim 'N Nick's
+-- ============================================================================
+
+INSERT INTO food_nutrition_overrides (
+  food_name_normalized, display_name,
+  calories_per_100g, protein_per_100g, carbs_per_100g, fat_per_100g,
+  fiber_per_100g, sugar_per_100g,
+  default_weight_per_piece_g, default_serving_g,
+  source, variant_names, notes,
+  restaurant_name, food_category, default_count
+) VALUES
+('dickeys_chopped_brisket', 'Dickey''s Chopped Brisket', 200.0, 17.1, 0.0, 14.3, 0.0, 0.0, NULL, 140, 'dickeys.com', ARRAY['dickeys brisket', 'dickeys chopped beef'], '280 cal per 140g serving. Slow-smoked 12+ hours over hickory.', 'Dickey''s', 'steak', 1),
+('dickeys_pulled_pork', 'Dickey''s Pulled Pork', 171.4, 18.6, 1.4, 10.0, 0.0, 1.0, NULL, 140, 'dickeys.com', ARRAY['dickeys pulled pork'], '240 cal per 140g serving.', 'Dickey''s', 'steak', 1),
+('dickeys_turkey_breast', 'Dickey''s Smoked Turkey Breast', 128.6, 22.9, 0.0, 4.3, 0.0, 0.0, NULL, 140, 'dickeys.com', ARRAY['dickeys turkey', 'dickeys smoked turkey'], '180 cal per 140g serving.', 'Dickey''s', 'chicken', 1),
+('dickeys_polish_sausage', 'Dickey''s Polish Sausage', 253.3, 10.7, 2.7, 21.3, 0.0, 1.0, 150, 150, 'dickeys.com', ARRAY['dickeys sausage', 'dickeys kielbasa'], '380 cal per link (150g).', 'Dickey''s', 'steak', 1),
+('dickeys_mac_cheese', 'Dickey''s Mac & Cheese', 164.7, 5.9, 16.5, 8.2, 0.5, 2.0, NULL, 170, 'dickeys.com', ARRAY['dickeys mac and cheese'], '280 cal per 170g side.', 'Dickey''s', 'sides', 1),
+('dickeys_jalapeno_beans', 'Dickey''s Jalapeño Beans', 94.1, 4.7, 14.1, 2.4, 4.0, 3.0, NULL, 170, 'dickeys.com', ARRAY['dickeys beans', 'dickeys baked beans'], '160 cal per 170g side.', 'Dickey''s', 'sides', 1),
+('dickeys_fried_okra', 'Dickey''s Fried Okra', 169.2, 3.1, 20.0, 9.2, 2.0, 2.0, NULL, 130, 'dickeys.com', ARRAY['dickeys okra'], '220 cal per 130g side.', 'Dickey''s', 'sides', 1),
+('famous_daves_stl_ribs', 'Famous Dave''s St. Louis Ribs (Half)', 222.9, 13.7, 3.4, 17.1, 0.0, 2.5, NULL, 350, 'famousdaves.com', ARRAY['famous daves ribs', 'famous daves st louis ribs'], '780 cal per half rack (350g). Slow-smoked with signature rub.', 'Famous Dave''s', 'steak', 1),
+('famous_daves_chopped_pork', 'Famous Dave''s Georgia Chopped Pork', 164.7, 16.5, 3.5, 9.4, 0.0, 4.0, NULL, 170, 'famousdaves.com', ARRAY['famous daves pulled pork', 'famous daves chopped pork'], '280 cal per 170g serving.', 'Famous Dave''s', 'steak', 1),
+('famous_daves_brisket', 'Famous Dave''s Texas Beef Brisket', 188.2, 16.5, 1.2, 12.9, 0.0, 1.0, NULL, 170, 'famousdaves.com', ARRAY['famous daves brisket', 'famous daves beef brisket'], '320 cal per 170g serving.', 'Famous Dave''s', 'steak', 1),
+('famous_daves_roasted_chicken', 'Famous Dave''s Country-Roasted Chicken (Half)', 173.3, 20.0, 0.0, 10.0, 0.0, 0.0, NULL, 300, 'famousdaves.com', ARRAY['famous daves chicken', 'famous daves roasted chicken'], '520 cal per half chicken (300g).', 'Famous Dave''s', 'chicken', 1),
+('famous_daves_cornbread', 'Famous Dave''s Corn Bread Muffin', 288.9, 4.4, 40.0, 11.1, 1.0, 12.0, 90, 90, 'famousdaves.com', ARRAY['famous daves cornbread'], '260 cal per muffin (90g).', 'Famous Dave''s', 'sides', 1),
+('famous_daves_wilbur_beans', 'Famous Dave''s Wilbur Beans', 117.6, 5.9, 17.6, 2.4, 4.0, 8.0, NULL, 170, 'famousdaves.com', ARRAY['famous daves beans', 'famous daves baked beans'], '200 cal per 170g side.', 'Famous Dave''s', 'sides', 1),
+('sonnys_sliced_pork', 'Sonny''s BBQ Sliced Pork', 164.7, 17.6, 2.4, 9.4, 0.0, 3.0, NULL, 170, 'sonnysbbq.com', ARRAY['sonnys pork', 'sonnys sliced pork'], '280 cal per 170g serving.', 'Sonny''s BBQ', 'steak', 1),
+('sonnys_baby_back_ribs', 'Sonny''s BBQ Baby Back Ribs (Half)', 225.0, 13.8, 2.5, 17.5, 0.0, 2.0, NULL, 320, 'sonnysbbq.com', ARRAY['sonnys ribs', 'sonnys baby back ribs'], '720 cal per half rack (320g).', 'Sonny''s BBQ', 'steak', 1),
+('sonnys_smoked_chicken', 'Sonny''s BBQ Smoked Chicken (Quarter)', 130.0, 16.0, 0.0, 7.0, 0.0, 0.0, NULL, 200, 'sonnysbbq.com', ARRAY['sonnys chicken', 'sonnys smoked chicken'], '260 cal per quarter (200g).', 'Sonny''s BBQ', 'chicken', 1),
+('sonnys_brisket', 'Sonny''s BBQ Beef Brisket', 182.4, 15.3, 1.2, 12.9, 0.0, 1.0, NULL, 170, 'sonnysbbq.com', ARRAY['sonnys brisket'], '310 cal per 170g serving.', 'Sonny''s BBQ', 'steak', 1),
+('sonnys_sweet_potato', 'Sonny''s BBQ Sweet Potato', 90.0, 1.0, 20.0, 1.0, 3.0, 8.0, 200, 200, 'sonnysbbq.com', ARRAY['sonnys sweet potato side'], '180 cal per 200g sweet potato.', 'Sonny''s BBQ', 'sides', 1),
+('sonnys_coleslaw', 'Sonny''s BBQ Coleslaw', 133.3, 0.8, 11.7, 10.0, 1.5, 8.0, NULL, 120, 'sonnysbbq.com', ARRAY['sonnys coleslaw', 'sonnys cole slaw'], '160 cal per 120g side.', 'Sonny''s BBQ', 'sides', 1),
+('city_bbq_brisket', 'City Barbeque Brisket', 214.3, 18.6, 0.0, 15.7, 0.0, 0.0, NULL, 140, 'citybbq.com', ARRAY['city bbq brisket', 'city barbeque brisket'], '300 cal per 140g serving.', 'City Barbeque', 'steak', 1),
+('city_bbq_pulled_chicken', 'City Barbeque Pulled Chicken', 128.6, 21.4, 1.4, 4.3, 0.0, 1.0, NULL, 140, 'citybbq.com', ARRAY['city bbq chicken', 'city barbeque chicken'], '180 cal per 140g serving.', 'City Barbeque', 'chicken', 1),
+('city_bbq_ribs', 'City Barbeque St. Louis Ribs (Half)', 226.7, 14.0, 2.0, 18.0, 0.0, 2.0, NULL, 300, 'citybbq.com', ARRAY['city bbq ribs', 'city barbeque ribs'], '680 cal per half rack (300g).', 'City Barbeque', 'steak', 1),
+('city_bbq_sausage', 'City Barbeque Smoked Sausage', 261.5, 10.8, 3.1, 23.1, 0.0, 1.0, 130, 130, 'citybbq.com', ARRAY['city bbq sausage'], '340 cal per link (130g).', 'City Barbeque', 'steak', 1),
+('city_bbq_cheesy_corn', 'City Barbeque Cheesy Corn Bake', 146.7, 4.0, 14.7, 8.0, 1.5, 4.0, NULL, 150, 'citybbq.com', ARRAY['city bbq corn', 'city barbeque corn bake'], '220 cal per 150g side.', 'City Barbeque', 'sides', 1),
+('smokey_bones_full_ribs', 'Smokey Bones Baby Back Ribs (Full)', 218.2, 13.1, 2.2, 17.5, 0.0, 1.5, NULL, 550, 'smokeybones.com', ARRAY['smokey bones ribs', 'smokey bones baby back'], '1200 cal per full rack (550g).', 'Smokey Bones', 'steak', 1),
+('smokey_bones_pulled_pork_sandwich', 'Smokey Bones Pulled Pork Sandwich', 185.7, 10.0, 15.0, 8.6, 1.0, 5.0, 280, 280, 'smokeybones.com', ARRAY['smokey bones pulled pork', 'smokey bones pork sandwich'], '520 cal per sandwich (280g).', 'Smokey Bones', 'sandwiches', 1),
+('smokey_bones_smoked_wings', 'Smokey Bones Smoked Wings', 195.0, 13.0, 2.0, 15.0, 0.0, 1.0, 40, 400, 'smokeybones.com', ARRAY['smokey bones wings'], '780 cal per 10 wings (400g).', 'Smokey Bones', 'chicken', 10),
+('smokey_bones_brisket', 'Smokey Bones Beef Brisket', 190.0, 15.0, 1.0, 14.0, 0.0, 0.5, NULL, 200, 'smokeybones.com', ARRAY['smokey bones brisket'], '380 cal per 200g serving.', 'Smokey Bones', 'steak', 1),
+('smokey_bones_loaded_potato', 'Smokey Bones Loaded Baked Potato', 126.7, 3.3, 14.0, 6.7, 2.5, 2.0, 300, 300, 'smokeybones.com', ARRAY['smokey bones baked potato'], '380 cal per potato (300g). With butter, sour cream, cheese, bacon.', 'Smokey Bones', 'sides', 1),
+('jim_n_nicks_pulled_pork', 'Jim ''N Nick''s Pulled Pork', 188.2, 16.5, 2.4, 12.9, 0.0, 3.0, NULL, 170, 'jimnnicks.com', ARRAY['jim n nicks pulled pork', 'jim and nicks pork'], '320 cal per 170g serving.', 'Jim ''N Nick''s', 'steak', 1),
+('jim_n_nicks_smoked_chicken', 'Jim ''N Nick''s Smoked Chicken (Half)', 160.0, 17.3, 0.0, 9.3, 0.0, 0.0, NULL, 300, 'jimnnicks.com', ARRAY['jim n nicks chicken', 'jim and nicks chicken'], '480 cal per half chicken (300g).', 'Jim ''N Nick''s', 'chicken', 1),
+('jim_n_nicks_baby_back', 'Jim ''N Nick''s Baby Back Ribs (Half)', 216.7, 13.3, 2.7, 16.7, 0.0, 2.0, NULL, 300, 'jimnnicks.com', ARRAY['jim n nicks ribs', 'jim and nicks baby back'], '650 cal per half rack (300g).', 'Jim ''N Nick''s', 'steak', 1),
+('jim_n_nicks_cheese_biscuit', 'Jim ''N Nick''s Cheese Biscuit', 300.0, 6.7, 33.3, 16.7, 0.5, 2.0, 60, 60, 'jimnnicks.com', ARRAY['jim n nicks biscuit', 'jim and nicks cheese biscuit'], '180 cal per biscuit (60g). Famous warm cheese biscuits.', 'Jim ''N Nick''s', 'sides', 1),
+('jim_n_nicks_pimento_cheese', 'Jim ''N Nick''s Pimento Cheese', 275.0, 10.0, 5.0, 25.0, 0.0, 1.5, NULL, 80, 'jimnnicks.com', ARRAY['jim n nicks pimento cheese dip'], '220 cal per 80g serving.', 'Jim ''N Nick''s', 'sides', 1)
+
+ON CONFLICT (food_name_normalized) DO UPDATE SET
+  display_name = EXCLUDED.display_name,
+  calories_per_100g = EXCLUDED.calories_per_100g,
+  protein_per_100g = EXCLUDED.protein_per_100g,
+  carbs_per_100g = EXCLUDED.carbs_per_100g,
+  fat_per_100g = EXCLUDED.fat_per_100g,
+  fiber_per_100g = EXCLUDED.fiber_per_100g,
+  sugar_per_100g = EXCLUDED.sugar_per_100g,
+  default_weight_per_piece_g = EXCLUDED.default_weight_per_piece_g,
+  default_serving_g = EXCLUDED.default_serving_g,
+  source = EXCLUDED.source,
+  variant_names = EXCLUDED.variant_names,
+  notes = EXCLUDED.notes,
+  restaurant_name = EXCLUDED.restaurant_name,
+  food_category = EXCLUDED.food_category,
+  default_count = EXCLUDED.default_count,
+  updated_at = NOW();

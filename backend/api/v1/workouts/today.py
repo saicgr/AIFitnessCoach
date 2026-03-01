@@ -305,7 +305,7 @@ def _backfill_gym_profile_id(db, user_id: str, gym_profile_id: str) -> None:
         logger.warning(f"[BACKFILL] Failed to backfill gym_profile_id: {e}")
 
 
-async def auto_generate_workout(user_id: str, target_date: date, gym_profile_id: Optional[str] = None, selected_days: Optional[List[int]] = None) -> None:
+async def auto_generate_workout(user_id: str, target_date: date, gym_profile_id: Optional[str] = None, selected_days: Optional[List[int]] = None, adjacent_day_exercises: Optional[List[str]] = None):
     """Background task: generate a workout for a specific date.
 
     Safety guarantees:
@@ -392,12 +392,14 @@ async def auto_generate_workout(user_id: str, target_date: date, gym_profile_id:
             gym_profile_id=gym_profile_id,
             focus_areas=[focus_for_day] if focus_for_day else None,
             workout_type=workout_type,
+            adjacent_day_exercises=adjacent_day_exercises,
         )
 
         # Use the existing non-streaming generate_workout function
         # It handles all user preferences, gym profiles, AI generation, etc.
         result = await generate_workout(request, background_tasks=BackgroundTasks())
         logger.info(f"[BG-GEN] Successfully generated workout for {generation_key}: {result.name if result else 'unknown'}")
+        return result
 
     except Exception as e:
         logger.error(f"[BG-GEN] Failed to generate workout for {generation_key}: {e}")
@@ -415,16 +417,24 @@ async def _sequential_generate_workouts(
 
     This ensures get_recently_used_exercises returns the exercises from
     the just-generated workout, preventing duplicate exercises across
-    adjacent days.
+    adjacent days. Adjacent-day exercise names are also passed explicitly
+    to the next generation call for additional deduplication.
     """
+    prev_exercise_names: List[str] = []
     for i, gen_date in enumerate(dates):
         logger.info(f"[SEQ-GEN] Generating workout {i+1}/{len(dates)} for {gen_date.isoformat()}")
-        await auto_generate_workout(
+        result = await auto_generate_workout(
             user_id=user_id,
             target_date=gen_date,
             gym_profile_id=gym_profile_id,
             selected_days=selected_days,
+            adjacent_day_exercises=prev_exercise_names if prev_exercise_names else None,
         )
+        # Collect exercise names from this workout for the next day's avoid list
+        prev_exercise_names = []
+        if result and hasattr(result, 'exercises') and result.exercises:
+            prev_exercise_names = [ex.name for ex in result.exercises if hasattr(ex, 'name') and ex.name]
+            logger.info(f"[SEQ-GEN] Collected {len(prev_exercise_names)} exercises to avoid for next day")
 
 
 @router.get("/today", response_model=TodayWorkoutResponse)

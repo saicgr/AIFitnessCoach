@@ -6,10 +6,15 @@ from supabase import create_client, Client
 from supabase.lib.client_options import ClientOptions
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
 from sqlalchemy.orm import declarative_base
+from contextlib import asynccontextmanager
 from functools import lru_cache
 from typing import Optional
+import asyncio
+import logging
 import os
 import httpx
+
+logger = logging.getLogger(__name__)
 
 from core.config import get_settings
 
@@ -24,6 +29,7 @@ class SupabaseManager:
     _supabase: Optional[Client] = None
     _engine = None
     _session_maker = None
+    _db_semaphore: Optional[asyncio.Semaphore] = None
 
     def __new__(cls):
         if cls._instance is None:
@@ -87,6 +93,10 @@ class SupabaseManager:
                 expire_on_commit=False
             )
 
+            # Hard cap on concurrent DB sessions to stay within Supabase limits
+            max_concurrent = settings.db_pool_size + settings.db_max_overflow
+            self._db_semaphore = asyncio.Semaphore(max_concurrent)
+
     @property
     def client(self) -> Client:
         """Get Supabase client for Auth operations."""
@@ -98,8 +108,18 @@ class SupabaseManager:
         return self._engine
 
     def get_session(self) -> AsyncSession:
-        """Get a new database session."""
+        """Get a new database session (raw, without semaphore)."""
         return self._session_maker()
+
+    @asynccontextmanager
+    async def get_managed_session(self):
+        """Get a database session guarded by the concurrency semaphore."""
+        async with self._db_semaphore:
+            session = self._session_maker()
+            try:
+                yield session
+            finally:
+                await session.close()
 
     async def close(self):
         """Close database connections."""
@@ -122,6 +142,7 @@ def get_supabase() -> SupabaseManager:
 async def get_db_session():
     """
     Dependency for FastAPI endpoints to get database session.
+    Uses a semaphore to cap concurrent DB connections within Supabase limits.
 
     Usage:
         @app.get("/users")
@@ -130,15 +151,16 @@ async def get_db_session():
             return result.scalars().all()
     """
     supabase_manager = get_supabase()
-    session = supabase_manager.get_session()
-    try:
-        yield session
-        await session.commit()
-    except Exception:
-        await session.rollback()
-        raise
-    finally:
-        await session.close()
+    async with supabase_manager._db_semaphore:
+        session = supabase_manager.get_session()
+        try:
+            yield session
+            await session.commit()
+        except Exception:
+            await session.rollback()
+            raise
+        finally:
+            await session.close()
 
 
 class SupabaseAuth:

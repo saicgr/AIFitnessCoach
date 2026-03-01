@@ -1,8 +1,12 @@
 import 'dart:math' as math;
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
+import 'package:muscle_selector/muscle_selector.dart';
+import 'package:muscle_selector/src/parser.dart';
 import '../../../core/constants/app_colors.dart';
 
-/// Animated human body with liquid water fill effect and wave animation
+/// Animated anatomical muscle body with liquid water fill effect and wave animation.
+/// Uses the muscle_selector package SVG for a realistic body outline.
 class LiquidBodyHydration extends StatefulWidget {
   final double fillPercentage; // 0.0 to 1.0
   final bool isDark;
@@ -28,6 +32,11 @@ class _LiquidBodyHydrationState extends State<LiquidBodyHydration>
   late Animation<double> _fillAnimation;
   double _currentFill = 0.0;
 
+  // Anatomical muscle body paths from SVG
+  Path? _bodyOutlinePath;
+  List<Path> _musclePaths = [];
+  bool _pathsLoaded = false;
+
   @override
   void initState() {
     super.initState();
@@ -52,6 +61,36 @@ class _LiquidBodyHydrationState extends State<LiquidBodyHydration>
       parent: _fillController,
       curve: Curves.easeOutCubic,
     ));
+
+    _loadMusclePaths();
+  }
+
+  Future<void> _loadMusclePaths() async {
+    try {
+      final muscles = await Parser.instance.svgToMuscleList(Maps.BODY);
+      if (!mounted) return;
+
+      Path? bodyOutline;
+      final musclePaths = <Path>[];
+
+      for (final muscle in muscles) {
+        if (muscle.id == 'human_body') {
+          bodyOutline = muscle.path;
+        } else {
+          musclePaths.add(muscle.path);
+        }
+      }
+
+      if (bodyOutline != null) {
+        setState(() {
+          _bodyOutlinePath = bodyOutline;
+          _musclePaths = musclePaths;
+          _pathsLoaded = true;
+        });
+      }
+    } catch (e) {
+      debugPrint('Failed to load muscle SVG paths: $e');
+    }
   }
 
   @override
@@ -100,16 +139,19 @@ class _LiquidBodyHydrationState extends State<LiquidBodyHydration>
             alignment: Alignment.center,
             children: [
               // Body with water fill
-              CustomPaint(
-                size: Size(widget.width, widget.height),
-                painter: _LiquidBodyPainter(
-                  fillPercentage: fillValue,
-                  waveOffset: _waveController.value * 2 * math.pi,
-                  waterColor: waterColor,
-                  bodyOutlineColor: bodyOutlineColor,
-                  isDark: widget.isDark,
+              if (_pathsLoaded && _bodyOutlinePath != null)
+                CustomPaint(
+                  size: Size(widget.width, widget.height),
+                  painter: _LiquidBodyPainter(
+                    fillPercentage: fillValue,
+                    waveOffset: _waveController.value * 2 * math.pi,
+                    waterColor: waterColor,
+                    bodyOutlineColor: bodyOutlineColor,
+                    isDark: widget.isDark,
+                    bodyOutlinePath: _bodyOutlinePath!,
+                    musclePaths: _musclePaths,
+                  ),
                 ),
-              ),
 
               // Percentage text overlay - positioned at chest level
               Positioned(
@@ -173,6 +215,8 @@ class _LiquidBodyPainter extends CustomPainter {
   final Color waterColor;
   final Color bodyOutlineColor;
   final bool isDark;
+  final Path bodyOutlinePath;
+  final List<Path> musclePaths;
 
   _LiquidBodyPainter({
     required this.fillPercentage,
@@ -180,11 +224,39 @@ class _LiquidBodyPainter extends CustomPainter {
     required this.waterColor,
     required this.bodyOutlineColor,
     required this.isDark,
+    required this.bodyOutlinePath,
+    required this.musclePaths,
   });
 
   @override
   void paint(Canvas canvas, Size size) {
-    final bodyPath = _createBodyPath(size);
+    // Compute transform to fit SVG paths into widget bounds
+    final svgBounds = bodyOutlinePath.getBounds();
+    const padding = 4.0;
+    final availableWidth = size.width - 2 * padding;
+    final availableHeight = size.height - 2 * padding;
+
+    final scaleX = availableWidth / svgBounds.width;
+    final scaleY = availableHeight / svgBounds.height;
+    final scale = math.min(scaleX, scaleY);
+
+    final scaledWidth = svgBounds.width * scale;
+    final scaledHeight = svgBounds.height * scale;
+
+    final tx = (size.width - scaledWidth) / 2 - svgBounds.left * scale;
+    final ty = (size.height - scaledHeight) / 2 - svgBounds.top * scale;
+
+    // Column-major 4x4 affine transformation matrix
+    final matrix = Float64List(16)
+      ..[0] = scale // scaleX
+      ..[5] = scale // scaleY
+      ..[10] = 1.0 // scaleZ
+      ..[12] = tx // translateX
+      ..[13] = ty // translateY
+      ..[15] = 1.0; // w
+
+    final bodyPath = bodyOutlinePath.transform(matrix);
+    final bodyBounds = bodyPath.getBounds();
 
     // Draw body background (empty state)
     final emptyPaint = Paint()
@@ -199,25 +271,28 @@ class _LiquidBodyPainter extends CustomPainter {
       canvas.save();
       canvas.clipPath(bodyPath);
 
-      final waterHeight = size.height * fillPercentage;
-      final waterTop = size.height - waterHeight;
+      final waterHeight = bodyBounds.height * fillPercentage;
+      final waterTop = bodyBounds.bottom - waterHeight;
 
-      // Create water path with wave effect
+      // Create water path with wave effect spanning body width
       final waterPath = Path();
-      waterPath.moveTo(0, size.height);
+      waterPath.moveTo(bodyBounds.left - 2, bodyBounds.bottom + 2);
+      waterPath.lineTo(bodyBounds.left - 2, waterTop);
 
-      // Bottom of water
-      waterPath.lineTo(0, waterTop);
-
-      // Wave at top of water - more pronounced wave
-      final waveAmplitude = 6.0;
-      for (double x = 0; x <= size.width; x += 1) {
-        final wave1 = math.sin((x / size.width * 4 * math.pi) + waveOffset) * waveAmplitude;
-        final wave2 = math.sin((x / size.width * 2 * math.pi) + waveOffset * 0.8) * (waveAmplitude * 0.5);
+      // Wave at top of water
+      const waveAmplitude = 6.0;
+      for (double x = bodyBounds.left - 2; x <= bodyBounds.right + 2; x += 1) {
+        final normalizedX =
+            (x - bodyBounds.left) / bodyBounds.width;
+        final wave1 =
+            math.sin((normalizedX * 4 * math.pi) + waveOffset) * waveAmplitude;
+        final wave2 =
+            math.sin((normalizedX * 2 * math.pi) + waveOffset * 0.8) *
+                (waveAmplitude * 0.5);
         waterPath.lineTo(x, waterTop + wave1 + wave2);
       }
 
-      waterPath.lineTo(size.width, size.height);
+      waterPath.lineTo(bodyBounds.right + 2, bodyBounds.bottom + 2);
       waterPath.close();
 
       // Water gradient - more vibrant
@@ -232,17 +307,29 @@ class _LiquidBodyPainter extends CustomPainter {
           stops: const [0.0, 0.3, 0.7, 1.0],
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
-        ).createShader(Rect.fromLTWH(0, waterTop, size.width, waterHeight));
+        ).createShader(
+            Rect.fromLTWH(bodyBounds.left, waterTop, bodyBounds.width, waterHeight));
 
       canvas.drawPath(waterPath, waterPaint);
 
       // Add bubbles for extra effect
-      _drawBubbles(canvas, size, waterTop, waterHeight);
+      _drawBubbles(canvas, bodyBounds, waterTop, waterHeight);
 
       canvas.restore();
     }
 
-    // Draw body outline - thicker and more visible
+    // Draw muscle outlines for anatomical definition
+    final musclePen = Paint()
+      ..color = bodyOutlineColor.withValues(alpha: 0.3)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 0.6;
+
+    for (final musclePath in musclePaths) {
+      final transformedMuscle = musclePath.transform(matrix);
+      canvas.drawPath(transformedMuscle, musclePen);
+    }
+
+    // Draw body outline
     final outlinePaint = Paint()
       ..color = bodyOutlineColor.withValues(alpha: 0.8)
       ..style = PaintingStyle.stroke
@@ -252,216 +339,8 @@ class _LiquidBodyPainter extends CustomPainter {
     canvas.drawPath(bodyPath, outlinePaint);
   }
 
-  Path _createBodyPath(Size size) {
-    final path = Path();
-    final w = size.width;
-    final h = size.height;
-
-    // Realistic human silhouette - anatomically proportioned standing pose
-    // Head is ~1/8 of body height, shoulders ~3 head widths
-
-    final headRadius = w * 0.09;
-    final centerX = w * 0.5;
-
-    // HEAD - circular
-    path.addOval(Rect.fromCircle(
-      center: Offset(centerX, h * 0.05 + headRadius),
-      radius: headRadius,
-    ));
-
-    // Create body path separately and combine
-    final bodyPath = Path();
-
-    // NECK
-    bodyPath.moveTo(centerX - w * 0.04, h * 0.12);
-    bodyPath.lineTo(centerX - w * 0.04, h * 0.15);
-
-    // LEFT SHOULDER curve
-    bodyPath.quadraticBezierTo(
-      centerX - w * 0.12, h * 0.15,
-      centerX - w * 0.22, h * 0.18,
-    );
-
-    // LEFT ARM - down along body
-    bodyPath.quadraticBezierTo(
-      centerX - w * 0.26, h * 0.22,
-      centerX - w * 0.27, h * 0.28,
-    );
-    bodyPath.quadraticBezierTo(
-      centerX - w * 0.28, h * 0.34,
-      centerX - w * 0.26, h * 0.40,
-    );
-    // Left hand
-    bodyPath.quadraticBezierTo(
-      centerX - w * 0.25, h * 0.43,
-      centerX - w * 0.22, h * 0.44,
-    );
-    bodyPath.quadraticBezierTo(
-      centerX - w * 0.19, h * 0.44,
-      centerX - w * 0.18, h * 0.42,
-    );
-    // Left inner arm back up
-    bodyPath.quadraticBezierTo(
-      centerX - w * 0.19, h * 0.36,
-      centerX - w * 0.18, h * 0.30,
-    );
-    bodyPath.quadraticBezierTo(
-      centerX - w * 0.17, h * 0.24,
-      centerX - w * 0.15, h * 0.20,
-    );
-
-    // LEFT TORSO
-    bodyPath.lineTo(centerX - w * 0.14, h * 0.24);
-    bodyPath.quadraticBezierTo(
-      centerX - w * 0.15, h * 0.32,
-      centerX - w * 0.13, h * 0.38,
-    );
-
-    // LEFT WAIST (narrower)
-    bodyPath.quadraticBezierTo(
-      centerX - w * 0.11, h * 0.42,
-      centerX - w * 0.12, h * 0.46,
-    );
-
-    // LEFT HIP (wider)
-    bodyPath.quadraticBezierTo(
-      centerX - w * 0.14, h * 0.50,
-      centerX - w * 0.13, h * 0.54,
-    );
-
-    // LEFT THIGH
-    bodyPath.quadraticBezierTo(
-      centerX - w * 0.14, h * 0.60,
-      centerX - w * 0.12, h * 0.68,
-    );
-
-    // LEFT KNEE
-    bodyPath.quadraticBezierTo(
-      centerX - w * 0.11, h * 0.72,
-      centerX - w * 0.10, h * 0.76,
-    );
-
-    // LEFT CALF
-    bodyPath.quadraticBezierTo(
-      centerX - w * 0.11, h * 0.82,
-      centerX - w * 0.09, h * 0.90,
-    );
-
-    // LEFT ANKLE & FOOT
-    bodyPath.quadraticBezierTo(
-      centerX - w * 0.08, h * 0.94,
-      centerX - w * 0.10, h * 0.96,
-    );
-    bodyPath.lineTo(centerX - w * 0.14, h * 0.96);
-    bodyPath.quadraticBezierTo(
-      centerX - w * 0.15, h * 0.98,
-      centerX - w * 0.12, h * 0.99,
-    );
-    bodyPath.lineTo(centerX - w * 0.04, h * 0.99);
-    bodyPath.lineTo(centerX - w * 0.04, h * 0.96);
-
-    // CROTCH - go to right leg
-    bodyPath.lineTo(centerX - w * 0.03, h * 0.54);
-    bodyPath.quadraticBezierTo(centerX, h * 0.52, centerX + w * 0.03, h * 0.54);
-    bodyPath.lineTo(centerX + w * 0.04, h * 0.96);
-
-    // RIGHT FOOT
-    bodyPath.lineTo(centerX + w * 0.04, h * 0.99);
-    bodyPath.lineTo(centerX + w * 0.12, h * 0.99);
-    bodyPath.quadraticBezierTo(
-      centerX + w * 0.15, h * 0.98,
-      centerX + w * 0.14, h * 0.96,
-    );
-    bodyPath.lineTo(centerX + w * 0.10, h * 0.96);
-
-    // RIGHT ANKLE
-    bodyPath.quadraticBezierTo(
-      centerX + w * 0.08, h * 0.94,
-      centerX + w * 0.09, h * 0.90,
-    );
-
-    // RIGHT CALF
-    bodyPath.quadraticBezierTo(
-      centerX + w * 0.11, h * 0.82,
-      centerX + w * 0.10, h * 0.76,
-    );
-
-    // RIGHT KNEE
-    bodyPath.quadraticBezierTo(
-      centerX + w * 0.11, h * 0.72,
-      centerX + w * 0.12, h * 0.68,
-    );
-
-    // RIGHT THIGH
-    bodyPath.quadraticBezierTo(
-      centerX + w * 0.14, h * 0.60,
-      centerX + w * 0.13, h * 0.54,
-    );
-
-    // RIGHT HIP
-    bodyPath.quadraticBezierTo(
-      centerX + w * 0.14, h * 0.50,
-      centerX + w * 0.12, h * 0.46,
-    );
-
-    // RIGHT WAIST
-    bodyPath.quadraticBezierTo(
-      centerX + w * 0.11, h * 0.42,
-      centerX + w * 0.13, h * 0.38,
-    );
-
-    // RIGHT TORSO
-    bodyPath.quadraticBezierTo(
-      centerX + w * 0.15, h * 0.32,
-      centerX + w * 0.14, h * 0.24,
-    );
-    bodyPath.lineTo(centerX + w * 0.15, h * 0.20);
-
-    // RIGHT inner arm
-    bodyPath.quadraticBezierTo(
-      centerX + w * 0.17, h * 0.24,
-      centerX + w * 0.18, h * 0.30,
-    );
-    bodyPath.quadraticBezierTo(
-      centerX + w * 0.19, h * 0.36,
-      centerX + w * 0.18, h * 0.42,
-    );
-    // Right hand
-    bodyPath.quadraticBezierTo(
-      centerX + w * 0.19, h * 0.44,
-      centerX + w * 0.22, h * 0.44,
-    );
-    bodyPath.quadraticBezierTo(
-      centerX + w * 0.25, h * 0.43,
-      centerX + w * 0.26, h * 0.40,
-    );
-    // Right outer arm
-    bodyPath.quadraticBezierTo(
-      centerX + w * 0.28, h * 0.34,
-      centerX + w * 0.27, h * 0.28,
-    );
-    bodyPath.quadraticBezierTo(
-      centerX + w * 0.26, h * 0.22,
-      centerX + w * 0.22, h * 0.18,
-    );
-
-    // RIGHT SHOULDER
-    bodyPath.quadraticBezierTo(
-      centerX + w * 0.12, h * 0.15,
-      centerX + w * 0.04, h * 0.15,
-    );
-
-    // Back to neck
-    bodyPath.lineTo(centerX + w * 0.04, h * 0.12);
-    bodyPath.close();
-
-    // Combine head and body
-    path.addPath(bodyPath, Offset.zero);
-
-    return path;
-  }
-
-  void _drawBubbles(Canvas canvas, Size size, double waterTop, double waterHeight) {
+  void _drawBubbles(
+      Canvas canvas, Rect bodyBounds, double waterTop, double waterHeight) {
     if (waterHeight < 30) return;
 
     final random = math.Random(42); // Fixed seed for consistent bubbles
@@ -470,14 +349,16 @@ class _LiquidBodyPainter extends CustomPainter {
       ..style = PaintingStyle.fill;
 
     for (int i = 0; i < 10; i++) {
-      final bubbleX = size.width * 0.3 + random.nextDouble() * size.width * 0.4;
+      final bubbleX = bodyBounds.left +
+          bodyBounds.width * 0.2 +
+          random.nextDouble() * bodyBounds.width * 0.6;
       final bubbleY = waterTop + 15 + random.nextDouble() * (waterHeight - 30);
       final bubbleRadius = 2 + random.nextDouble() * 5;
 
       // Animate bubble position
       final animatedY = bubbleY - (math.sin(waveOffset + i * 0.5) * 5);
 
-      if (animatedY > waterTop + 5 && animatedY < size.height - 5) {
+      if (animatedY > waterTop + 5 && animatedY < bodyBounds.bottom - 5) {
         canvas.drawCircle(
           Offset(bubbleX, animatedY),
           bubbleRadius,

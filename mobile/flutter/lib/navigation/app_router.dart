@@ -29,6 +29,7 @@ import '../screens/onboarding/fitness_assessment_screen.dart';
 import '../screens/onboarding/how_it_works_screen.dart';
 import '../screens/onboarding/personal_info_screen.dart';
 import '../screens/onboarding/ai_consent_screen.dart';
+import '../screens/onboarding/training_split_screen.dart';
 import '../screens/onboarding/weight_projection_screen.dart';
 import '../screens/onboarding/workout_generation_screen.dart';
 import '../screens/profile/profile_screen.dart';
@@ -342,6 +343,11 @@ String? _handleAuthRedirect(
 
   // Weight projection - auth required
   if (loc == '/weight-projection') {
+    return isLoggedIn ? null : '/stats-welcome';
+  }
+
+  // Training split - auth required
+  if (loc == '/training-split') {
     return isLoggedIn ? null : '/stats-welcome';
   }
 
@@ -702,6 +708,32 @@ final routerProvider = Provider<GoRouter>((ref) {
         pageBuilder: (context, state) => CustomTransitionPage(
           key: state.pageKey,
           child: const WeightProjectionScreen(),
+          transitionDuration: const Duration(milliseconds: 400),
+          reverseTransitionDuration: const Duration(milliseconds: 300),
+          transitionsBuilder: (context, animation, secondaryAnimation, child) {
+            return FadeTransition(
+              opacity: animation,
+              child: SlideTransition(
+                position: Tween<Offset>(
+                  begin: const Offset(0.05, 0),
+                  end: Offset.zero,
+                ).animate(CurvedAnimation(
+                  parent: animation,
+                  curve: Curves.easeOutCubic,
+                )),
+                child: child,
+              ),
+            );
+          },
+        ),
+      ),
+
+      // Training Split - choose training split after weight projection, before AI consent
+      GoRoute(
+        path: '/training-split',
+        pageBuilder: (context, state) => CustomTransitionPage(
+          key: state.pageKey,
+          child: const TrainingSplitScreen(),
           transitionDuration: const Duration(milliseconds: 400),
           reverseTransitionDuration: const Duration(milliseconds: 300),
           transitionsBuilder: (context, animation, secondaryAnimation, child) {
@@ -1415,11 +1447,6 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/settings/privacy-data',
         builder: (context, state) => const PrivacyDataPage(),
       ),
-      GoRoute(
-        path: '/settings/about-support',
-        builder: (context, state) => const AboutSupportPage(),
-      ),
-
       // Beast Mode - Power user tools (hidden easter egg)
       GoRoute(
         path: '/settings/beast-mode',
@@ -1507,7 +1534,9 @@ final routerProvider = Provider<GoRouter>((ref) {
       // Support Tickets - Create new ticket
       GoRoute(
         path: '/support-tickets/create',
-        builder: (context, state) => const CreateTicketScreen(),
+        builder: (context, state) => CreateTicketScreen(
+          initialCategory: state.extra as String?,
+        ),
       ),
 
       // Support Tickets - View ticket detail

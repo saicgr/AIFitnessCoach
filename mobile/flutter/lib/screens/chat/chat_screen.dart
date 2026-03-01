@@ -349,14 +349,14 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
           ],
         ),
         actions: [
-          // Info icon - shows features help sheet
+          // Help button - shows help options sheet
           IconButton(
-            icon: const Icon(Icons.info_outline, size: 20),
-            tooltip: 'Features',
+            icon: const Icon(Icons.support_agent, size: 20),
+            tooltip: 'Help',
             visualDensity: VisualDensity.compact,
             onPressed: () {
               HapticService.light();
-              _showFeaturesInfoSheet();
+              _showHelpSheet();
             },
           ),
           // Swap coach button
@@ -504,6 +504,63 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
       context: context,
       builder: (context) => ChatFeaturesInfoSheet(
         onAction: (action) => _handleQuickAction(action),
+      ),
+    );
+  }
+
+  void _showHelpSheet() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textSecondary = isDark ? AppColors.textSecondary : const Color(0xFF9E9E9E);
+
+    showGlassSheet(
+      context: context,
+      builder: (context) => GlassSheet(
+        child: SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                leading: const Icon(Icons.headset_mic, color: AppColors.cyan),
+                title: const Text('Talk to Human'),
+                subtitle: Text(
+                  'Connect with a real support agent',
+                  style: TextStyle(fontSize: 12, color: textSecondary),
+                ),
+                onTap: () {
+                  Navigator.pop(context);
+                  HapticService.selection();
+                  _showEscalateToHumanDialog();
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.bug_report, color: AppColors.orange),
+                title: const Text('Report a Problem'),
+                subtitle: Text(
+                  'Create a support ticket',
+                  style: TextStyle(fontSize: 12, color: textSecondary),
+                ),
+                onTap: () {
+                  Navigator.pop(context);
+                  HapticService.selection();
+                  context.push('/support-tickets/create');
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.lightbulb_outline, color: AppColors.purple),
+                title: const Text('Chat Tips'),
+                subtitle: Text(
+                  'See what your AI coach can do',
+                  style: TextStyle(fontSize: 12, color: textSecondary),
+                ),
+                onTap: () {
+                  Navigator.pop(context);
+                  HapticService.selection();
+                  _showFeaturesInfoSheet();
+                },
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -876,10 +933,16 @@ class _MessageBubble extends StatelessWidget {
   Widget build(BuildContext context) {
     final isUser = message.role == 'user';
     final isSystem = message.role == 'system';
+    final isError = message.role == 'error';
 
     // System messages (like coach change notifications) are displayed centered
     if (isSystem) {
       return _buildSystemMessage(context);
+    }
+
+    // Error messages are displayed with distinct warning styling
+    if (isError) {
+      return _buildErrorMessage(context);
     }
 
     // Wrap AI messages with GestureDetector for long-press to report
@@ -1078,6 +1141,46 @@ class _MessageBubble extends StatelessWidget {
   }
 
   /// Build a system notification message (centered, subtle styling)
+  Widget _buildErrorMessage(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return Center(
+      child: Container(
+        margin: const EdgeInsets.symmetric(vertical: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        decoration: BoxDecoration(
+          color: isDark
+              ? Colors.red.withOpacity(0.1)
+              : Colors.red.withOpacity(0.06),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: Colors.red.withOpacity(0.3),
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.warning_amber_rounded,
+              size: 18,
+              color: isDark ? Colors.red[300] : Colors.red[600],
+            ),
+            const SizedBox(width: 8),
+            Flexible(
+              child: Text(
+                message.content,
+                style: TextStyle(
+                  fontSize: 13,
+                  color: isDark ? Colors.red[300] : Colors.red[700],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildSystemMessage(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 

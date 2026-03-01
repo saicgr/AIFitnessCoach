@@ -190,6 +190,7 @@ class GenerateWorkoutRequest(BaseModel):
     equipment: Optional[List[str]] = Field(default=None, max_length=50)
     scheduled_date: Optional[str] = Field(default=None, description="Target date for workout (YYYY-MM-DD). If not provided, uses today's date.")
     skip_comeback: Optional[bool] = Field(default=None, description="If True, skip comeback mode adjustments even if user qualifies")
+    adjacent_day_exercises: Optional[List[str]] = Field(default=None, description="Exercises from adjacent-day workouts to avoid for variety")
 
 
 class GenerateWeeklyRequest(BaseModel):

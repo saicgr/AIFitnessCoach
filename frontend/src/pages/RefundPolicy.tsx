@@ -119,8 +119,8 @@ export default function RefundPolicy() {
               </h2>
               <p>
                 If you have questions about refunds or need assistance, please contact us at{' '}
-                <a href="mailto:support@fitwiz.app" className="text-emerald-400 hover:underline">
-                  support@fitwiz.app
+                <a href="mailto:support@fitwiz.us" className="text-emerald-400 hover:underline">
+                  support@fitwiz.us
                 </a>. We aim to respond to all inquiries within 24 hours.
               </p>
             </div>

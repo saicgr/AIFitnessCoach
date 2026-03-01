@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -38,6 +40,7 @@ class ProfileScreen extends ConsumerStatefulWidget {
 class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   final _scrollController = ScrollController();
   final _preferencesKey = GlobalKey();
+  final _fitnessCardKey = GlobalKey<EditableFitnessCardState>();
 
   @override
   void initState() {
@@ -74,6 +77,81 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           color: color,
           letterSpacing: 0.5,
         ),
+      ),
+    );
+  }
+
+  // --- FITNESS section header with inline Edit/Save/Cancel ---
+  Widget _buildFitnessSectionHeader(bool isDark, Color textMuted) {
+    final accentColor = isDark ? AppColors.accent : AppColorsLight.accent;
+    final state = _fitnessCardKey.currentState;
+    final isEditing = state?.isEditing ?? false;
+    final isSaving = state?.isSaving ?? false;
+
+    return Padding(
+      padding: const EdgeInsets.only(left: 4),
+      child: Row(
+        children: [
+          Text(
+            'FITNESS',
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: textMuted,
+              letterSpacing: 0.5,
+            ),
+          ),
+          const Spacer(),
+          if (isEditing) ...[
+            TextButton(
+              onPressed: isSaving
+                  ? null
+                  : () {
+                      state?.toggleEdit();
+                      setState(() {});
+                    },
+              style: TextButton.styleFrom(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                minimumSize: Size.zero,
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              ),
+              child: Text('Cancel', style: TextStyle(color: textMuted, fontSize: 12)),
+            ),
+            TextButton(
+              onPressed: isSaving
+                  ? null
+                  : () async {
+                      await state?.saveChanges();
+                      if (mounted) setState(() {});
+                    },
+              style: TextButton.styleFrom(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                minimumSize: Size.zero,
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              ),
+              child: isSaving
+                  ? SizedBox(
+                      width: 14,
+                      height: 14,
+                      child: CircularProgressIndicator(strokeWidth: 2, color: accentColor),
+                    )
+                  : Text('Save', style: TextStyle(color: accentColor, fontWeight: FontWeight.w600, fontSize: 12)),
+            ),
+          ] else
+            TextButton.icon(
+              onPressed: () {
+                state?.toggleEdit();
+                setState(() {});
+              },
+              icon: Icon(Icons.edit, size: 12, color: accentColor),
+              label: Text('Edit', style: TextStyle(color: accentColor, fontSize: 12)),
+              style: TextButton.styleFrom(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                minimumSize: Size.zero,
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              ),
+            ),
+        ],
       ),
     );
   }
@@ -198,73 +276,13 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         icon: Icons.card_membership,
         iconColor: isDark ? AppColors.success : AppColorsLight.success,
         title: 'Manage Membership',
-        onTap: () => context.push('/paywall-pricing'),
+        onTap: () => context.push('/subscription-management'),
       ),
       _AccountRowData(
         icon: Icons.person_outline,
         iconColor: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
         title: 'Edit Profile',
         onTap: () => _showEditPersonalInfoSheet(context),
-      ),
-    ];
-
-    return Container(
-      decoration: BoxDecoration(
-        color: elevated,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: cardBorder),
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: Column(
-        children: [
-          for (int i = 0; i < rows.length; i++) ...[
-            _buildAccountRow(rows[i], textPrimary, textMuted),
-            if (i < rows.length - 1)
-              Divider(height: 1, indent: 52, color: cardBorder),
-          ],
-        ],
-      ),
-    );
-  }
-
-  // --- Health group card (settings-style rows with icons) ---
-  Widget _buildHealthGroupCard(
-    bool isDark,
-    Color elevated,
-    Color cardBorder,
-    Color textPrimary,
-    Color textMuted,
-  ) {
-    final rows = [
-      _AccountRowData(
-        icon: Icons.bloodtype_outlined,
-        iconColor: isDark ? AppColors.error : AppColorsLight.error,
-        title: 'Diabetes Dashboard',
-        onTap: () => context.push('/diabetes'),
-      ),
-      _AccountRowData(
-        icon: Icons.directions_walk_outlined,
-        iconColor: isDark ? AppColors.success : AppColorsLight.success,
-        title: 'Activity (NEAT)',
-        onTap: () => context.push('/neat'),
-      ),
-      _AccountRowData(
-        icon: Icons.healing_outlined,
-        iconColor: isDark ? AppColors.warning : AppColorsLight.warning,
-        title: 'Injury Tracker',
-        onTap: () => context.push('/injuries'),
-      ),
-      _AccountRowData(
-        icon: Icons.shield_outlined,
-        iconColor: isDark ? AppColors.orange : AppColorsLight.orange,
-        title: 'Strain Prevention',
-        onTap: () => context.push('/strain-prevention'),
-      ),
-      _AccountRowData(
-        icon: Icons.trending_flat_outlined,
-        iconColor: isDark ? AppColors.info : AppColorsLight.info,
-        title: 'Plateau Detection',
-        onTap: () => context.push('/plateau'),
       ),
     ];
 
@@ -714,9 +732,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               const SizedBox(height: 24),
 
               // FITNESS
-              _buildSectionLabel('FITNESS', textMuted),
+              _buildFitnessSectionHeader(isDark, textMuted),
               const SizedBox(height: 8),
-              EditableFitnessCard(user: user),
+              EditableFitnessCard(key: _fitnessCardKey, user: user),
               const SizedBox(height: 24),
 
               // TRAINING
@@ -750,13 +768,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               _buildSectionLabel('NUTRITION', textMuted),
               const SizedBox(height: 8),
               const NutritionFastingCard(),
-              const SizedBox(height: 24),
-
-              // HEALTH
-              _buildSectionLabel('HEALTH', textMuted),
-              const SizedBox(height: 8),
-              _buildHealthGroupCard(
-                  isDark, elevated, cardBorder, textPrimary, textMuted),
               const SizedBox(height: 24),
 
               // ACCOUNT
@@ -879,17 +890,14 @@ class _CustomEquipmentManagerState extends State<_CustomEquipmentManager> {
         List<String> equipment = [];
         if (customEquipmentData != null) {
           if (customEquipmentData is List) {
-            equipment = customEquipmentData.cast<String>();
+            equipment = List<String>.from(customEquipmentData);
           } else if (customEquipmentData is String &&
               customEquipmentData.isNotEmpty) {
             try {
-              final parsed = List<String>.from(
-                (customEquipmentData).isNotEmpty
-                    ? List.from(
-                        Uri.decodeComponent(customEquipmentData).split(','))
-                    : [],
-              );
-              equipment = parsed;
+              final decoded = jsonDecode(customEquipmentData);
+              if (decoded is List) {
+                equipment = List<String>.from(decoded);
+              }
             } catch (e) {
               debugPrint('⚠️ [CustomEquipment] Error parsing: $e');
             }

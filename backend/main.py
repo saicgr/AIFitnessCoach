@@ -27,7 +27,7 @@ import json
 from core.config import get_settings
 from core.logger import get_logger, set_log_context, clear_log_context
 from core.rate_limiter import limiter
-from core.redis_cache import init_redis, close_redis
+from core.redis_cache import init_redis, close_redis, ping_redis
 from api.v1 import router as v1_router
 from api.v1 import chat as chat_module
 from services.gemini_service import GeminiService
@@ -314,6 +314,17 @@ def _create_safe_task(coro, name: str = None):
     return task
 
 
+async def _redis_keepalive_loop():
+    """Ping Redis every 6 hours to prevent Upstash free-tier archival."""
+    while True:
+        await asyncio.sleep(6 * 3600)  # 6 hours
+        ok = await ping_redis()
+        if ok:
+            logger.info("Redis keepalive ping OK")
+        else:
+            logger.warning("Redis keepalive ping failed")
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """
@@ -339,16 +350,17 @@ async def lifespan(app: FastAPI):
 
     # ── Phase 2: Parallel initialization of independent services ──
     # RAG depends on Gemini (uses gemini_service for embeddings).
-    # LangGraph is lazy-initialized on first request via get_langgraph_service().
+    # LangGraph Coach service for AI chat.
     phase2_start = time.time()
     logger.info("Starting Phase 2: parallel service initialization...")
     phase2_results = await asyncio.gather(
         _init_rag_service(),
+        _init_langgraph_service(),
         return_exceptions=True,
     )
 
     # Log any Phase 2 failures (non-fatal)
-    phase2_names = ["RAG service"]
+    phase2_names = ["RAG service", "LangGraph service"]
     for name, result in zip(phase2_names, phase2_results):
         if isinstance(result, Exception):
             logger.error(f"Phase 2 failure - {name}: {result}")
@@ -358,6 +370,7 @@ async def lifespan(app: FastAPI):
     # ── Phase 3: Background tasks (server starts serving immediately) ──
     # These can run after the server is already accepting requests.
     logger.info("Starting Phase 3: background initialization tasks...")
+    _create_safe_task(_redis_keepalive_loop(), name="redis-keepalive")
     _create_safe_task(_init_cache_manager(), name="init-cache-manager")
     _create_safe_task(_check_exercise_rag_index(), name="check-exercise-rag-index")
     _create_safe_task(_check_chromadb_dimensions(), name="check-chromadb-dimensions")
@@ -468,10 +481,15 @@ async def health_keep_alive():
     """
     Lightweight health/keep-alive endpoint for external monitoring.
 
-    No DB queries, no auth, no heavy computation.
+    Pings Redis to keep the Upstash free-tier database active.
     Use this for Render keep-alive pings (prevents free-tier sleep after 15 min).
     """
-    return {"status": "ok", "timestamp": datetime.utcnow().isoformat()}
+    redis_ok = await ping_redis()
+    return {
+        "status": "ok",
+        "timestamp": datetime.utcnow().isoformat(),
+        "redis": "connected" if redis_ok else "unavailable",
+    }
 
 
 if __name__ == "__main__":

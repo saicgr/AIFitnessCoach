@@ -2201,8 +2201,6 @@ class _QuickWorkoutSheetState extends ConsumerState<_QuickWorkoutSheet> {
       ref.invalidate(workoutsProvider);
 
       Navigator.pop(context, workout);
-      // Navigate to active workout screen
-      context.push('/workout/${workout.id}');
     }
   }
 

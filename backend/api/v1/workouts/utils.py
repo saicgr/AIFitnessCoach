@@ -600,6 +600,74 @@ async def get_recently_used_exercises(user_id: str, days: int = 7) -> List[str]:
         return []
 
 
+def _ensure_no_consecutive_same_focus(focus_map: dict, available_focuses: List[str]) -> dict:
+    """Ensure no two adjacent workout days share the same focus.
+
+    Adjacent means weekday numbers that differ by 1 (including 6->0 wrap).
+    If duplicates are found, swap with the nearest non-adjacent day that has
+    a different focus.
+    """
+    sorted_days = sorted(focus_map.keys())
+    if len(sorted_days) <= 1:
+        return focus_map
+
+    result = dict(focus_map)
+
+    def _are_adjacent(day_a: int, day_b: int) -> bool:
+        return abs(day_a - day_b) == 1 or {day_a, day_b} == {0, 6}
+
+    # Multiple passes to resolve cascading swaps
+    for _ in range(len(sorted_days)):
+        changed = False
+        for idx in range(len(sorted_days) - 1):
+            day_a = sorted_days[idx]
+            day_b = sorted_days[idx + 1]
+            if _are_adjacent(day_a, day_b) and result[day_a] == result[day_b]:
+                # Try to swap day_b with a non-adjacent day that has a different focus
+                swapped = False
+                for swap_idx in range(len(sorted_days)):
+                    if swap_idx == idx or swap_idx == idx + 1:
+                        continue
+                    swap_day = sorted_days[swap_idx]
+                    # Check the swap candidate is different from day_a and won't create
+                    # a new adjacency conflict at its position
+                    if result[swap_day] != result[day_b]:
+                        # Verify the swap won't create new adjacency issues
+                        ok = True
+                        for neighbor_idx in [swap_idx - 1, swap_idx + 1]:
+                            if 0 <= neighbor_idx < len(sorted_days) and neighbor_idx != idx + 1:
+                                neighbor_day = sorted_days[neighbor_idx]
+                                if _are_adjacent(swap_day, neighbor_day) and result[day_b] == result[neighbor_day]:
+                                    ok = False
+                                    break
+                        if ok:
+                            result[day_b], result[swap_day] = result[swap_day], result[day_b]
+                            swapped = True
+                            changed = True
+                            break
+                if not swapped:
+                    # If no swap candidate found, assign a different focus from available list
+                    for alt in available_focuses:
+                        if alt != result[day_a]:
+                            result[day_b] = alt
+                            changed = True
+                            break
+        # Also check wrap-around (last day -> first day)
+        if len(sorted_days) >= 3:
+            first_day = sorted_days[0]
+            last_day = sorted_days[-1]
+            if _are_adjacent(first_day, last_day) and result[first_day] == result[last_day]:
+                for alt in available_focuses:
+                    if alt != result[first_day] and (alt != result[sorted_days[-2]] if len(sorted_days) > 1 else True):
+                        result[last_day] = alt
+                        changed = True
+                        break
+        if not changed:
+            break
+
+    return result
+
+
 def get_workout_focus(split: str, selected_days: List[int], focus_areas: List[str] = None) -> dict:
     """Return workout focus for each day based on training split.
 
@@ -723,21 +791,39 @@ def get_workout_focus(split: str, selected_days: List[int], focus_areas: List[st
                 "full_body_pull",
                 "full_body_legs",
             ]
-            return {day: full_body_emphases[i % len(full_body_emphases)] for i, day in enumerate(selected_days)}
+            focus_map = {day: full_body_emphases[i % len(full_body_emphases)] for i, day in enumerate(selected_days)}
+            return _ensure_no_consecutive_same_focus(focus_map, full_body_emphases)
         elif num_days == 4:
             # 4 days: Upper/Lower is ideal balance
             focuses = ["upper", "lower", "upper", "lower"]
-            return {day: focuses[i] for i, day in enumerate(selected_days)}
+            focus_map = {day: focuses[i] for i, day in enumerate(selected_days)}
+            return _ensure_no_consecutive_same_focus(focus_map, ["upper", "lower"])
         elif num_days <= 6:
             # 5-6 days: Push/Pull/Legs works well
             focuses = ["push", "pull", "legs"] * 2
-            return {day: focuses[i] for i, day in enumerate(selected_days)}
+            focus_map = {day: focuses[i] for i, day in enumerate(selected_days)}
+            return _ensure_no_consecutive_same_focus(focus_map, ["push", "pull", "legs"])
         else:
-            # 7 days: Full body with variety
-            return {day: "full_body" for day in selected_days}
+            # 7 days: Rotate through varied full-body focuses + active recovery
+            seven_day_emphases = [
+                "full_body_push",
+                "full_body_pull",
+                "full_body_legs",
+                "full_body_core",
+                "full_body_upper",
+                "full_body_lower",
+                "active_recovery",
+            ]
+            focus_map = {day: seven_day_emphases[i % len(seven_day_emphases)] for i, day in enumerate(selected_days)}
+            return _ensure_no_consecutive_same_focus(focus_map, seven_day_emphases)
 
-    # Default to full body if unknown split
-    return {day: "full_body" for day in selected_days}
+    # Default to full body with variety if unknown split
+    default_emphases = [
+        "full_body_push", "full_body_pull", "full_body_legs",
+        "full_body_core", "full_body_upper", "full_body_lower", "full_body_power",
+    ]
+    focus_map = {day: default_emphases[i % len(default_emphases)] for i, day in enumerate(selected_days)}
+    return _ensure_no_consecutive_same_focus(focus_map, default_emphases)
 
 
 def extract_name_words(workout_name: str) -> List[str]:

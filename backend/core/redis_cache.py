@@ -47,6 +47,17 @@ async def init_redis() -> bool:
         return False
 
 
+async def ping_redis() -> bool:
+    """Ping Redis to keep the connection (and Upstash free-tier) alive."""
+    if _redis_available and _redis_client:
+        try:
+            await _redis_client.ping()
+            return True
+        except Exception:
+            return False
+    return False
+
+
 async def close_redis():
     """Close the Redis connection pool. Call on shutdown."""
     global _redis_client, _redis_available

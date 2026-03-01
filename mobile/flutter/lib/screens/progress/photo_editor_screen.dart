@@ -25,6 +25,7 @@ class _PhotoEditorScreenState extends State<PhotoEditorScreen> {
   File? _editedImage;
   bool _showLogo = true;
   bool _isSaving = false;
+  bool _showPoseHint = true;
 
   // Logo position and size
   Offset _logoPosition = const Offset(20, 20);
@@ -40,35 +41,62 @@ class _PhotoEditorScreenState extends State<PhotoEditorScreen> {
   void initState() {
     super.initState();
     _editedImage = widget.imageFile;
+    // Auto-dismiss pose hint after 4 seconds
+    Future.delayed(const Duration(seconds: 4), () {
+      if (mounted) setState(() => _showPoseHint = false);
+    });
+  }
+
+  IconData get _poseIcon {
+    switch (widget.viewTypeName.toLowerCase()) {
+      case 'front':
+        return Icons.accessibility_new;
+      case 'back':
+        return Icons.person_outline;
+      default:
+        return Icons.person;
+    }
   }
 
   Future<void> _cropImage() async {
-    if (_editedImage == null) return;
+    try {
+      if (_editedImage == null) return;
 
-    final croppedFile = await ImageCropper().cropImage(
-      sourcePath: _editedImage!.path,
-      uiSettings: [
-        AndroidUiSettings(
-          toolbarTitle: 'Crop Photo',
-          toolbarColor: AppColors.nearBlack,
-          toolbarWidgetColor: Colors.white,
-          backgroundColor: AppColors.pureBlack,
-          activeControlsWidgetColor: AppColors.cyan,
-          initAspectRatio: CropAspectRatioPreset.original,
-          lockAspectRatio: false,
-        ),
-        IOSUiSettings(
-          title: 'Crop Photo',
-          doneButtonTitle: 'Done',
-          cancelButtonTitle: 'Cancel',
-        ),
-      ],
-    );
+      final croppedFile = await ImageCropper().cropImage(
+        sourcePath: _editedImage!.path,
+        uiSettings: [
+          AndroidUiSettings(
+            toolbarTitle: 'Crop Photo',
+            toolbarColor: AppColors.nearBlack,
+            toolbarWidgetColor: Colors.white,
+            backgroundColor: AppColors.pureBlack,
+            activeControlsWidgetColor: AppColors.cyan,
+            initAspectRatio: CropAspectRatioPreset.original,
+            lockAspectRatio: false,
+          ),
+          IOSUiSettings(
+            title: 'Crop Photo',
+            doneButtonTitle: 'Done',
+            cancelButtonTitle: 'Cancel',
+          ),
+        ],
+      );
 
-    if (croppedFile != null && mounted) {
-      setState(() {
-        _editedImage = File(croppedFile.path);
-      });
+      if (croppedFile != null && mounted) {
+        setState(() {
+          _editedImage = File(croppedFile.path);
+        });
+      }
+    } catch (e) {
+      debugPrint('❌ [PhotoEditor] Error cropping image: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Failed to crop image. Please try again.'),
+          ),
+        );
+      }
+      return;
     }
   }
 
@@ -227,6 +255,50 @@ class _PhotoEditorScreenState extends State<PhotoEditorScreen> {
                             ),
                           ),
                         ),
+
+                      // Pose guide hint — auto-fades after 4s
+                      Positioned(
+                        top: 12,
+                        right: 12,
+                        child: IgnorePointer(
+                          ignoring: !_showPoseHint,
+                          child: AnimatedOpacity(
+                            opacity: _showPoseHint ? 1.0 : 0.0,
+                            duration: const Duration(milliseconds: 600),
+                            child: GestureDetector(
+                              onTap: () => setState(() => _showPoseHint = false),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 10, vertical: 6),
+                                decoration: BoxDecoration(
+                                  color: Colors.black.withValues(alpha: 0.65),
+                                  borderRadius: BorderRadius.circular(20),
+                                  border: Border.all(
+                                    color: AppColors.cyan.withValues(alpha: 0.35),
+                                  ),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(_poseIcon,
+                                        size: 16, color: AppColors.cyan),
+                                    const SizedBox(width: 6),
+                                    Text(
+                                      '${widget.viewTypeName} pose',
+                                      style: TextStyle(
+                                        color:
+                                            Colors.white.withValues(alpha: 0.9),
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -393,15 +465,12 @@ class _PhotoEditorScreenState extends State<PhotoEditorScreen> {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        // Logo icon with gradient and shadow
+        // App icon from asset
         Container(
-          width: 24,
-          height: 24,
+          width: 28,
+          height: 28,
           decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [AppColors.cyan, AppColors.purple],
-            ),
-            borderRadius: BorderRadius.circular(6),
+            borderRadius: BorderRadius.circular(7),
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withValues(alpha: 0.45),
@@ -410,14 +479,29 @@ class _PhotoEditorScreenState extends State<PhotoEditorScreen> {
               ),
             ],
           ),
-          child: const Icon(
-            Icons.fitness_center,
-            size: 14,
-            color: Colors.white,
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(7),
+            child: Image.asset(
+              'assets/images/app_icon.png',
+              fit: BoxFit.cover,
+              errorBuilder: (_, __, ___) => Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [AppColors.cyan, AppColors.purple],
+                  ),
+                  borderRadius: BorderRadius.circular(7),
+                ),
+                child: const Icon(
+                  Icons.fitness_center,
+                  size: 14,
+                  color: Colors.white,
+                ),
+              ),
+            ),
           ),
         ),
         const SizedBox(width: 8),
-        // Logo text with shadow (no background)
+        // Logo text with shadow
         Text(
           'FitWiz',
           style: TextStyle(

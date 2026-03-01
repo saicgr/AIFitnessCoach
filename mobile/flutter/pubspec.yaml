@@ -131,6 +131,9 @@ dependencies:
   # Splash Screen
   flutter_native_splash: ^2.4.0
 
+  # Social Media Icons
+  font_awesome_flutter: ^10.7.0
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

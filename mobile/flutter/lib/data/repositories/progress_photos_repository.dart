@@ -467,7 +467,7 @@ class ProgressPhotosNotifier extends StateNotifier<ProgressPhotosState> {
   }
 
   /// Upload a new photo
-  Future<ProgressPhoto?> uploadPhoto({
+  Future<ProgressPhoto> uploadPhoto({
     required File imageFile,
     required PhotoViewType viewType,
     DateTime? takenAt,
@@ -476,27 +476,28 @@ class ProgressPhotosNotifier extends StateNotifier<ProgressPhotosState> {
     String? measurementId,
     PhotoVisibility visibility = PhotoVisibility.private,
   }) async {
-    try {
-      final photo = await _repository.uploadPhoto(
-        userId: _userId,
-        imageFile: imageFile,
-        viewType: viewType,
-        takenAt: takenAt,
-        bodyWeightKg: bodyWeightKg,
-        notes: notes,
-        measurementId: measurementId,
-        visibility: visibility,
-      );
+    final photo = await _repository.uploadPhoto(
+      userId: _userId,
+      imageFile: imageFile,
+      viewType: viewType,
+      takenAt: takenAt,
+      bodyWeightKg: bodyWeightKg,
+      notes: notes,
+      measurementId: measurementId,
+      visibility: visibility,
+    );
 
-      // Refresh photos list
-      await loadPhotos();
-      await loadLatestByView();
+    // Optimistic update: immediately add the new photo to state
+    // so the gallery shows it even if the refresh call fails
+    state = state.copyWith(
+      photos: [photo, ...state.photos],
+    );
 
-      return photo;
-    } catch (e) {
-      state = state.copyWith(error: e.toString());
-      return null;
-    }
+    // Refresh photos list in background (don't block on this)
+    loadPhotos().catchError((_) {});
+    loadLatestByView().catchError((_) {});
+
+    return photo;
   }
 
   /// Delete a photo

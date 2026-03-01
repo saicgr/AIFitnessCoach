@@ -141,6 +141,12 @@ def row_to_user(row: dict, is_new_user: bool = False, support_friend_added: bool
     elif active_injuries is None:
         active_injuries = "[]"
 
+    custom_equipment = row.get("custom_equipment")
+    if isinstance(custom_equipment, list):
+        custom_equipment = json.dumps(custom_equipment)
+    elif custom_equipment is None:
+        custom_equipment = "[]"
+
     # Helper to get value from column or fall back to preferences JSON
     def get_with_fallback(column_name: str, prefs_key: str = None):
         """Get value from dedicated column, or fall back to preferences JSON.
@@ -178,6 +184,7 @@ def row_to_user(row: dict, is_new_user: bool = False, support_friend_added: bool
         equipment=equipment,
         preferences=preferences,
         active_injuries=active_injuries,
+        custom_equipment=custom_equipment,
         created_at=row.get("created_at"),
         # Personal info fields - fall back to preferences JSON if column is empty
         height_cm=get_with_fallback("height_cm"),
@@ -599,6 +606,7 @@ def merge_extended_fields_into_preferences(
     sleep_quality: Optional[str] = None,
     obstacles: Optional[List[str]] = None,
     dietary_restrictions: Optional[List[str]] = None,
+    meals_per_day: Optional[int] = None,
     weight_direction: Optional[str] = None,
     weight_change_amount: Optional[float] = None,
     motivations: Optional[List[str]] = None,
@@ -657,6 +665,8 @@ def merge_extended_fields_into_preferences(
         prefs["obstacles"] = obstacles
     if dietary_restrictions is not None:
         prefs["dietary_restrictions"] = dietary_restrictions
+    if meals_per_day is not None:
+        prefs["meals_per_day"] = meals_per_day
     if weight_direction is not None:
         prefs["weight_direction"] = weight_direction
     if weight_change_amount is not None:
@@ -1007,6 +1017,7 @@ class UserPreferencesRequest(BaseModel):
     # Nutrition
     nutrition_goals: Optional[List[str]] = None
     dietary_restrictions: Optional[List[str]] = None
+    meals_per_day: Optional[int] = None
 
     # Fasting
     interested_in_fasting: Optional[bool] = None
@@ -1094,6 +1105,7 @@ async def save_user_preferences(user_id: str, request: UserPreferencesRequest,
             request.sleep_quality,
             request.obstacles,
             request.dietary_restrictions,
+            request.meals_per_day,
             request.weight_direction,
             request.weight_change_amount,
             request.motivations,

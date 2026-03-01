@@ -3549,6 +3549,19 @@ class WorkoutsNotifier extends StateNotifier<AsyncValue<List<Workout>>> {
     return workouts.where((w) => w.isCompleted == true).length;
   }
 
+  /// Get total workout duration formatted as a string
+  String get totalDurationFormatted {
+    final workouts = state.valueOrNull ?? [];
+    final totalMinutes = workouts
+        .where((w) => w.isCompleted == true)
+        .fold<int>(0, (sum, w) => sum + (w.durationMinutes ?? 0));
+    if (totalMinutes >= 60) {
+      final hours = totalMinutes / 60;
+      return '${hours.toStringAsFixed(1)}h';
+    }
+    return '${totalMinutes}m';
+  }
+
   /// Get this week's progress
   (int completed, int total) get weeklyProgress {
     final workouts = state.valueOrNull ?? [];

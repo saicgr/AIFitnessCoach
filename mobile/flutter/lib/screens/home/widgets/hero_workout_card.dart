@@ -700,10 +700,9 @@ class _HeroWorkoutCardState extends ConsumerState<HeroWorkoutCard> {
       height: 280,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: accentColor.withValues(alpha: 0.5), width: 2),
       ),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(22),
+        borderRadius: BorderRadius.circular(24),
         child: Stack(
           fit: StackFit.expand,
           children: [
@@ -718,12 +717,12 @@ class _HeroWorkoutCardState extends ConsumerState<HeroWorkoutCard> {
                   end: Alignment.bottomCenter,
                   colors: isDark
                       ? [
-                          Colors.black.withValues(alpha: 0.1),
+                          Colors.black.withValues(alpha: 0.4),
                           Colors.black.withValues(alpha: 0.3),
                           Colors.black.withValues(alpha: 0.85),
                         ]
                       : [
-                          Colors.white.withValues(alpha: 0.0),
+                          Colors.white.withValues(alpha: 0.5),
                           Colors.white.withValues(alpha: 0.3),
                           Colors.white.withValues(alpha: 0.9),
                         ],

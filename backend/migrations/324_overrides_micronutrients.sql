@@ -1,0 +1,20 @@
+-- 324_overrides_micronutrients.sql
+-- Add 15 micronutrient columns to food_nutrition_overrides table.
+-- All values are per 100g, matching the base macros convention.
+
+ALTER TABLE food_nutrition_overrides
+  ADD COLUMN IF NOT EXISTS sodium_mg REAL DEFAULT NULL,
+  ADD COLUMN IF NOT EXISTS cholesterol_mg REAL DEFAULT NULL,
+  ADD COLUMN IF NOT EXISTS saturated_fat_g REAL DEFAULT NULL,
+  ADD COLUMN IF NOT EXISTS trans_fat_g REAL DEFAULT NULL,
+  ADD COLUMN IF NOT EXISTS potassium_mg REAL DEFAULT NULL,
+  ADD COLUMN IF NOT EXISTS calcium_mg REAL DEFAULT NULL,
+  ADD COLUMN IF NOT EXISTS iron_mg REAL DEFAULT NULL,
+  ADD COLUMN IF NOT EXISTS vitamin_a_ug REAL DEFAULT NULL,
+  ADD COLUMN IF NOT EXISTS vitamin_c_mg REAL DEFAULT NULL,
+  ADD COLUMN IF NOT EXISTS vitamin_d_iu REAL DEFAULT NULL,
+  ADD COLUMN IF NOT EXISTS magnesium_mg REAL DEFAULT NULL,
+  ADD COLUMN IF NOT EXISTS zinc_mg REAL DEFAULT NULL,
+  ADD COLUMN IF NOT EXISTS phosphorus_mg REAL DEFAULT NULL,
+  ADD COLUMN IF NOT EXISTS selenium_ug REAL DEFAULT NULL,
+  ADD COLUMN IF NOT EXISTS omega3_g REAL DEFAULT NULL;

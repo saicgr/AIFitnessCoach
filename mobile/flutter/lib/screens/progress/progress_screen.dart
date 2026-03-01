@@ -649,6 +649,7 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen>
             )
           else if (state.photos.isEmpty)
             SliverFillRemaining(
+              hasScrollBody: false,
               child: _buildEmptyPhotosState(),
             )
           else
@@ -1280,26 +1281,37 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen>
 
     if (source == null || !mounted) return;
 
-    // Pick the image
-    final picker = ImagePicker();
-    final pickedFile = await picker.pickImage(source: source);
+    try {
+      // Pick the image
+      final picker = ImagePicker();
+      final pickedFile = await picker.pickImage(source: source);
 
-    if (pickedFile == null || !mounted) return;
+      if (pickedFile == null || !mounted) return;
 
-    // Open photo editor for cropping and logo overlay
-    final editedFile = await Navigator.push<File>(
-      context,
-      AppPageRoute(
-        builder: (context) => PhotoEditorScreen(
-          imageFile: File(pickedFile.path),
-          viewTypeName: selectedType!.displayName,
+      // Open photo editor for cropping and logo overlay
+      final editedFile = await Navigator.push<File>(
+        context,
+        AppPageRoute(
+          builder: (context) => PhotoEditorScreen(
+            imageFile: File(pickedFile.path),
+            viewTypeName: selectedType!.displayName,
+          ),
         ),
-      ),
-    );
+      );
 
-    // If user saved the edited photo, upload it
-    if (editedFile != null && mounted) {
-      _uploadPhoto(editedFile, selectedType);
+      // If user saved the edited photo, upload it
+      if (editedFile != null && mounted) {
+        _uploadPhoto(editedFile, selectedType);
+      }
+    } catch (e) {
+      debugPrint('❌ [Progress] Error picking/editing photo: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Failed to process photo. Please try again.'),
+          ),
+        );
+      }
     }
   }
 

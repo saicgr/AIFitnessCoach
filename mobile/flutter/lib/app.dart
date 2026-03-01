@@ -11,6 +11,7 @@ import 'data/repositories/auth_repository.dart';
 import 'data/services/api_client.dart';
 import 'data/services/notification_service.dart';
 import 'navigation/app_router.dart';
+import 'screens/ai_settings/ai_settings_screen.dart';
 import 'screens/notifications/notifications_screen.dart';
 import 'screens/workout/widgets/workout_mini_player.dart';
 import 'widgets/floating_chat/floating_chat_overlay.dart';
@@ -168,6 +169,15 @@ class _FitWizAppState extends ConsumerState<FitWizApp> {
       prefsNotifier.rescheduleNotifications();
     }
 
+    // Cache coach ID for personalized notifications
+    final aiSettings = ref.read(aiSettingsProvider);
+    if (aiSettings.coachPersonaId != null) {
+      NotificationService.cacheCoachId(
+        aiSettings.coachPersonaId,
+        coachingStyle: aiSettings.coachingStyle,
+      );
+    }
+
     // Register FCM token with backend now that user is authenticated
     _registerFcmToken();
 
@@ -237,56 +247,66 @@ class _FitWizAppState extends ConsumerState<FitWizApp> {
   }
 
   void _navigateToScreenForNotificationType(String? notificationType) {
-    final router = ref.read(routerProvider);
-
     debugPrint('🔔 [App] Navigating for notification type: $notificationType');
 
-    switch (notificationType) {
-      case 'ai_coach':
-        router.push('/chat');
-        break;
-      case 'workout_reminder':
-        router.push('/home');
-        break;
-      case 'nutrition_reminder':
-        router.push('/nutrition');
-        break;
-      case 'hydration_reminder':
-        router.push('/hydration');
-        break;
-      case 'streak_alert':
-        router.push('/achievements');
-        break;
-      case 'weekly_summary':
-        router.push('/summaries');
-        break;
-      case 'achievement':
-        router.push('/achievements');
-        break;
-      case 'test':
-        router.push('/notifications');
-        break;
-      case 'live_chat_message':
-      case 'live_chat_connected':
-      case 'live_chat_ended':
-        // Check if user is admin - route to admin support, otherwise live chat
-        final isAdmin = ref.read(isAdminProvider);
-        if (isAdmin) {
+    // Defer navigation to next frame to ensure router is ready (cold-start safety)
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final router = ref.read(routerProvider);
+
+      switch (notificationType) {
+        case 'ai_coach':
+          router.push('/chat');
+          break;
+        case 'workout_reminder':
+          router.push('/home');
+          break;
+        case 'movement_reminder':
+          router.push('/neat');
+          break;
+        case 'nutrition_reminder':
+          router.push('/nutrition');
+          break;
+        case 'hydration_reminder':
+          router.push('/hydration');
+          break;
+        case 'streak_alert':
+          router.push('/achievements');
+          break;
+        case 'weekly_summary':
+          router.push('/summaries');
+          break;
+        case 'achievement':
+          router.push('/achievements');
+          break;
+        case 'test':
+          router.push('/notifications');
+          break;
+        case 'live_chat_message':
+        case 'live_chat_connected':
+        case 'live_chat_ended':
+          // Check if user is admin - route to admin support, otherwise live chat
+          final isAdmin = ref.read(isAdminProvider);
+          if (isAdmin) {
+            router.push('/admin-support');
+          } else {
+            router.push('/live-chat');
+          }
+          break;
+        case 'admin_new_chat':
+        case 'admin_new_message':
+          // Admin-specific notifications - route to admin support
           router.push('/admin-support');
-        } else {
-          router.push('/live-chat');
-        }
-        break;
-      case 'admin_new_chat':
-      case 'admin_new_message':
-        // Admin-specific notifications - route to admin support
-        router.push('/admin-support');
-        break;
-      default:
-        // Default to notifications inbox
-        router.push('/notifications');
-        break;
-    }
+          break;
+        default:
+          // Handle schedule_reminder:$itemId payload format
+          if (notificationType != null && notificationType.startsWith('schedule_reminder')) {
+            router.push('/home');
+          } else {
+            router.push('/notifications');
+          }
+          break;
+      }
+    });
   }
 }
 

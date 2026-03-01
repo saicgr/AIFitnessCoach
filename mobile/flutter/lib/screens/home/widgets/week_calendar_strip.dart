@@ -302,31 +302,30 @@ class _DayCell extends StatelessWidget {
     );
   }
 
+  /// Whether this day was completed
+  bool get _isCompleted => workoutStatus == true;
+
   /// Whether this day was missed (past + scheduled but not completed)
   bool get _isMissed => workoutStatus == false && isPast;
 
-  /// Dot/indicator color for workout status
-  Color? get _dotColor {
-    if (workoutStatus == true) return AppColors.success;
-    if (_isMissed) return AppColors.error;
-    if (workoutStatus == false) return accentColor;
-    return null;
-  }
-
-  /// Build the status indicator: X mark for missed, dot for others
+  /// Build the status indicator: checkmark for completed, X for missed, dot for scheduled
   Widget _buildStatusIndicator() {
+    if (_isCompleted) {
+      // Green checkmark for completed workouts
+      return Icon(Icons.check, size: 12, color: AppColors.success);
+    }
     if (_isMissed) {
-      // X mark instead of red dot for missed workouts
+      // Red X for missed workouts
       return Icon(Icons.close, size: 10, color: AppColors.error);
     }
-    final color = _dotColor;
-    if (color != null) {
+    if (workoutStatus == false) {
+      // Accent dot for scheduled (future) workouts
       return Container(
         width: 6,
         height: 6,
         decoration: BoxDecoration(
           shape: BoxShape.circle,
-          color: color,
+          color: accentColor,
         ),
       );
     }

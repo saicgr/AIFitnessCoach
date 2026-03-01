@@ -1229,6 +1229,56 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
     }
   }
 
+  Future<void> _handleSkipRating() async {
+    final shouldSkip = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Skip Rating?'),
+        content: const Text(
+          'Ratings help our AI create better workouts. Skip anyway?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Go Back'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Skip'),
+          ),
+        ],
+      ),
+    );
+
+    if (shouldSkip != true || !mounted) return;
+
+    // Submit subjective feedback (mood/energy) if provided, even when skipping star rating
+    if (_moodAfter != null && widget.workout.id != null) {
+      try {
+        debugPrint('📝 [Skip Rating] Submitting subjective feedback only: mood=$_moodAfter, energy=$_energyAfter');
+        final notifier = ref.read(subjectiveFeedbackProvider.notifier);
+        await notifier.createPostCheckin(
+          workoutId: widget.workout.id!,
+          moodAfter: _moodAfter!,
+          energyAfter: _energyAfter,
+          confidenceLevel: _confidenceLevel,
+          feelingStronger: _feelingStronger,
+        );
+        debugPrint('✅ [Skip Rating] Subjective feedback submitted');
+      } catch (e) {
+        debugPrint('⚠️ [Skip Rating] Subjective feedback error (non-blocking): $e');
+      }
+    }
+
+    // Refresh workouts and navigate home
+    await ref.read(workoutsProvider.notifier).refresh();
+    ref.invalidate(workoutsProvider);
+
+    if (mounted) {
+      context.go('/home');
+    }
+  }
+
   /// Convert difficulty to energy level for backend
   String _getEnergyLevel() {
     switch (_difficulty) {
@@ -1280,6 +1330,85 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
 
     return Scaffold(
       backgroundColor: backgroundColor,
+      bottomNavigationBar: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(20, 8, 20, 8),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: _showShareSheet,
+                      icon: const Icon(Icons.share_rounded, size: 18),
+                      label: const Text('Share'),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: AppColors.orange,
+                        side: BorderSide(color: AppColors.orange.withOpacity(0.5)),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    flex: 2,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [AppColors.orange, AppColors.purple],
+                          begin: Alignment.centerLeft,
+                          end: Alignment.centerRight,
+                        ),
+                        borderRadius: BorderRadius.circular(12),
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppColors.orange.withOpacity(0.3),
+                            blurRadius: 8,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: ElevatedButton(
+                        onPressed: _isSubmitting ? null : _submitFeedback,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.transparent,
+                          shadowColor: Colors.transparent,
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                        ),
+                        child: _isSubmitting
+                            ? const SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: LottieLoading(size: 20, useDots: true, color: Colors.white),
+                              )
+                            : const Text(
+                                'Done',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                ),
+                              ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              TextButton(
+                onPressed: _handleSkipRating,
+                child: Text(
+                  'Skip rating',
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: textSecondary,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
       body: Stack(
         children: [
           SafeArea(
@@ -1454,6 +1583,15 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
                         fontWeight: FontWeight.w500,
                       ),
                     ),
+                  const SizedBox(height: 6),
+                  Text(
+                    'Your ratings help us personalize your future workouts',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontStyle: FontStyle.italic,
+                      color: textSecondary,
+                    ),
+                  ),
 
                   const SizedBox(height: 16),
 
@@ -1462,72 +1600,11 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
 
                   const SizedBox(height: 16),
 
-                  // Primary Actions
-                  Row(
-                    children: [
-                      Expanded(
-                        child: OutlinedButton.icon(
-                          onPressed: _showShareSheet,
-                          icon: const Icon(Icons.share_rounded, size: 18),
-                          label: const Text('Share'),
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: AppColors.orange,
-                            side: BorderSide(color: AppColors.orange.withOpacity(0.5)),
-                            padding: const EdgeInsets.symmetric(vertical: 12),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        flex: 2,
-                        child: Container(
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              colors: [AppColors.orange, AppColors.purple],
-                              begin: Alignment.centerLeft,
-                              end: Alignment.centerRight,
-                            ),
-                            borderRadius: BorderRadius.circular(12),
-                            boxShadow: [
-                              BoxShadow(
-                                color: AppColors.orange.withOpacity(0.3),
-                                blurRadius: 8,
-                                offset: const Offset(0, 4),
-                              ),
-                            ],
-                          ),
-                          child: ElevatedButton(
-                            onPressed: _isSubmitting ? null : _submitFeedback,
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.transparent,
-                              shadowColor: Colors.transparent,
-                              padding: const EdgeInsets.symmetric(vertical: 14),
-                            ),
-                            child: _isSubmitting
-                                ? const SizedBox(
-                                    width: 20,
-                                    height: 20,
-                                    child: LottieLoading(size: 20, useDots: true, color: Colors.white),
-                                  )
-                                : const Text(
-                                    'Done',
-                                    style: TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.white,
-                                    ),
-                                  ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ).animate().fadeIn(delay: 600.ms),
-
-                  const SizedBox(height: 12),
-
                   // Secondary Actions Row
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  Wrap(
+                    alignment: WrapAlignment.center,
+                    spacing: 4,
+                    runSpacing: 0,
                     children: [
                       TextButton.icon(
                         onPressed: _isExtendingWorkout ? null : _extendWorkout,
@@ -1546,11 +1623,6 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
                           foregroundColor: AppColors.purple,
                         ),
                       ),
-                      Container(
-                        width: 1,
-                        height: 20,
-                        color: textSecondary.withOpacity(0.3),
-                      ),
                       TextButton.icon(
                         onPressed: _showChallengeFriendsDialog,
                         icon: const Icon(Icons.emoji_events, size: 16),
@@ -1561,11 +1633,6 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
                         style: TextButton.styleFrom(
                           foregroundColor: AppColors.orange,
                         ),
-                      ),
-                      Container(
-                        width: 1,
-                        height: 20,
-                        color: textSecondary.withOpacity(0.3),
                       ),
                       TextButton.icon(
                         onPressed: () => setState(() => _showDetailedFeedback = !_showDetailedFeedback),
@@ -1582,7 +1649,7 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
                         ),
                       ),
                     ],
-                  ).animate().fadeIn(delay: 700.ms),
+                  ).animate().fadeIn(delay: 600.ms),
 
                   // Detailed feedback section (gated behind toggle)
                   if (_showDetailedFeedback) ...[
@@ -1644,7 +1711,7 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
                     ),
                   ],
 
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 16),
                 ],
               ),
             ),

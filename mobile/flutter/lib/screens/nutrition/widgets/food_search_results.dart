@@ -569,11 +569,14 @@ class _ResultCard extends StatelessWidget {
                         overflow: TextOverflow.ellipsis,
                       ),
 
-                      // Brand if available
-                      if (result.brand != null) ...[
+                      // Brand & serving info
+                      if (result.brand != null || result.servingSize != null) ...[
                         const SizedBox(height: 2),
                         Text(
-                          result.brand!,
+                          [
+                            if (result.brand != null) result.brand!,
+                            if (result.servingSize != null && result.servingSize != '100g') result.servingSize!,
+                          ].join(' · '),
                           style: TextStyle(
                             color: textMuted,
                             fontSize: 12,

@@ -139,6 +139,7 @@ class _FeedTabState extends ConsumerState<FeedTab> {
                         // Empty state for filtered view
                         if (!hasActivities && _showMyPostsOnly)
                           SliverFillRemaining(
+                            hasScrollBody: false,
                             child: Center(
                               child: Column(
                                 mainAxisSize: MainAxisSize.min,

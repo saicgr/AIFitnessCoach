@@ -131,6 +131,7 @@ class _ActivityHeatmapState extends ConsumerState<ActivityHeatmap> {
         Flexible(
           child: SingleChildScrollView(
             scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.only(right: 4),
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: HeatmapTimeRange.values.map((range) {
@@ -177,26 +178,34 @@ class _ActivityHeatmapState extends ConsumerState<ActivityHeatmap> {
     // Generate month labels
     final monthLabels = _generateMonthLabels(startDate, totalWeeks);
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // Month labels
-        SingleChildScrollView(
-          controller: _scrollController,
-          scrollDirection: Axis.horizontal,
-          physics: const ClampingScrollPhysics(),
-          child: Column(
+    const dayLabelWidth = 20.0;
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final availableWidth = constraints.maxWidth;
+        final gridWidth = availableWidth - dayLabelWidth;
+        // Calculate cell size to fill width, capped at 14px
+        final dynamicCellSize = gridWidth / totalWeeks;
+        final cellSize = dynamicCellSize > 14.0 ? dynamicCellSize : 14.0;
+        // If cells exceed available width, enable scrolling
+        final needsScroll = cellSize * totalWeeks > gridWidth;
+
+        Widget buildGrid() {
+          return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Month labels row
               Padding(
-                padding: const EdgeInsets.only(left: 24),
+                padding: EdgeInsets.only(left: dayLabelWidth),
                 child: Row(
                   children: monthLabels.map((label) {
+                    final width = label.weekSpan * cellSize;
                     return SizedBox(
-                      width: label.weekSpan * 14.0,
+                      width: width < 24.0 ? 24.0 : width,
                       child: Text(
                         label.month,
+                        maxLines: 1,
+                        overflow: TextOverflow.clip,
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
                               color: AppColors.textMuted,
                               fontSize: 10,
@@ -216,8 +225,8 @@ class _ActivityHeatmapState extends ConsumerState<ActivityHeatmap> {
                   Column(
                     children: ['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day) {
                       return SizedBox(
-                        height: 14,
-                        width: 20,
+                        height: cellSize,
+                        width: dayLabelWidth,
                         child: Text(
                           day,
                           style:
@@ -248,6 +257,7 @@ class _ActivityHeatmapState extends ConsumerState<ActivityHeatmap> {
                                 widget.highlightedDates?.contains(dateStr) ??
                                     false,
                             onTap: () => widget.onDayTapped?.call(dateStr),
+                            size: cellSize - 2, // margin of 1 on each side
                           );
                         }),
                       );
@@ -256,9 +266,20 @@ class _ActivityHeatmapState extends ConsumerState<ActivityHeatmap> {
                 ],
               ),
             ],
-          ),
-        ),
-      ],
+          );
+        }
+
+        if (needsScroll) {
+          return SingleChildScrollView(
+            controller: _scrollController,
+            scrollDirection: Axis.horizontal,
+            physics: const ClampingScrollPhysics(),
+            child: buildGrid(),
+          );
+        } else {
+          return buildGrid();
+        }
+      },
     );
   }
 
@@ -372,6 +393,7 @@ class _HeatmapCell extends StatelessWidget {
   final String? workoutName;
   final bool isHighlighted;
   final VoidCallback? onTap;
+  final double size;
 
   const _HeatmapCell({
     required this.date,
@@ -379,6 +401,7 @@ class _HeatmapCell extends StatelessWidget {
     this.workoutName,
     this.isHighlighted = false,
     this.onTap,
+    this.size = 12,
   });
 
   @override
@@ -386,8 +409,8 @@ class _HeatmapCell extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        width: 12,
-        height: 12,
+        width: size,
+        height: size,
         margin: const EdgeInsets.all(1),
         decoration: BoxDecoration(
           color: _getColor(),

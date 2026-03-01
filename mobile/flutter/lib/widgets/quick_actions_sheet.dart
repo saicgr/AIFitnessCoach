@@ -154,7 +154,7 @@ class _QuickActionsSheetState extends ConsumerState<_QuickActionsSheet> {
             ? Colors.white.withValues(alpha: 0.1)
             : Colors.black.withValues(alpha: 0.06));
 
-    void handleTap() {
+    Future<void> handleTap() async {
       HapticFeedback.lightImpact();
       switch (action.id) {
         case 'water':
@@ -165,8 +165,12 @@ class _QuickActionsSheetState extends ConsumerState<_QuickActionsSheet> {
           showLogMealSheet(context, widget.ref);
           return;
         case 'quick_workout':
+          final workout = await showQuickWorkoutSheet(context, widget.ref);
+          if (!mounted) return;
           Navigator.pop(context);
-          showQuickWorkoutSheet(context, widget.ref);
+          if (workout != null && context.mounted) {
+            context.push('/workout/${workout.id}');
+          }
           return;
         case 'fasting':
           Navigator.pop(context);

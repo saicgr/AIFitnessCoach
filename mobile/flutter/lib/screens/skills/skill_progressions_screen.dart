@@ -254,6 +254,7 @@ class _SkillProgressionsScreenState
           // Chains grid
           chains.isEmpty
               ? SliverFillRemaining(
+                  hasScrollBody: false,
                   child: _buildEmptyFilterState(context, isDark),
                 )
               : SliverPadding(

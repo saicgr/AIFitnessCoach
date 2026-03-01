@@ -2066,40 +2066,43 @@ class _ExpandedExerciseCardState extends ConsumerState<ExpandedExerciseCard> {
           // TARGET column - AI recommended weight × reps with RIR badge
           Expanded(
             flex: 3,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  targetDisplay,
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
-                    color: targetDisplay != '—' ? accentColor : textMuted,
+            child: ClipRect(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    targetDisplay,
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                      color: targetDisplay != '—' ? accentColor : textMuted,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
-                  overflow: TextOverflow.ellipsis,
-                ),
-                // RIR pill (matching active workout screen)
-                if (targetRir != null)
-                  Padding(
-                    padding: const EdgeInsets.only(top: 4),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: WorkoutDesign.getRirColor(targetRir),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: Text(
-                        WorkoutDesign.getRirLabel(targetRir),
-                        style: TextStyle(
-                          fontSize: 10,
-                          fontWeight: FontWeight.w600,
-                          color: WorkoutDesign.getRirTextColor(targetRir),
+                  // RIR pill (matching active workout screen)
+                  if (targetRir != null)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 2),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                        decoration: BoxDecoration(
+                          color: WorkoutDesign.getRirColor(targetRir),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Text(
+                          WorkoutDesign.getRirLabel(targetRir),
+                          style: TextStyle(
+                            fontSize: 9,
+                            fontWeight: FontWeight.w600,
+                            color: WorkoutDesign.getRirTextColor(targetRir),
+                          ),
                         ),
                       ),
                     ),
-                  ),
-              ],
+                ],
+              ),
             ),
           ),
         ],

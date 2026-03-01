@@ -1,0 +1,187 @@
+-- ============================================================================
+-- Batch 32: Baked Goods, Desserts & Sweet Treats
+-- Categories: Cookies, Cakes, Pies, Pastries, Frozen Desserts, Other, Candy
+-- Generated: 2026-02-28
+-- Sources: USDA FoodData Central, nutritionvalue.org, fatsecret.com,
+--          calorieking.com, nutritionix.com
+-- All values are per-100g. Formula: (total_value / serving_weight_g) * 100
+-- Calorie check: cal ≈ protein*4 + carbs*4 + fat*9
+-- ============================================================================
+
+-- ============================================================================
+-- COOKIES
+-- ============================================================================
+
+-- Chocolate Chip Cookie (homemade): ~488 cal/100g, ~78 cal per cookie (~16g)
+('chocolate_chip_cookie', 'Chocolate Chip Cookie', 488.0, 5.4, 60.0, 25.0, 1.8, 36.0, 16, 48, 'usda', ARRAY['chocolate chip cookie', 'choc chip cookie', 'chocolate cookie'], '234 cal per 3 cookies (48g). Classic homemade chocolate chip cookies.', NULL, 'desserts', 3),
+
+-- Oatmeal Raisin Cookie: ~450 cal/100g, ~72 cal per cookie (~16g)
+('oatmeal_raisin_cookie', 'Oatmeal Raisin Cookie', 450.0, 6.3, 65.0, 18.8, 2.5, 32.0, 16, 48, 'usda', ARRAY['oatmeal raisin cookie', 'oatmeal cookie', 'raisin oatmeal cookie'], '216 cal per 3 cookies (48g). With rolled oats, raisins, and cinnamon.', NULL, 'desserts', 3),
+
+-- Sugar Cookie: ~475 cal/100g, ~76 cal per cookie (~16g)
+('sugar_cookie', 'Sugar Cookie', 475.0, 4.4, 63.1, 22.5, 0.6, 30.0, 16, 48, 'usda', ARRAY['sugar cookie', 'plain cookie', 'butter sugar cookie'], '228 cal per 3 cookies (48g). Classic butter sugar cookies.', NULL, 'desserts', 3),
+
+-- Peanut Butter Cookie: ~502 cal/100g, ~80 cal per cookie (~16g)
+('peanut_butter_cookie', 'Peanut Butter Cookie', 502.0, 9.4, 52.5, 28.1, 1.9, 29.0, 16, 48, 'usda', ARRAY['peanut butter cookie', 'pb cookie', 'peanut cookie'], '241 cal per 3 cookies (48g). Classic peanut butter cookies with crosshatch pattern.', NULL, 'desserts', 3),
+
+-- Snickerdoodle: ~460 cal/100g, ~74 cal per cookie (~16g)
+('snickerdoodle', 'Snickerdoodle Cookie', 460.0, 5.0, 62.5, 20.6, 0.6, 32.0, 16, 48, 'usda', ARRAY['snickerdoodle', 'snickerdoodle cookie', 'cinnamon sugar cookie'], '221 cal per 3 cookies (48g). Soft butter cookies coated in cinnamon sugar.', NULL, 'desserts', 3),
+
+-- Oreo (1 cookie): ~480 cal/100g, ~53 cal per cookie (~11g)
+('oreo_cookie', 'Oreo Cookie', 480.0, 4.5, 68.2, 20.9, 1.8, 36.4, 11, 33, 'usda', ARRAY['oreo', 'oreo cookie', 'oreos'], '158 cal per 3 cookies (33g). Chocolate sandwich cookies with cream filling.', NULL, 'desserts', 3),
+
+-- Girl Scout Thin Mints (4 cookies): ~487 cal/100g, ~160 cal per 4 cookies (~32g)
+('thin_mints', 'Girl Scout Thin Mints', 487.0, 3.1, 65.6, 25.0, 3.1, 40.6, 8, 32, 'usda', ARRAY['thin mints', 'girl scout thin mints', 'girl scout cookies thin mint'], '156 cal per 4 cookies (32g). Mint-flavored chocolate-coated cookies.', NULL, 'desserts', 4),
+
+-- Shortbread Cookie: ~502 cal/100g, ~40 cal per cookie (~8g)
+('shortbread_cookie', 'Shortbread Cookie', 502.0, 5.0, 56.3, 28.8, 1.0, 14.0, 8, 32, 'usda', ARRAY['shortbread', 'shortbread cookie', 'butter shortbread'], '161 cal per 4 cookies (32g). Classic buttery Scottish-style shortbread.', NULL, 'desserts', 4),
+
+-- ============================================================================
+-- CAKES
+-- ============================================================================
+
+-- Chocolate Cake (with frosting): ~370 cal/100g, ~444 cal per slice (~120g)
+('chocolate_cake_frosted', 'Chocolate Cake (with Frosting)', 370.0, 4.2, 50.0, 17.5, 1.7, 37.5, 120, 120, 'usda', ARRAY['chocolate cake', 'chocolate layer cake', 'chocolate cake with frosting', 'chocolate birthday cake'], '444 cal per slice (120g). Moist chocolate cake with chocolate buttercream frosting.', NULL, 'desserts', 1),
+
+-- Vanilla/Yellow Cake (with frosting): ~365 cal/100g, ~438 cal per slice (~120g)
+('vanilla_cake_frosted', 'Vanilla Cake (with Frosting)', 365.0, 3.3, 53.3, 15.8, 0.4, 40.0, 120, 120, 'usda', ARRAY['vanilla cake', 'yellow cake', 'birthday cake', 'yellow cake with frosting'], '438 cal per slice (120g). Classic yellow cake with vanilla buttercream frosting.', NULL, 'desserts', 1),
+
+-- Carrot Cake (with cream cheese frosting): ~380 cal/100g, ~456 cal per slice (~120g)
+('carrot_cake', 'Carrot Cake (Cream Cheese Frosting)', 380.0, 4.2, 46.7, 20.0, 1.3, 32.5, 120, 120, 'usda', ARRAY['carrot cake', 'carrot cake with cream cheese', 'carrot cake frosting'], '456 cal per slice (120g). Spiced carrot cake with walnuts, cream cheese frosting.', NULL, 'desserts', 1),
+
+-- Cheesecake (plain): ~321 cal/100g, ~401 cal per slice (~125g)
+('cheesecake_plain', 'Cheesecake (Plain)', 321.0, 5.5, 25.5, 22.5, 0.3, 18.0, 125, 125, 'usda', ARRAY['cheesecake', 'plain cheesecake', 'new york cheesecake', 'ny cheesecake'], '401 cal per slice (125g). Classic New York-style cream cheese cake on graham crust.', NULL, 'desserts', 1),
+
+-- Pound Cake: ~353 cal/100g, ~283 cal per slice (~80g)
+('pound_cake', 'Pound Cake', 353.0, 5.0, 44.4, 17.5, 0.4, 24.4, 80, 80, 'usda', ARRAY['pound cake', 'butter pound cake', 'plain pound cake'], '283 cal per slice (80g). Dense, buttery classic pound cake.', NULL, 'desserts', 1),
+
+-- Red Velvet Cake: ~340 cal/100g, ~408 cal per slice (~120g)
+('red_velvet_cake', 'Red Velvet Cake', 340.0, 4.2, 45.0, 16.3, 0.8, 32.5, 120, 120, 'usda', ARRAY['red velvet cake', 'red velvet', 'red velvet with cream cheese'], '408 cal per slice (120g). Red-tinted cocoa cake with cream cheese frosting.', NULL, 'desserts', 1),
+
+-- Angel Food Cake: ~258 cal/100g, ~181 cal per slice (~70g)
+('angel_food_cake', 'Angel Food Cake', 258.0, 5.7, 57.1, 1.0, 0.3, 42.9, 70, 70, 'usda', ARRAY['angel food cake', 'angel cake', 'angelfood cake'], '181 cal per slice (70g). Light, airy sponge cake made with egg whites.', NULL, 'desserts', 1),
+
+-- Ice Cream Cake: ~240 cal/100g, ~288 cal per slice (~120g)
+('ice_cream_cake', 'Ice Cream Cake', 240.0, 3.3, 30.0, 12.1, 0.5, 22.5, 120, 120, 'usda', ARRAY['ice cream cake', 'dairy queen cake', 'carvel cake'], '288 cal per slice (120g). Layers of ice cream and cake with frosting.', NULL, 'desserts', 1),
+
+-- ============================================================================
+-- PIES
+-- ============================================================================
+
+-- Apple Pie: ~237 cal/100g, ~296 cal per slice (~125g)
+('apple_pie', 'Apple Pie', 237.0, 1.9, 34.0, 10.8, 1.4, 15.2, 125, 125, 'usda', ARRAY['apple pie', 'apple pie slice', 'homemade apple pie'], '296 cal per slice (125g). Double-crust with cinnamon apple filling. 1/8 of 9-inch pie.', NULL, 'desserts', 1),
+
+-- Pumpkin Pie: ~210 cal/100g, ~263 cal per slice (~125g)
+('pumpkin_pie', 'Pumpkin Pie', 210.0, 3.6, 27.2, 9.6, 1.6, 16.0, 125, 125, 'usda', ARRAY['pumpkin pie', 'pumpkin pie slice', 'thanksgiving pumpkin pie'], '263 cal per slice (125g). Classic pumpkin custard in single crust. 1/8 of 9-inch pie.', NULL, 'desserts', 1),
+
+-- Pecan Pie: ~405 cal/100g, ~506 cal per slice (~125g)
+('pecan_pie', 'Pecan Pie', 405.0, 4.0, 48.0, 22.4, 1.6, 32.0, 125, 125, 'usda', ARRAY['pecan pie', 'pecan pie slice', 'southern pecan pie'], '506 cal per slice (125g). Rich pecan and corn syrup filling in single crust. 1/8 of 9-inch pie.', NULL, 'desserts', 1),
+
+-- Key Lime Pie: ~295 cal/100g, ~354 cal per slice (~120g)
+('key_lime_pie', 'Key Lime Pie', 295.0, 4.2, 37.5, 14.2, 0.5, 25.0, 120, 120, 'usda', ARRAY['key lime pie', 'lime pie', 'key lime pie slice'], '354 cal per slice (120g). Tart key lime custard on graham cracker crust with whipped cream.', NULL, 'desserts', 1),
+
+-- Cherry Pie: ~260 cal/100g, ~325 cal per slice (~125g)
+('cherry_pie', 'Cherry Pie', 260.0, 2.4, 36.8, 11.2, 0.8, 17.6, 125, 125, 'usda', ARRAY['cherry pie', 'cherry pie slice', 'homemade cherry pie'], '325 cal per slice (125g). Double-crust with sweet cherry filling. 1/8 of 9-inch pie.', NULL, 'desserts', 1),
+
+-- Banana Cream Pie: ~220 cal/100g, ~275 cal per slice (~125g)
+('banana_cream_pie', 'Banana Cream Pie', 220.0, 3.2, 28.0, 10.4, 0.5, 16.0, 125, 125, 'usda', ARRAY['banana cream pie', 'banana pie', 'banana custard pie'], '275 cal per slice (125g). Banana custard filling, whipped cream, single crust. 1/8 of 9-inch pie.', NULL, 'desserts', 1),
+
+-- ============================================================================
+-- PASTRIES & BAKED GOODS
+-- ============================================================================
+
+-- Blueberry Muffin: ~330 cal/100g, ~430 cal per muffin (~130g)
+('blueberry_muffin', 'Blueberry Muffin', 330.0, 5.4, 46.2, 13.8, 1.5, 26.2, 130, 130, 'usda', ARRAY['blueberry muffin', 'muffin blueberry'], '430 cal per muffin (130g). Standard bakery-size blueberry muffin.', NULL, 'desserts', 1),
+
+-- Banana Nut Muffin: ~340 cal/100g, ~442 cal per muffin (~130g)
+('banana_nut_muffin', 'Banana Nut Muffin', 340.0, 5.4, 44.6, 16.2, 1.5, 24.6, 130, 130, 'usda', ARRAY['banana nut muffin', 'banana muffin', 'banana walnut muffin'], '442 cal per muffin (130g). Banana muffin with walnuts.', NULL, 'desserts', 1),
+
+-- Chocolate Muffin: ~370 cal/100g, ~481 cal per muffin (~130g)
+('chocolate_muffin', 'Chocolate Muffin', 370.0, 5.4, 48.5, 17.7, 2.3, 30.0, 130, 130, 'usda', ARRAY['chocolate muffin', 'double chocolate muffin', 'chocolate chip muffin'], '481 cal per muffin (130g). Rich double chocolate chip muffin.', NULL, 'desserts', 1),
+
+-- Cinnamon Roll: ~360 cal/100g, ~432 cal per roll (~120g)
+('cinnamon_roll', 'Cinnamon Roll', 360.0, 5.0, 50.0, 15.8, 1.0, 27.5, 120, 120, 'usda', ARRAY['cinnamon roll', 'cinnamon bun', 'cinnabon style'], '432 cal per roll (120g). Yeast dough with cinnamon sugar swirl and cream cheese icing.', NULL, 'desserts', 1),
+
+-- Danish Pastry: ~374 cal/100g, ~262 cal per pastry (~70g)
+('danish_pastry', 'Danish Pastry', 374.0, 5.7, 42.9, 20.0, 1.1, 18.6, 70, 70, 'usda', ARRAY['danish pastry', 'danish', 'cheese danish', 'fruit danish'], '262 cal per pastry (70g). Flaky laminated pastry with fruit or cream cheese filling.', NULL, 'desserts', 1),
+
+-- Blueberry Scone: ~390 cal/100g, ~312 cal per scone (~80g)
+('blueberry_scone', 'Scone (Blueberry)', 390.0, 5.6, 50.0, 18.8, 1.3, 20.0, 80, 80, 'usda', ARRAY['blueberry scone', 'scone', 'scone blueberry'], '312 cal per scone (80g). Buttery blueberry scone with sugar glaze.', NULL, 'desserts', 1),
+
+-- Butter Croissant: ~406 cal/100g, ~231 cal per croissant (~57g)
+('butter_croissant', 'Croissant (Butter)', 406.0, 8.2, 42.1, 22.6, 1.6, 7.0, 57, 57, 'usda', ARRAY['croissant', 'butter croissant', 'french croissant', 'plain croissant'], '231 cal per croissant (57g). Classic French all-butter laminated croissant.', NULL, 'desserts', 1),
+
+-- Glazed Donut: ~421 cal/100g, ~269 cal per donut (~64g)
+('glazed_donut', 'Donut (Glazed)', 421.0, 4.7, 51.6, 22.7, 1.3, 26.6, 64, 64, 'usda', ARRAY['glazed donut', 'donut', 'doughnut', 'glazed doughnut', 'krispy kreme style'], '269 cal per donut (64g). Classic yeast-raised glazed donut.', NULL, 'desserts', 1),
+
+-- ============================================================================
+-- FROZEN DESSERTS
+-- ============================================================================
+
+-- Vanilla Ice Cream: ~207 cal/100g, ~137 cal per scoop (~66g)
+('vanilla_ice_cream', 'Vanilla Ice Cream', 207.0, 3.5, 23.6, 11.0, 0.0, 21.2, 66, 132, 'usda', ARRAY['vanilla ice cream', 'ice cream vanilla', 'ice cream'], '274 cal per 2 scoops (132g). Regular vanilla ice cream.', NULL, 'desserts', 2),
+
+-- Chocolate Ice Cream: ~216 cal/100g, ~143 cal per scoop (~66g)
+('chocolate_ice_cream', 'Chocolate Ice Cream', 216.0, 3.8, 28.0, 10.6, 1.2, 23.5, 66, 132, 'usda', ARRAY['chocolate ice cream', 'ice cream chocolate'], '285 cal per 2 scoops (132g). Regular chocolate ice cream.', NULL, 'desserts', 2),
+
+-- Frozen Yogurt (vanilla): ~159 cal/100g, ~114 cal per serving (~72g)
+('frozen_yogurt_vanilla', 'Frozen Yogurt (Vanilla)', 159.0, 3.9, 28.5, 3.5, 0.0, 22.0, NULL, 144, 'usda', ARRAY['frozen yogurt', 'fro yo', 'froyo', 'vanilla frozen yogurt'], '229 cal per serving (144g). Low-fat vanilla frozen yogurt.', NULL, 'desserts', 1),
+
+-- Fruit Popsicle: ~45 cal/100g, ~40 cal per popsicle (~88g)
+('fruit_popsicle', 'Popsicle (Fruit)', 45.0, 0.0, 11.4, 0.0, 0.0, 9.1, 88, 88, 'usda', ARRAY['popsicle', 'fruit popsicle', 'fruit ice pop', 'ice pop'], '40 cal per popsicle (88g). Fruit-flavored frozen ice pop.', NULL, 'desserts', 1),
+
+-- Ice Cream Sandwich: ~237 cal/100g, ~166 cal per sandwich (~70g)
+('ice_cream_sandwich', 'Ice Cream Sandwich', 237.0, 3.4, 33.1, 10.0, 0.6, 21.4, 70, 70, 'usda', ARRAY['ice cream sandwich', 'ice cream bar'], '166 cal per sandwich (70g). Vanilla ice cream between chocolate wafers.', NULL, 'desserts', 1),
+
+-- Ice Cream Cone (cake cone + 1 scoop vanilla): ~195 cal/100g, ~176 cal per cone (~90g)
+('ice_cream_cone', 'Ice Cream Cone (1 Scoop)', 195.0, 3.3, 25.6, 8.9, 0.3, 17.8, 90, 90, 'usda', ARRAY['ice cream cone', 'cone ice cream', 'single scoop cone', 'ice cream in a cone'], '176 cal per cone (90g). One scoop vanilla ice cream in a cake cone.', NULL, 'desserts', 1),
+
+-- Fruit Sorbet: ~130 cal/100g, ~172 cal per serving (~132g)
+('fruit_sorbet', 'Sorbet (Fruit)', 130.0, 0.3, 33.0, 0.1, 0.5, 27.0, NULL, 132, 'usda', ARRAY['sorbet', 'fruit sorbet', 'raspberry sorbet', 'mango sorbet'], '172 cal per serving (132g). Dairy-free fruit sorbet.', NULL, 'desserts', 1),
+
+-- Gelato: ~180 cal/100g, ~238 cal per serving (~132g)
+('gelato', 'Gelato', 180.0, 4.0, 24.2, 7.6, 0.3, 20.5, NULL, 132, 'usda', ARRAY['gelato', 'italian gelato', 'gelato vanilla', 'gelato chocolate'], '238 cal per serving (132g). Italian-style dense ice cream, lower fat than regular ice cream.', NULL, 'desserts', 1),
+
+-- ============================================================================
+-- OTHER DESSERTS
+-- ============================================================================
+
+-- Brownie: ~405 cal/100g, ~243 cal per brownie (~60g)
+('brownie', 'Brownie', 405.0, 4.7, 50.0, 21.7, 1.7, 35.0, 60, 60, 'usda', ARRAY['brownie', 'chocolate brownie', 'fudge brownie'], '243 cal per brownie (60g). Dense chocolate fudge brownie.', NULL, 'desserts', 1),
+
+-- Rice Krispie Treat: ~395 cal/100g, ~178 cal per bar (~45g)
+('rice_krispie_treat', 'Rice Krispie Treat', 395.0, 2.2, 73.3, 10.0, 0.0, 33.3, 45, 45, 'usda', ARRAY['rice krispie treat', 'rice crispy treat', 'rice krispies treat'], '178 cal per bar (45g). Puffed rice cereal with melted marshmallow.', NULL, 'desserts', 1),
+
+-- Fudge: ~430 cal/100g, ~129 cal per piece (~30g)
+('fudge', 'Fudge', 430.0, 2.7, 60.0, 20.0, 0.7, 52.0, 30, 30, 'usda', ARRAY['fudge', 'chocolate fudge', 'homemade fudge'], '129 cal per piece (30g). Rich chocolate fudge square.', NULL, 'desserts', 1),
+
+-- Tiramisu: ~280 cal/100g, ~336 cal per serving (~120g)
+('tiramisu', 'Tiramisu', 280.0, 5.0, 28.3, 16.3, 0.3, 18.3, NULL, 120, 'usda', ARRAY['tiramisu', 'tiramisù', 'italian tiramisu'], '336 cal per serving (120g). Espresso-soaked ladyfingers, mascarpone cream, cocoa.', NULL, 'desserts', 1),
+
+-- Creme Brulee: ~280 cal/100g, ~336 cal per ramekin (~120g)
+('creme_brulee', 'Creme Brulee', 280.0, 4.2, 22.5, 19.2, 0.0, 19.2, NULL, 120, 'usda', ARRAY['creme brulee', 'crème brûlée', 'creme brule'], '336 cal per ramekin (120g). Rich vanilla custard with caramelized sugar top.', NULL, 'desserts', 1),
+
+-- Panna Cotta: ~235 cal/100g, ~282 cal per serving (~120g)
+('panna_cotta', 'Panna Cotta', 235.0, 3.3, 20.0, 15.8, 0.0, 17.5, NULL, 120, 'usda', ARRAY['panna cotta', 'pannacotta', 'italian panna cotta'], '282 cal per serving (120g). Italian cream dessert set with gelatin, with fruit coulis.', NULL, 'desserts', 1),
+
+-- Fruit Tart: ~290 cal/100g, ~290 cal per tart (~100g)
+('fruit_tart', 'Fruit Tart', 290.0, 3.5, 35.0, 15.5, 1.0, 18.0, 100, 100, 'usda', ARRAY['fruit tart', 'fruit tartlet', 'french fruit tart'], '290 cal per tart (100g). Pastry crust with pastry cream and fresh fruit.', NULL, 'desserts', 1),
+
+-- Chocolate Mousse: ~195 cal/100g, ~195 cal per serving (~100g)
+('chocolate_mousse', 'Chocolate Mousse', 195.0, 4.0, 18.0, 12.0, 1.0, 15.0, NULL, 100, 'usda', ARRAY['chocolate mousse', 'mousse au chocolat', 'mousse'], '195 cal per serving (100g). Light airy chocolate mousse with whipped cream.', NULL, 'desserts', 1),
+
+-- ============================================================================
+-- CANDY & SWEETS
+-- ============================================================================
+
+-- Cotton Candy: ~371 cal/100g, ~105 cal per bag (~28g)
+('cotton_candy', 'Cotton Candy', 371.0, 0.0, 92.8, 0.0, 0.0, 92.8, NULL, 28, 'usda', ARRAY['cotton candy', 'fairy floss', 'candy floss'], '105 cal per bag (28g). Spun sugar confection.', NULL, 'desserts', 1),
+
+-- Caramel Candy: ~382 cal/100g, ~39 cal per piece (~10g)
+('caramel_candy', 'Caramel', 382.0, 2.0, 60.0, 15.0, 0.0, 50.0, 10, 30, 'usda', ARRAY['caramel', 'caramel candy', 'caramel piece'], '115 cal per 3 pieces (30g). Soft caramel candy.', NULL, 'desserts', 3),
+
+-- Marshmallow: ~318 cal/100g, ~23 cal per marshmallow (~7g)
+('marshmallow', 'Marshmallow', 318.0, 1.8, 78.6, 0.2, 0.0, 57.1, 7, 28, 'usda', ARRAY['marshmallow', 'marshmallows', 'large marshmallow'], '89 cal per 4 marshmallows (28g). Regular-size marshmallows.', NULL, 'desserts', 4),
+
+-- Chocolate Truffle: ~525 cal/100g, ~73 cal per truffle (~14g)
+('chocolate_truffle', 'Chocolate Truffle', 525.0, 4.3, 42.9, 37.1, 2.1, 35.7, 14, 42, 'usda', ARRAY['chocolate truffle', 'truffle chocolate', 'lindt truffle'], '221 cal per 3 truffles (42g). Rich dark or milk chocolate ganache truffle.', NULL, 'desserts', 3),

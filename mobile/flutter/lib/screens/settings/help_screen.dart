@@ -5,7 +5,6 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../core/constants/app_colors.dart';
 import '../../data/providers/support_provider.dart';
 import '../../widgets/glass_back_button.dart';
-import '../../widgets/glass_sheet.dart';
 
 /// Help & Support screen with various support options.
 class HelpScreen extends ConsumerWidget {
@@ -144,58 +143,13 @@ class HelpScreen extends ConsumerWidget {
 
               const SizedBox(height: 12),
 
-              // Chat with AI Support
-              _HelpOptionCard(
-                icon: Icons.smart_toy,
-                iconColor: AppColors.cyan,
-                title: 'Chat with AI Support',
-                subtitle: 'Get instant answers from our AI assistant',
-                onTap: () => context.push('/chat'),
-                elevated: elevated,
-                cardBorder: cardBorder,
-                textPrimary: textPrimary,
-                textSecondary: textSecondary,
-              ),
-
-              const SizedBox(height: 12),
-
               // Feature Request
               _HelpOptionCard(
                 icon: Icons.lightbulb_outline,
                 iconColor: AppColors.orange,
                 title: 'Feature Request',
-                subtitle: 'Suggest new features or improvements',
-                onTap: () => _showFeatureRequestSheet(context, isDark),
-                elevated: elevated,
-                cardBorder: cardBorder,
-                textPrimary: textPrimary,
-                textSecondary: textSecondary,
-              ),
-
-              const SizedBox(height: 12),
-
-              // Send Feedback
-              _HelpOptionCard(
-                icon: Icons.feedback_outlined,
-                iconColor: AppColors.purple,
-                title: 'Send Feedback',
-                subtitle: 'Tell us about your experience',
-                onTap: () => _showFeedbackSheet(context, isDark),
-                elevated: elevated,
-                cardBorder: cardBorder,
-                textPrimary: textPrimary,
-                textSecondary: textSecondary,
-              ),
-
-              const SizedBox(height: 12),
-
-              // Report a Bug
-              _HelpOptionCard(
-                icon: Icons.bug_report_outlined,
-                iconColor: AppColors.error,
-                title: 'Report a Bug',
-                subtitle: 'Help us fix issues you encounter',
-                onTap: () => _showBugReportSheet(context, isDark),
+                subtitle: 'Vote & suggest features',
+                onTap: () => context.push('/features'),
                 elevated: elevated,
                 cardBorder: cardBorder,
                 textPrimary: textPrimary,
@@ -221,7 +175,7 @@ class HelpScreen extends ConsumerWidget {
                 icon: Icons.email_outlined,
                 iconColor: AppColors.cyan,
                 title: 'Email Support',
-                subtitle: 'support@fitwiz.app',
+                subtitle: 'support@fitwiz.us',
                 onTap: () => _launchEmail(),
                 elevated: elevated,
                 cardBorder: cardBorder,
@@ -356,7 +310,7 @@ class HelpScreen extends ConsumerWidget {
   }
 
   void _launchEmail() async {
-    final uri = Uri.parse('mailto:support@fitwiz.app?subject=FitWiz Support Request');
+    final uri = Uri.parse('mailto:support@fitwiz.us?subject=FitWiz Support Request');
     if (await canLaunchUrl(uri)) {
       await launchUrl(uri);
     }
@@ -369,158 +323,6 @@ class HelpScreen extends ConsumerWidget {
     }
   }
 
-  void _showFeatureRequestSheet(BuildContext context, bool isDark) {
-    _showFeedbackBottomSheet(
-      context: context,
-      isDark: isDark,
-      title: 'Feature Request',
-      icon: Icons.lightbulb_outline,
-      iconColor: AppColors.orange,
-      hintText: 'Describe the feature you\'d like to see...',
-      submitLabel: 'Submit Request',
-    );
-  }
-
-  void _showFeedbackSheet(BuildContext context, bool isDark) {
-    _showFeedbackBottomSheet(
-      context: context,
-      isDark: isDark,
-      title: 'Send Feedback',
-      icon: Icons.feedback_outlined,
-      iconColor: AppColors.purple,
-      hintText: 'Tell us about your experience...',
-      submitLabel: 'Send Feedback',
-    );
-  }
-
-  void _showBugReportSheet(BuildContext context, bool isDark) {
-    _showFeedbackBottomSheet(
-      context: context,
-      isDark: isDark,
-      title: 'Report a Bug',
-      icon: Icons.bug_report_outlined,
-      iconColor: AppColors.error,
-      hintText: 'Describe the issue you encountered...',
-      submitLabel: 'Submit Report',
-    );
-  }
-
-  void _showFeedbackBottomSheet({
-    required BuildContext context,
-    required bool isDark,
-    required String title,
-    required IconData icon,
-    required Color iconColor,
-    required String hintText,
-    required String submitLabel,
-  }) {
-    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
-    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
-    final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
-
-    showGlassSheet(
-      context: context,
-      useRootNavigator: true,
-      builder: (context) => GlassSheet(
-        child: Padding(
-          padding: EdgeInsets.only(
-            left: 20,
-            right: 20,
-            top: 20,
-            bottom: MediaQuery.of(context).viewInsets.bottom + 10,
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Header
-              Row(
-                children: [
-                  Container(
-                    width: 40,
-                    height: 40,
-                    decoration: BoxDecoration(
-                      color: iconColor.withOpacity(0.15),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Icon(icon, color: iconColor, size: 22),
-                  ),
-                  const SizedBox(width: 12),
-                  Text(
-                    title,
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: textPrimary,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 20),
-
-              // Text field
-              TextField(
-                maxLines: 5,
-                decoration: InputDecoration(
-                  hintText: hintText,
-                  hintStyle: TextStyle(color: textSecondary),
-                  filled: true,
-                  fillColor: isDark ? AppColors.pureBlack : AppColorsLight.pureWhite,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(color: cardBorder),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(color: cardBorder),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(color: iconColor),
-                  ),
-                ),
-                style: TextStyle(color: textPrimary),
-              ),
-              const SizedBox(height: 20),
-
-              // Submit button
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () {
-                    Navigator.pop(context);
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('Thank you for your $title!'),
-                        backgroundColor: AppColors.success,
-                        behavior: SnackBarBehavior.floating,
-                      ),
-                    );
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: iconColor,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  child: Text(
-                    submitLabel,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.w600,
-                      fontSize: 15,
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
 }
 
 /// Help option card widget

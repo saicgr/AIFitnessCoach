@@ -75,6 +75,8 @@ class SupportTicketsNotifier extends StateNotifier<AsyncValue<List<SupportTicket
     required String priority,
     required String description,
     List<String>? attachments,
+    String? stepsToReproduce,
+    String? screenContext,
   }) async {
     if (_userId == null) {
       throw Exception('User not authenticated');
@@ -90,6 +92,8 @@ class SupportTicketsNotifier extends StateNotifier<AsyncValue<List<SupportTicket
         priority: priority,
         description: description,
         attachments: attachments,
+        stepsToReproduce: stepsToReproduce,
+        screenContext: screenContext,
       );
 
       debugPrint('✅ [SupportTicketsNotifier] Ticket created: ${newTicket.ticketNumber}');

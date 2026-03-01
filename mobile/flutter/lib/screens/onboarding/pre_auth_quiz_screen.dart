@@ -3219,7 +3219,7 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
       case 8: // Muscle Focus Points
         return _buildMuscleFocus(showHeader: showHeader);
 
-      case 9: // Training Style (split + workout type)
+      case 9: // Training Style (workout type + variety only; split moved to dedicated screen)
         return QuizTrainingStyle(
           key: const ValueKey('training_style'),
           selectedSplit: _selectedTrainingSplit,
@@ -3234,6 +3234,7 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
             await ref.read(preAuthQuizProvider.notifier).setDaysPerWeek(newDays);
           },
           showHeader: showHeader,
+          showSplitSection: false,
         );
 
       case 10: // Progression pace only (limitations already collected in Screen 5)

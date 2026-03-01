@@ -254,6 +254,15 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet> {
     }
   }
 
+  void _triggerImmediateSearch() {
+    final query = _descriptionController.text.trim();
+    if (query.length >= 3) {
+      final service = ref.read(search.foodSearchServiceProvider);
+      final cachedLogs = ref.read(nutritionProvider).recentLogs;
+      service.searchImmediate(query, widget.userId, cachedLogs: cachedLogs);
+    }
+  }
+
   // ─── Analysis ─────────────────────────────────────────────────
 
   Future<void> _handleAnalyze() async {
@@ -1553,6 +1562,13 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet> {
                   ),
                   border: InputBorder.none,
                   contentPadding: const EdgeInsets.symmetric(vertical: 8),
+                  suffixIcon: _descriptionController.text.trim().length >= 3
+                      ? IconButton(
+                          icon: Icon(Icons.search, color: textMuted, size: 22),
+                          onPressed: _triggerImmediateSearch,
+                          tooltip: 'Search foods',
+                        )
+                      : null,
                 ),
               ),
               // Listening indicator

@@ -59,7 +59,6 @@ class HabitCard extends ConsumerWidget {
       child: Container(
         width: size,
         height: size,
-        padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
           color: cardBg,
           borderRadius: BorderRadius.circular(16),
@@ -70,88 +69,103 @@ class HabitCard extends ConsumerWidget {
             width: habit.todayCompleted ? 1.5 : 1,
           ),
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        child: Stack(
           children: [
-            // Title
-            Text(
-              habit.name,
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-                color: textPrimary,
-              ),
-            ),
-            Text(
-              'Last 30 Days',
-              style: TextStyle(
-                fontSize: 10,
-                color: textMuted,
-              ),
-            ),
-            const Spacer(),
-            // Grid
-            _buildGrid(accentColor, isDark),
-            const Spacer(),
-            // Footer with log button
-            Row(
-              children: [
-                Text(
-                  '$completedDays/${habit.last30Days.length}',
-                  style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w500,
-                    color: textMuted,
-                  ),
-                ),
-                const Spacer(),
-                if (habit.currentStreak > 0) ...[
-                  Icon(Icons.local_fire_department, size: 12, color: accentColor),
-                  const SizedBox(width: 2),
+            // Card content
+            Padding(
+              padding: const EdgeInsets.all(12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Title
                   Text(
-                    '${habit.currentStreak}',
+                    habit.name,
                     style: TextStyle(
-                      fontSize: 11,
+                      fontSize: 13,
                       fontWeight: FontWeight.w600,
-                      color: accentColor,
+                      color: textPrimary,
                     ),
                   ),
-                ],
-                if (onLog != null) ...[
-                  const SizedBox(width: 6),
-                  GestureDetector(
-                    onTap: () {
-                      HapticService.medium();
-                      onLog!();
-                    },
-                    child: habit.todayCompleted
-                        ? Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                            decoration: BoxDecoration(
-                              color: accentColor,
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Icon(Icons.check, size: 14, color: isDark ? Colors.black : Colors.white),
-                          )
-                        : Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                            decoration: BoxDecoration(
-                              color: accentColor.withValues(alpha: 0.15),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Text(
-                              '+ Log',
-                              style: TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w600,
-                                color: accentColor,
-                              ),
-                            ),
+                  Text(
+                    'Last 30 Days',
+                    style: TextStyle(
+                      fontSize: 10,
+                      color: textMuted,
+                    ),
+                  ),
+                  const Spacer(),
+                  // Grid
+                  _buildGrid(accentColor, isDark),
+                  const Spacer(),
+                  // Footer: count + streak
+                  Row(
+                    children: [
+                      Text(
+                        '$completedDays/${habit.last30Days.length}',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w500,
+                          color: textMuted,
+                        ),
+                      ),
+                      const Spacer(),
+                      if (habit.currentStreak > 0) ...[
+                        Icon(Icons.local_fire_department, size: 12, color: accentColor),
+                        const SizedBox(width: 2),
+                        Text(
+                          '${habit.currentStreak}',
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                            color: accentColor,
                           ),
+                        ),
+                      ],
+                    ],
                   ),
                 ],
-              ],
+              ),
             ),
+            // FAB pinned to bottom-right corner
+            if (onLog != null)
+              Positioned(
+                right: 6,
+                bottom: 6,
+                child: GestureDetector(
+                  onTap: () {
+                    HapticService.medium();
+                    onLog!();
+                  },
+                  child: Container(
+                    width: 30,
+                    height: 30,
+                    decoration: BoxDecoration(
+                      color: habit.todayCompleted
+                          ? accentColor
+                          : cardBg,
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: accentColor,
+                        width: 2,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: accentColor.withValues(alpha: 0.3),
+                          blurRadius: 6,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: Icon(
+                      habit.todayCompleted ? Icons.check_rounded : Icons.add_rounded,
+                      size: 16,
+                      color: habit.todayCompleted
+                          ? (isDark ? Colors.black : Colors.white)
+                          : accentColor,
+                    ),
+                  ),
+                ),
+              ),
           ],
         ),
       ),

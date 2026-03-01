@@ -1430,112 +1430,134 @@ async def get_scores_overview(
         )
 
     # Get strength scores summary
-    strength_response = db.client.table("latest_strength_scores").select(
-        "muscle_group, strength_score"
-    ).eq("user_id", user_id).execute()
+    muscle_scores_summary = {}
+    overall_score = 0
+    overall_level = StrengthLevel.BEGINNER
+    try:
+        strength_response = db.client.table("latest_strength_scores").select(
+            "muscle_group, strength_score"
+        ).eq("user_id", user_id).execute()
 
-    muscle_scores_summary = {
-        r["muscle_group"]: r["strength_score"] or 0
-        for r in (strength_response.data or [])
-    }
-
-    # Calculate overall strength
-    if muscle_scores_summary:
-        score_objects = {
-            k: type('obj', (object,), {'strength_score': v})()
-            for k, v in muscle_scores_summary.items()
+        muscle_scores_summary = {
+            r["muscle_group"]: r["strength_score"] or 0
+            for r in (strength_response.data or [])
         }
-        overall_score, overall_level = strength_service.calculate_overall_strength_score(score_objects)
-    else:
-        overall_score = 0
-        overall_level = StrengthLevel.BEGINNER
+
+        if muscle_scores_summary:
+            score_objects = {
+                k: type('obj', (object,), {'strength_score': v})()
+                for k, v in muscle_scores_summary.items()
+            }
+            overall_score, overall_level = strength_service.calculate_overall_strength_score(score_objects)
+    except Exception as e:
+        logger.warning(f"Failed to fetch strength scores: {e}")
 
     # Get recent PRs
-    pr_response = db.client.table("personal_records").select("*").eq(
-        "user_id", user_id
-    ).order(
-        "achieved_at", desc=True
-    ).limit(5).execute()
+    recent_prs = []
+    pr_count = 0
+    try:
+        pr_response = db.client.table("personal_records").select("*").eq(
+            "user_id", user_id
+        ).order(
+            "achieved_at", desc=True
+        ).limit(5).execute()
 
-    recent_prs = [
-        PersonalRecordResponse(
-            id=pr["id"],
-            user_id=pr["user_id"],
-            exercise_name=pr["exercise_name"],
-            exercise_id=pr.get("exercise_id"),
-            muscle_group=pr.get("muscle_group"),
-            weight_kg=float(pr["weight_kg"]),
-            reps=int(pr["reps"]),
-            estimated_1rm_kg=float(pr["estimated_1rm_kg"]),
-            set_type=pr.get("set_type", "working"),
-            rpe=float(pr["rpe"]) if pr.get("rpe") else None,
-            achieved_at=datetime.fromisoformat(pr["achieved_at"]),
-            workout_id=pr.get("workout_id"),
-            previous_weight_kg=float(pr["previous_weight_kg"]) if pr.get("previous_weight_kg") else None,
-            previous_1rm_kg=float(pr["previous_1rm_kg"]) if pr.get("previous_1rm_kg") else None,
-            improvement_kg=float(pr["improvement_kg"]) if pr.get("improvement_kg") else None,
-            improvement_percent=float(pr["improvement_percent"]) if pr.get("improvement_percent") else None,
-            is_all_time_pr=pr.get("is_all_time_pr", True),
-            celebration_message=pr.get("celebration_message"),
-            created_at=datetime.fromisoformat(pr["created_at"]),
-        )
-        for pr in (pr_response.data or [])
-    ]
+        for pr in (pr_response.data or []):
+            try:
+                recent_prs.append(PersonalRecordResponse(
+                    id=pr["id"],
+                    user_id=pr["user_id"],
+                    exercise_name=pr["exercise_name"],
+                    exercise_id=pr.get("exercise_id"),
+                    muscle_group=pr.get("muscle_group"),
+                    weight_kg=float(pr["weight_kg"]),
+                    reps=int(pr["reps"]),
+                    estimated_1rm_kg=float(pr["estimated_1rm_kg"]),
+                    set_type=pr.get("set_type", "working"),
+                    rpe=float(pr["rpe"]) if pr.get("rpe") else None,
+                    achieved_at=datetime.fromisoformat(pr["achieved_at"]),
+                    workout_id=pr.get("workout_id"),
+                    previous_weight_kg=float(pr["previous_weight_kg"]) if pr.get("previous_weight_kg") else None,
+                    previous_1rm_kg=float(pr["previous_1rm_kg"]) if pr.get("previous_1rm_kg") else None,
+                    improvement_kg=float(pr["improvement_kg"]) if pr.get("improvement_kg") else None,
+                    improvement_percent=float(pr["improvement_percent"]) if pr.get("improvement_percent") else None,
+                    is_all_time_pr=pr.get("is_all_time_pr", True),
+                    celebration_message=pr.get("celebration_message"),
+                    created_at=datetime.fromisoformat(pr["created_at"]),
+                ))
+            except Exception as e:
+                logger.warning(f"Failed to parse PR {pr.get('id')}: {e}")
 
-    # Count PRs in last 30 days
-    thirty_days_ago = (date.today() - timedelta(days=30)).isoformat()
-    pr_count_response = db.client.table("personal_records").select(
-        "id", count="exact"
-    ).eq(
-        "user_id", user_id
-    ).gte(
-        "achieved_at", thirty_days_ago
-    ).execute()
-
-    pr_count = pr_count_response.count or 0
+        # Count PRs in last 30 days
+        thirty_days_ago = (date.today() - timedelta(days=30)).isoformat()
+        pr_count_response = db.client.table("personal_records").select(
+            "id", count="exact"
+        ).eq(
+            "user_id", user_id
+        ).gte(
+            "achieved_at", thirty_days_ago
+        ).execute()
+        pr_count = pr_count_response.count or 0
+    except Exception as e:
+        logger.warning(f"Failed to fetch personal records: {e}")
 
     # Get 7-day readiness average
-    seven_days_ago = (date.today() - timedelta(days=7)).isoformat()
-    readiness_avg_response = db.client.table("readiness_scores").select(
-        "readiness_score"
-    ).eq(
-        "user_id", user_id
-    ).gte(
-        "score_date", seven_days_ago
-    ).execute()
+    readiness_average = None
+    try:
+        seven_days_ago = (date.today() - timedelta(days=7)).isoformat()
+        readiness_avg_response = db.client.table("readiness_scores").select(
+            "readiness_score"
+        ).eq(
+            "user_id", user_id
+        ).gte(
+            "score_date", seven_days_ago
+        ).execute()
 
-    readiness_scores = [r["readiness_score"] for r in (readiness_avg_response.data or [])]
-    readiness_average = (
-        sum(readiness_scores) / len(readiness_scores)
-        if readiness_scores else None
-    )
+        readiness_scores = [r["readiness_score"] for r in (readiness_avg_response.data or [])]
+        readiness_average = (
+            sum(readiness_scores) / len(readiness_scores)
+            if readiness_scores else None
+        )
+    except Exception as e:
+        logger.warning(f"Failed to fetch readiness average: {e}")
 
     # Get current week nutrition score
-    nutrition_service = NutritionCalculatorService()
-    week_start, week_end = nutrition_service.get_current_week_range()
-    nutrition_response = db.client.table("nutrition_scores").select(
-        "nutrition_score, nutrition_level"
-    ).eq(
-        "user_id", user_id
-    ).eq(
-        "week_start", week_start.isoformat()
-    ).maybe_single().execute()
+    nutrition_score = None
+    nutrition_level = None
+    try:
+        nutrition_service = NutritionCalculatorService()
+        week_start, week_end = nutrition_service.get_current_week_range()
+        nutrition_response = db.client.table("nutrition_scores").select(
+            "nutrition_score, nutrition_level"
+        ).eq(
+            "user_id", user_id
+        ).eq(
+            "week_start", week_start.isoformat()
+        ).maybe_single().execute()
 
-    nutrition_score = nutrition_response.data.get("nutrition_score") if nutrition_response and nutrition_response.data else None
-    nutrition_level = nutrition_response.data.get("nutrition_level") if nutrition_response and nutrition_response.data else None
+        nutrition_score = nutrition_response.data.get("nutrition_score") if nutrition_response and nutrition_response.data else None
+        nutrition_level = nutrition_response.data.get("nutrition_level") if nutrition_response and nutrition_response.data else None
+    except Exception as e:
+        logger.warning(f"Failed to fetch nutrition score: {e}")
 
     # Get latest fitness score
-    fitness_response = db.client.table("fitness_scores").select(
-        "overall_fitness_score, fitness_level, consistency_score"
-    ).eq(
-        "user_id", user_id
-    ).order(
-        "calculated_at", desc=True
-    ).limit(1).maybe_single().execute()
+    overall_fitness_score = None
+    fitness_level = None
+    consistency_score = None
+    try:
+        fitness_response = db.client.table("fitness_scores").select(
+            "overall_fitness_score, fitness_level, consistency_score"
+        ).eq(
+            "user_id", user_id
+        ).order(
+            "calculated_at", desc=True
+        ).limit(1).maybe_single().execute()
 
-    overall_fitness_score = fitness_response.data.get("overall_fitness_score") if fitness_response and fitness_response.data else None
-    fitness_level = fitness_response.data.get("fitness_level") if fitness_response and fitness_response.data else None
-    consistency_score = fitness_response.data.get("consistency_score") if fitness_response and fitness_response.data else None
+        overall_fitness_score = fitness_response.data.get("overall_fitness_score") if fitness_response and fitness_response.data else None
+        fitness_level = fitness_response.data.get("fitness_level") if fitness_response and fitness_response.data else None
+        consistency_score = fitness_response.data.get("consistency_score") if fitness_response and fitness_response.data else None
+    except Exception as e:
+        logger.warning(f"Failed to fetch fitness score: {e}")
 
     return ScoresOverviewResponse(
         user_id=user_id,

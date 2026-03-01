@@ -33,6 +33,8 @@ class AssignProgramRequest(BaseModel):
     custom_name: Optional[str] = None
     target_race_date: Optional[str] = None  # For HYROX programs
     division: Optional[str] = None  # For HYROX programs
+    desired_weeks: Optional[int] = None  # User's chosen duration
+    sessions_per_week: Optional[int] = None  # User's chosen frequency
 
 
 class RenameProgramRequest(BaseModel):
@@ -369,6 +371,117 @@ async def get_program_history(user_id: str = Query(...)):
 
     except Exception as e:
         logger.error(f"Error getting program history: {e}")
+        raise safe_internal_error(e, "branded_programs")
+
+
+@router.get("/branded-programs/{program_id}/durations", response_model=Dict[str, Any])
+async def get_program_durations(program_id: str):
+    """
+    Get available duration variants for a branded program.
+    Returns anchor durations, min/max weeks, and sessions_per_week options.
+    """
+    try:
+        db = get_supabase_db()
+
+        # Get the program name
+        program_result = db.client.table("branded_programs").select("id, name").eq("id", program_id).execute()
+        if not program_result.data:
+            raise HTTPException(status_code=404, detail="Program not found")
+
+        program_name = program_result.data[0]["name"]
+
+        # Get all variants for this program
+        variants_result = (
+            db.client.table("program_variants")
+            .select("id, duration_weeks, sessions_per_week, intensity_level, variant_name")
+            .eq("base_program_id", program_id)
+            .order("duration_weeks")
+            .execute()
+        )
+
+        variants = variants_result.data or []
+
+        # Build available durations list and anchor weeks
+        available_durations = []
+        anchor_weeks_set = set()
+        sessions_set = set()
+
+        for v in variants:
+            dw = v.get("duration_weeks")
+            spw = v.get("sessions_per_week")
+            if dw and spw:
+                available_durations.append({
+                    "variant_id": v["id"],
+                    "duration_weeks": dw,
+                    "sessions_per_week": spw,
+                    "intensity_level": v.get("intensity_level"),
+                })
+                anchor_weeks_set.add(dw)
+                sessions_set.add(spw)
+
+        anchor_weeks = sorted(anchor_weeks_set)
+        min_weeks = min(anchor_weeks) if anchor_weeks else 1
+        max_weeks = max(anchor_weeks) if anchor_weeks else 12
+        available_sessions = sorted(sessions_set)
+
+        logger.info(f"Got {len(available_durations)} variants for program {program_id}: anchors={anchor_weeks}")
+        return {
+            "program_id": program_id,
+            "program_name": program_name,
+            "available_durations": available_durations,
+            "min_weeks": min_weeks,
+            "max_weeks": max_weeks,
+            "anchor_weeks": anchor_weeks,
+            "available_sessions_per_week": available_sessions,
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error getting durations for program {program_id}: {e}")
+        raise safe_internal_error(e, "branded_programs")
+
+
+@router.get("/branded-programs/{program_id}/weeks", response_model=List[Dict[str, Any]])
+async def get_program_weeks(
+    program_id: str,
+    desired_weeks: int = Query(..., ge=1, le=52),
+    sessions_per_week: int = Query(..., ge=1, le=7),
+):
+    """
+    Get week-by-week workout data for a program at the desired duration.
+    Uses ProgramDurationService to derive weeks from anchor data.
+    """
+    try:
+        from services.program_duration_service import ProgramDurationService
+
+        db = get_supabase_db()
+
+        # Get program name
+        program_result = db.client.table("branded_programs").select("id, name").eq("id", program_id).execute()
+        if not program_result.data:
+            raise HTTPException(status_code=404, detail="Program not found")
+
+        program_name = program_result.data[0]["name"]
+
+        service = ProgramDurationService(db.client)
+        weeks = await service.get_program_for_duration(
+            program_name, desired_weeks, sessions_per_week
+        )
+
+        if not weeks:
+            raise HTTPException(
+                status_code=404,
+                detail=f"No week data found for {program_name} at {desired_weeks}w/{sessions_per_week}x per week"
+            )
+
+        logger.info(f"Got {len(weeks)} weeks for program {program_id} ({desired_weeks}w, {sessions_per_week}/wk)")
+        return weeks
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error getting weeks for program {program_id}: {e}")
         raise safe_internal_error(e, "branded_programs")
 
 

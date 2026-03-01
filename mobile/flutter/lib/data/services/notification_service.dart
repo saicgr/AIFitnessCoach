@@ -11,6 +11,7 @@ import 'package:timezone/timezone.dart' as tz;
 import 'package:timezone/data/latest.dart' as tz_data;
 import 'api_client.dart';
 import '../../core/constants/api_constants.dart';
+import '../models/coach_notification_templates.dart';
 
 /// Background message handler - must be top-level function
 @pragma('vm:entry-point')
@@ -30,6 +31,7 @@ class NotificationPrefsKeys {
   static const billingReminders = 'notif_billing_reminders';
   static const movementReminders = 'notif_movement_reminders';
   static const liveChatMessages = 'notif_live_chat_messages';
+  static const cachedCoachId = 'notif_cached_coach_id';
   static const quietHoursStart = 'notif_quiet_hours_start';
   static const quietHoursEnd = 'notif_quiet_hours_end';
   // Time preferences for scheduled notifications
@@ -104,14 +106,14 @@ class NotificationPreferences {
     this.nutritionBreakfastTime = '08:00',
     this.nutritionLunchTime = '12:00',
     this.nutritionDinnerTime = '18:00',
-    this.hydrationStartTime = '08:00',
+    this.hydrationStartTime = '08:15',
     this.hydrationEndTime = '20:00',
     this.hydrationIntervalMinutes = 120, // Every 2 hours
     this.streakAlertTime = '18:00',
     this.weeklySummaryDay = 0, // Sunday
     this.weeklySummaryTime = '09:00',
     // Movement reminder defaults (work hours)
-    this.movementReminderStartTime = '09:00',
+    this.movementReminderStartTime = '09:05',
     this.movementReminderEndTime = '17:00',
     this.movementStepThreshold = 250, // 250 steps per hour threshold
     // Smart timing
@@ -515,8 +517,31 @@ class NotificationService {
       initSettings,
       onDidReceiveNotificationResponse: (response) {
         debugPrint('🔔 [Local] Notification tapped: ${response.payload}');
-        // Call the tap callback for navigation
-        onNotificationTapped?.call(response.payload);
+        final payload = response.payload;
+        // Try to parse rich JSON payload (contains title, body, type)
+        if (payload != null && payload.startsWith('{')) {
+          try {
+            final data = jsonDecode(payload) as Map<String, dynamic>;
+            final type = data['type'] as String?;
+            final title = data['title'] as String?;
+            final body = data['body'] as String?;
+            // Store in notification inbox
+            if (title != null && body != null) {
+              onNotificationReceived?.call(
+                title: title,
+                body: body,
+                type: type,
+                data: {'type': type},
+              );
+            }
+            // Navigate based on type
+            onNotificationTapped?.call(type);
+          } catch (_) {
+            onNotificationTapped?.call(payload);
+          }
+        } else {
+          onNotificationTapped?.call(payload);
+        }
       },
     );
 
@@ -712,6 +737,17 @@ class NotificationService {
 
     // Get notification type from data payload
     final notificationType = message.data['type'] as String?;
+    final notification = message.notification;
+
+    // Store in inbox so it appears in the notification list
+    if (notification != null) {
+      onNotificationReceived?.call(
+        title: notification.title ?? 'FitWiz',
+        body: notification.body ?? '',
+        type: notificationType,
+        data: message.data,
+      );
+    }
 
     // Handle live chat notifications
     if (notificationType == 'live_chat_message' ||
@@ -856,7 +892,7 @@ class NotificationService {
   static const int _scheduleReminderBaseId = 7000;
 
   // ─────────────────────────────────────────────────────────────────
-  // Template Rotation Lists
+  // Template Rotation
   // ─────────────────────────────────────────────────────────────────
 
   /// Get day-of-year (0-365) for template rotation
@@ -865,159 +901,11 @@ class NotificationService {
     return now.difference(DateTime(now.year, 1, 1)).inDays;
   }
 
-  // Workout reminder templates (8 variants)
-  static const _workoutTitles = [
-    'Time to Work Out!',
-    'Your Workout Awaits!',
-    'Ready to Train?',
-    'Let\'s Get Moving!',
-    'Gym Time!',
-    'Sweat Session Time!',
-    'Workout O\'Clock!',
-    'Time to Crush It!',
-  ];
-  static const _workoutBodies = [
-    'Your workout is waiting. Let\'s crush those goals today!',
-    'Consistency builds results. Show up and give it your best!',
-    'Every rep counts. Let\'s make today a strong one!',
-    'Your future self will thank you. Let\'s go!',
-    'No excuses today - your body is ready for this!',
-    'Progress happens one workout at a time. Start now!',
-    'You\'re stronger than you think. Prove it today!',
-    'The hardest part is starting. After that, it\'s all momentum!',
-  ];
-
-  // Nutrition breakfast templates (8 variants)
-  static const _breakfastTitles = [
-    'Breakfast Time!',
-    'Good Morning! Time to Eat!',
-    'Fuel Your Morning!',
-    'Rise & Eat!',
-    'Morning Fuel Check!',
-    'Breakfast is Calling!',
-    'Start Your Day Right!',
-    'AM Nutrition Check!',
-  ];
-  static const _breakfastBodies = [
-    'Don\'t forget to log your breakfast and start the day right!',
-    'A good breakfast sets the tone. Log your morning meal!',
-    'Fuel up for the day ahead. What are you having?',
-    'Breakfast powers your morning. Track it to stay on target!',
-    'Your metabolism needs a kickstart. Log your breakfast!',
-    'Morning nutrition matters. Don\'t skip tracking!',
-    'Start strong with a logged breakfast!',
-    'What\'s fueling your morning? Log it now!',
-  ];
-
-  // Nutrition lunch templates (8 variants)
-  static const _lunchTitles = [
-    'Lunch Time!',
-    'Midday Meal!',
-    'Time for Lunch!',
-    'Lunch Break!',
-    'Noon Nutrition!',
-    'Midday Fuel Up!',
-    'Lunchtime Log!',
-    'Afternoon Fuel!',
-  ];
-  static const _lunchBodies = [
-    'Time for lunch! Remember to log your meal.',
-    'Keep your nutrition on track. Log your lunch!',
-    'Midday fuel matters. What are you having?',
-    'Stay consistent - log your lunch to hit your goals!',
-    'A balanced lunch keeps you going. Track it!',
-    'Don\'t let lunch go untracked. Log it now!',
-    'Halfway through the day - keep your nutrition dialed in!',
-    'Your afternoon energy depends on lunch. Log it!',
-  ];
-
-  // Nutrition dinner templates (8 variants)
-  static const _dinnerTitles = [
-    'Dinner Time!',
-    'Evening Meal!',
-    'Time for Dinner!',
-    'Dinner is Served!',
-    'Evening Nutrition!',
-    'Dinnertime Log!',
-    'Last Meal of the Day!',
-    'Evening Fuel Check!',
-  ];
-  static const _dinnerBodies = [
-    'Enjoy your dinner! Don\'t forget to log it.',
-    'Finish the day strong - log your dinner!',
-    'Evening nutrition counts. Track your dinner!',
-    'Almost done for the day. Log your final meal!',
-    'A well-tracked day ends with a logged dinner!',
-    'Your dinner matters for recovery. Log it!',
-    'Complete your food diary - log dinner now!',
-    'End the day right. Track your evening meal!',
-  ];
-
-  // Hydration templates (expanded to 8 variants)
-  static const _hydrationTitles = [
-    'Hydration Check!',
-    'Water Break Time!',
-    'Stay Hydrated!',
-    'Drink Up!',
-    'H2O Reminder!',
-    'Thirst Alert!',
-    'Water O\'Clock!',
-    'Sip Reminder!',
-  ];
-  static const _hydrationBodies = [
-    'Time to drink some water. Your body will thank you!',
-    'A quick water break keeps you energized.',
-    'Staying hydrated helps your workout performance!',
-    'Don\'t forget to hydrate! It\'s essential for recovery.',
-    'Water fuels everything. Take a sip now!',
-    'Hydration boosts focus and energy. Drink up!',
-    'Keep that water bottle handy. Time for a refill!',
-    'Your muscles need water to perform. Hydrate now!',
-  ];
-
-  // Streak alert templates (8 variants)
-  static const _streakTitles = [
-    'Keep Your Streak Alive!',
-    'Don\'t Break the Chain!',
-    'Streak Check!',
-    'Your Streak Needs You!',
-    'Streak in Danger!',
-    'Keep It Going!',
-    'Streak Reminder!',
-    'Stay Consistent!',
-  ];
-  static const _streakBodies = [
-    'Don\'t break your streak! Complete a workout today.',
-    'Your streak is counting on you. Get moving!',
-    'One workout keeps the streak alive. You got this!',
-    'Streaks build habits. Don\'t let today be the break!',
-    'Your consistency is impressive. Keep it up today!',
-    'A streak is a promise to yourself. Honor it!',
-    'Every day counts. Protect your streak!',
-    'Champions don\'t skip days. Keep your streak going!',
-  ];
-
-  // Weekly summary templates (8 variants)
-  static const _weeklySummaryTitles = [
-    'Your Weekly Summary is Ready!',
-    'Week in Review!',
-    'Weekly Progress Report!',
-    'How Was Your Week?',
-    'Weekly Fitness Recap!',
-    'Your Week at a Glance!',
-    'Progress Check-In!',
-    'Weekly Wrap-Up!',
-  ];
-  static const _weeklySummaryBodies = [
-    'Check out your progress from the past week.',
-    'See how you did this week. Tap to review!',
-    'Your weekly stats are in. Take a look!',
-    'Reflect on your week and plan for the next one!',
-    'Numbers don\'t lie. See your weekly progress!',
-    'Another week done! Review your achievements.',
-    'Your hard work is tracked. Check your summary!',
-    'Week complete! See what you accomplished.',
-  ];
+  /// Build a JSON payload for scheduled notifications so the tap handler
+  /// can store title/body in the bell icon inbox.
+  static String _richPayload(String type, String title, String body) {
+    return jsonEncode({'type': type, 'title': title, 'body': body});
+  }
 
   // ─────────────────────────────────────────────────────────────────
   // Cached User Context
@@ -1041,6 +929,26 @@ class NotificationService {
   static Future<int?> _getCachedStreak() async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getInt(NotificationPrefsKeys.cachedStreak);
+  }
+
+  /// Cache the user's selected coach ID for personalized notifications.
+  /// For custom coaches, maps coachingStyle to the nearest predefined coach.
+  static Future<void> cacheCoachId(String? coachId, {String? coachingStyle}) async {
+    final prefs = await SharedPreferences.getInstance();
+    String resolvedId;
+    if (coachId == 'custom' && coachingStyle != null) {
+      resolvedId = CoachNotificationTemplates.mapStyleToCoachId(coachingStyle);
+    } else {
+      resolvedId = coachId ?? 'coach_mike';
+    }
+    await prefs.setString(NotificationPrefsKeys.cachedCoachId, resolvedId);
+    debugPrint('🔔 [Cache] Coach ID cached: $resolvedId (raw=$coachId, style=$coachingStyle)');
+  }
+
+  /// Get cached coach ID (defaults to 'coach_mike')
+  static Future<String> _getCachedCoachId() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(NotificationPrefsKeys.cachedCoachId) ?? 'coach_mike';
   }
 
   // ─────────────────────────────────────────────────────────────────
@@ -1224,10 +1132,12 @@ class NotificationService {
       color: channelConfig.color,
     );
 
-    // Template rotation
+    // Coach-personalized template rotation
     final dayIndex = _getDayOfYear();
-    var title = _workoutTitles[dayIndex % _workoutTitles.length];
-    var body = _workoutBodies[dayIndex % _workoutBodies.length];
+    final coachId = await _getCachedCoachId();
+    final t = CoachNotificationTemplates.get(coachId, NotificationType.workout, dayIndex);
+    var title = t.title;
+    var body = t.body;
 
     // Personalize with cached user context
     final userName = await _getCachedUserName();
@@ -1244,6 +1154,7 @@ class NotificationService {
       androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
       matchDateTimeComponents: DateTimeComponents.time, // Repeat daily
       uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
+      payload: _richPayload('workout_reminder', title, body),
     );
 
     debugPrint('🔔 [Schedule] Workout reminder scheduled for $hour:${minute.toString().padLeft(2, '0')} daily (smart=$smartTimingEnabled)');
@@ -1267,44 +1178,51 @@ class NotificationService {
     );
 
     final dayIndex = _getDayOfYear();
+    final coachId = await _getCachedCoachId();
 
     // Breakfast
+    final bT = CoachNotificationTemplates.get(coachId, NotificationType.breakfast, dayIndex);
     final (bHour, bMinute) = _parseTime(breakfastTime);
     await _localNotifications.zonedSchedule(
       _nutritionBreakfastId,
-      _breakfastTitles[dayIndex % _breakfastTitles.length],
-      _breakfastBodies[dayIndex % _breakfastBodies.length],
+      bT.title,
+      bT.body,
       _nextInstanceOfTime(bHour, bMinute),
       NotificationDetails(android: androidDetails, iOS: const DarwinNotificationDetails()),
       androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
       matchDateTimeComponents: DateTimeComponents.time,
       uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
+      payload: _richPayload('nutrition_reminder', bT.title, bT.body),
     );
 
     // Lunch
+    final lT = CoachNotificationTemplates.get(coachId, NotificationType.lunch, dayIndex);
     final (lHour, lMinute) = _parseTime(lunchTime);
     await _localNotifications.zonedSchedule(
       _nutritionLunchId,
-      _lunchTitles[dayIndex % _lunchTitles.length],
-      _lunchBodies[dayIndex % _lunchBodies.length],
+      lT.title,
+      lT.body,
       _nextInstanceOfTime(lHour, lMinute),
       NotificationDetails(android: androidDetails, iOS: const DarwinNotificationDetails()),
       androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
       matchDateTimeComponents: DateTimeComponents.time,
       uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
+      payload: _richPayload('nutrition_reminder', lT.title, lT.body),
     );
 
     // Dinner
+    final dT = CoachNotificationTemplates.get(coachId, NotificationType.dinner, dayIndex);
     final (dHour, dMinute) = _parseTime(dinnerTime);
     await _localNotifications.zonedSchedule(
       _nutritionDinnerId,
-      _dinnerTitles[dayIndex % _dinnerTitles.length],
-      _dinnerBodies[dayIndex % _dinnerBodies.length],
+      dT.title,
+      dT.body,
       _nextInstanceOfTime(dHour, dMinute),
       NotificationDetails(android: androidDetails, iOS: const DarwinNotificationDetails()),
       androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
       matchDateTimeComponents: DateTimeComponents.time,
       uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
+      payload: _richPayload('nutrition_reminder', dT.title, dT.body),
     );
 
     debugPrint('🔔 [Schedule] Nutrition reminders scheduled: Breakfast=$breakfastTime, Lunch=$lunchTime, Dinner=$dinnerTime');
@@ -1335,6 +1253,7 @@ class NotificationService {
     final endMinutes = endHour * 60 + endMinute;
 
     final dayIndex = _getDayOfYear();
+    final coachId = await _getCachedCoachId();
     int notificationIndex = 0;
 
     for (int minutes = startMinutes; minutes <= endMinutes; minutes += intervalMinutes) {
@@ -1342,17 +1261,19 @@ class NotificationService {
       final minute = minutes % 60;
 
       // Combine day + index for varied rotation across reminders in a day
-      final templateIndex = (dayIndex + notificationIndex) % _hydrationTitles.length;
+      final templateIndex = dayIndex + notificationIndex;
+      final hT = CoachNotificationTemplates.get(coachId, NotificationType.hydration, templateIndex);
 
       await _localNotifications.zonedSchedule(
         _hydrationBaseId + notificationIndex,
-        _hydrationTitles[templateIndex],
-        _hydrationBodies[templateIndex],
+        hT.title,
+        hT.body,
         _nextInstanceOfTime(hour, minute),
         NotificationDetails(android: androidDetails, iOS: const DarwinNotificationDetails()),
         androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
         matchDateTimeComponents: DateTimeComponents.time,
         uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
+        payload: _richPayload('hydration_reminder', hT.title, hT.body),
       );
       notificationIndex++;
     }
@@ -1376,10 +1297,12 @@ class NotificationService {
       color: channelConfig.color,
     );
 
-    // Template rotation
+    // Coach-personalized template rotation
     final dayIndex = _getDayOfYear();
-    final title = _streakTitles[dayIndex % _streakTitles.length];
-    var body = _streakBodies[dayIndex % _streakBodies.length];
+    final coachId = await _getCachedCoachId();
+    final sT = CoachNotificationTemplates.get(coachId, NotificationType.streak, dayIndex);
+    final title = sT.title;
+    var body = sT.body;
 
     // Personalize with cached streak count
     final streak = await _getCachedStreak();
@@ -1396,6 +1319,7 @@ class NotificationService {
       androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
       matchDateTimeComponents: DateTimeComponents.time,
       uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
+      payload: _richPayload('streak_alert', title, body),
     );
 
     debugPrint('🔔 [Schedule] Streak alert scheduled for $time daily');
@@ -1419,10 +1343,12 @@ class NotificationService {
       color: channelConfig.color,
     );
 
-    // Template rotation (use week number for weekly notifications)
+    // Coach-personalized template rotation (use week number for weekly notifications)
     final weekIndex = _getDayOfYear() ~/ 7;
-    final title = _weeklySummaryTitles[weekIndex % _weeklySummaryTitles.length];
-    final body = _weeklySummaryBodies[weekIndex % _weeklySummaryBodies.length];
+    final coachId = await _getCachedCoachId();
+    final wT = CoachNotificationTemplates.get(coachId, NotificationType.weeklySummary, weekIndex);
+    final title = wT.title;
+    final body = wT.body;
 
     await _localNotifications.zonedSchedule(
       _weeklySummaryId,
@@ -1433,6 +1359,7 @@ class NotificationService {
       androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
       matchDateTimeComponents: DateTimeComponents.dayOfWeekAndTime,
       uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
+      payload: _richPayload('weekly_summary', title, body),
     );
 
     final dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
@@ -1472,22 +1399,25 @@ class NotificationService {
     final startMinutes = startHour * 60 + startMinute;
     final endMinutes = endHour * 60 + endMinute;
 
+    final coachId = await _getCachedCoachId();
     int reminderIndex = 0;
     // Schedule one reminder per hour within the time range
     for (int minutes = startMinutes; minutes <= endMinutes; minutes += 60) {
       final hour = minutes ~/ 60;
       final minute = minutes % 60;
 
+      final mT = CoachNotificationTemplates.get(coachId, NotificationType.movement, reminderIndex);
+
       await _localNotifications.zonedSchedule(
         _movementReminderBaseId + reminderIndex,
-        _getMovementReminderTitle(reminderIndex),
-        _getMovementReminderBody(reminderIndex),
+        mT.title,
+        mT.body,
         _nextInstanceOfTime(hour, minute),
         NotificationDetails(android: androidDetails, iOS: const DarwinNotificationDetails()),
         androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
         matchDateTimeComponents: DateTimeComponents.time,
         uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
-        payload: 'movement_reminder',
+        payload: _richPayload('movement_reminder', mT.title, mT.body),
       );
       reminderIndex++;
     }
@@ -1519,9 +1449,11 @@ class NotificationService {
       return;
     }
 
-    final title = _getMovementReminderTitle(DateTime.now().hour);
+    final coachId = await _getCachedCoachId();
+    final mT = CoachNotificationTemplates.get(coachId, NotificationType.movement, DateTime.now().hour);
+    final title = mT.title;
     final body = stepsSoFar == 0
-        ? 'You haven\'t moved this hour. Stand up and take a quick walk!'
+        ? mT.body
         : 'You\'ve taken only $stepsSoFar steps this hour. Try to hit $goal steps!';
 
     await _showLocalNotification(
@@ -1532,36 +1464,6 @@ class NotificationService {
     );
 
     debugPrint('🚶 [Movement] Movement reminder shown: $stepsSoFar/$goal steps');
-  }
-
-  /// Get variety of movement reminder titles to avoid notification fatigue
-  String _getMovementReminderTitle(int index) {
-    final titles = [
-      'Time to move!',
-      'Stand up and stretch!',
-      'Quick break?',
-      'Get moving!',
-      'Movement check!',
-      'Desk break time!',
-      'Walk break!',
-      'Stretch it out!',
-    ];
-    return titles[index % titles.length];
-  }
-
-  /// Get variety of movement reminder body messages
-  String _getMovementReminderBody(int index) {
-    final bodies = [
-      'A short walk can boost your energy and focus.',
-      'Your body will thank you. Take 2 minutes to move!',
-      'Stand up, stretch, and take a quick walk.',
-      'Reduce sedentary time - every step counts!',
-      'Time to shake off the stiffness. Move around!',
-      'Walking improves circulation and mood.',
-      'Get up and get those steps in!',
-      'Small movements add up. Start now!',
-    ];
-    return bodies[index % bodies.length];
   }
 
   /// Check if current time is within movement reminder hours
@@ -1640,7 +1542,7 @@ class NotificationService {
       NotificationDetails(android: androidDetails, iOS: const DarwinNotificationDetails()),
       androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
       uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
-      payload: 'schedule_reminder:$itemId',
+      payload: _richPayload('schedule_reminder', title, body),
     );
 
     debugPrint('✅ [Notifications] Scheduled reminder for "$title" at $scheduledDate (ID: $notificationId)');
@@ -1717,7 +1619,7 @@ class NotificationService {
       NotificationDetails(android: androidDetails, iOS: iosDetails),
       androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
       uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
-      payload: 'test',
+      payload: _richPayload('test', title, body),
     );
 
     // Store in inbox when scheduled notification fires
@@ -1842,14 +1744,14 @@ class NotificationPreferencesNotifier extends StateNotifier<NotificationPreferen
       nutritionBreakfastTime: _prefs.getString(NotificationPrefsKeys.nutritionBreakfastTime) ?? '08:00',
       nutritionLunchTime: _prefs.getString(NotificationPrefsKeys.nutritionLunchTime) ?? '12:00',
       nutritionDinnerTime: _prefs.getString(NotificationPrefsKeys.nutritionDinnerTime) ?? '18:00',
-      hydrationStartTime: _prefs.getString(NotificationPrefsKeys.hydrationStartTime) ?? '08:00',
+      hydrationStartTime: _prefs.getString(NotificationPrefsKeys.hydrationStartTime) ?? '08:15',
       hydrationEndTime: _prefs.getString(NotificationPrefsKeys.hydrationEndTime) ?? '20:00',
       hydrationIntervalMinutes: _prefs.getInt(NotificationPrefsKeys.hydrationIntervalMinutes) ?? 120,
       streakAlertTime: _prefs.getString(NotificationPrefsKeys.streakAlertTime) ?? '18:00',
       weeklySummaryDay: _prefs.getInt(NotificationPrefsKeys.weeklySummaryDay) ?? 0,
       weeklySummaryTime: _prefs.getString(NotificationPrefsKeys.weeklySummaryTime) ?? '09:00',
       // Movement reminder preferences
-      movementReminderStartTime: _prefs.getString(NotificationPrefsKeys.movementReminderStartTime) ?? '09:00',
+      movementReminderStartTime: _prefs.getString(NotificationPrefsKeys.movementReminderStartTime) ?? '09:05',
       movementReminderEndTime: _prefs.getString(NotificationPrefsKeys.movementReminderEndTime) ?? '17:00',
       movementStepThreshold: _prefs.getInt(NotificationPrefsKeys.movementStepThreshold) ?? 250,
       // Smart timing

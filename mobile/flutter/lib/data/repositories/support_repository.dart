@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -64,6 +66,74 @@ class SupportRepository {
     }
   }
 
+  /// Get a presigned URL for uploading a ticket attachment to S3
+  Future<Map<String, dynamic>> getAttachmentPresignedUrl({
+    required String filename,
+    required String contentType,
+    required int fileSize,
+  }) async {
+    try {
+      debugPrint('🔍 [Support] Getting presigned URL for attachment: $filename');
+      final response = await _apiClient.post(
+        '/support/attachments/presign',
+        data: {
+          'filename': filename,
+          'content_type': contentType,
+          'file_size': fileSize,
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final data = response.data as Map<String, dynamic>;
+        debugPrint('✅ [Support] Got presigned URL, s3_key: ${data['s3_key']}');
+        return data;
+      }
+      throw Exception('Failed to get presigned URL: ${response.statusCode}');
+    } catch (e) {
+      debugPrint('❌ [Support] Error getting presigned URL: $e');
+      rethrow;
+    }
+  }
+
+  /// Upload a file to S3 using a presigned POST URL
+  Future<void> uploadToS3({
+    required String presignedUrl,
+    required Map<String, dynamic>? fields,
+    required File file,
+    required String contentType,
+  }) async {
+    try {
+      debugPrint('🔍 [Support] Uploading attachment to S3...');
+      final fileBytes = await file.readAsBytes();
+      final s3Dio = Dio();
+
+      if (fields != null && fields.isNotEmpty) {
+        final formData = FormData.fromMap({
+          ...fields.map((k, v) => MapEntry(k, v.toString())),
+          'file': MultipartFile.fromBytes(
+            fileBytes,
+            filename: file.path.split('/').last,
+          ),
+        });
+        final response = await s3Dio.post(
+          presignedUrl,
+          data: formData,
+          options: Options(
+            receiveTimeout: const Duration(minutes: 2),
+            sendTimeout: const Duration(minutes: 2),
+          ),
+        );
+        debugPrint('✅ [Support] S3 upload complete: ${response.statusCode}');
+        if (response.statusCode != 200 && response.statusCode != 204) {
+          throw Exception('Upload failed with status ${response.statusCode}');
+        }
+      }
+    } catch (e) {
+      debugPrint('❌ [Support] Error uploading to S3: $e');
+      rethrow;
+    }
+  }
+
   /// Create a new support ticket
   Future<SupportTicket> createTicket({
     required String userId,
@@ -72,20 +142,32 @@ class SupportRepository {
     required String priority,
     required String description,
     List<String>? attachments,
+    String? stepsToReproduce,
+    String? screenContext,
   }) async {
     try {
       debugPrint('🔍 [Support] Creating ticket: $subject');
 
+      final data = <String, dynamic>{
+        'user_id': userId,
+        'subject': subject,
+        'category': category,
+        'priority': priority,
+        'initial_message': description,
+      };
+      if (attachments != null && attachments.isNotEmpty) {
+        data['attachments'] = attachments;
+      }
+      if (stepsToReproduce != null && stepsToReproduce.isNotEmpty) {
+        data['steps_to_reproduce'] = stepsToReproduce;
+      }
+      if (screenContext != null && screenContext.isNotEmpty) {
+        data['screen_context'] = screenContext;
+      }
+
       final response = await _apiClient.post(
         '/support/tickets',
-        data: {
-          'user_id': userId,
-          'subject': subject,
-          'category': category,
-          'priority': priority,
-          'description': description,
-          'attachments': attachments,
-        },
+        data: data,
       );
 
       if (response.statusCode == 201 || response.statusCode == 200) {

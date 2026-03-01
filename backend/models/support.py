@@ -78,6 +78,9 @@ class SupportTicketCreate(BaseModel):
     category: TicketCategory
     priority: TicketPriority = Field(default=TicketPriority.MEDIUM)
     initial_message: str = Field(..., min_length=10, max_length=5000)
+    attachments: Optional[List[str]] = Field(default=None, description="List of S3 keys for uploaded screenshots")
+    steps_to_reproduce: Optional[str] = Field(default=None, max_length=5000, description="Steps to reproduce the issue")
+    screen_context: Optional[str] = Field(default=None, max_length=100, description="Which screen/feature the issue occurred on")
 
 
 class SupportTicketUpdate(BaseModel):

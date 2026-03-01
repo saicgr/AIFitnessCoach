@@ -364,7 +364,7 @@ class _SetTrackingTableState extends State<SetTrackingTable> {
 
           // Weight column with toggle
           SizedBox(
-            width: widget.isLeftRightMode ? 60 : 72,
+            width: widget.isLeftRightMode ? 56 : 64,
             child: GestureDetector(
               onTap: widget.onToggleUnit,
               child: Row(
@@ -431,7 +431,7 @@ class _SetTrackingTableState extends State<SetTrackingTable> {
             ),
           ] else
             SizedBox(
-              width: 72,
+              width: 64,
               child: Text(
                 'Reps',
                 style: WorkoutDesign.tableHeaderStyle.copyWith(
@@ -543,7 +543,7 @@ class _SetTrackingTableState extends State<SetTrackingTable> {
 
             // Weight input
             SizedBox(
-              width: widget.isLeftRightMode ? 60 : 72,
+              width: widget.isLeftRightMode ? 56 : 64,
               child: isEditing
                   ? _DarkInputField(
                       controller: _editWeightController!,
@@ -620,7 +620,7 @@ class _SetTrackingTableState extends State<SetTrackingTable> {
               ),
             ] else
               SizedBox(
-                width: 72,
+                width: 64,
                 child: isEditing
                     ? _DarkInputField(
                         controller: _editRepsController!,
@@ -1000,7 +1000,7 @@ class _AutoTargetCell extends StatelessWidget {
 
     return ClipRect(
       child: Padding(
-        padding: const EdgeInsets.only(right: 8),
+        padding: const EdgeInsets.only(right: 4),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -1010,7 +1010,7 @@ class _AutoTargetCell extends StatelessWidget {
               targetString,
               style: WorkoutDesign.autoTargetStyle.copyWith(
                 color: isDark ? WorkoutDesign.textSecondary : Colors.grey.shade700,
-                fontSize: 12, // Slightly smaller to fit
+                fontSize: 12,
               ),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
@@ -1018,9 +1018,9 @@ class _AutoTargetCell extends StatelessWidget {
             // RIR pill with info icon - only ? icon is tappable
             if (targetRir != null)
               Padding(
-                padding: const EdgeInsets.only(top: 4),
+                padding: const EdgeInsets.only(top: 2),
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
                   decoration: BoxDecoration(
                     color: WorkoutDesign.getRirColor(targetRir!),
                     borderRadius: BorderRadius.circular(10),
@@ -1031,21 +1031,21 @@ class _AutoTargetCell extends StatelessWidget {
                       Text(
                         WorkoutDesign.getRirLabel(targetRir!),
                         style: TextStyle(
-                          fontSize: 10,
+                          fontSize: 9,
                           fontWeight: FontWeight.w600,
                           color: WorkoutDesign.getRirTextColor(targetRir!),
                         ),
                       ),
                       const SizedBox(width: 2),
-                      // Only the ? icon triggers the explanation - larger tap area
+                      // Only the ? icon triggers the explanation
                       GestureDetector(
                         behavior: HitTestBehavior.opaque,
                         onTap: () => _showRirExplanation(context),
                         child: Padding(
-                          padding: const EdgeInsets.all(4), // Larger tap target
+                          padding: const EdgeInsets.all(3),
                           child: Icon(
                             Icons.help_outline,
-                            size: 14,
+                            size: 12,
                             color: WorkoutDesign.getRirTextColor(targetRir!).withOpacity(0.7),
                           ),
                         ),
@@ -1101,45 +1101,47 @@ class _PreviousCell extends StatelessWidget {
       previousString = '$previousReps reps';
     }
 
-    return Padding(
-      padding: const EdgeInsets.only(right: 8),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Previous weight x reps
-          Text(
-            previousString,
-            style: WorkoutDesign.autoTargetStyle.copyWith(
-              color: isDark ? WorkoutDesign.textMuted : Colors.grey.shade500,
-              fontSize: 12,
+    return ClipRect(
+      child: Padding(
+        padding: const EdgeInsets.only(right: 4),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Previous weight x reps
+            Text(
+              previousString,
+              style: WorkoutDesign.autoTargetStyle.copyWith(
+                color: isDark ? WorkoutDesign.textMuted : Colors.grey.shade500,
+                fontSize: 12,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-          // RIR pill (if available)
-          if (previousRir != null)
-            Padding(
-              padding: const EdgeInsets.only(top: 2),
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
-                decoration: BoxDecoration(
-                  color: WorkoutDesign.getRirColor(previousRir!).withOpacity(0.3),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Text(
-                  'RIR $previousRir',
-                  style: TextStyle(
-                    fontSize: 9,
-                    fontWeight: FontWeight.w500,
-                    color: isDark
-                        ? WorkoutDesign.getRirColor(previousRir!)
-                        : WorkoutDesign.getRirColor(previousRir!).withOpacity(0.8),
+            // RIR pill (if available)
+            if (previousRir != null)
+              Padding(
+                padding: const EdgeInsets.only(top: 2),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                  decoration: BoxDecoration(
+                    color: WorkoutDesign.getRirColor(previousRir!).withOpacity(0.3),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    'RIR $previousRir',
+                    style: TextStyle(
+                      fontSize: 9,
+                      fontWeight: FontWeight.w500,
+                      color: isDark
+                          ? WorkoutDesign.getRirColor(previousRir!)
+                          : WorkoutDesign.getRirColor(previousRir!).withOpacity(0.8),
+                    ),
                   ),
                 ),
               ),
-            ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -1250,53 +1252,54 @@ class _PreviousCellWithRir extends StatelessWidget {
     // Determine which RIR to show (target takes priority for current set guidance)
     final displayRir = targetRir ?? previousRir;
 
-    return Padding(
-      padding: const EdgeInsets.only(right: 8),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // Previous weight x reps
-          Flexible(
-            child: Text(
+    return ClipRect(
+      child: Padding(
+        padding: const EdgeInsets.only(right: 4),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Previous weight x reps
+            Text(
               previousString,
               style: WorkoutDesign.autoTargetStyle.copyWith(
                 color: isDark ? WorkoutDesign.textSecondary : Colors.grey.shade600,
-                fontSize: 13,
+                fontSize: 12,
               ),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
-          ),
 
-          // RIR pill with ? icon (if available and not warmup)
-          // RIR text is tappable to edit, ? icon shows explanation
-          if (displayRir != null && !isWarmup) ...[
-            const SizedBox(width: 6),
-            Container(
-              padding: const EdgeInsets.only(left: 6, top: 2, bottom: 2),
-              decoration: BoxDecoration(
-                color: WorkoutDesign.getRirColor(displayRir).withOpacity(isDark ? 0.25 : 0.2),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  // RIR text - tappable to edit
-                  GestureDetector(
-                    behavior: HitTestBehavior.opaque,
-                    onTap: onRirTapped != null
-                        ? () {
-                            HapticFeedback.lightImpact();
-                            onRirTapped!();
-                          }
-                        : null,
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 2, horizontal: 2),
-                      child: Text(
-                        'RIR $displayRir',
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w600,
+            // RIR pill with ? icon (if available and not warmup)
+            // RIR text is tappable to edit, ? icon shows explanation
+            if (displayRir != null && !isWarmup)
+              Padding(
+                padding: const EdgeInsets.only(top: 2),
+                child: Container(
+                  padding: const EdgeInsets.only(left: 5, top: 1, bottom: 1),
+                  decoration: BoxDecoration(
+                    color: WorkoutDesign.getRirColor(displayRir).withOpacity(isDark ? 0.25 : 0.2),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // RIR text - tappable to edit
+                      GestureDetector(
+                        behavior: HitTestBehavior.opaque,
+                        onTap: onRirTapped != null
+                            ? () {
+                                HapticFeedback.lightImpact();
+                                onRirTapped!();
+                              }
+                            : null,
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 1, horizontal: 2),
+                          child: Text(
+                            'RIR $displayRir',
+                            style: TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w600,
                           color: isDark
                               ? WorkoutDesign.getRirColor(displayRir)
                               : WorkoutDesign.getRirColor(displayRir).withOpacity(0.9),
@@ -1304,26 +1307,27 @@ class _PreviousCellWithRir extends StatelessWidget {
                       ),
                     ),
                   ),
-                  // ? icon triggers the explanation - larger tap area
-                  GestureDetector(
-                    behavior: HitTestBehavior.opaque,
-                    onTap: () => _showRirExplanation(context),
-                    child: Padding(
-                      padding: const EdgeInsets.all(4), // Larger tap target
-                      child: Icon(
-                        Icons.help_outline,
-                        size: 14,
-                        color: isDark
-                            ? WorkoutDesign.getRirColor(displayRir).withOpacity(0.7)
-                            : WorkoutDesign.getRirColor(displayRir).withOpacity(0.6),
+                      // ? icon triggers the explanation - larger tap area
+                      GestureDetector(
+                        behavior: HitTestBehavior.opaque,
+                        onTap: () => _showRirExplanation(context),
+                        child: Padding(
+                          padding: const EdgeInsets.all(3),
+                          child: Icon(
+                            Icons.help_outline,
+                            size: 12,
+                            color: isDark
+                                ? WorkoutDesign.getRirColor(displayRir).withOpacity(0.7)
+                                : WorkoutDesign.getRirColor(displayRir).withOpacity(0.6),
+                          ),
+                        ),
                       ),
-                    ),
+                    ],
                   ),
-                ],
+                ),
               ),
-            ),
           ],
-        ],
+        ),
       ),
     );
   }

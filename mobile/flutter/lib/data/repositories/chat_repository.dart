@@ -107,6 +107,17 @@ class ChatRepository {
         return data;
       }
       throw Exception('Failed to get presigned URL: ${response.statusCode}');
+    } on DioException catch (e) {
+      debugPrint('❌ [Chat] Error getting presigned URL: $e');
+      if (e.response?.statusCode == 503) {
+        throw Exception('Media upload is temporarily unavailable. Please try again later.');
+      } else if (e.type == DioExceptionType.connectionTimeout ||
+                 e.type == DioExceptionType.receiveTimeout) {
+        throw Exception('Request timed out. Please check your connection.');
+      } else if (e.type == DioExceptionType.connectionError) {
+        throw Exception('Unable to connect. Please check your internet connection.');
+      }
+      throw Exception('Failed to prepare upload. Please try again.');
     } catch (e) {
       debugPrint('❌ [Chat] Error getting presigned URL: $e');
       rethrow;
@@ -131,6 +142,17 @@ class ChatRepository {
         return items;
       }
       throw Exception('Failed to get batch presigned URLs: ${response.statusCode}');
+    } on DioException catch (e) {
+      debugPrint('❌ [Chat] Error getting batch presigned URLs: $e');
+      if (e.response?.statusCode == 503) {
+        throw Exception('Media upload is temporarily unavailable. Please try again later.');
+      } else if (e.type == DioExceptionType.connectionTimeout ||
+                 e.type == DioExceptionType.receiveTimeout) {
+        throw Exception('Request timed out. Please check your connection.');
+      } else if (e.type == DioExceptionType.connectionError) {
+        throw Exception('Unable to connect. Please check your internet connection.');
+      }
+      throw Exception('Failed to prepare upload. Please try again.');
     } catch (e) {
       debugPrint('❌ [Chat] Error getting batch presigned URLs: $e');
       rethrow;
@@ -139,7 +161,7 @@ class ChatRepository {
 
   /// Upload a file directly to S3 using the presigned URL
   /// Uses a standalone Dio instance (not the API client) for direct S3 PUT
-  Future<bool> uploadToS3({
+  Future<void> uploadToS3({
     required String presignedUrl,
     required Map<String, dynamic>? fields,
     required File file,
@@ -170,7 +192,9 @@ class ChatRepository {
           ),
         );
         debugPrint('✅ [Chat] S3 upload complete: ${response.statusCode}');
-        return response.statusCode == 200 || response.statusCode == 204;
+        if (response.statusCode != 200 && response.statusCode != 204) {
+          throw Exception('Upload failed with status ${response.statusCode}. Please try again.');
+        }
       } else {
         // PUT with raw bytes (for presigned PUT URL)
         final response = await s3Dio.put(
@@ -186,11 +210,22 @@ class ChatRepository {
           ),
         );
         debugPrint('✅ [Chat] S3 upload complete: ${response.statusCode}');
-        return response.statusCode == 200 || response.statusCode == 204;
+        if (response.statusCode != 200 && response.statusCode != 204) {
+          throw Exception('Upload failed with status ${response.statusCode}. Please try again.');
+        }
       }
+    } on DioException catch (e) {
+      debugPrint('❌ [Chat] Error uploading to S3: $e');
+      if (e.type == DioExceptionType.connectionTimeout ||
+          e.type == DioExceptionType.sendTimeout) {
+        throw Exception('Upload timed out. The file may be too large or your connection is slow.');
+      } else if (e.type == DioExceptionType.connectionError) {
+        throw Exception('Upload failed. Please check your internet connection.');
+      }
+      throw Exception('Failed to upload file. Please try again.');
     } catch (e) {
       debugPrint('❌ [Chat] Error uploading to S3: $e');
-      return false;
+      rethrow;
     }
   }
 
@@ -250,7 +285,17 @@ class ChatRepository {
         throw Exception('Validation error: $validationMsg');
       }
       debugPrint('❌ [Chat] Error sending message: $e');
-      rethrow;
+      if (e.response?.statusCode == 503) {
+        throw Exception('The AI coach is temporarily unavailable. Please try again in a moment.');
+      } else if (e.response?.statusCode == 429) {
+        throw Exception('Too many messages. Please wait a moment before trying again.');
+      } else if (e.type == DioExceptionType.connectionTimeout ||
+                 e.type == DioExceptionType.receiveTimeout) {
+        throw Exception('The request timed out. Please check your connection and try again.');
+      } else if (e.type == DioExceptionType.connectionError) {
+        throw Exception('Unable to connect to the server. Please check your internet connection.');
+      }
+      throw Exception('Something went wrong. Please try again.');
     } catch (e) {
       debugPrint('❌ [Chat] Error sending message: $e');
       rethrow;
@@ -631,9 +676,10 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
       debugPrint('❌ [Chat] Stack trace: $stackTrace');
 
       // Surface the real error - don't mask it as an AI response
+      final errorText = e.toString().replaceFirst(RegExp(r'^Exception:\s*'), '');
       final errorMessage = ChatMessage(
         role: 'error',
-        content: e.toString(),
+        content: errorText,
         createdAt: DateTime.now().toIso8601String(),
       );
       final updatedMessages = state.valueOrNull ?? [];
@@ -697,19 +743,15 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
 
       final presignedUrl = presignData['presigned_url'] as String? ?? presignData['url'] as String;
       final s3Key = presignData['s3_key'] as String;
-      final fields = presignData['fields'] as Map<String, dynamic>?;
+      final fields = presignData['presigned_fields'] as Map<String, dynamic>?;
 
       // Step 3: Upload to S3
-      final uploadSuccess = await _repository.uploadToS3(
+      await _repository.uploadToS3(
         presignedUrl: presignedUrl,
         fields: fields,
         file: media.file,
         contentType: media.mimeType,
       );
-
-      if (!uploadSuccess) {
-        throw Exception('Failed to upload media to storage');
-      }
 
       // Step 4: Show analyzing system message
       final analyzingMsg = ChatMessage(
@@ -864,7 +906,7 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
       final presignedItems = await _repository.getBatchPresignedUrls(files: fileSpecs);
 
       // Step 3: Upload all to S3 in parallel
-      final uploadFutures = <Future<bool>>[];
+      final uploadFutures = <Future<void>>[];
       for (int i = 0; i < mediaList.length; i++) {
         final media = mediaList[i];
         final presigned = presignedItems[i];
@@ -876,10 +918,7 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
         ));
       }
 
-      final uploadResults = await Future.wait(uploadFutures);
-      if (uploadResults.any((success) => !success)) {
-        throw Exception('Some files failed to upload');
-      }
+      await Future.wait(uploadFutures);
 
       // Step 4: Show analyzing message
       final analyzingMsg = ChatMessage(

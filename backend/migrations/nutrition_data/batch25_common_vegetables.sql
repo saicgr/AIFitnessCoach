@@ -1,0 +1,264 @@
+-- ============================================================================
+-- Batch 25: Common Vegetables (Generic Foods)
+-- Category: vegetables
+-- Generated: 2026-02-28
+-- Sources: USDA FoodData Central (fdc.nal.usda.gov)
+-- All values are per 100g. Calorie check: cal ≈ protein*4 + carbs*4 + fat*9
+-- ============================================================================
+
+-- ============================================================================
+-- LEAFY GREENS (~10)
+-- ============================================================================
+
+-- Spinach (raw): 23 cal/100g | check: 2.9*4+3.6*4+0.4*9 = 11.6+14.4+3.6 = 29.6 (USDA reports 23, discrepancy from indigestible fiber carbs)
+('spinach_raw', 'Spinach (raw)', 23, 2.9, 3.6, 0.4, 2.2, 0.4, NULL, 30, 'usda', ARRAY['raw spinach', 'fresh spinach', 'baby spinach', 'spinach leaves'], '7 cal per cup raw (30g). Very low calorie, high in iron and vitamin K.', NULL, 'vegetables', 1),
+
+-- Spinach (cooked): 23 cal/100g cooked (boiled, drained)
+('spinach_cooked', 'Spinach (cooked)', 23, 2.97, 3.75, 0.26, 2.4, 0.49, NULL, 180, 'usda', ARRAY['cooked spinach', 'boiled spinach', 'steamed spinach', 'sauteed spinach'], '41 cal per cup cooked (180g). Wilts significantly; 1 cup raw = ~30g, 1 cup cooked = ~180g.', NULL, 'vegetables', 1),
+
+-- Kale (raw): 35 cal/100g
+('kale_raw', 'Kale (raw)', 35, 2.9, 4.4, 1.5, 4.1, 0.8, NULL, 21, 'usda', ARRAY['raw kale', 'fresh kale', 'curly kale', 'kale leaves'], '7 cal per cup chopped raw (21g). Superfood rich in vitamins A, C, K.', NULL, 'vegetables', 1),
+
+-- Kale (cooked): 28 cal/100g cooked (boiled, drained)
+('kale_cooked', 'Kale (cooked)', 28, 1.9, 5.6, 0.4, 2.0, 1.0, NULL, 130, 'usda', ARRAY['cooked kale', 'boiled kale', 'steamed kale', 'sauteed kale'], '36 cal per cup cooked (130g). Loses some nutrients when boiled.', NULL, 'vegetables', 1),
+
+-- Romaine lettuce: 17 cal/100g
+('romaine_lettuce', 'Romaine Lettuce', 17, 1.2, 3.3, 0.3, 2.1, 1.2, NULL, 47, 'usda', ARRAY['romaine', 'cos lettuce', 'romaine hearts'], '8 cal per cup shredded (47g). Classic salad and Caesar green.', NULL, 'vegetables', 1),
+
+-- Iceberg lettuce: 14 cal/100g
+('iceberg_lettuce', 'Iceberg Lettuce', 14, 0.9, 3.0, 0.1, 1.2, 2.0, NULL, 57, 'usda', ARRAY['iceberg', 'head lettuce', 'crisphead lettuce'], '8 cal per cup shredded (57g). High water content, mild flavor.', NULL, 'vegetables', 1),
+
+-- Arugula: 25 cal/100g
+('arugula', 'Arugula', 25, 2.6, 3.7, 0.7, 1.6, 2.0, NULL, 20, 'usda', ARRAY['rocket', 'rocket lettuce', 'roquette', 'rucola'], '5 cal per cup (20g). Peppery flavor, popular in salads.', NULL, 'vegetables', 1),
+
+-- Collard greens (cooked): 33 cal/100g
+('collard_greens_cooked', 'Collard Greens (cooked)', 33, 2.7, 5.4, 0.4, 3.6, 0.5, NULL, 190, 'usda', ARRAY['cooked collards', 'collard greens', 'collards'], '63 cal per cup cooked (190g). Southern staple, high in calcium and vitamin K.', NULL, 'vegetables', 1),
+
+-- Swiss chard (cooked): 20 cal/100g
+('swiss_chard_cooked', 'Swiss Chard (cooked)', 20, 1.9, 4.1, 0.1, 1.9, 1.1, NULL, 175, 'usda', ARRAY['cooked chard', 'chard', 'silverbeet', 'rainbow chard'], '35 cal per cup cooked (175g). Colorful stems, mild beet-like flavor.', NULL, 'vegetables', 1),
+
+-- Mixed salad greens: 17 cal/100g (average of common mixes)
+('mixed_salad_greens', 'Mixed Salad Greens', 17, 1.5, 2.9, 0.2, 1.5, 0.8, NULL, 56, 'usda', ARRAY['spring mix', 'mesclun', 'field greens', 'mixed greens', 'salad mix'], '10 cal per cup (56g). Blend of baby lettuces, spinach, arugula.', NULL, 'vegetables', 1),
+
+-- ============================================================================
+-- CRUCIFEROUS (~8)
+-- ============================================================================
+
+-- Broccoli (raw): 34 cal/100g | check: 2.8*4+6.6*4+0.4*9 = 11.2+26.4+3.6 = 41.2 (USDA 34, fiber not fully metabolized)
+('broccoli_raw', 'Broccoli (raw)', 34, 2.8, 6.6, 0.4, 2.6, 1.7, NULL, 91, 'usda', ARRAY['raw broccoli', 'fresh broccoli', 'broccoli florets'], '31 cal per cup chopped (91g). Crunchy, great for dipping.', NULL, 'vegetables', 1),
+
+-- Broccoli (cooked/steamed): 35 cal/100g
+('broccoli_cooked', 'Broccoli (cooked)', 35, 2.4, 7.2, 0.4, 3.3, 1.4, NULL, 156, 'usda', ARRAY['steamed broccoli', 'cooked broccoli', 'boiled broccoli'], '55 cal per cup cooked (156g). Retains most nutrients when steamed.', NULL, 'vegetables', 1),
+
+-- Cauliflower (raw): 25 cal/100g
+('cauliflower_raw', 'Cauliflower (raw)', 25, 1.9, 5.0, 0.3, 2.0, 1.9, NULL, 107, 'usda', ARRAY['raw cauliflower', 'fresh cauliflower', 'cauliflower florets'], '27 cal per cup (107g). Popular low-carb rice/pizza substitute.', NULL, 'vegetables', 1),
+
+-- Cauliflower (cooked): 23 cal/100g
+('cauliflower_cooked', 'Cauliflower (cooked)', 23, 1.8, 4.1, 0.5, 2.3, 1.6, NULL, 124, 'usda', ARRAY['cooked cauliflower', 'steamed cauliflower', 'boiled cauliflower'], '29 cal per cup cooked (124g). Soft texture, versatile for mashing.', NULL, 'vegetables', 1),
+
+-- Brussels sprouts (cooked): 36 cal/100g
+('brussels_sprouts_cooked', 'Brussels Sprouts (cooked)', 36, 2.6, 7.1, 0.5, 2.6, 1.7, 21, 156, 'usda', ARRAY['cooked brussels sprouts', 'brussel sprouts', 'roasted brussels sprouts'], '56 cal per cup cooked (156g). ~21g per sprout. Nutty when roasted.', NULL, 'vegetables', 1),
+
+-- Bok choy (raw): 13 cal/100g
+('bok_choy', 'Bok Choy', 13, 1.5, 2.2, 0.2, 1.0, 1.2, NULL, 70, 'usda', ARRAY['pak choi', 'pak choy', 'chinese cabbage', 'baby bok choy'], '9 cal per cup shredded (70g). Mild Asian green, great stir-fried.', NULL, 'vegetables', 1),
+
+-- Green cabbage (raw): 25 cal/100g
+('cabbage_green_raw', 'Cabbage (green, raw)', 25, 1.3, 5.8, 0.1, 2.5, 3.2, NULL, 89, 'usda', ARRAY['green cabbage', 'raw cabbage', 'white cabbage', 'cabbage'], '22 cal per cup shredded (89g). Base for coleslaw and stir-fries.', NULL, 'vegetables', 1),
+
+-- Red cabbage (raw): 31 cal/100g
+('cabbage_red_raw', 'Cabbage (red, raw)', 31, 1.4, 7.4, 0.2, 2.1, 3.8, NULL, 89, 'usda', ARRAY['red cabbage', 'purple cabbage'], '28 cal per cup shredded (89g). Higher in antioxidants than green.', NULL, 'vegetables', 1),
+
+-- ============================================================================
+-- ROOT VEGETABLES (~12)
+-- ============================================================================
+
+-- Potato (baked with skin): 93 cal/100g
+('potato_baked', 'Potato (baked, with skin)', 93, 2.5, 21.2, 0.1, 2.2, 1.2, 173, 173, 'usda', ARRAY['baked potato', 'jacket potato', 'potato baked with skin'], '161 cal per medium potato (173g). Excellent source of potassium.', NULL, 'vegetables', 1),
+
+-- Potato (boiled, no skin): 87 cal/100g
+('potato_boiled', 'Potato (boiled)', 87, 1.9, 20.1, 0.1, 1.8, 0.9, 150, 150, 'usda', ARRAY['boiled potato', 'mashed potato plain', 'steamed potato'], '131 cal per medium boiled potato (150g). Plain, no butter added.', NULL, 'vegetables', 1),
+
+-- Sweet potato (baked): 90 cal/100g
+('sweet_potato_baked', 'Sweet Potato (baked)', 90, 2.0, 20.7, 0.2, 3.3, 6.5, 114, 114, 'usda', ARRAY['baked sweet potato', 'yam baked', 'sweet potato'], '103 cal per medium baked sweet potato (114g). High in beta-carotene.', NULL, 'vegetables', 1),
+
+-- Carrot (raw): 41 cal/100g
+('carrot_raw', 'Carrot (raw)', 41, 0.9, 9.6, 0.2, 2.8, 4.7, 61, 61, 'usda', ARRAY['raw carrot', 'fresh carrot', 'baby carrots', 'carrot sticks'], '25 cal per medium carrot (61g). Sweet, crunchy, great snacking veggie.', NULL, 'vegetables', 1),
+
+-- Carrot (cooked): 35 cal/100g
+('carrot_cooked', 'Carrot (cooked)', 35, 0.8, 8.2, 0.2, 3.0, 3.5, NULL, 156, 'usda', ARRAY['cooked carrots', 'boiled carrots', 'steamed carrots'], '55 cal per cup sliced cooked (156g). Softer, slightly sweeter when cooked.', NULL, 'vegetables', 1),
+
+-- Beet (cooked): 44 cal/100g
+('beet_cooked', 'Beet (cooked)', 44, 1.7, 10.0, 0.2, 2.0, 8.0, 100, 170, 'usda', ARRAY['cooked beets', 'boiled beets', 'roasted beets', 'beetroot'], '75 cal per cup sliced cooked (170g). Earthy flavor, rich in nitrates.', NULL, 'vegetables', 1),
+
+-- Turnip (raw): 28 cal/100g
+('turnip', 'Turnip', 28, 0.9, 6.4, 0.1, 1.8, 3.8, 122, 130, 'usda', ARRAY['turnips', 'white turnip', 'raw turnip'], '36 cal per medium turnip (122g). Mild, slightly peppery root.', NULL, 'vegetables', 1),
+
+-- Parsnip (raw): 75 cal/100g
+('parsnip', 'Parsnip', 75, 1.2, 18.0, 0.3, 4.9, 4.8, 133, 133, 'usda', ARRAY['parsnips', 'raw parsnip'], '100 cal per medium parsnip (133g). Sweet root, excellent roasted.', NULL, 'vegetables', 1),
+
+-- Radish (raw): 16 cal/100g
+('radish', 'Radish', 16, 0.7, 3.4, 0.1, 1.6, 1.9, 4.5, 58, 'usda', ARRAY['radishes', 'red radish', 'raw radish'], '1 cal per small radish (4.5g). Peppery crunch, virtually calorie-free.', NULL, 'vegetables', 1),
+
+-- Ginger root (raw): 80 cal/100g
+('ginger_root', 'Ginger Root', 80, 1.8, 17.8, 0.8, 2.0, 1.7, 11, 11, 'usda', ARRAY['fresh ginger', 'ginger', 'raw ginger'], '9 cal per 1-inch piece (11g). Used as flavoring, not eaten in bulk.', NULL, 'vegetables', 1),
+
+-- Garlic (raw): 149 cal/100g
+('garlic', 'Garlic', 149, 6.4, 33.1, 0.5, 2.1, 1.0, 3, 9, 'usda', ARRAY['fresh garlic', 'garlic cloves', 'raw garlic', 'minced garlic'], '4 cal per clove (3g). Potent flavor, used in small quantities.', NULL, 'vegetables', 1),
+
+-- Yam (cooked): 116 cal/100g
+('yam', 'Yam (cooked)', 116, 1.5, 27.5, 0.1, 3.9, 0.5, 136, 136, 'usda', ARRAY['cooked yam', 'boiled yam', 'true yam'], '158 cal per cup cubed (136g). Starchier and drier than sweet potato.', NULL, 'vegetables', 1),
+
+-- ============================================================================
+-- NIGHTSHADES (~8)
+-- ============================================================================
+
+-- Tomato (raw): 18 cal/100g
+('tomato_raw', 'Tomato (raw)', 18, 0.9, 3.9, 0.2, 1.2, 2.6, 123, 123, 'usda', ARRAY['raw tomato', 'fresh tomato', 'sliced tomato', 'tomato'], '22 cal per medium tomato (123g). Versatile, rich in lycopene.', NULL, 'vegetables', 1),
+
+-- Cherry tomatoes: 18 cal/100g
+('cherry_tomatoes', 'Cherry Tomatoes', 18, 0.9, 3.9, 0.2, 1.2, 2.6, 17, 149, 'usda', ARRAY['cherry tomato', 'grape tomatoes', 'grape tomato', 'cocktail tomatoes'], '27 cal per cup (149g). ~17g per cherry tomato. Sweet snacking tomato.', NULL, 'vegetables', 1),
+
+-- Bell pepper red: 31 cal/100g
+('bell_pepper_red', 'Bell Pepper (red)', 31, 1.0, 6.0, 0.3, 2.1, 4.2, 119, 119, 'usda', ARRAY['red bell pepper', 'red pepper', 'red capsicum', 'sweet red pepper'], '37 cal per medium pepper (119g). Sweetest bell pepper, high in vitamin C.', NULL, 'vegetables', 1),
+
+-- Bell pepper green: 20 cal/100g
+('bell_pepper_green', 'Bell Pepper (green)', 20, 0.9, 4.6, 0.2, 1.7, 2.4, 119, 119, 'usda', ARRAY['green bell pepper', 'green pepper', 'green capsicum', 'sweet green pepper'], '24 cal per medium pepper (119g). Slightly bitter, lower in sugar than red.', NULL, 'vegetables', 1),
+
+-- Bell pepper yellow: 27 cal/100g
+('bell_pepper_yellow', 'Bell Pepper (yellow)', 27, 1.0, 6.3, 0.2, 0.9, 0.0, 119, 119, 'usda', ARRAY['yellow bell pepper', 'yellow pepper', 'yellow capsicum', 'sweet yellow pepper'], '32 cal per medium pepper (119g). Mild, sweet flavor between green and red.', NULL, 'vegetables', 1),
+
+-- Eggplant (cooked): 35 cal/100g
+('eggplant_cooked', 'Eggplant (cooked)', 35, 0.8, 8.7, 0.2, 2.5, 3.2, NULL, 99, 'usda', ARRAY['cooked eggplant', 'aubergine', 'grilled eggplant', 'baked eggplant'], '35 cal per cup cubed cooked (99g). Spongy texture, absorbs sauces well.', NULL, 'vegetables', 1),
+
+-- Jalapeno: 29 cal/100g
+('jalapeno', 'Jalapeno Pepper', 29, 0.9, 6.5, 0.4, 2.8, 4.1, 14, 14, 'usda', ARRAY['jalapeno', 'jalapeño', 'jalapeno pepper', 'hot pepper'], '4 cal per pepper (14g). Medium heat (2500-8000 Scoville).', NULL, 'vegetables', 1),
+
+-- Serrano pepper: 32 cal/100g
+('serrano_pepper', 'Serrano Pepper', 32, 1.7, 6.7, 0.4, 3.7, 3.8, 6, 6, 'usda', ARRAY['serrano', 'serrano chile', 'serrano chili'], '2 cal per pepper (6g). Hotter than jalapeno (10000-25000 Scoville).', NULL, 'vegetables', 1),
+
+-- ============================================================================
+-- SQUASH (~8)
+-- ============================================================================
+
+-- Zucchini (raw): 17 cal/100g
+('zucchini_raw', 'Zucchini (raw)', 17, 1.2, 3.1, 0.3, 1.0, 2.5, 196, 113, 'usda', ARRAY['raw zucchini', 'courgette', 'fresh zucchini', 'zucchini noodles', 'zoodles'], '19 cal per cup sliced (113g). ~196g per medium zucchini. Popular pasta sub.', NULL, 'vegetables', 1),
+
+-- Zucchini (cooked): 15 cal/100g
+('zucchini_cooked', 'Zucchini (cooked)', 15, 1.1, 2.7, 0.1, 1.0, 1.5, NULL, 180, 'usda', ARRAY['cooked zucchini', 'grilled zucchini', 'sauteed zucchini', 'steamed zucchini'], '27 cal per cup cooked (180g). Very low calorie, holds up well grilled.', NULL, 'vegetables', 1),
+
+-- Yellow squash (raw): 16 cal/100g
+('yellow_squash', 'Yellow Squash', 16, 1.2, 3.4, 0.2, 1.1, 2.2, 196, 113, 'usda', ARRAY['summer squash', 'crookneck squash', 'straightneck squash', 'yellow summer squash'], '18 cal per cup sliced (113g). Mild flavor, interchangeable with zucchini.', NULL, 'vegetables', 1),
+
+-- Butternut squash (cooked): 40 cal/100g
+('butternut_squash_cooked', 'Butternut Squash (cooked)', 40, 0.9, 10.5, 0.1, 3.2, 2.0, NULL, 205, 'usda', ARRAY['cooked butternut squash', 'baked butternut squash', 'roasted butternut squash', 'butternut squash'], '82 cal per cup cubed cooked (205g). Sweet, creamy, great for soups.', NULL, 'vegetables', 1),
+
+-- Acorn squash (cooked): 40 cal/100g
+('acorn_squash_cooked', 'Acorn Squash (cooked)', 40, 0.8, 10.2, 0.1, 3.2, 0.0, NULL, 205, 'usda', ARRAY['cooked acorn squash', 'baked acorn squash', 'roasted acorn squash', 'acorn squash'], '82 cal per cup cubed cooked (205g). Slightly nutty, great halved and baked.', NULL, 'vegetables', 1),
+
+-- Spaghetti squash (cooked): 31 cal/100g
+('spaghetti_squash_cooked', 'Spaghetti Squash (cooked)', 31, 0.6, 6.9, 0.6, 1.5, 2.8, NULL, 155, 'usda', ARRAY['cooked spaghetti squash', 'baked spaghetti squash', 'spaghetti squash'], '48 cal per cup cooked (155g). Strands mimic pasta, popular low-carb sub.', NULL, 'vegetables', 1),
+
+-- Pumpkin (canned): 34 cal/100g
+('pumpkin_canned', 'Pumpkin (canned)', 34, 1.1, 8.1, 0.3, 2.9, 3.3, NULL, 245, 'usda', ARRAY['canned pumpkin', 'pumpkin puree', 'pumpkin'], '83 cal per cup (245g). Pure pumpkin, not pie filling. High in vitamin A.', NULL, 'vegetables', 1),
+
+-- Kabocha squash: 40 cal/100g (similar to butternut)
+('kabocha_squash', 'Kabocha Squash', 40, 1.1, 9.7, 0.1, 2.7, 0.0, NULL, 175, 'usda', ARRAY['japanese pumpkin', 'kabocha', 'japanese squash'], '70 cal per cup cubed cooked (175g). Dense, sweet Japanese winter squash.', NULL, 'vegetables', 1),
+
+-- ============================================================================
+-- ALLIUMS (~6)
+-- ============================================================================
+
+-- Onion (white/yellow, raw): 40 cal/100g
+('onion_white', 'Onion (white)', 40, 1.1, 9.3, 0.1, 1.7, 4.2, 110, 110, 'usda', ARRAY['white onion', 'yellow onion', 'onion', 'raw onion', 'cooking onion'], '44 cal per medium onion (110g). Staple cooking aromatic.', NULL, 'vegetables', 1),
+
+-- Onion (red, raw): 40 cal/100g
+('onion_red', 'Onion (red)', 40, 1.1, 9.3, 0.1, 1.7, 4.2, 110, 110, 'usda', ARRAY['red onion', 'purple onion', 'spanish onion'], '44 cal per medium onion (110g). Milder, popular raw in salads.', NULL, 'vegetables', 1),
+
+-- Green onion/scallion: 32 cal/100g
+('green_onion', 'Green Onion (scallion)', 32, 1.8, 7.3, 0.2, 2.6, 2.3, 15, 100, 'usda', ARRAY['scallion', 'scallions', 'green onions', 'spring onion', 'spring onions'], '5 cal per stalk (15g). Used as garnish and in Asian cooking.', NULL, 'vegetables', 1),
+
+-- Shallot: 72 cal/100g
+('shallot', 'Shallot', 72, 2.5, 16.8, 0.1, 0.0, 7.9, 30, 30, 'usda', ARRAY['shallots', 'french shallot', 'eschalot'], '22 cal per medium shallot (30g). Delicate, mild onion flavor.', NULL, 'vegetables', 1),
+
+-- Leek (raw): 61 cal/100g
+('leek', 'Leek', 61, 1.5, 14.2, 0.3, 1.8, 3.9, 89, 89, 'usda', ARRAY['leeks', 'raw leek'], '54 cal per medium leek (89g). Mild onion flavor, great in soups.', NULL, 'vegetables', 1),
+
+-- Chives: 30 cal/100g
+('chives', 'Chives', 30, 3.3, 4.4, 0.7, 2.5, 1.9, NULL, 3, 'usda', ARRAY['fresh chives', 'chopped chives'], '1 cal per tablespoon (3g). Delicate onion herb garnish.', NULL, 'vegetables', 1),
+
+-- ============================================================================
+-- OTHER COMMON (~15)
+-- ============================================================================
+
+-- White button mushroom (raw): 22 cal/100g
+('mushroom_white_button', 'Mushroom (white button)', 22, 3.1, 3.3, 0.3, 1.0, 2.0, NULL, 70, 'usda', ARRAY['white mushroom', 'button mushroom', 'white mushrooms', 'mushrooms', 'sliced mushrooms'], '15 cal per cup sliced (70g). Most common mushroom variety.', NULL, 'vegetables', 1),
+
+-- Portobello mushroom: 22 cal/100g
+('mushroom_portobello', 'Mushroom (portobello)', 22, 2.1, 3.9, 0.4, 1.3, 2.5, 84, 84, 'usda', ARRAY['portobello mushroom', 'portabella', 'portobella', 'grilled portobello'], '18 cal per cap (84g). Meaty texture, popular burger substitute.', NULL, 'vegetables', 1),
+
+-- Shiitake mushroom (cooked): 56 cal/100g
+('mushroom_shiitake', 'Mushroom (shiitake, cooked)', 56, 1.6, 14.4, 0.2, 2.1, 3.8, NULL, 145, 'usda', ARRAY['shiitake mushroom', 'shiitake mushrooms', 'cooked shiitake'], '81 cal per cup cooked (145g). Rich umami flavor, popular in Asian dishes.', NULL, 'vegetables', 1),
+
+-- Corn (cooked, kernels): 96 cal/100g
+('corn_cooked', 'Corn (cooked)', 96, 3.4, 21.0, 1.5, 2.4, 4.5, 90, 164, 'usda', ARRAY['sweet corn', 'corn on the cob', 'cooked corn', 'boiled corn', 'corn kernels'], '157 cal per cup kernels (164g). ~90g per ear. Sweet summer vegetable.', NULL, 'vegetables', 1),
+
+-- Green peas (cooked): 84 cal/100g
+('peas_green_cooked', 'Peas (green, cooked)', 84, 5.4, 15.6, 0.2, 5.5, 5.9, NULL, 160, 'usda', ARRAY['green peas', 'cooked peas', 'garden peas', 'sweet peas', 'boiled peas'], '134 cal per cup cooked (160g). High in protein for a vegetable.', NULL, 'vegetables', 1),
+
+-- Green beans (cooked): 35 cal/100g
+('green_beans_cooked', 'Green Beans (cooked)', 35, 1.9, 7.9, 0.3, 3.2, 1.6, NULL, 125, 'usda', ARRAY['cooked green beans', 'string beans', 'snap beans', 'french beans', 'steamed green beans'], '44 cal per cup cooked (125g). Classic side dish, slightly crunchy.', NULL, 'vegetables', 1),
+
+-- Asparagus (cooked): 22 cal/100g
+('asparagus_cooked', 'Asparagus (cooked)', 22, 2.4, 4.1, 0.2, 2.0, 1.3, 16, 180, 'usda', ARRAY['cooked asparagus', 'grilled asparagus', 'steamed asparagus', 'roasted asparagus'], '40 cal per cup cooked (180g). ~16g per spear. Elegant side, high in folate.', NULL, 'vegetables', 1),
+
+-- Artichoke heart (canned): 28 cal/100g
+('artichoke_heart', 'Artichoke Heart', 28, 2.0, 4.9, 0.3, 4.8, 0.3, NULL, 120, 'usda', ARRAY['artichoke hearts', 'canned artichoke', 'marinated artichoke', 'artichoke'], '34 cal per 3 hearts (~120g). Tangy, popular in salads and dips.', NULL, 'vegetables', 1),
+
+-- Celery (raw): 14 cal/100g
+('celery', 'Celery', 14, 0.7, 3.0, 0.2, 1.6, 1.3, 40, 101, 'usda', ARRAY['celery sticks', 'celery stalks', 'raw celery', 'celery ribs'], '6 cal per medium stalk (40g). Virtually calorie-free, great with dips.', NULL, 'vegetables', 1),
+
+-- Cucumber (raw, with peel): 15 cal/100g
+('cucumber', 'Cucumber', 15, 0.7, 3.6, 0.1, 0.5, 1.7, 201, 119, 'usda', ARRAY['cucumbers', 'raw cucumber', 'sliced cucumber', 'english cucumber'], '18 cal per cup sliced (119g). ~201g whole. Hydrating, 95% water.', NULL, 'vegetables', 1),
+
+-- Snap peas / snow peas (raw): 42 cal/100g
+('snap_peas', 'Snap Peas (sugar snap)', 42, 2.8, 7.6, 0.2, 2.6, 4.0, NULL, 63, 'usda', ARRAY['sugar snap peas', 'snow peas', 'mange tout', 'snap peas raw', 'chinese pea pods'], '26 cal per cup (63g). Sweet, crunchy, edible pod.', NULL, 'vegetables', 1),
+
+-- Okra (cooked): 22 cal/100g
+('okra', 'Okra (cooked)', 22, 1.9, 4.5, 0.2, 2.5, 2.2, 12, 160, 'usda', ARRAY['cooked okra', 'ladies finger', 'bhindi', 'gumbo'], '35 cal per cup cooked (160g). ~12g per pod. Slightly mucilaginous.', NULL, 'vegetables', 1),
+
+-- Bean sprouts (raw, mung bean): 31 cal/100g
+('bean_sprouts', 'Bean Sprouts', 31, 3.0, 5.9, 0.2, 1.8, 4.1, NULL, 104, 'usda', ARRAY['mung bean sprouts', 'raw bean sprouts', 'sprouts', 'beansprouts'], '32 cal per cup (104g). Crunchy, common in Asian stir-fries and pho.', NULL, 'vegetables', 1),
+
+-- Water chestnuts (canned): 50 cal/100g
+('water_chestnuts', 'Water Chestnuts (canned)', 50, 0.9, 12.3, 0.0, 2.5, 2.0, NULL, 140, 'usda', ARRAY['sliced water chestnuts', 'canned water chestnuts', 'water chestnut'], '70 cal per cup sliced (140g). Crunchy texture even when cooked.', NULL, 'vegetables', 1),
+
+-- Bamboo shoots (canned): 19 cal/100g
+('bamboo_shoots', 'Bamboo Shoots (canned)', 19, 1.7, 3.2, 0.4, 1.2, 2.1, NULL, 131, 'usda', ARRAY['canned bamboo shoots', 'sliced bamboo shoots', 'bamboo shoot'], '25 cal per cup sliced (131g). Mild, crunchy, staple in Asian cuisine.', NULL, 'vegetables', 1),
+
+-- Jicama (raw): 38 cal/100g
+('jicama', 'Jicama (raw)', 38, 0.7, 8.8, 0.1, 4.9, 1.8, NULL, 120, 'usda', ARRAY['jicama', 'mexican turnip', 'yam bean', 'raw jicama', 'jicama sticks'], '46 cal per cup sliced (120g). Crispy, mildly sweet, great raw in salads.', NULL, 'vegetables', 1),
+
+-- Edamame (shelled, cooked): 121 cal/100g
+('edamame', 'Edamame (shelled, cooked)', 121, 12.0, 8.9, 5.2, 5.2, 2.2, NULL, 155, 'usda', ARRAY['edamame beans', 'shelled edamame', 'soybeans green', 'steamed edamame'], '188 cal per cup shelled (155g). High-protein plant food, popular appetizer.', NULL, 'vegetables', 1),
+
+-- Watercress (raw): 11 cal/100g
+('watercress', 'Watercress', 11, 2.3, 1.3, 0.1, 0.5, 0.2, NULL, 34, 'usda', ARRAY['raw watercress', 'fresh watercress', 'cress'], '4 cal per cup (34g). Peppery green, nutrient-dense per calorie.', NULL, 'vegetables', 1),
+
+-- ============================================================================
+-- FROZEN VEGETABLES (~5)
+-- ============================================================================
+
+-- Frozen broccoli (cooked): 28 cal/100g
+('frozen_broccoli', 'Frozen Broccoli (cooked)', 28, 2.6, 5.4, 0.1, 3.0, 1.1, NULL, 184, 'usda', ARRAY['frozen broccoli florets', 'steamed frozen broccoli', 'microwaved broccoli'], '52 cal per cup cooked (184g). Convenient, flash-frozen retains nutrients.', NULL, 'vegetables', 1),
+
+-- Frozen mixed vegetables (cooked): 65 cal/100g
+('frozen_mixed_vegetables', 'Frozen Mixed Vegetables (cooked)', 65, 2.9, 13.1, 0.3, 3.6, 2.5, NULL, 182, 'usda', ARRAY['mixed veggies frozen', 'frozen vegetable medley', 'frozen veggie mix', 'mixed vegetables'], '118 cal per cup cooked (182g). Typical mix: corn, peas, carrots, green beans.', NULL, 'vegetables', 1),
+
+-- Frozen peas (cooked): 78 cal/100g
+('frozen_peas', 'Frozen Peas (cooked)', 78, 5.2, 14.3, 0.2, 4.5, 5.6, NULL, 160, 'usda', ARRAY['frozen green peas', 'steamed frozen peas', 'microwaved peas', 'frozen peas cooked'], '125 cal per cup cooked (160g). Sweet, convenient, nutritious.', NULL, 'vegetables', 1),
+
+-- Frozen corn (cooked): 94 cal/100g
+('frozen_corn', 'Frozen Corn (cooked)', 94, 3.1, 21.7, 0.7, 2.4, 3.8, NULL, 164, 'usda', ARRAY['frozen sweet corn', 'frozen corn kernels', 'steamed frozen corn', 'microwaved corn'], '154 cal per cup cooked (164g). Retains sweetness well when frozen.', NULL, 'vegetables', 1),
+
+-- Frozen spinach (cooked): 29 cal/100g
+('frozen_spinach', 'Frozen Spinach (cooked)', 29, 3.3, 4.6, 0.3, 2.6, 0.5, NULL, 190, 'usda', ARRAY['frozen chopped spinach', 'frozen leaf spinach', 'steamed frozen spinach', 'thawed spinach'], '55 cal per cup cooked (190g). Very concentrated; 1 cup frozen = several cups fresh.', NULL, 'vegetables', 1),

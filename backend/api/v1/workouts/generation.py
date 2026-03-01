@@ -560,6 +560,14 @@ async def generate_workout(request: GenerateWorkoutRequest, background_tasks: Ba
         logger.info(f"✅ [Workout Generation] All user preferences fetched in parallel")
         logger.info(f"🔄 [Consistency] Mode: {consistency_mode}, Recently used: {len(recently_used_exercises) if recently_used_exercises else 0}, Variation: {variation_percentage}%")
 
+        # Merge adjacent-day exercises into the avoid list for variety
+        if request.adjacent_day_exercises:
+            existing_lower = {e.lower() for e in (avoided_exercises or [])}
+            new_avoids = [e for e in request.adjacent_day_exercises if e.lower() not in existing_lower]
+            if new_avoids:
+                avoided_exercises = list(avoided_exercises or []) + new_avoids
+                logger.info(f"🔄 [Variety] Added {len(new_avoids)} adjacent-day exercises to avoid list")
+
         # Log what we found
         if avoided_exercises:
             logger.info(f"🚫 [Workout Generation] User has {len(avoided_exercises)} avoided exercises")
@@ -941,18 +949,28 @@ async def generate_workout(request: GenerateWorkoutRequest, background_tasks: Ba
             has_gym_equipment = any(eq in equipment_lower for eq in ["full_gym", "dumbbells", "barbell", "cable_machine", "machines"])
 
             if has_gym_equipment and exercises:
-                bodyweight_count = sum(
-                    1 for ex in exercises
-                    if (ex.get("equipment", "") or "").lower() in ["bodyweight", "body weight", ""]
-                )
-                bodyweight_ratio = bodyweight_count / len(exercises)
+                bw_keywords = {"bodyweight", "body weight", ""}
+                bw_exercises = [ex for ex in exercises if (ex.get("equipment", "") or "").lower() in bw_keywords]
+                equip_exercises = [ex for ex in exercises if (ex.get("equipment", "") or "").lower() not in bw_keywords]
+                bodyweight_count = len(bw_exercises)
+                bodyweight_ratio = bodyweight_count / len(exercises) if exercises else 0
 
-                if bodyweight_ratio > 0.4:  # Lowered threshold from 0.5 to 0.4
+                if bodyweight_ratio > 0.3 and bodyweight_count > 1:
+                    # Trim excess bodyweight exercises — keep at most 1
+                    exercises = equip_exercises + bw_exercises[:1]
+                    removed_count = bodyweight_count - 1
+                    logger.info(
+                        f"🔧 [Equipment] Trimmed to {len(exercises)} exercises "
+                        f"(removed {removed_count} excess bodyweight, ratio was {bodyweight_ratio:.0%})"
+                    )
+                elif bodyweight_ratio > 0.4:
                     logger.warning(
                         f"⚠️ [Equipment] High bodyweight ratio ({bodyweight_ratio:.0%}) "
                         f"despite gym equipment available: {equipment}"
                     )
-                    # Log which equipment was available but not used
+
+                # Log unused equipment for monitoring
+                if exercises:
                     used_equipment = set(ex.get("equipment", "").lower() for ex in exercises)
                     unused_equipment = [eq for eq in equipment if eq.lower() not in used_equipment and eq != "bodyweight"]
                     if unused_equipment:

@@ -11,10 +11,14 @@ This addresses the user complaint "Generic reply that didn't address my concern"
 by providing a structured ticket system with proper tracking and response handling.
 """
 
-from fastapi import APIRouter, Depends, HTTPException
+import uuid
+
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request
+from pydantic import BaseModel, Field
 from core.auth import get_current_user
 from core.exceptions import safe_internal_error
-from typing import List, Optional
+from core.config import get_settings
+from typing import Dict, List, Optional
 from datetime import datetime
 
 from core.supabase_db import get_supabase_db
@@ -36,6 +40,7 @@ from models.support import (
     MessageSender,
 )
 from services.user_context_service import user_context_service, EventType
+from services.trello_service import get_trello_service
 
 router = APIRouter()
 logger = get_logger(__name__)
@@ -93,11 +98,100 @@ def _parse_ticket_summary(data: dict) -> SupportTicketSummary:
 
 
 # =============================================================================
+# Presigned URL for Ticket Attachments
+# =============================================================================
+
+ALLOWED_ATTACHMENT_TYPES = {
+    "image/jpeg": "jpg",
+    "image/png": "png",
+    "image/webp": "webp",
+}
+MAX_ATTACHMENT_SIZE = 10 * 1024 * 1024  # 10 MB
+PRESIGN_EXPIRY_SECONDS = 600  # 10 minutes
+
+
+class AttachmentPresignRequest(BaseModel):
+    """Request body for generating a presigned S3 upload URL for ticket attachments."""
+    filename: str = Field(..., min_length=1, max_length=255)
+    content_type: str = Field(..., max_length=50)
+    file_size: int = Field(..., gt=0)
+
+
+class AttachmentPresignResponse(BaseModel):
+    """Response with presigned S3 POST URL and fields."""
+    presigned_url: str
+    presigned_fields: Dict[str, str]
+    s3_key: str
+
+
+@router.post("/attachments/presign", response_model=AttachmentPresignResponse)
+async def presign_attachment_upload(
+    body: AttachmentPresignRequest,
+    current_user: dict = Depends(get_current_user),
+):
+    """Generate a presigned S3 POST URL for uploading a ticket attachment (image only)."""
+    user_id = current_user.get("sub") or current_user.get("user_id")
+
+    if body.content_type not in ALLOWED_ATTACHMENT_TYPES:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Unsupported file type. Allowed: {', '.join(ALLOWED_ATTACHMENT_TYPES.keys())}",
+        )
+
+    if body.file_size > MAX_ATTACHMENT_SIZE:
+        raise HTTPException(
+            status_code=400,
+            detail=f"File too large. Maximum size: {MAX_ATTACHMENT_SIZE // (1024 * 1024)}MB",
+        )
+
+    ext = ALLOWED_ATTACHMENT_TYPES[body.content_type]
+    s3_key = f"support_attachments/{user_id}/{uuid.uuid4().hex}.{ext}"
+
+    try:
+        settings = get_settings()
+
+        if not settings.s3_bucket_name:
+            raise HTTPException(status_code=503, detail="Media upload not configured")
+
+        import boto3
+        s3_client = boto3.client(
+            "s3",
+            aws_access_key_id=settings.aws_access_key_id,
+            aws_secret_access_key=settings.aws_secret_access_key,
+            region_name=settings.aws_default_region,
+        )
+
+        presigned = s3_client.generate_presigned_post(
+            Bucket=settings.s3_bucket_name,
+            Key=s3_key,
+            Fields={"Content-Type": body.content_type},
+            Conditions=[
+                {"Content-Type": body.content_type},
+                ["content-length-range", 1, MAX_ATTACHMENT_SIZE],
+            ],
+            ExpiresIn=PRESIGN_EXPIRY_SECONDS,
+        )
+
+        return AttachmentPresignResponse(
+            presigned_url=presigned["url"],
+            presigned_fields=presigned["fields"],
+            s3_key=s3_key,
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to generate presigned URL for support attachment: {e}")
+        raise safe_internal_error(e, "support_attachment_presign")
+
+
+# =============================================================================
 # Create Support Ticket
 # =============================================================================
 
 @router.post("/tickets", response_model=SupportTicketWithMessages)
 async def create_support_ticket(ticket: SupportTicketCreate,
+    background_tasks: BackgroundTasks,
     current_user: dict = Depends(get_current_user),
 ):
     """
@@ -120,6 +214,12 @@ async def create_support_ticket(ticket: SupportTicketCreate,
             "priority": ticket.priority.value,
             "status": TicketStatus.OPEN.value,
         }
+        if ticket.attachments:
+            ticket_record["attachments"] = ticket.attachments
+        if ticket.steps_to_reproduce:
+            ticket_record["steps_to_reproduce"] = ticket.steps_to_reproduce
+        if ticket.screen_context:
+            ticket_record["screen_context"] = ticket.screen_context
 
         result = db.client.table("support_tickets").insert(ticket_record).execute()
 
@@ -176,6 +276,52 @@ async def create_support_ticket(ticket: SupportTicketCreate,
         )
 
         logger.info(f"Support ticket created: {ticket_id}")
+
+        # Create Trello card in background (non-blocking)
+        trello = get_trello_service()
+        if trello.enabled:
+            # Look up user name/username + device info for Trello card context
+            user_row = db.client.table("users").select(
+                "name, username, email, device_model, device_platform, os_version, screen_width, screen_height"
+            ).eq("id", ticket.user_id).execute()
+            user_info = user_row.data[0] if user_row.data else {}
+
+            device_info = {
+                "device_model": user_info.get("device_model"),
+                "device_platform": user_info.get("device_platform"),
+                "os_version": user_info.get("os_version"),
+                "screen_width": user_info.get("screen_width"),
+                "screen_height": user_info.get("screen_height"),
+            }
+            # Strip None values
+            device_info = {k: v for k, v in device_info.items() if v is not None}
+
+            async def _create_trello_card():
+                card = await trello.create_card(
+                    ticket_id=ticket_id,
+                    subject=ticket.subject,
+                    category=ticket.category.value,
+                    priority=ticket.priority.value,
+                    message=ticket.initial_message,
+                    user_email=user_info.get("email") or current_user.get("email"),
+                    user_name=user_info.get("name"),
+                    username=user_info.get("username"),
+                    user_id=ticket.user_id,
+                    device_info=device_info if device_info else None,
+                    attachments=ticket.attachments,
+                    steps_to_reproduce=ticket.steps_to_reproduce,
+                    screen_context=ticket.screen_context,
+                )
+                # Store Trello card ID on the ticket for future updates
+                if card and card.get("id"):
+                    try:
+                        db.client.table("support_tickets").update(
+                            {"trello_card_id": card["id"]}
+                        ).eq("id", ticket_id).execute()
+                    except Exception as e:
+                        logger.warning(f"Failed to store Trello card ID: {e}")
+
+            background_tasks.add_task(_create_trello_card)
 
         return SupportTicketWithMessages(
             id=ticket_id,
@@ -306,6 +452,7 @@ async def get_ticket(user_id: str, ticket_id: str,
 
 @router.post("/tickets/{ticket_id}/reply", response_model=SupportTicketReplyResponse)
 async def add_ticket_reply(ticket_id: str, user_id: str, reply: SupportTicketMessageCreate,
+    background_tasks: BackgroundTasks,
     current_user: dict = Depends(get_current_user),
 ):
     """
@@ -378,6 +525,15 @@ async def add_ticket_reply(ticket_id: str, user_id: str, reply: SupportTicketMes
 
         logger.info(f"Reply added to ticket {ticket_id}")
 
+        # Sync reply to Trello card (non-blocking)
+        trello_card_id = ticket_data.get("trello_card_id")
+        if trello_card_id:
+            trello = get_trello_service()
+            sender_label = "User" if reply.sender == MessageSender.USER else "Support"
+            background_tasks.add_task(
+                trello.add_comment, trello_card_id, f"**{sender_label}:** {reply.message}"
+            )
+
         return SupportTicketReplyResponse(
             success=True,
             ticket_id=ticket_id,
@@ -406,6 +562,7 @@ async def add_ticket_reply(ticket_id: str, user_id: str, reply: SupportTicketMes
 
 @router.patch("/tickets/{ticket_id}/close", response_model=SupportTicketCloseResponse)
 async def close_ticket(ticket_id: str, user_id: str, resolution_note: Optional[str] = None,
+    background_tasks: BackgroundTasks,
     current_user: dict = Depends(get_current_user),
 ):
     """
@@ -487,6 +644,12 @@ async def close_ticket(ticket_id: str, user_id: str, resolution_note: Optional[s
         )
 
         logger.info(f"Ticket {ticket_id} closed")
+
+        # Archive Trello card (non-blocking)
+        trello_card_id = ticket_data.get("trello_card_id")
+        if trello_card_id:
+            trello = get_trello_service()
+            background_tasks.add_task(trello.close_card, trello_card_id)
 
         return SupportTicketCloseResponse(
             success=True,

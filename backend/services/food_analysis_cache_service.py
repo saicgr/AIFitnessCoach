@@ -5,22 +5,29 @@ Wraps Gemini food analysis with intelligent caching to dramatically
 reduce response times for repeated queries.
 
 Cache Strategy:
+0a. Saved Foods - User's personal saved meals (instant, user-scoped)
+0b. Food Nutrition Overrides - 3,785 curated items (instant)
 1. Common Foods DB - Instant lookup (bypasses AI entirely)
 2. Food Analysis Cache - Cached AI responses (~100ms)
 3. Gemini AI - Fresh analysis (30-90s)
 
 Expected Performance:
+- Saved food / override hit: < 10ms
+- Common food: < 1 second
 - Cache hit: < 2 seconds
 - Cache miss (first time): 30-60 seconds
-- Common food: < 1 second
 """
 import asyncio
 import logging
 import re
 from typing import Optional, Dict, Any, List, Tuple
 
+from sqlalchemy import text
+
 from core.db.facade import get_supabase_db
 from core.db.nutrition_db import NutritionDB
+from core.supabase_client import get_supabase
+from services.food_database_lookup_service import get_food_db_lookup_service
 from services.gemini_service import GeminiService
 
 logger = logging.getLogger(__name__)
@@ -77,12 +84,16 @@ class FoodAnalysisCacheService:
         nutrition_targets: Optional[Dict] = None,
         rag_context: Optional[str] = None,
         use_cache: bool = True,
+        user_id: Optional[str] = None,
     ) -> Dict[str, Any]:
         """
         Analyze food with intelligent caching.
 
         Order of operations:
+        0a. Check user's saved foods (instant, user-scoped)
+        0b. Check food nutrition overrides - 3,785 curated items (instant)
         1. Check common foods database (instant, bypasses AI)
+        1b. Try multi-item lookup (overrides + common foods)
         2. Check food analysis cache (cached AI response)
         3. Fall back to fresh Gemini analysis (cache result)
 
@@ -92,6 +103,7 @@ class FoodAnalysisCacheService:
             nutrition_targets: Dict with calorie/macro targets
             rag_context: RAG context from nutrition knowledge base
             use_cache: Whether to use caching (default True)
+            user_id: Optional user ID for saved foods lookup
 
         Returns:
             Dict with food_items, totals, AI suggestions, and cache_hit indicator
@@ -100,6 +112,26 @@ class FoodAnalysisCacheService:
             "cache_hit": False,
             "cache_source": None,
         }
+
+        # Step 0a: Try user's saved foods (instant, user-scoped)
+        if use_cache and user_id:
+            saved = await self._try_saved_food(description, user_id)
+            if saved:
+                logger.info(f"🎯 Saved food HIT: {description}")
+                result.update(saved)
+                result["cache_hit"] = True
+                result["cache_source"] = "saved_food"
+                return result
+
+        # Step 0b: Try food nutrition overrides (3,785 curated items)
+        if use_cache:
+            override = await self._try_override(description)
+            if override:
+                logger.info(f"🎯 Override HIT: {description}")
+                result.update(override)
+                result["cache_hit"] = True
+                result["cache_source"] = "override"
+                return result
 
         # Step 1: Try common foods database (instant lookup)
         if use_cache:
@@ -111,14 +143,14 @@ class FoodAnalysisCacheService:
                 result["cache_source"] = "common_foods"
                 return result
 
-        # Step 1b: Try multi-item common food lookup
+        # Step 1b: Try multi-item lookup (overrides + common foods)
         if use_cache:
-            multi_result = await self._try_multi_item_common_food(description)
+            multi_result = await self._try_multi_item_lookup(description, user_id)
             if multi_result:
-                logger.info(f"🎯 Multi-item common food HIT: {description}")
+                logger.info(f"🎯 Multi-item lookup HIT: {description}")
                 result.update(multi_result)
                 result["cache_hit"] = True
-                result["cache_source"] = "multi_common_foods"
+                result["cache_source"] = "multi_lookup"
                 return result
 
         # Step 2: Try food analysis cache (cached AI response)
@@ -181,6 +213,256 @@ class FoodAnalysisCacheService:
         except Exception as e:
             logger.warning(f"Common food lookup failed: {e}")
             return None
+
+    async def _try_saved_food(
+        self, description: str, user_id: str
+    ) -> Optional[Dict[str, Any]]:
+        """
+        Try to find food in user's saved foods.
+
+        Args:
+            description: Food description
+            user_id: User ID for scoping
+
+        Returns:
+            Formatted analysis result if found, None otherwise
+        """
+        try:
+            supabase = get_supabase()
+            normalized = description.strip().lower()
+            async with supabase.get_session() as session:
+                result = await session.execute(
+                    text(
+                        "SELECT * FROM saved_foods "
+                        "WHERE user_id = :uid AND LOWER(name) = :name "
+                        "AND deleted_at IS NULL LIMIT 1"
+                    ),
+                    {"uid": user_id, "name": normalized},
+                )
+                row = result.fetchone()
+
+            if not row:
+                return None
+
+            saved = dict(row._mapping)
+            return self._saved_food_to_analysis(saved)
+
+        except Exception as e:
+            logger.warning(f"Saved food lookup failed: {e}")
+            return None
+
+    def _saved_food_to_analysis(self, saved: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Convert saved food record to standard analysis format.
+
+        Saved foods store per-meal totals + food_items JSONB array.
+
+        Args:
+            saved: Record from saved_foods table
+
+        Returns:
+            Dict in same format as Gemini analysis
+        """
+        total_calories = int(saved.get("total_calories") or 0)
+        protein_g = float(saved.get("total_protein_g") or 0)
+        carbs_g = float(saved.get("total_carbs_g") or 0)
+        fat_g = float(saved.get("total_fat_g") or 0)
+        fiber_g = float(saved.get("total_fiber_g") or 0)
+
+        # Map food_items JSONB array directly
+        raw_items = saved.get("food_items") or []
+        food_items = []
+        for item in raw_items:
+            fi = {
+                "name": item.get("name", saved.get("name")),
+                "amount": item.get("amount", "1 serving"),
+                "calories": int(item.get("calories") or 0),
+                "protein_g": float(item.get("protein_g") or 0),
+                "carbs_g": float(item.get("carbs_g") or 0),
+                "fat_g": float(item.get("fat_g") or 0),
+                "fiber_g": float(item.get("fiber_g") or 0),
+                "weight_g": float(item.get("weight_g")) if item.get("weight_g") else None,
+                "weight_source": "exact",
+                "unit": "g",
+            }
+            # Add per-gram scaling if weight available
+            w = fi["weight_g"]
+            if w and w > 0:
+                fi["ai_per_gram"] = {
+                    "calories": round(fi["calories"] / w, 3),
+                    "protein": round(fi["protein_g"] / w, 4),
+                    "carbs": round(fi["carbs_g"] / w, 4),
+                    "fat": round(fi["fat_g"] / w, 4),
+                    "fiber": round(fi["fiber_g"] / w, 4),
+                }
+            food_items.append(fi)
+
+        # Fallback: if no food_items array, create one from totals
+        if not food_items:
+            food_items = [{
+                "name": saved.get("name"),
+                "amount": "1 serving",
+                "calories": total_calories,
+                "protein_g": protein_g,
+                "carbs_g": carbs_g,
+                "fat_g": fat_g,
+                "fiber_g": fiber_g,
+                "weight_source": "exact",
+                "unit": "g",
+            }]
+
+        score = self._compute_health_score(total_calories, protein_g, fiber_g)
+
+        return {
+            "food_items": food_items,
+            "total_calories": total_calories,
+            "protein_g": protein_g,
+            "carbs_g": carbs_g,
+            "fat_g": fat_g,
+            "fiber_g": fiber_g,
+            "encouragements": [],
+            "warnings": [],
+            "ai_suggestion": None,
+            "recommended_swap": None,
+            "overall_meal_score": saved.get("overall_meal_score") or score,
+            "health_score": score,
+            "data_source": "saved_food",
+        }
+
+    async def _try_override(self, description: str) -> Optional[Dict[str, Any]]:
+        """
+        Try to find food in the curated food_nutrition_overrides (3,785 items).
+
+        Uses the FoodDatabaseLookupService singleton which keeps overrides
+        in memory with a 30-min TTL.
+
+        Args:
+            description: Food description
+
+        Returns:
+            Formatted analysis result if found, None otherwise
+        """
+        try:
+            lookup_service = get_food_db_lookup_service()
+            await lookup_service._load_overrides()
+            override = lookup_service._check_override(description)
+
+            if not override:
+                return None
+
+            return self._override_to_analysis(override)
+
+        except Exception as e:
+            logger.warning(f"Override lookup failed: {e}")
+            return None
+
+    def _override_to_analysis(self, override: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Convert per-100g override to per-serving analysis format.
+
+        Serving size priority: override_serving_g > override_weight_per_piece_g > 100g
+
+        Args:
+            override: Override dict from FoodDatabaseLookupService
+
+        Returns:
+            Dict in same format as Gemini analysis
+        """
+        # Determine serving size
+        serving_g = (
+            override.get("override_serving_g")
+            or override.get("override_weight_per_piece_g")
+            or 100.0
+        )
+        scale = serving_g / 100.0
+        default_count = override.get("default_count", 1) or 1
+
+        calories_per_serving = round(override["calories_per_100g"] * scale)
+        protein_per_serving = round(override["protein_per_100g"] * scale, 1)
+        carbs_per_serving = round(override["carbs_per_100g"] * scale, 1)
+        fat_per_serving = round(override["fat_per_100g"] * scale, 1)
+        fiber_per_serving = round(override.get("fiber_per_100g", 0) * scale, 1)
+
+        total_calories = calories_per_serving * default_count
+        total_protein = round(protein_per_serving * default_count, 1)
+        total_carbs = round(carbs_per_serving * default_count, 1)
+        total_fat = round(fat_per_serving * default_count, 1)
+        total_fiber = round(fiber_per_serving * default_count, 1)
+
+        # Build serving description
+        if default_count > 1:
+            amount = f"{default_count} x {serving_g:.0f}g"
+        elif override.get("override_serving_g"):
+            amount = f"{serving_g:.0f}g serving"
+        elif override.get("override_weight_per_piece_g"):
+            amount = f"1 piece ({serving_g:.0f}g)"
+        else:
+            amount = "100g"
+
+        # Scale micronutrients by serving size and count (same as macros)
+        micro_keys = (
+            "sodium_mg", "cholesterol_mg", "saturated_fat_g", "trans_fat_g",
+            "potassium_mg", "calcium_mg", "iron_mg", "vitamin_a_ug",
+            "vitamin_c_mg", "vitamin_d_iu", "magnesium_mg", "zinc_mg",
+            "phosphorus_mg", "selenium_ug", "omega3_g",
+        )
+        scaled_micros = {}
+        per_gram_micros = {}
+        for key in micro_keys:
+            val = override.get(key)
+            if val is not None:
+                scaled_micros[key] = round(val * scale * default_count, 2)
+                per_gram_micros[key] = round(val / 100, 4)
+
+        food_item = {
+            "name": override["display_name"],
+            "amount": amount,
+            "calories": total_calories,
+            "protein_g": total_protein,
+            "carbs_g": total_carbs,
+            "fat_g": total_fat,
+            "fiber_g": total_fiber,
+            "weight_g": round(serving_g * default_count, 1),
+            "weight_source": "exact",
+            "unit": "g",
+            # Per-gram scaling for frontend weight adjustment slider
+            "ai_per_gram": {
+                "calories": round(override["calories_per_100g"] / 100, 3),
+                "protein": round(override["protein_per_100g"] / 100, 4),
+                "carbs": round(override["carbs_per_100g"] / 100, 4),
+                "fat": round(override["fat_per_100g"] / 100, 4),
+                "fiber": round(override.get("fiber_per_100g", 0) / 100, 4),
+                **per_gram_micros,
+            },
+        }
+
+        # Add weight_per_unit_g for count-based adjustment
+        if override.get("override_weight_per_piece_g"):
+            food_item["weight_per_unit_g"] = override["override_weight_per_piece_g"]
+            food_item["count"] = default_count
+
+        score = self._compute_health_score(total_calories, total_protein, total_fiber)
+
+        result = {
+            "food_items": [food_item],
+            "total_calories": total_calories,
+            "protein_g": total_protein,
+            "carbs_g": total_carbs,
+            "fat_g": total_fat,
+            "fiber_g": total_fiber,
+            "encouragements": [],
+            "warnings": [],
+            "ai_suggestion": None,
+            "recommended_swap": None,
+            "overall_meal_score": score,
+            "health_score": score,
+            "data_source": "override",
+            "restaurant_name": override.get("restaurant_name"),
+            "food_category": override.get("food_category"),
+        }
+        # Add scaled micronutrients to top-level response
+        result.update(scaled_micros)
+        return result
 
     async def _auto_learn_food_items(self, analysis_result: Dict[str, Any]) -> None:
         """
@@ -298,18 +580,21 @@ class FoodAnalysisCacheService:
 
         return items
 
-    async def _try_multi_item_common_food(
-        self, description: str
+    async def _try_multi_item_lookup(
+        self, description: str, user_id: Optional[str] = None
     ) -> Optional[Dict[str, Any]]:
         """
-        Try to resolve a multi-item food description from the common foods DB.
+        Try to resolve a multi-item food description from overrides + common foods.
 
-        Only activates when multiple items are detected. If ALL items are found
-        in common_foods, combines and returns the result. Otherwise returns None
-        to let Gemini handle it.
+        Only activates when multiple items are detected. For each item, checks:
+        1. Override (3,785 curated items)
+        2. Common foods DB
+        If ALL items resolve, combines and returns the result.
+        Any miss → returns None to let Gemini handle the entire description.
 
         Args:
             description: Food description
+            user_id: Optional user ID (unused for now, reserved for saved food per-item)
 
         Returns:
             Combined analysis dict if all items found, None otherwise
@@ -319,6 +604,10 @@ class FoodAnalysisCacheService:
             if len(items) <= 1:
                 return None
 
+            # Ensure overrides are loaded
+            lookup_service = get_food_db_lookup_service()
+            await lookup_service._load_overrides()
+
             all_food_items = []
             total_cals = 0
             total_protein = 0.0
@@ -327,12 +616,22 @@ class FoodAnalysisCacheService:
             total_fiber = 0.0
 
             for qty, food_name in items:
-                common = self.nutrition_db.get_common_food(food_name)
-                if not common:
+                analysis = None
+
+                # Try override first
+                override = lookup_service._check_override(food_name)
+                if override:
+                    analysis = self._override_to_analysis(override)
+                else:
+                    # Try common foods
+                    common = self.nutrition_db.get_common_food(food_name)
+                    if common:
+                        analysis = self._common_food_to_analysis(common)
+
+                if not analysis:
                     # Any miss means we fall through to Gemini
                     return None
 
-                analysis = self._common_food_to_analysis(common)
                 # Scale by quantity
                 for fi in analysis["food_items"]:
                     fi["calories"] = int(fi["calories"] * qty)
@@ -368,11 +667,11 @@ class FoodAnalysisCacheService:
                 "recommended_swap": None,
                 "overall_meal_score": score,
                 "health_score": score,
-                "data_source": "multi_common_foods",
+                "data_source": "multi_lookup",
             }
 
         except Exception as e:
-            logger.warning(f"Multi-item common food lookup failed: {e}")
+            logger.warning(f"Multi-item lookup failed: {e}")
             return None
 
     def _common_food_to_analysis(self, common_food: Dict[str, Any]) -> Dict[str, Any]:

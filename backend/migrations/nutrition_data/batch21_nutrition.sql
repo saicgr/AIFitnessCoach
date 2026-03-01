@@ -1,0 +1,313 @@
+-- ============================================================================
+-- Batch 21: Local Indian Restaurants
+-- Restaurants: Swadeshi, Chowrasta, Desi District
+-- Generated: 2026-02-28
+-- Sources: USDA FoodData Central, nutritionvalue.org, ifct2017.com (Indian Food
+--          Composition Tables), caloriecount.in, healthifyme.com, fatsecret.com
+-- All values are per-100g. Formula: (total_value / serving_weight_g) * 100
+-- ============================================================================
+
+-- ============================================================================
+-- SWADESHI
+-- ============================================================================
+
+-- === THALIS ===
+-- Indian Veg Thali (rice, dal, curry, fry, chutney, raitha, sweet): ~650 cal per plate (~550g)
+('swadeshi_veg_thali', 'Swadeshi Indian Veg Thali', 118.2, 3.8, 16.4, 4.2, 1.5, 2.5, NULL, 550, 'swadeshi', ARRAY['swadeshi veg thali', 'swadeshi vegetarian thali'], '650 cal per thali (~550g). Includes flavored rice, white rice, dal, curry, fry, chutney, raitha, sweet.', 'Swadeshi', 'indian', 1),
+
+-- Tandoor Non-Veg Thali: ~750 cal per plate (~600g)
+('swadeshi_nonveg_thali', 'Swadeshi Tandoor Non-Veg Thali', 125.0, 6.7, 13.3, 5.3, 1.0, 2.0, NULL, 600, 'swadeshi', ARRAY['swadeshi non veg thali', 'swadeshi tandoor thali'], '750 cal per thali (~600g). Includes tandoor items, rice, dal, curry, sides.', 'Swadeshi', 'indian', 1),
+
+-- === DOSAS ===
+-- Plain Dosa: ~120 cal/100g, ~130g per dosa
+('swadeshi_plain_dosa', 'Swadeshi Plain Dosa', 120.0, 3.5, 20.0, 2.5, 0.5, 0.5, 130, 130, 'swadeshi', ARRAY['swadeshi dosa', 'swadeshi plain dosa'], '156 cal per dosa (130g). Served with sambar and chutney.', 'Swadeshi', 'indian', 1),
+
+-- Masala Dosa: ~165 cal/100g, ~200g with potato filling
+('swadeshi_masala_dosa', 'Swadeshi Masala Dosa', 165.0, 4.0, 22.0, 6.5, 1.5, 1.0, 200, 200, 'swadeshi', ARRAY['swadeshi masala dosa'], '330 cal per dosa (200g). Crispy dosa with spiced potato filling.', 'Swadeshi', 'indian', 1),
+
+-- Mysore Masala Dosa: ~175 cal/100g
+('swadeshi_mysore_masala_dosa', 'Swadeshi Mysore Masala Dosa', 175.0, 4.0, 21.0, 8.0, 1.5, 1.0, 210, 210, 'swadeshi', ARRAY['swadeshi mysore dosa', 'swadeshi mysore masala'], '368 cal per dosa (210g). With spicy Mysore red chutney.', 'Swadeshi', 'indian', 1),
+
+-- Ghee Roast Dosa: ~190 cal/100g
+('swadeshi_ghee_roast_dosa', 'Swadeshi Ghee Roast Dosa', 190.0, 3.5, 22.0, 10.0, 0.5, 0.5, 150, 150, 'swadeshi', ARRAY['swadeshi ghee dosa', 'swadeshi ghee roast'], '285 cal per dosa (150g). Extra crispy with ghee.', 'Swadeshi', 'indian', 1),
+
+-- Onion Rava Dosa: ~180 cal/100g
+('swadeshi_onion_rava_dosa', 'Swadeshi Onion Rava Dosa', 180.0, 3.5, 24.0, 8.0, 1.0, 1.0, 180, 180, 'swadeshi', ARRAY['swadeshi rava dosa', 'swadeshi onion rava'], '324 cal per dosa (180g). Semolina-based crispy dosa with onions.', 'Swadeshi', 'indian', 1),
+
+-- Cheese Dosa: ~200 cal/100g
+('swadeshi_cheese_dosa', 'Swadeshi Cheese Dosa', 200.0, 6.0, 20.0, 10.5, 0.5, 1.0, 180, 180, 'swadeshi', ARRAY['swadeshi cheese dosa'], '360 cal per dosa (180g). Dosa with melted cheese.', 'Swadeshi', 'indian', 1),
+
+-- Paneer Dosa: ~185 cal/100g
+('swadeshi_paneer_dosa', 'Swadeshi Paneer Dosa', 185.0, 6.5, 20.0, 8.5, 1.0, 1.0, 200, 200, 'swadeshi', ARRAY['swadeshi paneer dosa'], '370 cal per dosa (200g). Dosa with paneer filling.', 'Swadeshi', 'indian', 1),
+
+-- Chicken Dosa: ~180 cal/100g
+('swadeshi_chicken_dosa', 'Swadeshi Chicken Dosa', 180.0, 8.0, 19.0, 7.5, 0.5, 0.5, 210, 210, 'swadeshi', ARRAY['swadeshi chicken dosa'], '378 cal per dosa (210g). Dosa with spiced chicken filling.', 'Swadeshi', 'indian', 1),
+
+-- Chicken Keema Dosa: ~185 cal/100g
+('swadeshi_chicken_keema_dosa', 'Swadeshi Chicken Keema Dosa', 185.0, 9.0, 18.0, 8.5, 0.5, 0.5, 210, 210, 'swadeshi', ARRAY['swadeshi chicken keema dosa', 'swadeshi keema dosa'], '389 cal per dosa (210g). Dosa with minced chicken.', 'Swadeshi', 'indian', 1),
+
+-- Set Dosa (3 pcs): ~110 cal/100g
+('swadeshi_set_dosa', 'Swadeshi Set Dosa', 110.0, 3.0, 18.0, 2.5, 0.5, 0.5, 60, 180, 'swadeshi', ARRAY['swadeshi set dosa'], '198 cal per 3 pieces (180g). Soft, spongy mini dosas.', 'Swadeshi', 'indian', 3),
+
+-- Uthappam: ~130 cal/100g
+('swadeshi_uthappam', 'Swadeshi Uthappam', 130.0, 4.0, 20.0, 3.5, 1.0, 1.0, 200, 200, 'swadeshi', ARRAY['swadeshi uthappam', 'swadeshi uttapam'], '260 cal per uthappam (200g). Thick rice-lentil pancake.', 'Swadeshi', 'indian', 1),
+
+-- === BREAKFAST (Idli, Vada, Bonda) ===
+-- Idli (3 pcs): ~58 cal/100g
+('swadeshi_idli', 'Swadeshi Idli', 58.0, 2.0, 12.0, 0.2, 0.5, 0.3, 60, 180, 'swadeshi', ARRAY['swadeshi idli', 'swadeshi steamed idli'], '104 cal per 3 pieces (180g). Steamed rice-lentil cakes.', 'Swadeshi', 'indian', 3),
+
+-- Medu Vada (4 pcs): ~180 cal/100g
+('swadeshi_medu_vada', 'Swadeshi Medu Vada', 180.0, 7.0, 18.0, 9.0, 2.0, 0.5, 50, 200, 'swadeshi', ARRAY['swadeshi vada', 'swadeshi medu vada'], '360 cal per 4 pieces (200g). Crispy lentil fritters.', 'Swadeshi', 'indian', 4),
+
+-- Mysore Bonda (4 pcs): ~200 cal/100g
+('swadeshi_mysore_bonda', 'Swadeshi Mysore Bonda', 200.0, 4.0, 24.0, 10.0, 1.0, 1.0, 45, 180, 'swadeshi', ARRAY['swadeshi bonda', 'swadeshi mysore bonda'], '360 cal per 4 pieces (180g). Deep-fried lentil dumplings.', 'Swadeshi', 'indian', 4),
+
+-- === BIRYANIS ===
+-- Hyderabad Chicken Dum Biryani: ~155 cal/100g, ~450g serving
+('swadeshi_chicken_dum_biryani', 'Swadeshi Hyderabad Chicken Dum Biryani', 155.0, 7.5, 18.0, 5.5, 0.5, 0.5, NULL, 450, 'swadeshi', ARRAY['swadeshi chicken biryani', 'swadeshi dum biryani', 'swadeshi hyderabadi biryani'], '698 cal per serving (450g). Slow-cooked dum-style with bone-in chicken.', 'Swadeshi', 'indian', 1),
+
+-- Vijayawada Chicken Biryani (boneless): ~165 cal/100g
+('swadeshi_vijayawada_chicken_biryani', 'Swadeshi Vijayawada Chicken Biryani', 165.0, 8.0, 18.0, 6.5, 0.5, 0.5, NULL, 450, 'swadeshi', ARRAY['swadeshi vijayawada biryani', 'swadeshi boneless chicken biryani'], '743 cal per serving (450g). Andhra-style spicy biryani with boneless chicken.', 'Swadeshi', 'indian', 1),
+
+-- Goat/Mutton Dum Biryani: ~170 cal/100g
+('swadeshi_goat_dum_biryani', 'Swadeshi Hyderabad Goat Dum Biryani', 170.0, 8.5, 17.0, 7.5, 0.5, 0.5, NULL, 450, 'swadeshi', ARRAY['swadeshi goat biryani', 'swadeshi mutton biryani', 'swadeshi goat dum biryani'], '765 cal per serving (450g). Slow-cooked with bone-in goat.', 'Swadeshi', 'indian', 1),
+
+-- Egg Biryani: ~145 cal/100g
+('swadeshi_egg_biryani', 'Swadeshi Egg Biryani', 145.0, 6.0, 18.0, 5.0, 0.5, 0.5, NULL, 420, 'swadeshi', ARRAY['swadeshi egg biryani'], '609 cal per serving (420g).', 'Swadeshi', 'indian', 1),
+
+-- Veg Dum Biryani: ~135 cal/100g
+('swadeshi_veg_biryani', 'Swadeshi Veg Dum Biryani', 135.0, 3.5, 20.0, 4.5, 1.5, 1.0, NULL, 420, 'swadeshi', ARRAY['swadeshi veg biryani', 'swadeshi vegetable biryani'], '567 cal per serving (420g).', 'Swadeshi', 'indian', 1),
+
+-- Paneer Biryani: ~150 cal/100g
+('swadeshi_paneer_biryani', 'Swadeshi Paneer Biryani', 150.0, 5.5, 18.0, 6.0, 1.0, 0.5, NULL, 420, 'swadeshi', ARRAY['swadeshi paneer biryani'], '630 cal per serving (420g).', 'Swadeshi', 'indian', 1),
+
+-- Chicken Keema Biryani: ~160 cal/100g
+('swadeshi_chicken_keema_biryani', 'Swadeshi Chicken Keema Biryani', 160.0, 8.5, 17.5, 6.0, 0.5, 0.5, NULL, 450, 'swadeshi', ARRAY['swadeshi keema biryani', 'swadeshi chicken keema biryani'], '720 cal per serving (450g). With minced chicken.', 'Swadeshi', 'indian', 1),
+
+-- Chicken Fry Biryani: ~175 cal/100g
+('swadeshi_chicken_fry_biryani', 'Swadeshi Chicken Fry Biryani', 175.0, 8.0, 18.0, 7.5, 0.5, 0.5, NULL, 450, 'swadeshi', ARRAY['swadeshi fry biryani', 'swadeshi chicken fry biryani'], '788 cal per serving (450g). Biryani with crispy fried chicken pieces.', 'Swadeshi', 'indian', 1),
+
+-- Goat Haleem: ~120 cal/100g, 12oz = 340g
+('swadeshi_goat_haleem', 'Swadeshi Goat Haleem', 120.0, 7.0, 10.0, 5.5, 1.5, 0.5, NULL, 340, 'swadeshi', ARRAY['swadeshi haleem', 'swadeshi goat haleem'], '408 cal per 12oz (340g). Slow-cooked goat with wheat, lentils, spices.', 'Swadeshi', 'indian', 1),
+
+-- === PULAVS (lighter than biryani, ~140 cal/100g) ===
+('swadeshi_chicken_pulav', 'Swadeshi Chicken Pulav', 140.0, 7.0, 18.0, 4.5, 0.5, 0.5, NULL, 420, 'swadeshi', ARRAY['swadeshi chicken pulav', 'swadeshi chicken pulao'], '588 cal per serving (420g).', 'Swadeshi', 'indian', 1),
+
+('swadeshi_mutton_pulav', 'Swadeshi Mutton Pulav', 155.0, 7.5, 17.0, 6.0, 0.5, 0.5, NULL, 420, 'swadeshi', ARRAY['swadeshi mutton pulav', 'swadeshi goat pulav'], '651 cal per serving (420g).', 'Swadeshi', 'indian', 1),
+
+-- === POORI ===
+-- Poori Masala (2 pcs): ~220 cal/100g
+('swadeshi_poori_masala', 'Swadeshi Poori Masala', 220.0, 5.0, 26.0, 11.0, 1.5, 1.0, 80, 250, 'swadeshi', ARRAY['swadeshi poori masala', 'swadeshi poori'], '550 cal per 2 pooris with potato masala (250g).', 'Swadeshi', 'indian', 2),
+
+-- Chole Bhature: ~235 cal/100g
+('swadeshi_chole_bhature', 'Swadeshi Chole Bhature', 235.0, 6.5, 28.0, 11.0, 3.0, 2.0, NULL, 280, 'swadeshi', ARRAY['swadeshi chole bhature', 'swadeshi bhatura'], '658 cal per serving (280g). Deep-fried bread with chickpea curry.', 'Swadeshi', 'indian', 1),
+
+-- === VEG CURRIES (per 300g serving bowl) ===
+('swadeshi_paneer_butter_masala', 'Swadeshi Paneer Butter Masala', 175.0, 7.0, 8.0, 13.0, 1.0, 2.5, NULL, 300, 'swadeshi', ARRAY['swadeshi paneer butter masala', 'swadeshi pbm'], '525 cal per bowl (300g). Paneer in rich buttery tomato gravy.', 'Swadeshi', 'indian', 1),
+
+('swadeshi_palak_paneer', 'Swadeshi Palak Paneer', 140.0, 7.5, 6.0, 10.0, 2.0, 1.5, NULL, 300, 'swadeshi', ARRAY['swadeshi palak paneer', 'swadeshi saag paneer'], '420 cal per bowl (300g). Paneer in creamy spinach gravy.', 'Swadeshi', 'indian', 1),
+
+('swadeshi_kadai_paneer', 'Swadeshi Kadai Paneer', 155.0, 7.0, 7.0, 11.5, 1.5, 2.0, NULL, 300, 'swadeshi', ARRAY['swadeshi kadai paneer'], '465 cal per bowl (300g). Paneer with bell peppers in tomato gravy.', 'Swadeshi', 'indian', 1),
+
+('swadeshi_malai_kofta', 'Swadeshi Malai Kofta', 165.0, 5.0, 12.0, 11.0, 1.0, 3.0, NULL, 300, 'swadeshi', ARRAY['swadeshi malai kofta'], '495 cal per bowl (300g). Fried veggie balls in cashew-cream gravy.', 'Swadeshi', 'indian', 1),
+
+('swadeshi_chana_masala', 'Swadeshi Chana Masala', 120.0, 6.0, 16.0, 3.5, 4.0, 2.0, NULL, 300, 'swadeshi', ARRAY['swadeshi chana masala', 'swadeshi chole'], '360 cal per bowl (300g). Chickpeas in spicy onion-tomato gravy.', 'Swadeshi', 'indian', 1),
+
+('swadeshi_aloo_gobi', 'Swadeshi Aloo Gobi Curry', 95.0, 2.5, 12.0, 4.0, 2.0, 2.0, NULL, 300, 'swadeshi', ARRAY['swadeshi aloo gobi', 'swadeshi potato cauliflower'], '285 cal per bowl (300g).', 'Swadeshi', 'indian', 1),
+
+-- === CHICKEN CURRIES ===
+('swadeshi_butter_chicken', 'Swadeshi Butter Chicken Masala', 170.0, 12.0, 6.0, 11.0, 0.5, 2.5, NULL, 300, 'swadeshi', ARRAY['swadeshi butter chicken', 'swadeshi murgh makhani'], '510 cal per bowl (300g). Chicken in rich buttery tomato gravy.', 'Swadeshi', 'indian', 1),
+
+('swadeshi_chicken_tikka_masala', 'Swadeshi Chicken Tikka Masala', 165.0, 13.0, 6.0, 10.0, 0.5, 2.0, NULL, 300, 'swadeshi', ARRAY['swadeshi chicken tikka masala', 'swadeshi ctm'], '495 cal per bowl (300g). Tandoori chicken in creamy tomato gravy.', 'Swadeshi', 'indian', 1),
+
+('swadeshi_andhra_chicken_curry', 'Swadeshi Andhra Chicken Curry', 145.0, 12.5, 4.0, 8.5, 0.5, 1.0, NULL, 300, 'swadeshi', ARRAY['swadeshi andhra chicken', 'swadeshi spicy chicken curry'], '435 cal per bowl (300g). Fiery Andhra-style with red chilies.', 'Swadeshi', 'indian', 1),
+
+('swadeshi_gongura_chicken', 'Swadeshi Gongura Chicken Curry', 150.0, 12.0, 5.0, 9.0, 1.0, 1.0, NULL, 300, 'swadeshi', ARRAY['swadeshi gongura chicken'], '450 cal per bowl (300g). Chicken with tangy sorrel leaves.', 'Swadeshi', 'indian', 1),
+
+('swadeshi_chicken_korma', 'Swadeshi Chicken Korma', 160.0, 11.0, 6.0, 10.5, 0.5, 2.0, NULL, 300, 'swadeshi', ARRAY['swadeshi chicken korma'], '480 cal per bowl (300g). Chicken in creamy cashew-yogurt gravy.', 'Swadeshi', 'indian', 1),
+
+-- === MUTTON/GOAT CURRIES ===
+('swadeshi_hyderabadi_mutton', 'Swadeshi Hyderabadi Mutton Curry', 165.0, 13.0, 4.0, 11.0, 0.5, 1.0, NULL, 300, 'swadeshi', ARRAY['swadeshi mutton curry', 'swadeshi hyderabadi mutton'], '495 cal per bowl (300g).', 'Swadeshi', 'indian', 1),
+
+('swadeshi_mutton_korma', 'Swadeshi Mutton Korma', 175.0, 12.0, 5.0, 12.0, 0.5, 1.5, NULL, 300, 'swadeshi', ARRAY['swadeshi mutton korma', 'swadeshi goat korma'], '525 cal per bowl (300g). Mutton in creamy cashew gravy.', 'Swadeshi', 'indian', 1),
+
+('swadeshi_mutton_keema', 'Swadeshi Mutton Keema Curry', 160.0, 14.0, 5.0, 9.5, 1.0, 1.0, NULL, 300, 'swadeshi', ARRAY['swadeshi mutton keema', 'swadeshi goat keema curry'], '480 cal per bowl (300g). Minced goat meat curry.', 'Swadeshi', 'indian', 1),
+
+-- === NON-VEG APPETIZERS ===
+('swadeshi_chicken_65', 'Swadeshi Chicken 65', 220.0, 16.0, 10.0, 13.0, 0.5, 1.0, NULL, 200, 'swadeshi', ARRAY['swadeshi chicken 65', 'swadeshi chicken sixtyfive'], '440 cal per serving (200g). Spicy deep-fried chicken with curry leaves.', 'Swadeshi', 'indian', 1),
+
+('swadeshi_chicken_tikka_kebab', 'Swadeshi Chicken Tikka Kebab', 180.0, 20.0, 4.0, 9.0, 0.5, 1.0, 25, 175, 'swadeshi', ARRAY['swadeshi chicken tikka', 'swadeshi tikka kebab'], '315 cal per 7 pieces (175g). Tandoor-grilled marinated chicken.', 'Swadeshi', 'indian', 7),
+
+('swadeshi_apollo_fish', 'Swadeshi Apollo Fish', 210.0, 14.0, 12.0, 12.0, 0.5, 1.0, NULL, 200, 'swadeshi', ARRAY['swadeshi apollo fish'], '420 cal per serving (200g). Crispy fried fish in tangy Andhra sauce.', 'Swadeshi', 'indian', 1),
+
+('swadeshi_pepper_chicken_fry', 'Swadeshi Pepper Chicken Fry', 195.0, 18.0, 5.0, 11.0, 0.5, 0.5, NULL, 200, 'swadeshi', ARRAY['swadeshi pepper chicken', 'swadeshi pepper chicken fry'], '390 cal per serving (200g). Dry-fried chicken with black pepper.', 'Swadeshi', 'indian', 1),
+
+('swadeshi_chilli_chicken', 'Swadeshi Chilli Chicken', 200.0, 15.0, 10.0, 12.0, 0.5, 2.0, NULL, 200, 'swadeshi', ARRAY['swadeshi chilli chicken', 'swadeshi chili chicken'], '400 cal per serving (200g). Indo-Chinese style.', 'Swadeshi', 'indian', 1),
+
+('swadeshi_mutton_roast', 'Swadeshi Mutton Roast', 210.0, 16.0, 5.0, 14.0, 0.5, 0.5, NULL, 200, 'swadeshi', ARRAY['swadeshi mutton roast', 'swadeshi goat roast'], '420 cal per serving (200g). Dry-roasted mutton with spices.', 'Swadeshi', 'indian', 1),
+
+-- === VEG APPETIZERS ===
+('swadeshi_paneer_65', 'Swadeshi Paneer 65', 230.0, 10.0, 12.0, 16.0, 0.5, 1.5, NULL, 200, 'swadeshi', ARRAY['swadeshi paneer 65', 'swadeshi paneer sixtyfive'], '460 cal per serving (200g). Deep-fried spiced paneer.', 'Swadeshi', 'indian', 1),
+
+('swadeshi_gobi_manchurian', 'Swadeshi Gobi Manchurian', 170.0, 4.0, 18.0, 9.0, 2.0, 3.0, NULL, 200, 'swadeshi', ARRAY['swadeshi gobi manchurian', 'swadeshi cauliflower manchurian'], '340 cal per serving (200g). Crispy cauliflower in sweet-spicy sauce.', 'Swadeshi', 'indian', 1),
+
+('swadeshi_chilli_paneer', 'Swadeshi Chilli Paneer', 215.0, 9.0, 10.0, 16.0, 1.0, 2.0, NULL, 200, 'swadeshi', ARRAY['swadeshi chilli paneer', 'swadeshi chili paneer'], '430 cal per serving (200g). Paneer in spicy garlic-chili sauce.', 'Swadeshi', 'indian', 1),
+
+-- === INDO-CHINESE ===
+('swadeshi_chicken_fried_rice', 'Swadeshi Chicken Fried Rice', 155.0, 7.0, 20.0, 5.5, 0.5, 1.0, NULL, 350, 'swadeshi', ARRAY['swadeshi chicken fried rice'], '543 cal per serving (350g).', 'Swadeshi', 'indian', 1),
+
+('swadeshi_egg_fried_rice', 'Swadeshi Egg Fried Rice', 145.0, 5.5, 21.0, 4.5, 0.5, 0.5, NULL, 350, 'swadeshi', ARRAY['swadeshi egg fried rice'], '508 cal per serving (350g).', 'Swadeshi', 'indian', 1),
+
+('swadeshi_veg_fried_rice', 'Swadeshi Veg Fried Rice', 135.0, 3.5, 22.0, 3.5, 1.0, 1.0, NULL, 350, 'swadeshi', ARRAY['swadeshi veg fried rice'], '473 cal per serving (350g).', 'Swadeshi', 'indian', 1),
+
+('swadeshi_chicken_noodles', 'Swadeshi Chicken Soft Noodles', 150.0, 7.0, 20.0, 5.0, 0.5, 1.0, NULL, 350, 'swadeshi', ARRAY['swadeshi chicken noodles', 'swadeshi chicken hakka noodles'], '525 cal per serving (350g).', 'Swadeshi', 'indian', 1),
+
+-- === BREADS ===
+('swadeshi_garlic_naan', 'Swadeshi Garlic Naan', 280.0, 8.0, 40.0, 10.0, 1.5, 2.0, 100, 100, 'swadeshi', ARRAY['swadeshi garlic naan'], '280 cal per naan (100g).', 'Swadeshi', 'indian', 1),
+
+('swadeshi_butter_naan', 'Swadeshi Butter Naan', 300.0, 7.5, 42.0, 12.0, 1.0, 2.0, 90, 90, 'swadeshi', ARRAY['swadeshi butter naan'], '270 cal per naan (90g).', 'Swadeshi', 'indian', 1),
+
+('swadeshi_tandoori_roti', 'Swadeshi Tandoori Roti', 240.0, 7.5, 42.0, 4.5, 2.0, 1.0, 70, 70, 'swadeshi', ARRAY['swadeshi tandoori roti', 'swadeshi roti'], '168 cal per roti (70g).', 'Swadeshi', 'indian', 1),
+
+-- === CHAATS ===
+('swadeshi_pani_puri', 'Swadeshi Pani Puri', 130.0, 3.0, 20.0, 4.0, 1.5, 3.0, 25, 150, 'swadeshi', ARRAY['swadeshi pani puri', 'swadeshi golgappa'], '195 cal per 6 pieces (150g).', 'Swadeshi', 'indian', 6),
+
+('swadeshi_pav_bhaji', 'Swadeshi Pav Bhaji', 200.0, 5.0, 24.0, 9.5, 2.0, 3.0, NULL, 300, 'swadeshi', ARRAY['swadeshi pav bhaji'], '600 cal per serving (300g). Buttery mashed veggies with toasted pav bread.', 'Swadeshi', 'indian', 2),
+
+('swadeshi_samosa_chat', 'Swadeshi Samosa Chat', 195.0, 4.5, 22.0, 10.0, 2.0, 3.0, NULL, 200, 'swadeshi', ARRAY['swadeshi samosa chat', 'swadeshi samosa chaat'], '390 cal per serving (200g).', 'Swadeshi', 'indian', 1),
+
+-- === FRANKIES/STREET FOOD ===
+('swadeshi_chicken_frankie', 'Swadeshi Chicken Frankie', 210.0, 10.0, 22.0, 9.0, 1.0, 1.5, 180, 180, 'swadeshi', ARRAY['swadeshi chicken frankie', 'swadeshi chicken roll'], '378 cal per frankie (180g). Chicken wrapped in paratha.', 'Swadeshi', 'indian', 1),
+
+-- === DESSERTS ===
+('swadeshi_gulab_jamun', 'Swadeshi Gulab Jamun', 325.0, 4.0, 44.0, 15.0, 0.3, 38.0, 30, 120, 'swadeshi', ARRAY['swadeshi gulab jamun'], '390 cal per 4 pieces (120g). Golden fried milk dumplings in sugar syrup.', 'Swadeshi', 'desserts', 4),
+
+-- ============================================================================
+-- CHOWRASTA
+-- ============================================================================
+
+-- === BIRYANIS ===
+('chowrasta_chicken_dum_biryani', 'Chowrasta Chicken Dum Biryani', 155.0, 7.5, 18.0, 5.5, 0.5, 0.5, NULL, 450, 'chowrasta', ARRAY['chowrasta chicken biryani', 'chowrasta chicken dum'], '698 cal per serving (450g).', 'Chowrasta', 'indian', 1),
+
+('chowrasta_goat_dum_biryani', 'Chowrasta Goat Dum Biryani', 170.0, 8.5, 17.0, 7.5, 0.5, 0.5, NULL, 450, 'chowrasta', ARRAY['chowrasta goat biryani', 'chowrasta mutton biryani'], '765 cal per serving (450g).', 'Chowrasta', 'indian', 1),
+
+('chowrasta_vijayawada_biryani', 'Chowrasta Vijayawada Boneless Biryani', 165.0, 8.0, 18.0, 6.5, 0.5, 0.5, NULL, 450, 'chowrasta', ARRAY['chowrasta vijayawada biryani'], '743 cal per serving (450g). Andhra-style spicy.', 'Chowrasta', 'indian', 1),
+
+('chowrasta_shrimp_biryani', 'Chowrasta Shrimp Biryani', 148.0, 8.0, 18.0, 5.0, 0.5, 0.5, NULL, 420, 'chowrasta', ARRAY['chowrasta shrimp biryani', 'chowrasta prawn biryani'], '622 cal per serving (420g).', 'Chowrasta', 'indian', 1),
+
+('chowrasta_fish_biryani', 'Chowrasta Fish Biryani', 145.0, 7.5, 18.0, 5.0, 0.5, 0.5, NULL, 420, 'chowrasta', ARRAY['chowrasta fish biryani'], '609 cal per serving (420g).', 'Chowrasta', 'indian', 1),
+
+-- === PULAVS ===
+('chowrasta_chicken_pulav', 'Chowrasta Chicken Fry Pulao', 145.0, 7.5, 18.0, 5.0, 0.5, 0.5, NULL, 420, 'chowrasta', ARRAY['chowrasta chicken pulav', 'chowrasta chicken pulao'], '609 cal per serving (420g).', 'Chowrasta', 'indian', 1),
+
+-- === VEG APPETIZERS ===
+('chowrasta_gobi_manchurian', 'Chowrasta Gobi Manchurian', 170.0, 4.0, 18.0, 9.0, 2.0, 3.0, NULL, 200, 'chowrasta', ARRAY['chowrasta gobi manchuria'], '340 cal per serving (200g).', 'Chowrasta', 'indian', 1),
+
+('chowrasta_crispy_corn', 'Chowrasta Crispy Corn', 190.0, 4.0, 22.0, 10.0, 2.0, 2.0, NULL, 180, 'chowrasta', ARRAY['chowrasta crispy corn'], '342 cal per serving (180g). Crispy fried corn with spices.', 'Chowrasta', 'indian', 1),
+
+('chowrasta_dragon_paneer', 'Chowrasta Dragon Paneer', 225.0, 9.0, 12.0, 16.0, 1.0, 2.5, NULL, 200, 'chowrasta', ARRAY['chowrasta dragon paneer'], '450 cal per serving (200g). Paneer in fiery dragon sauce.', 'Chowrasta', 'indian', 1),
+
+-- === NON-VEG APPETIZERS ===
+('chowrasta_chicken_65', 'Chowrasta Chicken 65', 220.0, 16.0, 10.0, 13.0, 0.5, 1.0, NULL, 200, 'chowrasta', ARRAY['chowrasta chicken 65'], '440 cal per serving (200g).', 'Chowrasta', 'indian', 1),
+
+('chowrasta_apollo_fish', 'Chowrasta Apollo Fish', 210.0, 14.0, 12.0, 12.0, 0.5, 1.0, NULL, 200, 'chowrasta', ARRAY['chowrasta apollo fish'], '420 cal per serving (200g).', 'Chowrasta', 'indian', 1),
+
+('chowrasta_goat_pepper_fry', 'Chowrasta Goat Pepper Fry', 200.0, 17.0, 4.0, 13.0, 0.5, 0.5, NULL, 200, 'chowrasta', ARRAY['chowrasta goat pepper fry', 'chowrasta mutton pepper fry'], '400 cal per serving (200g). Dry-fried goat with black pepper.', 'Chowrasta', 'indian', 1),
+
+('chowrasta_chicken_majestic', 'Chowrasta Chicken Majestic', 215.0, 15.0, 12.0, 13.0, 0.5, 1.5, NULL, 200, 'chowrasta', ARRAY['chowrasta chicken majestic'], '430 cal per serving (200g). Crispy chicken in spiced yogurt sauce.', 'Chowrasta', 'indian', 1),
+
+('chowrasta_haleem', 'Chowrasta Haleem', 120.0, 7.0, 10.0, 5.5, 1.5, 0.5, NULL, 340, 'chowrasta', ARRAY['chowrasta haleem', 'chowrasta goat haleem'], '408 cal per serving (340g).', 'Chowrasta', 'indian', 1),
+
+('chowrasta_fried_chicken', 'Chowrasta CFC (Fried Chicken)', 250.0, 18.0, 14.0, 14.0, 0.3, 0.5, NULL, 200, 'chowrasta', ARRAY['chowrasta fried chicken', 'chowrasta cfc', 'cfc chicken'], '500 cal per serving (200g). Chowrasta Fried Chicken.', 'Chowrasta', 'indian', 1),
+
+-- === VEG CURRIES ===
+('chowrasta_paneer_butter_masala', 'Chowrasta Paneer Butter Masala', 175.0, 7.0, 8.0, 13.0, 1.0, 2.5, NULL, 300, 'chowrasta', ARRAY['chowrasta paneer butter masala'], '525 cal per bowl (300g).', 'Chowrasta', 'indian', 1),
+
+('chowrasta_dal_tadka', 'Chowrasta Yellow Dal Tadka', 90.0, 5.5, 12.0, 2.5, 3.0, 1.0, NULL, 300, 'chowrasta', ARRAY['chowrasta dal tadka', 'chowrasta dal fry'], '270 cal per bowl (300g). Tempered lentils.', 'Chowrasta', 'indian', 1),
+
+-- === NON-VEG CURRIES ===
+('chowrasta_butter_chicken', 'Chowrasta Butter Chicken', 170.0, 12.0, 6.0, 11.0, 0.5, 2.5, NULL, 300, 'chowrasta', ARRAY['chowrasta butter chicken'], '510 cal per bowl (300g).', 'Chowrasta', 'indian', 1),
+
+('chowrasta_chettinad_chicken', 'Chowrasta Chettinad Chicken Curry', 155.0, 13.0, 4.0, 9.5, 1.0, 1.0, NULL, 300, 'chowrasta', ARRAY['chowrasta chettinad chicken'], '465 cal per bowl (300g). Fiery South Indian pepper curry.', 'Chowrasta', 'indian', 1),
+
+('chowrasta_goat_rara', 'Chowrasta Goat Rara', 180.0, 14.0, 5.0, 12.0, 0.5, 1.5, NULL, 300, 'chowrasta', ARRAY['chowrasta goat rara', 'chowrasta mutton rara'], '540 cal per bowl (300g). Goat curry with minced goat.', 'Chowrasta', 'indian', 1),
+
+-- === DOSAS ===
+('chowrasta_plain_dosa', 'Chowrasta Plain Dosa', 120.0, 3.5, 20.0, 2.5, 0.5, 0.5, 130, 130, 'chowrasta', ARRAY['chowrasta dosa', 'chowrasta plain dosa'], '156 cal per dosa (130g).', 'Chowrasta', 'indian', 1),
+
+('chowrasta_masala_dosa', 'Chowrasta Masala Dosa', 165.0, 4.0, 22.0, 6.5, 1.5, 1.0, 200, 200, 'chowrasta', ARRAY['chowrasta masala dosa'], '330 cal per dosa (200g).', 'Chowrasta', 'indian', 1),
+
+('chowrasta_benne_dosa', 'Chowrasta Benne Dosa', 195.0, 3.5, 22.0, 10.5, 0.5, 0.5, 150, 150, 'chowrasta', ARRAY['chowrasta benne dosa', 'chowrasta butter dosa'], '293 cal per dosa (150g). Karnataka-style butter dosa.', 'Chowrasta', 'indian', 1),
+
+-- === CHAATS ===
+('chowrasta_pav_bhaji', 'Chowrasta Pav Bhaji', 200.0, 5.0, 24.0, 9.5, 2.0, 3.0, NULL, 300, 'chowrasta', ARRAY['chowrasta pav bhaji'], '600 cal per serving (300g).', 'Chowrasta', 'indian', 3),
+
+('chowrasta_vada_pav', 'Chowrasta Vada Pav', 260.0, 5.5, 30.0, 13.0, 2.0, 2.0, 120, 120, 'chowrasta', ARRAY['chowrasta vada pav', 'chowrasta wada pav'], '312 cal per vada pav (120g). Mumbai street food.', 'Chowrasta', 'indian', 1),
+
+-- === TANDOOR ===
+('chowrasta_chicken_tandoori', 'Chowrasta Chicken Tandoori (Half)', 160.0, 22.0, 3.0, 7.0, 0.0, 0.5, NULL, 280, 'chowrasta', ARRAY['chowrasta tandoori chicken half', 'chowrasta chicken tandoor'], '448 cal per half (280g). Yogurt-marinated chicken roasted in tandoor.', 'Chowrasta', 'indian', 1),
+
+-- === RICE SPECIALS ===
+('chowrasta_sambar_rice', 'Chowrasta Sambar Rice', 110.0, 3.5, 18.0, 2.5, 2.0, 1.5, NULL, 350, 'chowrasta', ARRAY['chowrasta sambar rice', 'chowrasta bisi bele bath'], '385 cal per serving (350g). Lentil-vegetable rice.', 'Chowrasta', 'indian', 1),
+
+('chowrasta_curd_rice', 'Chowrasta Curd Rice', 100.0, 3.5, 16.0, 2.5, 0.3, 1.5, NULL, 300, 'chowrasta', ARRAY['chowrasta curd rice', 'chowrasta dahi chawal'], '300 cal per serving (300g). Creamy yogurt rice.', 'Chowrasta', 'indian', 1),
+
+-- === DESSERTS ===
+('chowrasta_gulab_jamun', 'Chowrasta Gulab Jamun', 325.0, 4.0, 44.0, 15.0, 0.3, 38.0, 30, 120, 'chowrasta', ARRAY['chowrasta gulab jamun'], '390 cal per serving (120g).', 'Chowrasta', 'desserts', 4),
+
+('chowrasta_shahi_kulfi', 'Chowrasta Shahi Kulfi', 200.0, 5.0, 22.0, 10.0, 0.0, 18.0, 80, 80, 'chowrasta', ARRAY['chowrasta kulfi', 'chowrasta shahi kulfi'], '160 cal per kulfi (80g). Indian ice cream with nuts, saffron.', 'Chowrasta', 'desserts', 1),
+
+-- ============================================================================
+-- DESI DISTRICT
+-- ============================================================================
+
+-- === BIRYANIS ===
+('desi_district_chicken_dum_biryani', 'Desi District Chicken Dum Biryani', 155.0, 7.5, 18.0, 5.5, 0.5, 0.5, NULL, 450, 'desidistrict', ARRAY['desi district chicken biryani', 'desi district dum biryani'], '698 cal per serving (450g).', 'Desi District', 'indian', 1),
+
+('desi_district_chicken_65_biryani', 'Desi District Chicken 65 Biryani', 175.0, 8.0, 18.0, 7.5, 0.5, 0.5, NULL, 450, 'desidistrict', ARRAY['desi district chicken 65 biryani'], '788 cal per serving (450g). With crispy chicken 65 pieces.', 'Desi District', 'indian', 1),
+
+('desi_district_shrimp_biryani', 'Desi District Shrimp Biryani', 148.0, 8.0, 18.0, 5.0, 0.5, 0.5, NULL, 420, 'desidistrict', ARRAY['desi district shrimp biryani', 'desi district prawn biryani'], '622 cal per serving (420g).', 'Desi District', 'indian', 1),
+
+-- === MANDI (unique to Desi District) ===
+('desi_district_chicken_mandi', 'Desi District Juicy Chicken Mandi', 145.0, 8.5, 17.0, 5.0, 0.5, 0.5, NULL, 500, 'desidistrict', ARRAY['desi district chicken mandi', 'desi district mandi'], '725 cal per serving (500g). Yemeni-style chicken with fragrant rice.', 'Desi District', 'indian', 1),
+
+('desi_district_mutton_mandi', 'Desi District Juicy Mutton Mandi', 160.0, 9.0, 16.0, 6.5, 0.5, 0.5, NULL, 500, 'desidistrict', ARRAY['desi district mutton mandi', 'desi district goat mandi'], '800 cal per serving (500g).', 'Desi District', 'indian', 1),
+
+('desi_district_paneer_mandi', 'Desi District Paneer Mandi', 140.0, 5.5, 18.0, 5.0, 1.0, 0.5, NULL, 450, 'desidistrict', ARRAY['desi district paneer mandi', 'desi district veg mandi'], '630 cal per serving (450g).', 'Desi District', 'indian', 1),
+
+('desi_district_shrimp_mandi', 'Desi District Shrimp Mandi', 138.0, 7.5, 17.0, 4.5, 0.5, 0.5, NULL, 480, 'desidistrict', ARRAY['desi district shrimp mandi'], '662 cal per serving (480g).', 'Desi District', 'indian', 1),
+
+-- === KATI ROLLS (unique) ===
+('desi_district_chicken_kati_roll', 'Desi District Ghee Roasted Chicken Roll', 210.0, 10.0, 22.0, 9.0, 1.0, 1.5, 200, 200, 'desidistrict', ARRAY['desi district chicken roll', 'desi district chicken kati roll'], '420 cal per roll (200g).', 'Desi District', 'indian', 1),
+
+('desi_district_paneer_kati_roll', 'Desi District Paneer Kati Roll', 220.0, 8.0, 24.0, 10.0, 1.0, 1.5, 200, 200, 'desidistrict', ARRAY['desi district paneer roll', 'desi district paneer kati roll'], '440 cal per roll (200g).', 'Desi District', 'indian', 1),
+
+-- === DESI BURGERS (unique) ===
+('desi_district_butter_chicken_burger', 'Desi District Butter Chicken Tikka Burger', 240.0, 12.0, 22.0, 12.0, 1.0, 2.5, 250, 250, 'desidistrict', ARRAY['desi district chicken burger', 'desi district butter chicken burger'], '600 cal per burger (250g). Butter chicken tikka in toasted bun.', 'Desi District', 'indian', 1),
+
+-- === CURRIES ===
+('desi_district_butter_chicken', 'Desi District Butter Chicken Masala', 170.0, 12.0, 6.0, 11.0, 0.5, 2.5, NULL, 300, 'desidistrict', ARRAY['desi district butter chicken'], '510 cal per bowl (300g).', 'Desi District', 'indian', 1),
+
+('desi_district_hyderabad_mutton', 'Desi District Hyderabad Mutton Curry', 165.0, 13.0, 4.0, 11.0, 0.5, 1.0, NULL, 300, 'desidistrict', ARRAY['desi district mutton curry', 'desi district hyderabadi mutton'], '495 cal per bowl (300g).', 'Desi District', 'indian', 1),
+
+-- === APPETIZERS ===
+('desi_district_chicken_65', 'Desi District Chicken 65', 220.0, 16.0, 10.0, 13.0, 0.5, 1.0, NULL, 200, 'desidistrict', ARRAY['desi district chicken 65', 'desi district chicken sixty five'], '440 cal per serving (200g).', 'Desi District', 'indian', 1),
+
+('desi_district_chicken_lollipop', 'Desi District Chicken Lollipop', 230.0, 16.0, 12.0, 13.0, 0.3, 1.5, 40, 240, 'desidistrict', ARRAY['desi district chicken lollipop'], '552 cal per 6 pieces (240g). Frenched chicken wings in spicy batter.', 'Desi District', 'indian', 6),
+
+('desi_district_paneer_tikka', 'Desi District Paneer Tikka', 190.0, 12.0, 6.0, 13.0, 0.5, 1.0, NULL, 200, 'desidistrict', ARRAY['desi district paneer tikka'], '380 cal per serving (200g). Tandoor-grilled marinated paneer.', 'Desi District', 'indian', 1),
+
+-- === TIFFINS/BREAKFAST ===
+('desi_district_masala_dosa', 'Desi District Masala Dosa', 165.0, 4.0, 22.0, 6.5, 1.5, 1.0, 200, 200, 'desidistrict', ARRAY['desi district masala dosa'], '330 cal per dosa (200g).', 'Desi District', 'indian', 1),
+
+('desi_district_sambar_idli', 'Desi District Sambar Idli', 75.0, 3.0, 12.0, 1.5, 1.5, 1.0, 60, 250, 'desidistrict', ARRAY['desi district sambar idli'], '188 cal per serving (250g). Steamed idlis soaked in sambar.', 'Desi District', 'indian', 3),
+
+('desi_district_pongal', 'Desi District Pongal', 120.0, 3.5, 16.0, 5.0, 0.5, 0.5, NULL, 250, 'desidistrict', ARRAY['desi district pongal', 'desi district ven pongal'], '300 cal per serving (250g). Creamy rice-lentil porridge with ghee, pepper.', 'Desi District', 'indian', 1),
+
+-- === DESSERTS ===
+('desi_district_rasmalai', 'Desi District Rasmalai', 215.0, 5.0, 25.0, 11.0, 0.0, 22.0, 50, 100, 'desidistrict', ARRAY['desi district rasmalai', 'desi district ras malai'], '215 cal per 2 pieces (100g). Cottage cheese in sweet saffron milk.', 'Desi District', 'desserts', 2),
+
+('desi_district_gulab_jamun', 'Desi District Gulab Jamun', 325.0, 4.0, 44.0, 15.0, 0.3, 38.0, 30, 90, 'desidistrict', ARRAY['desi district gulab jamun'], '293 cal per 3 pieces (90g).', 'Desi District', 'desserts', 3),
+
+-- === DRINKS ===
+('desi_district_mango_lassi', 'Desi District Mango Lassi', 95.0, 2.5, 16.0, 2.5, 0.3, 13.0, NULL, 350, 'desidistrict', ARRAY['desi district mango lassi'], '333 cal per glass (350g). Mango blended with yogurt.', 'Desi District', 'drinks', 1)

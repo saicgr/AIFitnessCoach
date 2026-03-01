@@ -465,10 +465,10 @@ async def generate_quick_workout(request: Request, body: QuickWorkoutRequest, ba
 
         # Log to user context
         try:
-            await user_context_service.log_action(
+            await user_context_service.log_event(
                 user_id=body.user_id,
-                action="quick_workout_generated",
-                details={
+                event_type="quick_workout_generated",
+                event_data={
                     "workout_id": created['id'],
                     "duration": body.duration,
                     "focus": body.focus,
@@ -583,10 +583,10 @@ async def save_quick_workout(request: Request, body: QuickWorkoutSaveRequest, ba
         # Log to user context
         async def _background_log_context():
             try:
-                await user_context_service.log_action(
+                await user_context_service.log_event(
                     user_id=user_id,
-                    action="quick_workout_saved",
-                    details={
+                    event_type="quick_workout_saved",
+                    event_data={
                         "workout_id": created_id,
                         "generation_method": body.generation_method,
                         "generation_source": body.generation_source,
@@ -608,6 +608,11 @@ async def save_quick_workout(request: Request, body: QuickWorkoutSaveRequest, ba
         raise HTTPException(status_code=500, detail="Failed to save workout")
 
 
+# Circuit breaker: once we know the table/RPC doesn't exist, skip DB calls
+# until the next server restart (when the migration may have been applied).
+_quick_prefs_available: Optional[bool] = None
+
+
 async def track_quick_workout_usage(
     user_id: str,
     duration: int,
@@ -615,6 +620,12 @@ async def track_quick_workout_usage(
     source: QuickWorkoutSource = "button",
 ) -> None:
     """Track quick workout usage for personalization."""
+    global _quick_prefs_available
+
+    # Circuit breaker: skip if we already know the table/RPC is missing
+    if _quick_prefs_available is False:
+        return
+
     db = get_supabase_db()
 
     try:
@@ -632,22 +643,22 @@ async def track_quick_workout_usage(
             "source": source,
         }, on_conflict="user_id").execute()
 
+        _quick_prefs_available = True
         logger.debug(f"Tracked quick workout usage: user={user_id}, source={source}")
 
     except Exception as e:
-        # Table might not exist yet, that's ok - fall back to simple upsert
+        error_str = str(e)
+        # Detect missing table/RPC (400 or 404) and trip the circuit breaker
+        if "400" in error_str or "404" in error_str or "does not exist" in error_str.lower():
+            if _quick_prefs_available is None:
+                logger.info(
+                    "[QuickWorkout] quick_workout_preferences table/RPC not available, "
+                    "disabling tracking until next restart"
+                )
+            _quick_prefs_available = False
+            return
+
         logger.debug(f"Could not track quick workout preference via RPC: {e}")
-        try:
-            db.client.table("quick_workout_preferences").upsert({
-                "user_id": user_id,
-                "preferred_duration": duration,
-                "preferred_focus": focus,
-                "last_quick_workout_at": datetime.now().isoformat(),
-                "source": source,
-                "quick_workout_count": 1,
-            }, on_conflict="user_id").execute()
-        except Exception as fallback_error:
-            logger.debug(f"Fallback upsert also failed: {fallback_error}")
 
 
 @router.get("/quick/preferences/{user_id}")

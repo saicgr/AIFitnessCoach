@@ -56,8 +56,8 @@ class Settings(BaseSettings):
     sqlite_url: Optional[str] = None
 
     # Database Connection Pool (only applies to PostgreSQL, ignored for SQLite)
-    db_pool_size: int = 25          # Base number of persistent connections
-    db_max_overflow: int = 50       # Extra connections allowed under load
+    db_pool_size: int = 5            # Base number of persistent connections
+    db_max_overflow: int = 10        # Extra connections allowed under load
     db_pool_timeout: int = 30       # Seconds to wait for a connection
     db_pool_recycle: int = 1800     # Recycle connections every 30 minutes
 
@@ -94,10 +94,20 @@ class Settings(BaseSettings):
     # Webhook Configuration (for admin notifications)
     # Slack webhook URL for support chat notifications
     slack_support_webhook: Optional[str] = None
-    # Discord webhook URL for support chat notifications (optional)
-    discord_support_webhook: Optional[str] = None
+    # Discord webhook URL for live chat / support notifications
+    discord_webhook_url: Optional[str] = None
+    # Admin email for live chat notification fallback (via Resend)
+    admin_notification_email: Optional[str] = None
     # Admin dashboard URL for action buttons in webhook messages
     admin_dashboard_url: str = "https://fitwiz-admin.example.com"
+
+    # Trello Integration (support tickets → Trello board)
+    # Get API key: https://trello.com/power-ups/admin
+    # Get token: https://trello.com/1/authorize?expiration=never&scope=read,write&response_type=token&key=YOUR_KEY
+    # Get list ID: https://api.trello.com/1/boards/BOARD_ID/lists?key=KEY&token=TOKEN
+    trello_api_key: Optional[str] = None
+    trello_token: Optional[str] = None
+    trello_list_id: Optional[str] = None  # The list where new ticket cards are created
 
     # Redis (shared cache across workers)
     redis_url: Optional[str] = None

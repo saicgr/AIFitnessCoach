@@ -804,6 +804,29 @@ class ExerciseRAGService:
             f"{len([c for c in candidates if c.get('difficulty_category') == 'advanced'])} advanced exercises available"
         )
 
+        # Cap bodyweight exercises in candidate pool for gym users
+        # Gym users should see mostly equipment-based exercises; allow at most 2 bodyweight
+        equipment_lower_check = [eq.lower() for eq in equipment] if equipment else []
+        has_gym_equipment = any(
+            eq in equipment_lower_check
+            for eq in ["full_gym", "full gym", "dumbbells", "barbell", "cable_machine", "machines"]
+        ) or any(
+            kw in eq for eq in equipment_lower_check for kw in ["dumbbell", "barbell", "cable", "machine"]
+        )
+
+        if has_gym_equipment:
+            bw_keywords = {"bodyweight", "body weight", "none", ""}
+            bw_candidates = [c for c in candidates if (c.get("equipment", "") or "").lower() in bw_keywords]
+            equip_candidates = [c for c in candidates if (c.get("equipment", "") or "").lower() not in bw_keywords]
+            if len(bw_candidates) > 2:
+                logger.info(
+                    f"🔧 [Equipment Cap] Capping bodyweight candidates from {len(bw_candidates)} to 2 "
+                    f"(gym user has {len(equip_candidates)} equipment-based candidates)"
+                )
+                candidates = equip_candidates + bw_candidates[:2]
+                # Re-sort to maintain similarity order
+                candidates.sort(key=lambda x: x.get("similarity", 0), reverse=True)
+
         # Pre-filter for injuries
         if injuries and len(injuries) > 0:
             safe_candidates = pre_filter_by_injuries(candidates, injuries)
@@ -1132,6 +1155,7 @@ class ExerciseRAGService:
                 workout_params=adjusted_workout_params,
                 strength_history=strength_history,
                 progression_pace=progression_pace,
+                equipment=equipment,
             )
 
             # Backfill from full candidate pool if AI returned too few
@@ -1212,6 +1236,7 @@ class ExerciseRAGService:
         workout_params: Optional[Dict] = None,
         strength_history: Optional[Dict[str, Dict]] = None,
         progression_pace: str = "medium",
+        equipment: Optional[List[str]] = None,
     ) -> List[Dict[str, Any]]:
         """Use AI to select the best exercises from candidates."""
 
@@ -1242,6 +1267,25 @@ YOU MUST STRICTLY AVOID exercises that could aggravate these injuries.
 The user's safety is the TOP PRIORITY. Only select exercises that are 100% SAFE.
 """
 
+        # Detect if user has gym equipment for equipment priority rule
+        equipment_lower_check = [eq.lower() for eq in equipment] if equipment else []
+        user_has_gym_equipment = any(
+            eq in equipment_lower_check
+            for eq in ["full_gym", "full gym", "dumbbells", "barbell", "cable_machine", "machines"]
+        ) or any(
+            kw in eq for eq in equipment_lower_check for kw in ["dumbbell", "barbell", "cable", "machine"]
+        )
+
+        equipment_priority_section = ""
+        if user_has_gym_equipment:
+            equipment_priority_section = f"""
+EQUIPMENT PRIORITY RULE (user has gym equipment):
+- Select AT MOST 1 bodyweight exercise out of {count}
+- Prefer barbell, dumbbell, cable, and machine exercises
+- Bodyweight exercises are acceptable ONLY as a warm-up or finisher, not as primary movements
+- Do NOT select easy cardio-style bodyweight moves (punches, jumping jacks, etc.) — these are not appropriate for a gym strength session
+"""
+
         prompt = f"""You are an expert fitness coach selecting exercises for a workout.
 
 TARGET WORKOUT:
@@ -1262,6 +1306,7 @@ SELECTION CRITERIA:
 6. Progress from compound to isolation exercises
 7. Consider the fitness level - {fitness_level} (but still use weights - beginners benefit from learning barbell and dumbbell movements)
 8. Align with goals: {', '.join(goals) if goals else 'General fitness'}
+{equipment_priority_section}
 
 IMPORTANT: You MUST select {count} DIFFERENT exercises. Each number in your response must be unique.
 

@@ -6,12 +6,26 @@ import 'dart:io';
 import '../../../core/constants/app_colors.dart';
 import '../../../data/providers/support_provider.dart';
 import '../../../data/repositories/auth_repository.dart';
+import '../../../data/repositories/support_repository.dart';
 import '../../../models/support_ticket.dart';
 import '../../../widgets/glass_back_button.dart';
 
+/// Screen context options for "Where did this happen?"
+const _screenContextOptions = [
+  'Home',
+  'Workouts',
+  'Chat',
+  'Nutrition',
+  'Progress',
+  'Settings',
+  'Onboarding',
+  'Other',
+];
+
 /// Screen for creating a new support ticket
 class CreateTicketScreen extends ConsumerStatefulWidget {
-  const CreateTicketScreen({super.key});
+  final String? initialCategory;
+  const CreateTicketScreen({super.key, this.initialCategory});
 
   @override
   ConsumerState<CreateTicketScreen> createState() => _CreateTicketScreenState();
@@ -21,16 +35,34 @@ class _CreateTicketScreenState extends ConsumerState<CreateTicketScreen> {
   final _formKey = GlobalKey<FormState>();
   final _subjectController = TextEditingController();
   final _descriptionController = TextEditingController();
+  final _stepsController = TextEditingController();
 
   TicketCategory _selectedCategory = TicketCategory.other;
   TicketPriority _selectedPriority = TicketPriority.medium;
+  String? _selectedScreenContext;
   final List<File> _attachments = [];
   bool _isSubmitting = false;
+  String? _uploadStatus;
+
+  @override
+  void initState() {
+    super.initState();
+    final initial = widget.initialCategory;
+    if (initial != null) {
+      for (final cat in TicketCategory.values) {
+        if (cat.value == initial) {
+          _selectedCategory = cat;
+          break;
+        }
+      }
+    }
+  }
 
   @override
   void dispose() {
     _subjectController.dispose();
     _descriptionController.dispose();
+    _stepsController.dispose();
     super.dispose();
   }
 
@@ -66,6 +98,51 @@ class _CreateTicketScreenState extends ConsumerState<CreateTicketScreen> {
     });
   }
 
+  /// Upload all attachments to S3 and return their S3 keys
+  Future<List<String>> _uploadAttachments() async {
+    if (_attachments.isEmpty) return [];
+
+    final repo = ref.read(supportRepositoryProvider);
+    final s3Keys = <String>[];
+
+    for (int i = 0; i < _attachments.length; i++) {
+      if (mounted) {
+        setState(() {
+          _uploadStatus = 'Uploading screenshot ${i + 1} of ${_attachments.length}...';
+        });
+      }
+
+      final file = _attachments[i];
+      final filename = file.path.split('/').last;
+      final ext = filename.split('.').last.toLowerCase();
+      final contentType = switch (ext) {
+        'png' => 'image/png',
+        'webp' => 'image/webp',
+        _ => 'image/jpeg',
+      };
+      final fileSize = await file.length();
+
+      // Get presigned URL
+      final presignData = await repo.getAttachmentPresignedUrl(
+        filename: filename,
+        contentType: contentType,
+        fileSize: fileSize,
+      );
+
+      // Upload to S3
+      await repo.uploadToS3(
+        presignedUrl: presignData['presigned_url'] as String,
+        fields: presignData['presigned_fields'] as Map<String, dynamic>?,
+        file: file,
+        contentType: contentType,
+      );
+
+      s3Keys.add(presignData['s3_key'] as String);
+    }
+
+    return s3Keys;
+  }
+
   Future<void> _submitTicket() async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -81,16 +158,29 @@ class _CreateTicketScreenState extends ConsumerState<CreateTicketScreen> {
       return;
     }
 
-    setState(() => _isSubmitting = true);
+    setState(() {
+      _isSubmitting = true;
+      _uploadStatus = _attachments.isNotEmpty ? 'Uploading screenshots...' : null;
+    });
 
     try {
+      // Upload attachments first
+      final s3Keys = await _uploadAttachments();
+
+      if (mounted) {
+        setState(() => _uploadStatus = 'Creating ticket...');
+      }
+
+      final stepsText = _stepsController.text.trim();
+
       final ticket = await ref.read(supportTicketsProvider.notifier).createTicket(
         subject: _subjectController.text.trim(),
         category: _selectedCategory.value,
         priority: _selectedPriority.value,
         description: _descriptionController.text.trim(),
-        // Note: In a real app, you would upload attachments first and pass URLs
-        attachments: null,
+        attachments: s3Keys.isNotEmpty ? s3Keys : null,
+        stepsToReproduce: stepsText.isNotEmpty ? stepsText : null,
+        screenContext: _selectedScreenContext,
       );
 
       if (mounted) {
@@ -110,7 +200,10 @@ class _CreateTicketScreenState extends ConsumerState<CreateTicketScreen> {
       }
     } finally {
       if (mounted) {
-        setState(() => _isSubmitting = false);
+        setState(() {
+          _isSubmitting = false;
+          _uploadStatus = null;
+        });
       }
     }
   }
@@ -213,6 +306,36 @@ class _CreateTicketScreenState extends ConsumerState<CreateTicketScreen> {
     );
   }
 
+  InputDecoration _fieldDecoration({
+    required String hintText,
+    required Color fillColor,
+    required Color borderColor,
+    required Color hintColor,
+  }) {
+    return InputDecoration(
+      hintText: hintText,
+      hintStyle: TextStyle(color: hintColor),
+      filled: true,
+      fillColor: fillColor,
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: borderColor),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: borderColor),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: AppColors.cyan),
+      ),
+      errorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: AppColors.error),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -256,27 +379,11 @@ class _CreateTicketScreenState extends ConsumerState<CreateTicketScreen> {
             TextFormField(
               controller: _subjectController,
               style: TextStyle(color: textPrimary),
-              decoration: InputDecoration(
+              decoration: _fieldDecoration(
                 hintText: 'Brief description of your issue',
-                hintStyle: TextStyle(color: textSecondary),
-                filled: true,
                 fillColor: elevated,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: cardBorder),
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: cardBorder),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(color: AppColors.cyan),
-                ),
-                errorBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(color: AppColors.error),
-                ),
+                borderColor: cardBorder,
+                hintColor: textSecondary,
               ),
               validator: (value) {
                 if (value == null || value.trim().isEmpty) {
@@ -412,6 +519,49 @@ class _CreateTicketScreenState extends ConsumerState<CreateTicketScreen> {
 
             const SizedBox(height: 24),
 
+            // Where did this happen? (optional)
+            Text(
+              'Where did this happen? (optional)',
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: textPrimary,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Container(
+              decoration: BoxDecoration(
+                color: elevated,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: cardBorder),
+              ),
+              child: DropdownButtonFormField<String>(
+                value: _selectedScreenContext,
+                dropdownColor: elevated,
+                style: TextStyle(color: textPrimary),
+                decoration: InputDecoration(
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+                  border: InputBorder.none,
+                  hintText: 'Select screen or feature',
+                  hintStyle: TextStyle(color: textSecondary),
+                ),
+                items: _screenContextOptions.map((screen) {
+                  return DropdownMenuItem(
+                    value: screen,
+                    child: Text(
+                      screen,
+                      style: TextStyle(color: textPrimary),
+                    ),
+                  );
+                }).toList(),
+                onChanged: (value) {
+                  setState(() => _selectedScreenContext = value);
+                },
+              ),
+            ),
+
+            const SizedBox(height: 24),
+
             // Description
             Text(
               'Description',
@@ -426,27 +576,11 @@ class _CreateTicketScreenState extends ConsumerState<CreateTicketScreen> {
               controller: _descriptionController,
               style: TextStyle(color: textPrimary),
               maxLines: 6,
-              decoration: InputDecoration(
+              decoration: _fieldDecoration(
                 hintText: 'Describe your issue in detail...',
-                hintStyle: TextStyle(color: textSecondary),
-                filled: true,
                 fillColor: elevated,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: cardBorder),
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: cardBorder),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(color: AppColors.cyan),
-                ),
-                errorBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(color: AppColors.error),
-                ),
+                borderColor: cardBorder,
+                hintColor: textSecondary,
               ),
               validator: (value) {
                 if (value == null || value.trim().isEmpty) {
@@ -457,6 +591,30 @@ class _CreateTicketScreenState extends ConsumerState<CreateTicketScreen> {
                 }
                 return null;
               },
+            ),
+
+            const SizedBox(height: 24),
+
+            // Steps to reproduce (optional)
+            Text(
+              'Steps to reproduce (optional)',
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: textPrimary,
+              ),
+            ),
+            const SizedBox(height: 8),
+            TextFormField(
+              controller: _stepsController,
+              style: TextStyle(color: textPrimary),
+              maxLines: 4,
+              decoration: _fieldDecoration(
+                hintText: '1. Open the app\n2. Go to...\n3. Tap on...',
+                fillColor: elevated,
+                borderColor: cardBorder,
+                hintColor: textSecondary,
+              ),
             ),
 
             const SizedBox(height: 24),
@@ -489,12 +647,12 @@ class _CreateTicketScreenState extends ConsumerState<CreateTicketScreen> {
                 ..._attachments.asMap().entries.map((entry) {
                   return _AttachmentTile(
                     file: entry.value,
-                    onRemove: () => _removeAttachment(entry.key),
+                    onRemove: _isSubmitting ? null : () => _removeAttachment(entry.key),
                   );
                 }),
 
                 // Add button
-                if (_attachments.length < 3)
+                if (_attachments.length < 3 && !_isSubmitting)
                   GestureDetector(
                     onTap: _pickImage,
                     child: Container(
@@ -548,13 +706,29 @@ class _CreateTicketScreenState extends ConsumerState<CreateTicketScreen> {
                   disabledBackgroundColor: AppColors.cyan.withOpacity(0.5),
                 ),
                 child: _isSubmitting
-                    ? const SizedBox(
-                        width: 24,
-                        height: 24,
-                        child: CircularProgressIndicator(
-                          color: Colors.white,
-                          strokeWidth: 2,
-                        ),
+                    ? Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(
+                              color: Colors.white,
+                              strokeWidth: 2,
+                            ),
+                          ),
+                          if (_uploadStatus != null) ...[
+                            const SizedBox(width: 12),
+                            Text(
+                              _uploadStatus!,
+                              style: const TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w500,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ],
+                        ],
                       )
                     : const Text(
                         'Submit Ticket',
@@ -590,7 +764,7 @@ class _CreateTicketScreenState extends ConsumerState<CreateTicketScreen> {
 /// Attachment tile widget
 class _AttachmentTile extends StatelessWidget {
   final File file;
-  final VoidCallback onRemove;
+  final VoidCallback? onRemove;
 
   const _AttachmentTile({
     required this.file,
@@ -612,26 +786,27 @@ class _AttachmentTile extends StatelessWidget {
             ),
           ),
         ),
-        Positioned(
-          top: 4,
-          right: 4,
-          child: GestureDetector(
-            onTap: onRemove,
-            child: Container(
-              width: 24,
-              height: 24,
-              decoration: BoxDecoration(
-                color: AppColors.error,
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(
-                Icons.close,
-                color: Colors.white,
-                size: 14,
+        if (onRemove != null)
+          Positioned(
+            top: 4,
+            right: 4,
+            child: GestureDetector(
+              onTap: onRemove,
+              child: Container(
+                width: 24,
+                height: 24,
+                decoration: BoxDecoration(
+                  color: AppColors.error,
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.close,
+                  color: Colors.white,
+                  size: 14,
+                ),
               ),
             ),
           ),
-        ),
       ],
     );
   }

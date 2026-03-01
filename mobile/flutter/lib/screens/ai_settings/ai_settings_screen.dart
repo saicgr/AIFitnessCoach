@@ -8,6 +8,7 @@ import '../../data/models/chat_message.dart';
 import '../../data/models/coach_persona.dart';
 import '../../data/repositories/chat_repository.dart';
 import '../../data/services/api_client.dart';
+import '../../data/services/notification_service.dart';
 import '../../widgets/glass_back_button.dart';
 
 /// AI Settings storage provider - loads from API when user is authenticated
@@ -380,6 +381,7 @@ class AISettingsNotifier extends StateNotifier<AISettings> {
     // Mark as loaded to prevent API from overwriting local selection during onboarding
     _isLoaded = true;
     _saveSettings();
+    NotificationService.cacheCoachId(coach.id, coachingStyle: coach.coachingStyle);
   }
 
   /// Set a custom coach with user-defined settings
@@ -400,6 +402,7 @@ class AISettingsNotifier extends StateNotifier<AISettings> {
     // Mark as loaded to prevent API from overwriting local selection during onboarding
     _isLoaded = true;
     _saveSettings();
+    NotificationService.cacheCoachId('custom', coachingStyle: coachingStyle);
   }
 
   /// Get the current coach persona (reconstructs from settings)

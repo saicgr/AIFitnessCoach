@@ -112,9 +112,10 @@ class MediaPickerHelper {
         sizeBytes: sizeBytes,
         mimeType: mimeType,
       );
-    } catch (e) {
+    } catch (e, stackTrace) {
       if (e is MediaValidationException) rethrow;
       debugPrint('❌ [MediaPicker] Error picking image: $e');
+      debugPrint('❌ [MediaPicker] Stack trace: $stackTrace');
       return null;
     }
   }

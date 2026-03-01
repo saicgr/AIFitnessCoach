@@ -20,6 +20,7 @@ class QuizTrainingStyle extends StatefulWidget {
   final ValueChanged<String>? onWorkoutVarietyChanged;
   final ValueChanged<int>? onDaysPerWeekChanged;  // ← ADDED: Allow adjusting days/week
   final bool showHeader;
+  final bool showSplitSection;
 
   const QuizTrainingStyle({
     super.key,
@@ -32,6 +33,7 @@ class QuizTrainingStyle extends StatefulWidget {
     this.onWorkoutVarietyChanged,
     this.onDaysPerWeekChanged,  // ← ADDED: Optional callback
     this.showHeader = true,
+    this.showSplitSection = true,
   });
 
   @override
@@ -201,6 +203,7 @@ class _QuizTrainingStyleState extends State<QuizTrainingStyle> {
                   controller: _scrollController,
                   padding: EdgeInsets.zero,
                   children: [
+                if (widget.showSplitSection) ...[
                 Text(
                   'Training Split',
                   style: TextStyle(
@@ -375,6 +378,7 @@ class _QuizTrainingStyleState extends State<QuizTrainingStyle> {
                 ],
 
                 const SizedBox(height: 32),
+                ],
 
                 // Section B: Workout Type
                 Text(

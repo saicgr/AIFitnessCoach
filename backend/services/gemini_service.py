@@ -3180,12 +3180,40 @@ Foods that are calorie-dense with low nutritional value, highly processed, or ha
         source_label = "USDA" if use_usda else "FoodDB"
         for i, (item, nutrition_data) in enumerate(zip(parsed_items, nutrition_results)):
             weight_g = item['weight_g']
+            weight_source = item.get('weight_source', 'estimated')
 
             if nutrition_data:
                 # Check if data has valid calories (non-zero)
                 calories_per_100g = nutrition_data.get('calories_per_100g', 0)
 
                 if calories_per_100g > 0 and weight_g > 0:
+                    # Apply override weight correction if available
+                    # Never override when user gave an exact weight (e.g. "200g of dosa")
+                    override_weight = nutrition_data.get('override_weight_per_piece_g')
+                    if override_weight and weight_source != 'exact':
+                        original_item = food_items[i]
+                        count = original_item.get('count')
+                        if count and count > 0:
+                            # User said "2 dosas" → 2 * 100g = 200g
+                            corrected = count * override_weight
+                            logger.info(
+                                f"[{source_label}] WEIGHT OVERRIDE: '{food_names[i]}' "
+                                f"count={count} × {override_weight}g = {corrected}g "
+                                f"(was {weight_g}g)"
+                            )
+                            weight_g = corrected
+                            item['weight_g'] = weight_g
+                            item['weight_source'] = 'override'
+                        elif weight_source in ('estimated', 'gemini'):
+                            # No explicit count, assume 1 piece
+                            logger.info(
+                                f"[{source_label}] WEIGHT OVERRIDE: '{food_names[i]}' "
+                                f"1 piece = {override_weight}g (was {weight_g}g)"
+                            )
+                            weight_g = override_weight
+                            item['weight_g'] = weight_g
+                            item['weight_source'] = 'override'
+
                     # Use nutrition DB data
                     item['usda_data'] = nutrition_data
                     item['ai_per_gram'] = None
@@ -3196,7 +3224,7 @@ Foods that are calorie-dense with low nutritional value, highly processed, or ha
                     item['carbs_g'] = round(nutrition_data['carbs_per_100g'] * multiplier, 1)
                     item['fat_g'] = round(nutrition_data['fat_per_100g'] * multiplier, 1)
                     item['fiber_g'] = round(nutrition_data['fiber_per_100g'] * multiplier, 1)
-                    logger.info(f"[{source_label}] Using data for '{food_names[i]}' | calories={item['calories']} | cal/100g={calories_per_100g}")
+                    logger.info(f"[{source_label}] Using data for '{food_names[i]}' | calories={item['calories']} | cal/100g={calories_per_100g} | weight={weight_g}g")
                 else:
                     # Match found but has 0 calories - fall back to AI values
                     logger.warning(f"[{source_label}] Found match for '{food_names[i]}' but calories=0, keeping AI estimate | ai_calories={item.get('calories', 0)}")
@@ -4465,8 +4493,8 @@ IMPORTANT - ALWAYS identify foods:
         last_error = None
         content = ""
 
-        # Timeout for food analysis (12 seconds per attempt)
-        FOOD_ANALYSIS_TIMEOUT = 12
+        # Timeout for food analysis (25 seconds base, progressive per retry)
+        FOOD_ANALYSIS_TIMEOUT = 25
 
         for attempt in range(max_retries):
             try:
@@ -4474,6 +4502,7 @@ IMPORTANT - ALWAYS identify foods:
 
                 # Add timeout to prevent hanging on slow Gemini responses
                 try:
+                    attempt_timeout = FOOD_ANALYSIS_TIMEOUT + (attempt * 10)
                     response = await asyncio.wait_for(
                         client.aio.models.generate_content(
                             model=self.model,
@@ -4485,11 +4514,12 @@ IMPORTANT - ALWAYS identify foods:
                                 temperature=0.2,  # Lower = faster, more deterministic
                             ),
                         ),
-                        timeout=FOOD_ANALYSIS_TIMEOUT
+                        timeout=attempt_timeout
                     )
                 except asyncio.TimeoutError:
-                    logger.warning(f"[Gemini] Request timed out after {FOOD_ANALYSIS_TIMEOUT}s (attempt {attempt + 1})")
-                    last_error = f"Timeout after {FOOD_ANALYSIS_TIMEOUT}s"
+                    logger.warning(f"[Gemini] Request timed out after {attempt_timeout}s (attempt {attempt + 1})")
+                    last_error = f"Timeout after {attempt_timeout}s"
+                    await asyncio.sleep(1 + attempt)
                     continue
 
                 # Use response.parsed for structured output - SDK handles JSON parsing
@@ -4585,7 +4615,7 @@ IMPORTANT - ALWAYS identify foods:
                         temperature=0.2,
                     ),
                 ),
-                timeout=FOOD_ANALYSIS_TIMEOUT
+                timeout=FOOD_ANALYSIS_TIMEOUT + 15
             )
 
             if fallback_response.text:

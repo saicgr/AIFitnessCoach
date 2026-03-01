@@ -21,6 +21,7 @@ from core.db import get_supabase_db
 from core.timezone_utils import resolve_timezone, get_user_today
 from core.auth import get_current_user
 from core.exceptions import safe_internal_error
+from core.db_utils import safe_maybe_single
 from models.consistency import (
     ConsistencyInsights,
     ConsistencyPatterns,
@@ -157,9 +158,11 @@ async def get_consistency_insights(
         logger.info(f"Fetching consistency insights for user {user_id}")
 
         # Get user's current streak from users table
-        user_response = db.client.table("users").select(
-            "current_streak, last_workout_date"
-        ).eq("id", user_id).maybe_single().execute()
+        user_response = safe_maybe_single(
+            db.client.table("users").select(
+                "current_streak, last_workout_date"
+            ).eq("id", user_id).maybe_single()
+        )
 
         current_streak = 0
         last_workout_date = None
@@ -282,36 +285,36 @@ async def get_consistency_insights(
                     p.is_preferred = True
                     break
 
-        # Get monthly stats (current month)
+        # Get monthly + weekly stats in ONE query instead of 10 separate ones
         month_start = today.replace(day=1)
-        month_end = today
+        oldest_week_start = today - timedelta(days=3 * 7 + 6)  # 4 weeks back
+        range_start = min(month_start, oldest_week_start)
 
-        # Count scheduled workouts this month
-        scheduled_response = db.client.table("workouts").select(
-            "id", count="exact"
+        all_workouts_resp = db.client.table("workouts").select(
+            "scheduled_date, is_completed"
         ).eq("user_id", user_id).gte(
-            "scheduled_date", month_start.isoformat()
+            "scheduled_date", range_start.isoformat()
         ).lte(
-            "scheduled_date", month_end.isoformat()
+            "scheduled_date", today.isoformat()
         ).execute()
-        month_scheduled = scheduled_response.count or 0
 
-        # Count completed workouts this month
-        completed_response = db.client.table("workouts").select(
-            "id", count="exact"
-        ).eq("user_id", user_id).eq(
-            "is_completed", True
-        ).gte(
-            "scheduled_date", month_start.isoformat()
-        ).lte(
-            "scheduled_date", month_end.isoformat()
-        ).execute()
-        month_completed = completed_response.count or 0
+        all_workouts = all_workouts_resp.data or []
 
+        # Parse dates once
+        parsed_workouts = []
+        for w in all_workouts:
+            sd = w["scheduled_date"]
+            if "T" in sd:
+                sd = sd.split("T")[0]
+            parsed_workouts.append((date.fromisoformat(sd), w["is_completed"]))
+
+        # Monthly stats
+        month_scheduled = sum(1 for d, _ in parsed_workouts if d >= month_start)
+        month_completed = sum(1 for d, c in parsed_workouts if d >= month_start and c)
         month_rate = (month_completed / month_scheduled * 100) if month_scheduled > 0 else 0
         month_display = f"{month_completed} of {month_scheduled} workouts"
 
-        # Get weekly completion rates (last 4 weeks)
+        # Weekly completion rates (last 4 weeks) - computed from same data
         weekly_rates = []
         rates_for_trend = []
 
@@ -319,27 +322,8 @@ async def get_consistency_insights(
             week_end = today - timedelta(days=week_offset * 7)
             week_start = week_end - timedelta(days=6)
 
-            # Count for this week
-            week_scheduled_resp = db.client.table("workouts").select(
-                "id", count="exact"
-            ).eq("user_id", user_id).gte(
-                "scheduled_date", week_start.isoformat()
-            ).lte(
-                "scheduled_date", week_end.isoformat()
-            ).execute()
-            week_scheduled = week_scheduled_resp.count or 0
-
-            week_completed_resp = db.client.table("workouts").select(
-                "id", count="exact"
-            ).eq("user_id", user_id).eq(
-                "is_completed", True
-            ).gte(
-                "scheduled_date", week_start.isoformat()
-            ).lte(
-                "scheduled_date", week_end.isoformat()
-            ).execute()
-            week_completed = week_completed_resp.count or 0
-
+            week_scheduled = sum(1 for d, _ in parsed_workouts if week_start <= d <= week_end)
+            week_completed = sum(1 for d, c in parsed_workouts if week_start <= d <= week_end and c)
             week_rate = (week_completed / week_scheduled * 100) if week_scheduled > 0 else 0
 
             weekly_rates.append(WeeklyConsistencyMetric(
@@ -772,9 +756,11 @@ async def get_day_detail(
             }
 
         # Get workout log for completed workout
-        log_response = db.client.table("workout_logs").select(
-            "id, completed_at, total_time_seconds, sets_json, calories_burned"
-        ).eq("workout_id", workout_id).maybe_single().execute()
+        log_response = safe_maybe_single(
+            db.client.table("workout_logs").select(
+                "id, completed_at, total_time_seconds, sets_json, calories_burned"
+            ).eq("workout_id", workout_id).maybe_single()
+        )
         log_data = log_response.data or {}
 
         workout_log_id = log_data.get("id")
@@ -1153,9 +1139,11 @@ async def initiate_streak_recovery(
         logger.info(f"Initiating streak recovery for user {user_id}")
 
         # Get user's last workout info
-        user_response = db.client.table("users").select(
-            "current_streak, last_workout_date"
-        ).eq("id", user_id).maybe_single().execute()
+        user_response = safe_maybe_single(
+            db.client.table("users").select(
+                "current_streak, last_workout_date"
+            ).eq("id", user_id).maybe_single()
+        )
 
         last_workout_date = None
         previous_streak = 0

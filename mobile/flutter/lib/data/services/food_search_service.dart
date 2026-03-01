@@ -18,6 +18,9 @@ class FoodSearchResult {
   final FoodSearchSource source;
   final double? distance; // For similarity ranking (lower = more similar)
   final Map<String, dynamic>? originalData;
+  final double? weightPerUnitG; // Weight of 1 piece (e.g. 1 burger = 219g)
+  final int? defaultCount; // Default number of pieces (e.g. 10 for 10pc nuggets)
+  final double? servingWeightG; // Standard serving weight in grams
 
   const FoodSearchResult({
     required this.id,
@@ -31,6 +34,9 @@ class FoodSearchResult {
     required this.source,
     this.distance,
     this.originalData,
+    this.weightPerUnitG,
+    this.defaultCount,
+    this.servingWeightG,
   });
 
   /// Create from SavedFood model
@@ -182,7 +188,7 @@ class FoodSearchService {
 
   // Debounce timer
   Timer? _debounceTimer;
-  static const Duration _debounceDuration = Duration(milliseconds: 200);
+  static const Duration _debounceDuration = Duration(milliseconds: 600);
 
   // Stream controller for real-time search updates
   final _searchController = StreamController<FoodSearchState>.broadcast();
@@ -287,6 +293,32 @@ class FoodSearchService {
     _debounceTimer = Timer(_debounceDuration, () {
       _performSearch(normalizedQuery, userId, cachedLogs: cachedLogs);
     });
+  }
+
+  /// Trigger search immediately (bypass debounce) — for manual search button.
+  void searchImmediate(String query, String userId, {List<FoodLog>? cachedLogs}) {
+    _debounceTimer?.cancel();
+    final normalizedQuery = _normalizeQuery(query);
+    _currentQuery = normalizedQuery;
+    if (normalizedQuery.length < _minQueryLength) return;
+
+    // Check cache first
+    final cacheKey = _cacheKey(normalizedQuery);
+    final cachedEntry = _cache[cacheKey];
+    if (cachedEntry != null && !cachedEntry.isExpired) {
+      _searchController.add(FoodSearchResults(
+        query: normalizedQuery,
+        saved: cachedEntry.results.saved,
+        recent: cachedEntry.results.recent,
+        database: cachedEntry.results.database,
+        foodDatabase: cachedEntry.results.foodDatabase,
+        fromCache: true,
+      ));
+      return;
+    }
+
+    _searchController.add(FoodSearchLoading(normalizedQuery));
+    _performSearch(normalizedQuery, userId, cachedLogs: cachedLogs);
   }
 
   /// Synchronous filter of cached food logs — runs instantly on the UI thread.
@@ -470,15 +502,37 @@ class FoodSearchService {
               (item['total_protein_g'] as num?)?.toDouble(),
           carbs: (nutrients['carbs_per_100g'] as num?)?.toDouble(),
           fat: (nutrients['fat_per_100g'] as num?)?.toDouble(),
-          servingSize: isPersonal ? null : '100g',
+          servingSize: isPersonal ? null : _formatServingSize(item),
           source: isPersonal ? FoodSearchSource.saved : FoodSearchSource.foodDatabase,
           originalData: item as Map<String, dynamic>,
+          weightPerUnitG: (item['weight_per_unit_g'] as num?)?.toDouble(),
+          defaultCount: (item['default_count'] as num?)?.toInt(),
+          servingWeightG: (item['serving_weight_g'] as num?)?.toDouble(),
         );
       }).toList();
     } catch (e) {
       debugPrint('FoodSearch: Error searching food database: $e');
       return [];
     }
+  }
+
+  /// Format serving size from API response for display.
+  /// Shows "1 pc (219g)" for single items, "10 pc (162g)" for multi-piece, or "100g" fallback.
+  String _formatServingSize(Map<String, dynamic> item) {
+    final count = (item['default_count'] as num?)?.toInt();
+    final servingG = (item['serving_weight_g'] as num?)?.toDouble();
+    final weightPerUnit = (item['weight_per_unit_g'] as num?)?.toDouble();
+
+    if (count != null && count > 0 && servingG != null && servingG > 0) {
+      if (count > 1) {
+        return '$count pc (${servingG.round()}g)';
+      }
+      return '1 serving (${servingG.round()}g)';
+    }
+    if (weightPerUnit != null && weightPerUnit > 0) {
+      return '1 serving (${weightPerUnit.round()}g)';
+    }
+    return '100g';
   }
 
   /// Normalize query for consistent caching

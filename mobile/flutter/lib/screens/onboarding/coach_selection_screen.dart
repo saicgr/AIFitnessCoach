@@ -610,6 +610,19 @@ class _CoachSelectionScreenState extends ConsumerState<CoachSelectionScreen> {
           // Workout environment
           if (quizData.workoutEnvironment != null) 'workout_environment': quizData.workoutEnvironment,
 
+          // Nutrition fields - must be top-level for backend UserPreferencesRequest
+          // (AIProfilePayloadBuilder nests these under 'nutrition' key which backend doesn't parse)
+          if (quizData.dietaryRestrictions != null && quizData.dietaryRestrictions!.isNotEmpty)
+            'dietary_restrictions': quizData.dietaryRestrictions!.where((r) => r != 'none').toList(),
+          if (quizData.nutritionGoals != null) 'nutrition_goals': quizData.nutritionGoals,
+          if (quizData.mealsPerDay != null) 'meals_per_day': quizData.mealsPerDay,
+
+          // Fasting fields - must be top-level for backend UserPreferencesRequest
+          if (quizData.interestedInFasting != null) 'interested_in_fasting': quizData.interestedInFasting,
+          if (quizData.fastingProtocol != null) 'fasting_protocol': quizData.fastingProtocol,
+          if (quizData.wakeTime != null) 'wake_time': quizData.wakeTime,
+          if (quizData.sleepTime != null) 'sleep_time': quizData.sleepTime,
+
           // Coach
           'coach_id': _isCustomMode ? 'custom' : _selectedCoach?.id,
         };
@@ -632,6 +645,12 @@ class _CoachSelectionScreenState extends ConsumerState<CoachSelectionScreen> {
         // Also set in SharedPreferences so local notification scheduling works
         final prefs = await SharedPreferences.getInstance();
         await prefs.setBool('onboarding_completed', true);
+
+        // Cache coach ID for personalized notifications
+        await NotificationService.cacheCoachId(
+          _isCustomMode ? 'custom' : _selectedCoach?.id,
+          coachingStyle: _isCustomMode ? _customStyle : _selectedCoach?.coachingStyle,
+        );
 
         debugPrint('✅ [CoachSelection] User preferences submitted successfully');
 

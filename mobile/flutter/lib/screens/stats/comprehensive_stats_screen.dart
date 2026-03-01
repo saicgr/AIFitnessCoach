@@ -13,6 +13,8 @@ import '../../widgets/glass_back_button.dart';
 import '../../core/theme/accent_color_provider.dart';
 import '../../data/models/progress_photos.dart';
 import '../../data/providers/consistency_provider.dart';
+import '../../data/models/milestone.dart';
+import '../../data/providers/milestones_provider.dart';
 import '../../data/providers/scores_provider.dart';
 import '../../data/repositories/progress_photos_repository.dart';
 import '../../data/repositories/workout_repository.dart';
@@ -92,6 +94,8 @@ class _ComprehensiveStatsScreenState extends ConsumerState<ComprehensiveStatsScr
       });
       // Load photos data
       ref.read(progressPhotosNotifierProvider(userId).notifier).loadAll();
+      // Load milestones data
+      ref.read(milestonesProvider.notifier).loadMilestoneProgress(userId: userId);
 
       // If openPhotoSheet is requested, switch to Photos tab
       if (widget.openPhotoSheet) {
@@ -417,7 +421,7 @@ class _OverviewTabState extends ConsumerState<_OverviewTab> {
                 _StatDivider(),
                 _CompactStat(
                   icon: Icons.timer_outlined,
-                  value: '12.5h',
+                  value: workoutsNotifier.totalDurationFormatted,
                   label: 'Time',
                   color: AppColors.purple,
                 ),
@@ -589,6 +593,7 @@ class _PhotosTabState extends ConsumerState<_PhotosTab>
                 )
               else if (state.photos.isEmpty)
                 SliverFillRemaining(
+                  hasScrollBody: false,
                   child: _buildEmptyPhotosState(),
                 )
               else
@@ -3054,11 +3059,68 @@ class _StatDivider extends StatelessWidget {
   }
 }
 
-class _AchievementsPreview extends StatelessWidget {
+class _AchievementsPreview extends ConsumerWidget {
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final elevatedColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final milestonesState = ref.watch(milestonesProvider);
+
+    if (milestonesState.isLoading) {
+      return Container(
+        height: 120,
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: elevatedColor,
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: const Center(
+          child: SizedBox(
+            width: 24,
+            height: 24,
+            child: CircularProgressIndicator(strokeWidth: 2),
+          ),
+        ),
+      );
+    }
+
+    final achieved = milestonesState.achieved;
+    final upcoming = milestonesState.upcoming;
+
+    // Build display list: up to 4 items, achieved first then upcoming
+    final displayItems = <MilestoneProgress>[];
+    displayItems.addAll(achieved.take(4));
+    if (displayItems.length < 4) {
+      displayItems.addAll(upcoming.take(4 - displayItems.length));
+    }
+
+    if (displayItems.isEmpty) {
+      return Container(
+        height: 120,
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: elevatedColor,
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.emoji_events_outlined,
+                  color: AppColors.textMuted, size: 32),
+              const SizedBox(height: 8),
+              Text(
+                'No achievements yet',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: AppColors.textMuted,
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
 
     return Container(
       height: 120,
@@ -3069,50 +3131,76 @@ class _AchievementsPreview extends StatelessWidget {
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: [
-          _BadgeIcon(icon: '🏆', label: 'First Workout', unlocked: true),
-          _BadgeIcon(icon: '🔥', label: '7 Day Streak', unlocked: true),
-          _BadgeIcon(icon: '💪', label: '10 Workouts', unlocked: true),
-          _BadgeIcon(icon: '🎯', label: '30 Days', unlocked: false),
-        ],
+        children: displayItems.map((mp) {
+          return _BadgeIcon(
+            iconData: _categoryIcon(mp.milestone.category),
+            label: mp.milestone.name,
+            unlocked: mp.isAchieved,
+            color: Color(mp.milestone.tier.colorValue),
+          );
+        }).toList(),
       ),
     );
+  }
+
+  static IconData _categoryIcon(MilestoneCategory category) {
+    switch (category) {
+      case MilestoneCategory.workouts:
+        return Icons.fitness_center;
+      case MilestoneCategory.streak:
+        return Icons.local_fire_department;
+      case MilestoneCategory.strength:
+        return Icons.emoji_events;
+      case MilestoneCategory.volume:
+        return Icons.speed;
+      case MilestoneCategory.time:
+        return Icons.schedule;
+      case MilestoneCategory.weight:
+        return Icons.monitor_weight;
+      case MilestoneCategory.prs:
+        return Icons.military_tech;
+    }
   }
 }
 
 class _BadgeIcon extends StatelessWidget {
-  final String icon;
+  final IconData iconData;
   final String label;
   final bool unlocked;
+  final Color color;
 
   const _BadgeIcon({
-    required this.icon,
+    required this.iconData,
     required this.label,
     required this.unlocked,
+    required this.color,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Text(
-          icon,
-          style: TextStyle(
-            fontSize: 32,
-            color: unlocked ? null : Colors.grey.withOpacity(0.3),
+    return SizedBox(
+      width: 72,
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            iconData,
+            size: 32,
+            color: unlocked ? color : Colors.grey.withOpacity(0.3),
           ),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 10,
-            color: unlocked ? AppColors.textSecondary : AppColors.textMuted,
+          const SizedBox(height: 4),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 10,
+              color: unlocked ? AppColors.textSecondary : AppColors.textMuted,
+            ),
+            textAlign: TextAlign.center,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
           ),
-          textAlign: TextAlign.center,
-        ),
-      ],
+        ],
+      ),
     );
   }
 }

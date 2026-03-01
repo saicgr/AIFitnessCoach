@@ -919,6 +919,9 @@ class USDAFoodResponse(BaseModel):
     nutrients: dict
     nutrients_per_serving: Optional[dict] = None
     score: Optional[float] = None
+    weight_per_unit_g: Optional[float] = None
+    default_count: Optional[int] = None
+    serving_weight_g: Optional[float] = None
 
 
 class USDASearchResponse(BaseModel):
@@ -961,6 +964,16 @@ async def search_foods(
         default=None,
         description="User ID to include personal saved foods in results"
     ),
+    restaurant: Optional[str] = Query(
+        default=None,
+        max_length=100,
+        description="Filter by restaurant name (e.g. McDonald's, Taco Bell)"
+    ),
+    category: Optional[str] = Query(
+        default=None,
+        max_length=50,
+        description="Filter by food category (e.g. burgers, drinks, breakfast)"
+    ),
 ):
     """
     Search the food database for foods matching a query.
@@ -983,6 +996,8 @@ async def search_foods(
                 user_id=user_id,
                 page_size=page_size,
                 page=page,
+                restaurant=restaurant,
+                food_category=category,
             )
         else:
             results = await food_db_service.search_foods(
@@ -990,6 +1005,8 @@ async def search_foods(
                 page_size=page_size,
                 page=page,
                 source=source,
+                restaurant=restaurant,
+                food_category=category,
             )
 
         # Convert local DB results to USDAFoodResponse format for compatibility
@@ -1035,6 +1052,9 @@ async def search_foods(
                 nutrients=nutrients,
                 nutrients_per_serving=nutrients_per_serving,
                 score=item.get("similarity_score"),
+                weight_per_unit_g=item.get("weight_per_unit_g"),
+                default_count=item.get("default_count"),
+                serving_weight_g=item.get("serving_weight_g"),
             ))
 
         total_hits = len(foods)
@@ -1841,14 +1861,21 @@ async def log_food_from_text_streaming(request: Request, body: LogTextRequest, c
             # Use caching service for faster lookups
             cache_service = get_food_analysis_cache_service()
 
-            # First try cache (common foods + cached AI responses)
-            food_analysis = await cache_service.analyze_food(
+            # First try cache (saved foods + overrides + common foods + cached AI responses)
+            cache_task = asyncio.create_task(cache_service.analyze_food(
                 description=body.description,
                 user_goals=user_goals,
                 nutrition_targets=nutrition_targets,
                 rag_context=None,  # Skip RAG on cache hit for speed
                 use_cache=True,
-            )
+                user_id=body.user_id,
+            ))
+            while not cache_task.done():
+                try:
+                    await asyncio.wait_for(asyncio.shield(cache_task), timeout=10.0)
+                except asyncio.TimeoutError:
+                    yield ": keep-alive\n\n"
+            food_analysis = cache_task.result()
 
             # If cache hit, log it
             if food_analysis and food_analysis.get("cache_hit"):
@@ -1869,13 +1896,20 @@ async def log_food_from_text_streaming(request: Request, body: LogTextRequest, c
                         logger.warning(f"[STREAM] Could not fetch RAG context: {e}")
 
                 # Re-analyze with RAG context (cache will save for next time)
-                food_analysis = await cache_service.analyze_food(
+                analysis_task = asyncio.create_task(cache_service.analyze_food(
                     description=body.description,
                     user_goals=user_goals,
                     nutrition_targets=nutrition_targets,
                     rag_context=rag_context,
                     use_cache=True,  # Will cache this new result
-                )
+                    user_id=body.user_id,
+                ))
+                while not analysis_task.done():
+                    try:
+                        await asyncio.wait_for(asyncio.shield(analysis_task), timeout=10.0)
+                    except asyncio.TimeoutError:
+                        yield ": keep-alive\n\n"
+                food_analysis = analysis_task.result()
 
             if not food_analysis or not food_analysis.get('food_items'):
                 yield send_error("Could not identify any food items from your description")
@@ -2056,6 +2090,7 @@ async def analyze_food_from_text_streaming(request: Request, body: LogTextReques
                     nutrition_targets=None,
                     rag_context=None,
                     use_cache=True,
+                    user_id=body.user_id,
                 )
 
             try:
@@ -2113,20 +2148,34 @@ async def analyze_food_from_text_streaming(request: Request, body: LogTextReques
                         logger.warning(f"[ANALYZE-STREAM] Could not fetch RAG context: {e}")
 
                 # Skip cache checks (already done above) — go straight to Gemini
-                food_analysis = await cache_service.analyze_food(
+                # Run analysis as a task and send keep-alive pings to prevent
+                # Render proxy from closing the SSE connection during long AI calls
+                analysis_task = asyncio.create_task(cache_service.analyze_food(
                     description=body.description,
                     user_goals=user_goals,
                     nutrition_targets=nutrition_targets,
                     rag_context=rag_context,
                     use_cache=False,
-                )
+                    user_id=body.user_id,
+                ))
 
-                # Step 3: Finalize results
-                yield send_progress(3, 3, "Finalizing results...", f"Found {len(food_analysis.get('food_items', []))} items")
+                # Send SSE keep-alive comments every 10s while waiting for Gemini
+                while not analysis_task.done():
+                    try:
+                        await asyncio.wait_for(asyncio.shield(analysis_task), timeout=10.0)
+                    except asyncio.TimeoutError:
+                        # Task still running — send keep-alive to prevent proxy timeout
+                        yield ": keep-alive\n\n"
+
+                food_analysis = analysis_task.result()
 
             if not food_analysis or not food_analysis.get('food_items'):
                 yield send_error("Could not identify any food items from your description")
                 return
+
+            if not food_analysis.get("cache_hit"):
+                # Step 3: Finalize results (only show for non-cached)
+                yield send_progress(3, 3, "Finalizing results...", f"Found {len(food_analysis.get('food_items', []))} items")
 
             food_items = food_analysis.get('food_items', [])
             total_calories = food_analysis.get('total_calories', 0)
@@ -2267,8 +2316,8 @@ async def log_food_from_image_streaming(
 
             gemini_service = GeminiService()
 
-            # Run Gemini analysis and S3 upload concurrently (no added delay)
-            food_analysis, (image_url, storage_key) = await asyncio.gather(
+            # Run Gemini analysis and S3 upload concurrently with keep-alive pings
+            analysis_task = asyncio.create_task(asyncio.gather(
                 gemini_service.analyze_food_image(
                     image_base64=image_base64,
                     mime_type=content_type,
@@ -2278,7 +2327,16 @@ async def log_food_from_image_streaming(
                     user_id=user_id,
                     content_type=content_type,
                 ),
-            )
+            ))
+
+            # Send SSE keep-alive comments every 10s while waiting
+            while not analysis_task.done():
+                try:
+                    await asyncio.wait_for(asyncio.shield(analysis_task), timeout=10.0)
+                except asyncio.TimeoutError:
+                    yield ": keep-alive\n\n"
+
+            food_analysis, (image_url, storage_key) = analysis_task.result()
             logger.info(f"[STREAM] S3 upload complete: {image_url}")
 
             if not food_analysis or not food_analysis.get('food_items'):
@@ -2466,11 +2524,19 @@ async def analyze_food_from_image_streaming(
             logger.info(f"[ANALYZE-STREAM:{request_id}] Step 2: Sending to Gemini for analysis")
 
             gemini_service = GeminiService()
-            food_analysis = await gemini_service.analyze_food_image(
+
+            # Run Gemini analysis with keep-alive pings to prevent proxy timeout
+            analysis_task = asyncio.create_task(gemini_service.analyze_food_image(
                 image_base64=image_base64,
                 mime_type=content_type,
                 request_id=request_id,
-            )
+            ))
+            while not analysis_task.done():
+                try:
+                    await asyncio.wait_for(asyncio.shield(analysis_task), timeout=10.0)
+                except asyncio.TimeoutError:
+                    yield ": keep-alive\n\n"
+            food_analysis = analysis_task.result()
 
             # Check if Gemini returned an error structure
             if food_analysis and food_analysis.get('error'):

@@ -150,6 +150,14 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
   }
 
   Future<void> _loadWorkout() async {
+    if (widget.workoutId.isEmpty) {
+      setState(() {
+        _error = 'Invalid workout ID';
+        _isLoading = false;
+      });
+      return;
+    }
+
     setState(() {
       _isLoading = true;
       _error = null;
@@ -158,9 +166,16 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
     try {
       final workoutRepo = ref.read(workoutRepositoryProvider);
       final workout = await workoutRepo.getWorkout(widget.workoutId);
+      if (workout == null) {
+        setState(() {
+          _error = 'Workout not found';
+          _isLoading = false;
+        });
+        return;
+      }
       setState(() {
         _workout = workout;
-        _isFavorite = workout?.isFavorite ?? false;
+        _isFavorite = workout.isFavorite ?? false;
         _isLoading = false;
       });
       // Load workout summary, training split, and generation params
@@ -169,6 +184,7 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
       _loadTrainingSplit();
       _loadGenerationParams();
     } catch (e) {
+      debugPrint('❌ [WorkoutDetail] Failed to load workout ${widget.workoutId}: $e');
       setState(() {
         _error = e.toString();
         _isLoading = false;
@@ -1325,21 +1341,37 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
           leading: const GlassBackButton(),
         ),
         body: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(Icons.error_outline, color: AppColors.error, size: 48),
-              const SizedBox(height: 16),
-              Text(
-                'Failed to load workout',
-                style: Theme.of(context).textTheme.titleMedium,
-              ),
-              const SizedBox(height: 8),
-              TextButton(
-                onPressed: _loadWorkout,
-                child: const Text('Try Again'),
-              ),
-            ],
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 32),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Icons.error_outline, color: AppColors.error, size: 48),
+                const SizedBox(height: 16),
+                Text(
+                  'Failed to load workout',
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+                if (_error != null) ...[
+                  const SizedBox(height: 8),
+                  Text(
+                    _error!,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: textMuted,
+                    ),
+                    textAlign: TextAlign.center,
+                    maxLines: 3,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+                const SizedBox(height: 16),
+                FilledButton.icon(
+                  onPressed: _loadWorkout,
+                  icon: const Icon(Icons.refresh, size: 18),
+                  label: const Text('Try Again'),
+                ),
+              ],
+            ),
           ),
         ),
       );

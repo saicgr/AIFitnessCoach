@@ -122,6 +122,10 @@ class _ComparisonViewState extends ConsumerState<ComparisonView> {
   void initState() {
     super.initState();
     _initFromExisting();
+    // Load progress photos so the photo selection grid is populated
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(progressPhotosNotifierProvider(widget.userId).notifier).loadAll();
+    });
   }
 
   void _initFromExisting() {
@@ -629,7 +633,9 @@ class _ComparisonViewState extends ConsumerState<ComparisonView> {
 
         // Photo grid
         Expanded(
-          child: sortedPhotos.isEmpty
+          child: state.isLoading
+              ? const Center(child: CircularProgressIndicator())
+              : sortedPhotos.isEmpty
               ? _buildEmptyPhotosState(colorScheme)
               : GridView.builder(
                   padding: const EdgeInsets.all(16),

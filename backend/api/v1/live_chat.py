@@ -18,8 +18,10 @@ from core.exceptions import safe_internal_error
 from typing import List, Optional
 from datetime import datetime
 import asyncio
+import httpx
 
 from core.supabase_db import get_supabase_db
+from core.config import get_settings
 from core.logger import get_logger
 from core.activity_logger import log_user_activity, log_user_error
 from models.live_chat import (
@@ -134,10 +136,10 @@ async def _send_admin_webhook(
     metadata: dict = None
 ) -> None:
     """
-    Send webhook notification to admins.
+    Send webhook notification to admins via Discord and/or email.
 
-    This is a placeholder that will be implemented later.
-    Currently just logs the event.
+    Sends a rich embed to Discord and optionally an email via Resend.
+    Gracefully handles failures — never breaks the user flow.
     """
     logger.info(f"[Admin Webhook] {event_type}: {message}")
     logger.info(f"  - Ticket: {ticket_id}")
@@ -145,8 +147,97 @@ async def _send_admin_webhook(
     if metadata:
         logger.info(f"  - Metadata: {metadata}")
 
-    # Webhook not yet connected to Discord/Slack or custom admin panel
-    logger.warning("Admin webhook not configured - message not forwarded (event=%s, ticket=%s)", event_type, ticket_id)
+    settings = get_settings()
+    metadata = metadata or {}
+
+    # --- Discord Webhook ---
+    if settings.discord_webhook_url:
+        try:
+            category = metadata.get("category", "General")
+            queue_position = metadata.get("queue_position", "N/A")
+            escalated = metadata.get("escalated_from_ai", False)
+            preview = metadata.get("initial_message_preview", metadata.get("preview", ""))
+
+            # Choose color by event type
+            color_map = {
+                "live_chat_started": 0x00E5FF,   # cyan
+                "live_chat_escalated": 0xFFA726,  # orange
+                "live_chat_message": 0x66BB6A,    # green
+            }
+            color = color_map.get(event_type, 0x9E9E9E)
+
+            # Choose title emoji by event type
+            title_map = {
+                "live_chat_started": "New Live Chat Request",
+                "live_chat_escalated": "Ticket Escalated to Live Chat",
+                "live_chat_message": "New Message from User",
+            }
+            title = title_map.get(event_type, event_type.replace("_", " ").title())
+
+            fields = [
+                {"name": "Ticket", "value": f"`#{ticket_id[:8]}`", "inline": True},
+                {"name": "Category", "value": category.replace("_", " ").title(), "inline": True},
+                {"name": "Queue Position", "value": str(queue_position), "inline": True},
+            ]
+
+            if escalated:
+                fields.append({"name": "Escalated from AI", "value": "Yes", "inline": True})
+
+            if preview:
+                fields.append({"name": "Message Preview", "value": preview[:200], "inline": False})
+
+            embed = {
+                "title": f"\U0001f514 {title}",
+                "color": color,
+                "fields": fields,
+                "footer": {"text": f"User: {user_id[:8]}..."},
+                "timestamp": datetime.utcnow().isoformat(),
+            }
+
+            payload = {"embeds": [embed]}
+
+            async with httpx.AsyncClient(timeout=10) as client:
+                resp = await client.post(settings.discord_webhook_url, json=payload)
+                if resp.status_code in (200, 204):
+                    logger.info(f"Discord webhook sent for {event_type} (ticket={ticket_id[:8]})")
+                else:
+                    logger.warning(f"Discord webhook returned {resp.status_code}: {resp.text[:200]}")
+
+        except Exception as e:
+            logger.error(f"Discord webhook failed: {e}")
+
+    # --- Email Notification (optional fallback) ---
+    if settings.admin_notification_email:
+        try:
+            from services.email_service import EmailService
+            email_svc = EmailService()
+            if email_svc.is_configured():
+                import resend
+                category = metadata.get("category", "General")
+                queue_position = metadata.get("queue_position", "N/A")
+
+                subject = f"[FitWiz] {event_type.replace('_', ' ').title()} — #{ticket_id[:8]}"
+                html_body = f"""
+                <h2>{event_type.replace('_', ' ').title()}</h2>
+                <p><strong>Ticket:</strong> #{ticket_id[:8]}</p>
+                <p><strong>Category:</strong> {category}</p>
+                <p><strong>Queue Position:</strong> {queue_position}</p>
+                <p><strong>User:</strong> {user_id}</p>
+                <p><strong>Message:</strong> {message}</p>
+                """
+
+                resend.Emails.send({
+                    "from": email_svc.from_email,
+                    "to": [settings.admin_notification_email],
+                    "subject": subject,
+                    "html": html_body,
+                })
+                logger.info(f"Admin email sent to {settings.admin_notification_email}")
+        except Exception as e:
+            logger.error(f"Admin email notification failed: {e}")
+
+    if not settings.discord_webhook_url and not settings.admin_notification_email:
+        logger.warning("No admin notification channels configured (set DISCORD_WEBHOOK_URL or ADMIN_NOTIFICATION_EMAIL)")
 
 
 async def _check_if_user_is_agent(user_id: str) -> bool:

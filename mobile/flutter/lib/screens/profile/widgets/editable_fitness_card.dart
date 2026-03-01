@@ -23,12 +23,29 @@ class EditableFitnessCard extends ConsumerStatefulWidget {
   });
 
   @override
-  ConsumerState<EditableFitnessCard> createState() => _EditableFitnessCardState();
+  ConsumerState<EditableFitnessCard> createState() => EditableFitnessCardState();
 }
 
-class _EditableFitnessCardState extends ConsumerState<EditableFitnessCard> {
+class EditableFitnessCardState extends ConsumerState<EditableFitnessCard> {
   bool _isEditing = false;
   bool _isSaving = false;
+
+  /// Whether the card is currently in edit mode.
+  bool get isEditing => _isEditing;
+
+  /// Whether a save operation is in progress.
+  bool get isSaving => _isSaving;
+
+  /// Toggle between edit and view mode. If cancelling, reloads original values.
+  void toggleEdit() {
+    if (_isEditing) {
+      _loadValues();
+    }
+    setState(() => _isEditing = !_isEditing);
+  }
+
+  /// Trigger save from outside the widget.
+  Future<void> saveChanges() => _saveChanges();
 
   String _selectedLevel = 'Intermediate';
   String _selectedGoal = 'Build Muscle';
@@ -182,127 +199,233 @@ class _EditableFitnessCardState extends ConsumerState<EditableFitnessCard> {
     // Watch the active gym profile
     final activeGymProfile = ref.watch(activeGymProfileProvider);
 
-    return Stack(
+    if (!_isEditing) {
+      return _buildGridView(
+        activeGymProfile: activeGymProfile,
+        isDark: isDark,
+        elevated: elevated,
+        textMuted: textMuted,
+        accentColor: accentColor,
+      );
+    }
+
+    return Container(
+      decoration: BoxDecoration(
+        color: elevated,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        children: [
+          // Active Gym (tappable to switch/manage gyms)
+          _buildGymRow(
+            profile: activeGymProfile,
+            isDark: isDark,
+            textMuted: textMuted,
+            textSecondary: textSecondary,
+          ),
+          Divider(height: 1, color: cardBorder, indent: 56),
+
+          // Duration (editable range)
+          _buildEditableRow(
+            icon: Icons.timer_outlined,
+            iconColor: accentColor,
+            label: 'Duration',
+            value: _formatDurationDisplay(),
+            isEditing: _isEditing,
+            editWidget: _buildDurationRangeSelector(accentColor),
+            isDark: isDark,
+            textMuted: textMuted,
+          ),
+          Divider(height: 1, color: cardBorder, indent: 56),
+
+          // Warmup Duration
+          _buildEditableRow(
+            icon: Icons.whatshot_outlined,
+            iconColor: AppColors.orange,
+            label: 'Warmup',
+            value: '$_selectedWarmupDuration min',
+            isEditing: _isEditing,
+            editWidget: _buildWarmupSelector(AppColors.orange, cardBorder, textSecondary),
+            isDark: isDark,
+            textMuted: textMuted,
+          ),
+          Divider(height: 1, color: cardBorder, indent: 56),
+
+          // Stretch Duration
+          _buildEditableRow(
+            icon: Icons.self_improvement_outlined,
+            iconColor: AppColors.purple,
+            label: 'Stretch',
+            value: '$_selectedStretchDuration min',
+            isEditing: _isEditing,
+            editWidget: _buildStretchSelector(AppColors.purple, cardBorder, textSecondary),
+            isDark: isDark,
+            textMuted: textMuted,
+          ),
+          Divider(height: 1, color: cardBorder, indent: 56),
+
+          // Goal
+          _buildEditableRow(
+            icon: Icons.flag,
+            iconColor: accentColor,
+            label: 'Goal',
+            value: _selectedGoal,
+            isEditing: _isEditing,
+            editWidget: _buildGoalSelector(accentColor, cardBorder, textSecondary),
+            isDark: isDark,
+            textMuted: textMuted,
+          ),
+          Divider(height: 1, color: cardBorder, indent: 56),
+
+          // Level
+          _buildEditableRow(
+            icon: Icons.signal_cellular_alt,
+            iconColor: accentColor,
+            label: 'Level',
+            value: _selectedLevel,
+            isEditing: _isEditing,
+            editWidget: _buildLevelSelector(accentColor, cardBorder, textSecondary),
+            isDark: isDark,
+            textMuted: textMuted,
+          ),
+          Divider(height: 1, color: cardBorder, indent: 56),
+
+          // Workout Days
+          _buildEditableRow(
+            icon: Icons.calendar_today,
+            iconColor: accentColor,
+            label: 'Workout Days',
+            value: _selectedDays.isEmpty
+                ? 'Not set'
+                : _selectedDays.map((d) => ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'][d]).join(', '),
+            isEditing: _isEditing,
+            editWidget: _buildDaysSelector(accentColor, cardBorder, textSecondary),
+            isDark: isDark,
+            textMuted: textMuted,
+          ),
+          Divider(height: 1, color: cardBorder, indent: 56),
+
+          // Injuries
+          _buildEditableRow(
+            icon: Icons.healing,
+            iconColor: AppColors.error,
+            label: 'Injuries',
+            value: _selectedInjuries.isEmpty ? 'None' : _selectedInjuries.join(', '),
+            isEditing: _isEditing,
+            editWidget: _buildInjurySelector(cardBorder, textSecondary),
+            isDark: isDark,
+            textMuted: textMuted,
+          ),
+
+          // Warning when editing
+          _buildEditingWarning(isDark),
+        ],
+      ),
+    );
+  }
+
+  /// Compact 2x4 grid view for fitness settings
+  Widget _buildGridView({
+    required GymProfile? activeGymProfile,
+    required bool isDark,
+    required Color elevated,
+    required Color textMuted,
+    required Color accentColor,
+  }) {
+    final gymName = activeGymProfile?.name ?? 'No gym';
+    final gymColor = activeGymProfile?.profileColor ?? Colors.grey;
+    final gymIcon = _getGymIconData(activeGymProfile?.icon ?? 'fitness_center');
+
+    // Format workout days for compact display
+    final daysDisplay = _selectedDays.isEmpty
+        ? 'Not set'
+        : _selectedDays.map((d) => ['M', 'T', 'W', 'T', 'F', 'S', 'S'][d]).join(',');
+
+    final injuriesDisplay = _selectedInjuries.isEmpty
+        ? 'None'
+        : _selectedInjuries.length == 1
+            ? _selectedInjuries.first
+            : '${_selectedInjuries.length} areas';
+
+    return GridView.count(
+      crossAxisCount: 4,
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      crossAxisSpacing: 8,
+      mainAxisSpacing: 8,
+      childAspectRatio: 0.85,
       children: [
-        Container(
-          decoration: BoxDecoration(
-            color: elevated,
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Column(
-            children: [
-              // Active Gym (tappable to switch/manage gyms)
-              _buildGymRow(
-                profile: activeGymProfile,
-                isDark: isDark,
-                textMuted: textMuted,
-                textSecondary: textSecondary,
-              ),
-              Divider(height: 1, color: cardBorder, indent: 56),
-
-              // Duration (editable range)
-              _buildEditableRow(
-                icon: Icons.timer_outlined,
-                iconColor: accentColor,
-                label: 'Duration',
-                value: _formatDurationDisplay(),
-                isEditing: _isEditing,
-                editWidget: _buildDurationRangeSelector(accentColor),
-                isDark: isDark,
-                textMuted: textMuted,
-              ),
-              Divider(height: 1, color: cardBorder, indent: 56),
-
-              // Warmup Duration
-              _buildEditableRow(
-                icon: Icons.whatshot_outlined,
-                iconColor: AppColors.orange,
-                label: 'Warmup',
-                value: '$_selectedWarmupDuration min',
-                isEditing: _isEditing,
-                editWidget: _buildWarmupSelector(AppColors.orange, cardBorder, textSecondary),
-                isDark: isDark,
-                textMuted: textMuted,
-              ),
-              Divider(height: 1, color: cardBorder, indent: 56),
-
-              // Stretch Duration
-              _buildEditableRow(
-                icon: Icons.self_improvement_outlined,
-                iconColor: AppColors.purple,
-                label: 'Stretch',
-                value: '$_selectedStretchDuration min',
-                isEditing: _isEditing,
-                editWidget: _buildStretchSelector(AppColors.purple, cardBorder, textSecondary),
-                isDark: isDark,
-                textMuted: textMuted,
-              ),
-              Divider(height: 1, color: cardBorder, indent: 56),
-
-              // Goal
-              _buildEditableRow(
-                icon: Icons.flag,
-                iconColor: accentColor,
-                label: 'Goal',
-                value: _selectedGoal,
-                isEditing: _isEditing,
-                editWidget: _buildGoalSelector(accentColor, cardBorder, textSecondary),
-                isDark: isDark,
-                textMuted: textMuted,
-              ),
-              Divider(height: 1, color: cardBorder, indent: 56),
-
-              // Level
-              _buildEditableRow(
-                icon: Icons.signal_cellular_alt,
-                iconColor: accentColor,
-                label: 'Level',
-                value: _selectedLevel,
-                isEditing: _isEditing,
-                editWidget: _buildLevelSelector(accentColor, cardBorder, textSecondary),
-                isDark: isDark,
-                textMuted: textMuted,
-              ),
-              Divider(height: 1, color: cardBorder, indent: 56),
-
-              // Workout Days
-              _buildEditableRow(
-                icon: Icons.calendar_today,
-                iconColor: accentColor,
-                label: 'Workout Days',
-                value: _selectedDays.isEmpty
-                    ? 'Not set'
-                    : _selectedDays.map((d) => ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'][d]).join(', '),
-                isEditing: _isEditing,
-                editWidget: _buildDaysSelector(accentColor, cardBorder, textSecondary),
-                isDark: isDark,
-                textMuted: textMuted,
-              ),
-              Divider(height: 1, color: cardBorder, indent: 56),
-
-              // Injuries
-              _buildEditableRow(
-                icon: Icons.healing,
-                iconColor: AppColors.error,
-                label: 'Injuries',
-                value: _selectedInjuries.isEmpty ? 'None' : _selectedInjuries.join(', '),
-                isEditing: _isEditing,
-                editWidget: _buildInjurySelector(cardBorder, textSecondary),
-                isDark: isDark,
-                textMuted: textMuted,
-              ),
-
-              // Warning when editing
-              if (_isEditing)
-                _buildEditingWarning(isDark),
-            ],
-          ),
+        _FitnessTile(
+          icon: gymIcon,
+          iconColor: gymColor,
+          label: 'Gym',
+          value: gymName,
+          backgroundColor: elevated,
+          textMutedColor: textMuted,
+          onTap: () {
+            HapticFeedback.lightImpact();
+            showGlassSheet(
+              context: context,
+              builder: (context) => const ManageGymProfilesSheet(),
+            );
+          },
+          showChevron: true,
         ),
-        // Edit button positioned in top-right corner
-        Positioned(
-          top: 8,
-          right: 8,
-          child: _buildEditButton(accentColor, textMuted),
+        _FitnessTile(
+          icon: Icons.timer_outlined,
+          iconColor: accentColor,
+          label: 'Duration',
+          value: _formatDurationDisplay(),
+          backgroundColor: elevated,
+          textMutedColor: textMuted,
+        ),
+        _FitnessTile(
+          icon: Icons.whatshot_outlined,
+          iconColor: AppColors.orange,
+          label: 'Warmup',
+          value: '$_selectedWarmupDuration min',
+          backgroundColor: elevated,
+          textMutedColor: textMuted,
+        ),
+        _FitnessTile(
+          icon: Icons.self_improvement_outlined,
+          iconColor: AppColors.purple,
+          label: 'Stretch',
+          value: '$_selectedStretchDuration min',
+          backgroundColor: elevated,
+          textMutedColor: textMuted,
+        ),
+        _FitnessTile(
+          icon: Icons.flag,
+          iconColor: accentColor,
+          label: 'Goal',
+          value: _selectedGoal,
+          backgroundColor: elevated,
+          textMutedColor: textMuted,
+        ),
+        _FitnessTile(
+          icon: Icons.signal_cellular_alt,
+          iconColor: accentColor,
+          label: 'Level',
+          value: _selectedLevel,
+          backgroundColor: elevated,
+          textMutedColor: textMuted,
+        ),
+        _FitnessTile(
+          icon: Icons.calendar_today,
+          iconColor: accentColor,
+          label: 'Days',
+          value: daysDisplay,
+          backgroundColor: elevated,
+          textMutedColor: textMuted,
+        ),
+        _FitnessTile(
+          icon: Icons.healing,
+          iconColor: AppColors.error,
+          label: 'Injuries',
+          value: injuriesDisplay,
+          backgroundColor: elevated,
+          textMutedColor: textMuted,
         ),
       ],
     );
@@ -589,56 +712,6 @@ class _EditableFitnessCardState extends ConsumerState<EditableFitnessCard> {
     );
   }
 
-  Widget _buildEditButton(Color cyan, Color textMuted) {
-    if (_isEditing) {
-      return Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          TextButton(
-            onPressed: _isSaving
-                ? null
-                : () {
-                    _loadValues();
-                    setState(() => _isEditing = false);
-                  },
-            style: TextButton.styleFrom(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              minimumSize: Size.zero,
-              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-            ),
-            child: Text('Cancel', style: TextStyle(color: textMuted, fontSize: 12)),
-          ),
-          TextButton(
-            onPressed: _isSaving ? null : _saveChanges,
-            style: TextButton.styleFrom(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              minimumSize: Size.zero,
-              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-            ),
-            child: _isSaving
-                ? SizedBox(
-                    width: 14,
-                    height: 14,
-                    child: CircularProgressIndicator(strokeWidth: 2, color: cyan),
-                  )
-                : Text('Save', style: TextStyle(color: cyan, fontWeight: FontWeight.w600, fontSize: 12)),
-          ),
-        ],
-      );
-    }
-
-    return TextButton.icon(
-      onPressed: () => setState(() => _isEditing = true),
-      icon: Icon(Icons.edit, size: 12, color: cyan),
-      label: Text('Edit', style: TextStyle(color: cyan, fontSize: 12)),
-      style: TextButton.styleFrom(
-        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-        minimumSize: Size.zero,
-        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-      ),
-    );
-  }
-
   /// Build the gym row with profile color dot and tap to manage
   Widget _buildGymRow({
     required GymProfile? profile,
@@ -790,5 +863,73 @@ class _EditableFitnessCardState extends ConsumerState<EditableFitnessCard> {
         ],
       ),
     );
+  }
+}
+
+/// Compact tile for the 2x4 fitness grid.
+class _FitnessTile extends StatelessWidget {
+  final IconData icon;
+  final Color iconColor;
+  final String label;
+  final String value;
+  final Color backgroundColor;
+  final Color textMutedColor;
+  final VoidCallback? onTap;
+  final bool showChevron;
+
+  const _FitnessTile({
+    required this.icon,
+    required this.iconColor,
+    required this.label,
+    required this.value,
+    required this.backgroundColor,
+    required this.textMutedColor,
+    this.onTap,
+    this.showChevron = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final tile = Container(
+      padding: const EdgeInsets.all(8),
+      decoration: BoxDecoration(
+        color: backgroundColor,
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            width: 28,
+            height: 28,
+            decoration: BoxDecoration(
+              color: iconColor.withOpacity(0.2),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(icon, color: iconColor, size: 14),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            label,
+            style: TextStyle(fontSize: 10, color: textMutedColor),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            value,
+            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            textAlign: TextAlign.center,
+          ),
+          if (showChevron)
+            Icon(Icons.chevron_right_rounded, size: 12, color: textMutedColor),
+        ],
+      ),
+    );
+
+    if (onTap != null) {
+      return GestureDetector(onTap: onTap, child: tile);
+    }
+    return tile;
   }
 }
