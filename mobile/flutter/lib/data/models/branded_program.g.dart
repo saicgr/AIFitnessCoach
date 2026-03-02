@@ -67,6 +67,52 @@ Map<String, dynamic> _$BrandedProgramToJson(BrandedProgram instance) =>
       'minimum_equipment': instance.minimumEquipment,
     };
 
+DurationVariant _$DurationVariantFromJson(Map<String, dynamic> json) =>
+    DurationVariant(
+  variantId: json['variant_id'] as String,
+  durationWeeks: (json['duration_weeks'] as num).toInt(),
+  sessionsPerWeek: (json['sessions_per_week'] as num).toInt(),
+  intensityLevel: json['intensity_level'] as String?,
+);
+
+Map<String, dynamic> _$DurationVariantToJson(DurationVariant instance) =>
+    <String, dynamic>{
+      'variant_id': instance.variantId,
+      'duration_weeks': instance.durationWeeks,
+      'sessions_per_week': instance.sessionsPerWeek,
+      'intensity_level': instance.intensityLevel,
+    };
+
+ProgramDurationInfo _$ProgramDurationInfoFromJson(Map<String, dynamic> json) =>
+    ProgramDurationInfo(
+  programId: json['program_id'] as String,
+  programName: json['program_name'] as String,
+  availableDurations: (json['available_durations'] as List<dynamic>)
+      .map((e) => DurationVariant.fromJson(e as Map<String, dynamic>))
+      .toList(),
+  minWeeks: (json['min_weeks'] as num).toInt(),
+  maxWeeks: (json['max_weeks'] as num).toInt(),
+  anchorWeeks: (json['anchor_weeks'] as List<dynamic>)
+      .map((e) => (e as num).toInt())
+      .toList(),
+  availableSessionsPerWeek:
+      (json['available_sessions_per_week'] as List<dynamic>)
+          .map((e) => (e as num).toInt())
+          .toList(),
+);
+
+Map<String, dynamic> _$ProgramDurationInfoToJson(
+        ProgramDurationInfo instance) =>
+    <String, dynamic>{
+      'program_id': instance.programId,
+      'program_name': instance.programName,
+      'available_durations': instance.availableDurations,
+      'min_weeks': instance.minWeeks,
+      'max_weeks': instance.maxWeeks,
+      'anchor_weeks': instance.anchorWeeks,
+      'available_sessions_per_week': instance.availableSessionsPerWeek,
+    };
+
 UserProgram _$UserProgramFromJson(Map<String, dynamic> json) => UserProgram(
   userId: json['user_id'] as String,
   programId: json['program_id'] as String,

@@ -5,8 +5,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/utils/difficulty_utils.dart';
 import '../../../data/models/branded_program.dart';
+import '../../../data/repositories/branded_program_repository.dart';
 import '../../../data/services/context_logging_service.dart';
 import '../widgets/info_badge.dart';
+import 'week_duration_selector.dart';
 
 /// Bottom sheet showing program details
 class ProgramDetailSheet extends ConsumerStatefulWidget {
@@ -22,13 +24,48 @@ class ProgramDetailSheet extends ConsumerStatefulWidget {
 }
 
 class _ProgramDetailSheetState extends ConsumerState<ProgramDetailSheet> {
+  ProgramDurationInfo? _durationInfo;
+  bool _loadingDurations = true;
+  int _selectedWeeks = 0;
+  int _selectedSessionsPerWeek = 0;
+
   @override
   void initState() {
     super.initState();
-    // Log the program view for AI preference learning
+    _selectedWeeks = widget.program.durationWeeks ?? 12;
+    _selectedSessionsPerWeek = widget.program.sessionsPerWeek ?? 4;
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _logProgramView();
+      _fetchDurations();
     });
+  }
+
+  Future<void> _fetchDurations() async {
+    try {
+      final repo = ref.read(brandedProgramRepositoryProvider);
+      final info = await repo.getAvailableDurations(widget.program.id);
+      if (mounted) {
+        setState(() {
+          _durationInfo = info;
+          _loadingDurations = false;
+          if (info != null && info.anchorWeeks.isNotEmpty) {
+            // Default to the program's duration if it's an anchor, otherwise first anchor
+            if (info.anchorWeeks.contains(_selectedWeeks)) {
+              // keep current
+            } else {
+              _selectedWeeks = info.anchorWeeks.first;
+            }
+            if (info.availableSessionsPerWeek.isNotEmpty &&
+                !info.availableSessionsPerWeek.contains(_selectedSessionsPerWeek)) {
+              _selectedSessionsPerWeek = info.availableSessionsPerWeek.first;
+            }
+          }
+        });
+      }
+    } catch (_) {
+      if (mounted) setState(() => _loadingDurations = false);
+    }
   }
 
   void _logProgramView() {
@@ -203,23 +240,44 @@ class _ProgramDetailSheetState extends ConsumerState<ProgramDetailSheet> {
                         value: DifficultyUtils.getDisplayName(program.difficultyLevel!),
                         color: DifficultyUtils.getColor(program.difficultyLevel!),
                       ),
-                    if (program.durationWeeks != null)
-                      DetailBadge(
-                        icon: Icons.calendar_today,
-                        label: 'Duration',
-                        value: '${program.durationWeeks} weeks',
-                        color: cyan,
-                      ),
-                    if (program.sessionsPerWeek != null)
-                      DetailBadge(
-                        icon: Icons.repeat,
-                        label: 'Sessions',
-                        value: '${program.sessionsPerWeek}/week',
-                        color: cyan,
-                      ),
+                    DetailBadge(
+                      icon: Icons.calendar_today,
+                      label: 'Duration',
+                      value: '$_selectedWeeks weeks',
+                      color: cyan,
+                    ),
+                    DetailBadge(
+                      icon: Icons.repeat,
+                      label: 'Sessions',
+                      value: '$_selectedSessionsPerWeek/week',
+                      color: cyan,
+                    ),
                   ],
                 ),
               ),
+
+              // Duration selector
+              if (_loadingDurations) ...[
+                const SizedBox(height: 24),
+                const Center(
+                  child: SizedBox(
+                    width: 24,
+                    height: 24,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  ),
+                ),
+              ] else if (_durationInfo != null &&
+                  _durationInfo!.anchorWeeks.length > 1) ...[
+                const SizedBox(height: 24),
+                WeekDurationSelector(
+                  durationInfo: _durationInfo!,
+                  selectedWeeks: _selectedWeeks,
+                  selectedSessionsPerWeek: _selectedSessionsPerWeek,
+                  onWeeksChanged: (w) => setState(() => _selectedWeeks = w),
+                  onSessionsChanged: (s) =>
+                      setState(() => _selectedSessionsPerWeek = s),
+                ),
+              ],
 
               // Description
               if (program.description != null &&
@@ -363,14 +421,17 @@ class _ProgramDetailSheetState extends ConsumerState<ProgramDetailSheet> {
 
               const SizedBox(height: 32),
 
-              // Start Program button (placeholder)
+              // Start Program button
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
                     onPressed: () {
-                      Navigator.pop(context);
+                      Navigator.pop(context, {
+                        'desired_weeks': _selectedWeeks,
+                        'sessions_per_week': _selectedSessionsPerWeek,
+                      });
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: cyan,
@@ -380,9 +441,9 @@ class _ProgramDetailSheetState extends ConsumerState<ProgramDetailSheet> {
                         borderRadius: BorderRadius.circular(12),
                       ),
                     ),
-                    child: const Text(
-                      'Start This Program',
-                      style: TextStyle(
+                    child: Text(
+                      'Start $_selectedWeeks-Week Program',
+                      style: const TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 16,
                       ),

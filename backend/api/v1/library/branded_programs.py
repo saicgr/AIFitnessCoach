@@ -198,10 +198,28 @@ async def assign_program(request: AssignProgramRequest):
             "updated_at": datetime.utcnow().isoformat()
         }).eq("user_id", request.user_id).eq("is_active", True).execute()
 
-        # Calculate total workouts and target end date
-        duration_weeks = program.get("duration_weeks", 12)
-        sessions_per_week = program.get("sessions_per_week", 5)
+        # Use user-selected duration or fall back to program defaults
+        duration_weeks = request.desired_weeks or program.get("duration_weeks", 12)
+        sessions_per_week = request.sessions_per_week or program.get("sessions_per_week", 5)
         total_workouts = duration_weeks * sessions_per_week
+
+        # Find the best matching variant if user selected duration/sessions
+        variant_id = None
+        if request.desired_weeks or request.sessions_per_week:
+            variants_result = db.client.table("program_variants").select(
+                "id, duration_weeks, sessions_per_week"
+            ).eq("base_program_id", request.program_id).eq(
+                "sessions_per_week", sessions_per_week
+            ).order("duration_weeks").execute()
+
+            if variants_result.data:
+                # Pick smallest anchor >= desired_weeks, or largest if none
+                for v in variants_result.data:
+                    if v["duration_weeks"] >= duration_weeks:
+                        variant_id = v["id"]
+                        break
+                if not variant_id:
+                    variant_id = variants_result.data[-1]["id"]
 
         # Create new assignment
         assignment_data = {
@@ -216,6 +234,14 @@ async def assign_program(request: AssignProgramRequest):
             "workouts_completed": 0,
             "progress_percentage": 0,
         }
+
+        # Add variant tracking fields
+        if variant_id:
+            assignment_data["variant_id"] = variant_id
+        if request.desired_weeks:
+            assignment_data["desired_weeks"] = request.desired_weeks
+        if request.sessions_per_week:
+            assignment_data["sessions_per_week"] = request.sessions_per_week
 
         # Add HYROX-specific fields if provided
         if request.target_race_date:

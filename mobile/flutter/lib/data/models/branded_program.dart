@@ -163,6 +163,63 @@ class BrandedProgram {
   }
 }
 
+/// Duration variant info for a single anchor
+@JsonSerializable()
+class DurationVariant {
+  @JsonKey(name: 'variant_id')
+  final String variantId;
+  @JsonKey(name: 'duration_weeks')
+  final int durationWeeks;
+  @JsonKey(name: 'sessions_per_week')
+  final int sessionsPerWeek;
+  @JsonKey(name: 'intensity_level')
+  final String? intensityLevel;
+
+  const DurationVariant({
+    required this.variantId,
+    required this.durationWeeks,
+    required this.sessionsPerWeek,
+    this.intensityLevel,
+  });
+
+  factory DurationVariant.fromJson(Map<String, dynamic> json) =>
+      _$DurationVariantFromJson(json);
+  Map<String, dynamic> toJson() => _$DurationVariantToJson(this);
+}
+
+/// Available duration options for a branded program
+@JsonSerializable()
+class ProgramDurationInfo {
+  @JsonKey(name: 'program_id')
+  final String programId;
+  @JsonKey(name: 'program_name')
+  final String programName;
+  @JsonKey(name: 'available_durations')
+  final List<DurationVariant> availableDurations;
+  @JsonKey(name: 'min_weeks')
+  final int minWeeks;
+  @JsonKey(name: 'max_weeks')
+  final int maxWeeks;
+  @JsonKey(name: 'anchor_weeks')
+  final List<int> anchorWeeks;
+  @JsonKey(name: 'available_sessions_per_week')
+  final List<int> availableSessionsPerWeek;
+
+  const ProgramDurationInfo({
+    required this.programId,
+    required this.programName,
+    required this.availableDurations,
+    required this.minWeeks,
+    required this.maxWeeks,
+    required this.anchorWeeks,
+    required this.availableSessionsPerWeek,
+  });
+
+  factory ProgramDurationInfo.fromJson(Map<String, dynamic> json) =>
+      _$ProgramDurationInfoFromJson(json);
+  Map<String, dynamic> toJson() => _$ProgramDurationInfoToJson(this);
+}
+
 /// User's current assigned program
 @JsonSerializable()
 class UserProgram {

@@ -118,11 +118,35 @@ class BrandedProgramRepository {
     }
   }
 
+  /// Get available duration variants for a program
+  Future<ProgramDurationInfo?> getAvailableDurations(String programId) async {
+    try {
+      debugPrint('🔍 [BrandedProgram] Fetching durations for program $programId');
+
+      final response = await _client.get(
+        '${ApiConstants.library}/branded-programs/$programId/durations',
+      );
+
+      if (response.statusCode == 200 && response.data != null) {
+        final info = ProgramDurationInfo.fromJson(response.data as Map<String, dynamic>);
+        debugPrint('✅ [BrandedProgram] Got ${info.anchorWeeks.length} anchor durations');
+        return info;
+      }
+
+      return null;
+    } catch (e) {
+      debugPrint('❌ [BrandedProgram] Error fetching durations: $e');
+      return null;
+    }
+  }
+
   /// Assign a program to the current user
   Future<UserProgram?> assignProgram({
     required String userId,
     required String programId,
     String? customName,
+    int? desiredWeeks,
+    int? sessionsPerWeek,
   }) async {
     try {
       debugPrint('🔍 [BrandedProgram] Assigning program $programId to user $userId');
@@ -134,6 +158,8 @@ class BrandedProgramRepository {
           'program_id': programId,
           if (customName != null && customName.isNotEmpty)
             'custom_name': customName,
+          if (desiredWeeks != null) 'desired_weeks': desiredWeeks,
+          if (sessionsPerWeek != null) 'sessions_per_week': sessionsPerWeek,
         },
       );
 

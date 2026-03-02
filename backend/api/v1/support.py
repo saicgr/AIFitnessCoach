@@ -561,8 +561,9 @@ async def add_ticket_reply(ticket_id: str, user_id: str, reply: SupportTicketMes
 # =============================================================================
 
 @router.patch("/tickets/{ticket_id}/close", response_model=SupportTicketCloseResponse)
-async def close_ticket(ticket_id: str, user_id: str, resolution_note: Optional[str] = None,
+async def close_ticket(ticket_id: str, user_id: str,
     background_tasks: BackgroundTasks,
+    resolution_note: Optional[str] = None,
     current_user: dict = Depends(get_current_user),
 ):
     """
