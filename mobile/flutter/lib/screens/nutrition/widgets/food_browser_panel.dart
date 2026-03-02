@@ -486,6 +486,37 @@ class _FoodBrowserPanelState extends ConsumerState<FoodBrowserPanel> {
 
     return searchState.when(
       data: (state) {
+        // ── NL states ──────────────────────────────────────────
+        if (state is search.FoodSearchNLLoading) {
+          return ListView(
+            padding: const EdgeInsets.symmetric(horizontal: 4),
+            children: _buildShimmerRows(5),
+          );
+        }
+        if (state is search.FoodSearchNLError) {
+          return Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.error_outline, color: textMuted, size: 36),
+                const SizedBox(height: 8),
+                Text(state.message, style: TextStyle(color: textMuted, fontSize: 13)),
+                const SizedBox(height: 8),
+                TextButton(
+                  onPressed: () {
+                    ref.read(search.foodSearchServiceProvider).analyzeNaturalLanguage(widget.searchQuery);
+                  },
+                  child: Text('Retry', style: TextStyle(color: teal)),
+                ),
+              ],
+            ),
+          );
+        }
+        if (state is search.FoodSearchNLResults) {
+          return _buildNLResults(state.result);
+        }
+
+        // ── Existing keyword search states ─────────────────────
         if (state is search.FoodSearchLoading) {
           return ListView(
             padding: const EdgeInsets.symmetric(horizontal: 4),
@@ -605,6 +636,174 @@ class _FoodBrowserPanelState extends ConsumerState<FoodBrowserPanel> {
         child: Text('Search error', style: TextStyle(color: textMuted)),
       ),
     );
+  }
+
+  // ─── NL Results UI ──────────────────────────────────────────
+
+  Widget _buildNLResults(search.FoodAnalysisResult result) {
+    final isDark = widget.isDark;
+    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final teal = isDark ? AppColors.teal : AppColorsLight.teal;
+    const orange = Color(0xFFF97316);
+
+    if (result.foodItems.isEmpty) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.search_off, color: textMuted, size: 36),
+              const SizedBox(height: 8),
+              Text('Could not parse any food items', style: TextStyle(color: textMuted, fontSize: 13)),
+            ],
+          ),
+        ),
+      );
+    }
+
+    return Column(
+      children: [
+        // Header + totals summary
+        Padding(
+          padding: const EdgeInsets.fromLTRB(4, 4, 4, 8),
+          child: Row(
+            children: [
+              Icon(Icons.auto_awesome, size: 16, color: teal),
+              const SizedBox(width: 6),
+              Text(
+                'AI Analysis',
+                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: teal, letterSpacing: 0.5),
+              ),
+              const Spacer(),
+              Text(
+                '${result.totalCalories} kcal',
+                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: textPrimary),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                'P${result.proteinG.toStringAsFixed(0)}  C${result.carbsG.toStringAsFixed(0)}  F${result.fatG.toStringAsFixed(0)}',
+                style: TextStyle(fontSize: 11, color: textMuted),
+              ),
+            ],
+          ),
+        ),
+        // Food item cards
+        Expanded(
+          child: ListView.builder(
+            padding: const EdgeInsets.symmetric(horizontal: 4),
+            itemCount: result.foodItems.length + 1, // +1 for "Log All" button
+            itemBuilder: (context, index) {
+              if (index == result.foodItems.length) {
+                // "Log All" button at the end
+                final allKey = 'nl_all';
+                final allState = _logStates[allKey];
+                return Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  child: SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      onPressed: allState == _LogState.loading
+                          ? null
+                          : () => _logAllNLItems(result, allKey),
+                      icon: allState == _LogState.loading
+                          ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                          : allState == _LogState.done
+                              ? const Icon(Icons.check, size: 18)
+                              : const Icon(Icons.playlist_add_check, size: 18),
+                      label: Text(
+                        allState == _LogState.done ? 'Logged!' : 'Log All (${result.totalCalories} kcal)',
+                        style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: allState == _LogState.done ? teal : orange,
+                        foregroundColor: Colors.white,
+                        disabledBackgroundColor: orange.withValues(alpha: 0.5),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
+                    ),
+                  ),
+                );
+              }
+
+              final item = result.foodItems[index];
+              final key = 'nl_$index';
+              final logState = _logStates[key];
+
+              return _NLFoodItemCard(
+                item: item,
+                logState: logState,
+                onLog: () => _logSingleNLItem(item, key),
+                isDark: isDark,
+              );
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// Log a single NL food item
+  Future<void> _logSingleNLItem(search.NLFoodItem item, String key) async {
+    setState(() => _logStates[key] = _LogState.loading);
+    try {
+      final repo = ref.read(nutritionRepositoryProvider);
+      final description = item.amount != null
+          ? '${item.amount} ${item.name}'
+          : item.name;
+      await repo.logFoodFromText(
+        userId: widget.userId,
+        description: description,
+        mealType: widget.mealType.value,
+      );
+      ref.read(xpProvider.notifier).markMealLogged();
+      if (!mounted) return;
+      setState(() => _logStates[key] = _LogState.done);
+      widget.onFoodLogged();
+      Future.delayed(const Duration(seconds: 1), () {
+        if (mounted) setState(() => _logStates.remove(key));
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _logStates.remove(key));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to log: $e'), behavior: SnackBarBehavior.floating),
+      );
+    }
+  }
+
+  /// Log all NL food items as a single meal description
+  Future<void> _logAllNLItems(search.FoodAnalysisResult result, String key) async {
+    setState(() => _logStates[key] = _LogState.loading);
+    try {
+      final repo = ref.read(nutritionRepositoryProvider);
+      // Build a combined description from all items
+      final description = result.foodItems.map((item) {
+        return item.amount != null
+            ? '${item.amount} ${item.name}'
+            : item.name;
+      }).join(', ');
+      await repo.logFoodFromText(
+        userId: widget.userId,
+        description: description,
+        mealType: widget.mealType.value,
+      );
+      ref.read(xpProvider.notifier).markMealLogged();
+      if (!mounted) return;
+      setState(() => _logStates[key] = _LogState.done);
+      widget.onFoodLogged();
+      Future.delayed(const Duration(seconds: 1), () {
+        if (mounted) setState(() => _logStates.remove(key));
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _logStates.remove(key));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to log: $e'), behavior: SnackBarBehavior.floating),
+      );
+    }
   }
 
   String _sourceLabel(String source) {
@@ -851,6 +1050,117 @@ class _BrowseSectionHeader extends StatelessWidget {
               ),
             ),
         ],
+      ),
+    );
+  }
+}
+
+// ─── NL Food Item Card ─────────────────────────────────────────
+
+class _NLFoodItemCard extends StatelessWidget {
+  final search.NLFoodItem item;
+  final _LogState? logState;
+  final VoidCallback onLog;
+  final bool isDark;
+
+  const _NLFoodItemCard({
+    required this.item,
+    this.logState,
+    required this.onLog,
+    required this.isDark,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final teal = isDark ? AppColors.teal : AppColorsLight.teal;
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: elevated,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(
+          color: isDark ? Colors.white.withValues(alpha: 0.06) : Colors.black.withValues(alpha: 0.04),
+        ),
+      ),
+      child: Row(
+        children: [
+          // Food info
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  item.name,
+                  style: TextStyle(
+                    color: textPrimary,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 3),
+                Row(
+                  children: [
+                    if (item.amount != null) ...[
+                      Text(
+                        item.amount!,
+                        style: TextStyle(color: textMuted, fontSize: 12),
+                      ),
+                      Text(' · ', style: TextStyle(color: textMuted, fontSize: 12)),
+                    ],
+                    Text(
+                      '${item.calories} kcal',
+                      style: TextStyle(
+                        color: textPrimary,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    Text(' · ', style: TextStyle(color: textMuted, fontSize: 12)),
+                    Text(
+                      'P${item.proteinG.toStringAsFixed(0)} C${item.carbsG.toStringAsFixed(0)} F${item.fatG.toStringAsFixed(0)}',
+                      style: TextStyle(color: textMuted, fontSize: 11),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          // Log button
+          const SizedBox(width: 8),
+          _logButton(teal, textMuted),
+        ],
+      ),
+    );
+  }
+
+  Widget _logButton(Color teal, Color textMuted) {
+    if (logState == _LogState.loading) {
+      return SizedBox(
+        width: 28,
+        height: 28,
+        child: CircularProgressIndicator(strokeWidth: 2, color: teal),
+      );
+    }
+    if (logState == _LogState.done) {
+      return Icon(Icons.check_circle, color: teal, size: 28);
+    }
+    return GestureDetector(
+      onTap: onLog,
+      child: Container(
+        width: 28,
+        height: 28,
+        decoration: BoxDecoration(
+          color: teal.withValues(alpha: 0.15),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Icon(Icons.add, size: 18, color: teal),
       ),
     );
   }

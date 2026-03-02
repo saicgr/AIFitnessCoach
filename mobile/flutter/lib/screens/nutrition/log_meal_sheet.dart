@@ -247,6 +247,8 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet> {
     if (query != _searchQuery) {
       setState(() => _searchQuery = query);
       if (query.isNotEmpty) {
+        // NL input is only triggered on explicit submit (search button / enter),
+        // not on every keystroke — regular search continues as-is during typing.
         final service = ref.read(search.foodSearchServiceProvider);
         final cachedLogs = ref.read(nutritionProvider).recentLogs;
         service.search(query, widget.userId, cachedLogs: cachedLogs);
@@ -258,8 +260,13 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet> {
     final query = _descriptionController.text.trim();
     if (query.length >= 3) {
       final service = ref.read(search.foodSearchServiceProvider);
-      final cachedLogs = ref.read(nutritionProvider).recentLogs;
-      service.searchImmediate(query, widget.userId, cachedLogs: cachedLogs);
+      // When user explicitly submits, check if it looks like NL food logging
+      if (search.FoodSearchService.isNaturalLanguageInput(query)) {
+        service.analyzeNaturalLanguage(query);
+      } else {
+        final cachedLogs = ref.read(nutritionProvider).recentLogs;
+        service.searchImmediate(query, widget.userId, cachedLogs: cachedLogs);
+      }
     }
   }
 
@@ -1552,6 +1559,8 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet> {
                 focusNode: _textFieldFocusNode,
                 maxLines: null,
                 minLines: 2,
+                textInputAction: TextInputAction.search,
+                onSubmitted: (_) => _triggerImmediateSearch(),
                 style: TextStyle(color: textPrimary, fontSize: 18, height: 1.4),
                 decoration: InputDecoration(
                   hintText: _isListening ? 'Listening...' : 'What did you eat?',

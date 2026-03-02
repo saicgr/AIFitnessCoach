@@ -10,6 +10,8 @@ data that takes priority over the base food_database for known-incorrect
 entries (e.g. dosa, eggs).
 """
 
+import asyncio
+import re
 import time
 from typing import Optional, Dict, List
 
@@ -53,6 +55,8 @@ class FoodDatabaseLookupService:
         self._overrides: Dict[str, Dict] = {}
         # Deduplicated list of all override entries (one per DB row)
         self._overrides_list: List[Dict] = []
+        # Word-level inverted index: word -> set of indices into _overrides_list
+        self._overrides_word_index: Dict[str, set] = {}
         self._overrides_loaded_at: float = 0
         self._overrides_ttl = 1800  # 30 minutes
 
@@ -129,6 +133,7 @@ class FoodDatabaseLookupService:
                     "phosphorus_mg": float(row["phosphorus_mg"]) if row.get("phosphorus_mg") is not None else None,
                     "selenium_ug": float(row["selenium_ug"]) if row.get("selenium_ug") is not None else None,
                     "omega3_g": float(row["omega3_g"]) if row.get("omega3_g") is not None else None,
+                    "variant_names": row.get("variant_names") or [],
                 }
                 new_overrides_list.append(override_data)
                 # Key by primary normalized name
@@ -140,10 +145,32 @@ class FoodDatabaseLookupService:
                     if variant:
                         new_overrides[variant.lower().strip()] = override_data
 
+            # Build word-level inverted index for fast search
+            word_index: Dict[str, set] = {}
+            for idx, override in enumerate(new_overrides_list):
+                # Index words from display_name
+                display_words = override["display_name"].lower().split()
+                for w in display_words:
+                    w = w.strip("(),.'\"!?-")
+                    if len(w) >= 2:
+                        word_index.setdefault(w, set()).add(idx)
+                # Index words from variant_names
+                for vn in (override.get("variant_names") or []):
+                    if not isinstance(vn, str):
+                        continue
+                    vn_lower = vn.lower()
+                    # Index the full variant as a key too
+                    word_index.setdefault(vn_lower, set()).add(idx)
+                    for w in vn_lower.split():
+                        w = w.strip("(),.'\"!?-")
+                        if len(w) >= 2:
+                            word_index.setdefault(w, set()).add(idx)
+
             self._overrides = new_overrides
             self._overrides_list = new_overrides_list
+            self._overrides_word_index = word_index
             self._overrides_loaded_at = time.time()
-            logger.info(f"[FoodDB] Loaded {len(rows)} overrides ({len(new_overrides)} keys)")
+            logger.info(f"[FoodDB] Loaded {len(rows)} overrides ({len(new_overrides)} keys, {len(word_index)} index terms)")
 
         except Exception as e:
             logger.warning(f"[FoodDB] Failed to load overrides: {e}")
@@ -219,7 +246,7 @@ class FoodDatabaseLookupService:
         food_category: Optional[str] = None,
     ) -> List[Dict]:
         """Find overrides matching a search query for injection into search results.
-        Supports exact match, substring match, and word overlap (50% threshold).
+        Uses word-level inverted index for fast lookup instead of iterating all overrides.
         Optionally filters by restaurant_name and/or food_category."""
         if not self._overrides_list:
             return []
@@ -231,39 +258,62 @@ class FoodDatabaseLookupService:
         seen_display_names: set = set()
         matches: List[Dict] = []
 
-        for override in self._overrides_list:
+        # If no query, browse by restaurant/category (iterate filtered subset)
+        if not query_lower:
+            if not restaurant_lower and not category_lower:
+                return []
+            for override in self._overrides_list:
+                if restaurant_lower:
+                    if restaurant_lower not in (override.get("restaurant_name") or "").lower():
+                        continue
+                if category_lower:
+                    if category_lower != (override.get("food_category") or "").lower():
+                        continue
+                display = override["display_name"]
+                if display not in seen_display_names:
+                    matches.append(self._override_to_search_result(override))
+                    seen_display_names.add(display)
+            return matches
+
+        # Use inverted index to find candidate overrides
+        candidate_indices: set = set()
+
+        # Check full query as a key (e.g., "coke" matches variant "coke")
+        if query_lower in self._overrides_word_index:
+            candidate_indices.update(self._overrides_word_index[query_lower])
+
+        # Check each query word
+        query_words = [w.strip("(),.'\"!?-") for w in query_lower.split() if len(w) >= 2]
+        for w in query_words:
+            if w in self._overrides_word_index:
+                candidate_indices.update(self._overrides_word_index[w])
+
+        # Score and filter candidates
+        for idx in candidate_indices:
+            override = self._overrides_list[idx]
+
             # Filter by restaurant if specified
             if restaurant_lower:
-                override_restaurant = (override.get("restaurant_name") or "").lower()
-                if restaurant_lower not in override_restaurant:
+                if restaurant_lower not in (override.get("restaurant_name") or "").lower():
                     continue
-
             # Filter by food_category if specified
             if category_lower:
-                override_category = (override.get("food_category") or "").lower()
-                if category_lower != override_category:
+                if category_lower != (override.get("food_category") or "").lower():
                     continue
 
             display = override["display_name"]
             if display in seen_display_names:
                 continue
 
-            # If no query, return all filtered results (browsing by restaurant/category)
-            if not query_lower:
-                if restaurant_lower or category_lower:
-                    matches.append(self._override_to_search_result(override))
-                    seen_display_names.add(display)
-                continue
-
             display_lower = display.lower()
 
-            # Substring match (query in display_name or display_name in query)
+            # Check: substring match on display_name
             if query_lower in display_lower or display_lower in query_lower:
                 matches.append(self._override_to_search_result(override))
                 seen_display_names.add(display)
                 continue
 
-            # Check variant_names array for matches
+            # Check: variant_names match
             variant_names = override.get("variant_names") or []
             variant_matched = False
             for vn in variant_names:
@@ -271,26 +321,63 @@ class FoodDatabaseLookupService:
                 if query_lower in vn_lower or vn_lower in query_lower:
                     variant_matched = True
                     break
-                # Also check word overlap against variant names
-                if query_lower and vn_lower:
-                    q_words = query_lower.split()
-                    if any(w in vn_lower for w in q_words if len(w) >= 3):
-                        variant_matched = True
-                        break
             if variant_matched:
                 matches.append(self._override_to_search_result(override))
                 seen_display_names.add(display)
                 continue
 
-            # Word overlap check (50% threshold)
-            query_words = [w for w in query_lower.split() if len(w) >= 3]
-            if query_words:
-                overlap = sum(1 for w in query_words if w in display_lower)
-                if overlap / len(query_words) >= 0.5:
+            # Check: word overlap on display_name (50% threshold)
+            significant_words = [w for w in query_words if len(w) >= 3]
+            if significant_words:
+                overlap = sum(1 for w in significant_words if w in display_lower)
+                if overlap / len(significant_words) >= 0.5:
                     matches.append(self._override_to_search_result(override))
                     seen_display_names.add(display)
 
         return matches
+
+    # ── Multi-food query splitting ─────────────────────────────────
+
+    def _split_multi_query(self, query: str) -> List[str]:
+        """Split multi-food queries into individual search terms.
+
+        Splits on: commas, " and ", " & ", " + "
+        Preserves compound foods that exist as overrides (e.g., "mac and cheese").
+
+        Examples:
+            "coke and biryani and ice cream" → ["coke", "biryani", "ice cream"]
+            "mac and cheese"                → ["mac and cheese"]  (exists in overrides)
+            "coke, biryani, ice cream"      → ["coke", "biryani", "ice cream"]
+            "rice + chicken"                → ["rice", "chicken"]
+        """
+        q = query.strip()
+        if not q:
+            return []
+
+        q_lower = q.lower()
+
+        # No delimiters → single query
+        if ',' not in q and ' and ' not in q_lower and ' & ' not in q and ' + ' not in q:
+            return [q]
+
+        # Split on commas first (always a clear multi-food delimiter)
+        if ',' in q:
+            comma_parts = [p.strip() for p in q.split(',') if p.strip()]
+            # Recursively process each comma-separated part for " and " splitting
+            final: List[str] = []
+            for part in comma_parts:
+                final.extend(self._split_multi_query(part))
+            return final if len(final) > 1 else [q]
+
+        # Handle " and " / " & " / " + "
+        # Check if the full query is a known food in overrides → don't split
+        if self._overrides.get(q_lower):
+            return [q]
+
+        parts = re.split(r'\s+and\s+|\s*&\s*|\s*\+\s*', q, flags=re.IGNORECASE)
+        parts = [p.strip() for p in parts if p.strip()]
+
+        return parts if len(parts) > 1 else [q]
 
     # ── Match quality ──────────────────────────────────────────────
 
@@ -362,38 +449,70 @@ class FoodDatabaseLookupService:
         # Load overrides (TTL-gated, no-op if fresh)
         await self._load_overrides()
 
+        # Handle multi-food queries (e.g., "coke and biryani and ice cream")
+        query_parts = self._split_multi_query(query)
+        if len(query_parts) > 1:
+            logger.info(f"[FoodDB] Multi-food query split: '{query}' → {query_parts}")
+            all_results: List[Dict] = []
+            seen_names: set = set()
+            per_part_limit = max(5, page_size // len(query_parts))
+
+            for part in query_parts:
+                part_results = await self.search_foods(
+                    query=part, page_size=per_part_limit, page=1,
+                    category=category, source=source,
+                    restaurant=restaurant, food_category=food_category,
+                )
+                for r in part_results:
+                    name_lower = r.get("name", "").lower()
+                    if name_lower not in seen_names:
+                        all_results.append(r)
+                        seen_names.add(name_lower)
+
+            self._set_cached(cache_key, all_results[:page_size])
+            return all_results[:page_size]
+
         try:
             supabase = get_supabase()
             offset = (page - 1) * page_size
 
-            foods = []
-            if query:
-                # Use direct SQLAlchemy to bypass PostgREST's 3s anon statement_timeout
-                async with supabase.get_session() as session:
-                    result = await session.execute(
-                        text("SELECT * FROM search_food_database(:q, :lim, :off)"),
-                        {"q": query, "lim": page_size, "off": offset},
-                    )
-                    foods = [dict(row._mapping) for row in result.fetchall()]
-
-            # Post-filter by source/category if specified
-            if source:
-                source_lower = source.lower()
-                foods = [f for f in foods if (f.get("source") or "").lower() == source_lower]
-            if category:
-                category_lower = category.lower()
-                foods = [f for f in foods if category_lower in (f.get("category") or "").lower()]
-
-            # Inject matching overrides at the top (page 1 only)
+            # Step 1: Search overrides (in-memory, <1ms) — ALWAYS returned
+            override_results = []
             if page == 1:
                 override_results = self._find_matching_overrides_for_search(
                     query, restaurant=restaurant, food_category=food_category,
                 )
-                if override_results:
-                    # Remove DB entries that duplicate the override display_name
-                    override_names = {r["name"].lower() for r in override_results}
-                    foods = [f for f in foods if f.get("name", "").lower() not in override_names]
-                    foods = override_results + foods
+
+            # Step 2: Only hit slow 528K trigram search if overrides aren't enough
+            db_foods = []
+            if query and len(override_results) < page_size:
+                try:
+                    async with supabase.get_session() as session:
+                        result = await asyncio.wait_for(
+                            session.execute(
+                                text("SELECT * FROM search_food_database(:q, :lim, :off)"),
+                                {"q": query, "lim": page_size, "off": offset},
+                            ),
+                            timeout=6.0,
+                        )
+                        db_foods = [dict(row._mapping) for row in result.fetchall()]
+                except asyncio.TimeoutError:
+                    logger.warning(f"[FoodDB] RPC timed out for '{query}' — returning overrides only")
+                except Exception as rpc_err:
+                    logger.warning(f"[FoodDB] RPC failed for '{query}': {rpc_err}")
+
+            # Post-filter by source/category if specified
+            if source:
+                source_lower = source.lower()
+                db_foods = [f for f in db_foods if (f.get("source") or "").lower() == source_lower]
+            if category:
+                category_lower = category.lower()
+                db_foods = [f for f in db_foods if category_lower in (f.get("category") or "").lower()]
+
+            # Assemble: Overrides first, then DB (deduped)
+            override_names = {r["name"].lower() for r in override_results}
+            db_foods = [f for f in db_foods if f.get("name", "").lower() not in override_names]
+            foods = override_results + db_foods
 
             logger.info(f"[FoodDB] Found {len(foods)} results for '{query}'")
             self._set_cached(cache_key, foods)
@@ -437,41 +556,103 @@ class FoodDatabaseLookupService:
         # Load overrides (TTL-gated, no-op if fresh)
         await self._load_overrides()
 
+        # Handle multi-food queries (e.g., "coke and biryani and ice cream")
+        query_parts = self._split_multi_query(query)
+        if len(query_parts) > 1:
+            logger.info(f"[FoodDB] Multi-food query split: '{query}' → {query_parts}")
+            all_results: List[Dict] = []
+            seen_names: set = set()
+            per_part_limit = max(5, page_size // len(query_parts))
+
+            for part in query_parts:
+                part_results = await self.search_foods_unified(
+                    query=part, user_id=user_id,
+                    page_size=per_part_limit, page=1,
+                    restaurant=restaurant, food_category=food_category,
+                )
+                for r in part_results:
+                    name_lower = r.get("name", "").lower()
+                    if name_lower not in seen_names:
+                        all_results.append(r)
+                        seen_names.add(name_lower)
+
+            self._set_cached(cache_key, all_results[:page_size])
+            return all_results[:page_size]
+
         try:
             supabase = get_supabase()
             offset = (page - 1) * page_size
 
-            foods = []
-            if query:
-                # Use direct SQLAlchemy to bypass PostgREST's 3s anon statement_timeout
-                async with supabase.get_session() as session:
-                    result = await session.execute(
-                        text("SELECT * FROM search_food_database_unified(:q, CAST(:uid AS uuid), :lim, :off)"),
-                        {"q": query, "uid": user_id, "lim": page_size, "off": offset},
-                    )
-                    foods = [dict(row._mapping) for row in result.fetchall()]
-
-            # Priority fix: Saved Foods > Overrides > Curated DB
+            # Step 1: Search overrides (in-memory, <1ms) — ALWAYS returned
+            override_results = []
             if page == 1:
                 override_results = self._find_matching_overrides_for_search(
                     query, restaurant=restaurant, food_category=food_category,
                 )
 
-                if override_results:
-                    # Split unified results into saved vs DB
-                    saved_foods = [f for f in foods if f.get("source") in ("saved", "saved_item")]
-                    db_foods = [f for f in foods if f.get("source") not in ("saved", "saved_item")]
+            # Step 2: Fetch saved foods (fast LIKE on user's small table, <100ms)
+            saved_foods = []
+            if query and user_id:
+                try:
+                    async with supabase.get_session() as session:
+                        result = await asyncio.wait_for(
+                            session.execute(
+                                text("""
+                                    SELECT
+                                        sfe.saved_food_id::TEXT AS id, sfe.name,
+                                        CASE WHEN sfe.is_composite THEN 'saved' ELSE 'saved_item' END AS source,
+                                        NULL::TEXT AS brand, NULL::TEXT AS category,
+                                        ABS(sfe.calories)::REAL AS calories_per_100g,
+                                        ABS(sfe.protein_g)::REAL AS protein_per_100g,
+                                        ABS(sfe.fat_g)::REAL AS fat_per_100g,
+                                        ABS(sfe.carbs_g)::REAL AS carbs_per_100g,
+                                        ABS(sfe.fiber_g)::REAL AS fiber_per_100g,
+                                        0.0::REAL AS sugar_per_100g,
+                                        'per serving'::TEXT AS serving_description,
+                                        NULL::REAL AS serving_weight_g,
+                                        0.85::REAL AS similarity_score
+                                    FROM saved_foods_exploded sfe
+                                    WHERE sfe.user_id = CAST(:uid AS uuid)
+                                      AND LOWER(sfe.name) LIKE LOWER('%' || :q || '%')
+                                """),
+                                {"q": query, "uid": user_id},
+                            ),
+                            timeout=3.0,
+                        )
+                        saved_foods = [dict(row._mapping) for row in result.fetchall()]
+                except Exception:
+                    pass  # Saved foods are optional, don't block
 
-                    # Deduplicate: remove DB entries that match override names
-                    override_names = {r["name"].lower() for r in override_results}
-                    db_foods = [f for f in db_foods if f.get("name", "").lower() not in override_names]
+            # Step 3: Only hit the slow 528K-row trigram RPC if we don't have
+            # enough results from overrides + saved foods combined
+            db_foods = []
+            have_enough = len(override_results) + len(saved_foods) >= page_size
+            if query and not have_enough:
+                try:
+                    async with supabase.get_session() as session:
+                        result = await asyncio.wait_for(
+                            session.execute(
+                                text("SELECT * FROM search_food_database(:q, :lim, :off)"),
+                                {"q": query, "lim": page_size, "off": offset},
+                            ),
+                            timeout=6.0,
+                        )
+                        db_foods = [dict(row._mapping) for row in result.fetchall()]
+                except asyncio.TimeoutError:
+                    logger.warning(f"[FoodDB] RPC timed out for '{query}' — returning overrides only")
+                except Exception as rpc_err:
+                    logger.warning(f"[FoodDB] RPC failed for '{query}': {rpc_err}")
 
-                    # Deduplicate: remove overrides that duplicate saved food names
-                    saved_names = {f.get("name", "").lower() for f in saved_foods}
-                    override_results = [r for r in override_results if r["name"].lower() not in saved_names]
+            # Assemble: Saved > Overrides > Curated DB (deduped)
+            override_names = {r["name"].lower() for r in override_results}
+            saved_names = {f.get("name", "").lower() for f in saved_foods}
+            # Remove overrides that duplicate saved food names
+            override_results = [r for r in override_results if r["name"].lower() not in saved_names]
+            # Remove DB entries that duplicate override or saved names
+            all_preferred_names = override_names | saved_names
+            db_foods = [f for f in db_foods if f.get("name", "").lower() not in all_preferred_names]
 
-                    # Reassemble: saved > overrides > curated DB
-                    foods = saved_foods + override_results + db_foods
+            foods = saved_foods + override_results + db_foods
 
             logger.info(f"[FoodDB] Unified search found {len(foods)} results for '{query}'")
             self._set_cached(cache_key, foods)

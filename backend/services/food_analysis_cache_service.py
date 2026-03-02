@@ -20,6 +20,7 @@ Expected Performance:
 import asyncio
 import logging
 import re
+from dataclasses import dataclass, field
 from typing import Optional, Dict, Any, List, Tuple
 
 from sqlalchemy import text
@@ -31,6 +32,129 @@ from services.food_database_lookup_service import get_food_db_lookup_service
 from services.gemini_service import GeminiService
 
 logger = logging.getLogger(__name__)
+
+
+@dataclass
+class ParsedFoodItem:
+    """A single parsed food item extracted from a natural-language description."""
+    food_name: str          # Cleaned name for DB lookup
+    quantity: float = 1.0   # Count (pieces/servings)
+    weight_g: float = None  # Explicit weight in grams (e.g., "300g haleem")
+    volume_ml: float = None # Explicit volume (converted to weight_g using 1ml~1g)
+    unit: str = None        # "plate", "bowl", "glass", "slice", "cup", etc.
+    raw_text: str = ""      # Original text before parsing
+
+
+# ── Parsing constants ─────────────────────────────────────────────
+
+_WORD_NUMBERS = {
+    "a": 1, "an": 1, "one": 1, "two": 2, "three": 3, "four": 4,
+    "five": 5, "six": 6, "seven": 7, "eight": 8, "nine": 9, "ten": 10,
+    "half": 0.5, "quarter": 0.25, "dozen": 12, "couple": 2,
+}
+
+# Units that indicate "how many" (not weight/volume)
+_COUNT_UNITS = frozenset([
+    "plate", "plates", "bowl", "bowls", "glass", "glasses",
+    "slice", "slices", "piece", "pieces", "cup", "cups",
+    "scoop", "scoops", "spoon", "spoons", "tablespoon", "tablespoons",
+    "teaspoon", "teaspoons", "tbsp", "tsp", "serving", "servings",
+    "handful", "handfuls", "stick", "sticks", "can", "cans",
+    "bottle", "bottles", "packet", "packets", "box", "boxes",
+    "bar", "bars", "strip", "strips", "roll", "rolls",
+    "portion", "portions",
+])
+
+# Weight pattern: number + weight unit (possibly with space)
+_WEIGHT_REGEX = re.compile(
+    r'^(\d+(?:\.\d+)?)\s*'
+    r'(g|gm|gms|gram|grams|kg|kilo|kilogram|kilograms|oz|ounce|ounces)\b'
+    r'\s*(?:of\s+)?(.+)$',
+    re.IGNORECASE,
+)
+
+# Weight AFTER food: "rice 100g"
+_WEIGHT_AFTER_REGEX = re.compile(
+    r'^(.+?)\s+(\d+(?:\.\d+)?)\s*'
+    r'(g|gm|gms|gram|grams|kg|kilo|kilogram|kilograms|oz|ounce|ounces)$',
+    re.IGNORECASE,
+)
+
+# Volume pattern: number + volume unit
+_VOLUME_REGEX = re.compile(
+    r'^(\d+(?:\.\d+)?)\s*'
+    r'(ml|milliliter|milliliters|millilitres|l|liter|litre|liters|litres'
+    r'|fl\s*oz|fluid\s*oz)\b'
+    r'\s*(?:of\s+)?(.+)$',
+    re.IGNORECASE,
+)
+
+# Volume AFTER food: "milk 500ml"
+_VOLUME_AFTER_REGEX = re.compile(
+    r'^(.+?)\s+(\d+(?:\.\d+)?)\s*'
+    r'(ml|milliliter|milliliters|millilitres|l|liter|litre|liters|litres'
+    r'|fl\s*oz|fluid\s*oz)$',
+    re.IGNORECASE,
+)
+
+# Filler phrases to strip from the start
+_FILLER_REGEX = re.compile(
+    r'^(?:i\s+(?:had|ate|just\s+had|just\s+ate|drank|just\s+drank)\s+)'
+    r'|^(?:about|maybe|around|approximately|roughly|nearly|like)\s+',
+    re.IGNORECASE,
+)
+
+# Bullet / prefix patterns
+_BULLET_REGEX = re.compile(
+    r'^(?:[-•*]\s+|\d+[.)]\s+|(?:breakfast|lunch|dinner|snack|brunch|supper)\s*:\s*)',
+    re.IGNORECASE,
+)
+
+# Numeric + count-unit: "6 slices pizza"
+_NUM_UNIT_REGEX = re.compile(
+    r'^(\d+(?:\.\d+)?)\s+(' + '|'.join(_COUNT_UNITS) + r')\s+(?:of\s+)?(.+)$',
+    re.IGNORECASE,
+)
+
+# Word number + optional unit: "one plate biryani", "half a pizza", "a bowl of soup"
+_WORD_NUM_PATTERN = '|'.join(re.escape(w) for w in _WORD_NUMBERS)
+_WORD_NUM_UNIT_REGEX = re.compile(
+    r'^(' + _WORD_NUM_PATTERN + r')\s+'
+    r'(?:a\s+)?'
+    r'(?:(' + '|'.join(_COUNT_UNITS) + r')\s+(?:of\s+)?)?'
+    r'(.+)$',
+    re.IGNORECASE,
+)
+
+# Bare number prefix: "2 dosa", "100 rice"
+_BARE_NUM_REGEX = re.compile(r'^(\d+(?:\.\d+)?)\s+(.+)$')
+
+# Fraction prefix: "1/2 pizza"
+_FRACTION_REGEX = re.compile(r'^(\d+)/(\d+)\s+(.+)$')
+
+
+def _weight_unit_to_grams(value: float, unit: str) -> float:
+    """Convert a weight value+unit to grams."""
+    u = unit.lower().rstrip('s')
+    if u in ('g', 'gm', 'gram'):
+        return value
+    if u in ('kg', 'kilo', 'kilogram'):
+        return value * 1000
+    if u in ('oz', 'ounce'):
+        return value * 28.35
+    return value
+
+
+def _volume_unit_to_ml(value: float, unit: str) -> float:
+    """Convert a volume value+unit to milliliters."""
+    u = unit.lower().replace(' ', '')
+    if u in ('ml', 'milliliter', 'milliliters', 'millilitres'):
+        return value
+    if u in ('l', 'liter', 'litre', 'liters', 'litres'):
+        return value * 1000
+    if u in ('floz', 'fluidoz'):
+        return value * 29.57
+    return value
 
 
 class FoodAnalysisCacheService:
@@ -333,8 +457,13 @@ class FoodAnalysisCacheService:
         """
         Try to find food in the curated food_nutrition_overrides (3,785 items).
 
-        Uses the FoodDatabaseLookupService singleton which keeps overrides
-        in memory with a 30-min TTL.
+        Parses quantity/weight from the description, looks up the cleaned food name,
+        then scales the result accordingly.
+
+        Examples:
+            "2 dosa"     → food="dosa", qty=2 → scale by 2
+            "300g rice"  → food="rice", weight_g=300 → scale per-100g
+            "biryani"    → food="biryani", qty=1 → default serving
 
         Args:
             description: Food description
@@ -345,12 +474,28 @@ class FoodAnalysisCacheService:
         try:
             lookup_service = get_food_db_lookup_service()
             await lookup_service._load_overrides()
-            override = lookup_service._check_override(description)
 
+            # First try exact match on full description (handles "chicken 65", etc.)
+            override = lookup_service._check_override(description)
+            if override:
+                return self._override_to_analysis(override)
+
+            # Parse to extract quantity/weight, then look up cleaned food name
+            parsed = self._parse_single_item(description)
+            if not parsed:
+                return None
+
+            override = lookup_service._check_override(parsed.food_name)
             if not override:
                 return None
 
-            return self._override_to_analysis(override)
+            # Scale based on what was parsed
+            if parsed.weight_g:
+                return self._override_to_analysis_by_weight(override, parsed.weight_g)
+            elif parsed.quantity != 1.0:
+                return self._override_to_analysis_scaled(override, parsed.quantity)
+            else:
+                return self._override_to_analysis(override)
 
         except Exception as e:
             logger.warning(f"Override lookup failed: {e}")
@@ -464,6 +609,192 @@ class FoodAnalysisCacheService:
         result.update(scaled_micros)
         return result
 
+    def _override_to_analysis_by_weight(
+        self, override: Dict[str, Any], weight_g: float
+    ) -> Dict[str, Any]:
+        """
+        Convert override to analysis using explicit weight in grams.
+        Scales per-100g data by weight_g/100.
+
+        Args:
+            override: Override dict from FoodDatabaseLookupService
+            weight_g: Explicit weight in grams
+
+        Returns:
+            Dict in same format as Gemini analysis
+        """
+        scale = weight_g / 100.0
+
+        total_calories = round(override["calories_per_100g"] * scale)
+        total_protein = round(override["protein_per_100g"] * scale, 1)
+        total_carbs = round(override["carbs_per_100g"] * scale, 1)
+        total_fat = round(override["fat_per_100g"] * scale, 1)
+        total_fiber = round(override.get("fiber_per_100g", 0) * scale, 1)
+
+        amount = f"{weight_g:.0f}g"
+
+        micro_keys = (
+            "sodium_mg", "cholesterol_mg", "saturated_fat_g", "trans_fat_g",
+            "potassium_mg", "calcium_mg", "iron_mg", "vitamin_a_ug",
+            "vitamin_c_mg", "vitamin_d_iu", "magnesium_mg", "zinc_mg",
+            "phosphorus_mg", "selenium_ug", "omega3_g",
+        )
+        scaled_micros = {}
+        per_gram_micros = {}
+        for key in micro_keys:
+            val = override.get(key)
+            if val is not None:
+                scaled_micros[key] = round(val * scale, 2)
+                per_gram_micros[key] = round(val / 100, 4)
+
+        food_item = {
+            "name": override["display_name"],
+            "amount": amount,
+            "calories": total_calories,
+            "protein_g": total_protein,
+            "carbs_g": total_carbs,
+            "fat_g": total_fat,
+            "fiber_g": total_fiber,
+            "weight_g": round(weight_g, 1),
+            "weight_source": "exact",
+            "unit": "g",
+            "ai_per_gram": {
+                "calories": round(override["calories_per_100g"] / 100, 3),
+                "protein": round(override["protein_per_100g"] / 100, 4),
+                "carbs": round(override["carbs_per_100g"] / 100, 4),
+                "fat": round(override["fat_per_100g"] / 100, 4),
+                "fiber": round(override.get("fiber_per_100g", 0) / 100, 4),
+                **per_gram_micros,
+            },
+        }
+
+        if override.get("override_weight_per_piece_g"):
+            food_item["weight_per_unit_g"] = override["override_weight_per_piece_g"]
+
+        score = self._compute_health_score(total_calories, total_protein, total_fiber)
+
+        result = {
+            "food_items": [food_item],
+            "total_calories": total_calories,
+            "protein_g": total_protein,
+            "carbs_g": total_carbs,
+            "fat_g": total_fat,
+            "fiber_g": total_fiber,
+            "encouragements": [],
+            "warnings": [],
+            "ai_suggestion": None,
+            "recommended_swap": None,
+            "overall_meal_score": score,
+            "health_score": score,
+            "data_source": "override",
+            "restaurant_name": override.get("restaurant_name"),
+            "food_category": override.get("food_category"),
+        }
+        result.update(scaled_micros)
+        return result
+
+    def _override_to_analysis_scaled(
+        self, override: Dict[str, Any], count: float
+    ) -> Dict[str, Any]:
+        """
+        Convert override to analysis scaled by a given count.
+        Uses serving size (override_serving_g or override_weight_per_piece_g or 100g)
+        as the base, then multiplies by count.
+
+        Args:
+            override: Override dict from FoodDatabaseLookupService
+            count: Number of servings/pieces
+
+        Returns:
+            Dict in same format as Gemini analysis
+        """
+        serving_g = (
+            override.get("override_serving_g")
+            or override.get("override_weight_per_piece_g")
+            or 100.0
+        )
+        scale = serving_g / 100.0
+
+        calories_per_serving = round(override["calories_per_100g"] * scale)
+        protein_per_serving = round(override["protein_per_100g"] * scale, 1)
+        carbs_per_serving = round(override["carbs_per_100g"] * scale, 1)
+        fat_per_serving = round(override["fat_per_100g"] * scale, 1)
+        fiber_per_serving = round(override.get("fiber_per_100g", 0) * scale, 1)
+
+        total_calories = round(calories_per_serving * count)
+        total_protein = round(protein_per_serving * count, 1)
+        total_carbs = round(carbs_per_serving * count, 1)
+        total_fat = round(fat_per_serving * count, 1)
+        total_fiber = round(fiber_per_serving * count, 1)
+
+        # Build serving description
+        count_display = int(count) if count == int(count) else count
+        if override.get("override_weight_per_piece_g"):
+            amount = f"{count_display} piece{'s' if count != 1 else ''} ({round(serving_g * count):.0f}g)"
+        else:
+            amount = f"{count_display} x {serving_g:.0f}g"
+
+        micro_keys = (
+            "sodium_mg", "cholesterol_mg", "saturated_fat_g", "trans_fat_g",
+            "potassium_mg", "calcium_mg", "iron_mg", "vitamin_a_ug",
+            "vitamin_c_mg", "vitamin_d_iu", "magnesium_mg", "zinc_mg",
+            "phosphorus_mg", "selenium_ug", "omega3_g",
+        )
+        scaled_micros = {}
+        per_gram_micros = {}
+        for key in micro_keys:
+            val = override.get(key)
+            if val is not None:
+                scaled_micros[key] = round(val * scale * count, 2)
+                per_gram_micros[key] = round(val / 100, 4)
+
+        food_item = {
+            "name": override["display_name"],
+            "amount": amount,
+            "calories": total_calories,
+            "protein_g": total_protein,
+            "carbs_g": total_carbs,
+            "fat_g": total_fat,
+            "fiber_g": total_fiber,
+            "weight_g": round(serving_g * count, 1),
+            "weight_source": "exact",
+            "unit": "g",
+            "ai_per_gram": {
+                "calories": round(override["calories_per_100g"] / 100, 3),
+                "protein": round(override["protein_per_100g"] / 100, 4),
+                "carbs": round(override["carbs_per_100g"] / 100, 4),
+                "fat": round(override["fat_per_100g"] / 100, 4),
+                "fiber": round(override.get("fiber_per_100g", 0) / 100, 4),
+                **per_gram_micros,
+            },
+        }
+
+        if override.get("override_weight_per_piece_g"):
+            food_item["weight_per_unit_g"] = override["override_weight_per_piece_g"]
+            food_item["count"] = count_display
+
+        score = self._compute_health_score(total_calories, total_protein, total_fiber)
+
+        result = {
+            "food_items": [food_item],
+            "total_calories": total_calories,
+            "protein_g": total_protein,
+            "carbs_g": total_carbs,
+            "fat_g": total_fat,
+            "fiber_g": total_fiber,
+            "encouragements": [],
+            "warnings": [],
+            "ai_suggestion": None,
+            "recommended_swap": None,
+            "overall_meal_score": score,
+            "health_score": score,
+            "data_source": "override",
+            "restaurant_name": override.get("restaurant_name"),
+            "food_category": override.get("food_category"),
+        }
+        result.update(scaled_micros)
+        return result
+
     async def _auto_learn_food_items(self, analysis_result: Dict[str, Any]) -> None:
         """
         Auto-learn individual food items from a Gemini analysis result
@@ -547,61 +878,194 @@ class FoodAnalysisCacheService:
 
     def _split_food_description(
         self, description: str
-    ) -> List[Tuple[float, str]]:
+    ) -> List[ParsedFoodItem]:
         """
-        Split a multi-item food description into individual items with quantities.
+        Split a multi-item food description into individual ParsedFoodItems.
 
-        Splits on: comma, ' and ', ' & ', ' + ', ' with '
-        Extracts quantity prefix: "2 eggs" -> (2.0, "eggs")
+        Splitting order:
+        1. Newlines
+        2. Commas
+        3. " and " / " & " / " + " (with compound food protection)
+        4. Does NOT split on " with " (part of food names like "dosa with chutney")
+
+        Per-item parsing extracts quantity, weight_g, volume_ml, unit, and food_name.
 
         Args:
             description: Food description potentially containing multiple items
 
         Returns:
-            List of (quantity, food_name) tuples
+            List of ParsedFoodItem
         """
-        # Split on delimiters
-        parts = re.split(r'\s*,\s*|\s+and\s+|\s+&\s+|\s+\+\s+|\s+with\s+', description.strip())
-        items: List[Tuple[float, str]] = []
-
-        for part in parts:
-            part = part.strip()
-            if not part:
-                continue
-            # Try to extract leading quantity (e.g., "2 eggs", "1.5 cups rice")
-            qty_match = re.match(r'^(\d+(?:\.\d+)?)\s+(.+)$', part)
-            if qty_match:
-                qty = float(qty_match.group(1))
-                food_name = qty_match.group(2).strip()
-            else:
-                qty = 1.0
-                food_name = part
-            items.append((qty, food_name))
-
+        raw_parts = self._split_text_into_parts(description.strip())
+        items: List[ParsedFoodItem] = []
+        for part in raw_parts:
+            parsed = self._parse_single_item(part)
+            if parsed:
+                items.append(parsed)
         return items
+
+    def _split_text_into_parts(self, text: str) -> List[str]:
+        """Split text into individual food strings using newlines, commas, and conjunctions."""
+        # Step 1: Split on newlines
+        lines = [l.strip() for l in text.split('\n') if l.strip()]
+        parts: List[str] = []
+        for line in lines:
+            # Step 2: Split on commas
+            comma_parts = [p.strip() for p in line.split(',') if p.strip()]
+            for cp in comma_parts:
+                # Step 3: Split on " and " / " & " / " + " with compound food protection
+                parts.extend(self._split_on_conjunctions(cp))
+        return parts
+
+    def _split_on_conjunctions(self, text: str) -> List[str]:
+        """Split on ' and ', ' & ', ' + ' but protect compound foods like 'mac and cheese'."""
+        # Check if the full text is a known override → don't split
+        lookup_service = get_food_db_lookup_service()
+        if lookup_service._overrides.get(text.lower().strip()):
+            return [text]
+
+        # Try splitting
+        parts = re.split(r'\s+and\s+|\s*&\s*|\s*\+\s*', text, flags=re.IGNORECASE)
+        parts = [p.strip() for p in parts if p.strip()]
+        if len(parts) <= 1:
+            return [text]
+
+        # Check if any adjacent pair forms a compound food
+        # e.g., "mac and cheese" → rejoin if "mac and cheese" is in overrides
+        merged: List[str] = []
+        i = 0
+        while i < len(parts):
+            if i + 1 < len(parts):
+                compound = f"{parts[i]} and {parts[i+1]}"
+                if lookup_service._overrides.get(compound.lower().strip()):
+                    merged.append(compound)
+                    i += 2
+                    continue
+            merged.append(parts[i])
+            i += 1
+        return merged
+
+    def _parse_single_item(self, raw: str) -> Optional[ParsedFoodItem]:
+        """Parse a single food string into a ParsedFoodItem."""
+        text = raw.strip()
+        if not text:
+            return None
+
+        # Strip fillers: "I had", "I ate", "about", etc.
+        text = _FILLER_REGEX.sub('', text).strip()
+        # Strip bullets: "- ", "• ", "1. ", "breakfast: "
+        text = _BULLET_REGEX.sub('', text).strip()
+        # Strip leading "and " / "or "
+        text = re.sub(r'^(?:and|or)\s+', '', text, flags=re.IGNORECASE).strip()
+
+        if not text:
+            return None
+
+        # Full-text override check: if entire text (including number) is a known override
+        # This handles "chicken 65", "5 star chocolate", "7up"
+        lookup_service = get_food_db_lookup_service()
+        if lookup_service._overrides.get(text.lower().strip()):
+            return ParsedFoodItem(food_name=text, quantity=1.0, raw_text=raw)
+
+        # Try weight BEFORE food: "300g haleem", "0.5kg chicken"
+        m = _WEIGHT_REGEX.match(text)
+        if m:
+            val = float(m.group(1))
+            wg = _weight_unit_to_grams(val, m.group(2))
+            food = m.group(3).strip()
+            return ParsedFoodItem(food_name=food, weight_g=wg, raw_text=raw)
+
+        # Try volume BEFORE food: "500ml milk", "2 liters water"
+        m = _VOLUME_REGEX.match(text)
+        if m:
+            val = float(m.group(1))
+            ml = _volume_unit_to_ml(val, m.group(2))
+            food = m.group(3).strip()
+            return ParsedFoodItem(food_name=food, weight_g=ml, volume_ml=ml, raw_text=raw)
+
+        # Try weight AFTER food: "rice 100g"
+        m = _WEIGHT_AFTER_REGEX.match(text)
+        if m:
+            food = m.group(1).strip()
+            val = float(m.group(2))
+            wg = _weight_unit_to_grams(val, m.group(3))
+            return ParsedFoodItem(food_name=food, weight_g=wg, raw_text=raw)
+
+        # Try volume AFTER food: "milk 500ml"
+        m = _VOLUME_AFTER_REGEX.match(text)
+        if m:
+            food = m.group(1).strip()
+            val = float(m.group(2))
+            ml = _volume_unit_to_ml(val, m.group(2))
+            return ParsedFoodItem(food_name=food, weight_g=ml, volume_ml=ml, raw_text=raw)
+
+        # Try numeric + count-unit: "6 slices pizza", "2 cups rice"
+        m = _NUM_UNIT_REGEX.match(text)
+        if m:
+            qty = float(m.group(1))
+            unit = m.group(2).lower()
+            food = m.group(3).strip()
+            return ParsedFoodItem(food_name=food, quantity=qty, unit=unit, raw_text=raw)
+
+        # Try word number + optional unit: "one plate biryani", "half a pizza", "a bowl of soup"
+        m = _WORD_NUM_UNIT_REGEX.match(text)
+        if m:
+            word = m.group(1).lower()
+            qty = _WORD_NUMBERS.get(word, 1.0)
+            unit = m.group(2).lower() if m.group(2) else None
+            food = m.group(3).strip()
+            # Strip leading "of " from food if present
+            food = re.sub(r'^of\s+', '', food, flags=re.IGNORECASE)
+            return ParsedFoodItem(food_name=food, quantity=qty, unit=unit, raw_text=raw)
+
+        # Try fraction: "1/2 pizza"
+        m = _FRACTION_REGEX.match(text)
+        if m:
+            qty = float(m.group(1)) / float(m.group(2))
+            food = m.group(3).strip()
+            return ParsedFoodItem(food_name=food, quantity=qty, raw_text=raw)
+
+        # Try bare number: "2 dosa", "100 rice"
+        m = _BARE_NUM_REGEX.match(text)
+        if m:
+            qty = float(m.group(1))
+            food = m.group(2).strip()
+            # Check if full text with number is a known override (e.g., "chicken 65")
+            if lookup_service._overrides.get(text.lower().strip()):
+                return ParsedFoodItem(food_name=text, quantity=1.0, raw_text=raw)
+            return ParsedFoodItem(food_name=food, quantity=qty, raw_text=raw)
+
+        # No quantity detected
+        return ParsedFoodItem(food_name=text, quantity=1.0, raw_text=raw)
 
     async def _try_multi_item_lookup(
         self, description: str, user_id: Optional[str] = None
     ) -> Optional[Dict[str, Any]]:
         """
-        Try to resolve a multi-item food description from overrides + common foods.
+        Try to resolve food description from overrides + common foods.
 
-        Only activates when multiple items are detected. For each item, checks:
-        1. Override (3,785 curated items)
-        2. Common foods DB
-        If ALL items resolve, combines and returns the result.
-        Any miss → returns None to let Gemini handle the entire description.
+        Now handles single items with quantities (e.g., "2 dosa") in addition
+        to multi-item descriptions. For each parsed item, checks:
+        1. Exact override match
+        2. Fuzzy override search (word-index)
+        3. Common foods DB
+
+        If ALL items resolve locally, combines and returns the result.
+        If any item misses, returns None to let Gemini handle the full description.
+
+        When weight_g is provided on a ParsedFoodItem, scales using per-100g data.
+        Applies countability heuristic for bare numbers.
 
         Args:
             description: Food description
-            user_id: Optional user ID (unused for now, reserved for saved food per-item)
+            user_id: Optional user ID
 
         Returns:
             Combined analysis dict if all items found, None otherwise
         """
         try:
             items = self._split_food_description(description)
-            if len(items) <= 1:
+            if not items:
                 return None
 
             # Ensure overrides are loaded
@@ -615,43 +1079,22 @@ class FoodAnalysisCacheService:
             total_fat = 0.0
             total_fiber = 0.0
 
-            for qty, food_name in items:
-                analysis = None
-
-                # Try override first
-                override = lookup_service._check_override(food_name)
-                if override:
-                    analysis = self._override_to_analysis(override)
-                else:
-                    # Try common foods
-                    common = self.nutrition_db.get_common_food(food_name)
-                    if common:
-                        analysis = self._common_food_to_analysis(common)
+            for item in items:
+                analysis = self._resolve_single_parsed_item(item, lookup_service)
 
                 if not analysis:
-                    # Any miss means we fall through to Gemini
+                    # Any miss means Gemini handles the full description
                     return None
 
-                # Scale by quantity
                 for fi in analysis["food_items"]:
-                    fi["calories"] = int(fi["calories"] * qty)
-                    fi["protein_g"] = round(fi["protein_g"] * qty, 1)
-                    fi["carbs_g"] = round(fi["carbs_g"] * qty, 1)
-                    fi["fat_g"] = round(fi["fat_g"] * qty, 1)
-                    fi["fiber_g"] = round(fi["fiber_g"] * qty, 1)
-                    if fi.get("weight_g"):
-                        fi["weight_g"] = round(fi["weight_g"] * qty, 1)
-                    if qty != 1.0:
-                        fi["amount"] = f"{qty} x {fi['amount']}"
                     all_food_items.append(fi)
 
-                total_cals += int(analysis["total_calories"] * qty)
-                total_protein += analysis["protein_g"] * qty
-                total_carbs += analysis["carbs_g"] * qty
-                total_fat += analysis["fat_g"] * qty
-                total_fiber += analysis["fiber_g"] * qty
+                total_cals += analysis["total_calories"]
+                total_protein += analysis["protein_g"]
+                total_carbs += analysis["carbs_g"]
+                total_fat += analysis["fat_g"]
+                total_fiber += analysis["fiber_g"]
 
-            # Compute a simple health score from combined macros
             score = self._compute_health_score(total_cals, total_protein, total_fiber)
 
             return {
@@ -673,6 +1116,134 @@ class FoodAnalysisCacheService:
         except Exception as e:
             logger.warning(f"Multi-item lookup failed: {e}")
             return None
+
+    def _resolve_single_parsed_item(
+        self, item: ParsedFoodItem, lookup_service
+    ) -> Optional[Dict[str, Any]]:
+        """
+        Resolve a single ParsedFoodItem to a nutrition analysis using overrides + common foods.
+
+        Applies countability heuristic for bare numbers and weight-based scaling.
+
+        Args:
+            item: ParsedFoodItem from _split_food_description
+            lookup_service: FoodDatabaseLookupService instance
+
+        Returns:
+            Analysis dict or None if not found
+        """
+        food_name = item.food_name
+        override = lookup_service._check_override(food_name)
+
+        # Fuzzy fallback: try word-index search if exact miss
+        if not override:
+            fuzzy_matches = lookup_service._find_matching_overrides_for_search(food_name)
+            if fuzzy_matches and len(fuzzy_matches) == 1:
+                # Only use fuzzy if there's exactly one match (unambiguous)
+                match_name = fuzzy_matches[0].get("name", "")
+                override = lookup_service._check_override(match_name)
+
+        if override:
+            # Weight-based scaling
+            if item.weight_g:
+                return self._override_to_analysis_by_weight(override, item.weight_g)
+
+            # Apply countability heuristic for bare numbers (no unit specified)
+            qty = item.quantity
+            if qty != 1.0 and not item.unit:
+                qty = self._apply_countability_heuristic(override, qty)
+
+            if qty != 1.0:
+                return self._override_to_analysis_scaled(override, qty)
+            else:
+                return self._override_to_analysis(override)
+
+        # Try common foods DB
+        common = self.nutrition_db.get_common_food(food_name)
+        if common:
+            analysis = self._common_food_to_analysis(common)
+            # Scale by quantity if not 1.0
+            qty = item.quantity
+            if item.weight_g and analysis.get("food_items"):
+                # Weight-based scaling for common foods
+                fi = analysis["food_items"][0]
+                base_weight = float(fi.get("weight_g") or 100)
+                if base_weight > 0:
+                    scale = item.weight_g / base_weight
+                    self._scale_analysis(analysis, scale, f"{item.weight_g:.0f}g")
+                return analysis
+            elif qty != 1.0:
+                self._scale_analysis(analysis, qty)
+            return analysis
+
+        return None
+
+    @staticmethod
+    def _apply_countability_heuristic(override: Dict, qty: float) -> float:
+        """
+        Apply countability heuristic for bare numbers (user typed "100 rice" or "2 dosa").
+
+        Rules:
+        - Countable food (has weight_per_piece_g) + qty <= 30 → count (pieces)
+        - Countable food + qty > 30 → treat qty as grams, convert to piece-count
+        - Non-countable (serving_g only) + qty > 10 → treat qty as grams
+        - Non-countable + qty <= 10 → treat as servings
+        - Unknown + qty > 20 → assume grams (return qty as weight_g later handled upstream)
+        - Unknown + qty <= 20 → assume count
+
+        Returns the effective count to pass to _override_to_analysis_scaled,
+        or a negative value to signal weight-based scaling (caller checks).
+        """
+        has_piece_weight = override.get("override_weight_per_piece_g") is not None
+        has_serving = override.get("override_serving_g") is not None
+
+        if has_piece_weight:
+            # Countable food
+            if qty <= 30:
+                return qty  # pieces
+            else:
+                # Treat as grams → convert to piece count
+                piece_g = override["override_weight_per_piece_g"]
+                return qty / piece_g if piece_g > 0 else qty
+        elif has_serving:
+            # Non-countable food
+            if qty > 10:
+                # Treat as grams → convert to serving count
+                serv_g = override["override_serving_g"]
+                return qty / serv_g if serv_g > 0 else qty
+            else:
+                return qty  # servings
+        else:
+            # Unknown structure
+            if qty > 20:
+                # Treat as grams → scale from 100g base
+                return qty / 100.0
+            else:
+                return qty  # count
+
+    def _scale_analysis(
+        self, analysis: Dict[str, Any], scale: float, amount_label: str = None
+    ) -> None:
+        """Scale an analysis dict's food_items and totals by a multiplier (in-place)."""
+        for fi in analysis.get("food_items", []):
+            fi["calories"] = round(fi["calories"] * scale)
+            fi["protein_g"] = round(fi["protein_g"] * scale, 1)
+            fi["carbs_g"] = round(fi["carbs_g"] * scale, 1)
+            fi["fat_g"] = round(fi["fat_g"] * scale, 1)
+            fi["fiber_g"] = round(fi["fiber_g"] * scale, 1)
+            if fi.get("weight_g"):
+                fi["weight_g"] = round(fi["weight_g"] * scale, 1)
+            if amount_label:
+                fi["amount"] = amount_label
+            elif scale != 1.0:
+                scale_display = int(scale) if scale == int(scale) else round(scale, 1)
+                fi["amount"] = f"{scale_display} x {fi['amount']}"
+
+        analysis["total_calories"] = round(analysis["total_calories"] * scale)
+        analysis["protein_g"] = round(analysis["protein_g"] * scale, 1)
+        analysis["carbs_g"] = round(analysis["carbs_g"] * scale, 1)
+        analysis["fat_g"] = round(analysis["fat_g"] * scale, 1)
+        analysis["fiber_g"] = round(analysis["fiber_g"] * scale, 1)
 
     def _common_food_to_analysis(self, common_food: Dict[str, Any]) -> Dict[str, Any]:
         """

@@ -5,6 +5,107 @@ import '../repositories/nutrition_repository.dart';
 import '../models/nutrition.dart';
 import 'api_client.dart';
 
+/// A single food item from NL analysis
+class NLFoodItem {
+  final String name;
+  final String? amount;
+  final int calories;
+  final double proteinG;
+  final double carbsG;
+  final double fatG;
+  final double? fiberG;
+  final double? weightG;
+  final String? weightSource;
+  final String? unit;
+  final Map<String, dynamic>? aiPerGram;
+
+  const NLFoodItem({
+    required this.name,
+    this.amount,
+    required this.calories,
+    required this.proteinG,
+    required this.carbsG,
+    required this.fatG,
+    this.fiberG,
+    this.weightG,
+    this.weightSource,
+    this.unit,
+    this.aiPerGram,
+  });
+
+  factory NLFoodItem.fromJson(Map<String, dynamic> json) {
+    return NLFoodItem(
+      name: json['name'] as String? ?? 'Unknown',
+      amount: json['amount'] as String?,
+      calories: (json['calories'] as num?)?.toInt() ?? 0,
+      proteinG: (json['protein_g'] as num?)?.toDouble() ?? 0,
+      carbsG: (json['carbs_g'] as num?)?.toDouble() ?? 0,
+      fatG: (json['fat_g'] as num?)?.toDouble() ?? 0,
+      fiberG: (json['fiber_g'] as num?)?.toDouble(),
+      weightG: (json['weight_g'] as num?)?.toDouble(),
+      weightSource: json['weight_source'] as String?,
+      unit: json['unit'] as String?,
+      aiPerGram: json['ai_per_gram'] as Map<String, dynamic>?,
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+    'name': name,
+    if (amount != null) 'amount': amount,
+    'calories': calories,
+    'protein_g': proteinG,
+    'carbs_g': carbsG,
+    'fat_g': fatG,
+    if (fiberG != null) 'fiber_g': fiberG,
+    if (weightG != null) 'weight_g': weightG,
+    if (weightSource != null) 'weight_source': weightSource,
+    if (unit != null) 'unit': unit,
+    if (aiPerGram != null) 'ai_per_gram': aiPerGram,
+  };
+}
+
+/// Wrapper for the NL analyze-text endpoint response
+class FoodAnalysisResult {
+  final List<NLFoodItem> foodItems;
+  final int totalCalories;
+  final double proteinG;
+  final double carbsG;
+  final double fatG;
+  final double? fiberG;
+  final String? dataSource;
+  final bool cacheHit;
+  final String? cacheSource;
+
+  const FoodAnalysisResult({
+    required this.foodItems,
+    required this.totalCalories,
+    required this.proteinG,
+    required this.carbsG,
+    required this.fatG,
+    this.fiberG,
+    this.dataSource,
+    this.cacheHit = false,
+    this.cacheSource,
+  });
+
+  factory FoodAnalysisResult.fromJson(Map<String, dynamic> json) {
+    final items = (json['food_items'] as List<dynamic>?)
+        ?.map((e) => NLFoodItem.fromJson(e as Map<String, dynamic>))
+        .toList() ?? [];
+    return FoodAnalysisResult(
+      foodItems: items,
+      totalCalories: (json['total_calories'] as num?)?.toInt() ?? 0,
+      proteinG: (json['protein_g'] as num?)?.toDouble() ?? 0,
+      carbsG: (json['carbs_g'] as num?)?.toDouble() ?? 0,
+      fatG: (json['fat_g'] as num?)?.toDouble() ?? 0,
+      fiberG: (json['fiber_g'] as num?)?.toDouble(),
+      dataSource: json['data_source'] as String?,
+      cacheHit: json['cache_hit'] as bool? ?? false,
+      cacheSource: json['cache_source'] as String?,
+    );
+  }
+}
+
 /// Result model for food search
 class FoodSearchResult {
   final String id;
@@ -164,6 +265,26 @@ class FoodSearchError extends FoodSearchState {
   final String message;
   final String query;
   const FoodSearchError(this.message, this.query);
+}
+
+/// State: NL analysis is loading
+class FoodSearchNLLoading extends FoodSearchState {
+  final String query;
+  const FoodSearchNLLoading(this.query);
+}
+
+/// State: NL analysis returned results
+class FoodSearchNLResults extends FoodSearchState {
+  final String query;
+  final FoodAnalysisResult result;
+  const FoodSearchNLResults({required this.query, required this.result});
+}
+
+/// State: NL analysis errored
+class FoodSearchNLError extends FoodSearchState {
+  final String message;
+  final String query;
+  const FoodSearchNLError(this.message, this.query);
 }
 
 /// LRU Cache entry with timestamp
@@ -571,6 +692,80 @@ class FoodSearchService {
   void cancel() {
     _debounceTimer?.cancel();
     _currentQuery = null;
+  }
+
+  // ─── Natural Language Detection & Analysis ──────────────────
+
+  /// Filler phrases that indicate natural-language food logging.
+  static final _nlFillerPhrases = RegExp(
+    r'\b(i\s+had|i\s+ate|i\s+just\s+had|i\s+just\s+ate|for\s+breakfast|for\s+lunch|for\s+dinner|along\s+with|and\s+a\b|with\s+a\b)\b',
+    caseSensitive: false,
+  );
+
+  /// Word-form numbers that precede food items.
+  static final _wordNumbers = RegExp(
+    r'\b(one|two|three|four|five|six|seven|eight|nine|ten|half|dozen|couple)\b',
+    caseSensitive: false,
+  );
+
+  /// Weight / volume units.
+  static final _weightUnits = RegExp(
+    r'\b(grams?|g\b|kg\b|ml\b|oz\b|ounces?|cups?|tbsp\b|tsp\b|liters?|litres?|lbs?|pounds?|slices?|pieces?|servings?|bowls?|plates?|handfuls?)\b',
+    caseSensitive: false,
+  );
+
+  /// Returns true if [query] looks like natural-language food logging
+  /// rather than a simple keyword search (e.g. "chicken").
+  static bool isNaturalLanguageInput(String query) {
+    final trimmed = query.trim();
+    if (trimmed.isEmpty) return false;
+
+    // Multi-line input is always NL
+    if (trimmed.contains('\n')) return true;
+
+    // Comma-separated with 2+ segments that aren't a single word each
+    if (trimmed.contains(',')) {
+      final segments = trimmed.split(',').where((s) => s.trim().isNotEmpty).toList();
+      if (segments.length >= 2) return true;
+    }
+
+    // Starts with digit(s) followed by text (e.g. "2 dosa", "300g rice")
+    if (RegExp(r'^\d+\s*[a-zA-Z]').hasMatch(trimmed)) return true;
+
+    // Filler phrases
+    if (_nlFillerPhrases.hasMatch(trimmed)) return true;
+
+    // Word numbers before food
+    if (_wordNumbers.hasMatch(trimmed)) return true;
+
+    // Weight/volume units
+    if (_weightUnits.hasMatch(trimmed)) return true;
+
+    return false;
+  }
+
+  /// Call the NL analyze-text endpoint and emit results on the search stream.
+  Future<void> analyzeNaturalLanguage(String text) async {
+    final normalizedText = text.trim();
+    if (normalizedText.isEmpty) return;
+
+    _debounceTimer?.cancel();
+    _currentQuery = normalizedText;
+    _searchController.add(FoodSearchNLLoading(normalizedText));
+
+    try {
+      final response = await _nutritionRepository.analyzeText(normalizedText);
+
+      // Check the query hasn't changed while we were waiting
+      if (_currentQuery != normalizedText) return;
+
+      final result = FoodAnalysisResult.fromJson(response);
+      _searchController.add(FoodSearchNLResults(query: normalizedText, result: result));
+    } catch (e) {
+      if (_currentQuery != normalizedText) return;
+      debugPrint('FoodSearch: NL analysis error: $e');
+      _searchController.add(FoodSearchNLError('Analysis failed. Please try again.', normalizedText));
+    }
   }
 
   /// Dispose of resources

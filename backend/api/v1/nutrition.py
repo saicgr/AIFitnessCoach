@@ -2022,6 +2022,47 @@ async def log_food_from_text_streaming(request: Request, body: LogTextRequest, c
     )
 
 
+@router.post("/analyze-text")
+@limiter.limit("10/minute")
+async def analyze_food_text(
+    request: Request,
+    body: LogTextRequest,
+    current_user: dict = Depends(get_current_user),
+):
+    """
+    Analyze food from text description (non-streaming).
+
+    DOES NOT save to database - returns analysis only for user review.
+    Use /log-direct to save after user confirmation.
+
+    Returns the full analysis result as JSON with an 8s timeout.
+    On timeout, returns HTTP 504.
+    """
+    logger.info(f"[ANALYZE-TEXT] Analyzing food for user {current_user['id']}: {body.description[:80]}...")
+
+    cache_service = get_food_analysis_cache_service()
+    try:
+        result = await asyncio.wait_for(
+            cache_service.analyze_food(
+                description=body.description,
+                user_id=current_user["id"],
+                use_cache=True,
+            ),
+            timeout=8.0,
+        )
+        if result:
+            return result
+        raise HTTPException(status_code=422, detail="Could not analyze food")
+    except asyncio.TimeoutError:
+        logger.warning(f"[ANALYZE-TEXT] Timed out for: {body.description[:80]}")
+        raise HTTPException(status_code=504, detail="Analysis timed out")
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"[ANALYZE-TEXT] Error: {e}")
+        raise safe_internal_error(e, "nutrition")
+
+
 @router.post("/analyze-text-stream")
 @limiter.limit("10/minute")
 async def analyze_food_from_text_streaming(request: Request, body: LogTextRequest, current_user: dict = Depends(get_current_user)):

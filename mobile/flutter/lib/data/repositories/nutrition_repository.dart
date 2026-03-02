@@ -487,6 +487,24 @@ class NutritionRepository {
     }
   }
 
+  /// Analyze natural-language food text (multi-item) without logging.
+  /// Returns the raw response map from POST /nutrition/analyze-text.
+  Future<Map<String, dynamic>> analyzeText(String description) async {
+    try {
+      final response = await _client.post(
+        '/nutrition/analyze-text',
+        data: {'description': description},
+        options: Options(
+          receiveTimeout: ApiConstants.aiReceiveTimeout,
+        ),
+      );
+      return response.data as Map<String, dynamic>;
+    } catch (e) {
+      debugPrint('Error analyzing text: $e');
+      rethrow;
+    }
+  }
+
   /// Log food from text description using AI
   Future<LogFoodResponse> logFoodFromText({
     required String userId,
