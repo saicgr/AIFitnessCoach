@@ -400,6 +400,7 @@ async def generate_workout(request: GenerateWorkoutRequest, background_tasks: Ba
                     "scheduled_date": request.scheduled_date,
                     "status": "generating",
                     "name": "Generating...",
+                    "type": request.workout_type or "strength",
                     "exercises_json": [],
                 }
                 if dedup_gym_profile_id:

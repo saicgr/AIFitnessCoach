@@ -263,6 +263,25 @@ class FoodDatabaseLookupService:
                 seen_display_names.add(display)
                 continue
 
+            # Check variant_names array for matches
+            variant_names = override.get("variant_names") or []
+            variant_matched = False
+            for vn in variant_names:
+                vn_lower = vn.lower() if isinstance(vn, str) else ""
+                if query_lower in vn_lower or vn_lower in query_lower:
+                    variant_matched = True
+                    break
+                # Also check word overlap against variant names
+                if query_lower and vn_lower:
+                    q_words = query_lower.split()
+                    if any(w in vn_lower for w in q_words if len(w) >= 3):
+                        variant_matched = True
+                        break
+            if variant_matched:
+                matches.append(self._override_to_search_result(override))
+                seen_display_names.add(display)
+                continue
+
             # Word overlap check (50% threshold)
             query_words = [w for w in query_lower.split() if len(w) >= 3]
             if query_words:

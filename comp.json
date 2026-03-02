@@ -1,0 +1,461 @@
+[
+  {
+    "type": "strength",
+    "exercises": [
+      {
+        "name": "Barbell Bench Press",
+        "reps": 5,
+        "sets": 4,
+        "form_cue": "Retract scapula, touch chest, leg drive",
+        "body_part": "Chest",
+        "equipment": "Barbell",
+        "difficulty": "intermediate",
+        "in_library": false,
+        "rest_seconds": 180,
+        "substitution": "Dumbbell Bench Press",
+        "primary_muscle": "Pectoralis Major",
+        "weight_guidance": "Start 70% 1RM, add 2.5lb/session",
+        "secondary_muscles": [
+          "Triceps",
+          "Anterior Deltoid"
+        ],
+        "exercise_library_id": null
+      },
+      {
+        "name": "Overhead Press",
+        "reps": 8,
+        "sets": 3,
+        "form_cue": "Strict press, no leg drive",
+        "body_part": "Shoulders",
+        "equipment": "Barbell",
+        "difficulty": "intermediate",
+        "in_library": false,
+        "rest_seconds": 120,
+        "substitution": "Dumbbell Shoulder Press",
+        "primary_muscle": "Deltoids",
+        "weight_guidance": "Start moderate, linear progression",
+        "secondary_muscles": [
+          "Triceps",
+          "Core"
+        ],
+        "exercise_library_id": null
+      },
+      {
+        "name": "Incline Dumbbell Press",
+        "reps": 10,
+        "sets": 3,
+        "form_cue": "30 degrees, full ROM",
+        "body_part": "Chest",
+        "equipment": "Dumbbell",
+        "difficulty": "intermediate",
+        "in_library": false,
+        "rest_seconds": 60,
+        "substitution": "Incline Barbell Press",
+        "primary_muscle": "Upper Pectoralis",
+        "weight_guidance": "Moderate dumbbells",
+        "secondary_muscles": [
+          "Triceps",
+          "Anterior Deltoid"
+        ],
+        "exercise_library_id": null
+      },
+      {
+        "name": "Dumbbell Lateral Raise",
+        "reps": 15,
+        "sets": 3,
+        "form_cue": "No momentum, controlled",
+        "body_part": "Shoulders",
+        "equipment": "Dumbbell",
+        "difficulty": "beginner",
+        "in_library": false,
+        "rest_seconds": 30,
+        "substitution": "Cable Lateral Raise",
+        "primary_muscle": "Lateral Deltoid",
+        "weight_guidance": "Light, strict form",
+        "secondary_muscles": [
+          "Supraspinatus"
+        ],
+        "exercise_library_id": null
+      },
+      {
+        "name": "Tricep Pushdown",
+        "reps": 12,
+        "sets": 3,
+        "form_cue": "Full extension, squeeze",
+        "body_part": "Arms",
+        "equipment": "Cable Machine",
+        "difficulty": "beginner",
+        "in_library": false,
+        "rest_seconds": 30,
+        "substitution": "Diamond Push-Up",
+        "primary_muscle": "Triceps",
+        "weight_guidance": "Rope or bar",
+        "secondary_muscles": [
+          "Anconeus"
+        ],
+        "exercise_library_id": null
+      },
+      {
+        "name": "Overhead Tricep Extension",
+        "reps": 12,
+        "sets": 3,
+        "form_cue": "Full stretch behind head",
+        "body_part": "Arms",
+        "equipment": "Cable Machine",
+        "difficulty": "beginner",
+        "in_library": false,
+        "rest_seconds": 30,
+        "substitution": "Skull Crusher",
+        "primary_muscle": "Triceps",
+        "weight_guidance": "Cable or dumbbell",
+        "secondary_muscles": [
+          "Anconeus"
+        ],
+        "exercise_library_id": null
+      }
+    ],
+    "workout_name": "PPL Push Day",
+    "duration_minutes": 60
+  },
+  {
+    "type": "strength",
+    "exercises": [
+      {
+        "name": "Barbell Deadlift",
+        "reps": 5,
+        "sets": 1,
+        "form_cue": "Hip hinge, flat back, drive through floor",
+        "body_part": "Full Body",
+        "equipment": "Barbell",
+        "difficulty": "intermediate",
+        "in_library": false,
+        "rest_seconds": 180,
+        "substitution": "Trap Bar Deadlift",
+        "primary_muscle": "Hamstrings",
+        "weight_guidance": "Start 70% 1RM, add 2.5lb/session",
+        "secondary_muscles": [
+          "Glutes",
+          "Erector Spinae",
+          "Quadriceps"
+        ],
+        "exercise_library_id": null
+      },
+      {
+        "name": "Barbell Row",
+        "reps": 8,
+        "sets": 3,
+        "form_cue": "45 degree torso, pull to navel",
+        "body_part": "Back",
+        "equipment": "Barbell",
+        "difficulty": "intermediate",
+        "in_library": false,
+        "rest_seconds": 90,
+        "substitution": "Dumbbell Row",
+        "primary_muscle": "Latissimus Dorsi",
+        "weight_guidance": "Linear progression",
+        "secondary_muscles": [
+          "Rhomboids",
+          "Biceps",
+          "Rear Deltoid"
+        ],
+        "exercise_library_id": null
+      },
+      {
+        "name": "Pull-Up",
+        "reps": 8,
+        "sets": 3,
+        "form_cue": "Full dead hang, chin over bar",
+        "body_part": "Back",
+        "equipment": "Bodyweight",
+        "difficulty": "intermediate",
+        "in_library": false,
+        "rest_seconds": 90,
+        "substitution": "Lat Pulldown",
+        "primary_muscle": "Latissimus Dorsi",
+        "weight_guidance": "Add weight when hitting 3x8",
+        "secondary_muscles": [
+          "Biceps",
+          "Rhomboids"
+        ],
+        "exercise_library_id": null
+      },
+      {
+        "name": "Face Pull",
+        "reps": 15,
+        "sets": 3,
+        "form_cue": "Pull to face, rotate thumbs back",
+        "body_part": "Shoulders",
+        "equipment": "Cable Machine",
+        "difficulty": "beginner",
+        "in_library": false,
+        "rest_seconds": 30,
+        "substitution": "Band Pull-Apart",
+        "primary_muscle": "Rear Deltoid",
+        "weight_guidance": "Light cable, external rotation",
+        "secondary_muscles": [
+          "Rhomboids",
+          "External Rotators"
+        ],
+        "exercise_library_id": null
+      },
+      {
+        "name": "Barbell Curl",
+        "reps": 10,
+        "sets": 3,
+        "form_cue": "No swinging, full ROM",
+        "body_part": "Arms",
+        "equipment": "Barbell",
+        "difficulty": "beginner",
+        "in_library": false,
+        "rest_seconds": 30,
+        "substitution": "Dumbbell Curl",
+        "primary_muscle": "Biceps",
+        "weight_guidance": "Moderate weight",
+        "secondary_muscles": [
+          "Brachialis"
+        ],
+        "exercise_library_id": null
+      },
+      {
+        "name": "Hammer Curl",
+        "reps": 10,
+        "sets": 3,
+        "form_cue": "Neutral grip, controlled",
+        "body_part": "Arms",
+        "equipment": "Dumbbell",
+        "difficulty": "beginner",
+        "in_library": false,
+        "rest_seconds": 30,
+        "substitution": "Reverse Curl",
+        "primary_muscle": "Brachialis",
+        "weight_guidance": "Moderate dumbbells",
+        "secondary_muscles": [
+          "Biceps",
+          "Forearms"
+        ],
+        "exercise_library_id": null
+      }
+    ],
+    "workout_name": "PPL Pull Day",
+    "duration_minutes": 60
+  },
+  {
+    "type": "strength",
+    "exercises": [
+      {
+        "name": "Barbell Bench Press",
+        "reps": 5,
+        "sets": 4,
+        "form_cue": "Retract scapula, touch chest, leg drive",
+        "body_part": "Chest",
+        "equipment": "Barbell",
+        "difficulty": "intermediate",
+        "in_library": false,
+        "rest_seconds": 180,
+        "substitution": "Dumbbell Bench Press",
+        "primary_muscle": "Pectoralis Major",
+        "weight_guidance": "Start 70% 1RM, add 2.5lb/session",
+        "secondary_muscles": [
+          "Triceps",
+          "Anterior Deltoid"
+        ],
+        "exercise_library_id": null
+      },
+      {
+        "name": "Overhead Press",
+        "reps": 8,
+        "sets": 3,
+        "form_cue": "Strict press, no leg drive",
+        "body_part": "Shoulders",
+        "equipment": "Barbell",
+        "difficulty": "intermediate",
+        "in_library": false,
+        "rest_seconds": 120,
+        "substitution": "Dumbbell Shoulder Press",
+        "primary_muscle": "Deltoids",
+        "weight_guidance": "Start moderate, linear progression",
+        "secondary_muscles": [
+          "Triceps",
+          "Core"
+        ],
+        "exercise_library_id": null
+      },
+      {
+        "name": "Incline Dumbbell Press",
+        "reps": 10,
+        "sets": 3,
+        "form_cue": "30 degrees, full ROM",
+        "body_part": "Chest",
+        "equipment": "Dumbbell",
+        "difficulty": "intermediate",
+        "in_library": false,
+        "rest_seconds": 60,
+        "substitution": "Incline Barbell Press",
+        "primary_muscle": "Upper Pectoralis",
+        "weight_guidance": "Moderate dumbbells",
+        "secondary_muscles": [
+          "Triceps",
+          "Anterior Deltoid"
+        ],
+        "exercise_library_id": null
+      },
+      {
+        "name": "Dumbbell Lateral Raise",
+        "reps": 15,
+        "sets": 3,
+        "form_cue": "No momentum, controlled",
+        "body_part": "Shoulders",
+        "equipment": "Dumbbell",
+        "difficulty": "beginner",
+        "in_library": false,
+        "rest_seconds": 30,
+        "substitution": "Cable Lateral Raise",
+        "primary_muscle": "Lateral Deltoid",
+        "weight_guidance": "Light, strict form",
+        "secondary_muscles": [
+          "Supraspinatus"
+        ],
+        "exercise_library_id": null
+      },
+      {
+        "name": "Tricep Pushdown",
+        "reps": 12,
+        "sets": 3,
+        "form_cue": "Full extension, squeeze",
+        "body_part": "Arms",
+        "equipment": "Cable Machine",
+        "difficulty": "beginner",
+        "in_library": false,
+        "rest_seconds": 30,
+        "substitution": "Diamond Push-Up",
+        "primary_muscle": "Triceps",
+        "weight_guidance": "Rope or bar",
+        "secondary_muscles": [
+          "Anconeus"
+        ],
+        "exercise_library_id": null
+      },
+      {
+        "name": "Overhead Tricep Extension",
+        "reps": 12,
+        "sets": 3,
+        "form_cue": "Full stretch behind head",
+        "body_part": "Arms",
+        "equipment": "Cable Machine",
+        "difficulty": "beginner",
+        "in_library": false,
+        "rest_seconds": 30,
+        "substitution": "Skull Crusher",
+        "primary_muscle": "Triceps",
+        "weight_guidance": "Cable or dumbbell",
+        "secondary_muscles": [
+          "Anconeus"
+        ],
+        "exercise_library_id": null
+      }
+    ],
+    "workout_name": "PPL Push Day",
+    "duration_minutes": 60
+  },
+  {
+    "type": "strength",
+    "exercises": [
+      {
+        "name": "Barbell Back Squat",
+        "reps": 5,
+        "sets": 4,
+        "form_cue": "Below parallel, brace core, knees track toes",
+        "body_part": "Legs",
+        "equipment": "Barbell",
+        "difficulty": "intermediate",
+        "in_library": false,
+        "rest_seconds": 180,
+        "substitution": "Leg Press",
+        "primary_muscle": "Quadriceps",
+        "weight_guidance": "Start 70% 1RM, add 2.5lb/session",
+        "secondary_muscles": [
+          "Glutes",
+          "Hamstrings",
+          "Core"
+        ],
+        "exercise_library_id": null
+      },
+      {
+        "name": "Romanian Deadlift",
+        "reps": 10,
+        "sets": 3,
+        "form_cue": "Hip hinge, feel hamstring stretch",
+        "body_part": "Legs",
+        "equipment": "Barbell",
+        "difficulty": "intermediate",
+        "in_library": false,
+        "rest_seconds": 90,
+        "substitution": "Dumbbell RDL",
+        "primary_muscle": "Hamstrings",
+        "weight_guidance": "60-70% DL 1RM",
+        "secondary_muscles": [
+          "Glutes",
+          "Erector Spinae"
+        ],
+        "exercise_library_id": null
+      },
+      {
+        "name": "Leg Press",
+        "reps": 10,
+        "sets": 3,
+        "form_cue": "Full depth, feet shoulder width",
+        "body_part": "Legs",
+        "equipment": "Leg Press",
+        "difficulty": "intermediate",
+        "in_library": false,
+        "rest_seconds": 90,
+        "substitution": "Hack Squat",
+        "primary_muscle": "Quadriceps",
+        "weight_guidance": "Heavy",
+        "secondary_muscles": [
+          "Glutes",
+          "Hamstrings"
+        ],
+        "exercise_library_id": null
+      },
+      {
+        "name": "Leg Curl",
+        "reps": 10,
+        "sets": 3,
+        "form_cue": "Full ROM, squeeze at top",
+        "body_part": "Legs",
+        "equipment": "Machine",
+        "difficulty": "beginner",
+        "in_library": false,
+        "rest_seconds": 45,
+        "substitution": "Nordic Curl",
+        "primary_muscle": "Hamstrings",
+        "weight_guidance": "Moderate weight",
+        "secondary_muscles": [
+          "Calves"
+        ],
+        "exercise_library_id": null
+      },
+      {
+        "name": "Calf Raise",
+        "reps": 15,
+        "sets": 4,
+        "form_cue": "Full stretch at bottom, pause at top",
+        "body_part": "Legs",
+        "equipment": "Machine",
+        "difficulty": "beginner",
+        "in_library": false,
+        "rest_seconds": 30,
+        "substitution": "Seated Calf Raise",
+        "primary_muscle": "Calves",
+        "weight_guidance": "Standing machine or smith",
+        "secondary_muscles": [
+          "Tibialis Anterior"
+        ],
+        "exercise_library_id": null
+      }
+    ],
+    "workout_name": "PPL Leg Day",
+    "duration_minutes": 60
+  }
+]
