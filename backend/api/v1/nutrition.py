@@ -70,7 +70,13 @@ from services.food_database_service import get_food_database_service
 from services.cooking_conversion_service import get_cooking_conversion_service
 from services.gemini_service import GeminiService
 from services.nutrition_rag_service import get_nutrition_rag_service
-from services.food_analysis_cache_service import get_food_analysis_cache_service
+from services.food_analysis_cache_service import (
+    get_food_analysis_cache_service,
+    _FOOD_MODIFIERS,
+    _MODIFIER_METADATA,
+    _classify_modifier,
+    ModifierType,
+)
 from services.saved_foods_rag_service import get_saved_foods_rag_service
 
 # Regional/complex food keywords — frozenset for O(1) lookup
@@ -931,6 +937,7 @@ class USDASearchResponse(BaseModel):
     current_page: int
     total_pages: int
     query: str
+    search_time_ms: Optional[int] = None
 
 
 class CombinedFoodSearchResponse(BaseModel):
@@ -990,6 +997,7 @@ async def search_foods(
         from services.food_database_lookup_service import get_food_db_lookup_service
         food_db_service = get_food_db_lookup_service()
 
+        _search_start = time.time()
         if user_id:
             results = await food_db_service.search_foods_unified(
                 query=query,
@@ -1008,6 +1016,7 @@ async def search_foods(
                 restaurant=restaurant,
                 food_category=category,
             )
+        _search_time_ms = int((time.time() - _search_start) * 1000)
 
         # Convert local DB results to USDAFoodResponse format for compatibility
         foods = []
@@ -1058,7 +1067,7 @@ async def search_foods(
             ))
 
         total_hits = len(foods)
-        logger.info(f"Found {total_hits} foods for query: {query}")
+        logger.info(f"Found {total_hits} foods for query: {query} in {_search_time_ms}ms")
 
         return USDASearchResponse(
             foods=foods,
@@ -1066,6 +1075,7 @@ async def search_foods(
             current_page=page,
             total_pages=max(1, (total_hits + page_size - 1) // page_size),
             query=query,
+            search_time_ms=_search_time_ms,
         )
 
     except Exception as e:
@@ -2060,6 +2070,51 @@ async def analyze_food_text(
         raise
     except Exception as e:
         logger.error(f"[ANALYZE-TEXT] Error: {e}")
+        raise safe_internal_error(e, "nutrition")
+
+
+class FoodReviewRequest(BaseModel):
+    food_name: str
+    calories: int
+    protein_g: float
+    carbs_g: float
+    fat_g: float
+
+
+@router.post("/food-review")
+@limiter.limit("20/minute")
+async def review_food(
+    request: Request,
+    body: FoodReviewRequest,
+    current_user: dict = Depends(get_current_user),
+):
+    """AI-powered food review based on user goals."""
+    logger.info(f"[FOOD-REVIEW] Reviewing '{body.food_name}' for user {current_user['id']}")
+
+    cache_service = get_food_analysis_cache_service()
+    macros = {
+        "calories": body.calories,
+        "protein_g": body.protein_g,
+        "carbs_g": body.carbs_g,
+        "fat_g": body.fat_g,
+    }
+    try:
+        result = await asyncio.wait_for(
+            cache_service.review_food(
+                food_name=body.food_name,
+                macros=macros,
+                user_id=current_user["id"],
+            ),
+            timeout=10.0,
+        )
+        return result
+    except asyncio.TimeoutError:
+        logger.warning(f"[FOOD-REVIEW] Timed out for: {body.food_name}")
+        raise HTTPException(status_code=504, detail="Food review timed out")
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"[FOOD-REVIEW] Error: {e}")
         raise safe_internal_error(e, "nutrition")
 
 
@@ -6818,6 +6873,8 @@ class FoodReportRequest(BaseModel):
     corrected_protein: Optional[float] = None
     corrected_carbs: Optional[float] = None
     corrected_fat: Optional[float] = None
+    data_source: Optional[str] = None      # "override", "ai_analysis", "modified_override", "common_food", "barcode", "food_log"
+    food_log_id: Optional[str] = None      # UUID of the food_log if flagged from history
 
 
 class FoodReportResponse(BaseModel):
@@ -6853,6 +6910,8 @@ async def report_food(request: FoodReportRequest, current_user: dict = Depends(g
             "corrected_protein": request.corrected_protein,
             "corrected_carbs": request.corrected_carbs,
             "corrected_fat": request.corrected_fat,
+            "data_source": request.data_source,
+            "food_log_id": request.food_log_id,
             "status": "pending",
         }
 
@@ -6877,3 +6936,41 @@ async def report_food(request: FoodReportRequest, current_user: dict = Depends(g
     except Exception as e:
         logger.error(f"Failed to create food report: {e}")
         raise safe_internal_error(e, "nutrition")
+
+
+# ── Modifier search ───────────────────────────────────────────────
+@router.get("/modifier-search")
+async def search_modifiers(
+    q: str = Query(..., min_length=2, description="Search query for modifier phrases"),
+    _user=Depends(get_current_user),
+):
+    """
+    Search food modifiers by substring match (case-insensitive).
+    Returns top 10 matching modifier entries with type, delta, and weight metadata.
+    Pure in-memory lookup — no DB call.
+    """
+    q_lower = q.lower()
+    results = []
+    for phrase, delta in _FOOD_MODIFIERS.items():
+        if q_lower in phrase:
+            meta = _MODIFIER_METADATA.get(phrase)
+            mod_type = meta.type if meta else _classify_modifier(phrase)
+            entry = {
+                "phrase": phrase,
+                "type": mod_type.value,
+                "delta": {
+                    "calories": delta[0],
+                    "protein_g": delta[1],
+                    "carbs_g": delta[2],
+                    "fat_g": delta[3],
+                    "fiber_g": delta[4],
+                },
+                "default_weight_g": meta.default_weight_g if meta else None,
+                "weight_per_unit_g": meta.weight_per_unit_g if meta else None,
+                "unit_name": meta.unit_name if meta else None,
+                "display_label": meta.display_label if meta else None,
+            }
+            results.append(entry)
+            if len(results) >= 10:
+                break
+    return {"results": results, "count": len(results)}

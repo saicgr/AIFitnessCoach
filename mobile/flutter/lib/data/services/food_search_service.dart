@@ -5,6 +5,119 @@ import '../repositories/nutrition_repository.dart';
 import '../models/nutrition.dart';
 import 'api_client.dart';
 
+enum FoodModifierType {
+  addon,
+  removal,
+  cookingMethod,
+  doneness,
+  sizePortion,
+  qualityLabel,
+  stateTemp;
+
+  static FoodModifierType fromString(String value) {
+    switch (value) {
+      case 'addon': return FoodModifierType.addon;
+      case 'removal': return FoodModifierType.removal;
+      case 'cooking_method': return FoodModifierType.cookingMethod;
+      case 'doneness': return FoodModifierType.doneness;
+      case 'size_portion': return FoodModifierType.sizePortion;
+      case 'quality_label': return FoodModifierType.qualityLabel;
+      case 'state_temp': return FoodModifierType.stateTemp;
+      default: return FoodModifierType.addon;
+    }
+  }
+}
+
+class ModifierGroupOption {
+  final String phrase;
+  final String label;
+  final int calDelta;
+
+  const ModifierGroupOption({required this.phrase, required this.label, required this.calDelta});
+
+  factory ModifierGroupOption.fromJson(Map<String, dynamic> json) {
+    return ModifierGroupOption(
+      phrase: json['phrase'] as String? ?? '',
+      label: json['label'] as String? ?? '',
+      calDelta: (json['cal_delta'] as num?)?.toInt() ?? 0,
+    );
+  }
+}
+
+class NutrientPerGram {
+  final double calories;
+  final double proteinG;
+  final double carbsG;
+  final double fatG;
+  final double fiberG;
+
+  const NutrientPerGram({
+    required this.calories, required this.proteinG,
+    required this.carbsG, required this.fatG, required this.fiberG,
+  });
+
+  factory NutrientPerGram.fromJson(Map<String, dynamic> json) {
+    return NutrientPerGram(
+      calories: (json['calories'] as num?)?.toDouble() ?? 0,
+      proteinG: (json['protein_g'] as num?)?.toDouble() ?? 0,
+      carbsG: (json['carbs_g'] as num?)?.toDouble() ?? 0,
+      fatG: (json['fat_g'] as num?)?.toDouble() ?? 0,
+      fiberG: (json['fiber_g'] as num?)?.toDouble() ?? 0,
+    );
+  }
+}
+
+class FoodModifier {
+  final String phrase;
+  final FoodModifierType type;
+  final String? displayLabel;
+  final Map<String, double> delta;
+  final double? defaultWeightG;
+  final double? weightPerUnitG;
+  final String? unitName;
+  final NutrientPerGram? perGram;
+  final String? group;
+  final List<ModifierGroupOption> groupOptions;
+
+  const FoodModifier({
+    required this.phrase,
+    required this.type,
+    this.displayLabel,
+    required this.delta,
+    this.defaultWeightG,
+    this.weightPerUnitG,
+    this.unitName,
+    this.perGram,
+    this.group,
+    this.groupOptions = const [],
+  });
+
+  factory FoodModifier.fromJson(Map<String, dynamic> json) {
+    final deltaRaw = json['delta'] as Map<String, dynamic>? ?? {};
+    final delta = <String, double>{};
+    for (final entry in deltaRaw.entries) {
+      delta[entry.key] = (entry.value as num?)?.toDouble() ?? 0;
+    }
+
+    return FoodModifier(
+      phrase: json['phrase'] as String? ?? '',
+      type: FoodModifierType.fromString(json['type'] as String? ?? 'addon'),
+      displayLabel: json['display_label'] as String?,
+      delta: delta,
+      defaultWeightG: (json['default_weight_g'] as num?)?.toDouble(),
+      weightPerUnitG: (json['weight_per_unit_g'] as num?)?.toDouble(),
+      unitName: json['unit_name'] as String?,
+      perGram: json['per_gram'] != null
+          ? NutrientPerGram.fromJson(json['per_gram'] as Map<String, dynamic>)
+          : null,
+      group: json['group'] as String?,
+      groupOptions: (json['group_options'] as List<dynamic>?)
+          ?.map((e) => ModifierGroupOption.fromJson(e as Map<String, dynamic>))
+          .toList() ?? [],
+    );
+  }
+}
+
 /// A single food item from NL analysis
 class NLFoodItem {
   final String name;
@@ -18,6 +131,7 @@ class NLFoodItem {
   final String? weightSource;
   final String? unit;
   final Map<String, dynamic>? aiPerGram;
+  final List<FoodModifier> modifiers;
 
   const NLFoodItem({
     required this.name,
@@ -31,6 +145,7 @@ class NLFoodItem {
     this.weightSource,
     this.unit,
     this.aiPerGram,
+    this.modifiers = const [],
   });
 
   factory NLFoodItem.fromJson(Map<String, dynamic> json) {
@@ -46,6 +161,9 @@ class NLFoodItem {
       weightSource: json['weight_source'] as String?,
       unit: json['unit'] as String?,
       aiPerGram: json['ai_per_gram'] as Map<String, dynamic>?,
+      modifiers: (json['modifiers'] as List<dynamic>?)
+          ?.map((e) => FoodModifier.fromJson(e as Map<String, dynamic>))
+          .toList() ?? [],
     );
   }
 
@@ -61,7 +179,39 @@ class NLFoodItem {
     if (weightSource != null) 'weight_source': weightSource,
     if (unit != null) 'unit': unit,
     if (aiPerGram != null) 'ai_per_gram': aiPerGram,
+    if (modifiers.isNotEmpty) 'modifiers': modifiers.map((m) => {'phrase': m.phrase, 'type': m.type.name}).toList(),
   };
+}
+
+/// AI review for a food item (from POST /nutrition/food-review)
+class FoodReview {
+  final List<String> encouragements;
+  final List<String> warnings;
+  final String? aiSuggestion;
+  final String? recommendedSwap;
+  final int? healthScore;
+
+  const FoodReview({
+    this.encouragements = const [],
+    this.warnings = const [],
+    this.aiSuggestion,
+    this.recommendedSwap,
+    this.healthScore,
+  });
+
+  factory FoodReview.fromJson(Map<String, dynamic> json) {
+    return FoodReview(
+      encouragements: (json['encouragements'] as List<dynamic>?)
+          ?.map((e) => e.toString())
+          .toList() ?? [],
+      warnings: (json['warnings'] as List<dynamic>?)
+          ?.map((e) => e.toString())
+          .toList() ?? [],
+      aiSuggestion: json['ai_suggestion'] as String?,
+      recommendedSwap: json['recommended_swap'] as String?,
+      healthScore: (json['health_score'] as num?)?.toInt(),
+    );
+  }
 }
 
 /// Wrapper for the NL analyze-text endpoint response
@@ -75,6 +225,12 @@ class FoodAnalysisResult {
   final String? dataSource;
   final bool cacheHit;
   final String? cacheSource;
+  // AI review fields (parsed from NL response if present)
+  final List<String>? encouragements;
+  final List<String>? warnings;
+  final String? aiSuggestion;
+  final String? recommendedSwap;
+  final int? healthScore;
 
   const FoodAnalysisResult({
     required this.foodItems,
@@ -86,6 +242,11 @@ class FoodAnalysisResult {
     this.dataSource,
     this.cacheHit = false,
     this.cacheSource,
+    this.encouragements,
+    this.warnings,
+    this.aiSuggestion,
+    this.recommendedSwap,
+    this.healthScore,
   });
 
   factory FoodAnalysisResult.fromJson(Map<String, dynamic> json) {
@@ -102,6 +263,15 @@ class FoodAnalysisResult {
       dataSource: json['data_source'] as String?,
       cacheHit: json['cache_hit'] as bool? ?? false,
       cacheSource: json['cache_source'] as String?,
+      encouragements: (json['encouragements'] as List<dynamic>?)
+          ?.map((e) => e.toString())
+          .toList(),
+      warnings: (json['warnings'] as List<dynamic>?)
+          ?.map((e) => e.toString())
+          .toList(),
+      aiSuggestion: json['ai_suggestion'] as String?,
+      recommendedSwap: json['recommended_swap'] as String?,
+      healthScore: (json['health_score'] as num?)?.toInt(),
     );
   }
 }
@@ -238,6 +408,7 @@ class FoodSearchResults extends FoodSearchState {
   final List<FoodSearchResult> database;
   final List<FoodSearchResult> foodDatabase;
   final bool fromCache;
+  final int? searchTimeMs;
 
   const FoodSearchResults({
     required this.query,
@@ -246,6 +417,7 @@ class FoodSearchResults extends FoodSearchState {
     this.database = const [],
     this.foodDatabase = const [],
     this.fromCache = false,
+    this.searchTimeMs,
   });
 
   bool get isEmpty =>
@@ -314,8 +486,15 @@ class FoodSearchService {
   // Stream controller for real-time search updates
   final _searchController = StreamController<FoodSearchState>.broadcast();
 
+  // AI review stream + timer
+  final _reviewController = StreamController<FoodReview?>.broadcast();
+  Timer? _reviewTimer;
+
   // Current query to prevent stale results
   String? _currentQuery;
+
+  // Last search timing from backend (ms)
+  int? _lastSearchTimeMs;
 
   // Current database source filter
   String? _currentSource;
@@ -328,6 +507,9 @@ class FoodSearchService {
 
   /// Stream of search states for UI binding
   Stream<FoodSearchState> get searchStream => _searchController.stream;
+
+  /// Stream of AI review states
+  Stream<FoodReview?> get reviewStream => _reviewController.stream;
 
   /// Get cached results without triggering a search
   FoodSearchResults? getCachedResults(String query) {
@@ -342,6 +524,24 @@ class FoodSearchService {
   /// Set database source filter for food database search
   void setSource(String? source) {
     _currentSource = source;
+  }
+
+  /// Search for food modifiers (addons, cooking methods, etc.)
+  Future<List<FoodModifier>> searchModifiers(String query, String userId) async {
+    try {
+      final response = await _apiClient.get(
+        '/nutrition/modifier-search',
+        queryParameters: {'q': query},
+      );
+      if (response.statusCode == 200) {
+        final data = response.data as List<dynamic>;
+        return data.map((e) => FoodModifier.fromJson(e as Map<String, dynamic>)).toList();
+      }
+      return [];
+    } catch (e) {
+      if (kDebugMode) print('❌ Modifier search error: $e');
+      return [];
+    }
   }
 
   /// Cache key combining query and source filter
@@ -389,6 +589,7 @@ class FoodSearchService {
         database: cachedEntry.results.database,
         foodDatabase: cachedEntry.results.foodDatabase,
         fromCache: true,
+        searchTimeMs: cachedEntry.results.searchTimeMs,
       ));
       return;
     }
@@ -434,6 +635,7 @@ class FoodSearchService {
         database: cachedEntry.results.database,
         foodDatabase: cachedEntry.results.foodDatabase,
         fromCache: true,
+        searchTimeMs: cachedEntry.results.searchTimeMs,
       ));
       return;
     }
@@ -530,6 +732,7 @@ class FoodSearchService {
       saved: savedResults,
       recent: recentResults,
       foodDatabase: dbResults,
+      searchTimeMs: _lastSearchTimeMs,
     );
 
     // Cache the results
@@ -607,7 +810,8 @@ class FoodSearchService {
         queryParameters: queryParams,
       );
 
-      // Backend returns USDASearchResponse format: {foods: [...], total_hits, ...}
+      // Backend returns USDASearchResponse format: {foods: [...], total_hits, search_time_ms, ...}
+      _lastSearchTimeMs = (response.data['search_time_ms'] as num?)?.toInt();
       final List<dynamic> foods = response.data['foods'] ?? [];
       return foods.map((item) {
         final nutrients = item['nutrients'] as Map<String, dynamic>? ?? {};
@@ -696,21 +900,179 @@ class FoodSearchService {
 
   // ─── Natural Language Detection & Analysis ──────────────────
 
+  /// Compound food names containing "and", "with", or numbers that should
+  /// NOT be split into multiple items. Checked before NL heuristics.
+  static final _compoundFoods = <String>{
+    // "and" compounds
+    'mac and cheese', 'macaroni and cheese', 'fish and chips',
+    'bread and butter', 'ham and cheese', 'salt and pepper',
+    'peanut butter and jelly', 'pb and j', 'pbj',
+    'surf and turf', 'rice and beans', 'chips and salsa',
+    'steak and eggs', 'biscuits and gravy', 'franks and beans',
+    'bangers and mash', 'bubble and squeak',
+    'sweet and sour chicken', 'sweet and sour pork',
+    'chips and dip', 'bread and butter pudding',
+    'strawberries and cream', 'peaches and cream',
+    'ham and egg', 'bacon and eggs', 'bacon and cheese',
+    'pork and beans', 'meat and potatoes',
+    'dal and rice', 'rice and dal', 'dal rice', 'dal chawal',
+    'chole bhature', 'dal makhani', 'paneer butter masala',
+    'rajma chawal', 'kadhi chawal', 'curd rice',
+    // "with" compounds
+    'coffee with milk', 'tea with honey', 'tea with milk',
+    'bread with butter', 'rice with gravy', 'cereal with milk',
+    'pasta with sauce', 'toast with jam', 'toast with butter',
+    'oatmeal with milk', 'pancakes with syrup',
+    // Number-in-name foods
+    'chicken 65', 'chicken 555', '7 up', '7up', 'coke zero',
+    'v8', '5 hour energy', '5-hour energy', 'heinz 57',
+    'formula 1', 'g2', 'muscle milk', 'ensure plus',
+    '5 star chocolate', '5star',
+    // Multi-word single items
+    'protein shake', 'peanut butter', 'sour cream',
+    'cream cheese', 'ice cream', 'fried rice', 'brown rice',
+    'black beans', 'green tea', 'hot dog', 'french fries',
+    'onion rings', 'mashed potatoes', 'sweet potato',
+    'baked beans', 'hash browns', 'grilled cheese',
+    'tuna salad', 'chicken salad', 'egg salad',
+    'fruit salad', 'caesar salad', 'greek salad',
+  };
+
   /// Filler phrases that indicate natural-language food logging.
   static final _nlFillerPhrases = RegExp(
-    r'\b(i\s+had|i\s+ate|i\s+just\s+had|i\s+just\s+ate|for\s+breakfast|for\s+lunch|for\s+dinner|along\s+with|and\s+a\b|with\s+a\b)\b',
+    r'\b('
+    // ── Past tense ──
+    // "I had / ate / just had / just ate / drank / consumed / took"
+    // NOTE: "finished" is NOT here — handled as "finished off" in phrasal verbs below
+    r'i\s+(?:had|ate|just\s+had|just\s+ate|drank|just\s+drank|consumed|took)'
+    // "I've had / eaten / been eating / already ate / already had"
+    r"|i'?ve\s+(?:had|eaten|been\s+eating|been\s+having|already\s+(?:had|ate|eaten))"
+    r'|i\s+already\s+(?:had|ate|eaten)'
+
+    // ── Present tense ──
+    r"|i'?m\s+(?:eating|having|drinking|munching|snacking|chewing|finishing|consuming)"
+    r'|(?:currently|right\s+now|just\s+now)\s+(?:eating|having|drinking|munching)'
+
+    // ── Future / intent ──
+    r"|i'?m\s+(?:gonna|about\s+to|going\s+to|planning\s+to)\s+(?:eat|have|grab|get|order)"
+    r"|i\s+(?:wanna|want\s+to)\s+(?:eat|have|grab|get|order)"
+    r'|i\s+feel\s+like\s+(?:eating|having)'
+    r'|craving\s+'
+
+    // ── Habitual ──
+    r'|i\s+(?:usually|normally|always|often|sometimes|typically)\s+(?:eat|have|drink|get|grab|order)'
+
+    // ── Phrasal verb fillers ──
+    // "ended up eating / wound up having / went ahead and ate / decided to eat"
+    r'|(?:ended\s+up|wound\s+up)\s+(?:eating|having|drinking|getting|ordering)'
+    r"|(?:went\s+ahead\s+and|decided\s+to|managed\s+to|had\s+to|could\s+only|couldn't\s+help\s+but)\s+(?:eat|ate|have|had|drink|drank|grab|grabbed|get|got|order|ordered)"
+
+    // ── Reward / guilt / indulgence ──
+    // "treated myself to / indulged in / splurged on / cheated with / snuck in"
+    r'|(?:treated\s+myself\s+to|indulged\s+in|splurged\s+on|cheated\s+with|snuck\s+in|sneaked\s+in|gave\s+in\s+to)'
+    r'|(?:guilty\s+pleasure\s+(?:was|is)|cheat\s+meal\s+(?:was|is))'
+
+    // ── Small quantity eating ──
+    // "nibbled on / picked at / had a bite of / had a taste of / munched on / snacked on"
+    r'|(?:nibbled\s+on|picked\s+at|munched\s+on|snacked\s+on|grazed\s+on|pecked\s+at)'
+    r'|had\s+(?:a\s+)?(?:bite|taste|sip|piece|bit|morsel|sliver|nibble|lick|spoonful)\s+(?:of\s+)?'
+
+    // ── Large quantity eating ──
+    // "stuffed myself with / gorged on / pigged out on / feasted on / loaded up on"
+    r'|(?:stuffed\s+myself\s+with|gorged\s+on|pigged\s+out\s+on|feasted\s+on|overindulged\s+in|loaded\s+up\s+on|overdid\s+it\s+(?:on|with))'
+
+    // ── Delivery / source compound (MUST come before generic action verbs) ──
+    r'|(?:ordered|got|picked\s+up|grabbed|delivered)\s+(?:from|via|through|off)\s+(?:swiggy|zomato|doordash|ubereats|uber\s+eats|grubhub|postmates|instacart|seamless|the\s+(?:restaurant|cafeteria|canteen|food\s+court|drive\s+thru|drive-?through))'
+    // ── Action verbs ──
+    // NOTE: "reheated/heated up/warmed up/microwaved/air fried" are food modifiers, not fillers
+    // NOTE: "cooked" has lookahead (?!\s+through) to preserve "cooked through" modifier
+    r'|(?:just\s+)?(?:grabbed|ordered|picked\s+up|got|went\s+with|chose|cooked(?!\s+through)|made|prepared|whipped\s+up|threw\s+together|fixed\s+myself|made\s+myself|cooked\s+myself)'
+    r'|(?:just\s+)?(?:demolished|crushed|smashed|scarfed|wolfed\s+down|inhaled|devoured|polished\s+off|downed|chugged|sipped|tasted|tried|sampled|split|shared)'
+
+    // ── Logging intent verbs ──
+    // "log / add / track / record" — compound: "track my lunch:" / "log breakfast:"
+    r'|(?:please\s+)?(?:log|add|track|record|put\s+down|note\s+down|enter|count|save|register)\s+(?:my\s+)?(?:(?:breakfast|lunch|dinner|brunch|snack|meal|food|intake)\s*[:=]\s*)?'
+    r'|(?:can\s+you|could\s+you|please|help\s+me)\s+(?:log|add|track|record|enter|count|note)\s+(?:my\s+)?(?:(?:breakfast|lunch|dinner|brunch|snack|meal|food)\s*[:=]\s*)?'
+    r'|(?:log(?:ging)?|track(?:ing)?|add(?:ing)?|record(?:ing)?|enter(?:ing)?|count(?:ing)?|not(?:ing)?)\s+(?:my\s+)?(?:food|meal|snack|breakfast|lunch|dinner|intake|macros|calories)\s*:?'
+
+    // ── Meal context ──
+    r'|for\s+(?:breakfast|lunch|dinner|brunch|snack|supper|dessert|a\s+snack|my\s+meal|pre-?workout|post-?workout|a\s+quick\s+bite|a\s+cheat\s+meal|a\s+treat|my\s+cheat\s+day|elevenses|tea\s+time|tiffin|second\s+breakfast|midnight\s+snack|a\s+late\s+night\s+snack)'
+    // Bare meal labels: "breakfast:", "lunch:", "meal 1:", "3pm snack:"
+    r'|(?:breakfast|lunch|dinner|brunch|snack|supper|meal\s*\d*|pre-?\s*workout|post-?\s*workout)\s*[:=]\s*'
+    r'|\d{1,2}\s*(?:am|pm)\s+(?:breakfast|lunch|dinner|snack|meal)\s*[:=]?\s+'
+
+    // ── Time context ──
+    r'|(?:today|tonight|this\s+morning|this\s+afternoon|this\s+evening|last\s+night|yesterday|earlier\s+today|earlier|just\s+now|moments?\s+ago|a\s+while\s+ago|an\s+hour\s+ago|a\s+few\s+(?:minutes|hours)\s+ago)\s+i\s+(?:had|ate|drank|got|grabbed|consumed|finished)'
+    // Possessive time
+    r"|(?:today'?s|tonight'?s|this\s+morning'?s|yesterday'?s)\s+(?:breakfast|lunch|dinner|snack|meal|food)"
+
+    // ── Possessive / diary style ──
+    r'|my\s+(?:breakfast|lunch|dinner|brunch|snack|meal|food|intake)\s+(?:was|is|today|tonight|this\s+morning|consisted\s+of|included)'
+    r'|what\s+i\s+(?:ate|had|eaten|ordered|grabbed)'
+    r"|what\s+i'?m\s+(?:eating|having)"
+
+    // ── Conversational ──
+    r'|(?:ate|had|having|grabbed|got|ordered|tried|sampled)\s+(?:some|a|an)\b'
+    // Limiting
+    r'|all\s+i\s+(?:had|ate)\s+was'
+    r'|(?:only|just)\s+(?:had|ate|eating|having)\b'
+    r'|(?:nothing|all\s+i\s+ate)\s+(?:but|except)'
+
+    // ── Sharing context ──
+    r'|we\s+(?:had|ate|ordered|shared|split|grabbed|got|went\s+for|picked\s+up)'
+    r'|(?:my\s+(?:friend|partner|wife|husband|bf|gf|kid|son|daughter)\s+and\s+i|me\s+and\s+my\s+\w+)\s+(?:had|ate|shared|split)'
+
+    // ── Conjunction fillers ──
+    r'|along\s+with|and\s+a\b|with\s+a\b|as\s+well\s+as|on\s+the\s+side|plus\s+a\b|also\s+(?:had|ate|a)\b'
+
+    // ── Sequential eating ──
+    // "followed by / and then had / topped off with / washed it down with"
+    r'|(?:followed\s+by|and\s+then\s+(?:had|ate|a)|topped\s+(?:it\s+)?off\s+with|washed\s+(?:it\s+)?down\s+with)\b'
+
+    // ── Query-style ──
+    r'|how\s+many\s+(?:calories?|carbs?|protein|fat|macros?)\s+(?:in|for|does)'
+    r"|(?:what(?:'?s| is| are)?\s+the\s+)?(?:nutrition|calories?|macros?|carbs?|protein|fat)\s+(?:in|of|for|info)\b"
+    r'|(?:nutrition|calorie|macro)\s+(?:info|information|data|breakdown|count)\s+(?:for|of|in)'
+    r'|(?:is|does)\s+.{2,30}\s+(?:healthy|good\s+for\s+(?:me|you|weight\s+loss|muscle)|bad\s+for\s+(?:me|you)|fattening|low\s+cal(?:orie)?|high\s+protein)\s*\??'
+
+    // ── Restaurant / source context ──
+    r'|(?:from|at|via|through|off\s+of)\s+(?:the\s+)?(?:restaurant|cafeteria|canteen|food\s+court|drive\s+thru|drive-?through)'
+    r'|(?:ordered|got|delivered)\s+(?:from|via|through|off)\s+(?:swiggy|zomato|doordash|ubereats|uber\s+eats|grubhub|postmates|instacart|seamless)'
+    r'|(?:home\s*made|home\s*cooked|store\s*bought|takeout|take-?out|take\s*away|dine-?in|delivery)'
+
+    // ── Emphasis / descriptive noise ──
+    r'|(?:the\s+)?(?:best|most\s+amazing|most\s+delicious|incredible|fantastic|amazing|delicious|terrible|disgusting|decent|mediocre|okay|mid)'
+    r'|(?:really|very|super|incredibly|extremely|absolutely|totally|so)\s+(?:good|tasty|yummy|delicious|filling|satisfying|healthy|unhealthy)'
+    r'|(?:honestly|basically|literally|actually|truly|seriously|lowkey|highkey|ngl|tbh|fr)\s+(?:(?:just|only)\s+)?'
+
+    // ── Mid-sentence noise ──
+    // NOTE: "well" must not match before "done" (well done steak)
+    r'|(?:um|uh|hmm|well(?!\s+done)|okay|ok|so|yeah)'
+
+    // ── Phrasal verb completions (must come AFTER simple past group) ──
+    r'|i\s+(?:took|finished\s+off|wolfed|polished\s+off|binged\s+on)'
+
+    // ── Approximations ──
+    r'|(?:about|maybe|around|approximately|roughly|nearly|like|probably|i\s+think)'
+    r')',
     caseSensitive: false,
   );
 
   /// Word-form numbers that precede food items.
   static final _wordNumbers = RegExp(
-    r'\b(one|two|three|four|five|six|seven|eight|nine|ten|half|dozen|couple)\b',
+    r'\b(one|two|three|four|five|six|seven|eight|nine|ten|half|dozen|couple)\s+\w',
     caseSensitive: false,
   );
 
   /// Weight / volume units.
   static final _weightUnits = RegExp(
-    r'\b(grams?|g\b|kg\b|ml\b|oz\b|ounces?|cups?|tbsp\b|tsp\b|liters?|litres?|lbs?|pounds?|slices?|pieces?|servings?|bowls?|plates?|handfuls?)\b',
+    r'\b(grams?|kg\b|ml\b|oz\b|ounces?|cups?|tbsp\b|tsp\b|liters?|litres?|lbs?|pounds?|slices?|pieces?|servings?|bowls?|plates?|handfuls?)\b',
+    caseSensitive: false,
+  );
+
+  /// Digit immediately followed by a weight/volume unit (e.g., "300g", "2kg").
+  static final _digitUnit = RegExp(
+    r'\d+\s*(g|gm|gms|kg|ml|oz|l|lb)\b',
     caseSensitive: false,
   );
 
@@ -719,28 +1081,56 @@ class FoodSearchService {
   static bool isNaturalLanguageInput(String query) {
     final trimmed = query.trim();
     if (trimmed.isEmpty) return false;
+    final lower = trimmed.toLowerCase();
 
-    // Multi-line input is always NL
+    // ── Step 1: Compound food dictionary check (HIGHEST PRIORITY) ──
+    // If the entire input matches a known compound food, it's a keyword search.
+    if (_compoundFoods.contains(lower)) return false;
+    // Also check after stripping a leading number: "2 mac and cheese" → "mac and cheese"
+    final withoutLeadingNum = lower.replaceFirst(RegExp(r'^\d+\s+'), '');
+    if (withoutLeadingNum != lower && _compoundFoods.contains(withoutLeadingNum)) {
+      // "2 mac and cheese" → NL (quantity + compound food)
+      return true;
+    }
+
+    // ── Step 2: Strong NL signals (always NL) ──
+    // Multi-line input
     if (trimmed.contains('\n')) return true;
 
-    // Comma-separated with 2+ segments that aren't a single word each
+    // Comma-separated with 2+ segments
     if (trimmed.contains(',')) {
       final segments = trimmed.split(',').where((s) => s.trim().isNotEmpty).toList();
       if (segments.length >= 2) return true;
     }
 
-    // Starts with digit(s) followed by text (e.g. "2 dosa", "300g rice")
-    if (RegExp(r'^\d+\s*[a-zA-Z]').hasMatch(trimmed)) return true;
-
-    // Filler phrases
+    // Filler phrases ("I had", "I ate", "for breakfast")
     if (_nlFillerPhrases.hasMatch(trimmed)) return true;
 
-    // Word numbers before food
-    if (_wordNumbers.hasMatch(trimmed)) return true;
+    // ── Step 3: Moderate NL signals ──
+    // Digit + weight/volume unit (e.g., "300g rice", "2kg chicken", "500ml milk")
+    if (_digitUnit.hasMatch(trimmed)) return true;
 
-    // Weight/volume units
+    // Weight/volume unit words (e.g., "2 cups rice", "a bowl of soup")
     if (_weightUnits.hasMatch(trimmed)) return true;
 
+    // Word numbers followed by food (e.g., "one apple", "half plate rice")
+    if (_wordNumbers.hasMatch(trimmed)) return true;
+
+    // Starts with digit + text, but NOT if it's just one food (e.g., "2 dosa" is NL)
+    if (RegExp(r'^\d+\s+[a-zA-Z]').hasMatch(trimmed)) return true;
+
+    // ── Step 4: "and" conjunction check (only if both sides look like distinct foods) ──
+    if (RegExp(r'\s+and\s+', caseSensitive: false).hasMatch(trimmed)) {
+      // If NOT in compound dictionary (checked above), and has "and" between
+      // words, it's likely multi-item: "rice and dal", "dosa and chutney"
+      // BUT only if there are at least 2 word-tokens on each side
+      final andParts = lower.split(RegExp(r'\s+and\s+'));
+      if (andParts.length >= 2 && andParts.every((p) => p.trim().isNotEmpty)) {
+        return true;
+      }
+    }
+
+    // ── Step 5: No NL signals → keyword search ──
     return false;
   }
 
@@ -768,10 +1158,78 @@ class FoodSearchService {
     }
   }
 
+  /// Search alternatives for a food item (direct call, no stream).
+  /// Used by NL item sections for inline alternative picking.
+  /// Returns food database results for the given query.
+  Future<List<FoodSearchResult>> searchAlternatives(String query, String userId) async {
+    final normalized = _normalizeQuery(query);
+    if (normalized.length < _minQueryLength) return [];
+
+    // Check cache
+    final cacheKey = 'alt_$normalized';
+    final cached = _cache[cacheKey];
+    if (cached != null && !cached.isExpired) {
+      return cached.results.foodDatabase;
+    }
+
+    try {
+      final results = await _searchFoodDatabase(normalized, userId);
+      // Cache with alt_ prefix
+      _addToCache(cacheKey, FoodSearchResults(
+        query: normalized,
+        foodDatabase: results,
+      ));
+      return results;
+    } catch (e) {
+      debugPrint('FoodSearch: searchAlternatives error: $e');
+      return [];
+    }
+  }
+
+  /// Call POST /nutrition/food-review to get AI review for a food.
+  Future<FoodReview?> reviewFood(String foodName, int calories, double protein, double carbs, double fat) async {
+    try {
+      final response = await _apiClient.post(
+        '/nutrition/food-review',
+        data: {
+          'food_name': foodName,
+          'calories': calories,
+          'protein_g': protein,
+          'carbs_g': carbs,
+          'fat_g': fat,
+        },
+      );
+      final data = response.data as Map<String, dynamic>?;
+      if (data == null) return null;
+      return FoodReview.fromJson(data);
+    } catch (e) {
+      debugPrint('FoodSearch: reviewFood error: $e');
+      return null;
+    }
+  }
+
+  /// Start a 2-second idle timer for AI review. Cancels any existing timer.
+  void startReviewTimer(String foodName, int calories, double protein, double carbs, double fat) {
+    _reviewTimer?.cancel();
+    _reviewController.add(null); // reset to loading-like state
+    _reviewTimer = Timer(const Duration(seconds: 2), () async {
+      final review = await reviewFood(foodName, calories, protein, carbs, fat);
+      _reviewController.add(review);
+    });
+  }
+
+  /// Cancel any pending review timer and clear the review stream.
+  void cancelReview() {
+    _reviewTimer?.cancel();
+    _reviewController.add(null);
+  }
+
   /// Dispose of resources
   void dispose() {
     _debounceTimer?.cancel();
+    _reviewTimer?.cancel();
     _searchController.close();
+    _reviewController.close();
   }
 }
 
@@ -795,6 +1253,13 @@ final foodSearchStateProvider =
     StreamProvider.autoDispose<FoodSearchState>((ref) {
   final service = ref.watch(foodSearchServiceProvider);
   return service.searchStream;
+});
+
+/// Provider for AI food review stream
+final foodReviewStreamProvider =
+    StreamProvider.autoDispose<FoodReview?>((ref) {
+  final service = ref.watch(foodSearchServiceProvider);
+  return service.reviewStream;
 });
 
 /// Provider for recent searches (stored locally)

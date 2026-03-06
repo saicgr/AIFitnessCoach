@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../core/constants/app_colors.dart';
+import '../core/providers/subscription_provider.dart';
 import '../core/theme/theme_colors.dart';
 import '../data/models/coach_persona.dart';
 import '../data/providers/admin_provider.dart';
@@ -182,6 +183,21 @@ class MainShell extends ConsumerWidget {
       }
     });
 
+    // Listen for 24h trial expiration — show upgrade prompt
+    ref.listen(
+      subscriptionProvider.select((s) => s.trialJustExpired),
+      (previous, trialExpired) {
+        if (trialExpired && context.mounted) {
+          ref.read(subscriptionProvider.notifier).clearTrialExpiredFlag();
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (context.mounted) {
+              _showTrialExpiredSheet(context, ref);
+            }
+          });
+        }
+      },
+    );
+
     // Use ValueKey to avoid GlobalKey conflicts when theme changes
     return Material(
       key: const ValueKey('main_shell_material'),
@@ -225,6 +241,102 @@ class MainShell extends ConsumerWidget {
           // Note: Workout mini player is now handled globally in app.dart
           // Edge handle removed to reduce UI clutter (chat accessible via nav bar + floating overlay)
         ],
+      ),
+    );
+  }
+
+  void _showTrialExpiredSheet(BuildContext context, WidgetRef ref) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final accentColor = ref.colors(context).accent;
+
+    showModalBottomSheet(
+      context: context,
+      isDismissible: true,
+      backgroundColor: isDark ? AppColors.elevated : AppColorsLight.elevated,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) => Padding(
+        padding: const EdgeInsets.fromLTRB(24, 8, 24, 32),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Drag handle
+            Container(
+              width: 36,
+              height: 4,
+              margin: const EdgeInsets.only(bottom: 20),
+              decoration: BoxDecoration(
+                color: (isDark ? Colors.white : Colors.black).withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            // Clock icon
+            Icon(
+              Icons.timer_off_outlined,
+              size: 48,
+              color: accentColor,
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'Your free trial has ended',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: isDark ? AppColors.textPrimary : AppColorsLight.textPrimary,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Upgrade to keep your AI workouts, food scanning, and all premium features.',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 14,
+                color: isDark ? AppColors.textSecondary : AppColorsLight.textSecondary,
+                height: 1.4,
+              ),
+            ),
+            const SizedBox(height: 24),
+            // Primary CTA
+            SizedBox(
+              width: double.infinity,
+              height: 52,
+              child: ElevatedButton(
+                onPressed: () {
+                  Navigator.pop(ctx);
+                  context.push('/paywall');
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: accentColor,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  elevation: 0,
+                ),
+                child: const Text(
+                  'Continue Free for 7 Days',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+            // Dismiss
+            GestureDetector(
+              onTap: () => Navigator.pop(ctx),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 4),
+                child: Text(
+                  'Maybe later',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

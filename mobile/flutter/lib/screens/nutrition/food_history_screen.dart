@@ -4,7 +4,9 @@ import 'package:intl/intl.dart';
 import '../../core/constants/app_colors.dart';
 import '../../data/models/nutrition.dart';
 import '../../data/repositories/nutrition_repository.dart';
+import '../../data/services/api_client.dart';
 import '../../data/services/food_search_service.dart';
+import 'widgets/food_report_dialog.dart';
 import 'widgets/food_search_bar.dart';
 
 /// Smart food history screen with search, frequently eaten, and date-grouped logs.
@@ -448,6 +450,7 @@ class _FoodHistoryScreenState extends ConsumerState<FoodHistoryScreen> {
                             cardBg: cardBg,
                             cardBorder: cardBorder,
                             teal: teal,
+                            apiClient: ref.read(apiClientProvider),
                           ),
           ),
         ],
@@ -1102,6 +1105,7 @@ class _HistoryListView extends StatelessWidget {
   final Color cardBg;
   final Color cardBorder;
   final Color teal;
+  final ApiClient? apiClient;
 
   const _HistoryListView({
     required this.logs,
@@ -1122,6 +1126,7 @@ class _HistoryListView extends StatelessWidget {
     required this.cardBg,
     required this.cardBorder,
     required this.teal,
+    this.apiClient,
   });
 
   @override
@@ -1264,6 +1269,7 @@ class _HistoryListView extends StatelessWidget {
                     getMealEmoji: getMealEmoji,
                     onTap: () => onRelogFoodLog(log),
                     onDismissed: () => onDeleteFoodLog(log),
+                    apiClient: apiClient,
                   )),
             ];
           }),
@@ -1454,6 +1460,7 @@ class _FoodLogTile extends StatelessWidget {
   final String Function(String) getMealEmoji;
   final VoidCallback onTap;
   final VoidCallback onDismissed;
+  final ApiClient? apiClient;
 
   const _FoodLogTile({
     required this.log,
@@ -1466,6 +1473,7 @@ class _FoodLogTile extends StatelessWidget {
     required this.getMealEmoji,
     required this.onTap,
     required this.onDismissed,
+    this.apiClient,
   });
 
   @override
@@ -1553,6 +1561,36 @@ class _FoodLogTile extends StatelessWidget {
                   fontSize: 12,
                 ),
               ),
+              if (apiClient != null) ...[
+                const SizedBox(width: 4),
+                GestureDetector(
+                  onTap: () {
+                    final foodName = log.foodItems.isNotEmpty
+                        ? log.foodItems.first.name
+                        : log.mealType;
+                    showFoodReportDialog(
+                      context,
+                      apiClient: apiClient!,
+                      foodName: foodName,
+                      originalCalories: log.totalCalories,
+                      originalProtein: log.proteinG,
+                      originalCarbs: log.carbsG,
+                      originalFat: log.fatG,
+                      dataSource: 'food_log',
+                      foodLogId: log.id,
+                    );
+                  },
+                  behavior: HitTestBehavior.opaque,
+                  child: Padding(
+                    padding: const EdgeInsets.all(2),
+                    child: Icon(
+                      Icons.flag_outlined,
+                      size: 14,
+                      color: textMuted.withValues(alpha: 0.4),
+                    ),
+                  ),
+                ),
+              ],
               const SizedBox(width: 4),
               Icon(Icons.chevron_right, color: textMuted, size: 18),
             ],

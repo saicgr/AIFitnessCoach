@@ -158,6 +158,21 @@ class _RoadmapTab extends StatelessWidget {
 
         const SizedBox(height: 24),
 
+        // Nutrition
+        _buildSectionLabel('NUTRITION', textMuted),
+        _buildFeatureGroup(
+          cardColor: cardColor,
+          borderColor: borderColor,
+          textPrimary: textPrimary,
+          textSecondary: textSecondary,
+          features: [
+            _Feature(Icons.restaurant_outlined, AppColors.purple, 'AI Meal Plans', 'Personalized daily meal plans based on your macros & goals'),
+            _Feature(Icons.menu_book_outlined, AppColors.orange, 'AI Recipe Suggestions', 'Get recipe ideas that fit your diet, culture & eating window'),
+          ],
+        ),
+
+        const SizedBox(height: 24),
+
         // Analytics & Insights
         _buildSectionLabel('ANALYTICS & INSIGHTS', textMuted),
         _buildFeatureGroup(

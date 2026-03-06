@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/theme/theme_colors.dart';
 import '../../../data/models/exercise.dart';
@@ -13,6 +14,7 @@ import '../../../data/models/ai_split_preset.dart';
 import '../../../data/repositories/library_repository.dart';
 import '../../../data/services/haptic_service.dart';
 import '../providers/library_providers.dart';
+import '../providers/muscle_group_images_provider.dart';
 import '../../../widgets/glass_sheet.dart';
 import '../components/exercise_detail_sheet.dart';
 import '../components/ai_split_preset_detail_sheet.dart';
@@ -126,6 +128,30 @@ class _NetflixExercisesTabState extends ConsumerState<NetflixExercisesTab> {
   double? _searchTimeMs;
   Timer? _debounceTimer;
   CancelToken? _cancelToken;
+
+  // Track whether we've already prefetched exercise images
+  bool _imagesPrefetched = false;
+
+  /// Prefetch first batch of exercise images into CachedNetworkImage's
+  /// disk + memory cache so they appear instantly.
+  void _prefetchImages(List<LibraryExercise> exercises) {
+    if (_imagesPrefetched || !mounted) return;
+    _imagesPrefetched = true;
+
+    // Prefetch first 30 exercise images (covers initial viewport)
+    var count = 0;
+    for (final exercise in exercises) {
+      if (count >= 30) break;
+      final url = exercise.imageUrl;
+      if (url != null && url.isNotEmpty) {
+        precacheImage(
+          CachedNetworkImageProvider(url),
+          context,
+        );
+        count++;
+      }
+    }
+  }
 
   @override
   void dispose() {
@@ -248,6 +274,15 @@ class _NetflixExercisesTabState extends ConsumerState<NetflixExercisesTab> {
       data: (categoryData) {
         // Get all categories
         final categories = categoryData.preview.keys.toList();
+
+        // Prefetch exercise images into cache as soon as data is available
+        if (!_imagesPrefetched) {
+          final allForPrefetch = <LibraryExercise>[];
+          for (final exercises in categoryData.all.values) {
+            allForPrefetch.addAll(exercises);
+          }
+          _prefetchImages(allForPrefetch);
+        }
 
         // Get exercises based on selection
         List<LibraryExercise> allExercises = [];
@@ -871,6 +906,7 @@ class _NetflixExercisesTabState extends ConsumerState<NetflixExercisesTab> {
                               exerciseCount: entry.value.length,
                               completedCount: 0,
                               isDark: isDark,
+                              muscleAssetPath: muscleGroupAssets[entry.key],
                               onTap: () {
                                 HapticService.light();
                                 setState(() {
@@ -1835,6 +1871,7 @@ class _MuscleAnatomyCard extends StatelessWidget {
   final int exerciseCount;
   final int completedCount;
   final bool isDark;
+  final String? muscleAssetPath;
   final VoidCallback onTap;
 
   const _MuscleAnatomyCard({
@@ -1842,6 +1879,7 @@ class _MuscleAnatomyCard extends StatelessWidget {
     required this.exerciseCount,
     required this.completedCount,
     required this.isDark,
+    this.muscleAssetPath,
     required this.onTap,
   });
 
@@ -1887,9 +1925,10 @@ class _MuscleAnatomyCard extends StatelessWidget {
         ),
         child: Row(
           children: [
-            // Left side - Body silhouette with highlighted muscle
+            // Left side - Muscle image or silhouette fallback
             Container(
               width: 56,
+              clipBehavior: Clip.hardEdge,
               decoration: BoxDecoration(
                 color: isDark ? Colors.grey.shade900 : Colors.grey.shade100,
                 borderRadius: const BorderRadius.only(
@@ -1897,18 +1936,39 @@ class _MuscleAnatomyCard extends StatelessWidget {
                   bottomLeft: Radius.circular(12),
                 ),
               ),
-              child: Center(
-                child: CustomPaint(
-                  size: const Size(36, 48),
-                  painter: _BodySilhouettePainter(
-                    bodyColor: isDark
-                        ? Colors.grey.shade700
-                        : Colors.grey.shade400,
-                    highlightColor: muscleColor,
-                    highlightMuscle: muscleName.toLowerCase(),
-                  ),
-                ),
-              ),
+              child: muscleAssetPath != null && muscleAssetPath!.isNotEmpty
+                  ? Image.asset(
+                      muscleAssetPath!,
+                      fit: BoxFit.cover,
+                      width: 56,
+                      height: 66,
+                      cacheWidth: 112,
+                      cacheHeight: 132,
+                      errorBuilder: (context, error, stack) => Center(
+                        child: CustomPaint(
+                          size: const Size(36, 48),
+                          painter: _BodySilhouettePainter(
+                            bodyColor: isDark
+                                ? Colors.grey.shade700
+                                : Colors.grey.shade400,
+                            highlightColor: muscleColor,
+                            highlightMuscle: muscleName.toLowerCase(),
+                          ),
+                        ),
+                      ),
+                    )
+                  : Center(
+                      child: CustomPaint(
+                        size: const Size(36, 48),
+                        painter: _BodySilhouettePainter(
+                          bodyColor: isDark
+                              ? Colors.grey.shade700
+                              : Colors.grey.shade400,
+                          highlightColor: muscleColor,
+                          highlightMuscle: muscleName.toLowerCase(),
+                        ),
+                      ),
+                    ),
             ),
 
             // Middle - Muscle name and count
@@ -1986,9 +2046,10 @@ class _EquipmentExerciseCard extends StatelessWidget {
         ),
         child: Row(
           children: [
-            // Left side - Exercise icon
+            // Left side - Exercise image or icon fallback
             Container(
               width: 56,
+              clipBehavior: Clip.hardEdge,
               decoration: BoxDecoration(
                 color: isDark ? Colors.grey.shade900 : Colors.grey.shade100,
                 borderRadius: const BorderRadius.only(
@@ -1996,13 +2057,37 @@ class _EquipmentExerciseCard extends StatelessWidget {
                   bottomLeft: Radius.circular(12),
                 ),
               ),
-              child: Center(
-                child: Icon(
-                  Icons.fitness_center,
-                  size: 24,
-                  color: textMuted,
-                ),
-              ),
+              child: exercise.imageUrl != null && exercise.imageUrl!.isNotEmpty
+                  ? CachedNetworkImage(
+                      imageUrl: exercise.imageUrl!,
+                      cacheKey: 'ex_${exercise.name}',
+                      fit: BoxFit.cover,
+                      width: 56,
+                      height: 66,
+                      memCacheWidth: 112,
+                      memCacheHeight: 132,
+                      placeholder: (context, url) => Center(
+                        child: Icon(
+                          Icons.fitness_center,
+                          size: 24,
+                          color: textMuted,
+                        ),
+                      ),
+                      errorWidget: (context, url, error) => Center(
+                        child: Icon(
+                          Icons.fitness_center,
+                          size: 24,
+                          color: textMuted,
+                        ),
+                      ),
+                    )
+                  : Center(
+                      child: Icon(
+                        Icons.fitness_center,
+                        size: 24,
+                        color: textMuted,
+                      ),
+                    ),
             ),
 
             // Middle - Exercise name and muscle

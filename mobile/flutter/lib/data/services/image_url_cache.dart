@@ -3,47 +3,31 @@ import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'api_client.dart';
 
-/// Persistent cache for S3 presigned URLs.
-/// URLs are cached with expiration to avoid stale presigned URLs.
+/// Persistent cache for exercise image URLs.
+/// URLs are permanent (public S3/CDN) so cache entries never expire.
 class ImageUrlCache {
   static const String _cacheKey = 'exercise_image_urls';
-  static const String _timestampKey = 'exercise_image_urls_timestamp';
-
-  // Presigned URLs typically expire after 1 hour, we cache for 45 minutes to be safe
-  static const Duration _cacheExpiration = Duration(minutes: 45);
 
   // Perf fix 2.4: cap in-memory cache to prevent unbounded growth
   static const int _maxCacheEntries = 500;
 
   // In-memory cache for fast access during session
   static Map<String, String>? _memoryCache;
-  static DateTime? _cacheTimestamp;
 
-  /// Initialize cache from SharedPreferences on app start
+  /// Initialize cache from SharedPreferences on app start.
+  /// URLs are permanent (no expiration) so cached entries are valid indefinitely.
   static Future<void> initialize() async {
     final prefs = await SharedPreferences.getInstance();
-    final timestamp = prefs.getInt(_timestampKey);
-
-    if (timestamp != null) {
-      _cacheTimestamp = DateTime.fromMillisecondsSinceEpoch(timestamp);
-
-      // Check if cache is still valid
-      if (DateTime.now().difference(_cacheTimestamp!) < _cacheExpiration) {
-        final cached = prefs.getString(_cacheKey);
-        if (cached != null) {
-          try {
-            _memoryCache = Map<String, String>.from(json.decode(cached));
-            return;
-          } catch (_) {
-            // Invalid cache, will be cleared
-          }
-        }
+    final cached = prefs.getString(_cacheKey);
+    if (cached != null) {
+      try {
+        _memoryCache = Map<String, String>.from(json.decode(cached));
+        return;
+      } catch (_) {
+        // Invalid cache, will be cleared
       }
     }
-
-    // Cache expired or invalid, clear it
     _memoryCache = {};
-    _cacheTimestamp = DateTime.now();
   }
 
   /// Get a cached URL for an exercise name
@@ -96,7 +80,6 @@ class ImageUrlCache {
 
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_cacheKey, json.encode(_memoryCache));
-    await prefs.setInt(_timestampKey, DateTime.now().millisecondsSinceEpoch);
   }
 
   /// Batch pre-fetch image URLs for multiple exercises in a single API call.
@@ -135,11 +118,9 @@ class ImageUrlCache {
   /// Clear all cached URLs (call when presigned URLs might have expired)
   static Future<void> clear() async {
     _memoryCache = {};
-    _cacheTimestamp = DateTime.now();
 
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(_cacheKey);
-    await prefs.remove(_timestampKey);
   }
 
   /// Check if cache has any entries

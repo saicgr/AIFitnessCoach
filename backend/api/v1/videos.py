@@ -411,14 +411,12 @@ async def get_image_by_exercise_name(exercise_name: str, gender: str = None,
         if not found_result:
             s3_key = search_s3_for_image(exercise_name, gender)
             if s3_key:
-                url = s3_client.generate_presigned_url(
-                    'get_object',
-                    Params={'Bucket': BUCKET_NAME, 'Key': s3_key},
-                    ExpiresIn=PRESIGNED_URL_EXPIRATION
-                )
+                from api.v1.library.utils import resolve_image_url
+                s3_path = f"s3://{BUCKET_NAME}/{s3_key}"
+                url = resolve_image_url(s3_path)
                 return {
                     "url": url,
-                    "expires_in": PRESIGNED_URL_EXPIRATION,
+                    "expires_in": None,
                     "exercise_name": exercise_name,
                     "source": "s3_fuzzy_search"
                 }
@@ -429,19 +427,12 @@ async def get_image_by_exercise_name(exercise_name: str, gender: str = None,
         s3_path = found_result["image_s3_path"]
         found_exercise_name = found_result["exercise_name"]
 
-        # s3_path format: s3://bucket/key
-        # Extract key from s3:// URI
-        key = s3_path.replace(f"s3://{BUCKET_NAME}/", "")
-
-        url = s3_client.generate_presigned_url(
-            'get_object',
-            Params={'Bucket': BUCKET_NAME, 'Key': key},
-            ExpiresIn=PRESIGNED_URL_EXPIRATION
-        )
+        from api.v1.library.utils import resolve_image_url
+        url = resolve_image_url(s3_path)
 
         return {
             "url": url,
-            "expires_in": PRESIGNED_URL_EXPIRATION,
+            "expires_in": None,
             "exercise_name": found_exercise_name
         }
 
@@ -486,22 +477,17 @@ async def batch_get_image_urls(request: BatchImageRequest,
             "name, image_url"
         ).in_("name", names).execute()
 
-        # Generate presigned URLs for matching exercises
+        # Generate permanent or presigned URLs for matching exercises
+        from api.v1.library.utils import resolve_image_url
         urls = {}
         for row in (result.data or []):
             name = row.get("name", "")
             s3_path = row.get("image_url")
             if not name or not s3_path or not s3_path.startswith("s3://"):
                 continue
-            try:
-                key = s3_path.replace(f"s3://{BUCKET_NAME}/", "")
-                urls[name] = s3_client.generate_presigned_url(
-                    'get_object',
-                    Params={'Bucket': BUCKET_NAME, 'Key': key},
-                    ExpiresIn=PRESIGNED_URL_EXPIRATION,
-                )
-            except Exception as e:
-                logger.warning(f"Failed to generate presigned URL: {e}")
+            url = resolve_image_url(s3_path)
+            if url:
+                urls[name] = url
 
         return {"urls": urls, "resolved": len(urls), "requested": len(names)}
 

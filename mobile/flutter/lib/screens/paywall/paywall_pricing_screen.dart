@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:purchases_flutter/purchases_flutter.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -37,6 +38,45 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
   String _selectedPlan = 'premium_yearly';
   String _selectedBillingCycle = 'yearly'; // 'yearly' or 'monthly'
   bool _hasShownDiscount = false;
+
+  /// Get dynamic price string from RevenueCat offerings, with fallback
+  String _getDynamicPrice({
+    required Offerings? offerings,
+    required String productId,
+    required String fallback,
+  }) {
+    if (offerings?.current == null) return fallback;
+    for (final pkg in offerings!.current!.availablePackages) {
+      if (pkg.storeProduct.identifier == productId) {
+        return pkg.storeProduct.priceString;
+      }
+    }
+    return fallback;
+  }
+
+  /// Get the monthly equivalent price string for yearly plan
+  String _getMonthlyEquivalent({required Offerings? offerings}) {
+    if (offerings?.current == null) return '\$5.83';
+    for (final pkg in offerings!.current!.availablePackages) {
+      if (pkg.storeProduct.identifier == SubscriptionNotifier.premiumYearlyId) {
+        final monthly = pkg.storeProduct.price / 12;
+        return '\$${monthly.toStringAsFixed(2)}';
+      }
+    }
+    return '\$5.83';
+  }
+
+  /// Get per-day price string for yearly plan
+  String _getDailyEquivalent({required Offerings? offerings}) {
+    if (offerings?.current == null) return '\$0.19';
+    for (final pkg in offerings!.current!.availablePackages) {
+      if (pkg.storeProduct.identifier == SubscriptionNotifier.premiumYearlyId) {
+        final daily = pkg.storeProduct.price / 365;
+        return '\$${daily.toStringAsFixed(2)}';
+      }
+    }
+    return '\$0.19';
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -181,7 +221,7 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
 
                 SizedBox(height: isFoldable ? 10 : 14),
 
-                // Single Premium plan
+                // Single Premium plan (dynamic pricing from RevenueCat offerings)
                 _AccentBorderCard(
                   isSelected: true,
                   colors: colors,
@@ -191,9 +231,17 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
                     badge: _selectedBillingCycle == 'yearly' ? 'BEST VALUE' : '',
                     badgeColor: colors.accent,
                     accentColor: colors.accent,
-                    price: _selectedBillingCycle == 'yearly' ? '\$5.83' : '\$6.99',
+                    price: _selectedBillingCycle == 'yearly'
+                        ? _getMonthlyEquivalent(offerings: subscriptionState.offerings)
+                        : _getDynamicPrice(
+                            offerings: subscriptionState.offerings,
+                            productId: SubscriptionNotifier.premiumMonthlyId,
+                            fallback: '\$6.99',
+                          ),
                     period: '/mo',
-                    billedAs: _selectedBillingCycle == 'yearly' ? '\$69.99/year (\$0.19/day)' : 'Billed monthly',
+                    billedAs: _selectedBillingCycle == 'yearly'
+                        ? '${_getDynamicPrice(offerings: subscriptionState.offerings, productId: SubscriptionNotifier.premiumYearlyId, fallback: '\$69.99')}/year (${_getDailyEquivalent(offerings: subscriptionState.offerings)}/day)'
+                        : 'Billed monthly',
                     features: const [
                       '∞ Never repeat the same workout',
                       '📸 Snap a photo, get instant macros',

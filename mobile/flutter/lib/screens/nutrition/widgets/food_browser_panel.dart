@@ -4,9 +4,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../data/models/nutrition.dart';
 import '../../../data/repositories/nutrition_repository.dart';
+import '../../../data/services/api_client.dart';
 import '../../../data/services/food_search_service.dart' as search;
 import '../../../data/providers/xp_provider.dart';
+import '../../../data/repositories/auth_repository.dart';
 import '../food_history_screen.dart';
+import 'food_report_dialog.dart';
 
 /// Filter tabs for the food browser browse mode
 enum FoodBrowserFilter { recent, saved, foodDb }
@@ -51,10 +54,68 @@ class _FoodBrowserPanelState extends ConsumerState<FoodBrowserPanel> {
   // Per-item logging state: food name -> logging/done
   final Map<String, _LogState> _logStates = {};
 
+  // Expanded item index for NL accordion (-1 = none, 0 = first auto-expanded)
+  int _expandedNLIndex = 0;
+
+  // AI review state
+  StreamSubscription<search.FoodReview?>? _reviewSub;
+  search.FoodReview? _currentReview;
+  bool _reviewLoading = false;
+  String? _lastReviewQuery;
+
   @override
   void initState() {
     super.initState();
     _loadSavedFoods();
+    _reviewSub = ref.read(search.foodSearchServiceProvider).reviewStream.listen((review) {
+      if (!mounted) return;
+      setState(() {
+        _currentReview = review;
+        _reviewLoading = false;
+      });
+    });
+  }
+
+  @override
+  void didUpdateWidget(FoodBrowserPanel oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Cancel review when query changes
+    if (widget.searchQuery != oldWidget.searchQuery) {
+      _currentReview = null;
+      _reviewLoading = false;
+      _lastReviewQuery = null;
+      ref.read(search.foodSearchServiceProvider).cancelReview();
+    }
+  }
+
+  @override
+  void dispose() {
+    _reviewSub?.cancel();
+    ref.read(search.foodSearchServiceProvider).cancelReview();
+    super.dispose();
+  }
+
+  /// Trigger AI review for keyword search results if user has goals.
+  void _maybeStartReview(search.FoodSearchResults state) {
+    final user = ref.read(authStateProvider).user;
+    final goals = user?.goalsList ?? [];
+    if (goals.isEmpty) return;
+    if (state.isEmpty) return;
+
+    // Don't re-trigger for same query
+    if (_lastReviewQuery == state.query) return;
+    _lastReviewQuery = state.query;
+
+    // Pick top result for macros
+    final top = state.allResults.first;
+    setState(() => _reviewLoading = true);
+    ref.read(search.foodSearchServiceProvider).startReviewTimer(
+      top.name,
+      top.calories,
+      top.protein ?? 0,
+      top.carbs ?? 0,
+      top.fat ?? 0,
+    );
   }
 
   Future<void> _loadSavedFoods() async {
@@ -569,6 +630,12 @@ class _FoodBrowserPanelState extends ConsumerState<FoodBrowserPanel> {
             );
           }
 
+          // Trigger AI review after results load
+          _maybeStartReview(state);
+
+          // User goals for tag generation
+          final userGoals = ref.read(authStateProvider).user?.goalsList ?? [];
+
           // Group results: personal (saved + recent) and database
           final personalResults = [...state.saved, ...state.recent];
           final dbResults = [...state.database, ...state.foodDatabase];
@@ -576,6 +643,28 @@ class _FoodBrowserPanelState extends ConsumerState<FoodBrowserPanel> {
           return ListView(
             padding: const EdgeInsets.symmetric(horizontal: 4),
             children: [
+              // Search timing info
+              if (state.searchTimeMs != null)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 4),
+                  child: Text(
+                    '${state.totalCount} results \u00b7 ${state.searchTimeMs}ms',
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: textMuted,
+                    ),
+                  ),
+                ),
+              // AI Coach Tip card
+              if (_currentReview != null || _reviewLoading)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: _FoodReviewCard(
+                    review: _currentReview,
+                    isLoading: _reviewLoading,
+                    isDark: widget.isDark,
+                  ),
+                ),
               if (personalResults.isNotEmpty) ...[
                 _BrowseSectionHeader(
                   icon: Icons.person_outline,
@@ -594,6 +683,16 @@ class _FoodBrowserPanelState extends ConsumerState<FoodBrowserPanel> {
                     isWeightEditable: false,
                     onAdd: (desc) => _logFood(desc, key),
                     isDark: widget.isDark,
+                    goalTags: _buildGoalTags(
+                      goals: userGoals,
+                      calories: result.calories,
+                      protein: result.protein ?? 0,
+                      carbs: result.carbs ?? 0,
+                      fat: result.fat ?? 0,
+                      isDark: widget.isDark,
+                    ),
+                    searchResult: result,
+                    apiClient: ref.read(apiClientProvider),
                   );
                 }),
                 const SizedBox(height: 12),
@@ -619,6 +718,16 @@ class _FoodBrowserPanelState extends ConsumerState<FoodBrowserPanel> {
                     baseWeightG: 100.0,
                     onAdd: (desc) => _logFood(desc, key),
                     isDark: widget.isDark,
+                    goalTags: _buildGoalTags(
+                      goals: userGoals,
+                      calories: result.calories,
+                      protein: result.protein ?? 0,
+                      carbs: result.carbs ?? 0,
+                      fat: result.fat ?? 0,
+                      isDark: widget.isDark,
+                    ),
+                    searchResult: result,
+                    apiClient: ref.read(apiClientProvider),
                   );
                 }),
               ],
@@ -638,7 +747,34 @@ class _FoodBrowserPanelState extends ConsumerState<FoodBrowserPanel> {
     );
   }
 
-  // ─── NL Results UI ──────────────────────────────────────────
+  // ─── NL Results UI (Compact Accordion with Inline Picker) ───
+
+  // Keys for _NLItemSection GlobalKeys to read state
+  final Map<int, GlobalKey<_NLItemSectionState>> _nlSectionKeys = {};
+
+  GlobalKey<_NLItemSectionState> _nlKey(int index) {
+    return _nlSectionKeys.putIfAbsent(index, () => GlobalKey<_NLItemSectionState>());
+  }
+
+  /// Recalculate summary totals from all section states
+  int get _nlTotalCalories {
+    int total = 0;
+    for (final entry in _nlSectionKeys.entries) {
+      final state = entry.value.currentState;
+      if (state != null) total += state.displayCalories;
+    }
+    return total;
+  }
+
+  /// Count how many items are already logged (done)
+  int get _nlDoneCount {
+    int count = 0;
+    for (final entry in _nlSectionKeys.entries) {
+      final key = 'nl_${entry.key}';
+      if (_logStates[key] == _LogState.done) count++;
+    }
+    return count;
+  }
 
   Widget _buildNLResults(search.FoodAnalysisResult result) {
     final isDark = widget.isDark;
@@ -663,48 +799,89 @@ class _FoodBrowserPanelState extends ConsumerState<FoodBrowserPanel> {
       );
     }
 
+    final allKey = 'nl_all';
+    final allState = _logStates[allKey];
+    final doneCount = _nlDoneCount;
+    final totalItems = result.foodItems.length;
+    final totalCal = _nlTotalCalories > 0 ? _nlTotalCalories : result.totalCalories;
+
+    // Compute remaining calories (subtract done items)
+    int remainingCal = 0;
+    for (int i = 0; i < totalItems; i++) {
+      final key = 'nl_$i';
+      if (_logStates[key] != _LogState.done) {
+        final sectionState = _nlSectionKeys[i]?.currentState;
+        remainingCal += sectionState?.displayCalories ?? result.foodItems[i].calories;
+      }
+    }
+
+    final hasLoggedSome = doneCount > 0 && doneCount < totalItems;
+    final buttonLabel = allState == _LogState.done
+        ? 'Logged!'
+        : hasLoggedSome
+            ? 'Log Remaining ($remainingCal kcal)'
+            : 'Log All ($totalCal kcal)';
+
     return Column(
       children: [
-        // Header + totals summary
-        Padding(
-          padding: const EdgeInsets.fromLTRB(4, 4, 4, 8),
+        // ── Summary banner (live-updating) ──
+        Container(
+          margin: const EdgeInsets.fromLTRB(4, 4, 4, 6),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          decoration: BoxDecoration(
+            color: teal.withValues(alpha: 0.08),
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: teal.withValues(alpha: 0.15)),
+          ),
           child: Row(
             children: [
-              Icon(Icons.auto_awesome, size: 16, color: teal),
+              Icon(Icons.auto_awesome, size: 15, color: teal),
               const SizedBox(width: 6),
               Text(
-                'AI Analysis',
-                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: teal, letterSpacing: 0.5),
+                '$totalItems items',
+                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: teal),
               ),
               const Spacer(),
               Text(
-                '${result.totalCalories} kcal',
-                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: textPrimary),
-              ),
-              const SizedBox(width: 8),
-              Text(
-                'P${result.proteinG.toStringAsFixed(0)}  C${result.carbsG.toStringAsFixed(0)}  F${result.fatG.toStringAsFixed(0)}',
-                style: TextStyle(fontSize: 11, color: textMuted),
+                '$totalCal kcal',
+                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: textPrimary),
               ),
             ],
           ),
         ),
-        // Food item cards
+
+        // ── Coach Tip from NL analysis (if review fields present) ──
+        if (_hasNLReviewData(result))
+          Padding(
+            padding: const EdgeInsets.fromLTRB(4, 0, 4, 6),
+            child: _FoodReviewCard(
+              review: search.FoodReview(
+                encouragements: result.encouragements ?? [],
+                warnings: result.warnings ?? [],
+                aiSuggestion: result.aiSuggestion,
+                recommendedSwap: result.recommendedSwap,
+                healthScore: result.healthScore,
+              ),
+              isLoading: false,
+              isDark: isDark,
+            ),
+          ),
+
+        // ── Compact accordion list ──
         Expanded(
           child: ListView.builder(
             padding: const EdgeInsets.symmetric(horizontal: 4),
-            itemCount: result.foodItems.length + 1, // +1 for "Log All" button
+            itemCount: totalItems + 2,
             itemBuilder: (context, index) {
-              if (index == result.foodItems.length) {
-                // "Log All" button at the end
-                final allKey = 'nl_all';
-                final allState = _logStates[allKey];
+              // "Log All" / "Log Remaining" button
+              if (index == totalItems) {
+                final anyLoading = _logStates.values.any((s) => s == _LogState.loading);
                 return Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  padding: const EdgeInsets.only(top: 8),
                   child: SizedBox(
                     width: double.infinity,
                     child: ElevatedButton.icon(
-                      onPressed: allState == _LogState.loading
+                      onPressed: (allState == _LogState.loading || anyLoading)
                           ? null
                           : () => _logAllNLItems(result, allKey),
                       icon: allState == _LogState.loading
@@ -713,7 +890,7 @@ class _FoodBrowserPanelState extends ConsumerState<FoodBrowserPanel> {
                               ? const Icon(Icons.check, size: 18)
                               : const Icon(Icons.playlist_add_check, size: 18),
                       label: Text(
-                        allState == _LogState.done ? 'Logged!' : 'Log All (${result.totalCalories} kcal)',
+                        buttonLabel,
                         style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
                       ),
                       style: ElevatedButton.styleFrom(
@@ -728,15 +905,57 @@ class _FoodBrowserPanelState extends ConsumerState<FoodBrowserPanel> {
                 );
               }
 
+              // "Search instead" escape hatch
+              if (index == totalItems + 1) {
+                return Padding(
+                  padding: const EdgeInsets.only(top: 4, bottom: 16),
+                  child: Center(
+                    child: GestureDetector(
+                      onTap: () {
+                        final service = ref.read(search.foodSearchServiceProvider);
+                        final cachedLogs = ref.read(nutritionProvider).recentLogs;
+                        service.searchImmediate(widget.searchQuery, widget.userId, cachedLogs: cachedLogs);
+                      },
+                      child: Text(
+                        'Looking for a specific product? Search instead',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: teal,
+                          decoration: TextDecoration.underline,
+                          decorationColor: teal.withValues(alpha: 0.5),
+                        ),
+                      ),
+                    ),
+                  ),
+                );
+              }
+
+              // Food item sections (accordion with inline picker)
               final item = result.foodItems[index];
               final key = 'nl_$index';
               final logState = _logStates[key];
+              final isExpanded = _expandedNLIndex == index;
 
-              return _NLFoodItemCard(
+              return _NLItemSection(
+                key: _nlKey(index),
                 item: item,
+                isExpanded: isExpanded,
                 logState: logState,
-                onLog: () => _logSingleNLItem(item, key),
+                onTap: () {
+                  setState(() {
+                    _expandedNLIndex = isExpanded ? -1 : index;
+                  });
+                },
+                onLog: (description) => _logSingleNLItem(description, key),
+                onStateChanged: () {
+                  // Trigger banner rebuild when selection/qty/weight changes
+                  setState(() {});
+                },
                 isDark: isDark,
+                showHint: index == 0 && _expandedNLIndex == 0 && totalItems > 1,
+                searchService: ref.read(search.foodSearchServiceProvider),
+                userId: widget.userId,
+                apiClient: ref.read(apiClientProvider),
               );
             },
           ),
@@ -745,14 +964,19 @@ class _FoodBrowserPanelState extends ConsumerState<FoodBrowserPanel> {
     );
   }
 
-  /// Log a single NL food item
-  Future<void> _logSingleNLItem(search.NLFoodItem item, String key) async {
+  /// Check if NL result has any review data to show
+  bool _hasNLReviewData(search.FoodAnalysisResult result) {
+    return (result.encouragements != null && result.encouragements!.isNotEmpty) ||
+           (result.warnings != null && result.warnings!.isNotEmpty) ||
+           (result.aiSuggestion != null && result.aiSuggestion!.isNotEmpty) ||
+           (result.recommendedSwap != null && result.recommendedSwap!.isNotEmpty);
+  }
+
+  /// Log a single NL food item using the description from the section
+  Future<void> _logSingleNLItem(String description, String key) async {
     setState(() => _logStates[key] = _LogState.loading);
     try {
       final repo = ref.read(nutritionRepositoryProvider);
-      final description = item.amount != null
-          ? '${item.amount} ${item.name}'
-          : item.name;
       await repo.logFoodFromText(
         userId: widget.userId,
         description: description,
@@ -774,20 +998,28 @@ class _FoodBrowserPanelState extends ConsumerState<FoodBrowserPanel> {
     }
   }
 
-  /// Log all NL food items as a single meal description
+  /// Log all NL food items using current state from each section
   Future<void> _logAllNLItems(search.FoodAnalysisResult result, String key) async {
     setState(() => _logStates[key] = _LogState.loading);
     try {
       final repo = ref.read(nutritionRepositoryProvider);
-      // Build a combined description from all items
-      final description = result.foodItems.map((item) {
-        return item.amount != null
-            ? '${item.amount} ${item.name}'
-            : item.name;
-      }).join(', ');
+      // Build descriptions from current section states, skipping done items
+      final descriptions = <String>[];
+      for (int i = 0; i < result.foodItems.length; i++) {
+        final itemKey = 'nl_$i';
+        if (_logStates[itemKey] == _LogState.done) continue; // skip already logged
+        final sectionState = _nlSectionKeys[i]?.currentState;
+        if (sectionState != null) {
+          descriptions.add(sectionState.buildDescription());
+        } else {
+          final item = result.foodItems[i];
+          descriptions.add(item.amount != null ? '${item.amount} ${item.name}' : item.name);
+        }
+      }
+      if (descriptions.isEmpty) return;
       await repo.logFoodFromText(
         userId: widget.userId,
-        description: description,
+        description: descriptions.join(', '),
         mealType: widget.mealType.value,
       );
       ref.read(xpProvider.notifier).markMealLogged();
@@ -1055,112 +1287,1105 @@ class _BrowseSectionHeader extends StatelessWidget {
   }
 }
 
-// ─── NL Food Item Card ─────────────────────────────────────────
+// ─── NL Item Section (Stateful Accordion with Inline Picker) ──
 
-class _NLFoodItemCard extends StatelessWidget {
+class _NLItemSection extends StatefulWidget {
   final search.NLFoodItem item;
+  final bool isExpanded;
   final _LogState? logState;
-  final VoidCallback onLog;
+  final VoidCallback onTap;
+  final void Function(String description) onLog;
+  final VoidCallback onStateChanged;
   final bool isDark;
+  final bool showHint;
+  final search.FoodSearchService searchService;
+  final String userId;
+  final ApiClient apiClient;
 
-  const _NLFoodItemCard({
+  const _NLItemSection({
+    super.key,
     required this.item,
+    required this.isExpanded,
     this.logState,
+    required this.onTap,
     required this.onLog,
+    required this.onStateChanged,
     required this.isDark,
+    this.showHint = false,
+    required this.searchService,
+    required this.userId,
+    required this.apiClient,
   });
 
   @override
-  Widget build(BuildContext context) {
-    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
-    final teal = isDark ? AppColors.teal : AppColorsLight.teal;
+  State<_NLItemSection> createState() => _NLItemSectionState();
+}
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: 6),
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-      decoration: BoxDecoration(
-        color: elevated,
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(
-          color: isDark ? Colors.white.withValues(alpha: 0.06) : Colors.black.withValues(alpha: 0.04),
+class _ModifierState {
+  double? weightG;
+  int? count;
+  bool enabled;
+  String? selectedPhrase;
+
+  _ModifierState({this.weightG, this.count, this.enabled = true, this.selectedPhrase});
+}
+
+class _NLItemSectionState extends State<_NLItemSection> {
+  // Selection
+  search.FoodSearchResult? _selectedAlt;
+  List<search.FoodSearchResult> _alternatives = [];
+  bool _altsLoading = false;
+  String? _altsError;
+  bool _altsFetched = false;
+
+  // Qty / weight
+  late int _qty;
+  late double _weightG;
+  late TextEditingController _qtyCtrl;
+  late TextEditingController _weightCtrl;
+
+  // Mini search
+  late TextEditingController _searchCtrl;
+  Timer? _searchDebounce;
+
+  // Modifier controls
+  final Map<String, _ModifierState> _modifierStates = {};
+  late TextEditingController _modSearchCtrl;
+  Timer? _modSearchDebounce;
+  List<search.FoodModifier> _modSearchResults = [];
+  bool _modSearchLoading = false;
+
+  int _parseOriginalQty = 1;
+  double? _originalPieceWeight;
+
+  @override
+  void initState() {
+    super.initState();
+    // Parse qty from amount string (e.g. "5×" or "5 pieces" or "2 cups")
+    _parseOriginalQty = _parseQtyFromAmount(widget.item.amount);
+    _qty = _parseOriginalQty;
+    _weightG = widget.item.weightG ?? 100.0;
+    _originalPieceWeight = _qty > 0 ? _weightG / _qty : null;
+
+    _qtyCtrl = TextEditingController(text: _qty.toString());
+    _weightCtrl = TextEditingController(text: _weightG.round().toString());
+    _searchCtrl = TextEditingController();
+    _modSearchCtrl = TextEditingController();
+    // Initialize modifier states from item's detected modifiers
+    for (final mod in widget.item.modifiers) {
+      switch (mod.type) {
+        case search.FoodModifierType.addon:
+          final weight = mod.defaultWeightG;
+          int? count;
+          if (mod.weightPerUnitG != null && weight != null) {
+            count = (weight / mod.weightPerUnitG!).round();
+          }
+          _modifierStates[mod.phrase] = _ModifierState(weightG: weight, count: count, enabled: true);
+          break;
+        case search.FoodModifierType.doneness:
+        case search.FoodModifierType.cookingMethod:
+        case search.FoodModifierType.sizePortion:
+          _modifierStates[mod.phrase] = _ModifierState(selectedPhrase: mod.phrase, enabled: true);
+          break;
+        case search.FoodModifierType.removal:
+          _modifierStates[mod.phrase] = _ModifierState(enabled: true);
+          break;
+        default:
+          _modifierStates[mod.phrase] = _ModifierState(enabled: true);
+      }
+    }
+  }
+
+  @override
+  void didUpdateWidget(_NLItemSection oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Auto-fetch alternatives on first expand
+    if (widget.isExpanded && !oldWidget.isExpanded && !_altsFetched) {
+      _fetchAlternatives(widget.item.name);
+    }
+  }
+
+  @override
+  void dispose() {
+    _qtyCtrl.dispose();
+    _weightCtrl.dispose();
+    _searchCtrl.dispose();
+    _searchDebounce?.cancel();
+    _modSearchCtrl.dispose();
+    _modSearchDebounce?.cancel();
+    super.dispose();
+  }
+
+  int _parseQtyFromAmount(String? amount) {
+    if (amount == null || amount.isEmpty) return 1;
+    final match = RegExp(r'(\d+)').firstMatch(amount);
+    if (match != null) {
+      final n = int.tryParse(match.group(1)!);
+      if (n != null && n > 0) return n;
+    }
+    return 1;
+  }
+
+  /// Calories: cal_per_100g * weightG / 100 + modifier deltas
+  int get displayCalories {
+    int baseCal;
+    if (_selectedAlt != null) {
+      baseCal = (_selectedAlt!.calories * _weightG / 100).round();
+    } else {
+      final origW = widget.item.weightG;
+      if (origW != null && origW > 0) {
+        final calPer100 = widget.item.calories / _parseOriginalQty / origW * 100;
+        baseCal = (calPer100 * _weightG / 100).round();
+      } else {
+        baseCal = (widget.item.calories / _parseOriginalQty * _qty).round();
+      }
+    }
+    // Add modifier deltas
+    int modifierTotal = 0;
+    for (final mod in widget.item.modifiers) {
+      final state = _modifierStates[mod.phrase];
+      if (state == null) continue;
+      modifierTotal += _calcModifierCalDelta(mod, state);
+    }
+    // Also add any user-added modifiers not in original list
+    for (final entry in _modifierStates.entries) {
+      final isOriginal = widget.item.modifiers.any((m) => m.phrase == entry.key);
+      if (!isOriginal) {
+        final addedMod = _modSearchResults.where((m) => m.phrase == entry.key).firstOrNull;
+        if (addedMod != null) {
+          modifierTotal += _calcModifierCalDelta(addedMod, entry.value);
+        }
+      }
+    }
+    return baseCal + modifierTotal;
+  }
+
+  int _calcModifierCalDelta(search.FoodModifier mod, _ModifierState state) {
+    if (!state.enabled) return 0;
+    switch (mod.type) {
+      case search.FoodModifierType.addon:
+        if (mod.perGram != null && state.weightG != null) {
+          return (mod.perGram!.calories * state.weightG!).round();
+        }
+        return mod.delta['calories']?.round() ?? 0;
+      case search.FoodModifierType.doneness:
+      case search.FoodModifierType.cookingMethod:
+      case search.FoodModifierType.sizePortion:
+        if (mod.groupOptions.isNotEmpty && state.selectedPhrase != null) {
+          final opt = mod.groupOptions.where((o) => o.phrase == state.selectedPhrase).firstOrNull;
+          if (opt != null) return opt.calDelta;
+        }
+        return mod.delta['calories']?.round() ?? 0;
+      case search.FoodModifierType.removal:
+        return state.enabled ? (mod.delta['calories']?.round() ?? 0) : 0;
+      default:
+        return 0;
+    }
+  }
+
+  String get displayName => _selectedAlt?.name ?? widget.item.name;
+
+  void _openFlagDialog() {
+    showFoodReportDialog(
+      context,
+      apiClient: widget.apiClient,
+      foodName: displayName,
+      originalCalories: displayCalories,
+      originalProtein: widget.item.proteinG,
+      originalCarbs: widget.item.carbsG,
+      originalFat: widget.item.fatG,
+      dataSource: 'ai_analysis',
+    );
+  }
+
+  String get _displayAmount {
+    if (_qty > 1) return '$_qty×';
+    return '';
+  }
+
+  String buildDescription() {
+    final name = displayName;
+    final modParts = <String>[];
+    for (final mod in widget.item.modifiers) {
+      final state = _modifierStates[mod.phrase];
+      if (state == null) continue;
+      if (mod.type == search.FoodModifierType.doneness ||
+          mod.type == search.FoodModifierType.cookingMethod ||
+          mod.type == search.FoodModifierType.sizePortion) {
+        modParts.add(state.selectedPhrase ?? mod.phrase);
+      } else if (mod.type == search.FoodModifierType.addon && state.enabled) {
+        final w = state.weightG?.round() ?? mod.defaultWeightG?.round();
+        modParts.add('${w}g ${mod.displayLabel ?? mod.phrase}');
+      } else if (mod.type == search.FoodModifierType.removal && state.enabled) {
+        modParts.add(mod.phrase);
+      }
+    }
+    // Include user-added modifiers
+    for (final entry in _modifierStates.entries) {
+      final isOriginal = widget.item.modifiers.any((m) => m.phrase == entry.key);
+      if (!isOriginal && entry.value.enabled) {
+        final w = entry.value.weightG?.round();
+        modParts.add(w != null ? '${w}g ${entry.key}' : entry.key);
+      }
+    }
+    final modStr = modParts.isNotEmpty ? ' (${modParts.join(", ")})' : '';
+    if (_qty > 1) return '$_qty x $name$modStr, ${_weightG.round()}g';
+    return '$name$modStr, ${_weightG.round()}g';
+  }
+
+  Future<void> _fetchAlternatives(String query) async {
+    setState(() {
+      _altsLoading = true;
+      _altsError = null;
+    });
+    try {
+      final results = await widget.searchService.searchAlternatives(query, widget.userId);
+      if (!mounted) return;
+      setState(() {
+        _alternatives = results;
+        _altsLoading = false;
+        _altsFetched = true;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _altsLoading = false;
+        _altsError = 'Couldn\'t load alternatives';
+        _altsFetched = true;
+      });
+    }
+  }
+
+  void _onAltSelected(search.FoodSearchResult alt) {
+    final oldPieceWeight = _selectedAlt?.weightPerUnitG ?? _originalPieceWeight;
+    setState(() {
+      _selectedAlt = alt;
+      // Auto-adjust weight if piece weight differs
+      if (alt.weightPerUnitG != null && alt.weightPerUnitG! > 0) {
+        _weightG = _qty * alt.weightPerUnitG!;
+        _weightCtrl.text = _weightG.round().toString();
+      } else if (oldPieceWeight != null && oldPieceWeight > 0) {
+        // Keep same total weight pattern
+      }
+    });
+    widget.onStateChanged();
+  }
+
+  void _onOriginalSelected() {
+    setState(() {
+      _selectedAlt = null;
+      // Restore original weight
+      _weightG = widget.item.weightG ?? 100.0;
+      _weightCtrl.text = _weightG.round().toString();
+    });
+    widget.onStateChanged();
+  }
+
+  void _onMiniSearch(String query) {
+    _searchDebounce?.cancel();
+    if (query.trim().isEmpty) {
+      // Revert to original alternatives
+      _fetchAlternatives(widget.item.name);
+      return;
+    }
+    _searchDebounce = Timer(const Duration(milliseconds: 400), () {
+      _fetchAlternatives(query.trim());
+    });
+  }
+
+  void _updateQty(int newQty) {
+    if (newQty < 1 || newQty > 99) return;
+    final pieceWeight = _selectedAlt?.weightPerUnitG ?? _originalPieceWeight;
+    setState(() {
+      _qty = newQty;
+      _qtyCtrl.text = newQty.toString();
+      // Auto-adjust total weight if we know piece weight
+      if (pieceWeight != null && pieceWeight > 0) {
+        _weightG = newQty * pieceWeight;
+        _weightCtrl.text = _weightG.round().toString();
+      }
+    });
+    widget.onStateChanged();
+  }
+
+  void _updateWeight(double newWeight) {
+    if (newWeight < 1 || newWeight > 9999) return;
+    setState(() {
+      _weightG = newWeight;
+      _weightCtrl.text = newWeight.round().toString();
+    });
+    widget.onStateChanged();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final textPrimary = widget.isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textMuted = widget.isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final elevated = widget.isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final teal = widget.isDark ? AppColors.teal : AppColorsLight.teal;
+    final glassSurface = widget.isDark ? AppColors.glassSurface : AppColorsLight.glassSurface;
+
+    return GestureDetector(
+      onTap: widget.onTap,
+      behavior: HitTestBehavior.opaque,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        curve: Curves.easeInOut,
+        margin: const EdgeInsets.only(bottom: 4),
+        padding: EdgeInsets.symmetric(
+          horizontal: 12,
+          vertical: widget.isExpanded ? 10 : 8,
         ),
-      ),
-      child: Row(
-        children: [
-          // Food info
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+        decoration: BoxDecoration(
+          color: widget.isExpanded ? elevated : Colors.transparent,
+          borderRadius: BorderRadius.circular(10),
+          border: widget.isExpanded
+              ? Border.all(color: widget.isDark ? Colors.white.withValues(alpha: 0.08) : Colors.black.withValues(alpha: 0.06))
+              : null,
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // ── Header row (always visible) ──
+            Row(
               children: [
-                Text(
-                  item.name,
-                  style: TextStyle(
-                    color: textPrimary,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
+                Expanded(
+                  child: Text(
+                    displayName,
+                    style: TextStyle(color: textPrimary, fontSize: 14, fontWeight: FontWeight.w600),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
                 ),
-                const SizedBox(height: 3),
-                Row(
-                  children: [
-                    if (item.amount != null) ...[
-                      Text(
-                        item.amount!,
-                        style: TextStyle(color: textMuted, fontSize: 12),
-                      ),
-                      Text(' · ', style: TextStyle(color: textMuted, fontSize: 12)),
-                    ],
-                    Text(
-                      '${item.calories} kcal',
-                      style: TextStyle(
-                        color: textPrimary,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    Text(' · ', style: TextStyle(color: textMuted, fontSize: 12)),
-                    Text(
-                      'P${item.proteinG.toStringAsFixed(0)} C${item.carbsG.toStringAsFixed(0)} F${item.fatG.toStringAsFixed(0)}',
-                      style: TextStyle(color: textMuted, fontSize: 11),
-                    ),
-                  ],
+                if (_displayAmount.isNotEmpty) ...[
+                  const SizedBox(width: 6),
+                  Text(_displayAmount, style: TextStyle(color: textMuted, fontSize: 12)),
+                ],
+                const SizedBox(width: 10),
+                Text(
+                  '$displayCalories',
+                  style: TextStyle(color: textPrimary, fontSize: 13, fontWeight: FontWeight.w700),
+                ),
+                Text(' kcal', style: TextStyle(color: textMuted, fontSize: 11)),
+                const SizedBox(width: 4),
+                _FlagIconButton(
+                  isDark: widget.isDark,
+                  onTap: () => _openFlagDialog(),
+                ),
+                const SizedBox(width: 2),
+                AnimatedRotation(
+                  turns: widget.isExpanded ? 0.5 : 0.0,
+                  duration: const Duration(milliseconds: 200),
+                  child: Icon(Icons.keyboard_arrow_down, size: 18, color: textMuted.withValues(alpha: 0.6)),
                 ),
               ],
             ),
+
+            // ── Divider for collapsed rows ──
+            if (!widget.isExpanded)
+              Padding(
+                padding: const EdgeInsets.only(top: 8),
+                child: Divider(
+                  height: 1, thickness: 0.5,
+                  color: widget.isDark ? Colors.white.withValues(alpha: 0.06) : Colors.black.withValues(alpha: 0.06),
+                ),
+              ),
+
+            // ── Expanded section ──
+            if (widget.isExpanded) ...[
+              const SizedBox(height: 10),
+
+              // Qty + Weight steppers
+              Row(
+                children: [
+                  _buildStepper(
+                    controller: _qtyCtrl,
+                    label: 'qty',
+                    onDecrease: () => _updateQty(_qty - 1),
+                    onIncrease: () => _updateQty(_qty + 1),
+                    onSubmitted: (v) {
+                      final n = int.tryParse(v);
+                      if (n != null) _updateQty(n);
+                    },
+                    fieldWidth: 36,
+                    glassSurface: glassSurface,
+                    textPrimary: textPrimary,
+                    textMuted: textMuted,
+                  ),
+                  const SizedBox(width: 12),
+                  _buildStepper(
+                    controller: _weightCtrl,
+                    label: 'g',
+                    onDecrease: () => _updateWeight(_weightG - 10),
+                    onIncrease: () => _updateWeight(_weightG + 10),
+                    onSubmitted: (v) {
+                      final n = double.tryParse(v);
+                      if (n != null) _updateWeight(n);
+                    },
+                    fieldWidth: 46,
+                    glassSurface: glassSurface,
+                    textPrimary: textPrimary,
+                    textMuted: textMuted,
+                  ),
+                  const Spacer(),
+                  // Log this item button
+                  _buildLogButton(teal),
+                ],
+              ),
+
+              const SizedBox(height: 10),
+
+              // ── Modifier controls ──
+              if (widget.item.modifiers.isNotEmpty || _modifierStates.isNotEmpty)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: _buildModifierSection(textPrimary, textMuted, teal, glassSurface, elevated),
+                ),
+
+              // ── Mini search bar ──
+              GestureDetector(
+                onTap: () {}, // absorb tap so it doesn't collapse
+                child: SizedBox(
+                  height: 36,
+                  child: TextField(
+                    controller: _searchCtrl,
+                    style: TextStyle(fontSize: 13, color: textPrimary),
+                    decoration: InputDecoration(
+                      hintText: 'Search alternatives...',
+                      hintStyle: TextStyle(fontSize: 13, color: textMuted.withValues(alpha: 0.5)),
+                      prefixIcon: Icon(Icons.search, size: 18, color: textMuted),
+                      isDense: true,
+                      contentPadding: const EdgeInsets.symmetric(vertical: 8),
+                      filled: true,
+                      fillColor: glassSurface,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: BorderSide.none,
+                      ),
+                    ),
+                    onChanged: _onMiniSearch,
+                    onTap: () {}, // prevent parent GestureDetector
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 8),
+
+              // ── Alternatives list ──
+              _buildAlternativesList(textPrimary, textMuted, teal, glassSurface),
+
+              // Hint text
+              if (widget.showHint) ...[
+                const SizedBox(height: 6),
+                Text(
+                  'Tap items to adjust or pick alternatives',
+                  style: TextStyle(fontSize: 11, color: textMuted.withValues(alpha: 0.5), fontStyle: FontStyle.italic),
+                ),
+              ],
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAlternativesList(Color textPrimary, Color textMuted, Color teal, Color glassSurface) {
+    // Loading shimmer
+    if (_altsLoading) {
+      return Column(
+        children: List.generate(3, (_) => Container(
+          height: 40,
+          margin: const EdgeInsets.only(bottom: 4),
+          decoration: BoxDecoration(
+            color: glassSurface.withValues(alpha: 0.5),
+            borderRadius: BorderRadius.circular(8),
           ),
-          // Log button
-          const SizedBox(width: 8),
-          _logButton(teal, textMuted),
+        )),
+      );
+    }
+
+    // Error state
+    if (_altsError != null) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        child: Row(
+          children: [
+            Icon(Icons.error_outline, size: 16, color: textMuted),
+            const SizedBox(width: 6),
+            Text(_altsError!, style: TextStyle(fontSize: 12, color: textMuted)),
+            const SizedBox(width: 8),
+            GestureDetector(
+              onTap: () => _fetchAlternatives(widget.item.name),
+              child: Text('Retry', style: TextStyle(fontSize: 12, color: teal, fontWeight: FontWeight.w600)),
+            ),
+          ],
+        ),
+      );
+    }
+
+    // Build list: original item first as radio, then alternatives
+    final hasAlts = _alternatives.isNotEmpty;
+    final isOriginalSelected = _selectedAlt == null;
+
+    return GestureDetector(
+      onTap: () {}, // absorb taps so list doesn't collapse
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Original parsed item (always shown as first radio option)
+          _buildAltRow(
+            name: widget.item.name,
+            calPer100g: _getOriginalCalPer100g(),
+            isSelected: isOriginalSelected,
+            onTap: _onOriginalSelected,
+            textPrimary: textPrimary,
+            textMuted: textMuted,
+            teal: teal,
+          ),
+          // Alternative items from search
+          if (hasAlts)
+            ...(_alternatives.take(6).map((alt) => _buildAltRow(
+              name: alt.name,
+              calPer100g: alt.calories,
+              isSelected: _selectedAlt?.id == alt.id,
+              onTap: () => _onAltSelected(alt),
+              textPrimary: textPrimary,
+              textMuted: textMuted,
+              teal: teal,
+              subtitle: alt.brand,
+            )))
+          else if (_altsFetched && !_altsLoading)
+            Padding(
+              padding: const EdgeInsets.only(top: 4, bottom: 4),
+              child: Text(
+                'Only match found',
+                style: TextStyle(fontSize: 11, color: textMuted.withValues(alpha: 0.5), fontStyle: FontStyle.italic),
+              ),
+            ),
         ],
       ),
     );
   }
 
-  Widget _logButton(Color teal, Color textMuted) {
-    if (logState == _LogState.loading) {
-      return SizedBox(
-        width: 28,
-        height: 28,
-        child: CircularProgressIndicator(strokeWidth: 2, color: teal),
-      );
+  int _getOriginalCalPer100g() {
+    final w = widget.item.weightG;
+    if (w != null && w > 0) {
+      return (widget.item.calories / _parseOriginalQty / w * 100).round();
     }
-    if (logState == _LogState.done) {
-      return Icon(Icons.check_circle, color: teal, size: 28);
+    return widget.item.calories;
+  }
+
+  Widget _buildAltRow({
+    required String name,
+    required int calPer100g,
+    required bool isSelected,
+    required VoidCallback onTap,
+    required Color textPrimary,
+    required Color textMuted,
+    required Color teal,
+    String? subtitle,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 4),
+        child: Row(
+          children: [
+            Icon(
+              isSelected ? Icons.radio_button_checked : Icons.radio_button_unchecked,
+              size: 18,
+              color: isSelected ? teal : textMuted.withValues(alpha: 0.4),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    name,
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: isSelected ? textPrimary : textMuted,
+                      fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  if (subtitle != null)
+                    Text(subtitle, style: TextStyle(fontSize: 10, color: textMuted.withValues(alpha: 0.6)), maxLines: 1, overflow: TextOverflow.ellipsis),
+                ],
+              ),
+            ),
+            const SizedBox(width: 8),
+            Text(
+              '$calPer100g cal/100g',
+              style: TextStyle(fontSize: 11, color: textMuted, fontWeight: FontWeight.w500),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStepper({
+    required TextEditingController controller,
+    required String label,
+    required VoidCallback onDecrease,
+    required VoidCallback onIncrease,
+    required ValueChanged<String> onSubmitted,
+    required double fieldWidth,
+    required Color glassSurface,
+    required Color textPrimary,
+    required Color textMuted,
+  }) {
+    return GestureDetector(
+      onTap: () {}, // absorb tap so it doesn't collapse
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          GestureDetector(
+            onTap: onDecrease,
+            child: Container(
+              padding: const EdgeInsets.all(4),
+              decoration: BoxDecoration(color: glassSurface, borderRadius: BorderRadius.circular(4)),
+              child: Icon(Icons.remove, size: 14, color: textMuted),
+            ),
+          ),
+          const SizedBox(width: 4),
+          SizedBox(
+            width: fieldWidth,
+            child: TextField(
+              controller: controller,
+              keyboardType: TextInputType.number,
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 13, color: textPrimary, fontWeight: FontWeight.w500),
+              decoration: InputDecoration(
+                isDense: true,
+                contentPadding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+                filled: true,
+                fillColor: glassSurface,
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(4), borderSide: BorderSide.none),
+              ),
+              onSubmitted: onSubmitted,
+            ),
+          ),
+          const SizedBox(width: 2),
+          Text(label, style: TextStyle(fontSize: 12, color: textMuted)),
+          const SizedBox(width: 4),
+          GestureDetector(
+            onTap: onIncrease,
+            child: Container(
+              padding: const EdgeInsets.all(4),
+              decoration: BoxDecoration(color: glassSurface, borderRadius: BorderRadius.circular(4)),
+              child: Icon(Icons.add, size: 14, color: textMuted),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ── Modifier section ──
+
+  Widget _buildModifierSection(Color textPrimary, Color textMuted, Color teal, Color glassSurface, Color elevated) {
+    final allModifiers = <search.FoodModifier>[...widget.item.modifiers];
+    // Include user-added modifiers from search
+    for (final entry in _modifierStates.entries) {
+      final isOriginal = widget.item.modifiers.any((m) => m.phrase == entry.key);
+      if (!isOriginal) {
+        final addedMod = _modSearchResults.where((m) => m.phrase == entry.key).firstOrNull;
+        if (addedMod != null) allModifiers.add(addedMod);
+      }
+    }
+
+    if (allModifiers.isEmpty && widget.item.modifiers.isEmpty) return const SizedBox.shrink();
+
+    return GestureDetector(
+      onTap: () {}, // absorb tap
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (allModifiers.isNotEmpty) ...[
+            Padding(
+              padding: const EdgeInsets.only(bottom: 6),
+              child: Text('Modifiers', style: TextStyle(fontSize: 11, color: textMuted, fontWeight: FontWeight.w600, letterSpacing: 0.5)),
+            ),
+            ...allModifiers.map((mod) => _buildModifierControl(mod, textPrimary, textMuted, teal, glassSurface)),
+          ],
+          const SizedBox(height: 8),
+          // Modifier search bar
+          SizedBox(
+            height: 34,
+            child: TextField(
+              controller: _modSearchCtrl,
+              style: TextStyle(fontSize: 12, color: textPrimary),
+              decoration: InputDecoration(
+                hintText: 'Add modifier...',
+                hintStyle: TextStyle(fontSize: 12, color: textMuted.withValues(alpha: 0.4)),
+                prefixIcon: Icon(Icons.add_circle_outline, size: 16, color: textMuted),
+                isDense: true,
+                contentPadding: const EdgeInsets.symmetric(vertical: 6),
+                filled: true,
+                fillColor: glassSurface,
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide.none),
+              ),
+              onChanged: _onModifierSearch,
+              onTap: () {},
+            ),
+          ),
+          if (_modSearchLoading)
+            Padding(
+              padding: const EdgeInsets.only(top: 4),
+              child: SizedBox(height: 16, width: 16, child: CircularProgressIndicator(strokeWidth: 1.5, color: teal)),
+            ),
+          if (_modSearchResults.isNotEmpty && _modSearchCtrl.text.isNotEmpty)
+            ..._modSearchResults.where((m) => !_modifierStates.containsKey(m.phrase)).take(6).map((mod) =>
+              GestureDetector(
+                onTap: () => _addModifierFromSearch(mod),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 3),
+                  child: Row(
+                    children: [
+                      Icon(Icons.add, size: 14, color: teal),
+                      const SizedBox(width: 6),
+                      Expanded(child: Text(mod.displayLabel ?? mod.phrase.split(' ').map((w) => w.isNotEmpty ? '${w[0].toUpperCase()}${w.substring(1)}' : w).join(' '), style: TextStyle(fontSize: 12, color: textPrimary))),
+                      Text('${(mod.delta['calories']?.round() ?? 0) >= 0 ? "+" : ""}${mod.delta['calories']?.round() ?? 0}', style: TextStyle(fontSize: 11, color: textMuted, fontWeight: FontWeight.w500)),
+                      Text(' kcal', style: TextStyle(fontSize: 10, color: textMuted.withValues(alpha: 0.6))),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildModifierControl(search.FoodModifier mod, Color textPrimary, Color textMuted, Color teal, Color glassSurface) {
+    final state = _modifierStates[mod.phrase];
+    if (state == null) return const SizedBox.shrink();
+
+    switch (mod.type) {
+      case search.FoodModifierType.addon:
+        return _buildAddonControl(mod, state, textPrimary, textMuted, teal, glassSurface);
+      case search.FoodModifierType.doneness:
+        return _buildDonenessControl(mod, state, textPrimary, textMuted, teal, glassSurface);
+      case search.FoodModifierType.cookingMethod:
+      case search.FoodModifierType.sizePortion:
+        return _buildDropdownControl(mod, state, textPrimary, textMuted, teal, glassSurface);
+      case search.FoodModifierType.removal:
+        return _buildRemovalControl(mod, state, textPrimary, textMuted, teal);
+      case search.FoodModifierType.qualityLabel:
+      case search.FoodModifierType.stateTemp:
+        return _buildInfoTag(mod, textMuted);
+    }
+  }
+
+  Widget _buildAddonControl(search.FoodModifier mod, _ModifierState state, Color textPrimary, Color textMuted, Color teal, Color glassSurface) {
+    final calDelta = _calcModifierCalDelta(mod, state);
+    final label = mod.displayLabel ?? mod.phrase.split(' ').map((w) => w.isNotEmpty ? '${w[0].toUpperCase()}${w.substring(1)}' : w).join(' ');
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 6),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(child: Text(label, style: TextStyle(fontSize: 12, color: textPrimary, fontWeight: FontWeight.w500))),
+              Text('${calDelta >= 0 ? "+" : ""}$calDelta', style: TextStyle(fontSize: 11, color: calDelta >= 0 ? teal : Colors.orange, fontWeight: FontWeight.w600)),
+              Text(' kcal', style: TextStyle(fontSize: 10, color: textMuted)),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Row(
+            children: [
+              // Weight stepper
+              _buildMiniStepper(
+                value: '${state.weightG?.round() ?? 0}',
+                label: 'g',
+                onDecrease: () {
+                  final newW = (state.weightG ?? 0) - 5;
+                  if (newW < 0) return;
+                  setState(() {
+                    state.weightG = newW;
+                    if (mod.weightPerUnitG != null && mod.weightPerUnitG! > 0) {
+                      state.count = (newW / mod.weightPerUnitG!).round();
+                    }
+                  });
+                  widget.onStateChanged();
+                },
+                onIncrease: () {
+                  setState(() {
+                    state.weightG = (state.weightG ?? 0) + 5;
+                    if (mod.weightPerUnitG != null && mod.weightPerUnitG! > 0) {
+                      state.count = (state.weightG! / mod.weightPerUnitG!).round();
+                    }
+                  });
+                  widget.onStateChanged();
+                },
+                glassSurface: glassSurface,
+                textPrimary: textPrimary,
+                textMuted: textMuted,
+              ),
+              // Count stepper (only for countable addons)
+              if (mod.weightPerUnitG != null) ...[
+                const SizedBox(width: 12),
+                _buildMiniStepper(
+                  value: '${state.count ?? 0}',
+                  label: mod.unitName ?? 'pc',
+                  onDecrease: () {
+                    final newC = (state.count ?? 0) - 1;
+                    if (newC < 0) return;
+                    setState(() {
+                      state.count = newC;
+                      state.weightG = newC * (mod.weightPerUnitG ?? 0);
+                    });
+                    widget.onStateChanged();
+                  },
+                  onIncrease: () {
+                    setState(() {
+                      state.count = (state.count ?? 0) + 1;
+                      state.weightG = state.count! * (mod.weightPerUnitG ?? 0);
+                    });
+                    widget.onStateChanged();
+                  },
+                  glassSurface: glassSurface,
+                  textPrimary: textPrimary,
+                  textMuted: textMuted,
+                ),
+              ],
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDonenessControl(search.FoodModifier mod, _ModifierState state, Color textPrimary, Color textMuted, Color teal, Color glassSurface) {
+    if (mod.groupOptions.isEmpty) return const SizedBox.shrink();
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('Doneness', style: TextStyle(fontSize: 11, color: textMuted, fontWeight: FontWeight.w500)),
+          const SizedBox(height: 4),
+          Wrap(
+            spacing: 4,
+            runSpacing: 4,
+            children: mod.groupOptions.map((opt) {
+              final isSelected = state.selectedPhrase == opt.phrase;
+              return GestureDetector(
+                onTap: () {
+                  setState(() => state.selectedPhrase = opt.phrase);
+                  widget.onStateChanged();
+                },
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: isSelected ? teal.withValues(alpha: 0.15) : glassSurface,
+                    borderRadius: BorderRadius.circular(6),
+                    border: Border.all(color: isSelected ? teal : Colors.transparent, width: 1),
+                  ),
+                  child: Column(
+                    children: [
+                      Text(opt.label, style: TextStyle(fontSize: 11, color: isSelected ? teal : textPrimary, fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400)),
+                      Text('${opt.calDelta >= 0 ? "+" : ""}${opt.calDelta}', style: TextStyle(fontSize: 9, color: textMuted)),
+                    ],
+                  ),
+                ),
+              );
+            }).toList(),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDropdownControl(search.FoodModifier mod, _ModifierState state, Color textPrimary, Color textMuted, Color teal, Color glassSurface) {
+    if (mod.groupOptions.isEmpty) return const SizedBox.shrink();
+    final calDelta = _calcModifierCalDelta(mod, state);
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 6),
+      child: Row(
+        children: [
+          Icon(mod.type == search.FoodModifierType.cookingMethod ? Icons.local_fire_department : Icons.straighten, size: 14, color: textMuted),
+          const SizedBox(width: 4),
+          Text(mod.type == search.FoodModifierType.cookingMethod ? 'Cooking' : 'Size', style: TextStyle(fontSize: 11, color: textMuted, fontWeight: FontWeight.w500)),
+          const SizedBox(width: 8),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8),
+            decoration: BoxDecoration(color: glassSurface, borderRadius: BorderRadius.circular(6)),
+            child: DropdownButton<String>(
+              value: state.selectedPhrase,
+              underline: const SizedBox.shrink(),
+              isDense: true,
+              style: TextStyle(fontSize: 12, color: textPrimary),
+              dropdownColor: glassSurface,
+              items: mod.groupOptions.map((opt) => DropdownMenuItem(
+                value: opt.phrase,
+                child: Text('${opt.label} (${opt.calDelta >= 0 ? "+" : ""}${opt.calDelta})', style: TextStyle(fontSize: 12, color: textPrimary)),
+              )).toList(),
+              onChanged: (v) {
+                if (v == null) return;
+                setState(() => state.selectedPhrase = v);
+                widget.onStateChanged();
+              },
+            ),
+          ),
+          const Spacer(),
+          Text('${calDelta >= 0 ? "+" : ""}$calDelta', style: TextStyle(fontSize: 11, color: textMuted, fontWeight: FontWeight.w500)),
+          Text(' kcal', style: TextStyle(fontSize: 10, color: textMuted.withValues(alpha: 0.6))),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildRemovalControl(search.FoodModifier mod, _ModifierState state, Color textPrimary, Color textMuted, Color teal) {
+    final calDelta = state.enabled ? (mod.delta['calories']?.round() ?? 0) : 0;
+    final label = mod.displayLabel ?? mod.phrase.split(' ').map((w) => w.isNotEmpty ? '${w[0].toUpperCase()}${w.substring(1)}' : w).join(' ');
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 4),
+      child: Row(
+        children: [
+          SizedBox(
+            width: 20, height: 20,
+            child: Checkbox(
+              value: state.enabled,
+              onChanged: (v) {
+                setState(() => state.enabled = v ?? false);
+                widget.onStateChanged();
+              },
+              activeColor: teal,
+              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            ),
+          ),
+          const SizedBox(width: 6),
+          Expanded(child: Text(label, style: TextStyle(fontSize: 12, color: textPrimary))),
+          Text('$calDelta', style: TextStyle(fontSize: 11, color: Colors.orange, fontWeight: FontWeight.w500)),
+          Text(' kcal', style: TextStyle(fontSize: 10, color: textMuted)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildInfoTag(search.FoodModifier mod, Color textMuted) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 4),
+      child: Row(
+        children: [
+          Icon(Icons.label_outline, size: 14, color: textMuted.withValues(alpha: 0.5)),
+          const SizedBox(width: 4),
+          Text(mod.displayLabel ?? mod.phrase, style: TextStyle(fontSize: 11, color: textMuted, fontStyle: FontStyle.italic)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMiniStepper({
+    required String value,
+    required String label,
+    required VoidCallback onDecrease,
+    required VoidCallback onIncrease,
+    required Color glassSurface,
+    required Color textPrimary,
+    required Color textMuted,
+  }) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        GestureDetector(
+          onTap: onDecrease,
+          child: Container(
+            padding: const EdgeInsets.all(3),
+            decoration: BoxDecoration(color: glassSurface, borderRadius: BorderRadius.circular(4)),
+            child: Icon(Icons.remove, size: 12, color: textMuted),
+          ),
+        ),
+        const SizedBox(width: 3),
+        Container(
+          constraints: const BoxConstraints(minWidth: 30),
+          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+          decoration: BoxDecoration(color: glassSurface, borderRadius: BorderRadius.circular(4)),
+          child: Text(value, textAlign: TextAlign.center, style: TextStyle(fontSize: 12, color: textPrimary, fontWeight: FontWeight.w500)),
+        ),
+        const SizedBox(width: 2),
+        Text(label, style: TextStyle(fontSize: 10, color: textMuted)),
+        const SizedBox(width: 3),
+        GestureDetector(
+          onTap: onIncrease,
+          child: Container(
+            padding: const EdgeInsets.all(3),
+            decoration: BoxDecoration(color: glassSurface, borderRadius: BorderRadius.circular(4)),
+            child: Icon(Icons.add, size: 12, color: textMuted),
+          ),
+        ),
+      ],
+    );
+  }
+
+  void _onModifierSearch(String query) {
+    _modSearchDebounce?.cancel();
+    if (query.trim().length < 2) {
+      setState(() {
+        _modSearchResults = [];
+        _modSearchLoading = false;
+      });
+      return;
+    }
+    setState(() => _modSearchLoading = true);
+    _modSearchDebounce = Timer(const Duration(milliseconds: 400), () async {
+      try {
+        final results = await widget.searchService.searchModifiers(query.trim(), widget.userId);
+        if (!mounted) return;
+        setState(() {
+          _modSearchResults = results;
+          _modSearchLoading = false;
+        });
+      } catch (e) {
+        if (!mounted) return;
+        setState(() => _modSearchLoading = false);
+      }
+    });
+  }
+
+  void _addModifierFromSearch(search.FoodModifier mod) {
+    setState(() {
+      _modifierStates[mod.phrase] = _ModifierState(
+        weightG: mod.defaultWeightG,
+        count: mod.weightPerUnitG != null && mod.defaultWeightG != null
+            ? (mod.defaultWeightG! / mod.weightPerUnitG!).round()
+            : null,
+        enabled: true,
+        selectedPhrase: mod.groupOptions.isNotEmpty ? mod.phrase : null,
+      );
+      _modSearchCtrl.clear();
+    });
+    widget.onStateChanged();
+  }
+
+  Widget _buildLogButton(Color teal) {
+    if (widget.logState == _LogState.loading) {
+      return SizedBox(width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 2, color: teal));
+    }
+    if (widget.logState == _LogState.done) {
+      return Icon(Icons.check_circle, color: teal, size: 26);
     }
     return GestureDetector(
-      onTap: onLog,
+      onTap: () => widget.onLog(buildDescription()),
       child: Container(
-        width: 28,
-        height: 28,
-        decoration: BoxDecoration(
-          color: teal.withValues(alpha: 0.15),
-          borderRadius: BorderRadius.circular(8),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+        decoration: BoxDecoration(color: teal.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(8)),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.add, size: 14, color: teal),
+            const SizedBox(width: 2),
+            Text('Log', style: TextStyle(fontSize: 12, color: teal, fontWeight: FontWeight.w600)),
+          ],
         ),
-        child: Icon(Icons.add, size: 18, color: teal),
       ),
     );
   }
@@ -1285,6 +2510,9 @@ class _FoodBrowserItemEditable extends StatefulWidget {
   final double baseWeightG;
   final void Function(String description) onAdd;
   final bool isDark;
+  final List<_GoalTag> goalTags;
+  final search.FoodSearchResult? searchResult;
+  final ApiClient? apiClient;
 
   const _FoodBrowserItemEditable({
     required this.name,
@@ -1295,6 +2523,9 @@ class _FoodBrowserItemEditable extends StatefulWidget {
     this.baseWeightG = 100.0,
     required this.onAdd,
     required this.isDark,
+    this.goalTags = const [],
+    this.searchResult,
+    this.apiClient,
   });
 
   @override
@@ -1398,6 +2629,15 @@ class _FoodBrowserItemEditableState extends State<_FoodBrowserItemEditable> {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
+                    if (widget.goalTags.isNotEmpty)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 3),
+                        child: Wrap(
+                          spacing: 4,
+                          runSpacing: 2,
+                          children: widget.goalTags,
+                        ),
+                      ),
                   ],
                 ),
               ),
@@ -1407,6 +2647,17 @@ class _FoodBrowserItemEditableState extends State<_FoodBrowserItemEditable> {
                 style: TextStyle(color: teal, fontSize: 13, fontWeight: FontWeight.w600),
               ),
               Text(' kcal', style: TextStyle(color: textMuted, fontSize: 11)),
+              if (widget.apiClient != null && widget.searchResult != null) ...[
+                const SizedBox(width: 4),
+                _FlagIconButton(
+                  isDark: widget.isDark,
+                  onTap: () => showFoodReportDialog(
+                    context,
+                    apiClient: widget.apiClient!,
+                    food: widget.searchResult,
+                  ),
+                ),
+              ],
               const SizedBox(width: 8),
               GestureDetector(
                 onTap: widget.logState == null ? () => widget.onAdd(_description) : null,
@@ -1547,5 +2798,333 @@ class _FoodBrowserItemEditableState extends State<_FoodBrowserItemEditable> {
       return Icon(Icons.check_circle, color: Colors.green, size: 24);
     }
     return Icon(Icons.add_circle, color: teal, size: 24);
+  }
+}
+
+// ─── Goal Tag Chip ─────────────────────────────────────────────
+
+class _GoalTag extends StatelessWidget {
+  final String label;
+  final Color color;
+  final bool isDark;
+
+  const _GoalTag({
+    required this.label,
+    required this.color,
+    required this.isDark,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          fontSize: 10,
+          fontWeight: FontWeight.w600,
+          color: color,
+        ),
+      ),
+    );
+  }
+}
+
+/// Build goal tags based on user goals and food macros (per 100g).
+List<_GoalTag> _buildGoalTags({
+  required List<String> goals,
+  required int calories,
+  required double protein,
+  required double carbs,
+  required double fat,
+  double? fiber,
+  required bool isDark,
+}) {
+  if (goals.isEmpty) return [];
+  final tags = <_GoalTag>[];
+  final green = isDark ? AppColors.green : AppColorsLight.green;
+  const orange = Color(0xFFF97316);
+
+  final hasMuscleGoal = goals.any((g) => g.contains('build_muscle') || g.contains('gain_muscle'));
+  final hasWeightLossGoal = goals.any((g) => g.contains('lose_weight') || g.contains('lose_fat'));
+
+  if (hasMuscleGoal && protein > 20) {
+    tags.add(_GoalTag(label: 'High protein', color: green, isDark: isDark));
+  }
+  if (hasWeightLossGoal && calories > 300) {
+    tags.add(_GoalTag(label: 'Calorie-dense', color: orange, isDark: isDark));
+  }
+  if (hasWeightLossGoal && calories < 100) {
+    tags.add(_GoalTag(label: 'Low cal', color: green, isDark: isDark));
+  }
+  if (fiber != null && fiber > 5) {
+    tags.add(_GoalTag(label: 'High fiber', color: green, isDark: isDark));
+  }
+  if (fat > 30 && !hasMuscleGoal) {
+    tags.add(_GoalTag(label: 'High fat', color: orange, isDark: isDark));
+  }
+  if (protein < 1 && carbs < 1 && fat > 90) {
+    tags.add(_GoalTag(label: 'Pure fat', color: orange, isDark: isDark));
+  }
+  return tags;
+}
+
+// ─── AI Food Review Card (Coach Tip) ───────────────────────────
+
+class _FoodReviewCard extends StatelessWidget {
+  final search.FoodReview? review;
+  final bool isLoading;
+  final bool isDark;
+
+  const _FoodReviewCard({
+    required this.review,
+    required this.isLoading,
+    required this.isDark,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    if (!isLoading && review == null) return const SizedBox.shrink();
+
+    final teal = isDark ? AppColors.teal : AppColorsLight.teal;
+    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final encourageColor = isDark ? AppColors.green : AppColorsLight.green;
+    final warningColor = isDark ? AppColors.error : AppColorsLight.error;
+    final swapColor = isDark ? AppColors.purple : AppColorsLight.purple;
+
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            teal.withValues(alpha: 0.1),
+            teal.withValues(alpha: 0.05),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: teal.withValues(alpha: 0.2)),
+      ),
+      child: isLoading ? _buildLoading(teal, textPrimary) : _buildContent(
+        textPrimary: textPrimary,
+        teal: teal,
+        encourageColor: encourageColor,
+        warningColor: warningColor,
+        swapColor: swapColor,
+      ),
+    );
+  }
+
+  Widget _buildLoading(Color teal, Color textPrimary) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(5),
+              decoration: BoxDecoration(
+                color: teal.withValues(alpha: 0.2),
+                borderRadius: BorderRadius.circular(6),
+              ),
+              child: Icon(Icons.psychology, size: 16, color: teal),
+            ),
+            const SizedBox(width: 8),
+            Text(
+              'Coach Tip',
+              style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: textPrimary),
+            ),
+          ],
+        ),
+        const SizedBox(height: 10),
+        // Shimmer placeholder
+        ...List.generate(2, (_) => Container(
+          height: 12,
+          margin: const EdgeInsets.only(bottom: 6),
+          decoration: BoxDecoration(
+            color: teal.withValues(alpha: 0.08),
+            borderRadius: BorderRadius.circular(4),
+          ),
+        )),
+      ],
+    );
+  }
+
+  Widget _buildContent({
+    required Color textPrimary,
+    required Color teal,
+    required Color encourageColor,
+    required Color warningColor,
+    required Color swapColor,
+  }) {
+    final r = review!;
+    final hasContent = r.encouragements.isNotEmpty ||
+        r.warnings.isNotEmpty ||
+        (r.aiSuggestion != null && r.aiSuggestion!.isNotEmpty) ||
+        (r.recommendedSwap != null && r.recommendedSwap!.isNotEmpty);
+    if (!hasContent) return const SizedBox.shrink();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Header
+        Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(5),
+              decoration: BoxDecoration(
+                color: teal.withValues(alpha: 0.2),
+                borderRadius: BorderRadius.circular(6),
+              ),
+              child: Icon(Icons.psychology, size: 16, color: teal),
+            ),
+            const SizedBox(width: 8),
+            Text(
+              'Coach Tip',
+              style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: textPrimary),
+            ),
+            if (r.healthScore != null) ...[
+              const Spacer(),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                decoration: BoxDecoration(
+                  color: _scoreColor(r.healthScore!).withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  '${r.healthScore}/10',
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    color: _scoreColor(r.healthScore!),
+                  ),
+                ),
+              ),
+            ],
+          ],
+        ),
+
+        // Encouragements
+        if (r.encouragements.isNotEmpty) ...[
+          const SizedBox(height: 8),
+          ...r.encouragements.take(2).map((e) => Padding(
+            padding: const EdgeInsets.only(bottom: 4),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(Icons.thumb_up, size: 12, color: encourageColor),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Text(
+                    e,
+                    style: TextStyle(fontSize: 12, color: encourageColor),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ),
+          )),
+        ],
+
+        // Warnings
+        if (r.warnings.isNotEmpty) ...[
+          const SizedBox(height: 4),
+          ...r.warnings.take(2).map((w) => Padding(
+            padding: const EdgeInsets.only(bottom: 4),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(Icons.warning_amber, size: 12, color: warningColor),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Text(
+                    w,
+                    style: TextStyle(fontSize: 12, color: warningColor),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ),
+          )),
+        ],
+
+        // AI suggestion
+        if (r.aiSuggestion != null && r.aiSuggestion!.isNotEmpty) ...[
+          const SizedBox(height: 4),
+          Text(
+            r.aiSuggestion!,
+            style: TextStyle(fontSize: 12, color: textPrimary),
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ],
+
+        // Recommended swap
+        if (r.recommendedSwap != null && r.recommendedSwap!.isNotEmpty) ...[
+          const SizedBox(height: 8),
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: swapColor.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: swapColor.withValues(alpha: 0.2)),
+            ),
+            child: Row(
+              children: [
+                Icon(Icons.swap_horiz, size: 14, color: swapColor),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Text(
+                    r.recommendedSwap!,
+                    style: TextStyle(fontSize: 11, color: swapColor, fontWeight: FontWeight.w500),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+
+  Color _scoreColor(int score) {
+    if (score >= 7) return isDark ? AppColors.green : AppColorsLight.green;
+    if (score >= 4) return const Color(0xFFF97316);
+    return isDark ? AppColors.error : AppColorsLight.error;
+  }
+}
+
+// ─── Shared Flag Icon Button ─────────────────────────────────────────────────
+
+class _FlagIconButton extends StatelessWidget {
+  final bool isDark;
+  final VoidCallback onTap;
+
+  const _FlagIconButton({required this.isDark, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: Padding(
+        padding: const EdgeInsets.all(2),
+        child: Icon(
+          Icons.flag_outlined,
+          size: 14,
+          color: textMuted.withValues(alpha: 0.4),
+        ),
+      ),
+    );
   }
 }

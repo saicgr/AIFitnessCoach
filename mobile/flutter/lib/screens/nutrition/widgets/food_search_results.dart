@@ -112,6 +112,23 @@ class FoodSearchResults extends ConsumerWidget {
             service.search(query, userId, cachedLogs: cachedLogs);
           },
         );
+
+      case search.FoodSearchNLLoading():
+        return const _ShimmerLoadingResults();
+
+      case search.FoodSearchNLResults():
+        // NL results are handled by the food browser panel, not here
+        return const SizedBox.shrink();
+
+      case search.FoodSearchNLError(:final message, :final query):
+        return _ErrorState(
+          message: message,
+          onRetry: () {
+            final service = ref.read(search.foodSearchServiceProvider);
+            final cachedLogs = ref.read(nutritionProvider).recentLogs;
+            service.search(query, userId, cachedLogs: cachedLogs);
+          },
+        );
     }
   }
 }

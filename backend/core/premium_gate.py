@@ -20,7 +20,6 @@ PREMIUM_FEATURE_KEYS = [
     "food_scanning",
     "form_video_analysis",
     "text_to_calories",
-    "ai_meal_plan",
 ]
 
 

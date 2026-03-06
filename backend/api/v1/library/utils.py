@@ -7,15 +7,20 @@ This module contains helper functions for the library API:
 - Row conversion functions
 - Goal/suitability derivation
 - S3 presigned URL generation
+- Static (permanent) URL generation for public assets
 """
 import re
 from typing import List, Dict, Any, Optional
+from urllib.parse import quote
 
 from core.supabase_db import get_supabase_db
 from .models import LibraryExercise, LibraryProgram
 
 
 _presign_error_logged = False  # Log first error only to avoid log spam
+
+# S3 prefixes that are publicly readable (no presigning needed)
+_STATIC_PREFIXES = ("ILLUSTRATIONS/", "Ultimate-Muscle-Visuals/")
 
 
 def presign_s3_path(s3_path: Optional[str]) -> Optional[str]:
@@ -47,6 +52,49 @@ def presign_s3_path(s3_path: Optional[str]) -> Optional[str]:
             get_logger(__name__).warning(f"presign_s3_path failed (further errors suppressed): {e}")
             _presign_error_logged = True
         return None
+
+
+def static_url(s3_path: Optional[str]) -> Optional[str]:
+    """Return a permanent (non-expiring) URL for a public static asset.
+
+    If STATIC_CDN_BASE_URL is set, returns a CloudFront URL.
+    Otherwise returns a direct S3 URL (bucket must have public-read policy).
+
+    Returns None if the path is not under a static prefix.
+    """
+    if not s3_path or not s3_path.startswith('s3://'):
+        return None
+
+    path_without_prefix = s3_path[5:]  # Remove 's3://'
+    slash_idx = path_without_prefix.index('/')
+    bucket = path_without_prefix[:slash_idx]
+    key = path_without_prefix[slash_idx + 1:]
+
+    # Only static prefixes get permanent URLs
+    if not any(key.startswith(prefix) for prefix in _STATIC_PREFIXES):
+        return None
+
+    from core.config import get_settings
+    settings = get_settings()
+
+    if settings.static_cdn_base_url:
+        cdn_base = settings.static_cdn_base_url.rstrip('/')
+        return f"{cdn_base}/{quote(key, safe='/')}"
+
+    region = settings.aws_default_region
+    return f"https://{bucket}.s3.{region}.amazonaws.com/{quote(key, safe='/')}"
+
+
+def resolve_image_url(s3_path: Optional[str]) -> Optional[str]:
+    """Convert an S3 path to the best available URL.
+
+    Tries static_url() first (permanent, cacheable forever).
+    Falls back to presign_s3_path() for private content.
+    """
+    url = static_url(s3_path)
+    if url:
+        return url
+    return presign_s3_path(s3_path)
 
 
 async def fetch_all_rows(
@@ -274,7 +322,7 @@ def row_to_library_exercise(row: dict, from_cleaned_view: bool = True) -> Librar
             category=row.get("category"),
             gif_url=row.get("gif_url"),
             video_url=row.get("video_url"),
-            image_url=presign_s3_path(row.get("image_url")),
+            image_url=resolve_image_url(row.get("image_url")),
             goals=row.get("goals", []),
             suitable_for=row.get("suitable_for", []),
             avoid_if=row.get("avoid_if", []),
@@ -320,7 +368,7 @@ def row_to_library_exercise(row: dict, from_cleaned_view: bool = True) -> Librar
             category=row.get("category"),
             gif_url=row.get("gif_url"),
             video_url=row.get("video_s3_path"),
-            image_url=presign_s3_path(row.get("image_s3_path")),
+            image_url=resolve_image_url(row.get("image_s3_path")),
             goals=row.get("goals", []),
             suitable_for=row.get("suitable_for", []),
             avoid_if=row.get("avoid_if", []),

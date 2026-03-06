@@ -178,6 +178,7 @@ flutter:
     - assets/images/coaches/
     - assets/lottie/
     - assets/data/
+    - assets/images/muscles/
     - assets/audio/countdown/
     - assets/audio/exercise_complete/
     - assets/audio/workout_complete/

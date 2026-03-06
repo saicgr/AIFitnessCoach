@@ -109,6 +109,9 @@ class Settings(BaseSettings):
     trello_token: Optional[str] = None
     trello_list_id: Optional[str] = None  # The list where new ticket cards are created
 
+    # Static CDN for public assets (set to CloudFront URL when available)
+    static_cdn_base_url: str = ""
+
     # Redis (shared cache across workers)
     redis_url: Optional[str] = None
 

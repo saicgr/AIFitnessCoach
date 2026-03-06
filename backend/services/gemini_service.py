@@ -8409,6 +8409,116 @@ Key coaching points for {level} level:
 
 Be encouraging and normalize pelvic floor health as an important part of overall fitness."""
 
+    async def generate_food_review(
+        self,
+        food_name: str,
+        macros: dict,
+        user_goals: list,
+        nutrition_targets: dict,
+    ) -> dict:
+        """
+        Generate an AI-powered food review based on user goals and nutrition targets.
+
+        Args:
+            food_name: Name of the food item
+            macros: Dict with calories, protein_g, carbs_g, fat_g
+            user_goals: List of user fitness goals (e.g. ["build_muscle", "lose_fat"])
+            nutrition_targets: Dict with daily calorie/macro targets
+
+        Returns:
+            Dict with encouragements, warnings, ai_suggestion, recommended_swap, health_score
+        """
+        goals_str = ", ".join(user_goals) if user_goals else "general health"
+        targets_str = ", ".join(
+            f"{k}: {v}" for k, v in nutrition_targets.items() if v is not None
+        ) if nutrition_targets else "no specific targets"
+        macros_str = (
+            f"calories={macros.get('calories', 0)}, "
+            f"protein={macros.get('protein_g', 0)}g, "
+            f"carbs={macros.get('carbs_g', 0)}g, "
+            f"fat={macros.get('fat_g', 0)}g"
+        )
+
+        prompt = f'''Given user goals of [{goals_str}] and daily targets of [{targets_str}], review this food: "{food_name}" with macros: {macros_str}.
+
+IMPORTANT SEED OIL AWARENESS:
+- If this food is commonly fried, packaged, or fast food, check if it is likely cooked in or contains seed oils (canola oil, soybean oil, sunflower oil, corn oil, cottonseed oil, vegetable oil).
+- Seed oils are high in inflammatory omega-6 fatty acids and should be flagged as a warning.
+- If seed oils are likely present, suggest a healthier alternative cooked in olive oil, ghee, avocado oil, or coconut oil.
+- Common seed oil offenders: fried snacks, chips, crackers, packaged baked goods, fast food fries, restaurant fried items, margarine-based products.
+
+Return ONLY valid JSON (no markdown) with this exact structure:
+{{
+  "encouragements": ["list of positive aspects of this food for the user goals"],
+  "warnings": ["list of concerns including seed oil warnings if applicable"],
+  "ai_suggestion": "a brief actionable suggestion for how to include this food in the diet",
+  "recommended_swap": "a healthier alternative if applicable, or empty string if the food is already a great choice",
+  "health_score": 7
+}}
+
+Rules:
+- health_score is an integer from 1 to 10 (1=very unhealthy for goals, 10=perfect for goals)
+- encouragements and warnings should each have 1-3 items
+- Be specific to the user's goals
+- Keep each string concise (under 80 chars)
+'''
+
+        try:
+            response = await asyncio.wait_for(
+                client.aio.models.generate_content(
+                    model=self.model,
+                    contents=[types.Content(role="user", parts=[types.Part.from_text(text=prompt)])],
+                    config=types.GenerateContentConfig(
+                        system_instruction="You are a nutrition expert AI. Return only valid JSON.",
+                        max_output_tokens=200,
+                        temperature=0.1,
+                    ),
+                ),
+                timeout=15,
+            )
+
+            if not response.text:
+                logger.warning("[FoodReview] Empty response from Gemini")
+                return None
+
+            # Robust JSON extraction (handle markdown code blocks)
+            text = response.text.strip()
+            parse_result = parse_ai_json(text, context="food_review")
+            if parse_result.success:
+                data = parse_result.data
+                # Validate expected keys
+                return {
+                    "encouragements": data.get("encouragements", []),
+                    "warnings": data.get("warnings", []),
+                    "ai_suggestion": data.get("ai_suggestion", ""),
+                    "recommended_swap": data.get("recommended_swap", ""),
+                    "health_score": max(1, min(10, int(data.get("health_score", 5)))),
+                }
+
+            # Fallback: manual markdown strip
+            if text.startswith("```json"):
+                text = text[7:]
+            if text.startswith("```"):
+                text = text[3:]
+            if text.endswith("```"):
+                text = text[:-3]
+
+            data = json.loads(text.strip())
+            return {
+                "encouragements": data.get("encouragements", []),
+                "warnings": data.get("warnings", []),
+                "ai_suggestion": data.get("ai_suggestion", ""),
+                "recommended_swap": data.get("recommended_swap", ""),
+                "health_score": max(1, min(10, int(data.get("health_score", 5)))),
+            }
+
+        except asyncio.TimeoutError:
+            logger.error("[FoodReview] Gemini API timed out")
+            return None
+        except Exception as e:
+            logger.error(f"[FoodReview] Error generating food review: {e}")
+            return None
+
 
 # Backward compatibility alias
 OpenAIService = GeminiService

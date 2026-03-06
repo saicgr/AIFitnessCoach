@@ -206,8 +206,20 @@ class FoodDatabaseLookupService:
             "override_serving_g": override.get("override_serving_g"),
         }
 
-    def _override_to_search_result(self, override: Dict) -> Dict:
-        """Convert an override dict to a search result dict for the food picker UI."""
+    # Match-score → similarity mapping for override search results
+    _MATCH_SCORE_TO_SIMILARITY = {
+        0: 1.0,   # Exact display_name match
+        1: 0.95,  # Prefix match on display_name
+        2: 0.85,  # Query is a whole word in display_name
+        3: 0.75,  # Substring match on display_name
+        4: 0.65,  # Exact variant name match
+        5: 0.55,  # Variant substring/word match
+    }
+
+    def _override_to_search_result(self, override: Dict, match_score: int = 0) -> Dict:
+        """Convert an override dict to a search result dict for the food picker UI.
+        match_score controls the similarity_score (0=best, 5=worst)."""
+        similarity = self._MATCH_SCORE_TO_SIMILARITY.get(match_score, 0.55)
         result = {
             "name": override["display_name"],
             "calories_per_100g": override["calories_per_100g"],
@@ -216,7 +228,7 @@ class FoodDatabaseLookupService:
             "fat_per_100g": override["fat_per_100g"],
             "fiber_per_100g": override["fiber_per_100g"],
             "source": "verified",
-            "similarity_score": 1.0,
+            "similarity_score": similarity,
         }
         if override.get("restaurant_name"):
             result["brand"] = override["restaurant_name"]
@@ -278,17 +290,39 @@ class FoodDatabaseLookupService:
         # Use inverted index to find candidate overrides
         candidate_indices: set = set()
 
+        def _stem_simple(word: str) -> str:
+            """Basic plural stripping: bananas→banana, berries→berry, tomatoes→tomato."""
+            if len(word) <= 3:
+                return word
+            if word.endswith("ies") and len(word) > 4:
+                return word[:-3] + "y"  # berries→berry, cherries→cherry
+            if word.endswith("oes") and len(word) > 4:
+                return word[:-2]  # tomatoes→tomato, potatoes→potato
+            if word.endswith("ches") or word.endswith("shes") or word.endswith("xes"):
+                return word[:-2]  # peaches→peach, dishes→dish
+            if word.endswith("s") and not word.endswith("ss"):
+                return word[:-1]  # bananas→banana, apples→apple, eggs→egg
+            return word
+
+        def _lookup_word(word: str) -> None:
+            """Look up a word in the index, trying original + stemmed form."""
+            if word in self._overrides_word_index:
+                candidate_indices.update(self._overrides_word_index[word])
+            stemmed = _stem_simple(word)
+            if stemmed != word and stemmed in self._overrides_word_index:
+                candidate_indices.update(self._overrides_word_index[stemmed])
+
         # Check full query as a key (e.g., "coke" matches variant "coke")
-        if query_lower in self._overrides_word_index:
-            candidate_indices.update(self._overrides_word_index[query_lower])
+        _lookup_word(query_lower)
 
         # Check each query word
         query_words = [w.strip("(),.'\"!?-") for w in query_lower.split() if len(w) >= 2]
         for w in query_words:
-            if w in self._overrides_word_index:
-                candidate_indices.update(self._overrides_word_index[w])
+            _lookup_word(w)
 
-        # Score and filter candidates
+        # Score and filter candidates — collect (match_score, override) tuples
+        scored_matches: List[tuple] = []  # (match_score, override)
+
         for idx in candidate_indices:
             override = self._overrides_list[idx]
 
@@ -307,33 +341,52 @@ class FoodDatabaseLookupService:
 
             display_lower = display.lower()
 
-            # Check: substring match on display_name
-            if query_lower in display_lower or display_lower in query_lower:
-                matches.append(self._override_to_search_result(override))
+            # Determine match quality score (lower = better)
+            match_score: Optional[int] = None
+
+            # Display name matches (scores 0-3)
+            if display_lower == query_lower:
+                match_score = 0  # Exact display_name match
+            elif display_lower.startswith(query_lower):
+                match_score = 1  # Prefix match
+            elif re.search(r'\b' + re.escape(query_lower) + r'\b', display_lower):
+                match_score = 2  # Whole-word match in display_name
+            elif query_lower in display_lower or display_lower in query_lower:
+                match_score = 3  # Substring match
+
+            # Variant name matches (scores 4-5)
+            if match_score is None:
+                variant_names = override.get("variant_names") or []
+                for vn in variant_names:
+                    vn_lower = vn.lower() if isinstance(vn, str) else ""
+                    if not vn_lower:
+                        continue
+                    if vn_lower == query_lower or query_lower == vn_lower:
+                        match_score = 4  # Exact variant match
+                        break
+                    if query_lower in vn_lower or vn_lower in query_lower:
+                        match_score = 5  # Variant substring match
+                        break
+
+            # Word overlap fallback (scores as 3 — substring-level)
+            if match_score is None:
+                significant_words = [w for w in query_words if len(w) >= 3]
+                if significant_words:
+                    overlap = sum(1 for w in significant_words if w in display_lower)
+                    if overlap / len(significant_words) >= 0.5:
+                        match_score = 3
+
+            if match_score is not None:
+                scored_matches.append((match_score, override))
                 seen_display_names.add(display)
-                continue
 
-            # Check: variant_names match
-            variant_names = override.get("variant_names") or []
-            variant_matched = False
-            for vn in variant_names:
-                vn_lower = vn.lower() if isinstance(vn, str) else ""
-                if query_lower in vn_lower or vn_lower in query_lower:
-                    variant_matched = True
-                    break
-            if variant_matched:
-                matches.append(self._override_to_search_result(override))
-                seen_display_names.add(display)
-                continue
+        # Sort by match quality (lower score = better match)
+        scored_matches.sort(key=lambda x: x[0])
 
-            # Check: word overlap on display_name (50% threshold)
-            significant_words = [w for w in query_words if len(w) >= 3]
-            if significant_words:
-                overlap = sum(1 for w in significant_words if w in display_lower)
-                if overlap / len(significant_words) >= 0.5:
-                    matches.append(self._override_to_search_result(override))
-                    seen_display_names.add(display)
-
+        matches = [
+            self._override_to_search_result(override, match_score=score)
+            for score, override in scored_matches
+        ]
         return matches
 
     # ── Multi-food query splitting ─────────────────────────────────

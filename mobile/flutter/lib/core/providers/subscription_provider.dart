@@ -1,5 +1,7 @@
+import 'dart:async';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -74,6 +76,12 @@ class SubscriptionState {
   final Map<String, dynamic> features;
   final bool isRevenueCatConfigured;
 
+  /// Cached RevenueCat offerings for dynamic pricing
+  final Offerings? offerings;
+
+  /// True when the 24h no-credit-card trial has just expired (triggers UI prompt)
+  final bool trialJustExpired;
+
   // Lifetime member specific fields
   final bool isLifetimeMember;
   final DateTime? lifetimePurchaseDate;
@@ -91,6 +99,8 @@ class SubscriptionState {
     this.error,
     this.features = const {},
     this.isRevenueCatConfigured = false,
+    this.offerings,
+    this.trialJustExpired = false,
     // Lifetime fields
     this.isLifetimeMember = false,
     this.lifetimePurchaseDate,
@@ -128,6 +138,8 @@ class SubscriptionState {
     String? error,
     Map<String, dynamic>? features,
     bool? isRevenueCatConfigured,
+    Offerings? offerings,
+    bool? trialJustExpired,
     bool? isLifetimeMember,
     DateTime? lifetimePurchaseDate,
     int? daysAsMember,
@@ -144,6 +156,8 @@ class SubscriptionState {
       error: error,
       features: features ?? this.features,
       isRevenueCatConfigured: isRevenueCatConfigured ?? this.isRevenueCatConfigured,
+      offerings: offerings ?? this.offerings,
+      trialJustExpired: trialJustExpired ?? this.trialJustExpired,
       isLifetimeMember: isLifetimeMember ?? this.isLifetimeMember,
       lifetimePurchaseDate: lifetimePurchaseDate ?? this.lifetimePurchaseDate,
       daysAsMember: daysAsMember ?? this.daysAsMember,
@@ -185,9 +199,43 @@ class FeatureAccessResult {
 class SubscriptionNotifier extends StateNotifier<SubscriptionState> {
   final ApiClient? _apiClient;
   String? _userId;
+  Timer? _trialExpirationTimer;
   static bool _revenueCatInitialized = false;
 
   SubscriptionNotifier([this._apiClient]) : super(const SubscriptionState());
+
+  @override
+  void dispose() {
+    _trialExpirationTimer?.cancel();
+    super.dispose();
+  }
+
+  /// Schedule a timer that fires when the 24h trial expires.
+  /// Downgrades to free and sets [trialJustExpired] so the UI can show a prompt.
+  void _scheduleTrialExpiration(DateTime trialEnd) {
+    _trialExpirationTimer?.cancel();
+    final remaining = trialEnd.difference(DateTime.now());
+    if (remaining.isNegative) return;
+    _trialExpirationTimer = Timer(remaining, () async {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove('free_trial_end_date');
+      await prefs.setString('subscription_tier', 'free');
+      if (mounted) {
+        state = state.copyWith(
+          tier: SubscriptionTier.free,
+          isTrialActive: false,
+          trialJustExpired: true,
+        );
+        debugPrint('⏰ 24h trial expired — downgraded to free');
+      }
+    });
+    debugPrint('⏰ Trial expiration timer set for ${remaining.inMinutes}m from now');
+  }
+
+  /// Clear the trialJustExpired flag after the UI has shown the prompt.
+  void clearTrialExpiredFlag() {
+    state = state.copyWith(trialJustExpired: false);
+  }
 
   // RevenueCat product IDs - must match App Store Connect / Google Play Console
   static const String premiumMonthlyId = 'premium_monthly';
@@ -209,12 +257,15 @@ class SubscriptionNotifier extends StateNotifier<SubscriptionState> {
           ? ApiConstants.revenueCatAppleApiKey
           : ApiConstants.revenueCatGoogleApiKey;
 
-      // Skip configuration if API key is empty
-      if (apiKey.isEmpty) {
+      // Skip configuration if API key is empty or placeholder
+      if (apiKey.isEmpty || apiKey == 'test_key_placeholder') {
         debugPrint('⚠️ RevenueCat: Skipping - no API key configured');
         return;
       }
 
+      if (kDebugMode) {
+        await Purchases.setLogLevel(LogLevel.debug);
+      }
       await Purchases.configure(PurchasesConfiguration(apiKey));
       _revenueCatInitialized = true;
       debugPrint('✅ RevenueCat configured successfully');
@@ -241,6 +292,15 @@ class SubscriptionNotifier extends StateNotifier<SubscriptionState> {
           // Get customer info from RevenueCat
           final customerInfo = await Purchases.getCustomerInfo();
           _updateStateFromCustomerInfo(customerInfo);
+
+          // Fetch and cache offerings for dynamic pricing
+          try {
+            final offerings = await Purchases.getOfferings();
+            state = state.copyWith(offerings: offerings);
+            debugPrint('✅ RevenueCat offerings fetched: ${offerings.current?.availablePackages.length ?? 0} packages');
+          } catch (e) {
+            debugPrint('⚠️ Failed to fetch offerings: $e');
+          }
 
           state = state.copyWith(isRevenueCatConfigured: true);
         } catch (e) {
@@ -275,6 +335,7 @@ class SubscriptionNotifier extends StateNotifier<SubscriptionState> {
               isTrialActive: true,
               trialEndDate: trialEnd,
             );
+            _scheduleTrialExpiration(trialEnd);
             debugPrint('✅ Active 24h trial found, expires: $trialEnd');
           } else {
             await prefs.remove('free_trial_end_date');
@@ -482,6 +543,7 @@ class SubscriptionNotifier extends StateNotifier<SubscriptionState> {
             isTrialActive: true,
             trialEndDate: trialEnd,
           );
+          _scheduleTrialExpiration(trialEnd);
           return;
         } else {
           // Trial expired — clean up
@@ -614,6 +676,19 @@ class SubscriptionNotifier extends StateNotifier<SubscriptionState> {
         state = state.copyWith(isLoading: false, error: 'Purchase service not configured');
         return false;
       }
+    } on PlatformException catch (e) {
+      final errorCode = PurchasesErrorHelper.getErrorCode(e);
+      if (errorCode == PurchasesErrorCode.purchaseCancelledError) {
+        debugPrint('ℹ️ Purchase cancelled by user');
+        state = state.copyWith(isLoading: false);
+        return false;
+      }
+      debugPrint('❌ Purchase failed: $e');
+      state = state.copyWith(
+        isLoading: false,
+        error: 'Purchase failed. Please try again.',
+      );
+      return false;
     } catch (e) {
       debugPrint('❌ Purchase failed: $e');
       state = state.copyWith(
@@ -674,6 +749,7 @@ class SubscriptionNotifier extends StateNotifier<SubscriptionState> {
       isTrialActive: true,
       trialEndDate: trialEnd,
     );
+    _scheduleTrialExpiration(trialEnd);
     debugPrint('✅ 24-hour free trial granted, expires: $trialEnd');
   }
 
@@ -712,15 +788,15 @@ final subscriptionProvider = StateNotifierProvider<SubscriptionNotifier, Subscri
 class ProductPricing {
   static const Map<String, Map<String, dynamic>> products = {
     'premium_monthly': {
-      'price': 5.99,
+      'price': 6.99,
       'period': 'month',
       'trialDays': 0,
     },
     'premium_yearly': {
-      'price': 39.99,
+      'price': 69.99,
       'period': 'year',
-      'monthlyEquivalent': 3.33,
-      'savings': '44%',
+      'monthlyEquivalent': 5.83,
+      'savings': '17%',
       'trialDays': 7,
     },
   };

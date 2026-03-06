@@ -1,0 +1,18 @@
+-- Loaded 63 programs from batch_10_body_comp_competition.py
+-- Loaded 44 programs from batch_11_gender_medical_longevity.py
+-- Loaded 28 programs from batch_12_lifestyle_tactical_events.py
+-- Loaded 27 programs from batch_1_reddit_strength.py
+-- Loaded 67 programs from batch_2_glute_viral_influencer.py
+-- Loaded 55 programs from batch_3_yoga_pilates_mindbody.py
+-- Loaded 69 programs from batch_4_hiit_conditioning_quick.py
+-- Loaded 59 programs from batch_5_mobility_rehab_balance.py
+-- Loaded 95 programs from batch_6_lifestyle.py
+-- Loaded 68 programs from batch_7_age_life_misc.py
+-- Loaded 125 programs from batch_8_remaining.py
+-- Loaded 68 programs from batch_9_strength_oly_calisthenics.py
+Traceback (most recent call last):
+  File "/Users/saichetangrandhe/AIFitnessCoach/backend/scripts/generate_correct_workouts.py", line 439, in <module>
+    main()
+  File "/Users/saichetangrandhe/AIFitnessCoach/backend/scripts/generate_correct_workouts.py", line 428, in main
+    workouts = workout_fn()
+TypeError: 'list' object is not callable

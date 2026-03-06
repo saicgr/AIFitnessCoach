@@ -93,8 +93,6 @@ class PaywallFeaturesScreen extends ConsumerWidget {
                 const SizedBox(height: 8),
                 _FeatureItem(icon: Icons.videocam_outlined, iconColor: colors.coral, title: 'AI form video analysis', subtitle: 'Upload exercise videos for AI form scoring & corrections', colors: colors),
                 const SizedBox(height: 8),
-                _FeatureItem(icon: Icons.restaurant_outlined, iconColor: colors.purple, title: 'AI meal plan generation', subtitle: 'Personalized meal plans based on your goals & macros', colors: colors),
-                const SizedBox(height: 8),
                 _FeatureItem(icon: Icons.restaurant_menu_outlined, iconColor: const Color(0xFF00BCD4), title: 'Calorie & macro tracking', subtitle: 'Log meals, hit daily targets, track progress', colors: colors),
                 const SizedBox(height: 8),
                 _FeatureItem(icon: Icons.healing_outlined, iconColor: colors.coral, title: 'Injury tracking & body part exclusion', subtitle: 'Report injuries, auto-adapt workouts safely', colors: colors),

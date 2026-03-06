@@ -6,16 +6,37 @@ import '../../../data/services/food_search_service.dart';
 import '../../../widgets/glass_sheet.dart';
 
 /// Shows the food report bottom sheet for correcting nutrition data.
+///
+/// Pass either [food] (a FoodSearchResult) or raw values ([foodName], etc.)
+/// for sources like NL analysis results or food history logs.
 Future<void> showFoodReportDialog(
   BuildContext context, {
-  required FoodSearchResult food,
   required ApiClient apiClient,
+  // Option A: pass a FoodSearchResult (existing search result)
+  FoodSearchResult? food,
+  // Option B: pass raw values (for NL items, food history, etc.)
+  String? foodName,
+  int? originalCalories,
+  double? originalProtein,
+  double? originalCarbs,
+  double? originalFat,
+  // Extra context fields
+  String? dataSource,
+  String? foodLogId,
 }) {
+  assert(food != null || foodName != null, 'Either food or foodName must be provided');
   return showGlassSheet(
     context: context,
     builder: (context) => GlassSheet(
       child: _FoodReportSheet(
         food: food,
+        foodName: food?.name ?? foodName!,
+        initialCalories: food?.calories ?? originalCalories ?? 0,
+        initialProtein: food?.protein ?? originalProtein,
+        initialCarbs: food?.carbs ?? originalCarbs,
+        initialFat: food?.fat ?? originalFat,
+        dataSource: dataSource,
+        foodLogId: foodLogId,
         apiClient: apiClient,
       ),
     ),
@@ -23,11 +44,25 @@ Future<void> showFoodReportDialog(
 }
 
 class _FoodReportSheet extends StatefulWidget {
-  final FoodSearchResult food;
+  final FoodSearchResult? food;
+  final String foodName;
+  final int initialCalories;
+  final double? initialProtein;
+  final double? initialCarbs;
+  final double? initialFat;
+  final String? dataSource;
+  final String? foodLogId;
   final ApiClient apiClient;
 
   const _FoodReportSheet({
-    required this.food,
+    this.food,
+    required this.foodName,
+    required this.initialCalories,
+    this.initialProtein,
+    this.initialCarbs,
+    this.initialFat,
+    this.dataSource,
+    this.foodLogId,
     required this.apiClient,
   });
 
@@ -47,13 +82,13 @@ class _FoodReportSheetState extends State<_FoodReportSheet> {
   void initState() {
     super.initState();
     _caloriesController =
-        TextEditingController(text: widget.food.calories.toString());
+        TextEditingController(text: widget.initialCalories.toString());
     _proteinController = TextEditingController(
-        text: widget.food.protein?.toStringAsFixed(1) ?? '');
+        text: widget.initialProtein?.toStringAsFixed(1) ?? '');
     _carbsController = TextEditingController(
-        text: widget.food.carbs?.toStringAsFixed(1) ?? '');
+        text: widget.initialCarbs?.toStringAsFixed(1) ?? '');
     _fatController = TextEditingController(
-        text: widget.food.fat?.toStringAsFixed(1) ?? '');
+        text: widget.initialFat?.toStringAsFixed(1) ?? '');
     _notesController = TextEditingController();
   }
 
@@ -72,29 +107,39 @@ class _FoodReportSheetState extends State<_FoodReportSheet> {
     setState(() => _isSubmitting = true);
 
     try {
-      // user_id will be injected by the auth interceptor on the backend
-      await widget.apiClient.post(
-        '/nutrition/food-report',
-        data: {
-          'user_id': '', // Will be set from auth context
-          'food_name': widget.food.name,
-          'food_database_id': int.tryParse(widget.food.id),
-          'reported_issue': _notesController.text.trim().isEmpty
-              ? null
-              : _notesController.text.trim(),
-          'original_calories': widget.food.calories.toDouble(),
-          'original_protein': widget.food.protein,
-          'original_carbs': widget.food.carbs,
-          'original_fat': widget.food.fat,
-          'corrected_calories': double.tryParse(_caloriesController.text),
-          'corrected_protein': double.tryParse(_proteinController.text),
-          'corrected_carbs': double.tryParse(_carbsController.text),
-          'corrected_fat': double.tryParse(_fatController.text),
-        },
-      );
+      final data = <String, dynamic>{
+        'user_id': '', // Will be set from auth context
+        'food_name': widget.foodName,
+        'reported_issue': _notesController.text.trim().isEmpty
+            ? null
+            : _notesController.text.trim(),
+        'original_calories': widget.initialCalories.toDouble(),
+        'original_protein': widget.initialProtein,
+        'original_carbs': widget.initialCarbs,
+        'original_fat': widget.initialFat,
+        'corrected_calories': double.tryParse(_caloriesController.text),
+        'corrected_protein': double.tryParse(_proteinController.text),
+        'corrected_carbs': double.tryParse(_carbsController.text),
+        'corrected_fat': double.tryParse(_fatController.text),
+      };
+
+      // Include food_database_id if from a FoodSearchResult
+      if (widget.food != null) {
+        data['food_database_id'] = int.tryParse(widget.food!.id);
+      }
+
+      // Include extra context fields
+      if (widget.dataSource != null) {
+        data['data_source'] = widget.dataSource;
+      }
+      if (widget.foodLogId != null) {
+        data['food_log_id'] = widget.foodLogId;
+      }
+
+      await widget.apiClient.post('/nutrition/food-report', data: data);
 
       if (!mounted) return;
-      Navigator.of(context).pop();
+      Navigator.of(context).pop(true); // Return true to indicate success
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Report submitted. Thank you!'),
@@ -164,7 +209,7 @@ class _FoodReportSheetState extends State<_FoodReportSheet> {
             ),
             const SizedBox(height: 4),
             Text(
-              widget.food.name,
+              widget.foodName,
               style: TextStyle(color: textMuted, fontSize: 14),
             ),
             const SizedBox(height: 20),
