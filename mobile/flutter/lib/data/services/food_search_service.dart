@@ -292,6 +292,7 @@ class FoodSearchResult {
   final double? weightPerUnitG; // Weight of 1 piece (e.g. 1 burger = 219g)
   final int? defaultCount; // Default number of pieces (e.g. 10 for 10pc nuggets)
   final double? servingWeightG; // Standard serving weight in grams
+  final String? matchedQuery; // Which sub-query matched (for multi-food queries)
 
   const FoodSearchResult({
     required this.id,
@@ -308,6 +309,7 @@ class FoodSearchResult {
     this.weightPerUnitG,
     this.defaultCount,
     this.servingWeightG,
+    this.matchedQuery,
   });
 
   /// Create from SavedFood model
@@ -833,6 +835,7 @@ class FoodSearchService {
           weightPerUnitG: (item['weight_per_unit_g'] as num?)?.toDouble(),
           defaultCount: (item['default_count'] as num?)?.toInt(),
           servingWeightG: (item['serving_weight_g'] as num?)?.toDouble(),
+          matchedQuery: item['matched_query'] as String?,
         );
       }).toList();
     } catch (e) {

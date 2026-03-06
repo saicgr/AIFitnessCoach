@@ -697,40 +697,8 @@ class _FoodBrowserPanelState extends ConsumerState<FoodBrowserPanel> {
                 }),
                 const SizedBox(height: 12),
               ],
-              if (dbResults.isNotEmpty) ...[
-                _BrowseSectionHeader(
-                  icon: Icons.storage_outlined,
-                  title: _selectedDbSource != null
-                      ? 'FOOD DATABASE (${_sourceLabel(_selectedDbSource!)})'
-                      : 'FOOD DATABASE',
-                  count: dbResults.length,
-                  isDark: widget.isDark,
-                ),
-                const SizedBox(height: 6),
-                ...dbResults.map((result) {
-                  final key = 'search_db_${result.id}';
-                  return _FoodBrowserItemEditable(
-                    name: result.name,
-                    baseCalories: result.calories,
-                    subtitle: result.brand ?? result.servingSize,
-                    logState: _logStates[key],
-                    isWeightEditable: true,
-                    baseWeightG: 100.0,
-                    onAdd: (desc) => _logFood(desc, key),
-                    isDark: widget.isDark,
-                    goalTags: _buildGoalTags(
-                      goals: userGoals,
-                      calories: result.calories,
-                      protein: result.protein ?? 0,
-                      carbs: result.carbs ?? 0,
-                      fat: result.fat ?? 0,
-                      isDark: widget.isDark,
-                    ),
-                    searchResult: result,
-                    apiClient: ref.read(apiClientProvider),
-                  );
-                }),
-              ],
+              // Group DB results by matched_query for multi-food sections
+              ..._buildDbResultSections(dbResults, userGoals),
             ],
           );
         }
@@ -744,6 +712,89 @@ class _FoodBrowserPanelState extends ConsumerState<FoodBrowserPanel> {
       error: (e, _) => Center(
         child: Text('Search error', style: TextStyle(color: textMuted)),
       ),
+    );
+  }
+
+  /// Build DB result sections — grouped by matched_query when multi-food, else single section.
+  List<Widget> _buildDbResultSections(
+    List<search.FoodSearchResult> dbResults,
+    List<String> userGoals,
+  ) {
+    if (dbResults.isEmpty) return [];
+
+    // Check if results have matched_query grouping (multi-food query)
+    final hasGroups = dbResults.any((r) => r.matchedQuery != null);
+
+    if (!hasGroups) {
+      // Single flat section (original behavior)
+      return [
+        _BrowseSectionHeader(
+          icon: Icons.storage_outlined,
+          title: _selectedDbSource != null
+              ? 'FOOD DATABASE (${_sourceLabel(_selectedDbSource!)})'
+              : 'FOOD DATABASE',
+          count: dbResults.length,
+          isDark: widget.isDark,
+        ),
+        const SizedBox(height: 6),
+        ...dbResults.map((result) => _buildDbResultItem(result, userGoals)),
+      ];
+    }
+
+    // Multi-food: group by matched_query, preserving order
+    final groups = <String, List<search.FoodSearchResult>>{};
+    final groupOrder = <String>[];
+    for (final result in dbResults) {
+      final group = result.matchedQuery ?? '';
+      if (!groups.containsKey(group)) {
+        groups[group] = [];
+        groupOrder.add(group);
+      }
+      groups[group]!.add(result);
+    }
+
+    final widgets = <Widget>[];
+    for (final group in groupOrder) {
+      final items = groups[group]!;
+      final title = group.isNotEmpty
+          ? group[0].toUpperCase() + group.substring(1)
+          : 'Other';
+      widgets.addAll([
+        if (widgets.isNotEmpty) const SizedBox(height: 12),
+        _BrowseSectionHeader(
+          icon: Icons.restaurant_outlined,
+          title: title.toUpperCase(),
+          count: items.length,
+          isDark: widget.isDark,
+        ),
+        const SizedBox(height: 6),
+        ...items.map((result) => _buildDbResultItem(result, userGoals)),
+      ]);
+    }
+    return widgets;
+  }
+
+  Widget _buildDbResultItem(search.FoodSearchResult result, List<String> userGoals) {
+    final key = 'search_db_${result.id}';
+    return _FoodBrowserItemEditable(
+      name: result.name,
+      baseCalories: result.calories,
+      subtitle: result.brand ?? result.servingSize,
+      logState: _logStates[key],
+      isWeightEditable: true,
+      baseWeightG: 100.0,
+      onAdd: (desc) => _logFood(desc, key),
+      isDark: widget.isDark,
+      goalTags: _buildGoalTags(
+        goals: userGoals,
+        calories: result.calories,
+        protein: result.protein ?? 0,
+        carbs: result.carbs ?? 0,
+        fat: result.fat ?? 0,
+        isDark: widget.isDark,
+      ),
+      searchResult: result,
+      apiClient: ref.read(apiClientProvider),
     );
   }
 

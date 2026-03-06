@@ -928,6 +928,7 @@ class USDAFoodResponse(BaseModel):
     weight_per_unit_g: Optional[float] = None
     default_count: Optional[int] = None
     serving_weight_g: Optional[float] = None
+    matched_query: Optional[str] = None  # Which sub-query this result matched (for multi-food queries)
 
 
 class USDASearchResponse(BaseModel):
@@ -1064,6 +1065,7 @@ async def search_foods(
                 weight_per_unit_g=item.get("weight_per_unit_g"),
                 default_count=item.get("default_count"),
                 serving_weight_g=item.get("serving_weight_g"),
+                matched_query=item.get("matched_query"),
             ))
 
         total_hits = len(foods)

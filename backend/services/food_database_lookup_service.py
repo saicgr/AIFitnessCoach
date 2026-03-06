@@ -391,17 +391,70 @@ class FoodDatabaseLookupService:
 
     # ── Multi-food query splitting ─────────────────────────────────
 
+    # Pre-compiled regex for word-based multi-food delimiters.
+    # Order matters: longer phrases first to avoid partial matches.
+    _WORD_DELIMITERS_RE = re.compile(
+        r'\s+along\s+with\s+'       # "biryani along with raita"
+        r'|\s+paired\s+with\s+'     # "steak paired with mashed potatoes"
+        r'|\s+served\s+with\s+'     # "dosa served with chutney"
+        r'|\s+on\s+the\s+side\s+'   # "burger on the side fries" (rare)
+        r'|\s+alongside\s+'         # "steak alongside veggies"
+        r'|\s+and\s+a\s+'           # "burger and a coke"
+        r'|\s+and\s+some\s+'        # "rice and some dal"
+        r'|\s+and\s+'               # "rice and dal"
+        r'|\s+with\s+a\s+'          # "pasta with a salad"
+        r'|\s+with\s+some\s+'       # "roti with some sabzi"
+        r'|\s+with\s+'              # "biryani with raita"
+        r'|\s+plus\s+'              # "burger plus fries"
+        r'|\s+also\s+'              # "dosa also sambhar"
+        r'|\s+w/\s*'                # "naan w/ curry" or "naan w/curry"
+        r'|\s*&\s*'                 # "rice & dal"
+        r'|\s*\+\s*',              # "rice + chicken"
+        flags=re.IGNORECASE,
+    )
+
+    # Hard delimiters that always mean separate foods.
+    # Commas, semicolons, pipes, newlines, and " / " (slash with spaces).
+    # Slash without spaces (e.g. "pizza/pasta") also splits, but NOT fractions
+    # like "1/2" or shorthand like "w/".
+    _HARD_DELIMITERS_RE = re.compile(r'[,;|\n]+')
+    _SLASH_DELIMITERS_RE = re.compile(r'\s+/\s+')  # " / " with spaces
+    _BARE_SLASH_RE = re.compile(r'(?<![0-9])/(?![0-9])')  # "/" not in fractions like "1/2"
+
     def _split_multi_query(self, query: str) -> List[str]:
         """Split multi-food queries into individual search terms.
 
-        Splits on: commas, " and ", " & ", " + "
-        Preserves compound foods that exist as overrides (e.g., "mac and cheese").
+        Phase 1 — Hard delimiters (always split, no override check):
+            Commas, semicolons, pipes, newlines, " / " (spaced slash)
+        Phase 2 — Bare slash "pizza/pasta" (not fractions "1/2", not "w/"):
+            Splits unless full query is a known override
+        Phase 3 — Word delimiters (override-protected):
+            "and", "with", "along with", "paired with", "served with",
+            "alongside", "plus", "also", "w/", "&", "+"
+
+        Preserves compound foods that exist as overrides
+        (e.g., "mac and cheese", "fish and chips", "rice with lentils").
 
         Examples:
-            "coke and biryani and ice cream" → ["coke", "biryani", "ice cream"]
-            "mac and cheese"                → ["mac and cheese"]  (exists in overrides)
-            "coke, biryani, ice cream"      → ["coke", "biryani", "ice cream"]
-            "rice + chicken"                → ["rice", "chicken"]
+            "chicken biryani with raita"       → ["chicken biryani", "raita"]
+            "coke and biryani and ice cream"   → ["coke", "biryani", "ice cream"]
+            "burger and a coke"                → ["burger", "coke"]
+            "mac and cheese"                   → ["mac and cheese"]  (override)
+            "fish and chips"                   → ["fish and chips"]  (override)
+            "coke, biryani, ice cream"         → ["coke", "biryani", "ice cream"]
+            "rice; dal; roti"                  → ["rice", "dal", "roti"]
+            "tea | coffee"                     → ["tea", "coffee"]
+            "pizza / pasta"                    → ["pizza", "pasta"]
+            "tea/coffee"                       → ["tea", "coffee"]
+            "rice + chicken"                   → ["rice", "chicken"]
+            "dosa served with chutney"         → ["dosa", "chutney"]
+            "steak alongside veggies"          → ["steak", "veggies"]
+            "burger plus fries"                → ["burger", "fries"]
+            "dosa also sambhar"                → ["dosa", "sambhar"]
+            "naan w/ butter chicken"           → ["naan", "butter chicken"]
+            "steak paired with mashed potatoes"→ ["steak", "mashed potatoes"]
+            "biryani along with raita"         → ["biryani", "raita"]
+            "pasta with a salad"               → ["pasta", "salad"]
         """
         q = query.strip()
         if not q:
@@ -409,27 +462,41 @@ class FoodDatabaseLookupService:
 
         q_lower = q.lower()
 
-        # No delimiters → single query
-        if ',' not in q and ' and ' not in q_lower and ' & ' not in q and ' + ' not in q:
-            return [q]
-
-        # Split on commas first (always a clear multi-food delimiter)
-        if ',' in q:
-            comma_parts = [p.strip() for p in q.split(',') if p.strip()]
-            # Recursively process each comma-separated part for " and " splitting
+        # ── Phase 1: Hard delimiters — always split, recurse each part ──
+        if self._HARD_DELIMITERS_RE.search(q):
+            parts = [p.strip() for p in self._HARD_DELIMITERS_RE.split(q) if p.strip()]
             final: List[str] = []
-            for part in comma_parts:
+            for part in parts:
                 final.extend(self._split_multi_query(part))
             return final if len(final) > 1 else [q]
 
-        # Handle " and " / " & " / " + "
-        # Check if the full query is a known food in overrides → don't split
+        # " / " with spaces — clear separator like "pizza / pasta"
+        if self._SLASH_DELIMITERS_RE.search(q):
+            parts = [p.strip() for p in self._SLASH_DELIMITERS_RE.split(q) if p.strip()]
+            if len(parts) > 1:
+                final = []
+                for part in parts:
+                    final.extend(self._split_multi_query(part))
+                return final if len(final) > 1 else [q]
+
+        # ── Phase 2: Bare slash — "tea/coffee" but NOT "1/2" ──
+        # Skip if contains "w/" (shorthand for "with", handled in Phase 3)
+        if '/' in q and self._BARE_SLASH_RE.search(q) and not re.search(r'\bw/', q, re.IGNORECASE):
+            parts = [p.strip() for p in q.split('/') if p.strip()]
+            if len(parts) > 1:
+                if self._overrides.get(q_lower):
+                    return [q]
+                return parts
+
+        # ── Phase 3: Word delimiters — override-protected ──
+        if not self._WORD_DELIMITERS_RE.search(q):
+            return [q]
+
+        # Full query is a known compound food → don't split
         if self._overrides.get(q_lower):
             return [q]
 
-        parts = re.split(r'\s+and\s+|\s*&\s*|\s*\+\s*', q, flags=re.IGNORECASE)
-        parts = [p.strip() for p in parts if p.strip()]
-
+        parts = [p.strip() for p in self._WORD_DELIMITERS_RE.split(q) if p.strip()]
         return parts if len(parts) > 1 else [q]
 
     # ── Match quality ──────────────────────────────────────────────
@@ -519,6 +586,7 @@ class FoodDatabaseLookupService:
                 for r in part_results:
                     name_lower = r.get("name", "").lower()
                     if name_lower not in seen_names:
+                        r["matched_query"] = part
                         all_results.append(r)
                         seen_names.add(name_lower)
 
@@ -626,6 +694,7 @@ class FoodDatabaseLookupService:
                 for r in part_results:
                     name_lower = r.get("name", "").lower()
                     if name_lower not in seen_names:
+                        r["matched_query"] = part
                         all_results.append(r)
                         seen_names.add(name_lower)
 
