@@ -21,6 +21,8 @@ import '../../widgets/glass_back_button.dart';
 import '../../widgets/floating_chat/floating_chat_overlay.dart';
 import '../../widgets/medical_disclaimer_banner.dart';
 import '../ai_settings/ai_settings_screen.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../data/repositories/nutrition_repository.dart';
 import 'widgets/food_analysis_result_card.dart';
 import 'widgets/form_check_result_card.dart';
 import 'widgets/form_comparison_result_card.dart';
@@ -201,11 +203,88 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     super.dispose();
   }
 
+  /// Log selected dishes from a FoodAnalysisResultCard (buffet/menu analysis).
+  Future<void> _logAnalysisItems(List<Map<String, dynamic>> items) async {
+    if (items.isEmpty) return;
+    final userId = Supabase.instance.client.auth.currentUser?.id;
+    if (userId == null) return;
+
+    // Determine meal type from time of day
+    final hour = DateTime.now().hour;
+    final mealType = hour < 10
+        ? 'breakfast'
+        : hour < 14
+            ? 'lunch'
+            : hour < 17
+                ? 'snack'
+                : 'dinner';
+
+    try {
+      final repo = ref.read(nutritionRepositoryProvider);
+
+      // Build food_items list and sum macros
+      final foodItems = <Map<String, dynamic>>[];
+      int totalCal = 0;
+      int totalProtein = 0;
+      int totalCarbs = 0;
+      int totalFat = 0;
+
+      for (final item in items) {
+        final cal = (item['calories'] as num? ?? 0).toInt();
+        final protein = (item['protein'] as num? ?? 0).toInt();
+        final carbs = (item['carbs'] as num? ?? 0).toInt();
+        final fat = (item['fat'] as num? ?? 0).toInt();
+
+        totalCal += cal;
+        totalProtein += protein;
+        totalCarbs += carbs;
+        totalFat += fat;
+
+        foodItems.add({
+          'name': item['name'] ?? 'Unknown',
+          'calories': cal,
+          'protein_g': protein,
+          'carbs_g': carbs,
+          'fat_g': fat,
+          if (item['portion_multiplier'] != null) 'portion_multiplier': item['portion_multiplier'],
+        });
+      }
+
+      await repo.logAdjustedFood(
+        userId: userId,
+        mealType: mealType,
+        foodItems: foodItems,
+        totalCalories: totalCal,
+        totalProtein: totalProtein,
+        totalCarbs: totalCarbs,
+        totalFat: totalFat,
+        sourceType: 'image',
+      );
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Logged ${items.length} item${items.length == 1 ? '' : 's'} as $mealType'),
+          behavior: SnackBarBehavior.floating,
+          duration: const Duration(seconds: 2),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Failed to log food items'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
+  }
+
   void _scrollToBottom() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (_scrollController.hasClients) {
+      if (_scrollController.hasClients && _scrollController.offset > 0) {
         _scrollController.animateTo(
-          _scrollController.position.maxScrollExtent,
+          0,
           duration: const Duration(milliseconds: 300),
           curve: Curves.easeOut,
         );
@@ -439,17 +518,25 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                   return ListView.builder(
                     key: const ValueKey('content'),
                     controller: _scrollController,
+                    reverse: true,
                     padding: const EdgeInsets.all(16),
                     itemCount: messages.length + (_isLoading ? 1 : 0),
                     itemBuilder: (context, index) {
-                      if (index == messages.length && _isLoading) {
+                      // With reverse: true, index 0 = bottom (newest).
+                      // Typing indicator is the newest item (index 0).
+                      if (index == 0 && _isLoading) {
                         return const _TypingIndicator();
                       }
-                      final message = messages[index];
+                      // Offset by 1 if loading indicator is shown
+                      final msgIndex = messages.length - 1 - (index - (_isLoading ? 1 : 0));
+                      if (msgIndex < 0 || msgIndex >= messages.length) {
+                        return const SizedBox.shrink();
+                      }
+                      final message = messages[msgIndex];
                       // Find the previous user message for context when reporting
                       String? previousUserMessage;
                       if (message.role == 'assistant') {
-                        for (int i = index - 1; i >= 0; i--) {
+                        for (int i = msgIndex - 1; i >= 0; i--) {
                           if (messages[i].role == 'user') {
                             previousUserMessage = messages[i].content;
                             break;
@@ -457,10 +544,11 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                         }
                       }
                       return _MessageBubble(
-                        key: ValueKey(message.id ?? 'msg_$index'),
+                        key: ValueKey(message.id ?? 'msg_$msgIndex'),
                         message: message,
                         previousUserMessage: previousUserMessage,
                         coach: coach,
+                        onLogAnalysisItems: _logAnalysisItems,
                       ).animate().fadeIn(duration: 200.ms);
                     },
                   );
@@ -921,12 +1009,14 @@ class _MessageBubble extends StatelessWidget {
   final ChatMessage message;
   final String? previousUserMessage;
   final CoachPersona coach;
+  final void Function(List<Map<String, dynamic>>)? onLogAnalysisItems;
 
   const _MessageBubble({
     super.key,
     required this.message,
     required this.coach,
     this.previousUserMessage,
+    this.onLogAnalysisItems,
   });
 
   @override
@@ -1073,7 +1163,10 @@ class _MessageBubble extends StatelessWidget {
           // Show multi-food/buffet/menu analysis result card
           if (!isUser && (message.hasBuffetAnalysis || message.hasMenuAnalysis ||
               (message.actionData?['action'] == 'analyze_multi_food_images')))
-            FoodAnalysisResultCard(data: message.actionData!),
+            FoodAnalysisResultCard(
+              data: message.actionData!,
+              onLogItems: onLogAnalysisItems != null ? (items) => onLogAnalysisItems!(items) : null,
+            ),
           // Show form comparison result card
           if (!isUser && message.hasFormComparison)
             FormComparisonResultCard(data: message.actionData!),

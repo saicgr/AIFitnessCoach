@@ -4,6 +4,7 @@ import '../services/api_client.dart';
 import '../services/challenges_service.dart';
 import '../../core/providers/auth_provider.dart';
 import '../../screens/notifications/notifications_screen.dart';
+import 'social_provider.dart';
 
 /// Unified notification model that merges local + challenge notifications
 class UnifiedNotification {
@@ -14,6 +15,7 @@ class UnifiedNotification {
   final DateTime timestamp;
   final bool isRead;
   final String? challengeId;
+  final String? requestId;
   final String? fromUserName;
   final String? fromUserAvatar;
 
@@ -25,6 +27,7 @@ class UnifiedNotification {
     required this.timestamp,
     this.isRead = false,
     this.challengeId,
+    this.requestId,
     this.fromUserName,
     this.fromUserAvatar,
   });
@@ -84,6 +87,24 @@ class UnifiedNotification {
       fromUserAvatar: json['from_user_avatar'] as String?,
     );
   }
+
+  /// Create from a friend request API response
+  factory UnifiedNotification.fromFriendRequest(Map<String, dynamic> json) {
+    final fromName = json['from_user_name'] as String? ?? 'Someone';
+    return UnifiedNotification(
+      id: 'friend_request_${json['id']}',
+      title: 'Friend Request',
+      body: '$fromName wants to be your friend',
+      type: 'friend_request',
+      timestamp: json['created_at'] != null
+          ? DateTime.parse(json['created_at'] as String)
+          : DateTime.now(),
+      isRead: false,
+      requestId: json['id'] as String?,
+      fromUserName: fromName,
+      fromUserAvatar: json['from_user_avatar'] as String?,
+    );
+  }
 }
 
 /// Provider for ChallengesService
@@ -136,8 +157,25 @@ class UnifiedNotificationsNotifier extends StateNotifier<AsyncValue<List<Unified
         }
       }
 
+      // Fetch pending friend requests
+      List<UnifiedNotification> friendRequestUnified = [];
+      if (userId != null) {
+        try {
+          final socialService = _ref.read(socialServiceProvider);
+          final requests = await socialService.getReceivedFriendRequests(
+            userId: userId,
+            status: 'pending',
+          );
+          friendRequestUnified = requests
+              .map((r) => UnifiedNotification.fromFriendRequest(r))
+              .toList();
+        } catch (e) {
+          debugPrint('🔔 [UnifiedNotifications] Error fetching friend requests: $e');
+        }
+      }
+
       // Merge and sort by timestamp (newest first)
-      final all = [...challengeUnified, ...localUnified];
+      final all = [...challengeUnified, ...friendRequestUnified, ...localUnified];
       all.sort((a, b) => b.timestamp.compareTo(a.timestamp));
 
       state = AsyncValue.data(all);
@@ -179,6 +217,7 @@ class UnifiedNotificationsNotifier extends StateNotifier<AsyncValue<List<Unified
               timestamp: n.timestamp,
               isRead: true,
               challengeId: n.challengeId,
+              requestId: n.requestId,
               fromUserName: n.fromUserName,
               fromUserAvatar: n.fromUserAvatar,
             );
@@ -188,6 +227,47 @@ class UnifiedNotificationsNotifier extends StateNotifier<AsyncValue<List<Unified
       });
     } catch (e) {
       debugPrint('🔔 [UnifiedNotifications] Error marking as read: $e');
+    }
+  }
+
+  /// Accept a friend request and remove its notification
+  Future<void> acceptFriendRequest(String notificationId, String requestId) async {
+    final userId = _ref.read(currentUserIdProvider);
+    if (userId == null) return;
+
+    try {
+      final socialService = _ref.read(socialServiceProvider);
+      await socialService.acceptFriendRequest(userId: userId, requestId: requestId);
+
+      // Remove notification from state
+      state = state.whenData(
+        (notifications) => notifications.where((n) => n.id != notificationId).toList(),
+      );
+
+      // Invalidate friends list so it auto-refreshes
+      _ref.invalidate(friendsListProvider(userId));
+    } catch (e) {
+      debugPrint('🔔 [UnifiedNotifications] Error accepting friend request: $e');
+      rethrow;
+    }
+  }
+
+  /// Decline a friend request and remove its notification
+  Future<void> declineFriendRequest(String notificationId, String requestId) async {
+    final userId = _ref.read(currentUserIdProvider);
+    if (userId == null) return;
+
+    try {
+      final socialService = _ref.read(socialServiceProvider);
+      await socialService.declineFriendRequest(userId: userId, requestId: requestId);
+
+      // Remove notification from state
+      state = state.whenData(
+        (notifications) => notifications.where((n) => n.id != notificationId).toList(),
+      );
+    } catch (e) {
+      debugPrint('🔔 [UnifiedNotifications] Error declining friend request: $e');
+      rethrow;
     }
   }
 }

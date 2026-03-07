@@ -212,6 +212,55 @@ class NutritionDB(BaseDB):
         result = query.order("logged_at", desc=True).limit(limit).execute()
         return result.data or []
 
+    def update_food_log(
+        self,
+        log_id: str,
+        user_id: str,
+        total_calories: int,
+        protein_g: float,
+        carbs_g: float,
+        fat_g: float,
+        fiber_g: Optional[float] = None,
+        weight_g: Optional[float] = None,
+    ) -> Optional[Dict[str, Any]]:
+        """
+        Update macros on an existing food log.
+
+        Args:
+            log_id: Food log UUID
+            user_id: Owner's UUID (for authorization check)
+            total_calories: Updated calorie total
+            protein_g: Updated protein grams
+            carbs_g: Updated carb grams
+            fat_g: Updated fat grams
+            fiber_g: Updated fiber grams (optional)
+            weight_g: Updated weight grams (optional)
+
+        Returns:
+            Updated food log record, or None if not found / not owned
+        """
+        update_data: Dict[str, Any] = {
+            "total_calories": total_calories,
+            "protein_g": protein_g,
+            "carbs_g": carbs_g,
+            "fat_g": fat_g,
+            "updated_at": datetime.utcnow().isoformat(),
+        }
+        if fiber_g is not None:
+            update_data["fiber_g"] = fiber_g
+        if weight_g is not None:
+            update_data["weight_g"] = weight_g
+
+        result = (
+            self.client.table("food_logs")
+            .update(update_data)
+            .eq("id", log_id)
+            .eq("user_id", user_id)
+            .is_("deleted_at", "null")
+            .execute()
+        )
+        return result.data[0] if result.data else None
+
     def delete_food_log(self, log_id: str) -> bool:
         """
         Soft-delete a food log entry (SCD2 pattern).

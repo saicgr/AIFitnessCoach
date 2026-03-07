@@ -1,6 +1,4 @@
 import 'dart:async';
-import 'dart:ui';
-
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -18,93 +16,7 @@ import '../providers/muscle_group_images_provider.dart';
 import '../../../widgets/glass_sheet.dart';
 import '../components/exercise_detail_sheet.dart';
 import '../components/ai_split_preset_detail_sheet.dart';
-import '../widgets/filter_chip_widget.dart';
-
-/// Group exercises into sections for carousel display
-/// Returns full lists - the UI limits what's shown in carousel
-Map<String, List<LibraryExercise>> _groupExercisesIntoSections(
-  List<LibraryExercise> exercises,
-  Map<String, List<LibraryExercise>?> categoryData,
-) {
-  final Map<String, List<LibraryExercise>> sections = {};
-
-  // Featured - Popular category or first exercises
-  final popular = categoryData['Popular'] ?? exercises.take(50).toList();
-  if (popular.isNotEmpty) {
-    sections['Featured Exercises'] = popular;
-  }
-
-  // Upper Body
-  final upperBody = exercises.where((e) =>
-    e.bodyPart?.toLowerCase() == 'upper body' ||
-    e.bodyPart?.toLowerCase() == 'chest' ||
-    e.bodyPart?.toLowerCase() == 'back' ||
-    e.bodyPart?.toLowerCase() == 'shoulders'
-  ).toList();
-  if (upperBody.isNotEmpty) {
-    sections['Upper Body'] = upperBody;
-  }
-
-  // Lower Body
-  final lowerBody = exercises.where((e) =>
-    e.bodyPart?.toLowerCase() == 'lower body' ||
-    e.bodyPart?.toLowerCase() == 'legs' ||
-    e.bodyPart?.toLowerCase() == 'glutes'
-  ).toList();
-  if (lowerBody.isNotEmpty) {
-    sections['Lower Body'] = lowerBody;
-  }
-
-  // Core & Abs
-  final core = exercises.where((e) =>
-    e.bodyPart?.toLowerCase() == 'core' ||
-    e.bodyPart?.toLowerCase() == 'abs' ||
-    e.bodyPart?.toLowerCase() == 'waist'
-  ).toList();
-  if (core.isNotEmpty) {
-    sections['Core & Abs'] = core;
-  }
-
-  // Arms
-  final arms = exercises.where((e) =>
-    e.bodyPart?.toLowerCase() == 'arms' ||
-    e.bodyPart?.toLowerCase() == 'biceps' ||
-    e.bodyPart?.toLowerCase() == 'triceps' ||
-    e.bodyPart?.toLowerCase() == 'forearms'
-  ).toList();
-  if (arms.isNotEmpty) {
-    sections['Arms'] = arms;
-  }
-
-  // Cardio
-  final cardio = exercises.where((e) =>
-    e.bodyPart?.toLowerCase() == 'cardio' ||
-    e.equipment.any((eq) => eq.toLowerCase().contains('cardio'))
-  ).toList();
-  if (cardio.isNotEmpty) {
-    sections['Cardio'] = cardio;
-  }
-
-  // Beginner Friendly
-  final beginner = exercises.where((e) =>
-    e.difficulty?.toLowerCase() == 'beginner'
-  ).toList();
-  if (beginner.isNotEmpty) {
-    sections['Beginner Friendly'] = beginner;
-  }
-
-  // Advanced
-  final advanced = exercises.where((e) =>
-    e.difficulty?.toLowerCase() == 'advanced'
-  ).toList();
-  if (advanced.isNotEmpty) {
-    sections['Advanced'] = advanced;
-  }
-
-  return sections;
-}
-
-/// Exercises tab with search, category chips, featured carousel, and grid layout
+/// Exercises tab with search, muscle group pills, equipment pills, and splits
 class NetflixExercisesTab extends ConsumerStatefulWidget {
   const NetflixExercisesTab({super.key});
 
@@ -117,11 +29,10 @@ class _NetflixExercisesTabState extends ConsumerState<NetflixExercisesTab> {
   final ScrollController _scrollController = ScrollController();
   final TextEditingController _searchController = TextEditingController();
   final FocusNode _searchFocusNode = FocusNode();
-  String? _selectedCategory;
   String? _expandedSection; // Track which section is showing "View All"
 
   // Smart search state
-  bool _useSmartSearch = true;
+  bool _useSmartSearch = false;
   bool _isSmartSearching = false;
   List<SmartSearchExerciseItem> _smartSearchResults = [];
   String? _searchCorrection;
@@ -243,11 +154,9 @@ class _NetflixExercisesTabState extends ConsumerState<NetflixExercisesTab> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final backgroundColor = isDark ? AppColors.pureBlack : AppColorsLight.pureWhite;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final cyan = isDark ? AppColors.cyan : AppColorsLight.cyan;
     final accentColor = ref.colors(context).accent;
-    final bottomPadding = MediaQuery.of(context).padding.bottom;
 
     final categoryExercisesAsync = ref.watch(categoryExercisesProvider);
     final searchQuery = _searchController.text.toLowerCase();
@@ -272,9 +181,6 @@ class _NetflixExercisesTabState extends ConsumerState<NetflixExercisesTab> {
         ),
       ),
       data: (categoryData) {
-        // Get all categories
-        final categories = categoryData.preview.keys.toList();
-
         // Prefetch exercise images into cache as soon as data is available
         if (!_imagesPrefetched) {
           final allForPrefetch = <LibraryExercise>[];
@@ -284,107 +190,33 @@ class _NetflixExercisesTabState extends ConsumerState<NetflixExercisesTab> {
           _prefetchImages(allForPrefetch);
         }
 
-        // Get exercises based on selection
+        // Always collect all exercises
         List<LibraryExercise> allExercises = [];
-
-        if (_selectedCategory == null) {
-          // Show all exercises
-          for (final exercises in categoryData.all.values) {
-            allExercises.addAll(exercises);
-          }
-        } else {
-          // Show selected category
-          allExercises = categoryData.all[_selectedCategory] ?? [];
+        for (final exercises in categoryData.all.values) {
+          allExercises.addAll(exercises);
         }
 
-        // Apply client-side search filter (only when smart search is off)
+        // Apply client-side search filter with relevance ranking
         if (!_useSmartSearch && searchQuery.isNotEmpty) {
-          allExercises = allExercises.where((e) {
-            return e.name.toLowerCase().contains(searchQuery) ||
-                (e.bodyPart?.toLowerCase().contains(searchQuery) ?? false) ||
-                e.equipment.any((eq) => eq.toLowerCase().contains(searchQuery));
-          }).toList();
+          allExercises = _rankSearchResults(allExercises, searchQuery);
         }
 
-        return Stack(
+        return Column(
           children: [
-            // Main content
-            Column(
-              children: [
-                // Category filter chips
-                SizedBox(
-                  height: 40,
-                  child: ListView(
-                    scrollDirection: Axis.horizontal,
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    children: [
-                      FilterChipWidget(
-                        label: 'All',
-                        isSelected: _selectedCategory == null,
-                        onTap: () {
-                          HapticService.light();
-                          setState(() => _selectedCategory = null);
-                        },
-                      ),
-                      ...categories.map((category) => FilterChipWidget(
-                        label: category,
-                        isSelected: _selectedCategory == category,
-                        onTap: () {
-                          HapticService.light();
-                          setState(() => _selectedCategory =
-                              _selectedCategory == category ? null : category);
-                        },
-                      )),
-                    ],
-                  ),
-                ),
-
-                const SizedBox(height: 8),
-
-                // Exercises content
-                Expanded(
-                  child: _buildExercisesContent(
-                    allExercises,
-                    categoryData,
-                    searchQuery,
-                    isDark,
-                    textMuted,
-                  ),
-                ),
-              ],
+            // Search bar (inline, always visible at top)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              child: _buildSamsungSearchBar(context, isDark, accentColor, textMuted),
             ),
 
-            // Bottom fade gradient
-            Positioned(
-              left: 0,
-              right: 0,
-              bottom: 0,
-              child: IgnorePointer(
-                child: Container(
-                  height: bottomPadding + 100,
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                      colors: [
-                        backgroundColor.withValues(alpha: 0),
-                        backgroundColor.withValues(alpha: 0.8),
-                        backgroundColor,
-                      ],
-                      stops: const [0.0, 0.5, 1.0],
-                    ),
-                  ),
-                ),
-              ),
-            ),
-
-            // Samsung-style bottom search bar (always visible with inline text field)
-            Positioned(
-              left: 0,
-              right: 0,
-              bottom: bottomPadding + 16,
-              child: Center(
-                child: _buildSamsungSearchBar(context, isDark, accentColor, textMuted),
+            // Exercises content
+            Expanded(
+              child: _buildExercisesContent(
+                allExercises,
+                categoryData,
+                searchQuery,
+                isDark,
+                textMuted,
               ),
             ),
           ],
@@ -480,7 +312,7 @@ class _NetflixExercisesTabState extends ConsumerState<NetflixExercisesTab> {
           // Smart search results list
           Expanded(
             child: ListView.builder(
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 80),
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
               itemCount: _smartSearchResults.length,
               itemBuilder: (context, index) {
                 final result = _smartSearchResults[index];
@@ -512,8 +344,8 @@ class _NetflixExercisesTabState extends ConsumerState<NetflixExercisesTab> {
       );
     }
 
-    // Client-side search or category filter: show list view
-    if (searchQuery.isNotEmpty || _selectedCategory != null) {
+    // Client-side search filter: show list view
+    if (!_useSmartSearch && searchQuery.isNotEmpty) {
       if (allExercises.isEmpty) {
         return Center(
           child: Column(
@@ -522,23 +354,21 @@ class _NetflixExercisesTabState extends ConsumerState<NetflixExercisesTab> {
               Icon(Icons.fitness_center, color: textMuted, size: 48),
               const SizedBox(height: 16),
               const Text('No exercises found'),
-              if (searchQuery.isNotEmpty || _selectedCategory != null)
-                TextButton(
-                  onPressed: () {
-                    setState(() {
-                      _searchController.clear();
-                      _selectedCategory = null;
-                    });
-                  },
-                  child: const Text('Clear filters'),
-                ),
+              TextButton(
+                onPressed: () {
+                  setState(() {
+                    _searchController.clear();
+                  });
+                },
+                child: const Text('Clear filters'),
+              ),
             ],
           ),
         );
       }
 
       return ListView.builder(
-        padding: const EdgeInsets.fromLTRB(16, 16, 16, 80),
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
         itemCount: allExercises.length,
         itemBuilder: (context, index) {
           final exercise = allExercises[index];
@@ -555,15 +385,11 @@ class _NetflixExercisesTabState extends ConsumerState<NetflixExercisesTab> {
 
     // If a section is expanded, show full list for that section
     if (_expandedSection != null) {
-      final sections = _groupExercisesIntoSections(allExercises, categoryData.all);
       final muscleGroups = _groupExercisesByMuscle(allExercises);
       final equipmentGroups = _groupExercisesByEquipment(allExercises);
 
-      // Check all possible sources for exercises
-      List<LibraryExercise> sectionExercises = sections[_expandedSection] ?? [];
-      if (sectionExercises.isEmpty) {
-        sectionExercises = muscleGroups[_expandedSection] ?? [];
-      }
+      // Check muscle groups and equipment groups for exercises
+      List<LibraryExercise> sectionExercises = muscleGroups[_expandedSection] ?? [];
       if (sectionExercises.isEmpty) {
         sectionExercises = equipmentGroups[_expandedSection] ?? [];
       }
@@ -622,7 +448,7 @@ class _NetflixExercisesTabState extends ConsumerState<NetflixExercisesTab> {
           // Exercise list
           Expanded(
             child: ListView.builder(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 80),
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
               itemCount: sectionExercises.length,
               itemBuilder: (context, index) {
                 final exercise = sectionExercises[index];
@@ -640,78 +466,100 @@ class _NetflixExercisesTabState extends ConsumerState<NetflixExercisesTab> {
       );
     }
 
-    // Gravl-style layout with muscle groups and equipment
-    final sections = _groupExercisesIntoSections(allExercises, categoryData.all);
+    // Clean hierarchy: Muscle Groups → Equipment → Splits
     final muscleGroups = _groupExercisesByMuscle(allExercises);
     final equipmentGroups = _groupExercisesByEquipment(allExercises);
 
     return ListView(
       controller: _scrollController,
-      padding: const EdgeInsets.only(bottom: 100),
+      padding: const EdgeInsets.only(bottom: 16),
       children: [
-        // Gravl Splits section at the very top (like Gravl app)
-        _buildGravlSplitsSection(isDark).animate().fadeIn(),
-
-        // Featured Exercises carousel (no count in header)
-        if (sections['Featured Exercises']?.isNotEmpty ?? false)
-          _ExerciseCarouselSection(
-            title: 'Featured Exercises',
-            exercises: sections['Featured Exercises']!,
-            isFeatured: true,
-            isDark: isDark,
-            showCount: false, // No count in header
-            onExerciseTap: _showExerciseDetail,
-            onViewAll: () {
-              HapticService.light();
-              setState(() => _expandedSection = 'Featured Exercises');
-            },
-          ).animate().fadeIn(),
-
-        // Exercises by muscle section
+        // 1. Muscle group pills (PRIMARY navigation)
         _buildMuscleGroupsSection(
           muscleGroups,
           isDark,
           textMuted,
-        ).animate().fadeIn(delay: const Duration(milliseconds: 100)),
+        ).animate().fadeIn(),
 
-        // Equipment sections (Weights, Bodyweight, Cardio) - Gravl style
-        _buildEquipmentSections(
+        // 2. Equipment pills
+        _buildEquipmentPillsSection(
           equipmentGroups,
           isDark,
           textMuted,
-        ).animate().fadeIn(delay: const Duration(milliseconds: 200)),
+        ).animate().fadeIn(delay: const Duration(milliseconds: 100)),
 
-        // Beginner Friendly
-        if (sections['Beginner Friendly']?.isNotEmpty ?? false)
-          _ExerciseCarouselSection(
-            title: 'Beginner Friendly',
-            exercises: sections['Beginner Friendly']!,
-            isFeatured: false,
-            isDark: isDark,
-            showCount: false,
-            onExerciseTap: _showExerciseDetail,
-            onViewAll: () {
-              HapticService.light();
-              setState(() => _expandedSection = 'Beginner Friendly');
-            },
-          ).animate().fadeIn(delay: const Duration(milliseconds: 300)),
-
-        // Advanced
-        if (sections['Advanced']?.isNotEmpty ?? false)
-          _ExerciseCarouselSection(
-            title: 'Advanced',
-            exercises: sections['Advanced']!,
-            isFeatured: false,
-            isDark: isDark,
-            showCount: false,
-            onExerciseTap: _showExerciseDetail,
-            onViewAll: () {
-              HapticService.light();
-              setState(() => _expandedSection = 'Advanced');
-            },
-          ).animate().fadeIn(delay: const Duration(milliseconds: 400)),
+        // 3. Training Splits (discovery, lower priority)
+        _buildGravlSplitsSection(isDark)
+            .animate().fadeIn(delay: const Duration(milliseconds: 200)),
       ],
     );
+  }
+
+  /// Rank search results by relevance:
+  /// 1. Exact name match (e.g. "Push Up" for query "push up")
+  /// 2. Name starts with query (e.g. "Push Up Plus" for query "push")
+  /// 3. Word in name starts with query (e.g. "Diamond Push Up" for query "push")
+  /// 4. Name contains query anywhere
+  /// 5. Body part or equipment match
+  List<LibraryExercise> _rankSearchResults(
+    List<LibraryExercise> exercises,
+    String query,
+  ) {
+    final scored = <(LibraryExercise, int)>[];
+    final queryWords = query.split(RegExp(r'\s+'));
+
+    for (final e in exercises) {
+      final nameLower = e.name.toLowerCase();
+      final bodyPart = (e.bodyPart ?? '').toLowerCase();
+      final equipment = e.equipment.map((eq) => eq.toLowerCase()).toList();
+
+      int score;
+
+      // Exact match
+      if (nameLower == query) {
+        score = 100;
+      }
+      // Name starts with query
+      else if (nameLower.startsWith(query)) {
+        // Shorter names rank higher (closer to exact match)
+        score = 90 - (nameLower.length - query.length).clamp(0, 30);
+      }
+      // A word in the name starts with query
+      else if (nameLower.split(RegExp(r'[\s\-]+')).any((w) => w.startsWith(query))) {
+        score = 50 - (nameLower.length - query.length).clamp(0, 20);
+      }
+      // All query words appear in name (multi-word search)
+      else if (queryWords.length > 1 && queryWords.every((w) => nameLower.contains(w))) {
+        score = 40;
+      }
+      // Name contains query substring
+      else if (nameLower.contains(query)) {
+        score = 30 - (nameLower.indexOf(query)).clamp(0, 15);
+      }
+      // Body part match
+      else if (bodyPart.contains(query)) {
+        score = 10;
+      }
+      // Equipment match
+      else if (equipment.any((eq) => eq.contains(query))) {
+        score = 5;
+      }
+      // No match
+      else {
+        continue;
+      }
+
+      scored.add((e, score));
+    }
+
+    // Sort by score descending, then alphabetically for ties
+    scored.sort((a, b) {
+      final cmp = b.$2.compareTo(a.$2);
+      if (cmp != 0) return cmp;
+      return a.$1.name.compareTo(b.$1.name);
+    });
+
+    return scored.map((s) => s.$1).toList();
   }
 
   /// Group exercises by muscle for the "Exercises by muscle" section
@@ -849,7 +697,6 @@ class _NetflixExercisesTabState extends ConsumerState<NetflixExercisesTab> {
     final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final entries = muscleGroups.entries.toList();
 
-    // If no muscle groups, don't show section
     if (entries.isEmpty) {
       return const SizedBox.shrink();
     }
@@ -857,7 +704,6 @@ class _NetflixExercisesTabState extends ConsumerState<NetflixExercisesTab> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Section header
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
           child: Text(
@@ -870,55 +716,26 @@ class _NetflixExercisesTabState extends ConsumerState<NetflixExercisesTab> {
           ),
         ),
 
-        // Horizontal scroll with 3 cards stacked vertically per column
-        // Shows peek of NEXT 3 cards on the right
+        // Horizontal scroll of circular muscle pills
         SizedBox(
-          height: 220, // Height for 3 stacked cards (3 * 68 + spacing)
-          child: LayoutBuilder(
-            builder: (context, constraints) {
-              final screenWidth = constraints.maxWidth;
-              // Each column takes 85% of screen width, leaving 15% peek of next column
-              final columnWidth = screenWidth * 0.85;
-
-              // Group entries into columns of 3
-              final columnCount = (entries.length / 3).ceil();
-
-              return ListView.builder(
-                scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.only(left: 16),
-                itemCount: columnCount,
-                itemBuilder: (context, columnIndex) {
-                  final startIdx = columnIndex * 3;
-                  final endIdx = (startIdx + 3).clamp(0, entries.length);
-                  final columnEntries = entries.sublist(startIdx, endIdx);
-
-                  return SizedBox(
-                    width: columnWidth,
-                    child: Padding(
-                      padding: const EdgeInsets.only(right: 12),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: columnEntries.map((entry) {
-                          return Padding(
-                            padding: const EdgeInsets.only(bottom: 6),
-                            child: _MuscleAnatomyCard(
-                              muscleName: entry.key,
-                              exerciseCount: entry.value.length,
-                              completedCount: 0,
-                              isDark: isDark,
-                              muscleAssetPath: muscleGroupAssets[entry.key],
-                              onTap: () {
-                                HapticService.light();
-                                setState(() {
-                                  _expandedSection = entry.key;
-                                });
-                              },
-                            ),
-                          );
-                        }).toList(),
-                      ),
-                    ),
-                  );
+          height: 100,
+          child: ListView.builder(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            itemCount: entries.length,
+            itemBuilder: (context, index) {
+              final entry = entries[index];
+              final assetPath = muscleGroupAssets[entry.key];
+              return _MuscleGroupPill(
+                muscleName: entry.key,
+                exerciseCount: entry.value.length,
+                assetPath: assetPath,
+                isDark: isDark,
+                onTap: () {
+                  HapticService.light();
+                  setState(() {
+                    _expandedSection = entry.key;
+                  });
                 },
               );
             },
@@ -930,102 +747,60 @@ class _NetflixExercisesTabState extends ConsumerState<NetflixExercisesTab> {
     );
   }
 
-  /// Build the Equipment sections - Gravl style (Weights, Bodyweight, Cardio)
-  /// Each section shows 3 exercises stacked vertically with horizontal scroll showing peek of next 3
-  Widget _buildEquipmentSections(
+  /// Build Equipment pills section — matches muscle group pill style
+  Widget _buildEquipmentPillsSection(
     Map<String, List<LibraryExercise>> equipmentGroups,
     bool isDark,
     Color textMuted,
   ) {
     final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final entries = equipmentGroups.entries.toList();
+
+    if (entries.isEmpty) {
+      return const SizedBox.shrink();
+    }
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
-      children: equipmentGroups.entries.map((entry) {
-        final equipmentName = entry.key;
-        final exercises = entry.value;
-
-        // Group exercises into columns of 3 for horizontal scroll
-        final columnCount = (exercises.length / 3).ceil().clamp(1, 10); // Max 10 columns
-
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Section header with arrow
-            GestureDetector(
-              onTap: () {
-                HapticService.light();
-                setState(() => _expandedSection = equipmentName);
-              },
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-                child: Row(
-                  children: [
-                    Text(
-                      equipmentName,
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w700,
-                        color: textPrimary,
-                      ),
-                    ),
-                    const SizedBox(width: 4),
-                    Icon(
-                      Icons.chevron_right,
-                      size: 20,
-                      color: textMuted,
-                    ),
-                  ],
-                ),
-              ),
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+          child: Text(
+            'Equipment',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w700,
+              color: textPrimary,
             ),
+          ),
+        ),
 
-            // Horizontal scroll with 3 exercises stacked vertically per column
-            // Shows peek of NEXT 3 exercises on the right
-            SizedBox(
-              height: 220, // Height for 3 stacked exercise cards
-              child: LayoutBuilder(
-                builder: (context, constraints) {
-                  final screenWidth = constraints.maxWidth;
-                  // Each column takes 85% of screen width, leaving 15% peek of next column
-                  final columnWidth = screenWidth * 0.85;
-
-                  return ListView.builder(
-                    scrollDirection: Axis.horizontal,
-                    padding: const EdgeInsets.only(left: 16),
-                    itemCount: columnCount,
-                    itemBuilder: (context, columnIndex) {
-                      final startIdx = columnIndex * 3;
-                      final endIdx = (startIdx + 3).clamp(0, exercises.length);
-                      final columnExercises = exercises.sublist(startIdx, endIdx);
-
-                      return SizedBox(
-                        width: columnWidth,
-                        child: Padding(
-                          padding: const EdgeInsets.only(right: 12),
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: columnExercises.map((exercise) {
-                              return Padding(
-                                padding: const EdgeInsets.only(bottom: 6),
-                                child: _EquipmentExerciseCard(
-                                  exercise: exercise,
-                                  isDark: isDark,
-                                  onTap: () => _showExerciseDetail(exercise),
-                                ),
-                              );
-                            }).toList(),
-                          ),
-                        ),
-                      );
-                    },
-                  );
+        // Horizontal scroll of circular equipment pills
+        SizedBox(
+          height: 100,
+          child: ListView.builder(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            itemCount: entries.length,
+            itemBuilder: (context, index) {
+              final entry = entries[index];
+              return _EquipmentPill(
+                equipmentName: entry.key,
+                exerciseCount: entry.value.length,
+                isDark: isDark,
+                onTap: () {
+                  HapticService.light();
+                  setState(() {
+                    _expandedSection = entry.key;
+                  });
                 },
-              ),
-            ),
-          ],
-        );
-      }).toList(),
+              );
+            },
+          ),
+        ),
+
+        const SizedBox(height: 8),
+      ],
     );
   }
 
@@ -1085,140 +860,129 @@ class _NetflixExercisesTabState extends ConsumerState<NetflixExercisesTab> {
     );
   }
 
-  /// Samsung-style bottom search bar with inline text field and add button
+  /// Inline search bar with text field and AI toggle
   Widget _buildSamsungSearchBar(
     BuildContext context,
     bool isDark,
     Color accentColor,
     Color textMuted,
   ) {
-    final orange = isDark ? AppColors.orange : AppColorsLight.orange;
-
-    return SizedBox(
-      width: MediaQuery.of(context).size.width - 32,
-      child: ClipRRect(
+    return Container(
+      height: 56,
+      padding: const EdgeInsets.symmetric(horizontal: 12),
+      decoration: BoxDecoration(
+        color: isDark
+            ? Colors.grey.shade900
+            : Colors.grey.shade200,
         borderRadius: BorderRadius.circular(32),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 25, sigmaY: 25),
-          child: Container(
-            height: 56,
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-            decoration: BoxDecoration(
-              color: isDark
-                  ? Colors.grey.shade900.withValues(alpha: 0.85)
-                  : Colors.grey.shade200.withValues(alpha: 0.9),
-              borderRadius: BorderRadius.circular(32),
-            ),
-            child: Row(
-              children: [
-                Icon(
-                  Icons.search_rounded,
-                  color: isDark ? Colors.white70 : Colors.black54,
-                  size: 22,
+      ),
+      child: Row(
+        children: [
+          Icon(
+            Icons.search_rounded,
+            color: isDark ? Colors.white70 : Colors.black54,
+            size: 22,
+          ),
+          const SizedBox(width: 10),
+          // Inline search field (always visible)
+          Expanded(
+            child: TextField(
+              controller: _searchController,
+              focusNode: _searchFocusNode,
+              onChanged: _onSearchChanged,
+              cursorColor: accentColor,
+              style: TextStyle(
+                color: isDark ? Colors.white : Colors.black87,
+                fontSize: 15,
+              ),
+              decoration: InputDecoration(
+                hintText: _useSmartSearch
+                    ? 'AI search (e.g. "something for chest")'
+                    : 'Search exercises...',
+                hintStyle: TextStyle(
+                  color: textMuted.withValues(alpha: 0.6),
+                  fontSize: 15,
                 ),
-                const SizedBox(width: 10),
-                // Inline search field (always visible)
-                Expanded(
-                  child: TextField(
-                    controller: _searchController,
-                    focusNode: _searchFocusNode,
-                    onChanged: _onSearchChanged,
-                    cursorColor: accentColor,
-                    style: TextStyle(
-                      color: isDark ? Colors.white : Colors.black87,
-                      fontSize: 15,
-                    ),
-                    decoration: InputDecoration(
-                      hintText: _useSmartSearch
-                          ? 'AI search (e.g. "something for chest")'
-                          : 'Search exercises...',
-                      hintStyle: TextStyle(
-                        color: textMuted.withValues(alpha: 0.6),
-                        fontSize: 15,
-                      ),
-                      border: InputBorder.none,
-                      enabledBorder: InputBorder.none,
-                      focusedBorder: InputBorder.none,
-                      filled: false,
-                      contentPadding: EdgeInsets.zero,
-                      isDense: true,
-                    ),
-                  ),
-                ),
-                // Clear button when searching
-                if (_searchController.text.isNotEmpty)
-                  GestureDetector(
-                    onTap: () {
-                      HapticService.light();
-                      _cancelToken?.cancel();
-                      _debounceTimer?.cancel();
-                      setState(() {
-                        _searchController.clear();
-                        _smartSearchResults = [];
-                        _isSmartSearching = false;
-                        _searchCorrection = null;
-                        _searchTimeMs = null;
-                      });
-                    },
-                    child: Padding(
-                      padding: const EdgeInsets.only(right: 8),
-                      child: Icon(
-                        Icons.close_rounded,
-                        color: textMuted,
-                        size: 18,
-                      ),
-                    ),
-                  ),
-                // AI toggle button
-                GestureDetector(
-                  onTap: () {
-                    HapticFeedback.lightImpact();
-                    setState(() {
-                      _useSmartSearch = !_useSmartSearch;
-                      _searchCorrection = null;
-                      _searchTimeMs = null;
-                      _smartSearchResults = [];
-                      _isSmartSearching = false;
-                    });
-                    // Re-trigger search with new mode
-                    final query = _searchController.text;
-                    if (query.length >= 2) {
-                      if (_useSmartSearch) {
-                        _debounceTimer?.cancel();
-                        setState(() => _isSmartSearching = true);
-                        _debounceTimer = Timer(const Duration(milliseconds: 100), () {
-                          _performSmartSearch(query);
-                        });
-                      } else {
-                        setState(() {}); // Triggers client-side rebuild
-                      }
-                    }
-                  },
-                  child: Padding(
-                    padding: const EdgeInsets.only(right: 8),
-                    child: Container(
-                      width: 32,
-                      height: 32,
-                      decoration: BoxDecoration(
-                        color: _useSmartSearch
-                            ? (isDark ? AppColors.cyan : AppColorsLight.cyan).withValues(alpha: 0.2)
-                            : Colors.transparent,
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      child: Icon(
-                        Icons.auto_awesome,
-                        color: _useSmartSearch
-                            ? (isDark ? AppColors.cyan : AppColorsLight.cyan)
-                            : textMuted,
-                        size: 18,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
+                border: InputBorder.none,
+                enabledBorder: InputBorder.none,
+                focusedBorder: InputBorder.none,
+                filled: false,
+                contentPadding: EdgeInsets.zero,
+                isDense: true,
+              ),
             ),
           ),
-        ),
+          // Clear button when searching
+          if (_searchController.text.isNotEmpty)
+            GestureDetector(
+              onTap: () {
+                HapticService.light();
+                _cancelToken?.cancel();
+                _debounceTimer?.cancel();
+                setState(() {
+                  _searchController.clear();
+                  _smartSearchResults = [];
+                  _isSmartSearching = false;
+                  _searchCorrection = null;
+                  _searchTimeMs = null;
+                });
+              },
+              child: Padding(
+                padding: const EdgeInsets.only(right: 8),
+                child: Icon(
+                  Icons.close_rounded,
+                  color: textMuted,
+                  size: 18,
+                ),
+              ),
+            ),
+          // AI toggle button
+          GestureDetector(
+            onTap: () {
+              HapticFeedback.lightImpact();
+              setState(() {
+                _useSmartSearch = !_useSmartSearch;
+                _searchCorrection = null;
+                _searchTimeMs = null;
+                _smartSearchResults = [];
+                _isSmartSearching = false;
+              });
+              // Re-trigger search with new mode
+              final query = _searchController.text;
+              if (query.length >= 2) {
+                if (_useSmartSearch) {
+                  _debounceTimer?.cancel();
+                  setState(() => _isSmartSearching = true);
+                  _debounceTimer = Timer(const Duration(milliseconds: 100), () {
+                    _performSmartSearch(query);
+                  });
+                } else {
+                  setState(() {}); // Triggers client-side rebuild
+                }
+              }
+            },
+            child: Padding(
+              padding: const EdgeInsets.only(right: 8),
+              child: Container(
+                width: 32,
+                height: 32,
+                decoration: BoxDecoration(
+                  color: _useSmartSearch
+                      ? (isDark ? AppColors.cyan : AppColorsLight.cyan).withValues(alpha: 0.2)
+                      : Colors.transparent,
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Icon(
+                  Icons.auto_awesome,
+                  color: _useSmartSearch
+                      ? (isDark ? AppColors.cyan : AppColorsLight.cyan)
+                      : textMuted,
+                  size: 18,
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -1287,348 +1051,6 @@ class _NetflixExercisesTabState extends ConsumerState<NetflixExercisesTab> {
   }
 }
 
-/// Exercise carousel section (Netflix style)
-class _ExerciseCarouselSection extends StatelessWidget {
-  final String title;
-  final List<LibraryExercise> exercises;
-  final bool isFeatured;
-  final bool isDark;
-  final bool showCount;
-  final Function(LibraryExercise) onExerciseTap;
-  final VoidCallback onViewAll;
-
-  /// Maximum items to show in carousel before "View All"
-  static const int _carouselLimit = 10;
-
-  const _ExerciseCarouselSection({
-    required this.title,
-    required this.exercises,
-    required this.isFeatured,
-    required this.isDark,
-    this.showCount = true,
-    required this.onExerciseTap,
-    required this.onViewAll,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    final accentColor = isDark ? AppColors.cyan : AppColorsLight.cyan;
-    final cardHeight = isFeatured ? 180.0 : 150.0;
-    final showViewAll = exercises.length > _carouselLimit;
-    final displayExercises = showViewAll ? exercises.take(_carouselLimit).toList() : exercises;
-
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 24),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Section title with View All
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
-            child: Row(
-              children: [
-                if (isFeatured) ...[
-                  Icon(Icons.star, color: AppColors.yellow, size: 18),
-                  const SizedBox(width: 8),
-                ],
-                Expanded(
-                  child: Text(
-                    title,
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                      color: isDark ? AppColors.textPrimary : AppColorsLight.textPrimary,
-                    ),
-                  ),
-                ),
-                GestureDetector(
-                  onTap: onViewAll,
-                  child: Row(
-                    children: [
-                      if (showCount) ...[
-                        Text(
-                          '${exercises.length}',
-                          style: TextStyle(
-                            fontSize: 13,
-                            color: textMuted,
-                          ),
-                        ),
-                        const SizedBox(width: 4),
-                      ],
-                      Icon(
-                        Icons.chevron_right,
-                        size: 20,
-                        color: accentColor,
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-          // Horizontal carousel with visible peek of next cards
-          SizedBox(
-            height: cardHeight,
-            child: LayoutBuilder(
-              builder: (context, constraints) {
-                final screenWidth = constraints.maxWidth;
-                // Card width: show ~2.5 cards so next one peeks (40% each)
-                final cardWidth = isFeatured
-                    ? screenWidth * 0.65  // Featured: wider cards, show ~1.5
-                    : screenWidth * 0.35; // Compact: narrower, show ~2.8
-
-                return ListView.builder(
-                  scrollDirection: Axis.horizontal,
-                  padding: const EdgeInsets.only(left: 16),
-                  itemCount: displayExercises.length + (showViewAll ? 1 : 0),
-                  itemBuilder: (context, index) {
-                    // "View All" card at the end
-                    if (showViewAll && index == displayExercises.length) {
-                      return Padding(
-                        padding: const EdgeInsets.only(right: 16),
-                        child: _ViewAllCard(
-                          count: exercises.length - _carouselLimit,
-                          isDark: isDark,
-                          onTap: onViewAll,
-                          height: cardHeight,
-                        ),
-                      );
-                    }
-
-                    final exercise = displayExercises[index];
-                    return SizedBox(
-                      width: cardWidth,
-                      child: Padding(
-                        padding: const EdgeInsets.only(right: 10),
-                        child: isFeatured
-                            ? _FeaturedExerciseCard(
-                                exercise: exercise,
-                                isDark: isDark,
-                                onTap: () => onExerciseTap(exercise),
-                              )
-                            : _CompactExerciseCard(
-                                exercise: exercise,
-                                isDark: isDark,
-                                onTap: () => onExerciseTap(exercise),
-                              ),
-                      ),
-                    );
-                  },
-                );
-              },
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-/// "View All" card at the end of carousel
-class _ViewAllCard extends StatelessWidget {
-  final int count;
-  final bool isDark;
-  final VoidCallback onTap;
-  final double height;
-
-  const _ViewAllCard({
-    required this.count,
-    required this.isDark,
-    required this.onTap,
-    required this.height,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final cardBg = isDark ? AppColors.elevated : AppColorsLight.elevated;
-    final borderColor = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
-    final accentColor = isDark ? AppColors.cyan : AppColorsLight.cyan;
-    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: 100,
-        height: height,
-        decoration: BoxDecoration(
-          color: cardBg,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: borderColor),
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                color: accentColor.withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Icon(
-                Icons.arrow_forward_rounded,
-                color: accentColor,
-                size: 22,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              '+$count more',
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-                color: textPrimary,
-              ),
-            ),
-            const SizedBox(height: 2),
-            Text(
-              'View All',
-              style: TextStyle(
-                fontSize: 11,
-                color: accentColor,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-/// Compact exercise card for non-featured sections
-class _CompactExerciseCard extends StatelessWidget {
-  final LibraryExercise exercise;
-  final bool isDark;
-  final VoidCallback onTap;
-
-  const _CompactExerciseCard({
-    required this.exercise,
-    required this.isDark,
-    required this.onTap,
-  });
-
-  Color _getDifficultyColor(String? difficulty) {
-    switch (difficulty?.toLowerCase()) {
-      case 'beginner':
-        return AppColors.green;
-      case 'intermediate':
-        return AppColors.yellow;
-      case 'advanced':
-        return AppColors.orange;
-      default:
-        return AppColors.green;
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final cardBg = isDark ? AppColors.elevated : AppColorsLight.elevated;
-    final borderColor = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
-    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    final difficultyColor = _getDifficultyColor(exercise.difficulty);
-
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: 130, // Narrower for peek effect
-        decoration: BoxDecoration(
-          color: cardBg,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: borderColor),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Image area
-            Expanded(
-              child: Container(
-                width: double.infinity,
-                decoration: BoxDecoration(
-                  borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [
-                      difficultyColor.withValues(alpha: 0.3),
-                      difficultyColor.withValues(alpha: 0.5),
-                    ],
-                  ),
-                ),
-                child: Stack(
-                  children: [
-                    Center(
-                      child: Icon(
-                        Icons.fitness_center,
-                        size: 32,
-                        color: difficultyColor,
-                      ),
-                    ),
-                    // Body part badge
-                    if (exercise.bodyPart != null)
-                      Positioned(
-                        top: 6,
-                        left: 6,
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                          decoration: BoxDecoration(
-                            color: Colors.black.withValues(alpha: 0.5),
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                          child: Text(
-                            exercise.bodyPart!,
-                            style: const TextStyle(
-                              fontSize: 9,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.white,
-                            ),
-                          ),
-                        ),
-                      ),
-                  ],
-                ),
-              ),
-            ),
-            // Info
-            Padding(
-              padding: const EdgeInsets.all(8),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    exercise.name,
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: textPrimary,
-                    ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    exercise.equipment.isNotEmpty
-                        ? exercise.equipment.first
-                        : 'Bodyweight',
-                    style: TextStyle(
-                      fontSize: 10,
-                      color: textMuted,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
 /// Exercise list card (for search results)
 class _ExerciseListCard extends StatelessWidget {
   final LibraryExercise exercise;
@@ -1676,19 +1098,39 @@ class _ExerciseListCard extends StatelessWidget {
         ),
         child: Row(
           children: [
-            // Icon
+            // Exercise image or fallback icon
             Container(
               width: 48,
               height: 48,
+              clipBehavior: Clip.hardEdge,
               decoration: BoxDecoration(
                 color: difficultyColor.withValues(alpha: 0.2),
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: Icon(
-                Icons.fitness_center,
-                color: difficultyColor,
-                size: 24,
-              ),
+              child: exercise.imageUrl != null && exercise.imageUrl!.isNotEmpty
+                  ? CachedNetworkImage(
+                      imageUrl: exercise.imageUrl!,
+                      fit: BoxFit.cover,
+                      width: 48,
+                      height: 48,
+                      memCacheWidth: 96,
+                      memCacheHeight: 96,
+                      placeholder: (_, __) => Icon(
+                        Icons.fitness_center,
+                        color: difficultyColor,
+                        size: 24,
+                      ),
+                      errorWidget: (_, __, ___) => Icon(
+                        Icons.fitness_center,
+                        color: difficultyColor,
+                        size: 24,
+                      ),
+                    )
+                  : Icon(
+                      Icons.fitness_center,
+                      color: difficultyColor,
+                      size: 24,
+                    ),
             ),
             const SizedBox(width: 12),
             // Info
@@ -1764,266 +1206,18 @@ class _ExerciseListCard extends StatelessWidget {
   }
 }
 
-/// Featured exercise card (horizontal carousel)
-class _FeaturedExerciseCard extends StatelessWidget {
-  final LibraryExercise exercise;
-  final bool isDark;
-  final VoidCallback onTap;
-
-  const _FeaturedExerciseCard({
-    required this.exercise,
-    required this.isDark,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: 240, // Narrower for peek effect
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(12),
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              Colors.grey.shade400,
-              Colors.grey.shade600,
-            ],
-          ),
-        ),
-        child: Stack(
-          children: [
-            // Category badge
-            Positioned(
-              top: 12,
-              left: 12,
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                decoration: BoxDecoration(
-                  color: Colors.black.withValues(alpha: 0.5),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Text(
-                  exercise.bodyPart ?? 'Exercise',
-                  style: const TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.white,
-                  ),
-                ),
-              ),
-            ),
-            // Exercise info at bottom
-            Positioned(
-              left: 12,
-              right: 12,
-              bottom: 12,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    exercise.name,
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  if (exercise.equipment.isNotEmpty) ...[
-                    const SizedBox(height: 4),
-                    Row(
-                      children: [
-                        const Icon(Icons.fitness_center, size: 12, color: Colors.white70),
-                        const SizedBox(width: 4),
-                        Expanded(
-                          child: Text(
-                            exercise.equipment.join(', '),
-                            style: const TextStyle(
-                              fontSize: 12,
-                              color: Colors.white70,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-/// Muscle anatomy card with body silhouette and highlighted muscle area
-/// Gravl-style design showing muscle group with progress count
-/// Full-width card for stacked vertical layout with chevron
-class _MuscleAnatomyCard extends StatelessWidget {
+/// Circular muscle group pill — image on top, label below.
+class _MuscleGroupPill extends StatelessWidget {
   final String muscleName;
   final int exerciseCount;
-  final int completedCount;
+  final String? assetPath;
   final bool isDark;
-  final String? muscleAssetPath;
   final VoidCallback onTap;
 
-  const _MuscleAnatomyCard({
+  const _MuscleGroupPill({
     required this.muscleName,
     required this.exerciseCount,
-    required this.completedCount,
-    required this.isDark,
-    this.muscleAssetPath,
-    required this.onTap,
-  });
-
-  // Get muscle highlight color
-  Color _getMuscleColor() {
-    switch (muscleName.toLowerCase()) {
-      case 'chest':
-        return const Color(0xFFEF4444); // Red
-      case 'back':
-        return const Color(0xFF3B82F6); // Blue
-      case 'shoulders':
-        return const Color(0xFFA855F7); // Purple
-      case 'arms':
-        return const Color(0xFF22C55E); // Green
-      case 'legs':
-        return const Color(0xFFF97316); // Orange
-      case 'core':
-        return const Color(0xFFEAB308); // Yellow
-      case 'glutes':
-        return const Color(0xFFEC4899); // Pink
-      case 'cardio':
-        return const Color(0xFF06B6D4); // Cyan
-      default:
-        return const Color(0xFF6B7280); // Gray
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    final borderColor = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
-    final muscleColor = _getMuscleColor();
-
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        height: 66, // Compact height for 3 cards stacked
-        decoration: BoxDecoration(
-          color: isDark ? AppColors.elevated : AppColorsLight.elevated,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: borderColor),
-        ),
-        child: Row(
-          children: [
-            // Left side - Muscle image or silhouette fallback
-            Container(
-              width: 56,
-              clipBehavior: Clip.hardEdge,
-              decoration: BoxDecoration(
-                color: isDark ? Colors.grey.shade900 : Colors.grey.shade100,
-                borderRadius: const BorderRadius.only(
-                  topLeft: Radius.circular(12),
-                  bottomLeft: Radius.circular(12),
-                ),
-              ),
-              child: muscleAssetPath != null && muscleAssetPath!.isNotEmpty
-                  ? Image.asset(
-                      muscleAssetPath!,
-                      fit: BoxFit.cover,
-                      width: 56,
-                      height: 66,
-                      cacheWidth: 112,
-                      cacheHeight: 132,
-                      errorBuilder: (context, error, stack) => Center(
-                        child: CustomPaint(
-                          size: const Size(36, 48),
-                          painter: _BodySilhouettePainter(
-                            bodyColor: isDark
-                                ? Colors.grey.shade700
-                                : Colors.grey.shade400,
-                            highlightColor: muscleColor,
-                            highlightMuscle: muscleName.toLowerCase(),
-                          ),
-                        ),
-                      ),
-                    )
-                  : Center(
-                      child: CustomPaint(
-                        size: const Size(36, 48),
-                        painter: _BodySilhouettePainter(
-                          bodyColor: isDark
-                              ? Colors.grey.shade700
-                              : Colors.grey.shade400,
-                          highlightColor: muscleColor,
-                          highlightMuscle: muscleName.toLowerCase(),
-                        ),
-                      ),
-                    ),
-            ),
-
-            // Middle - Muscle name and count
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      muscleName,
-                      style: TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w600,
-                        color: textPrimary,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      '$completedCount/$exerciseCount',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: textMuted,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-
-            // Right side - Chevron
-            Padding(
-              padding: const EdgeInsets.only(right: 12),
-              child: Icon(
-                Icons.chevron_right,
-                color: textMuted,
-                size: 20,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-/// Equipment exercise card - compact card for equipment section horizontal scroll
-class _EquipmentExerciseCard extends StatelessWidget {
-  final LibraryExercise exercise;
-  final bool isDark;
-  final VoidCallback onTap;
-
-  const _EquipmentExerciseCard({
-    required this.exercise,
+    this.assetPath,
     required this.isDark,
     required this.onTap,
   });
@@ -2032,281 +1226,177 @@ class _EquipmentExerciseCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    final borderColor = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
-    final primaryMuscle = exercise.targetMuscle ?? exercise.bodyPart ?? '';
+    final bgColor = isDark ? Colors.grey.shade900 : Colors.grey.shade100;
 
     return GestureDetector(
       onTap: onTap,
-      child: Container(
-        height: 66, // Same height as muscle cards
-        decoration: BoxDecoration(
-          color: isDark ? AppColors.elevated : AppColorsLight.elevated,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: borderColor),
-        ),
-        child: Row(
-          children: [
-            // Left side - Exercise image or icon fallback
-            Container(
-              width: 56,
-              clipBehavior: Clip.hardEdge,
-              decoration: BoxDecoration(
-                color: isDark ? Colors.grey.shade900 : Colors.grey.shade100,
-                borderRadius: const BorderRadius.only(
-                  topLeft: Radius.circular(12),
-                  bottomLeft: Radius.circular(12),
+      child: Padding(
+        padding: const EdgeInsets.only(right: 16),
+        child: SizedBox(
+          width: 64,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Circular image
+              Container(
+                width: 60,
+                height: 60,
+                clipBehavior: Clip.hardEdge,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: bgColor,
+                  border: Border.all(
+                    color: isDark ? AppColors.cardBorder : AppColorsLight.cardBorder,
+                  ),
                 ),
-              ),
-              child: exercise.imageUrl != null && exercise.imageUrl!.isNotEmpty
-                  ? CachedNetworkImage(
-                      imageUrl: exercise.imageUrl!,
-                      cacheKey: 'ex_${exercise.name}',
-                      fit: BoxFit.cover,
-                      width: 56,
-                      height: 66,
-                      memCacheWidth: 112,
-                      memCacheHeight: 132,
-                      placeholder: (context, url) => Center(
-                        child: Icon(
+                child: assetPath != null
+                    ? Image.asset(
+                        assetPath!,
+                        fit: BoxFit.cover,
+                        cacheWidth: 120,
+                        cacheHeight: 120,
+                        errorBuilder: (_, __, ___) => Icon(
                           Icons.fitness_center,
                           size: 24,
                           color: textMuted,
                         ),
-                      ),
-                      errorWidget: (context, url, error) => Center(
-                        child: Icon(
-                          Icons.fitness_center,
-                          size: 24,
-                          color: textMuted,
-                        ),
-                      ),
-                    )
-                  : Center(
-                      child: Icon(
+                      )
+                    : Icon(
                         Icons.fitness_center,
                         size: 24,
                         color: textMuted,
                       ),
-                    ),
-            ),
-
-            // Middle - Exercise name and muscle
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      exercise.name,
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: textPrimary,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    if (primaryMuscle.isNotEmpty) ...[
-                      const SizedBox(height: 2),
-                      Text(
-                        primaryMuscle,
-                        style: TextStyle(
-                          fontSize: 11,
-                          color: textMuted,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ],
-                  ],
+              ),
+              const SizedBox(height: 6),
+              // Label
+              Text(
+                muscleName,
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  color: textPrimary,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                textAlign: TextAlign.center,
+              ),
+              Text(
+                '$exerciseCount',
+                style: TextStyle(
+                  fontSize: 10,
+                  color: textMuted,
                 ),
               ),
-            ),
-
-            // Right side - Chevron
-            Padding(
-              padding: const EdgeInsets.only(right: 12),
-              child: Icon(
-                Icons.chevron_right,
-                color: textMuted,
-                size: 20,
-              ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
   }
 }
 
-/// Custom painter for body silhouette with highlighted muscle
-class _BodySilhouettePainter extends CustomPainter {
-  final Color bodyColor;
-  final Color highlightColor;
-  final String highlightMuscle;
+/// Circular equipment pill — icon on top, label below. Matches _MuscleGroupPill style.
+class _EquipmentPill extends StatelessWidget {
+  final String equipmentName;
+  final int exerciseCount;
+  final bool isDark;
+  final VoidCallback onTap;
 
-  _BodySilhouettePainter({
-    required this.bodyColor,
-    required this.highlightColor,
-    required this.highlightMuscle,
+  const _EquipmentPill({
+    required this.equipmentName,
+    required this.exerciseCount,
+    required this.isDark,
+    required this.onTap,
   });
 
-  @override
-  void paint(Canvas canvas, Size size) {
-    final bodyPaint = Paint()
-      ..color = bodyColor
-      ..style = PaintingStyle.fill;
+  IconData _getEquipmentIcon(String name) {
+    switch (name) {
+      case 'Weights':
+        return Icons.fitness_center;
+      case 'Bodyweight':
+        return Icons.accessibility_new;
+      case 'Machines':
+        return Icons.precision_manufacturing;
+      case 'Cardio':
+        return Icons.directions_run;
+      default:
+        return Icons.fitness_center;
+    }
+  }
 
-    final highlightPaint = Paint()
-      ..color = highlightColor
-      ..style = PaintingStyle.fill;
-
-    final centerX = size.width / 2;
-    final scale = size.height / 85;
-
-    // Draw body silhouette
-    // Head
-    canvas.drawCircle(
-      Offset(centerX, 8 * scale),
-      6 * scale,
-      bodyPaint,
-    );
-
-    // Neck
-    canvas.drawRect(
-      Rect.fromCenter(
-        center: Offset(centerX, 16 * scale),
-        width: 6 * scale,
-        height: 4 * scale,
-      ),
-      bodyPaint,
-    );
-
-    // Torso (main body)
-    final torsoPath = Path();
-    torsoPath.moveTo(centerX - 18 * scale, 20 * scale); // Left shoulder
-    torsoPath.lineTo(centerX + 18 * scale, 20 * scale); // Right shoulder
-    torsoPath.lineTo(centerX + 14 * scale, 50 * scale); // Right hip
-    torsoPath.lineTo(centerX - 14 * scale, 50 * scale); // Left hip
-    torsoPath.close();
-    canvas.drawPath(torsoPath, bodyPaint);
-
-    // Arms
-    // Left arm
-    canvas.drawRect(
-      Rect.fromLTWH(centerX - 26 * scale, 20 * scale, 8 * scale, 25 * scale),
-      bodyPaint,
-    );
-    // Right arm
-    canvas.drawRect(
-      Rect.fromLTWH(centerX + 18 * scale, 20 * scale, 8 * scale, 25 * scale),
-      bodyPaint,
-    );
-
-    // Legs
-    // Left leg
-    canvas.drawRect(
-      Rect.fromLTWH(centerX - 12 * scale, 50 * scale, 10 * scale, 30 * scale),
-      bodyPaint,
-    );
-    // Right leg
-    canvas.drawRect(
-      Rect.fromLTWH(centerX + 2 * scale, 50 * scale, 10 * scale, 30 * scale),
-      bodyPaint,
-    );
-
-    // Draw highlighted muscle area
-    switch (highlightMuscle) {
-      case 'chest':
-        // Chest area
-        final chestPath = Path();
-        chestPath.moveTo(centerX - 14 * scale, 22 * scale);
-        chestPath.lineTo(centerX + 14 * scale, 22 * scale);
-        chestPath.lineTo(centerX + 12 * scale, 35 * scale);
-        chestPath.lineTo(centerX - 12 * scale, 35 * scale);
-        chestPath.close();
-        canvas.drawPath(chestPath, highlightPaint);
-        break;
-
-      case 'back':
-        // Back area (full torso highlight for back view representation)
-        final backPath = Path();
-        backPath.moveTo(centerX - 16 * scale, 20 * scale);
-        backPath.lineTo(centerX + 16 * scale, 20 * scale);
-        backPath.lineTo(centerX + 14 * scale, 48 * scale);
-        backPath.lineTo(centerX - 14 * scale, 48 * scale);
-        backPath.close();
-        canvas.drawPath(backPath, highlightPaint);
-        break;
-
-      case 'shoulders':
-        // Shoulder areas
-        canvas.drawCircle(Offset(centerX - 16 * scale, 22 * scale), 5 * scale, highlightPaint);
-        canvas.drawCircle(Offset(centerX + 16 * scale, 22 * scale), 5 * scale, highlightPaint);
-        break;
-
-      case 'arms':
-        // Arm areas
-        canvas.drawRect(
-          Rect.fromLTWH(centerX - 26 * scale, 20 * scale, 8 * scale, 25 * scale),
-          highlightPaint,
-        );
-        canvas.drawRect(
-          Rect.fromLTWH(centerX + 18 * scale, 20 * scale, 8 * scale, 25 * scale),
-          highlightPaint,
-        );
-        break;
-
-      case 'legs':
-        // Leg areas
-        canvas.drawRect(
-          Rect.fromLTWH(centerX - 12 * scale, 50 * scale, 10 * scale, 30 * scale),
-          highlightPaint,
-        );
-        canvas.drawRect(
-          Rect.fromLTWH(centerX + 2 * scale, 50 * scale, 10 * scale, 30 * scale),
-          highlightPaint,
-        );
-        break;
-
-      case 'core':
-        // Core/abs area
-        final corePath = Path();
-        corePath.moveTo(centerX - 10 * scale, 35 * scale);
-        corePath.lineTo(centerX + 10 * scale, 35 * scale);
-        corePath.lineTo(centerX + 10 * scale, 48 * scale);
-        corePath.lineTo(centerX - 10 * scale, 48 * scale);
-        corePath.close();
-        canvas.drawPath(corePath, highlightPaint);
-        break;
-
-      case 'glutes':
-        // Glute area (hip/lower back region)
-        canvas.drawOval(
-          Rect.fromCenter(
-            center: Offset(centerX, 52 * scale),
-            width: 24 * scale,
-            height: 10 * scale,
-          ),
-          highlightPaint,
-        );
-        break;
-
-      case 'cardio':
-        // Heart/cardio area
-        canvas.drawCircle(
-          Offset(centerX, 30 * scale),
-          8 * scale,
-          highlightPaint,
-        );
-        break;
+  Color _getEquipmentColor(String name, bool isDark) {
+    switch (name) {
+      case 'Weights':
+        return isDark ? AppColors.orange : AppColorsLight.orange;
+      case 'Bodyweight':
+        return isDark ? AppColors.green : AppColorsLight.green;
+      case 'Machines':
+        return isDark ? AppColors.cyan : AppColorsLight.cyan;
+      case 'Cardio':
+        return AppColors.yellow;
+      default:
+        return isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     }
   }
 
   @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+  Widget build(BuildContext context) {
+    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final iconColor = _getEquipmentColor(equipmentName, isDark);
+
+    return GestureDetector(
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.only(right: 16),
+        child: SizedBox(
+          width: 64,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Circular icon
+              Container(
+                width: 60,
+                height: 60,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: iconColor.withValues(alpha: 0.15),
+                  border: Border.all(
+                    color: isDark ? AppColors.cardBorder : AppColorsLight.cardBorder,
+                  ),
+                ),
+                child: Icon(
+                  _getEquipmentIcon(equipmentName),
+                  size: 26,
+                  color: iconColor,
+                ),
+              ),
+              const SizedBox(height: 6),
+              // Label
+              Text(
+                equipmentName,
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  color: textPrimary,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                textAlign: TextAlign.center,
+              ),
+              Text(
+                '$exerciseCount',
+                style: TextStyle(
+                  fontSize: 10,
+                  color: textMuted,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 /// Card widget for Gravl Split Preset

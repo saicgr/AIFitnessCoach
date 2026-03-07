@@ -5,6 +5,7 @@ ENDPOINTS:
 - GET  /api/v1/nutrition/food-logs/{user_id} - List food logs for a user
 - GET  /api/v1/nutrition/food-logs/{user_id}/{log_id} - Get a specific food log
 - DELETE /api/v1/nutrition/food-logs/{log_id} - Delete a food log
+- PUT  /api/v1/nutrition/food-logs/{log_id} - Update food log macros/weight
 - GET  /api/v1/nutrition/summary/daily/{user_id} - Get daily nutrition summary
 - GET  /api/v1/nutrition/summary/weekly/{user_id} - Get weekly nutrition summary
 - GET  /api/v1/nutrition/targets/{user_id} - Get user's nutrition targets
@@ -523,6 +524,54 @@ async def delete_food_log(log_id: str, current_user: dict = Depends(get_current_
         raise
     except Exception as e:
         logger.error(f"Failed to delete food log: {e}")
+        raise safe_internal_error(e, "nutrition")
+
+
+class UpdateFoodLogRequest(BaseModel):
+    total_calories: int
+    protein_g: float
+    carbs_g: float
+    fat_g: float
+    fiber_g: Optional[float] = None
+    weight_g: Optional[float] = None
+    portion_multiplier: Optional[float] = None
+
+
+@router.put("/food-logs/{log_id}")
+async def update_food_log(log_id: str, body: UpdateFoodLogRequest, current_user: dict = Depends(get_current_user)):
+    """Update macros/weight on an existing food log (e.g. after portion adjustment)."""
+    user_id = current_user.get("id") or current_user.get("sub")
+    logger.info(f"Updating food log {log_id} for user {user_id}")
+
+    try:
+        db = get_supabase_db()
+        updated = db.update_food_log(
+            log_id=log_id,
+            user_id=user_id,
+            total_calories=body.total_calories,
+            protein_g=body.protein_g,
+            carbs_g=body.carbs_g,
+            fat_g=body.fat_g,
+            fiber_g=body.fiber_g,
+            weight_g=body.weight_g,
+        )
+
+        if not updated:
+            raise HTTPException(status_code=404, detail="Food log not found or not owned by user")
+
+        return {
+            "status": "updated",
+            "id": log_id,
+            "total_calories": updated.get("total_calories"),
+            "protein_g": updated.get("protein_g"),
+            "carbs_g": updated.get("carbs_g"),
+            "fat_g": updated.get("fat_g"),
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to update food log: {e}")
         raise safe_internal_error(e, "nutrition")
 
 

@@ -8,6 +8,7 @@ import '../../data/services/api_client.dart';
 import '../../data/services/food_search_service.dart';
 import 'widgets/food_report_dialog.dart';
 import 'widgets/food_search_bar.dart';
+import 'widgets/portion_amount_input.dart';
 
 /// Smart food history screen with search, frequently eaten, and date-grouped logs.
 class FoodHistoryScreen extends ConsumerStatefulWidget {
@@ -280,6 +281,53 @@ class _FoodHistoryScreenState extends ConsumerState<FoodHistoryScreen> {
     }
   }
 
+  void _editFoodLog(FoodLog log) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => _EditFoodLogSheet(
+        log: log,
+        isDark: isDark,
+        onSave: (multiplier) async {
+          final repo = ref.read(nutritionRepositoryProvider);
+          try {
+            await repo.updateFoodLog(
+              logId: log.id,
+              totalCalories: (log.totalCalories * multiplier).round(),
+              proteinG: log.proteinG * multiplier,
+              carbsG: log.carbsG * multiplier,
+              fatG: log.fatG * multiplier,
+              fiberG: log.fiberG != null ? log.fiberG! * multiplier : null,
+              portionMultiplier: multiplier,
+            );
+            if (!mounted) return;
+            Navigator.of(ctx).pop();
+            _loadData();
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(
+                  'Updated to ${(multiplier * 100).round()}% portion',
+                ),
+                behavior: SnackBarBehavior.floating,
+                duration: const Duration(seconds: 2),
+              ),
+            );
+          } catch (e) {
+            if (!mounted) return;
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Failed to update food log'),
+                behavior: SnackBarBehavior.floating,
+              ),
+            );
+          }
+        },
+      ),
+    );
+  }
+
   String _getMealEmoji(String mealType) {
     switch (mealType) {
       case 'breakfast':
@@ -442,6 +490,7 @@ class _FoodHistoryScreenState extends ConsumerState<FoodHistoryScreen> {
                             onLoadMore: _loadMore,
                             onRelogSavedFood: _relogSavedFood,
                             onRelogFoodLog: _relogFoodLog,
+                            onEditFoodLog: _editFoodLog,
                             onDeleteFoodLog: _deleteFoodLog,
                             getMealEmoji: _getMealEmoji,
                             textPrimary: textPrimary,
@@ -1097,6 +1146,7 @@ class _HistoryListView extends StatelessWidget {
   final VoidCallback onLoadMore;
   final Function(SavedFood) onRelogSavedFood;
   final Function(FoodLog) onRelogFoodLog;
+  final Function(FoodLog) onEditFoodLog;
   final Function(FoodLog) onDeleteFoodLog;
   final String Function(String) getMealEmoji;
   final Color textPrimary;
@@ -1118,6 +1168,7 @@ class _HistoryListView extends StatelessWidget {
     required this.onLoadMore,
     required this.onRelogSavedFood,
     required this.onRelogFoodLog,
+    required this.onEditFoodLog,
     required this.onDeleteFoodLog,
     required this.getMealEmoji,
     required this.textPrimary,
@@ -1267,7 +1318,7 @@ class _HistoryListView extends StatelessWidget {
                     cardBorder: cardBorder,
                     teal: teal,
                     getMealEmoji: getMealEmoji,
-                    onTap: () => onRelogFoodLog(log),
+                    onTap: () => onEditFoodLog(log),
                     onDismissed: () => onDeleteFoodLog(log),
                     apiClient: apiClient,
                   )),
@@ -1639,6 +1690,159 @@ class _ErrorState extends StatelessWidget {
               style: TextStyle(color: teal, fontWeight: FontWeight.w600),
             ),
           ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─── Edit Food Log Sheet ────────────────────────────────────────────────────
+
+class _EditFoodLogSheet extends StatefulWidget {
+  final FoodLog log;
+  final bool isDark;
+  final Future<void> Function(double multiplier) onSave;
+
+  const _EditFoodLogSheet({
+    required this.log,
+    required this.isDark,
+    required this.onSave,
+  });
+
+  @override
+  State<_EditFoodLogSheet> createState() => _EditFoodLogSheetState();
+}
+
+class _EditFoodLogSheetState extends State<_EditFoodLogSheet> {
+  double _multiplier = 1.0;
+  bool _saving = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final textPrimary = widget.isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textMuted = widget.isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final teal = widget.isDark ? AppColors.teal : AppColorsLight.teal;
+    final bg = widget.isDark ? AppColors.elevated : AppColorsLight.elevated;
+
+    final foodName = widget.log.foodItems.isNotEmpty
+        ? widget.log.foodItems.first.name
+        : widget.log.mealType;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      padding: EdgeInsets.only(
+        bottom: MediaQuery.of(context).viewInsets.bottom + 16,
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Drag handle
+          Container(
+            margin: const EdgeInsets.only(top: 12),
+            width: 40,
+            height: 4,
+            decoration: BoxDecoration(
+              color: textMuted.withValues(alpha: 0.3),
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+
+          // Header
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 16, 20, 4),
+            child: Row(
+              children: [
+                Icon(Icons.edit_outlined, color: teal, size: 22),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Edit Portion',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: textPrimary,
+                        ),
+                      ),
+                      Text(
+                        foodName,
+                        style: TextStyle(fontSize: 13, color: textMuted),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 8),
+
+          // Portion input
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: PortionAmountInput(
+              initialMultiplier: 1.0,
+              baseCalories: widget.log.totalCalories,
+              baseProtein: widget.log.proteinG,
+              baseCarbs: widget.log.carbsG,
+              baseFat: widget.log.fatG,
+              isDark: widget.isDark,
+              onMultiplierChanged: (m) => setState(() => _multiplier = m),
+            ),
+          ),
+
+          const SizedBox(height: 16),
+
+          // Save button
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: SizedBox(
+              width: double.infinity,
+              height: 48,
+              child: ElevatedButton(
+                onPressed: _saving
+                    ? null
+                    : () async {
+                        setState(() => _saving = true);
+                        await widget.onSave(_multiplier);
+                        if (mounted) setState(() => _saving = false);
+                      },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: teal,
+                  foregroundColor: Colors.white,
+                  disabledBackgroundColor: teal.withValues(alpha: 0.4),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                ),
+                child: _saving
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
+                      )
+                    : const Text(
+                        'Save Changes',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+              ),
+            ),
+          ),
+
+          const SizedBox(height: 8),
         ],
       ),
     );

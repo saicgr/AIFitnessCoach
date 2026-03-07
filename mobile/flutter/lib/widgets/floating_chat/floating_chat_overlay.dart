@@ -145,12 +145,11 @@ class _ChatBottomSheetState extends ConsumerState<_ChatBottomSheet> {
 
   void _scrollToBottom({bool animate = true}) {
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (_scrollController.hasClients) {
-        final maxScroll = _scrollController.position.maxScrollExtent;
+      if (_scrollController.hasClients && _scrollController.offset > 0) {
         if (animate) {
-          _scrollController.animateTo(maxScroll, duration: const Duration(milliseconds: 300), curve: Curves.easeOut);
+          _scrollController.animateTo(0, duration: const Duration(milliseconds: 300), curve: Curves.easeOut);
         } else {
-          _scrollController.jumpTo(maxScroll);
+          _scrollController.jumpTo(0);
         }
       }
     });
@@ -362,13 +361,18 @@ class _ChatBottomSheetState extends ConsumerState<_ChatBottomSheet> {
 
                   return ListView.builder(
                     controller: _scrollController,
+                    reverse: true,
                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                     itemCount: messages.length + (_isLoading ? 1 : 0),
                     itemBuilder: (context, index) {
-                      if (index == messages.length && _isLoading) {
+                      if (index == 0 && _isLoading) {
                         return _buildTypingIndicator(context);
                       }
-                      return _buildMessageBubble(context, messages[index]);
+                      final msgIndex = messages.length - 1 - (index - (_isLoading ? 1 : 0));
+                      if (msgIndex < 0 || msgIndex >= messages.length) {
+                        return const SizedBox.shrink();
+                      }
+                      return _buildMessageBubble(context, messages[msgIndex]);
                     },
                   );
                 },

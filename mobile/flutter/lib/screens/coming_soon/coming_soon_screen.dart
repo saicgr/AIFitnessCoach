@@ -115,44 +115,25 @@ class _RoadmapTab extends StatelessWidget {
           textPrimary: textPrimary,
           textSecondary: textSecondary,
           features: [
-            _Feature(Icons.emoji_events_outlined, AppColors.orange, 'Create Challenges', 'Challenge friends to fitness competitions'),
             _Feature(Icons.person_search_outlined, AppColors.purple, 'Friend Profiles', 'View detailed friend profiles and stats'),
-            _Feature(Icons.sports_kabaddi_outlined, AppColors.coral, 'Direct Challenges', 'Challenge someone from the leaderboard'),
+            _Feature(Icons.emoji_events_outlined, AppColors.orange, 'Community Challenges', 'Create and host public fitness challenges'),
+            _Feature(Icons.leaderboard_outlined, AppColors.yellow, 'Exercise Leaderboard', 'Compare lifts with friends'),
           ],
         ),
 
         const SizedBox(height: 24),
 
-        // Customization
-        _buildSectionLabel('CUSTOMIZATION', textMuted),
+        // AI Features
+        _buildSectionLabel('AI FEATURES', textMuted),
         _buildFeatureGroup(
           cardColor: cardColor,
           borderColor: borderColor,
           textPrimary: textPrimary,
           textSecondary: textSecondary,
           features: [
-            _Feature(Icons.child_care_outlined, AppColors.green, 'Kids Mode', 'Age-appropriate fitness tracking'),
-            _Feature(Icons.watch_outlined, AppColors.info, 'Wear OS', 'Full smartwatch integration'),
-            _Feature(Icons.location_on_outlined, AppColors.magenta, 'Custom Environments', 'Save training locations with equipment'),
-            _Feature(Icons.smart_toy_outlined, AppColors.purple, 'Custom AI Coach', 'Personalize your coach\'s personality'),
-            _Feature(Icons.map_outlined, AppColors.teal, 'Gym Location Map', 'Map-based gym location picker'),
-            _Feature(Icons.translate_outlined, AppColors.info, 'More Languages', 'Additional language support'),
-          ],
-        ),
-
-        const SizedBox(height: 24),
-
-        // Library
-        _buildSectionLabel('LIBRARY', textMuted),
-        _buildFeatureGroup(
-          cardColor: cardColor,
-          borderColor: borderColor,
-          textPrimary: textPrimary,
-          textSecondary: textSecondary,
-          features: [
-            _Feature(Icons.fitness_center_outlined, AppColors.orange, 'Branded Programs', 'Follow structured training programs'),
-            _Feature(Icons.trending_up_outlined, AppColors.limeGreen, 'Skill Progressions', 'Track bodyweight skill mastery'),
-            _Feature(Icons.add_circle_outline, AppColors.coral, 'Custom Exercises', 'Create your own exercises'),
+            _Feature(Icons.smart_toy_outlined, AppColors.purple, 'Custom AI Coach', 'Personalize your coach\'s personality & style'),
+            _Feature(Icons.accessibility_new_outlined, AppColors.cyan, 'AI Pose Detection', 'Auto-verify form from progress photos'),
+            _Feature(Icons.memory_outlined, AppColors.teal, 'On-Device AI', 'AI coaching without internet'),
           ],
         ),
 
@@ -168,13 +149,31 @@ class _RoadmapTab extends StatelessWidget {
           features: [
             _Feature(Icons.restaurant_outlined, AppColors.purple, 'AI Meal Plans', 'Personalized daily meal plans based on your macros & goals'),
             _Feature(Icons.menu_book_outlined, AppColors.orange, 'AI Recipe Suggestions', 'Get recipe ideas that fit your diet, culture & eating window'),
+            _Feature(Icons.store_outlined, AppColors.green, 'Restaurant Chain Menus', 'Request your favorite restaurant chains & foods to be added'),
           ],
         ),
 
         const SizedBox(height: 24),
 
-        // Analytics & Insights
-        _buildSectionLabel('ANALYTICS & INSIGHTS', textMuted),
+        // Training
+        _buildSectionLabel('TRAINING', textMuted),
+        _buildFeatureGroup(
+          cardColor: cardColor,
+          borderColor: borderColor,
+          textPrimary: textPrimary,
+          textSecondary: textSecondary,
+          features: [
+            _Feature(Icons.fitness_center_outlined, AppColors.orange, 'Branded Programs', 'Follow structured training programs'),
+            _Feature(Icons.trending_up_outlined, AppColors.limeGreen, 'Skill Progressions', 'Track bodyweight skill mastery'),
+            _Feature(Icons.add_circle_outline, AppColors.coral, 'Custom Exercises', 'Create your own exercises'),
+            _Feature(Icons.event_outlined, AppColors.magenta, 'Event-Based Training', 'Train for marathons, Hyrox, etc.'),
+          ],
+        ),
+
+        const SizedBox(height: 24),
+
+        // Analytics
+        _buildSectionLabel('ANALYTICS', textMuted),
         _buildFeatureGroup(
           cardColor: cardColor,
           borderColor: borderColor,
@@ -182,9 +181,8 @@ class _RoadmapTab extends StatelessWidget {
           textSecondary: textSecondary,
           features: [
             _Feature(Icons.show_chart_outlined, AppColors.green, 'Inline Progress Charts', 'Exercise progress in workout view'),
-            _Feature(Icons.leaderboard_outlined, AppColors.yellow, 'Exercise Leaderboard', 'Compare lifts with friends'),
-            _Feature(Icons.event_outlined, AppColors.coral, 'Event-Based Workouts', 'Train for marathons, Hyrox, etc.'),
-            _Feature(Icons.science_outlined, AppColors.info, 'Exercise Science Research', 'Evidence-based training insights'),
+            _Feature(Icons.trending_flat_outlined, AppColors.info, 'Plateau Detection', 'Detect and break through plateaus'),
+            _Feature(Icons.science_outlined, AppColors.cyan, 'Exercise Science Insights', 'Evidence-based training recommendations'),
           ],
         ),
 
@@ -202,14 +200,13 @@ class _RoadmapTab extends StatelessWidget {
             _Feature(Icons.directions_walk_outlined, AppColors.green, 'Daily Activity (NEAT)', 'Non-exercise activity tracking'),
             _Feature(Icons.healing_outlined, AppColors.orange, 'Injury Tracker', 'Log and manage active injuries'),
             _Feature(Icons.shield_outlined, AppColors.warning, 'Strain Prevention', 'Prevent overtraining and strain'),
-            _Feature(Icons.trending_flat_outlined, AppColors.info, 'Plateau Detection', 'Detect and break through plateaus'),
           ],
         ),
 
         const SizedBox(height: 24),
 
-        // Tech
-        _buildSectionLabel('TECH', textMuted),
+        // Platform
+        _buildSectionLabel('PLATFORM', textMuted),
         _buildFeatureGroup(
           cardColor: cardColor,
           borderColor: borderColor,
@@ -217,9 +214,11 @@ class _RoadmapTab extends StatelessWidget {
           textSecondary: textSecondary,
           features: [
             _Feature(Icons.cloud_off_outlined, AppColors.teal, 'Offline Mode', 'Train without internet connection'),
-            _Feature(Icons.memory_outlined, AppColors.purple, 'On-Device AI', 'AI coaching without cloud dependency'),
-            _Feature(Icons.sync_outlined, AppColors.orange, 'Data Sync', 'Seamless offline-to-cloud sync'),
-            _Feature(Icons.accessibility_new_outlined, AppColors.cyan, 'AI Pose Detection', 'Auto-verify progress photo poses'),
+            _Feature(Icons.watch_outlined, AppColors.info, 'Wear OS', 'Full smartwatch integration'),
+            _Feature(Icons.child_care_outlined, AppColors.green, 'Kids Mode', 'Age-appropriate fitness tracking'),
+            _Feature(Icons.location_on_outlined, AppColors.magenta, 'Custom Environments', 'Save training locations with equipment'),
+            _Feature(Icons.map_outlined, AppColors.orange, 'Gym Location Map', 'Map-based gym location picker'),
+            _Feature(Icons.translate_outlined, AppColors.purple, 'More Languages', 'Additional language support'),
           ],
         ),
 

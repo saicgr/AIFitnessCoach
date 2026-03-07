@@ -586,6 +586,23 @@ class SupabaseDB:
         """Get nutrition totals for a week."""
         return self._nutrition_db.get_weekly_nutrition_summary(user_id, start_date, timezone_str=timezone_str)
 
+    def update_food_log(
+        self,
+        log_id: str,
+        user_id: str,
+        total_calories: int,
+        protein_g: float,
+        carbs_g: float,
+        fat_g: float,
+        fiber_g: Optional[float] = None,
+        weight_g: Optional[float] = None,
+    ) -> Optional[Dict[str, Any]]:
+        """Update macros on an existing food log."""
+        return self._nutrition_db.update_food_log(
+            log_id, user_id, total_calories, protein_g, carbs_g, fat_g,
+            fiber_g=fiber_g, weight_g=weight_g,
+        )
+
     def delete_food_log(self, log_id: str) -> bool:
         """Delete a food log entry."""
         return self._nutrition_db.delete_food_log(log_id)

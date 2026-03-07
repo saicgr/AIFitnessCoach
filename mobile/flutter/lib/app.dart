@@ -278,6 +278,9 @@ class _FitWizAppState extends ConsumerState<FitWizApp> {
         case 'achievement':
           router.push('/achievements');
           break;
+        case 'friend_request':
+          router.push('/notifications');
+          break;
         case 'test':
           router.push('/notifications');
           break;

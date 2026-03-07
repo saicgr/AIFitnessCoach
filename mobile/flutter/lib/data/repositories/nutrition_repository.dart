@@ -332,6 +332,39 @@ class NutritionRepository {
     }
   }
 
+  /// Update macros/weight on an existing food log (portion adjustment)
+  Future<Map<String, dynamic>> updateFoodLog({
+    required String logId,
+    required int totalCalories,
+    required double proteinG,
+    required double carbsG,
+    required double fatG,
+    double? fiberG,
+    double? weightG,
+    double? portionMultiplier,
+  }) async {
+    try {
+      final body = <String, dynamic>{
+        'total_calories': totalCalories,
+        'protein_g': proteinG,
+        'carbs_g': carbsG,
+        'fat_g': fatG,
+      };
+      if (fiberG != null) body['fiber_g'] = fiberG;
+      if (weightG != null) body['weight_g'] = weightG;
+      if (portionMultiplier != null) body['portion_multiplier'] = portionMultiplier;
+
+      final response = await _client.put(
+        '/nutrition/food-logs/$logId',
+        data: body,
+      );
+      return response.data as Map<String, dynamic>;
+    } catch (e) {
+      debugPrint('Error updating food log: $e');
+      rethrow;
+    }
+  }
+
   /// Copy a food log to a different meal type
   Future<Map<String, dynamic>> copyFoodLog({
     required String logId,

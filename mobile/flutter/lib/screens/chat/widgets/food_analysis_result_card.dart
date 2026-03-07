@@ -8,6 +8,7 @@ import 'package:flutter/material.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../core/theme/theme_colors.dart';
+import '../../nutrition/widgets/portion_amount_input.dart';
 
 /// Card that displays a structured food analysis result from the AI.
 /// Handles buffet analysis, menu analysis, and multi-food image analysis.
@@ -33,6 +34,10 @@ class _FoodAnalysisResultCardState extends State<FoodAnalysisResultCard> {
   bool _redExpanded = false;
   final Set<String> _selectedDishes = {};
   bool _itemsLogged = false;
+  /// Per-dish portion multipliers, keyed by dishKey (name_calories).
+  final Map<String, double> _dishMultipliers = {};
+  /// Which dish is currently being portion-edited (null = none).
+  String? _editingDishKey;
 
   static const _collapsedItemCount = 5;
 
@@ -304,92 +309,135 @@ class _FoodAnalysisResultCardState extends State<FoodAnalysisResultCard> {
     final name = dish['name'] as String? ?? 'Unknown dish';
     final calories = dish['calories'] as num?;
     final protein = dish['protein'] as num?;
+    final carbs = dish['carbs'] as num?;
+    final fat = dish['fat'] as num?;
     final rating = _getRating(dish);
     final dotColor = _ratingColor(rating);
     final dishKey = '${name}_${calories ?? 0}';
     final isSelected = _selectedDishes.contains(dishKey);
+    final multiplier = _dishMultipliers[dishKey] ?? 1.0;
+    final isEditing = _editingDishKey == dishKey;
 
-    return GestureDetector(
-      onTap: showCheckbox && !_itemsLogged
-          ? () => setState(() {
-                if (isSelected) {
-                  _selectedDishes.remove(dishKey);
-                } else {
-                  _selectedDishes.add(dishKey);
-                }
-              })
-          : null,
-      child: Padding(
-        padding: const EdgeInsets.only(bottom: 4),
-        child: Row(
-          children: [
-            if (showCheckbox && !_itemsLogged) ...[
-              SizedBox(
-                width: 20,
-                height: 20,
-                child: Checkbox(
-                  value: isSelected,
-                  onChanged: (val) => setState(() {
-                    if (val == true) {
-                      _selectedDishes.add(dishKey);
-                    } else {
+    // Calculate adjusted values
+    final adjustedCal = calories != null ? (calories * multiplier).round() : null;
+    final adjustedProtein = protein != null ? (protein * multiplier).round() : null;
+
+    return Column(
+      children: [
+        GestureDetector(
+          onTap: showCheckbox && !_itemsLogged
+              ? () => setState(() {
+                    if (isSelected) {
                       _selectedDishes.remove(dishKey);
+                    } else {
+                      _selectedDishes.add(dishKey);
                     }
-                  }),
-                  materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                  visualDensity: VisualDensity.compact,
-                  activeColor: _greenColor,
-                  side: BorderSide(color: colors.textMuted, width: 1.5),
-                ),
-              ),
-              const SizedBox(width: 6),
-            ],
-            Container(
-              width: 6,
-              height: 6,
-              decoration: BoxDecoration(
-                color: dotColor,
-                shape: BoxShape.circle,
-              ),
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Text(
-                name,
-                style: TextStyle(
-                  fontSize: 12,
-                  color: colors.textPrimary,
-                ),
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-            if (calories != null)
-              Padding(
-                padding: const EdgeInsets.only(left: 8),
-                child: Text(
-                  '${calories.toInt()} cal',
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: colors.textMuted,
-                    fontWeight: FontWeight.w500,
+                  })
+              : null,
+          child: Padding(
+            padding: const EdgeInsets.only(bottom: 4),
+            child: Row(
+              children: [
+                if (showCheckbox && !_itemsLogged) ...[
+                  SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: Checkbox(
+                      value: isSelected,
+                      onChanged: (val) => setState(() {
+                        if (val == true) {
+                          _selectedDishes.add(dishKey);
+                        } else {
+                          _selectedDishes.remove(dishKey);
+                        }
+                      }),
+                      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      visualDensity: VisualDensity.compact,
+                      activeColor: _greenColor,
+                      side: BorderSide(color: colors.textMuted, width: 1.5),
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                ],
+                Container(
+                  width: 6,
+                  height: 6,
+                  decoration: BoxDecoration(
+                    color: dotColor,
+                    shape: BoxShape.circle,
                   ),
                 ),
-              ),
-            if (protein != null)
-              Padding(
-                padding: const EdgeInsets.only(left: 6),
-                child: Text(
-                  '${protein.toInt()}g P',
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: _greenColor.withOpacity(0.8),
-                    fontWeight: FontWeight.w500,
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    name,
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: colors.textPrimary,
+                    ),
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
-              ),
-          ],
+                if (adjustedCal != null)
+                  Padding(
+                    padding: const EdgeInsets.only(left: 8),
+                    child: Text(
+                      '$adjustedCal cal',
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: multiplier != 1.0 ? colors.accent : colors.textMuted,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+                if (adjustedProtein != null)
+                  Padding(
+                    padding: const EdgeInsets.only(left: 6),
+                    child: Text(
+                      '${adjustedProtein}g P',
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: _greenColor.withOpacity(0.8),
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+                // Portion adjust button (only for selected, not-yet-logged items)
+                if (isSelected && !_itemsLogged && calories != null)
+                  GestureDetector(
+                    onTap: () => setState(() {
+                      _editingDishKey = isEditing ? null : dishKey;
+                    }),
+                    child: Padding(
+                      padding: const EdgeInsets.only(left: 4),
+                      child: Icon(
+                        isEditing ? Icons.close : Icons.tune,
+                        size: 14,
+                        color: isEditing ? colors.textMuted : colors.accent,
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
         ),
-      ),
+        // Inline portion editor
+        if (isEditing && isSelected && !_itemsLogged)
+          Padding(
+            padding: const EdgeInsets.only(left: 28, bottom: 8),
+            child: PortionAmountInput(
+              initialMultiplier: multiplier,
+              baseCalories: (calories ?? 0).toInt(),
+              baseProtein: (protein ?? 0).toDouble(),
+              baseCarbs: (carbs ?? 0).toDouble(),
+              baseFat: (fat ?? 0).toDouble(),
+              isDark: isDark,
+              onMultiplierChanged: (m) => setState(() {
+                _dishMultipliers[dishKey] = m;
+              }),
+            ),
+          ),
+      ],
     );
   }
 
@@ -610,6 +658,21 @@ class _FoodAnalysisResultCardState extends State<FoodAnalysisResultCard> {
                         final name = d['name'] as String? ?? '';
                         final cal = d['calories'] as num? ?? 0;
                         return _selectedDishes.contains('${name}_$cal');
+                      }).map((d) {
+                        final name = d['name'] as String? ?? '';
+                        final cal = d['calories'] as num? ?? 0;
+                        final dishKey = '${name}_$cal';
+                        final mult = _dishMultipliers[dishKey] ?? 1.0;
+                        if (mult == 1.0) return d;
+                        // Return a copy with adjusted macros
+                        return <String, dynamic>{
+                          ...d,
+                          'calories': ((d['calories'] as num? ?? 0) * mult).round(),
+                          'protein': ((d['protein'] as num? ?? 0) * mult).round(),
+                          'carbs': ((d['carbs'] as num? ?? 0) * mult).round(),
+                          'fat': ((d['fat'] as num? ?? 0) * mult).round(),
+                          'portion_multiplier': mult,
+                        };
                       }).toList();
                       widget.onLogItems?.call(selected);
                       setState(() => _itemsLogged = true);

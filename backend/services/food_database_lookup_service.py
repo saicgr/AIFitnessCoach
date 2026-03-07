@@ -32,6 +32,8 @@ RESTAURANT_BRANDS = [
     'sonic', 'arby', "arby's", 'jack in the box', 'carl', "carl's jr",
     'hardee', "hardee's", 'del taco', 'qdoba', 'panera', 'noodles',
     'wingstop', 'buffalo wild wings', 'hooters', 'zaxbys', "zaxby's",
+    "freddy's", 'freddys',
+    'kirkland', 'kirkland signature',
 ]
 
 

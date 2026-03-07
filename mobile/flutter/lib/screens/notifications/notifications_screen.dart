@@ -194,6 +194,9 @@ class NotificationsScreen extends ConsumerWidget {
           context.push('/challenges');
         }
         break;
+      case 'friend_request':
+        // Actions handled via inline Accept/Ignore buttons
+        break;
       case 'test':
         // Test notifications stay on this screen
         break;
@@ -293,10 +296,11 @@ class NotificationsScreen extends ConsumerWidget {
               itemBuilder: (context, index) {
                 final notification = notifications[index];
                 final isChallengeNotification = notification.id.startsWith('challenge_');
+                final isFriendRequest = notification.type == 'friend_request';
 
                 return Dismissible(
                   key: Key(notification.id),
-                  direction: isChallengeNotification
+                  direction: (isChallengeNotification || isFriendRequest)
                       ? DismissDirection.none
                       : DismissDirection.endToStart,
                   background: Container(
@@ -314,12 +318,62 @@ class NotificationsScreen extends ConsumerWidget {
                   child: _UnifiedNotificationCard(
                     notification: notification,
                     isDark: isDark,
+                    onAccept: isFriendRequest && notification.requestId != null
+                        ? () async {
+                            try {
+                              await ref.read(unifiedNotificationsProvider.notifier)
+                                  .acceptFriendRequest(notification.id, notification.requestId!);
+                              if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text('You and ${notification.fromUserName} are now friends!'),
+                                    behavior: SnackBarBehavior.floating,
+                                  ),
+                                );
+                              }
+                            } catch (e) {
+                              if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text('Failed to accept request. Try again.'),
+                                    behavior: SnackBarBehavior.floating,
+                                  ),
+                                );
+                              }
+                            }
+                          }
+                        : null,
+                    onDecline: isFriendRequest && notification.requestId != null
+                        ? () async {
+                            try {
+                              await ref.read(unifiedNotificationsProvider.notifier)
+                                  .declineFriendRequest(notification.id, notification.requestId!);
+                              if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text('Friend request ignored'),
+                                    behavior: SnackBarBehavior.floating,
+                                  ),
+                                );
+                              }
+                            } catch (e) {
+                              if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text('Failed to ignore request. Try again.'),
+                                    behavior: SnackBarBehavior.floating,
+                                  ),
+                                );
+                              }
+                            }
+                          }
+                        : null,
                     onTap: () {
                       // Mark as read
                       if (isChallengeNotification) {
                         ref.read(unifiedNotificationsProvider.notifier)
                             .markChallengeNotificationRead(notification.id);
-                      } else {
+                      } else if (!isFriendRequest) {
                         ref.read(notificationsProvider.notifier).markAsRead(notification.id);
                       }
                       _navigateForNotificationType(
@@ -507,6 +561,8 @@ class _NotificationCard extends StatelessWidget {
         return Icons.water_drop;
       case 'test':
         return Icons.science;
+      case 'friend_request':
+        return Icons.person_add;
       case 'challenge_received':
         return Icons.emoji_events;
       case 'challenge_accepted':
@@ -538,6 +594,8 @@ class _NotificationCard extends StatelessWidget {
         return Colors.blue;
       case 'test':
         return AppColors.cyan;
+      case 'friend_request':
+        return AppColors.purple;
       case 'challenge_received':
         return AppColors.orange;
       case 'challenge_accepted':
@@ -690,11 +748,15 @@ class _UnifiedNotificationCard extends StatelessWidget {
   final UnifiedNotification notification;
   final bool isDark;
   final VoidCallback onTap;
+  final VoidCallback? onAccept;
+  final VoidCallback? onDecline;
 
   const _UnifiedNotificationCard({
     required this.notification,
     required this.isDark,
     required this.onTap,
+    this.onAccept,
+    this.onDecline,
   });
 
   IconData _getIconForType(String type) {
@@ -713,6 +775,8 @@ class _UnifiedNotificationCard extends StatelessWidget {
         return Icons.restaurant;
       case 'hydration_reminder':
         return Icons.water_drop;
+      case 'friend_request':
+        return Icons.person_add;
       case 'challenge_received':
         return Icons.emoji_events;
       case 'challenge_accepted':
@@ -742,6 +806,8 @@ class _UnifiedNotificationCard extends StatelessWidget {
         return AppColors.success;
       case 'hydration_reminder':
         return Colors.blue;
+      case 'friend_request':
+        return AppColors.purple;
       case 'challenge_received':
         return AppColors.orange;
       case 'challenge_accepted':
@@ -811,7 +877,7 @@ class _UnifiedNotificationCard extends StatelessWidget {
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Avatar for challenge notifications, icon for others
+                // Avatar for challenge/friend notifications, icon for others
                 if (notification.fromUserAvatar != null)
                   CircleAvatar(
                     radius: 20,
@@ -881,6 +947,52 @@ class _UnifiedNotificationCard extends StatelessWidget {
                           color: textMuted,
                         ),
                       ),
+                      // Accept / Ignore buttons for friend requests
+                      if (notification.type == 'friend_request' && (onAccept != null || onDecline != null)) ...[
+                        const SizedBox(height: 10),
+                        Row(
+                          children: [
+                            if (onAccept != null)
+                              Expanded(
+                                child: SizedBox(
+                                  height: 34,
+                                  child: FilledButton(
+                                    onPressed: onAccept,
+                                    style: FilledButton.styleFrom(
+                                      backgroundColor: AppColors.cyan,
+                                      foregroundColor: Colors.white,
+                                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                    ),
+                                    child: const Text('Accept', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+                                  ),
+                                ),
+                              ),
+                            if (onAccept != null && onDecline != null)
+                              const SizedBox(width: 8),
+                            if (onDecline != null)
+                              Expanded(
+                                child: SizedBox(
+                                  height: 34,
+                                  child: OutlinedButton(
+                                    onPressed: onDecline,
+                                    style: OutlinedButton.styleFrom(
+                                      foregroundColor: textSecondary,
+                                      side: BorderSide(color: textMuted.withOpacity(0.3)),
+                                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                    ),
+                                    child: const Text('Ignore', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+                                  ),
+                                ),
+                              ),
+                          ],
+                        ),
+                      ],
                     ],
                   ),
                 ),

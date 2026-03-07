@@ -128,6 +128,6 @@ $ADB_PATH -s "$TARGET_DEVICE" uninstall com.aifitnesscoach.app 2>/dev/null || ec
 
 # Build and run on target device (arm64 only to reduce APK size ~40MB)
 echo -e "${GREEN}Building and running app on $TARGET_DEVICE...${NC}"
-$FLUTTER_PATH run -d "$TARGET_DEVICE"
+$FLUTTER_PATH run --release -d "$TARGET_DEVICE"
 
 echo -e "${GREEN}=== Done! ===${NC}"
