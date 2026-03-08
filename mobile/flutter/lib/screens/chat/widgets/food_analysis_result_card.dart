@@ -4,7 +4,10 @@
 /// Shows traffic-light dish ratings, suggested plate, and budget info.
 library;
 
+import 'dart:math';
+
 import 'package:flutter/material.dart';
+import 'package:share_plus/share_plus.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../core/theme/theme_colors.dart';
@@ -145,6 +148,22 @@ class _FoodAnalysisResultCardState extends State<FoodAnalysisResultCard> {
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
                 color: colors.textPrimary,
+              ),
+            ),
+          ),
+          GestureDetector(
+            onTap: () => _exportSummary(title),
+            child: Container(
+              width: 28,
+              height: 28,
+              decoration: BoxDecoration(
+                color: isDark ? Colors.white.withOpacity(0.06) : Colors.grey.shade100,
+                borderRadius: BorderRadius.circular(6),
+              ),
+              child: Icon(
+                Icons.ios_share_rounded,
+                size: 14,
+                color: colors.textMuted,
               ),
             ),
           ),
@@ -318,9 +337,9 @@ class _FoodAnalysisResultCardState extends State<FoodAnalysisResultCard> {
     final multiplier = _dishMultipliers[dishKey] ?? 1.0;
     final isEditing = _editingDishKey == dishKey;
 
-    // Calculate adjusted values
-    final adjustedCal = calories != null ? (calories * multiplier).round() : null;
-    final adjustedProtein = protein != null ? (protein * multiplier).round() : null;
+    // Calculate adjusted values (floor at 0 to prevent negative display)
+    final adjustedCal = calories != null ? max(0, (calories * multiplier).round()) : null;
+    final adjustedProtein = protein != null ? max(0, (protein * multiplier).round()) : null;
 
     return Column(
       children: [
@@ -367,7 +386,16 @@ class _FoodAnalysisResultCardState extends State<FoodAnalysisResultCard> {
                     shape: BoxShape.circle,
                   ),
                 ),
-                const SizedBox(width: 8),
+                const SizedBox(width: 4),
+                Text(
+                  _ratingLabel(rating),
+                  style: TextStyle(
+                    fontSize: 9,
+                    fontWeight: FontWeight.w600,
+                    color: dotColor,
+                  ),
+                ),
+                const SizedBox(width: 6),
                 Expanded(
                   child: Text(
                     name,
@@ -449,8 +477,10 @@ class _FoodAnalysisResultCardState extends State<FoodAnalysisResultCard> {
     if (selection == null) return const SizedBox.shrink();
 
     final items = (selection['items'] as List?)?.cast<String>() ?? [];
-    final totalCalories = selection['total_calories'] as num?;
-    final totalProtein = selection['total_protein'] as num?;
+    final totalCaloriesRaw = selection['total_calories'] as num?;
+    final totalProteinRaw = selection['total_protein'] as num?;
+    final totalCalories = totalCaloriesRaw != null ? max(0, totalCaloriesRaw.toInt()) as num : null;
+    final totalProtein = totalProteinRaw != null ? max(0, totalProteinRaw.toInt()) as num : null;
     final title = analysisType == 'menu' ? 'Recommended Order' : 'Suggested Plate';
 
     return Container(
@@ -539,9 +569,9 @@ class _FoodAnalysisResultCardState extends State<FoodAnalysisResultCard> {
     final budget = widget.data['daily_budget_remaining'] as Map<String, dynamic>?;
     if (budget == null) return const SizedBox.shrink();
 
-    final remaining = (budget['calories_remaining'] as num?)?.toDouble() ?? 0;
-    final total = (budget['daily_target'] as num?)?.toDouble() ?? 2000;
-    final consumed = total - remaining;
+    final remaining = max(0, (budget['calories_remaining'] as num?)?.toDouble() ?? 0);
+    final total = max(1, (budget['daily_target'] as num?)?.toDouble() ?? 2000);
+    final consumed = max(0.0, total - remaining);
     final progress = (consumed / total).clamp(0.0, 1.0);
     final mealLabel = budget['for_meal'] as String? ?? 'remaining meals';
 
@@ -664,13 +694,13 @@ class _FoodAnalysisResultCardState extends State<FoodAnalysisResultCard> {
                         final dishKey = '${name}_$cal';
                         final mult = _dishMultipliers[dishKey] ?? 1.0;
                         if (mult == 1.0) return d;
-                        // Return a copy with adjusted macros
+                        // Return a copy with adjusted macros (floored at 0)
                         return <String, dynamic>{
                           ...d,
-                          'calories': ((d['calories'] as num? ?? 0) * mult).round(),
-                          'protein': ((d['protein'] as num? ?? 0) * mult).round(),
-                          'carbs': ((d['carbs'] as num? ?? 0) * mult).round(),
-                          'fat': ((d['fat'] as num? ?? 0) * mult).round(),
+                          'calories': max(0, ((d['calories'] as num? ?? 0) * mult).round()),
+                          'protein': max(0, ((d['protein'] as num? ?? 0) * mult).round()),
+                          'carbs': max(0, ((d['carbs'] as num? ?? 0) * mult).round()),
+                          'fat': max(0, ((d['fat'] as num? ?? 0) * mult).round()),
                           'portion_multiplier': mult,
                         };
                       }).toList();
@@ -704,6 +734,53 @@ class _FoodAnalysisResultCardState extends State<FoodAnalysisResultCard> {
         ],
       ),
     );
+  }
+
+  void _exportSummary(String title) {
+    final buffer = StringBuffer();
+    buffer.writeln('$title - FitWiz');
+    buffer.writeln('=' * 30);
+    buffer.writeln();
+
+    final allDishes = _getAllDishes();
+    if (allDishes.isNotEmpty) {
+      buffer.writeln('Items:');
+      for (final dish in allDishes) {
+        final name = dish['name'] as String? ?? 'Unknown';
+        final cal = max(0, (dish['calories'] as num? ?? 0).toInt());
+        final protein = max(0, (dish['protein'] as num? ?? 0).toInt());
+        final rating = _getRating(dish);
+        final label = _ratingLabel(rating);
+        buffer.writeln('  [$label] $name - ${cal} cal, ${protein}g protein');
+      }
+      buffer.writeln();
+    }
+
+    final suggestedPlate = widget.data['suggested_plate'] as Map<String, dynamic>?;
+    final recommendedOrder = widget.data['recommended_order'] as Map<String, dynamic>?;
+    final selection = suggestedPlate ?? recommendedOrder;
+    if (selection != null) {
+      final items = (selection['items'] as List?)?.cast<String>() ?? [];
+      if (items.isNotEmpty) {
+        buffer.writeln('Suggested:');
+        for (final item in items) {
+          buffer.writeln('  - $item');
+        }
+        buffer.writeln();
+      }
+    }
+
+    final tips = (widget.data['tips'] as List?)?.cast<String>() ?? [];
+    if (tips.isNotEmpty) {
+      buffer.writeln('Tips:');
+      for (final tip in tips) {
+        buffer.writeln('  - $tip');
+      }
+      buffer.writeln();
+    }
+
+    buffer.writeln('Generated by FitWiz');
+    Share.share(buffer.toString(), subject: title);
   }
 
   /// Collect all dishes from buffet `dishes` or menu `sections`.
@@ -810,6 +887,17 @@ class _FoodAnalysisResultCardState extends State<FoodAnalysisResultCard> {
         return _redColor;
       default:
         return _yellowColor;
+    }
+  }
+
+  String _ratingLabel(String rating) {
+    switch (rating) {
+      case 'green':
+        return 'Good';
+      case 'red':
+        return 'Limit';
+      default:
+        return 'Moderate';
     }
   }
 }

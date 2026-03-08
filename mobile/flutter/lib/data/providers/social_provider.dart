@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../services/social_service.dart';
 import '../services/api_client.dart';
+import 'e2ee_provider.dart';
 
 /// Social service provider
 final socialServiceProvider = Provider<SocialService>((ref) {
@@ -81,5 +82,58 @@ final conversationsProvider = FutureProvider.family<List<Map<String, dynamic>>, 
   (ref, userId) async {
     final socialService = ref.watch(socialServiceProvider);
     return await socialService.getConversations(userId: userId);
+  },
+);
+
+/// Conversation messages provider - fetches and decrypts messages
+/// Note: Removed autoDispose to prevent refetching on navigation
+final conversationMessagesProvider = FutureProvider.family<List<Map<String, dynamic>>, ({String userId, String conversationId, String otherUserId})>(
+  (ref, params) async {
+    final socialService = ref.watch(socialServiceProvider);
+    final messages = await socialService.getMessages(
+      userId: params.userId,
+      conversationId: params.conversationId,
+    );
+
+    // Decrypt encrypted messages
+    final e2eeService = ref.watch(e2eeServiceProvider);
+    final sharedSecret = await e2eeService.deriveSharedSecret(
+      params.userId,
+      params.otherUserId,
+    );
+
+    final decryptedMessages = <Map<String, dynamic>>[];
+    for (final msg in messages) {
+      final encryptionVersion = msg['encryption_version'] as int? ?? 0;
+      if (encryptionVersion > 0 && sharedSecret != null) {
+        final encryptedContent = msg['encrypted_content'] as String?;
+        final nonce = msg['encryption_nonce'] as String?;
+        if (encryptedContent != null && nonce != null) {
+          final decrypted = await e2eeService.decryptMessage(
+            encryptedContent,
+            nonce,
+            sharedSecret,
+          );
+          decryptedMessages.add({
+            ...msg,
+            'decrypted_content': decrypted,
+          });
+        } else {
+          decryptedMessages.add({
+            ...msg,
+            'decrypted_content': '[Unable to decrypt]',
+          });
+        }
+      } else if (encryptionVersion > 0 && sharedSecret == null) {
+        decryptedMessages.add({
+          ...msg,
+          'decrypted_content': '[Unable to decrypt]',
+        });
+      } else {
+        decryptedMessages.add(msg);
+      }
+    }
+
+    return decryptedMessages;
   },
 );

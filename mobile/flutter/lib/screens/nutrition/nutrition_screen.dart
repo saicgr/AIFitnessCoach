@@ -37,7 +37,10 @@ class NutritionScreen extends ConsumerStatefulWidget {
   /// Optional meal type to auto-open the log meal sheet (from deep link).
   final String? initialMeal;
 
-  const NutritionScreen({super.key, this.initialMeal});
+  /// Optional initial tab index (0=Daily, 1=Nutrients, 2=Water, 3=Fast).
+  final int initialTab;
+
+  const NutritionScreen({super.key, this.initialMeal, this.initialTab = 0});
 
   @override
   ConsumerState<NutritionScreen> createState() => _NutritionScreenState();
@@ -60,7 +63,7 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 4, vsync: this);
+    _tabController = TabController(length: 4, vsync: this, initialIndex: widget.initialTab);
     _loadData();
     // Collapse nav bar labels on this secondary page
     WidgetsBinding.instance.addPostFrameCallback((_) {

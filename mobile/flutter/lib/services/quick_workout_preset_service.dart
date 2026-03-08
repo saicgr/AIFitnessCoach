@@ -242,8 +242,25 @@ class QuickWorkoutPresetService {
         ],
       );
     }
+    // Build equipment list from what user actually has
+    final equipList = <String>['Bodyweight'];
     if (lower.contains('dumbbells') || lower.contains('dumbbell')) {
-      return _EquipmentTier(equipment: ['Bodyweight', 'Dumbbells']);
+      equipList.add('Dumbbells');
+    }
+    if (lower.contains('kettlebell') || lower.contains('kettlebells')) {
+      equipList.add('Kettlebell');
+    }
+    if (lower.contains('resistance_bands') || lower.contains('resistance bands')) {
+      equipList.add('Resistance Bands');
+    }
+    if (lower.contains('pull_up_bar') || lower.contains('pull-up bar')) {
+      equipList.add('Pull-up Bar');
+    }
+    if (lower.contains('barbell')) {
+      equipList.add('Barbell');
+    }
+    if (equipList.length > 1) {
+      return _EquipmentTier(equipment: equipList);
     }
     return _EquipmentTier(equipment: ['Bodyweight']);
   }

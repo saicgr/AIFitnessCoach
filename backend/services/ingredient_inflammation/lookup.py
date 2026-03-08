@@ -9,10 +9,12 @@ Lookup order:
 Never returns None - always produces a score.
 """
 
+import asyncio
 import re
 import difflib
 import logging
-from typing import Tuple, Optional
+import time
+from typing import Tuple, Optional, Dict
 
 from .database import IngredientRecord, get_by_name, get_alias_index
 from .scoring import ingredient_score_to_category
@@ -23,6 +25,12 @@ logger = logging.getLogger(__name__)
 SOURCE_STATIC = "static_db"
 SOURCE_FOOD_DB = "food_database"
 SOURCE_HEURISTIC = "heuristic"
+
+# In-memory cache of food_database inflammation scores (loaded once lazily)
+_food_db_cache: Optional[Dict[str, Tuple[int, str]]] = None  # name_lower -> (score, category)
+_food_db_cache_loaded_at: float = 0
+_food_db_cache_lock = asyncio.Lock()
+_FOOD_DB_CACHE_TTL = 3600  # refresh every hour
 
 
 def lookup_static(name: str) -> Optional[Tuple[str, IngredientRecord]]:
@@ -69,52 +77,102 @@ def lookup_static(name: str) -> Optional[Tuple[str, IngredientRecord]]:
     return None
 
 
+async def _ensure_food_db_cache() -> Dict[str, Tuple[int, str]]:
+    """Load all food_database inflammation scores into memory (once, then hourly refresh)."""
+    global _food_db_cache, _food_db_cache_loaded_at
+
+    now = time.monotonic()
+    if _food_db_cache is not None and (now - _food_db_cache_loaded_at) < _FOOD_DB_CACHE_TTL:
+        return _food_db_cache
+
+    async with _food_db_cache_lock:
+        # Double-check after acquiring lock
+        if _food_db_cache is not None and (now - _food_db_cache_loaded_at) < _FOOD_DB_CACHE_TTL:
+            return _food_db_cache
+
+        try:
+            from core.supabase_client import get_supabase
+            supabase = get_supabase()
+
+            cache: Dict[str, Tuple[int, str]] = {}
+            offset = 0
+            batch_size = 1000
+
+            while True:
+                result = supabase.client.table("food_database") \
+                    .select("name, inflammatory_score, inflammatory_category") \
+                    .not_.is_("inflammatory_score", "null") \
+                    .eq("is_primary", True) \
+                    .range(offset, offset + batch_size - 1) \
+                    .execute()
+
+                if not result.data:
+                    break
+
+                for row in result.data:
+                    name = row.get("name")
+                    score = row.get("inflammatory_score")
+                    if name and score is not None:
+                        score_int = int(score)
+                        if 1 <= score_int <= 10:
+                            category = row.get("inflammatory_category") or ingredient_score_to_category(score_int)
+                            cache[name.lower().strip()] = (score_int, category)
+
+                if len(result.data) < batch_size:
+                    break
+                offset += batch_size
+
+            _food_db_cache = cache
+            _food_db_cache_loaded_at = time.monotonic()
+            logger.info(f"Loaded {len(cache)} inflammation scores from food_database into memory")
+            return cache
+
+        except Exception as e:
+            logger.warning(f"Failed to load food_database cache: {e}")
+            if _food_db_cache is not None:
+                return _food_db_cache
+            _food_db_cache = {}
+            _food_db_cache_loaded_at = time.monotonic()
+            return _food_db_cache
+
+
 async def lookup_food_database(name: str) -> Optional[Tuple[str, IngredientRecord]]:
     """
-    Look up ingredient in the Supabase food_database.
+    Look up ingredient in the in-memory food_database cache.
 
-    Only called when static dict misses. Uses the search_food_database RPC
-    and reads inflammatory_score/inflammatory_category if available.
+    Uses a pre-loaded dict of all food_database rows with inflammation scores.
+    Tries exact match, then substring match — all in-memory, no DB queries.
 
     Returns:
         (source_label, IngredientRecord) or None
     """
     try:
-        from core.supabase_client import get_supabase
-        supabase = get_supabase()
-
-        # Query food_database directly for inflammation columns
-        result = supabase.client.table("food_database") \
-            .select("name, inflammatory_score, inflammatory_category") \
-            .ilike("name", f"%{name}%") \
-            .eq("is_primary", True) \
-            .limit(1) \
-            .execute()
-
-        if not result.data:
+        cache = await _ensure_food_db_cache()
+        if not cache:
             return None
 
-        row = result.data[0]
-        score = row.get("inflammatory_score")
-        category = row.get("inflammatory_category")
+        name_lower = name.lower().strip()
 
-        if score is None:
-            return None
+        # 1. Exact match
+        if name_lower in cache:
+            score, category = cache[name_lower]
+            return (SOURCE_FOOD_DB, IngredientRecord(
+                score=score, category=category,
+                reason=f"Score from food database entry: {name}",
+                is_additive=False, aliases=(),
+            ))
 
-        score = int(score)
-        if score < 1 or score > 10:
-            return None
+        # 2. Substring match (input name found in a cached key)
+        if len(name_lower) >= 5:
+            for key, (score, category) in cache.items():
+                if name_lower in key:
+                    return (SOURCE_FOOD_DB, IngredientRecord(
+                        score=score, category=category,
+                        reason=f"Score from food database entry: {key}",
+                        is_additive=False, aliases=(),
+                    ))
 
-        category = category or ingredient_score_to_category(score)
-
-        record = IngredientRecord(
-            score=score,
-            category=category,
-            reason=f"Score from food database entry: {row.get('name', name)}",
-            is_additive=False,
-            aliases=(),
-        )
-        return (SOURCE_FOOD_DB, record)
+        return None
 
     except Exception as e:
         logger.warning(f"food_database lookup failed for '{name}': {e}")

@@ -421,16 +421,17 @@ class User extends Equatable {
         (equip.contains('barbell') && equip.contains('cable_machine'))) {
       return 'commercial_gym';
     }
-    if (equip.contains('barbell') || equip.contains('cable_machine')) {
+    if (equip.contains('barbell') || equip.contains('cable_machine') ||
+        equip.contains('smith_machine') || equip.contains('leg_press') ||
+        equip.contains('lat_pulldown') || equip.contains('squat_rack')) {
       return 'home_gym';
     }
-    if (equip.contains('dumbbells') || equip.contains('kettlebell') || equip.contains('resistance_bands')) {
+    // Any non-bodyweight equipment = home with equipment
+    const bodyweightOnly = {'bodyweight', 'yoga_mat', 'jump_rope', ''};
+    if (equip.any((e) => !bodyweightOnly.contains(e))) {
       return 'home';
     }
-    if (equip.contains('bodyweight')) {
-      return 'home';
-    }
-    return null;
+    return 'home';
   }
 
   /// Get workout environment as display text

@@ -27,16 +27,25 @@ PRIMARY_MUSCLE_REDUCE_PENALTY = 0.5
 FULL_GYM_EQUIPMENT = [
     "barbell", "dumbbell", "dumbbells", "cable", "cable machine",
     "machine", "kettlebell", "bench", "ez bar", "smith machine",
-    "lat pulldown", "leg press", "pull-up bar", "pullup bar",
-    "resistance band", "medicine ball", "slam ball", "stability ball", "trx",
-    "body weight", "bodyweight", "none"
+    "lat pulldown", "leg press", "leg extension", "leg curl",
+    "chest press machine", "shoulder press machine", "hack squat",
+    "hip abductor machine", "pec fly machine", "seated row machine",
+    "pull-up bar", "pullup bar", "dip station",
+    "resistance band", "medicine ball", "slam ball", "stability ball",
+    "exercise ball", "bosu ball", "trx", "suspension trainer",
+    "battle ropes", "gymnastic rings", "ab wheel", "landmine",
+    "foam roller", "yoga mat", "jump rope", "trap bar",
+    "body weight", "bodyweight", "none",
 ]
 
 # Home gym equipment list
 HOME_GYM_EQUIPMENT = [
     "dumbbell", "dumbbells", "kettlebell", "resistance band",
     "pull-up bar", "pullup bar", "bench", "stability ball",
-    "body weight", "bodyweight", "none"
+    "exercise ball", "medicine ball", "foam roller", "yoga mat",
+    "ab wheel", "jump rope", "dip station", "bosu ball", "landmine",
+    "trx", "suspension trainer",
+    "body weight", "bodyweight", "none",
 ]
 
 # Injury contraindications mapping
@@ -119,6 +128,46 @@ MOVEMENT_PATTERNS = {
     # Core stability
     "core_stability": ["plank", "dead bug", "hollow hold", "bird dog", "pallof"],
 }
+
+
+# Patterns that strongly indicate a stretch/flexibility exercise
+_STRETCH_NAME_PATTERNS = [
+    "stretch", "opener", "opens", "child pose", "pigeon",
+    "cat cow", "cobra stretch", "scorpion", "pretzel",
+    "90/90", "world's greatest",
+]
+
+# Exercises that are warmup/cardio filler — not suitable as main strength exercises
+_WARMUP_FILLER_PATTERNS = [
+    "alternate punching", "shadow boxing", "arm circles",
+    "jumping jacks", "high knees", "butt kicks", "butt kickers",
+    "seal jacks", "neck rotation", "ankle circles", "wrist circles",
+    "torso twist", "hip circles",
+]
+
+
+def is_warmup_filler_exercise(name: str) -> bool:
+    """Return True if the exercise is a warmup/cardio filler not suitable for strength workouts."""
+    name_lower = (name or "").lower()
+    return any(pattern in name_lower for pattern in _WARMUP_FILLER_PATTERNS)
+
+
+def is_stretch_exercise(name: str, body_part: str, category: str) -> bool:
+    """Return True if the exercise is a stretch/flexibility movement."""
+    bp = (body_part or "").lower()
+    cat = (category or "").lower()
+
+    # Metadata check
+    if bp == "stretching" or cat in ("stretching", "flexibility", "yoga"):
+        return True
+
+    # Name-based check for misclassified stretches
+    name_lower = (name or "").lower()
+    for pattern in _STRETCH_NAME_PATTERNS:
+        if pattern in name_lower:
+            return True
+
+    return False
 
 
 def get_movement_pattern(exercise_name: str) -> Optional[str]:
@@ -275,6 +324,7 @@ def filter_by_equipment(
     ex_equipment: str,
     user_equipment: List[str],
     exercise_name: str,
+    use_substitutions: bool = False,
 ) -> bool:
     """
     Check if exercise equipment matches user's available equipment.
@@ -338,6 +388,30 @@ def filter_by_equipment(
             if eq_words and eq_words.issubset(exercise_words):
                 equipment_match = True
                 break
+
+    # Check substitution matrix if no direct match found
+    if not equipment_match and use_substitutions:
+        try:
+            from services.equipment_resolver import EquipmentResolver
+            resolver = EquipmentResolver._instance
+            if resolver and resolver._loaded:
+                ex_canonical = resolver.resolve(ex_equipment_lower)
+                if ex_canonical:
+                    user_canonical = set()
+                    for eq in equipment_lower:
+                        resolved = resolver.resolve(eq)
+                        if resolved:
+                            user_canonical.add(resolved)
+                    if ex_canonical in user_canonical:
+                        equipment_match = True
+                    else:
+                        subs = resolver.get_substitutes(ex_canonical)
+                        for target, compat in subs:
+                            if target in user_canonical and compat >= 0.5:
+                                equipment_match = True
+                                break
+        except Exception:
+            pass  # Graceful fallback - substitution lookup is optional
 
     return equipment_match
 

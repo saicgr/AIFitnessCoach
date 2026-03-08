@@ -12,8 +12,11 @@ import 'tabs/challenges_tab.dart';
 import 'tabs/leaderboard_tab.dart';
 import 'tabs/friends_tab.dart';
 import 'tabs/messages_tab.dart';
+import '../../widgets/app_loading.dart';
 import '../../widgets/glass_back_button.dart';
+import '../../widgets/main_shell.dart';
 import 'friend_search_screen.dart';
+import 'conversation_screen.dart';
 
 /// Social screen - Shows activity feed, challenges, and friends
 /// Adapts UI based on accessibility mode (Normal vs Senior)
@@ -510,8 +513,45 @@ class _SocialScreenState extends ConsumerState<SocialScreen>
 }
 
 /// Standalone Messages screen with proper AppBar for navigation
-class _MessagesScreen extends StatelessWidget {
+class _MessagesScreen extends ConsumerStatefulWidget {
   const _MessagesScreen();
+
+  @override
+  ConsumerState<_MessagesScreen> createState() => _MessagesScreenState();
+}
+
+class _MessagesScreenState extends ConsumerState<_MessagesScreen> {
+  bool _isSearching = false;
+  String _searchQuery = '';
+  final _searchController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(floatingNavBarVisibleProvider.notifier).state = false;
+    });
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    Future.microtask(() {
+      ref.read(floatingNavBarVisibleProvider.notifier).state = true;
+    });
+    super.dispose();
+  }
+
+  void _handleNewMessage() {
+    HapticFeedback.lightImpact();
+    // Open friend picker to start a new conversation
+    Navigator.push(
+      context,
+      AppPageRoute(
+        builder: (_) => _NewMessagePickerScreen(),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -526,15 +566,346 @@ class _MessagesScreen extends StatelessWidget {
         elevation: 0,
         automaticallyImplyLeading: false,
         leading: const GlassBackButton(),
+        title: _isSearching
+            ? TextField(
+                controller: _searchController,
+                autofocus: true,
+                style: Theme.of(context).textTheme.bodyLarge,
+                decoration: InputDecoration(
+                  hintText: 'Search conversations...',
+                  hintStyle: TextStyle(
+                    color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
+                  ),
+                  border: InputBorder.none,
+                ),
+                onChanged: (value) {
+                  setState(() => _searchQuery = value.toLowerCase());
+                },
+              )
+            : Text(
+                'Messages',
+                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+              ),
+        centerTitle: false,
+        actions: [
+          IconButton(
+            icon: Icon(
+              _isSearching ? Icons.close_rounded : Icons.search_rounded,
+              color: isDark ? Colors.white : AppColors.pureBlack,
+            ),
+            tooltip: _isSearching ? 'Close search' : 'Search',
+            onPressed: () {
+              HapticFeedback.lightImpact();
+              setState(() {
+                _isSearching = !_isSearching;
+                if (!_isSearching) {
+                  _searchQuery = '';
+                  _searchController.clear();
+                }
+              });
+            },
+          ),
+          IconButton(
+            icon: Icon(
+              Icons.edit_square,
+              color: isDark ? Colors.white : AppColors.pureBlack,
+            ),
+            tooltip: 'New Message',
+            onPressed: _handleNewMessage,
+          ),
+          const SizedBox(width: 8),
+        ],
+      ),
+      body: _searchQuery.isNotEmpty
+          ? _FilteredMessagesTab(searchQuery: _searchQuery)
+          : const MessagesTab(),
+    );
+  }
+}
+
+/// Filtered messages tab that filters conversations by search query
+class _FilteredMessagesTab extends ConsumerWidget {
+  final String searchQuery;
+
+  const _FilteredMessagesTab({required this.searchQuery});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final authState = ref.watch(authStateProvider);
+    final userId = authState.user?.id;
+
+    if (userId == null) return const SizedBox.shrink();
+
+    final conversationsAsync = ref.watch(conversationsProvider(userId));
+
+    return conversationsAsync.when(
+      loading: () => AppLoading.fullScreen(),
+      error: (_, __) => const Center(child: Text('Failed to load')),
+      data: (conversations) {
+        final filtered = conversations.where((c) {
+          final name = (c['other_user_name'] as String? ?? '').toLowerCase();
+          return name.contains(searchQuery);
+        }).toList();
+
+        if (filtered.isEmpty) {
+          return Center(
+            child: Text(
+              'No conversations found',
+              style: TextStyle(
+                color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
+              ),
+            ),
+          );
+        }
+
+        return ListView.builder(
+          padding: const EdgeInsets.all(16),
+          itemCount: filtered.length,
+          itemBuilder: (context, index) {
+            final conversation = filtered[index];
+            return _buildConversationCard(context, ref, conversation, userId, isDark);
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildConversationCard(BuildContext context, WidgetRef ref,
+      Map<String, dynamic> conversation, String userId, bool isDark) {
+    final otherUserName = conversation['other_user_name'] as String? ?? 'User';
+    final otherUserAvatar = conversation['other_user_avatar'] as String?;
+    final otherUserId = conversation['other_user_id'] as String? ?? '';
+    final lastMessage = conversation['last_message'] as String? ?? '';
+    final conversationId = conversation['id'] as String? ?? '';
+    final cardBg = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Material(
+        color: cardBg,
+        borderRadius: BorderRadius.circular(16),
+        child: InkWell(
+          onTap: () {
+            HapticFeedback.lightImpact();
+            Navigator.push(
+              context,
+              AppPageRoute(
+                builder: (_) => ConversationScreen(
+                  conversationId: conversationId,
+                  otherUserId: otherUserId,
+                  otherUserName: otherUserName,
+                  otherUserAvatar: otherUserAvatar,
+                ),
+              ),
+            );
+          },
+          borderRadius: BorderRadius.circular(16),
+          child: Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: cardBorder),
+            ),
+            child: Row(
+              children: [
+                CircleAvatar(
+                  radius: 24,
+                  backgroundColor: AppColors.cyan,
+                  backgroundImage: otherUserAvatar != null
+                      ? NetworkImage(otherUserAvatar)
+                      : null,
+                  child: otherUserAvatar == null
+                      ? Icon(Icons.person, color: Colors.white, size: 24)
+                      : null,
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        otherUserName,
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                          color: textPrimary,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        lastMessage,
+                        style: TextStyle(fontSize: 13, color: textSecondary),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Friend picker screen for starting a new conversation
+class _NewMessagePickerScreen extends ConsumerWidget {
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final backgroundColor = isDark ? AppColors.pureBlack : AppColorsLight.pureWhite;
+    final authState = ref.watch(authStateProvider);
+    final userId = authState.user?.id;
+
+    return Scaffold(
+      backgroundColor: backgroundColor,
+      appBar: AppBar(
+        backgroundColor: backgroundColor,
+        surfaceTintColor: Colors.transparent,
+        elevation: 0,
+        automaticallyImplyLeading: false,
+        leading: const GlassBackButton(),
         title: Text(
-          'Messages',
+          'New Message',
           style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                 fontWeight: FontWeight.bold,
               ),
         ),
         centerTitle: false,
       ),
-      body: const MessagesTab(),
+      body: userId == null
+          ? const Center(child: Text('Not logged in'))
+          : _buildFriendsList(context, ref, userId, isDark),
+    );
+  }
+
+  Widget _buildFriendsList(BuildContext context, WidgetRef ref, String userId, bool isDark) {
+    final friendsAsync = ref.watch(friendsListProvider(userId));
+
+    return friendsAsync.when(
+      loading: () => AppLoading.fullScreen(),
+      error: (_, __) => const Center(child: Text('Failed to load friends')),
+      data: (friends) {
+        if (friends.isEmpty) {
+          return Center(
+            child: Text(
+              'No friends to message',
+              style: TextStyle(
+                color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
+              ),
+            ),
+          );
+        }
+
+        return ListView.builder(
+          padding: const EdgeInsets.all(16),
+          itemCount: friends.length,
+          itemBuilder: (context, index) {
+            final friend = friends[index];
+            final name = friend['name'] as String? ?? 'Unknown';
+            final avatarUrl = friend['avatar_url'] as String?;
+            final friendId = friend['id'] as String? ?? '';
+            final cardBg = isDark ? AppColors.elevated : AppColorsLight.elevated;
+            final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+            final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+            final colors = ref.colors(context);
+
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: Material(
+                color: cardBg,
+                borderRadius: BorderRadius.circular(16),
+                child: InkWell(
+                  onTap: () async {
+                    HapticFeedback.lightImpact();
+                    try {
+                      final socialService = ref.read(socialServiceProvider);
+                      final conversation = await socialService.getOrCreateConversation(
+                        userId: userId,
+                        otherUserId: friendId,
+                      );
+
+                      if (context.mounted) {
+                        // Pop the picker, then push the conversation
+                        Navigator.pop(context);
+                        Navigator.push(
+                          context,
+                          AppPageRoute(
+                            builder: (_) => ConversationScreen(
+                              conversationId: conversation['id'] as String? ?? '',
+                              otherUserId: friendId,
+                              otherUserName: name,
+                              otherUserAvatar: avatarUrl,
+                            ),
+                          ),
+                        );
+                      }
+                    } catch (e) {
+                      debugPrint('Failed to create conversation: $e');
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Failed to start conversation')),
+                        );
+                      }
+                    }
+                  },
+                  borderRadius: BorderRadius.circular(16),
+                  child: Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: cardBorder.withValues(alpha: 0.3)),
+                    ),
+                    child: Row(
+                      children: [
+                        CircleAvatar(
+                          radius: 22,
+                          backgroundColor: colors.accent.withValues(alpha: 0.2),
+                          backgroundImage: avatarUrl != null ? NetworkImage(avatarUrl) : null,
+                          child: avatarUrl == null
+                              ? Text(
+                                  name.isNotEmpty ? name[0].toUpperCase() : '?',
+                                  style: TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                    color: colors.accent,
+                                  ),
+                                )
+                              : null,
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            name,
+                            style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w600,
+                              color: textPrimary,
+                            ),
+                          ),
+                        ),
+                        Icon(
+                          Icons.chat_bubble_outline_rounded,
+                          size: 20,
+                          color: colors.accent,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            );
+          },
+        );
+      },
     );
   }
 }

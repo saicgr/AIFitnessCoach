@@ -5,6 +5,7 @@ Replaces the Gemini AI-based analysis with a deterministic
 database + heuristic approach.
 """
 
+import asyncio
 import logging
 from typing import Dict, Optional, List
 
@@ -71,16 +72,18 @@ class IngredientDatabaseAnalyzer:
         if not ingredients:
             return self._neutral_fallback(ingredients_text, product_name)
 
-        # 2. Look up each ingredient
+        # 2. Look up all ingredients concurrently
+        lookup_results = await asyncio.gather(
+            *(lookup_ingredient(ing_name) for ing_name in ingredients)
+        )
+
         ingredient_analyses: List[Dict] = []
         inflammatory_names: List[str] = []
         anti_inflammatory_names: List[str] = []
         additives_found: List[str] = []
         heuristic_count = 0
 
-        for ing_name in ingredients:
-            source, record = await lookup_ingredient(ing_name)
-
+        for ing_name, (source, record) in zip(ingredients, lookup_results):
             if source == SOURCE_HEURISTIC:
                 heuristic_count += 1
 

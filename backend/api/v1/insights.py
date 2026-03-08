@@ -553,13 +553,9 @@ async def get_weight_insight(
             direction=direction
         )
 
-        response = await gemini_service.chat(
-            message=prompt,
-            user_id=user_id,
-            context="weight_insight"
-        )
+        response = await gemini_service.chat(user_message=prompt)
 
-        insight = response.get("response", _fallback_weight_insight(weekly_change, direction))
+        insight = response if response else _fallback_weight_insight(weekly_change, direction)
 
         # Cache the result
         _cache_insight(db, cache_key, insight, hours=24)
@@ -652,13 +648,9 @@ async def get_daily_tip(
             time_of_day=time_of_day
         )
 
-        response = await gemini_service.chat(
-            message=prompt,
-            user_id=user_id,
-            context="daily_tip"
-        )
+        response = await gemini_service.chat(user_message=prompt)
 
-        tip = response.get("response", _fallback_daily_tip(days_since, time_of_day))
+        tip = response if response else _fallback_daily_tip(days_since, time_of_day)
 
         # Cache the result (expires at midnight)
         _cache_insight(db, cache_key, tip, hours=24)
@@ -734,14 +726,10 @@ async def get_habit_suggestions(
             pain_points="staying consistent, avoiding junk food"  # Could be personalized later
         )
 
-        response = await gemini_service.chat(
-            message=prompt,
-            user_id=user_id,
-            context="habit_suggestions"
-        )
+        response = await gemini_service.chat(user_message=prompt)
 
         # Parse JSON from response
-        suggestions = _parse_habit_suggestions(response.get("response", "[]"))
+        suggestions = _parse_habit_suggestions(response if response else "[]")
 
         # Cache
         _cache_insight(db, cache_key, json.dumps(suggestions), hours=168)  # 1 week

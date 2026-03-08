@@ -99,6 +99,9 @@ class SettingItemData {
   /// Whether this item is the daily XP strip toggle.
   final bool isDailyXPStripToggle;
 
+  /// Whether this item is the week start day selector (Mon/Sun).
+  final bool isWeekStartSelector;
+
   const SettingItemData({
     required this.icon,
     required this.title,
@@ -132,6 +135,7 @@ class SettingItemData {
     this.isAccentColorSelector = false,
     this.isWeightIncrementsSelector = false,
     this.isDailyXPStripToggle = false,
+    this.isWeekStartSelector = false,
   });
 }
 

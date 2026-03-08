@@ -4,8 +4,11 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/providers/window_mode_provider.dart';
+import '../../widgets/press_and_hold_button.dart';
+import 'health_disclaimer_screen.dart';
 import 'widgets/foldable_quiz_scaffold.dart';
 
 /// Key used to store AI consent acceptance in SharedPreferences
@@ -35,7 +38,7 @@ class AiConsentNotifier extends StateNotifier<bool> {
 }
 
 /// AI Consent Screen - Shown during onboarding after personal info, before coach selection.
-/// Informs users about how their data is anonymized before AI processing.
+/// Covers both data privacy and health & safety disclaimer in one screen.
 class AiConsentScreen extends ConsumerStatefulWidget {
   const AiConsentScreen({super.key});
 
@@ -44,23 +47,17 @@ class AiConsentScreen extends ConsumerStatefulWidget {
 }
 
 class _AiConsentScreenState extends ConsumerState<AiConsentScreen> {
-  bool _isLoading = false;
-
-  Future<void> _acceptAndContinue() async {
-    if (_isLoading) return;
-
-    HapticFeedback.mediumImpact();
-    setState(() => _isLoading = true);
-
+  void _onConfirmed() async {
     try {
       await ref.read(aiConsentProvider.notifier).accept();
-      debugPrint('✅ [AiConsent] User accepted AI consent');
+      await ref.read(healthDisclaimerProvider.notifier).accept();
+      debugPrint('User accepted privacy & health disclaimer');
 
       if (mounted) {
         context.go('/coach-selection');
       }
     } catch (e) {
-      debugPrint('❌ [AiConsent] Error saving consent: $e');
+      debugPrint('Error saving consent: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -68,10 +65,6 @@ class _AiConsentScreenState extends ConsumerState<AiConsentScreen> {
             backgroundColor: AppColors.error,
           ),
         );
-      }
-    } finally {
-      if (mounted) {
-        setState(() => _isLoading = false);
       }
     }
   }
@@ -104,8 +97,8 @@ class _AiConsentScreenState extends ConsumerState<AiConsentScreen> {
         ),
         child: SafeArea(
           child: FoldableQuizScaffold(
-            headerTitle: 'Your Privacy Matters',
-            headerSubtitle: 'How we protect your data',
+            headerTitle: 'Privacy & Safety',
+            headerSubtitle: 'How we protect you and your data',
             headerExtra: Container(
               width: 48,
               height: 48,
@@ -131,58 +124,93 @@ class _AiConsentScreenState extends ConsumerState<AiConsentScreen> {
                       child: _buildHeader(isDark, textPrimary, textSecondary),
                     );
                   }),
-                  const SizedBox(height: 24),
-                  _buildPrivacyPoint(
+
+                  // --- Privacy section ---
+                  const SizedBox(height: 20),
+                  _buildSectionLabel('Your Data', Icons.lock_outline, isDark ? AppColors.cyan : AppColorsLight.cyan, isDark, textPrimary, 0),
+                  const SizedBox(height: 12),
+                  _buildCompactPoint(
                     icon: Icons.shield_outlined,
-                    title: 'Your data is anonymized before AI processing',
-                    description: 'Personal identifiers are removed before any data reaches the AI.',
-                    delay: 0,
+                    text: 'Data is anonymized before AI processing',
+                    delay: 50,
                     isDark: isDark,
                     textPrimary: textPrimary,
-                    textSecondary: textSecondary,
+                    accentColor: isDark ? AppColors.cyan : AppColorsLight.cyan,
                   ),
-                  const SizedBox(height: 16),
-                  _buildPrivacyPoint(
+                  const SizedBox(height: 8),
+                  _buildCompactPoint(
                     icon: Icons.visibility_off_outlined,
-                    title: 'AI only sees fitness data, never personal details',
-                    description: 'Your name, email, and identity stay private at all times.',
+                    text: 'AI sees fitness data only, never personal details',
                     delay: 100,
                     isDark: isDark,
                     textPrimary: textPrimary,
-                    textSecondary: textSecondary,
+                    accentColor: isDark ? AppColors.cyan : AppColorsLight.cyan,
                   ),
-                  const SizedBox(height: 16),
-                  _buildPrivacyPoint(
+                  const SizedBox(height: 8),
+                  _buildCompactPoint(
                     icon: Icons.toggle_on_outlined,
-                    title: "You're always in control of your data",
-                    description: 'Review, export, or delete your data anytime from Settings.',
-                    delay: 200,
+                    text: 'Review, export, or delete your data anytime',
+                    delay: 150,
                     isDark: isDark,
                     textPrimary: textPrimary,
-                    textSecondary: textSecondary,
+                    accentColor: isDark ? AppColors.cyan : AppColorsLight.cyan,
                   ),
-                  const SizedBox(height: 32),
-                  GestureDetector(
-                    onTap: () {
-                      HapticFeedback.selectionClick();
-                      context.push('/settings/ai-data-usage');
-                    },
-                    child: Text(
-                      'Learn More',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
-                        color: isDark ? AppColors.cyan : AppColorsLight.cyan,
-                        decoration: TextDecoration.underline,
-                        decorationColor: isDark ? AppColors.cyan : AppColorsLight.cyan,
+
+                  // --- Health & Safety section ---
+                  const SizedBox(height: 24),
+                  _buildSectionLabel('Health & Safety', Icons.health_and_safety_outlined, isDark ? AppColors.warning : AppColorsLight.warning, isDark, textPrimary, 200),
+                  const SizedBox(height: 12),
+                  _buildCompactPoint(
+                    icon: Icons.phone_android_outlined,
+                    text: 'FitWiz is not a medical device or substitute for professional advice',
+                    delay: 250,
+                    isDark: isDark,
+                    textPrimary: textPrimary,
+                    accentColor: isDark ? AppColors.warning : AppColorsLight.warning,
+                  ),
+                  const SizedBox(height: 8),
+                  _buildCompactPoint(
+                    icon: Icons.medical_services_outlined,
+                    text: 'Consult your doctor before starting any exercise program',
+                    delay: 300,
+                    isDark: isDark,
+                    textPrimary: textPrimary,
+                    accentColor: isDark ? AppColors.warning : AppColorsLight.warning,
+                  ),
+                  const SizedBox(height: 8),
+                  _buildCompactPoint(
+                    icon: Icons.hearing_outlined,
+                    text: 'Stop if you feel pain or dizziness — AI cannot assess you in real-time',
+                    delay: 350,
+                    isDark: isDark,
+                    textPrimary: textPrimary,
+                    accentColor: isDark ? AppColors.warning : AppColorsLight.warning,
+                  ),
+
+                  // Links row
+                  const SizedBox(height: 20),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      _buildLink('Privacy Details', () {
+                        HapticFeedback.selectionClick();
+                        context.push('/settings/ai-data-usage');
+                      }, isDark),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                        child: Text('·', style: TextStyle(color: textSecondary, fontSize: 14)),
                       ),
-                    ),
-                  ).animate().fadeIn(delay: 400.ms),
+                      _buildLink('Full Disclaimer', () {
+                        HapticFeedback.selectionClick();
+                        launchUrl(Uri.parse('https://fitwiz.app/health-disclaimer'), mode: LaunchMode.externalApplication);
+                      }, isDark),
+                    ],
+                  ).animate().fadeIn(delay: 450.ms),
                   const SizedBox(height: 24),
                 ],
               ),
             ),
-            button: _buildContinueButton(isDark),
+            button: _buildBottomButton(isDark),
           ),
         ),
       ),
@@ -209,7 +237,7 @@ class _AiConsentScreenState extends ConsumerState<AiConsentScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Your Privacy Matters',
+                  'Privacy & Safety',
                   style: TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
@@ -218,7 +246,7 @@ class _AiConsentScreenState extends ConsumerState<AiConsentScreen> {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  'How we protect your data',
+                  'How we protect you and your data',
                   style: TextStyle(
                     fontSize: 14,
                     color: textSecondary,
@@ -307,73 +335,87 @@ class _AiConsentScreenState extends ConsumerState<AiConsentScreen> {
     );
   }
 
-  Widget _buildPrivacyPoint({
+  Widget _buildSectionLabel(String label, IconData icon, Color color, bool isDark, Color textPrimary, int delay) {
+    return Row(
+      children: [
+        Icon(icon, size: 18, color: color),
+        const SizedBox(width: 8),
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w700,
+            color: textPrimary,
+            letterSpacing: 0.5,
+          ),
+        ),
+      ],
+    ).animate().fadeIn(delay: Duration(milliseconds: delay));
+  }
+
+  Widget _buildCompactPoint({
     required IconData icon,
-    required String title,
-    required String description,
+    required String text,
     required int delay,
     required bool isDark,
     required Color textPrimary,
-    required Color textSecondary,
+    required Color accentColor,
   }) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
         color: isDark ? AppColors.elevated : AppColorsLight.elevated,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(12),
         border: Border.all(
           color: isDark ? AppColors.cardBorder : AppColorsLight.cardBorder,
         ),
       ),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
-            width: 40,
-            height: 40,
+            width: 32,
+            height: 32,
             decoration: BoxDecoration(
-              color: (isDark ? AppColors.cyan : AppColorsLight.cyan).withValues(alpha: 0.15),
-              borderRadius: BorderRadius.circular(10),
+              color: accentColor.withValues(alpha: 0.15),
+              borderRadius: BorderRadius.circular(8),
             ),
-            child: Icon(
-              icon,
-              color: isDark ? AppColors.cyan : AppColorsLight.cyan,
-              size: 22,
-            ),
+            child: Icon(icon, color: accentColor, size: 18),
           ),
-          const SizedBox(width: 14),
+          const SizedBox(width: 12),
           Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
-                    color: textPrimary,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  description,
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: textSecondary,
-                    height: 1.4,
-                  ),
-                ),
-              ],
+            child: Text(
+              text,
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w500,
+                color: textPrimary,
+                height: 1.3,
+              ),
             ),
           ),
         ],
       ),
-    ).animate().fadeIn(delay: Duration(milliseconds: 200 + delay)).slideX(begin: 0.05);
+    ).animate().fadeIn(delay: Duration(milliseconds: 200 + delay)).slideX(begin: 0.03);
   }
 
-  Widget _buildContinueButton(bool isDark) {
-    const orange = Color(0xFFF97316);
+  Widget _buildLink(String label, VoidCallback onTap, bool isDark) {
+    final linkColor = isDark ? AppColors.cyan : AppColorsLight.cyan;
+    return GestureDetector(
+      onTap: onTap,
+      child: Text(
+        label,
+        style: TextStyle(
+          fontSize: 13,
+          fontWeight: FontWeight.w500,
+          color: linkColor,
+          decoration: TextDecoration.underline,
+          decorationColor: linkColor,
+        ),
+      ),
+    );
+  }
 
+  Widget _buildBottomButton(bool isDark) {
     return Container(
       padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
       decoration: BoxDecoration(
@@ -388,46 +430,10 @@ class _AiConsentScreenState extends ConsumerState<AiConsentScreen> {
       ),
       child: SafeArea(
         top: false,
-        child: GestureDetector(
-          onTap: _isLoading ? null : _acceptAndContinue,
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 200),
-            width: double.infinity,
-            height: 56,
-            decoration: BoxDecoration(
-              color: orange,
-              borderRadius: BorderRadius.circular(14),
-            ),
-            child: Center(
-              child: _isLoading
-                  ? const SizedBox(
-                      width: 24,
-                      height: 24,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2.5,
-                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                      ),
-                    )
-                  : const Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.check_circle_outline, size: 20, color: Colors.white),
-                        SizedBox(width: 8),
-                        Text(
-                          'I Agree - Continue',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.white,
-                          ),
-                        ),
-                        SizedBox(width: 8),
-                        Icon(Icons.arrow_forward, size: 20, color: Colors.white),
-                      ],
-                    ),
-            ),
-          ),
-        ).animate().fadeIn(delay: 400.ms).slideY(begin: 0.1),
+        child: PressAndHoldButton(
+          label: 'Hold to Agree',
+          onConfirmed: _onConfirmed,
+        ).animate().fadeIn(delay: 500.ms).slideY(begin: 0.1),
       ),
     );
   }

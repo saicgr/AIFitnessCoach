@@ -50,7 +50,7 @@ final habitsProvider = Provider<List<HabitData>>((ref) {
       icon: Icons.water_drop,
       last30Days: waterDays,
       currentStreak: waterStreak,
-      route: '/hydration',
+      route: '/nutrition?tab=2',
       todayCompleted: waterDays.isNotEmpty && waterDays.last,
     ),
   ];

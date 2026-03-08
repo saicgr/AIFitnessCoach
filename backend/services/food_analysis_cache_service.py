@@ -36,8 +36,11 @@ from core.db.nutrition_db import NutritionDB
 from core.supabase_client import get_supabase
 from services.food_database_lookup_service import get_food_db_lookup_service
 from services.gemini_service import GeminiService
+from core.redis_cache import RedisCache
 
 logger = logging.getLogger(__name__)
+
+_food_analysis_cache = RedisCache(prefix="food_analysis", ttl_seconds=86400, max_size=200)
 
 
 @dataclass
@@ -1556,7 +1559,84 @@ _MODIFIER_GROUPS: Dict[str, List[str]] = {
     "size": [
         "mini", "small", "half portion", "large", "extra large", "supersize",
     ],
+    "cooking_method": [
+        "grilled", "baked", "pan fried", "deep fried",
+        "steamed", "boiled", "air fried", "roasted",
+    ],
 }
+
+
+# Foods that should show modifier group toggles by default (even without explicit modifier text).
+# Maps food_name_normalized → list of (group_name, default_phrase, modifier_type).
+_FOOD_DEFAULT_MODIFIER_GROUPS: Dict[str, List[tuple]] = {
+    "steak": [("steak_doneness", "medium", ModifierType.DONENESS)],
+    # Proteins with cooking method modifiers
+    "chicken":    [("cooking_method", "grilled", ModifierType.COOKING_METHOD)],
+    "fish":       [("cooking_method", "grilled", ModifierType.COOKING_METHOD)],
+    "salmon":     [("cooking_method", "grilled", ModifierType.COOKING_METHOD)],
+    "tilapia":    [("cooking_method", "grilled", ModifierType.COOKING_METHOD)],
+    "cod":        [("cooking_method", "grilled", ModifierType.COOKING_METHOD)],
+    "shrimp":     [("cooking_method", "grilled", ModifierType.COOKING_METHOD)],
+    "paneer":     [("cooking_method", "grilled", ModifierType.COOKING_METHOD)],
+    "tofu":       [("cooking_method", "grilled", ModifierType.COOKING_METHOD)],
+    "turkey":     [("cooking_method", "grilled", ModifierType.COOKING_METHOD)],
+    "pork":       [("cooking_method", "grilled", ModifierType.COOKING_METHOD)],
+    "lamb":       [("cooking_method", "grilled", ModifierType.COOKING_METHOD)],
+    "egg":        [("cooking_method", "grilled", ModifierType.COOKING_METHOD)],
+    # Vegetables with cooking method modifiers
+    "vegetables": [("cooking_method", "grilled", ModifierType.COOKING_METHOD)],
+    "broccoli":   [("cooking_method", "steamed", ModifierType.COOKING_METHOD)],
+    "mushroom":   [("cooking_method", "grilled", ModifierType.COOKING_METHOD)],
+    "cauliflower":[("cooking_method", "steamed", ModifierType.COOKING_METHOD)],
+    "potato":     [("cooking_method", "baked", ModifierType.COOKING_METHOD)],
+}
+# Also map variant names so "beef steak", "grilled steak" etc. get the toggle
+for _vn in ("beef steak", "grilled steak", "steak dinner", "cooked steak",
+            "steak piece", "plain steak", "1 steak",
+            "sirloin", "ribeye", "filet mignon", "ny strip", "new york strip",
+            "t-bone", "tenderloin", "flank steak", "skirt steak",
+            "strip steak", "porterhouse"):
+    _FOOD_DEFAULT_MODIFIER_GROUPS[_vn] = _FOOD_DEFAULT_MODIFIER_GROUPS["steak"]
+
+
+def _build_default_modifiers(food_name: str) -> List[Dict[str, Any]]:
+    """Build default modifier details for foods with applicable modifier groups."""
+    food_key = food_name.lower().strip()
+    groups = _FOOD_DEFAULT_MODIFIER_GROUPS.get(food_key)
+    if not groups:
+        return []
+
+    modifier_details = []
+    for group_name, default_phrase, mod_type in groups:
+        adj = _FOOD_MODIFIERS.get(default_phrase, (0, 0.0, 0.0, 0.0, 0.0, 0, 0, 0.0, 0.0))
+        meta = _MODIFIER_METADATA.get(default_phrase)
+        detail: Dict[str, Any] = {
+            "phrase": default_phrase,
+            "type": mod_type.value,
+            "delta": {
+                "calories": adj[0],
+                "protein_g": adj[1],
+                "carbs_g": adj[2],
+                "fat_g": adj[3],
+                "fiber_g": adj[4],
+            },
+        }
+        if meta and meta.display_label:
+            detail["display_label"] = meta.display_label
+        if meta and meta.group:
+            detail["group"] = meta.group
+            detail["group_options"] = []
+            for m in _MODIFIER_GROUPS.get(meta.group, []):
+                if m in _FOOD_MODIFIERS:
+                    m_meta = _MODIFIER_METADATA.get(m)
+                    label = m_meta.display_label if m_meta and m_meta.display_label else m.title()
+                    detail["group_options"].append({
+                        "phrase": m,
+                        "label": label,
+                        "cal_delta": _FOOD_MODIFIERS[m][0],
+                    })
+        modifier_details.append(detail)
+    return modifier_details
 
 
 def _classify_modifier(phrase: str) -> ModifierType:
@@ -1966,8 +2046,11 @@ class FoodAnalysisCacheService:
 
             # First try exact match on full description (handles "chicken 65", etc.)
             override = lookup_service._check_override(description)
+            food_key = description  # Track which key matched for default modifiers
             if override:
-                return self._override_to_analysis(override)
+                result = self._override_to_analysis(override)
+                self._inject_default_modifiers(result, food_key, override)
+                return result
 
             # Parse to extract quantity/weight, then look up cleaned food name
             parsed = self._parse_single_item(description)
@@ -1975,16 +2058,20 @@ class FoodAnalysisCacheService:
                 return None
 
             override = lookup_service._check_override(parsed.food_name)
+            food_key = parsed.food_name
             if not override:
                 return None
 
             # Scale based on what was parsed
             if parsed.weight_g:
-                return self._override_to_analysis_by_weight(override, parsed.weight_g)
+                result = self._override_to_analysis_by_weight(override, parsed.weight_g)
             elif parsed.quantity != 1.0:
-                return self._override_to_analysis_scaled(override, parsed.quantity)
+                result = self._override_to_analysis_scaled(override, parsed.quantity)
             else:
-                return self._override_to_analysis(override)
+                result = self._override_to_analysis(override)
+
+            self._inject_default_modifiers(result, food_key, override)
+            return result
 
         except Exception as e:
             logger.warning(f"Override lookup failed: {e}")
@@ -2097,6 +2184,31 @@ class FoodAnalysisCacheService:
         # Add scaled micronutrients to top-level response
         result.update(scaled_micros)
         return result
+
+    @staticmethod
+    def _inject_default_modifiers(
+        result: Dict[str, Any], food_key: str, override: Dict[str, Any]
+    ) -> None:
+        """Inject default modifier groups (e.g. steak doneness) into analysis result."""
+        # Check both the lookup key and the override's food_name_normalized
+        override_name = override.get("food_name_normalized", "")
+        default_mods = _build_default_modifiers(food_key)
+        if not default_mods:
+            default_mods = _build_default_modifiers(override_name)
+        if not default_mods:
+            return
+
+        food_items = result.get("food_items", [])
+        if not food_items:
+            return
+        fi = food_items[0]
+        existing_mods = fi.get("modifiers", [])
+        # Don't inject if a modifier of the same group already exists
+        existing_groups = {m.get("group") for m in existing_mods if m.get("group")}
+        for mod in default_mods:
+            if mod.get("group") not in existing_groups:
+                existing_mods.append(mod)
+        fi["modifiers"] = existing_mods
 
     def _override_to_analysis_by_weight(
         self, override: Dict[str, Any], weight_g: float
@@ -3119,7 +3231,7 @@ class FoodAnalysisCacheService:
             query_hash = NutritionDB.hash_query(normalized)
 
             # Check cache
-            cached = self.nutrition_db.get_cached_food_analysis(query_hash)
+            cached = await _food_analysis_cache.get(query_hash)
 
             return cached
 
@@ -3143,10 +3255,10 @@ class FoodAnalysisCacheService:
             True if cached successfully
         """
         try:
-            return self.nutrition_db.cache_food_analysis(
-                food_description=description,
-                analysis_result=analysis,
-            )
+            normalized = NutritionDB.normalize_food_query(description)
+            query_hash = NutritionDB.hash_query(normalized)
+            await _food_analysis_cache.set(query_hash, analysis)
+            return True
         except Exception as e:
             logger.warning(f"Failed to cache analysis: {e}")
             return False
@@ -3180,9 +3292,7 @@ class FoodAnalysisCacheService:
             normalized = NutritionDB.normalize_food_query(description)
             query_hash = NutritionDB.hash_query(normalized)
 
-            self.nutrition_db.client.table("food_analysis_cache").delete().eq(
-                "query_hash", query_hash
-            ).execute()
+            await _food_analysis_cache.delete(query_hash)
 
             logger.info(f"🗑️ Invalidated cache for: {description[:50]}...")
             return True
@@ -3228,8 +3338,9 @@ class FoodAnalysisCacheService:
                 # Get nutrition targets
                 targets_result = await session.execute(
                     text(
-                        "SELECT calories, protein_g, carbs_g, fat_g "
-                        "FROM nutrition_targets WHERE user_id = :uid LIMIT 1"
+                        "SELECT target_calories AS calories, target_protein_g AS protein_g, "
+                        "target_carbs_g AS carbs_g, target_fat_g AS fat_g "
+                        "FROM nutrition_preferences WHERE user_id = :uid LIMIT 1"
                     ),
                     {"uid": user_id},
                 )
@@ -3249,7 +3360,7 @@ class FoodAnalysisCacheService:
 
         # Check cache
         try:
-            cached = self.nutrition_db.get_cached_food_analysis(query_hash)
+            cached = await _food_analysis_cache.get(query_hash)
             if cached:
                 logger.info(f"[FoodReview] Cache HIT for: {food_name[:50]}")
                 return cached
@@ -3268,17 +3379,7 @@ class FoodAnalysisCacheService:
             if result:
                 # Cache for 24h
                 try:
-                    self.nutrition_db.client.table("food_analysis_cache").upsert(
-                        {
-                            "query_hash": query_hash,
-                            "food_description": cache_key,
-                            "analysis_result": result,
-                            "model_version": "food_review_v1",
-                            "prompt_version": "v1",
-                            "last_accessed_at": datetime.utcnow().isoformat(),
-                        },
-                        on_conflict="query_hash",
-                    ).execute()
+                    await _food_analysis_cache.set(query_hash, result)
                     logger.info(f"[FoodReview] Cached result for: {food_name[:50]}")
                 except Exception as cache_err:
                     logger.warning(f"[FoodReview] Failed to cache: {cache_err}")

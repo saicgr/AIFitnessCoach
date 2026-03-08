@@ -112,6 +112,14 @@ const quickActionRegistry = <String, QuickAction>{
     behavior: QuickActionBehavior.route,
     route: '/library',
   ),
+  'programs': QuickAction(
+    id: 'programs',
+    label: 'Programs',
+    icon: Icons.view_list_outlined,
+    color: Color(0xFFE11D48),
+    behavior: QuickActionBehavior.route,
+    route: '/library?tab=1',
+  ),
   'settings': QuickAction(
     id: 'settings',
     label: 'Settings',
@@ -166,7 +174,7 @@ const quickActionRegistry = <String, QuickAction>{
     icon: Icons.local_drink_outlined,
     color: Color(0xFF3B82F6),
     behavior: QuickActionBehavior.route,
-    route: '/hydration',
+    route: '/nutrition?tab=2',
   ),
   'summaries': QuickAction(
     id: 'summaries',
@@ -180,6 +188,6 @@ const quickActionRegistry = <String, QuickAction>{
 
 const defaultQuickActionOrder = [
   'quick_workout', 'food', 'water', 'chat', 'weight', 'photo', 'fasting', 'measure', 'mood',
-  'history', 'steps', 'workout', 'library', 'settings', 'schedule', 'habits',
+  'history', 'steps', 'workout', 'programs', 'library', 'settings', 'schedule', 'habits',
   'progress', 'achievements', 'hydration', 'summaries',
 ];

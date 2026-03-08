@@ -48,6 +48,8 @@ class CoachIntentEnum(str, Enum):
     COMPLETE_WORKOUT = "complete_workout"
     LOG_HYDRATION = "log_hydration"
     GENERATE_QUICK_WORKOUT = "generate_quick_workout"
+    SET_WATER_GOAL = "set_water_goal"
+    LOG_WEIGHT = "log_weight"
     GENERATE_WEEKLY_PLAN = "generate_weekly_plan"
     ADJUST_PLAN = "adjust_plan"
     EXPLAIN_PLAN = "explain_plan"
@@ -64,6 +66,8 @@ class IntentExtractionResponse(BaseModel):
     setting_value: Optional[bool] = Field(default=None, description="New setting value")
     destination: Optional[str] = Field(default=None, description="Navigation destination")
     hydration_amount: Optional[int] = Field(default=None, description="Number of glasses/cups")
+    water_goal_glasses: Optional[int] = Field(default=None, description="Daily water goal in glasses")
+    weight_value: Optional[float] = Field(default=None, description="Weight value to log")
 
 
 # =============================================================================

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/providers/week_start_provider.dart';
 import '../../../core/theme/accent_color_provider.dart';
 import '../../../data/services/haptic_service.dart';
 
@@ -35,39 +36,35 @@ class WeekCalendarStrip extends ConsumerWidget {
     final accentColorEnum = ref.watch(accentColorProvider);
     final accentColor = accentColorEnum.getColor(isDark);
 
+    final weekConfig = ref.watch(weekDisplayConfigProvider);
+
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
-    final todayIndex = today.weekday - 1; // 0=Mon
-
-    // Compute the Monday of this week
-    final monday = today.subtract(Duration(days: todayIndex));
-
-    const shortDays = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
+    final todayIndex = today.weekday - 1; // 0=Mon (data model)
+    final weekStart = weekConfig.weekStart(today);
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Column(
         children: [
-          // Day cells (Mon-Sun)
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: List.generate(7, (index) {
-              final date = monday.add(Duration(days: index));
-              final isToday = index == todayIndex;
-              final isSelected = index == selectedDayIndex;
-              final status = workoutStatusMap[index]; // null, true, or false
-              final isPast = index < todayIndex;
+            children: List.generate(7, (displayIndex) {
+              final dataIndex = weekConfig.displayOrder[displayIndex];
+              final date = weekStart.add(Duration(days: displayIndex));
+              final isToday = dataIndex == todayIndex;
+              final isSelected = dataIndex == selectedDayIndex;
+              final status = workoutStatusMap[dataIndex];
+              final isPast = date.isBefore(today);
 
-              // Check if previous day's workout was completed or missed (for today's badge)
+              final prevDataIndex = (todayIndex - 1 + 7) % 7;
               final prevDayCompleted = isToday &&
-                  index > 0 &&
-                  workoutStatusMap[index - 1] == true;
+                  workoutStatusMap[prevDataIndex] == true;
               final prevDayMissed = isToday &&
-                  index > 0 &&
-                  workoutStatusMap[index - 1] == false;
+                  workoutStatusMap[prevDataIndex] == false;
 
               return _DayCell(
-                dayLabel: shortDays[index],
+                dayLabel: weekConfig.dayLabels[displayIndex],
                 dateNumber: date.day,
                 isToday: isToday,
                 isSelected: isSelected,
@@ -79,7 +76,7 @@ class WeekCalendarStrip extends ConsumerWidget {
                 isDark: isDark,
                 onTap: () {
                   HapticService.selection();
-                  onDaySelected(index);
+                  onDaySelected(dataIndex);
                 },
               );
             }),

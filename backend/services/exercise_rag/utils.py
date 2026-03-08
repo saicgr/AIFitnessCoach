@@ -69,22 +69,61 @@ def infer_equipment_from_name(exercise_name: str) -> str:
 
     # Equipment inference rules (order matters - more specific first)
     equipment_patterns = [
-        (["cable machine", "cable"], "Cable Machine"),
+        # Specific equipment first (longer/more specific patterns)
+        (["cable machine"], "Cable Machine"),
+        (["cable "], "Cable Machine"),
+        (["smith machine"], "Smith Machine"),
+        (["ez bar", "ez-bar", "curl bar"], "EZ Bar"),
+        (["trap bar", "hex bar"], "Trap Bar"),
+        (["lat pulldown", "lat pull down"], "Lat Pulldown Machine"),
+        (["leg press"], "Leg Press Machine"),
+        (["leg extension"], "Leg Extension Machine"),
+        (["leg curl"], "Leg Curl Machine"),
+        (["hack squat"], "Hack Squat Machine"),
+        (["pec deck", "pec fly machine"], "Pec Fly Machine"),
+        (["chest press machine"], "Chest Press Machine"),
+        (["shoulder press machine"], "Shoulder Press Machine"),
+        (["assisted pull"], "Assisted Pull-Up Machine"),
+        (["hyperextension"], "Hyperextension Bench"),
+        # Free weights
         (["barbell", "bar bell"], "Barbell"),
         (["dumbbell", "dumb bell", "db "], "Dumbbells"),
         (["kettlebell", "kettle bell", "kb "], "Kettlebell"),
-        (["ez bar", "ez-bar"], "EZ Bar"),
-        (["smith machine", "smith"], "Smith Machine"),
-        (["resistance band", "band "], "Resistance Bands"),
-        (["pull-up bar", "pullup bar", "chin-up bar", "chinup bar"], "Pull-up Bar"),
-        (["machine", "lat pulldown", "leg press", "leg curl", "leg extension",
-          "chest press machine", "shoulder press machine"], "Machine"),
-        (["trx", "suspension"], "TRX"),
-        (["slam ball"], "Slam Ball"),
+        (["weight plate", "plate front raise"], "Weight Plate"),
+        # Accessories
+        (["resistance band", "band "], "Resistance Band"),
+        (["bosu ball", "bosu"], "Bosu Ball"),
+        (["exercise ball"], "Exercise Ball"),
+        (["stability ball", "swiss ball"], "Exercise Ball"),
+        (["slam ball", "ball slam"], "Slam Ball"),
         (["medicine ball", "med ball"], "Medicine Ball"),
-        (["stability ball", "swiss ball", "exercise ball"], "Stability Ball"),
-        (["rope ", " rope", "battle rope"], "Rope"),
+        (["foam roller"], "Foam Roller"),
+        (["ab wheel", "ab roller"], "Ab Wheel"),
+        (["jump rope", "skipping rope"], "Jump Rope"),
+        # Bars and racks
+        (["pull-up bar", "pullup bar", "chin-up bar", "chinup bar", "pull up bar"], "Pull-Up Bar"),
+        (["hanging "], "Pull-Up Bar"),
+        (["dip station", "dip stand", "parallel bar"], "Dip Station"),
+        (["landmine"], "Landmine"),
         (["bench ", " bench"], "Bench"),
+        # Specialty
+        (["suspension trainer", "trx", "suspension"], "Suspension Trainer"),
+        (["battle rope"], "Battle Ropes"),
+        (["gymnastic ring", "ring dip"], "Gymnastic Rings"),
+        (["agility ladder"], "Agility Ladder"),
+        (["plyo box", "box jump", "step box"], "Plyo Box"),
+        # Unconventional
+        (["sandbag"], "Sandbag"),
+        # Cardio
+        (["treadmill"], "Treadmill"),
+        (["rebounder", "mini trampoline"], "Rebounder"),
+        (["stepmill", "stair climber"], "Stair Climber"),
+        (["rowing machine", "rower"], "Rowing Machine"),
+        (["assault bike", "air bike", "airbike"], "Assault Bike"),
+        (["stationary bike", "exercise bike"], "Stationary Bike"),
+        (["elliptical"], "Elliptical"),
+        # Generic machine (LAST - catches remaining machine exercises)
+        (["machine"], "Machine"),
     ]
 
     for patterns, equipment in equipment_patterns:

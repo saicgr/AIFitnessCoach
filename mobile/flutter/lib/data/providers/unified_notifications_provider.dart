@@ -133,6 +133,12 @@ class UnifiedNotificationsNotifier extends StateNotifier<AsyncValue<List<Unified
 
   UnifiedNotificationsNotifier(this._ref) : super(const AsyncValue.loading()) {
     _loadAll();
+    // Re-fetch when auth state changes (userId becomes available after login)
+    _ref.listen<String?>(currentUserIdProvider, (prev, next) {
+      if (prev != next && next != null) {
+        _loadAll();
+      }
+    });
   }
 
   Future<void> _loadAll() async {

@@ -236,7 +236,7 @@ class _WaterPill extends ConsumerWidget {
     return _StatPillContainer(
       onTap: () {
         HapticService.light();
-        context.push('/hydration');
+        context.go('/nutrition?tab=2');
       },
       child: Column(
         mainAxisSize: MainAxisSize.min,

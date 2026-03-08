@@ -227,8 +227,21 @@ class WorkoutExercise extends Equatable {
     }
   }
 
-  factory WorkoutExercise.fromJson(Map<String, dynamic> json) =>
-      _$WorkoutExerciseFromJson(json);
+  factory WorkoutExercise.fromJson(Map<String, dynamic> json) {
+    // Sanitise: API sometimes returns numeric fields as strings
+    final sanitised = Map<String, dynamic>.from(json);
+    for (final key in const [
+      'sets', 'reps', 'rest_seconds', 'duration_seconds', 'weight',
+      'hold_seconds', 'superset_group', 'superset_order',
+      'drop_set_count', 'drop_set_percentage', 'difficulty_num',
+    ]) {
+      final v = sanitised[key];
+      if (v is String) {
+        sanitised[key] = num.tryParse(v);
+      }
+    }
+    return _$WorkoutExerciseFromJson(sanitised);
+  }
   Map<String, dynamic> toJson() => _$WorkoutExerciseToJson(this);
 
   /// Get name (never null for display)

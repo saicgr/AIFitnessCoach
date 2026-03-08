@@ -154,7 +154,7 @@ class PlanPreviewScreen extends ConsumerWidget {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  // Primary: Start Workout
+                  // Primary: Continue (proceeds to next onboarding step)
                   SizedBox(
                     width: double.infinity,
                     height: 56,
@@ -176,14 +176,14 @@ class PlanPreviewScreen extends ConsumerWidget {
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           const Text(
-                            'Start Workout',
+                            'Looks Good, Continue',
                             style: TextStyle(
                               fontSize: 17,
                               fontWeight: FontWeight.w600,
                             ),
                           ),
                           const SizedBox(width: 8),
-                          const Icon(Icons.fitness_center_rounded, size: 20),
+                          const Icon(Icons.arrow_forward_rounded, size: 20),
                         ],
                       ),
                     ),
@@ -610,57 +610,59 @@ class PlanPreviewScreen extends ConsumerWidget {
     final equipment = quizData.equipment ?? [];
     final hasBarbell = equipment.contains('barbell') || equipment.contains('full_gym');
     final hasDumbbells = equipment.contains('dumbbells') || equipment.contains('full_gym');
+    final hasKettlebell = equipment.contains('kettlebell') || equipment.contains('kettlebells') || equipment.contains('full_gym');
+    final hasResistanceBands = equipment.contains('resistance_bands') || equipment.contains('full_gym');
 
     if (goal == 'muscle_strength' || goal == 'strength_hypertrophy') {
       return [
         {
-          'name': hasBarbell ? 'Barbell Bench Press' : (hasDumbbells ? 'Dumbbell Bench Press' : 'Push-Ups'),
+          'name': hasBarbell ? 'Barbell Bench Press' : (hasDumbbells ? 'Dumbbell Bench Press' : (hasKettlebell ? 'KB Floor Press' : 'Push-Ups')),
           'sets': '4 sets × 6-8 reps',
         },
         {
-          'name': hasDumbbells ? 'Dumbbell Shoulder Press' : 'Pike Push-Ups',
+          'name': hasDumbbells ? 'Dumbbell Shoulder Press' : (hasKettlebell ? 'KB Clean & Press' : (hasResistanceBands ? 'Band Overhead Press' : 'Pike Push-Ups')),
           'sets': '3 sets × 8-10 reps',
         },
         {
-          'name': 'Tricep Dips',
+          'name': hasKettlebell ? 'KB Goblet Squats' : (hasResistanceBands ? 'Banded Squats' : 'Tricep Dips'),
           'sets': '3 sets × 10-12 reps',
         },
         {
-          'name': hasDumbbells ? 'Dumbbell Lateral Raises' : 'Shoulder Taps',
+          'name': hasDumbbells ? 'Dumbbell Lateral Raises' : (hasResistanceBands ? 'Band Pull-Aparts' : 'Shoulder Taps'),
           'sets': '3 sets × 12-15 reps',
         },
       ];
     } else if (goal == 'muscle_hypertrophy') {
       return [
         {
-          'name': hasDumbbells ? 'Dumbbell Bench Press' : 'Push-Ups',
+          'name': hasDumbbells ? 'Dumbbell Bench Press' : (hasKettlebell ? 'KB Floor Press' : (hasResistanceBands ? 'Banded Push-Ups' : 'Push-Ups')),
           'sets': '4 sets × 10-12 reps',
         },
         {
-          'name': hasBarbell ? 'Barbell Rows' : (hasDumbbells ? 'Dumbbell Rows' : 'Bodyweight Rows'),
+          'name': hasBarbell ? 'Barbell Rows' : (hasDumbbells ? 'Dumbbell Rows' : (hasKettlebell ? 'KB Rows' : (hasResistanceBands ? 'Band Rows' : 'Bodyweight Rows'))),
           'sets': '4 sets × 10-12 reps',
         },
         {
-          'name': hasDumbbells ? 'Dumbbell Shoulder Press' : 'Pike Push-Ups',
+          'name': hasDumbbells ? 'Dumbbell Shoulder Press' : (hasKettlebell ? 'KB Clean & Press' : (hasResistanceBands ? 'Band Overhead Press' : 'Pike Push-Ups')),
           'sets': '3 sets × 12-15 reps',
         },
         {
-          'name': hasDumbbells ? 'Bicep Curls' : 'Chin-Ups',
+          'name': hasDumbbells ? 'Bicep Curls' : (hasKettlebell ? 'KB Swings' : (hasResistanceBands ? 'Band Curls' : 'Chin-Ups')),
           'sets': '3 sets × 12-15 reps',
         },
       ];
     } else {
       return [
         {
-          'name': 'Jump Squats',
+          'name': hasKettlebell ? 'KB Swings' : (hasResistanceBands ? 'Banded Squats' : 'Jump Squats'),
           'sets': '3 sets × 15 reps',
         },
         {
-          'name': 'Push-Ups',
+          'name': hasKettlebell ? 'KB Goblet Squats' : (hasResistanceBands ? 'Banded Push-Ups' : 'Push-Ups'),
           'sets': '3 sets × 15 reps',
         },
         {
-          'name': 'Mountain Climbers',
+          'name': hasKettlebell ? 'KB Clean & Press' : (hasResistanceBands ? 'Band Pull-Aparts' : 'Mountain Climbers'),
           'sets': '3 sets × 30 seconds',
         },
         {

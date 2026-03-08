@@ -3088,27 +3088,40 @@ class _FoodItemRankingCardState extends State<_FoodItemRankingCard> {
             children: [
               // Score badge
               if (widget.item.goalScore != null)
-                Container(
-                  width: 36,
-                  height: 36,
-                  decoration: BoxDecoration(
-                    color: scoreColor.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: scoreColor.withValues(alpha: 0.3)),
-                  ),
-                  child: Center(
-                    child: Text(
-                      '${widget.item.goalScore}',
+                Column(
+                  children: [
+                    Text(
+                      'Score',
                       style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
-                        color: scoreColor,
+                        fontSize: 9,
+                        fontWeight: FontWeight.w500,
+                        color: scoreColor.withValues(alpha: 0.7),
                       ),
                     ),
-                  ),
+                    const SizedBox(height: 2),
+                    Container(
+                      width: 42,
+                      height: 36,
+                      decoration: BoxDecoration(
+                        color: scoreColor.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: scoreColor.withValues(alpha: 0.3)),
+                      ),
+                      child: Center(
+                        child: Text(
+                          '${widget.item.goalScore}/10',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                            color: scoreColor,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
                 )
               else
-                const SizedBox(width: 36),
+                const SizedBox(width: 42),
               const SizedBox(width: 12),
               // Food info
               Expanded(

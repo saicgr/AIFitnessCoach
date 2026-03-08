@@ -907,7 +907,7 @@ class WaterIntakeCard extends ConsumerWidget {
     return InkWell(
       onTap: () {
         HapticService.light();
-        context.push('/hydration');
+        context.go('/nutrition?tab=2');
       },
       borderRadius: BorderRadius.circular(16),
       child: Container(

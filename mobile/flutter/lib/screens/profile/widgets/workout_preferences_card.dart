@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/providers/week_start_provider.dart';
 import '../../../data/models/user.dart';
 
 /// Displays workout preferences from onboarding data.
-class WorkoutPreferencesCard extends StatelessWidget {
+class WorkoutPreferencesCard extends ConsumerWidget {
   final User? user;
   final VoidCallback? onEdit;
 
@@ -14,7 +16,7 @@ class WorkoutPreferencesCard extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
     final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
@@ -110,6 +112,14 @@ class WorkoutPreferencesCard extends StatelessWidget {
             icon: Icons.calendar_today_outlined,
             label: 'Workout Days',
             value: user?.workoutDaysFormatted ?? 'Not set',
+            textPrimary: textPrimary,
+            textSecondary: textSecondary,
+          ),
+          const SizedBox(height: 12),
+          _PreferenceRow(
+            icon: Icons.calendar_today_outlined,
+            label: 'Week Starts On',
+            value: ref.watch(weekStartsSundayProvider) ? 'Sunday' : 'Monday',
             textPrimary: textPrimary,
             textSecondary: textSecondary,
           ),

@@ -4,9 +4,11 @@
 /// for the AI coach chat media upload feature.
 library;
 
+import 'dart:async';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:video_compress/video_compress.dart';
 
 import '../../../core/constants/app_colors.dart';
@@ -75,9 +77,94 @@ class MediaPickerHelper {
   static const List<String> supportedImageFormats = ['jpg', 'jpeg', 'png', 'heic', 'webp'];
   static const List<String> supportedVideoFormats = ['mp4', 'mov', 'avi', 'mkv'];
 
+  /// Request camera permission, returns true if granted.
+  static Future<bool> _requestCameraPermission(BuildContext context) async {
+    final status = await Permission.camera.status;
+    if (status.isGranted) return true;
+
+    if (status.isPermanentlyDenied) {
+      _showPermissionDeniedDialog(context, 'Camera');
+      return false;
+    }
+
+    final result = await Permission.camera.request();
+    if (result.isGranted) return true;
+
+    if (result.isPermanentlyDenied) {
+      _showPermissionDeniedDialog(context, 'Camera');
+    } else if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Camera permission required')),
+      );
+    }
+    return false;
+  }
+
+  /// Request gallery/photos permission, returns true if granted.
+  static Future<bool> _requestGalleryPermission(BuildContext context) async {
+    // On Android 13+ use Permission.photos, otherwise storage
+    final permission = Platform.isAndroid ? Permission.photos : Permission.photos;
+    final status = await permission.status;
+    if (status.isGranted || status.isLimited) return true;
+
+    if (status.isPermanentlyDenied) {
+      _showPermissionDeniedDialog(context, 'Photo Library');
+      return false;
+    }
+
+    final result = await permission.request();
+    if (result.isGranted || result.isLimited) return true;
+
+    if (result.isPermanentlyDenied) {
+      _showPermissionDeniedDialog(context, 'Photo Library');
+    } else if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Photo library permission required')),
+      );
+    }
+    return false;
+  }
+
+  /// Show dialog prompting user to open app settings for permanently denied permissions.
+  static void _showPermissionDeniedDialog(BuildContext context, String permissionName) {
+    if (!context.mounted) return;
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text('$permissionName Permission Required'),
+        content: Text(
+          '$permissionName access has been permanently denied. '
+          'Please enable it in your device settings.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(ctx);
+              openAppSettings();
+            },
+            child: const Text('Open Settings'),
+          ),
+        ],
+      ),
+    );
+  }
+
   /// Pick an image from the given source
-  static Future<PickedMedia?> pickImage(ImageSource source) async {
+  static Future<PickedMedia?> pickImage(ImageSource source, {BuildContext? context}) async {
     try {
+      // Check permissions when context is provided
+      if (context != null) {
+        if (source == ImageSource.camera) {
+          if (!await _requestCameraPermission(context)) return null;
+        } else {
+          if (!await _requestGalleryPermission(context)) return null;
+        }
+      }
+
       final XFile? xfile = await _picker.pickImage(
         source: source,
         imageQuality: 85,
@@ -121,8 +208,12 @@ class MediaPickerHelper {
   }
 
   /// Pick multiple images from gallery (max 5)
-  static Future<List<PickedMedia>> pickMultipleImages() async {
+  static Future<List<PickedMedia>> pickMultipleImages({BuildContext? context}) async {
     try {
+      if (context != null) {
+        if (!await _requestGalleryPermission(context)) return [];
+      }
+
       final List<XFile> xfiles = await _picker.pickMultiImage(
         imageQuality: 85,
         maxWidth: 1920,
@@ -162,8 +253,17 @@ class MediaPickerHelper {
   }
 
   /// Pick a video from the given source with auto-compression
-  static Future<PickedMedia?> pickVideo(ImageSource source) async {
+  static Future<PickedMedia?> pickVideo(ImageSource source, {BuildContext? context}) async {
     try {
+      // Check permissions when context is provided
+      if (context != null) {
+        if (source == ImageSource.camera) {
+          if (!await _requestCameraPermission(context)) return null;
+        } else {
+          if (!await _requestGalleryPermission(context)) return null;
+        }
+      }
+
       final XFile? xfile = await _picker.pickVideo(
         source: source,
         maxDuration: const Duration(seconds: maxVideoSeconds),
@@ -191,14 +291,16 @@ class MediaPickerHelper {
         );
       }
 
-      // Compress video
+      // Compress video with progress dialog
       debugPrint('🔍 [MediaPicker] Compressing video...');
-      final compressed = await VideoCompress.compressVideo(
-        file.path,
-        quality: VideoQuality.MediumQuality,
-        deleteOrigin: false,
-        includeAudio: true,
-      );
+      final compressed = context != null && context.mounted
+          ? await _compressVideoWithProgress(context, file.path)
+          : await VideoCompress.compressVideo(
+              file.path,
+              quality: VideoQuality.MediumQuality,
+              deleteOrigin: false,
+              includeAudio: true,
+            );
 
       if (compressed != null && compressed.file != null) {
         file = compressed.file!;
@@ -221,12 +323,59 @@ class MediaPickerHelper {
     }
   }
 
+  /// Compress video while showing a modal progress dialog.
+  static Future<MediaInfo?> _compressVideoWithProgress(
+    BuildContext context,
+    String videoPath,
+  ) async {
+    final navigatorContext = Navigator.of(context, rootNavigator: true).context;
+    MediaInfo? result;
+
+    showDialog(
+      context: navigatorContext,
+      barrierDismissible: false,
+      builder: (dialogCtx) {
+        return PopScope(
+          canPop: false,
+          child: AlertDialog(
+            content: const Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    CircularProgressIndicator(),
+                    SizedBox(height: 16),
+                    Text(
+                      'Compressing video...',
+                      style: TextStyle(fontSize: 14),
+                    ),
+                  ],
+                ),
+          ),
+        );
+      },
+    );
+
+    try {
+      result = await VideoCompress.compressVideo(
+        videoPath,
+        quality: VideoQuality.MediumQuality,
+        deleteOrigin: false,
+        includeAudio: true,
+      );
+    } finally {
+      if (navigatorContext.mounted) {
+        Navigator.of(navigatorContext, rootNavigator: true).pop();
+      }
+    }
+
+    return result;
+  }
+
   /// Show bottom sheet with media picker options
   /// Returns a PickedMediaResult (which may contain one or multiple media items)
   static Future<PickedMediaResult?> showMediaPickerSheet(BuildContext context) async {
-    PickedMediaResult? result;
+    final completer = Completer<PickedMediaResult?>();
 
-    await showModalBottomSheet<void>(
+    showModalBottomSheet<void>(
       context: context,
       backgroundColor: Colors.transparent,
       builder: (ctx) {
@@ -272,9 +421,9 @@ class MediaPickerHelper {
                   onTap: () async {
                     Navigator.pop(ctx);
                     HapticService.selection();
-                    final media = await pickImage(ImageSource.gallery);
-                    if (media != null) {
-                      result = PickedMediaResult(media: [media]);
+                    final media = await pickImage(ImageSource.gallery, context: context);
+                    if (!completer.isCompleted) {
+                      completer.complete(media != null ? PickedMediaResult(media: [media]) : null);
                     }
                   },
                 ),
@@ -287,9 +436,9 @@ class MediaPickerHelper {
                   onTap: () async {
                     Navigator.pop(ctx);
                     HapticService.selection();
-                    final mediaList = await pickMultipleImages();
-                    if (mediaList.isNotEmpty) {
-                      result = PickedMediaResult(media: mediaList);
+                    final mediaList = await pickMultipleImages(context: context);
+                    if (!completer.isCompleted) {
+                      completer.complete(mediaList.isNotEmpty ? PickedMediaResult(media: mediaList) : null);
                     }
                   },
                 ),
@@ -302,9 +451,9 @@ class MediaPickerHelper {
                   onTap: () async {
                     Navigator.pop(ctx);
                     HapticService.selection();
-                    final media = await pickImage(ImageSource.camera);
-                    if (media != null) {
-                      result = PickedMediaResult(media: [media]);
+                    final media = await pickImage(ImageSource.camera, context: context);
+                    if (!completer.isCompleted) {
+                      completer.complete(media != null ? PickedMediaResult(media: [media]) : null);
                     }
                   },
                 ),
@@ -349,9 +498,9 @@ class MediaPickerHelper {
                   onTap: () async {
                     Navigator.pop(ctx);
                     HapticService.selection();
-                    final media = await pickVideo(ImageSource.gallery);
-                    if (media != null) {
-                      result = PickedMediaResult(media: [media]);
+                    final media = await pickVideo(ImageSource.gallery, context: context);
+                    if (!completer.isCompleted) {
+                      completer.complete(media != null ? PickedMediaResult(media: [media]) : null);
                     }
                   },
                 ),
@@ -364,9 +513,9 @@ class MediaPickerHelper {
                   onTap: () async {
                     Navigator.pop(ctx);
                     HapticService.selection();
-                    final media = await pickVideo(ImageSource.camera);
-                    if (media != null) {
-                      result = PickedMediaResult(media: [media]);
+                    final media = await pickVideo(ImageSource.camera, context: context);
+                    if (!completer.isCompleted) {
+                      completer.complete(media != null ? PickedMediaResult(media: [media]) : null);
                     }
                   },
                 ),
@@ -375,9 +524,14 @@ class MediaPickerHelper {
           ),
         );
       },
-    );
+    ).then((_) {
+      // Sheet dismissed without picking (swipe down / tap outside)
+      if (!completer.isCompleted) {
+        completer.complete(null);
+      }
+    });
 
-    return result;
+    return completer.future;
   }
 
   static String _formatBytes(int bytes) {

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../../core/animations/app_animations.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../widgets/app_loading.dart';
@@ -13,6 +14,7 @@ import '../widgets/friend_card.dart';
 import '../widgets/empty_state.dart';
 import '../widgets/pending_request_card.dart';
 import '../friend_search_screen.dart';
+import '../friend_profile_screen.dart';
 
 /// Friends Tab - Shows pending requests, friends, followers, and following
 class FriendsTab extends ConsumerStatefulWidget {
@@ -26,15 +28,27 @@ class _FriendsTabState extends ConsumerState<FriendsTab>
     with SingleTickerProviderStateMixin {
   late TabController _friendsTabController;
 
+  static const _collapsedKey = 'friend_requests_collapsed';
+
   String? _userId;
   List<Map<String, dynamic>> _pendingRequests = [];
   bool _isLoadingPending = true;
   int _pendingCount = 0;
+  bool _isRequestsCollapsed = false;
 
   @override
   void initState() {
     super.initState();
     _friendsTabController = TabController(length: 3, vsync: this);
+
+    // Load persisted collapse state
+    SharedPreferences.getInstance().then((prefs) {
+      if (mounted) {
+        setState(() {
+          _isRequestsCollapsed = prefs.getBool(_collapsedKey) ?? false;
+        });
+      }
+    });
 
     // Get userId from authStateProvider (consistent with rest of app)
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -82,6 +96,14 @@ class _FriendsTabState extends ConsumerState<FriendsTab>
   Future<void> _handleAcceptRequest(String requestId) async {
     if (_userId == null) return;
 
+    // Optimistically remove the card to prevent duplicate taps
+    setState(() {
+      _pendingRequests = _pendingRequests
+          .where((r) => r['id'] != requestId)
+          .toList();
+      _pendingCount = _pendingRequests.length;
+    });
+
     HapticFeedback.mediumImpact();
 
     try {
@@ -91,14 +113,27 @@ class _FriendsTabState extends ConsumerState<FriendsTab>
         requestId: requestId,
       );
       _showSnackBar('Friend request accepted!');
+      // Refresh friends list and feed so the new friend's posts appear
+      ref.invalidate(friendsListProvider(_userId!));
+      ref.invalidate(activityFeedProvider(_userId!));
       await _loadPendingRequests();
     } catch (e) {
       _showSnackBar('Failed to accept request');
+      // Reload to restore the card if it failed
+      await _loadPendingRequests();
     }
   }
 
   Future<void> _handleDeclineRequest(String requestId) async {
     if (_userId == null) return;
+
+    // Optimistically remove the card to prevent duplicate taps
+    setState(() {
+      _pendingRequests = _pendingRequests
+          .where((r) => r['id'] != requestId)
+          .toList();
+      _pendingCount = _pendingRequests.length;
+    });
 
     HapticFeedback.mediumImpact();
 
@@ -112,6 +147,8 @@ class _FriendsTabState extends ConsumerState<FriendsTab>
       await _loadPendingRequests();
     } catch (e) {
       _showSnackBar('Failed to decline request');
+      // Reload to restore the card if it failed
+      await _loadPendingRequests();
     }
   }
 
@@ -156,6 +193,13 @@ class _FriendsTabState extends ConsumerState<FriendsTab>
     );
   }
 
+  void _toggleRequestsCollapsed() {
+    setState(() => _isRequestsCollapsed = !_isRequestsCollapsed);
+    SharedPreferences.getInstance().then((prefs) {
+      prefs.setBool(_collapsedKey, _isRequestsCollapsed);
+    });
+  }
+
   Widget _buildPendingRequestsSection(bool isDark) {
     final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
 
@@ -172,63 +216,86 @@ class _FriendsTabState extends ConsumerState<FriendsTab>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Icon(
-                Icons.person_add_alt_1_rounded,
-                color: ref.colors(context).accent,
-                size: 20,
-              ),
-              const SizedBox(width: 8),
-              const Text(
-                'Friend Requests',
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16,
+          InkWell(
+            onTap: _toggleRequestsCollapsed,
+            borderRadius: BorderRadius.circular(8),
+            child: Row(
+              children: [
+                Icon(
+                  Icons.person_add_alt_1_rounded,
+                  color: ref.colors(context).accent,
+                  size: 20,
                 ),
-              ),
-              const SizedBox(width: 8),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                decoration: BoxDecoration(
-                  color: ref.colors(context).accent.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Text(
-                  '$_pendingCount',
+                const SizedBox(width: 8),
+                const Text(
+                  'Friend Requests',
                   style: TextStyle(
-                    fontSize: 12,
                     fontWeight: FontWeight.bold,
-                    color: ref.colors(context).accent,
+                    fontSize: 16,
                   ),
                 ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-
-          // Horizontal scroll of pending requests
-          SizedBox(
-            height: 140,
-            child: _isLoadingPending
-                ? AppLoading.fullScreen()
-                : ListView.builder(
-                    scrollDirection: Axis.horizontal,
-                    itemCount: _pendingRequests.length,
-                    itemBuilder: (context, index) {
-                      final request = _pendingRequests[index];
-                      return Padding(
-                        padding: EdgeInsets.only(
-                          right: index < _pendingRequests.length - 1 ? 12 : 0,
-                        ),
-                        child: PendingRequestCard(
-                          request: request,
-                          onAccept: () => _handleAcceptRequest(request['id']),
-                          onDecline: () => _handleDeclineRequest(request['id']),
-                        ),
-                      );
-                    },
+                const SizedBox(width: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: ref.colors(context).accent.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(12),
                   ),
+                  child: Text(
+                    '$_pendingCount',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      color: ref.colors(context).accent,
+                    ),
+                  ),
+                ),
+                const Spacer(),
+                AnimatedRotation(
+                  turns: _isRequestsCollapsed ? -0.25 : 0,
+                  duration: const Duration(milliseconds: 200),
+                  child: Icon(
+                    Icons.expand_more_rounded,
+                    size: 22,
+                    color: isDark ? AppColors.textSecondary : AppColorsLight.textSecondary,
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          // Collapsible content
+          AnimatedCrossFade(
+            firstChild: Padding(
+              padding: const EdgeInsets.only(top: 12),
+              child: SizedBox(
+                height: 140,
+                child: _isLoadingPending
+                    ? AppLoading.fullScreen()
+                    : ListView.builder(
+                        scrollDirection: Axis.horizontal,
+                        itemCount: _pendingRequests.length,
+                        itemBuilder: (context, index) {
+                          final request = _pendingRequests[index];
+                          return Padding(
+                            padding: EdgeInsets.only(
+                              right: index < _pendingRequests.length - 1 ? 12 : 0,
+                            ),
+                            child: PendingRequestCard(
+                              request: request,
+                              onAccept: () => _handleAcceptRequest(request['id']),
+                              onDecline: () => _handleDeclineRequest(request['id']),
+                            ),
+                          );
+                        },
+                      ),
+              ),
+            ),
+            secondChild: const SizedBox.shrink(),
+            crossFadeState: _isRequestsCollapsed
+                ? CrossFadeState.showSecond
+                : CrossFadeState.showFirst,
+            duration: const Duration(milliseconds: 200),
           ),
         ],
       ),
@@ -424,6 +491,13 @@ class _FriendsTabState extends ConsumerState<FriendsTab>
 
   void _handleUserProfile(String? targetUserId) {
     if (targetUserId == null) return;
+    HapticFeedback.lightImpact();
+    Navigator.push(
+      context,
+      AppPageRoute(
+        builder: (_) => FriendProfileScreen(targetUserId: targetUserId),
+      ),
+    );
   }
 
   Future<void> _handleFollow(String? targetUserId) async {

@@ -267,11 +267,12 @@ IMPORTANT GUIDELINES:
 - Make it achievable within the time limit
 
 🚨 CRITICAL - EQUIPMENT USAGE:
-If the user has gym equipment (dumbbells, barbell, machines, full_gym, cable_machine):
+If the user has ANY non-bodyweight equipment ({equipment_str}):
 - AT LEAST 70% of exercises MUST use that equipment
-- Do NOT generate mostly bodyweight exercises when gym equipment is available
-- For beginners with gym access: Use machines and dumbbells, NOT just push-ups and planks
-- Example: If user has dumbbells → Dumbbell Press, Dumbbell Rows, Goblet Squats, etc.
+- Do NOT generate mostly bodyweight exercises when equipment is available
+- Prioritise the user's specific equipment over generic bodyweight moves
+- For beginners with equipment: Use their equipment, NOT just push-ups and planks
+- Examples: dumbbells → Dumbbell Press; kettlebell → KB Swings, Goblet Squats; resistance_bands → Band Rows, Banded Squats; pull_up_bar → Pull-Ups, Chin-Ups
 
 Return a JSON object with this exact structure:
 {{

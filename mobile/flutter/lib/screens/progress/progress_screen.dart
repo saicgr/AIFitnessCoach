@@ -1597,6 +1597,8 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen>
         return Icons.arrow_forward;
       case PhotoViewType.back:
         return Icons.person_outline;
+      default:
+        return Icons.camera_alt;
     }
   }
 
@@ -1610,6 +1612,8 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen>
         return 'Turn your right side to camera';
       case PhotoViewType.back:
         return 'Turn your back to camera';
+      default:
+        return 'Pose for a ${type.displayName} photo';
     }
   }
 }

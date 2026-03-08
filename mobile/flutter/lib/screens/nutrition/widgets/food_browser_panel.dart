@@ -14,6 +14,17 @@ import 'food_report_dialog.dart';
 /// Filter tabs for the food browser browse mode
 enum FoodBrowserFilter { recent, saved, foodDb }
 
+/// Display mode for search results
+enum _SearchDisplayMode { pages, list, carousel }
+
+/// A group of search results sharing the same matchedQuery
+class _FoodGroup {
+  final String label;
+  final List<search.FoodSearchResult> results;
+
+  const _FoodGroup({required this.label, required this.results});
+}
+
 /// Inline food browser panel: shows Recent + Saved foods when text is empty,
 /// live search results when typing.
 class FoodBrowserPanel extends ConsumerStatefulWidget {
@@ -57,6 +68,12 @@ class _FoodBrowserPanelState extends ConsumerState<FoodBrowserPanel> {
   // Expanded item index for NL accordion (-1 = none, 0 = first auto-expanded)
   int _expandedNLIndex = 0;
 
+  // Search result display state
+  PageController? _searchPageController;
+  int _currentSearchPage = 0;
+  _SearchDisplayMode _displayMode = _SearchDisplayMode.pages;
+  String? _expandedSearchKey; // key of expanded search card (only one at a time)
+
   // AI review state
   StreamSubscription<search.FoodReview?>? _reviewSub;
   search.FoodReview? _currentReview;
@@ -79,11 +96,15 @@ class _FoodBrowserPanelState extends ConsumerState<FoodBrowserPanel> {
   @override
   void didUpdateWidget(FoodBrowserPanel oldWidget) {
     super.didUpdateWidget(oldWidget);
-    // Cancel review when query changes
+    // Cancel review and reset search state when query changes
     if (widget.searchQuery != oldWidget.searchQuery) {
       _currentReview = null;
       _reviewLoading = false;
       _lastReviewQuery = null;
+      _expandedSearchKey = null;
+      _currentSearchPage = 0;
+      _searchPageController?.dispose();
+      _searchPageController = null;
       ref.read(search.foodSearchServiceProvider).cancelReview();
     }
   }
@@ -91,6 +112,7 @@ class _FoodBrowserPanelState extends ConsumerState<FoodBrowserPanel> {
   @override
   void dispose() {
     _reviewSub?.cancel();
+    _searchPageController?.dispose();
     ref.read(search.foodSearchServiceProvider).cancelReview();
     super.dispose();
   }
@@ -639,66 +661,102 @@ class _FoodBrowserPanelState extends ConsumerState<FoodBrowserPanel> {
           // Group results: personal (saved + recent) and database
           final personalResults = [...state.saved, ...state.recent];
           final dbResults = [...state.database, ...state.foodDatabase];
+          final foodGroups = _groupDbResults(dbResults);
+          final isMultiGroup = foodGroups.length > 1;
 
-          return ListView(
-            padding: const EdgeInsets.symmetric(horizontal: 4),
+          // Default display mode: pages for multi-group, list for single
+          final effectiveMode = isMultiGroup ? _displayMode : _SearchDisplayMode.list;
+
+          return Column(
             children: [
-              // Search timing info
-              if (state.searchTimeMs != null)
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 4),
-                  child: Text(
-                    '${state.totalCount} results \u00b7 ${state.searchTimeMs}ms',
-                    style: TextStyle(
-                      fontSize: 11,
-                      color: textMuted,
-                    ),
-                  ),
+              // Search timing + review
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 4),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    if (state.searchTimeMs != null)
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 4),
+                        child: Text(
+                          '${state.totalCount} results \u00b7 ${state.searchTimeMs}ms',
+                          style: TextStyle(fontSize: 11, color: textMuted),
+                        ),
+                      ),
+                    if (_currentReview != null || _reviewLoading)
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 8),
+                        child: _FoodReviewCard(
+                          review: _currentReview,
+                          isLoading: _reviewLoading,
+                          isDark: widget.isDark,
+                        ),
+                      ),
+                    // Personal results (always shown above groups)
+                    if (personalResults.isNotEmpty) ...[
+                      _BrowseSectionHeader(
+                        icon: Icons.person_outline,
+                        title: 'YOUR FOODS',
+                        count: personalResults.length,
+                        isDark: widget.isDark,
+                      ),
+                      const SizedBox(height: 6),
+                      ...personalResults.map((result) {
+                        final key = 'search_${result.source.name}_${result.id}';
+                        return _ExpandableSearchCard(
+                          result: result,
+                          logState: _logStates[key],
+                          isExpanded: _expandedSearchKey == key,
+                          onTap: () => setState(() {
+                            _expandedSearchKey = _expandedSearchKey == key ? null : key;
+                          }),
+                          onLog: (desc) => _logFood(desc, key),
+                          isWeightEditable: false,
+                          isDark: widget.isDark,
+                          goalTags: _buildGoalTags(
+                            goals: userGoals,
+                            calories: result.calories,
+                            protein: result.protein ?? 0,
+                            carbs: result.carbs ?? 0,
+                            fat: result.fat ?? 0,
+                            isDark: widget.isDark,
+                          ),
+                          apiClient: ref.read(apiClientProvider),
+                          searchService: ref.read(search.foodSearchServiceProvider),
+                        );
+                      }),
+                      const SizedBox(height: 12),
+                    ],
+                  ],
                 ),
-              // AI Coach Tip card
-              if (_currentReview != null || _reviewLoading)
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 8),
-                  child: _FoodReviewCard(
-                    review: _currentReview,
-                    isLoading: _reviewLoading,
-                    isDark: widget.isDark,
-                  ),
+              ),
+              // DB results with display mode
+              Expanded(
+                child: _SearchResultsPageView(
+                  groups: foodGroups,
+                  displayMode: effectiveMode,
+                  currentPage: _currentSearchPage,
+                  expandedSearchKey: _expandedSearchKey,
+                  logStates: _logStates,
+                  userGoals: userGoals,
+                  isDark: widget.isDark,
+                  selectedDbSource: _selectedDbSource,
+                  onPageChanged: (page) => setState(() => _currentSearchPage = page),
+                  onExpandCard: (key) => setState(() {
+                    _expandedSearchKey = _expandedSearchKey == key ? null : key;
+                  }),
+                  onLogFood: (desc, key) => _logFood(desc, key),
+                  apiClient: ref.read(apiClientProvider),
+                  searchService: ref.read(search.foodSearchServiceProvider),
                 ),
-              if (personalResults.isNotEmpty) ...[
-                _BrowseSectionHeader(
-                  icon: Icons.person_outline,
-                  title: 'YOUR FOODS',
-                  count: personalResults.length,
+              ),
+              // Display mode toggle (only for multi-group)
+              if (isMultiGroup)
+                _DisplayModeToggle(
+                  mode: _displayMode,
+                  onChanged: (mode) => setState(() => _displayMode = mode),
                   isDark: widget.isDark,
                 ),
-                const SizedBox(height: 6),
-                ...personalResults.map((result) {
-                  final key = 'search_${result.source.name}_${result.id}';
-                  return _FoodBrowserItemEditable(
-                    name: result.name,
-                    baseCalories: result.calories,
-                    subtitle: result.source.label,
-                    logState: _logStates[key],
-                    isWeightEditable: false,
-                    onAdd: (desc) => _logFood(desc, key),
-                    isDark: widget.isDark,
-                    goalTags: _buildGoalTags(
-                      goals: userGoals,
-                      calories: result.calories,
-                      protein: result.protein ?? 0,
-                      carbs: result.carbs ?? 0,
-                      fat: result.fat ?? 0,
-                      isDark: widget.isDark,
-                    ),
-                    searchResult: result,
-                    apiClient: ref.read(apiClientProvider),
-                  );
-                }),
-                const SizedBox(height: 12),
-              ],
-              // Group DB results by matched_query for multi-food sections
-              ..._buildDbResultSections(dbResults, userGoals),
             ],
           );
         }
@@ -715,33 +773,18 @@ class _FoodBrowserPanelState extends ConsumerState<FoodBrowserPanel> {
     );
   }
 
-  /// Build DB result sections — grouped by matched_query when multi-food, else single section.
-  List<Widget> _buildDbResultSections(
-    List<search.FoodSearchResult> dbResults,
-    List<String> userGoals,
-  ) {
+  /// Group DB results by matched_query, preserving order
+  List<_FoodGroup> _groupDbResults(List<search.FoodSearchResult> dbResults) {
     if (dbResults.isEmpty) return [];
 
-    // Check if results have matched_query grouping (multi-food query)
     final hasGroups = dbResults.any((r) => r.matchedQuery != null);
-
     if (!hasGroups) {
-      // Single flat section (original behavior)
-      return [
-        _BrowseSectionHeader(
-          icon: Icons.storage_outlined,
-          title: _selectedDbSource != null
-              ? 'FOOD DATABASE (${_sourceLabel(_selectedDbSource!)})'
-              : 'FOOD DATABASE',
-          count: dbResults.length,
-          isDark: widget.isDark,
-        ),
-        const SizedBox(height: 6),
-        ...dbResults.map((result) => _buildDbResultItem(result, userGoals)),
-      ];
+      final title = _selectedDbSource != null
+          ? 'Food Database (${_sourceLabel(_selectedDbSource!)})'
+          : 'Food Database';
+      return [_FoodGroup(label: title, results: dbResults)];
     }
 
-    // Multi-food: group by matched_query, preserving order
     final groups = <String, List<search.FoodSearchResult>>{};
     final groupOrder = <String>[];
     for (final result in dbResults) {
@@ -753,49 +796,12 @@ class _FoodBrowserPanelState extends ConsumerState<FoodBrowserPanel> {
       groups[group]!.add(result);
     }
 
-    final widgets = <Widget>[];
-    for (final group in groupOrder) {
-      final items = groups[group]!;
+    return groupOrder.map((group) {
       final title = group.isNotEmpty
           ? group[0].toUpperCase() + group.substring(1)
           : 'Other';
-      widgets.addAll([
-        if (widgets.isNotEmpty) const SizedBox(height: 12),
-        _BrowseSectionHeader(
-          icon: Icons.restaurant_outlined,
-          title: title.toUpperCase(),
-          count: items.length,
-          isDark: widget.isDark,
-        ),
-        const SizedBox(height: 6),
-        ...items.map((result) => _buildDbResultItem(result, userGoals)),
-      ]);
-    }
-    return widgets;
-  }
-
-  Widget _buildDbResultItem(search.FoodSearchResult result, List<String> userGoals) {
-    final key = 'search_db_${result.id}';
-    return _FoodBrowserItemEditable(
-      name: result.name,
-      baseCalories: result.calories,
-      subtitle: result.brand ?? result.servingSize,
-      logState: _logStates[key],
-      isWeightEditable: true,
-      baseWeightG: 100.0,
-      onAdd: (desc) => _logFood(desc, key),
-      isDark: widget.isDark,
-      goalTags: _buildGoalTags(
-        goals: userGoals,
-        calories: result.calories,
-        protein: result.protein ?? 0,
-        carbs: result.carbs ?? 0,
-        fat: result.fat ?? 0,
-        isDark: widget.isDark,
-      ),
-      searchResult: result,
-      apiClient: ref.read(apiClientProvider),
-    );
+      return _FoodGroup(label: title, results: groups[group]!);
+    }).toList();
   }
 
   // ─── NL Results UI (Compact Accordion with Inline Picker) ───
@@ -1381,6 +1387,7 @@ class _ModifierState {
   _ModifierState({this.weightG, this.count, this.enabled = true, this.selectedPhrase});
 }
 
+
 class _NLItemSectionState extends State<_NLItemSection> {
   // Selection
   search.FoodSearchResult? _selectedAlt;
@@ -1424,26 +1431,30 @@ class _NLItemSectionState extends State<_NLItemSection> {
     _modSearchCtrl = TextEditingController();
     // Initialize modifier states from item's detected modifiers
     for (final mod in widget.item.modifiers) {
-      switch (mod.type) {
-        case search.FoodModifierType.addon:
-          final weight = mod.defaultWeightG;
-          int? count;
-          if (mod.weightPerUnitG != null && weight != null) {
-            count = (weight / mod.weightPerUnitG!).round();
-          }
-          _modifierStates[mod.phrase] = _ModifierState(weightG: weight, count: count, enabled: true);
-          break;
-        case search.FoodModifierType.doneness:
-        case search.FoodModifierType.cookingMethod:
-        case search.FoodModifierType.sizePortion:
-          _modifierStates[mod.phrase] = _ModifierState(selectedPhrase: mod.phrase, enabled: true);
-          break;
-        case search.FoodModifierType.removal:
-          _modifierStates[mod.phrase] = _ModifierState(enabled: true);
-          break;
-        default:
-          _modifierStates[mod.phrase] = _ModifierState(enabled: true);
-      }
+      _initModifierState(mod);
+    }
+  }
+
+  void _initModifierState(search.FoodModifier mod) {
+    switch (mod.type) {
+      case search.FoodModifierType.addon:
+        final weight = mod.defaultWeightG;
+        int? count;
+        if (mod.weightPerUnitG != null && weight != null) {
+          count = (weight / mod.weightPerUnitG!).round();
+        }
+        _modifierStates[mod.phrase] = _ModifierState(weightG: weight, count: count, enabled: true);
+        break;
+      case search.FoodModifierType.doneness:
+      case search.FoodModifierType.cookingMethod:
+      case search.FoodModifierType.sizePortion:
+        _modifierStates[mod.phrase] = _ModifierState(selectedPhrase: mod.phrase, enabled: true);
+        break;
+      case search.FoodModifierType.removal:
+        _modifierStates[mod.phrase] = _ModifierState(enabled: true);
+        break;
+      default:
+        _modifierStates[mod.phrase] = _ModifierState(enabled: true);
     }
   }
 
@@ -2040,29 +2051,31 @@ class _NLItemSectionState extends State<_NLItemSection> {
   // ── Modifier section ──
 
   Widget _buildModifierSection(Color textPrimary, Color textMuted, Color teal, Color glassSurface, Color elevated) {
-    final allModifiers = <search.FoodModifier>[...widget.item.modifiers];
+    // Backend-provided modifiers (excluding doneness/cooking from defaults)
+    final backendModifiers = <search.FoodModifier>[...widget.item.modifiers];
     // Include user-added modifiers from search
     for (final entry in _modifierStates.entries) {
       final isOriginal = widget.item.modifiers.any((m) => m.phrase == entry.key);
       if (!isOriginal) {
         final addedMod = _modSearchResults.where((m) => m.phrase == entry.key).firstOrNull;
-        if (addedMod != null) allModifiers.add(addedMod);
+        if (addedMod != null) backendModifiers.add(addedMod);
       }
     }
 
-    if (allModifiers.isEmpty && widget.item.modifiers.isEmpty) return const SizedBox.shrink();
+    if (backendModifiers.isEmpty) return const SizedBox.shrink();
 
     return GestureDetector(
       onTap: () {}, // absorb tap
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          if (allModifiers.isNotEmpty) ...[
+          if (backendModifiers.isNotEmpty) ...[
             Padding(
               padding: const EdgeInsets.only(bottom: 6),
               child: Text('Modifiers', style: TextStyle(fontSize: 11, color: textMuted, fontWeight: FontWeight.w600, letterSpacing: 0.5)),
             ),
-            ...allModifiers.map((mod) => _buildModifierControl(mod, textPrimary, textMuted, teal, glassSurface)),
+            // Backend-provided modifiers (addons, removals, doneness, cooking, etc.)
+            ...backendModifiers.map((mod) => _buildModifierControl(mod, textPrimary, textMuted, teal, glassSurface)),
           ],
           const SizedBox(height: 8),
           // Modifier search bar
@@ -2550,308 +2563,6 @@ class _FoodBrowserItem extends StatelessWidget {
   }
 }
 
-// ─── Editable Food Browser Item (Search Mode) ─────────────────
-
-class _FoodBrowserItemEditable extends StatefulWidget {
-  final String name;
-  final int baseCalories;
-  final String? subtitle;
-  final _LogState? logState;
-  final bool isWeightEditable;
-  final double baseWeightG;
-  final void Function(String description) onAdd;
-  final bool isDark;
-  final List<_GoalTag> goalTags;
-  final search.FoodSearchResult? searchResult;
-  final ApiClient? apiClient;
-
-  const _FoodBrowserItemEditable({
-    required this.name,
-    required this.baseCalories,
-    this.subtitle,
-    this.logState,
-    this.isWeightEditable = false,
-    this.baseWeightG = 100.0,
-    required this.onAdd,
-    required this.isDark,
-    this.goalTags = const [],
-    this.searchResult,
-    this.apiClient,
-  });
-
-  @override
-  State<_FoodBrowserItemEditable> createState() => _FoodBrowserItemEditableState();
-}
-
-class _FoodBrowserItemEditableState extends State<_FoodBrowserItemEditable> {
-  int _qty = 1;
-  late double _weightG;
-  late TextEditingController _qtyController;
-  late TextEditingController _weightController;
-
-  @override
-  void initState() {
-    super.initState();
-    _weightG = widget.baseWeightG;
-    _qtyController = TextEditingController(text: '1');
-    _weightController = TextEditingController(text: _weightG.round().toString());
-  }
-
-  @override
-  void dispose() {
-    _qtyController.dispose();
-    _weightController.dispose();
-    super.dispose();
-  }
-
-  int get _displayCalories {
-    if (widget.isWeightEditable) {
-      return (widget.baseCalories * _qty * (_weightG / widget.baseWeightG)).round();
-    }
-    return widget.baseCalories * _qty;
-  }
-
-  String get _description {
-    if (widget.isWeightEditable) {
-      if (_qty > 1) return '$_qty x ${widget.name}, ${_weightG.round()}g';
-      return '${widget.name}, ${_weightG.round()}g';
-    }
-    if (_qty > 1) return '$_qty x ${widget.name}';
-    return widget.name;
-  }
-
-  void _updateQty(int newQty) {
-    if (newQty < 1 || newQty > 99) return;
-    setState(() {
-      _qty = newQty;
-      _qtyController.text = newQty.toString();
-    });
-  }
-
-  void _updateWeight(double newWeight) {
-    if (newWeight < 1 || newWeight > 5000) return;
-    setState(() {
-      _weightG = newWeight;
-      _weightController.text = newWeight.round().toString();
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final elevated = widget.isDark ? AppColors.elevated : AppColorsLight.elevated;
-    final textPrimary = widget.isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textMuted = widget.isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    final teal = widget.isDark ? AppColors.teal : AppColorsLight.teal;
-    final cardBorder = widget.isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
-    final glassSurface = widget.isDark ? AppColors.glassSurface : AppColorsLight.glassSurface;
-
-    return Container(
-      margin: const EdgeInsets.only(bottom: 4),
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: BoxDecoration(
-        color: elevated,
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: cardBorder),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Row 1: Name, calories, add button
-          Row(
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      widget.name,
-                      style: TextStyle(
-                        color: textPrimary,
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    if (widget.subtitle != null)
-                      Text(
-                        widget.subtitle!,
-                        style: TextStyle(color: textMuted, fontSize: 11),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    if (widget.goalTags.isNotEmpty)
-                      Padding(
-                        padding: const EdgeInsets.only(top: 3),
-                        child: Wrap(
-                          spacing: 4,
-                          runSpacing: 2,
-                          children: widget.goalTags,
-                        ),
-                      ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 8),
-              Text(
-                '$_displayCalories',
-                style: TextStyle(color: teal, fontSize: 13, fontWeight: FontWeight.w600),
-              ),
-              Text(' kcal', style: TextStyle(color: textMuted, fontSize: 11)),
-              if (widget.apiClient != null && widget.searchResult != null) ...[
-                const SizedBox(width: 4),
-                _FlagIconButton(
-                  isDark: widget.isDark,
-                  onTap: () => showFoodReportDialog(
-                    context,
-                    apiClient: widget.apiClient!,
-                    food: widget.searchResult,
-                  ),
-                ),
-              ],
-              const SizedBox(width: 8),
-              GestureDetector(
-                onTap: widget.logState == null ? () => widget.onAdd(_description) : null,
-                child: SizedBox(
-                  width: 28,
-                  height: 28,
-                  child: _buildAddButton(teal),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 6),
-          // Row 2: Qty stepper + optional weight stepper
-          Row(
-            children: [
-              // Qty stepper
-              _buildStepper(
-                controller: _qtyController,
-                label: 'qty',
-                value: _qty.toDouble(),
-                onDecrease: () => _updateQty(_qty - 1),
-                onIncrease: () => _updateQty(_qty + 1),
-                onSubmitted: (v) {
-                  final n = int.tryParse(v);
-                  if (n != null) _updateQty(n);
-                },
-                fieldWidth: 36,
-                glassSurface: glassSurface,
-                textPrimary: textPrimary,
-                textMuted: textMuted,
-              ),
-              // Weight stepper (food DB only)
-              if (widget.isWeightEditable) ...[
-                const SizedBox(width: 12),
-                _buildStepper(
-                  controller: _weightController,
-                  label: 'g',
-                  value: _weightG,
-                  onDecrease: () => _updateWeight(_weightG - 10),
-                  onIncrease: () => _updateWeight(_weightG + 10),
-                  onSubmitted: (v) {
-                    final n = double.tryParse(v);
-                    if (n != null) _updateWeight(n);
-                  },
-                  fieldWidth: 46,
-                  glassSurface: glassSurface,
-                  textPrimary: textPrimary,
-                  textMuted: textMuted,
-                ),
-              ],
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildStepper({
-    required TextEditingController controller,
-    required String label,
-    required double value,
-    required VoidCallback onDecrease,
-    required VoidCallback onIncrease,
-    required ValueChanged<String> onSubmitted,
-    required double fieldWidth,
-    required Color glassSurface,
-    required Color textPrimary,
-    required Color textMuted,
-  }) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        GestureDetector(
-          onTap: onDecrease,
-          child: Container(
-            padding: const EdgeInsets.all(4),
-            decoration: BoxDecoration(
-              color: glassSurface,
-              borderRadius: BorderRadius.circular(4),
-            ),
-            child: Icon(Icons.remove, size: 14, color: textMuted),
-          ),
-        ),
-        const SizedBox(width: 4),
-        SizedBox(
-          width: fieldWidth,
-          child: TextField(
-            controller: controller,
-            keyboardType: TextInputType.number,
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 13,
-              color: textPrimary,
-              fontWeight: FontWeight.w500,
-            ),
-            decoration: InputDecoration(
-              isDense: true,
-              contentPadding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
-              filled: true,
-              fillColor: glassSurface,
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(4),
-                borderSide: BorderSide.none,
-              ),
-            ),
-            onSubmitted: onSubmitted,
-          ),
-        ),
-        const SizedBox(width: 2),
-        Text(label, style: TextStyle(fontSize: 12, color: textMuted)),
-        const SizedBox(width: 4),
-        GestureDetector(
-          onTap: onIncrease,
-          child: Container(
-            padding: const EdgeInsets.all(4),
-            decoration: BoxDecoration(
-              color: glassSurface,
-              borderRadius: BorderRadius.circular(4),
-            ),
-            child: Icon(Icons.add, size: 14, color: textMuted),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildAddButton(Color teal) {
-    if (widget.logState == _LogState.loading) {
-      return Center(
-        child: SizedBox(
-          width: 18,
-          height: 18,
-          child: CircularProgressIndicator(strokeWidth: 2, color: teal),
-        ),
-      );
-    }
-    if (widget.logState == _LogState.done) {
-      return Icon(Icons.check_circle, color: Colors.green, size: 24);
-    }
-    return Icon(Icons.add_circle, color: teal, size: 24);
-  }
-}
-
 // ─── Goal Tag Chip ─────────────────────────────────────────────
 
 class _GoalTag extends StatelessWidget {
@@ -3175,6 +2886,933 @@ class _FlagIconButton extends StatelessWidget {
           size: 14,
           color: textMuted.withValues(alpha: 0.4),
         ),
+      ),
+    );
+  }
+}
+
+// ─── Expandable Search Result Card ───────────────────────────────
+
+class _ExpandableSearchCard extends StatefulWidget {
+  final search.FoodSearchResult result;
+  final _LogState? logState;
+  final bool isExpanded;
+  final VoidCallback onTap;
+  final void Function(String description) onLog;
+  final bool isWeightEditable;
+  final double baseWeightG;
+  final bool isDark;
+  final List<_GoalTag> goalTags;
+  final ApiClient? apiClient;
+  final search.FoodSearchService searchService;
+
+  const _ExpandableSearchCard({
+    required this.result,
+    this.logState,
+    required this.isExpanded,
+    required this.onTap,
+    required this.onLog,
+    this.isWeightEditable = true,
+    this.baseWeightG = 100.0,
+    required this.isDark,
+    this.goalTags = const [],
+    this.apiClient,
+    required this.searchService,
+  });
+
+  @override
+  State<_ExpandableSearchCard> createState() => _ExpandableSearchCardState();
+}
+
+class _ExpandableSearchCardState extends State<_ExpandableSearchCard> {
+  int _qty = 1;
+  late double _weightG;
+  late TextEditingController _qtyController;
+  late TextEditingController _weightController;
+
+  // Dynamic modifiers from backend
+  List<search.FoodModifier> _modifiers = [];
+  bool _modifiersLoading = false;
+  bool _modifiersFetched = false;
+  final Map<String, _ModifierState> _modifierStates = {};
+
+  @override
+  void initState() {
+    super.initState();
+    _weightG = widget.baseWeightG;
+    _qtyController = TextEditingController(text: '1');
+    _weightController = TextEditingController(text: _weightG.round().toString());
+  }
+
+  @override
+  void didUpdateWidget(_ExpandableSearchCard oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Fetch modifiers on first expand
+    if (widget.isExpanded && !oldWidget.isExpanded && !_modifiersFetched) {
+      _fetchModifiers();
+    }
+  }
+
+  @override
+  void dispose() {
+    _qtyController.dispose();
+    _weightController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _fetchModifiers() async {
+    setState(() => _modifiersLoading = true);
+    try {
+      final mods = await widget.searchService.getFoodModifiers(widget.result.name);
+      if (!mounted) return;
+      setState(() {
+        _modifiers = mods;
+        _modifiersLoading = false;
+        _modifiersFetched = true;
+        for (final mod in mods) {
+          _initModifierState(mod);
+        }
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _modifiersLoading = false;
+        _modifiersFetched = true;
+      });
+    }
+  }
+
+  void _initModifierState(search.FoodModifier mod) {
+    switch (mod.type) {
+      case search.FoodModifierType.addon:
+        final weight = mod.defaultWeightG;
+        int? count;
+        if (mod.weightPerUnitG != null && weight != null) {
+          count = (weight / mod.weightPerUnitG!).round();
+        }
+        _modifierStates[mod.phrase] = _ModifierState(weightG: weight, count: count, enabled: true);
+        break;
+      case search.FoodModifierType.doneness:
+      case search.FoodModifierType.cookingMethod:
+      case search.FoodModifierType.sizePortion:
+        _modifierStates[mod.phrase] = _ModifierState(selectedPhrase: mod.phrase, enabled: true);
+        break;
+      case search.FoodModifierType.removal:
+        _modifierStates[mod.phrase] = _ModifierState(enabled: true);
+        break;
+      default:
+        _modifierStates[mod.phrase] = _ModifierState(enabled: true);
+    }
+  }
+
+  int get _displayCalories {
+    int base;
+    if (widget.isWeightEditable) {
+      base = (widget.result.calories * _qty * (_weightG / widget.baseWeightG)).round();
+    } else {
+      base = widget.result.calories * _qty;
+    }
+    // Add modifier deltas
+    int modDelta = 0;
+    for (final mod in _modifiers) {
+      final state = _modifierStates[mod.phrase];
+      if (state == null || !state.enabled) continue;
+      if (mod.type == search.FoodModifierType.doneness ||
+          mod.type == search.FoodModifierType.cookingMethod ||
+          mod.type == search.FoodModifierType.sizePortion) {
+        if (mod.groupOptions.isNotEmpty && state.selectedPhrase != null) {
+          final opt = mod.groupOptions.where((o) => o.phrase == state.selectedPhrase).firstOrNull;
+          if (opt != null) modDelta += opt.calDelta;
+        }
+      } else if (mod.type == search.FoodModifierType.addon) {
+        if (mod.perGram != null && state.weightG != null) {
+          modDelta += (mod.perGram!.calories * state.weightG!).round();
+        } else {
+          modDelta += mod.delta['calories']?.round() ?? 0;
+        }
+      } else if (mod.type == search.FoodModifierType.removal) {
+        modDelta += mod.delta['calories']?.round() ?? 0;
+      }
+    }
+    return base + modDelta;
+  }
+
+  String get _description {
+    final modParts = <String>[];
+    for (final mod in _modifiers) {
+      final state = _modifierStates[mod.phrase];
+      if (state == null || !state.enabled) continue;
+      if (mod.type == search.FoodModifierType.doneness ||
+          mod.type == search.FoodModifierType.cookingMethod ||
+          mod.type == search.FoodModifierType.sizePortion) {
+        if (state.selectedPhrase != null && state.selectedPhrase != mod.phrase) {
+          modParts.add(state.selectedPhrase!);
+        }
+      } else if (mod.type == search.FoodModifierType.addon) {
+        final w = state.weightG?.round() ?? mod.defaultWeightG?.round();
+        modParts.add('${w}g ${mod.displayLabel ?? mod.phrase}');
+      } else if (mod.type == search.FoodModifierType.removal) {
+        modParts.add(mod.phrase);
+      }
+    }
+    final modStr = modParts.isNotEmpty ? ' (${modParts.join(", ")})' : '';
+    if (widget.isWeightEditable) {
+      if (_qty > 1) return '$_qty x ${widget.result.name}$modStr, ${_weightG.round()}g';
+      return '${widget.result.name}$modStr, ${_weightG.round()}g';
+    }
+    if (_qty > 1) return '$_qty x ${widget.result.name}$modStr';
+    return '${widget.result.name}$modStr';
+  }
+
+  void _updateQty(int newQty) {
+    if (newQty < 1 || newQty > 99) return;
+    setState(() {
+      _qty = newQty;
+      _qtyController.text = newQty.toString();
+    });
+  }
+
+  void _updateWeight(double newWeight) {
+    if (newWeight < 1 || newWeight > 5000) return;
+    setState(() {
+      _weightG = newWeight;
+      _weightController.text = newWeight.round().toString();
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final elevated = widget.isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final textPrimary = widget.isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textMuted = widget.isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final teal = widget.isDark ? AppColors.teal : AppColorsLight.teal;
+    final cardBorder = widget.isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+    final glassSurface = widget.isDark ? AppColors.glassSurface : AppColorsLight.glassSurface;
+
+    return GestureDetector(
+      onTap: widget.onTap,
+      behavior: HitTestBehavior.opaque,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        curve: Curves.easeInOut,
+        margin: const EdgeInsets.only(bottom: 4),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          color: elevated,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+            color: widget.isExpanded
+                ? teal.withValues(alpha: 0.3)
+                : cardBorder,
+          ),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // ── Collapsed row (always visible) ──
+            Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        widget.result.name,
+                        style: TextStyle(color: textPrimary, fontSize: 14, fontWeight: FontWeight.w500),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      if (widget.result.brand != null || widget.result.servingSize != null)
+                        Text(
+                          widget.result.brand ?? widget.result.servingSize ?? '',
+                          style: TextStyle(color: textMuted, fontSize: 11),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      if (widget.goalTags.isNotEmpty)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 3),
+                          child: Wrap(spacing: 4, runSpacing: 2, children: widget.goalTags),
+                        ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  '$_displayCalories',
+                  style: TextStyle(color: teal, fontSize: 13, fontWeight: FontWeight.w600),
+                ),
+                Text(' kcal', style: TextStyle(color: textMuted, fontSize: 11)),
+                if (widget.apiClient != null) ...[
+                  const SizedBox(width: 4),
+                  _FlagIconButton(
+                    isDark: widget.isDark,
+                    onTap: () => showFoodReportDialog(
+                      context,
+                      apiClient: widget.apiClient!,
+                      food: widget.result,
+                    ),
+                  ),
+                ],
+                const SizedBox(width: 4),
+                // Add button (collapsed mode quick-add)
+                if (!widget.isExpanded)
+                  GestureDetector(
+                    onTap: widget.logState == null ? () => widget.onLog(_description) : null,
+                    child: SizedBox(
+                      width: 28, height: 28,
+                      child: _buildAddIcon(teal),
+                    ),
+                  ),
+                AnimatedRotation(
+                  turns: widget.isExpanded ? 0.5 : 0.0,
+                  duration: const Duration(milliseconds: 200),
+                  child: Icon(Icons.keyboard_arrow_down, size: 18, color: textMuted.withValues(alpha: 0.6)),
+                ),
+              ],
+            ),
+
+            // ── Expanded section ──
+            if (widget.isExpanded) ...[
+              const SizedBox(height: 10),
+              // Qty + Weight steppers + Log button
+              GestureDetector(
+                onTap: () {}, // absorb tap so card doesn't collapse
+                child: Row(
+                  children: [
+                    _buildStepper(
+                      controller: _qtyController,
+                      label: 'qty',
+                      onDecrease: () => _updateQty(_qty - 1),
+                      onIncrease: () => _updateQty(_qty + 1),
+                      onSubmitted: (v) {
+                        final n = int.tryParse(v);
+                        if (n != null) _updateQty(n);
+                      },
+                      fieldWidth: 36,
+                      glassSurface: glassSurface,
+                      textPrimary: textPrimary,
+                      textMuted: textMuted,
+                    ),
+                    if (widget.isWeightEditable) ...[
+                      const SizedBox(width: 12),
+                      _buildStepper(
+                        controller: _weightController,
+                        label: 'g',
+                        onDecrease: () => _updateWeight(_weightG - 10),
+                        onIncrease: () => _updateWeight(_weightG + 10),
+                        onSubmitted: (v) {
+                          final n = double.tryParse(v);
+                          if (n != null) _updateWeight(n);
+                        },
+                        fieldWidth: 46,
+                        glassSurface: glassSurface,
+                        textPrimary: textPrimary,
+                        textMuted: textMuted,
+                      ),
+                    ],
+                    const Spacer(),
+                    _buildLogButton(teal),
+                  ],
+                ),
+              ),
+
+              // Modifiers from backend
+              if (_modifiersLoading)
+                Padding(
+                  padding: const EdgeInsets.only(top: 8),
+                  child: Row(
+                    children: [
+                      SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 1.5, color: teal)),
+                      const SizedBox(width: 6),
+                      Text('Loading modifiers...', style: TextStyle(fontSize: 11, color: textMuted)),
+                    ],
+                  ),
+                ),
+              if (_modifiers.isNotEmpty)
+                GestureDetector(
+                  onTap: () {}, // absorb tap
+                  child: Padding(
+                    padding: const EdgeInsets.only(top: 8),
+                    child: _buildModifierControls(textPrimary, textMuted, teal, glassSurface),
+                  ),
+                ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildModifierControls(Color textPrimary, Color textMuted, Color teal, Color glassSurface) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('Modifiers', style: TextStyle(fontSize: 11, color: textMuted, fontWeight: FontWeight.w600, letterSpacing: 0.5)),
+        const SizedBox(height: 4),
+        ..._modifiers.map((mod) {
+          final state = _modifierStates[mod.phrase];
+          if (state == null) return const SizedBox.shrink();
+
+          // Doneness / cooking method / size: chip group
+          if ((mod.type == search.FoodModifierType.doneness ||
+               mod.type == search.FoodModifierType.cookingMethod ||
+               mod.type == search.FoodModifierType.sizePortion) &&
+              mod.groupOptions.isNotEmpty) {
+            final label = mod.type == search.FoodModifierType.doneness ? 'Doneness' : 'Cooking';
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 6),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(label, style: TextStyle(fontSize: 10, color: textMuted, fontWeight: FontWeight.w500)),
+                  const SizedBox(height: 3),
+                  Wrap(
+                    spacing: 4,
+                    runSpacing: 4,
+                    children: mod.groupOptions.map((opt) {
+                      final isSelected = state.selectedPhrase == opt.phrase;
+                      return GestureDetector(
+                        onTap: () {
+                          setState(() => state.selectedPhrase = opt.phrase);
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                          decoration: BoxDecoration(
+                            color: isSelected ? teal.withValues(alpha: 0.15) : glassSurface,
+                            borderRadius: BorderRadius.circular(6),
+                            border: Border.all(color: isSelected ? teal : Colors.transparent, width: 1),
+                          ),
+                          child: Text(
+                            '${opt.label} (${opt.calDelta >= 0 ? "+" : ""}${opt.calDelta})',
+                            style: TextStyle(
+                              fontSize: 10,
+                              color: isSelected ? teal : textPrimary,
+                              fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                            ),
+                          ),
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                ],
+              ),
+            );
+          }
+
+          // Addon
+          if (mod.type == search.FoodModifierType.addon) {
+            final calDelta = mod.perGram != null && state.weightG != null
+                ? (mod.perGram!.calories * state.weightG!).round()
+                : mod.delta['calories']?.round() ?? 0;
+            final label = mod.displayLabel ?? mod.phrase;
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 4),
+              child: Row(
+                children: [
+                  Expanded(child: Text(label, style: TextStyle(fontSize: 12, color: textPrimary, fontWeight: FontWeight.w500))),
+                  Text('${calDelta >= 0 ? "+" : ""}$calDelta', style: TextStyle(fontSize: 11, color: calDelta >= 0 ? teal : Colors.orange, fontWeight: FontWeight.w600)),
+                  Text(' kcal', style: TextStyle(fontSize: 10, color: textMuted)),
+                ],
+              ),
+            );
+          }
+
+          // Removal
+          if (mod.type == search.FoodModifierType.removal) {
+            final calDelta = state.enabled ? (mod.delta['calories']?.round() ?? 0) : 0;
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 4),
+              child: Row(
+                children: [
+                  SizedBox(
+                    width: 20, height: 20,
+                    child: Checkbox(
+                      value: state.enabled,
+                      onChanged: (v) => setState(() => state.enabled = v ?? false),
+                      activeColor: teal,
+                      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  Expanded(child: Text(mod.displayLabel ?? mod.phrase, style: TextStyle(fontSize: 12, color: textPrimary))),
+                  Text('$calDelta', style: TextStyle(fontSize: 11, color: Colors.orange, fontWeight: FontWeight.w500)),
+                  Text(' kcal', style: TextStyle(fontSize: 10, color: textMuted)),
+                ],
+              ),
+            );
+          }
+
+          // Info tag
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 4),
+            child: Row(
+              children: [
+                Icon(Icons.label_outline, size: 14, color: textMuted.withValues(alpha: 0.5)),
+                const SizedBox(width: 4),
+                Text(mod.displayLabel ?? mod.phrase, style: TextStyle(fontSize: 11, color: textMuted, fontStyle: FontStyle.italic)),
+              ],
+            ),
+          );
+        }),
+      ],
+    );
+  }
+
+  Widget _buildStepper({
+    required TextEditingController controller,
+    required String label,
+    required VoidCallback onDecrease,
+    required VoidCallback onIncrease,
+    required ValueChanged<String> onSubmitted,
+    required double fieldWidth,
+    required Color glassSurface,
+    required Color textPrimary,
+    required Color textMuted,
+  }) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        GestureDetector(
+          onTap: onDecrease,
+          child: Container(
+            padding: const EdgeInsets.all(4),
+            decoration: BoxDecoration(color: glassSurface, borderRadius: BorderRadius.circular(4)),
+            child: Icon(Icons.remove, size: 14, color: textMuted),
+          ),
+        ),
+        const SizedBox(width: 4),
+        SizedBox(
+          width: fieldWidth,
+          child: TextField(
+            controller: controller,
+            keyboardType: TextInputType.number,
+            textAlign: TextAlign.center,
+            style: TextStyle(fontSize: 13, color: textPrimary, fontWeight: FontWeight.w500),
+            decoration: InputDecoration(
+              isDense: true,
+              contentPadding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+              filled: true,
+              fillColor: glassSurface,
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(4), borderSide: BorderSide.none),
+            ),
+            onSubmitted: onSubmitted,
+          ),
+        ),
+        const SizedBox(width: 2),
+        Text(label, style: TextStyle(fontSize: 12, color: textMuted)),
+        const SizedBox(width: 4),
+        GestureDetector(
+          onTap: onIncrease,
+          child: Container(
+            padding: const EdgeInsets.all(4),
+            decoration: BoxDecoration(color: glassSurface, borderRadius: BorderRadius.circular(4)),
+            child: Icon(Icons.add, size: 14, color: textMuted),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildLogButton(Color teal) {
+    if (widget.logState == _LogState.loading) {
+      return SizedBox(width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 2, color: teal));
+    }
+    if (widget.logState == _LogState.done) {
+      return Icon(Icons.check_circle, color: teal, size: 26);
+    }
+    return GestureDetector(
+      onTap: () => widget.onLog(_description),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+        decoration: BoxDecoration(color: teal.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(8)),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.add, size: 14, color: teal),
+            const SizedBox(width: 2),
+            Text('Log', style: TextStyle(fontSize: 12, color: teal, fontWeight: FontWeight.w600)),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAddIcon(Color teal) {
+    if (widget.logState == _LogState.loading) {
+      return Center(child: SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: teal)));
+    }
+    if (widget.logState == _LogState.done) {
+      return Icon(Icons.check_circle, color: Colors.green, size: 24);
+    }
+    return Icon(Icons.add_circle, color: teal, size: 24);
+  }
+}
+
+// ─── Search Results PageView ──────────────────────────────────────
+
+class _SearchResultsPageView extends StatefulWidget {
+  final List<_FoodGroup> groups;
+  final _SearchDisplayMode displayMode;
+  final int currentPage;
+  final String? expandedSearchKey;
+  final Map<String, _LogState> logStates;
+  final List<String> userGoals;
+  final bool isDark;
+  final String? selectedDbSource;
+  final ValueChanged<int> onPageChanged;
+  final void Function(String key) onExpandCard;
+  final void Function(String desc, String key) onLogFood;
+  final ApiClient apiClient;
+  final search.FoodSearchService searchService;
+
+  const _SearchResultsPageView({
+    required this.groups,
+    required this.displayMode,
+    required this.currentPage,
+    this.expandedSearchKey,
+    required this.logStates,
+    required this.userGoals,
+    required this.isDark,
+    this.selectedDbSource,
+    required this.onPageChanged,
+    required this.onExpandCard,
+    required this.onLogFood,
+    required this.apiClient,
+    required this.searchService,
+  });
+
+  @override
+  State<_SearchResultsPageView> createState() => _SearchResultsPageViewState();
+}
+
+class _SearchResultsPageViewState extends State<_SearchResultsPageView> {
+  late PageController _pageController;
+
+  @override
+  void initState() {
+    super.initState();
+    _pageController = PageController(initialPage: widget.currentPage);
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
+
+  @override
+  void didUpdateWidget(_SearchResultsPageView oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Reset page controller when groups change
+    if (widget.groups.length != oldWidget.groups.length) {
+      _pageController.dispose();
+      _pageController = PageController(initialPage: 0);
+      widget.onPageChanged(0);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (widget.groups.isEmpty) return const SizedBox.shrink();
+
+    switch (widget.displayMode) {
+      case _SearchDisplayMode.pages:
+        return _buildPageView();
+      case _SearchDisplayMode.list:
+        return _buildListView();
+      case _SearchDisplayMode.carousel:
+        return _buildCarouselView();
+    }
+  }
+
+  Widget _buildPageView() {
+    final isMultiPage = widget.groups.length > 1;
+    return Column(
+      children: [
+        // Dot indicators for multi-page
+        if (isMultiPage) ...[
+          _PageDotIndicator(
+            count: widget.groups.length,
+            current: widget.currentPage,
+            isDark: widget.isDark,
+          ),
+          const SizedBox(height: 4),
+        ],
+        Expanded(
+          child: PageView.builder(
+            controller: _pageController,
+            itemCount: widget.groups.length,
+            onPageChanged: widget.onPageChanged,
+            itemBuilder: (context, pageIndex) {
+              final group = widget.groups[pageIndex];
+              return _buildGroupPage(group, pageIndex);
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildGroupPage(_FoodGroup group, int pageIndex) {
+    return ListView.builder(
+      padding: const EdgeInsets.symmetric(horizontal: 4),
+      itemCount: group.results.length + 1, // +1 for header
+      itemBuilder: (context, index) {
+        if (index == 0) {
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 6),
+            child: _BrowseSectionHeader(
+              icon: Icons.restaurant_outlined,
+              title: group.label.toUpperCase(),
+              count: group.results.length,
+              isDark: widget.isDark,
+            ),
+          );
+        }
+        final result = group.results[index - 1];
+        return _buildResultCard(result);
+      },
+    );
+  }
+
+  Widget _buildListView() {
+    return ListView(
+      padding: const EdgeInsets.symmetric(horizontal: 4),
+      children: [
+        for (int g = 0; g < widget.groups.length; g++) ...[
+          if (g > 0) const SizedBox(height: 12),
+          _BrowseSectionHeader(
+            icon: widget.groups.length > 1 ? Icons.restaurant_outlined : Icons.storage_outlined,
+            title: widget.groups[g].label.toUpperCase(),
+            count: widget.groups[g].results.length,
+            isDark: widget.isDark,
+          ),
+          const SizedBox(height: 6),
+          ...widget.groups[g].results.map((result) => _buildResultCard(result)),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildCarouselView() {
+    return ListView(
+      padding: const EdgeInsets.symmetric(horizontal: 4),
+      children: [
+        for (int g = 0; g < widget.groups.length; g++) ...[
+          if (g > 0) const SizedBox(height: 12),
+          _BrowseSectionHeader(
+            icon: Icons.restaurant_outlined,
+            title: widget.groups[g].label.toUpperCase(),
+            count: widget.groups[g].results.length,
+            isDark: widget.isDark,
+          ),
+          const SizedBox(height: 6),
+          SizedBox(
+            height: 80,
+            child: ListView.builder(
+              scrollDirection: Axis.horizontal,
+              itemCount: widget.groups[g].results.length,
+              itemBuilder: (context, index) {
+                final result = widget.groups[g].results[index];
+                return _buildCarouselCard(result);
+              },
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildCarouselCard(search.FoodSearchResult result) {
+    final elevated = widget.isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final textPrimary = widget.isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textMuted = widget.isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final teal = widget.isDark ? AppColors.teal : AppColorsLight.teal;
+    final cardBorder = widget.isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+    final key = 'search_db_${result.id}';
+
+    return GestureDetector(
+      onTap: () => widget.onExpandCard(key),
+      child: Container(
+        width: 160,
+        margin: const EdgeInsets.only(right: 8),
+        padding: const EdgeInsets.all(10),
+        decoration: BoxDecoration(
+          color: elevated,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: cardBorder),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+              result.name,
+              style: TextStyle(color: textPrimary, fontSize: 12, fontWeight: FontWeight.w500),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+            const SizedBox(height: 4),
+            Row(
+              children: [
+                Text('${result.calories}', style: TextStyle(color: teal, fontSize: 12, fontWeight: FontWeight.w600)),
+                Text(' kcal', style: TextStyle(color: textMuted, fontSize: 10)),
+                const Spacer(),
+                GestureDetector(
+                  onTap: widget.logStates[key] == null
+                      ? () => widget.onLogFood('${result.name}, 100g', key)
+                      : null,
+                  child: SizedBox(
+                    width: 22, height: 22,
+                    child: _buildSmallAddIcon(teal, widget.logStates[key]),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSmallAddIcon(Color teal, _LogState? logState) {
+    if (logState == _LogState.loading) {
+      return Center(child: SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 1.5, color: teal)));
+    }
+    if (logState == _LogState.done) {
+      return Icon(Icons.check_circle, color: Colors.green, size: 20);
+    }
+    return Icon(Icons.add_circle, color: teal, size: 20);
+  }
+
+  Widget _buildResultCard(search.FoodSearchResult result) {
+    final key = 'search_db_${result.id}';
+    return _ExpandableSearchCard(
+      result: result,
+      logState: widget.logStates[key],
+      isExpanded: widget.expandedSearchKey == key,
+      onTap: () => widget.onExpandCard(key),
+      onLog: (desc) => widget.onLogFood(desc, key),
+      isWeightEditable: true,
+      isDark: widget.isDark,
+      goalTags: _buildGoalTags(
+        goals: widget.userGoals,
+        calories: result.calories,
+        protein: result.protein ?? 0,
+        carbs: result.carbs ?? 0,
+        fat: result.fat ?? 0,
+        isDark: widget.isDark,
+      ),
+      apiClient: widget.apiClient,
+      searchService: widget.searchService,
+    );
+  }
+}
+
+// ─── Page Dot Indicator ────────────────────────────────────────────
+
+class _PageDotIndicator extends StatelessWidget {
+  final int count;
+  final int current;
+  final bool isDark;
+
+  const _PageDotIndicator({
+    required this.count,
+    required this.current,
+    required this.isDark,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final teal = isDark ? AppColors.teal : AppColorsLight.teal;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: List.generate(count, (i) {
+        final isActive = i == current;
+        return AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          margin: const EdgeInsets.symmetric(horizontal: 3),
+          width: isActive ? 16 : 6,
+          height: 6,
+          decoration: BoxDecoration(
+            color: isActive ? teal : textMuted.withValues(alpha: 0.3),
+            borderRadius: BorderRadius.circular(3),
+          ),
+        );
+      }),
+    );
+  }
+}
+
+// ─── Display Mode Toggle ──────────────────────────────────────────
+
+class _DisplayModeToggle extends StatelessWidget {
+  final _SearchDisplayMode mode;
+  final ValueChanged<_SearchDisplayMode> onChanged;
+  final bool isDark;
+
+  const _DisplayModeToggle({
+    required this.mode,
+    required this.onChanged,
+    required this.isDark,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final teal = isDark ? AppColors.teal : AppColorsLight.teal;
+    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+
+    Widget modeButton(_SearchDisplayMode m, IconData icon, String label) {
+      final isActive = mode == m;
+      return GestureDetector(
+        onTap: () => onChanged(m),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 150),
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+          decoration: BoxDecoration(
+            color: isActive ? teal : Colors.transparent,
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, size: 14, color: isActive ? Colors.white : textMuted),
+              const SizedBox(width: 4),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
+                  color: isActive ? Colors.white : textMuted,
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
+      padding: const EdgeInsets.all(3),
+      decoration: BoxDecoration(
+        color: elevated,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: cardBorder),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          modeButton(_SearchDisplayMode.pages, Icons.view_carousel_outlined, 'Pages'),
+          modeButton(_SearchDisplayMode.list, Icons.view_list_outlined, 'List'),
+          modeButton(_SearchDisplayMode.carousel, Icons.view_column_outlined, 'Carousel'),
+        ],
       ),
     );
   }

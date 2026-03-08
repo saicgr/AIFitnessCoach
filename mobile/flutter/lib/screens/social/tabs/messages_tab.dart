@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
+import '../../../core/animations/app_animations.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../widgets/app_loading.dart';
 import '../../../core/theme/theme_colors.dart';
 import '../../../data/repositories/auth_repository.dart';
 import '../../../data/providers/social_provider.dart';
 import '../widgets/empty_state.dart';
+import '../conversation_screen.dart';
 
 /// Messages Tab - Shows direct messages between users
 /// First message for new users is from support@fitwiz.us
@@ -114,7 +115,18 @@ class _ConversationCard extends StatelessWidget {
         child: InkWell(
           onTap: () {
             HapticFeedback.lightImpact();
-            context.push('/social/messages/$conversationId');
+            final otherUserId = conversation['other_user_id'] as String? ?? '';
+            Navigator.push(
+              context,
+              AppPageRoute(
+                builder: (_) => ConversationScreen(
+                  conversationId: conversationId,
+                  otherUserId: otherUserId,
+                  otherUserName: otherUserName,
+                  otherUserAvatar: otherUserAvatar,
+                ),
+              ),
+            );
           },
           borderRadius: BorderRadius.circular(16),
           child: Container(

@@ -206,7 +206,7 @@ class _SeniorHomeScreenState extends ConsumerState<SeniorHomeScreen> {
                       label: 'Water',
                       icon: Icons.water_drop,
                       iconColor: const Color(0xFF2196F3),
-                      onPressed: () => context.push('/hydration'),
+                      onPressed: () => context.go('/nutrition?tab=2'),
                     ),
                   ),
                   const SizedBox(width: 16),

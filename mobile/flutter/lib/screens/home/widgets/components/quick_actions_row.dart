@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -51,6 +52,14 @@ Widget buildQuickActionWidget(String actionId, bool isDark, BuildContext context
           }
         },
         isDark: isDark,
+      );
+    case 'chat':
+      return _AIChatActionItem(
+        isDark: isDark,
+        onTap: () {
+          HapticService.light();
+          context.push('/chat');
+        },
       );
     default:
       final action = quickActionRegistry[actionId];
@@ -455,6 +464,232 @@ class _EndFastButtonState extends ConsumerState<_EndFastButton> {
   }
 }
 
+/// Premium AI Chat action item with gradient border shimmer and sparkle icon.
+class _AIChatActionItem extends StatefulWidget {
+  final bool isDark;
+  final VoidCallback onTap;
+
+  const _AIChatActionItem({required this.isDark, required this.onTap});
+
+  @override
+  State<_AIChatActionItem> createState() => _AIChatActionItemState();
+}
+
+class _AIChatActionItemState extends State<_AIChatActionItem>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+
+  static const _gradientColors = [
+    Color(0xFFA855F7), // purple
+    Color(0xFF06B6D4), // cyan
+    Color(0xFFEC4899), // pink
+    Color(0xFFA855F7), // purple (wrap)
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 3),
+    )..repeat();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final cardBg = widget.isDark
+        ? Colors.white.withValues(alpha: 0.06)
+        : Colors.black.withValues(alpha: 0.03);
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: widget.onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: AnimatedBuilder(
+          animation: _controller,
+          builder: (context, child) {
+            return CustomPaint(
+              painter: _GradientBorderPainter(
+                progress: _controller.value,
+                colors: _gradientColors,
+                radius: 12,
+                strokeWidth: 1.5,
+              ),
+              child: child,
+            );
+          },
+          child: Container(
+            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
+            decoration: BoxDecoration(
+              color: cardBg,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                AnimatedBuilder(
+                  animation: _controller,
+                  builder: (context, _) {
+                    return CustomPaint(
+                      size: const Size(24, 22),
+                      painter: _AIChatIconPainter(
+                        progress: _controller.value,
+                      ),
+                    );
+                  },
+                ),
+                const SizedBox(height: 4),
+                ShaderMask(
+                  shaderCallback: (bounds) => const LinearGradient(
+                    colors: [Color(0xFFA855F7), Color(0xFF06B6D4)],
+                  ).createShader(bounds),
+                  child: Text(
+                    'Chat',
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Paints a rotating gradient border around a rounded rectangle.
+class _GradientBorderPainter extends CustomPainter {
+  final double progress;
+  final List<Color> colors;
+  final double radius;
+  final double strokeWidth;
+
+  _GradientBorderPainter({
+    required this.progress,
+    required this.colors,
+    required this.radius,
+    required this.strokeWidth,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final rect = Offset.zero & size;
+    final rrect = RRect.fromRectAndRadius(
+      rect.deflate(strokeWidth / 2),
+      Radius.circular(radius),
+    );
+
+    final sweep = SweepGradient(
+      startAngle: progress * 2 * math.pi,
+      endAngle: progress * 2 * math.pi + 2 * math.pi,
+      colors: colors,
+      tileMode: TileMode.clamp,
+    );
+
+    final paint = Paint()
+      ..shader = sweep.createShader(rect)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = strokeWidth;
+
+    canvas.drawRRect(rrect, paint);
+  }
+
+  @override
+  bool shouldRepaint(_GradientBorderPainter oldDelegate) =>
+      oldDelegate.progress != progress;
+}
+
+/// Paints a single chat-bubble icon with sparkle stars inside.
+/// The gradient rotates based on [progress] and the sparkles pulse in opacity.
+class _AIChatIconPainter extends CustomPainter {
+  final double progress;
+
+  _AIChatIconPainter({required this.progress});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final w = size.width;
+    final h = size.height;
+
+    // -- Gradient that shifts over time --
+    final gradient = LinearGradient(
+      begin: Alignment.topLeft,
+      end: Alignment.bottomRight,
+      colors: const [
+        Color(0xFFA855F7), // purple
+        Color(0xFF06B6D4), // cyan
+        Color(0xFFEC4899), // pink
+      ],
+      stops: [
+        (progress * 0.6) % 1.0,
+        ((progress * 0.6) + 0.45).clamp(0, 1),
+        1.0,
+      ],
+    );
+    final rect = Offset.zero & size;
+    final fillPaint = Paint()
+      ..shader = gradient.createShader(rect)
+      ..style = PaintingStyle.fill;
+
+    // -- Chat bubble path --
+    final bubbleRect = RRect.fromLTRBR(
+      0, 0, w, h * 0.82, const Radius.circular(5),
+    );
+    final bubblePath = Path()..addRRect(bubbleRect);
+    // Tail (bottom-left triangle)
+    bubblePath.moveTo(w * 0.15, h * 0.82);
+    bubblePath.lineTo(w * 0.05, h);
+    bubblePath.lineTo(w * 0.35, h * 0.82);
+    bubblePath.close();
+
+    canvas.drawPath(bubblePath, fillPaint);
+
+    // -- 3 sparkle stars inside the bubble --
+    final starPaint = Paint()..color = Colors.white;
+    // Pulse opacity for liveliness
+    final sparkleAlpha = 0.7 + 0.3 * math.sin(progress * 2 * math.pi);
+    starPaint.color = Colors.white.withValues(alpha: sparkleAlpha);
+
+    _drawStar(canvas, Offset(w * 0.25, h * 0.38), 3.2, starPaint);
+    _drawStar(canvas, Offset(w * 0.55, h * 0.28), 2.2, starPaint);
+    _drawStar(canvas, Offset(w * 0.75, h * 0.50), 2.6, starPaint);
+  }
+
+  /// Draws a 4-point star (diamond sparkle) centered at [center] with [radius].
+  void _drawStar(Canvas canvas, Offset center, double radius, Paint paint) {
+    final path = Path();
+    path.moveTo(center.dx, center.dy - radius); // top
+    path.lineTo(center.dx + radius * 0.35, center.dy);
+    path.lineTo(center.dx, center.dy + radius); // bottom
+    path.lineTo(center.dx - radius * 0.35, center.dy);
+    path.close();
+    // Horizontal arms
+    final hPath = Path();
+    hPath.moveTo(center.dx - radius, center.dy);
+    hPath.lineTo(center.dx, center.dy + radius * 0.35);
+    hPath.lineTo(center.dx + radius, center.dy);
+    hPath.lineTo(center.dx, center.dy - radius * 0.35);
+    hPath.close();
+    canvas.drawPath(path, paint);
+    canvas.drawPath(hPath, paint);
+  }
+
+  @override
+  bool shouldRepaint(_AIChatIconPainter oldDelegate) =>
+      oldDelegate.progress != progress;
+}
+
 /// Grid action item with icon and label
 class _GridActionItem extends StatelessWidget {
   final IconData icon;
@@ -672,7 +907,7 @@ class _WaterGridActionItemState extends ConsumerState<_WaterGridActionItem> {
               TextButton(
                 onPressed: () {
                   Navigator.pop(context);
-                  context.push('/hydration');
+                  context.go('/nutrition?tab=2');
                 },
                 child: Text(
                   'Open Hydration Tracker',

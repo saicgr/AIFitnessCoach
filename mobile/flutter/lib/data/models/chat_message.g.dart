@@ -20,6 +20,9 @@ ChatMessage _$ChatMessageFromJson(Map<String, dynamic> json) => ChatMessage(
   mediaRefs: (json['media_refs'] as List<dynamic>?)
       ?.map((e) => e as Map<String, dynamic>)
       .toList(),
+  isPinned: json['isPinned'] as bool? ?? false,
+  audioUrl: json['audio_url'] as String?,
+  audioDurationMs: (json['audio_duration_ms'] as num?)?.toInt(),
 );
 
 Map<String, dynamic> _$ChatMessageToJson(ChatMessage instance) =>
@@ -35,6 +38,9 @@ Map<String, dynamic> _$ChatMessageToJson(ChatMessage instance) =>
       'media_url': instance.mediaUrl,
       'media_type': instance.mediaType,
       'media_refs': instance.mediaRefs,
+      'isPinned': instance.isPinned,
+      'audio_url': instance.audioUrl,
+      'audio_duration_ms': instance.audioDurationMs,
     };
 
 const _$AgentTypeEnumMap = {
@@ -106,6 +112,9 @@ ChatHistoryItem _$ChatHistoryItemFromJson(Map<String, dynamic> json) =>
       timestamp: json['timestamp'] as String?,
       agentType: $enumDecodeNullable(_$AgentTypeEnumMap, json['agent_type']),
       actionData: json['action_data'] as Map<String, dynamic>?,
+      isPinned: json['is_pinned'] as bool? ?? false,
+      audioUrl: json['audio_url'] as String?,
+      audioDurationMs: (json['audio_duration_ms'] as num?)?.toInt(),
     );
 
 Map<String, dynamic> _$ChatHistoryItemToJson(ChatHistoryItem instance) =>
@@ -116,4 +125,7 @@ Map<String, dynamic> _$ChatHistoryItemToJson(ChatHistoryItem instance) =>
       'timestamp': instance.timestamp,
       'agent_type': _$AgentTypeEnumMap[instance.agentType],
       'action_data': instance.actionData,
+      'is_pinned': instance.isPinned,
+      'audio_url': instance.audioUrl,
+      'audio_duration_ms': instance.audioDurationMs,
     };

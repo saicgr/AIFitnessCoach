@@ -2,21 +2,31 @@
 Chat API endpoints.
 
 ENDPOINTS:
-- POST /api/v1/chat/send - Send a message to the AI coach
-- POST /api/v1/chat/media/presign - Get presigned S3 URL for media upload
-- POST /api/v1/chat/media/presign-batch - Get batch presigned S3 URLs
-- GET  /api/v1/chat/history/{user_id} - Get chat history for a user
-- GET  /api/v1/chat/rag/stats - Get RAG system statistics
-- POST /api/v1/chat/rag/search - Search similar past conversations
+- POST   /api/v1/chat/send - Send a message to the AI coach
+- POST   /api/v1/chat/send-stream - Send a message with SSE streaming response
+- DELETE  /api/v1/chat/messages/{message_id} - Delete a single chat message
+- PATCH   /api/v1/chat/messages/{message_id}/pin - Toggle pin on a message
+- POST   /api/v1/chat/search - Search chat history by keyword
+- POST   /api/v1/chat/media/presign - Get presigned S3 URL for media upload
+- POST   /api/v1/chat/media/presign-batch - Get batch presigned S3 URLs
+- GET    /api/v1/chat/history/{user_id} - Get chat history for a user
+- DELETE  /api/v1/chat/history/{user_id} - Clear all chat history for a user
+- GET    /api/v1/chat/rag/stats - Get RAG system statistics
+- POST   /api/v1/chat/rag/search - Search similar past conversations
 
 RATE LIMITS:
-- /send: 10 requests/minute (AI-intensive)
+- /send + /send-stream: 10 requests/minute SHARED (AI-intensive)
+- /messages/{id}: 10 requests/minute
+- /messages/{id}/pin: 10 requests/minute
+- /search: 10 requests/minute
 - /media/presign: 3 requests/minute
 - /media/presign-batch: 3 requests/minute
 - /extract-intent: 10 requests/minute (AI-intensive)
 - /rag/search: 20 requests/minute
-- /history: 30 requests/minute
+- /history GET: 30 requests/minute
+- /history DELETE: 3 requests/minute
 """
+import asyncio
 import json
 import time
 import uuid
@@ -43,6 +53,24 @@ logger = get_logger(__name__)
 gemini_service: Optional[GeminiService] = None
 rag_service: Optional[RAGService] = None
 langgraph_coach_service: Optional[LangGraphCoachService] = None
+
+
+def _chat_send_key(request: Request) -> str:
+    """Shared rate limit key for /send and /send-stream endpoints.
+
+    Both endpoints count against the same bucket so a user cannot
+    bypass the limit by alternating between them.
+    """
+    # Try to extract user_id from the auth dependency state
+    user = getattr(request.state, "user", None) if hasattr(request, "state") else None
+    if user and isinstance(user, dict):
+        uid = user.get("id")
+        if uid:
+            return f"chat_send:{uid}"
+    # Fall back to IP
+    if request.client and request.client.host:
+        return f"chat_send:{request.client.host}"
+    return "chat_send:127.0.0.1"
 
 
 def get_coach_service() -> LangGraphCoachService:
@@ -127,8 +155,24 @@ async def _log_chat_activity(user_id: str, response_intent, response_agent_type,
         logger.warning(f"[Background] Failed to log chat activity: {activity_error}")
 
 
+async def _retry_task(fn, *args, max_retries=3, task_name=""):
+    """Retry a background task with exponential backoff. Handles both sync and async callables."""
+    for attempt in range(max_retries):
+        try:
+            if asyncio.iscoroutinefunction(fn):
+                await fn(*args)
+            else:
+                fn(*args)
+            return
+        except Exception as e:
+            wait = 2 ** attempt
+            logger.warning(f"[Background] {task_name} attempt {attempt + 1} failed: {e}, retrying in {wait}s")
+            await asyncio.sleep(wait)
+    logger.error(f"[Background] {task_name} failed after {max_retries} attempts")
+
+
 @router.post("/send", response_model=ChatResponse)
-@limiter.limit("10/minute")
+@limiter.limit("10/minute", key_func=_chat_send_key)
 async def send_message(
     request: Request,  # Must be named 'request' for slowapi rate limiter
     chat_request: ChatRequest,
@@ -189,9 +233,10 @@ async def send_message(
         if _chat_gate_feature:
             background_tasks.add_task(track_premium_usage, chat_request.user_id, _chat_gate_feature)
 
-        # Move DB writes to background tasks - these don't block the response.
+        # Move DB writes to background tasks with retry - these don't block the response.
         # Chat history is only read on subsequent requests (GET /history), not in this flow.
         background_tasks.add_task(
+            _retry_task,
             _save_chat_to_db,
             chat_request.user_id,
             chat_request.message,
@@ -200,9 +245,11 @@ async def send_message(
             response.agent_type,
             response.rag_context_used,
             response.action_data,
+            task_name="save_chat_to_db",
         )
 
         background_tasks.add_task(
+            _retry_task,
             _save_chat_analytics,
             chat_request.user_id,
             chat_request.message,
@@ -212,15 +259,18 @@ async def send_message(
             response.rag_context_used,
             response_time_ms,
             chat_request.ai_settings,
+            task_name="save_chat_analytics",
         )
 
         background_tasks.add_task(
+            _retry_task,
             _log_chat_activity,
             chat_request.user_id,
             response.intent,
             response.agent_type,
             response.rag_context_used,
             response_time_ms,
+            task_name="log_chat_activity",
         )
 
         return response
@@ -247,6 +297,9 @@ class ChatHistoryItem(BaseModel):
     timestamp: str
     agent_type: Optional[str] = None  # "coach", "nutrition", "workout", "injury", "hydration"
     action_data: Optional[dict] = None
+    is_pinned: bool = False
+    audio_url: Optional[str] = None
+    audio_duration_ms: Optional[int] = None
 
 
 @router.get("/history/{user_id}", response_model=List[ChatHistoryItem])
@@ -278,9 +331,7 @@ async def get_chat_history(
         # Offset also divided by 2 for the same reason
         db_limit = (limit + 1) // 2
         db_offset = offset // 2
-        result = db.list_chat_history(user_id, limit=db_limit + db_offset)
-        # Apply offset by slicing: skip the first db_offset rows
-        result = result[db_offset:db_offset + db_limit]
+        result = db.list_chat_history(user_id, limit=db_limit, offset=db_offset)
 
         messages: List[ChatHistoryItem] = []
         for row in result:
@@ -301,6 +352,10 @@ async def get_chat_history(
                 except Exception as e:
                     logger.warning(f"Failed to parse context_json: {e}")
 
+            is_pinned = row.get("is_pinned", False)
+            audio_url = row.get("audio_url")
+            audio_duration_ms = row.get("audio_duration_ms")
+
             # Add user message
             if row.get("user_message"):
                 messages.append(ChatHistoryItem(
@@ -310,6 +365,9 @@ async def get_chat_history(
                     timestamp=timestamp,
                     agent_type=None,
                     action_data=None,
+                    is_pinned=is_pinned,
+                    audio_url=audio_url,
+                    audio_duration_ms=audio_duration_ms,
                 ))
 
             # Add assistant response
@@ -321,12 +379,222 @@ async def get_chat_history(
                     timestamp=timestamp,
                     agent_type=agent_type,
                     action_data=action_data,
+                    is_pinned=is_pinned,
                 ))
 
         logger.info(f"Returning {len(messages)} chat messages for user {user_id}")
         return messages
     except Exception as e:
         raise safe_internal_error(e, "get_chat_history")
+
+
+@router.delete("/messages/{message_id}")
+@limiter.limit("10/minute")
+async def delete_message(
+    request: Request,
+    message_id: str,
+    current_user: dict = Depends(get_current_user),
+):
+    """Delete a single chat message by ID. Only the owning user can delete."""
+    db = get_supabase_db()
+    deleted = db.delete_chat_message(message_id, current_user["id"])
+    if not deleted:
+        raise HTTPException(status_code=404, detail="Message not found")
+    return {"status": "deleted"}
+
+
+class PinToggleRequest(BaseModel):
+    """Request body for toggling pin status on a chat message."""
+    is_pinned: bool
+
+
+@router.patch("/messages/{message_id}/pin")
+@limiter.limit("10/minute")
+async def toggle_message_pin(
+    request: Request,
+    message_id: str,
+    body: PinToggleRequest,
+    current_user: dict = Depends(get_current_user),
+):
+    """Toggle pin status on a chat message."""
+    user_id = str(current_user["id"])
+    try:
+        db = get_supabase_db()
+        db.toggle_chat_message_pin(message_id, user_id, body.is_pinned)
+        return {"status": "ok", "message_id": message_id, "is_pinned": body.is_pinned}
+    except Exception as e:
+        logger.error(f"Failed to toggle pin for message {message_id}: {e}")
+        raise safe_internal_error(e, "toggle_pin")
+
+
+@router.delete("/history/{user_id}")
+@limiter.limit("3/minute")
+async def clear_chat_history(
+    request: Request,
+    user_id: str,
+    current_user: dict = Depends(get_current_user),
+):
+    """Clear all chat history for a user."""
+    auth_user_id = str(current_user["id"])
+    # Ensure user can only clear their own history
+    if auth_user_id != user_id:
+        raise HTTPException(status_code=403, detail="Not authorized to clear this user's history")
+
+    try:
+        db = get_supabase_db()
+        db.clear_chat_history(user_id)
+        return {"status": "ok", "message": "Chat history cleared"}
+    except Exception as e:
+        logger.error(f"Failed to clear chat history for user {user_id}: {e}")
+        raise safe_internal_error(e, "clear_chat_history")
+
+
+class ChatSearchRequest(BaseModel):
+    """Request body for chat history search."""
+    query: str = Field(..., min_length=1, max_length=200)
+    limit: int = Field(default=20, ge=1, le=50)
+
+
+@router.post("/search")
+@limiter.limit("10/minute")
+async def search_chat(
+    request: Request,
+    body: ChatSearchRequest,
+    current_user: dict = Depends(get_current_user),
+):
+    """
+    Search chat history for the current user.
+
+    Returns matching messages in the same ChatHistoryItem format as /history.
+    """
+    user_id = str(current_user["id"])
+    try:
+        db = get_supabase_db()
+        result = db.search_chat_history(user_id, body.query, body.limit)
+
+        messages: List[ChatHistoryItem] = []
+        for row in result:
+            timestamp = str(row.get("timestamp", ""))
+            row_id = str(row.get("id", ""))
+
+            action_data = None
+            agent_type = None
+            if row.get("context_json"):
+                try:
+                    context = json.loads(row.get("context_json"))
+                    action_data = context.get("action_data")
+                    agent_type = context.get("agent_type")
+                except Exception:
+                    pass
+
+            if row.get("user_message"):
+                messages.append(ChatHistoryItem(
+                    id=f"{row_id}_user",
+                    role="user",
+                    content=row.get("user_message", ""),
+                    timestamp=timestamp,
+                    agent_type=None,
+                    action_data=None,
+                ))
+
+            if row.get("ai_response"):
+                messages.append(ChatHistoryItem(
+                    id=f"{row_id}_assistant",
+                    role="assistant",
+                    content=row.get("ai_response", ""),
+                    timestamp=timestamp,
+                    agent_type=agent_type,
+                    action_data=action_data,
+                ))
+
+        return messages
+    except Exception as e:
+        raise safe_internal_error(e, "search_chat")
+
+
+@router.post("/send-stream")
+@limiter.limit("10/minute", key_func=_chat_send_key)
+async def send_message_stream(
+    request: Request,
+    chat_request: ChatRequest,
+    background_tasks: BackgroundTasks,
+    current_user: dict = Depends(get_current_user),
+    coach: LangGraphCoachService = Depends(get_coach_service),
+):
+    """
+    Send a message to the AI fitness coach with Server-Sent Events streaming.
+
+    Streams the response in chunks:
+    1. {"event": "start", "agent": "coach"}
+    2. {"event": "token", "text": "..."} (20-word chunks)
+    3. {"event": "done", "action_data": {...}}
+    """
+    if str(current_user["id"]) != str(chat_request.user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
+
+    from starlette.responses import StreamingResponse
+
+    async def _stream_response():
+        start_time = time.time()
+        yield f"data: {json.dumps({'event': 'start', 'agent': 'coach'})}\n\n"
+
+        try:
+            response = await coach.process_message(chat_request)
+            response_time_ms = int((time.time() - start_time) * 1000)
+
+            # Chunk the response text into ~20-word segments
+            words = response.message.split()
+            for i in range(0, len(words), 20):
+                chunk = ' '.join(words[i:i + 20])
+                yield f"data: {json.dumps({'event': 'token', 'text': chunk})}\n\n"
+
+            yield f"data: {json.dumps({'event': 'done', 'action_data': response.action_data})}\n\n"
+
+            # Schedule background tasks for DB persistence
+            background_tasks.add_task(
+                _retry_task,
+                _save_chat_to_db,
+                chat_request.user_id,
+                chat_request.message,
+                response.message,
+                response.intent,
+                response.agent_type,
+                response.rag_context_used,
+                response.action_data,
+                task_name="save_chat_to_db",
+            )
+            background_tasks.add_task(
+                _retry_task,
+                _save_chat_analytics,
+                chat_request.user_id,
+                chat_request.message,
+                response.message,
+                response.intent,
+                response.agent_type,
+                response.rag_context_used,
+                response_time_ms,
+                chat_request.ai_settings,
+                task_name="save_chat_analytics",
+            )
+            background_tasks.add_task(
+                _retry_task,
+                _log_chat_activity,
+                chat_request.user_id,
+                response.intent,
+                response.agent_type,
+                response.rag_context_used,
+                response_time_ms,
+                task_name="log_chat_activity",
+            )
+        except Exception as e:
+            logger.error(f"Streaming error: {e}")
+            yield f"data: {json.dumps({'event': 'error', 'message': str(e)})}\n\n"
+
+    return StreamingResponse(
+        _stream_response(),
+        media_type="text/event-stream",
+        headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
+    )
 
 
 class ExtractIntentRequest(BaseModel):
@@ -446,11 +714,14 @@ ALLOWED_CONTENT_TYPES = {
     "image/jpeg", "image/png", "image/webp",
     # Videos
     "video/mp4", "video/quicktime", "video/webm",
+    # Audio
+    "audio/m4a", "audio/mp4", "audio/aac", "audio/mpeg", "audio/wav",
 }
 
 # Size limits in bytes
 MAX_IMAGE_SIZE = 10 * 1024 * 1024   # 10 MB
 MAX_VIDEO_SIZE = 50 * 1024 * 1024   # 50 MB
+MAX_AUDIO_SIZE = 25 * 1024 * 1024   # 25 MB
 
 # Presigned URL expiry
 PRESIGN_EXPIRY_SECONDS = 300  # 5 minutes
@@ -463,6 +734,11 @@ EXT_MAP = {
     "video/mp4": "mp4",
     "video/quicktime": "mov",
     "video/webm": "webm",
+    "audio/m4a": "m4a",
+    "audio/mp4": "m4a",
+    "audio/aac": "aac",
+    "audio/mpeg": "mp3",
+    "audio/wav": "wav",
 }
 
 
@@ -470,7 +746,7 @@ class MediaPresignRequest(BaseModel):
     """Request body for generating a presigned S3 upload URL."""
     filename: str = Field(..., min_length=1, max_length=255, description="Original filename")
     content_type: str = Field(..., max_length=50, description="MIME type (e.g., 'video/mp4', 'image/jpeg')")
-    media_type: str = Field(..., max_length=10, description="'image' or 'video'")
+    media_type: str = Field(..., max_length=10, description="'image', 'video', or 'audio'")
     expected_size_bytes: int = Field(..., gt=0, description="Expected file size in bytes")
 
 
@@ -480,6 +756,7 @@ class MediaPresignResponse(BaseModel):
     presigned_fields: Dict[str, str] = Field(..., description="Form fields to include in the POST")
     s3_key: str = Field(..., description="S3 object key for referencing in ChatRequest.media_ref")
     expires_in: int = Field(..., description="Seconds until the presigned URL expires")
+    public_url: str = Field(..., description="Persistent public URL for the uploaded file")
 
 
 def _validate_media_file(content_type: str, media_type: str, expected_size_bytes: int):
@@ -493,7 +770,14 @@ def _validate_media_file(content_type: str, media_type: str, expected_size_bytes
         raise HTTPException(status_code=400, detail="media_type 'video' requires a video/* content_type")
     if media_type == "image" and not content_type.startswith("image/"):
         raise HTTPException(status_code=400, detail="media_type 'image' requires an image/* content_type")
-    max_size = MAX_VIDEO_SIZE if media_type == "video" else MAX_IMAGE_SIZE
+    if media_type == "audio" and not content_type.startswith("audio/"):
+        raise HTTPException(status_code=400, detail="media_type 'audio' requires an audio/* content_type")
+    if media_type == "audio":
+        max_size = MAX_AUDIO_SIZE
+    elif media_type == "video":
+        max_size = MAX_VIDEO_SIZE
+    else:
+        max_size = MAX_IMAGE_SIZE
     if expected_size_bytes > max_size:
         max_mb = max_size // (1024 * 1024)
         raise HTTPException(
@@ -504,7 +788,12 @@ def _validate_media_file(content_type: str, media_type: str, expected_size_bytes
 
 def _generate_presigned_post(s3_client, bucket: str, s3_key: str, content_type: str, media_type: str) -> dict:
     """Generate a presigned S3 POST for a single file."""
-    max_size = MAX_VIDEO_SIZE if media_type == "video" else MAX_IMAGE_SIZE
+    if media_type == "audio":
+        max_size = MAX_AUDIO_SIZE
+    elif media_type == "video":
+        max_size = MAX_VIDEO_SIZE
+    else:
+        max_size = MAX_IMAGE_SIZE
     return s3_client.generate_presigned_post(
         Bucket=bucket,
         Key=s3_key,
@@ -556,11 +845,14 @@ async def presign_media_upload(
 
         presigned = _generate_presigned_post(s3_client, settings.s3_bucket_name, s3_key, body.content_type, body.media_type)
 
+        public_url = f"https://{settings.s3_bucket_name}.s3.{settings.aws_default_region}.amazonaws.com/{s3_key}"
+
         return MediaPresignResponse(
             presigned_url=presigned["url"],
             presigned_fields=presigned["fields"],
             s3_key=s3_key,
             expires_in=PRESIGN_EXPIRY_SECONDS,
+            public_url=public_url,
         )
 
     except HTTPException:
@@ -591,6 +883,7 @@ class BatchPresignResponseItem(BaseModel):
     presigned_fields: Dict[str, str]
     s3_key: str
     expires_in: int
+    public_url: str
 
 
 class BatchPresignResponse(BaseModel):
@@ -666,11 +959,14 @@ async def presign_media_upload_batch(
                 s3_client, settings.s3_bucket_name, s3_key, f.content_type, f.media_type
             )
 
+            public_url = f"https://{settings.s3_bucket_name}.s3.{settings.aws_default_region}.amazonaws.com/{s3_key}"
+
             items.append(BatchPresignResponseItem(
                 presigned_url=presigned["url"],
                 presigned_fields=presigned["fields"],
                 s3_key=s3_key,
                 expires_in=PRESIGN_EXPIRY_SECONDS,
+                public_url=public_url,
             ))
 
         return BatchPresignResponse(items=items)

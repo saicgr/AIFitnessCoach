@@ -56,6 +56,11 @@ final hydrationProvider =
 class HydrationNotifier extends StateNotifier<HydrationState> {
   final HydrationRepository _repository;
 
+  /// Monotonic counter to discard stale responses from earlier loads.
+  /// Incremented at the start of every [loadTodaySummary]; the response is
+  /// only applied when the epoch still matches (i.e. no newer load started).
+  int _loadEpoch = 0;
+
   HydrationNotifier(this._repository)
       : super(_hydrationInMemoryCache ?? const HydrationState());
 
@@ -68,6 +73,7 @@ class HydrationNotifier extends StateNotifier<HydrationState> {
   /// Load today's hydration summary
   /// Set [showLoading] to false for background refreshes (e.g., after adding water)
   Future<void> loadTodaySummary(String userId, {bool showLoading = true}) async {
+    final epoch = ++_loadEpoch;
     if (showLoading) {
       state = state.copyWith(isLoading: true, error: null);
     }
@@ -75,6 +81,8 @@ class HydrationNotifier extends StateNotifier<HydrationState> {
       // Pass local date to avoid UTC mismatch on server (Render runs in UTC)
       final localDate = DateTime.now().toIso8601String().substring(0, 10);
       final summary = await _repository.getDailySummary(userId, date: localDate);
+      // Only apply if no newer load was started while we were awaiting
+      if (_loadEpoch != epoch) return;
       state = state.copyWith(
         isLoading: false,
         todaySummary: summary,
@@ -83,6 +91,7 @@ class HydrationNotifier extends StateNotifier<HydrationState> {
       // Update in-memory cache for instant access on provider recreation
       _hydrationInMemoryCache = state;
     } catch (e) {
+      if (_loadEpoch != epoch) return;
       state = state.copyWith(isLoading: false, error: e.toString());
     }
   }
@@ -96,6 +105,8 @@ class HydrationNotifier extends StateNotifier<HydrationState> {
     String? notes,
   }) async {
     try {
+      // Invalidate any in-flight background load so it doesn't overwrite
+      ++_loadEpoch;
       // Optimistic update - immediately update the total
       final currentSummary = state.todaySummary;
       if (currentSummary != null) {
@@ -144,6 +155,8 @@ class HydrationNotifier extends StateNotifier<HydrationState> {
     int amountMl = 250,
   }) async {
     try {
+      // Invalidate any in-flight background load so it doesn't overwrite
+      ++_loadEpoch;
       // Optimistic update - immediately update the total
       final currentSummary = state.todaySummary;
       if (currentSummary != null) {

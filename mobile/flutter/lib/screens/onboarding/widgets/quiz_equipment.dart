@@ -91,6 +91,8 @@ class QuizEquipment extends StatelessWidget {
     'pull_up_bar',
     'kettlebell',
     'cable_machine',
+    'medicine_ball',
+    'trx',
   ];
 
   static const _equipment = [
@@ -102,6 +104,8 @@ class QuizEquipment extends StatelessWidget {
     {'id': 'pull_up_bar', 'label': 'Pull-up Bar', 'icon': Icons.sports_gymnastics},
     {'id': 'kettlebell', 'label': 'Kettlebell', 'icon': Icons.sports_handball, 'hasQuantity': true},
     {'id': 'cable_machine', 'label': 'Cable Machine', 'icon': Icons.settings_ethernet},
+    {'id': 'medicine_ball', 'label': 'Medicine Ball', 'icon': Icons.circle},
+    {'id': 'trx', 'label': 'TRX / Suspension', 'icon': Icons.swap_vert},
   ];
 
   bool get _hasFullGym =>

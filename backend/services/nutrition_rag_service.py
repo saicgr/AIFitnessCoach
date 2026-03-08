@@ -480,13 +480,13 @@ class UserNutritionProfileService:
         metadata = {
             "user_id": user_id,
             "type": "nutrition_profile",
-            "calories": int(metrics.get('calories', 0)),
-            "protein": int(metrics.get('protein', 0)),
-            "carbs": int(metrics.get('carbs', 0)),
-            "fat": int(metrics.get('fat', 0)),
-            "bmr": int(metrics.get('bmr', 0)),
-            "tdee": int(metrics.get('tdee', 0)),
-            "metabolic_age": int(metrics.get('metabolic_age', 0)),
+            "calories": int(metrics.get('calories') or 0),
+            "protein": int(metrics.get('protein') or 0),
+            "carbs": int(metrics.get('carbs') or 0),
+            "fat": int(metrics.get('fat') or 0),
+            "bmr": int(metrics.get('bmr') or 0),
+            "tdee": int(metrics.get('tdee') or 0),
+            "metabolic_age": int(metrics.get('metabolic_age') or 0),
             "updated_at": datetime.now(timezone.utc).isoformat(),
         }
 

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../../../core/providers/week_start_provider.dart';
 import '../../../../data/models/weekly_plan.dart';
 import '../../../../data/providers/weekly_plan_provider.dart';
 
@@ -299,23 +300,24 @@ class _WeeklyPlanCardState extends ConsumerState<WeeklyPlanCard> {
   }
 
   Widget _buildMiniCalendar(WeeklyPlan plan, ColorScheme colorScheme) {
-    const days = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
-    final today = DateTime.now().weekday - 1; // 0-indexed
+    final weekConfig = ref.watch(weekDisplayConfigProvider);
+    final todayDataIndex = DateTime.now().weekday - 1; // 0=Mon (data model)
 
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceAround,
-      children: List.generate(7, (index) {
-        final isToday = index == today;
-        final isTrainingDay = plan.workoutDays.contains(index);
-        final entry = index < plan.dailyEntries.length
-            ? plan.dailyEntries[index]
+      children: List.generate(7, (displayIndex) {
+        final dataIndex = weekConfig.displayOrder[displayIndex];
+        final isToday = dataIndex == todayDataIndex;
+        final isTrainingDay = plan.workoutDays.contains(dataIndex);
+        final entry = dataIndex < plan.dailyEntries.length
+            ? plan.dailyEntries[dataIndex]
             : null;
         final isCompleted = entry?.workoutCompleted ?? false;
 
         return Column(
           children: [
             Text(
-              days[index],
+              weekConfig.dayLabels[displayIndex],
               style: TextStyle(
                 fontSize: 11,
                 fontWeight: FontWeight.w500,

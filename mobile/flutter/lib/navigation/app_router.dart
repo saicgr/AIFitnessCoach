@@ -15,7 +15,6 @@ import '../screens/features/feature_voting_screen.dart';
 import '../screens/coming_soon/coming_soon_screen.dart';
 import '../screens/home/home_screen.dart';
 import '../screens/home/senior_home_screen.dart';
-import '../screens/hydration/hydration_screen.dart';
 import '../screens/library/library_screen.dart';
 import '../screens/nutrition/nutrition_screen.dart';
 import '../screens/nutrition/nutrition_settings_screen.dart';
@@ -29,6 +28,7 @@ import '../screens/onboarding/fitness_assessment_screen.dart';
 import '../screens/onboarding/how_it_works_screen.dart';
 import '../screens/onboarding/personal_info_screen.dart';
 import '../screens/onboarding/ai_consent_screen.dart';
+import '../screens/onboarding/health_disclaimer_screen.dart';
 import '../screens/onboarding/training_split_screen.dart';
 import '../screens/onboarding/weight_projection_screen.dart';
 import '../screens/onboarding/workout_generation_screen.dart';
@@ -164,8 +164,8 @@ final currentRouteProvider = StateProvider<String>((ref) => '/splash');
 /// Handle widget deep link redirects (fitwiz:// scheme)
 String? _handleDeepLinkRedirect(GoRouterState state) {
   if (state.matchedLocation == '/add') {
-    debugPrint('Router: Widget deep link /add -> /hydration');
-    return '/hydration';
+    debugPrint('Router: Widget deep link /add -> /nutrition?tab=2');
+    return '/nutrition?tab=2';
   }
   if (state.matchedLocation == '/share') {
     debugPrint('Router: Widget deep link /share -> /social');
@@ -353,6 +353,11 @@ String? _handleAuthRedirect(
 
   // AI consent - auth required
   if (loc == '/ai-consent') {
+    return isLoggedIn ? null : '/stats-welcome';
+  }
+
+  // Health disclaimer - auth required
+  if (loc == '/health-disclaimer') {
     return isLoggedIn ? null : '/stats-welcome';
   }
 
@@ -780,6 +785,32 @@ final routerProvider = Provider<GoRouter>((ref) {
         ),
       ),
 
+      // Health Disclaimer - health & safety acknowledgment before coach selection
+      GoRoute(
+        path: '/health-disclaimer',
+        pageBuilder: (context, state) => CustomTransitionPage(
+          key: state.pageKey,
+          child: const HealthDisclaimerScreen(),
+          transitionDuration: const Duration(milliseconds: 400),
+          reverseTransitionDuration: const Duration(milliseconds: 300),
+          transitionsBuilder: (context, animation, secondaryAnimation, child) {
+            return FadeTransition(
+              opacity: animation,
+              child: SlideTransition(
+                position: Tween<Offset>(
+                  begin: const Offset(0.05, 0),
+                  end: Offset.zero,
+                ).animate(CurvedAnimation(
+                  parent: animation,
+                  curve: Curves.easeOutCubic,
+                )),
+                child: child,
+              ),
+            );
+          },
+        ),
+      ),
+
       // Coach Selection - pick your AI coach personality before onboarding
       // Also used for changing coach from AI settings (with ?fromSettings=true)
       GoRoute(
@@ -921,8 +952,13 @@ final routerProvider = Provider<GoRouter>((ref) {
             pageBuilder: (context, state) {
               // Support deep link: fitwiz://nutrition?meal=lunch
               final initialMeal = state.uri.queryParameters['meal'];
+              // Support deep link: fitwiz://nutrition?tab=2 (0=Daily, 1=Nutrients, 2=Water, 3=Fast)
+              final tabParam = state.uri.queryParameters['tab'];
+              final initialTab = tabParam != null ? int.tryParse(tabParam) ?? 0 : 0;
               return NoTransitionPage(
-                child: NutritionScreen(initialMeal: initialMeal),
+                // Key on query params so GoRouter rebuilds when ?tab= changes
+                key: state.pageKey,
+                child: NutritionScreen(initialMeal: initialMeal, initialTab: initialTab),
               );
             },
           ),
@@ -1348,10 +1384,10 @@ final routerProvider = Provider<GoRouter>((ref) {
         },
       ),
 
-      // Hydration
+      // Hydration — redirect to Nutrition screen's Water tab
       GoRoute(
         path: '/hydration',
-        builder: (context, state) => const HydrationScreen(),
+        redirect: (context, state) => '/nutrition?tab=2',
       ),
 
       // Habit Detail - View habit detail with yearly heatmap and stats

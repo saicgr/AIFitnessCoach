@@ -28,6 +28,7 @@ from .users import router as users_router
 from .friend_requests import router as friend_requests_router
 from .notifications import router as notifications_router
 from .messages import router as messages_router
+from .keys import router as keys_router
 
 # Create the combined router with /social prefix
 router = APIRouter(prefix="/social")
@@ -44,6 +45,7 @@ router.include_router(users_router)
 router.include_router(friend_requests_router)
 router.include_router(notifications_router)
 router.include_router(messages_router, prefix="/messages", tags=["messages"])
+router.include_router(keys_router, prefix="/keys", tags=["encryption"])
 
 # Re-export utilities
 from .utils import get_supabase_client

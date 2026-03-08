@@ -52,6 +52,9 @@ class CoachIntent(str, Enum):
     ANALYZE_MENU = "analyze_menu"
     ANALYZE_BUFFET = "analyze_buffet"
     COMPARE_EXERCISE_FORM = "compare_exercise_form"
+    # Additional action intents
+    SET_WATER_GOAL = "set_water_goal"
+    LOG_WEIGHT = "log_weight"
 
 
 class MediaRef(BaseModel):
@@ -201,10 +204,15 @@ class IntentExtraction(BaseModel):
     # App settings fields
     setting_name: Optional[str] = Field(default=None, max_length=100)
     setting_value: Optional[bool] = None
+    setting_numeric_value: Optional[float] = Field(default=None, description="Numeric value for settings like water goal, weight")
     # Navigation fields
     destination: Optional[str] = Field(default=None, max_length=100)
     # Hydration logging fields
     hydration_amount: Optional[int] = Field(default=None, ge=0, le=100)  # Number of glasses/cups
+    # Water goal fields
+    water_goal_glasses: Optional[int] = Field(default=None, ge=1, le=30, description="Daily water goal in glasses")
+    # Weight logging fields
+    weight_value: Optional[float] = Field(default=None, ge=0, le=500, description="Weight value in user's preferred unit")
 
 
 class ChatResponse(BaseModel):

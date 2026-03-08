@@ -4,6 +4,9 @@
 /// Displays per-video scores, improvements, regressions, and trends.
 library;
 
+import 'dart:math';
+
+import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 
 import '../../../core/constants/app_colors.dart';
@@ -41,6 +44,9 @@ class FormComparisonResultCard extends StatelessWidget {
 
           // Score badges
           if (videos.isNotEmpty) _buildScoreBadges(colors, isDark, videos),
+
+          // Score trend chart (3+ videos)
+          if (videos.length >= 3) _buildScoreTrendChart(colors, isDark, videos),
 
           // Divider
           Padding(
@@ -219,6 +225,155 @@ class FormComparisonResultCard extends StatelessWidget {
             );
           }).toList(),
         ),
+      ),
+    );
+  }
+
+  Widget _buildScoreTrendChart(ThemeColors colors, bool isDark, List<Map<String, dynamic>> videos) {
+    final spots = <FlSpot>[];
+    final labels = <String>[];
+    for (var i = 0; i < videos.length; i++) {
+      final score = (videos[i]['form_score'] as num?)?.toDouble() ?? 0;
+      spots.add(FlSpot(i.toDouble(), score.clamp(0, 10)));
+      labels.add(videos[i]['label'] as String? ?? 'V${i + 1}');
+    }
+
+    // Determine trend
+    final firstScore = spots.first.y;
+    final lastScore = spots.last.y;
+    final diff = lastScore - firstScore;
+    final IconData trendIcon;
+    final Color trendColor;
+    final String trendLabel;
+    if (diff > 0.5) {
+      trendIcon = Icons.trending_up;
+      trendColor = AppColors.success;
+      trendLabel = 'Improving';
+    } else if (diff < -0.5) {
+      trendIcon = Icons.trending_down;
+      trendColor = AppColors.error;
+      trendLabel = 'Regressing';
+    } else {
+      trendIcon = Icons.trending_flat;
+      trendColor = AppColors.info;
+      trendLabel = 'Stable';
+    }
+
+    final maxY = spots.map((s) => s.y).reduce(max);
+    final chartMaxY = (maxY + 1).clamp(0.0, 10.0);
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(14, 4, 14, 12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.show_chart, size: 14, color: colors.textMuted),
+              const SizedBox(width: 6),
+              Text(
+                'Score Trend',
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: colors.textPrimary,
+                ),
+              ),
+              const Spacer(),
+              Icon(trendIcon, size: 14, color: trendColor),
+              const SizedBox(width: 4),
+              Text(
+                trendLabel,
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  color: trendColor,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          SizedBox(
+            height: 120,
+            child: LineChart(
+              LineChartData(
+                minY: 0,
+                maxY: chartMaxY,
+                gridData: FlGridData(
+                  show: true,
+                  drawVerticalLine: false,
+                  horizontalInterval: 2,
+                  getDrawingHorizontalLine: (value) => FlLine(
+                    color: isDark ? Colors.white.withOpacity(0.06) : Colors.black.withOpacity(0.05),
+                    strokeWidth: 1,
+                  ),
+                ),
+                titlesData: FlTitlesData(
+                  leftTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                  rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                  topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                  bottomTitles: AxisTitles(
+                    sideTitles: SideTitles(
+                      showTitles: true,
+                      interval: 1,
+                      getTitlesWidget: (value, meta) {
+                        final idx = value.toInt();
+                        if (idx < 0 || idx >= labels.length) return const SizedBox.shrink();
+                        return Padding(
+                          padding: const EdgeInsets.only(top: 4),
+                          child: Text(
+                            labels[idx],
+                            style: TextStyle(fontSize: 9, color: colors.textMuted),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ),
+                borderData: FlBorderData(show: false),
+                lineBarsData: [
+                  LineChartBarData(
+                    spots: spots,
+                    isCurved: true,
+                    preventCurveOverShooting: true,
+                    color: trendColor,
+                    barWidth: 2,
+                    dotData: FlDotData(
+                      show: true,
+                      getDotPainter: (spot, percent, bar, index) =>
+                          FlDotCirclePainter(
+                        radius: 3,
+                        color: trendColor,
+                        strokeWidth: 1.5,
+                        strokeColor: isDark ? AppColors.glassSurface : Colors.white,
+                      ),
+                    ),
+                    belowBarData: BarAreaData(
+                      show: true,
+                      color: trendColor.withOpacity(0.08),
+                    ),
+                  ),
+                ],
+                lineTouchData: LineTouchData(
+                  touchTooltipData: LineTouchTooltipData(
+                    getTooltipItems: (touchedSpots) {
+                      return touchedSpots.map((spot) {
+                        return LineTooltipItem(
+                          spot.y.toStringAsFixed(1),
+                          TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                            color: trendColor,
+                          ),
+                        );
+                      }).toList();
+                    },
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

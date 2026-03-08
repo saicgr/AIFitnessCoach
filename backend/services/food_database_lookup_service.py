@@ -15,10 +15,12 @@ import re
 import time
 from typing import Optional, Dict, List
 
+import httpx
 from sqlalchemy import text
 
 from core.logger import get_logger
 from core.supabase_client import get_supabase
+from services.food_database_service import OFF_USER_AGENT
 
 logger = get_logger(__name__)
 
@@ -499,7 +501,90 @@ class FoodDatabaseLookupService:
             return [q]
 
         parts = [p.strip() for p in self._WORD_DELIMITERS_RE.split(q) if p.strip()]
+        # Filter out parts that are too short to be valid food names (e.g. "1", "1 c")
+        # Keep only parts with at least one alphabetic word of 3+ characters
+        parts = [p for p in parts if any(len(w) >= 3 and w.isalpha() for w in p.split())]
         return parts if len(parts) > 1 else [q]
+
+    def _filter_search_results(self, query: str, db_foods: List[Dict]) -> List[Dict]:
+        """Post-query word-overlap filter to remove false-positive trigram matches.
+
+        - similarity >= 0.5: always keep (strong match)
+        - similarity < 0.5 + single-word query: keep if any result word startswith query word
+        - similarity < 0.5 + multi-word query: keep if at least one query word appears in result name
+        """
+        if not query or not db_foods:
+            return db_foods
+        query_words = set(query.lower().split())
+        filtered = []
+        for food in db_foods:
+            sim = food.get("similarity_score", 0) or 0
+            if sim >= 0.5:
+                filtered.append(food)
+                continue
+            name_lower = food.get("name", "").lower()
+            name_words = set(name_lower.split())
+            if len(query_words) == 1:
+                qw = next(iter(query_words))
+                if any(nw.startswith(qw) for nw in name_words):
+                    filtered.append(food)
+            else:
+                if query_words & name_words:
+                    filtered.append(food)
+        return filtered
+
+    # ── OpenFoodFacts text-search fallback ─────────────────────────
+
+    async def _search_off_text(self, query: str, limit: int = 20) -> List[Dict]:
+        """OpenFoodFacts text-search fallback for typos / zero-result RPC queries."""
+        try:
+            async with httpx.AsyncClient(
+                timeout=httpx.Timeout(4.0, connect=2.0),
+                headers={"User-Agent": OFF_USER_AGENT},
+            ) as client:
+                resp = await client.get(
+                    "https://world.openfoodfacts.org/cgi/search.pl",
+                    params={
+                        "search_terms": query,
+                        "search_simple": 1,
+                        "action": "process",
+                        "json": 1,
+                        "page_size": limit,
+                        "fields": "product_name,nutriments,serving_quantity,brands",
+                    },
+                )
+                resp.raise_for_status()
+                data = resp.json()
+
+            results: List[Dict] = []
+            for p in data.get("products", []):
+                name = p.get("product_name")
+                if not name:
+                    continue
+                n = p.get("nutriments", {})
+                brand = p.get("brands", "")
+                display_name = f"{name} ({brand})" if brand else name
+                results.append({
+                    "id": None,
+                    "name": display_name,
+                    "source": "openfoodfacts",
+                    "brand": brand,
+                    "category": None,
+                    "calories_per_100g": n.get("energy-kcal_100g", 0) or 0,
+                    "protein_per_100g": n.get("proteins_100g", 0) or 0,
+                    "fat_per_100g": n.get("fat_100g", 0) or 0,
+                    "carbs_per_100g": n.get("carbohydrates_100g", 0) or 0,
+                    "fiber_per_100g": n.get("fiber_100g", 0) or 0,
+                    "sugar_per_100g": n.get("sugars_100g", 0) or 0,
+                    "serving_description": f"{p.get('serving_quantity', '')}g" if p.get("serving_quantity") else None,
+                    "serving_weight_g": p.get("serving_quantity"),
+                    "similarity_score": 0.5,
+                })
+            logger.info(f"[FoodDB] OFF fallback returned {len(results)} results for '{query}'")
+            return results
+        except Exception as e:
+            logger.warning(f"[FoodDB] OFF fallback failed for '{query}': {e}")
+            return []
 
     # ── Match quality ──────────────────────────────────────────────
 
@@ -616,13 +701,22 @@ class FoodDatabaseLookupService:
                                 text("SELECT * FROM search_food_database(:q, :lim, :off)"),
                                 {"q": query, "lim": page_size, "off": offset},
                             ),
-                            timeout=6.0,
+                            timeout=5.0,
                         )
                         db_foods = [dict(row._mapping) for row in result.fetchall()]
                 except asyncio.TimeoutError:
-                    logger.warning(f"[FoodDB] RPC timed out for '{query}' — returning overrides only")
+                    logger.warning(f"[FoodDB] RPC timed out for '{query}' — trying OFF fallback")
+                    db_foods = await self._search_off_text(query, page_size)
                 except Exception as rpc_err:
                     logger.warning(f"[FoodDB] RPC failed for '{query}': {rpc_err}")
+
+            # Word-overlap filter: remove false-positive trigram matches
+            db_foods = self._filter_search_results(query, db_foods)
+
+            # If RPC returned nothing, try OFF as last resort
+            if not db_foods and not override_results and query:
+                db_foods = await self._search_off_text(query, page_size)
+                db_foods = self._filter_search_results(query, db_foods)
 
             # Post-filter by source/category if specified
             if source:
@@ -759,13 +853,22 @@ class FoodDatabaseLookupService:
                                 text("SELECT * FROM search_food_database(:q, :lim, :off)"),
                                 {"q": query, "lim": page_size, "off": offset},
                             ),
-                            timeout=6.0,
+                            timeout=5.0,
                         )
                         db_foods = [dict(row._mapping) for row in result.fetchall()]
                 except asyncio.TimeoutError:
-                    logger.warning(f"[FoodDB] RPC timed out for '{query}' — returning overrides only")
+                    logger.warning(f"[FoodDB] RPC timed out for '{query}' — trying OFF fallback")
+                    db_foods = await self._search_off_text(query, page_size)
                 except Exception as rpc_err:
                     logger.warning(f"[FoodDB] RPC failed for '{query}': {rpc_err}")
+
+            # Word-overlap filter: remove false-positive trigram matches
+            db_foods = self._filter_search_results(query, db_foods)
+
+            # If RPC returned nothing, try OFF as last resort
+            if not db_foods and not override_results and not saved_foods and query:
+                db_foods = await self._search_off_text(query, page_size)
+                db_foods = self._filter_search_results(query, db_foods)
 
             # Assemble: Saved > Overrides > Curated DB (deduped)
             override_names = {r["name"].lower() for r in override_results}

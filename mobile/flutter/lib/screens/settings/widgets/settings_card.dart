@@ -18,6 +18,7 @@ import '../../../core/providers/training_intensity_provider.dart';
 import '../../../core/providers/video_cache_provider.dart';
 import '../../../core/theme/theme_provider.dart';
 import '../../../core/theme/accent_color_provider.dart';
+import '../../../core/providers/week_start_provider.dart';
 import '../../../core/providers/weight_increments_provider.dart';
 import '../../../data/providers/xp_provider.dart';
 import '../../../widgets/weight_increments_sheet.dart';
@@ -1461,6 +1462,30 @@ class SettingsCard extends ConsumerWidget {
               ],
             );
             onTap = () => showWeightIncrementsSheet(context);
+          } else if (item.isWeekStartSelector) {
+            final startsSunday = ref.watch(weekStartsSundayProvider);
+            trailing = Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  startsSunday ? 'Sunday' : 'Monday',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: textMuted,
+                  ),
+                ),
+                const SizedBox(width: 4),
+                Icon(
+                  Icons.chevron_right,
+                  color: textMuted,
+                  size: 20,
+                ),
+              ],
+            );
+            onTap = () {
+              HapticFeedback.lightImpact();
+              ref.read(weekStartsSundayProvider.notifier).toggle();
+            };
           } else if (item.isDailyXPStripToggle) {
             final isEnabled = ref.watch(dailyXPStripEnabledProvider);
             final accentEnum = ref.watch(accentColorProvider);
@@ -1516,7 +1541,8 @@ class SettingsCard extends ConsumerWidget {
                     !item.isWeightUnitSelector &&
                     !item.isAccentColorSelector && // Has custom trailing with chevron
                     !item.isWeightIncrementsSelector &&
-                    !item.isDailyXPStripToggle, // Toggle has no chevron
+                    !item.isDailyXPStripToggle &&
+                    !item.isWeekStartSelector, // Has custom trailing
                 borderRadius: index == 0
                     ? const BorderRadius.vertical(top: Radius.circular(16))
                     : index == items.length - 1

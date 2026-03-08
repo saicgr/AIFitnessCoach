@@ -483,11 +483,26 @@ class _FormCheckResultCardState extends State<FormCheckResultCard> {
     );
   }
 
+  String _tempoDirectionLabel(Map<String, dynamic> tempo) {
+    final observed = (tempo['observed_tempo'] as String? ?? '').toLowerCase();
+    final recommendation = (tempo['recommendation'] as String? ?? '').toLowerCase();
+    final combined = '$observed $recommendation';
+
+    if (combined.contains('fast') || combined.contains('quick') || combined.contains('rushed') || combined.contains('rapid')) {
+      return 'Too Fast';
+    }
+    if (combined.contains('slow') || combined.contains('sluggish') || combined.contains('dragging')) {
+      return 'Too Slow';
+    }
+    return 'Needs Adjustment';
+  }
+
   Widget _buildTempoAnalysis(ThemeColors colors, bool isDark, Map<String, dynamic> tempo) {
     final observed = tempo['observed_tempo'] as String? ?? '';
     final isAppropriate = tempo['is_appropriate'] as bool? ?? true;
     final recommendation = tempo['recommendation'] as String? ?? '';
     final color = isAppropriate ? AppColors.success : AppColors.warning;
+    final badgeLabel = isAppropriate ? 'Good Tempo' : _tempoDirectionLabel(tempo);
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(14, 12, 14, 0),
@@ -514,7 +529,7 @@ class _FormCheckResultCardState extends State<FormCheckResultCard> {
                   borderRadius: BorderRadius.circular(4),
                 ),
                 child: Text(
-                  isAppropriate ? 'Good' : 'Adjust',
+                  badgeLabel,
                   style: TextStyle(fontSize: 9, fontWeight: FontWeight.w600, color: color),
                 ),
               ),

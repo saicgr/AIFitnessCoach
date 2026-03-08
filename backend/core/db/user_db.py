@@ -367,7 +367,7 @@ class UserDB(BaseDB):
     # ==================== CHAT HISTORY ====================
 
     def list_chat_history(
-        self, user_id: str, limit: int = 100
+        self, user_id: str, limit: int = 100, offset: int = 0
     ) -> List[Dict[str, Any]]:
         """
         List chat history for a user.
@@ -375,15 +375,17 @@ class UserDB(BaseDB):
         Args:
             user_id: User's UUID
             limit: Maximum records to return
+            offset: Number of records to skip
 
         Returns:
             List of chat messages (oldest first)
         """
         result = (
             self.client.table("chat_history")
-            .select("id, user_id, user_message, ai_response, context_json, timestamp")
+            .select("id, user_id, user_message, ai_response, context_json, timestamp, is_pinned, audio_url, audio_duration_ms")
             .eq("user_id", user_id)
             .order("timestamp", desc=False)
+            .offset(offset)
             .limit(limit)
             .execute()
         )
@@ -401,6 +403,87 @@ class UserDB(BaseDB):
         """
         result = self.client.table("chat_history").insert(data).execute()
         return result.data[0] if result.data else None
+
+    def delete_chat_message(self, message_id: str, user_id: str) -> bool:
+        """
+        Delete a single chat message by ID.
+
+        Args:
+            message_id: The message UUID
+            user_id: User's UUID (for ownership verification)
+
+        Returns:
+            True if deleted, False if not found
+        """
+        result = self.client.table("chat_history").delete().eq("id", message_id).eq("user_id", user_id).execute()
+        return bool(result.data)
+
+    def search_chat_history(self, user_id: str, query: str, limit: int = 20, offset: int = 0) -> List[Dict[str, Any]]:
+        """
+        Search chat history for a user by keyword.
+
+        Args:
+            user_id: User's UUID
+            query: Search term to match against user_message or ai_response
+            limit: Maximum records to return
+            offset: Number of records to skip
+
+        Returns:
+            List of matching chat records (newest first)
+        """
+        result = (
+            self.client.table("chat_history")
+            .select("id, user_id, user_message, ai_response, context_json, timestamp, is_pinned, audio_url, audio_duration_ms")
+            .eq("user_id", user_id)
+            .or_(f"user_message.ilike.%{query}%,ai_response.ilike.%{query}%")
+            .order("timestamp", desc=True)
+            .offset(offset)
+            .limit(limit)
+            .execute()
+        )
+        return result.data or []
+
+    def toggle_chat_message_pin(self, message_id: str, user_id: str, is_pinned: bool) -> bool:
+        """
+        Toggle pin status on a chat message.
+
+        Args:
+            message_id: The message UUID
+            user_id: User's UUID (for ownership verification)
+            is_pinned: New pin status
+
+        Returns:
+            True if updated, False if not found
+        """
+        import logging
+        logger = logging.getLogger(__name__)
+        try:
+            result = self.client.table("chat_history").update(
+                {"is_pinned": is_pinned}
+            ).eq("id", message_id).eq("user_id", user_id).execute()
+            return len(result.data) > 0
+        except Exception as e:
+            logger.warning(f"Failed to toggle pin for message {message_id}: {e}")
+            return False
+
+    def clear_chat_history(self, user_id: str) -> None:
+        """
+        Delete all chat messages for a user.
+
+        Args:
+            user_id: User's UUID
+
+        Raises:
+            Exception: If the delete operation fails
+        """
+        import logging
+        logger = logging.getLogger(__name__)
+        try:
+            self.client.table("chat_history").delete().eq("user_id", user_id).execute()
+            logger.info(f"Cleared chat history for user {user_id}")
+        except Exception as e:
+            logger.warning(f"Failed to clear chat history for user {user_id}: {e}")
+            raise
 
     def delete_chat_history_by_user(self, user_id: str) -> bool:
         """

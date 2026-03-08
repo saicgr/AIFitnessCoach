@@ -1,8 +1,10 @@
 import 'dart:async';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/api_constants.dart';
 import '../../core/providers/window_mode_provider.dart';
@@ -647,14 +649,31 @@ class _SignInScreenState extends ConsumerState<SignInScreen>
   }
 
   Widget _buildTermsText(Color textSecondary) {
-    return Text(
-      'By continuing, you agree to our Terms of Service and Privacy Policy',
-      style: TextStyle(
-        fontSize: 12,
-        color: textSecondary,
-        height: 1.4,
-      ),
+    final linkColor = Theme.of(context).brightness == Brightness.dark
+        ? AppColors.cyan
+        : AppColorsLight.cyan;
+
+    return RichText(
       textAlign: TextAlign.center,
+      text: TextSpan(
+        style: TextStyle(fontSize: 12, color: textSecondary, height: 1.4),
+        children: [
+          const TextSpan(text: 'By continuing, you agree to our '),
+          TextSpan(
+            text: 'Terms of Service',
+            style: TextStyle(color: linkColor, decoration: TextDecoration.underline, decorationColor: linkColor),
+            recognizer: TapGestureRecognizer()
+              ..onTap = () => launchUrl(Uri.parse('https://fitwiz.app/terms'), mode: LaunchMode.externalApplication),
+          ),
+          const TextSpan(text: ' and '),
+          TextSpan(
+            text: 'Privacy Policy',
+            style: TextStyle(color: linkColor, decoration: TextDecoration.underline, decorationColor: linkColor),
+            recognizer: TapGestureRecognizer()
+              ..onTap = () => launchUrl(Uri.parse('https://fitwiz.app/privacy'), mode: LaunchMode.externalApplication),
+          ),
+        ],
+      ),
     ).animate().fadeIn(delay: 800.ms);
   }
 

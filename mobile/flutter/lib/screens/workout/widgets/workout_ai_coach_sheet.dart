@@ -650,6 +650,7 @@ User question: $message
               MediaPreviewStrip(
                 mediaList: _selectedMedia,
                 onRemoveAt: (index) => setState(() => _selectedMedia.removeAt(index)),
+                onInsertAt: (index, media) => setState(() => _selectedMedia.insert(index, media)),
                 onAddMore: _pickMedia,
               ),
 

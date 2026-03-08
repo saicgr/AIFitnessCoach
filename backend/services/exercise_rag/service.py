@@ -23,6 +23,8 @@ from .utils import clean_exercise_name_for_display, infer_equipment_from_name
 from .filters import (
     filter_by_equipment,
     is_similar_exercise,
+    is_stretch_exercise,
+    is_warmup_filler_exercise,
     pre_filter_by_injuries,
     filter_by_avoided_muscles,
     parse_secondary_muscles,
@@ -391,7 +393,7 @@ class ExerciseRAGService:
                     "exercise_id": str(ex.get("id") or ""),
                     "name": exercise_name,
                     "body_part": str(ex.get("body_part") or ""),
-                    "equipment": str(ex.get("equipment") or "bodyweight"),
+                    "equipment": str(ex.get("equipment") or infer_equipment_from_name(exercise_name)),
                     "target_muscle": str(ex.get("target_muscle") or ""),
                     "secondary_muscles": json.dumps(ex.get("secondary_muscles") or []),
                     "difficulty": str(ex.get("difficulty_level") or "intermediate"),
@@ -639,7 +641,9 @@ class ExerciseRAGService:
         query_embedding = await self.gemini_service.get_embedding_async(search_query)
 
         # Search for candidate exercises
-        candidate_count = min(count * 6, 40)
+        # Home/outdoor environments need a larger pool since most exercises require gym equipment
+        is_constrained_env = workout_environment and workout_environment.lower() in ("home", "outdoor", "park")
+        candidate_count = min(count * 12, 80) if is_constrained_env else min(count * 6, 40)
 
         results = self.collection.query(
             query_embeddings=[query_embedding],
@@ -720,6 +724,22 @@ class ExerciseRAGService:
                         logger.debug(f"Filtered out '{meta.get('name')}' - too difficult ({exercise_difficulty}) for {validated_fitness_level}")
                         continue
 
+                # Filter out stretches for strength/cardio workouts
+                if workout_type_preference not in ("mobility", "recovery", "flexibility"):
+                    if is_stretch_exercise(
+                        meta.get("name", ""),
+                        meta.get("body_part", ""),
+                        meta.get("category", ""),
+                    ):
+                        logger.debug(f"Filtered out '{meta.get('name')}' - stretch exercise in {workout_type_preference} workout")
+                        continue
+
+                # Filter out warmup/filler exercises from strength workouts
+                if workout_type_preference in ("strength", "hypertrophy"):
+                    if is_warmup_filler_exercise(meta.get("name", "")):
+                        logger.debug(f"Filtered out '{meta.get('name')}' - warmup filler in {workout_type_preference} workout")
+                        continue
+
                 # Clean name for display
                 raw_name = meta.get("name", "Unknown")
                 exercise_name = clean_exercise_name_for_display(raw_name)
@@ -794,6 +814,21 @@ class ExerciseRAGService:
             candidate["similarity"] = (original_similarity * 0.7) + (difficulty_score * 0.3)
             candidate["original_similarity"] = original_similarity
 
+        # Boost exercises matching user's selected (non-bodyweight) equipment
+        _BW_EQUIPMENT = {"bodyweight", "body weight", "none", ""}
+        user_real_equipment = [
+            eq.lower() for eq in (equipment or [])
+            if eq.lower() not in _BW_EQUIPMENT
+        ]
+        if user_real_equipment:
+            for candidate in candidates:
+                ex_eq = (candidate.get("equipment", "") or "").lower()
+                if ex_eq not in _BW_EQUIPMENT:
+                    for user_eq in user_real_equipment:
+                        if user_eq in ex_eq or ex_eq in user_eq:
+                            candidate["similarity"] *= 1.15  # 15% boost
+                            break
+
         # Re-sort after applying difficulty scores
         candidates.sort(key=lambda x: x.get("similarity", 0), reverse=True)
 
@@ -804,17 +839,15 @@ class ExerciseRAGService:
             f"{len([c for c in candidates if c.get('difficulty_category') == 'advanced'])} advanced exercises available"
         )
 
-        # Cap bodyweight exercises in candidate pool for gym users
-        # Gym users should see mostly equipment-based exercises; allow at most 2 bodyweight
-        equipment_lower_check = [eq.lower() for eq in equipment] if equipment else []
-        has_gym_equipment = any(
-            eq in equipment_lower_check
-            for eq in ["full_gym", "full gym", "dumbbells", "barbell", "cable_machine", "machines"]
-        ) or any(
-            kw in eq for eq in equipment_lower_check for kw in ["dumbbell", "barbell", "cable", "machine"]
+        # Cap bodyweight exercises in candidate pool for users with any real equipment
+        # Users with equipment should see mostly equipment-based exercises; allow at most 2 bodyweight
+        _BW_ONLY_EQUIPMENT = {"bodyweight", "bodyweight_only", "bodyweight only", "body weight", "none", ""}
+        has_non_bodyweight_equipment = any(
+            eq.lower() not in _BW_ONLY_EQUIPMENT
+            for eq in (equipment or [])
         )
 
-        if has_gym_equipment:
+        if has_non_bodyweight_equipment:
             bw_keywords = {"bodyweight", "body weight", "none", ""}
             bw_candidates = [c for c in candidates if (c.get("equipment", "") or "").lower() in bw_keywords]
             equip_candidates = [c for c in candidates if (c.get("equipment", "") or "").lower() not in bw_keywords]
@@ -1267,23 +1300,18 @@ YOU MUST STRICTLY AVOID exercises that could aggravate these injuries.
 The user's safety is the TOP PRIORITY. Only select exercises that are 100% SAFE.
 """
 
-        # Detect if user has gym equipment for equipment priority rule
-        equipment_lower_check = [eq.lower() for eq in equipment] if equipment else []
-        user_has_gym_equipment = any(
-            eq in equipment_lower_check
-            for eq in ["full_gym", "full gym", "dumbbells", "barbell", "cable_machine", "machines"]
-        ) or any(
-            kw in eq for eq in equipment_lower_check for kw in ["dumbbell", "barbell", "cable", "machine"]
-        )
+        # Detect if user has any non-bodyweight equipment for equipment priority rule
+        _BW_ONLY_EQUIPMENT_AI = {"bodyweight", "bodyweight_only", "bodyweight only", "body weight", "none", ""}
+        user_real_equipment = [eq for eq in (equipment or []) if eq.lower() not in _BW_ONLY_EQUIPMENT_AI]
 
         equipment_priority_section = ""
-        if user_has_gym_equipment:
+        if user_real_equipment:
             equipment_priority_section = f"""
-EQUIPMENT PRIORITY RULE (user has gym equipment):
+EQUIPMENT PRIORITY RULE (user has: {', '.join(user_real_equipment)}):
 - Select AT MOST 1 bodyweight exercise out of {count}
-- Prefer barbell, dumbbell, cable, and machine exercises
+- STRONGLY prefer exercises using: {', '.join(user_real_equipment)}
 - Bodyweight exercises are acceptable ONLY as a warm-up or finisher, not as primary movements
-- Do NOT select easy cardio-style bodyweight moves (punches, jumping jacks, etc.) — these are not appropriate for a gym strength session
+- Do NOT select easy cardio-style bodyweight moves (punches, jumping jacks, etc.)
 """
 
         prompt = f"""You are an expert fitness coach selecting exercises for a workout.

@@ -190,6 +190,8 @@ const Map<String, List<String>> _settingsSearchIndex = {
     'dont increase weight', 'keep same weight', 'weight too fast',
     'add cardio', 'cardio workouts', 'strength training',
     'mixed workouts', 'progression speed', 'weight jumps',
+    'week start', 'monday', 'sunday', 'calendar', 'first day',
+    'week starts on', 'start of week',
   ],
   'superset': [
     'superset', 'supersets', 'pair', 'pairs', 'pairing',

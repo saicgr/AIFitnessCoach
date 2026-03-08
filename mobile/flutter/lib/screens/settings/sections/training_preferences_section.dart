@@ -142,6 +142,12 @@ class TrainingPreferencesSection extends StatelessWidget {
               isWorkoutDaysSelector: true,
             ),
             SettingItemData(
+              icon: Icons.calendar_today_outlined,
+              title: 'Week Starts On',
+              subtitle: 'First day of the week on calendars',
+              isWeekStartSelector: true,
+            ),
+            SettingItemData(
               icon: Icons.shuffle,
               title: 'Exercise Consistency',
               subtitle: 'Vary or keep same exercises',

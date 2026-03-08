@@ -51,8 +51,8 @@ BEGIN
     PERFORM set_config('statement_timeout', '8000', TRUE);
 
     -- Set trigram similarity threshold for % operator (uses GIN index)
-    -- 0.15 balances typo tolerance vs GIN candidate volume
-    PERFORM set_config('pg_trgm.similarity_threshold', '0.15', TRUE);
+    -- 0.3 reduces false positives while still allowing typo tolerance
+    PERFORM set_config('pg_trgm.similarity_threshold', '0.3', TRUE);
 
     RETURN QUERY
     SELECT
@@ -134,7 +134,7 @@ RETURNS TABLE (
 AS $$
 BEGIN
     -- Set trigram similarity threshold for % operator (uses GIN index)
-    PERFORM set_config('pg_trgm.similarity_threshold', '0.15', TRUE);
+    PERFORM set_config('pg_trgm.similarity_threshold', '0.3', TRUE);
 
     -- Two-pass approach for performance:
     -- Pass 1: name_normalized matches (fast, uses existing GIN index)

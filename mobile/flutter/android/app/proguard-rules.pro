@@ -55,6 +55,10 @@
 -dontwarn com.google.android.play.core.splitinstall.**
 -dontwarn com.google.android.play.core.tasks.**
 
+# MediaPipe
+-dontwarn com.google.mediapipe.proto.CalculatorProfileProto$CalculatorProfile
+-dontwarn com.google.mediapipe.proto.GraphTemplateProto$CalculatorGraphTemplate
+
 # Suppress warnings for common libraries
 -dontwarn com.google.errorprone.annotations.**
 -dontwarn javax.annotation.**

@@ -111,6 +111,15 @@ class RedisCache:
         # Fallback to local cache
         self._local_set(key, value)
 
+    async def delete(self, key: str):
+        """Delete a cached value from Redis and local fallback."""
+        if _redis_available and _redis_client:
+            try:
+                await _redis_client.delete(self._prefix + key)
+            except Exception as e:
+                logger.debug(f"Redis DELETE error: {e}")
+        self._local.pop(key, None)
+
     def _local_get(self, key: str) -> Optional[Any]:
         """In-memory fallback get."""
         from datetime import datetime

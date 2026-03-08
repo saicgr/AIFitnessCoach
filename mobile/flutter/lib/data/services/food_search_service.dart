@@ -528,6 +528,27 @@ class FoodSearchService {
     _currentSource = source;
   }
 
+  /// Fetch dynamic food modifiers for a specific food from backend.
+  Future<List<FoodModifier>> getFoodModifiers(String foodName) async {
+    try {
+      final response = await _apiClient.get(
+        '/nutrition/food-modifiers',
+        queryParameters: {'food_name': foodName},
+      );
+      if (response.statusCode == 200) {
+        final data = response.data as Map<String, dynamic>;
+        final mods = (data['modifiers'] as List<dynamic>?)
+            ?.map((e) => FoodModifier.fromJson(e as Map<String, dynamic>))
+            .toList() ?? [];
+        return mods;
+      }
+      return [];
+    } catch (e) {
+      if (kDebugMode) print('❌ getFoodModifiers error: $e');
+      return [];
+    }
+  }
+
   /// Search for food modifiers (addons, cooking methods, etc.)
   Future<List<FoodModifier>> searchModifiers(String query, String userId) async {
     try {

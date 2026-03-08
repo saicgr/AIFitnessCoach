@@ -1682,7 +1682,7 @@ class NotificationService {
       case 'nutrition_reminder':
         return '/nutrition';
       case 'hydration_reminder':
-        return '/hydration';
+        return '/nutrition?tab=2';
       case 'streak_alert':
         return '/stats';
       case 'weekly_summary':

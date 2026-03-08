@@ -38,15 +38,17 @@ class PendingRequestCard extends StatelessWidget {
           // Avatar
           CircleAvatar(
             radius: 24,
-            backgroundColor: AppColors.cyan.withValues(alpha: 0.2),
+            backgroundColor: isDark
+                ? AppColors.cyan.withValues(alpha: 0.2)
+                : AppColorsLight.accent.withValues(alpha: 0.1),
             backgroundImage: avatarUrl != null ? NetworkImage(avatarUrl) : null,
             child: avatarUrl == null
                 ? Text(
                     name.isNotEmpty ? name[0].toUpperCase() : '?',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
-                      color: AppColors.cyan,
+                      color: isDark ? AppColors.cyan : AppColorsLight.accent,
                     ),
                   )
                 : null,
@@ -90,9 +92,10 @@ class PendingRequestCard extends StatelessWidget {
                 child: OutlinedButton(
                   onPressed: onDecline,
                   style: OutlinedButton.styleFrom(
-                    foregroundColor: AppColors.textMuted,
+                    foregroundColor: isDark ? AppColors.coral : AppColorsLight.coral,
                     side: BorderSide(
-                      color: AppColors.textMuted.withValues(alpha: 0.3),
+                      color: (isDark ? AppColors.coral : AppColorsLight.coral)
+                          .withValues(alpha: 0.3),
                     ),
                     padding: const EdgeInsets.symmetric(vertical: 6),
                     visualDensity: VisualDensity.compact,

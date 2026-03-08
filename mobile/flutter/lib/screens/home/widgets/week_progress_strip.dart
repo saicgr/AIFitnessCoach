@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/providers/week_start_provider.dart';
 import '../../../data/repositories/workout_repository.dart';
 import '../../../data/services/haptic_service.dart';
 
@@ -35,24 +36,26 @@ class WeekProgressStrip extends ConsumerWidget {
           ),
           child: workoutsAsync.when(
             data: (workouts) {
-              // Calculate week data
+              final weekConfig = ref.watch(weekDisplayConfigProvider);
+
               final now = DateTime.now();
-              final weekStart = now.subtract(Duration(days: now.weekday - 1));
-              final todayIndex = now.weekday - 1; // 0 = Monday
+              final today = DateTime(now.year, now.month, now.day);
+              final todayIndex = today.weekday - 1; // 0=Mon (data model)
+              final weekStart = weekConfig.weekStart(today);
 
               // Get this week's workouts
               final thisWeekWorkouts = workouts.where((w) {
                 final date = w.scheduledLocalDate;
                 if (date == null) return false;
-                final workoutWeekStart = date.subtract(Duration(days: date.weekday - 1));
-                return workoutWeekStart.year == weekStart.year &&
-                    workoutWeekStart.month == weekStart.month &&
-                    workoutWeekStart.day == weekStart.day;
+                final wWeekStart = weekConfig.weekStart(date);
+                return wWeekStart.year == weekStart.year &&
+                    wWeekStart.month == weekStart.month &&
+                    wWeekStart.day == weekStart.day;
               }).toList();
 
-              // Create day states
-              final dayStates = List<_DayState>.generate(7, (index) {
-                final dayDate = weekStart.add(Duration(days: index));
+              // Create day states in display order
+              final dayStates = List<_DayState>.generate(7, (displayIndex) {
+                final dayDate = weekStart.add(Duration(days: displayIndex));
                 final dayWorkouts = thisWeekWorkouts.where((w) {
                   final date = w.scheduledLocalDate;
                   if (date == null) return false;
@@ -63,8 +66,9 @@ class WeekProgressStrip extends ConsumerWidget {
 
                 final hasWorkout = dayWorkouts.isNotEmpty;
                 final isCompleted = dayWorkouts.any((w) => w.isCompleted == true);
-                final isToday = index == todayIndex;
-                final isPast = index < todayIndex;
+                final dataIndex = weekConfig.displayOrder[displayIndex];
+                final isToday = dataIndex == todayIndex;
+                final isPast = dayDate.isBefore(today);
 
                 return _DayState(
                   hasWorkout: hasWorkout,
@@ -118,7 +122,7 @@ class WeekProgressStrip extends ConsumerWidget {
                     mainAxisAlignment: MainAxisAlignment.spaceAround,
                     children: List.generate(7, (index) {
                       return _DayCircle(
-                        dayLabel: ['M', 'T', 'W', 'T', 'F', 'S', 'S'][index],
+                        dayLabel: weekConfig.dayLabels[index],
                         state: dayStates[index],
                         isDark: isDark,
                       );

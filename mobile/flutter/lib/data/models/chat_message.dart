@@ -105,6 +105,9 @@ class AgentConfig {
   ];
 }
 
+/// Message delivery status for optimistic UI
+enum MessageStatus { pending, sent, delivered, error }
+
 /// Chat message model
 @JsonSerializable()
 class ChatMessage extends Equatable {
@@ -127,6 +130,26 @@ class ChatMessage extends Equatable {
   @JsonKey(name: 'media_refs')
   final List<Map<String, dynamic>>? mediaRefs;
 
+  /// Transient local file path for showing user's own photo before S3 URL is available
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  final String? localFilePath;
+
+  /// Delivery status for optimistic UI updates
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  final MessageStatus status;
+
+  /// Whether this message is pinned by the user
+  @JsonKey(defaultValue: false)
+  final bool isPinned;
+
+  /// URL of an attached voice message
+  @JsonKey(name: 'audio_url')
+  final String? audioUrl;
+
+  /// Duration of the voice message in milliseconds
+  @JsonKey(name: 'audio_duration_ms')
+  final int? audioDurationMs;
+
   const ChatMessage({
     this.id,
     this.userId,
@@ -139,6 +162,11 @@ class ChatMessage extends Equatable {
     this.mediaUrl,
     this.mediaType,
     this.mediaRefs,
+    this.localFilePath,
+    this.status = MessageStatus.sent,
+    this.isPinned = false,
+    this.audioUrl,
+    this.audioDurationMs,
   });
 
   factory ChatMessage.fromJson(Map<String, dynamic> json) =>
@@ -175,7 +203,7 @@ class ChatMessage extends Equatable {
   }
 
   /// Check if this message has media (image or video)
-  bool get hasMedia => mediaUrl != null && mediaUrl!.isNotEmpty;
+  bool get hasMedia => (mediaUrl != null && mediaUrl!.isNotEmpty) || localFilePath != null;
 
   /// Check if this message has a form check result from the AI
   bool get hasFormCheckResult =>
@@ -187,7 +215,49 @@ class ChatMessage extends Equatable {
       actionData?['form_check_result'] as Map<String, dynamic>?;
 
   @override
-  List<Object?> get props => [id, userId, role, content, agentType, createdAt, actionData, mediaUrl, mediaType, mediaRefs];
+  List<Object?> get props => [id, userId, role, content, agentType, createdAt, actionData, mediaUrl, mediaType, mediaRefs, localFilePath, status, isPinned, audioUrl, audioDurationMs];
+
+  /// Check if this is a voice message
+  bool get isVoiceMessage => audioUrl != null && audioUrl!.isNotEmpty;
+
+  /// Create a copy with optional field overrides
+  ChatMessage copyWith({
+    String? id,
+    String? userId,
+    String? role,
+    String? content,
+    String? intent,
+    AgentType? agentType,
+    String? createdAt,
+    Map<String, dynamic>? actionData,
+    String? mediaUrl,
+    String? mediaType,
+    List<Map<String, dynamic>>? mediaRefs,
+    String? localFilePath,
+    MessageStatus? status,
+    bool? isPinned,
+    String? audioUrl,
+    int? audioDurationMs,
+  }) {
+    return ChatMessage(
+      id: id ?? this.id,
+      userId: userId ?? this.userId,
+      role: role ?? this.role,
+      content: content ?? this.content,
+      intent: intent ?? this.intent,
+      agentType: agentType ?? this.agentType,
+      createdAt: createdAt ?? this.createdAt,
+      actionData: actionData ?? this.actionData,
+      mediaUrl: mediaUrl ?? this.mediaUrl,
+      mediaType: mediaType ?? this.mediaType,
+      mediaRefs: mediaRefs ?? this.mediaRefs,
+      localFilePath: localFilePath ?? this.localFilePath,
+      status: status ?? this.status,
+      isPinned: isPinned ?? this.isPinned,
+      audioUrl: audioUrl ?? this.audioUrl,
+      audioDurationMs: audioDurationMs ?? this.audioDurationMs,
+    );
+  }
 
   /// Check if this message has a generated workout
   bool get hasGeneratedWorkout =>
@@ -302,6 +372,12 @@ class ChatHistoryItem {
   final AgentType? agentType;
   @JsonKey(name: 'action_data')
   final Map<String, dynamic>? actionData;
+  @JsonKey(name: 'is_pinned', defaultValue: false)
+  final bool isPinned;
+  @JsonKey(name: 'audio_url')
+  final String? audioUrl;
+  @JsonKey(name: 'audio_duration_ms')
+  final int? audioDurationMs;
 
   const ChatHistoryItem({
     this.id,
@@ -310,6 +386,9 @@ class ChatHistoryItem {
     this.timestamp,
     this.agentType,
     this.actionData,
+    this.isPinned = false,
+    this.audioUrl,
+    this.audioDurationMs,
   });
 
   factory ChatHistoryItem.fromJson(Map<String, dynamic> json) =>
@@ -324,5 +403,8 @@ class ChatHistoryItem {
         agentType: agentType,
         createdAt: timestamp,
         actionData: actionData,
+        isPinned: isPinned,
+        audioUrl: audioUrl,
+        audioDurationMs: audioDurationMs,
       );
 }

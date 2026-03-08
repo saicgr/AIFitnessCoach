@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/theme/theme_colors.dart';
 import '../../core/providers/window_mode_provider.dart';
+import '../../data/providers/feature_provider.dart';
+import '../../models/feature_request.dart';
 import '../onboarding/widgets/foldable_quiz_scaffold.dart';
 
 /// Paywall Screen 1: Feature Highlights
@@ -102,6 +105,10 @@ class PaywallFeaturesScreen extends ConsumerWidget {
                 _FeatureItem(icon: Icons.fitness_center, iconColor: colors.success, title: '52 skill progressions', subtitle: 'Wall pushups → one-arm, dragon squats & more', colors: colors),
                 const SizedBox(height: 8),
                 _FeatureItem(icon: Icons.self_improvement, iconColor: colors.accent, title: 'Hormonal health optimization', subtitle: 'Cycle-aware workouts & diet recommendations', colors: colors),
+
+                // --- Coming Soon: Roadmap Voting ---
+                const SizedBox(height: 24),
+                _RoadmapVotingSection(colors: colors),
 
                 const SizedBox(height: 24),
               ],
@@ -326,5 +333,218 @@ class _FeatureItem extends StatelessWidget {
         ),
       ],
     );
+  }
+}
+
+/// Shows top voting features from the roadmap with upvote buttons.
+/// Loads from the existing featuresProvider (backend API).
+class _RoadmapVotingSection extends ConsumerWidget {
+  final ThemeColors colors;
+
+  const _RoadmapVotingSection({required this.colors});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final featuresAsync = ref.watch(featuresProvider);
+
+    return featuresAsync.when(
+      loading: () => const SizedBox.shrink(),
+      error: (_, __) => const SizedBox.shrink(),
+      data: (features) {
+        // Show top 5 voting/planned features
+        final votingFeatures = features
+            .where((f) => f.isVoting || f.isPlanned)
+            .take(5)
+            .toList();
+
+        if (votingFeatures.isEmpty) return const SizedBox.shrink();
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Section header
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              decoration: BoxDecoration(
+                color: colors.accent.withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.rocket_launch_outlined, size: 18, color: colors.accent),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Coming Soon — Vote!',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                        color: colors.textPrimary,
+                      ),
+                    ),
+                  ),
+                  Text(
+                    'Shape FitWiz',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      color: colors.accent,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 10),
+
+            // Feature vote cards
+            ...votingFeatures.map((feature) => Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: _VotableFeatureCard(
+                feature: feature,
+                colors: colors,
+                onVote: () {
+                  HapticFeedback.lightImpact();
+                  ref.read(featuresProvider.notifier).toggleVote(feature.id);
+                },
+              ),
+            )),
+          ],
+        );
+      },
+    );
+  }
+}
+
+class _VotableFeatureCard extends StatelessWidget {
+  final FeatureRequest feature;
+  final ThemeColors colors;
+  final VoidCallback onVote;
+
+  const _VotableFeatureCard({
+    required this.feature,
+    required this.colors,
+    required this.onVote,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final categoryColor = _categoryColor(feature.category);
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: colors.elevated,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: colors.cardBorder),
+      ),
+      child: Row(
+        children: [
+          // Vote button
+          GestureDetector(
+            onTap: onVote,
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: feature.userHasVoted
+                    ? colors.accent.withValues(alpha: 0.15)
+                    : colors.accent.withValues(alpha: 0.05),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(
+                  color: feature.userHasVoted
+                      ? colors.accent
+                      : colors.cardBorder,
+                  width: feature.userHasVoted ? 1.5 : 1,
+                ),
+              ),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    feature.userHasVoted ? Icons.thumb_up : Icons.thumb_up_outlined,
+                    size: 14,
+                    color: feature.userHasVoted ? colors.accent : colors.textMuted,
+                  ),
+                  Text(
+                    '${feature.voteCount}',
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w700,
+                      color: feature.userHasVoted ? colors.accent : colors.textMuted,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          // Feature info
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  feature.title,
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: colors.textPrimary,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  feature.description,
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: colors.textSecondary,
+                    height: 1.3,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          // Category badge
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+            decoration: BoxDecoration(
+              color: categoryColor.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(6),
+            ),
+            child: Text(
+              feature.categoryDisplayName,
+              style: TextStyle(
+                fontSize: 9,
+                fontWeight: FontWeight.w600,
+                color: categoryColor,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Color _categoryColor(String category) {
+    switch (category) {
+      case 'workout':
+        return const Color(0xFFF97316);
+      case 'nutrition':
+        return const Color(0xFF00BCD4);
+      case 'social':
+        return const Color(0xFF9B59B6);
+      case 'analytics':
+        return const Color(0xFF3B82F6);
+      case 'coaching':
+        return const Color(0xFF10B981);
+      default:
+        return const Color(0xFF6B7280);
+    }
   }
 }

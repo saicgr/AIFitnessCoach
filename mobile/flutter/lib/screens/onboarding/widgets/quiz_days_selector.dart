@@ -65,21 +65,19 @@ class QuizDaysSelector extends StatelessWidget {
           children: [
             if (showHeader) ...[
               _buildTitle(textPrimary),
-              const SizedBox(height: 8),
+              const SizedBox(height: 6),
               _buildSubtitle(textSecondary),
-              const SizedBox(height: 24),
+              const SizedBox(height: 16),
             ],
             _buildDaysPerWeekSelector(isDark, textPrimary, textSecondary),
-            const SizedBox(height: 28),
+            const SizedBox(height: 20),
             if (selectedDays != null) ...[
               _buildWhichDaysSection(isDark, textPrimary, textSecondary, requiredDays, selectedCount),
-              if (selectedDays != null && selectedCount >= requiredDays)
-                _buildRecommendation(isDark, textPrimary),
             ],
 
             // Workout Duration Section (only show if callback is provided)
             if (onDurationChanged != null) ...[
-              const SizedBox(height: 28),
+              const SizedBox(height: 20),
               _buildDurationSection(isDark, textPrimary, textSecondary),
             ],
           ],
@@ -110,7 +108,7 @@ class QuizDaysSelector extends StatelessWidget {
             color: textSecondary,
           ),
         ).animate().fadeIn(delay: 150.ms),
-        const SizedBox(height: 16),
+        const SizedBox(height: 12),
         Row(
           children: _durationOptions.asMap().entries.map((entry) {
             final index = entry.key;
@@ -188,21 +186,10 @@ class QuizDaysSelector extends StatelessWidget {
                       ),
                       if (isRecommended) ...[
                         const SizedBox(height: 4),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                          decoration: BoxDecoration(
-                            color: AppColors.orange.withValues(alpha: 0.12),
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          child: const Text(
-                            'Recommended',
-                            style: TextStyle(
-                              fontSize: 9,
-                              fontWeight: FontWeight.w700,
-                              color: AppColors.orange,
-                              letterSpacing: 0.2,
-                            ),
-                          ),
+                        Icon(
+                          Icons.star_rounded,
+                          size: 14,
+                          color: AppColors.orange.withValues(alpha: 0.8),
                         ),
                       ],
                     ],
@@ -394,7 +381,7 @@ class QuizDaysSelector extends StatelessWidget {
             color: textSecondary,
           ),
         ).animate().fadeIn(delay: 150.ms),
-        const SizedBox(height: 16),
+        const SizedBox(height: 12),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: _dayInfo.map((day) {
@@ -479,12 +466,8 @@ class QuizDaysSelector extends StatelessWidget {
             ).animate(delay: (200 + (index * 40)).ms).fadeIn().scale(begin: const Offset(0.9, 0.9));
           }).toList(),
         ),
-        const SizedBox(height: 20),
+        const SizedBox(height: 12),
         _buildSelectionCounter(isDark, textPrimary, requiredDays, selectedCount),
-        if (selectedWorkoutDays.isNotEmpty) ...[
-          const SizedBox(height: 12),
-          _buildSelectedDaysSummary(textSecondary),
-        ],
       ],
     );
   }

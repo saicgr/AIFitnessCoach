@@ -120,6 +120,48 @@ def safe_join_list(items, default: str = "") -> str:
     return ", ".join(result) if result else default
 
 
+# Canonical set of equipment values that are NOT bodyweight
+_BODYWEIGHT_ALIASES = {"bodyweight", "none", "no_equipment", ""}
+
+def _build_equipment_usage_rule(equipment) -> str:
+    """Build the equipment-usage rule section for the workout generation prompt.
+
+    Dynamically detects ANY non-bodyweight equipment so kettlebell, resistance_bands,
+    pull_up_bar, etc. all get the same strong enforcement rule that was previously
+    only applied to full_gym/dumbbells/barbell/cable_machine/machines.
+    """
+    if not equipment:
+        return ""
+
+    # Normalise items (may be dicts from the DB)
+    normalised = []
+    for item in equipment:
+        if isinstance(item, str):
+            normalised.append(item.strip().lower())
+        elif isinstance(item, dict):
+            val = item.get("name") or item.get("value") or item.get("id") or ""
+            if isinstance(val, str):
+                normalised.append(val.strip().lower())
+
+    real_equipment = [e for e in normalised if e and e not in _BODYWEIGHT_ALIASES]
+
+    if not real_equipment:
+        return (
+            "The user has NO equipment — generate bodyweight-only exercises.\n"
+            "Do NOT include any exercises that require dumbbells, barbells, machines, or other equipment."
+        )
+
+    equip_names = ", ".join(real_equipment)
+    return (
+        f"IF THE USER HAS EQUIPMENT, YOU **MUST** USE IT! This is NON-NEGOTIABLE.\n"
+        f"The user owns: {equip_names}\n"
+        f"  → AT LEAST 4-5 exercises (out of 6-8 total) MUST use the user's equipment\n"
+        f"  → Maximum 1-2 bodyweight exercises allowed\n"
+        f"  → NEVER generate a mostly bodyweight workout when the user has equipment!\n"
+        f"  → Prioritise the user's specific equipment ({equip_names}) over generic bodyweight moves."
+    )
+
+
 def infer_set_type(exercise: Dict, set_target: Dict, set_index: int, total_sets: int) -> str:
     """
     Infer set_type from context when Gemini omits it (safety net).
@@ -3348,15 +3390,17 @@ Foods that are calorie-dense with low nutritional value, highly processed, or ha
 
 Return ONLY valid JSON in this exact format (no markdown, no explanation):
 {
-  "intent": "add_exercise|remove_exercise|swap_workout|modify_intensity|reschedule|report_injury|change_setting|navigate|start_workout|complete_workout|log_hydration|generate_quick_workout|question",
+  "intent": "add_exercise|remove_exercise|swap_workout|modify_intensity|reschedule|delete_workout|report_injury|change_setting|navigate|start_workout|complete_workout|log_hydration|set_water_goal|log_weight|generate_quick_workout|nutrition_summary|recent_meals|question",
   "exercises": ["exercise name 1", "exercise name 2"],
   "muscle_groups": ["chest", "back", "shoulders", "biceps", "triceps", "legs", "core", "glutes"],
   "modification": "easier|harder|shorter|longer",
   "body_part": "shoulder|back|knee|ankle|wrist|elbow|hip|neck",
-  "setting_name": "dark_mode|light_mode|notifications",
+  "setting_name": "dark_mode|sounds|countdown_sounds|rest_timer_sounds|voice_announcements|tts|background_music|haptics|notifications|equipment|workout_days|training_split|ai_coach_style|coaching_style|font_size",
   "setting_value": true,
-  "destination": "home|library|profile|achievements|hydration|nutrition|summaries|settings|stats|schedule|fasting|chat|neat|metrics|support|workout_settings|ai_coach|appearance",
-  "hydration_amount": 8
+  "destination": "home|nutrition|social|profile|workouts|library|schedule|workout_builder|hydration|fasting|food_history|food_library|recipe_suggestions|nutrition_settings|stats|progress|milestones|exercise_history|muscle_analytics|progress_charts|consistency|measurements|chat|support|help|glossary|injuries|habits|neat|metrics|diabetes|plateau|strain_prevention|hormonal_health|mood_history|achievements|trophy_room|leaderboard|rewards|summaries|settings|workout_settings|ai_coach|appearance|sound_notifications|equipment|offline_mode|privacy|subscription",
+  "hydration_amount": 8,
+  "water_goal_glasses": 10,
+  "weight_value": 75.5
 }
 
 INTENT DEFINITIONS:
@@ -3365,19 +3409,34 @@ INTENT DEFINITIONS:
 - swap_workout: User wants a DIFFERENT workout type (e.g., "not in mood for leg day")
 - modify_intensity: User wants to change difficulty/duration (e.g., "make it easier", "too hard")
 - reschedule: User wants to change workout timing (e.g., "move to tomorrow")
+- delete_workout: User wants to DELETE/CANCEL a workout entirely (e.g., "delete today's workout", "cancel my workout", "remove this workout")
 - report_injury: User mentions pain/injury (e.g., "my shoulder hurts")
 - change_setting: User wants to change app settings (e.g., "turn on dark mode", "enable dark theme", "switch to light mode")
 - navigate: User wants to go to a specific screen (e.g., "show my achievements", "open nutrition", "go to profile")
 - start_workout: User wants to START their workout NOW (e.g., "start my workout", "let's go", "begin workout", "I'm ready")
 - complete_workout: User wants to FINISH/COMPLETE their workout (e.g., "I'm done", "finished", "completed my workout", "mark as done")
 - log_hydration: User wants to LOG water intake (e.g., "log 8 glasses of water", "I drank 3 cups", "track my water")
+- set_water_goal: User wants to SET their daily water goal (e.g., "set my water goal to 10 glasses", "change my daily water target to 12 cups")
+- log_weight: User wants to LOG their weight (e.g., "log my weight as 75kg", "I weigh 165 lbs", "record my weight")
 - generate_quick_workout: User wants to CREATE/GENERATE a new workout (e.g., "give me a quick workout", "create a 15-minute workout", "make me a cardio workout", "I need a short workout", "new workout please")
+- nutrition_summary: User wants a SUMMARY of their nutrition/diet (e.g., "how's my diet today?", "show my macros", "nutrition summary", "what did I eat today?", "calorie report")
+- recent_meals: User wants to see their RECENT MEALS or food log (e.g., "what did I eat?", "show my meals", "recent food", "meal history")
 - question: General fitness question or unclear intent
 
 SETTING EXTRACTION:
 - For dark mode requests: setting_name="dark_mode", setting_value=true
 - For light mode requests: setting_name="dark_mode", setting_value=false
 - For notification toggles: setting_name="notifications", setting_value=true/false
+- For mute/unmute sounds: setting_name="sounds", setting_value=false (mute) / true (unmute)
+- For countdown beeps: setting_name="countdown_sounds", setting_value=true/false
+- For rest timer sounds: setting_name="rest_timer_sounds", setting_value=true/false
+- For voice/TTS toggle: setting_name="voice_announcements", setting_value=true/false
+- For background music: setting_name="background_music", setting_value=true/false
+- For haptic feedback: setting_name="haptics", setting_value=true/false
+- For equipment setup: setting_name="equipment" (no setting_value needed, opens settings)
+- For workout days/split: setting_name="workout_days" (opens settings)
+- For AI coach style: setting_name="ai_coach_style" (opens settings)
+- For font size: setting_name="font_size" (opens settings)
 
 NAVIGATION EXTRACTION:
 - "show achievements" / "my badges" -> destination="achievements"
@@ -3386,7 +3445,7 @@ NAVIGATION EXTRACTION:
 - "weekly summary" / "my progress" -> destination="summaries"
 - "go home" / "main screen" -> destination="home"
 - "exercise library" / "browse exercises" -> destination="library"
-- "my profile" / "settings" -> destination="profile"
+- "my profile" -> destination="profile"
 - "open settings" / "app settings" -> destination="settings"
 - "my stats" / "statistics" / "progress" -> destination="stats"
 - "my schedule" / "workout schedule" -> destination="schedule"
@@ -3398,6 +3457,28 @@ NAVIGATION EXTRACTION:
 - "workout settings" / "exercise preferences" -> destination="workout_settings"
 - "ai coach settings" / "coach preferences" -> destination="ai_coach"
 - "appearance" / "theme settings" -> destination="appearance"
+- "social" / "friends" / "community" -> destination="social"
+- "workout history" / "past workouts" -> destination="workouts"
+- "build workout" / "custom workout" -> destination="workout_builder"
+- "injuries" / "injury tracker" -> destination="injuries"
+- "habits" / "daily habits" -> destination="habits"
+- "measurements" / "body measurements" -> destination="measurements"
+- "milestones" -> destination="milestones"
+- "exercise history" / "exercise progress" -> destination="exercise_history"
+- "muscle analytics" / "muscle distribution" -> destination="muscle_analytics"
+- "consistency" / "streaks" -> destination="consistency"
+- "trophy room" / "trophies" -> destination="trophy_room"
+- "leaderboard" / "ranking" -> destination="leaderboard"
+- "recipes" / "meal suggestions" -> destination="recipe_suggestions"
+- "sound settings" / "notification settings" -> destination="sound_notifications"
+- "equipment" / "gym equipment" -> destination="equipment"
+- "offline mode" / "download workouts" -> destination="offline_mode"
+- "privacy" / "data settings" -> destination="privacy"
+- "subscription" / "my plan" / "billing" -> destination="subscription"
+- "diabetes" / "blood sugar" / "glucose" -> destination="diabetes"
+- "plateau" / "stagnation" -> destination="plateau"
+- "strain prevention" / "overtraining" -> destination="strain_prevention"
+- "hormonal health" / "cycle tracking" -> destination="hormonal_health"
 
 WORKOUT ACTION EXTRACTION:
 - "start my workout" / "let's go" / "begin" / "I'm ready" / "start training" -> intent="start_workout"
@@ -3409,6 +3490,16 @@ HYDRATION EXTRACTION:
 - "I drank 3 cups" -> hydration_amount=3
 - "track 2 glasses" -> hydration_amount=2
 - If no number specified, default to hydration_amount=1
+
+WATER GOAL EXTRACTION:
+- "set my water goal to 10 glasses" -> intent="set_water_goal", water_goal_glasses=10
+- "change my daily water target to 12" -> intent="set_water_goal", water_goal_glasses=12
+- If no number specified, default to water_goal_glasses=8
+
+WEIGHT LOGGING EXTRACTION:
+- "log my weight as 75kg" -> intent="log_weight", weight_value=75.0
+- "I weigh 165 lbs" -> intent="log_weight", weight_value=165.0
+- "record weight 80" -> intent="log_weight", weight_value=80.0
 
 User message: "''' + _sanitize_for_prompt(user_message) + '"'
 
@@ -3452,6 +3543,8 @@ User message: "''' + _sanitize_for_prompt(user_message) + '"'
                 setting_value=data.setting_value,
                 destination=data.destination,
                 hydration_amount=data.hydration_amount,
+                water_goal_glasses=data.water_goal_glasses,
+                weight_value=data.weight_value,
             )
 
             # Cache the result
@@ -6468,11 +6561,7 @@ Requirements:
 🚨🚨🚨 ABSOLUTE CRITICAL RULE - EQUIPMENT USAGE 🚨🚨🚨
 Available equipment: {safe_join_list(equipment, 'bodyweight only')}
 
-IF THE USER HAS GYM EQUIPMENT, YOU **MUST** USE IT! This is NON-NEGOTIABLE.
-- If "full_gym" OR "dumbbells" OR "barbell" OR "cable_machine" OR "machines" is in the equipment list:
-  → AT LEAST 4-5 exercises (out of 6-8 total) MUST use that equipment
-  → Maximum 1-2 bodyweight exercises allowed
-  → NEVER generate a mostly bodyweight workout when gym equipment is available!
+{_build_equipment_usage_rule(equipment)}
 
 MANDATORY EQUIPMENT-BASED EXERCISES (include these when equipment is available):
 - full_gym/commercial_gym: Barbell Squat, Bench Press, Lat Pulldown, Cable Row, Leg Press, Dumbbell Rows
@@ -6481,11 +6570,9 @@ MANDATORY EQUIPMENT-BASED EXERCISES (include these when equipment is available):
 - cable_machine: Cable Fly, Face Pull, Tricep Pushdown, Cable Row, Lat Pulldown
 - machines: Leg Press, Chest Press Machine, Lat Pulldown, Leg Curl, Shoulder Press Machine
 - kettlebell/kettlebells: Kettlebell Swings, Goblet Squats, KB Clean & Press, KB Turkish Get-up, KB Deadlift, KB Snatch
-
-🔔 KETTLEBELL RULE: If "kettlebell" or "kettlebells" is in the equipment list:
-- Include AT LEAST 1 kettlebell exercise in every workout!
-- Kettlebells are excellent for: full body power, core stability, conditioning
-- Don't ignore this equipment - users specifically added it!
+- resistance_bands: Banded Squats, Band Pull-Aparts, Banded Push-Ups, Band Rows, Banded Lateral Walks
+- pull_up_bar: Pull-Ups, Chin-Ups, Hanging Leg Raises, Dead Hangs
+- trx/suspension_trainer: TRX Rows, TRX Push-Ups, TRX Pistol Squats, TRX Y-Raises
 
 FOR BEGINNERS WITH GYM ACCESS - THIS IS CRITICAL:
 Beginners benefit MORE from weighted exercises than bodyweight! Use machines and dumbbells for:
@@ -8125,6 +8212,115 @@ RESPONSE FORMAT:
 
 Remember: You're a supportive coach, not a robot. Be human, be helpful, be motivating!'''
 
+    async def generate_food_review(
+        self,
+        food_name: str,
+        macros: dict,
+        user_goals: list,
+        nutrition_targets: dict,
+    ) -> dict:
+        """
+        Generate an AI-powered food review based on user goals and nutrition targets.
+
+        Args:
+            food_name: Name of the food item
+            macros: Dict with calories, protein_g, carbs_g, fat_g
+            user_goals: List of user fitness goals (e.g. ["build_muscle", "lose_fat"])
+            nutrition_targets: Dict with daily calorie/macro targets
+
+        Returns:
+            Dict with encouragements, warnings, ai_suggestion, recommended_swap, health_score
+        """
+        goals_str = ", ".join(user_goals) if user_goals else "general health"
+        targets_str = ", ".join(
+            f"{k}: {v}" for k, v in nutrition_targets.items() if v is not None
+        ) if nutrition_targets else "no specific targets"
+        macros_str = (
+            f"calories={macros.get('calories', 0)}, "
+            f"protein={macros.get('protein_g', 0)}g, "
+            f"carbs={macros.get('carbs_g', 0)}g, "
+            f"fat={macros.get('fat_g', 0)}g"
+        )
+
+        prompt = f'''Given user goals of [{goals_str}] and daily targets of [{targets_str}], review this food: "{food_name}" with macros: {macros_str}.
+
+IMPORTANT SEED OIL AWARENESS:
+- If this food is commonly fried, packaged, or fast food, check if it is likely cooked in or contains seed oils (canola oil, soybean oil, sunflower oil, corn oil, cottonseed oil, vegetable oil).
+- Seed oils are high in inflammatory omega-6 fatty acids and should be flagged as a warning.
+- If seed oils are likely present, suggest a healthier alternative cooked in olive oil, ghee, avocado oil, or coconut oil.
+- Common seed oil offenders: fried snacks, chips, crackers, packaged baked goods, fast food fries, restaurant fried items, margarine-based products.
+
+Return ONLY valid JSON (no markdown) with this exact structure:
+{{
+  "encouragements": ["list of positive aspects of this food for the user goals"],
+  "warnings": ["list of concerns including seed oil warnings if applicable"],
+  "ai_suggestion": "a brief actionable suggestion for how to include this food in the diet",
+  "recommended_swap": "a healthier alternative if applicable, or empty string if the food is already a great choice",
+  "health_score": 7
+}}
+
+Rules:
+- health_score is an integer from 1 to 10 (1=very unhealthy for goals, 10=perfect for goals)
+- encouragements and warnings should each have 1-3 items
+- Be specific to the user's goals
+- Keep each string concise (under 80 chars)
+'''
+
+        try:
+            response = await asyncio.wait_for(
+                client.aio.models.generate_content(
+                    model=self.model,
+                    contents=[types.Content(role="user", parts=[types.Part.from_text(text=prompt)])],
+                    config=types.GenerateContentConfig(
+                        system_instruction="You are a nutrition expert AI. Return only valid JSON.",
+                        max_output_tokens=200,
+                        temperature=0.1,
+                    ),
+                ),
+                timeout=15,
+            )
+
+            if not response.text:
+                logger.warning("[FoodReview] Empty response from Gemini")
+                return None
+
+            # Robust JSON extraction (handle markdown code blocks)
+            text = response.text.strip()
+            parse_result = parse_ai_json(text, context="food_review")
+            if parse_result.success:
+                data = parse_result.data
+                return {
+                    "encouragements": data.get("encouragements", []),
+                    "warnings": data.get("warnings", []),
+                    "ai_suggestion": data.get("ai_suggestion", ""),
+                    "recommended_swap": data.get("recommended_swap", ""),
+                    "health_score": max(1, min(10, int(data.get("health_score", 5)))),
+                }
+
+            # Fallback: manual markdown strip
+            if text.startswith("```json"):
+                text = text[7:]
+            if text.startswith("```"):
+                text = text[3:]
+            if text.endswith("```"):
+                text = text[:-3]
+
+            data = json.loads(text.strip())
+            return {
+                "encouragements": data.get("encouragements", []),
+                "warnings": data.get("warnings", []),
+                "ai_suggestion": data.get("ai_suggestion", ""),
+                "recommended_swap": data.get("recommended_swap", ""),
+                "health_score": max(1, min(10, int(data.get("health_score", 5)))),
+            }
+
+        except asyncio.TimeoutError:
+            logger.error("[FoodReview] Gemini API timed out")
+            return None
+        except Exception as e:
+            logger.error(f"[FoodReview] Error generating food review: {e}")
+            return None
+
 
 # ============================================================================
 # HORMONAL HEALTH PROMPTS
@@ -8408,116 +8604,6 @@ Key coaching points for {level} level:
 {'- Combine with breath work and core exercises' if level == 'advanced' else ''}
 
 Be encouraging and normalize pelvic floor health as an important part of overall fitness."""
-
-    async def generate_food_review(
-        self,
-        food_name: str,
-        macros: dict,
-        user_goals: list,
-        nutrition_targets: dict,
-    ) -> dict:
-        """
-        Generate an AI-powered food review based on user goals and nutrition targets.
-
-        Args:
-            food_name: Name of the food item
-            macros: Dict with calories, protein_g, carbs_g, fat_g
-            user_goals: List of user fitness goals (e.g. ["build_muscle", "lose_fat"])
-            nutrition_targets: Dict with daily calorie/macro targets
-
-        Returns:
-            Dict with encouragements, warnings, ai_suggestion, recommended_swap, health_score
-        """
-        goals_str = ", ".join(user_goals) if user_goals else "general health"
-        targets_str = ", ".join(
-            f"{k}: {v}" for k, v in nutrition_targets.items() if v is not None
-        ) if nutrition_targets else "no specific targets"
-        macros_str = (
-            f"calories={macros.get('calories', 0)}, "
-            f"protein={macros.get('protein_g', 0)}g, "
-            f"carbs={macros.get('carbs_g', 0)}g, "
-            f"fat={macros.get('fat_g', 0)}g"
-        )
-
-        prompt = f'''Given user goals of [{goals_str}] and daily targets of [{targets_str}], review this food: "{food_name}" with macros: {macros_str}.
-
-IMPORTANT SEED OIL AWARENESS:
-- If this food is commonly fried, packaged, or fast food, check if it is likely cooked in or contains seed oils (canola oil, soybean oil, sunflower oil, corn oil, cottonseed oil, vegetable oil).
-- Seed oils are high in inflammatory omega-6 fatty acids and should be flagged as a warning.
-- If seed oils are likely present, suggest a healthier alternative cooked in olive oil, ghee, avocado oil, or coconut oil.
-- Common seed oil offenders: fried snacks, chips, crackers, packaged baked goods, fast food fries, restaurant fried items, margarine-based products.
-
-Return ONLY valid JSON (no markdown) with this exact structure:
-{{
-  "encouragements": ["list of positive aspects of this food for the user goals"],
-  "warnings": ["list of concerns including seed oil warnings if applicable"],
-  "ai_suggestion": "a brief actionable suggestion for how to include this food in the diet",
-  "recommended_swap": "a healthier alternative if applicable, or empty string if the food is already a great choice",
-  "health_score": 7
-}}
-
-Rules:
-- health_score is an integer from 1 to 10 (1=very unhealthy for goals, 10=perfect for goals)
-- encouragements and warnings should each have 1-3 items
-- Be specific to the user's goals
-- Keep each string concise (under 80 chars)
-'''
-
-        try:
-            response = await asyncio.wait_for(
-                client.aio.models.generate_content(
-                    model=self.model,
-                    contents=[types.Content(role="user", parts=[types.Part.from_text(text=prompt)])],
-                    config=types.GenerateContentConfig(
-                        system_instruction="You are a nutrition expert AI. Return only valid JSON.",
-                        max_output_tokens=200,
-                        temperature=0.1,
-                    ),
-                ),
-                timeout=15,
-            )
-
-            if not response.text:
-                logger.warning("[FoodReview] Empty response from Gemini")
-                return None
-
-            # Robust JSON extraction (handle markdown code blocks)
-            text = response.text.strip()
-            parse_result = parse_ai_json(text, context="food_review")
-            if parse_result.success:
-                data = parse_result.data
-                # Validate expected keys
-                return {
-                    "encouragements": data.get("encouragements", []),
-                    "warnings": data.get("warnings", []),
-                    "ai_suggestion": data.get("ai_suggestion", ""),
-                    "recommended_swap": data.get("recommended_swap", ""),
-                    "health_score": max(1, min(10, int(data.get("health_score", 5)))),
-                }
-
-            # Fallback: manual markdown strip
-            if text.startswith("```json"):
-                text = text[7:]
-            if text.startswith("```"):
-                text = text[3:]
-            if text.endswith("```"):
-                text = text[:-3]
-
-            data = json.loads(text.strip())
-            return {
-                "encouragements": data.get("encouragements", []),
-                "warnings": data.get("warnings", []),
-                "ai_suggestion": data.get("ai_suggestion", ""),
-                "recommended_swap": data.get("recommended_swap", ""),
-                "health_score": max(1, min(10, int(data.get("health_score", 5)))),
-            }
-
-        except asyncio.TimeoutError:
-            logger.error("[FoodReview] Gemini API timed out")
-            return None
-        except Exception as e:
-            logger.error(f"[FoodReview] Error generating food review: {e}")
-            return None
 
 
 # Backward compatibility alias

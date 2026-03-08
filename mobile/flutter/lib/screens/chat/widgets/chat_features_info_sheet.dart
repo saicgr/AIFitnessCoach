@@ -15,6 +15,9 @@ class ChatFeaturesInfoSheet extends StatelessWidget {
     'Nutrition': ['scan_food', 'analyze_menu', 'calorie_check'],
     'Workout': ['quick_workout', 'meal_prep'],
     'Recovery': ['recovery_tips', 'injury_help'],
+    'App Control': ['toggle_dark_mode', 'toggle_sounds', 'toggle_tts'],
+    'Navigation': ['go_to_stats', 'go_to_library', 'go_to_schedule'],
+    'Tracking': ['log_water', 'set_water_goal'],
   };
 
   @override
@@ -98,6 +101,33 @@ class ChatFeaturesInfoSheet extends StatelessWidget {
                     Expanded(
                       child: Text(
                         'Long-press action pills to customize your shortcuts',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: colors.textMuted,
+                          fontStyle: FontStyle.italic,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 8),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: isDark
+                      ? Colors.white.withOpacity(0.04)
+                      : Colors.black.withOpacity(0.03),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.auto_awesome, size: 16, color: colors.textMuted),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Try asking: "What can you do?" for a full list of capabilities',
                         style: TextStyle(
                           fontSize: 12,
                           color: colors.textMuted,

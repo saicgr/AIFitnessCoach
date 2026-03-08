@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/theme/accent_color_provider.dart';
 import '../../../core/providers/user_provider.dart';
+import '../../../core/providers/week_start_provider.dart';
 import '../../../data/repositories/workout_repository.dart';
 import '../../../data/services/haptic_service.dart';
 import 'hero_workout_carousel.dart';
@@ -42,8 +44,8 @@ class SectionedHeroArea extends ConsumerStatefulWidget {
 }
 
 class _SectionedHeroAreaState extends ConsumerState<SectionedHeroArea> {
-  // Fixed height: calendarStrip(61) + gap(8) + carousel(360) = 429
-  static const _kContentHeight = 429.0;
+  // Fixed height: utilityRow(18) + gap(4) + calendarStrip(61) + gap(8) + carousel(360) = 451
+  static const _kContentHeight = 451.0;
 
   @override
   Widget build(BuildContext context) {
@@ -74,6 +76,8 @@ class _SectionedHeroAreaState extends ConsumerState<SectionedHeroArea> {
           child: Column(
             children: [
               if (currentFocus == HomeFocus.workout) ...[
+                _buildWorkoutUtilityRow(isDark),
+                const SizedBox(height: 4),
                 _buildWeekCalendarStrip(isDark),
                 const SizedBox(height: 8),
               ],
@@ -120,6 +124,66 @@ class _SectionedHeroAreaState extends ConsumerState<SectionedHeroArea> {
     );
   }
 
+  Widget _buildWorkoutUtilityRow(bool isDark) {
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final startsSunday = ref.watch(weekStartsSundayProvider);
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      child: SizedBox(
+        height: 18,
+        child: Row(
+          children: [
+            GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: () {
+                HapticService.light();
+                context.push('/library?tab=1');
+              },
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    'Programs',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w500,
+                      color: textMuted,
+                    ),
+                  ),
+                  Icon(Icons.chevron_right, size: 13, color: textMuted),
+                ],
+              ),
+            ),
+            const Spacer(),
+            GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: () {
+                HapticService.selection();
+                ref.read(weekStartsSundayProvider.notifier).toggle();
+              },
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.swap_horiz, size: 13, color: textMuted),
+                  const SizedBox(width: 2),
+                  Text(
+                    startsSunday ? 'Sun' : 'Mon',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w500,
+                      color: textMuted,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildWeekCalendarStrip(bool isDark) {
     final userAsync = ref.watch(currentUserProvider);
     final workoutsAsync = ref.watch(workoutsProvider);
@@ -130,20 +194,22 @@ class _SectionedHeroAreaState extends ConsumerState<SectionedHeroArea> {
     final workoutDays = user.workoutDays;
     if (workoutDays.isEmpty) return const SizedBox.shrink();
 
+    final weekConfig = ref.watch(weekDisplayConfigProvider);
+
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
-    final todayIndex = today.weekday - 1;
-    final monday = today.subtract(Duration(days: todayIndex));
+    final weekStart = weekConfig.weekStart(today);
 
     final allWorkouts = workoutsAsync.valueOrNull ?? [];
     final Map<int, bool?> statusMap = {};
 
-    for (int i = 0; i < 7; i++) {
+    for (int displayIndex = 0; displayIndex < 7; displayIndex++) {
+      final i = weekConfig.displayOrder[displayIndex];
       if (!workoutDays.contains(i)) {
         statusMap[i] = null;
         continue;
       }
-      final dayDate = monday.add(Duration(days: i));
+      final dayDate = weekStart.add(Duration(days: displayIndex));
       final dateKey =
           '${dayDate.year}-${dayDate.month.toString().padLeft(2, '0')}-${dayDate.day.toString().padLeft(2, '0')}';
 

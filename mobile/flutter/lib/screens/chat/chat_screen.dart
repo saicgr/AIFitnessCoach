@@ -1,4 +1,6 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -26,12 +28,16 @@ import '../../data/repositories/nutrition_repository.dart';
 import 'widgets/food_analysis_result_card.dart';
 import 'widgets/form_check_result_card.dart';
 import 'widgets/form_comparison_result_card.dart';
+import 'widgets/fullscreen_image_viewer.dart';
+import 'widgets/chat_search_overlay.dart';
+import 'widgets/pinned_message_bar.dart';
 import 'widgets/media_picker_helper.dart';
 import 'widgets/media_preview_strip.dart';
 import 'widgets/report_message_sheet.dart';
 import 'widgets/chat_quick_pills.dart';
 import 'widgets/chat_features_info_sheet.dart';
 import 'widgets/enhanced_empty_state.dart';
+import 'widgets/voice_message_widget.dart';
 import '../../core/models/chat_quick_action.dart';
 import '../../core/providers/usage_tracking_provider.dart';
 import '../../widgets/upgrade_prompt_sheet.dart';
@@ -64,6 +70,8 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   final _focusNode = FocusNode();
   bool _isLoading = false;
   bool _initialMessageSent = false;
+  bool _showScrollFAB = false;
+  String? _highlightedMessageId;
 
   /// Callback for _InputBar to send single media message
   Future<void> _sendMessageWithMedia(PickedMedia media) async {
@@ -173,9 +181,35 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     }
   }
 
+  /// Callback for _InputBar to send a voice message
+  Future<void> _sendVoiceMessage(File audioFile, int durationMs) async {
+    setState(() => _isLoading = true);
+    try {
+      await ref.read(chatMessagesProvider.notifier).sendVoiceMessage(audioFile, durationMs);
+      _scrollToBottom();
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to send voice message: $e'), backgroundColor: AppColors.error),
+        );
+      }
+    } finally {
+      setState(() => _isLoading = false);
+    }
+  }
+
   @override
   void initState() {
     super.initState();
+    _scrollController.addListener(() {
+      final show = _scrollController.offset > 200;
+      if (show != _showScrollFAB) setState(() => _showScrollFAB = show);
+
+      // Load older messages when scrolling near the top (max extent in reversed list)
+      if (_scrollController.position.pixels >= _scrollController.position.maxScrollExtent - 200) {
+        ref.read(chatMessagesProvider.notifier).loadOlderMessages();
+      }
+    });
     // Load chat history on screen load
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(chatMessagesProvider.notifier).loadHistory();
@@ -290,6 +324,24 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
         );
       }
     });
+  }
+
+  void _scrollToMessage(String messageId) {
+    final messages = ref.read(chatMessagesProvider).valueOrNull ?? [];
+    final idx = messages.indexWhere((m) => m.id == messageId);
+    if (idx >= 0 && _scrollController.hasClients) {
+      final reversedIndex = messages.length - 1 - idx;
+      final estimatedOffset = reversedIndex * 80.0;
+      _scrollController.animateTo(
+        estimatedOffset.clamp(0, _scrollController.position.maxScrollExtent),
+        duration: const Duration(milliseconds: 400),
+        curve: Curves.easeOut,
+      );
+      setState(() => _highlightedMessageId = messageId);
+      Future.delayed(const Duration(seconds: 2), () {
+        if (mounted) setState(() => _highlightedMessageId = null);
+      });
+    }
   }
 
   Future<void> _sendMessage() async {
@@ -428,6 +480,27 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
           ],
         ),
         actions: [
+          // Search button
+          IconButton(
+            icon: const Icon(Icons.search, size: 20),
+            tooltip: 'Search',
+            visualDensity: VisualDensity.compact,
+            onPressed: () {
+              HapticService.light();
+              final messagesData = ref.read(chatMessagesProvider).valueOrNull ?? [];
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => ChatSearchOverlay(
+                    messages: messagesData,
+                    onScrollToMessage: (messageId) {
+                      Navigator.of(context).pop();
+                      _scrollToMessage(messageId);
+                    },
+                  ),
+                ),
+              );
+            },
+          ),
           // Help button - shows help options sheet
           IconButton(
             icon: const Icon(Icons.support_agent, size: 20),
@@ -467,9 +540,24 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
       ),
       body: Column(
         children: [
+          // Pinned message bar
+          if (messagesState.valueOrNull != null)
+            Builder(builder: (context) {
+              final pinnedMsg = messagesState.valueOrNull!
+                  .cast<ChatMessage?>()
+                  .firstWhere((m) => m!.isPinned, orElse: () => null);
+              if (pinnedMsg == null) return const SizedBox.shrink();
+              return PinnedMessageBar(
+                message: pinnedMsg,
+                onTap: () => _scrollToMessage(pinnedMsg.id ?? ''),
+                onUnpin: () => ref.read(chatMessagesProvider.notifier).togglePin(pinnedMsg.id!),
+              );
+            }),
           // Messages
           Expanded(
-            child: AnimatedSwitcher(
+            child: Stack(
+              children: [
+                AnimatedSwitcher(
               duration: const Duration(milliseconds: 200),
               transitionBuilder: (child, animation) => FadeTransition(
                 opacity: animation,
@@ -515,18 +603,33 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                     );
                   }
 
+                  final hasMore = ref.read(chatMessagesProvider.notifier).hasMoreMessages;
+                  final extraItems = (_isLoading ? 1 : 0) + (hasMore ? 1 : 0);
+
                   return ListView.builder(
                     key: const ValueKey('content'),
                     controller: _scrollController,
                     reverse: true,
                     padding: const EdgeInsets.all(16),
-                    itemCount: messages.length + (_isLoading ? 1 : 0),
+                    itemCount: messages.length + extraItems,
                     itemBuilder: (context, index) {
                       // With reverse: true, index 0 = bottom (newest).
                       // Typing indicator is the newest item (index 0).
                       if (index == 0 && _isLoading) {
                         return const _TypingIndicator();
                       }
+
+                      // Loading-more indicator at the END (visually at top in reversed list)
+                      final lastIndex = messages.length + extraItems - 1;
+                      if (hasMore && index == lastIndex) {
+                        return const Center(
+                          child: Padding(
+                            padding: EdgeInsets.all(16),
+                            child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2)),
+                          ),
+                        );
+                      }
+
                       // Offset by 1 if loading indicator is shown
                       final msgIndex = messages.length - 1 - (index - (_isLoading ? 1 : 0));
                       if (msgIndex < 0 || msgIndex >= messages.length) {
@@ -543,18 +646,75 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                           }
                         }
                       }
-                      return _MessageBubble(
+
+                      // Date separator: show when date differs from PREVIOUS message
+                      // (In reversed list, previous = msgIndex+1 = older message visually above)
+                      Widget? dateSeparator;
+                      final prevIndex = msgIndex + 1;
+                      if (prevIndex < messages.length) {
+                        final currentDate = message.timestamp ?? DateTime.now();
+                        final prevDate = messages[prevIndex].timestamp ?? DateTime.now();
+                        if (!_isSameDay(currentDate, prevDate)) {
+                          dateSeparator = _buildDateSeparator(currentDate);
+                        }
+                      } else {
+                        // Oldest message gets a date header
+                        dateSeparator = _buildDateSeparator(message.timestamp ?? DateTime.now());
+                      }
+
+                      final bubble = _MessageBubble(
                         key: ValueKey(message.id ?? 'msg_$msgIndex'),
                         message: message,
                         previousUserMessage: previousUserMessage,
                         coach: coach,
                         onLogAnalysisItems: _logAnalysisItems,
+                        onRetry: (message.role == 'error' || message.status == MessageStatus.error)
+                            ? () => _retryMessage(messages, msgIndex)
+                            : null,
+                        onRegenerate: message.role == 'assistant' ? () => _regenerateResponse(messages, msgIndex) : null,
                       ).animate().fadeIn(duration: 200.ms);
+
+                      // Highlight animation for scroll-to-message
+                      final isHighlighted = _highlightedMessageId != null && message.id == _highlightedMessageId;
+                      final wrappedBubble = isHighlighted
+                          ? Container(
+                              decoration: BoxDecoration(
+                                color: AppColors.cyan.withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: bubble,
+                            )
+                          : bubble;
+
+                      if (dateSeparator != null) {
+                        // In reversed list, dateSeparator goes AFTER bubble (visually above)
+                        return Column(
+                          children: [wrappedBubble, dateSeparator],
+                        );
+                      }
+                      return wrappedBubble;
                     },
                   );
                 },
               ),
             ),
+              // Scroll-to-bottom FAB
+              Positioned(
+                right: 16,
+                bottom: 16,
+                child: AnimatedScale(
+                  scale: _showScrollFAB ? 1.0 : 0.0,
+                  duration: const Duration(milliseconds: 200),
+                  child: FloatingActionButton.small(
+                    heroTag: 'scroll_to_bottom',
+                    backgroundColor: AppColors.elevated,
+                    onPressed: _scrollToBottom,
+                    child: const Icon(Icons.keyboard_arrow_down, color: AppColors.textPrimary),
+                  ),
+                ),
+              ),
+            ],
+          ),
           ),
 
           // Medical disclaimer
@@ -579,12 +739,102 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
             onSend: _sendMessage,
             onSendWithMedia: _sendMessageWithMedia,
             onSendWithMultiMedia: _sendMessageWithMultiMedia,
+            onSendVoiceMessage: _sendVoiceMessage,
             isOffline: offlineChatState.isAvailable,
             modelName: offlineChatState.modelName,
           ),
         ],
       ),
     );
+  }
+
+  bool _isSameDay(DateTime a, DateTime b) {
+    return a.year == b.year && a.month == b.month && a.day == b.day;
+  }
+
+  Widget _buildDateSeparator(DateTime date) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final messageDate = DateTime(date.year, date.month, date.day);
+
+    String label;
+    if (messageDate == today) {
+      label = 'Today';
+    } else if (messageDate == today.subtract(const Duration(days: 1))) {
+      label = 'Yesterday';
+    } else {
+      const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+      const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+      label = '${days[date.weekday - 1]} ${date.day} ${months[date.month - 1]}';
+    }
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 16),
+      child: Center(
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+          decoration: BoxDecoration(
+            color: AppColors.elevated.withOpacity(0.7),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Text(
+            label,
+            style: const TextStyle(
+              fontSize: 12,
+              color: AppColors.textMuted,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _retryMessage(List<ChatMessage> messages, int errorIndex) {
+    // Find the user message that preceded this error
+    String? userMessage;
+    for (int i = errorIndex - 1; i >= 0; i--) {
+      if (messages[i].role == 'user') {
+        userMessage = messages[i].content;
+        break;
+      }
+    }
+    if (userMessage != null && userMessage.isNotEmpty) {
+      // Remove the error message and resend
+      final errorMsg = messages[errorIndex];
+      if (errorMsg.id != null) {
+        ref.read(chatMessagesProvider.notifier).deleteMessage(errorMsg.id!);
+      }
+      _textController.text = userMessage;
+      _sendMessage();
+    }
+  }
+
+  /// Regenerate an AI response by removing it and resending the previous user message
+  Future<void> _regenerateResponse(List<ChatMessage> messages, int aiMsgIndex) async {
+    // Find the previous user message
+    String? userMessage;
+    for (int i = aiMsgIndex - 1; i >= 0; i--) {
+      if (messages[i].role == 'user') {
+        userMessage = messages[i].content;
+        break;
+      }
+    }
+    if (userMessage == null || userMessage.isEmpty) return;
+
+    // Remove the AI response and await completion before resending
+    final aiMsg = messages[aiMsgIndex];
+    if (aiMsg.id != null) {
+      await ref.read(chatMessagesProvider.notifier).deleteMessage(aiMsg.id!);
+    } else {
+      final current = ref.read(chatMessagesProvider).valueOrNull ?? [];
+      final updated = current.where((m) => m != aiMsg).toList();
+      ref.read(chatMessagesProvider.notifier).state = AsyncValue.data(updated);
+    }
+
+    // Resend the user message
+    _textController.text = userMessage;
+    _sendMessage();
   }
 
   void _showFeaturesInfoSheet() {
@@ -1005,11 +1255,13 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
 // Message Bubble
 // ─────────────────────────────────────────────────────────────────
 
-class _MessageBubble extends StatelessWidget {
+class _MessageBubble extends ConsumerWidget {
   final ChatMessage message;
   final String? previousUserMessage;
   final CoachPersona coach;
   final void Function(List<Map<String, dynamic>>)? onLogAnalysisItems;
+  final VoidCallback? onRetry;
+  final VoidCallback? onRegenerate;
 
   const _MessageBubble({
     super.key,
@@ -1017,10 +1269,12 @@ class _MessageBubble extends StatelessWidget {
     required this.coach,
     this.previousUserMessage,
     this.onLogAnalysisItems,
+    this.onRetry,
+    this.onRegenerate,
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final isUser = message.role == 'user';
     final isSystem = message.role == 'system';
     final isError = message.role == 'error';
@@ -1082,81 +1336,152 @@ class _MessageBubble extends StatelessWidget {
           if (isUser && message.hasMedia)
             Padding(
               padding: const EdgeInsets.only(bottom: 8),
+              child: GestureDetector(
+                onTap: message.mediaType != 'video'
+                    ? () => Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => FullscreenImageViewer(
+                              imageUrl: message.mediaUrl,
+                              localFilePath: message.localFilePath,
+                              heroTag: 'chat_media_${message.id}',
+                            ),
+                          ),
+                        )
+                    : null,
+                child: Hero(
+                  tag: 'chat_media_${message.id}',
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(10),
+                    child: SizedBox(
+                      height: 150,
+                      child: Stack(
+                        children: [
+                          if (message.localFilePath != null)
+                            Image.file(
+                              File(message.localFilePath!),
+                              fit: BoxFit.cover,
+                              width: double.infinity,
+                              height: 150,
+                              errorBuilder: (_, __, ___) => Container(
+                                color: Colors.black12,
+                                child: Center(
+                                  child: Icon(
+                                    message.mediaType == 'video' ? Icons.videocam : Icons.image,
+                                    size: 32,
+                                    color: Colors.white54,
+                                  ),
+                                ),
+                              ),
+                            )
+                          else if (message.mediaUrl != null)
+                            CachedNetworkImage(
+                              imageUrl: message.mediaUrl!,
+                              fit: BoxFit.cover,
+                              width: double.infinity,
+                              height: 150,
+                              placeholder: (_, __) => Container(
+                                color: Colors.black12,
+                                child: const Center(
+                                  child: SizedBox(
+                                    width: 20,
+                                    height: 20,
+                                    child: CircularProgressIndicator(strokeWidth: 2),
+                                  ),
+                                ),
+                              ),
+                              errorWidget: (_, __, ___) => Container(
+                                color: Colors.black12,
+                                child: Center(
+                                  child: Icon(
+                                    message.mediaType == 'video' ? Icons.videocam : Icons.image,
+                                    size: 32,
+                                    color: Colors.white54,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          if (message.mediaType == 'video')
+                            const Positioned.fill(
+                              child: Center(
+                                child: Icon(Icons.play_circle_outline, color: Colors.white70, size: 40),
+                              ),
+                            ),
+                          if (isUser && message.mediaRefs != null && message.mediaRefs!.length > 1)
+                            Positioned(
+                              bottom: 4,
+                              right: 4,
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: Colors.black54,
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Text(
+                                  '+${message.mediaRefs!.length - 1}',
+                                  style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w600),
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          // Show upload progress indicator for user messages without URL (uploading)
+          if (isUser && !message.hasMedia && message.mediaType != null)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 8),
               child: ClipRRect(
-                borderRadius: BorderRadius.circular(10),
-                child: SizedBox(
-                  height: 150,
-                  child: Stack(
+                borderRadius: BorderRadius.circular(8),
+                child: Container(
+                  height: 48,
+                  width: 140,
+                  decoration: BoxDecoration(
+                    color: AppColors.pureBlack.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      CachedNetworkImage(
-                        imageUrl: message.mediaUrl!,
-                        fit: BoxFit.cover,
-                        width: double.infinity,
-                        height: 150,
-                        placeholder: (_, __) => Container(
-                          color: Colors.black12,
-                          child: const Center(
-                            child: SizedBox(
-                              width: 20,
-                              height: 20,
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            ),
-                          ),
-                        ),
-                        errorWidget: (_, __, ___) => Container(
-                          color: Colors.black12,
-                          child: Center(
-                            child: Icon(
-                              message.mediaType == 'video' ? Icons.videocam : Icons.image,
-                              size: 32,
-                              color: Colors.white54,
-                            ),
-                          ),
+                      SizedBox(
+                        width: 14,
+                        height: 14,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: AppColors.pureBlack.withOpacity(0.5),
                         ),
                       ),
-                      if (message.mediaType == 'video')
-                        const Positioned.fill(
-                          child: Center(
-                            child: Icon(Icons.play_circle_outline, color: Colors.white70, size: 40),
-                          ),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Uploading...',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                          color: AppColors.pureBlack.withOpacity(0.6),
                         ),
+                      ),
                     ],
                   ),
                 ),
               ),
             ),
-          // Show media indicator for user messages without URL (uploading)
-          if (isUser && !message.hasMedia && message.mediaType != null)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 8),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    message.mediaType == 'video' ? Icons.videocam : Icons.image,
-                    size: 14,
-                    color: AppColors.pureBlack.withOpacity(0.6),
-                  ),
-                  const SizedBox(width: 4),
-                  Text(
-                    message.mediaType == 'video' ? 'Video attached' : 'Image attached',
-                    style: TextStyle(
-                      fontSize: 11,
-                      fontStyle: FontStyle.italic,
-                      color: AppColors.pureBlack.withOpacity(0.6),
-                    ),
-                  ),
-                ],
+          if (message.isVoiceMessage)
+            VoiceMessageBubble(
+              audioUrl: message.audioUrl!,
+              durationMs: message.audioDurationMs ?? 0,
+            )
+          else
+            Text(
+              message.content,
+              style: TextStyle(
+                color: isUser ? AppColors.pureBlack : AppColors.textPrimary,
+                fontSize: 15,
+                height: 1.4,
               ),
             ),
-          Text(
-            message.content,
-            style: TextStyle(
-              color: isUser ? AppColors.pureBlack : AppColors.textPrimary,
-              fontSize: 15,
-              height: 1.4,
-            ),
-          ),
           // Show form check result card for assistant messages
           if (!isUser && message.hasFormCheckResult)
             FormCheckResultCard(result: message.formCheckResult!),
@@ -1179,17 +1504,26 @@ class _MessageBubble extends StatelessWidget {
                 workoutName: message.workoutName,
               ),
             ),
-          // Always show timestamp - use "now" if not available
+          // Always show timestamp + delivery status
           Padding(
             padding: const EdgeInsets.only(top: 6),
-            child: Text(
-              _formatTime(message.timestamp ?? DateTime.now()),
-              style: TextStyle(
-                fontSize: 10,
-                color: isUser
-                    ? AppColors.pureBlack.withOpacity(0.6)
-                    : AppColors.textMuted,
-              ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  _formatTime(message.timestamp ?? DateTime.now()),
+                  style: TextStyle(
+                    fontSize: 10,
+                    color: isUser
+                        ? AppColors.pureBlack.withOpacity(0.6)
+                        : AppColors.textMuted,
+                  ),
+                ),
+                if (isUser) ...[
+                  const SizedBox(width: 4),
+                  _buildStatusIcon(message.status),
+                ],
+              ],
             ),
           ),
           // Show offline model badge if message was generated offline
@@ -1211,25 +1545,146 @@ class _MessageBubble extends StatelessWidget {
       ),
     );
 
-    // For AI messages, wrap with GestureDetector for long-press to report
-    if (!isUser) {
-      bubbleContent = GestureDetector(
-        onLongPress: () {
-          HapticService.medium();
-          showReportMessageSheet(
-            context,
-            messageId: message.id,
-            originalUserMessage: previousUserMessage ?? '',
-            aiResponse: message.content,
-          );
-        },
-        child: bubbleContent,
-      );
-    }
+    // Long-press context menu for all messages
+    bubbleContent = GestureDetector(
+      onLongPress: () {
+        HapticService.medium();
+        _showMessageContextMenu(context, ref, isUser);
+      },
+      child: bubbleContent,
+    );
 
     return Align(
       alignment: isUser ? Alignment.centerRight : Alignment.centerLeft,
       child: bubbleContent,
+    );
+  }
+
+  Widget _buildStatusIcon(MessageStatus status) {
+    final statusColor = AppColors.pureBlack.withOpacity(0.5);
+    switch (status) {
+      case MessageStatus.pending:
+        return Icon(Icons.access_time, size: 10, color: statusColor);
+      case MessageStatus.sent:
+        return Icon(Icons.check, size: 10, color: statusColor);
+      case MessageStatus.delivered:
+        return const Icon(Icons.done_all, size: 10, color: AppColors.cyan);
+      case MessageStatus.error:
+        return const Icon(Icons.close, size: 10, color: AppColors.error);
+    }
+  }
+
+  void _showMessageContextMenu(BuildContext context, WidgetRef ref, bool isUser) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) {
+        final isDark = Theme.of(ctx).brightness == Brightness.dark;
+        return Container(
+          decoration: BoxDecoration(
+            color: isDark ? AppColors.elevated : Colors.white,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+          ),
+          padding: const EdgeInsets.fromLTRB(0, 8, 0, 0),
+          child: SafeArea(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Copy
+                ListTile(
+                  leading: const Icon(Icons.copy, size: 20),
+                  title: const Text('Copy'),
+                  onTap: () {
+                    Navigator.pop(ctx);
+                    Clipboard.setData(ClipboardData(text: message.content));
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Copied'),
+                        duration: Duration(seconds: 1),
+                        behavior: SnackBarBehavior.floating,
+                      ),
+                    );
+                  },
+                ),
+                // Regenerate (AI messages only)
+                if (!isUser && onRegenerate != null)
+                  ListTile(
+                    leading: const Icon(Icons.refresh, size: 20),
+                    title: const Text('Regenerate'),
+                    onTap: () {
+                      Navigator.pop(ctx);
+                      onRegenerate!();
+                    },
+                  ),
+                // Pin / Unpin
+                if (message.id != null)
+                  ListTile(
+                    leading: Icon(
+                      message.isPinned ? Icons.push_pin : Icons.push_pin_outlined,
+                      size: 20,
+                    ),
+                    title: Text(message.isPinned ? 'Unpin' : 'Pin'),
+                    onTap: () {
+                      Navigator.pop(ctx);
+                      ref.read(chatMessagesProvider.notifier).togglePin(message.id!);
+                    },
+                  ),
+                // Delete (user messages only)
+                if (isUser)
+                  ListTile(
+                    leading: const Icon(Icons.delete_outline, size: 20, color: AppColors.error),
+                    title: const Text('Delete', style: TextStyle(color: AppColors.error)),
+                    onTap: () {
+                      Navigator.pop(ctx);
+                      showDialog(
+                        context: context,
+                        builder: (dlgCtx) => AlertDialog(
+                          title: const Text('Delete this message?'),
+                          content: const Text('This action cannot be undone.'),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.pop(dlgCtx),
+                              child: const Text('Cancel'),
+                            ),
+                            TextButton(
+                              onPressed: () {
+                                Navigator.pop(dlgCtx);
+                                if (message.id != null) {
+                                  ref.read(chatMessagesProvider.notifier).deleteMessage(message.id!);
+                                } else {
+                                  final current = ref.read(chatMessagesProvider).valueOrNull ?? [];
+                                  final updated = current.where((m) => m != message).toList();
+                                  ref.read(chatMessagesProvider.notifier).state = AsyncValue.data(updated);
+                                }
+                              },
+                              child: const Text('Delete', style: TextStyle(color: AppColors.error)),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
+                // Report (AI messages only)
+                if (!isUser)
+                  ListTile(
+                    leading: const Icon(Icons.flag_outlined, size: 20, color: AppColors.orange),
+                    title: const Text('Report'),
+                    onTap: () {
+                      Navigator.pop(ctx);
+                      showReportMessageSheet(
+                        context,
+                        messageId: message.id,
+                        originalUserMessage: previousUserMessage ?? '',
+                        aiResponse: message.content,
+                      );
+                    },
+                  ),
+                const SizedBox(height: 8),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 
@@ -1250,24 +1705,49 @@ class _MessageBubble extends StatelessWidget {
             color: Colors.red.withOpacity(0.3),
           ),
         ),
-        child: Row(
+        child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
-              Icons.warning_amber_rounded,
-              size: 18,
-              color: isDark ? Colors.red[300] : Colors.red[600],
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Icons.warning_amber_rounded,
+                  size: 18,
+                  color: isDark ? Colors.red[300] : Colors.red[600],
+                ),
+                const SizedBox(width: 8),
+                Flexible(
+                  child: Text(
+                    message.content,
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: isDark ? Colors.red[300] : Colors.red[700],
+                    ),
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(width: 8),
-            Flexible(
-              child: Text(
-                message.content,
-                style: TextStyle(
-                  fontSize: 13,
-                  color: isDark ? Colors.red[300] : Colors.red[700],
+            if (onRetry != null)
+              Padding(
+                padding: const EdgeInsets.only(top: 8),
+                child: TextButton.icon(
+                  onPressed: onRetry,
+                  icon: Icon(Icons.refresh, size: 14, color: isDark ? Colors.red[300] : Colors.red[600]),
+                  label: Text(
+                    'Retry',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: isDark ? Colors.red[300] : Colors.red[600],
+                    ),
+                  ),
+                  style: TextButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                    minimumSize: Size.zero,
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  ),
                 ),
               ),
-            ),
           ],
         ),
       ),
@@ -1381,6 +1861,7 @@ class _InputBar extends StatefulWidget {
   final VoidCallback onSend;
   final Future<void> Function(PickedMedia media) onSendWithMedia;
   final Future<void> Function(List<PickedMedia> mediaList) onSendWithMultiMedia;
+  final Future<void> Function(File, int) onSendVoiceMessage;
   final bool isOffline;
   final String? modelName;
 
@@ -1391,6 +1872,7 @@ class _InputBar extends StatefulWidget {
     required this.onSend,
     required this.onSendWithMedia,
     required this.onSendWithMultiMedia,
+    required this.onSendVoiceMessage,
     this.isOffline = false,
     this.modelName,
   });
@@ -1401,6 +1883,26 @@ class _InputBar extends StatefulWidget {
 
 class _InputBarState extends State<_InputBar> {
   List<PickedMedia> _selectedMedia = [];
+  bool _hasText = false;
+
+  @override
+  void initState() {
+    super.initState();
+    widget.controller.addListener(_onTextChanged);
+  }
+
+  @override
+  void dispose() {
+    widget.controller.removeListener(_onTextChanged);
+    super.dispose();
+  }
+
+  void _onTextChanged() {
+    final hasText = widget.controller.text.trim().isNotEmpty;
+    if (hasText != _hasText) {
+      setState(() => _hasText = hasText);
+    }
+  }
 
   void _pickMedia() async {
     try {
@@ -1543,6 +2045,8 @@ class _InputBarState extends State<_InputBar> {
     } else {
       widget.onSend();
     }
+    // Dismiss keyboard after send
+    FocusManager.instance.primaryFocus?.unfocus();
   }
 
   @override
@@ -1571,6 +2075,7 @@ class _InputBarState extends State<_InputBar> {
             MediaPreviewStrip(
               mediaList: _selectedMedia,
               onRemoveAt: (index) => setState(() => _selectedMedia.removeAt(index)),
+              onInsertAt: (index, media) => setState(() => _selectedMedia.insert(index, media)),
               onAddMore: _pickMedia,
             ),
 
@@ -1671,7 +2176,7 @@ class _InputBarState extends State<_InputBar> {
                         focusNode: widget.focusNode,
                         enabled: true,
                         textCapitalization: TextCapitalization.sentences,
-                        maxLines: 1,
+                        maxLines: 4,
                         minLines: 1,
                         decoration: InputDecoration(
                           hintText: _selectedMedia.isNotEmpty
@@ -1693,33 +2198,40 @@ class _InputBarState extends State<_InputBar> {
                     ),
                     const SizedBox(width: 8),
 
-                    // Send button
-                    Container(
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: widget.isLoading
-                              ? [colors.textMuted, colors.textMuted]
-                              : [AppColors.cyan, AppColors.purple],
+                    // Send or Voice button
+                    if (_hasText || _selectedMedia.isNotEmpty || widget.isLoading)
+                      Container(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: widget.isLoading
+                                ? [colors.textMuted, colors.textMuted]
+                                : [AppColors.cyan, AppColors.purple],
+                          ),
+                          shape: BoxShape.circle,
                         ),
-                        shape: BoxShape.circle,
-                      ),
-                      child: IconButton(
-                        onPressed: widget.isLoading ? null : _handleSend,
-                        icon: widget.isLoading
-                            ? const SizedBox(
-                                width: 20,
-                                height: 20,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
+                        child: IconButton(
+                          onPressed: widget.isLoading ? null : _handleSend,
+                          icon: widget.isLoading
+                              ? const SizedBox(
+                                  width: 20,
+                                  height: 20,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: Colors.white,
+                                  ),
+                                )
+                              : const Icon(
+                                  Icons.send_rounded,
                                   color: Colors.white,
                                 ),
-                              )
-                            : const Icon(
-                                Icons.send_rounded,
-                                color: Colors.white,
-                              ),
+                        ),
+                      )
+                    else
+                      VoiceRecorderButton(
+                        onRecordingComplete: (audioFile, durationMs) {
+                          widget.onSendVoiceMessage(audioFile, durationMs);
+                        },
                       ),
-                    ),
                   ],
                 ),
               ],

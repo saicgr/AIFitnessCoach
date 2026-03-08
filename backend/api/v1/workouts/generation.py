@@ -13,6 +13,7 @@ This module handles AI-powered workout generation:
 import hashlib
 import json
 import asyncio
+import re
 import threading
 import uuid
 from datetime import datetime, timedelta
@@ -168,7 +169,7 @@ async def generate_next_day_background(user_id: str, target_date: str):
                     "user_id", user_id
                 ).eq(
                     "is_active", True
-                ).single().execute()
+                ).maybe_single().execute()
                 if active_result.data:
                     gym_profile_id = active_result.data.get("id")
             except Exception as e:
@@ -357,7 +358,7 @@ async def generate_workout(request: GenerateWorkoutRequest, background_tasks: Ba
             try:
                 active_result = db.client.table("gym_profiles").select("id").eq(
                     "user_id", request.user_id
-                ).eq("is_active", True).single().execute()
+                ).eq("is_active", True).maybe_single().execute()
                 if active_result.data:
                     dedup_gym_profile_id = active_result.data.get("id")
             except Exception as e:
@@ -401,6 +402,7 @@ async def generate_workout(request: GenerateWorkoutRequest, background_tasks: Ba
                     "status": "generating",
                     "name": "Generating...",
                     "type": request.workout_type or "strength",
+                    "difficulty": "medium",
                     "exercises_json": [],
                 }
                 if dedup_gym_profile_id:
@@ -901,7 +903,8 @@ async def generate_workout(request: GenerateWorkoutRequest, background_tasks: Ba
 
             # Filter similar exercises to ensure movement pattern diversity
             # This prevents workouts like "6 push-up variations" by limiting MAX 2 per pattern
-            from services.exercise_rag.filters import is_similar_exercise, get_movement_pattern
+            from services.exercise_rag.filters import is_similar_exercise, get_movement_pattern, filter_by_equipment
+            from services.exercise_rag.utils import infer_equipment_from_name
 
             # Phase 2: Deduplicate by movement pattern - MAX 2 exercises per pattern
             MAX_PER_PATTERN = 2
@@ -944,10 +947,35 @@ async def generate_workout(request: GenerateWorkoutRequest, background_tasks: Ba
                 logger.info(f"📊 [Patterns] Final pattern distribution: {pattern_counts}")
                 exercises = deduplicated_exercises
 
+            # Phase 3.5: Hard equipment filter - reject exercises requiring unavailable equipment
+            if equipment and exercises:
+                equipment_compatible = []
+                for ex in exercises:
+                    ex_equip = (ex.get("equipment") or "").strip()
+                    ex_name = ex.get("name", "") or ex.get("exercise_name", "")
+                    if not ex_equip or ex_equip.lower() in ("bodyweight", "body weight", "none", ""):
+                        ex_equip = infer_equipment_from_name(ex_name)
+                    if filter_by_equipment(ex_equip, equipment, ex_name):
+                        equipment_compatible.append(ex)
+                    else:
+                        filtered_exercises.append(ex)
+                        logger.warning(
+                            f"[Equipment Filter] Removed '{ex_name}' - "
+                            f"requires '{ex_equip}', user has: {equipment}"
+                        )
+                if len(equipment_compatible) < len(exercises):
+                    removed_count = len(exercises) - len(equipment_compatible)
+                    logger.info(
+                        f"[Equipment Filter] Removed {removed_count} exercises "
+                        f"with incompatible equipment"
+                    )
+                    exercises = equipment_compatible
+
             # Phase 3: Validate equipment utilization - warn if workouts don't match user's equipment
             # This helps identify when Gemini is generating suboptimal equipment choices
             equipment_lower = [eq.lower() for eq in equipment] if equipment else []
-            has_gym_equipment = any(eq in equipment_lower for eq in ["full_gym", "dumbbells", "barbell", "cable_machine", "machines"])
+            _bw_aliases = {"bodyweight", "none", "no_equipment", ""}
+            has_gym_equipment = any(eq not in _bw_aliases for eq in equipment_lower)
 
             if has_gym_equipment and exercises:
                 bw_keywords = {"bodyweight", "body weight", ""}
@@ -977,15 +1005,23 @@ async def generate_workout(request: GenerateWorkoutRequest, background_tasks: Ba
                     if unused_equipment:
                         logger.info(f"📋 [Equipment] Unused equipment: {unused_equipment}")
 
-                # Check kettlebell usage specifically
-                if "kettlebell" in equipment_lower or "kettlebells" in equipment_lower:
-                    kb_count = sum(
-                        1 for ex in exercises
-                        if "kettlebell" in (ex.get("equipment", "") or "").lower()
-                        or "kb" in (ex.get("name", "") or "").lower()
-                    )
-                    if kb_count == 0:
-                        logger.warning(f"⚠️ [Equipment] Kettlebell available but NOT used in any exercise!")
+                # Check each non-bodyweight equipment type is used
+                _equip_name_hints = {
+                    "kettlebell": ["kettlebell", "kb "],
+                    "kettlebells": ["kettlebell", "kb "],
+                    "resistance_bands": ["band", "resistance"],
+                    "pull_up_bar": ["pull-up", "pull up", "chin-up", "chin up", "hanging"],
+                    "trx": ["trx", "suspension"],
+                    "medicine_ball": ["medicine ball", "med ball"],
+                }
+                for eq_key, hints in _equip_name_hints.items():
+                    if eq_key in equipment_lower:
+                        used = sum(
+                            1 for ex in exercises
+                            if any(h in (ex.get("equipment", "") or "").lower() or h in (ex.get("name", "") or "").lower() for h in hints)
+                        )
+                        if used == 0:
+                            logger.warning(f"⚠️ [Equipment] {eq_key} available but NOT used in any exercise!")
 
             # Auto-substitute filtered exercises with safe alternatives
             if filtered_exercises and exercises:
@@ -1275,7 +1311,7 @@ async def generate_workout_streaming(request: Request, body: GenerateWorkoutRequ
         try:
             active_result = db.client.table("gym_profiles").select("id").eq(
                 "user_id", body.user_id
-            ).eq("is_active", True).single().execute()
+            ).eq("is_active", True).maybe_single().execute()
             if active_result.data:
                 stream_gym_profile_id = active_result.data.get("id")
         except Exception as e:
@@ -3247,12 +3283,17 @@ async def add_exercise_to_workout(request: AddExerciseRequest, background_tasks:
             else:
                 exercises = exercises_json
 
+            # Parse reps: handle "8-12" string format by taking the first number
+            reps_str = str(request.reps) if request.reps else "10"
+            reps_match = re.search(r'\d+', reps_str)
+            reps_int = int(reps_match.group()) if reps_match else 10
+
             if exercise_data:
                 new_ex = exercise_data[0]
                 new_exercise = {
                     "name": new_ex.get("name", request.exercise_name),
                     "sets": request.sets,
-                    "reps": request.reps,
+                    "reps": reps_int,
                     "rest_seconds": request.rest_seconds,
                     "muscle_group": new_ex.get("target_muscle") or new_ex.get("body_part"),
                     "equipment": new_ex.get("equipment"),
@@ -3265,7 +3306,7 @@ async def add_exercise_to_workout(request: AddExerciseRequest, background_tasks:
                 new_exercise = {
                     "name": request.exercise_name,
                     "sets": request.sets,
-                    "reps": request.reps,
+                    "reps": reps_int,
                     "rest_seconds": request.rest_seconds,
                 }
 

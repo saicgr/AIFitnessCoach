@@ -267,7 +267,7 @@ class _FitWizAppState extends ConsumerState<FitWizApp> {
           router.push('/nutrition');
           break;
         case 'hydration_reminder':
-          router.push('/hydration');
+          router.go('/nutrition?tab=2');
           break;
         case 'streak_alert':
           router.push('/achievements');

@@ -22,8 +22,7 @@ class GlassBackButton extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     const size = 40.0;
 
-    return Center(
-      child: GestureDetector(
+    return GestureDetector(
         onTap: onTap ?? () {
           if (context.canPop()) {
             context.pop();
@@ -56,7 +55,6 @@ class GlassBackButton extends StatelessWidget {
             ),
           ),
         ),
-      ),
     );
   }
 }

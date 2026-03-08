@@ -289,13 +289,39 @@ class TemplateWorkoutGenerator {
         exercises.add(_createExercise('Chin-ups', 3, 8, 60));
       }
     }
-    // For endurance - Circuit training
+    // For endurance - Circuit training (use equipment when available)
     else if (primaryGoal == 'endurance') {
-      exercises.add(_createExercise('Jumping Jacks', 3, 20, 30));
-      exercises.add(_createExercise('Bodyweight Squats', 3, 15, 30));
-      exercises.add(_createExercise('Push-ups', 3, 12, 30));
-      exercises.add(_createExercise('Mountain Climbers', 3, 20, 30));
-      exercises.add(_createExercise('Plank', 3, 30, 30)); // 30 seconds
+      // Explosive movement
+      if (hasKettlebells) {
+        exercises.add(_createExercise('Kettlebell Swings', 3, 15, 30));
+      } else {
+        exercises.add(_createExercise('Jumping Jacks', 3, 20, 30));
+      }
+      // Lower body
+      if (hasDumbbells || hasKettlebells) {
+        exercises.add(_createExercise(hasKettlebells ? 'Goblet Squat' : 'Dumbbell Squats', 3, 15, 30));
+      } else if (hasResistanceBands) {
+        exercises.add(_createExercise('Banded Squats', 3, 15, 30));
+      } else {
+        exercises.add(_createExercise('Bodyweight Squats', 3, 15, 30));
+      }
+      // Upper push
+      if (hasDumbbells) {
+        exercises.add(_createExercise('Dumbbell Thrusters', 3, 12, 30));
+      } else if (hasKettlebells) {
+        exercises.add(_createExercise('Kettlebell Clean & Press', 3, 10, 30));
+      } else if (hasResistanceBands) {
+        exercises.add(_createExercise('Banded Push-ups', 3, 12, 30));
+      } else {
+        exercises.add(_createExercise('Push-ups', 3, 12, 30));
+      }
+      // Cardio / full body
+      if (hasKettlebells) {
+        exercises.add(_createExercise('Kettlebell Snatches', 3, 10, 30));
+      } else {
+        exercises.add(_createExercise('Mountain Climbers', 3, 20, 30));
+      }
+      exercises.add(_createExercise('Plank', 3, 30, 30));
       exercises.add(_createExercise('Burpees', 3, 10, 30));
     }
 

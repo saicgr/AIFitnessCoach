@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/providers/week_start_provider.dart';
 import '../../../../core/theme/theme_colors.dart';
 
 /// A card showing weekly workout progress with a progress bar and day indicators
@@ -24,8 +25,8 @@ class WeeklyProgressCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final progress = total > 0 ? completed / total : 0.0;
-    final days = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
-    final today = DateTime.now().weekday - 1; // 0-indexed
+    final weekConfig = ref.watch(weekDisplayConfigProvider);
+    final todayDataIndex = DateTime.now().weekday - 1; // 0=Mon (data model)
     final elevatedColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
     final glassSurface =
         isDark ? AppColors.glassSurface : AppColorsLight.glassSurface;
@@ -97,9 +98,10 @@ class WeeklyProgressCard extends ConsumerWidget {
           const SizedBox(height: 16),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: List.generate(7, (index) {
-              final isToday = index == today;
-              final isPast = index < today;
+            children: List.generate(7, (displayIndex) {
+              final dataIndex = weekConfig.displayOrder[displayIndex];
+              final isToday = dataIndex == todayDataIndex;
+              final isPast = dataIndex < todayDataIndex;
               final dayProgress = isPast ? 1.0 : (isToday && completed > 0 ? 0.5 : 0.0);
 
               return Column(
@@ -120,7 +122,7 @@ class WeeklyProgressCard extends ConsumerWidget {
                         // Progress ring
                         TweenAnimationBuilder<double>(
                           tween: Tween(begin: 0, end: dayProgress),
-                          duration: Duration(milliseconds: 600 + (index * 100)),
+                          duration: Duration(milliseconds: 600 + (displayIndex * 100)),
                           curve: Curves.easeOutCubic,
                           builder: (context, value, _) => CircularProgressIndicator(
                             value: value,
@@ -154,7 +156,7 @@ class WeeklyProgressCard extends ConsumerWidget {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    days[index],
+                    weekConfig.dayLabels[displayIndex],
                     style: TextStyle(
                       fontSize: 10,
                       fontWeight: isToday ? FontWeight.bold : FontWeight.w500,

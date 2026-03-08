@@ -32,6 +32,7 @@ import 'widgets/quiz_personalization_gate.dart';
 import 'widgets/quiz_training_style.dart';
 import 'widgets/quiz_progression_constraints.dart';
 import 'widgets/quiz_nutrition_gate.dart';
+import 'widgets/did_you_know_chip.dart';
 import 'widgets/foldable_quiz_scaffold.dart';
 import '../../core/providers/window_mode_provider.dart';
 import 'plan_preview_screen.dart';
@@ -899,8 +900,16 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
         (equipment.contains('barbell') && equipment.contains('cable_machine'))) {
       return 'commercial_gym';
     }
-    if (equipment.contains('barbell') || equipment.contains('cable_machine')) {
+    if (equipment.contains('barbell') || equipment.contains('cable_machine') ||
+        equipment.contains('smith_machine') || equipment.contains('leg_press') ||
+        equipment.contains('lat_pulldown') || equipment.contains('squat_rack')) {
       return 'home_gym';
+    }
+    // Any non-bodyweight equipment beyond just bands/mat = home with equipment
+    const bodyweightOnly = {'bodyweight', 'yoga_mat', 'jump_rope'};
+    final hasRealEquipment = equipment.any((e) => !bodyweightOnly.contains(e));
+    if (hasRealEquipment) {
+      return 'home';
     }
     return 'home';
   }
@@ -2607,18 +2616,21 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
       debugPrint('   Duration: ${templateWorkout.estimatedDurationMinutes} min');
 
       // Show plan preview immediately with template workout
-      await Navigator.of(context).push(
+      final navigator = Navigator.of(context);
+      await navigator.push(
         MaterialPageRoute(
-          builder: (context) => PlanPreviewScreen(
+          builder: (_) => PlanPreviewScreen(
             quizData: quizData,
             generatedWorkout: templateWorkout,
             onContinue: () {
-              Navigator.of(context).pop();
+              navigator.pop();
+              if (!mounted) return;
               setState(() => _currentQuestion = 7); // Go to personalization gate
               _questionController.forward(from: 0);
             },
             onStartNow: () {
-              Navigator.of(context).pop();
+              navigator.pop();
+              if (!mounted) return;
               setState(() {
                 _skipPersonalization = true;
                 _currentQuestion = 11; // Skip to nutrition gate
@@ -2999,6 +3011,28 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
     }
   }
 
+  /// Contextual "Did you know?" hints shown below quiz content on select steps.
+  String? _getDidYouKnowHint(int step) {
+    switch (step) {
+      case 0:
+        return 'FitWiz tracks 52 skill progressions — from wall pushups to one-arm pushups.';
+      case 2:
+        return 'Missed a day? AI auto-adjusts your week — no guilt, no wasted workouts.';
+      case 4:
+        return 'FitWiz supports 23+ equipment types and adapts every exercise to your setup.';
+      case 5:
+        return 'AI automatically avoids 200+ exercises that could stress your injured areas.';
+      case 6:
+        return 'Your plan updates every month with progressive overload built in.';
+      case 9:
+        return 'Chat with your AI coach anytime to swap exercises or change your split.';
+      case 12:
+        return 'Snap a photo of your meal — AI estimates calories and macros instantly.';
+      default:
+        return null;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -3036,24 +3070,35 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
                 context.go('/stats-welcome');
               },
             ),
-            content: AnimatedSwitcher(
-              duration: const Duration(milliseconds: 300),
-              transitionBuilder: (child, animation) {
-                return FadeTransition(
-                  opacity: animation,
-                  child: SlideTransition(
-                    position: Tween<Offset>(
-                      begin: const Offset(0.1, 0),
-                      end: Offset.zero,
-                    ).animate(CurvedAnimation(
-                      parent: animation,
-                      curve: Curves.easeOutCubic,
-                    )),
-                    child: child,
+            content: Column(
+              children: [
+                Expanded(
+                  child: AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 300),
+                    transitionBuilder: (child, animation) {
+                      return FadeTransition(
+                        opacity: animation,
+                        child: SlideTransition(
+                          position: Tween<Offset>(
+                            begin: const Offset(0.1, 0),
+                            end: Offset.zero,
+                          ).animate(CurvedAnimation(
+                            parent: animation,
+                            curve: Curves.easeOutCubic,
+                          )),
+                          child: child,
+                        ),
+                      );
+                    },
+                    child: _buildCurrentQuestion(showHeader: !isFoldableOpen),
                   ),
-                );
-              },
-              child: _buildCurrentQuestion(showHeader: !isFoldableOpen),
+                ),
+                if (_getDidYouKnowHint(_currentQuestion) != null)
+                  DidYouKnowChip(
+                    key: ValueKey('hint_$_currentQuestion'),
+                    text: _getDidYouKnowHint(_currentQuestion)!,
+                  ),
+              ],
             ),
             button: _buildActionButton(isDark),
           ),
@@ -3668,6 +3713,13 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
             'pull_up_bar',
             'kettlebell',
             'cable_machine',
+            'bench',
+            'squat_rack',
+            'dip_station',
+            'smith_machine',
+            'leg_press',
+            'lat_pulldown',
+            'medicine_ball',
             'full_gym',
           ]);
         }
@@ -3722,6 +3774,13 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
             'pull_up_bar',
             'kettlebell',
             'cable_machine',
+            'bench',
+            'squat_rack',
+            'dip_station',
+            'smith_machine',
+            'leg_press',
+            'lat_pulldown',
+            'medicine_ball',
             'full_gym',
           ]);
           break;

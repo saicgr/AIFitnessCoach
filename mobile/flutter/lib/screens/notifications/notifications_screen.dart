@@ -166,7 +166,7 @@ class NotificationsScreen extends ConsumerWidget {
         context.push('/nutrition');
         break;
       case 'hydration_reminder':
-        context.push('/hydration');
+        context.go('/nutrition?tab=2');
         break;
       case 'streak_alert':
       case 'achievement':

@@ -157,13 +157,29 @@ class SupabaseDB:
         return self._user_db.delete_user_metrics_by_user(user_id)
 
     # Chat History
-    def list_chat_history(self, user_id: str, limit: int = 100) -> List[Dict[str, Any]]:
+    def list_chat_history(self, user_id: str, limit: int = 100, offset: int = 0) -> List[Dict[str, Any]]:
         """List chat history for a user."""
-        return self._user_db.list_chat_history(user_id, limit)
+        return self._user_db.list_chat_history(user_id, limit, offset)
 
     def create_chat_message(self, data: Dict[str, Any]) -> Optional[Dict[str, Any]]:
         """Create a chat message."""
         return self._user_db.create_chat_message(data)
+
+    def delete_chat_message(self, message_id: str, user_id: str) -> bool:
+        """Delete a single chat message by ID."""
+        return self._user_db.delete_chat_message(message_id, user_id)
+
+    def search_chat_history(self, user_id: str, query: str, limit: int = 20) -> List[Dict[str, Any]]:
+        """Search chat history for a user by keyword."""
+        return self._user_db.search_chat_history(user_id, query, limit)
+
+    def toggle_chat_message_pin(self, message_id: str, user_id: str, is_pinned: bool) -> bool:
+        """Toggle pin status on a chat message."""
+        return self._user_db.toggle_chat_message_pin(message_id, user_id, is_pinned)
+
+    def clear_chat_history(self, user_id: str) -> None:
+        """Delete all chat messages for a user."""
+        return self._user_db.clear_chat_history(user_id)
 
     def delete_chat_history_by_user(self, user_id: str) -> bool:
         """Delete all chat history for a user."""

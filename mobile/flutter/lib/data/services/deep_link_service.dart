@@ -116,11 +116,11 @@ class DeepLinkService {
         }
         final amount = int.parse(rawAmount);
         _quickAddWater(amount, ref);
-        router.go('/hydration');
+        router.go('/nutrition?tab=2');
         break;
 
       case 'hydration':
-        router.go('/hydration');
+        router.go('/nutrition?tab=2');
         break;
 
       // Nutrition routes

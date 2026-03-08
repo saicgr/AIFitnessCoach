@@ -371,9 +371,9 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
                         child: Text(
                           'Maybe later',
                           style: TextStyle(
-                            fontSize: 13,
+                            fontSize: 12,
                             fontWeight: FontWeight.w400,
-                            color: colors.textMuted,
+                            color: colors.textMuted.withOpacity(0.5),
                           ),
                         ),
                       ),

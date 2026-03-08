@@ -32,6 +32,8 @@ class CoachAgentState(TypedDict):
     setting_name: Optional[str]
     setting_value: Optional[bool]
     destination: Optional[str]
+    water_goal_glasses: Optional[int]
+    weight_value: Optional[float]
 
     # RAG context
     rag_documents: List[Dict[str, Any]]

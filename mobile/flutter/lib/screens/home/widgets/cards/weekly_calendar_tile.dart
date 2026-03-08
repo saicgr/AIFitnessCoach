@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/providers/week_start_provider.dart';
 import '../../../../core/theme/theme_colors.dart';
 import '../../../../data/models/home_layout.dart';
 import '../../../../data/repositories/workout_repository.dart';
@@ -30,13 +31,14 @@ class WeeklyCalendarCard extends ConsumerWidget {
     final workoutsNotifier = ref.read(workoutsProvider.notifier);
     final allWorkouts = ref.watch(workoutsProvider).valueOrNull ?? [];
 
-    // Calculate this week's dates (Mon-Sun)
+    final weekConfig = ref.watch(weekDisplayConfigProvider);
+
+    // Calculate this week's dates
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
-    final weekStart = today.subtract(Duration(days: now.weekday - 1)); // Monday
+    final weekStart = weekConfig.weekStart(today);
 
-    // Build day data
-    final dayNames = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
+    // Build day data in display order
     final days = List.generate(7, (i) {
       final date = weekStart.add(Duration(days: i));
       final dateStr = '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
@@ -55,7 +57,7 @@ class WeeklyCalendarCard extends ConsumerWidget {
       }
 
       return _DayData(
-        label: dayNames[i],
+        label: weekConfig.dayLabels[i],
         date: date,
         isToday: date == today,
         isScheduled: isScheduled,

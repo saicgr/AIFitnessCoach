@@ -525,7 +525,9 @@ def derive_suitable_for(name: str, body_part: str, equipment: str, video_url: st
         suitable.append('Low Impact')
 
     # Home workout friendly
-    home_equipment = ['bodyweight', 'dumbbell', 'resistance band', 'yoga mat', 'chair', '']
+    home_equipment = ['bodyweight', 'dumbbell', 'resistance band', 'yoga mat', 'chair',
+                      'kettlebell', 'foam roller', 'medicine ball', 'ab wheel', 'jump rope',
+                      'exercise ball', 'bosu ball', 'trx', 'suspension trainer', '']
     if not equipment or any(eq in eq_lower for eq in home_equipment):
         suitable.append('Home Workout')
 

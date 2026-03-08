@@ -100,6 +100,8 @@ INTENT_TO_AGENT = {
     CoachIntent.QUESTION: AgentType.COACH,
     CoachIntent.CHANGE_SETTING: AgentType.COACH,
     CoachIntent.NAVIGATE: AgentType.COACH,
+    CoachIntent.SET_WATER_GOAL: AgentType.COACH,
+    CoachIntent.LOG_WEIGHT: AgentType.COACH,
 }
 
 # Keyword-based routing for message analysis
@@ -318,6 +320,8 @@ class LangGraphCoachService:
             "setting_value": extraction.setting_value,
             "destination": extraction.destination,
             "hydration_amount": extraction.hydration_amount,
+            "water_goal_glasses": extraction.water_goal_glasses,
+            "weight_value": extraction.weight_value,
         }
 
     async def _get_rag_context(self, message: str, user_id: str) -> Tuple[str, bool, list]:
@@ -603,6 +607,8 @@ class LangGraphCoachService:
             base_state["setting_name"] = extraction_data.get("setting_name")
             base_state["setting_value"] = extraction_data.get("setting_value")
             base_state["destination"] = extraction_data.get("destination")
+            base_state["water_goal_glasses"] = extraction_data.get("water_goal_glasses")
+            base_state["weight_value"] = extraction_data.get("weight_value")
             base_state["image_base64"] = request.image_base64
             base_state["media_ref"] = request.media_ref.model_dump() if hasattr(request, "media_ref") and request.media_ref else None
             base_state["media_refs"] = media_refs_dicts

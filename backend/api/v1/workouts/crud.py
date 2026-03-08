@@ -1337,7 +1337,10 @@ async def recalculate_user_strength_scores(user_id: str, supabase):
                 "period_end": period_end.isoformat(),
             }
 
-            supabase.table("strength_scores").insert(record_data).execute()
+            supabase.table("strength_scores").upsert(
+                record_data,
+                on_conflict="user_id,muscle_group,period_end",
+            ).execute()
 
         logger.info(f"Background: Updated strength scores for {len(muscle_scores)} muscle groups")
 
@@ -1415,9 +1418,10 @@ async def recalculate_user_fitness_score(user_id: str, supabase):
             "user_id", user_id
         ).eq(
             "week_start", week_start.isoformat()
-        ).maybe_single().execute()
+        ).limit(1).execute()
 
-        nutrition_score = nutrition_response.data.get("nutrition_score", 0) if nutrition_response and nutrition_response.data else 0
+        nutrition_rows = nutrition_response.data or []
+        nutrition_score = nutrition_rows[0].get("nutrition_score", 0) if nutrition_rows else 0
 
         # 4. Get readiness score (7-day average)
         seven_days_ago = (date.today() - timedelta(days=7)).isoformat()
@@ -1439,9 +1443,10 @@ async def recalculate_user_fitness_score(user_id: str, supabase):
             "user_id", user_id
         ).order(
             "calculated_at", desc=True
-        ).limit(1).maybe_single().execute()
+        ).limit(1).execute()
 
-        previous_score = previous_response.data.get("overall_fitness_score") if previous_response and previous_response.data else None
+        previous_rows = previous_response.data or []
+        previous_score = previous_rows[0].get("overall_fitness_score") if previous_rows else None
 
         # 6. Calculate overall fitness score
         score = fitness_service.calculate_fitness_score(
@@ -1474,7 +1479,10 @@ async def recalculate_user_fitness_score(user_id: str, supabase):
             "calculated_at": datetime.now().isoformat(),
         }
 
-        supabase.table("fitness_scores").insert(record_data).execute()
+        supabase.table("fitness_scores").upsert(
+            record_data,
+            on_conflict="user_id,calculated_date",
+        ).execute()
 
         logger.info(f"Background: Updated fitness score for user {user_id}: {score.overall_fitness_score} ({score.fitness_level.value})")
 

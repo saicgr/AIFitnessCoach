@@ -2,6 +2,63 @@ import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../data/models/user.dart';
 
+/// Formats an equipment ID to a user-friendly display name.
+String _equipmentDisplayName(String equipment) {
+  const displayNames = {
+    'full_gym': 'Full Gym Access',
+    'home_gym': 'Home Gym',
+    'commercial_gym': 'Commercial Gym',
+    'bodyweight': 'Bodyweight',
+    'dumbbells': 'Dumbbells',
+    'barbell': 'Barbell',
+    'kettlebell': 'Kettlebell',
+    'kettlebells': 'Kettlebells',
+    'resistance_bands': 'Resistance Bands',
+    'pull_up_bar': 'Pull-up Bar',
+    'cable_machine': 'Cable Machine',
+    'smith_machine': 'Smith Machine',
+    'leg_press': 'Leg Press',
+    'bench': 'Bench',
+    'bench_press': 'Bench Press',
+    'adjustable_bench': 'Adjustable Bench',
+    'squat_rack': 'Squat Rack',
+    'power_rack': 'Power Rack',
+    'dip_station': 'Dip Station',
+    'ez_curl_bar': 'EZ Curl Bar',
+    'trap_bar': 'Trap Bar',
+    'medicine_ball': 'Medicine Ball',
+    'slam_ball': 'Slam Ball',
+    'exercise_ball': 'Exercise Ball',
+    'bosu_ball': 'BOSU Ball',
+    'foam_roller': 'Foam Roller',
+    'ab_wheel': 'Ab Wheel',
+    'jump_rope': 'Jump Rope',
+    'yoga_mat': 'Yoga Mat',
+    'landmine': 'Landmine',
+    'trx': 'TRX / Suspension Trainer',
+    'suspension_trainer': 'Suspension Trainer',
+    'battle_ropes': 'Battle Ropes',
+    'gymnastic_rings': 'Gymnastic Rings',
+    'sandbag': 'Sandbag',
+    'weight_plates': 'Weight Plates',
+    'leg_curl_machine': 'Leg Curl Machine',
+    'leg_extension_machine': 'Leg Extension Machine',
+    'lat_pulldown': 'Lat Pulldown',
+    'seated_row_machine': 'Seated Row Machine',
+    'chest_fly_machine': 'Chest Fly Machine',
+    'shoulder_press_machine': 'Shoulder Press Machine',
+    'hack_squat': 'Hack Squat',
+    'calf_raise_machine': 'Calf Raise Machine',
+  };
+  if (displayNames.containsKey(equipment)) return displayNames[equipment]!;
+  // Fallback: capitalize each word
+  return equipment
+      .replaceAll('_', ' ')
+      .split(' ')
+      .map((w) => w.isEmpty ? w : '${w[0].toUpperCase()}${w.substring(1)}')
+      .join(' ');
+}
+
 /// Displays user's available equipment as chips.
 class EquipmentCard extends StatelessWidget {
   final User? user;
@@ -13,22 +70,7 @@ class EquipmentCard extends StatelessWidget {
 
   /// Format equipment name for display
   String _formatEquipmentName(String equipment) {
-    const displayNames = {
-      'full_gym': 'Full Gym Access',
-      'home_gym': 'Home Gym',
-      'bodyweight': 'Bodyweight',
-      'dumbbells': 'Dumbbells',
-      'barbell': 'Barbell',
-      'kettlebell': 'Kettlebell',
-      'resistance_bands': 'Resistance Bands',
-      'pull_up_bar': 'Pull-up Bar',
-      'cable_machine': 'Cable Machine',
-      'smith_machine': 'Smith Machine',
-      'leg_press': 'Leg Press',
-      'bench': 'Bench',
-      'squat_rack': 'Squat Rack',
-    };
-    return displayNames[equipment] ?? equipment.replaceAll('_', ' ');
+    return _equipmentDisplayName(equipment);
   }
 
   /// Get simplified equipment list for display

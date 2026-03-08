@@ -10,6 +10,7 @@ import Pricing from './pages/Pricing';
 import Store from './pages/Store';
 import PrivacyPolicy from './pages/PrivacyPolicy';
 import TermsOfService from './pages/TermsOfService';
+import HealthDisclaimer from './pages/HealthDisclaimer';
 import RefundPolicy from './pages/RefundPolicy';
 import Onboarding from './pages/Onboarding';
 import OnboardingSelector from './pages/OnboardingSelector';
@@ -80,6 +81,7 @@ function App() {
         <Route path="/store" element={<Store />} />
         <Route path="/privacy" element={<PrivacyPolicy />} />
         <Route path="/terms" element={<TermsOfService />} />
+        <Route path="/health-disclaimer" element={<HealthDisclaimer />} />
         <Route path="/refunds" element={<RefundPolicy />} />
         {/* Legacy landing page */}
         <Route path="/app" element={<Landing />} />

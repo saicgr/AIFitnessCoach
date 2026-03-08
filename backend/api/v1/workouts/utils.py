@@ -18,6 +18,8 @@ from core.logger import get_logger
 from models.schemas import Workout
 from services.gemini_service import GeminiService
 from services.rag_service import WorkoutRAGService
+from services.exercise_rag.filters import filter_by_equipment
+from services.exercise_rag.utils import infer_equipment_from_name
 
 logger = get_logger(__name__)
 
@@ -1872,23 +1874,39 @@ async def get_substitute_exercise(
 
             if equipment:
                 equipment_lower = [e.lower() for e in equipment]
-                has_gym_equipment = any(eq in equipment_lower for eq in ["full_gym", "dumbbells", "barbell", "cable_machine", "machines"])
+                _bw_aliases = {"bodyweight", "none", "no_equipment", ""}
+                has_real_equipment = any(eq not in _bw_aliases for eq in equipment_lower)
 
                 if ex_equipment in equipment_lower:
                     # Direct equipment match gets highest score
                     score += 20
-                elif has_gym_equipment and ex_equipment in ["dumbbell", "dumbbells", "barbell", "cable", "machine"]:
-                    # Gym equipment gets high score when user has gym access
+                elif has_real_equipment and ex_equipment not in ("body weight", "bodyweight", "none", ""):
+                    # Non-bodyweight exercise gets high score when user has equipment
                     score += 15
-                elif ex_equipment == "body weight":
-                    # Bodyweight gets lower score when gym equipment is available
-                    score += 5 if has_gym_equipment else 10
+                elif ex_equipment in ("body weight", "bodyweight"):
+                    # Bodyweight gets lower score when real equipment is available
+                    score += 5 if has_real_equipment else 10
             else:
                 # If no equipment specified, prefer bodyweight
                 if ex_equipment == "body weight":
                     score += 5
 
             candidates.append((score, ex))
+
+        # Hard equipment filter - only keep candidates compatible with user's equipment
+        if equipment:
+            compatible_candidates = []
+            for score, ex in candidates:
+                ex_equip = (ex.get("equipment") or "").strip()
+                ex_name = ex.get("name", "")
+                if not ex_equip or ex_equip.lower() in ("bodyweight", "body weight", "none", ""):
+                    ex_equip = infer_equipment_from_name(ex_name)
+                if filter_by_equipment(ex_equip, equipment, ex_name):
+                    compatible_candidates.append((score, ex))
+            if compatible_candidates:
+                candidates = compatible_candidates
+            else:
+                logger.debug(f"No equipment-compatible substitutes for {exercise_name}, using best scored")
 
         if not candidates:
             logger.debug(f"No valid substitutes found for {exercise_name} (muscle: {muscle_group})")

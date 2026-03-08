@@ -42,13 +42,16 @@ def _parse_message(data: dict, users_data: dict = None) -> DirectMessage:
         id=str(data["id"]),
         conversation_id=str(data["conversation_id"]),
         sender_id=str(data["sender_id"]),
-        content=data["content"],
+        content=data.get("content"),
         is_system_message=data.get("is_system_message", False),
         created_at=data.get("created_at") or datetime.utcnow(),
         edited_at=data.get("edited_at"),
         sender_name=sender_info.get("name"),
         sender_avatar=sender_info.get("avatar_url"),
         sender_is_support=sender_info.get("is_support_user", False),
+        encrypted_content=data.get("encrypted_content"),
+        encryption_nonce=data.get("encryption_nonce"),
+        encryption_version=data.get("encryption_version", 0),
     )
 
 
@@ -122,6 +125,7 @@ async def get_conversations(
                     created_at=row.get("last_msg_created_at") or datetime.utcnow(),
                     sender_name=row.get("last_msg_sender_name"),
                     sender_avatar=row.get("last_msg_sender_avatar"),
+                    encryption_version=row.get("last_msg_encryption_version", 0),
                 )
 
             conversations.append(Conversation(
@@ -272,9 +276,15 @@ async def send_message(
         message_data = {
             "conversation_id": conversation_id,
             "sender_id": user_id,
-            "content": request.content,
+            "content": request.content if not request.encrypted_content else "[encrypted]",
             "is_system_message": False,
         }
+
+        # Add encryption fields if present
+        if request.encrypted_content:
+            message_data["encrypted_content"] = request.encrypted_content
+            message_data["encryption_nonce"] = request.encryption_nonce
+            message_data["encryption_version"] = request.encryption_version
 
         message_result = db.client.table("direct_messages").insert(message_data).execute()
 
@@ -307,7 +317,7 @@ async def send_message(
             metadata={
                 "conversation_id": conversation_id,
                 "recipient_id": request.recipient_id,
-                "message_length": len(request.content),
+                "message_length": len(request.encrypted_content or request.content or ""),
             },
             status_code=200
         )
@@ -323,7 +333,7 @@ async def send_message(
                 "recipient_id": request.recipient_id,
             },
             context={
-                "message_length": len(request.content),
+                "message_length": len(request.encrypted_content or request.content or ""),
             },
         )
 

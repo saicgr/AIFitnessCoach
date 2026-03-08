@@ -412,7 +412,7 @@ class DirectMessage(BaseModel):
     id: str
     conversation_id: str
     sender_id: str
-    content: str
+    content: Optional[str] = None
     is_system_message: bool = False
     created_at: datetime
     edited_at: Optional[datetime] = None
@@ -422,12 +422,37 @@ class DirectMessage(BaseModel):
     sender_avatar: Optional[str] = None
     sender_is_support: bool = False
 
+    # E2EE fields
+    encrypted_content: Optional[str] = None
+    encryption_nonce: Optional[str] = None
+    encryption_version: int = 0
+
 
 class DirectMessageCreate(BaseModel):
     """Request to send a direct message."""
     recipient_id: str = Field(..., max_length=100)
-    content: str = Field(..., min_length=1, max_length=5000)
+    content: Optional[str] = Field(default=None, max_length=5000)
     conversation_id: Optional[str] = Field(default=None, max_length=100)
+
+    # E2EE fields
+    encrypted_content: Optional[str] = Field(default=None, max_length=50000)
+    encryption_nonce: Optional[str] = Field(default=None, max_length=100)
+    encryption_version: int = Field(default=0, ge=0, le=10)
+
+
+class PublicKeyUpload(BaseModel):
+    """Request to upload a public encryption key."""
+    public_key: str = Field(..., min_length=1, max_length=500)
+    algorithm: str = Field(default="x25519", max_length=50)
+
+
+class PublicKeyResponse(BaseModel):
+    """Public key response."""
+    user_id: str
+    public_key: str
+    algorithm: str
+    key_version: int
+    created_at: datetime
 
 
 class Conversation(BaseModel):

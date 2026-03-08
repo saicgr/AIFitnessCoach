@@ -1458,7 +1458,10 @@ class SocialService {
             'other_user_name': otherUser?['user_name'] ?? 'User',
             'other_user_avatar': otherUser?['user_avatar'],
             'is_support_user': otherUser?['is_support_user'] ?? false,
-            'last_message': lastMessage?['content'] ?? '',
+            'last_message': (lastMessage?['encryption_version'] ?? 0) > 0
+                ? 'Encrypted message'
+                : (lastMessage?['content'] ?? ''),
+            'last_message_encryption_version': lastMessage?['encryption_version'] ?? 0,
             'last_message_time': conv['last_message_at'] ?? lastMessage?['created_at'],
             'unread_count': conv['unread_count'] ?? 0,
           };
@@ -1511,8 +1514,11 @@ class SocialService {
   Future<Map<String, dynamic>> sendMessage({
     required String userId,
     required String recipientId,
-    required String content,
+    String? content,
     String? conversationId,
+    String? encryptedContent,
+    String? encryptionNonce,
+    int? encryptionVersion,
   }) async {
     try {
       final response = await _apiClient.post(
@@ -1520,8 +1526,11 @@ class SocialService {
         queryParameters: {'user_id': userId},
         data: {
           'recipient_id': recipientId,
-          'content': content,
+          if (content != null) 'content': content,
           if (conversationId != null) 'conversation_id': conversationId,
+          if (encryptedContent != null) 'encrypted_content': encryptedContent,
+          if (encryptionNonce != null) 'encryption_nonce': encryptionNonce,
+          if (encryptionVersion != null) 'encryption_version': encryptionVersion,
         },
       );
 
@@ -1533,6 +1542,49 @@ class SocialService {
       }
     } catch (e) {
       debugPrint('❌ [Social] Error sending message: $e');
+      rethrow;
+    }
+  }
+
+  /// Get social summary for a user (workout stats, mutual friends, etc.)
+  Future<Map<String, dynamic>> getSocialSummary({
+    required String userId,
+    required String targetUserId,
+  }) async {
+    try {
+      final response = await _apiClient.get(
+        '/api/v1/social/users/$targetUserId/summary',
+        queryParameters: {'user_id': userId},
+      );
+      if (response.statusCode == 200) {
+        return response.data as Map<String, dynamic>;
+      }
+      return {};
+    } catch (e) {
+      debugPrint('❌ [Social] Error getting social summary: $e');
+      return {};
+    }
+  }
+
+  /// Get or create a direct message conversation with another user
+  Future<Map<String, dynamic>> getOrCreateConversation({
+    required String userId,
+    required String otherUserId,
+  }) async {
+    try {
+      final response = await _apiClient.post(
+        '/api/v1/social/conversations',
+        data: {
+          'user_id': userId,
+          'other_user_id': otherUserId,
+        },
+      );
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        return response.data as Map<String, dynamic>;
+      }
+      throw Exception('Failed to get/create conversation: ${response.statusCode}');
+    } catch (e) {
+      debugPrint('❌ [Social] Error getting/creating conversation: $e');
       rethrow;
     }
   }

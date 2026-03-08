@@ -175,22 +175,63 @@ def _extract_equipment(user_message: str, existing_equipment: list = None) -> li
     - full_gym, dumbbells, barbell, resistance_bands, pull_up_bar, kettlebell, cable_machine
     """
     equipment_map = {
+        # Gym access
         'full gym': 'full_gym',
+        'commercial gym': 'full_gym',
+        # Free weights
         'dumbbells': 'dumbbells',
         'dumbbell': 'dumbbells',
-        'resistance bands': 'resistance_bands',
-        'resistance band': 'resistance_bands',
-        'bands': 'resistance_bands',
-        'bodyweight only': 'bodyweight',
-        'bodyweight': 'bodyweight',
         'barbell': 'barbell',
         'kettlebell': 'kettlebell',
         'kettlebells': 'kettlebell',
+        'ez bar': 'ez_bar',
+        'ez-bar': 'ez_bar',
+        'trap bar': 'trap_bar',
+        # Cable / machines
         'cable machine': 'cable_machine',
         'cable': 'cable_machine',
+        'smith machine': 'smith_machine',
+        'leg press': 'leg_press',
+        'lat pulldown': 'lat_pulldown',
+        # Bars / racks
         'pull-up bar': 'pull_up_bar',
         'pull up bar': 'pull_up_bar',
+        'pullup bar': 'pull_up_bar',
         'bench': 'bench',
+        'dip station': 'dip_station',
+        'dip bar': 'dip_station',
+        'squat rack': 'squat_rack',
+        'power rack': 'squat_rack',
+        # Bands / accessories
+        'resistance bands': 'resistance_bands',
+        'resistance band': 'resistance_bands',
+        'bands': 'resistance_bands',
+        'medicine ball': 'medicine_ball',
+        'med ball': 'medicine_ball',
+        'slam ball': 'slam_ball',
+        'exercise ball': 'exercise_ball',
+        'stability ball': 'exercise_ball',
+        'swiss ball': 'exercise_ball',
+        'foam roller': 'foam_roller',
+        'ab wheel': 'ab_wheel',
+        'ab roller': 'ab_wheel',
+        'jump rope': 'jump_rope',
+        'skipping rope': 'jump_rope',
+        'yoga mat': 'yoga_mat',
+        'bosu ball': 'bosu_ball',
+        'bosu': 'bosu_ball',
+        'landmine': 'landmine',
+        # Specialty
+        'trx': 'trx',
+        'suspension trainer': 'trx',
+        'gymnastic rings': 'gymnastic_rings',
+        'rings': 'gymnastic_rings',
+        'battle ropes': 'battle_ropes',
+        'battle rope': 'battle_ropes',
+        'sandbag': 'sandbag',
+        # Bodyweight
+        'bodyweight only': 'bodyweight',
+        'bodyweight': 'bodyweight',
     }
 
     user_lower = user_message.strip().lower()

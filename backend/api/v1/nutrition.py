@@ -76,6 +76,7 @@ from services.food_analysis_cache_service import (
     _FOOD_MODIFIERS,
     _MODIFIER_METADATA,
     _classify_modifier,
+    _build_default_modifiers,
     ModifierType,
 )
 from services.saved_foods_rag_service import get_saved_foods_rag_service
@@ -288,6 +289,11 @@ class LogBarcodeResponse(BaseModel):
     protein_g: float
     carbs_g: float
     fat_g: float
+
+
+class AnalyzeTextRequest(BaseModel):
+    """Request to analyze food from text description (no logging)."""
+    description: str
 
 
 class LogTextRequest(BaseModel):
@@ -2087,7 +2093,7 @@ async def log_food_from_text_streaming(request: Request, body: LogTextRequest, c
 @limiter.limit("10/minute")
 async def analyze_food_text(
     request: Request,
-    body: LogTextRequest,
+    body: AnalyzeTextRequest,
     current_user: dict = Depends(get_current_user),
 ):
     """
@@ -4029,12 +4035,16 @@ async def get_daily_micronutrients(
             return db.get_user(user_id)
 
         def _fetch_logs():
-            return db.list_food_logs(
-                user_id=user_id,
-                from_date=date,
-                to_date=date,
-                limit=50
-            )
+            start_of_day, end_of_day = local_date_to_utc_range(date, user_tz)
+            result = db.client.table("food_logs").select("*") \
+                .eq("user_id", user_id) \
+                .is_("deleted_at", "null") \
+                .gte("logged_at", start_of_day) \
+                .lte("logged_at", end_of_day) \
+                .order("logged_at", desc=True) \
+                .limit(50) \
+                .execute()
+            return result.data or []
 
         rda_result, user, logs = await asyncio.gather(
             loop.run_in_executor(None, _fetch_rdas),
@@ -4156,12 +4166,16 @@ async def get_nutrient_contributors(
         rda = rda_result.data
 
         # Get all food logs for the day with this nutrient
-        logs = db.list_food_logs(
-            user_id=user_id,
-            from_date=date,
-            to_date=date,
-            limit=50
-        )
+        start_of_day, end_of_day = local_date_to_utc_range(date, user_tz)
+        log_result = db.client.table("food_logs").select("*") \
+            .eq("user_id", user_id) \
+            .is_("deleted_at", "null") \
+            .gte("logged_at", start_of_day) \
+            .lte("logged_at", end_of_day) \
+            .order("logged_at", desc=True) \
+            .limit(50) \
+            .execute()
+        logs = log_result.data or []
 
         # Extract contributors
         contributors = []
@@ -6431,10 +6445,10 @@ async def get_detailed_tdee(request: Request, user_id: str, days: int = Query(de
                 id=h["id"],
                 user_id=h["user_id"],
                 calculated_at=datetime.fromisoformat(str(h["calculated_at"]).replace("Z", "+00:00")),
-                calculated_tdee=h.get("calculated_tdee", 0),
-                weight_change_kg=float(h.get("weight_change_kg", 0) or 0),
-                avg_daily_intake=h.get("avg_daily_intake", 0),
-                data_quality_score=float(h.get("data_quality_score", 0) or 0),
+                calculated_tdee=h.get("calculated_tdee") or 0,
+                weight_change_kg=float(h.get("weight_change_kg") or 0),
+                avg_daily_intake=h.get("avg_daily_intake") or 0,
+                data_quality_score=float(h.get("data_quality_score") or 0),
             )
             for h in history_result.data or []
         ]
@@ -6640,10 +6654,10 @@ async def get_recommendation_options(user_id: str, current_user: dict = Depends(
             .eq("user_id", user_id)\
             .order("calculated_at", desc=True)\
             .limit(1)\
-            .maybe_single()\
             .execute()
 
-        tdee_data = getattr(tdee_result, 'data', None)
+        tdee_rows = tdee_result.data or []
+        tdee_data = tdee_rows[0] if tdee_rows else None
         if not tdee_data or not tdee_data.get("calculated_tdee"):
             # Fall back to nutrition preferences TDEE
             prefs = db.client.table("nutrition_preferences")\
@@ -6659,10 +6673,10 @@ async def get_recommendation_options(user_id: str, current_user: dict = Depends(
                     detail="No TDEE available. Please log food and weight data first."
                 )
 
-            current_tdee = prefs_data.get("calculated_tdee", 2000)
-            current_goal = prefs_data.get("nutrition_goal", "maintain")
+            current_tdee = prefs_data.get("calculated_tdee") or 2000
+            current_goal = prefs_data.get("nutrition_goal") or "maintain"
         else:
-            current_tdee = tdee_data.get("calculated_tdee", 2000)
+            current_tdee = tdee_data.get("calculated_tdee") or 2000
             # Get goal from preferences
             prefs = db.client.table("nutrition_preferences")\
                 .select("nutrition_goal")\
@@ -6670,11 +6684,64 @@ async def get_recommendation_options(user_id: str, current_user: dict = Depends(
                 .maybe_single()\
                 .execute()
             prefs_data = getattr(prefs, 'data', None)
-            current_goal = prefs_data.get("nutrition_goal", "maintain") if prefs_data else "maintain"
+            current_goal = (prefs_data.get("nutrition_goal") or "maintain") if prefs_data else "maintain"
 
-        # Get adherence summary
-        adherence_response = await get_adherence_summary(user_id, weeks=4)
-        adherence_score = adherence_response.sustainability_score
+        # Get adherence score via service (avoid calling route handler directly)
+        try:
+            prefs_for_adh = db.client.table("nutrition_preferences")\
+                .select("target_calories, target_protein_g, target_carbs_g, target_fat_g")\
+                .eq("user_id", user_id)\
+                .maybe_single()\
+                .execute()
+            adh_prefs = getattr(prefs_for_adh, 'data', None) or {}
+            adh_targets = ServiceNutritionTargets(
+                calories=adh_prefs.get("target_calories", 2000),
+                protein_g=adh_prefs.get("target_protein_g", 150),
+                carbs_g=adh_prefs.get("target_carbs_g", 200),
+                fat_g=adh_prefs.get("target_fat_g", 65),
+            )
+            end_date = datetime.now().date()
+            start_date = end_date - timedelta(weeks=4)
+            food_logs_result = db.client.table("food_logs")\
+                .select("logged_at, total_calories, protein_g, carbs_g, fat_g")\
+                .eq("user_id", user_id)\
+                .is_("deleted_at", "null")\
+                .gte("logged_at", start_date.isoformat())\
+                .lte("logged_at", end_date.isoformat())\
+                .execute()
+            daily_totals: dict = {}
+            for log in food_logs_result.data or []:
+                log_date = datetime.fromisoformat(str(log["logged_at"]).replace("Z", "+00:00")).date()
+                if log_date not in daily_totals:
+                    daily_totals[log_date] = {"calories": 0, "protein": 0, "carbs": 0, "fat": 0, "meals": 0}
+                daily_totals[log_date]["calories"] += log.get("total_calories", 0) or 0
+                daily_totals[log_date]["protein"] += float(log.get("protein_g", 0) or 0)
+                daily_totals[log_date]["carbs"] += float(log.get("carbs_g", 0) or 0)
+                daily_totals[log_date]["fat"] += float(log.get("fat_g", 0) or 0)
+                daily_totals[log_date]["meals"] += 1
+            daily_adherences = []
+            for log_date, totals in daily_totals.items():
+                actuals = NutritionActuals(
+                    date=log_date,
+                    calories=int(totals["calories"]),
+                    protein_g=totals["protein"],
+                    carbs_g=totals["carbs"],
+                    fat_g=totals["fat"],
+                    meals_logged=totals["meals"],
+                )
+                daily_adherences.append(adherence_service.calculate_daily_adherence(adh_targets, actuals))
+            weekly_summaries = []
+            week_start = start_date - timedelta(days=start_date.weekday())
+            while week_start <= end_date:
+                week_end = week_start + timedelta(days=6)
+                week_adh = [a for a in daily_adherences if week_start <= a.date <= week_end]
+                weekly_summaries.append(adherence_service.calculate_weekly_summary(week_adh, week_start))
+                week_start += timedelta(days=7)
+            sustainability = adherence_service.calculate_sustainability_score(weekly_summaries)
+            adherence_score = sustainability.score
+        except Exception as adh_err:
+            logger.warning(f"Failed to compute adherence score, defaulting to 0.5: {adh_err}")
+            adherence_score = 0.5
 
         # Get TDEE history for adaptation detection
         history_result = db.client.table("adaptive_nutrition_calculations")\
@@ -6689,10 +6756,10 @@ async def get_recommendation_options(user_id: str, current_user: dict = Depends(
                 id=h["id"],
                 user_id=h["user_id"],
                 calculated_at=datetime.fromisoformat(str(h["calculated_at"]).replace("Z", "+00:00")),
-                calculated_tdee=h.get("calculated_tdee", 0),
-                weight_change_kg=float(h.get("weight_change_kg", 0) or 0),
-                avg_daily_intake=h.get("avg_daily_intake", 0),
-                data_quality_score=float(h.get("data_quality_score", 0) or 0),
+                calculated_tdee=h.get("calculated_tdee") or 0,
+                weight_change_kg=float(h.get("weight_change_kg") or 0),
+                avg_daily_intake=h.get("avg_daily_intake") or 0,
+                data_quality_score=float(h.get("data_quality_score") or 0),
             )
             for h in history_result.data or []
         ]
@@ -7025,3 +7092,18 @@ async def search_modifiers(
             if len(results) >= 10:
                 break
     return {"results": results, "count": len(results)}
+
+
+# ── Food modifiers (contextual) ──────────────────────────────────
+@router.get("/food-modifiers")
+async def get_food_modifiers(
+    food_name: str = Query(..., min_length=1, description="Food name to get contextual modifiers for"),
+    _user=Depends(get_current_user),
+):
+    """
+    Return contextual modifier groups for a given food name.
+    E.g. steak → doneness options, chicken → cooking method options.
+    Pure in-memory lookup — no DB call.
+    """
+    modifiers = _build_default_modifiers(food_name)
+    return {"food_name": food_name, "modifiers": modifiers}

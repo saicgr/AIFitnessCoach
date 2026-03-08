@@ -147,6 +147,9 @@ enum WorkoutEnvironment {
           'hack_squat',
           'calf_raise_machine',
           'seated_row_machine',
+          'medicine_ball',
+          'battle_ropes',
+          'suspension_trainer',
           'treadmill',
           'stationary_bike',
           'elliptical',
@@ -164,6 +167,7 @@ enum WorkoutEnvironment {
           'weight_plates',
           'ez_curl_bar',
           'dip_station',
+          'medicine_ball',
           'yoga_mat',
         ];
       case WorkoutEnvironment.home:
@@ -171,6 +175,7 @@ enum WorkoutEnvironment {
           'resistance_bands',
           'yoga_mat',
           'jump_rope',
+          'medicine_ball',
         ];
       case WorkoutEnvironment.outdoors:
         return [
@@ -189,6 +194,7 @@ enum WorkoutEnvironment {
         return [
           'dumbbells',
           'cable_machine',
+          'resistance_bands',
           'treadmill',
           'stationary_bike',
           'elliptical',
