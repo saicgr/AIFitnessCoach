@@ -159,6 +159,10 @@ def setup_logging(level: str = "INFO", use_json: bool = True) -> None:
     root_logger = logging.getLogger()
     root_logger.setLevel(getattr(logging, level.upper()))
 
+    # Silence noisy third-party loggers
+    logging.getLogger("httpx").setLevel(logging.WARNING)
+    logging.getLogger("httpcore").setLevel(logging.WARNING)
+
     # Remove existing handlers
     for handler in root_logger.handlers[:]:
         root_logger.removeHandler(handler)

@@ -132,8 +132,8 @@ def _row_to_summary(row: dict, user_today_str: Optional[str] = None) -> TodayWor
     """Convert a database row to TodayWorkoutSummary."""
     # Parse exercises
     raw_exercises = row.get("exercises") or row.get("exercises_json")
-    logger.info(f"[_row_to_summary] workout_id={row.get('id')}, exercises_type={type(raw_exercises)}, "
-                f"exercises_len={len(raw_exercises) if raw_exercises else 0}")
+    logger.debug(f"[_row_to_summary] workout_id={row.get('id')}, exercises_type={type(raw_exercises)}, "
+                 f"exercises_len={len(raw_exercises) if raw_exercises else 0}")
 
     exercises = raw_exercises or []
     if isinstance(exercises, str):
