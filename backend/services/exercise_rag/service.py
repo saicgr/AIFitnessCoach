@@ -1320,6 +1320,14 @@ EQUIPMENT PRIORITY RULE (user has: {', '.join(user_real_equipment)}):
 - Do NOT select easy cardio-style bodyweight moves (punches, jumping jacks, etc.)
 """
 
+        adjacent_day_section = ""
+        if avoid_exercises:
+            adjacent_day_section = f"""
+ADJACENT-DAY VARIETY RULE:
+AVOID these exercises already used in adjacent workouts: {', '.join(avoid_exercises)}
+Do NOT select any exercise from the above list. Pick different exercises for variety.
+"""
+
         prompt = f"""You are an expert fitness coach selecting exercises for a workout.
 
 TARGET WORKOUT:
@@ -1341,11 +1349,7 @@ SELECTION CRITERIA:
 7. Consider the fitness level - {fitness_level} (but still use weights - beginners benefit from learning barbell and dumbbell movements)
 8. Align with goals: {', '.join(goals) if goals else 'General fitness'}
 {equipment_priority_section}
-{f"""
-ADJACENT-DAY VARIETY RULE:
-AVOID these exercises already used in adjacent workouts: {', '.join(avoid_exercises)}
-Do NOT select any exercise from the above list. Pick different exercises for variety.
-""" if avoid_exercises else ""}
+{adjacent_day_section}
 IMPORTANT: You MUST select {count} DIFFERENT exercises. Each number in your response must be unique.
 
 Return a JSON object with "selected_indices" array containing {count} UNIQUE exercise numbers (1-indexed), in the order they should be performed.

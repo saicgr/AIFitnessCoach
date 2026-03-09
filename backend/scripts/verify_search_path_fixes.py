@@ -7,8 +7,9 @@ This script verifies that:
 2. Materialized views are not accessible to anon/authenticated
 3. Wrapper functions exist for leaderboard access
 """
-import os
 from __future__ import annotations
+
+import os
 
 import psycopg2
 import sys
