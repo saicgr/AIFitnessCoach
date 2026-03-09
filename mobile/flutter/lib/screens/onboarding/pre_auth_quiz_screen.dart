@@ -3781,6 +3781,7 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
             'leg_press',
             'lat_pulldown',
             'medicine_ball',
+            'trx',
             'full_gym',
           ]);
           break;

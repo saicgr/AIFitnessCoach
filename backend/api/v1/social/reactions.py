@@ -61,6 +61,65 @@ def _bg_remove_reaction(reaction_id: str):
         logger.error(f"[Social] Failed to remove reaction from ChromaDB: {e}")
 
 
+def _bg_notify_reaction(activity_id: str, user_id: str, reaction_type: str):
+    """Background task: send push notification for a new reaction."""
+    try:
+        supabase = get_supabase_client()
+
+        # Get activity owner
+        activity_result = supabase.table("activity_feed").select("user_id").eq("id", activity_id).execute()
+        if not activity_result.data:
+            return
+        owner_id = activity_result.data[0]["user_id"]
+
+        # Skip if reactor == owner
+        if owner_id == user_id:
+            return
+
+        # Check privacy settings
+        privacy_result = supabase.table("user_privacy_settings").select(
+            "notify_reactions"
+        ).eq("user_id", owner_id).execute()
+        if privacy_result.data and not privacy_result.data[0].get("notify_reactions", True):
+            return
+
+        # Get reactor name
+        reactor_result = supabase.table("users").select("name").eq("id", user_id).execute()
+        reactor_name = reactor_result.data[0]["name"] if reactor_result.data else "Someone"
+
+        # Create social_notifications row (upsert by from_user_id + reference_id + type for dedup)
+        supabase.table("social_notifications").upsert({
+            "user_id": owner_id,
+            "from_user_id": user_id,
+            "type": "reaction",
+            "title": f"{reactor_name} reacted to your post",
+            "body": f"{reactor_name} reacted with {reaction_type}",
+            "reference_id": activity_id,
+            "is_read": False,
+        }, on_conflict="from_user_id,reference_id,type").execute()
+
+        # Try to send push notification
+        try:
+            owner_result = supabase.table("users").select("fcm_token").eq("id", owner_id).execute()
+            if owner_result.data and owner_result.data[0].get("fcm_token"):
+                import asyncio
+                from services.notification_service import NotificationService
+                ns = NotificationService()
+                asyncio.get_event_loop().run_until_complete(
+                    ns.send_notification(
+                        fcm_token=owner_result.data[0]["fcm_token"],
+                        title=f"{reactor_name} reacted to your post",
+                        body=f"Reacted with {reaction_type}",
+                        data={"type": "reaction", "activity_id": activity_id},
+                    )
+                )
+        except Exception:
+            pass  # Push notification is best-effort
+
+    except Exception as e:
+        logger.error(f"[Social] Failed to notify reaction: {e}")
+
+
 @router.post("/reactions", response_model=ActivityReaction)
 async def add_reaction(
     user_id: str,
@@ -111,6 +170,14 @@ async def add_reaction(
         user_id=user_id,
         reaction_type=reaction.reaction_type.value,
         created_at=reaction_obj.created_at,
+    )
+
+    # Send push notification for reaction (F5)
+    background_tasks.add_task(
+        _bg_notify_reaction,
+        activity_id=reaction.activity_id,
+        user_id=user_id,
+        reaction_type=reaction.reaction_type.value,
     )
 
     return reaction_obj

@@ -23,6 +23,7 @@ class SocialPrivacyState {
   final bool notifyComments;
   final bool notifyChallengeInvites;
   final bool notifyFriendActivity;
+  final bool showReadReceipts;
   final String? error;
 
   const SocialPrivacyState({
@@ -36,6 +37,7 @@ class SocialPrivacyState {
     this.notifyComments = true,
     this.notifyChallengeInvites = true,
     this.notifyFriendActivity = true,
+    this.showReadReceipts = true,
     this.error,
   });
 
@@ -50,6 +52,7 @@ class SocialPrivacyState {
     bool? notifyComments,
     bool? notifyChallengeInvites,
     bool? notifyFriendActivity,
+    bool? showReadReceipts,
     String? error,
   }) {
     return SocialPrivacyState(
@@ -63,6 +66,7 @@ class SocialPrivacyState {
       notifyComments: notifyComments ?? this.notifyComments,
       notifyChallengeInvites: notifyChallengeInvites ?? this.notifyChallengeInvites,
       notifyFriendActivity: notifyFriendActivity ?? this.notifyFriendActivity,
+      showReadReceipts: showReadReceipts ?? this.showReadReceipts,
       error: error,
     );
   }
@@ -107,6 +111,7 @@ class SocialPrivacySettingsNotifier extends StateNotifier<SocialPrivacyState> {
         notifyComments: settings['notify_comments'] as bool? ?? true,
         notifyChallengeInvites: settings['notify_challenge_invites'] as bool? ?? true,
         notifyFriendActivity: settings['notify_friend_activity'] as bool? ?? true,
+        showReadReceipts: settings['show_read_receipts'] as bool? ?? true,
       );
     } catch (e) {
       debugPrint('Error loading social settings: $e');
@@ -176,6 +181,11 @@ class SocialPrivacySettingsNotifier extends StateNotifier<SocialPrivacyState> {
   void setNotifyFriendActivity(bool value) {
     state = state.copyWith(notifyFriendActivity: value);
     _updateSettings({'notify_friend_activity': value});
+  }
+
+  void setShowReadReceipts(bool value) {
+    state = state.copyWith(showReadReceipts: value);
+    _updateSettings({'show_read_receipts': value});
   }
 }
 
@@ -313,6 +323,23 @@ class _SocialPrivacyCard extends ConsumerWidget {
             onChanged: (value) {
               HapticFeedback.selectionClick();
               ref.read(socialPrivacySettingsProvider.notifier).setShowOnLeaderboards(value);
+            },
+            textMuted: textMuted,
+          ),
+          Divider(height: 1, color: cardBorder.withValues(alpha: 0.3), indent: 50),
+
+          // Read Receipts
+          _buildPrivacyToggle(
+            context: context,
+            ref: ref,
+            icon: Icons.done_all_rounded,
+            iconColor: AppColors.cyan,
+            title: 'Read Receipts',
+            subtitle: 'Let others see when you\'ve read their messages',
+            value: socialSettings.showReadReceipts,
+            onChanged: (value) {
+              HapticFeedback.selectionClick();
+              ref.read(socialPrivacySettingsProvider.notifier).setShowReadReceipts(value);
             },
             textMuted: textMuted,
           ),

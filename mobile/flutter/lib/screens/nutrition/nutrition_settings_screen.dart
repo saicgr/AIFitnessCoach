@@ -10,6 +10,7 @@ import '../../data/services/api_client.dart';
 import '../../data/services/haptic_service.dart';
 import '../../widgets/glass_back_button.dart';
 import '../../widgets/glass_sheet.dart';
+import 'widgets/edit_targets_sheet.dart';
 import 'food_library_screen.dart';
 import 'weekly_checkin_sheet.dart';
 
@@ -1241,176 +1242,12 @@ class _NutritionSettingsScreenState
     NutritionPreferences preferences,
     String userId,
   ) {
-    final nearBlack = isDark ? AppColors.nearBlack : AppColorsLight.nearWhite;
-    final teal = isDark ? AppColors.teal : AppColorsLight.teal;
-
-    final caloriesController = TextEditingController(
-      text: (preferences.targetCalories ?? 2000).toString(),
-    );
-    final proteinController = TextEditingController(
-      text: (preferences.targetProteinG ?? 150).toString(),
-    );
-    final carbsController = TextEditingController(
-      text: (preferences.targetCarbsG ?? 200).toString(),
-    );
-    final fatController = TextEditingController(
-      text: (preferences.targetFatG ?? 65).toString(),
-    );
-
     showGlassSheet(
       context: context,
       builder: (context) => GlassSheet(
-        child: Padding(
-          padding: EdgeInsets.only(
-            left: 24,
-            right: 24,
-            top: 8,
-            bottom: MediaQuery.of(context).viewInsets.bottom + 24,
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    'Edit Daily Targets',
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: textPrimary,
-                    ),
-                  ),
-                  IconButton(
-                    onPressed: () => Navigator.pop(context),
-                    icon: Icon(Icons.close, color: textMuted),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'Manually set your daily nutrition goals',
-                style: TextStyle(
-                  fontSize: 14,
-                  color: textMuted,
-                ),
-              ),
-              const SizedBox(height: 24),
-              _buildTargetTextField(
-                controller: caloriesController,
-                label: 'Calories',
-                suffix: 'kcal',
-                elevated: elevated,
-                textMuted: textMuted,
-                textPrimary: textPrimary,
-              ),
-              const SizedBox(height: 12),
-              _buildTargetTextField(
-                controller: proteinController,
-                label: 'Protein',
-                suffix: 'g',
-                elevated: elevated,
-                textMuted: textMuted,
-                textPrimary: textPrimary,
-              ),
-              const SizedBox(height: 12),
-              _buildTargetTextField(
-                controller: carbsController,
-                label: 'Carbs',
-                suffix: 'g',
-                elevated: elevated,
-                textMuted: textMuted,
-                textPrimary: textPrimary,
-              ),
-              const SizedBox(height: 12),
-              _buildTargetTextField(
-                controller: fatController,
-                label: 'Fat',
-                suffix: 'g',
-                elevated: elevated,
-                textMuted: textMuted,
-                textPrimary: textPrimary,
-              ),
-              const SizedBox(height: 24),
-              SizedBox(
-                width: double.infinity,
-                child: FilledButton(
-                  onPressed: () async {
-                    HapticService.light();
-                    Navigator.pop(context);
-
-                    final calories = int.tryParse(caloriesController.text);
-                    final protein = int.tryParse(proteinController.text);
-                    final carbs = int.tryParse(carbsController.text);
-                    final fat = int.tryParse(fatController.text);
-
-                    if (calories != null || protein != null || carbs != null || fat != null) {
-                      await ref.read(nutritionPreferencesProvider.notifier).updateTargets(
-                        userId: userId,
-                        targetCalories: calories,
-                        targetProteinG: protein,
-                        targetCarbsG: carbs,
-                        targetFatG: fat,
-                      );
-
-                      if (mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: const Text('Targets updated'),
-                            backgroundColor: teal,
-                            behavior: SnackBarBehavior.floating,
-                          ),
-                        );
-                      }
-                    }
-                  },
-                  style: FilledButton.styleFrom(
-                    backgroundColor: teal,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  child: const Text(
-                    'Save Targets',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildTargetTextField({
-    required TextEditingController controller,
-    required String label,
-    required String suffix,
-    required Color elevated,
-    required Color textMuted,
-    required Color textPrimary,
-  }) {
-    return TextField(
-      controller: controller,
-      keyboardType: TextInputType.number,
-      style: TextStyle(color: textPrimary),
-      decoration: InputDecoration(
-        labelText: label,
-        labelStyle: TextStyle(color: textMuted),
-        suffixText: suffix,
-        suffixStyle: TextStyle(color: textMuted),
-        filled: true,
-        fillColor: elevated,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide.none,
+        child: EditTargetsSheet(
+          userId: userId,
+          onSaved: () {}, // Settings screen doesn't need a refresh callback
         ),
       ),
     );

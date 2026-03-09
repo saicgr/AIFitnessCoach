@@ -735,88 +735,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     );
   }
 
-  // --- User card at top ---
-  Widget _buildUserCard(
-    BuildContext context,
-    WidgetRef ref,
-    bool isDark,
-    Color elevated,
-    Color cardBorder,
-    Color textPrimary,
-    Color textMuted,
-  ) {
-    final authState = ref.watch(authStateProvider);
-    final user = authState.user;
-    final userName = user?.name ?? user?.username ?? 'User';
-    final userEmail = user?.email ?? '';
-    final photoUrl = user?.photoUrl;
 
-    return GestureDetector(
-      onTap: () => context.push('/profile'),
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: elevated,
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: cardBorder),
-        ),
-        child: Row(
-          children: [
-            // Avatar
-            Container(
-              width: 52,
-              height: 52,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: (isDark ? AppColors.cyan : AppColorsLight.cyan).withValues(alpha: 0.15),
-                image: photoUrl != null && photoUrl.isNotEmpty
-                    ? DecorationImage(
-                        image: NetworkImage(photoUrl),
-                        fit: BoxFit.cover,
-                      )
-                    : null,
-              ),
-              child: photoUrl == null || photoUrl.isEmpty
-                  ? Icon(
-                      Icons.person,
-                      color: isDark ? AppColors.cyan : AppColorsLight.cyan,
-                      size: 28,
-                    )
-                  : null,
-            ),
-            const SizedBox(width: 14),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    userName,
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w700,
-                      color: textPrimary,
-                    ),
-                  ),
-                  if (userEmail.isNotEmpty) ...[
-                    const SizedBox(height: 2),
-                    Text(
-                      userEmail,
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: textMuted,
-                      ),
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ],
-                ],
-              ),
-            ),
-            Icon(Icons.chevron_right, color: textMuted, size: 20),
-          ],
-        ),
-      ),
-    );
-  }
 
   // --- Delete account dialog ---
   void _showDeleteAccountDialog(BuildContext context, WidgetRef ref) {
@@ -1334,10 +1253,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // User card
-                  _buildUserCard(context, ref, isDark, elevated, cardBorder, textPrimary, textMuted),
-                  const SizedBox(height: 24),
-
                   // Grouped sections
                   for (final section in sections) ...[
                     // Check if any row in this section matches search

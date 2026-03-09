@@ -840,22 +840,37 @@ class FoodSearchService {
         final nutrients = item['nutrients'] as Map<String, dynamic>? ?? {};
         final sourceStr = item['source'] as String? ?? '';
         final isPersonal = sourceStr == 'saved' || sourceStr == 'saved_item';
+        final calsPer100 = (nutrients['calories_per_100g'] as num?)?.toDouble() ?? 0;
+        final protPer100 = (nutrients['protein_per_100g'] as num?)?.toDouble();
+        final carbsPer100 = (nutrients['carbs_per_100g'] as num?)?.toDouble();
+        final fatPer100 = (nutrients['fat_per_100g'] as num?)?.toDouble();
+        final weightPerUnit = (item['weight_per_unit_g'] as num?)?.toDouble();
+        final servingWeight = (item['serving_weight_g'] as num?)?.toDouble();
+        final defaultCount = (item['default_count'] as num?)?.toInt();
+
+        // Scale to per-serving using serving_weight_g (already includes count,
+        // e.g. Hershey's Kisses: 9 × 4.5g = 41g). No separate countMultiplier needed.
+        final displayWeight = servingWeight ?? weightPerUnit ?? 100.0;
+        final scale = displayWeight / 100.0;
+
         return FoodSearchResult(
           id: (item['fdc_id'] ?? item['id'] ?? 0).toString(),
           name: item['description'] as String? ?? item['name'] as String? ?? 'Unknown',
           brand: item['brand_owner'] as String?,
-          calories: (nutrients['calories_per_100g'] as num?)?.toInt() ??
-              (item['total_calories'] as num?)?.toInt() ?? 0,
-          protein: (nutrients['protein_per_100g'] as num?)?.toDouble() ??
-              (item['total_protein_g'] as num?)?.toDouble(),
-          carbs: (nutrients['carbs_per_100g'] as num?)?.toDouble(),
-          fat: (nutrients['fat_per_100g'] as num?)?.toDouble(),
+          calories: isPersonal
+              ? ((item['total_calories'] as num?)?.toInt() ?? 0)
+              : (calsPer100 * scale).round(),
+          protein: isPersonal
+              ? (item['total_protein_g'] as num?)?.toDouble()
+              : (protPer100 != null ? protPer100 * scale : null),
+          carbs: isPersonal ? null : (carbsPer100 != null ? carbsPer100 * scale : null),
+          fat: isPersonal ? null : (fatPer100 != null ? fatPer100 * scale : null),
           servingSize: isPersonal ? null : _formatServingSize(item),
           source: isPersonal ? FoodSearchSource.saved : FoodSearchSource.foodDatabase,
           originalData: item as Map<String, dynamic>,
-          weightPerUnitG: (item['weight_per_unit_g'] as num?)?.toDouble(),
-          defaultCount: (item['default_count'] as num?)?.toInt(),
-          servingWeightG: (item['serving_weight_g'] as num?)?.toDouble(),
+          weightPerUnitG: weightPerUnit,
+          defaultCount: defaultCount,
+          servingWeightG: servingWeight,
           matchedQuery: item['matched_query'] as String?,
         );
       }).toList();
@@ -872,10 +887,12 @@ class FoodSearchService {
     final servingG = (item['serving_weight_g'] as num?)?.toDouble();
     final weightPerUnit = (item['weight_per_unit_g'] as num?)?.toDouble();
 
-    if (count != null && count > 0 && servingG != null && servingG > 0) {
-      if (count > 1) {
-        return '$count pc (${servingG.round()}g)';
-      }
+    // Multi-piece: show count and total serving weight
+    if (count != null && count > 1 && servingG != null && servingG > 0) {
+      return '$count pc (${servingG.round()}g)';
+    }
+    // Single serving with known weight (servingG takes priority)
+    if (servingG != null && servingG > 0) {
       return '1 serving (${servingG.round()}g)';
     }
     if (weightPerUnit != null && weightPerUnit > 0) {

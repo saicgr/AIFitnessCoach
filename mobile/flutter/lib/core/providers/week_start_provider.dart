@@ -77,6 +77,17 @@ class WeekDisplayConfig {
     }
     return today.subtract(Duration(days: today.weekday - 1));
   }
+
+  /// Convert a data index (0=Mon..6=Sun) to a date within the current
+  /// display-week anchored at [weekStartDate].
+  DateTime dateForDataIndex(DateTime weekStartDate, int dataIndex) {
+    if (startsSunday) {
+      // Sunday is offset 0, Monday is offset 1, … Saturday is offset 6
+      return weekStartDate.add(Duration(days: (dataIndex + 1) % 7));
+    }
+    // Monday-first: Monday is offset 0, … Sunday is offset 6
+    return weekStartDate.add(Duration(days: dataIndex));
+  }
 }
 
 /// Derived provider for the display config.

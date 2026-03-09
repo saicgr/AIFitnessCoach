@@ -30,6 +30,7 @@ class _MeasurementDetailScreenState
   String _selectedPeriod = '30d';
   bool _isMetric = true;
   late MeasurementType _type;
+  String? _userGender;
 
   final _periods = [
     {'label': '7D', 'value': '7d', 'days': 7},
@@ -50,6 +51,7 @@ class _MeasurementDetailScreenState
 
   Future<void> _loadMeasurements() async {
     final auth = ref.read(authStateProvider);
+    _userGender = auth.user?.gender;
     if (auth.user != null) {
       await ref
           .read(measurementsProvider.notifier)
@@ -205,6 +207,42 @@ class _MeasurementDetailScreenState
                   textMuted: textMuted,
                   cyan: cyan,
                 ).animate().fadeIn(delay: 250.ms),
+              ),
+
+              // Rate of change
+              SliverToBoxAdapter(
+                child: _buildRateOfChangeCard(
+                  filteredHistory,
+                  isDark: isDark,
+                  elevated: elevated,
+                  textPrimary: textPrimary,
+                  textMuted: textMuted,
+                  cyan: cyan,
+                ).animate().fadeIn(delay: 260.ms),
+              ),
+
+              // Health context
+              SliverToBoxAdapter(
+                child: _buildHealthContextCard(
+                  latest: latest,
+                  isDark: isDark,
+                  elevated: elevated,
+                  textPrimary: textPrimary,
+                  textMuted: textMuted,
+                  cyan: cyan,
+                ).animate().fadeIn(delay: 270.ms),
+              ),
+
+              // Related metrics
+              SliverToBoxAdapter(
+                child: _buildRelatedMetrics(
+                  summary: measurementsState.summary,
+                  isDark: isDark,
+                  elevated: elevated,
+                  textPrimary: textPrimary,
+                  textMuted: textMuted,
+                  cyan: cyan,
+                ).animate().fadeIn(delay: 280.ms),
               ),
 
               // History header
@@ -445,6 +483,79 @@ class _MeasurementDetailScreenState
     );
   }
 
+  List<double> _computeEWMA(List<double> values, {double alpha = 0.3}) {
+    if (values.isEmpty) return [];
+    final result = <double>[values.first];
+    for (int i = 1; i < values.length; i++) {
+      result.add(alpha * values[i] + (1 - alpha) * result[i - 1]);
+    }
+    return result;
+  }
+
+  List<HorizontalLine> _getHealthZoneLines() {
+    final g = _userGender?.toLowerCase() ?? 'male';
+    switch (_type) {
+      case MeasurementType.bodyFat:
+        if (g == 'female') {
+          return [
+            HorizontalLine(y: 20, color: Colors.green.withOpacity(0.4), strokeWidth: 1, dashArray: [5, 5],
+              label: HorizontalLineLabel(show: true, alignment: Alignment.topRight,
+                style: TextStyle(fontSize: 9, color: Colors.green.withOpacity(0.7)),
+                labelResolver: (_) => 'Athletes')),
+            HorizontalLine(y: 24, color: Colors.cyan.withOpacity(0.4), strokeWidth: 1, dashArray: [5, 5],
+              label: HorizontalLineLabel(show: true, alignment: Alignment.topRight,
+                style: TextStyle(fontSize: 9, color: Colors.cyan.withOpacity(0.7)),
+                labelResolver: (_) => 'Fitness')),
+            HorizontalLine(y: 31, color: Colors.red.withOpacity(0.4), strokeWidth: 1, dashArray: [5, 5],
+              label: HorizontalLineLabel(show: true, alignment: Alignment.topRight,
+                style: TextStyle(fontSize: 9, color: Colors.red.withOpacity(0.7)),
+                labelResolver: (_) => 'Obese')),
+          ];
+        } else {
+          return [
+            HorizontalLine(y: 13, color: Colors.green.withOpacity(0.4), strokeWidth: 1, dashArray: [5, 5],
+              label: HorizontalLineLabel(show: true, alignment: Alignment.topRight,
+                style: TextStyle(fontSize: 9, color: Colors.green.withOpacity(0.7)),
+                labelResolver: (_) => 'Athletes')),
+            HorizontalLine(y: 17, color: Colors.cyan.withOpacity(0.4), strokeWidth: 1, dashArray: [5, 5],
+              label: HorizontalLineLabel(show: true, alignment: Alignment.topRight,
+                style: TextStyle(fontSize: 9, color: Colors.cyan.withOpacity(0.7)),
+                labelResolver: (_) => 'Fitness')),
+            HorizontalLine(y: 24, color: Colors.red.withOpacity(0.4), strokeWidth: 1, dashArray: [5, 5],
+              label: HorizontalLineLabel(show: true, alignment: Alignment.topRight,
+                style: TextStyle(fontSize: 9, color: Colors.red.withOpacity(0.7)),
+                labelResolver: (_) => 'Obese')),
+          ];
+        }
+      case MeasurementType.waist:
+        if (g == 'female') {
+          return [
+            HorizontalLine(y: 80, color: Colors.green.withOpacity(0.4), strokeWidth: 1, dashArray: [5, 5],
+              label: HorizontalLineLabel(show: true, alignment: Alignment.topRight,
+                style: TextStyle(fontSize: 9, color: Colors.green.withOpacity(0.7)),
+                labelResolver: (_) => 'Healthy')),
+            HorizontalLine(y: 88, color: Colors.red.withOpacity(0.4), strokeWidth: 1, dashArray: [5, 5],
+              label: HorizontalLineLabel(show: true, alignment: Alignment.topRight,
+                style: TextStyle(fontSize: 9, color: Colors.red.withOpacity(0.7)),
+                labelResolver: (_) => 'High Risk')),
+          ];
+        } else {
+          return [
+            HorizontalLine(y: 94, color: Colors.green.withOpacity(0.4), strokeWidth: 1, dashArray: [5, 5],
+              label: HorizontalLineLabel(show: true, alignment: Alignment.topRight,
+                style: TextStyle(fontSize: 9, color: Colors.green.withOpacity(0.7)),
+                labelResolver: (_) => 'Healthy')),
+            HorizontalLine(y: 102, color: Colors.red.withOpacity(0.4), strokeWidth: 1, dashArray: [5, 5],
+              label: HorizontalLineLabel(show: true, alignment: Alignment.topRight,
+                style: TextStyle(fontSize: 9, color: Colors.red.withOpacity(0.7)),
+                labelResolver: (_) => 'High Risk')),
+          ];
+        }
+      default:
+        return [];
+    }
+  }
+
   Widget _buildChart(
     List<MeasurementEntry> history, {
     required Color cyan,
@@ -464,8 +575,100 @@ class _MeasurementDetailScreenState
     if (spots.isEmpty) return const SizedBox.shrink();
 
     final values = spots.map((s) => s.y).toList();
-    final minY = values.reduce((a, b) => a < b ? a : b) * 0.95;
-    final maxY = values.reduce((a, b) => a > b ? a : b) * 1.05;
+    var minY = values.reduce((a, b) => a < b ? a : b) * 0.95;
+    var maxY = values.reduce((a, b) => a > b ? a : b) * 1.05;
+
+    // Extend minY/maxY to encompass health zone lines
+    final zoneLines = _getHealthZoneLines();
+    for (final line in zoneLines) {
+      if (line.y < minY) minY = line.y * 0.95;
+      if (line.y > maxY) maxY = line.y * 1.05;
+    }
+
+    // Build line bars - EWMA trend line for weight with 3+ data points
+    final bool showEWMA = _type == MeasurementType.weight && values.length >= 3;
+    final List<LineChartBarData> lineBars = [];
+
+    if (showEWMA) {
+      final ewmaValues = _computeEWMA(values, alpha: 0.3);
+      final ewmaSpots = ewmaValues.asMap().entries.map((entry) {
+        return FlSpot(entry.key.toDouble(), entry.value);
+      }).toList();
+
+      // Raw data line: thin and dotted
+      lineBars.add(
+        LineChartBarData(
+          spots: spots,
+          isCurved: true,
+          color: cyan.withOpacity(0.5),
+          barWidth: 1.5,
+          dashArray: [4, 4],
+          isStrokeCapRound: true,
+          dotData: FlDotData(
+            show: true,
+            getDotPainter: (spot, percent, barData, index) {
+              return FlDotCirclePainter(
+                radius: 3,
+                color: cyan.withOpacity(0.5),
+                strokeWidth: 1.5,
+                strokeColor: isDark ? AppColors.pureBlack : Colors.white,
+              );
+            },
+          ),
+          belowBarData: BarAreaData(show: false),
+        ),
+      );
+
+      // EWMA trend line: thick solid with gradient fill
+      lineBars.add(
+        LineChartBarData(
+          spots: ewmaSpots,
+          isCurved: true,
+          color: cyan,
+          barWidth: 3,
+          isStrokeCapRound: true,
+          dotData: const FlDotData(show: false),
+          belowBarData: BarAreaData(
+            show: true,
+            gradient: LinearGradient(
+              colors: [cyan.withOpacity(0.3), cyan.withOpacity(0.0)],
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+            ),
+          ),
+        ),
+      );
+    } else {
+      // Default single line
+      lineBars.add(
+        LineChartBarData(
+          spots: spots,
+          isCurved: true,
+          color: cyan,
+          barWidth: 3,
+          isStrokeCapRound: true,
+          dotData: FlDotData(
+            show: true,
+            getDotPainter: (spot, percent, barData, index) {
+              return FlDotCirclePainter(
+                radius: 4,
+                color: cyan,
+                strokeWidth: 2,
+                strokeColor: isDark ? AppColors.pureBlack : Colors.white,
+              );
+            },
+          ),
+          belowBarData: BarAreaData(
+            show: true,
+            gradient: LinearGradient(
+              colors: [cyan.withOpacity(0.3), cyan.withOpacity(0.0)],
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+            ),
+          ),
+        ),
+      );
+    }
 
     return LineChart(
       LineChartData(
@@ -517,34 +720,8 @@ class _MeasurementDetailScreenState
         borderData: FlBorderData(show: false),
         minY: minY,
         maxY: maxY,
-        lineBarsData: [
-          LineChartBarData(
-            spots: spots,
-            isCurved: true,
-            color: cyan,
-            barWidth: 3,
-            isStrokeCapRound: true,
-            dotData: FlDotData(
-              show: true,
-              getDotPainter: (spot, percent, barData, index) {
-                return FlDotCirclePainter(
-                  radius: 4,
-                  color: cyan,
-                  strokeWidth: 2,
-                  strokeColor: isDark ? AppColors.pureBlack : Colors.white,
-                );
-              },
-            ),
-            belowBarData: BarAreaData(
-              show: true,
-              gradient: LinearGradient(
-                colors: [cyan.withOpacity(0.3), cyan.withOpacity(0.0)],
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-              ),
-            ),
-          ),
-        ],
+        extraLinesData: ExtraLinesData(horizontalLines: zoneLines),
+        lineBarsData: lineBars,
         lineTouchData: LineTouchData(
           touchTooltipData: LineTouchTooltipData(
             getTooltipColor: (spot) =>
@@ -635,6 +812,278 @@ class _MeasurementDetailScreenState
         ],
       ),
     );
+  }
+
+  Widget _buildRateOfChangeCard(
+    List<MeasurementEntry> history, {
+    required bool isDark,
+    required Color elevated,
+    required Color textPrimary,
+    required Color textMuted,
+    required Color cyan,
+  }) {
+    if (history.length < 2) return const SizedBox.shrink();
+
+    final values = history.map((e) => e.getValueInUnit(_isMetric)).toList();
+    final first = values.last; // oldest (history is newest-first)
+    final last = values.first; // newest
+    final totalChange = last - first;
+    final daySpan = history.first.recordedAt.difference(history.last.recordedAt).inDays;
+    if (daySpan <= 0) return const SizedBox.shrink();
+
+    final weeklyRate = totalChange / (daySpan / 7);
+    final monthlyRate = totalChange / (daySpan / 30);
+    final unit = _isMetric ? _type.metricUnit : _type.imperialUnit;
+
+    // For weight/body fat, decrease is good
+    final isDecreaseGood = _type == MeasurementType.weight || _type == MeasurementType.bodyFat;
+    Color rateColor(double rate) {
+      if (rate.abs() < 0.01) return textMuted;
+      final isGood = isDecreaseGood ? rate < 0 : rate > 0;
+      return isGood ? AppColors.success : AppColors.error;
+    }
+    String formatRate(double rate) {
+      final sign = rate >= 0 ? '+' : '';
+      return '$sign${rate.toStringAsFixed(1)} $unit';
+    }
+
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: elevated,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('Trends', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: textPrimary)),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: Column(
+                  children: [
+                    Text('Weekly', style: TextStyle(fontSize: 12, color: textMuted)),
+                    const SizedBox(height: 4),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(weeklyRate >= 0 ? Icons.trending_up : Icons.trending_down,
+                          size: 16, color: rateColor(weeklyRate)),
+                        const SizedBox(width: 4),
+                        Text(formatRate(weeklyRate),
+                          style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: rateColor(weeklyRate))),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              Container(width: 1, height: 40, color: isDark ? AppColors.cardBorder : AppColorsLight.cardBorder),
+              Expanded(
+                child: Column(
+                  children: [
+                    Text('Monthly', style: TextStyle(fontSize: 12, color: textMuted)),
+                    const SizedBox(height: 4),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(monthlyRate >= 0 ? Icons.trending_up : Icons.trending_down,
+                          size: 16, color: rateColor(monthlyRate)),
+                        const SizedBox(width: 4),
+                        Text(formatRate(monthlyRate),
+                          style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: rateColor(monthlyRate))),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHealthContextCard({
+    required MeasurementEntry? latest,
+    required bool isDark,
+    required Color elevated,
+    required Color textPrimary,
+    required Color textMuted,
+    required Color cyan,
+  }) {
+    if (latest == null) return const SizedBox.shrink();
+    final value = latest.getValueInUnit(_isMetric);
+    final g = _userGender?.toLowerCase() ?? 'male';
+
+    final String title;
+    final String subtitle;
+    final Color contextColor;
+    final String source;
+
+    switch (_type) {
+      case MeasurementType.bodyFat:
+        title = 'Your Body Fat: ${_formatValue(value)}%';
+        if (g == 'female') {
+          if (value < 14) { subtitle = 'Essential fat range'; contextColor = Colors.red; source = 'ACE'; }
+          else if (value < 21) { subtitle = 'Athletes range (14-20%)'; contextColor = Colors.green; source = 'ACE'; }
+          else if (value < 25) { subtitle = 'Fitness range (21-24%)'; contextColor = Colors.cyan; source = 'ACE'; }
+          else if (value < 32) { subtitle = 'Acceptable range (25-31%)'; contextColor = Colors.amber; source = 'ACE'; }
+          else { subtitle = 'Above acceptable range'; contextColor = Colors.red; source = 'ACE'; }
+        } else {
+          if (value < 6) { subtitle = 'Essential fat range'; contextColor = Colors.red; source = 'ACE'; }
+          else if (value < 14) { subtitle = 'Athletes range (6-13%)'; contextColor = Colors.green; source = 'ACE'; }
+          else if (value < 18) { subtitle = 'Fitness range (14-17%)'; contextColor = Colors.cyan; source = 'ACE'; }
+          else if (value < 25) { subtitle = 'Acceptable range (18-24%)'; contextColor = Colors.amber; source = 'ACE'; }
+          else { subtitle = 'Above acceptable range'; contextColor = Colors.red; source = 'ACE'; }
+        }
+      case MeasurementType.waist:
+        final unitLabel = _isMetric ? 'cm' : 'in';
+        title = 'Your Waist: ${_formatValue(value)} $unitLabel';
+        final cmValue = _isMetric ? value : value * 2.54;
+        if (g == 'female') {
+          if (cmValue < 80) { subtitle = 'Low Risk - below 80cm threshold'; contextColor = Colors.green; source = 'CDC/WHO'; }
+          else if (cmValue < 88) { subtitle = 'Moderate Risk (80-88cm)'; contextColor = Colors.amber; source = 'CDC/WHO'; }
+          else { subtitle = 'High Risk - above 88cm threshold'; contextColor = Colors.red; source = 'CDC/WHO'; }
+        } else {
+          if (cmValue < 94) { subtitle = 'Low Risk - below 94cm threshold'; contextColor = Colors.green; source = 'CDC/WHO'; }
+          else if (cmValue < 102) { subtitle = 'Moderate Risk (94-102cm)'; contextColor = Colors.amber; source = 'CDC/WHO'; }
+          else { subtitle = 'High Risk - above 102cm threshold'; contextColor = Colors.red; source = 'CDC/WHO'; }
+        }
+      default:
+        return const SizedBox.shrink();
+    }
+
+    return Container(
+      margin: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [contextColor.withOpacity(0.15), contextColor.withOpacity(0.05)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: contextColor.withOpacity(0.3)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(title, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: textPrimary)),
+          const SizedBox(height: 4),
+          Text(subtitle, style: TextStyle(fontSize: 14, color: contextColor, fontWeight: FontWeight.w600)),
+          if (source.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            Text('Source: $source guideline', style: TextStyle(fontSize: 11, color: textMuted)),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildRelatedMetrics({
+    required MeasurementsSummary? summary,
+    required bool isDark,
+    required Color elevated,
+    required Color textPrimary,
+    required Color textMuted,
+    required Color cyan,
+  }) {
+    if (summary == null) return const SizedBox.shrink();
+
+    // Define related metrics per type
+    final Map<MeasurementType, List<MeasurementType>> relatedMap = {
+      MeasurementType.weight: [MeasurementType.bodyFat, MeasurementType.waist, MeasurementType.chest],
+      MeasurementType.bodyFat: [MeasurementType.weight, MeasurementType.waist],
+      MeasurementType.waist: [MeasurementType.hips, MeasurementType.shoulders, MeasurementType.chest],
+      MeasurementType.chest: [MeasurementType.waist, MeasurementType.shoulders],
+      MeasurementType.hips: [MeasurementType.waist, MeasurementType.thighLeft],
+      MeasurementType.shoulders: [MeasurementType.waist, MeasurementType.chest],
+      MeasurementType.bicepsLeft: [MeasurementType.bicepsRight, MeasurementType.forearmLeft],
+      MeasurementType.bicepsRight: [MeasurementType.bicepsLeft, MeasurementType.forearmRight],
+      MeasurementType.thighLeft: [MeasurementType.thighRight, MeasurementType.calfLeft],
+      MeasurementType.thighRight: [MeasurementType.thighLeft, MeasurementType.calfRight],
+    };
+
+    final related = relatedMap[_type];
+    if (related == null || related.isEmpty) return const SizedBox.shrink();
+
+    // Filter to only metrics that have data
+    final available = related.where((t) => summary.latestByType.containsKey(t)).toList();
+    if (available.isEmpty) return const SizedBox.shrink();
+
+    return Container(
+      margin: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: Text('RELATED METRICS', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: textMuted, letterSpacing: 1.5)),
+          ),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: available.map((t) {
+              final entry = summary.latestByType[t]!;
+              final change = summary.changeFromPrevious[t];
+              return GestureDetector(
+                onTap: () {
+                  HapticService.light();
+                  // Navigate to that metric's detail
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => MeasurementDetailScreen(measurementType: t.name),
+                    ),
+                  );
+                },
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                  decoration: BoxDecoration(
+                    color: elevated,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: isDark ? AppColors.cardBorder : AppColorsLight.cardBorder),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(t.displayName, style: TextStyle(fontSize: 11, color: textMuted)),
+                          const SizedBox(height: 2),
+                          Text(
+                            '${_formatValue(entry.value)} ${entry.unit}',
+                            style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: textPrimary),
+                          ),
+                        ],
+                      ),
+                      if (change != null && change.abs() >= 0.1) ...[
+                        const SizedBox(width: 8),
+                        Icon(
+                          change > 0 ? Icons.arrow_upward : Icons.arrow_downward,
+                          size: 12,
+                          color: _getRelatedChangeColor(t, change),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+              );
+            }).toList(),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Color _getRelatedChangeColor(MeasurementType type, double change) {
+    if (type == MeasurementType.weight || type == MeasurementType.bodyFat) {
+      return change < 0 ? AppColors.success : AppColors.error;
+    }
+    return change > 0 ? AppColors.success : AppColors.error;
   }
 
   Widget _buildHistoryList(
@@ -867,8 +1316,6 @@ class _MeasurementDetailScreenState
 
   void _showAddMeasurementSheet(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final backgroundColor =
-        isDark ? AppColors.nearBlack : AppColorsLight.nearWhite;
     final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final cyan = isDark ? AppColors.cyan : AppColorsLight.cyan;

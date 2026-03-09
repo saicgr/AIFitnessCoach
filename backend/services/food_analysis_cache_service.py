@@ -1759,6 +1759,152 @@ class FoodAnalysisCacheService:
             self._gemini_service = GeminiService()
         return self._gemini_service
 
+    async def enrich_with_tips(
+        self,
+        food_items: list,
+        meal_type: Optional[str] = None,
+        mood_before: Optional[str] = None,
+        user_id: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        """
+        Generate contextual coach tips for food items using full user context.
+
+        Fetches calorie budget (consumed today vs target), computes health score,
+        then calls Gemini generate_food_review() with all context for score-stratified,
+        mood-aware, calorie-budget-aware tips.
+
+        Args:
+            food_items: List of food item dicts with nutritional data
+            meal_type: Meal type (breakfast, lunch, dinner, snack)
+            mood_before: User's current mood/state
+            user_id: User ID for fetching goals, targets, and daily summary
+
+        Returns:
+            Dict with encouragements, warnings, ai_suggestion, recommended_swap, health_score
+        """
+        # Compute aggregate food name and macros from items
+        food_names = [item.get("name", "food") for item in food_items]
+        food_name = ", ".join(food_names[:3])
+        if len(food_names) > 3:
+            food_name += f" (+{len(food_names) - 3} more)"
+
+        total_cal = sum(item.get("calories", 0) for item in food_items)
+        total_protein = sum(float(item.get("protein_g", 0)) for item in food_items)
+        total_carbs = sum(float(item.get("carbs_g", 0)) for item in food_items)
+        total_fat = sum(float(item.get("fat_g", 0)) for item in food_items)
+        total_fiber = sum(float(item.get("fiber_g", 0)) for item in food_items)
+
+        macros = {
+            "calories": total_cal,
+            "protein_g": total_protein,
+            "carbs_g": total_carbs,
+            "fat_g": total_fat,
+        }
+
+        # Compute health score from items (average goal_score if available, else rule-based)
+        item_scores = [item.get("goal_score") or item.get("health_score") for item in food_items]
+        item_scores = [s for s in item_scores if s is not None]
+        if item_scores:
+            health_score = round(sum(item_scores) / len(item_scores))
+        else:
+            health_score = self._compute_health_score(total_cal, total_protein, total_fiber)
+
+        # Fetch user context (goals, targets, daily summary)
+        user_goals = []
+        nutrition_targets = {}
+        calories_consumed_today = None
+        calories_remaining = None
+
+        daily_target = None
+        if user_id:
+            try:
+                supabase = get_supabase()
+                async with supabase.get_session() as session:
+                    # Get user goals
+                    user_result = await session.execute(
+                        text("SELECT goals, daily_calorie_target FROM users WHERE id = :uid LIMIT 1"),
+                        {"uid": user_id},
+                    )
+                    user_row = user_result.fetchone()
+                    if user_row:
+                        goals_val = user_row._mapping.get("goals")
+                        if isinstance(goals_val, list):
+                            user_goals = goals_val
+                        elif isinstance(goals_val, str):
+                            try:
+                                user_goals = json.loads(goals_val)
+                            except (json.JSONDecodeError, TypeError):
+                                user_goals = [goals_val] if goals_val else []
+
+                        daily_target = user_row._mapping.get("daily_calorie_target")
+
+                    # Get nutrition targets from preferences
+                    targets_result = await session.execute(
+                        text(
+                            "SELECT target_calories AS calories, target_protein_g AS protein_g, "
+                            "target_carbs_g AS carbs_g, target_fat_g AS fat_g "
+                            "FROM nutrition_preferences WHERE user_id = :uid LIMIT 1"
+                        ),
+                        {"uid": user_id},
+                    )
+                    targets_row = targets_result.fetchone()
+                    if targets_row:
+                        nutrition_targets = dict(targets_row._mapping)
+
+                # Get daily nutrition summary for calorie budget
+                try:
+                    from datetime import date as date_type
+                    today_str = date_type.today().isoformat()
+                    nutrition_db = NutritionDB()
+                    daily_summary = nutrition_db.get_daily_nutrition_summary(user_id, today_str)
+                    calories_consumed_today = daily_summary.get("total_calories", 0)
+
+                    # Use target from preferences first, then user table
+                    target_cal = nutrition_targets.get("calories") or (daily_target if user_row else None)
+                    if target_cal:
+                        calories_remaining = max(0, int(target_cal) - calories_consumed_today)
+                except Exception as e:
+                    logger.warning(f"[EnrichTips] Failed to get daily summary: {e}")
+
+            except Exception as e:
+                logger.warning(f"[EnrichTips] Failed to fetch user data: {e}")
+
+        # Call Gemini for contextual tips
+        try:
+            review = await self.gemini_service.generate_food_review(
+                food_name=food_name,
+                macros=macros,
+                user_goals=user_goals,
+                nutrition_targets=nutrition_targets,
+                meal_type=meal_type,
+                mood_before=mood_before,
+                calories_consumed_today=calories_consumed_today,
+                calories_remaining=calories_remaining,
+                health_score=health_score,
+            )
+            if review:
+                # Use the Gemini-returned health_score if we didn't have one from items
+                if not item_scores and review.get("health_score"):
+                    health_score = review["health_score"]
+                return {
+                    "encouragements": review.get("encouragements", []),
+                    "warnings": review.get("warnings", []),
+                    "ai_suggestion": review.get("ai_suggestion", ""),
+                    "recommended_swap": review.get("recommended_swap", ""),
+                    "health_score": health_score,
+                }
+        except Exception as e:
+            logger.error(f"[EnrichTips] Gemini call failed: {e}")
+
+        # Fallback: return just the computed health_score with no tips
+        return {
+            "encouragements": [],
+            "warnings": [],
+            "ai_suggestion": "",
+            "recommended_swap": "",
+            "health_score": health_score,
+        }
+
     async def analyze_food(
         self,
         description: str,
@@ -1767,6 +1913,8 @@ class FoodAnalysisCacheService:
         rag_context: Optional[str] = None,
         use_cache: bool = True,
         user_id: Optional[str] = None,
+        mood_before: Optional[str] = None,
+        meal_type: Optional[str] = None,
     ) -> Dict[str, Any]:
         """
         Analyze food with intelligent caching.
@@ -1780,6 +1928,8 @@ class FoodAnalysisCacheService:
         2. Check food analysis cache (cached AI response)
         3. Fall back to fresh Gemini analysis (cache result)
 
+        For cache hits, enriches with contextual coach tips via enrich_with_tips().
+
         Args:
             description: Food description text
             user_goals: List of user fitness goals
@@ -1787,6 +1937,8 @@ class FoodAnalysisCacheService:
             rag_context: RAG context from nutrition knowledge base
             use_cache: Whether to use caching (default True)
             user_id: Optional user ID for saved foods lookup
+            mood_before: User's current mood/state
+            meal_type: Meal type (breakfast, lunch, dinner, snack)
 
         Returns:
             Dict with food_items, totals, AI suggestions, and cache_hit indicator
@@ -1804,6 +1956,8 @@ class FoodAnalysisCacheService:
                 result.update(saved)
                 result["cache_hit"] = True
                 result["cache_source"] = "saved_food"
+                # Enrich cache hit with contextual tips
+                await self._enrich_cache_hit_with_tips(result, meal_type, mood_before, user_id)
                 return result
 
         # Step 0b: Try food nutrition overrides (3,785 curated items)
@@ -1814,6 +1968,7 @@ class FoodAnalysisCacheService:
                 result.update(override)
                 result["cache_hit"] = True
                 result["cache_source"] = "override"
+                await self._enrich_cache_hit_with_tips(result, meal_type, mood_before, user_id)
                 return result
 
         # Step 1: Try common foods database (instant lookup)
@@ -1824,6 +1979,7 @@ class FoodAnalysisCacheService:
                 result.update(common_food)
                 result["cache_hit"] = True
                 result["cache_source"] = "common_foods"
+                await self._enrich_cache_hit_with_tips(result, meal_type, mood_before, user_id)
                 return result
 
         # Step 1b: Try multi-item lookup (overrides + common foods)
@@ -1834,6 +1990,7 @@ class FoodAnalysisCacheService:
                 result.update(multi_result)
                 result["cache_hit"] = True
                 result["cache_source"] = "multi_lookup"
+                await self._enrich_cache_hit_with_tips(result, meal_type, mood_before, user_id)
                 return result
 
         # Step 1c: Try modified override (base item + modifiers like "extra patty", "no cheese")
@@ -1844,6 +2001,7 @@ class FoodAnalysisCacheService:
                 result.update(modified)
                 result["cache_hit"] = True
                 result["cache_source"] = "modified_override"
+                await self._enrich_cache_hit_with_tips(result, meal_type, mood_before, user_id)
                 return result
 
         # Step 2: Try food analysis cache (cached AI response)
@@ -1854,6 +2012,7 @@ class FoodAnalysisCacheService:
                 result.update(cached)
                 result["cache_hit"] = True
                 result["cache_source"] = "analysis_cache"
+                await self._enrich_cache_hit_with_tips(result, meal_type, mood_before, user_id)
                 return result
 
         # Step 3: Fresh Gemini analysis
@@ -1864,6 +2023,8 @@ class FoodAnalysisCacheService:
             user_goals=user_goals,
             nutrition_targets=nutrition_targets,
             rag_context=rag_context,
+            mood_before=mood_before,
+            meal_type=meal_type,
         )
 
         if analysis and analysis.get('food_items'):
@@ -1882,6 +2043,50 @@ class FoodAnalysisCacheService:
         # Analysis failed
         logger.warning(f"❌ Gemini analysis failed for: {description[:50]}...")
         return None
+
+    async def _enrich_cache_hit_with_tips(
+        self,
+        result: Dict[str, Any],
+        meal_type: Optional[str],
+        mood_before: Optional[str],
+        user_id: Optional[str],
+    ) -> None:
+        """
+        Enrich a cache-hit result with contextual coach tips if missing.
+
+        Modifies result dict in-place by adding tip fields from enrich_with_tips().
+        Only calls Gemini if tips are empty/missing in the cached data.
+        """
+        # Check if tips are already present and non-empty
+        has_tips = (
+            result.get("ai_suggestion")
+            or result.get("encouragements")
+            or result.get("warnings")
+        )
+        if has_tips:
+            return
+
+        food_items = result.get("food_items", [])
+        if not food_items:
+            return
+
+        try:
+            tips = await self.enrich_with_tips(
+                food_items=food_items,
+                meal_type=meal_type,
+                mood_before=mood_before,
+                user_id=user_id,
+            )
+            if tips:
+                result["encouragements"] = tips.get("encouragements", [])
+                result["warnings"] = tips.get("warnings", [])
+                result["ai_suggestion"] = tips.get("ai_suggestion", "")
+                result["recommended_swap"] = tips.get("recommended_swap", "")
+                if tips.get("health_score") and not result.get("health_score"):
+                    result["health_score"] = tips["health_score"]
+                logger.info(f"[EnrichTips] Enriched cache hit with tips for {len(food_items)} items")
+        except Exception as e:
+            logger.warning(f"[EnrichTips] Failed to enrich cache hit: {e}")
 
     async def _try_common_food(self, description: str) -> Optional[Dict[str, Any]]:
         """
@@ -3367,6 +3572,13 @@ class FoodAnalysisCacheService:
         except Exception as e:
             logger.warning(f"[FoodReview] Cache lookup failed: {e}")
 
+        # Pre-compute health score for score-stratified guidance
+        pre_score = self._compute_health_score(
+            macros.get("calories", 0),
+            macros.get("protein_g", 0),
+            macros.get("fiber_g", 0),
+        )
+
         # Cache miss - call Gemini
         try:
             result = await self.gemini_service.generate_food_review(
@@ -3374,6 +3586,7 @@ class FoodAnalysisCacheService:
                 macros=macros,
                 user_goals=user_goals,
                 nutrition_targets=nutrition_targets,
+                health_score=pre_score,
             )
 
             if result:
@@ -3391,17 +3604,12 @@ class FoodAnalysisCacheService:
 
         # Fallback: rule-based scoring
         logger.info(f"[FoodReview] Using rule-based fallback for: {food_name[:50]}")
-        score = self._compute_health_score(
-            macros.get("calories", 0),
-            macros.get("protein_g", 0),
-            macros.get("fiber_g", 0),
-        )
         return {
             "encouragements": [],
             "warnings": [],
             "ai_suggestion": "",
             "recommended_swap": "",
-            "health_score": score,
+            "health_score": pre_score,
         }
 
 

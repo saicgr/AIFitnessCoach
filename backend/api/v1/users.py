@@ -1310,6 +1310,10 @@ async def update_user(user_id: str, user: UserUpdate,
             update_data["equipment_details"] = user.equipment_details
             logger.info(f"Updating equipment_details for user {user_id}: {len(user.equipment_details)} items")
 
+        # Handle bio field
+        if user.bio is not None:
+            update_data["bio"] = user.bio
+
         # Handle primary training goal
         if user.primary_goal is not None:
             update_data["primary_goal"] = user.primary_goal

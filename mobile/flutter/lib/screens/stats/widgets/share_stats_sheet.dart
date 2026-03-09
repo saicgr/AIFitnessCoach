@@ -7,6 +7,9 @@ import 'package:intl/intl.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../widgets/glass_sheet.dart';
 import '../../../data/providers/consistency_provider.dart';
+import '../../../data/providers/milestones_provider.dart';
+import '../../../data/providers/scores_provider.dart';
+import '../../../data/models/milestone.dart';
 import '../../../data/repositories/workout_repository.dart';
 import '../../../data/services/api_client.dart';
 import '../../../data/services/share_service.dart';
@@ -338,6 +341,25 @@ class _ShareStatsSheetState extends ConsumerState<ShareStatsSheet> {
     );
   }
 
+  static String _categoryToEmoji(MilestoneCategory category) {
+    switch (category) {
+      case MilestoneCategory.workouts:
+        return '💪';
+      case MilestoneCategory.streak:
+        return '🔥';
+      case MilestoneCategory.strength:
+        return '🏆';
+      case MilestoneCategory.volume:
+        return '⚡';
+      case MilestoneCategory.time:
+        return '⏱️';
+      case MilestoneCategory.weight:
+        return '⚖️';
+      case MilestoneCategory.prs:
+        return '🥇';
+    }
+  }
+
   /// Build stats snapshot from current state
   StatsSnapshot _buildStatsSnapshot() {
     final consistencyState = ref.read(consistencyProvider);
@@ -572,48 +594,31 @@ class _ShareStatsSheetState extends ConsumerState<ShareStatsSheet> {
     final workoutsNotifier = ref.read(workoutsProvider.notifier);
     final weeklyProgress = workoutsNotifier.weeklyProgress;
 
-    // Sample achievements data (in production, pull from achievements provider)
-    final sampleAchievements = [
-      const AchievementData(emoji: '💪', name: 'First PR'),
-      const AchievementData(emoji: '🔥', name: '7 Day Streak'),
-      const AchievementData(emoji: '🏆', name: '100 Workouts'),
-      const AchievementData(emoji: '⚡', name: 'Speed Demon'),
-    ];
+    // Real achievements from milestones provider
+    final milestonesState = ref.watch(milestonesProvider);
+    final realAchievements = milestonesState.achieved.take(4).map((mp) {
+      return AchievementData(
+        emoji: _categoryToEmoji(mp.milestone.category),
+        name: mp.milestone.name,
+      );
+    }).toList();
+    // Fallback if no achievements yet
+    final achievements = realAchievements.isNotEmpty
+        ? realAchievements
+        : [const AchievementData(emoji: '🎯', name: 'Getting Started')];
 
-    // Sample PRs data (in production, pull from PRs provider)
-    final samplePRs = [
-      const PRData(
-        exerciseName: 'Bench Press',
-        value: '225',
-        unit: 'lbs',
-        date: 'Jan 10, 2026',
+    // Real PRs from scores provider
+    final prStats = ref.watch(prStatsProvider);
+    final realPRs = (prStats?.recentPrs ?? []).take(3).map((pr) {
+      final date = DateTime.tryParse(pr.achievedAt);
+      return PRData(
+        exerciseName: pr.exerciseDisplayName,
+        value: pr.weightKg.toStringAsFixed(0),
+        unit: 'kg',
+        date: date != null ? DateFormat('MMM d, yyyy').format(date) : '',
         type: PRType.weight,
-      ),
-      const PRData(
-        exerciseName: 'Deadlift',
-        value: '315',
-        unit: 'lbs',
-        date: 'Jan 8, 2026',
-        type: PRType.weight,
-      ),
-      const PRData(
-        exerciseName: 'Pull-ups',
-        value: '15',
-        unit: 'reps',
-        date: 'Jan 5, 2026',
-        type: PRType.reps,
-      ),
-    ];
-
-    // Format total time
-    String formatTotalTime(int? minutes) {
-      if (minutes == null || minutes == 0) return '0h';
-      final hours = minutes ~/ 60;
-      final mins = minutes % 60;
-      if (hours > 0 && mins > 0) return '${hours}h ${mins}m';
-      if (hours > 0) return '${hours}h';
-      return '${mins}m';
-    }
+      );
+    }).toList();
 
     return PageView(
       controller: _pageController,
@@ -633,7 +638,7 @@ class _ShareStatsSheetState extends ConsumerState<ShareStatsSheet> {
                 weeklyCompleted: weeklyProgress.$1,
                 weeklyGoal: weeklyProgress.$2,
                 currentStreak: consistencyState.currentStreak,
-                totalTimeFormatted: formatTotalTime(null), // TODO: Add total time tracking
+                totalTimeFormatted: workoutsNotifier.totalDurationFormatted,
                 dateRangeLabel: _dateRangeLabel,
                 showWatermark: _showWatermark,
               ),
@@ -648,7 +653,7 @@ class _ShareStatsSheetState extends ConsumerState<ShareStatsSheet> {
             child: InstagramStoryWrapper(
               backgroundGradient: _getGradientForTemplate(1),
               child: StatsAchievementsTemplate(
-                achievements: sampleAchievements,
+                achievements: achievements,
                 currentStreak: consistencyState.currentStreak,
                 totalWorkouts: insights?.monthWorkoutsCompleted ?? workoutsNotifier.completedCount,
                 showWatermark: _showWatermark,
@@ -664,8 +669,8 @@ class _ShareStatsSheetState extends ConsumerState<ShareStatsSheet> {
             child: InstagramStoryWrapper(
               backgroundGradient: _getGradientForTemplate(2),
               child: StatsPRsTemplate(
-                recentPRs: samplePRs,
-                totalPRCount: samplePRs.length,
+                recentPRs: realPRs,
+                totalPRCount: realPRs.length,
                 dateRangeLabel: _dateRangeLabel,
                 showWatermark: _showWatermark,
               ),
@@ -699,7 +704,7 @@ class _ShareStatsSheetState extends ConsumerState<ShareStatsSheet> {
                 weeklyCompleted: weeklyProgress.$1,
                 weeklyGoal: weeklyProgress.$2,
                 currentStreak: consistencyState.currentStreak,
-                totalTimeFormatted: formatTotalTime(null),
+                totalTimeFormatted: workoutsNotifier.totalDurationFormatted,
                 dateRangeLabel: _dateRangeLabel,
                 totalWorkouts: insights?.monthWorkoutsCompleted ?? workoutsNotifier.completedCount,
                 showWatermark: _showWatermark,

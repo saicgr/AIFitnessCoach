@@ -166,8 +166,11 @@ async def search_exercises_node(state: ExerciseSuggestionState) -> Dict[str, Any
     swap_reason = state.get("swap_reason", "variety")
     user_equipment = state.get("user_equipment", [])
     avoided_exercises = state.get("avoided_exercises", []) or []
+    existing_exercises = state.get("existing_exercises", []) or []
+    mode = state.get("mode", "swap")
     # Normalize avoided exercises to lowercase for case-insensitive matching
     avoided_exercises_lower = {ex.lower() for ex in avoided_exercises}
+    existing_exercises_lower = {ex.lower() for ex in existing_exercises}
 
     try:
         # Get the RAG service (uses ChromaDB)
@@ -177,9 +180,18 @@ async def search_exercises_node(state: ExerciseSuggestionState) -> Dict[str, Any
         # Build a semantic search query based on user's request
         search_parts = []
 
-        # Include the current exercise context
-        if current_exercise.get("name"):
-            search_parts.append(f"Alternative to {current_exercise.get('name')}")
+        if mode == "add":
+            # For "add" mode: build query from workout context instead of dummy exercise name
+            muscle_group = current_exercise.get("muscle_group", "")
+            if existing_exercises:
+                search_parts.append(f"Exercises that complement: {', '.join(existing_exercises[:5])}")
+            if muscle_group:
+                search_parts.append(f"for a {muscle_group} workout")
+            search_parts.append("strength training compound and isolation exercises")
+        else:
+            # For "swap" mode: use current exercise context
+            if current_exercise.get("name"):
+                search_parts.append(f"Alternative to {current_exercise.get('name')}")
 
         # Include target muscle
         if target_muscle:
@@ -189,16 +201,17 @@ async def search_exercises_node(state: ExerciseSuggestionState) -> Dict[str, Any
         if user_message:
             search_parts.append(user_message)
 
-        # Include swap reason context
-        reason_context = {
-            "equipment": "exercises with different equipment",
-            "injury": "safe exercises that avoid injury",
-            "difficulty": "exercises with different difficulty level",
-            "variety": "different exercises for variety",
-            "preference": "alternative exercises",
-        }
-        if swap_reason in reason_context:
-            search_parts.append(reason_context[swap_reason])
+        # Include swap reason context (only for swap mode)
+        if mode != "add":
+            reason_context = {
+                "equipment": "exercises with different equipment",
+                "injury": "safe exercises that avoid injury",
+                "difficulty": "exercises with different difficulty level",
+                "variety": "different exercises for variety",
+                "preference": "alternative exercises",
+            }
+            if swap_reason in reason_context:
+                search_parts.append(reason_context[swap_reason])
 
         search_query = " ".join(search_parts)
         logger.info(f"[Search Node] Semantic search query: {search_query[:100]}...")
@@ -244,14 +257,22 @@ async def search_exercises_node(state: ExerciseSuggestionState) -> Dict[str, Any
                 logger.debug(f"[Search Node] Skipping avoided exercise: {exercise_name}")
                 continue
 
+            # Skip exercises already in the workout (for "add" mode)
+            if lower_name in existing_exercises_lower:
+                logger.debug(f"[Search Node] Skipping existing exercise: {exercise_name}")
+                continue
+
             # Get normalized body part
             body_part = normalize_body_part(meta.get("target_muscle") or meta.get("body_part", ""))
 
             # Filter by target muscle if specified
             if target_muscle:
                 target_normalized = normalize_body_part(target_muscle)
-                if body_part.lower() != target_normalized.lower():
-                    continue
+                # Skip muscle group filter when it returns "Other" (workout types
+                # like "full_body", "strength" aren't real muscle groups)
+                if target_normalized != "Other":
+                    if body_part.lower() != target_normalized.lower():
+                        continue
 
             # Filter by equipment constraints
             exercise_equipment = (meta.get("equipment") or "").lower()
@@ -303,6 +324,8 @@ async def generate_suggestions_node(state: ExerciseSuggestionState) -> Dict[str,
     swap_reason = state.get("swap_reason", "variety")
     user_injuries = state.get("user_injuries", [])
     user_fitness_level = state.get("user_fitness_level", "intermediate")
+    existing_exercises = state.get("existing_exercises", []) or []
+    mode = state.get("mode", "swap")
 
     if not candidates:
         return {
@@ -318,7 +341,50 @@ async def generate_suggestions_node(state: ExerciseSuggestionState) -> Dict[str,
         for c in candidates[:20]
     ])
 
-    system_prompt = f"""You are an expert fitness coach helping a user find alternative exercises.
+    if mode == "add":
+        # Prompt for "add" mode: suggest complementary exercises
+        existing_list = ", ".join(existing_exercises) if existing_exercises else "None yet"
+        workout_type = current_exercise.get("muscle_group", "general")
+
+        system_prompt = f"""You are an expert fitness coach helping a user add exercises to their workout.
+
+WORKOUT TYPE: {workout_type}
+EXERCISES ALREADY IN WORKOUT: {existing_list}
+
+USER'S REQUEST: {user_message}
+USER FITNESS LEVEL: {user_fitness_level}
+USER INJURIES: {', '.join(user_injuries) if user_injuries else 'None reported'}
+
+AVAILABLE EXERCISES TO ADD:
+{candidates_text}
+
+Select the TOP 5 best exercises to ADD to this workout. Choose exercises that:
+1. Complement the existing exercises (target different angles or muscles not yet covered)
+2. Create a well-balanced workout
+3. Are appropriate for the user's fitness level
+4. Do NOT duplicate exercises already in the workout
+
+For each, provide:
+1. The exact exercise name (must match one from the list)
+2. A brief reason why it complements the workout (1-2 sentences)
+3. Any modifications or tips
+
+Respond in this JSON format:
+{{
+    "suggestions": [
+        {{
+            "name": "Exercise Name",
+            "reason": "Why this complements the workout",
+            "tip": "Optional tip or modification"
+        }}
+    ],
+    "message": "A friendly response explaining your recommendations"
+}}
+
+IMPORTANT: Only suggest exercises from the provided list. Match names exactly. Do NOT suggest exercises already in the workout."""
+    else:
+        # Prompt for "swap" mode: find alternatives (original behavior)
+        system_prompt = f"""You are an expert fitness coach helping a user find alternative exercises.
 
 CURRENT EXERCISE: {current_exercise.get('name', 'unknown')}
 - Sets: {current_exercise.get('sets', 3)}

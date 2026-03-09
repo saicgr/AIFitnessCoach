@@ -47,6 +47,12 @@ class WorkoutDayDetail {
   @JsonKey(name: 'average_rpe')
   final double? averageRpe;
 
+  @JsonKey(name: 'is_health_import')
+  final bool isHealthImport;
+
+  @JsonKey(name: 'import_metadata')
+  final Map<String, dynamic>? importMetadata;
+
   const WorkoutDayDetail({
     required this.date,
     required this.status,
@@ -63,6 +69,8 @@ class WorkoutDayDetail {
     this.coachFeedback,
     this.completedAt,
     this.averageRpe,
+    this.isHealthImport = false,
+    this.importMetadata,
   });
 
   factory WorkoutDayDetail.fromJson(Map<String, dynamic> json) =>

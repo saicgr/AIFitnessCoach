@@ -28,6 +28,7 @@ import 'food_history_screen.dart';
 import 'nutrition_settings_screen.dart';
 import 'recipe_builder_sheet.dart';
 import 'weekly_checkin_sheet.dart';
+import 'widgets/edit_targets_sheet.dart';
 import 'widgets/nutrition_goals_card.dart';
 import 'tabs/hydration_tab.dart';
 import 'tabs/fasting_tab.dart';
@@ -148,6 +149,12 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
 
     // Check if weekly check-in is due using the model helper
     if (prefs.isWeeklyCheckinDue) {
+      // Don't auto-show if user has dismissed 3+ times
+      if (prefs.weeklyCheckinDismissCount >= 3) {
+        debugPrint('📅 [NutritionScreen] Weekly check-in due but user dismissed ${prefs.weeklyCheckinDismissCount} times, skipping auto-show');
+        return;
+      }
+
       debugPrint('📅 [NutritionScreen] Weekly check-in is due! Last check-in: ${prefs.lastWeeklyCheckinAt}, Days since: ${prefs.daysSinceLastCheckin}');
 
       // Small delay to let the screen render first
@@ -1074,28 +1081,7 @@ class _DailyTabState extends ConsumerState<_DailyTab> {
   /// Show edit targets bottom sheet
   void _showEditTargetsSheet(BuildContext context) {
     final prefsState = ref.read(nutritionPreferencesProvider);
-    final preferences = prefsState.preferences;
-    if (preferences == null) return;
-
-    final isDark = widget.isDark;
-    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
-    final nearBlack = isDark ? AppColors.nearBlack : AppColorsLight.nearWhite;
-    final teal = isDark ? AppColors.teal : AppColorsLight.teal;
-
-    final caloriesController = TextEditingController(
-      text: (preferences.targetCalories ?? 2000).toString(),
-    );
-    final proteinController = TextEditingController(
-      text: (preferences.targetProteinG ?? 150).toString(),
-    );
-    final carbsController = TextEditingController(
-      text: (preferences.targetCarbsG ?? 200).toString(),
-    );
-    final fatController = TextEditingController(
-      text: (preferences.targetFatG ?? 65).toString(),
-    );
+    if (prefsState.preferences == null) return;
 
     // Hide nav bar while sheet is open
     ref.read(floatingNavBarVisibleProvider.notifier).state = false;
@@ -1103,123 +1089,15 @@ class _DailyTabState extends ConsumerState<_DailyTab> {
     showGlassSheet(
       context: context,
       builder: (ctx) => GlassSheet(
-        child: Padding(
-          padding: EdgeInsets.only(
-            left: 24,
-            right: 24,
-            top: 8,
-            bottom: MediaQuery.of(ctx).viewInsets.bottom + 24,
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    'Edit Daily Targets',
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: textPrimary,
-                    ),
-                  ),
-                  IconButton(
-                    onPressed: () => Navigator.pop(ctx),
-                    icon: Icon(Icons.close, color: textMuted),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'Manually set your daily nutrition goals',
-                style: TextStyle(fontSize: 14, color: textMuted),
-              ),
-              const SizedBox(height: 24),
-              _buildTargetField(caloriesController, 'Calories', 'kcal', elevated, textMuted, textPrimary),
-              const SizedBox(height: 12),
-              _buildTargetField(proteinController, 'Protein', 'g', elevated, textMuted, textPrimary),
-              const SizedBox(height: 12),
-              _buildTargetField(carbsController, 'Carbs', 'g', elevated, textMuted, textPrimary),
-              const SizedBox(height: 12),
-              _buildTargetField(fatController, 'Fat', 'g', elevated, textMuted, textPrimary),
-              const SizedBox(height: 24),
-              SizedBox(
-                width: double.infinity,
-                child: FilledButton(
-                  onPressed: () async {
-                    Navigator.pop(ctx);
-                    final calories = int.tryParse(caloriesController.text);
-                    final protein = int.tryParse(proteinController.text);
-                    final carbs = int.tryParse(carbsController.text);
-                    final fat = int.tryParse(fatController.text);
-
-                    if (calories != null || protein != null || carbs != null || fat != null) {
-                      await ref.read(nutritionPreferencesProvider.notifier).updateTargets(
-                        userId: widget.userId,
-                        targetCalories: calories,
-                        targetProteinG: protein,
-                        targetCarbsG: carbs,
-                        targetFatG: fat,
-                      );
-                      if (mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: const Text('Targets updated'),
-                            backgroundColor: teal,
-                            behavior: SnackBarBehavior.floating,
-                          ),
-                        );
-                        widget.onRefresh();
-                      }
-                    }
-                  },
-                  style: FilledButton.styleFrom(
-                    backgroundColor: teal,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  ),
-                  child: const Text('Save Targets', style: TextStyle(fontWeight: FontWeight.w600)),
-                ),
-              ),
-              SizedBox(height: MediaQuery.of(ctx).padding.bottom + 8),
-            ],
-          ),
+        child: EditTargetsSheet(
+          userId: widget.userId,
+          onSaved: () => widget.onRefresh(),
         ),
       ),
     ).whenComplete(() {
       // Show nav bar again when sheet is closed
       ref.read(floatingNavBarVisibleProvider.notifier).state = true;
     });
-  }
-
-  Widget _buildTargetField(
-    TextEditingController controller,
-    String label,
-    String suffix,
-    Color elevated,
-    Color textMuted,
-    Color textPrimary,
-  ) {
-    return TextField(
-      controller: controller,
-      keyboardType: TextInputType.number,
-      style: TextStyle(color: textPrimary, fontSize: 16),
-      decoration: InputDecoration(
-        labelText: label,
-        labelStyle: TextStyle(color: textMuted),
-        suffixText: suffix,
-        suffixStyle: TextStyle(color: textMuted),
-        filled: true,
-        fillColor: elevated,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide.none,
-        ),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-      ),
-    );
   }
 
   /// Recalculate nutrition targets based on user profile

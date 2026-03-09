@@ -60,7 +60,7 @@ def invalidate_upcoming_workouts(
 
         query = db.client.table("workouts").select("id, scheduled_date, status").eq(
             "user_id", user_id
-        ).gte(
+        ).gt(
             "scheduled_date", today_str
         ).eq(
             "is_completed", False

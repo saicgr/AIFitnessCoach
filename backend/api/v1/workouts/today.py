@@ -305,7 +305,7 @@ def _backfill_gym_profile_id(db, user_id: str, gym_profile_id: str) -> None:
         logger.warning(f"[BACKFILL] Failed to backfill gym_profile_id: {e}")
 
 
-async def auto_generate_workout(user_id: str, target_date: date, gym_profile_id: Optional[str] = None, selected_days: Optional[List[int]] = None, adjacent_day_exercises: Optional[List[str]] = None):
+async def auto_generate_workout(user_id: str, target_date: date, gym_profile_id: Optional[str] = None, selected_days: Optional[List[int]] = None, adjacent_day_exercises: Optional[List[str]] = None, batch_offset: int = 0):
     """Background task: generate a workout for a specific date.
 
     Safety guarantees:
@@ -393,6 +393,7 @@ async def auto_generate_workout(user_id: str, target_date: date, gym_profile_id:
             focus_areas=[focus_for_day] if focus_for_day else None,
             workout_type=workout_type,
             adjacent_day_exercises=adjacent_day_exercises,
+            batch_offset=batch_offset,
         )
 
         # Use the existing non-streaming generate_workout function
@@ -420,21 +421,22 @@ async def _sequential_generate_workouts(
     adjacent days. Adjacent-day exercise names are also passed explicitly
     to the next generation call for additional deduplication.
     """
-    prev_exercise_names: List[str] = []
+    all_batch_exercises: List[str] = []
     for i, gen_date in enumerate(dates):
-        logger.info(f"[SEQ-GEN] Generating workout {i+1}/{len(dates)} for {gen_date.isoformat()}")
+        logger.info(f"[SEQ-GEN] Generating workout {i+1}/{len(dates)} for {gen_date.isoformat()} (batch_offset={i}, avoiding {len(all_batch_exercises)} exercises)")
         result = await auto_generate_workout(
             user_id=user_id,
             target_date=gen_date,
             gym_profile_id=gym_profile_id,
             selected_days=selected_days,
-            adjacent_day_exercises=prev_exercise_names if prev_exercise_names else None,
+            adjacent_day_exercises=all_batch_exercises if all_batch_exercises else None,
+            batch_offset=i,
         )
-        # Collect exercise names from this workout for the next day's avoid list
-        prev_exercise_names = []
+        # Accumulate exercise names from ALL generated workouts for the avoid list
         if result and hasattr(result, 'exercises') and result.exercises:
-            prev_exercise_names = [ex.name for ex in result.exercises if hasattr(ex, 'name') and ex.name]
-            logger.info(f"[SEQ-GEN] Collected {len(prev_exercise_names)} exercises to avoid for next day")
+            new_exercises = [ex.name for ex in result.exercises if hasattr(ex, 'name') and ex.name]
+            all_batch_exercises.extend(new_exercises)
+            logger.info(f"[SEQ-GEN] Accumulated {len(all_batch_exercises)} total exercises to avoid (added {len(new_exercises)} from day {i+1})")
 
 
 @router.get("/today", response_model=TodayWorkoutResponse)

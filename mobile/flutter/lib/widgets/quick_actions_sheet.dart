@@ -9,8 +9,10 @@ import '../data/providers/fasting_provider.dart';
 import '../data/providers/quick_action_provider.dart';
 import '../data/repositories/hydration_repository.dart';
 import '../data/services/api_client.dart';
+import '../screens/fasting/widgets/log_weight_sheet.dart';
 import '../screens/nutrition/log_meal_sheet.dart';
 import '../screens/workout/widgets/quick_workout_sheet.dart';
+import 'mood_picker_sheet.dart';
 import 'main_shell.dart';
 import 'glass_sheet.dart';
 
@@ -175,6 +177,14 @@ class _QuickActionsSheetState extends ConsumerState<_QuickActionsSheet> {
         case 'fasting':
           Navigator.pop(context);
           context.push('/fasting');
+          return;
+        case 'weight':
+          Navigator.pop(context);
+          showLogWeightSheet(context, widget.ref);
+          return;
+        case 'mood':
+          Navigator.pop(context);
+          showMoodPickerSheet(context, widget.ref);
           return;
         default:
           Navigator.pop(context);

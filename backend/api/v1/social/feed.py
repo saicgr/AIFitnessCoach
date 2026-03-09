@@ -24,6 +24,7 @@ from models.social import (
 )
 from services.social_rag_service import get_social_rag_service
 from services.admin_service import get_admin_service
+from services.hashtag_service import extract_hashtags, extract_mentions
 from core.logger import get_logger
 from .utils import get_supabase_client
 
@@ -62,15 +63,22 @@ async def get_presigned_upload_url(
     current_user: dict = Depends(get_current_user),
 ):
     """
-    Get a pre-signed URL for direct image upload to S3.
+    Get a pre-signed URL for direct image/video upload to S3.
     Client uploads directly to S3 -- zero bytes through the API server.
     """
-    allowed_types = ['image/jpeg', 'image/png', 'image/gif', 'image/webp']
+    allowed_types = [
+        'image/jpeg', 'image/png', 'image/gif', 'image/webp',
+        'video/mp4', 'video/quicktime',
+    ]
     if content_type not in allowed_types:
         raise HTTPException(
             status_code=400,
             detail=f"Invalid content type. Allowed: {', '.join(allowed_types)}"
         )
+
+    # Enforce 50MB limit for videos
+    is_video = content_type.startswith('video/')
+    max_size_mb = 50 if is_video else 10
 
     timestamp = datetime.utcnow().strftime('%Y%m%d_%H%M%S')
     storage_key = f"social_posts/{user_id}/{timestamp}_{uuid.uuid4().hex[:8]}.{file_extension}"
@@ -170,6 +178,7 @@ async def get_activity_feed(
     page: int = 1,
     page_size: int = 20,
     activity_type: Optional[ActivityType] = None,
+    sort_by: str = Query("recent", regex="^(recent|top|trending)$"),
     current_user: dict = Depends(get_current_user),
 ):
     """
@@ -199,6 +208,7 @@ async def get_activity_feed(
             "p_activity_type": activity_type.value if activity_type else None,
             "p_limit": page_size,
             "p_offset": offset,
+            "p_sort_by": sort_by,
         }).execute()
     except Exception as e:
         logger.error(f"[Social] Error fetching feed: {e}")
@@ -243,6 +253,166 @@ async def get_activity_feed(
         "page_size": page_size,
         "has_more": offset + page_size < total_count,
     }
+
+
+def _bg_link_hashtags(activity_id: str, hashtags: list):
+    """Background task: upsert hashtags and link them to the activity."""
+    try:
+        supabase = get_supabase_client()
+        for tag in hashtags:
+            # Upsert hashtag
+            ht_result = supabase.table("hashtags").upsert(
+                {"name": tag},
+                on_conflict="name",
+            ).execute()
+            if ht_result.data:
+                hashtag_id = ht_result.data[0]["id"]
+                # Link to activity
+                supabase.table("activity_hashtags").upsert(
+                    {"activity_id": activity_id, "hashtag_id": hashtag_id},
+                    on_conflict="activity_id,hashtag_id",
+                ).execute()
+        logger.info(f"[Social] Linked {len(hashtags)} hashtags to activity {activity_id}")
+    except Exception as e:
+        logger.error(f"[Social] Failed to link hashtags: {e}")
+
+
+async def _bg_link_mentions(activity_id: str, author_user_id: str, usernames: list):
+    """Background task: resolve @mentions, store links, notify mentioned users."""
+    try:
+        from .friend_requests import create_social_notification
+        from models.friend_request import SocialNotificationType
+
+        supabase = get_supabase_client()
+
+        # Get author info for notifications
+        author_result = supabase.table("users").select("name, avatar_url").eq("id", author_user_id).execute()
+        author_name = author_result.data[0]["name"] if author_result.data else "Someone"
+        author_avatar = author_result.data[0].get("avatar_url") if author_result.data else None
+
+        for username in usernames:
+            # Resolve username to user ID
+            user_result = supabase.table("users").select("id").eq("username", username).execute()
+            if not user_result.data:
+                continue
+            mentioned_user_id = user_result.data[0]["id"]
+
+            # Don't mention yourself
+            if mentioned_user_id == author_user_id:
+                continue
+
+            # Link mention to activity
+            supabase.table("activity_mentions").upsert(
+                {"activity_id": activity_id, "mentioned_user_id": mentioned_user_id},
+                on_conflict="activity_id,mentioned_user_id",
+            ).execute()
+
+            # Send notification
+            try:
+                await create_social_notification(
+                    supabase=supabase,
+                    user_id=mentioned_user_id,
+                    notification_type=SocialNotificationType.MENTION,
+                    from_user_id=author_user_id,
+                    from_user_name=author_name,
+                    from_user_avatar=author_avatar,
+                    reference_id=activity_id,
+                    reference_type="activity",
+                    title="You were mentioned",
+                    body=f"@{author_name} mentioned you in a post",
+                )
+            except Exception as notify_err:
+                logger.warning(f"[Social] Failed to notify mention for {username}: {notify_err}")
+
+            # Send FCM push (best-effort)
+            try:
+                mentioned_result = supabase.table("users").select("fcm_token").eq("id", mentioned_user_id).execute()
+                if mentioned_result.data and mentioned_result.data[0].get("fcm_token"):
+                    from services.notification_service import NotificationService
+                    ns = NotificationService()
+                    await ns.send_notification(
+                        fcm_token=mentioned_result.data[0]["fcm_token"],
+                        title="You were mentioned",
+                        body=f"{author_name} mentioned you in a post",
+                        data={"type": "mention", "activity_id": activity_id},
+                    )
+            except Exception:
+                pass  # Push is best-effort
+
+        logger.info(f"[Social] Linked {len(usernames)} mentions to activity {activity_id}")
+    except Exception as e:
+        logger.error(f"[Social] Failed to link mentions: {e}")
+
+
+async def _bg_notify_workout_shared(activity_id: str, user_id: str):
+    """Background task: notify friends when a workout is shared."""
+    try:
+        from .friend_requests import create_social_notification
+        from models.friend_request import SocialNotificationType
+
+        supabase = get_supabase_client()
+
+        # Get author info
+        author_result = supabase.table("users").select("name, avatar_url").eq("id", user_id).execute()
+        if not author_result.data:
+            return
+        author_name = author_result.data[0]["name"]
+        author_avatar = author_result.data[0].get("avatar_url")
+
+        # Get friends (accepted connections where this user is follower or following)
+        friends_result = supabase.table("user_connections").select(
+            "follower_id, following_id"
+        ).or_(
+            f"follower_id.eq.{user_id},following_id.eq.{user_id}"
+        ).eq("connection_type", "friend").eq("status", "active").limit(100).execute()
+
+        if not friends_result.data:
+            return
+
+        notified_ids = set()
+        for conn in friends_result.data:
+            friend_id = conn["following_id"] if conn["follower_id"] == user_id else conn["follower_id"]
+            if not friend_id or friend_id == user_id or friend_id in notified_ids:
+                continue
+            notified_ids.add(friend_id)
+
+            # Create social notification (privacy check handled inside)
+            try:
+                await create_social_notification(
+                    supabase=supabase,
+                    user_id=friend_id,
+                    notification_type=SocialNotificationType.WORKOUT_SHARED,
+                    from_user_id=user_id,
+                    from_user_name=author_name,
+                    from_user_avatar=author_avatar,
+                    reference_id=activity_id,
+                    reference_type="activity",
+                    title=f"{author_name} shared a workout",
+                    body=f"{author_name} just shared a workout to the feed",
+                )
+            except Exception as notify_err:
+                logger.warning(f"[Social] Failed to notify friend {friend_id} of workout share: {notify_err}")
+                continue
+
+            # FCM push (best-effort)
+            try:
+                from services.notification_service import get_notification_service
+                fcm_result = supabase.table("users").select("fcm_token").eq("id", friend_id).execute()
+                if fcm_result.data and fcm_result.data[0].get("fcm_token"):
+                    ns = get_notification_service()
+                    await ns.send_notification(
+                        fcm_token=fcm_result.data[0]["fcm_token"],
+                        title=f"{author_name} shared a workout",
+                        body=f"{author_name} just shared a workout to the feed",
+                        notification_type="social",
+                        data={"type": "workout_shared", "activity_id": activity_id},
+                    )
+            except Exception:
+                pass  # Push is best-effort
+
+        logger.info(f"[Social] Notified {len(notified_ids)} friends of workout share: {activity_id}")
+    except Exception as e:
+        logger.error(f"[Social] Failed to notify workout share: {e}")
 
 
 def _bg_index_activity(activity_id: str, user_id: str, activity_type: str, activity_data: dict, visibility: str, created_at):
@@ -309,6 +479,34 @@ async def create_activity(
         raise HTTPException(status_code=500, detail="Failed to create activity")
 
     activity_item = ActivityFeedItem(**result.data[0])
+
+    # Extract and link hashtags from caption (F10)
+    caption = activity.activity_data.get("caption", "") or activity.activity_data.get("text", "")
+    hashtags = extract_hashtags(caption)
+    if hashtags:
+        background_tasks.add_task(
+            _bg_link_hashtags,
+            activity_id=activity_item.id,
+            hashtags=hashtags,
+        )
+
+    # Extract and notify @mentions
+    mentions = extract_mentions(caption)
+    if mentions:
+        background_tasks.add_task(
+            _bg_link_mentions,
+            activity_id=activity_item.id,
+            author_user_id=user_id,
+            usernames=mentions,
+        )
+
+    # Notify friends of workout shares
+    if activity.activity_type.value == 'workout_shared':
+        background_tasks.add_task(
+            _bg_notify_workout_shared,
+            activity_id=activity_item.id,
+            user_id=user_id,
+        )
 
     # Store in ChromaDB in background - non-blocking
     background_tasks.add_task(

@@ -1,9 +1,13 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants/app_colors.dart';
 import '../../data/providers/social_provider.dart';
 import '../../data/repositories/auth_repository.dart';
+import '../../widgets/glass_back_button.dart';
+import 'friend_profile_screen.dart';
 import 'widgets/user_search_result_card.dart';
 
 /// Friend Search Screen - Search for users and send friend requests
@@ -19,6 +23,7 @@ class _FriendSearchScreenState extends ConsumerState<FriendSearchScreen>
   late TabController _tabController;
   final TextEditingController _searchController = TextEditingController();
   final FocusNode _searchFocusNode = FocusNode();
+  Timer? _debounceTimer;
 
   String? _userId;
 
@@ -27,11 +32,18 @@ class _FriendSearchScreenState extends ConsumerState<FriendSearchScreen>
   bool _isSearching = false;
   bool _isLoadingSuggestions = true;
   String? _error;
+  int _searchOffset = 0;
+  bool _hasMoreResults = false;
+  bool _isLoadingMore = false;
+  final ScrollController _searchScrollController = ScrollController();
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
+
+    // Add scroll listener for pagination
+    _searchScrollController.addListener(_onSearchScroll);
 
     // Get userId from authStateProvider (consistent with rest of app)
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -46,10 +58,19 @@ class _FriendSearchScreenState extends ConsumerState<FriendSearchScreen>
 
   @override
   void dispose() {
+    _debounceTimer?.cancel();
     _tabController.dispose();
     _searchController.dispose();
     _searchFocusNode.dispose();
+    _searchScrollController.dispose();
     super.dispose();
+  }
+
+  void _onSearchScroll() {
+    if (_searchScrollController.position.pixels >=
+        _searchScrollController.position.maxScrollExtent - 200) {
+      _loadMoreResults();
+    }
   }
 
   Future<void> _loadSuggestions() async {
@@ -94,6 +115,8 @@ class _FriendSearchScreenState extends ConsumerState<FriendSearchScreen>
       setState(() {
         _searchResults = [];
         _isSearching = false;
+        _searchOffset = 0;
+        _hasMoreResults = false;
       });
       return;
     }
@@ -106,21 +129,27 @@ class _FriendSearchScreenState extends ConsumerState<FriendSearchScreen>
     setState(() {
       _isSearching = true;
       _error = null;
+      _searchOffset = 0;
     });
 
     try {
       debugPrint('🔍 [FriendSearch] Searching users with query: $query');
       final socialService = ref.read(socialServiceProvider);
-      final results = await socialService.searchUsers(
+      final response = await socialService.searchUsers(
         userId: _userId!,
         query: query,
         limit: 30,
+        offset: 0,
       );
-      debugPrint('✅ [FriendSearch] Found ${results.length} users');
+      final results = List<Map<String, dynamic>>.from(response['results'] ?? []);
+      final hasMore = response['has_more'] as bool? ?? false;
+      debugPrint('✅ [FriendSearch] Found ${results.length} users (has_more: $hasMore)');
       if (mounted) {
         setState(() {
           _searchResults = results;
           _isSearching = false;
+          _searchOffset = results.length;
+          _hasMoreResults = hasMore;
         });
       }
     } catch (e, stackTrace) {
@@ -131,6 +160,42 @@ class _FriendSearchScreenState extends ConsumerState<FriendSearchScreen>
           _error = 'Search failed';
           _isSearching = false;
         });
+      }
+    }
+  }
+
+  Future<void> _loadMoreResults() async {
+    if (_isLoadingMore || !_hasMoreResults || _userId == null) return;
+
+    final query = _searchController.text.trim();
+    if (query.isEmpty) return;
+
+    setState(() => _isLoadingMore = true);
+
+    try {
+      debugPrint('🔍 [FriendSearch] Loading more results, offset: $_searchOffset');
+      final socialService = ref.read(socialServiceProvider);
+      final response = await socialService.searchUsers(
+        userId: _userId!,
+        query: query,
+        limit: 30,
+        offset: _searchOffset,
+      );
+      final results = List<Map<String, dynamic>>.from(response['results'] ?? []);
+      final hasMore = response['has_more'] as bool? ?? false;
+      debugPrint('✅ [FriendSearch] Loaded ${results.length} more users');
+      if (mounted) {
+        setState(() {
+          _searchResults.addAll(results);
+          _searchOffset = _searchResults.length;
+          _hasMoreResults = hasMore;
+          _isLoadingMore = false;
+        });
+      }
+    } catch (e) {
+      debugPrint('❌ [FriendSearch] Load more error: $e');
+      if (mounted) {
+        setState(() => _isLoadingMore = false);
       }
     }
   }
@@ -203,6 +268,8 @@ class _FriendSearchScreenState extends ConsumerState<FriendSearchScreen>
       backgroundColor: backgroundColor,
       appBar: AppBar(
         backgroundColor: backgroundColor,
+        automaticallyImplyLeading: false,
+        leading: const GlassBackButton(),
         title: const Text('Find Friends'),
         centerTitle: true,
         bottom: PreferredSize(
@@ -219,7 +286,14 @@ class _FriendSearchScreenState extends ConsumerState<FriendSearchScreen>
                 if (value.isNotEmpty && _tabController.index != 0) {
                   _tabController.animateTo(0);
                 }
-                _performSearch(value);
+                _debounceTimer?.cancel();
+                if (value.trim().isEmpty) {
+                  _performSearch(value);
+                } else {
+                  _debounceTimer = Timer(const Duration(milliseconds: 400), () {
+                    _performSearch(value);
+                  });
+                }
               },
               decoration: InputDecoration(
                 hintText: 'Search by name or username...',
@@ -465,19 +539,42 @@ class _FriendSearchScreenState extends ConsumerState<FriendSearchScreen>
       );
     }
 
-    return ListView.builder(
-      padding: const EdgeInsets.all(16),
-      itemCount: _searchResults.length,
-      itemBuilder: (context, index) {
-        final user = _searchResults[index];
-        return Padding(
-          padding: const EdgeInsets.only(bottom: 12),
-          child: UserSearchResultCard(
-            user: user,
-            onAction: () => _handleFollowOrRequest(user),
-          ),
-        );
-      },
+    return RefreshIndicator(
+      onRefresh: () => _performSearch(_searchController.text),
+      child: ListView.builder(
+        controller: _searchScrollController,
+        padding: const EdgeInsets.all(16),
+        itemCount: _searchResults.length + (_isLoadingMore ? 1 : 0),
+        itemBuilder: (context, index) {
+          if (index == _searchResults.length) {
+            return const Center(
+              child: Padding(
+                padding: EdgeInsets.all(16),
+                child: CircularProgressIndicator(),
+              ),
+            );
+          }
+          final user = _searchResults[index];
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 12),
+            child: UserSearchResultCard(
+              user: user,
+              onAction: () => _handleFollowOrRequest(user),
+              onTap: () {
+                final targetUserId = user['id'] as String?;
+                if (targetUserId != null) {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => FriendProfileScreen(targetUserId: targetUserId),
+                    ),
+                  );
+                }
+              },
+            ),
+          );
+        },
+      ),
     );
   }
 
@@ -557,6 +654,17 @@ class _FriendSearchScreenState extends ConsumerState<FriendSearchScreen>
               user: user,
               onAction: () => _handleFollowOrRequest(user),
               showSuggestionReason: true,
+              onTap: () {
+                final targetUserId = user['id'] as String?;
+                if (targetUserId != null) {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => FriendProfileScreen(targetUserId: targetUserId),
+                    ),
+                  );
+                }
+              },
             ),
           );
         },

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
 import '../../../core/constants/app_colors.dart';
+import '../../../core/theme/accent_color_provider.dart';
 import '../../../data/providers/consistency_provider.dart';
 import '../../../data/services/haptic_service.dart';
 import '../../../widgets/glass_sheet.dart';
@@ -44,7 +45,8 @@ class _DateRangeFilterSheetState extends ConsumerState<DateRangeFilterSheet> {
     final backgroundColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
     final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    final cyan = isDark ? AppColors.cyan : AppColorsLight.cyan;
+    final accentEnum = ref.watch(accentColorProvider);
+    final accent = accentEnum.getColor(isDark);
 
     return GlassSheet(
       child: Padding(
@@ -79,6 +81,7 @@ class _DateRangeFilterSheetState extends ConsumerState<DateRangeFilterSheet> {
                   ...HeatmapTimeRange.values.map((preset) => _PresetChip(
                         label: preset.label,
                         isSelected: !_isCustomSelected && _selectedPreset == preset,
+                        accentColor: accent,
                         onTap: () {
                           HapticService.light();
                           setState(() {
@@ -91,6 +94,7 @@ class _DateRangeFilterSheetState extends ConsumerState<DateRangeFilterSheet> {
                   _PresetChip(
                     label: 'Custom',
                     isSelected: _isCustomSelected,
+                    accentColor: accent,
                     onTap: () => _showCustomDatePicker(context),
                   ),
                 ],
@@ -118,7 +122,7 @@ class _DateRangeFilterSheetState extends ConsumerState<DateRangeFilterSheet> {
                     Icon(
                       Icons.calendar_today_outlined,
                       size: 20,
-                      color: cyan,
+                      color: accent,
                     ),
                     const SizedBox(width: 12),
                     Expanded(
@@ -146,7 +150,7 @@ class _DateRangeFilterSheetState extends ConsumerState<DateRangeFilterSheet> {
                 child: ElevatedButton(
                   onPressed: _applySelection,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: cyan,
+                    backgroundColor: accent,
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     shape: RoundedRectangleBorder(
@@ -205,10 +209,11 @@ class _DateRangeFilterSheetState extends ConsumerState<DateRangeFilterSheet> {
       initialDateRange: initialRange,
       builder: (context, child) {
         final isDark = Theme.of(context).brightness == Brightness.dark;
+        final pickerAccent = ref.read(accentColorProvider).getColor(isDark);
         return Theme(
           data: Theme.of(context).copyWith(
             colorScheme: ColorScheme.fromSeed(
-              seedColor: AppColors.cyan,
+              seedColor: pickerAccent,
               brightness: isDark ? Brightness.dark : Brightness.light,
             ),
           ),
@@ -249,25 +254,26 @@ class _DateRangeFilterSheetState extends ConsumerState<DateRangeFilterSheet> {
 class _PresetChip extends StatelessWidget {
   final String label;
   final bool isSelected;
+  final Color accentColor;
   final VoidCallback onTap;
 
   const _PresetChip({
     required this.label,
     required this.isSelected,
+    required this.accentColor,
     required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final cyan = isDark ? AppColors.cyan : AppColorsLight.cyan;
     final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
 
     return Material(
       color: isSelected
-          ? cyan
-          : (isDark ? AppColors.pureBlack.withOpacity(0.3) : AppColorsLight.background),
+          ? accentColor
+          : (isDark ? AppColors.pureBlack.withValues(alpha: 0.3) : AppColorsLight.background),
       borderRadius: BorderRadius.circular(20),
       child: InkWell(
         onTap: onTap,
@@ -278,7 +284,7 @@ class _PresetChip extends StatelessWidget {
             borderRadius: BorderRadius.circular(20),
             border: Border.all(
               color: isSelected
-                  ? cyan
+                  ? accentColor
                   : (isDark ? AppColors.cardBorder : AppColorsLight.cardBorder),
             ),
           ),

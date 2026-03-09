@@ -318,7 +318,7 @@ class _StapleChoiceSheetState extends ConsumerState<StapleChoiceSheet> {
               iconColor: textMuted,
               title: 'Start from next workout',
               subtitle: 'Current workout unchanged',
-              showSectionChips: false,
+              showSectionChips: true,
               textPrimary: textPrimary,
               textMuted: textMuted,
               cardColor: cardColor,

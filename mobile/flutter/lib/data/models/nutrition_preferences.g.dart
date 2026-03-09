@@ -85,6 +85,8 @@ NutritionPreferences _$NutritionPreferencesFromJson(
   lastWeeklyCheckinAt: json['last_weekly_checkin_at'] == null
       ? null
       : DateTime.parse(json['last_weekly_checkin_at'] as String),
+  weeklyCheckinDismissCount:
+      (json['weekly_checkin_dismiss_count'] as num?)?.toInt() ?? 0,
 );
 
 Map<String, dynamic> _$NutritionPreferencesToJson(
@@ -133,6 +135,7 @@ Map<String, dynamic> _$NutritionPreferencesToJson(
   'calorie_estimate_bias': instance.calorieEstimateBias,
   'weekly_checkin_enabled': instance.weeklyCheckinEnabled,
   'last_weekly_checkin_at': instance.lastWeeklyCheckinAt?.toIso8601String(),
+  'weekly_checkin_dismiss_count': instance.weeklyCheckinDismissCount,
 };
 
 WeightLog _$WeightLogFromJson(Map<String, dynamic> json) => WeightLog(

@@ -990,6 +990,7 @@ class NutritionRepository {
     required String userId,
     required String description,
     required String mealType,
+    String? moodBefore,
   }) async* {
     debugPrint('🔍 [Nutrition] Starting streaming food ANALYSIS for $userId');
     final startTime = DateTime.now();
@@ -1046,6 +1047,7 @@ class NutritionRepository {
           'user_id': userId,
           'description': description,
           'meal_type': mealType,
+          if (moodBefore != null) 'mood_before': moodBefore,
         },
         options: Options(
           responseType: ResponseType.stream,
@@ -1948,12 +1950,12 @@ class NutritionRepository {
     try {
       debugPrint('📊 [Nutrition] Loading weekly check-in data for $userId');
 
-      // Fetch all data in parallel for performance
+      // Fetch all data in parallel — each guarded so one failure doesn't nuke all
       final results = await Future.wait([
-        getDetailedTDEE(userId),
-        getAdherenceSummary(userId),
-        getRecommendationOptions(userId),
-        getWeeklySummary(userId),
+        getDetailedTDEE(userId).catchError((_) => null),
+        getAdherenceSummary(userId).catchError((_) => null),
+        getRecommendationOptions(userId).catchError((_) => null),
+        getWeeklySummary(userId).catchError((_) => null),
       ]);
 
       final detailedTdee = results[0] as DetailedTDEE?;

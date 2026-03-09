@@ -1,12 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 import '../../../data/models/exercise_history.dart';
+import '../../../data/models/scores.dart';
 import '../../../data/providers/exercise_history_provider.dart';
+import '../../../data/providers/scores_provider.dart';
 import '../../../data/repositories/exercise_history_repository.dart';
+import '../../../data/services/api_client.dart';
 
-/// Main screen showing list of most performed exercises
-/// Tap an exercise to see detailed history
+/// Main screen showing list of most performed exercises and personal records
+/// Two-tab layout: "Exercises" tab and "PRs" tab
 class ExerciseHistoryScreen extends ConsumerStatefulWidget {
   const ExerciseHistoryScreen({super.key});
 
@@ -14,20 +18,24 @@ class ExerciseHistoryScreen extends ConsumerStatefulWidget {
   ConsumerState<ExerciseHistoryScreen> createState() => _ExerciseHistoryScreenState();
 }
 
-class _ExerciseHistoryScreenState extends ConsumerState<ExerciseHistoryScreen> {
+class _ExerciseHistoryScreenState extends ConsumerState<ExerciseHistoryScreen>
+    with SingleTickerProviderStateMixin {
   final _searchController = TextEditingController();
+  late final TabController _tabController;
   DateTime? _screenOpenTime;
 
   @override
   void initState() {
     super.initState();
     _screenOpenTime = DateTime.now();
+    _tabController = TabController(length: 2, vsync: this);
   }
 
   @override
   void dispose() {
     _logViewDuration();
     _searchController.dispose();
+    _tabController.dispose();
     super.dispose();
   }
 
@@ -44,72 +52,96 @@ class _ExerciseHistoryScreenState extends ConsumerState<ExerciseHistoryScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final exercisesAsync = ref.watch(filteredExercisesProvider);
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Exercise History'),
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(60),
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-            child: TextField(
-              controller: _searchController,
-              decoration: InputDecoration(
-                hintText: 'Search exercises...',
-                prefixIcon: const Icon(Icons.search),
-                suffixIcon: _searchController.text.isNotEmpty
-                    ? IconButton(
-                        icon: const Icon(Icons.clear),
-                        onPressed: () {
-                          _searchController.clear();
-                          ref.read(exerciseSearchQueryProvider.notifier).state = '';
-                        },
-                      )
-                    : null,
-                filled: true,
-                fillColor: theme.colorScheme.surfaceContainerHighest.withOpacity(0.5),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide.none,
-                ),
-                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              ),
-              onChanged: (value) {
-                ref.read(exerciseSearchQueryProvider.notifier).state = value;
-              },
-            ),
-          ),
+        title: const Text('Exercises & PRs'),
+        bottom: TabBar(
+          controller: _tabController,
+          tabs: const [
+            Tab(icon: Icon(Icons.fitness_center), text: 'Exercises'),
+            Tab(icon: Icon(Icons.emoji_events), text: 'PRs'),
+          ],
         ),
       ),
-      body: exercisesAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, _) => _buildErrorState(theme, error.toString()),
-        data: (exercises) {
-          if (exercises.isEmpty) {
-            return _buildEmptyState(theme);
-          }
-          return RefreshIndicator(
-            onRefresh: () async {
-              ref.invalidate(mostPerformedExercisesProvider);
-            },
-            child: ListView.builder(
-              padding: const EdgeInsets.all(16),
-              itemCount: exercises.length,
-              itemBuilder: (context, index) {
-                final exercise = exercises[index];
-                return _ExerciseCard(
-                  exercise: exercise,
-                  rank: index + 1,
-                  onTap: () {
-                    context.push('/stats/exercise-history/${Uri.encodeComponent(exercise.exerciseName)}');
-                  },
-                );
-              },
-            ),
-          );
-        },
+      body: TabBarView(
+        controller: _tabController,
+        children: [
+          _buildExercisesTab(theme),
+          const _PRsTab(),
+        ],
       ),
+    );
+  }
+
+  Widget _buildExercisesTab(ThemeData theme) {
+    final exercisesAsync = ref.watch(filteredExercisesProvider);
+
+    return Column(
+      children: [
+        // Search field
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+          child: TextField(
+            controller: _searchController,
+            decoration: InputDecoration(
+              hintText: 'Search exercises...',
+              prefixIcon: const Icon(Icons.search),
+              suffixIcon: _searchController.text.isNotEmpty
+                  ? IconButton(
+                      icon: const Icon(Icons.clear),
+                      onPressed: () {
+                        _searchController.clear();
+                        ref.read(exerciseSearchQueryProvider.notifier).state = '';
+                      },
+                    )
+                  : null,
+              filled: true,
+              fillColor: theme.colorScheme.surfaceContainerHighest.withOpacity(0.5),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide.none,
+              ),
+              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            ),
+            onChanged: (value) {
+              ref.read(exerciseSearchQueryProvider.notifier).state = value;
+            },
+          ),
+        ),
+
+        // Exercise list
+        Expanded(
+          child: exercisesAsync.when(
+            loading: () => const Center(child: CircularProgressIndicator()),
+            error: (error, _) => _buildErrorState(theme, error.toString()),
+            data: (exercises) {
+              if (exercises.isEmpty) {
+                return _buildEmptyState(theme);
+              }
+              return RefreshIndicator(
+                onRefresh: () async {
+                  ref.invalidate(mostPerformedExercisesProvider);
+                },
+                child: ListView.builder(
+                  padding: const EdgeInsets.all(16),
+                  itemCount: exercises.length,
+                  itemBuilder: (context, index) {
+                    final exercise = exercises[index];
+                    return _ExerciseCard(
+                      exercise: exercise,
+                      rank: index + 1,
+                      onTap: () {
+                        context.push('/stats/exercise-history/${Uri.encodeComponent(exercise.exerciseName)}');
+                      },
+                    );
+                  },
+                ),
+              );
+            },
+          ),
+        ),
+      ],
     );
   }
 
@@ -182,6 +214,340 @@ class _ExerciseHistoryScreenState extends ConsumerState<ExerciseHistoryScreen> {
           ],
         ),
       ),
+    );
+  }
+}
+
+/// PRs tab showing personal records summary and list
+class _PRsTab extends ConsumerStatefulWidget {
+  const _PRsTab();
+
+  @override
+  ConsumerState<_PRsTab> createState() => _PRsTabState();
+}
+
+class _PRsTabState extends ConsumerState<_PRsTab> {
+  String? _userId;
+  bool _hasLoadedPrs = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadPRs();
+  }
+
+  Future<void> _loadPRs() async {
+    final apiClient = ref.read(apiClientProvider);
+    _userId = await apiClient.getUserId();
+    if (_userId != null && !_hasLoadedPrs) {
+      _hasLoadedPrs = true;
+      ref.read(scoresProvider.notifier).loadPersonalRecords(
+        userId: _userId,
+        limit: 50,
+        periodDays: 30,
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scoresState = ref.watch(scoresProvider);
+    final prStats = scoresState.prStats;
+
+    if (scoresState.isLoading && prStats == null) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (prStats == null) {
+      return _buildEmptyPRState(theme);
+    }
+
+    final recentPrs = prStats.recentPrs;
+
+    return RefreshIndicator(
+      onRefresh: () async {
+        if (_userId != null) {
+          await ref.read(scoresProvider.notifier).loadPersonalRecords(
+            userId: _userId,
+            limit: 50,
+            periodDays: 30,
+          );
+        }
+      },
+      child: ListView(
+        padding: const EdgeInsets.all(16),
+        children: [
+          // Summary card
+          _buildSummaryCard(theme, prStats),
+          const SizedBox(height: 16),
+
+          // Recent PRs header
+          if (recentPrs.isNotEmpty) ...[
+            Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: Text(
+                'Recent Personal Records',
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+
+            // PR items
+            ...recentPrs.map((pr) => _buildPRItem(theme, pr)),
+          ],
+
+          if (recentPrs.isEmpty)
+            Padding(
+              padding: const EdgeInsets.only(top: 32),
+              child: _buildEmptyPRState(theme),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSummaryCard(ThemeData theme, PRStats prStats) {
+    return Card(
+      color: Colors.amber.withOpacity(0.12),
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: BorderSide(
+          color: Colors.amber.withOpacity(0.3),
+        ),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          children: [
+            _SummaryStatItem(
+              value: prStats.totalPrs.toString(),
+              label: 'Total PRs',
+              icon: Icons.emoji_events,
+              color: Colors.amber,
+            ),
+            Container(
+              width: 1,
+              height: 40,
+              color: Colors.amber.withOpacity(0.3),
+            ),
+            _SummaryStatItem(
+              value: prStats.prsThisPeriod.toString(),
+              label: 'Last 30 Days',
+              icon: Icons.calendar_month,
+              color: Colors.amber.shade700,
+            ),
+            Container(
+              width: 1,
+              height: 40,
+              color: Colors.amber.withOpacity(0.3),
+            ),
+            _SummaryStatItem(
+              value: prStats.currentPrStreak.toString(),
+              label: 'PR Streak',
+              icon: Icons.local_fire_department,
+              color: Colors.deepOrange,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPRItem(ThemeData theme, PersonalRecordScore pr) {
+    final isAllTime = pr.isAllTimePr;
+    final trophyColor = isAllTime ? Colors.amber : theme.colorScheme.primary;
+
+    String formattedDate;
+    try {
+      final date = DateTime.parse(pr.achievedAt);
+      formattedDate = DateFormat.yMMMd().format(date);
+    } catch (_) {
+      formattedDate = pr.achievedAt;
+    }
+
+    return Card(
+      margin: const EdgeInsets.only(bottom: 10),
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: Row(
+          children: [
+            // Trophy icon
+            Container(
+              width: 42,
+              height: 42,
+              decoration: BoxDecoration(
+                color: trophyColor.withOpacity(0.15),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(
+                Icons.emoji_events,
+                color: trophyColor,
+                size: 22,
+              ),
+            ),
+            const SizedBox(width: 14),
+
+            // Exercise info
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    pr.exerciseDisplayName,
+                    style: theme.textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 2),
+                  if (pr.muscleGroup != null)
+                    Text(
+                      pr.muscleGroup!
+                          .replaceAll('_', ' ')
+                          .split(' ')
+                          .map((w) => w.isEmpty ? w : '${w[0].toUpperCase()}${w.substring(1)}')
+                          .join(' '),
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  const SizedBox(height: 4),
+                  Text(
+                    pr.liftDescription,
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      fontWeight: FontWeight.w500,
+                      color: theme.colorScheme.primary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            // Improvement badge + date column
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                if (pr.improvementPercent != null && pr.improvementPercent! > 0)
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: Colors.green.withOpacity(0.12),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      '+${pr.improvementPercent!.toStringAsFixed(1)}%',
+                      style: theme.textTheme.labelSmall?.copyWith(
+                        color: Colors.green.shade700,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                const SizedBox(height: 6),
+                Text(
+                  formattedDate,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                    fontSize: 11,
+                  ),
+                ),
+                if (isAllTime)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 2),
+                    child: Text(
+                      'ALL-TIME',
+                      style: theme.textTheme.labelSmall?.copyWith(
+                        color: Colors.amber.shade700,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 9,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEmptyPRState(ThemeData theme) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.emoji_events_outlined,
+              size: 80,
+              color: theme.colorScheme.outline,
+            ),
+            const SizedBox(height: 24),
+            Text(
+              'No Personal Records Yet',
+              style: theme.textTheme.headlineSmall?.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'Keep training and pushing your limits. Your personal records will appear here as you get stronger.',
+              textAlign: TextAlign.center,
+              style: theme.textTheme.bodyLarge?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Summary stat item for the PR summary card
+class _SummaryStatItem extends StatelessWidget {
+  final String value;
+  final String label;
+  final IconData icon;
+  final Color color;
+
+  const _SummaryStatItem({
+    required this.value,
+    required this.label,
+    required this.icon,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, color: color, size: 20),
+        const SizedBox(height: 6),
+        Text(
+          value,
+          style: theme.textTheme.titleLarge?.copyWith(
+            fontWeight: FontWeight.bold,
+            color: color,
+          ),
+        ),
+        const SizedBox(height: 2),
+        Text(
+          label,
+          style: theme.textTheme.bodySmall?.copyWith(
+            color: theme.colorScheme.onSurfaceVariant,
+          ),
+        ),
+      ],
     );
   }
 }

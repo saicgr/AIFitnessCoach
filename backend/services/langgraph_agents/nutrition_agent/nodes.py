@@ -109,7 +109,7 @@ def should_use_tools(state: NutritionAgentState) -> Literal["agent", "respond"]:
 
     # Check for media_content_type from classifier
     media_content_type = state.get("media_content_type")
-    if media_content_type in ("app_screenshot", "nutrition_label"):
+    if media_content_type in ("app_screenshot", "nutrition_label", "food_menu", "food_buffet", "food_plate"):
         logger.info(f"[Nutrition Router] media_content_type={media_content_type} -> agent")
         return "agent"
 
@@ -222,6 +222,8 @@ EXAMPLES:
 {f'MEDIA_CONTENT_TYPE: {state.get("media_content_type")}' if state.get('media_content_type') else 'MEDIA_CONTENT_TYPE: none'}
 {f'ACTION REQUIRED: This is an app screenshot. Call parse_app_screenshot with the s3_keys and mime_types from media_refs.' if state.get('media_content_type') == 'app_screenshot' else ''}
 {f'ACTION REQUIRED: This is a nutrition label. Call parse_nutrition_label with the s3_keys and mime_types from media_refs.' if state.get('media_content_type') == 'nutrition_label' else ''}
+{f'ACTION REQUIRED: This is a restaurant menu. Call analyze_multi_food_images with s3_keys and mime_types from media_refs and analysis_mode="menu".' if state.get('media_content_type') == 'food_menu' else ''}
+{f'ACTION REQUIRED: This is a buffet spread. Call analyze_multi_food_images with s3_keys and mime_types from media_refs and analysis_mode="buffet".' if state.get('media_content_type') == 'food_buffet' else ''}
 
 USER_ID: {state['user_id']}"""
 

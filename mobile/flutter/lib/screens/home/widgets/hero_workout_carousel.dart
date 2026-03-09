@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/accent_color_provider.dart';
 import '../../../core/providers/user_provider.dart';
+import '../../../core/providers/week_start_provider.dart';
 import '../../../data/repositories/auth_repository.dart';
 import '../../../data/models/workout.dart';
 import '../../../data/repositories/workout_repository.dart';
@@ -65,16 +66,17 @@ class HeroWorkoutCarousel extends ConsumerStatefulWidget {
     _HeroWorkoutCarouselState.resetAutoGeneration();
   }
 
-  /// Get remaining workout dates for this week (today through Sunday).
+  /// Get remaining workout dates for this week (today through end of display week).
   /// Past days are skipped — no wrapping to next week.
-  static List<DateTime> getWorkoutDatesForWeek(List<int> workoutDays) {
+  /// Uses [weekConfig] to respect the user's Sunday/Monday week-start preference.
+  static List<DateTime> getWorkoutDatesForWeek(List<int> workoutDays, WeekDisplayConfig weekConfig) {
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
-    final monday = today.subtract(Duration(days: today.weekday - 1));
+    final weekStart = weekConfig.weekStart(today);
 
     final dates = <DateTime>[];
     for (final day in workoutDays) {
-      final thisWeekDate = monday.add(Duration(days: day));
+      final thisWeekDate = weekConfig.dateForDataIndex(weekStart, day);
       if (!thisWeekDate.isBefore(today)) {
         dates.add(thisWeekDate);
       }
@@ -124,16 +126,17 @@ class _HeroWorkoutCarouselState extends ConsumerState<HeroWorkoutCarousel> {
   String _dateKey(DateTime date) =>
       '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
 
-  /// Get remaining workout dates for this week (today through Sunday).
+  /// Get remaining workout dates for this week (today through end of display week).
   /// Past days are skipped — no wrapping to next week.
-  List<DateTime> _getWorkoutDatesForWeek(List<int> workoutDays) {
+  /// Uses [weekConfig] to respect the user's Sunday/Monday week-start preference.
+  List<DateTime> _getWorkoutDatesForWeek(List<int> workoutDays, WeekDisplayConfig weekConfig) {
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
-    final monday = today.subtract(Duration(days: today.weekday - 1));
+    final weekStart = weekConfig.weekStart(today);
 
     final dates = <DateTime>[];
     for (final day in workoutDays) {
-      final thisWeekDate = monday.add(Duration(days: day));
+      final thisWeekDate = weekConfig.dateForDataIndex(weekStart, day);
       // Only include today or future dates this week
       if (!thisWeekDate.isBefore(today)) {
         dates.add(thisWeekDate);
@@ -224,13 +227,15 @@ class _HeroWorkoutCarouselState extends ConsumerState<HeroWorkoutCarousel> {
         _locallyGeneratedWorkouts.removeWhere(
           (local) => allWorkouts.any((w) => w.id == local.id),
         );
+        mergedWorkouts.removeWhere((w) => w.generationMethod == 'health_connect_import');
 
         // Build carousel items: one per workout day (workout card or pending card)
         // Multiple workouts on the same day each get their own carousel card.
         List<CarouselItem> carouselItems = [];
 
         if (workoutDays.isNotEmpty) {
-          final workoutDates = _getWorkoutDatesForWeek(workoutDays);
+          final weekConfig = ref.watch(weekDisplayConfigProvider);
+          final workoutDates = _getWorkoutDatesForWeek(workoutDays, weekConfig);
           // Track which workouts have been added to avoid duplicates
           final addedWorkoutIds = <String>{};
 

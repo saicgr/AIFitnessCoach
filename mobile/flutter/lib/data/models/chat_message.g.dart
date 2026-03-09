@@ -23,6 +23,7 @@ ChatMessage _$ChatMessageFromJson(Map<String, dynamic> json) => ChatMessage(
   isPinned: json['isPinned'] as bool? ?? false,
   audioUrl: json['audio_url'] as String?,
   audioDurationMs: (json['audio_duration_ms'] as num?)?.toInt(),
+  coachPersonaId: json['coach_persona_id'] as String?,
 );
 
 Map<String, dynamic> _$ChatMessageToJson(ChatMessage instance) =>
@@ -41,6 +42,7 @@ Map<String, dynamic> _$ChatMessageToJson(ChatMessage instance) =>
       'isPinned': instance.isPinned,
       'audio_url': instance.audioUrl,
       'audio_duration_ms': instance.audioDurationMs,
+      'coach_persona_id': instance.coachPersonaId,
     };
 
 const _$AgentTypeEnumMap = {
@@ -115,6 +117,7 @@ ChatHistoryItem _$ChatHistoryItemFromJson(Map<String, dynamic> json) =>
       isPinned: json['is_pinned'] as bool? ?? false,
       audioUrl: json['audio_url'] as String?,
       audioDurationMs: (json['audio_duration_ms'] as num?)?.toInt(),
+      coachPersonaId: json['coach_persona_id'] as String?,
     );
 
 Map<String, dynamic> _$ChatHistoryItemToJson(ChatHistoryItem instance) =>
@@ -128,4 +131,5 @@ Map<String, dynamic> _$ChatHistoryItemToJson(ChatHistoryItem instance) =>
       'is_pinned': instance.isPinned,
       'audio_url': instance.audioUrl,
       'audio_duration_ms': instance.audioDurationMs,
+      'coach_persona_id': instance.coachPersonaId,
     };

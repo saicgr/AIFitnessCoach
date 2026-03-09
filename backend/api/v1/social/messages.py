@@ -6,6 +6,7 @@ Allows users to:
 - Get messages in a conversation
 - Send direct messages to other users
 - Mark messages as read
+- Create/manage group conversations (F12)
 """
 
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -25,6 +26,8 @@ from models.social import (
     ConversationParticipant,
     ConversationsResponse,
     MessagesResponse,
+    GroupCreate,
+    GroupUpdate,
 )
 
 router = APIRouter()
@@ -68,6 +71,18 @@ def _parse_participant(data: dict) -> ConversationParticipant:
     )
 
 
+def _check_blocked(db, user_id: str, other_user_id: str) -> bool:
+    """Check if either user has blocked the other. Returns True if blocked."""
+    try:
+        block_check = db.client.table("user_blocks").select("id").or_(
+            f"and(blocker_id.eq.{user_id},blocked_id.eq.{other_user_id}),"
+            f"and(blocker_id.eq.{other_user_id},blocked_id.eq.{user_id})"
+        ).execute()
+        return bool(block_check.data)
+    except Exception:
+        return False
+
+
 # =============================================================================
 # Get Conversations
 # =============================================================================
@@ -99,8 +114,8 @@ async def get_conversations(
         conversation_ids = [str(row["conversation_id"]) for row in convos_result.data]
 
         participants_result = db.client.table("conversation_participants").select(
-            "conversation_id, user_id, last_read_at, is_muted, users(name, avatar_url, is_support_user)"
-        ).in_("conversation_id", conversation_ids).neq("user_id", user_id).execute()
+            "conversation_id, user_id, last_read_at, is_muted, role, left_at, users(name, avatar_url, is_support_user)"
+        ).in_("conversation_id", conversation_ids).neq("user_id", user_id).is_("left_at", "null").execute()
 
         # Index participants by conversation_id
         participants_by_conv = {}
@@ -166,16 +181,17 @@ async def get_messages(
 
     Returns messages sorted by most recent first.
     Also marks messages as read for the current user.
+    Includes read receipt data for group messages (F13).
     """
     logger.info(f"[Messages] Getting messages for conversation {conversation_id}, user {user_id}")
 
     try:
         db = get_supabase_db()
 
-        # Verify user is participant
+        # Verify user is participant (and not left)
         participant_check = db.client.table("conversation_participants").select(
             "id"
-        ).eq("conversation_id", conversation_id).eq("user_id", user_id).execute()
+        ).eq("conversation_id", conversation_id).eq("user_id", user_id).is_("left_at", "null").execute()
 
         if not participant_check.data:
             raise HTTPException(status_code=403, detail="Not authorized to view this conversation")
@@ -187,7 +203,7 @@ async def get_messages(
 
         total_count = count_result.count or 0
 
-        # Get messages with sender info
+        # Get messages with sender info (includes display_name and avatar for group msgs)
         offset = (page - 1) * page_size
         messages_result = db.client.table("direct_messages").select(
             "*, users:sender_id(name, avatar_url, is_support_user)"
@@ -199,6 +215,31 @@ async def get_messages(
         for msg_data in messages_result.data:
             users_info = msg_data.pop("users", {}) or {}
             messages.append(_parse_message(msg_data, users_info))
+
+        # Read receipts (F13): get participants' last_read_at and privacy settings
+        participants_result = db.client.table("conversation_participants").select(
+            "user_id, last_read_at"
+        ).eq("conversation_id", conversation_id).is_("left_at", "null").neq("user_id", user_id).execute()
+
+        # Check which participants allow read receipts
+        participant_ids = [p["user_id"] for p in (participants_result.data or [])]
+        privacy_map = {}
+        if participant_ids:
+            privacy_result = db.client.table("user_privacy_settings").select(
+                "user_id, show_read_receipts"
+            ).in_("user_id", participant_ids).execute()
+            privacy_map = {p["user_id"]: p.get("show_read_receipts", True) for p in (privacy_result.data or [])}
+
+        # Build read_by info for each message
+        read_by_data = {}
+        for participant in (participants_result.data or []):
+            pid = participant["user_id"]
+            # Respect show_read_receipts privacy setting (default True)
+            if not privacy_map.get(pid, True):
+                continue
+            last_read = participant.get("last_read_at")
+            if last_read:
+                read_by_data[pid] = last_read
 
         # Mark messages as read
         now = datetime.utcnow().isoformat()
@@ -240,6 +281,7 @@ async def send_message(
     Send a direct message to another user.
 
     Creates a new conversation if one doesn't exist between the users.
+    For group conversations, provide conversation_id (no recipient_id needed).
     """
     logger.info(f"[Messages] Sending message from {user_id} to {request.recipient_id}")
 
@@ -247,6 +289,28 @@ async def send_message(
         db = get_supabase_db()
 
         conversation_id = request.conversation_id
+
+        # If conversation_id is provided, check if it's a group conversation
+        if conversation_id:
+            conv_check = db.client.table("conversations").select(
+                "id, is_group"
+            ).eq("id", conversation_id).execute()
+
+            if conv_check.data and conv_check.data[0].get("is_group"):
+                # Group message - verify sender is active participant
+                part_check = db.client.table("conversation_participants").select(
+                    "id"
+                ).eq("conversation_id", conversation_id).eq("user_id", user_id).is_("left_at", "null").execute()
+                if not part_check.data:
+                    raise HTTPException(status_code=403, detail="Not a member of this group")
+            else:
+                # DM with existing conversation - check blocks (F9)
+                if request.recipient_id and _check_blocked(db, user_id, request.recipient_id):
+                    raise HTTPException(status_code=403, detail="Cannot send message to this user")
+        else:
+            # New DM - check blocks (F9)
+            if request.recipient_id and _check_blocked(db, user_id, request.recipient_id):
+                raise HTTPException(status_code=403, detail="Cannot send message to this user")
 
         # If no conversation_id provided, get or create one
         if not conversation_id:
@@ -467,4 +531,253 @@ async def get_conversation_with_user(
 
     except Exception as e:
         logger.error(f"[Messages] Failed to get conversation: {e}")
+        raise safe_internal_error(e, "messages")
+
+
+# =============================================================================
+# Group Conversations (F12)
+# =============================================================================
+
+@router.post("/conversations/group")
+async def create_group_conversation(
+    group: GroupCreate,
+    user_id: str = Query(..., description="Creator's user ID"),
+    current_user: dict = Depends(get_current_user),
+):
+    """
+    Create a group conversation.
+
+    The creator is automatically added as an admin member.
+    Requires at least 2 other member IDs.
+    """
+    logger.info(f"[Messages] Creating group '{group.name}' by user {user_id}")
+
+    try:
+        db = get_supabase_db()
+
+        # Create conversation with is_group=True
+        conv_result = db.client.table("conversations").insert({
+            "is_group": True,
+            "group_name": group.name,
+            "created_by": user_id,
+        }).execute()
+
+        if not conv_result.data:
+            raise HTTPException(status_code=500, detail="Failed to create group conversation")
+
+        conversation_id = str(conv_result.data[0]["id"])
+
+        # Add creator as admin
+        participants = [
+            {
+                "conversation_id": conversation_id,
+                "user_id": user_id,
+                "role": "admin",
+            }
+        ]
+
+        # Add other members
+        for member_id in group.member_ids:
+            if member_id != user_id:
+                participants.append({
+                    "conversation_id": conversation_id,
+                    "user_id": member_id,
+                    "role": "member",
+                })
+
+        db.client.table("conversation_participants").insert(participants).execute()
+
+        # Send system message
+        db.client.table("direct_messages").insert({
+            "conversation_id": conversation_id,
+            "sender_id": user_id,
+            "content": f"Group '{group.name}' created",
+            "is_system_message": True,
+        }).execute()
+
+        logger.info(f"[Messages] Group created: {conversation_id} with {len(participants)} members")
+
+        return {
+            "conversation_id": conversation_id,
+            "group_name": group.name,
+            "member_count": len(participants),
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"[Messages] Failed to create group: {e}")
+        raise safe_internal_error(e, "messages")
+
+
+@router.put("/conversations/{conversation_id}/members")
+async def update_group_members(
+    conversation_id: str,
+    user_id: str = Query(..., description="Admin user ID"),
+    add_member_ids: List[str] = Query(default=[], description="Member IDs to add"),
+    remove_member_ids: List[str] = Query(default=[], description="Member IDs to remove"),
+    current_user: dict = Depends(get_current_user),
+):
+    """
+    Add or remove members from a group conversation (admin only).
+    """
+    logger.info(f"[Messages] Updating members for group {conversation_id}")
+
+    try:
+        db = get_supabase_db()
+
+        # Verify conversation is a group
+        conv_check = db.client.table("conversations").select(
+            "id, is_group"
+        ).eq("id", conversation_id).execute()
+
+        if not conv_check.data or not conv_check.data[0].get("is_group"):
+            raise HTTPException(status_code=400, detail="Not a group conversation")
+
+        # Verify user is admin
+        admin_check = db.client.table("conversation_participants").select(
+            "role"
+        ).eq("conversation_id", conversation_id).eq("user_id", user_id).is_("left_at", "null").execute()
+
+        if not admin_check.data or admin_check.data[0].get("role") != "admin":
+            raise HTTPException(status_code=403, detail="Only admins can manage members")
+
+        # Add members
+        for member_id in add_member_ids:
+            # Check if already a participant (might have left)
+            existing = db.client.table("conversation_participants").select(
+                "id, left_at"
+            ).eq("conversation_id", conversation_id).eq("user_id", member_id).execute()
+
+            if existing.data:
+                # Re-join if previously left
+                if existing.data[0].get("left_at"):
+                    db.client.table("conversation_participants").update({
+                        "left_at": None,
+                        "role": "member",
+                    }).eq("id", existing.data[0]["id"]).execute()
+            else:
+                db.client.table("conversation_participants").insert({
+                    "conversation_id": conversation_id,
+                    "user_id": member_id,
+                    "role": "member",
+                }).execute()
+
+        # Remove members (soft remove by setting left_at)
+        for member_id in remove_member_ids:
+            if member_id == user_id:
+                continue  # Admin can't remove themselves this way
+            db.client.table("conversation_participants").update({
+                "left_at": datetime.utcnow().isoformat(),
+            }).eq("conversation_id", conversation_id).eq("user_id", member_id).execute()
+
+        return {"success": True, "added": len(add_member_ids), "removed": len(remove_member_ids)}
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"[Messages] Failed to update group members: {e}")
+        raise safe_internal_error(e, "messages")
+
+
+@router.put("/conversations/{conversation_id}/settings")
+async def update_group_settings(
+    conversation_id: str,
+    update: GroupUpdate,
+    user_id: str = Query(..., description="Admin user ID"),
+    current_user: dict = Depends(get_current_user),
+):
+    """
+    Update group conversation settings (admin only).
+    """
+    logger.info(f"[Messages] Updating settings for group {conversation_id}")
+
+    try:
+        db = get_supabase_db()
+
+        # Verify conversation is a group
+        conv_check = db.client.table("conversations").select(
+            "id, is_group"
+        ).eq("id", conversation_id).execute()
+
+        if not conv_check.data or not conv_check.data[0].get("is_group"):
+            raise HTTPException(status_code=400, detail="Not a group conversation")
+
+        # Verify user is admin
+        admin_check = db.client.table("conversation_participants").select(
+            "role"
+        ).eq("conversation_id", conversation_id).eq("user_id", user_id).is_("left_at", "null").execute()
+
+        if not admin_check.data or admin_check.data[0].get("role") != "admin":
+            raise HTTPException(status_code=403, detail="Only admins can update group settings")
+
+        # Build update data
+        update_data = {}
+        if update.name is not None:
+            update_data["group_name"] = update.name
+        if update.avatar_url is not None:
+            update_data["group_avatar_url"] = update.avatar_url
+
+        if update_data:
+            update_data["updated_at"] = datetime.utcnow().isoformat()
+            db.client.table("conversations").update(update_data).eq("id", conversation_id).execute()
+
+        return {"success": True, "updated_fields": list(update_data.keys())}
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"[Messages] Failed to update group settings: {e}")
+        raise safe_internal_error(e, "messages")
+
+
+@router.post("/conversations/{conversation_id}/leave")
+async def leave_group(
+    conversation_id: str,
+    user_id: str = Query(..., description="User leaving the group"),
+    current_user: dict = Depends(get_current_user),
+):
+    """
+    Leave a group conversation.
+    """
+    logger.info(f"[Messages] User {user_id} leaving group {conversation_id}")
+
+    try:
+        db = get_supabase_db()
+
+        # Verify conversation is a group
+        conv_check = db.client.table("conversations").select(
+            "id, is_group"
+        ).eq("id", conversation_id).execute()
+
+        if not conv_check.data or not conv_check.data[0].get("is_group"):
+            raise HTTPException(status_code=400, detail="Not a group conversation")
+
+        # Verify user is participant
+        part_check = db.client.table("conversation_participants").select(
+            "id"
+        ).eq("conversation_id", conversation_id).eq("user_id", user_id).is_("left_at", "null").execute()
+
+        if not part_check.data:
+            raise HTTPException(status_code=400, detail="Not a member of this group")
+
+        # Set left_at
+        db.client.table("conversation_participants").update({
+            "left_at": datetime.utcnow().isoformat(),
+        }).eq("conversation_id", conversation_id).eq("user_id", user_id).execute()
+
+        # Send system message
+        db.client.table("direct_messages").insert({
+            "conversation_id": conversation_id,
+            "sender_id": user_id,
+            "content": "left the group",
+            "is_system_message": True,
+        }).execute()
+
+        return {"success": True, "message": "Left group successfully"}
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"[Messages] Failed to leave group: {e}")
         raise safe_internal_error(e, "messages")

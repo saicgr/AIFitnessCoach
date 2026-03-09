@@ -4,9 +4,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../core/animations/app_animations.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/theme/theme_colors.dart';
 import '../../../widgets/app_loading.dart';
 import '../../../widgets/app_snackbar.dart';
-import '../../../core/theme/theme_colors.dart';
 import '../../../data/providers/social_provider.dart';
 import '../../../data/repositories/auth_repository.dart';
 import '../../../widgets/segmented_tab_bar.dart';
@@ -160,10 +160,17 @@ class _FriendsTabState extends ConsumerState<FriendsTab>
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final backgroundColor = isDark ? AppColors.pureBlack : AppColorsLight.pureWhite;
+
+    // Watch social stats for the stats chips
+    final socialStatsAsync = _userId != null
+        ? ref.watch(socialStatsProvider(_userId!))
+        : null;
 
     return Column(
       children: [
+        // Social stats chips (moved from main social screen)
+        _buildStatsChips(context, isDark, socialStatsAsync),
+
         // Pending Requests Section (if any)
         if (_pendingCount > 0) _buildPendingRequestsSection(isDark),
 
@@ -269,7 +276,7 @@ class _FriendsTabState extends ConsumerState<FriendsTab>
             firstChild: Padding(
               padding: const EdgeInsets.only(top: 12),
               child: SizedBox(
-                height: 140,
+                height: 190,
                 child: _isLoadingPending
                     ? AppLoading.fullScreen()
                     : ListView.builder(
@@ -285,6 +292,7 @@ class _FriendsTabState extends ConsumerState<FriendsTab>
                               request: request,
                               onAccept: () => _handleAcceptRequest(request['id']),
                               onDecline: () => _handleDeclineRequest(request['id']),
+                              onViewProfile: () => _handleUserProfile(request['from_user_id'] as String?),
                             ),
                           );
                         },
@@ -478,6 +486,141 @@ class _FriendsTabState extends ConsumerState<FriendsTab>
           },
         );
       },
+    );
+  }
+
+  Widget _buildStatsChips(
+    BuildContext context,
+    bool isDark,
+    AsyncValue<Map<String, dynamic>>? statsAsync,
+  ) {
+    int friendsCount = 0;
+    int followersCount = 0;
+    int followingCount = 0;
+
+    if (statsAsync != null) {
+      statsAsync.whenData((statsData) {
+        friendsCount = statsData['friends_count'] as int? ?? 0;
+        followersCount = statsData['followers_count'] as int? ?? 0;
+        followingCount = statsData['following_count'] as int? ?? 0;
+      });
+    }
+
+    final colors = ref.colors(context);
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
+      child: Row(
+        children: [
+          Expanded(
+            child: _buildStatChip(
+              context,
+              isDark: isDark,
+              icon: Icons.people_rounded,
+              value: friendsCount,
+              label: 'Friends',
+              color: colors.accent,
+              onTap: () {
+                HapticFeedback.lightImpact();
+                _friendsTabController.animateTo(0);
+              },
+            ),
+          ),
+          Container(
+            width: 1,
+            height: 28,
+            margin: const EdgeInsets.symmetric(horizontal: 8),
+            color: isDark ? AppColors.cardBorder : AppColorsLight.cardBorder,
+          ),
+          Expanded(
+            child: _buildStatChip(
+              context,
+              isDark: isDark,
+              icon: Icons.person_rounded,
+              value: followersCount,
+              label: 'Followers',
+              color: colors.accent,
+              onTap: () {
+                HapticFeedback.lightImpact();
+                _friendsTabController.animateTo(1);
+              },
+            ),
+          ),
+          Container(
+            width: 1,
+            height: 28,
+            margin: const EdgeInsets.symmetric(horizontal: 8),
+            color: isDark ? AppColors.cardBorder : AppColorsLight.cardBorder,
+          ),
+          Expanded(
+            child: _buildStatChip(
+              context,
+              isDark: isDark,
+              icon: Icons.person_add_alt_1_rounded,
+              value: followingCount,
+              label: 'Following',
+              color: colors.accent,
+              onTap: () {
+                HapticFeedback.lightImpact();
+                _friendsTabController.animateTo(2);
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStatChip(
+    BuildContext context, {
+    required bool isDark,
+    required IconData icon,
+    required int value,
+    required String label,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 4),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(icon, color: color, size: 14),
+                  const SizedBox(width: 4),
+                  Text(
+                    '$value',
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: color,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 2),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 11,
+                  color: textMuted,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 

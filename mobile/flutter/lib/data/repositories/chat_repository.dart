@@ -37,7 +37,9 @@ final chatMessagesProvider =
   final apiClient = ref.watch(apiClientProvider);
   final workoutsNotifier = ref.watch(workoutsProvider.notifier);
   final workoutRepository = ref.watch(workoutRepositoryProvider);
-  final authState = ref.watch(authStateProvider);
+  // Only rebuild when user identity changes (login/logout), not on data refresh
+  ref.watch(authStateProvider.select((s) => s.user?.id));
+  final user = ref.read(authStateProvider).user;
   final themeNotifier = ref.watch(themeModeProvider.notifier);
   final router = ref.watch(routerProvider);
   final hydrationNotifier = ref.watch(hydrationProvider.notifier);
@@ -54,7 +56,7 @@ final chatMessagesProvider =
   // Sound + audio control callbacks for AI setting changes
   SoundPreferencesNotifier getSoundPrefs() => ref.read(soundPreferencesProvider.notifier);
   AudioPreferencesNotifier getAudioPrefs() => ref.read(audioPreferencesProvider.notifier);
-  return ChatMessagesNotifier(repository, apiClient, workoutsNotifier, workoutRepository, authState.user, themeNotifier, router, hydrationNotifier, nutritionNotifier, getAISettings, setAIGenerating, getUnifiedContext, offlineCoach, isOnline, getSoundPrefs, getAudioPrefs);
+  return ChatMessagesNotifier(repository, apiClient, workoutsNotifier, workoutRepository, user, themeNotifier, router, hydrationNotifier, nutritionNotifier, getAISettings, setAIGenerating, getUnifiedContext, offlineCoach, isOnline, getSoundPrefs, getAudioPrefs);
 });
 
 /// Chat repository for API calls
@@ -482,7 +484,19 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
   ];
 
   ChatMessagesNotifier(this._repository, this._apiClient, this._workoutsNotifier, this._workoutRepository, this._user, this._themeNotifier, this._router, this._hydrationNotifier, this._nutritionNotifier, this._getAISettings, this._setAIGenerating, this._getUnifiedContext, this._offlineCoach, this._isOnline, this._getSoundPrefs, this._getAudioPrefs)
-      : super(const AsyncValue.data([]));
+      : super(const AsyncValue.data([])) {
+    _restoreFromCache();
+  }
+
+  /// Restore messages from cache on notifier recreation to prevent empty flash
+  Future<void> _restoreFromCache() async {
+    final userId = await _apiClient.getUserId();
+    if (userId == null || !mounted) return;
+    final cached = await _loadFromCache(userId);
+    if (mounted && cached.isNotEmpty && (state.valueOrNull?.isEmpty ?? true)) {
+      state = AsyncValue.data(cached);
+    }
+  }
 
   bool get isLoading => _isLoading;
 
@@ -546,10 +560,11 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
     }
 
     final userId = await _apiClient.getUserId();
-    if (userId == null) return;
+    if (userId == null || !mounted) return;
 
     // 1. Load from cache first and show immediately
     final cachedMessages = await _loadFromCache(userId);
+    if (!mounted) return;
     if (cachedMessages.isNotEmpty) {
       state = AsyncValue.data(cachedMessages);
       debugPrint('🔍 [Chat] Showing ${cachedMessages.length} cached messages while fetching fresh data');
@@ -560,11 +575,13 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
     // 2. Fetch fresh data from API in background
     try {
       final messages = await _repository.getChatHistory(userId);
+      if (!mounted) return;
       state = AsyncValue.data(messages);
       _currentOffset = messages.length;
       // 3. Update cache with fresh data
       await _saveToCache(userId, messages);
     } catch (e, st) {
+      if (!mounted) return;
       // If we have cached data, keep showing it instead of error
       if (cachedMessages.isNotEmpty) {
         debugPrint('⚠️ [Chat] API fetch failed, keeping cached data: $e');
@@ -745,12 +762,14 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
         aiSettings: currentAISettings.toJson(),
         unifiedContext: unifiedContext,
       );
+      if (!mounted) return;
 
       // Mark user message as sent after successful API call
       _updateMessageStatus(userMessage, MessageStatus.sent);
 
       // Process action_data if present (await to ensure refresh completes)
       await _processActionData(response.actionData);
+      if (!mounted) return;
 
       // Debug logging for action_data (helps trace "Go to Workout" button issues)
       if (response.actionData != null) {
@@ -769,6 +788,7 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
         agentType: response.agentType,
         createdAt: DateTime.now().toIso8601String(),
         actionData: response.actionData, // Include action_data for UI buttons
+        coachPersonaId: currentAISettings.coachPersonaId,
       );
 
       // Debug: Check if hasGeneratedWorkout will be true
@@ -789,6 +809,7 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
     } catch (e, stackTrace) {
       debugPrint('❌ [Chat] Error sending message: $e');
       debugPrint('❌ [Chat] Stack trace: $stackTrace');
+      if (!mounted) return;
 
       // Mark user message as error
       _updateMessageStatus(userMessage, MessageStatus.error);
@@ -872,6 +893,7 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
         file: media.file,
         contentType: media.mimeType,
       );
+      if (!mounted) return;
 
       // Update user message with persistent public URL
       if (publicUrl != null) {
@@ -935,9 +957,11 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
         unifiedContext: unifiedContext,
         mediaRef: mediaRef,
       );
+      if (!mounted) return;
 
       // Process action_data
       await _processActionData(response.actionData);
+      if (!mounted) return;
 
       // Remove system messages (upload/analyzing) and add the assistant response
       final finalMsgs = (state.valueOrNull ?? []).where((m) =>
@@ -950,6 +974,7 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
         agentType: response.agentType,
         createdAt: DateTime.now().toIso8601String(),
         actionData: response.actionData,
+        coachPersonaId: currentAISettings.coachPersonaId,
       );
 
       final newMessages = [...finalMsgs, assistantMessage];
@@ -959,6 +984,7 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
     } catch (e, stackTrace) {
       debugPrint('❌ [Chat] Error sending message with media: $e');
       debugPrint('❌ [Chat] Stack trace: $stackTrace');
+      if (!mounted) return;
 
       // Remove system messages, add error
       final errorMsgs = (state.valueOrNull ?? []).where((m) =>
@@ -1035,6 +1061,7 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
       }).toList();
 
       final presignedItems = await _repository.getBatchPresignedUrls(files: fileSpecs);
+      if (!mounted) return;
 
       // Step 3: Upload all to S3 in parallel with individual error handling
       final uploadResults = <bool>[];
@@ -1059,6 +1086,7 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
         }),
       );
 
+      if (!mounted) return;
       final successCount = uploadResults.where((r) => r).length;
       final failCount = uploadErrors.length;
 
@@ -1133,8 +1161,10 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
         unifiedContext: unifiedContext,
         mediaRefs: mediaRefs,
       );
+      if (!mounted) return;
 
       await _processActionData(response.actionData);
+      if (!mounted) return;
 
       // Remove system messages and add response
       final finalMsgs = (state.valueOrNull ?? []).where((m) =>
@@ -1147,6 +1177,7 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
         agentType: response.agentType,
         createdAt: DateTime.now().toIso8601String(),
         actionData: response.actionData,
+        coachPersonaId: currentAISettings.coachPersonaId,
       );
 
       final newMessages = [...finalMsgs, assistantMessage];
@@ -1155,6 +1186,7 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
     } catch (e, stackTrace) {
       debugPrint('❌ [Chat] Error sending multi-media message: $e');
       debugPrint('❌ [Chat] Stack trace: $stackTrace');
+      if (!mounted) return;
 
       final errorMsgs = (state.valueOrNull ?? []).where((m) =>
           !(m.role == 'system' && (m.content.contains('Uploading') || m.content.contains('Analyzing')))).toList();
@@ -1293,7 +1325,7 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
     if (!_hasMoreMessages || _isLoading) return;
 
     final userId = await _apiClient.getUserId();
-    if (userId == null) return;
+    if (userId == null || !mounted) return;
 
     try {
       final olderMessages = await _repository.getChatHistory(
@@ -1301,6 +1333,7 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
         limit: 50,
         offset: _currentOffset,
       );
+      if (!mounted) return;
 
       if (olderMessages.length < 50) {
         _hasMoreMessages = false;
@@ -1394,6 +1427,7 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
         file: audioFile,
         contentType: 'audio/m4a',
       );
+      if (!mounted) return;
 
       // Update user message with audio URL and sent status
       final updatedUserMessage = userMessage.copyWith(
@@ -1445,11 +1479,13 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
         unifiedContext: unifiedContext,
         mediaRef: mediaRef,
       );
+      if (!mounted) return;
 
       // Mark user message as delivered
       _updateMessageStatus(updatedUserMessage, MessageStatus.delivered);
 
       await _processActionData(response.actionData);
+      if (!mounted) return;
 
       final assistantMessage = ChatMessage(
         role: 'assistant',
@@ -1458,6 +1494,7 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
         agentType: response.agentType,
         createdAt: DateTime.now().toIso8601String(),
         actionData: response.actionData,
+        coachPersonaId: currentAISettings.coachPersonaId,
       );
 
       final updatedMessages = state.valueOrNull ?? [];
@@ -1467,6 +1504,7 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
     } catch (e, stackTrace) {
       debugPrint('❌ [Chat] Error sending voice message: $e');
       debugPrint('❌ [Chat] Stack trace: $stackTrace');
+      if (!mounted) return;
 
       _updateMessageStatus(userMessage, MessageStatus.error);
 

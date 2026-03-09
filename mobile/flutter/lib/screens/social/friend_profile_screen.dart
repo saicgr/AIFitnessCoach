@@ -141,6 +141,57 @@ class _FriendProfileScreenState extends ConsumerState<FriendProfileScreen> {
               ),
         ),
         centerTitle: false,
+        actions: [
+          PopupMenuButton<String>(
+            onSelected: (value) async {
+              if (value == 'block') {
+                final confirm = await showDialog<bool>(
+                  context: context,
+                  builder: (context) => AlertDialog(
+                    title: const Text('Block User'),
+                    content: const Text(
+                      'This user will not be able to see your content or message you. You can unblock them later.',
+                    ),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(context, false),
+                        child: const Text('Cancel'),
+                      ),
+                      TextButton(
+                        onPressed: () => Navigator.pop(context, true),
+                        style: TextButton.styleFrom(foregroundColor: Colors.red),
+                        child: const Text('Block'),
+                      ),
+                    ],
+                  ),
+                );
+                if (confirm == true) {
+                  try {
+                    await ref.read(socialServiceProvider).blockUser(widget.targetUserId);
+                    if (mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('User blocked')),
+                      );
+                      Navigator.pop(context);
+                    }
+                  } catch (e) {
+                    if (mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('Failed to block user: $e')),
+                      );
+                    }
+                  }
+                }
+              }
+            },
+            itemBuilder: (context) => [
+              const PopupMenuItem(
+                value: 'block',
+                child: Text('Block User', style: TextStyle(color: Colors.red)),
+              ),
+            ],
+          ),
+        ],
       ),
       body: _buildBody(context, isDark),
     );

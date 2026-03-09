@@ -31,7 +31,6 @@ import '../progress/comparison_view.dart';
 import '../progress/photo_editor_screen.dart';
 import '../progress/widgets/readiness_checkin_card.dart';
 import '../progress/widgets/strength_overview_card.dart';
-import '../progress/widgets/pr_summary_card.dart';
 import '../../data/providers/mood_history_provider.dart';
 import '../../widgets/mood_picker_sheet.dart';
 import '../../data/models/nutrition_preferences.dart';
@@ -42,6 +41,9 @@ import '../mood/widgets/mood_weekly_chart.dart';
 import '../mood/widgets/mood_streak_card.dart';
 import '../mood/widgets/mood_analytics_card.dart';
 import '../mood/widgets/mood_calendar_heatmap.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import '../../data/repositories/auth_repository.dart';
+import '../../data/repositories/measurements_repository.dart';
 import 'widgets/date_range_filter_sheet.dart';
 import 'widgets/export_stats_sheet.dart';
 import 'widgets/share_stats_sheet.dart';
@@ -96,6 +98,10 @@ class _ComprehensiveStatsScreenState extends ConsumerState<ComprehensiveStatsScr
       ref.read(progressPhotosNotifierProvider(userId).notifier).loadAll();
       // Load milestones data
       ref.read(milestonesProvider.notifier).loadMilestoneProgress(userId: userId);
+      // Load scores overview (consistency, readiness, etc.)
+      ref.read(scoresProvider.notifier).loadScoresOverview(userId: userId);
+      // Load personal records
+      ref.read(scoresProvider.notifier).loadPersonalRecords(userId: userId);
 
       // If openPhotoSheet is requested, switch to Photos tab
       if (widget.openPhotoSheet) {
@@ -108,12 +114,20 @@ class _ComprehensiveStatsScreenState extends ConsumerState<ComprehensiveStatsScr
     }
   }
 
-  static const _tabLabels = ['Overview', 'Photos', 'Strength', 'Body', 'Nutrition', 'Mood'];
+  static const _tabLabels = ['Overview', 'Photos', 'Score', 'Measurements', 'Nutrition', 'Mood'];
+  static const _tabIcons = [
+    Icons.dashboard_rounded,      // Overview
+    Icons.photo_library_rounded,  // Photos
+    Icons.emoji_events_rounded,   // Score
+    Icons.straighten_rounded,     // Measurements
+    Icons.restaurant_rounded,     // Nutrition
+    Icons.mood_rounded,           // Mood
+  ];
   static const _tabColors = [
     Color(0xFF3B82F6), // Overview - Blue
     Color(0xFFA855F7), // Photos - Purple
-    Color(0xFFF97316), // Strength - Orange
-    Color(0xFF22C55E), // Body - Green
+    Color(0xFFF97316), // Score - Orange
+    Color(0xFF22C55E), // Measurements - Green
     Color(0xFFEF4444), // Nutrition - Red
     Color(0xFFEC4899), // Mood - Pink
   ];
@@ -166,13 +180,20 @@ class _ComprehensiveStatsScreenState extends ConsumerState<ComprehensiveStatsScr
                             ]
                           : null,
                     ),
-                    child: Text(
-                      _tabLabels[i],
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-                        color: fg,
-                      ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(_tabIcons[i], size: 16, color: fg),
+                        const SizedBox(width: 6),
+                        Text(
+                          _tabLabels[i],
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                            color: fg,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ),
@@ -269,7 +290,7 @@ class _ComprehensiveStatsScreenState extends ConsumerState<ComprehensiveStatsScr
                 _OverviewTab(),
                 _PhotosTab(userId: _userId, openPhotoSheet: widget.openPhotoSheet),
                 _StrengthTab(userId: _userId),
-                _BodyTab(),
+                _MeasurementsTab(userId: _userId),
                 _NutritionTab(userId: _userId),
                 _MoodTab(),
               ],
@@ -463,7 +484,7 @@ class _OverviewTabState extends ConsumerState<_OverviewTab> {
     );
   }
 
-  void _updateHighlightedDates(String? searchQuery) {
+  Future<void> _updateHighlightedDates(String? searchQuery) async {
     if (searchQuery == null || searchQuery.isEmpty) {
       if (_highlightedDates.isNotEmpty) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -477,29 +498,26 @@ class _OverviewTabState extends ConsumerState<_OverviewTab> {
       return;
     }
 
-    // Get search results and update highlighted dates
-    final apiClient = ref.read(apiClientProvider);
-    final timeRange = ref.read(heatmapTimeRangeProvider);
+    try {
+      final apiClient = ref.read(apiClientProvider);
+      final timeRange = ref.read(heatmapTimeRangeProvider);
 
-    apiClient.getUserId().then((userId) {
-      if (userId != null && mounted) {
-        ref
-            .read(exerciseSearchProvider((
-              userId: userId,
-              exerciseName: searchQuery,
-              weeks: timeRange.weeks,
-            )).future)
-            .then((response) {
-          if (mounted) {
-            setState(() {
-              _highlightedDates = response.matchingDates.toSet();
-            });
-          }
-        }).catchError((_) {
-          // Ignore errors
-        });
-      }
-    });
+      final userId = await apiClient.getUserId();
+      if (userId == null || !mounted) return;
+
+      final response = await ref.read(exerciseSearchProvider((
+        userId: userId,
+        exerciseName: searchQuery,
+        weeks: timeRange.weeks,
+      )).future);
+
+      if (!mounted) return;
+      setState(() {
+        _highlightedDates = response.matchingDates.toSet();
+      });
+    } catch (_) {
+      // Ignore errors
+    }
   }
 }
 
@@ -1532,166 +1550,305 @@ class _StrengthTab extends ConsumerWidget {
       return AppLoading.fullScreen();
     }
 
-    return RefreshIndicator(
-      onRefresh: () async {
-        await ref.read(scoresProvider.notifier).loadScoresOverview(userId: userId);
-      },
-      child: SingleChildScrollView(
-        physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Readiness Check-in Card
-            ReadinessCheckinCard(
-              userId: userId!,
-              onCheckInComplete: () {
-                // Refresh overview after check-in
-                ref.read(scoresProvider.notifier).loadScoresOverview();
-              },
-            ),
-            const SizedBox(height: 16),
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final colorScheme = Theme.of(context).colorScheme;
 
-            // Strength Overview Card
-            StrengthOverviewCard(
-              userId: userId!,
-              onTapMuscleGroup: (muscleGroup) {
-                // Navigate to muscle analytics detail
-                context.push('/stats/muscle-analytics/$muscleGroup');
-              },
-            ),
-            const SizedBox(height: 16),
-
-            // Personal Records Summary Card
-            PRSummaryCard(userId: userId!),
-            const SizedBox(height: 16),
-
-            // Analytics Navigation Cards
-            _buildAnalyticsNavigationSection(context),
-            const SizedBox(height: 80), // Bottom padding for scroll
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildAnalyticsNavigationSection(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+    return Stack(
       children: [
-        Text(
-          'Detailed Analytics',
-          style: theme.textTheme.titleMedium?.copyWith(
-            fontWeight: FontWeight.bold,
+        RefreshIndicator(
+          onRefresh: () async {
+            await ref.read(scoresProvider.notifier).loadAllScores(userId: userId);
+          },
+          child: SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Fitness Score Summary
+                _FitnessScoreCard(userId: userId!),
+                const SizedBox(height: 16),
+
+                // Daily Readiness Check-In
+                ReadinessCheckinCard(userId: userId!),
+                const SizedBox(height: 16),
+
+                // Strength Overview Card
+                StrengthOverviewCard(
+                  userId: userId!,
+                  onTapMuscleGroup: (muscleGroup) {
+                    context.push('/stats/muscle-analytics/$muscleGroup');
+                  },
+                ),
+                const SizedBox(height: 24),
+
+                // Recent Personal Records
+                _SectionHeader(title: 'Recent Personal Records'),
+                const SizedBox(height: 12),
+                _PRList(),
+                const SizedBox(height: 16),
+
+                const SizedBox(height: 80), // Bottom padding for floating buttons
+              ],
+            ),
           ),
         ),
-        const SizedBox(height: 12),
-        Row(
-          children: [
-            Expanded(
-              child: _AnalyticsNavCard(
-                icon: Icons.history,
-                title: 'Exercise History',
-                subtitle: 'Per-exercise progress & PRs',
-                color: colorScheme.primary,
-                onTap: () => context.push('/stats/exercise-history'),
-              ),
+
+        // Floating analytics buttons at bottom
+        Positioned(
+          left: 16,
+          right: 16,
+          bottom: 16,
+          child: Container(
+            decoration: BoxDecoration(
+              color: isDark
+                  ? Colors.black.withValues(alpha: 0.85)
+                  : Colors.white.withValues(alpha: 0.92),
+              borderRadius: BorderRadius.circular(14),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.15),
+                  blurRadius: 12,
+                  offset: const Offset(0, -2),
+                ),
+              ],
             ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: _AnalyticsNavCard(
-                icon: Icons.fitness_center,
-                title: 'Muscle Analytics',
-                subtitle: 'Training volume & balance',
-                color: colorScheme.secondary,
-                onTap: () => context.push('/stats/muscle-analytics'),
-              ),
+            padding: const EdgeInsets.all(8),
+            child: Row(
+              children: [
+                Expanded(
+                  child: _FloatingNavButton(
+                    icon: Icons.emoji_events,
+                    label: 'Exercises & PRs',
+                    color: colorScheme.primary,
+                    onTap: () => context.push('/stats/exercise-history'),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: _FloatingNavButton(
+                    icon: Icons.fitness_center,
+                    label: 'Muscle Analytics',
+                    color: colorScheme.secondary,
+                    onTap: () => context.push('/stats/muscle-analytics'),
+                  ),
+                ),
+              ],
             ),
-          ],
+          ),
         ),
       ],
     );
   }
+
 }
 
-/// Navigation card for analytics sections
-class _AnalyticsNavCard extends StatelessWidget {
+/// Fitness Score Summary Card showing overall score and 4 component breakdowns
+class _FitnessScoreCard extends ConsumerWidget {
+  final String userId;
+
+  const _FitnessScoreCard({required this.userId});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+
+    final fitnessBreakdown = ref.watch(fitnessScoreBreakdownProvider);
+
+    if (fitnessBreakdown == null) {
+      return Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: elevated,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: cardBorder),
+        ),
+        child: Column(
+          children: [
+            Icon(Icons.insights_outlined, size: 40, color: textMuted),
+            const SizedBox(height: 8),
+            Text(
+              'Fitness score will appear after your first workout',
+              textAlign: TextAlign.center,
+              style: TextStyle(color: textMuted, fontSize: 13),
+            ),
+          ],
+        ),
+      );
+    }
+
+    final overallScore = fitnessBreakdown.overallScore;
+    final levelColor = Color(fitnessBreakdown.levelColorValue);
+
+    final components = [
+      _ScoreComponent('Strength', fitnessBreakdown.strengthScore, 0.40, const Color(0xFFEF4444)),
+      _ScoreComponent('Consistency', fitnessBreakdown.consistencyScore, 0.30, const Color(0xFF3B82F6)),
+      _ScoreComponent('Nutrition', fitnessBreakdown.nutritionScore, 0.20, const Color(0xFF22C55E)),
+      _ScoreComponent('Readiness', fitnessBreakdown.readinessScore, 0.10, const Color(0xFFA855F7)),
+    ];
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: elevated,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: cardBorder),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header row with overall score
+          Row(
+            children: [
+              // Score circle
+              Container(
+                width: 56,
+                height: 56,
+                decoration: BoxDecoration(
+                  color: levelColor,
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: levelColor.withOpacity(0.3),
+                      blurRadius: 10,
+                      spreadRadius: 1,
+                    ),
+                  ],
+                ),
+                child: Center(
+                  child: Text(
+                    '$overallScore',
+                    style: const TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Fitness Score',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        color: textPrimary,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      fitnessBreakdown.levelDescription,
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: levelColor,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+
+          // Component bars
+          ...components.map((c) => Padding(
+            padding: const EdgeInsets.only(bottom: 10),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      '${c.label} (${(c.weight * 100).toInt()}%)',
+                      style: TextStyle(fontSize: 12, color: textMuted),
+                    ),
+                    Text(
+                      '${c.score}',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: textPrimary,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(4),
+                  child: LinearProgressIndicator(
+                    value: c.score / 100,
+                    minHeight: 6,
+                    backgroundColor: c.color.withOpacity(0.15),
+                    valueColor: AlwaysStoppedAnimation(c.color),
+                  ),
+                ),
+              ],
+            ),
+          )),
+        ],
+      ),
+    );
+  }
+}
+
+class _ScoreComponent {
+  final String label;
+  final int score;
+  final double weight;
+  final Color color;
+
+  const _ScoreComponent(this.label, this.score, this.weight, this.color);
+}
+
+class _FloatingNavButton extends StatelessWidget {
   final IconData icon;
-  final String title;
-  final String subtitle;
+  final String label;
   final Color color;
   final VoidCallback onTap;
 
-  const _AnalyticsNavCard({
+  const _FloatingNavButton({
     required this.icon,
-    required this.title,
-    required this.subtitle,
+    required this.label,
     required this.color,
     required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-
-    return Card(
-      clipBehavior: Clip.antiAlias,
+    final colorScheme = Theme.of(context).colorScheme;
+    return Material(
+      color: color.withValues(alpha: 0.1),
+      borderRadius: BorderRadius.circular(10),
       child: InkWell(
         onTap: onTap,
-        child: Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                color.withOpacity(0.1),
-                color.withOpacity(0.05),
-              ],
-            ),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+        borderRadius: BorderRadius.circular(10),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: color.withOpacity(0.15),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Icon(icon, color: color, size: 24),
-              ),
-              const SizedBox(height: 12),
-              Text(
-                title,
-                style: theme.textTheme.titleSmall?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                subtitle,
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: colorScheme.onSurfaceVariant,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Row(
-                children: [
-                  Text(
-                    'View',
-                    style: theme.textTheme.labelMedium?.copyWith(
-                      color: color,
-                      fontWeight: FontWeight.w600,
-                    ),
+              Icon(icon, size: 18, color: color),
+              const SizedBox(width: 6),
+              Flexible(
+                child: Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: colorScheme.onSurface,
                   ),
-                  const SizedBox(width: 4),
-                  Icon(Icons.arrow_forward, size: 16, color: color),
-                ],
+                  overflow: TextOverflow.ellipsis,
+                ),
               ),
             ],
           ),
@@ -1705,49 +1862,862 @@ class _AnalyticsNavCard extends StatelessWidget {
 // BODY TAB - Weight, measurements, body composition
 // ═══════════════════════════════════════════════════════════════════
 
-class _BodyTab extends StatelessWidget {
+class _MeasurementsTab extends ConsumerStatefulWidget {
+  final String? userId;
+  const _MeasurementsTab({this.userId});
+
+  @override
+  ConsumerState<_MeasurementsTab> createState() => _MeasurementsTabState();
+}
+
+class _MeasurementsTabState extends ConsumerState<_MeasurementsTab> {
+  String _selectedPeriod = '30d';
+  MeasurementType? _selectedMetricType;
+  List<MeasurementType> _measurementOrder = [];
+
+  static const _defaultOrder = [
+    MeasurementType.weight, MeasurementType.bodyFat,
+    MeasurementType.chest, MeasurementType.waist, MeasurementType.hips,
+    MeasurementType.shoulders, MeasurementType.neck,
+    MeasurementType.bicepsLeft, MeasurementType.bicepsRight,
+    MeasurementType.forearmLeft, MeasurementType.forearmRight,
+    MeasurementType.thighLeft, MeasurementType.thighRight,
+    MeasurementType.calfLeft, MeasurementType.calfRight,
+  ];
+
+  final _periods = [
+    {'label': '7D', 'value': '7d', 'days': 7},
+    {'label': '30D', 'value': '30d', 'days': 30},
+    {'label': '90D', 'value': '90d', 'days': 90},
+    {'label': 'All', 'value': 'all', 'days': 365},
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadOrder();
+    _loadMeasurements();
+  }
+
+  Future<void> _loadOrder() async {
+    final prefs = await SharedPreferences.getInstance();
+    final saved = prefs.getStringList('measurement_order');
+    if (saved != null && saved.isNotEmpty) {
+      final order = <MeasurementType>[];
+      for (final name in saved) {
+        final t = MeasurementType.values.where((t) => t.name == name).firstOrNull;
+        if (t != null) order.add(t);
+      }
+      // Add any missing types
+      for (final t in _defaultOrder) {
+        if (!order.contains(t)) order.add(t);
+      }
+      if (mounted) setState(() => _measurementOrder = order);
+    } else {
+      setState(() => _measurementOrder = List.from(_defaultOrder));
+    }
+  }
+
+  Future<void> _saveOrder() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setStringList(
+      'measurement_order',
+      _measurementOrder.map((t) => t.name).toList(),
+    );
+  }
+
+  Future<void> _loadMeasurements() async {
+    final userId = widget.userId;
+    if (userId != null) {
+      ref.read(measurementsProvider.notifier).loadAllMeasurements(userId);
+    }
+  }
+
+  List<MeasurementEntry> _filterByPeriod(List<MeasurementEntry> history) {
+    if (_selectedPeriod == 'all') return history;
+    final days = _periods.firstWhere((p) => p['value'] == _selectedPeriod)['days'] as int;
+    final cutoff = DateTime.now().subtract(Duration(days: days));
+    return history.where((e) => e.recordedAt.isAfter(cutoff)).toList();
+  }
+
+  List<double> _computeEWMA(List<double> values, {double alpha = 0.3}) {
+    if (values.isEmpty) return [];
+    final result = <double>[values.first];
+    for (int i = 1; i < values.length; i++) {
+      result.add(alpha * values[i] + (1 - alpha) * result[i - 1]);
+    }
+    return result;
+  }
+
+  String _formatValue(double value) {
+    if (value == value.roundToDouble()) return value.toInt().toString();
+    return value.toStringAsFixed(1);
+  }
+
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Weight tracking
-          _SectionHeader(
-            title: 'Weight Tracking',
-            onViewAll: () => context.push('/measurements'),
-          ),
-          const SizedBox(height: 12),
-          _PlaceholderGraph(
-            height: 200,
-            message: 'Weight trend over time',
-          ),
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+    final cyan = isDark ? AppColors.cyan : AppColorsLight.cyan;
 
-          const SizedBox(height: 24),
+    final state = ref.watch(measurementsProvider);
+    final summary = state.summary;
+    final auth = ref.watch(authStateProvider);
+    final heightCm = auth.user?.heightCm;
+    final gender = auth.user?.gender;
 
-          // Current measurements
-          _SectionHeader(title: 'Current Measurements'),
-          const SizedBox(height: 12),
-          _MeasurementsList(),
+    if (state.isLoading) return AppLoading.fullScreen();
 
-          const SizedBox(height: 24),
+    // Determine which metric types have data
+    final typesWithData = state.historyByType.entries
+        .where((e) => e.value.isNotEmpty)
+        .map((e) => e.key)
+        .toList();
 
-          // Add measurement button
-          ElevatedButton.icon(
-            onPressed: () => context.push('/measurements'),
-            icon: const Icon(Icons.add),
-            label: const Text('Log New Measurement'),
-            style: ElevatedButton.styleFrom(
-              minimumSize: const Size(double.infinity, 48),
+    // Default selected metric to first with data (excluding weight since it has its own chart)
+    if (_selectedMetricType == null && typesWithData.isNotEmpty) {
+      _selectedMetricType = typesWithData.first;
+    }
+
+    // Compute derived metrics
+    final derivedMetrics = summary != null
+        ? computeDerivedMetrics(summary: summary, heightCm: heightCm, gender: gender)
+        : <DerivedMetricType, DerivedMetricResult>{};
+
+    return Stack(
+      children: [
+        RefreshIndicator(
+          onRefresh: _loadMeasurements,
+          color: cyan,
+          child: SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Weight Tracking section
+                _SectionHeader(
+                  title: 'Weight Tracking',
+                  onViewAll: () => context.push('/measurements'),
+                ),
+                const SizedBox(height: 12),
+
+                // Time range chips
+                _buildTimeRangeChips(cyan: cyan, elevated: elevated, textMuted: textMuted, cardBorder: cardBorder),
+                const SizedBox(height: 12),
+
+                // Weight trend chart
+                _buildWeightChart(
+                  state: state,
+                  isDark: isDark,
+                  elevated: elevated,
+                  textPrimary: textPrimary,
+                  textMuted: textMuted,
+                  cyan: cyan,
+                ),
+                const SizedBox(height: 24),
+
+                // Metric selector chips
+                if (typesWithData.isNotEmpty) ...[
+                  SizedBox(
+                    height: 36,
+                    child: ListView.separated(
+                      scrollDirection: Axis.horizontal,
+                      itemCount: typesWithData.length,
+                      separatorBuilder: (_, __) => const SizedBox(width: 8),
+                      itemBuilder: (context, index) {
+                        final type = typesWithData[index];
+                        final isSelected = _selectedMetricType == type;
+                        return GestureDetector(
+                          onTap: () => setState(() => _selectedMetricType = type),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                            decoration: BoxDecoration(
+                              color: isSelected ? cyan.withOpacity(0.2) : elevated,
+                              borderRadius: BorderRadius.circular(18),
+                              border: Border.all(color: isSelected ? cyan : cardBorder),
+                            ),
+                            child: Text(
+                              type.displayName,
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                                color: isSelected ? cyan : textMuted,
+                              ),
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+
+                  // Per-metric chart
+                  if (_selectedMetricType != null)
+                    _buildMetricChart(
+                      type: _selectedMetricType!,
+                      state: state,
+                      isDark: isDark,
+                      elevated: elevated,
+                      textMuted: textMuted,
+                      cyan: cyan,
+                    ),
+                  const SizedBox(height: 24),
+                ],
+
+                // Body Metrics (derived)
+                if (derivedMetrics.isNotEmpty) ...[
+                  _SectionHeader(title: 'Body Metrics'),
+                  const SizedBox(height: 12),
+                  _buildDerivedMetricsCard(
+                    metrics: derivedMetrics,
+                    isDark: isDark,
+                    elevated: elevated,
+                    textPrimary: textPrimary,
+                    textMuted: textMuted,
+                    cardBorder: cardBorder,
+                  ),
+                  const SizedBox(height: 24),
+                ],
+
+                // Current Measurements
+                _SectionHeader(title: 'Current Measurements'),
+                const SizedBox(height: 8),
+                Text(
+                  'Long-press to reorder',
+                  style: TextStyle(fontSize: 11, color: textMuted),
+                ),
+                const SizedBox(height: 8),
+                _buildMeasurementsList(
+                  summary: summary,
+                  isDark: isDark,
+                  elevated: elevated,
+                  textPrimary: textPrimary,
+                  textMuted: textMuted,
+                  cyan: cyan,
+                  cardBorder: cardBorder,
+                ),
+
+                const SizedBox(height: 80),
+              ],
             ),
           ),
+        ),
 
-          // Bottom padding for floating nav bar
-          const SizedBox(height: 80),
-        ],
+        // Floating FAB
+        Positioned(
+          right: 16,
+          bottom: 16,
+          child: FloatingActionButton(
+            onPressed: () => context.push('/measurements'),
+            backgroundColor: cyan,
+            child: Icon(Icons.add, color: isDark ? AppColors.pureBlack : Colors.white),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildTimeRangeChips({
+    required Color cyan,
+    required Color elevated,
+    required Color textMuted,
+    required Color cardBorder,
+  }) {
+    return Row(
+      children: _periods.map((period) {
+        final isSelected = _selectedPeriod == period['value'];
+        return Expanded(
+          child: GestureDetector(
+            onTap: () => setState(() => _selectedPeriod = period['value'] as String),
+            child: Container(
+              margin: const EdgeInsets.symmetric(horizontal: 3),
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              decoration: BoxDecoration(
+                color: isSelected ? cyan.withOpacity(0.2) : elevated,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: isSelected ? cyan : cardBorder),
+              ),
+              child: Center(
+                child: Text(
+                  period['label'] as String,
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                    color: isSelected ? cyan : textMuted,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        );
+      }).toList(),
+    );
+  }
+
+  Widget _buildWeightChart({
+    required MeasurementsState state,
+    required bool isDark,
+    required Color elevated,
+    required Color textPrimary,
+    required Color textMuted,
+    required Color cyan,
+  }) {
+    final weightHistory = state.historyByType[MeasurementType.weight] ?? [];
+    final filtered = _filterByPeriod(weightHistory).reversed.toList();
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: elevated,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: SizedBox(
+        height: 200,
+        child: filtered.length < 2
+            ? Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.show_chart, size: 40, color: textMuted),
+                    const SizedBox(height: 8),
+                    Text('Log weight to see trends', style: TextStyle(color: textMuted)),
+                  ],
+                ),
+              )
+            : _buildWeightLineChart(filtered, cyan: cyan, textMuted: textMuted, isDark: isDark),
       ),
     );
+  }
+
+  Widget _buildWeightLineChart(
+    List<MeasurementEntry> data, {
+    required Color cyan,
+    required Color textMuted,
+    required bool isDark,
+  }) {
+    final rawValues = data.map((e) => e.value).toList();
+    final ewmaValues = _computeEWMA(rawValues);
+
+    final rawSpots = data.asMap().entries.map((e) =>
+      FlSpot(e.key.toDouble(), e.value.value)).toList();
+    final ewmaSpots = ewmaValues.asMap().entries.map((e) =>
+      FlSpot(e.key.toDouble(), e.value)).toList();
+
+    final allValues = [...rawValues, ...ewmaValues];
+    final minY = allValues.reduce((a, b) => a < b ? a : b) * 0.98;
+    final maxY = allValues.reduce((a, b) => a > b ? a : b) * 1.02;
+
+    return LineChart(
+      LineChartData(
+        gridData: FlGridData(
+          show: true,
+          drawVerticalLine: false,
+          horizontalInterval: (maxY - minY) / 4,
+          getDrawingHorizontalLine: (value) => FlLine(
+            color: isDark ? AppColors.cardBorder : AppColorsLight.cardBorder,
+            strokeWidth: 0.5,
+          ),
+        ),
+        titlesData: FlTitlesData(
+          leftTitles: AxisTitles(
+            sideTitles: SideTitles(
+              showTitles: true,
+              reservedSize: 45,
+              getTitlesWidget: (value, meta) => Text(
+                _formatValue(value),
+                style: TextStyle(fontSize: 10, color: textMuted),
+              ),
+            ),
+          ),
+          bottomTitles: AxisTitles(
+            sideTitles: SideTitles(
+              showTitles: true,
+              reservedSize: 30,
+              interval: (data.length / 4).ceil().toDouble().clamp(1, double.infinity),
+              getTitlesWidget: (value, meta) {
+                final index = value.toInt();
+                if (index >= 0 && index < data.length) {
+                  return Padding(
+                    padding: const EdgeInsets.only(top: 8),
+                    child: Text(
+                      DateFormat('M/d').format(data[index].recordedAt),
+                      style: TextStyle(fontSize: 10, color: textMuted),
+                    ),
+                  );
+                }
+                return const SizedBox.shrink();
+              },
+            ),
+          ),
+          rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+          topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+        ),
+        borderData: FlBorderData(show: false),
+        minY: minY,
+        maxY: maxY,
+        lineBarsData: [
+          // Raw data - thin dotted line
+          LineChartBarData(
+            spots: rawSpots,
+            isCurved: true,
+            color: cyan.withOpacity(0.4),
+            barWidth: 1.5,
+            dashArray: [4, 4],
+            isStrokeCapRound: true,
+            dotData: FlDotData(
+              show: true,
+              getDotPainter: (spot, percent, barData, index) {
+                return FlDotCirclePainter(
+                  radius: 2.5,
+                  color: cyan.withOpacity(0.5),
+                  strokeWidth: 0,
+                );
+              },
+            ),
+            belowBarData: BarAreaData(show: false),
+          ),
+          // EWMA trend - thick solid line
+          LineChartBarData(
+            spots: ewmaSpots,
+            isCurved: true,
+            color: cyan,
+            barWidth: 3,
+            isStrokeCapRound: true,
+            dotData: const FlDotData(show: false),
+            belowBarData: BarAreaData(
+              show: true,
+              gradient: LinearGradient(
+                colors: [cyan.withOpacity(0.3), cyan.withOpacity(0.0)],
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+              ),
+            ),
+          ),
+        ],
+        lineTouchData: LineTouchData(
+          touchTooltipData: LineTouchTooltipData(
+            getTooltipColor: (spot) => isDark ? AppColors.nearBlack : Colors.white,
+            tooltipRoundedRadius: 8,
+            getTooltipItems: (touchedSpots) {
+              return touchedSpots.map((spot) {
+                final index = spot.x.toInt();
+                if (spot.barIndex == 1) {
+                  return LineTooltipItem(
+                    'Trend: ${_formatValue(spot.y)} kg',
+                    TextStyle(
+                      color: isDark ? AppColors.textPrimary : AppColorsLight.textPrimary,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 12,
+                    ),
+                  );
+                }
+                final date = index < data.length ? data[index].recordedAt : DateTime.now();
+                return LineTooltipItem(
+                  '${_formatValue(spot.y)} kg\n${DateFormat('MMM d').format(date)}',
+                  TextStyle(
+                    color: isDark ? AppColors.textPrimary : AppColorsLight.textPrimary,
+                    fontSize: 12,
+                  ),
+                );
+              }).toList();
+            },
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMetricChart({
+    required MeasurementType type,
+    required MeasurementsState state,
+    required bool isDark,
+    required Color elevated,
+    required Color textMuted,
+    required Color cyan,
+  }) {
+    final history = state.historyByType[type] ?? [];
+    final filtered = _filterByPeriod(history).reversed.toList();
+
+    if (filtered.length < 2) {
+      return Container(
+        height: 150,
+        decoration: BoxDecoration(
+          color: elevated,
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Center(
+          child: Text('Not enough data for ${type.displayName}', style: TextStyle(color: textMuted)),
+        ),
+      );
+    }
+
+    final spots = filtered.asMap().entries.map((e) =>
+      FlSpot(e.key.toDouble(), e.value.value)).toList();
+    final values = spots.map((s) => s.y).toList();
+    final minY = values.reduce((a, b) => a < b ? a : b) * 0.95;
+    final maxY = values.reduce((a, b) => a > b ? a : b) * 1.05;
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: elevated,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: SizedBox(
+        height: 150,
+        child: LineChart(
+          LineChartData(
+            gridData: FlGridData(
+              show: true,
+              drawVerticalLine: false,
+              horizontalInterval: (maxY - minY) / 3,
+              getDrawingHorizontalLine: (value) => FlLine(
+                color: isDark ? AppColors.cardBorder : AppColorsLight.cardBorder,
+                strokeWidth: 0.5,
+              ),
+            ),
+            titlesData: FlTitlesData(
+              leftTitles: AxisTitles(
+                sideTitles: SideTitles(
+                  showTitles: true,
+                  reservedSize: 40,
+                  getTitlesWidget: (value, meta) => Text(
+                    _formatValue(value),
+                    style: TextStyle(fontSize: 10, color: textMuted),
+                  ),
+                ),
+              ),
+              bottomTitles: AxisTitles(
+                sideTitles: SideTitles(
+                  showTitles: true,
+                  reservedSize: 25,
+                  interval: (filtered.length / 3).ceil().toDouble().clamp(1, double.infinity),
+                  getTitlesWidget: (value, meta) {
+                    final index = value.toInt();
+                    if (index >= 0 && index < filtered.length) {
+                      return Text(
+                        DateFormat('M/d').format(filtered[index].recordedAt),
+                        style: TextStyle(fontSize: 9, color: textMuted),
+                      );
+                    }
+                    return const SizedBox.shrink();
+                  },
+                ),
+              ),
+              rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+              topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+            ),
+            borderData: FlBorderData(show: false),
+            minY: minY,
+            maxY: maxY,
+            lineBarsData: [
+              LineChartBarData(
+                spots: spots,
+                isCurved: true,
+                color: cyan,
+                barWidth: 2.5,
+                isStrokeCapRound: true,
+                dotData: FlDotData(
+                  show: filtered.length < 20,
+                  getDotPainter: (spot, percent, barData, index) => FlDotCirclePainter(
+                    radius: 3,
+                    color: cyan,
+                    strokeWidth: 1.5,
+                    strokeColor: isDark ? AppColors.pureBlack : Colors.white,
+                  ),
+                ),
+                belowBarData: BarAreaData(
+                  show: true,
+                  gradient: LinearGradient(
+                    colors: [cyan.withOpacity(0.2), cyan.withOpacity(0.0)],
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                  ),
+                ),
+              ),
+            ],
+            lineTouchData: const LineTouchData(enabled: false),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDerivedMetricsCard({
+    required Map<DerivedMetricType, DerivedMetricResult> metrics,
+    required bool isDark,
+    required Color elevated,
+    required Color textPrimary,
+    required Color textMuted,
+    required Color cardBorder,
+  }) {
+    return Container(
+      decoration: BoxDecoration(
+        color: elevated,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(
+        children: metrics.entries.map((entry) {
+          final type = entry.key;
+          final result = entry.value;
+          final valueStr = type.unit.isNotEmpty
+              ? '${_formatValue(result.value)} ${type.unit}'
+              : _formatValue(result.value);
+
+          return Column(
+            children: [
+              if (entry.key != metrics.keys.first)
+                Divider(height: 1, color: cardBorder),
+              InkWell(
+                onTap: () {
+                  HapticService.light();
+                  context.push('/measurements/derived/${type.name}');
+                },
+                borderRadius: BorderRadius.circular(12),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          type.displayName,
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w500,
+                            color: textPrimary,
+                          ),
+                        ),
+                      ),
+                      // Info icon
+                      if (result.info != null)
+                        GestureDetector(
+                          onTap: () => _showMetricInfo(context, type.displayName, result.info!, isDark),
+                          child: Padding(
+                            padding: const EdgeInsets.only(right: 8),
+                            child: Icon(Icons.info_outline, size: 18, color: textMuted),
+                          ),
+                        ),
+                      Text(
+                        valueStr,
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.bold,
+                          color: textPrimary,
+                        ),
+                      ),
+                      if (result.label.isNotEmpty) ...[
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                          decoration: BoxDecoration(
+                            color: result.color.withOpacity(0.15),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Text(
+                            result.label,
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                              color: result.color,
+                            ),
+                          ),
+                        ),
+                      ],
+                      const SizedBox(width: 4),
+                      Icon(Icons.chevron_right, size: 18, color: textMuted),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          );
+        }).toList(),
+      ),
+    );
+  }
+
+  void _showMetricInfo(BuildContext context, String title, String info, bool isDark) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: isDark ? AppColors.nearBlack : Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              title,
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: isDark ? AppColors.textPrimary : AppColorsLight.textPrimary,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              info,
+              style: TextStyle(
+                fontSize: 14,
+                color: isDark ? AppColors.textSecondary : AppColorsLight.textSecondary,
+                height: 1.5,
+              ),
+            ),
+            const SizedBox(height: 16),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMeasurementsList({
+    required MeasurementsSummary? summary,
+    required bool isDark,
+    required Color elevated,
+    required Color textPrimary,
+    required Color textMuted,
+    required Color cyan,
+    required Color cardBorder,
+  }) {
+    if (summary == null || summary.latestByType.isEmpty) {
+      return Container(
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          color: elevated,
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Center(
+          child: Column(
+            children: [
+              Icon(Icons.straighten, size: 40, color: textMuted),
+              const SizedBox(height: 8),
+              Text('No measurements yet', style: TextStyle(color: textMuted)),
+              const SizedBox(height: 8),
+              TextButton(
+                onPressed: () => context.push('/measurements'),
+                child: Text('Log your first measurement', style: TextStyle(color: cyan)),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    // Filter to types that have data, in the user's preferred order
+    final orderedTypes = _measurementOrder
+        .where((t) => summary.latestByType.containsKey(t))
+        .toList();
+
+    return Container(
+      decoration: BoxDecoration(
+        color: elevated,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: ReorderableListView.builder(
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        itemCount: orderedTypes.length,
+        onReorder: (oldIndex, newIndex) {
+          setState(() {
+            if (newIndex > oldIndex) newIndex--;
+            final item = orderedTypes.removeAt(oldIndex);
+            orderedTypes.insert(newIndex, item);
+            // Rebuild full order preserving types without data
+            final newOrder = <MeasurementType>[];
+            newOrder.addAll(orderedTypes);
+            for (final t in _measurementOrder) {
+              if (!newOrder.contains(t)) newOrder.add(t);
+            }
+            _measurementOrder = newOrder;
+          });
+          _saveOrder();
+        },
+        proxyDecorator: (child, index, animation) {
+          return Material(
+            elevation: 4,
+            borderRadius: BorderRadius.circular(12),
+            child: child,
+          );
+        },
+        itemBuilder: (context, index) {
+          final type = orderedTypes[index];
+          final entry = summary.latestByType[type]!;
+          final change = summary.changeFromPrevious[type];
+
+          return Container(
+            key: ValueKey(type),
+            decoration: BoxDecoration(
+              border: index < orderedTypes.length - 1
+                  ? Border(bottom: BorderSide(color: cardBorder, width: 0.5))
+                  : null,
+            ),
+            child: ListTile(
+              leading: Icon(Icons.drag_handle, color: textMuted, size: 20),
+              title: Text(
+                type.displayName,
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                  color: textPrimary,
+                ),
+              ),
+              subtitle: change != null && change.abs() >= 0.1
+                  ? Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          change > 0 ? Icons.arrow_upward : Icons.arrow_downward,
+                          size: 12,
+                          color: _getChangeColor(type, change),
+                        ),
+                        Text(
+                          '${_formatValue(change.abs())} ${entry.unit}',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: _getChangeColor(type, change),
+                          ),
+                        ),
+                      ],
+                    )
+                  : null,
+              trailing: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    '${_formatValue(entry.value)} ${entry.unit}',
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.bold,
+                      color: textPrimary,
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  Icon(Icons.chevron_right, size: 18, color: textMuted),
+                ],
+              ),
+              onTap: () {
+                HapticService.light();
+                context.push('/measurements/${type.name}');
+              },
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Color _getChangeColor(MeasurementType type, double change) {
+    if (type == MeasurementType.weight || type == MeasurementType.bodyFat) {
+      return change < 0 ? AppColors.success : AppColors.error;
+    }
+    return change > 0 ? AppColors.success : AppColors.error;
   }
 }
 
@@ -1778,13 +2748,21 @@ class _NutritionTab extends ConsumerWidget {
     final detailedTDEE = ref.watch(detailedTDEEProvider(userId!));
     final adherence = ref.watch(adherenceSummaryProvider(userId!));
 
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Card 1: Weekly Overview Summary
-          _WeeklyOverviewCard(
+    return RefreshIndicator(
+      onRefresh: () async {
+        ref.invalidate(weeklySummaryProvider(userId!));
+        ref.invalidate(weeklyNutritionProvider(userId!));
+        ref.invalidate(detailedTDEEProvider(userId!));
+        ref.invalidate(adherenceSummaryProvider(userId!));
+      },
+      child: SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Card 1: Weekly Overview Summary
+            _WeeklyOverviewCard(
             weeklySummary: weeklySummary,
             cardColor: cardColor,
             textPrimary: textPrimary,
@@ -1849,6 +2827,7 @@ class _NutritionTab extends ConsumerWidget {
           const SizedBox(height: 80),
         ],
       ),
+    ),
     );
   }
 }
@@ -2915,57 +3894,60 @@ class _MoodTabState extends ConsumerState<_MoodTab> {
       return AppLoading.fullScreen();
     }
 
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Weekly mood chart
-          const MoodWeeklyChart(),
-          const SizedBox(height: 16),
+    final accentEnum = ref.watch(accentColorProvider);
+    final accentColor = accentEnum.getColor(isDark);
 
-          // Mood streaks
-          if (state.analytics != null)
-            MoodStreakCard(streaks: state.analytics!.streaks),
+    return Stack(
+      children: [
+        SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Weekly mood chart
+              const MoodWeeklyChart(),
+              const SizedBox(height: 16),
 
-          // Mood analytics summary
-          if (state.analytics != null) ...[
-            const SizedBox(height: 16),
-            MoodAnalyticsCard(analytics: state.analytics!),
-          ],
+              // Mood streaks
+              if (state.analytics != null)
+                MoodStreakCard(streaks: state.analytics!.streaks),
 
-          const SizedBox(height: 16),
+              // Mood analytics summary
+              if (state.analytics != null) ...[
+                const SizedBox(height: 16),
+                MoodAnalyticsCard(analytics: state.analytics!),
+              ],
 
-          // Calendar heatmap
-          const MoodCalendarHeatmap(),
+              const SizedBox(height: 16),
 
-          const SizedBox(height: 16),
+              // Calendar heatmap
+              const MoodCalendarHeatmap(),
 
-          // Log Mood button
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton.icon(
-              onPressed: () => showMoodPickerSheet(context, ref),
-              icon: const Icon(Icons.mood),
-              label: const Text('Log Mood'),
-              style: ElevatedButton.styleFrom(
-                minimumSize: const Size(double.infinity, 48),
+              // Link to full history
+              const SizedBox(height: 8),
+              Center(
+                child: TextButton(
+                  onPressed: () => context.push('/mood-history'),
+                  child: Text('View Full History', style: TextStyle(color: teal)),
+                ),
               ),
-            ),
-          ),
 
-          // Link to full history
-          const SizedBox(height: 8),
-          Center(
-            child: TextButton(
-              onPressed: () => context.push('/mood-history'),
-              child: Text('View Full History', style: TextStyle(color: teal)),
-            ),
+              const SizedBox(height: 80),
+            ],
           ),
+        ),
 
-          const SizedBox(height: 80),
-        ],
-      ),
+        // Floating Log Mood button
+        Positioned(
+          right: 16,
+          bottom: 16,
+          child: FloatingActionButton(
+            onPressed: () => showMoodPickerSheet(context, ref),
+            backgroundColor: accentColor,
+            child: const Icon(Icons.sentiment_satisfied_alt, color: Colors.white),
+          ),
+        ),
+      ],
     );
   }
 }
@@ -3261,85 +4243,113 @@ class _QuickActionButton extends ConsumerWidget {
   }
 }
 
-class _PlaceholderGraph extends StatelessWidget {
-  final double height;
-  final String message;
 
-  const _PlaceholderGraph({required this.height, required this.message});
-
+class _PRList extends ConsumerWidget {
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final elevatedColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+
+    final prStats = ref.watch(prStatsProvider);
+    final recentPrs = prStats?.recentPrs ?? [];
+
+    if (recentPrs.isEmpty) {
+      return Container(
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          color: elevatedColor,
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Center(
+          child: Column(
+            children: [
+              Icon(Icons.emoji_events_outlined, size: 48, color: textMuted),
+              const SizedBox(height: 12),
+              Text(
+                'No Personal Records Yet',
+                style: TextStyle(
+                  color: textPrimary,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Personal records are tracked as you complete workouts. Start training to see your progress here!',
+                textAlign: TextAlign.center,
+                style: TextStyle(color: textMuted, fontSize: 13),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
 
     return Container(
-      height: height,
       decoration: BoxDecoration(
         color: elevatedColor,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
+      ),
+      child: ListView.separated(
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        itemCount: recentPrs.length,
+        separatorBuilder: (_, __) => Divider(
+          height: 1,
           color: isDark ? AppColors.cardBorder : AppColorsLight.cardBorder,
         ),
-      ),
-      child: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.show_chart,
-              size: 48,
-              color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
-            ),
-            const SizedBox(height: 8),
-            Text(
-              message,
-              style: TextStyle(
-                color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
-              ),
-            ),
-            const SizedBox(height: 4),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _PRList extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final elevatedColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
-
-    final prs = [
-      {'exercise': 'Bench Press', 'weight': '100 kg', 'date': '2024-01-15'},
-      {'exercise': 'Squat', 'weight': '140 kg', 'date': '2024-01-10'},
-      {'exercise': 'Deadlift', 'weight': '160 kg', 'date': '2024-01-08'},
-    ];
-
-    return Container(
-      decoration: BoxDecoration(
-        color: elevatedColor,
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: ListView.separated(
-        shrinkWrap: true,
-        physics: const NeverScrollableScrollPhysics(),
-        itemCount: prs.length,
-        separatorBuilder: (_, __) => const Divider(height: 1),
         itemBuilder: (context, index) {
-          final pr = prs[index];
-          return ListTile(
-            leading: const Icon(Icons.emoji_events, color: AppColors.orange),
-            title: Text(pr['exercise']!),
-            subtitle: Text(pr['date']!),
-            trailing: Text(
-              pr['weight']!,
-              style: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-                color: AppColors.cyan,
-              ),
+          final pr = recentPrs[index];
+          final date = DateTime.tryParse(pr.achievedAt);
+          final dateStr = date != null
+              ? DateFormat('MMM d').format(date)
+              : '';
+
+          return Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            child: Row(
+              children: [
+                const Icon(Icons.emoji_events, color: AppColors.orange, size: 24),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        pr.exerciseDisplayName,
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                          color: textPrimary,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        '${pr.liftDescription}  •  $dateStr',
+                        style: TextStyle(fontSize: 13, color: textMuted),
+                      ),
+                    ],
+                  ),
+                ),
+                if (pr.improvementPercent != null && pr.improvementPercent! > 0)
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: AppColors.success.withOpacity(0.15),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      '+${pr.improvementPercent!.toStringAsFixed(1)}%',
+                      style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.success,
+                      ),
+                    ),
+                  ),
+              ],
             ),
           );
         },
@@ -3348,52 +4358,3 @@ class _PRList extends StatelessWidget {
   }
 }
 
-class _MeasurementsList extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final elevatedColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
-
-    final measurements = [
-      {'label': 'Weight', 'value': '75.0 kg', 'change': '-2.5 kg'},
-      {'label': 'Body Fat', 'value': '15.2%', 'change': '-1.8%'},
-      {'label': 'Chest', 'value': '102 cm', 'change': '+3 cm'},
-      {'label': 'Waist', 'value': '82 cm', 'change': '-5 cm'},
-    ];
-
-    return Container(
-      decoration: BoxDecoration(
-        color: elevatedColor,
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: ListView.separated(
-        shrinkWrap: true,
-        physics: const NeverScrollableScrollPhysics(),
-        itemCount: measurements.length,
-        separatorBuilder: (_, __) => const Divider(height: 1),
-        itemBuilder: (context, index) {
-          final measurement = measurements[index];
-          final isPositive = measurement['change']!.startsWith('+');
-          final isNegative = measurement['change']!.startsWith('-');
-
-          return ListTile(
-            title: Text(measurement['label']!),
-            subtitle: Text(measurement['change']!),
-            trailing: Text(
-              measurement['value']!,
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-                color: isPositive
-                    ? AppColors.success
-                    : isNegative
-                        ? AppColors.orange
-                        : AppColors.cyan,
-              ),
-            ),
-          );
-        },
-      ),
-    );
-  }
-}

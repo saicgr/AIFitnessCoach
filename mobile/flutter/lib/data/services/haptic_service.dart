@@ -73,9 +73,19 @@ class HapticService {
     _currentLevel = level;
     final prefs = await SharedPreferences.getInstance();
     await prefs.setInt(_prefsKey, level.index);
-    // Provide feedback for the new level
-    if (level != HapticLevel.off) {
-      selection();
+    // Preview the new level so the user feels the difference
+    switch (level) {
+      case HapticLevel.off:
+        break;
+      case HapticLevel.light:
+        light();
+        break;
+      case HapticLevel.medium:
+        medium();
+        break;
+      case HapticLevel.strong:
+        heavy();
+        break;
     }
   }
 

@@ -17,6 +17,7 @@ import 'widgets/recovery_section.dart';
 import 'widgets/rest_timer_card.dart';
 import 'widgets/rpe_card.dart';
 import 'widgets/scoring_card.dart';
+import 'widgets/accessibility_card.dart';
 import 'widgets/custom_color_lab_card.dart';
 import 'widgets/font_scale_card.dart';
 import 'widgets/rep_progression_card.dart';
@@ -116,6 +117,8 @@ class BeastModeScreen extends ConsumerWidget {
               CustomColorLabCard(theme: t),
               const SizedBox(height: 12),
               FontScaleCard(theme: t),
+              const SizedBox(height: 12),
+              AccessibilityCard(theme: t),
 
               const SizedBox(height: 24),
 

@@ -103,9 +103,6 @@ class TrainingSetupCard extends ConsumerWidget {
     final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
     final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
-    // Use monochrome accent
-    final accentColor = isDark ? AppColors.accent : AppColorsLight.accent;
-
     // Get the active gym profile for equipment and environment
     final activeGymProfile = ref.watch(activeGymProfileProvider);
     final equipment = activeGymProfile?.equipment ?? user?.equipmentList ?? [];
@@ -147,12 +144,12 @@ class TrainingSetupCard extends ConsumerWidget {
                   child: Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: accentColor.withOpacity(0.1),
+                      color: AppColors.cyan.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    child: Icon(
+                    child: const Icon(
                       Icons.edit_rounded,
-                      color: accentColor,
+                      color: AppColors.cyan,
                       size: 18,
                     ),
                   ),
@@ -164,6 +161,7 @@ class TrainingSetupCard extends ConsumerWidget {
           // Equipment row
           _SetupRow(
             icon: Icons.fitness_center,
+            iconColor: AppColors.orange,
             label: 'Equipment',
             value: _getEquipmentDisplay(equipment),
             textPrimary: textPrimary,
@@ -174,6 +172,7 @@ class TrainingSetupCard extends ConsumerWidget {
           // Environment row (from gym profile)
           _SetupRow(
             icon: Icons.location_on_outlined,
+            iconColor: AppColors.green,
             label: 'Environment',
             value: environment,
             textPrimary: textPrimary,
@@ -184,6 +183,7 @@ class TrainingSetupCard extends ConsumerWidget {
           // Experience row
           _SetupRow(
             icon: Icons.timeline,
+            iconColor: AppColors.purple,
             label: 'Experience',
             value: user?.trainingExperienceDisplay ?? 'Not set',
             textPrimary: textPrimary,
@@ -194,18 +194,9 @@ class TrainingSetupCard extends ConsumerWidget {
           // Focus Areas row
           _SetupRow(
             icon: Icons.center_focus_strong,
+            iconColor: AppColors.cyan,
             label: 'Focus Areas',
             value: user?.focusAreasDisplay ?? 'Full body',
-            textPrimary: textPrimary,
-            textSecondary: textSecondary,
-          ),
-          const SizedBox(height: 12),
-
-          // Motivation row
-          _SetupRow(
-            icon: Icons.favorite_outline,
-            label: 'Motivation',
-            value: user?.motivationDisplay ?? 'Not set',
             textPrimary: textPrimary,
             textSecondary: textSecondary,
           ),
@@ -214,6 +205,7 @@ class TrainingSetupCard extends ConsumerWidget {
           // Workout Days row
           _SetupRow(
             icon: Icons.calendar_today_outlined,
+            iconColor: AppColors.info,
             label: 'Workout Days',
             value: user?.workoutDaysFormatted ?? 'Not set',
             textPrimary: textPrimary,
@@ -239,7 +231,7 @@ class TrainingSetupCard extends ConsumerWidget {
               icon: Icons.build_outlined,
               label: 'My Custom Equipment',
               subtitle: 'Add equipment not in the standard list',
-              iconColor: accentColor,
+              iconColor: AppColors.yellow,
               textPrimary: textPrimary,
               textSecondary: textSecondary,
               onTap: onCustomEquipment!,
@@ -254,6 +246,7 @@ class TrainingSetupCard extends ConsumerWidget {
 /// A single row in the setup card.
 class _SetupRow extends StatelessWidget {
   final IconData icon;
+  final Color? iconColor;
   final String label;
   final String value;
   final Color textPrimary;
@@ -261,6 +254,7 @@ class _SetupRow extends StatelessWidget {
 
   const _SetupRow({
     required this.icon,
+    this.iconColor,
     required this.label,
     required this.value,
     required this.textPrimary,
@@ -271,7 +265,7 @@ class _SetupRow extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        Icon(icon, size: 18, color: textSecondary),
+        Icon(icon, size: 18, color: iconColor ?? textSecondary),
         const SizedBox(width: 10),
         Expanded(
           child: Text(
@@ -387,6 +381,8 @@ class _TrainingSplitRow extends ConsumerWidget {
     'arnold_split': 'Arnold Split',
     'hyrox': 'HYROX',
     'dont_know': 'AI Decides',
+    'ai_decide': 'AI Decides',
+    'ai decide': 'AI Decides',
   };
 
   @override
@@ -397,6 +393,7 @@ class _TrainingSplitRow extends ConsumerWidget {
 
     return _SetupRow(
       icon: Icons.view_week_outlined,
+      iconColor: AppColors.limeGreen,
       label: 'Training Split',
       value: displayName,
       textPrimary: textPrimary,

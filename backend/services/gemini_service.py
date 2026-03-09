@@ -3225,10 +3225,19 @@ Foods that are calorie-dense with low nutritional value, highly processed, or ha
             weight_source = item.get('weight_source', 'estimated')
 
             if nutrition_data:
-                # Check if data has valid calories (non-zero)
+                # Check if data has valid calories (non-zero, or legitimately zero-cal)
                 calories_per_100g = nutrition_data.get('calories_per_100g', 0)
+                protein_per_100g = nutrition_data.get('protein_per_100g', 0)
+                carbs_per_100g = nutrition_data.get('carbs_per_100g', 0)
+                fat_per_100g = nutrition_data.get('fat_per_100g', 0)
+                is_legit_zero_cal = (
+                    calories_per_100g == 0
+                    and protein_per_100g <= 1
+                    and carbs_per_100g <= 1
+                    and fat_per_100g <= 1
+                )
 
-                if calories_per_100g > 0 and weight_g > 0:
+                if weight_g > 0 and (calories_per_100g > 0 or is_legit_zero_cal):
                     # Apply override weight correction if available
                     # Never override when user gave an exact weight (e.g. "200g of dosa")
                     override_weight = nutrition_data.get('override_weight_per_piece_g')
@@ -3266,10 +3275,13 @@ Foods that are calorie-dense with low nutritional value, highly processed, or ha
                     item['carbs_g'] = round(nutrition_data['carbs_per_100g'] * multiplier, 1)
                     item['fat_g'] = round(nutrition_data['fat_per_100g'] * multiplier, 1)
                     item['fiber_g'] = round(nutrition_data['fiber_per_100g'] * multiplier, 1)
-                    logger.info(f"[{source_label}] Using data for '{food_names[i]}' | calories={item['calories']} | cal/100g={calories_per_100g} | weight={weight_g}g")
+                    if is_legit_zero_cal:
+                        logger.info(f"[{source_label}] Using ZERO-CAL data for '{food_names[i]}' | confirmed 0 cal + 0 macros from DB")
+                    else:
+                        logger.info(f"[{source_label}] Using data for '{food_names[i]}' | calories={item['calories']} | cal/100g={calories_per_100g} | weight={weight_g}g")
                 else:
-                    # Match found but has 0 calories - fall back to AI values
-                    logger.warning(f"[{source_label}] Found match for '{food_names[i]}' but calories=0, keeping AI estimate | ai_calories={item.get('calories', 0)}")
+                    # Match found but has 0 calories with non-trivial macros - incomplete data, fall back to AI values
+                    logger.warning(f"[{source_label}] Found match for '{food_names[i]}' but calories=0 with macros, keeping AI estimate | ai_calories={item.get('calories', 0)}")
                     item['usda_data'] = None
                     # Calculate ai_per_gram so frontend can still scale portions
                     original_item = food_items[i]
@@ -4421,7 +4433,9 @@ WEIGHT/COUNT FIELDS (required for portion editing):
         description: str,
         user_goals: Optional[List[str]] = None,
         nutrition_targets: Optional[Dict] = None,
-        rag_context: Optional[str] = None
+        rag_context: Optional[str] = None,
+        mood_before: Optional[str] = None,
+        meal_type: Optional[str] = None,
     ) -> Optional[Dict]:
         """
         Parse a text description of food and extract nutrition information with goal-based rankings.
@@ -4531,12 +4545,24 @@ SCORING (1-10): Be strict. Restaurant/fast food: 4-6. Whole foods: 7-8. Score 9-
         # Build actionable tip guidance based on user goals
         tip_guidance = ""
         if user_goals or nutrition_targets:
-            tip_guidance = """
+            mood_context = ""
+            if mood_before:
+                mood_context = f"\n- User's current mood/state: {mood_before}. Factor this into your tips — if bloated, don't suggest intense exercise; if tired, note energy impact; if hungry, acknowledge satiety."
+            meal_type_context = ""
+            if meal_type:
+                meal_type_context = f"\n- This is the user's {meal_type}. Tailor tip to meal timing (breakfast = energy for the day, dinner = avoid heavy foods before sleep, snack = portion awareness)."
+            tip_guidance = f"""
 COACH TIP STRUCTURE - Use these fields:
 - encouragements: 1-2 short points on what's GOOD for their goals (e.g., "Great protein source for muscle building")
 - warnings: Only if there are real concerns (high sodium, low fiber, etc.) - skip if meal is fine
 - ai_suggestion: Start with "Next time:" then give ONE specific actionable tip (e.g., "Next time: Add spinach for iron and fiber")
-- recommended_swap: Only if there's a clear healthier swap (e.g., "Swap white rice for brown rice +3g fiber")"""
+- recommended_swap: Only if there's a clear healthier swap (e.g., "Swap white rice for brown rice +3g fiber"){mood_context}{meal_type_context}
+
+SCORE-BASED TIP TONE:
+- Score 1-3: Be direct about poor nutrition. Focus on healthier alternatives. Do NOT spin positively.
+- Score 4-5: Acknowledge what it provides but emphasize better alternatives and portion control.
+- Score 6-7: Highlight nutritional benefits and suggest small improvements.
+- Score 8-10: Reinforce positive behavior and explain specific health benefits."""
 
         prompt = f'''Parse food and return nutrition JSON. Be fast and accurate.
 
@@ -4553,6 +4579,7 @@ CRITICAL PORTION SIZE RULES:
 - For homemade: use standard single serving
 - Movie popcorn (AMC/Regal/etc) without size = medium (~600-730 cal with butter, NOT large 1000+)
 - Coffee drinks without size = medium (16oz)
+- "Diet", "Zero Sugar", "Sugar-Free" beverages (Diet Coke, Coke Zero, Diet Pepsi, etc.) = ALWAYS 0 calories, 0 protein, 0 carbs, 0 fat. Do NOT estimate non-zero values.
 - Fast food without size = regular/medium combo
 - Pizza without count = assume 2 slices
 
@@ -8218,6 +8245,11 @@ Remember: You're a supportive coach, not a robot. Be human, be helpful, be motiv
         macros: dict,
         user_goals: list,
         nutrition_targets: dict,
+        meal_type: Optional[str] = None,
+        mood_before: Optional[str] = None,
+        calories_consumed_today: Optional[int] = None,
+        calories_remaining: Optional[int] = None,
+        health_score: Optional[int] = None,
     ) -> dict:
         """
         Generate an AI-powered food review based on user goals and nutrition targets.
@@ -8227,6 +8259,11 @@ Remember: You're a supportive coach, not a robot. Be human, be helpful, be motiv
             macros: Dict with calories, protein_g, carbs_g, fat_g
             user_goals: List of user fitness goals (e.g. ["build_muscle", "lose_fat"])
             nutrition_targets: Dict with daily calorie/macro targets
+            meal_type: Meal type (breakfast, lunch, dinner, snack)
+            mood_before: User's current mood/state (e.g. "bloated", "tired")
+            calories_consumed_today: Total calories consumed today so far
+            calories_remaining: Calories remaining in daily budget
+            health_score: Pre-computed health score (1-10) for score-stratified guidance
 
         Returns:
             Dict with encouragements, warnings, ai_suggestion, recommended_swap, health_score
@@ -8242,8 +8279,35 @@ Remember: You're a supportive coach, not a robot. Be human, be helpful, be motiv
             f"fat={macros.get('fat_g', 0)}g"
         )
 
-        prompt = f'''Given user goals of [{goals_str}] and daily targets of [{targets_str}], review this food: "{food_name}" with macros: {macros_str}.
+        # Build contextual sections
+        mood_section = ""
+        if mood_before:
+            mood_section = f"\nUser's current mood/state: {mood_before}. Factor this into your tip — if they feel bloated, don't suggest intense exercise; if tired, note energy impact; if hungry, acknowledge satiety.\n"
 
+        meal_type_section = ""
+        if meal_type:
+            meal_type_section = f"\nThis is the user's {meal_type}. Tailor tip to meal timing (e.g., breakfast = energy for the day, dinner = avoid heavy foods before sleep, snack = portion awareness).\n"
+
+        calorie_budget_section = ""
+        if calories_consumed_today is not None and calories_remaining is not None:
+            target = (calories_consumed_today or 0) + (calories_remaining or 0)
+            calorie_budget_section = f"\nUser has consumed {calories_consumed_today} calories today out of a {target} calorie target ({calories_remaining} remaining). If this meal would put them significantly over budget, mention it tactfully. If they have plenty of room, note that this fits within their plan.\n"
+
+        # Score-stratified tip guidance
+        score_guidance = ""
+        effective_score = health_score
+        if effective_score is not None:
+            if effective_score <= 3:
+                score_guidance = "\nSCORE CONTEXT: This is a POOR nutritional choice (score {}/10). Be direct but empathetic. Focus on healthier alternatives and specific health risks. Do NOT spin this positively or suggest it's okay as a treat. Be honest about the nutritional impact.\n".format(effective_score)
+            elif effective_score <= 5:
+                score_guidance = "\nSCORE CONTEXT: This is a BELOW-AVERAGE choice (score {}/10). Acknowledge what it provides but emphasize better alternatives and portion control.\n".format(effective_score)
+            elif effective_score <= 7:
+                score_guidance = "\nSCORE CONTEXT: This is a DECENT choice (score {}/10). Highlight the nutritional benefits and suggest small improvements.\n".format(effective_score)
+            else:
+                score_guidance = "\nSCORE CONTEXT: This is an EXCELLENT choice (score {}/10). Reinforce the positive behavior and explain specific health benefits.\n".format(effective_score)
+
+        prompt = f'''Given user goals of [{goals_str}] and daily targets of [{targets_str}], review this food: "{food_name}" with macros: {macros_str}.
+{mood_section}{meal_type_section}{calorie_budget_section}{score_guidance}
 IMPORTANT SEED OIL AWARENESS:
 - If this food is commonly fried, packaged, or fast food, check if it is likely cooked in or contains seed oils (canola oil, soybean oil, sunflower oil, corn oil, cottonseed oil, vegetable oil).
 - Seed oils are high in inflammatory omega-6 fatty acids and should be flagged as a warning.

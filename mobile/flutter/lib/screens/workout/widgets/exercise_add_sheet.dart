@@ -1,11 +1,14 @@
 import 'dart:convert';
+import 'package:drift/drift.dart' show Value;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/providers/user_provider.dart';
+import '../../../data/local/database.dart';
 import '../../../data/local/database_provider.dart';
 import '../../../data/models/workout.dart';
 import '../../../data/models/exercise.dart';
+import '../../../data/repositories/library_repository.dart';
 import '../../../data/repositories/workout_repository.dart';
 import '../../../data/repositories/exercise_preferences_repository.dart';
 import '../../../data/services/api_client.dart';
@@ -77,6 +80,7 @@ class _ExerciseAddSheetState extends ConsumerState<_ExerciseAddSheet>
   List<String> _userEquipment = [];
   String _userFitnessLevel = 'intermediate';
   List<String> _avoidedExercises = [];
+  Set<String> _avoidedMuscles = {};
 
   // AI Suggestions tab state
   bool _aiSuggestionsLoaded = false;
@@ -127,16 +131,56 @@ class _ExerciseAddSheetState extends ConsumerState<_ExerciseAddSheet>
               .where((a) => a.isActive)
               .map((a) => a.exerciseName)
               .toList();
+
+          // Load avoided muscles
+          try {
+            final muscles = await prefsRepo.getAvoidedMuscles(userId);
+            _avoidedMuscles = muscles
+                .where((m) => m.isActive)
+                .map((m) => m.muscleGroup.toLowerCase().replaceAll('_', ' '))
+                .toSet();
+          } catch (e) {
+            debugPrint('⚠️ [Add] Could not fetch avoided muscles: $e');
+          }
         }
       } catch (e) {
         debugPrint('⚠️ [Add] Could not fetch avoided exercises: $e');
       }
 
-      // Load all cached exercises from local SQLite
       final db = ref.read(appDatabaseProvider);
-      final cachedExercises = await db.exerciseLibraryDao.getAllCachedExercises();
 
-      // Convert CachedExercise -> OfflineExercise
+      // 1. Try local cache first
+      var cachedExercises = await db.exerciseLibraryDao.getAllCachedExercises();
+
+      // 2. If cache is sparse, fetch from API and populate cache
+      if (cachedExercises.length < 200) {
+        try {
+          final libraryRepo = ref.read(libraryRepositoryProvider);
+          final apiExercises = await libraryRepo.searchExercises(limit: 500);
+
+          if (apiExercises.isNotEmpty) {
+            final companions = apiExercises.map((e) => CachedExercisesCompanion(
+              id: Value(e.id),
+              name: Value(e.name),
+              bodyPart: Value(e.bodyPart),
+              equipment: Value(e.equipment),
+              targetMuscle: Value(e.targetMuscle),
+              primaryMuscle: Value(e.targetMuscle),
+              difficulty: Value(e.difficulty),
+              cachedAt: Value(DateTime.now()),
+            )).toList();
+
+            await db.exerciseLibraryDao.upsertExercises(companions);
+
+            // Re-read from cache (now populated)
+            cachedExercises = await db.exerciseLibraryDao.getAllCachedExercises();
+          }
+        } catch (e) {
+          debugPrint('⚠️ [Add] API fetch failed, using existing cache: $e');
+        }
+      }
+
+      // 3. Convert CachedExercise -> OfflineExercise
       _allExercises = cachedExercises.map((ce) {
         List<String>? secondaryMuscles;
         if (ce.secondaryMuscles != null) {
@@ -158,6 +202,7 @@ class _ExerciseAddSheetState extends ConsumerState<_ExerciseAddSheet>
         );
       }).toList();
 
+      // 4. Apply rule-based filter
       _applyLibraryFilter();
 
       if (mounted) {
@@ -181,6 +226,7 @@ class _ExerciseAddSheetState extends ConsumerState<_ExerciseAddSheet>
         targetMuscle: _selectedMuscle!.toLowerCase(),
         equipment: _userEquipment,
         avoidedExercises: _avoidedExercises,
+        avoidedMuscles: _avoidedMuscles,
         fitnessLevel: _userFitnessLevel,
       );
     } else {
@@ -194,14 +240,27 @@ class _ExerciseAddSheetState extends ConsumerState<_ExerciseAddSheet>
           targetMuscle: workoutLower,
           equipment: _userEquipment,
           avoidedExercises: _avoidedExercises,
+          avoidedMuscles: _avoidedMuscles,
           fitnessLevel: _userFitnessLevel,
         );
       } else {
-        // Generic workout type — show all exercises filtered by avoided
+        // Generic workout type — show all exercises with full filtering
         result = _allExercises.where((ex) {
           final name = (ex.name ?? '').toLowerCase();
-          if (_avoidedExercises.any((a) => a.toLowerCase() == name)) {
-            return false;
+          if (_avoidedExercises.any((a) => a.toLowerCase() == name)) return false;
+          // Filter by avoided muscles
+          final target = (ex.targetMuscle ?? '').toLowerCase();
+          final primary = (ex.primaryMuscle ?? '').toLowerCase();
+          if (_avoidedMuscles.contains(target) || _avoidedMuscles.contains(primary)) return false;
+          // Filter by equipment
+          if (_userEquipment.isNotEmpty) {
+            final exEquip = (ex.equipment ?? '').toLowerCase();
+            if (exEquip.isNotEmpty &&
+                exEquip != 'body weight' &&
+                exEquip != 'bodyweight' &&
+                !_userEquipment.any((e) => e.toLowerCase() == exEquip)) {
+              return false;
+            }
           }
           return true;
         }).toList();
@@ -237,19 +296,10 @@ class _ExerciseAddSheetState extends ConsumerState<_ExerciseAddSheet>
       final userId = await ref.read(apiClientProvider).getUserId();
       final repo = ref.read(workoutRepositoryProvider);
 
-      final message =
-          'Suggest exercises to add to my ${widget.workoutType} workout';
-
-      final suggestions = await repo.getExerciseSuggestions(
-        workoutId: widget.workoutId,
-        exercise: WorkoutExercise(
-          nameValue: 'Any Exercise',
-          muscleGroup: widget.workoutType,
-          sets: 3,
-          reps: 10,
-        ),
+      final suggestions = await repo.getExerciseSuggestionsForAdd(
+        workoutType: widget.workoutType,
+        existingExercises: widget.currentExerciseNames,
         userId: userId!,
-        reason: message,
         avoidedExercises: _avoidedExercises,
       );
 

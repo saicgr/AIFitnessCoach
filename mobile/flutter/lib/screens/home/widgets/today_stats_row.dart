@@ -7,6 +7,8 @@ import '../../../data/repositories/hydration_repository.dart';
 import '../../../data/repositories/nutrition_repository.dart';
 import '../../../data/services/haptic_service.dart';
 import '../../../data/services/health_service.dart';
+import '../../nutrition/widgets/calories_burned_sheet.dart';
+import 'edit_tracking_sheet.dart';
 
 /// Compact single-row tracking strip: Goals, Calories+Macros, Water, Burned.
 class TodayStatsRow extends ConsumerWidget {
@@ -14,19 +16,31 @@ class TodayStatsRow extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final pills = ref.watch(trackingPillsProvider);
+
+    final children = <Widget>[];
+
+    if (pills.showGoals) {
+      children.add(const Expanded(child: _GoalsPill(key: ValueKey('goals_pill'))));
+    }
+    if (pills.showCalories) {
+      if (children.isNotEmpty) children.add(const SizedBox(width: 6));
+      children.add(Expanded(flex: pills.visibleCount <= 2 ? 2 : 2, child: const _CaloriesPill(key: ValueKey('calories_pill'))));
+    }
+    if (pills.showWater) {
+      if (children.isNotEmpty) children.add(const SizedBox(width: 6));
+      children.add(const Expanded(child: _WaterPill(key: ValueKey('water_pill'))));
+    }
+    if (pills.showBurned) {
+      if (children.isNotEmpty) children.add(const SizedBox(width: 6));
+      children.add(const Expanded(child: _BurnedPill(key: ValueKey('burned_pill'))));
+    }
+
+    if (children.isEmpty) return const SizedBox.shrink();
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: Row(
-        children: [
-          Expanded(child: _GoalsPill(key: const ValueKey('goals_pill'))),
-          const SizedBox(width: 6),
-          Expanded(flex: 2, child: _CaloriesPill(key: const ValueKey('calories_pill'))),
-          const SizedBox(width: 6),
-          Expanded(child: _WaterPill(key: const ValueKey('water_pill'))),
-          const SizedBox(width: 6),
-          Expanded(child: _BurnedPill(key: const ValueKey('burned_pill'))),
-        ],
-      ),
+      child: Row(children: children),
     );
   }
 }
@@ -297,7 +311,11 @@ class _BurnedPill extends ConsumerWidget {
     return _StatPillContainer(
       onTap: () {
         HapticService.light();
-        context.push('/stats');
+        if (connected && burned > 0) {
+          showCaloriesBurnedSheet(context, burned.toDouble());
+        } else {
+          context.push('/stats');
+        }
       },
       child: Column(
         mainAxisSize: MainAxisSize.min,

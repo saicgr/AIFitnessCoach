@@ -9,22 +9,88 @@ This module handles comment operations:
 """
 from datetime import datetime, timezone
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query
 from core.auth import get_current_user
 from core.exceptions import safe_internal_error
+from core.logger import get_logger
 
 from models.social import (
     ActivityComment, ActivityCommentCreate, ActivityCommentUpdate, CommentsResponse,
 )
 from .utils import get_supabase_client
 
+logger = get_logger(__name__)
+
 router = APIRouter()
+
+
+def _bg_notify_comment(activity_id: str, commenter_id: str, comment_text: str):
+    """Background task: send push notification for a new comment."""
+    try:
+        supabase = get_supabase_client()
+
+        # Get activity owner
+        activity_result = supabase.table("activity_feed").select("user_id").eq("id", activity_id).execute()
+        if not activity_result.data:
+            return
+        owner_id = activity_result.data[0]["user_id"]
+
+        # Skip if commenter == owner
+        if owner_id == commenter_id:
+            return
+
+        # Check privacy settings
+        privacy_result = supabase.table("user_privacy_settings").select(
+            "notify_comments"
+        ).eq("user_id", owner_id).execute()
+        if privacy_result.data and not privacy_result.data[0].get("notify_comments", True):
+            return
+
+        # Get commenter name
+        commenter_result = supabase.table("users").select("name").eq("id", commenter_id).execute()
+        commenter_name = commenter_result.data[0]["name"] if commenter_result.data else "Someone"
+
+        # Truncate comment for notification
+        preview = comment_text[:100] + "..." if len(comment_text) > 100 else comment_text
+
+        # Create social_notifications row (upsert by from_user_id + reference_id + type for dedup)
+        supabase.table("social_notifications").upsert({
+            "user_id": owner_id,
+            "from_user_id": commenter_id,
+            "type": "comment",
+            "title": f"{commenter_name} commented on your post",
+            "body": preview,
+            "reference_id": activity_id,
+            "is_read": False,
+        }, on_conflict="from_user_id,reference_id,type").execute()
+
+        # Try to send push notification
+        try:
+            owner_result = supabase.table("users").select("fcm_token").eq("id", owner_id).execute()
+            if owner_result.data and owner_result.data[0].get("fcm_token"):
+                import asyncio
+                from services.notification_service import NotificationService
+                ns = NotificationService()
+                asyncio.get_event_loop().run_until_complete(
+                    ns.send_notification(
+                        fcm_token=owner_result.data[0]["fcm_token"],
+                        title=f"{commenter_name} commented on your post",
+                        body=preview,
+                        data={"type": "comment", "activity_id": activity_id},
+                    )
+                )
+        except Exception:
+            pass  # Push notification is best-effort
+
+    except Exception as e:
+        logger.error(f"[Social] Failed to notify comment: {e}")
 
 
 @router.post("/comments", response_model=ActivityComment)
 async def add_comment(
     user_id: str,
     comment: ActivityCommentCreate,
+    background_tasks: BackgroundTasks,
     current_user: dict = Depends(get_current_user),
 ):
     """
@@ -48,6 +114,14 @@ async def add_comment(
 
     if not result.data:
         raise HTTPException(status_code=500, detail="Failed to add comment")
+
+    # Send push notification for comment (F5)
+    background_tasks.add_task(
+        _bg_notify_comment,
+        activity_id=comment.activity_id,
+        commenter_id=user_id,
+        comment_text=comment.comment_text,
+    )
 
     return ActivityComment(**result.data[0])
 

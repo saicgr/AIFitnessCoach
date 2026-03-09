@@ -91,9 +91,13 @@ class PreferencesSection extends ConsumerWidget {
                 SizedBox(
                   width: double.infinity,
                   child: SegmentedButton<TrainingFocus>(
+                    showSelectedIcon: false,
                     segments: TrainingFocus.values.map((focus) => ButtonSegment<TrainingFocus>(
                       value: focus,
-                      label: Text(focus.displayName, style: const TextStyle(fontSize: 12)),
+                      label: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Text(focus.displayName, style: const TextStyle(fontSize: 12)),
+                      ),
                     )).toList(),
                     selected: {currentFocus},
                     onSelectionChanged: (selected) {

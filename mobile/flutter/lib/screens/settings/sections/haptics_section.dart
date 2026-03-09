@@ -82,6 +82,7 @@ class _HapticsSettingsCard extends ConsumerWidget {
               children: HapticLevel.values.map((level) {
                 final isSelected = hapticLevel == level;
                 return GestureDetector(
+                  behavior: HitTestBehavior.opaque,
                   onTap: () {
                     ref.read(hapticLevelProvider.notifier).setLevel(level);
                   },

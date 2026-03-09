@@ -7,6 +7,7 @@ import '../../../data/providers/nutrition_preferences_provider.dart';
 import '../../../data/repositories/hydration_repository.dart';
 import '../../../data/repositories/nutrition_preferences_repository.dart';
 import '../../../data/services/health_service.dart';
+import 'calories_burned_sheet.dart';
 
 /// Dedicated card showing nutrition goals with edit/recalculate options
 class NutritionGoalsCard extends ConsumerWidget {
@@ -248,14 +249,24 @@ class NutritionGoalsCard extends ConsumerWidget {
                       style: TextStyle(fontSize: 11, color: textMuted),
                     ),
                 ],
-                if (hasCaloriesBurned) ...[
-                  Icon(Icons.local_fire_department, size: 14, color: green),
-                  const SizedBox(width: 2),
-                  Text(
-                    '${caloriesBurned.toInt()} burned',
-                    style: TextStyle(fontSize: 11, color: green, fontWeight: FontWeight.w500),
+                if (hasCaloriesBurned)
+                  GestureDetector(
+                    onTap: () => showCaloriesBurnedSheet(context, caloriesBurned),
+                    behavior: HitTestBehavior.opaque,
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.local_fire_department, size: 14, color: green),
+                        const SizedBox(width: 2),
+                        Text(
+                          '${caloriesBurned.toInt()} burned',
+                          style: TextStyle(fontSize: 11, color: green, fontWeight: FontWeight.w500),
+                        ),
+                        const SizedBox(width: 2),
+                        Icon(Icons.chevron_right, size: 14, color: green),
+                      ],
+                    ),
                   ),
-                ],
                 if (hasAdjustment) ...[
                   const Spacer(),
                   GestureDetector(

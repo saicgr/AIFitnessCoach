@@ -35,6 +35,7 @@ class SocialNotificationType(str, Enum):
     CHALLENGE_COMPLETED = "challenge_completed"
     WORKOUT_SHARED = "workout_shared"
     ACHIEVEMENT_EARNED = "achievement_earned"
+    MENTION = "mention"
 
 
 # ============================================================

@@ -1488,11 +1488,12 @@ class _NLItemSectionState extends State<_NLItemSection> {
     return 1;
   }
 
-  /// Calories: cal_per_100g * weightG / 100 + modifier deltas
+  /// Calories: per-serving cal * weightG / servingWeight + modifier deltas
   int get displayCalories {
     int baseCal;
     if (_selectedAlt != null) {
-      baseCal = (_selectedAlt!.calories * _weightG / 100).round();
+      final altBaseWeight = _selectedAlt!.servingWeightG ?? _selectedAlt!.weightPerUnitG ?? 100.0;
+      baseCal = (_selectedAlt!.calories * _weightG / altBaseWeight).round();
     } else {
       final origW = widget.item.weightG;
       if (origW != null && origW > 0) {
@@ -3661,7 +3662,7 @@ class _SearchResultsPageViewState extends State<_SearchResultsPageView> {
                 const Spacer(),
                 GestureDetector(
                   onTap: widget.logStates[key] == null
-                      ? () => widget.onLogFood('${result.name}, 100g', key)
+                      ? () => widget.onLogFood('${result.name}, ${(result.servingWeightG ?? result.weightPerUnitG ?? 100.0).round()}g', key)
                       : null,
                   child: SizedBox(
                     width: 22, height: 22,
@@ -3695,6 +3696,7 @@ class _SearchResultsPageViewState extends State<_SearchResultsPageView> {
       onTap: () => widget.onExpandCard(key),
       onLog: (desc) => widget.onLogFood(desc, key),
       isWeightEditable: true,
+      baseWeightG: result.servingWeightG ?? result.weightPerUnitG ?? 100.0,
       isDark: widget.isDark,
       goalTags: _buildGoalTags(
         goals: widget.userGoals,

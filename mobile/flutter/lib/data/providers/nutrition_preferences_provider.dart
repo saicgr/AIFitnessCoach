@@ -444,6 +444,9 @@ class NutritionPreferencesNotifier extends StateNotifier<NutritionPreferencesSta
     int? targetProteinG,
     int? targetCarbsG,
     int? targetFatG,
+    int? customProteinPercent,
+    int? customCarbPercent,
+    int? customFatPercent,
   }) async {
     if (state.preferences == null) {
       debugPrint('❌ [NutritionPrefsProvider] Cannot update targets: no preferences loaded');
@@ -460,6 +463,9 @@ class NutritionPreferencesNotifier extends StateNotifier<NutritionPreferencesSta
         targetProteinG: targetProteinG ?? state.preferences!.targetProteinG,
         targetCarbsG: targetCarbsG ?? state.preferences!.targetCarbsG,
         targetFatG: targetFatG ?? state.preferences!.targetFatG,
+        customProteinPercent: customProteinPercent ?? state.preferences!.customProteinPercent,
+        customCarbPercent: customCarbPercent ?? state.preferences!.customCarbPercent,
+        customFatPercent: customFatPercent ?? state.preferences!.customFatPercent,
       );
 
       // Save to backend
@@ -501,8 +507,15 @@ class NutritionPreferencesNotifier extends StateNotifier<NutritionPreferencesSta
         preferences: updatedPreferences,
       );
 
-      state = state.copyWith(preferences: saved);
-      debugPrint('✅ [NutritionPrefsProvider] Weekly check-in recorded');
+      // Reset dismiss counter on successful check-in
+      final withResetDismiss = saved.copyWith(weeklyCheckinDismissCount: 0);
+      final finalSaved = await _repository.savePreferences(
+        userId: userId,
+        preferences: withResetDismiss,
+      );
+      state = state.copyWith(preferences: finalSaved);
+
+      debugPrint('✅ [NutritionPrefsProvider] Weekly check-in recorded, dismiss counter reset');
     } catch (e) {
       debugPrint('❌ [NutritionPrefsProvider] Record check-in error: $e');
     }

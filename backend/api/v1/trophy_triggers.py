@@ -83,6 +83,47 @@ async def _award_achievement(
         if result.data:
             logger.info(f"🏆 Awarded achievement {achievement_id} to user {user_id}")
 
+            # Create social notification for achievement
+            try:
+                user_result = db.client.table("users").select("name, avatar_url, fcm_token").eq("id", user_id).execute()
+                if user_result.data:
+                    user_name = user_result.data[0].get("name", "Someone")
+                    user_avatar = user_result.data[0].get("avatar_url")
+                    ach_name = achievement.get("name", "an achievement")
+
+                    # Social notification for the user
+                    db.client.table("social_notifications").insert({
+                        "user_id": user_id,
+                        "type": "achievement_earned",
+                        "from_user_id": user_id,
+                        "from_user_name": user_name,
+                        "from_user_avatar": user_avatar,
+                        "reference_id": achievement_id,
+                        "reference_type": "achievement",
+                        "title": "Achievement Unlocked!",
+                        "body": f"You earned: {ach_name}",
+                        "data": {},
+                        "is_read": False,
+                    }).execute()
+
+                    # FCM push (best-effort)
+                    fcm_token = user_result.data[0].get("fcm_token")
+                    if fcm_token:
+                        try:
+                            from services.notification_service import get_notification_service
+                            ns = get_notification_service()
+                            await ns.send_notification(
+                                fcm_token=fcm_token,
+                                title="Achievement Unlocked!",
+                                body=f"You earned: {ach_name}",
+                                notification_type="social",
+                                data={"type": "achievement_earned", "achievement_id": achievement_id},
+                            )
+                        except Exception:
+                            pass  # Push is best-effort
+            except Exception as notif_err:
+                logger.warning(f"[Trophies] Failed to send achievement notification: {notif_err}")
+
             # Award XP if configured
             xp_reward = achievement.get("xp_reward", 0)
             if xp_reward > 0:

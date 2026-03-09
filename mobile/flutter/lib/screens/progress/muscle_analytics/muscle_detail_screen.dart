@@ -3,7 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:go_router/go_router.dart';
 import '../../../data/models/muscle_analytics.dart';
+import '../../../data/models/muscle_status.dart';
 import '../../../data/providers/muscle_analytics_provider.dart';
+import '../../../data/providers/scores_provider.dart';
 import '../../../data/repositories/muscle_analytics_repository.dart';
 
 /// Detail screen showing analytics for a specific muscle group
@@ -58,6 +60,8 @@ class _MuscleDetailScreenState extends ConsumerState<MuscleDetailScreen> {
     final theme = Theme.of(context);
     final exercisesAsync = ref.watch(muscleExercisesProvider(widget.muscleGroup));
     final historyAsync = ref.watch(muscleHistoryProvider(widget.muscleGroup));
+    final frequencyAsync = ref.watch(muscleFrequencyProvider);
+    final balanceAsync = ref.watch(muscleBalanceProvider);
 
     return Scaffold(
       appBar: AppBar(
@@ -73,6 +77,18 @@ class _MuscleDetailScreenState extends ConsumerState<MuscleDetailScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // Training status badge
+              _MuscleStatusBadge(muscleGroup: widget.muscleGroup),
+              const SizedBox(height: 16),
+
+              // AI Insights Card
+              _InsightsCard(
+                muscleGroup: widget.muscleGroup,
+                frequencyAsync: frequencyAsync,
+                balanceAsync: balanceAsync,
+              ),
+              const SizedBox(height: 16),
+
               // Volume Trend Chart
               historyAsync.when(
                 loading: () => const _LoadingCard(),
@@ -595,6 +611,209 @@ class _EmptyCard extends StatelessWidget {
             ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _InsightsCard extends StatefulWidget {
+  final String muscleGroup;
+  final AsyncValue<MuscleTrainingFrequency> frequencyAsync;
+  final AsyncValue<MuscleBalanceData> balanceAsync;
+
+  const _InsightsCard({
+    required this.muscleGroup,
+    required this.frequencyAsync,
+    required this.balanceAsync,
+  });
+
+  @override
+  State<_InsightsCard> createState() => _InsightsCardState();
+}
+
+class _InsightsCardState extends State<_InsightsCard> {
+  bool _expanded = true;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final insights = _generateInsights();
+
+    if (insights.isEmpty) return const SizedBox.shrink();
+
+    return Card(
+      child: Column(
+        children: [
+          // Header with collapse toggle
+          InkWell(
+            onTap: () => setState(() => _expanded = !_expanded),
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Row(
+                children: [
+                  Icon(Icons.lightbulb_outline, size: 20, color: theme.colorScheme.primary),
+                  const SizedBox(width: 8),
+                  Text(
+                    'Insights',
+                    style: theme.textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const Spacer(),
+                  AnimatedRotation(
+                    turns: _expanded ? 0.5 : 0.0,
+                    duration: const Duration(milliseconds: 200),
+                    child: Icon(
+                      Icons.keyboard_arrow_down,
+                      size: 20,
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          // Collapsible content
+          AnimatedCrossFade(
+            firstChild: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: insights.map((insight) => Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('•  ', style: TextStyle(color: theme.colorScheme.primary, fontWeight: FontWeight.bold)),
+                      Expanded(
+                        child: Text(
+                          insight,
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            color: theme.colorScheme.onSurfaceVariant,
+                            height: 1.4,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                )).toList(),
+              ),
+            ),
+            secondChild: const SizedBox.shrink(),
+            crossFadeState: _expanded ? CrossFadeState.showFirst : CrossFadeState.showSecond,
+            duration: const Duration(milliseconds: 200),
+          ),
+        ],
+      ),
+    );
+  }
+
+  List<String> _generateInsights() {
+    final insights = <String>[];
+    final muscleName = widget.muscleGroup.replaceAll('_', ' ');
+    final capitalizedName = muscleName.split(' ').map((w) => w.isEmpty ? w : '${w[0].toUpperCase()}${w.substring(1)}').join(' ');
+
+    // Frequency insights
+    widget.frequencyAsync.whenData((frequency) {
+      for (final freq in frequency.frequencies) {
+        if (freq.muscleGroup == widget.muscleGroup) {
+          if (freq.isUndertrained) {
+            final recommended = freq.recommendedFrequency?.toStringAsFixed(1) ?? '2.0';
+            insights.add('$capitalizedName is undertrained (${freq.frequencyDisplay}) — try adding sessions to reach ${recommended}x/week');
+          } else if (freq.isOvertrained) {
+            insights.add('$capitalizedName may be overtrained (${freq.frequencyDisplay}) — consider adding a rest day');
+          } else if (freq.isOptimal) {
+            insights.add('$capitalizedName training frequency is optimal (${freq.frequencyDisplay})');
+          }
+
+          if (freq.daysSinceTrained != null && freq.daysSinceTrained! > 7) {
+            insights.add('Last trained ${freq.formattedLastTrained} — consider scheduling a session soon');
+          }
+          break;
+        }
+      }
+    });
+
+    // Balance insights
+    widget.balanceAsync.whenData((balance) {
+      if (balance.recommendations != null) {
+        for (final rec in balance.recommendations!) {
+          // Only add recommendations relevant to this muscle group
+          if (rec.toLowerCase().contains(muscleName.toLowerCase()) ||
+              rec.toLowerCase().contains('push') ||
+              rec.toLowerCase().contains('pull') ||
+              rec.toLowerCase().contains('ratio')) {
+            insights.add(rec);
+          }
+        }
+      }
+
+      // Push/pull ratio insight if relevant
+      if (balance.pushPullRatio != null) {
+        final ratio = balance.pushPullRatio!;
+        final isPushMuscle = ['chest', 'shoulders', 'triceps'].contains(widget.muscleGroup);
+        final isPullMuscle = ['lats', 'upper_back', 'biceps', 'traps'].contains(widget.muscleGroup);
+
+        if (isPushMuscle && ratio > 1.5) {
+          insights.add('Push/pull ratio is ${ratio.toStringAsFixed(1)}:1 — consider more pulling exercises for balance');
+        } else if (isPullMuscle && ratio < 0.7) {
+          insights.add('Push/pull ratio is ${ratio.toStringAsFixed(1)}:1 — consider more pushing exercises for balance');
+        }
+      }
+    });
+
+    return insights;
+  }
+}
+
+class _MuscleStatusBadge extends ConsumerWidget {
+  final String muscleGroup;
+
+  const _MuscleStatusBadge({required this.muscleGroup});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final scoresState = ref.watch(scoresProvider);
+    final muscleData = scoresState.strengthScores?.muscleScores[muscleGroup];
+    if (muscleData == null) return const SizedBox.shrink();
+
+    final readiness =
+        scoresState.todayReadiness ?? scoresState.overview?.todayReadiness;
+    final status = determineMuscleStatus(
+      muscleData: muscleData,
+      readiness: readiness,
+    );
+    final theme = Theme.of(context);
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: status.color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: status.color.withValues(alpha: 0.3)),
+      ),
+      child: Row(
+        children: [
+          Icon(status.icon, size: 18, color: status.color),
+          const SizedBox(width: 8),
+          Text(
+            status.label,
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: status.color,
+            ),
+          ),
+          const Spacer(),
+          Text(
+            '${muscleData.weeklySets} sets/wk',
+            style: TextStyle(
+              fontSize: 13,
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+          ),
+        ],
       ),
     );
   }

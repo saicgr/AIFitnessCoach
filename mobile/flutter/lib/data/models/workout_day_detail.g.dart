@@ -35,6 +35,8 @@ WorkoutDayDetail _$WorkoutDayDetailFromJson(Map<String, dynamic> json) =>
       coachFeedback: json['coach_feedback'] as String?,
       completedAt: json['completed_at'] as String?,
       averageRpe: (json['average_rpe'] as num?)?.toDouble(),
+      isHealthImport: json['is_health_import'] as bool? ?? false,
+      importMetadata: json['import_metadata'] as Map<String, dynamic>?,
     );
 
 Map<String, dynamic> _$WorkoutDayDetailToJson(WorkoutDayDetail instance) =>
@@ -54,6 +56,8 @@ Map<String, dynamic> _$WorkoutDayDetailToJson(WorkoutDayDetail instance) =>
       'coach_feedback': instance.coachFeedback,
       'completed_at': instance.completedAt,
       'average_rpe': instance.averageRpe,
+      'is_health_import': instance.isHealthImport,
+      'import_metadata': instance.importMetadata,
     };
 
 ExerciseSetDetail _$ExerciseSetDetailFromJson(Map<String, dynamic> json) =>

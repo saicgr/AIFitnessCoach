@@ -1,4 +1,7 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart' show ScrollDirection;
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
@@ -15,6 +18,16 @@ import '../widgets/empty_state.dart';
 import '../widgets/create_post_sheet.dart';
 import '../widgets/comments_sheet.dart';
 import '../widgets/activity_share_sheet.dart';
+import '../widgets/stories_ring.dart';
+
+/// Feed filter: show only my posts
+final feedMyPostsOnlyProvider = StateProvider<bool>((ref) => false);
+
+/// Auto-scroll: vertical feed cards
+final feedAutoScrollProvider = StateProvider<bool>((ref) => false);
+
+/// Auto-scroll: horizontal stories ring
+final storiesAutoScrollProvider = StateProvider<bool>((ref) => false);
 
 /// Activity Feed Tab - Shows recent workouts, achievements, and PRs from friends
 class FeedTab extends ConsumerStatefulWidget {
@@ -26,10 +39,38 @@ class FeedTab extends ConsumerStatefulWidget {
 
 class _FeedTabState extends ConsumerState<FeedTab> {
   final ScrollController _scrollController = ScrollController();
-  bool _showMyPostsOnly = false;
+  Timer? _autoScrollTimer;
+  bool _disposed = false;
+
+  void _startAutoScroll() {
+    _stopAutoScroll();
+    _autoScrollTimer = Timer.periodic(const Duration(seconds: 3), (_) {
+      if (_disposed || !_scrollController.hasClients) return;
+      final current = _scrollController.offset;
+      final max = _scrollController.position.maxScrollExtent;
+      if (current >= max) {
+        // Reached bottom — auto-disable
+        ref.read(feedAutoScrollProvider.notifier).state = false;
+        return;
+      }
+      final target = (current + 280).clamp(0.0, max);
+      _scrollController.animateTo(
+        target,
+        duration: const Duration(milliseconds: 800),
+        curve: Curves.easeInOut,
+      );
+    });
+  }
+
+  void _stopAutoScroll() {
+    _autoScrollTimer?.cancel();
+    _autoScrollTimer = null;
+  }
 
   @override
   void dispose() {
+    _disposed = true;
+    _stopAutoScroll();
     _scrollController.dispose();
     super.dispose();
   }
@@ -50,6 +91,15 @@ class _FeedTabState extends ConsumerState<FeedTab> {
         onAction: null,
       );
     }
+
+    // Auto-scroll: start/stop timer when provider changes
+    ref.listen<bool>(feedAutoScrollProvider, (prev, next) {
+      if (next) {
+        _startAutoScroll();
+      } else {
+        _stopAutoScroll();
+      }
+    });
 
     // Use the activityFeedProvider to load feed data
     final activityFeedAsync = ref.watch(activityFeedProvider(userId));
@@ -75,7 +125,8 @@ class _FeedTabState extends ConsumerState<FeedTab> {
             final allActivities = (feedData['items'] as List?) ?? [];
 
             // Apply My Posts filter
-            final activities = _showMyPostsOnly
+            final showMyPostsOnly = ref.watch(feedMyPostsOnlyProvider);
+            final activities = showMyPostsOnly
                 ? allActivities.where((a) => (a as Map<String, dynamic>)['user_id'] == userId).toList()
                 : allActivities;
             final hasActivities = activities.isNotEmpty;
@@ -91,6 +142,7 @@ class _FeedTabState extends ConsumerState<FeedTab> {
               child: !hasActivities && allActivities.isEmpty
                   ? ListView(
                       children: [
+                        const StoriesRing(),
                         SizedBox(
                           height: MediaQuery.of(context).size.height * 0.6,
                           child: SocialEmptyState(
@@ -103,41 +155,28 @@ class _FeedTabState extends ConsumerState<FeedTab> {
                         ),
                       ],
                     )
-                  : CustomScrollView(
+                  : NotificationListener<ScrollNotification>(
+                      onNotification: (notification) {
+                        // User-initiated drag → disable auto-scroll
+                        if (notification is UserScrollNotification &&
+                            notification.direction != ScrollDirection.idle) {
+                          if (ref.read(feedAutoScrollProvider)) {
+                            ref.read(feedAutoScrollProvider.notifier).state = false;
+                          }
+                        }
+                        return false;
+                      },
+                      child: CustomScrollView(
                       controller: _scrollController,
                       physics: const AlwaysScrollableScrollPhysics(),
                       slivers: [
-                        // My Posts / All toggle
+                        // Stories ring (scrolls with feed)
                         SliverToBoxAdapter(
-                          child: Padding(
-                            padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
-                            child: SegmentedButton<bool>(
-                              segments: const [
-                                ButtonSegment(
-                                  value: false,
-                                  label: Text('All'),
-                                  icon: Icon(Icons.public_rounded, size: 18),
-                                ),
-                                ButtonSegment(
-                                  value: true,
-                                  label: Text('My Posts'),
-                                  icon: Icon(Icons.person_rounded, size: 18),
-                                ),
-                              ],
-                              selected: {_showMyPostsOnly},
-                              onSelectionChanged: (value) {
-                                HapticFeedback.selectionClick();
-                                setState(() => _showMyPostsOnly = value.first);
-                              },
-                              style: ButtonStyle(
-                                visualDensity: VisualDensity.compact,
-                              ),
-                            ),
-                          ),
+                          child: const StoriesRing(),
                         ),
 
                         // Empty state for filtered view
-                        if (!hasActivities && _showMyPostsOnly)
+                        if (!hasActivities && showMyPostsOnly)
                           SliverFillRemaining(
                             hasScrollBody: false,
                             child: Center(
@@ -218,6 +257,7 @@ class _FeedTabState extends ConsumerState<FeedTab> {
                           child: SizedBox(height: 120),
                         ),
                       ],
+                    ),
                     ),
             );
           },

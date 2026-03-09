@@ -359,6 +359,10 @@ class ExerciseRAGService:
             if not ex.get("video_url") and not ex.get("video_s3_path"):
                 continue
 
+            # Skip exercises with missing critical metadata
+            if not ex.get("body_part") or not ex.get("target_muscle"):
+                continue
+
             exercise_name = ex.get("name", ex.get("exercise_name_cleaned", ex.get("exercise_name", "")))
             lower_name = exercise_name.lower()
             if lower_name in seen_names:
@@ -1189,6 +1193,7 @@ class ExerciseRAGService:
                 strength_history=strength_history,
                 progression_pace=progression_pace,
                 equipment=equipment,
+                avoid_exercises=avoid_exercises if avoid_exercises else None,
             )
 
             # Backfill from full candidate pool if AI returned too few
@@ -1270,6 +1275,7 @@ class ExerciseRAGService:
         strength_history: Optional[Dict[str, Dict]] = None,
         progression_pace: str = "medium",
         equipment: Optional[List[str]] = None,
+        avoid_exercises: Optional[List[str]] = None,
     ) -> List[Dict[str, Any]]:
         """Use AI to select the best exercises from candidates."""
 
@@ -1335,7 +1341,11 @@ SELECTION CRITERIA:
 7. Consider the fitness level - {fitness_level} (but still use weights - beginners benefit from learning barbell and dumbbell movements)
 8. Align with goals: {', '.join(goals) if goals else 'General fitness'}
 {equipment_priority_section}
-
+{f"""
+ADJACENT-DAY VARIETY RULE:
+AVOID these exercises already used in adjacent workouts: {', '.join(avoid_exercises)}
+Do NOT select any exercise from the above list. Pick different exercises for variety.
+""" if avoid_exercises else ""}
 IMPORTANT: You MUST select {count} DIFFERENT exercises. Each number in your response must be unique.
 
 Return a JSON object with "selected_indices" array containing {count} UNIQUE exercise numbers (1-indexed), in the order they should be performed.
@@ -1359,7 +1369,7 @@ Select exactly {count} UNIQUE exercises that are SAFE for this user."""
                 config=types.GenerateContentConfig(
                     response_mime_type="application/json",
                     response_schema=ExerciseIndicesResponse,
-                    temperature=0.3,
+                    temperature=0.5,
                     max_output_tokens=2000,
                 ),
             )

@@ -86,13 +86,14 @@ class _FitWizAppState extends ConsumerState<FitWizApp> {
         // 3. FloatingChatOverlay - Messenger-style chat bubble on all screens
 
         final mediaQuery = MediaQuery.of(context);
+        final a11y = ref.watch(accessibilityProvider);
 
         return MediaQuery(
           data: MediaQueryData(
             size: mediaQuery.size,
             devicePixelRatio: mediaQuery.devicePixelRatio,
-            // Force text scaling to 1.0 to prevent overflow
-            textScaler: const TextScaler.linear(1.0),
+            // Apply user font scale from accessibility settings
+            textScaler: TextScaler.linear(a11y.fontScale),
             padding: mediaQuery.padding,
             viewPadding: mediaQuery.viewPadding,
             viewInsets: mediaQuery.viewInsets,
@@ -100,9 +101,9 @@ class _FitWizAppState extends ConsumerState<FitWizApp> {
             alwaysUse24HourFormat: mediaQuery.alwaysUse24HourFormat,
             accessibleNavigation: mediaQuery.accessibleNavigation,
             invertColors: mediaQuery.invertColors,
-            highContrast: mediaQuery.highContrast,
+            highContrast: a11y.highContrast || mediaQuery.highContrast,
             onOffSwitchLabels: mediaQuery.onOffSwitchLabels,
-            disableAnimations: mediaQuery.disableAnimations,
+            disableAnimations: a11y.reduceAnimations || mediaQuery.disableAnimations,
             // Disable bold text to prevent layout changes
             boldText: false,
             navigationMode: mediaQuery.navigationMode,

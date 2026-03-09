@@ -191,6 +191,7 @@ class GenerateWorkoutRequest(BaseModel):
     scheduled_date: Optional[str] = Field(default=None, description="Target date for workout (YYYY-MM-DD). If not provided, uses today's date.")
     skip_comeback: Optional[bool] = Field(default=None, description="If True, skip comeback mode adjustments even if user qualifies")
     adjacent_day_exercises: Optional[List[str]] = Field(default=None, description="Exercises from adjacent-day workouts to avoid for variety")
+    batch_offset: int = Field(default=0, ge=0, description="Offset index for batch generation to ensure exercise variety across days")
 
 
 class GenerateWeeklyRequest(BaseModel):
@@ -247,6 +248,13 @@ class SwapExerciseRequest(BaseModel):
     new_exercise_name: str = Field(..., max_length=200)
     reason: Optional[str] = Field(default=None, max_length=500)
     swap_source: Optional[str] = Field(default="ai_suggestion", max_length=50)  # 'ai_suggestion', 'library_search', 'recent_exercise'
+    section: Optional[str] = Field(default="main", description="Section: main, warmup, or stretches")
+    duration_seconds: Optional[float] = Field(default=None, description="Cardio duration in seconds")
+    speed_mph: Optional[float] = Field(default=None, description="Cardio speed in mph")
+    incline_percent: Optional[float] = Field(default=None, description="Cardio incline percent")
+    rpm: Optional[float] = Field(default=None, description="Cardio RPM")
+    resistance_level: Optional[float] = Field(default=None, description="Cardio resistance level")
+    stroke_rate_spm: Optional[float] = Field(default=None, description="Rowing stroke rate SPM")
 
 
 class AddExerciseRequest(BaseModel):
@@ -257,6 +265,12 @@ class AddExerciseRequest(BaseModel):
     reps: Optional[str] = Field(default="8-12", max_length=20)
     rest_seconds: Optional[int] = Field(default=60, ge=0, le=300)
     section: Optional[str] = Field(default="main", description="Section to add exercise to: main, warmup, or stretches")
+    duration_seconds: Optional[float] = Field(default=None, description="Cardio duration in seconds")
+    speed_mph: Optional[float] = Field(default=None, description="Cardio speed in mph")
+    incline_percent: Optional[float] = Field(default=None, description="Cardio incline percent")
+    rpm: Optional[float] = Field(default=None, description="Cardio RPM")
+    resistance_level: Optional[float] = Field(default=None, description="Cardio resistance level")
+    stroke_rate_spm: Optional[float] = Field(default=None, description="Rowing stroke rate SPM")
 
     @field_validator('section')
     @classmethod

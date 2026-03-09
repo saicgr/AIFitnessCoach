@@ -87,7 +87,7 @@ def get_rag_service() -> RAGService:
     return rag_service
 
 
-def _save_chat_to_db(user_id: str, message: str, response_message: str, response_intent, response_agent_type, response_rag_context_used: bool, response_action_data):
+def _save_chat_to_db(user_id: str, message: str, response_message: str, response_intent, response_agent_type, response_rag_context_used: bool, response_action_data, coach_persona_id: Optional[str] = None):
     """Background task: Save chat message to database for persistence."""
     try:
         db = get_supabase_db()
@@ -98,6 +98,8 @@ def _save_chat_to_db(user_id: str, message: str, response_message: str, response
         }
         if response_action_data:
             context_dict["action_data"] = response_action_data
+        if coach_persona_id:
+            context_dict["coach_persona_id"] = coach_persona_id
 
         chat_data = {
             "user_id": user_id,
@@ -235,6 +237,7 @@ async def send_message(
 
         # Move DB writes to background tasks with retry - these don't block the response.
         # Chat history is only read on subsequent requests (GET /history), not in this flow.
+        _coach_persona_id = chat_request.ai_settings.coach_persona_id if chat_request.ai_settings else None
         background_tasks.add_task(
             _retry_task,
             _save_chat_to_db,
@@ -245,6 +248,7 @@ async def send_message(
             response.agent_type,
             response.rag_context_used,
             response.action_data,
+            _coach_persona_id,
             task_name="save_chat_to_db",
         )
 
@@ -300,6 +304,7 @@ class ChatHistoryItem(BaseModel):
     is_pinned: bool = False
     audio_url: Optional[str] = None
     audio_duration_ms: Optional[int] = None
+    coach_persona_id: Optional[str] = None  # Which coach persona sent this message
 
 
 @router.get("/history/{user_id}", response_model=List[ChatHistoryItem])
@@ -338,15 +343,17 @@ async def get_chat_history(
             timestamp = str(row.get("timestamp", ""))
             row_id = str(row.get("id", ""))
 
-            # Parse context_json for action_data and agent_type
+            # Parse context_json for action_data, agent_type, and coach_persona_id
             action_data = None
             agent_type = None
+            coach_persona_id = None
             if row.get("context_json"):
                 try:
                     context = json.loads(row.get("context_json"))
                     # Extract nested action_data if present (for "Go to Workout" button)
                     action_data = context.get("action_data")
                     agent_type = context.get("agent_type")
+                    coach_persona_id = context.get("coach_persona_id")
                     if action_data:
                         logger.debug(f"Loaded action_data from history: {action_data.get('action')}")
                 except Exception as e:
@@ -380,6 +387,7 @@ async def get_chat_history(
                     agent_type=agent_type,
                     action_data=action_data,
                     is_pinned=is_pinned,
+                    coach_persona_id=coach_persona_id,
                 ))
 
         logger.info(f"Returning {len(messages)} chat messages for user {user_id}")
@@ -551,6 +559,7 @@ async def send_message_stream(
             yield f"data: {json.dumps({'event': 'done', 'action_data': response.action_data})}\n\n"
 
             # Schedule background tasks for DB persistence
+            _stream_coach_persona_id = chat_request.ai_settings.coach_persona_id if chat_request.ai_settings else None
             background_tasks.add_task(
                 _retry_task,
                 _save_chat_to_db,
@@ -561,6 +570,7 @@ async def send_message_stream(
                 response.agent_type,
                 response.rag_context_used,
                 response.action_data,
+                _stream_coach_persona_id,
                 task_name="save_chat_to_db",
             )
             background_tasks.add_task(

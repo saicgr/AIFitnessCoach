@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../services/api_client.dart';
@@ -18,6 +20,7 @@ class UnifiedNotification {
   final String? requestId;
   final String? fromUserName;
   final String? fromUserAvatar;
+  final String? referenceId;
 
   const UnifiedNotification({
     required this.id,
@@ -30,6 +33,7 @@ class UnifiedNotification {
     this.requestId,
     this.fromUserName,
     this.fromUserAvatar,
+    this.referenceId,
   });
 
   /// Create from a local NotificationItem
@@ -105,6 +109,23 @@ class UnifiedNotification {
       fromUserAvatar: json['from_user_avatar'] as String?,
     );
   }
+
+  /// Create from a social notification API response (reactions, comments, mentions)
+  factory UnifiedNotification.fromSocialNotification(Map<String, dynamic> json) {
+    return UnifiedNotification(
+      id: 'social_${json['id']}',
+      title: json['title'] as String? ?? 'Notification',
+      body: json['body'] as String? ?? '',
+      type: json['type'] as String? ?? 'social',
+      timestamp: json['created_at'] != null
+          ? DateTime.parse(json['created_at'] as String)
+          : DateTime.now(),
+      isRead: json['is_read'] as bool? ?? false,
+      fromUserName: json['from_user_name'] as String?,
+      fromUserAvatar: json['from_user_avatar'] as String?,
+      referenceId: json['reference_id'] as String?,
+    );
+  }
 }
 
 /// Provider for ChallengesService
@@ -130,15 +151,42 @@ final unifiedUnreadCountProvider = Provider<int>((ref) {
 
 class UnifiedNotificationsNotifier extends StateNotifier<AsyncValue<List<UnifiedNotification>>> {
   final Ref _ref;
+  Timer? _pollTimer;
 
   UnifiedNotificationsNotifier(this._ref) : super(const AsyncValue.loading()) {
     _loadAll();
+    _startPolling();
     // Re-fetch when auth state changes (userId becomes available after login)
     _ref.listen<String?>(currentUserIdProvider, (prev, next) {
       if (prev != next && next != null) {
         _loadAll();
       }
     });
+  }
+
+  void _startPolling() {
+    _pollTimer?.cancel();
+    _pollTimer = Timer.periodic(const Duration(seconds: 30), (_) {
+      _silentRefresh();
+    });
+  }
+
+  /// Refresh without showing loading state (background poll)
+  Future<void> _silentRefresh() async {
+    // Only poll if we have data (don't poll during initial load or error)
+    if (state is! AsyncData) return;
+    try {
+      await _loadAll();
+    } catch (e) {
+      // Silent failure - don't update state on poll errors
+      debugPrint('🔔 [UnifiedNotifications] Silent poll error: $e');
+    }
+  }
+
+  @override
+  void dispose() {
+    _pollTimer?.cancel();
+    super.dispose();
   }
 
   Future<void> _loadAll() async {
@@ -180,8 +228,26 @@ class UnifiedNotificationsNotifier extends StateNotifier<AsyncValue<List<Unified
         }
       }
 
+      // Fetch social notifications (reactions, comments, mentions)
+      List<UnifiedNotification> socialUnified = [];
+      if (userId != null) {
+        try {
+          final socialService = _ref.read(socialServiceProvider);
+          final response = await socialService.getSocialNotifications(
+            userId: userId,
+            limit: 50,
+          );
+          final items = response['notifications'] as List<dynamic>? ?? [];
+          socialUnified = items
+              .map((n) => UnifiedNotification.fromSocialNotification(n as Map<String, dynamic>))
+              .toList();
+        } catch (e) {
+          debugPrint('🔔 [UnifiedNotifications] Error fetching social notifications: $e');
+        }
+      }
+
       // Merge and sort by timestamp (newest first)
-      final all = [...challengeUnified, ...friendRequestUnified, ...localUnified];
+      final all = [...socialUnified, ...challengeUnified, ...friendRequestUnified, ...localUnified];
       all.sort((a, b) => b.timestamp.compareTo(a.timestamp));
 
       state = AsyncValue.data(all);
@@ -226,6 +292,7 @@ class UnifiedNotificationsNotifier extends StateNotifier<AsyncValue<List<Unified
               requestId: n.requestId,
               fromUserName: n.fromUserName,
               fromUserAvatar: n.fromUserAvatar,
+              referenceId: n.referenceId,
             );
           }
           return n;
@@ -233,6 +300,46 @@ class UnifiedNotificationsNotifier extends StateNotifier<AsyncValue<List<Unified
       });
     } catch (e) {
       debugPrint('🔔 [UnifiedNotifications] Error marking as read: $e');
+    }
+  }
+
+  /// Mark a social notification as read via API
+  Future<void> markSocialNotificationRead(String notificationId) async {
+    final userId = _ref.read(currentUserIdProvider);
+    if (userId == null) return;
+
+    // Strip the 'social_' prefix to get the real notification ID
+    final realId = notificationId.startsWith('social_')
+        ? notificationId.substring('social_'.length)
+        : notificationId;
+
+    try {
+      final socialService = _ref.read(socialServiceProvider);
+      await socialService.markNotificationRead(userId: userId, notificationId: realId);
+
+      // Update local state
+      state = state.whenData((notifications) {
+        return notifications.map((n) {
+          if (n.id == notificationId) {
+            return UnifiedNotification(
+              id: n.id,
+              title: n.title,
+              body: n.body,
+              type: n.type,
+              timestamp: n.timestamp,
+              isRead: true,
+              challengeId: n.challengeId,
+              requestId: n.requestId,
+              fromUserName: n.fromUserName,
+              fromUserAvatar: n.fromUserAvatar,
+              referenceId: n.referenceId,
+            );
+          }
+          return n;
+        }).toList();
+      });
+    } catch (e) {
+      debugPrint('🔔 [UnifiedNotifications] Error marking social notification as read: $e');
     }
   }
 

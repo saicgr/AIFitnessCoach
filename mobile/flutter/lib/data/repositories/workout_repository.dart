@@ -96,9 +96,8 @@ final workoutsProvider =
     StateNotifierProvider<WorkoutsNotifier, AsyncValue<List<Workout>>>((ref) {
   final repository = ref.watch(workoutRepositoryProvider);
   final apiClient = ref.watch(apiClientProvider);
-  // Get userId from authStateProvider (primary source of truth)
-  final authState = ref.watch(authStateProvider);
-  final userId = authState.user?.id;
+  // Only rebuild when user identity changes (login/logout), not on data refresh
+  final userId = ref.watch(authStateProvider.select((s) => s.user?.id));
   return WorkoutsNotifier(repository, apiClient, userId);
 });
 
@@ -1465,6 +1464,47 @@ class WorkoutRepository {
     }
   }
 
+  /// Get AI exercise suggestions for adding to a workout (not swapping)
+  Future<List<Map<String, dynamic>>> getExerciseSuggestionsForAdd({
+    required String workoutType,
+    required List<String> existingExercises,
+    required String userId,
+    List<String>? avoidedExercises,
+  }) async {
+    try {
+      final message =
+          'Suggest exercises to add to my $workoutType workout that already has: ${existingExercises.join(', ')}';
+
+      debugPrint('🔍 [Workout] Getting add suggestions for $workoutType workout');
+
+      final response = await _apiClient.post(
+        '/exercise-suggestions/suggest',
+        data: {
+          'user_id': userId,
+          'message': message,
+          'current_exercise': {
+            'name': '',
+            'muscle_group': workoutType,
+          },
+          'existing_exercises': existingExercises,
+          'mode': 'add',
+          if (avoidedExercises != null && avoidedExercises.isNotEmpty)
+            'avoided_exercises': avoidedExercises,
+        },
+      );
+      if (response.statusCode == 200) {
+        final data = response.data as Map<String, dynamic>;
+        final suggestions = List<Map<String, dynamic>>.from(data['suggestions'] ?? []);
+        debugPrint('✅ [Workout] Got ${suggestions.length} add suggestions');
+        return suggestions;
+      }
+      return [];
+    } catch (e) {
+      debugPrint('❌ [Workout] Error getting add exercise suggestions: $e');
+      return [];
+    }
+  }
+
   /// Swap an exercise in a workout
   Future<Workout?> swapExercise({
     required String workoutId,
@@ -1472,6 +1512,8 @@ class WorkoutRepository {
     required String newExerciseName,
     String? reason,
     String swapSource = 'ai_suggestion',
+    String? section,
+    Map<String, double>? cardioParams,
   }) async {
     try {
       final response = await _apiClient.post(
@@ -1482,6 +1524,8 @@ class WorkoutRepository {
           'new_exercise_name': newExerciseName,
           if (reason != null) 'reason': reason,
           'swap_source': swapSource,
+          if (section != null) 'section': section,
+          if (cardioParams != null) ...cardioParams,
         },
       );
       if (response.statusCode == 200) {
@@ -1501,6 +1545,8 @@ class WorkoutRepository {
     int sets = 3,
     String reps = '8-12',
     int restSeconds = 60,
+    String? section,
+    Map<String, double>? cardioParams,
   }) async {
     try {
       debugPrint('🔍 [Workout] Adding exercise "$exerciseName" to workout $workoutId');
@@ -1512,6 +1558,8 @@ class WorkoutRepository {
           'sets': sets,
           'reps': reps,
           'rest_seconds': restSeconds,
+          if (section != null) 'section': section,
+          if (cardioParams != null) ...cardioParams,
         },
       );
       if (response.statusCode == 200) {
@@ -3128,6 +3176,14 @@ class WorkoutRepository {
       debugPrint('❌ [Workout] Error fetching completion summary: $e');
       rethrow;
     }
+  }
+
+  /// Get workouts imported from Health Connect / Apple Health
+  List<Workout> getSyncedWorkouts(List<Workout> allWorkouts) {
+    return allWorkouts
+        .where((w) => w.generationMethod == 'health_connect_import')
+        .toList()
+      ..sort((a, b) => (b.scheduledDate ?? '').compareTo(a.scheduledDate ?? ''));
   }
 }
 

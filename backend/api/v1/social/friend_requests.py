@@ -45,7 +45,7 @@ async def create_social_notification(
     try:
         # Check if user has this notification type enabled
         privacy = supabase.table("user_privacy_settings").select(
-            "notify_friend_requests"
+            "notify_friend_requests, notify_friend_activity"
         ).eq("user_id", user_id).execute()
 
         # Default to enabled if no settings exist
@@ -55,6 +55,10 @@ async def create_social_notification(
                 should_notify = privacy.data[0].get("notify_friend_requests", True)
             elif notification_type == SocialNotificationType.FRIEND_ACCEPTED:
                 should_notify = privacy.data[0].get("notify_friend_requests", True)
+            elif notification_type == SocialNotificationType.WORKOUT_SHARED:
+                should_notify = privacy.data[0].get("notify_friend_activity", True)
+            elif notification_type == SocialNotificationType.ACHIEVEMENT_EARNED:
+                should_notify = True  # Always notify user of their own achievements
 
         if should_notify:
             supabase.table("social_notifications").insert({
@@ -162,6 +166,25 @@ async def send_friend_request(
         body=f"{sender_name} sent you a friend request",
         data={"message": request.message} if request.message else None,
     )
+
+    # Send FCM push notification to recipient
+    try:
+        from services.notification_service import get_notification_service
+        target_profile = supabase.table("users").select("fcm_token").eq(
+            "id", request.to_user_id
+        ).single().execute()
+        fcm_token = target_profile.data.get("fcm_token") if target_profile.data else None
+        if fcm_token:
+            notification_service = get_notification_service()
+            await notification_service.send_notification(
+                fcm_token=fcm_token,
+                title="New Friend Request",
+                body=f"{sender_name} sent you a friend request",
+                notification_type="social",
+                data={"action": "open_social", "request_id": friend_request["id"]},
+            )
+    except Exception as e:
+        logger.warning(f"FCM push failed for friend request: {e}")
 
     return FriendRequest(**friend_request)
 
@@ -378,6 +401,25 @@ async def accept_friend_request(
         title="Friend Request Accepted",
         body=f"{recipient_name} accepted your friend request",
     )
+
+    # Send FCM push notification to original requester
+    try:
+        from services.notification_service import get_notification_service
+        requester_profile = supabase.table("users").select("fcm_token").eq(
+            "id", from_user_id
+        ).single().execute()
+        fcm_token = requester_profile.data.get("fcm_token") if requester_profile.data else None
+        if fcm_token:
+            notification_service = get_notification_service()
+            await notification_service.send_notification(
+                fcm_token=fcm_token,
+                title="Friend Request Accepted",
+                body=f"{recipient_name} accepted your friend request",
+                notification_type="social",
+                data={"action": "open_social", "request_id": request_id},
+            )
+    except Exception as e:
+        logger.warning(f"FCM push failed for friend accept: {e}")
 
     return {
         "message": "Friend request accepted",

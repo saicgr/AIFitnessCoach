@@ -14,13 +14,11 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:ui';
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:video_player/video_player.dart';
 
 import '../../core/constants/app_colors.dart';
@@ -64,6 +62,7 @@ import 'widgets/exercise_analytics_page.dart';
 import 'widgets/quit_workout_dialog.dart';
 import 'widgets/enhanced_notes_sheet.dart';
 import 'widgets/exercise_swap_sheet.dart';
+import 'widgets/exercise_add_sheet.dart';
 import 'widgets/ai_text_input_bar.dart';
 import 'widgets/parsed_exercises_preview_sheet.dart';
 import 'widgets/ai_input_preview_sheet.dart';
@@ -86,7 +85,6 @@ import '../../data/repositories/exercise_preferences_repository.dart';
 import '../settings/equipment/environment_list_screen.dart';
 import '../../data/services/haptic_service.dart';
 import '../../data/services/pr_detection_service.dart';
-import '../../data/models/coach_persona.dart';
 import '../../widgets/coach_avatar.dart';
 import 'widgets/pr_inline_celebration.dart';
 import '../../core/services/rest_tip_service.dart';
@@ -94,7 +92,6 @@ import '../../core/services/achievement_prompt_service.dart';
 import '../../core/services/exercise_info_service.dart';
 import '../../core/providers/workout_mini_player_provider.dart';
 import '../../core/providers/favorites_provider.dart';
-import '../../core/providers/heart_rate_provider.dart';
 import '../../core/providers/ble_heart_rate_provider.dart';
 import '../../data/services/ble_heart_rate_service.dart';
 import '../../widgets/heart_rate_display.dart';
@@ -135,8 +132,6 @@ class _ActiveWorkoutScreenState
   bool _isRestingBetweenExercises = false;
   bool _isPaused = false;
   bool _showInstructions = false;
-  bool _showExerciseList = false;
-
   /// Whether to hide the AI Coach FAB for this session (user long-pressed to hide)
   bool _hideAICoachForSession = false;
 
@@ -145,7 +140,6 @@ class _ActiveWorkoutScreenState
   bool _isVideoInitialized = false;
   bool _isVideoPlaying = true;
   String? _imageUrl;
-  String? _videoUrl;
   bool _isLoadingMedia = true;
 
   // Timer controller
@@ -177,21 +171,16 @@ class _ActiveWorkoutScreenState
   int _totalDrinkIntakeMl = 0;
   bool _isActiveRowExpanded = true;
   final List<Map<String, dynamic>> _restIntervals = [];
-  DateTime? _lastSetCompletedAt;
-  DateTime? _lastExerciseStartedAt;
-  final bool _lastSetWasFast = false;
   final Map<int, int> _exerciseTimeSeconds = {};
   DateTime? _currentExerciseStartTime;
   bool _isDoneButtonPressed = false;
   int? _justCompletedSetIndex;
-  bool _isLoadingHistory = true;
   final Map<String, double> _exerciseMaxWeights = {};
 
   // RPE/RIR and weight suggestion state
   int? _lastSetRpe;
   int? _lastSetRir = 3; // Default RIR 3 (moderate) for quick-select bar
   WeightSuggestion? _currentWeightSuggestion;
-  final bool _showRpeSelector = false;
   bool _isLoadingWeightSuggestion = false; // Loading state for AI suggestion
   SetLog? _pendingSetLog; // Set waiting for RPE/RIR input
 
@@ -201,9 +190,6 @@ class _ActiveWorkoutScreenState
 
   // PR detection service
   late PRDetectionService _prDetectionService;
-
-  // Coach persona for AI Coach button
-  CoachPersona? _coachPersona;
 
   // Rest suggestion state (AI-powered)
   RestSuggestion? _restSuggestion;
@@ -220,10 +206,8 @@ class _ActiveWorkoutScreenState
   // Warmup/stretch state (fetched from API)
   List<WarmupExerciseData>? _warmupExercises;
   List<StretchExerciseData>? _stretchExercises;
-  bool _isLoadingWarmup = true;
-
   // V2 UI flag - MacroFactor style design
-  bool _useV2Design = true;
+  final bool _useV2Design = true;
 
   // L/R mode for unilateral exercises
   bool _isLeftRightMode = false;
@@ -401,14 +385,12 @@ class _ActiveWorkoutScreenState
 
     // Initialize time tracking
     _currentExerciseStartTime = DateTime.now();
-    _lastExerciseStartedAt = DateTime.now();
   }
 
   /// Load personalized warmup and stretch exercises from API
   Future<void> _loadWarmupAndStretches() async {
     final workoutId = widget.workout.id;
     if (workoutId == null) {
-      setState(() => _isLoadingWarmup = false);
       return;
     }
 
@@ -449,17 +431,12 @@ class _ActiveWorkoutScreenState
             equipment: e['equipment']?.toString(),
           )).toList();
         }
-
-        _isLoadingWarmup = false;
       });
 
       debugPrint('✅ [Warmup] Loaded ${_warmupExercises?.length ?? 0} warmup exercises');
       debugPrint('✅ [Stretch] Loaded ${_stretchExercises?.length ?? 0} stretch exercises');
     } catch (e) {
       debugPrint('❌ [Warmup] Error loading warmup/stretches: $e');
-      if (mounted) {
-        setState(() => _isLoadingWarmup = false);
-      }
     }
   }
 
@@ -618,41 +595,9 @@ class _ActiveWorkoutScreenState
 
     // Use HapticService for satisfying set completion feedback
     HapticService.setCompletion();
-    _lastSetCompletedAt = DateTime.now();
 
     // Finalize the set
     _finalizeSetWithRpe();
-  }
-
-  /// Show the RPE/RIR selector bottom sheet
-  void _showRpeSelectorSheet() {
-    showGlassSheet(
-      context: context,
-      isDismissible: false, // Force user to respond
-      enableDrag: false,
-      builder: (context) => GlassSheet(
-        showHandle: false,
-        child: DraggableScrollableSheet(
-          initialChildSize: 0.85,
-          minChildSize: 0.5,
-          maxChildSize: 0.95,
-          expand: false,
-          builder: (context, scrollController) => SingleChildScrollView(
-            controller: scrollController,
-            child: RpeRirSelector(
-            currentRpe: _lastSetRpe,
-            currentRir: _lastSetRir,
-            onRpeChanged: (rpe) => setState(() => _lastSetRpe = rpe),
-            onRirChanged: (rir) => setState(() => _lastSetRir = rir),
-            onDone: () {
-              Navigator.pop(context);
-              _finalizeSetWithRpe();
-            },
-          ),
-        ),
-      ),
-      ),
-    );
   }
 
   /// Finalize the set log with RPE/RIR and continue
@@ -914,7 +859,6 @@ class _ActiveWorkoutScreenState
     _fetchMediaForExercise(nextExercise);
 
     _currentExerciseStartTime = DateTime.now();
-    _lastExerciseStartedAt = DateTime.now();
 
     // Show brief feedback
     ScaffoldMessenger.of(context).clearSnackBars();
@@ -977,10 +921,10 @@ class _ActiveWorkoutScreenState
         fitnessLevel: ref.read(scoresProvider).fitnessScore?.level.name ?? 'intermediate',
         goals: ref.read(activeGymProfileProvider)?.goals ?? [],
         // Pass AI settings for personalized coaching
-        coachingStyle: aiSettings?.coachingStyle ?? 'motivational',
-        communicationTone: aiSettings?.communicationTone ?? 'encouraging',
-        encouragementLevel: aiSettings?.encouragementLevel ?? 0.7,
-        responseLength: aiSettings?.responseLength ?? 'balanced',
+        coachingStyle: aiSettings.coachingStyle,
+        communicationTone: aiSettings.communicationTone,
+        encouragementLevel: aiSettings.encouragementLevel,
+        responseLength: aiSettings.responseLength,
       );
 
       if (!mounted) return;
@@ -1684,7 +1628,6 @@ class _ActiveWorkoutScreenState
       _startRest(true);
 
       _currentExerciseStartTime = DateTime.now();
-      _lastExerciseStartedAt = DateTime.now();
     } else {
       // All exercises complete - move to stretch phase
       // Celebratory haptic for workout completion
@@ -1723,7 +1666,7 @@ class _ActiveWorkoutScreenState
     if (_exercises.isEmpty || _currentExerciseIndex >= _exercises.length) return;
 
     final exercise = _exercises[_currentExerciseIndex];
-    final exerciseName = exercise.name ?? 'Unknown';
+    final exerciseName = exercise.name;
 
     HapticFeedback.mediumImpact();
 
@@ -1809,7 +1752,6 @@ class _ActiveWorkoutScreenState
     final apiClient = ref.read(apiClientProvider);
     final userId = await apiClient.getUserId();
     if (userId == null) {
-      setState(() => _isLoadingHistory = false);
       return;
     }
 
@@ -1818,10 +1760,6 @@ class _ActiveWorkoutScreenState
     for (int i = 0; i < _exercises.length; i++) {
       final exercise = _exercises[i];
       await _fetchSingleExerciseHistory(repository, userId, exercise, i);
-    }
-
-    if (mounted) {
-      setState(() => _isLoadingHistory = false);
     }
   }
 
@@ -1926,25 +1864,8 @@ class _ActiveWorkoutScreenState
 
   /// Load coach persona from AI settings
   void _loadCoachPersona() {
-    final aiSettings = ref.read(aiSettingsProvider);
-    if (aiSettings.coachPersonaId != null) {
-      // Try to find predefined coach
-      final predefined = CoachPersona.findById(aiSettings.coachPersonaId);
-      if (predefined != null) {
-        setState(() => _coachPersona = predefined);
-      } else if (aiSettings.isCustomCoach) {
-        // Create custom coach from settings
-        setState(() => _coachPersona = CoachPersona.custom(
-          name: aiSettings.coachName ?? 'My Coach',
-          coachingStyle: aiSettings.coachingStyle,
-          communicationTone: aiSettings.communicationTone,
-          encouragementLevel: aiSettings.encouragementLevel,
-        ));
-      }
-    } else {
-      // Default to Coach Mike
-      setState(() => _coachPersona = CoachPersona.defaultCoach);
-    }
+    // Coach persona is loaded for AI settings context;
+    // the actual persona is referenced via aiSettingsProvider when needed.
   }
 
   /// Check for PRs after completing a set
@@ -2059,7 +1980,6 @@ class _ActiveWorkoutScreenState
 
         if (mounted) {
           setState(() {
-            _videoUrl = modelVideoUrl;
             _isVideoInitialized = true;
             _isVideoPlaying = true;
           });
@@ -2102,7 +2022,6 @@ class _ActiveWorkoutScreenState
 
         if (mounted) {
           setState(() {
-            _videoUrl = videoUrl;
             _isVideoInitialized = true;
             _isVideoPlaying = true;
           });
@@ -3119,8 +3038,7 @@ class _ActiveWorkoutScreenState
                   totalCompletedSets: _completedSets.values
                       .fold(0, (sum, sets) => sum + sets.length),
                   onTogglePause: _togglePause,
-                  onShowExerciseList: () =>
-                      setState(() => _showExerciseList = true),
+                  onShowExerciseList: () {},
                   onQuit: _showQuitDialog,
                 ),
               ),
@@ -3365,7 +3283,7 @@ class _ActiveWorkoutScreenState
                       final favoritesState = ref.watch(favoritesProvider);
                       final currentExercise = _exercises.isNotEmpty ? _exercises[_currentExerciseIndex] : null;
                       final isFavorite = currentExercise != null
-                          ? favoritesState.isFavorite(currentExercise.name ?? '')
+                          ? favoritesState.isFavorite(currentExercise.name)
                           : false;
 
                       return WorkoutTopBarV2(
@@ -3537,7 +3455,7 @@ class _ActiveWorkoutScreenState
                               mainAxisSize: MainAxisSize.min,
                               children: [
                                 SetTrackingTable(
-                                  key: ValueKey('set_tracking_${_viewingExerciseIndex}'),
+                                  key: ValueKey('set_tracking_$_viewingExerciseIndex'),
                                   exercise: _exercises[_viewingExerciseIndex],
                                   sets: setRows,
                                   useKg: _useKg,
@@ -3774,7 +3692,7 @@ class _ActiveWorkoutScreenState
                         child: SingleChildScrollView(
                           padding: const EdgeInsets.symmetric(horizontal: 12),
                           child: SetTrackingTable(
-                            key: ValueKey('set_tracking_landscape_${_viewingExerciseIndex}'),
+                            key: ValueKey('set_tracking_landscape_$_viewingExerciseIndex'),
                             exercise: _exercises[_viewingExerciseIndex],
                             sets: setRows,
                             useKg: _useKg,
@@ -3916,7 +3834,7 @@ class _ActiveWorkoutScreenState
                   ),
                 ),
                 child: Text(
-                  exercise.name ?? 'Exercise',
+                  exercise.name,
                   style: const TextStyle(
                     color: Colors.white,
                     fontSize: 13,
@@ -3978,7 +3896,7 @@ class _ActiveWorkoutScreenState
             ),
             const SizedBox(height: 8),
             Text(
-              exercise.name ?? 'Exercise',
+              exercise.name,
               style: TextStyle(
                 fontSize: 12,
                 color: isDark ? AppColors.textSecondary : Colors.grey.shade600,
@@ -4079,7 +3997,7 @@ class _ActiveWorkoutScreenState
           // Exercise name (truncated)
           Expanded(
             child: Text(
-              exercise.name ?? 'Exercise',
+              exercise.name,
               style: TextStyle(
                 fontSize: 15,
                 fontWeight: FontWeight.bold,
@@ -4448,8 +4366,6 @@ class _ActiveWorkoutScreenState
   /// Show the 3-dot "More" popup menu with History, Increments options
   void _showMoreMenu(WorkoutExercise exercise) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final RenderBox? overlay = Overlay.of(context).context.findRenderObject() as RenderBox?;
-
     showMenu<String>(
       context: context,
       position: RelativeRect.fromLTRB(
@@ -4559,57 +4475,6 @@ class _ActiveWorkoutScreenState
     );
   }
 
-  /// Build a detail row for exercise info sheet
-  Widget _buildDetailRow({
-    required IconData icon,
-    required String label,
-    required String value,
-    required Color color,
-    required bool isDark,
-  }) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            width: 32,
-            height: 32,
-            decoration: BoxDecoration(
-              color: color.withOpacity(0.15),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Icon(icon, size: 18, color: color),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  label,
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: isDark ? Colors.grey.shade500 : Colors.grey.shade600,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  value,
-                  style: TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w500,
-                    color: isDark ? Colors.white : Colors.grey.shade800,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   /// Show warmup sheet
   void _showWarmupSheet(WorkoutExercise exercise) {
     showGlassSheet(
@@ -4667,7 +4532,7 @@ class _ActiveWorkoutScreenState
                   return Padding(
                     padding: const EdgeInsets.only(bottom: 8),
                     child: Text(
-                      'Set ${i + 1}: ${target.targetWeightKg?.toStringAsFixed(1) ?? '-'} kg × ${target.targetReps ?? '-'} @ ${target.targetRir ?? '-'} RIR',
+                      'Set ${i + 1}: ${target.targetWeightKg?.toStringAsFixed(1) ?? '-'} kg × ${target.targetReps} @ ${target.targetRir ?? '-'} RIR',
                       style: TextStyle(
                         color: isDark ? Colors.white : Colors.grey.shade800,
                       ),
@@ -4966,56 +4831,6 @@ class _ActiveWorkoutScreenState
     );
   }
 
-  /// Show equipment sheet
-  void _showEquipmentSheet(WorkoutExercise exercise) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    showGlassSheet(
-      context: context,
-      builder: (sheetCtx) => GlassSheet(
-        child: Padding(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              _buildInfoSheet(
-                title: 'Equipment',
-                content: 'Required: ${exercise.equipment ?? 'Bodyweight'}\n\nNo equipment? Tap Swap to find alternatives.',
-                icon: Icons.fitness_center,
-              ),
-              const SizedBox(height: 12),
-              SizedBox(
-                width: double.infinity,
-                child: TextButton.icon(
-                  onPressed: () {
-                    Navigator.pop(sheetCtx);
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => const EnvironmentListScreen(),
-                      ),
-                    );
-                  },
-                  icon: Icon(
-                    Icons.settings_outlined,
-                    size: 18,
-                    color: isDark ? Colors.white70 : Colors.black54,
-                  ),
-                  label: Text(
-                    'Change Equipment Settings',
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: isDark ? Colors.white70 : Colors.black54,
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
   /// Show history sheet
   void _showHistorySheet(WorkoutExercise exercise) {
     final previousSets = _previousSets[_viewingExerciseIndex] ?? [];
@@ -5139,10 +4954,52 @@ class _ActiveWorkoutScreenState
     }
   }
 
-  /// Show exercise add sheet (placeholder)
-  void _showExerciseAddSheet() {
-    // TODO: Implement add exercise sheet
+  /// Show exercise add sheet during active workout
+  Future<void> _showExerciseAddSheet() async {
     HapticFeedback.lightImpact();
+    final workoutId = widget.workout.id;
+    if (workoutId == null) return;
+
+    final currentExerciseNames = _exercises.map((e) => e.name).toList();
+    final updatedWorkout = await showExerciseAddSheet(
+      context,
+      ref,
+      workoutId: workoutId,
+      workoutType: widget.workout.type ?? 'strength',
+      currentExerciseNames: currentExerciseNames,
+    );
+
+    if (updatedWorkout != null && mounted) {
+      final oldCount = _exercises.length;
+      setState(() {
+        _exercises.clear();
+        _exercises.addAll(updatedWorkout.exercises);
+        _precomputeSupersetIndices();
+        // Initialize tracking for NEW exercises only — preserve existing tracking
+        for (int i = oldCount; i < _exercises.length; i++) {
+          _completedSets[i] = [];
+          final exercise = _exercises[i];
+          _totalSetsPerExercise[i] = exercise.hasSetTargets &&
+                  exercise.setTargets!.isNotEmpty
+              ? exercise.setTargets!.length
+              : exercise.sets ?? 3;
+          _previousSets[i] = [];
+        }
+      });
+      // Fetch smart weight suggestions for new exercises
+      for (int i = oldCount; i < _exercises.length; i++) {
+        _fetchSmartWeightForExercise(_exercises[i]);
+      }
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('${_exercises.length - oldCount} exercise(s) added'),
+            duration: const Duration(seconds: 2),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    }
   }
 
   Widget _buildCompletionScreen(bool isDark, Color backgroundColor) {
@@ -5185,41 +5042,6 @@ class _ActiveWorkoutScreenState
           ),
         ),
       ),
-    );
-  }
-
-  Widget _buildCompletionStats(bool isDark) {
-    final totalSets =
-        _completedSets.values.fold(0, (sum, sets) => sum + sets.length);
-    final totalReps = _completedSets.values.fold(
-        0, (sum, sets) => sum + sets.fold(0, (s, set) => s + set.reps));
-    final accentColor = ref.watch(accentColorProvider).getColor(isDark);
-
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-      children: [
-        _CompletionStat(
-          icon: Icons.fitness_center,
-          value: totalSets.toString(),
-          label: 'Sets',
-          isDark: isDark,
-          accentColor: accentColor,
-        ),
-        _CompletionStat(
-          icon: Icons.repeat,
-          value: totalReps.toString(),
-          label: 'Reps',
-          isDark: isDark,
-          accentColor: accentColor,
-        ),
-        _CompletionStat(
-          icon: Icons.local_fire_department,
-          value: _totalCaloriesBurned.toString(),
-          label: 'Calories',
-          isDark: isDark,
-          accentColor: accentColor,
-        ),
-      ],
     );
   }
 
@@ -5402,7 +5224,7 @@ class _ActiveWorkoutScreenState
                           width: 56,
                           height: 56,
                           decoration: BoxDecoration(
-                            color: isSelected ? color : color.withOpacity(0.15),
+                            color: isSelected ? color : color.withValues(alpha: 0.15),
                             borderRadius: BorderRadius.circular(12),
                             border: Border.all(
                               color: isSelected ? color : Colors.transparent,
@@ -6316,13 +6138,13 @@ class _ActiveWorkoutScreenState
                         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
                         decoration: BoxDecoration(
                           color: isSelected
-                              ? accentColor.withOpacity(0.1)
+                              ? accentColor.withValues(alpha: 0.1)
                               : Colors.transparent,
                           border: Border(
                             bottom: BorderSide(
                               color: isDark
-                                  ? Colors.white.withOpacity(0.05)
-                                  : Colors.black.withOpacity(0.04),
+                                  ? Colors.white.withValues(alpha: 0.05)
+                                  : Colors.black.withValues(alpha: 0.04),
                             ),
                           ),
                         ),
@@ -6334,10 +6156,10 @@ class _ActiveWorkoutScreenState
                               height: 40,
                               decoration: BoxDecoration(
                                 color: isSelected
-                                    ? accentColor.withOpacity(0.2)
+                                    ? accentColor.withValues(alpha: 0.2)
                                     : (isDark
-                                        ? Colors.white.withOpacity(0.08)
-                                        : Colors.black.withOpacity(0.05)),
+                                        ? Colors.white.withValues(alpha: 0.08)
+                                        : Colors.black.withValues(alpha: 0.05)),
                                 borderRadius: BorderRadius.circular(10),
                               ),
                               child: Icon(
@@ -6416,18 +6238,14 @@ class _ActiveWorkoutScreenState
         _exercises.clear();
         _exercises.addAll(updatedWorkout.exercises);
         _precomputeSupersetIndices();
-        // Reinitialize tracking for all exercises
-        _completedSets.clear();
-        _totalSetsPerExercise.clear();
-        _previousSets.clear();
-        for (int i = 0; i < _exercises.length; i++) {
-          _completedSets[i] = [];
-          final exercise = _exercises[i];
-          _totalSetsPerExercise[i] = exercise.hasSetTargets && exercise.setTargets!.isNotEmpty
-              ? exercise.setTargets!.length
-              : exercise.sets ?? 3;
-          _previousSets[i] = [];
-        }
+        // Only reinitialize tracking for the swapped exercise — preserve others
+        final swappedExercise = _exercises[exerciseIndex];
+        _completedSets[exerciseIndex] = [];
+        _totalSetsPerExercise[exerciseIndex] = swappedExercise.hasSetTargets &&
+                swappedExercise.setTargets!.isNotEmpty
+            ? swappedExercise.setTargets!.length
+            : swappedExercise.sets ?? 3;
+        _previousSets[exerciseIndex] = [];
       });
 
       // Show success feedback
@@ -6676,48 +6494,6 @@ class _ActiveWorkoutScreenState
         );
       }
     }
-  }
-}
-
-/// Completion stat widget
-class _CompletionStat extends StatelessWidget {
-  final IconData icon;
-  final String value;
-  final String label;
-  final bool isDark;
-  final Color accentColor;
-
-  const _CompletionStat({
-    required this.icon,
-    required this.value,
-    required this.label,
-    required this.isDark,
-    required this.accentColor,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Icon(icon, size: 32, color: accentColor),
-        const SizedBox(height: 8),
-        Text(
-          value,
-          style: TextStyle(
-            fontSize: 24,
-            fontWeight: FontWeight.bold,
-            color: isDark ? AppColors.textPrimary : AppColorsLight.textPrimary,
-          ),
-        ),
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 14,
-            color: isDark ? AppColors.textSecondary : AppColorsLight.textSecondary,
-          ),
-        ),
-      ],
-    );
   }
 }
 

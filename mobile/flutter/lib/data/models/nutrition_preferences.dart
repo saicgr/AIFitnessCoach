@@ -397,6 +397,8 @@ class NutritionPreferences {
   final bool weeklyCheckinEnabled;
   @JsonKey(name: 'last_weekly_checkin_at')
   final DateTime? lastWeeklyCheckinAt;
+  @JsonKey(name: 'weekly_checkin_dismiss_count')
+  final int weeklyCheckinDismissCount;
 
   const NutritionPreferences({
     this.id,
@@ -442,6 +444,7 @@ class NutritionPreferences {
     this.calorieEstimateBias = 0,
     this.weeklyCheckinEnabled = true,
     this.lastWeeklyCheckinAt,
+    this.weeklyCheckinDismissCount = 0,
   });
 
   /// Get nutrition goals as enums (multi-select)
@@ -539,6 +542,7 @@ class NutritionPreferences {
     int? calorieEstimateBias,
     bool? weeklyCheckinEnabled,
     DateTime? lastWeeklyCheckinAt,
+    int? weeklyCheckinDismissCount,
   }) {
     return NutritionPreferences(
       id: id ?? this.id,
@@ -595,6 +599,8 @@ class NutritionPreferences {
           weeklyCheckinEnabled ?? this.weeklyCheckinEnabled,
       lastWeeklyCheckinAt:
           lastWeeklyCheckinAt ?? this.lastWeeklyCheckinAt,
+      weeklyCheckinDismissCount:
+          weeklyCheckinDismissCount ?? this.weeklyCheckinDismissCount,
     );
   }
 }

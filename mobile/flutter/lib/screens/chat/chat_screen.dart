@@ -1279,6 +1279,12 @@ class _MessageBubble extends ConsumerWidget {
     final isSystem = message.role == 'system';
     final isError = message.role == 'error';
 
+    // Resolve the coach for this specific message: use stored persona if available,
+    // otherwise fall back to the current global coach (for old messages without stored persona)
+    final messageCoach = (message.coachPersonaId != null
+        ? CoachPersona.findById(message.coachPersonaId)
+        : null) ?? coach;
+
     // System messages (like coach change notifications) are displayed centered
     if (isSystem) {
       return _buildSystemMessage(context);
@@ -1313,7 +1319,7 @@ class _MessageBubble extends ConsumerWidget {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   CoachAvatar(
-                    coach: coach,
+                    coach: messageCoach,
                     size: 20,
                     showBorder: true,
                     borderWidth: 1,
@@ -1322,11 +1328,11 @@ class _MessageBubble extends ConsumerWidget {
                   ),
                   const SizedBox(width: 6),
                   Text(
-                    coach.name,
+                    messageCoach.name,
                     style: TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.w600,
-                      color: coach.primaryColor,
+                      color: messageCoach.primaryColor,
                     ),
                   ),
                 ],

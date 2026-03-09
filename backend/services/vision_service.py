@@ -8,6 +8,8 @@ This service handles:
 - JSON-formatted nutrition responses
 """
 
+from __future__ import annotations
+
 import asyncio
 import json
 import base64

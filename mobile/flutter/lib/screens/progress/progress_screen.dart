@@ -10,6 +10,7 @@ import '../../core/constants/app_colors.dart';
 import '../../widgets/app_loading.dart';
 import '../../data/models/progress_photos.dart';
 import '../../core/animations/app_animations.dart';
+import '../../data/models/muscle_status.dart';
 import '../../data/models/scores.dart';
 import '../../data/providers/guest_mode_provider.dart';
 import '../../data/providers/guest_usage_limits_provider.dart';
@@ -488,6 +489,51 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen>
                               ],
                             ),
                           ),
+                          const SizedBox(height: 12),
+
+                          // Training status badge
+                          Builder(builder: (context) {
+                            final readiness = scoresState.todayReadiness ??
+                                scoresState.overview?.todayReadiness;
+                            final status = determineMuscleStatus(
+                              muscleData: muscleData,
+                              readiness: readiness,
+                            );
+                            return Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 12, vertical: 8),
+                              decoration: BoxDecoration(
+                                color: status.color.withValues(alpha: 0.1),
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
+                                  color: status.color.withValues(alpha: 0.3),
+                                ),
+                              ),
+                              child: Row(
+                                children: [
+                                  Icon(status.icon,
+                                      size: 18, color: status.color),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    status.label,
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w600,
+                                      color: status.color,
+                                    ),
+                                  ),
+                                  const Spacer(),
+                                  Text(
+                                    '${muscleData.weeklySets} sets/wk',
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      color: colorScheme.onSurfaceVariant,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            );
+                          }),
                           const SizedBox(height: 24),
 
                           // Stats
@@ -692,8 +738,8 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen>
     final colorScheme = Theme.of(context).colorScheme;
 
     return Container(
-      margin: const EdgeInsets.all(16),
-      padding: const EdgeInsets.all(16),
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
@@ -708,19 +754,19 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen>
         children: [
           Row(
             children: [
-              Icon(Icons.insights, color: colorScheme.onPrimaryContainer),
-              const SizedBox(width: 8),
+              Icon(Icons.insights, size: 18, color: colorScheme.onPrimaryContainer),
+              const SizedBox(width: 6),
               Text(
                 'Photo Progress',
                 style: TextStyle(
-                  fontSize: 18,
+                  fontSize: 16,
                   fontWeight: FontWeight.bold,
                   color: colorScheme.onPrimaryContainer,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 10),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
@@ -750,12 +796,12 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen>
     final colorScheme = Theme.of(context).colorScheme;
     return Column(
       children: [
-        Icon(icon, size: 24, color: colorScheme.onPrimaryContainer),
+        Icon(icon, size: 20, color: colorScheme.onPrimaryContainer),
         const SizedBox(height: 4),
         Text(
           value,
           style: TextStyle(
-            fontSize: 20,
+            fontSize: 18,
             fontWeight: FontWeight.bold,
             color: colorScheme.onPrimaryContainer,
           ),
@@ -819,7 +865,7 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen>
             height: 120,
             child: ListView(
               scrollDirection: Axis.horizontal,
-              children: PhotoViewType.values.map((type) {
+              children: [PhotoViewType.front, PhotoViewType.sideLeft, PhotoViewType.sideRight, PhotoViewType.back].map((type) {
                 final photo = latest.getPhoto(type);
                 return _buildLatestViewCard(type, photo);
               }).toList(),
@@ -832,58 +878,67 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen>
 
   Widget _buildLatestViewCard(PhotoViewType type, ProgressPhoto? photo) {
     final colorScheme = Theme.of(context).colorScheme;
-    return Container(
-      width: 90,
-      margin: const EdgeInsets.only(right: 12),
-      child: Column(
-        children: [
-          Expanded(
-            child: Container(
-              decoration: BoxDecoration(
-                color: colorScheme.surfaceContainerHighest,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: photo != null
-                      ? colorScheme.primary.withOpacity(0.5)
-                      : colorScheme.outline.withOpacity(0.3),
-                  width: photo != null ? 2 : 1,
+    return GestureDetector(
+      onTap: () {
+        if (photo != null) {
+          _showPhotoDetail(photo);
+        } else {
+          _addPhotoForViewType(type);
+        }
+      },
+      child: Container(
+        width: 90,
+        margin: const EdgeInsets.only(right: 12),
+        child: Column(
+          children: [
+            Expanded(
+              child: Container(
+                decoration: BoxDecoration(
+                  color: colorScheme.surfaceContainerHighest,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: photo != null
+                        ? colorScheme.primary.withOpacity(0.5)
+                        : colorScheme.outline.withOpacity(0.3),
+                    width: photo != null ? 2 : 1,
+                  ),
                 ),
+                child: photo != null
+                    ? ClipRRect(
+                        borderRadius: BorderRadius.circular(11),
+                        child: CachedNetworkImage(
+                          imageUrl: photo.thumbnailUrl ?? photo.photoUrl,
+                          fit: BoxFit.cover,
+                          placeholder: (_, __) => const Center(
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          ),
+                          errorWidget: (_, __, ___) => Icon(
+                            Icons.broken_image,
+                            color: colorScheme.error,
+                          ),
+                        ),
+                      )
+                    : Center(
+                        child: Icon(
+                          Icons.add_rounded,
+                          color: colorScheme.outline,
+                          size: 24,
+                        ),
+                      ),
               ),
-              child: photo != null
-                  ? ClipRRect(
-                      borderRadius: BorderRadius.circular(11),
-                      child: CachedNetworkImage(
-                        imageUrl: photo.thumbnailUrl ?? photo.photoUrl,
-                        fit: BoxFit.cover,
-                        placeholder: (_, __) => const Center(
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        ),
-                        errorWidget: (_, __, ___) => Icon(
-                          Icons.broken_image,
-                          color: colorScheme.error,
-                        ),
-                      ),
-                    )
-                  : Center(
-                      child: Icon(
-                        Icons.add_a_photo,
-                        color: colorScheme.outline,
-                        size: 28,
-                      ),
-                    ),
             ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            type.displayName,
-            style: TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.w500,
-              color: colorScheme.onSurface,
+            const SizedBox(height: 4),
+            Text(
+              type.displayName,
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w500,
+                color: colorScheme.onSurface,
+              ),
+              textAlign: TextAlign.center,
             ),
-            textAlign: TextAlign.center,
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -978,7 +1033,7 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen>
           children: [
             Icon(
               Icons.photo_camera_outlined,
-              size: 80,
+              size: 48,
               color: colorScheme.outline,
             ),
             const SizedBox(height: 16),
@@ -1212,6 +1267,69 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen>
   // ============================================
   // Actions
   // ============================================
+
+  /// Add photo for a specific view type — skips the view type selection step
+  Future<void> _addPhotoForViewType(PhotoViewType viewType) async {
+    // Pick image source directly
+    final source = await showGlassSheet<ImageSource>(
+      context: context,
+      useRootNavigator: true,
+      builder: (context) => GlassSheet(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                leading: const Icon(Icons.camera_alt),
+                title: const Text('Take Photo'),
+                subtitle: const Text('Use camera'),
+                onTap: () => Navigator.pop(context, ImageSource.camera),
+              ),
+              ListTile(
+                leading: const Icon(Icons.photo_library),
+                title: const Text('Choose from Gallery'),
+                subtitle: const Text('Select existing photo'),
+                onTap: () => Navigator.pop(context, ImageSource.gallery),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    if (source == null || !mounted) return;
+
+    try {
+      final picker = ImagePicker();
+      final pickedFile = await picker.pickImage(source: source);
+
+      if (pickedFile == null || !mounted) return;
+
+      final editedFile = await Navigator.push<File>(
+        context,
+        AppPageRoute(
+          builder: (context) => PhotoEditorScreen(
+            imageFile: File(pickedFile.path),
+            viewTypeName: viewType.displayName,
+          ),
+        ),
+      );
+
+      if (editedFile != null && mounted) {
+        _uploadPhoto(editedFile, viewType);
+      }
+    } catch (e) {
+      debugPrint('❌ [Progress] Error picking/editing photo: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Failed to process photo. Please try again.'),
+          ),
+        );
+      }
+    }
+  }
 
   Future<void> _showAddPhotoSheet() async {
     final colorScheme = Theme.of(context).colorScheme;

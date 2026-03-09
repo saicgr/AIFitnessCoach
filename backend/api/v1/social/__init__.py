@@ -14,6 +14,10 @@ from the following submodules:
 - friend_requests: Friend request management
 - notifications: Social notifications
 - messages: Direct messaging between users
+- blocks: User blocking (F9)
+- reports: Content reporting (F9)
+- hashtags: Hashtag discovery (F10)
+- stories: Ephemeral stories (F11)
 """
 from fastapi import APIRouter
 
@@ -29,6 +33,10 @@ from .friend_requests import router as friend_requests_router
 from .notifications import router as notifications_router
 from .messages import router as messages_router
 from .keys import router as keys_router
+from .blocks import router as blocks_router
+from .reports import router as reports_router
+from .hashtags import router as hashtags_router
+from .stories import router as stories_router
 
 # Create the combined router with /social prefix
 router = APIRouter(prefix="/social")
@@ -46,6 +54,10 @@ router.include_router(friend_requests_router)
 router.include_router(notifications_router)
 router.include_router(messages_router, prefix="/messages", tags=["messages"])
 router.include_router(keys_router, prefix="/keys", tags=["encryption"])
+router.include_router(blocks_router, prefix="/blocks", tags=["Social Blocks"])
+router.include_router(reports_router, prefix="/reports", tags=["Social Reports"])
+router.include_router(hashtags_router, prefix="/hashtags", tags=["Social Hashtags"])
+router.include_router(stories_router, prefix="/stories", tags=["Social Stories"])
 
 # Re-export utilities
 from .utils import get_supabase_client

@@ -301,6 +301,7 @@ class LogTextRequest(BaseModel):
     user_id: str
     description: str  # e.g., "2 eggs, toast with butter, and orange juice"
     meal_type: str  # breakfast, lunch, dinner, snack
+    mood_before: Optional[str] = None  # e.g., "bloated", "hungry", "tired"
 
     @validator('user_id')
     def user_id_must_not_be_empty(cls, v):
@@ -984,6 +985,7 @@ class USDAFoodResponse(BaseModel):
     default_count: Optional[int] = None
     serving_weight_g: Optional[float] = None
     matched_query: Optional[str] = None  # Which sub-query this result matched (for multi-food queries)
+    verification_level: Optional[str] = None  # 'curated', 'lab_verified', 'manufacturer_verified', 'community_verified'
 
 
 class USDASearchResponse(BaseModel):
@@ -1088,7 +1090,7 @@ async def search_foods(
 
             # Calculate per-serving if serving info available
             nutrients_per_serving = None
-            serving_weight = item.get("serving_weight_g")
+            serving_weight = item.get("serving_weight_g") or item.get("weight_per_unit_g")
             if serving_weight and serving_weight > 0:
                 mult = serving_weight / 100.0
                 nutrients_per_serving = {
@@ -1104,6 +1106,17 @@ async def search_foods(
                 fdc_id = int(raw_id)
             except (ValueError, TypeError):
                 fdc_id = 0  # Saved food UUIDs -> 0; frontend uses source field
+
+            # Derive verification_level from source
+            source_str = item.get("source", "")
+            if source_str == "verified":
+                v_level = "curated"
+            elif source_str.startswith("verified:"):
+                v_level = source_str.split(":", 1)[1]
+            elif source_str in ("saved", "saved_item"):
+                v_level = "user_saved"
+            else:
+                v_level = item.get("verification_level")
 
             foods.append(USDAFoodResponse(
                 fdc_id=fdc_id,
@@ -1121,6 +1134,7 @@ async def search_foods(
                 default_count=item.get("default_count"),
                 serving_weight_g=item.get("serving_weight_g"),
                 matched_query=item.get("matched_query"),
+                verification_level=v_level,
             ))
 
         total_hits = len(foods)
@@ -1599,13 +1613,17 @@ async def log_food_from_text(body: LogTextRequest, background_tasks: BackgroundT
             except Exception as e:
                 logger.warning(f"Could not fetch RAG context: {e}")
 
-        # Parse description with Gemini (with goal context + RAG)
-        gemini_service = GeminiService()
-        food_analysis = await gemini_service.parse_food_description(
+        # Parse description through cache service (DB-first, then Gemini)
+        cache_service = get_food_analysis_cache_service()
+        food_analysis = await cache_service.analyze_food(
             description=body.description,
             user_goals=user_goals,
             nutrition_targets=nutrition_targets,
             rag_context=rag_context,
+            use_cache=True,
+            user_id=body.user_id,
+            mood_before=body.mood_before,
+            meal_type=body.meal_type,
         )
 
         if not food_analysis or not food_analysis.get('food_items'):
@@ -1614,9 +1632,11 @@ async def log_food_from_text(body: LogTextRequest, background_tasks: BackgroundT
                 detail="Could not parse any food items from the description"
             )
 
-        # Apply calorie estimate bias (AI estimates only, not barcode)
+        # Apply calorie estimate bias (AI estimates only, not DB-sourced)
         bias = await get_user_calorie_bias(body.user_id)
-        if bias != 0:
+        cache_source = food_analysis.get('cache_source')
+        is_ai_estimate = cache_source in (None, 'gemini_fresh', 'analysis_cache')
+        if bias != 0 and is_ai_estimate:
             food_analysis = apply_calorie_bias(food_analysis, bias)
 
         # Extract data from analysis
@@ -1936,6 +1956,8 @@ async def log_food_from_text_streaming(request: Request, body: LogTextRequest, c
                 rag_context=None,  # Skip RAG on cache hit for speed
                 use_cache=True,
                 user_id=body.user_id,
+                mood_before=body.mood_before,
+                meal_type=body.meal_type,
             ))
             while not cache_task.done():
                 try:
@@ -1970,6 +1992,8 @@ async def log_food_from_text_streaming(request: Request, body: LogTextRequest, c
                     rag_context=rag_context,
                     use_cache=True,  # Will cache this new result
                     user_id=body.user_id,
+                    mood_before=body.mood_before,
+                    meal_type=body.meal_type,
                 ))
                 while not analysis_task.done():
                     try:
@@ -2244,6 +2268,8 @@ async def analyze_food_from_text_streaming(request: Request, body: LogTextReques
                     rag_context=None,
                     use_cache=True,
                     user_id=body.user_id,
+                    mood_before=body.mood_before,
+                    meal_type=body.meal_type,
                 )
 
             try:
@@ -2310,6 +2336,8 @@ async def analyze_food_from_text_streaming(request: Request, body: LogTextReques
                     rag_context=rag_context,
                     use_cache=False,
                     user_id=body.user_id,
+                    mood_before=body.mood_before,
+                    meal_type=body.meal_type,
                 ))
 
                 # Send SSE keep-alive comments every 10s while waiting for Gemini
@@ -2530,6 +2558,22 @@ async def log_food_from_image_streaming(
                     else:
                         micronutrients[key] = float(value) if value else None
 
+            # Enrich image analysis with contextual coach tips
+            ai_suggestion = food_analysis.get('feedback')
+            health_score = None
+            try:
+                cache_service = get_food_analysis_cache_service()
+                tips = await cache_service.enrich_with_tips(
+                    food_items=food_items,
+                    meal_type=meal_type,
+                    user_id=user_id,
+                )
+                if tips:
+                    ai_suggestion = tips.get("ai_suggestion") or ai_suggestion
+                    health_score = tips.get("health_score")
+            except Exception as tip_err:
+                logger.warning(f"[STREAM] Tip enrichment failed for image log: {tip_err}")
+
             # Step 4: Save to database
             yield send_progress(4, 4, "Saving your meal...", "Almost done!")
 
@@ -2548,8 +2592,8 @@ async def log_food_from_image_streaming(
                 carbs_g=carbs_g,
                 fat_g=fat_g,
                 fiber_g=fiber_g,
-                ai_feedback=food_analysis.get('feedback'),
-                health_score=None,
+                ai_feedback=ai_suggestion,
+                health_score=health_score,
                 logged_at=stream_logged_at,
                 image_url=image_url,
                 image_storage_key=storage_key,
@@ -2570,6 +2614,8 @@ async def log_food_from_image_streaming(
                 "carbs_g": carbs_g,
                 "fat_g": fat_g,
                 "fiber_g": fiber_g,
+                "ai_suggestion": ai_suggestion,
+                "health_score": health_score,
                 "total_time_ms": elapsed_ms(),
             }
             yield f"event: done\ndata: {json.dumps(response_data)}\n\n"
@@ -2732,6 +2778,28 @@ async def analyze_food_from_image_streaming(
             calcium_mg = food_analysis.get('calcium_mg')
             iron_mg = food_analysis.get('iron_mg')
 
+            # Enrich image analysis with contextual coach tips
+            ai_suggestion = food_analysis.get('feedback')
+            encouragements = []
+            warnings = []
+            recommended_swap = None
+            health_score = None
+            try:
+                cache_service = get_food_analysis_cache_service()
+                tips = await cache_service.enrich_with_tips(
+                    food_items=food_items,
+                    meal_type=meal_type,
+                    user_id=user_id,
+                )
+                if tips:
+                    encouragements = tips.get("encouragements", [])
+                    warnings = tips.get("warnings", [])
+                    ai_suggestion = tips.get("ai_suggestion") or ai_suggestion
+                    recommended_swap = tips.get("recommended_swap")
+                    health_score = tips.get("health_score")
+            except Exception as tip_err:
+                logger.warning(f"[ANALYZE-STREAM:{request_id}] Tip enrichment failed: {tip_err}")
+
             # Log success with full details
             logger.info(
                 f"[ANALYZE-STREAM:{request_id}] SUCCESS | "
@@ -2756,7 +2824,11 @@ async def analyze_food_from_image_streaming(
                 "carbs_g": carbs_g,
                 "fat_g": fat_g,
                 "fiber_g": fiber_g,
-                "ai_suggestion": food_analysis.get('feedback'),
+                "ai_suggestion": ai_suggestion,
+                "encouragements": encouragements,
+                "warnings": warnings,
+                "recommended_swap": recommended_swap,
+                "health_score": health_score,
                 "source_type": "image",
                 "total_time_ms": elapsed_ms(),
                 # Micronutrients
@@ -4329,6 +4401,9 @@ class NutritionPreferencesResponse(BaseModel):
     last_recalculated_at: Optional[datetime] = None
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
+    weekly_checkin_enabled: bool = True
+    last_weekly_checkin_at: Optional[datetime] = None
+    weekly_checkin_dismiss_count: int = 0
 
 
 class NutritionPreferencesUpdate(BaseModel):
@@ -4357,6 +4432,9 @@ class NutritionPreferencesUpdate(BaseModel):
     show_weekly_instead_of_daily: Optional[bool] = None
     adjust_calories_for_training: Optional[bool] = None
     adjust_calories_for_rest: Optional[bool] = None
+    weekly_checkin_enabled: Optional[bool] = None
+    last_weekly_checkin_at: Optional[str] = None
+    weekly_checkin_dismiss_count: Optional[int] = None
 
 
 class DynamicTargetsResponse(BaseModel):
@@ -4435,6 +4513,9 @@ async def get_nutrition_preferences(user_id: str, current_user: dict = Depends(g
             last_recalculated_at=datetime.fromisoformat(str(data.get("last_recalculated_at")).replace("Z", "+00:00")) if data.get("last_recalculated_at") else None,
             created_at=datetime.fromisoformat(str(data.get("created_at")).replace("Z", "+00:00")) if data.get("created_at") else None,
             updated_at=datetime.fromisoformat(str(data.get("updated_at")).replace("Z", "+00:00")) if data.get("updated_at") else None,
+            weekly_checkin_enabled=data.get("weekly_checkin_enabled", True),
+            last_weekly_checkin_at=datetime.fromisoformat(str(data.get("last_weekly_checkin_at")).replace("Z", "+00:00")) if data.get("last_weekly_checkin_at") else None,
+            weekly_checkin_dismiss_count=data.get("weekly_checkin_dismiss_count", 0),
         )
 
     except Exception as e:

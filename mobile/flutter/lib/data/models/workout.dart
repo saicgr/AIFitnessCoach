@@ -281,6 +281,7 @@ class Workout extends Equatable {
         difficulty,
         scheduledDate,
         isCompleted,
+        exercisesJson,
         durationMinutes,
         generationMetadata,
         completedAt,

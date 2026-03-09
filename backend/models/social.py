@@ -333,6 +333,7 @@ class UserPrivacySettings(BaseModel):
     allow_friend_requests: bool = True
     allow_challenge_invites: bool = True
     show_on_leaderboards: bool = True
+    show_read_receipts: bool = True  # F13
     updated_at: datetime
 
 
@@ -346,6 +347,7 @@ class UserPrivacySettingsUpdate(BaseModel):
     allow_friend_requests: Optional[bool] = None
     allow_challenge_invites: Optional[bool] = None
     show_on_leaderboards: Optional[bool] = None
+    show_read_receipts: Optional[bool] = None  # F13
 
 
 # ============================================================
@@ -493,3 +495,57 @@ class MessagesResponse(BaseModel):
     page: int
     page_size: int
     has_more: bool
+
+
+# ============================================================
+# BLOCKS & REPORTS (F9)
+# ============================================================
+
+class UserBlock(BaseModel):
+    """User block record."""
+    blocker_id: str
+    blocked_id: str
+    reason: Optional[str] = None
+
+
+class ContentReport(BaseModel):
+    """Content report record."""
+    content_type: str  # 'post', 'user', 'message', 'comment'
+    content_id: str
+    reported_user_id: Optional[str] = None
+    reason: str  # 'spam', 'inappropriate', 'harassment', 'other'
+    description: Optional[str] = None
+
+
+# ============================================================
+# STORIES (F11)
+# ============================================================
+
+class Story(BaseModel):
+    """Story content item."""
+    media_url: str
+    media_type: str = "image"
+    caption: Optional[str] = Field(default=None, max_length=500)
+
+
+class StoryView(BaseModel):
+    """Story view record."""
+    story_id: str
+    viewer_id: str
+    viewed_at: Optional[datetime] = None
+
+
+# ============================================================
+# GROUP CHATS (F12)
+# ============================================================
+
+class GroupCreate(BaseModel):
+    """Request to create a group conversation."""
+    name: str = Field(..., max_length=100)
+    member_ids: List[str] = Field(..., min_length=2)
+
+
+class GroupUpdate(BaseModel):
+    """Request to update a group conversation."""
+    name: Optional[str] = Field(default=None, max_length=100)
+    avatar_url: Optional[str] = None

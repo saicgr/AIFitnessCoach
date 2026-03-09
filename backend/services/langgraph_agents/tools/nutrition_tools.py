@@ -14,7 +14,6 @@ from langchain_core.tools import tool
 from core.supabase_db import get_supabase_db
 from core.logger import get_logger
 from core.nutrition_bias import apply_calorie_bias, get_user_calorie_bias
-from services.media_job_service import get_media_job_service
 from .base import get_vision_service, run_async_in_sync
 
 logger = get_logger(__name__)
@@ -200,47 +199,9 @@ def analyze_multi_food_images(
     """
     logger.info(f"Tool: Analyzing {len(s3_keys)} food images for user {user_id}, mode={analysis_mode}")
 
-    # Buffet and menu modes are dispatched to background queue (expensive OCR/analysis)
-    if analysis_mode in ("buffet", "menu"):
-        try:
-            from services.media_job_service import get_media_job_service
-            from services.media_job_runner import run_media_job
-            import asyncio
-
-            job_service = get_media_job_service()
-            params = {"analysis_mode": analysis_mode}
-            if user_message:
-                params["user_context"] = user_message
-
-            job_id = job_service.create_job(
-                user_id=user_id,
-                job_type="food_analysis",
-                s3_keys=s3_keys,
-                mime_types=mime_types,
-                media_types=["image"] * len(s3_keys),
-                params=params,
-            )
-
-            # Kick off the background job
-            try:
-                loop = asyncio.get_event_loop()
-                if loop.is_running():
-                    loop.create_task(run_media_job(job_id))
-            except RuntimeError as e:
-                logger.debug(f"No running loop for async job: {e}")
-
-            logger.info(f"Dispatched async food_analysis ({analysis_mode}) job {job_id} for user {user_id}")
-            return {
-                "success": True,
-                "async_job": True,
-                "action": "analyze_multi_food_images",
-                "job_id": job_id,
-                "user_id": user_id,
-                "message": f"Analyzing the {analysis_mode} in the background. Results will be ready shortly.",
-            }
-        except Exception as e:
-            logger.warning(f"Failed to dispatch async food analysis, falling back to sync: {e}")
-            # Fall through to synchronous path
+    # Menu and buffet modes previously dispatched to background queue, but that created
+    # a dead-end (no frontend polling). Now all modes run synchronously — the sync path
+    # handles menu/buffet with a 90s timeout and returns formatted results directly.
 
     try:
         db = get_supabase_db()

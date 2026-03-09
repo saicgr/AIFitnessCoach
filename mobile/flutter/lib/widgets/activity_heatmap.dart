@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../core/constants/app_colors.dart';
+import '../core/theme/accent_color_provider.dart';
 import '../data/models/consistency.dart';
 import '../data/providers/consistency_provider.dart';
 import '../data/services/api_client.dart';
@@ -89,73 +90,74 @@ class _ActivityHeatmapState extends ConsumerState<ActivityHeatmap> {
   Widget _buildHeader(BuildContext context) {
     final timeRange = ref.watch(heatmapTimeRangeProvider);
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final accentEnum = ref.watch(accentColorProvider);
+    final accentColor = accentEnum.getColor(isDark);
 
-    return Row(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          'Activity',
-          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.w600,
-              ),
-        ),
-        const SizedBox(width: 8),
-        // Search button
-        if (widget.onSearchTapped != null)
-          GestureDetector(
-            onTap: widget.onSearchTapped,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
-              decoration: BoxDecoration(
-                color: widget.isSearchActive
-                    ? AppColors.cyan.withOpacity(0.2)
-                    : (isDark ? AppColors.elevated : AppColorsLight.elevated),
-                borderRadius: BorderRadius.circular(6),
-                border: Border.all(
-                  color: widget.isSearchActive
-                      ? AppColors.cyan.withOpacity(0.5)
-                      : (isDark ? AppColors.cardBorder : AppColorsLight.cardBorder),
-                  width: 1,
+        Row(
+          children: [
+            Text(
+              'Activity',
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+            ),
+            const SizedBox(width: 8),
+            // Search button
+            if (widget.onSearchTapped != null)
+              GestureDetector(
+                onTap: widget.onSearchTapped,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: widget.isSearchActive
+                        ? accentColor.withValues(alpha: 0.2)
+                        : (isDark ? AppColors.elevated : AppColorsLight.elevated),
+                    borderRadius: BorderRadius.circular(6),
+                    border: Border.all(
+                      color: widget.isSearchActive
+                          ? accentColor.withValues(alpha: 0.5)
+                          : (isDark ? AppColors.cardBorder : AppColorsLight.cardBorder),
+                      width: 1,
+                    ),
+                  ),
+                  child: Icon(
+                    Icons.search,
+                    size: 14,
+                    color: widget.isSearchActive
+                        ? accentColor
+                        : AppColors.textMuted,
+                  ),
                 ),
               ),
-              child: Icon(
-                Icons.search,
-                size: 14,
-                color: widget.isSearchActive
-                    ? AppColors.cyan
-                    : AppColors.textMuted,
+          ],
+        ),
+        const SizedBox(height: 8),
+        // Time range selector chips - full width row so all options are visible
+        Row(
+          children: HeatmapTimeRange.values.map((range) {
+            final isSelected = range == timeRange;
+            return Padding(
+              padding: const EdgeInsets.only(right: 6),
+              child: _TimeRangeChip(
+                label: range.label,
+                isSelected: isSelected,
+                accentColor: accentColor,
+                onTap: () {
+                  ref.read(heatmapTimeRangeProvider.notifier).state = range;
+                  // Scroll to end when range changes
+                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                    if (_scrollController.hasClients) {
+                      _scrollController
+                          .jumpTo(_scrollController.position.maxScrollExtent);
+                    }
+                  });
+                },
               ),
-            ),
-          ),
-        const Spacer(),
-        // Time range selector chips - wrapped in Flexible to prevent overflow
-        Flexible(
-          child: SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.only(right: 4),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: HeatmapTimeRange.values.map((range) {
-                final isSelected = range == timeRange;
-                return Padding(
-                  padding: const EdgeInsets.only(left: 4),
-                  child: _TimeRangeChip(
-                    label: range.label,
-                    isSelected: isSelected,
-                    onTap: () {
-                      ref.read(heatmapTimeRangeProvider.notifier).state = range;
-                      // Scroll to end when range changes
-                      WidgetsBinding.instance.addPostFrameCallback((_) {
-                        if (_scrollController.hasClients) {
-                          _scrollController
-                              .jumpTo(_scrollController.position.maxScrollExtent);
-                        }
-                      });
-                    },
-                  ),
-                );
-              }).toList(),
-            ),
-          ),
+            );
+          }).toList(),
         ),
       ],
     );
@@ -347,11 +349,13 @@ class _ActivityHeatmapState extends ConsumerState<ActivityHeatmap> {
 class _TimeRangeChip extends StatelessWidget {
   final String label;
   final bool isSelected;
+  final Color accentColor;
   final VoidCallback onTap;
 
   const _TimeRangeChip({
     required this.label,
     required this.isSelected,
+    required this.accentColor,
     required this.onTap,
   });
 
@@ -363,12 +367,12 @@ class _TimeRangeChip extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
         decoration: BoxDecoration(
           color: isSelected
-              ? AppColors.cyan.withOpacity(0.2)
+              ? accentColor.withValues(alpha: 0.2)
               : Colors.transparent,
           borderRadius: BorderRadius.circular(6),
           border: Border.all(
             color: isSelected
-                ? AppColors.cyan.withOpacity(0.5)
+                ? accentColor.withValues(alpha: 0.5)
                 : AppColors.cardBorder,
             width: 1,
           ),
@@ -376,7 +380,7 @@ class _TimeRangeChip extends StatelessWidget {
         child: Text(
           label,
           style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: isSelected ? AppColors.cyan : AppColors.textSecondary,
+                color: isSelected ? accentColor : AppColors.textSecondary,
                 fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
                 fontSize: 11,
               ),

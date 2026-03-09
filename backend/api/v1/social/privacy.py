@@ -72,6 +72,10 @@ async def update_privacy_settings(
     }
     update_data["updated_at"] = datetime.now(timezone.utc).isoformat()
 
+    # Handle show_read_receipts (F13)
+    if update.show_read_receipts is not None:
+        update_data["show_read_receipts"] = update.show_read_receipts
+
     # Upsert (update if exists, insert if not)
     result = supabase.table("user_privacy_settings").upsert({
         "user_id": user_id,

@@ -142,6 +142,15 @@ class _ProgressTab extends ConsumerWidget {
                   _SummaryCard(summary: history.summary!),
                 const SizedBox(height: 24),
 
+                // AI Insights
+                _ExerciseInsightsCard(
+                  summary: history.summary,
+                  chartData: history.weightChartData,
+                  prsAsync: prsAsync,
+                  exerciseName: exerciseName,
+                ),
+                const SizedBox(height: 16),
+
                 // Chart type selector
                 _ChartTypeSelector(
                   selected: chartType,
@@ -767,5 +776,180 @@ class _SessionStat extends StatelessWidget {
         ),
       ],
     );
+  }
+}
+
+class _ExerciseInsightsCard extends StatefulWidget {
+  final ExerciseProgressionSummary? summary;
+  final List<ExerciseChartDataPoint> chartData;
+  final AsyncValue<List<ExercisePersonalRecord>> prsAsync;
+  final String exerciseName;
+
+  const _ExerciseInsightsCard({
+    required this.summary,
+    required this.chartData,
+    required this.prsAsync,
+    required this.exerciseName,
+  });
+
+  @override
+  State<_ExerciseInsightsCard> createState() => _ExerciseInsightsCardState();
+}
+
+class _ExerciseInsightsCardState extends State<_ExerciseInsightsCard> {
+  bool _expanded = true;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final insights = _generateInsights();
+
+    if (insights.isEmpty) return const SizedBox.shrink();
+
+    return Card(
+      child: Column(
+        children: [
+          InkWell(
+            onTap: () => setState(() => _expanded = !_expanded),
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Row(
+                children: [
+                  Icon(Icons.lightbulb_outline, size: 20, color: theme.colorScheme.primary),
+                  const SizedBox(width: 8),
+                  Text(
+                    'Insights',
+                    style: theme.textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const Spacer(),
+                  AnimatedRotation(
+                    turns: _expanded ? 0.5 : 0.0,
+                    duration: const Duration(milliseconds: 200),
+                    child: Icon(
+                      Icons.keyboard_arrow_down,
+                      size: 20,
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          AnimatedCrossFade(
+            firstChild: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: insights.map((insight) => Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('•  ', style: TextStyle(color: theme.colorScheme.primary, fontWeight: FontWeight.bold)),
+                      Expanded(
+                        child: Text(
+                          insight,
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            color: theme.colorScheme.onSurfaceVariant,
+                            height: 1.4,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                )).toList(),
+              ),
+            ),
+            secondChild: const SizedBox.shrink(),
+            crossFadeState: _expanded ? CrossFadeState.showFirst : CrossFadeState.showSecond,
+            duration: const Duration(milliseconds: 200),
+          ),
+        ],
+      ),
+    );
+  }
+
+  List<String> _generateInsights() {
+    final insights = <String>[];
+    final summary = widget.summary;
+
+    if (summary == null) return insights;
+
+    // Weight change insight
+    if (summary.weightIncreaseKg != null && summary.weightIncreaseKg != 0) {
+      final sign = summary.weightIncreaseKg! > 0 ? '+' : '';
+      final weightStr = summary.weightIncreaseKg == summary.weightIncreaseKg!.toInt()
+          ? '${summary.weightIncreaseKg!.toInt()}'
+          : summary.weightIncreaseKg!.toStringAsFixed(1);
+
+      if (summary.firstSessionDate != null) {
+        try {
+          final firstDate = DateTime.parse(summary.firstSessionDate!);
+          final monthName = _monthName(firstDate.month);
+          insights.add('Weight ${summary.weightIncreaseKg! > 0 ? 'up' : 'down'} $sign${weightStr}kg since $monthName ${firstDate.year}');
+        } catch (_) {
+          insights.add('Weight change: $sign${weightStr}kg');
+        }
+      }
+    }
+
+    // Sessions and frequency
+    if (summary.totalSessions > 0) {
+      final freqStr = summary.avgFrequencyPerWeek != null
+          ? ', avg ${summary.avgFrequencyPerWeek!.toStringAsFixed(1)}x/week'
+          : '';
+      insights.add('${summary.totalSessions} sessions logged$freqStr');
+    }
+
+    // 1RM improvement
+    if (summary.oneRmIncreaseKg != null && summary.oneRmIncreaseKg! > 0) {
+      insights.add('Estimated 1RM improved by +${summary.oneRmIncreaseKg!.toStringAsFixed(1)}kg (${summary.formattedOneRmIncrease})');
+    }
+
+    // PR count
+    if (summary.prCount != null && summary.prCount! > 0) {
+      insights.add('${summary.prCount} personal records set');
+    }
+
+    // Recent PRs from async data
+    widget.prsAsync.whenData((prs) {
+      if (prs.isNotEmpty) {
+        final latest = prs.first;
+        try {
+          final prDate = DateTime.parse(latest.achievedDate);
+          final daysDiff = DateTime.now().difference(prDate).inDays;
+          if (daysDiff <= 7) {
+            insights.add('New PR! ${latest.formattedValue} (${daysDiff == 0 ? 'today' : daysDiff == 1 ? 'yesterday' : '$daysDiff days ago'})');
+          }
+        } catch (_) {}
+      }
+    });
+
+    // Trend insight
+    if (summary.trend != null) {
+      switch (summary.trend!) {
+        case 'improving':
+          insights.add('Performance is trending upward — keep it up!');
+          break;
+        case 'declining':
+          insights.add('Performance has been declining — consider adjusting volume or recovery');
+          break;
+        case 'maintaining':
+          if (summary.totalSessions > 5) {
+            insights.add('Performance is stable — try progressive overload to break through');
+          }
+          break;
+      }
+    }
+
+    return insights;
+  }
+
+  String _monthName(int month) {
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    return months[month - 1];
   }
 }

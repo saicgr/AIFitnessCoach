@@ -78,11 +78,13 @@ class SocialService {
     int page = 1,
     int pageSize = 20,
     SocialActivityType? activityType,
+    String sortBy = 'recent',
   }) async {
     try {
       final queryParams = {
         'page': page.toString(),
         'page_size': pageSize.toString(),
+        'sort_by': sortBy,
         if (activityType != null) 'activity_type': activityType.value,
       };
 
@@ -898,15 +900,18 @@ class SocialService {
   // USER SEARCH
   // ============================================================
 
-  /// Search users by name
-  Future<List<Map<String, dynamic>>> searchUsers({
+  /// Search users by name (with pagination support)
+  Future<Map<String, dynamic>> searchUsers({
     required String userId,
     required String query,
     int limit = 20,
+    int offset = 0,
   }) async {
-    if (query.trim().isEmpty) return [];
+    if (query.trim().isEmpty) {
+      return {'results': <Map<String, dynamic>>[], 'total_count': 0, 'has_more': false};
+    }
 
-    debugPrint('🔍 [Social] Searching users: query="$query", userId=$userId, limit=$limit');
+    debugPrint('🔍 [Social] Searching users: query="$query", userId=$userId, limit=$limit, offset=$offset');
 
     try {
       final response = await _apiClient.get(
@@ -915,15 +920,28 @@ class SocialService {
           'user_id': userId,
           'query': query,
           'limit': limit.toString(),
+          'offset': offset.toString(),
         },
       );
 
       debugPrint('🔍 [Social] Search response status: ${response.statusCode}');
 
       if (response.statusCode == 200) {
-        final results = List<Map<String, dynamic>>.from(response.data);
-        debugPrint('✅ [Social] Found ${results.length} users for query "$query"');
-        return results;
+        final data = response.data;
+        // Support both old (List) and new (Map with results/total_count/has_more) response formats
+        if (data is List) {
+          final results = List<Map<String, dynamic>>.from(data);
+          debugPrint('✅ [Social] Found ${results.length} users for query "$query"');
+          return {
+            'results': results,
+            'total_count': results.length,
+            'has_more': false,
+          };
+        } else if (data is Map) {
+          debugPrint('✅ [Social] Found ${data['total_count'] ?? 0} users for query "$query"');
+          return Map<String, dynamic>.from(data);
+        }
+        return {'results': <Map<String, dynamic>>[], 'total_count': 0, 'has_more': false};
       } else {
         debugPrint('❌ [Social] Search failed with status: ${response.statusCode}');
         debugPrint('❌ [Social] Response body: ${response.data}');
@@ -1563,6 +1581,356 @@ class SocialService {
     } catch (e) {
       debugPrint('❌ [Social] Error getting social summary: $e');
       return {};
+    }
+  }
+
+  // ============================================================
+  // BLOCKING & REPORTING (F9)
+  // ============================================================
+
+  /// Block a user
+  Future<void> blockUser(String userId, {String? reason}) async {
+    try {
+      await _apiClient.post(
+        '/social/blocks',
+        data: {
+          'blocked_id': userId,
+          if (reason != null) 'reason': reason,
+        },
+      );
+      debugPrint('✅ [Social] User blocked: $userId');
+    } catch (e) {
+      debugPrint('❌ [Social] Error blocking user: $e');
+      rethrow;
+    }
+  }
+
+  /// Unblock a user
+  Future<void> unblockUser(String userId) async {
+    try {
+      await _apiClient.delete('/social/blocks/$userId');
+      debugPrint('✅ [Social] User unblocked: $userId');
+    } catch (e) {
+      debugPrint('❌ [Social] Error unblocking user: $e');
+      rethrow;
+    }
+  }
+
+  /// Get list of blocked users
+  Future<List<Map<String, dynamic>>> getBlockedUsers() async {
+    try {
+      final response = await _apiClient.get('/social/blocks');
+      if (response.statusCode == 200) {
+        return List<Map<String, dynamic>>.from(response.data);
+      }
+      return [];
+    } catch (e) {
+      debugPrint('❌ [Social] Error getting blocked users: $e');
+      rethrow;
+    }
+  }
+
+  /// Report content (post, comment, user, message)
+  Future<void> reportContent({
+    required String contentType,
+    required String contentId,
+    String? reportedUserId,
+    required String reason,
+    String? description,
+  }) async {
+    try {
+      await _apiClient.post(
+        '/social/reports',
+        data: {
+          'content_type': contentType,
+          'content_id': contentId,
+          if (reportedUserId != null) 'reported_user_id': reportedUserId,
+          'reason': reason,
+          if (description != null) 'description': description,
+        },
+      );
+      debugPrint('✅ [Social] Content reported: $contentType/$contentId');
+    } catch (e) {
+      debugPrint('❌ [Social] Error reporting content: $e');
+      rethrow;
+    }
+  }
+
+  // ============================================================
+  // HASHTAGS (F10)
+  // ============================================================
+
+  /// Get trending hashtags
+  Future<List<Map<String, dynamic>>> getTrendingHashtags({int limit = 10}) async {
+    try {
+      final response = await _apiClient.get(
+        '/social/hashtags/trending',
+        queryParameters: {'limit': limit.toString()},
+      );
+      if (response.statusCode == 200) {
+        return List<Map<String, dynamic>>.from(response.data);
+      }
+      return [];
+    } catch (e) {
+      debugPrint('❌ [Social] Error getting trending hashtags: $e');
+      rethrow;
+    }
+  }
+
+  /// Get posts by hashtag
+  Future<Map<String, dynamic>> getPostsByHashtag(
+    String name, {
+    int limit = 20,
+    int offset = 0,
+  }) async {
+    try {
+      final response = await _apiClient.get(
+        '/social/hashtags/$name/posts',
+        queryParameters: {
+          'limit': limit.toString(),
+          'offset': offset.toString(),
+        },
+      );
+      if (response.statusCode == 200) {
+        return Map<String, dynamic>.from(response.data);
+      }
+      return {'posts': [], 'total_count': 0};
+    } catch (e) {
+      debugPrint('❌ [Social] Error getting posts by hashtag: $e');
+      rethrow;
+    }
+  }
+
+  /// Search hashtags
+  Future<List<Map<String, dynamic>>> searchHashtags(
+    String query, {
+    int limit = 20,
+  }) async {
+    try {
+      final response = await _apiClient.get(
+        '/social/hashtags/search',
+        queryParameters: {
+          'q': query,
+          'limit': limit.toString(),
+        },
+      );
+      if (response.statusCode == 200) {
+        return List<Map<String, dynamic>>.from(response.data);
+      }
+      return [];
+    } catch (e) {
+      debugPrint('❌ [Social] Error searching hashtags: $e');
+      rethrow;
+    }
+  }
+
+  // ============================================================
+  // STORIES (F11)
+  // ============================================================
+
+  /// Get pre-signed URL for story media upload
+  Future<Map<String, dynamic>> getStoryPresignedUrl(
+    String fileName,
+    String contentType,
+  ) async {
+    try {
+      final response = await _apiClient.post(
+        '/social/stories/presign',
+        data: {
+          'file_name': fileName,
+          'content_type': contentType,
+        },
+      );
+      if (response.statusCode == 200) {
+        return Map<String, dynamic>.from(response.data);
+      }
+      throw Exception('Failed to get story presigned URL: ${response.statusCode}');
+    } catch (e) {
+      debugPrint('❌ [Social] Error getting story presigned URL: $e');
+      rethrow;
+    }
+  }
+
+  /// Create a new story
+  Future<Map<String, dynamic>> createStory({
+    required String mediaUrl,
+    String mediaType = 'image',
+    String? storageKey,
+    String? caption,
+  }) async {
+    try {
+      final response = await _apiClient.post(
+        '/social/stories',
+        data: {
+          'media_url': mediaUrl,
+          'media_type': mediaType,
+          if (storageKey != null) 'storage_key': storageKey,
+          if (caption != null) 'caption': caption,
+        },
+      );
+      if (response.statusCode == 200) {
+        debugPrint('✅ [Social] Story created');
+        return Map<String, dynamic>.from(response.data);
+      }
+      throw Exception('Failed to create story: ${response.statusCode}');
+    } catch (e) {
+      debugPrint('❌ [Social] Error creating story: $e');
+      rethrow;
+    }
+  }
+
+  /// Get stories feed (stories from friends)
+  Future<List<Map<String, dynamic>>> getStoriesFeed() async {
+    try {
+      final response = await _apiClient.get('/social/stories/feed');
+      if (response.statusCode == 200) {
+        return List<Map<String, dynamic>>.from(response.data);
+      }
+      return [];
+    } catch (e) {
+      debugPrint('❌ [Social] Error getting stories feed: $e');
+      rethrow;
+    }
+  }
+
+  /// Get views for a story
+  Future<List<Map<String, dynamic>>> getStoryViews(String storyId) async {
+    try {
+      final response = await _apiClient.get('/social/stories/$storyId/views');
+      if (response.statusCode == 200) {
+        return List<Map<String, dynamic>>.from(response.data);
+      }
+      return [];
+    } catch (e) {
+      debugPrint('❌ [Social] Error getting story views: $e');
+      rethrow;
+    }
+  }
+
+  /// Mark a story as viewed
+  Future<void> markStoryViewed(String storyId) async {
+    try {
+      await _apiClient.post('/social/stories/$storyId/view');
+      debugPrint('✅ [Social] Story marked as viewed: $storyId');
+    } catch (e) {
+      debugPrint('❌ [Social] Error marking story viewed: $e');
+      rethrow;
+    }
+  }
+
+  /// Delete a story
+  Future<void> deleteStory(String storyId) async {
+    try {
+      await _apiClient.delete('/social/stories/$storyId');
+      debugPrint('✅ [Social] Story deleted: $storyId');
+    } catch (e) {
+      debugPrint('❌ [Social] Error deleting story: $e');
+      rethrow;
+    }
+  }
+
+  // ============================================================
+  // GROUP CHATS (F12)
+  // ============================================================
+
+  /// Create a group conversation
+  Future<Map<String, dynamic>> createGroupConversation({
+    required String name,
+    required List<String> memberIds,
+  }) async {
+    try {
+      final response = await _apiClient.post(
+        '/social/messages/conversations/group',
+        data: {
+          'name': name,
+          'member_ids': memberIds,
+        },
+      );
+      if (response.statusCode == 200) {
+        debugPrint('✅ [Social] Group conversation created: $name');
+        return Map<String, dynamic>.from(response.data);
+      }
+      throw Exception('Failed to create group conversation: ${response.statusCode}');
+    } catch (e) {
+      debugPrint('❌ [Social] Error creating group conversation: $e');
+      rethrow;
+    }
+  }
+
+  /// Update group members (add or remove)
+  Future<void> updateGroupMembers(
+    String conversationId, {
+    List<String>? addIds,
+    List<String>? removeIds,
+  }) async {
+    try {
+      await _apiClient.put(
+        '/social/messages/conversations/$conversationId/members',
+        data: {
+          if (addIds != null) 'add_ids': addIds,
+          if (removeIds != null) 'remove_ids': removeIds,
+        },
+      );
+      debugPrint('✅ [Social] Group members updated: $conversationId');
+    } catch (e) {
+      debugPrint('❌ [Social] Error updating group members: $e');
+      rethrow;
+    }
+  }
+
+  /// Update group settings (name, avatar)
+  Future<void> updateGroupSettings(
+    String conversationId, {
+    String? name,
+    String? avatarUrl,
+  }) async {
+    try {
+      await _apiClient.put(
+        '/social/messages/conversations/$conversationId/settings',
+        data: {
+          if (name != null) 'name': name,
+          if (avatarUrl != null) 'avatar_url': avatarUrl,
+        },
+      );
+      debugPrint('✅ [Social] Group settings updated: $conversationId');
+    } catch (e) {
+      debugPrint('❌ [Social] Error updating group settings: $e');
+      rethrow;
+    }
+  }
+
+  /// Leave a group conversation
+  Future<void> leaveGroup(String conversationId) async {
+    try {
+      await _apiClient.post(
+        '/social/messages/conversations/$conversationId/leave',
+      );
+      debugPrint('✅ [Social] Left group: $conversationId');
+    } catch (e) {
+      debugPrint('❌ [Social] Error leaving group: $e');
+      rethrow;
+    }
+  }
+
+  // ============================================================
+  // SOCIAL STATS (F7)
+  // ============================================================
+
+  /// Get social stats for the current user (friends count, followers, following)
+  Future<Map<String, dynamic>> getSocialStats({
+    required String userId,
+  }) async {
+    try {
+      final response = await _apiClient.get(
+        '/social/users/$userId/stats',
+      );
+      if (response.statusCode == 200) {
+        return Map<String, dynamic>.from(response.data);
+      }
+      return {'friends_count': 0, 'followers_count': 0, 'following_count': 0};
+    } catch (e) {
+      debugPrint('❌ [Social] Error getting social stats: $e');
+      return {'friends_count': 0, 'followers_count': 0, 'following_count': 0};
     }
   }
 

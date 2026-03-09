@@ -10,6 +10,7 @@ import '../../../data/providers/social_provider.dart';
 import '../../../data/repositories/auth_repository.dart';
 import '../../../widgets/segmented_tab_bar.dart';
 import '../widgets/challenge_card.dart';
+import '../widgets/create_challenge_sheet.dart';
 import '../widgets/empty_state.dart';
 
 /// Challenges Tab - Shows active and available fitness challenges
@@ -324,6 +325,22 @@ class _ChallengesTabState extends ConsumerState<ChallengesTab>
 
   void _handleCreateChallenge() {
     HapticFeedback.mediumImpact();
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      builder: (context) => CreateChallengeSheet(
+        onCreated: () {
+          // Invalidate challenge providers to refresh
+          if (_userId != null) {
+            ref.invalidate(challengesListProvider(_userId!));
+            ref.invalidate(userActiveChallengesProvider(_userId!));
+          }
+          // Switch to "My Challenges" tab
+          _challengeTabController.animateTo(0);
+        },
+      ),
+    );
   }
 
   void _showSnackBar(String message) {

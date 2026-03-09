@@ -9,8 +9,9 @@ import '../../../data/repositories/auth_repository.dart';
 import '../../../data/providers/social_provider.dart';
 import '../widgets/empty_state.dart';
 import '../conversation_screen.dart';
+import '../group_create_sheet.dart';
 
-/// Messages Tab - Shows direct messages between users
+/// Messages Tab - Shows direct messages and group conversations
 /// First message for new users is from support@fitwiz.us
 class MessagesTab extends ConsumerStatefulWidget {
   const MessagesTab({super.key});
@@ -64,17 +65,77 @@ class _MessagesTabState extends ConsumerState<MessagesTab> {
           );
         }
 
-        return ListView.builder(
-          padding: const EdgeInsets.all(16),
-          itemCount: conversations.length,
-          itemBuilder: (context, index) {
-            final conversation = conversations[index];
-            return _ConversationCard(
-              conversation: conversation,
-              currentUserId: userId,
-              isDark: isDark,
-            );
-          },
+        return Column(
+          children: [
+            // New Group button row
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: () {
+                        HapticFeedback.lightImpact();
+                        showModalBottomSheet(
+                          context: context,
+                          isScrollControlled: true,
+                          useSafeArea: true,
+                          builder: (context) => GroupCreateSheet(
+                            onCreated: (conversation) {
+                              ref.invalidate(conversationsProvider(userId));
+                              final conversationId = conversation['id'] as String? ?? '';
+                              final groupName = conversation['name'] as String? ?? 'Group Chat';
+                              final groupAvatar = conversation['avatar_url'] as String?;
+                              if (conversationId.isNotEmpty && mounted) {
+                                Navigator.push(
+                                  context,
+                                  AppPageRoute(
+                                    builder: (_) => ConversationScreen(
+                                      conversationId: conversationId,
+                                      otherUserId: '',
+                                      otherUserName: groupName,
+                                      isGroup: true,
+                                      groupName: groupName,
+                                      groupAvatar: groupAvatar,
+                                    ),
+                                  ),
+                                );
+                              }
+                            },
+                          ),
+                        );
+                      },
+                      icon: const Icon(Icons.group_add_rounded, size: 18),
+                      label: const Text('New Group'),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: context.colors.accent,
+                        side: BorderSide(color: context.colors.accent.withValues(alpha: 0.3)),
+                        padding: const EdgeInsets.symmetric(vertical: 8),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            // Conversations list
+            Expanded(
+              child: ListView.builder(
+                padding: const EdgeInsets.all(16),
+                itemCount: conversations.length,
+                itemBuilder: (context, index) {
+                  final conversation = conversations[index];
+                  return _ConversationCard(
+                    conversation: conversation,
+                    currentUserId: userId,
+                    isDark: isDark,
+                  );
+                },
+              ),
+            ),
+          ],
         );
       },
     );
@@ -94,13 +155,22 @@ class _ConversationCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isGroup = conversation['is_group'] as bool? ?? false;
     final otherUserName = conversation['other_user_name'] as String? ?? 'User';
     final otherUserAvatar = conversation['other_user_avatar'] as String?;
+    final groupName = conversation['name'] as String?;
+    final groupAvatar = conversation['avatar_url'] as String?;
+    final memberCount = conversation['member_count'] as int? ?? 0;
     final lastMessage = conversation['last_message'] as String? ?? '';
     final lastMessageTime = conversation['last_message_time'] as String?;
     final unreadCount = conversation['unread_count'] as int? ?? 0;
     final isSupportUser = conversation['is_support_user'] as bool? ?? false;
     final conversationId = conversation['id'] as String? ?? '';
+
+    final displayName = isGroup
+        ? (groupName ?? 'Group Chat')
+        : (isSupportUser ? 'FitWiz Support' : otherUserName);
+    final displayAvatar = isGroup ? groupAvatar : otherUserAvatar;
 
     final cardBg = isDark ? AppColors.elevated : AppColorsLight.elevated;
     final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
@@ -122,8 +192,11 @@ class _ConversationCard extends StatelessWidget {
                 builder: (_) => ConversationScreen(
                   conversationId: conversationId,
                   otherUserId: otherUserId,
-                  otherUserName: otherUserName,
-                  otherUserAvatar: otherUserAvatar,
+                  otherUserName: isGroup ? (groupName ?? 'Group Chat') : otherUserName,
+                  otherUserAvatar: displayAvatar,
+                  isGroup: isGroup,
+                  groupName: isGroup ? (groupName ?? 'Group Chat') : null,
+                  groupAvatar: isGroup ? groupAvatar : null,
                 ),
               ),
             );
@@ -142,20 +215,24 @@ class _ConversationCard extends StatelessWidget {
                   children: [
                     CircleAvatar(
                       radius: 24,
-                      backgroundColor: isSupportUser ? AppColors.teal : AppColors.purple,
-                      backgroundImage: otherUserAvatar != null
-                          ? NetworkImage(otherUserAvatar)
+                      backgroundColor: isGroup
+                          ? AppColors.purple
+                          : (isSupportUser ? AppColors.teal : AppColors.purple),
+                      backgroundImage: displayAvatar != null
+                          ? NetworkImage(displayAvatar)
                           : null,
-                      child: otherUserAvatar == null
+                      child: displayAvatar == null
                           ? Icon(
-                              isSupportUser ? Icons.support_agent : Icons.person,
+                              isGroup
+                                  ? Icons.group_rounded
+                                  : (isSupportUser ? Icons.support_agent : Icons.person),
                               color: Colors.white,
                               size: 24,
                             )
                           : null,
                     ),
                     // Support badge
-                    if (isSupportUser)
+                    if (isSupportUser && !isGroup)
                       Positioned(
                         bottom: 0,
                         right: 0,
@@ -176,6 +253,31 @@ class _ConversationCard extends StatelessWidget {
                           ),
                         ),
                       ),
+                    // Group member count badge
+                    if (isGroup && memberCount > 0)
+                      Positioned(
+                        bottom: 0,
+                        right: 0,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                          decoration: BoxDecoration(
+                            color: AppColors.purple,
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(
+                              color: cardBg,
+                              width: 2,
+                            ),
+                          ),
+                          child: Text(
+                            '$memberCount',
+                            style: const TextStyle(
+                              fontSize: 9,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ),
                   ],
                 ),
                 const SizedBox(width: 12),
@@ -188,7 +290,7 @@ class _ConversationCard extends StatelessWidget {
                         children: [
                           Expanded(
                             child: Text(
-                              isSupportUser ? 'FitWiz Support' : otherUserName,
+                              displayName,
                               style: TextStyle(
                                 fontSize: 15,
                                 fontWeight: FontWeight.w600,

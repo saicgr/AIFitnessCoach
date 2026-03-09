@@ -759,6 +759,7 @@ async def generate_workout(request: GenerateWorkoutRequest, background_tasks: Ba
                 workout_type_preference=request.workout_type or "strength",
                 favorite_exercises=favorite_exercises if favorite_exercises else None,
                 queued_exercises=exercise_queue if exercise_queue else None,
+                batch_offset=request.batch_offset,
             )
 
             if rag_exercises:
@@ -3159,6 +3160,20 @@ async def swap_exercise_in_workout(request: SwapExerciseRequest, background_task
                         # Add secondary muscles info for future reference
                         "secondary_muscles": new_ex.get("secondary_muscles", []),
                     }
+                    # Apply cardio params from request if provided
+                    if request.duration_seconds is not None:
+                        exercises[i]["duration_seconds"] = request.duration_seconds
+                        exercises[i]["is_timed"] = True
+                    if request.speed_mph is not None:
+                        exercises[i]["speed_mph"] = request.speed_mph
+                    if request.incline_percent is not None:
+                        exercises[i]["incline_percent"] = request.incline_percent
+                    if request.rpm is not None:
+                        exercises[i]["rpm"] = request.rpm
+                    if request.resistance_level is not None:
+                        exercises[i]["resistance_level"] = request.resistance_level
+                    if request.stroke_rate_spm is not None:
+                        exercises[i]["stroke_rate_spm"] = request.stroke_rate_spm
 
                     # Add muscle profile warning if significant change detected
                     if muscle_profile_warning:
@@ -3349,11 +3364,17 @@ async def add_exercise_to_workout(request: AddExerciseRequest, background_tasks:
                 "name": exercise_name,
                 "sets": 1,
                 "reps": None,
-                "duration_seconds": 30,
+                "duration_seconds": request.duration_seconds or 30,
                 "rest_seconds": 10,
-                "equipment": "none",
+                "equipment": (exercise_data[0].get("equipment") if exercise_data else None) or "none",
                 "muscle_group": muscle_group or "general",
-                "notes": None
+                "notes": None,
+                "is_timed": True if request.duration_seconds else False,
+                "speed_mph": request.speed_mph,
+                "incline_percent": request.incline_percent,
+                "rpm": request.rpm,
+                "resistance_level": request.resistance_level,
+                "stroke_rate_spm": request.stroke_rate_spm,
             }
 
             # Query existing warmup for this workout
@@ -3401,11 +3422,17 @@ async def add_exercise_to_workout(request: AddExerciseRequest, background_tasks:
                 "name": exercise_name,
                 "sets": 1,
                 "reps": 1,
-                "duration_seconds": 30,
+                "duration_seconds": request.duration_seconds or 30,
                 "rest_seconds": 0,
-                "equipment": "none",
+                "equipment": (exercise_data[0].get("equipment") if exercise_data else None) or "none",
                 "muscle_group": muscle_group or "general",
-                "notes": None
+                "notes": None,
+                "is_timed": True if request.duration_seconds else False,
+                "speed_mph": request.speed_mph,
+                "incline_percent": request.incline_percent,
+                "rpm": request.rpm,
+                "resistance_level": request.resistance_level,
+                "stroke_rate_spm": request.stroke_rate_spm,
             }
 
             # Query existing stretch for this workout

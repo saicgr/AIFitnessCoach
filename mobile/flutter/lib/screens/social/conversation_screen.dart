@@ -1,9 +1,12 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/animations/app_animations.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/theme/theme_colors.dart';
+import '../../data/providers/conversation_realtime_provider.dart';
 import '../../data/providers/e2ee_provider.dart';
 import '../../data/providers/social_provider.dart';
 import '../../data/repositories/auth_repository.dart';
@@ -11,12 +14,16 @@ import '../../widgets/app_loading.dart';
 import '../../widgets/glass_back_button.dart';
 import '../../widgets/main_shell.dart';
 import 'friend_profile_screen.dart';
+import 'group_settings_screen.dart';
 
 class ConversationScreen extends ConsumerStatefulWidget {
   final String conversationId;
   final String otherUserId;
   final String otherUserName;
   final String? otherUserAvatar;
+  final bool isGroup;
+  final String? groupName;
+  final String? groupAvatar;
 
   const ConversationScreen({
     super.key,
@@ -24,6 +31,9 @@ class ConversationScreen extends ConsumerStatefulWidget {
     required this.otherUserId,
     required this.otherUserName,
     this.otherUserAvatar,
+    this.isGroup = false,
+    this.groupName,
+    this.groupAvatar,
   });
 
   @override
@@ -34,29 +44,78 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen> {
   final _messageController = TextEditingController();
   final _scrollController = ScrollController();
   bool _isSending = false;
+  Timer? _typingDebounceTimer;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(floatingNavBarVisibleProvider.notifier).state = false;
-      // Initialize E2EE keys
       final authState = ref.read(authStateProvider);
       final userId = authState.user?.id;
       if (userId != null) {
-        ref.read(e2eeInitializedProvider(userId));
+        // Initialize E2EE keys only for DMs
+        if (!widget.isGroup) {
+          ref.read(e2eeInitializedProvider(userId));
+        }
+        // Join realtime channel for typing indicators
+        final realtimeService = ref.read(conversationRealtimeServiceProvider);
+        realtimeService.joinConversation(widget.conversationId);
+        // Listen for typing events
+        realtimeService.typingStream.listen((payload) {
+          if (!mounted) return;
+          final typingUserId = payload['user_id'] as String?;
+          final typingUserName = payload['user_name'] as String?;
+          final isTyping = payload['is_typing'] as bool? ?? false;
+          if (typingUserId == null || typingUserId == userId) return;
+
+          final currentList = ref.read(typingUsersProvider(widget.conversationId));
+          final name = typingUserName ?? 'Someone';
+          if (isTyping && !currentList.contains(name)) {
+            ref.read(typingUsersProvider(widget.conversationId).notifier).state =
+                [...currentList, name];
+          } else if (!isTyping) {
+            ref.read(typingUsersProvider(widget.conversationId).notifier).state =
+                currentList.where((n) => n != name).toList();
+          }
+        });
       }
     });
   }
 
   @override
   void dispose() {
+    _typingDebounceTimer?.cancel();
     _messageController.dispose();
     _scrollController.dispose();
+    final realtimeService = ref.read(conversationRealtimeServiceProvider);
+    realtimeService.leaveConversation();
     Future.microtask(() {
       ref.read(floatingNavBarVisibleProvider.notifier).state = true;
     });
     super.dispose();
+  }
+
+  void _onTextChanged(String text) {
+    setState(() {});
+
+    final authState = ref.read(authStateProvider);
+    final userId = authState.user?.id;
+    const userName = 'User';
+    if (userId == null) return;
+
+    final realtimeService = ref.read(conversationRealtimeServiceProvider);
+
+    // Debounce typing indicator - send true on keystroke, auto-clear after 2s
+    _typingDebounceTimer?.cancel();
+    if (text.trim().isNotEmpty) {
+      realtimeService.sendTyping(widget.conversationId, userId, userName, true);
+      _typingDebounceTimer = Timer(const Duration(seconds: 2), () {
+        realtimeService.sendTyping(widget.conversationId, userId, userName, false);
+      });
+    } else {
+      realtimeService.sendTyping(widget.conversationId, userId, userName, false);
+    }
   }
 
   Future<void> _sendMessage() async {
@@ -65,44 +124,61 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen> {
 
     final authState = ref.read(authStateProvider);
     final userId = authState.user?.id;
+    const userName = 'User';
     if (userId == null) return;
 
     setState(() => _isSending = true);
     _messageController.clear();
 
+    // Send typing=false on message send
+    _typingDebounceTimer?.cancel();
+    final realtimeService = ref.read(conversationRealtimeServiceProvider);
+    realtimeService.sendTyping(widget.conversationId, userId, userName, false);
+
     try {
       final socialService = ref.read(socialServiceProvider);
-      final e2eeService = ref.read(e2eeServiceProvider);
 
-      // Try to encrypt if recipient has a key
-      String? encryptedContent;
-      String? encryptionNonce;
-      int? encryptionVersion;
-      String? plainContent = text;
+      // Skip E2EE for group conversations
+      if (widget.isGroup) {
+        await socialService.sendMessage(
+          userId: userId,
+          recipientId: widget.otherUserId,
+          content: text,
+          conversationId: widget.conversationId,
+        );
+      } else {
+        final e2eeService = ref.read(e2eeServiceProvider);
 
-      final hasKey = await e2eeService.hasEncryptionKey(widget.otherUserId);
-      if (hasKey) {
-        final sharedSecret = await e2eeService.deriveSharedSecret(userId, widget.otherUserId);
-        if (sharedSecret != null) {
-          final encrypted = await e2eeService.encryptMessage(text, sharedSecret);
-          if (encrypted != null) {
-            encryptedContent = encrypted.ciphertext;
-            encryptionNonce = encrypted.nonce;
-            encryptionVersion = 1;
-            plainContent = null;  // Don't send plaintext
+        // Try to encrypt if recipient has a key
+        String? encryptedContent;
+        String? encryptionNonce;
+        int? encryptionVersion;
+        String? plainContent = text;
+
+        final hasKey = await e2eeService.hasEncryptionKey(widget.otherUserId);
+        if (hasKey) {
+          final sharedSecret = await e2eeService.deriveSharedSecret(userId, widget.otherUserId);
+          if (sharedSecret != null) {
+            final encrypted = await e2eeService.encryptMessage(text, sharedSecret);
+            if (encrypted != null) {
+              encryptedContent = encrypted.ciphertext;
+              encryptionNonce = encrypted.nonce;
+              encryptionVersion = 1;
+              plainContent = null;  // Don't send plaintext
+            }
           }
         }
-      }
 
-      await socialService.sendMessage(
-        userId: userId,
-        recipientId: widget.otherUserId,
-        content: plainContent,
-        conversationId: widget.conversationId,
-        encryptedContent: encryptedContent,
-        encryptionNonce: encryptionNonce,
-        encryptionVersion: encryptionVersion,
-      );
+        await socialService.sendMessage(
+          userId: userId,
+          recipientId: widget.otherUserId,
+          content: plainContent,
+          conversationId: widget.conversationId,
+          encryptedContent: encryptedContent,
+          encryptionNonce: encryptionNonce,
+          encryptionVersion: encryptionVersion,
+        );
+      }
 
       // Refresh messages
       ref.invalidate(conversationMessagesProvider(
@@ -135,6 +211,11 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen> {
     final authState = ref.watch(authStateProvider);
     final userId = authState.user?.id;
 
+    final displayName = widget.isGroup
+        ? (widget.groupName ?? 'Group Chat')
+        : widget.otherUserName;
+    final displayAvatar = widget.isGroup ? widget.groupAvatar : widget.otherUserAvatar;
+
     return Scaffold(
       backgroundColor: backgroundColor,
       appBar: AppBar(
@@ -146,41 +227,40 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen> {
         title: GestureDetector(
           onTap: () {
             HapticFeedback.lightImpact();
-            Navigator.push(
-              context,
-              AppPageRoute(
-                builder: (_) => FriendProfileScreen(
-                  targetUserId: widget.otherUserId,
+            if (!widget.isGroup) {
+              Navigator.push(
+                context,
+                AppPageRoute(
+                  builder: (_) => FriendProfileScreen(
+                    targetUserId: widget.otherUserId,
+                  ),
                 ),
-              ),
-            );
+              );
+            }
           },
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
               CircleAvatar(
                 radius: 16,
-                backgroundColor: colors.accent.withValues(alpha: 0.2),
-                backgroundImage: widget.otherUserAvatar != null
-                    ? NetworkImage(widget.otherUserAvatar!)
+                backgroundColor: widget.isGroup
+                    ? AppColors.purple.withValues(alpha: 0.2)
+                    : colors.accent.withValues(alpha: 0.2),
+                backgroundImage: displayAvatar != null
+                    ? NetworkImage(displayAvatar)
                     : null,
-                child: widget.otherUserAvatar == null
-                    ? Text(
-                        widget.otherUserName.isNotEmpty
-                            ? widget.otherUserName[0].toUpperCase()
-                            : '?',
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold,
-                          color: colors.accent,
-                        ),
+                child: displayAvatar == null
+                    ? Icon(
+                        widget.isGroup ? Icons.group_rounded : Icons.person,
+                        size: 18,
+                        color: widget.isGroup ? AppColors.purple : colors.accent,
                       )
                     : null,
               ),
               const SizedBox(width: 10),
               Flexible(
                 child: Text(
-                  widget.otherUserName,
+                  displayName,
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.w600,
                       ),
@@ -191,6 +271,25 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen> {
           ),
         ),
         centerTitle: false,
+        actions: [
+          if (widget.isGroup)
+            IconButton(
+              onPressed: () {
+                HapticFeedback.lightImpact();
+                Navigator.push(
+                  context,
+                  AppPageRoute(
+                    builder: (_) => GroupSettingsScreen(
+                      conversationId: widget.conversationId,
+                      groupName: widget.groupName ?? 'Group Chat',
+                      groupAvatar: widget.groupAvatar,
+                    ),
+                  ),
+                );
+              },
+              icon: const Icon(Icons.settings_rounded, size: 22),
+            ),
+        ],
       ),
       body: Column(
         children: [
@@ -199,7 +298,43 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen> {
                 ? const Center(child: Text('Not logged in'))
                 : _buildMessagesList(userId, isDark, colors),
           ),
+          _buildTypingIndicator(),
           _buildInputBar(isDark, colors),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTypingIndicator() {
+    final typingUsers = ref.watch(typingUsersProvider(widget.conversationId));
+    if (typingUsers.isEmpty) return const SizedBox.shrink();
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.surfaceContainerHighest,
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                SizedBox(
+                  width: 24,
+                  child: _TypingDotsAnimation(),
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  typingUsers.length == 1
+                      ? '${typingUsers.first} is typing...'
+                      : '${typingUsers.length} people typing...',
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+              ],
+            ),
+          ),
         ],
       ),
     );
@@ -275,10 +410,32 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen> {
           );
         }
 
+        // Find the last sent message that has been read (for read receipts)
+        // Compare message created_at against other participant's last_read_at
+        int? lastReadSentIndex;
+        final otherLastReadAt = messages.isNotEmpty
+            ? messages.first['other_last_read_at'] as String?
+            : null;
+        if (otherLastReadAt != null) {
+          try {
+            final lastReadTime = DateTime.parse(otherLastReadAt);
+            for (int i = 0; i < messages.length; i++) {
+              final msg = messages[i];
+              if (msg['sender_id'] == userId) {
+                final msgTime = DateTime.tryParse(msg['created_at'] as String? ?? '');
+                if (msgTime != null && !msgTime.isAfter(lastReadTime)) {
+                  lastReadSentIndex = i;
+                  break; // Messages are newest-first, so first match is the last read
+                }
+              }
+            }
+          } catch (_) {}
+        }
+
         // Messages typically come newest-first from API
         return Column(
           children: [
-            if (decryptionFailures > 2)
+            if (decryptionFailures > 2 && !widget.isGroup)
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
@@ -310,6 +467,12 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen> {
                   final message = messages[index];
                   final isMe = message['sender_id'] == userId;
                   final createdAt = message['created_at'] as String?;
+                  final messageType = message['message_type'] as String?;
+
+                  // Render system messages as centered grey text
+                  if (messageType == 'system') {
+                    return _buildSystemMessage(message, isDark);
+                  }
 
                   // Show timestamp if gap > 5 minutes from next message
                   bool showTimestamp = false;
@@ -329,11 +492,18 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen> {
                     showTimestamp = true; // Always show timestamp for oldest message
                   }
 
+                  final showReadReceipt = isMe && lastReadSentIndex == index;
+
                   return Column(
                     children: [
                       if (showTimestamp && createdAt != null)
                         _buildTimestamp(createdAt, isDark),
-                      _buildMessageBubble(message, isMe, isDark, colors),
+                      // For group messages: show sender name above received messages
+                      if (widget.isGroup && !isMe)
+                        _buildGroupSenderLabel(message, isDark),
+                      _buildMessageBubble(message, isMe, isDark, ref.colors(context)),
+                      if (showReadReceipt)
+                        _buildReadReceipt(isDark),
                     ],
                   );
                 },
@@ -342,6 +512,80 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen> {
           ],
         );
       },
+    );
+  }
+
+  Widget _buildSystemMessage(Map<String, dynamic> message, bool isDark) {
+    final content = message['content'] as String? ?? '';
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Center(
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          decoration: BoxDecoration(
+            color: (isDark ? AppColors.textMuted : AppColorsLight.textMuted).withValues(alpha: 0.15),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Text(
+            content,
+            style: TextStyle(
+              fontSize: 12,
+              color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildGroupSenderLabel(Map<String, dynamic> message, bool isDark) {
+    final senderName = message['sender_name'] as String? ?? 'Unknown';
+    final senderAvatar = message['sender_avatar'] as String?;
+
+    return Padding(
+      padding: const EdgeInsets.only(top: 8, bottom: 2),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          CircleAvatar(
+            radius: 10,
+            backgroundColor: AppColors.purple.withValues(alpha: 0.2),
+            backgroundImage: senderAvatar != null ? NetworkImage(senderAvatar) : null,
+            child: senderAvatar == null
+                ? Text(
+                    senderName.isNotEmpty ? senderName[0].toUpperCase() : '?',
+                    style: const TextStyle(fontSize: 9, fontWeight: FontWeight.bold),
+                  )
+                : null,
+          ),
+          const SizedBox(width: 6),
+          Text(
+            senderName,
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+              color: isDark ? AppColors.textSecondary : AppColorsLight.textSecondary,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildReadReceipt(bool isDark) {
+    return Align(
+      alignment: Alignment.centerRight,
+      child: Padding(
+        padding: const EdgeInsets.only(top: 2, right: 4),
+        child: Text(
+          'Read',
+          style: TextStyle(
+            fontSize: 11,
+            color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
+          ),
+        ),
+      ),
     );
   }
 
@@ -423,7 +667,7 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen> {
                 height: 1.3,
               ),
             ),
-            if (isEncrypted)
+            if (isEncrypted && !widget.isGroup)
               Padding(
                 padding: const EdgeInsets.only(top: 4),
                 child: Row(
@@ -494,7 +738,7 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen> {
                     border: InputBorder.none,
                     contentPadding: const EdgeInsets.symmetric(vertical: 10),
                   ),
-                  onChanged: (_) => setState(() {}),
+                  onChanged: _onTextChanged,
                 ),
               ),
             ),
@@ -525,6 +769,59 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen> {
           ],
         ),
       ),
+    );
+  }
+}
+
+/// Animated dots for typing indicator
+class _TypingDotsAnimation extends StatefulWidget {
+  @override
+  State<_TypingDotsAnimation> createState() => _TypingDotsAnimationState();
+}
+
+class _TypingDotsAnimationState extends State<_TypingDotsAnimation>
+    with TickerProviderStateMixin {
+  late AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1200),
+    )..repeat();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _controller,
+      builder: (context, child) {
+        return Row(
+          mainAxisSize: MainAxisSize.min,
+          children: List.generate(3, (index) {
+            final delay = index * 0.2;
+            final t = (_controller.value - delay) % 1.0;
+            final scale = t < 0.5 ? 1.0 + t * 0.6 : 1.0 + (1.0 - t) * 0.6;
+            return Container(
+              margin: const EdgeInsets.symmetric(horizontal: 1.5),
+              width: 5,
+              height: 5,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Theme.of(context).colorScheme.onSurfaceVariant.withValues(
+                    alpha: 0.4 + (scale - 1.0)),
+              ),
+            );
+          }),
+        );
+      },
     );
   }
 }

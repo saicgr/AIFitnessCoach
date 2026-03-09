@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io' show Platform;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -21,7 +22,9 @@ import '../settings/dialogs/import_dialog.dart';
 import '../workouts/widgets/exercise_preferences_card.dart';
 import 'widgets/nutrition_fasting_card.dart';
 import 'widgets/widgets.dart';
+import '../../data/providers/synced_workouts_provider.dart';
 import '../../data/providers/wrapped_provider.dart';
+import 'synced_workout_detail_screen.dart';
 
 /// Main profile screen displaying user information, stats, and settings.
 ///
@@ -41,6 +44,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   final _scrollController = ScrollController();
   final _preferencesKey = GlobalKey();
   final _fitnessCardKey = GlobalKey<EditableFitnessCardState>();
+  String? _bio;
+  bool _bioLoaded = false;
 
   @override
   void initState() {
@@ -56,6 +61,33 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           );
         }
       });
+    }
+
+    // Load bio from backend
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadBio();
+    });
+  }
+
+  Future<void> _loadBio() async {
+    try {
+      final authState = ref.read(authStateProvider);
+      final userId = authState.user?.id;
+      if (userId == null) return;
+      final apiClient = ref.read(apiClientProvider);
+      final response = await apiClient.get('${ApiConstants.users}/$userId');
+      if (response.statusCode == 200 && response.data != null) {
+        final userData = response.data as Map<String, dynamic>;
+        if (mounted) {
+          setState(() {
+            _bio = userData['bio'] as String?;
+            _bioLoaded = true;
+          });
+        }
+      }
+    } catch (e) {
+      debugPrint('Error loading bio: $e');
+      if (mounted) setState(() => _bioLoaded = true);
     }
   }
 
@@ -83,10 +115,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 
   // --- FITNESS section header with inline Edit/Save/Cancel ---
   Widget _buildFitnessSectionHeader(bool isDark, Color textMuted) {
-    final accentColor = isDark ? AppColors.accent : AppColorsLight.accent;
     final state = _fitnessCardKey.currentState;
     final isEditing = state?.isEditing ?? false;
     final isSaving = state?.isSaving ?? false;
+    const sectionColor = AppColors.info;
 
     return Padding(
       padding: const EdgeInsets.only(left: 4),
@@ -97,7 +129,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             style: TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.w600,
-              color: textMuted,
+              color: sectionColor,
               letterSpacing: 0.5,
             ),
           ),
@@ -130,12 +162,12 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 tapTargetSize: MaterialTapTargetSize.shrinkWrap,
               ),
               child: isSaving
-                  ? SizedBox(
+                  ? const SizedBox(
                       width: 14,
                       height: 14,
-                      child: CircularProgressIndicator(strokeWidth: 2, color: accentColor),
+                      child: CircularProgressIndicator(strokeWidth: 2, color: sectionColor),
                     )
-                  : Text('Save', style: TextStyle(color: accentColor, fontWeight: FontWeight.w600, fontSize: 12)),
+                  : const Text('Save', style: TextStyle(color: sectionColor, fontWeight: FontWeight.w600, fontSize: 12)),
             ),
           ] else
             TextButton.icon(
@@ -143,8 +175,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 state?.toggleEdit();
                 setState(() {});
               },
-              icon: Icon(Icons.edit, size: 12, color: accentColor),
-              label: Text('Edit', style: TextStyle(color: accentColor, fontSize: 12)),
+              icon: const Icon(Icons.edit, size: 12, color: sectionColor),
+              label: const Text('Edit', style: TextStyle(color: sectionColor, fontSize: 12)),
               style: TextButton.styleFrom(
                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                 minimumSize: Size.zero,
@@ -170,71 +202,112 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     final userEmail = user?.email ?? '';
     final photoUrl = user?.photoUrl;
 
-    return GestureDetector(
-      onTap: () => _showEditPersonalInfoSheet(context),
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: elevated,
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: cardBorder),
-        ),
-        child: Row(
-          children: [
-            Container(
-              width: 52,
-              height: 52,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: const Color(0xFF06B6D4).withValues(alpha: 0.15),
-                image: photoUrl != null && photoUrl.isNotEmpty
-                    ? DecorationImage(
-                        image: NetworkImage(photoUrl),
-                        fit: BoxFit.cover,
-                        onError: (exception, stackTrace) {
-                          debugPrint('❌ [Profile] Failed to load photo: $exception');
-                        },
-                      )
-                    : null,
-              ),
-              child: photoUrl == null || photoUrl.isEmpty
-                  ? const Icon(
-                      Icons.person,
-                      color: Color(0xFF06B6D4),
-                      size: 28,
-                    )
-                  : null,
-            ),
-            const SizedBox(width: 14),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+    return Container(
+      decoration: BoxDecoration(
+        color: elevated,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: cardBorder),
+      ),
+      child: Column(
+        children: [
+          // Main user row (tappable)
+          GestureDetector(
+            onTap: () => _showEditPersonalInfoSheet(context),
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Row(
                 children: [
-                  Text(
-                    userName,
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w700,
-                      color: textPrimary,
+                  Container(
+                    width: 52,
+                    height: 52,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: const Color(0xFF06B6D4).withValues(alpha: 0.15),
+                      image: photoUrl != null && photoUrl.isNotEmpty
+                          ? DecorationImage(
+                              image: NetworkImage(photoUrl),
+                              fit: BoxFit.cover,
+                              onError: (exception, stackTrace) {
+                                debugPrint('❌ [Profile] Failed to load photo: $exception');
+                              },
+                            )
+                          : null,
+                    ),
+                    child: photoUrl == null || photoUrl.isEmpty
+                        ? const Icon(
+                            Icons.person,
+                            color: Color(0xFF06B6D4),
+                            size: 28,
+                          )
+                        : null,
+                  ),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          userName,
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w700,
+                            color: textPrimary,
+                          ),
+                        ),
+                        if (userEmail.isNotEmpty) ...[
+                          const SizedBox(height: 2),
+                          Text(
+                            userEmail,
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: textMuted,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
+                      ],
                     ),
                   ),
-                  if (userEmail.isNotEmpty) ...[
-                    const SizedBox(height: 2),
-                    Text(
-                      userEmail,
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: textMuted,
-                      ),
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ],
+                  Icon(Icons.chevron_right, color: textMuted, size: 20),
                 ],
               ),
             ),
-            Icon(Icons.chevron_right, color: textMuted, size: 20),
-          ],
-        ),
+          ),
+
+          // Bio row (F6 - tappable to edit)
+          if (_bioLoaded)
+            GestureDetector(
+              onTap: _showEditBioDialog,
+              child: Container(
+                width: double.infinity,
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        _bio != null && _bio!.isNotEmpty
+                            ? _bio!
+                            : 'Add a bio...',
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: _bio != null && _bio!.isNotEmpty
+                              ? textPrimary
+                              : textMuted.withValues(alpha: 0.6),
+                          fontStyle: _bio != null && _bio!.isNotEmpty
+                              ? FontStyle.normal
+                              : FontStyle.italic,
+                        ),
+                        maxLines: 3,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Icon(Icons.edit_outlined, color: textMuted, size: 16),
+                  ],
+                ),
+              ),
+            ),
+        ],
       ),
     );
   }
@@ -394,6 +467,84 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         ],
       ),
     );
+  }
+
+  // --- Bio edit (F6) ---
+
+  void _showEditBioDialog() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final bioController = TextEditingController(text: _bio ?? '');
+
+    showDialog(
+      context: context,
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (dialogContext, setDialogState) {
+          return AlertDialog(
+            backgroundColor: elevated,
+            title: const Text('Edit Bio'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: bioController,
+                  maxLines: 4,
+                  maxLength: 300,
+                  textCapitalization: TextCapitalization.sentences,
+                  decoration: InputDecoration(
+                    hintText: 'Tell us about yourself...',
+                    hintStyle: TextStyle(
+                      color: (isDark ? AppColors.textMuted : AppColorsLight.textMuted)
+                          .withValues(alpha: 0.5),
+                    ),
+                    filled: true,
+                    fillColor: isDark
+                        ? AppColors.pureBlack.withValues(alpha: 0.5)
+                        : Colors.grey.withValues(alpha: 0.1),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide.none,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(dialogContext),
+                child: Text(
+                  'Cancel',
+                  style: TextStyle(
+                    color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
+                  ),
+                ),
+              ),
+              TextButton(
+                onPressed: () async {
+                  Navigator.pop(dialogContext);
+                  final newBio = bioController.text.trim();
+                  try {
+                    await ref
+                        .read(authStateProvider.notifier)
+                        .updateUserProfile({'bio': newBio});
+                    if (mounted) {
+                      setState(() => _bio = newBio.isEmpty ? null : newBio);
+                      AppSnackBar.success(context, 'Bio updated');
+                    }
+                  } catch (e) {
+                    debugPrint('Error updating bio: $e');
+                    if (mounted) {
+                      AppSnackBar.error(context, 'Failed to update bio');
+                    }
+                  }
+                },
+                child: const Text('Save'),
+              ),
+            ],
+          );
+        },
+      ),
+    ).then((_) => bioController.dispose());
   }
 
   // --- Sheet launchers ---
@@ -738,7 +889,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               const SizedBox(height: 24),
 
               // TRAINING
-              _buildSectionLabel('TRAINING', textMuted),
+              _buildSectionLabel('TRAINING', AppColors.orange),
               const SizedBox(height: 8),
               TrainingSetupCard(
                 user: user,
@@ -753,8 +904,24 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               const _TrainingFocusCard(),
               const SizedBox(height: 24),
 
+              // SYNCED WORKOUTS
+              _buildSectionLabel('SYNCED WORKOUTS', AppColors.purple),
+              const SizedBox(height: 4),
+              Text(
+                Platform.isIOS ? 'From Apple Health' : 'From Health Connect',
+                style: TextStyle(fontSize: 12, color: textMuted.withValues(alpha: 0.7)),
+              ),
+              const SizedBox(height: 8),
+              _SyncedWorkoutsRow(
+                elevated: elevated,
+                cardBorder: cardBorder,
+                textPrimary: textPrimary,
+                textMuted: textMuted,
+              ),
+              const SizedBox(height: 24),
+
               // MY WRAPPED
-              _buildSectionLabel('MY WRAPPED', textMuted),
+              _buildSectionLabel('MY WRAPPED', AppColors.yellow),
               const SizedBox(height: 8),
               _WrappedPeriodsRow(
                 elevated: elevated,
@@ -765,13 +932,13 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               const SizedBox(height: 24),
 
               // NUTRITION
-              _buildSectionLabel('NUTRITION', textMuted),
+              _buildSectionLabel('NUTRITION', AppColors.green),
               const SizedBox(height: 8),
               const NutritionFastingCard(),
               const SizedBox(height: 24),
 
               // ACCOUNT
-              _buildSectionLabel('ACCOUNT', textMuted),
+              _buildSectionLabel('ACCOUNT', AppColors.cyan),
               const SizedBox(height: 8),
               _buildAccountGroupCard(
                   isDark, elevated, cardBorder, textPrimary, textMuted),
@@ -1332,6 +1499,156 @@ class _TrainingFocusCard extends ConsumerWidget {
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+/// Horizontally scrollable row of synced (Health Connect / Apple Health) workouts.
+class _SyncedWorkoutsRow extends ConsumerWidget {
+  final Color elevated;
+  final Color cardBorder;
+  final Color textPrimary;
+  final Color textMuted;
+
+  const _SyncedWorkoutsRow({
+    required this.elevated,
+    required this.cardBorder,
+    required this.textPrimary,
+    required this.textMuted,
+  });
+
+  IconData _iconForType(String? type) {
+    switch (type?.toLowerCase()) {
+      case 'strength':
+        return Icons.fitness_center;
+      case 'cardio':
+      case 'running':
+        return Icons.directions_run;
+      case 'cycling':
+        return Icons.directions_bike;
+      case 'swimming':
+        return Icons.pool;
+      case 'yoga':
+      case 'flexibility':
+      case 'stretching':
+        return Icons.self_improvement;
+      case 'hiit':
+        return Icons.local_fire_department;
+      case 'walking':
+        return Icons.directions_walk;
+      default:
+        return Icons.sync_rounded;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final syncedWorkouts = ref.watch(syncedWorkoutsProvider);
+
+    if (syncedWorkouts.isEmpty) {
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: elevated,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: cardBorder),
+        ),
+        child: Text(
+          'No synced workouts yet',
+          style: TextStyle(
+            fontSize: 13,
+            color: textMuted,
+          ),
+          textAlign: TextAlign.center,
+        ),
+      );
+    }
+
+    return SizedBox(
+      height: 100,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        itemCount: syncedWorkouts.length,
+        separatorBuilder: (_, __) => const SizedBox(width: 10),
+        itemBuilder: (context, index) {
+          final workout = syncedWorkouts[index];
+          final metadata = workout.generationMetadata ?? {};
+          final sourceApp = metadata['source_app_name'] as String?;
+          final dateStr = workout.scheduledDate?.split('T')[0] ?? '';
+
+          return GestureDetector(
+            onTap: () {
+              HapticService.selection();
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => SyncedWorkoutDetailScreen(workout: workout),
+                ),
+              );
+            },
+            child: Container(
+              width: 150,
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: elevated,
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: cardBorder),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(
+                        _iconForType(workout.type),
+                        size: 16,
+                        color: textPrimary,
+                      ),
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: Text(
+                          workout.name ?? 'Workout',
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: textPrimary,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 6),
+                  if (dateStr.isNotEmpty)
+                    Text(
+                      dateStr,
+                      style: TextStyle(fontSize: 11, color: textMuted),
+                    ),
+                  if (workout.durationMinutes != null) ...[
+                    const SizedBox(height: 2),
+                    Text(
+                      '${workout.durationMinutes} min',
+                      style: TextStyle(fontSize: 11, color: textMuted),
+                    ),
+                  ],
+                  const Spacer(),
+                  if (sourceApp != null)
+                    Text(
+                      sourceApp,
+                      style: TextStyle(
+                        fontSize: 10,
+                        color: textMuted.withValues(alpha: 0.7),
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                ],
+              ),
+            ),
+          );
+        },
       ),
     );
   }

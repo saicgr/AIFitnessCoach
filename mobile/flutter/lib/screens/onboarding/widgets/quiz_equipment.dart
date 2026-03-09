@@ -64,8 +64,8 @@ class QuizEquipment extends StatelessWidget {
       id: 'home',
       label: 'Home',
       emoji: '🏡',
-      description: 'Minimal equipment - bodyweight, bands, mat',
-      defaultEquipment: ['bodyweight', 'resistance_bands'],
+      description: 'Minimal equipment - bodyweight, mat',
+      defaultEquipment: ['bodyweight'],
     ),
     _WorkoutEnvironmentOption(
       id: 'home_gym',
@@ -493,13 +493,19 @@ class QuizEquipment extends StatelessWidget {
           duration: const Duration(milliseconds: 200),
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
           decoration: BoxDecoration(
-            gradient: hasOtherSelected ? AppColors.accentGradient : null,
+            gradient: hasOtherSelected
+                ? LinearGradient(
+                    colors: [AppColors.orange, AppColors.orange.withOpacity(0.8)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  )
+                : null,
             color: hasOtherSelected
                 ? null
                 : (isDark ? AppColors.glassSurface : AppColorsLight.glassSurface),
             borderRadius: BorderRadius.circular(10),
             border: Border.all(
-              color: hasOtherSelected ? AppColors.accent : cardBorder,
+              color: hasOtherSelected ? AppColors.orange : cardBorder,
               width: hasOtherSelected ? 2 : 1,
             ),
           ),

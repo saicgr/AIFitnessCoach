@@ -80,4 +80,25 @@ class SocialImageService {
       return null;
     }
   }
+
+  /// Upload multiple images for a post. Returns list of URLs.
+  /// Uploads all images in parallel using [uploadPostImage] for each.
+  /// Any images that fail to upload will be excluded from the returned list.
+  Future<List<String>> uploadMultiplePostImages(
+    List<File> images,
+    String userId,
+  ) async {
+    debugPrint('[SocialImage] Uploading ${images.length} images for user: $userId');
+
+    final futures = images.map(
+      (image) => uploadPostImage(imageFile: image, userId: userId),
+    );
+    final results = await Future.wait(futures);
+
+    // Filter out null results (failed uploads)
+    final urls = results.whereType<String>().toList();
+    debugPrint('[SocialImage] Successfully uploaded ${urls.length}/${images.length} images');
+
+    return urls;
+  }
 }

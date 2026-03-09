@@ -310,12 +310,12 @@ async def add_staple_exercise(request: StapleExerciseCreate, current_user: dict 
         row = result.data[0]
 
         # Clear future incomplete workouts so they regenerate with the new staple
-        # This ensures the staple exercise appears in today's and upcoming workouts
+        # Only clears tomorrow+ to preserve today's workout (injection handles today)
         try:
             today_str = date.today().isoformat()
             deleted = db.client.table("workouts").delete().eq(
                 "user_id", request.user_id
-            ).gte(
+            ).gt(
                 "scheduled_date", today_str
             ).eq(
                 "is_completed", False
@@ -1197,12 +1197,12 @@ async def add_avoided_muscle(user_id: str, request: AvoidedMuscleCreate, current
         row = result.data[0]
 
         # Clear future incomplete workouts so they regenerate with muscle avoidance applied
-        # This ensures exercises targeting this muscle are excluded/reduced in upcoming workouts
+        # Only clears tomorrow+ to preserve today's workout
         try:
             today_str = date.today().isoformat()
             deleted = db.client.table("workouts").delete().eq(
                 "user_id", user_id
-            ).gte(
+            ).gt(
                 "scheduled_date", today_str
             ).eq(
                 "is_completed", False

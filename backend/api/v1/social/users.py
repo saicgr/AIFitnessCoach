@@ -21,11 +21,33 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/users")
 
 
-@router.get("/search", response_model=List[UserSearchResult])
+def _get_blocked_user_ids(supabase, user_id: str) -> set:
+    """Get all user IDs that are blocked by or have blocked the given user."""
+    try:
+        # Users I blocked
+        blocker_result = supabase.table("user_blocks").select(
+            "blocked_id"
+        ).eq("blocker_id", user_id).execute()
+        blocked_ids = {r["blocked_id"] for r in (blocker_result.data or [])}
+
+        # Users who blocked me
+        blocked_by_result = supabase.table("user_blocks").select(
+            "blocker_id"
+        ).eq("blocked_id", user_id).execute()
+        blocked_ids.update(r["blocker_id"] for r in (blocked_by_result.data or []))
+
+        return blocked_ids
+    except Exception as e:
+        logger.warning(f"[UserSearch] Failed to fetch blocked users: {e}")
+        return set()
+
+
+@router.get("/search")
 async def search_users(
     user_id: str = Query(..., description="Current user ID"),
     query: str = Query(..., min_length=1, description="Search query"),
     limit: int = Query(20, ge=1, le=50, description="Maximum results to return"),
+    offset: int = Query(0, ge=0, description="Offset for pagination"),
     current_user: dict = Depends(get_current_user),
 ):
     """
@@ -35,32 +57,44 @@ async def search_users(
         user_id: Current user's ID (to exclude from results)
         query: Search query string (searches name and username)
         limit: Maximum number of results
+        offset: Offset for pagination
 
     Returns:
-        List of matching users with relationship status
+        Paginated list of matching users with relationship status
     """
     if not query.strip():
-        return []
+        return {"results": [], "total_count": 0, "has_more": False}
 
     try:
         supabase = get_supabase_client()
         logger.info(f"🔍 [UserSearch] Searching for query='{query}' by user={user_id}")
 
+        # Get blocked user IDs (F9)
+        blocked_ids = _get_blocked_user_ids(supabase, user_id)
+
         # Search users by name OR username (case-insensitive)
-        # Use or filter to search both fields
-        # Note: bio column doesn't exist in users table, using empty string as default
-        # Include self in results so users can verify their username exists
+        # Include bio in select fields (F6)
         result = supabase.table("users").select(
-            "id, name, username, avatar_url"
-        ).or_(f"name.ilike.%{query}%,username.ilike.%{query}%").limit(limit).execute()
+            "id, name, username, avatar_url, bio", count="exact"
+        ).or_(f"name.ilike.%{query}%,username.ilike.%{query}%").range(
+            offset, offset + limit - 1
+        ).execute()
+
+        total_count = result.count or 0
 
         logger.info(f"✅ [UserSearch] Found {len(result.data) if result.data else 0} users matching '{query}'")
 
         if not result.data:
-            return []
+            return {"results": [], "total_count": 0, "has_more": False}
+
+        # Filter out blocked users
+        filtered_data = [u for u in result.data if u["id"] not in blocked_ids]
 
         # Get current user's connections to determine relationship status
-        user_ids = [u["id"] for u in result.data]
+        user_ids = [u["id"] for u in filtered_data]
+
+        if not user_ids:
+            return {"results": [], "total_count": 0, "has_more": False}
 
         # Get connections where current user is follower
         following_result = supabase.table("user_connections").select(
@@ -98,7 +132,7 @@ async def search_users(
         # Build results - put self first if found
         results = []
         self_result = None
-        for user in result.data:
+        for user in filtered_data:
             uid = user["id"]
             is_self = uid == user_id
             is_following = uid in following_ids
@@ -114,7 +148,7 @@ async def search_users(
                 name=user.get("name", "Unknown"),
                 username=user.get("username"),
                 avatar_url=user.get("avatar_url"),
-                bio=None,  # bio column doesn't exist in users table
+                bio=user.get("bio"),
                 total_workouts=workout_counts.get(uid, 0),
                 current_streak=0,  # Would need separate query for streak calculation
                 is_following=is_following,
@@ -135,17 +169,22 @@ async def search_users(
         if self_result:
             results.insert(0, self_result)
 
-        return results
+        return {
+            "results": [r.model_dump() if hasattr(r, 'model_dump') else r.dict() for r in results],
+            "total_count": total_count,
+            "has_more": offset + limit < total_count,
+        }
     except Exception as e:
         logger.error(f"❌ [UserSearch] Error searching users for query '{query}': {e}", exc_info=True)
         # Return empty list but log the full error for debugging
-        return []
+        return {"results": [], "total_count": 0, "has_more": False}
 
 
-@router.get("/suggestions", response_model=List[UserSuggestion])
+@router.get("/suggestions")
 async def get_friend_suggestions(
     user_id: str = Query(..., description="Current user ID"),
     limit: int = Query(10, ge=1, le=20, description="Maximum suggestions to return"),
+    offset: int = Query(0, ge=0, description="Offset for pagination"),
     current_user: dict = Depends(get_current_user),
 ):
     """
@@ -154,12 +193,16 @@ async def get_friend_suggestions(
     Args:
         user_id: Current user's ID
         limit: Maximum number of suggestions
+        offset: Offset for pagination
 
     Returns:
-        List of suggested users with reasons
+        Paginated list of suggested users with reasons
     """
     try:
         supabase = get_supabase_client()
+
+        # Get blocked user IDs (F9)
+        blocked_ids = _get_blocked_user_ids(supabase, user_id)
 
         # Get current user's following list
         following = supabase.table("user_connections").select(
@@ -171,6 +214,9 @@ async def get_friend_suggestions(
         original_following_ids = following_ids.copy()
         following_ids.add(user_id)  # Exclude self from suggestions
 
+        # Combine blocked + following for exclusion
+        exclude_ids = following_ids | blocked_ids
+
         suggestions = []
 
         # Try to get suggestions based on mutual connections
@@ -178,76 +224,95 @@ async def get_friend_suggestions(
             # Use RPC to get friend suggestions with mutual counts (server-side)
             suggestions_result = supabase.rpc("get_friend_suggestions_rpc", {
                 "p_user_id": user_id,
-                "p_limit": limit
+                "p_limit": limit + len(blocked_ids) + offset  # fetch extra to account for filtering + offset
             }).execute()
 
             if suggestions_result.data:
-                suggestion_ids = [s["suggested_user_id"] for s in suggestions_result.data]
-                mutual_map = {s["suggested_user_id"]: s["mutual_count"] for s in suggestions_result.data}
+                # Filter out blocked users
+                filtered_suggestions = [
+                    s for s in suggestions_result.data
+                    if s["suggested_user_id"] not in blocked_ids
+                ]
 
-                # Get user profiles (bio column doesn't exist)
-                users = supabase.table("users").select(
-                    "id, name, avatar_url"
-                ).in_("id", suggestion_ids).execute()
+                # Apply pagination
+                paginated = filtered_suggestions[offset:offset + limit]
+                total_available = len(filtered_suggestions)
 
-                # Get workout counts per user using batch RPC
-                counts_result = supabase.rpc("get_workout_counts", {"p_user_ids": suggestion_ids}).execute()
-                workout_counts = {row["user_id"]: row["workout_count"] for row in (counts_result.data or [])}
+                suggestion_ids = [s["suggested_user_id"] for s in paginated]
+                mutual_map = {s["suggested_user_id"]: s["mutual_count"] for s in paginated}
 
-                # Get privacy settings
-                privacy = supabase.table("user_privacy_settings").select(
-                    "user_id, require_follow_approval"
-                ).in_("user_id", suggestion_ids).execute()
-                requires_approval = {p["user_id"]: p.get("require_follow_approval", False) for p in privacy.data}
+                if suggestion_ids:
+                    # Get user profiles with bio (F6)
+                    users = supabase.table("users").select(
+                        "id, name, avatar_url, bio"
+                    ).in_("id", suggestion_ids).execute()
 
-                # Get pending friend requests to these users
-                pending_sent = supabase.table("friend_requests").select(
-                    "id, to_user_id"
-                ).eq("from_user_id", user_id).eq("status", "pending").in_("to_user_id", suggestion_ids).execute()
-                pending_sent_map = {r["to_user_id"]: r["id"] for r in pending_sent.data}
+                    # Get workout counts per user using batch RPC
+                    counts_result = supabase.rpc("get_workout_counts", {"p_user_ids": suggestion_ids}).execute()
+                    workout_counts = {row["user_id"]: row["workout_count"] for row in (counts_result.data or [])}
 
-                # Build user map for quick lookup
-                user_map = {u["id"]: u for u in users.data}
+                    # Get privacy settings
+                    privacy = supabase.table("user_privacy_settings").select(
+                        "user_id, require_follow_approval"
+                    ).in_("user_id", suggestion_ids).execute()
+                    requires_approval = {p["user_id"]: p.get("require_follow_approval", False) for p in privacy.data}
 
-                for uid in suggestion_ids:
-                    if uid in user_map:
-                        user = user_map[uid]
-                        mutual_count = mutual_map.get(uid, 0)
-                        has_pending = uid in pending_sent_map
-                        suggestions.append(UserSuggestion(
-                            id=uid,
-                            name=user.get("name", "Unknown"),
-                            avatar_url=user.get("avatar_url"),
-                            bio=None,  # bio column doesn't exist
-                            total_workouts=workout_counts.get(uid, 0),
-                            current_streak=0,
-                            is_following=False,
-                            is_follower=False,
-                            is_friend=False,
-                            has_pending_request=has_pending,
-                            pending_request_id=pending_sent_map.get(uid),
-                            requires_approval=requires_approval.get(uid, False),
-                            suggestion_reason=f"{mutual_count} mutual friends",
-                            mutual_friends_count=mutual_count,
-                        ))
+                    # Get pending friend requests to these users
+                    pending_sent = supabase.table("friend_requests").select(
+                        "id, to_user_id"
+                    ).eq("from_user_id", user_id).eq("status", "pending").in_("to_user_id", suggestion_ids).execute()
+                    pending_sent_map = {r["to_user_id"]: r["id"] for r in pending_sent.data}
 
-                return suggestions
+                    # Build user map for quick lookup
+                    user_map = {u["id"]: u for u in users.data}
+
+                    for uid in suggestion_ids:
+                        if uid in user_map:
+                            user = user_map[uid]
+                            mutual_count = mutual_map.get(uid, 0)
+                            has_pending = uid in pending_sent_map
+                            suggestions.append(UserSuggestion(
+                                id=uid,
+                                name=user.get("name", "Unknown"),
+                                avatar_url=user.get("avatar_url"),
+                                bio=user.get("bio"),
+                                total_workouts=workout_counts.get(uid, 0),
+                                current_streak=0,
+                                is_following=False,
+                                is_follower=False,
+                                is_friend=False,
+                                has_pending_request=has_pending,
+                                pending_request_id=pending_sent_map.get(uid),
+                                requires_approval=requires_approval.get(uid, False),
+                                suggestion_reason=f"{mutual_count} mutual friends",
+                                mutual_friends_count=mutual_count,
+                            ))
+
+                    return {
+                        "results": [s.model_dump() if hasattr(s, 'model_dump') else s.dict() for s in suggestions],
+                        "total_count": total_available,
+                        "has_more": offset + limit < total_available,
+                    }
 
         # Fallback: Get active users if no mutual connections
         active_users = supabase.table("users").select(
-            "id, name, avatar_url"
-        ).neq("id", user_id).limit(limit).execute()
+            "id, name, avatar_url, bio"
+        ).neq("id", user_id).limit(limit + offset + len(blocked_ids)).execute()
 
         if not active_users.data:
-            return []
+            return {"results": [], "total_count": 0, "has_more": False}
 
-        # Filter out users already being followed
-        filtered_users = [u for u in active_users.data if u["id"] not in following_ids]
+        # Filter out users already being followed and blocked users
+        filtered_users = [u for u in active_users.data if u["id"] not in exclude_ids]
+        total_available = len(filtered_users)
 
-        if not filtered_users:
-            return []
+        # Apply pagination
+        paginated_users = filtered_users[offset:offset + limit]
 
-        user_ids = [u["id"] for u in filtered_users]
+        if not paginated_users:
+            return {"results": [], "total_count": 0, "has_more": False}
+
+        user_ids = [u["id"] for u in paginated_users]
 
         # Get privacy settings (only if we have users)
         privacy = supabase.table("user_privacy_settings").select(
@@ -265,12 +330,12 @@ async def get_friend_suggestions(
         counts_result = supabase.rpc("get_workout_counts", {"p_user_ids": user_ids}).execute()
         workout_counts = {row["user_id"]: row["workout_count"] for row in (counts_result.data or [])}
 
-        return [
+        results = [
             UserSuggestion(
                 id=u["id"],
                 name=u.get("name", "Unknown"),
                 avatar_url=u.get("avatar_url"),
-                bio=None,  # bio column doesn't exist
+                bio=u.get("bio"),
                 total_workouts=workout_counts.get(u["id"], 0),
                 current_streak=0,
                 is_following=False,
@@ -279,16 +344,22 @@ async def get_friend_suggestions(
                 has_pending_request=u["id"] in pending_sent_map,
                 pending_request_id=pending_sent_map.get(u["id"]),
                 requires_approval=requires_approval.get(u["id"], False),
-                suggestion_reason="Active on IncircleAI",
+                suggestion_reason="Active on FitWiz",
                 mutual_friends_count=0,
             )
-            for u in filtered_users
+            for u in paginated_users
         ]
+
+        return {
+            "results": [r.model_dump() if hasattr(r, 'model_dump') else r.dict() for r in results],
+            "total_count": total_available,
+            "has_more": offset + limit < total_available,
+        }
     except Exception as e:
         # Log the error for debugging
         logger.error(f"Error getting friend suggestions for user {user_id}: {e}", exc_info=True)
         # Return empty list instead of failing
-        return []
+        return {"results": [], "total_count": 0, "has_more": False}
 
 
 @router.get("/{target_user_id}/profile", response_model=UserSearchResult)
@@ -309,9 +380,9 @@ async def get_user_profile(
     """
     supabase = get_supabase_client()
 
-    # Get user profile (bio column doesn't exist)
+    # Get user profile with bio (F6)
     result = supabase.table("users").select(
-        "id, name, avatar_url"
+        "id, name, avatar_url, bio"
     ).eq("id", target_user_id).single().execute()
 
     if not result.data:
@@ -364,7 +435,7 @@ async def get_user_profile(
         id=user["id"],
         name=user.get("name", "Unknown"),
         avatar_url=user.get("avatar_url"),
-        bio=None,  # bio column doesn't exist
+        bio=user.get("bio"),
         total_workouts=workout_count.count or 0,
         current_streak=0,
         is_following=is_following,

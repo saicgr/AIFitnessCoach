@@ -180,7 +180,7 @@ class _AiConsentScreenState extends ConsumerState<AiConsentScreen> {
                   const SizedBox(height: 8),
                   _buildCompactPoint(
                     icon: Icons.hearing_outlined,
-                    text: 'Stop if you feel pain or dizziness — AI cannot assess you in real-time',
+                    text: 'Stop if you feel pain or dizziness — AI cannot assess you in real-time, but AI Chat is always available',
                     delay: 350,
                     isDark: isDark,
                     textPrimary: textPrimary,

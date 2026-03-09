@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../core/constants/api_constants.dart';
 import '../models/muscle_analytics.dart';
 import '../services/api_client.dart';
 
@@ -29,7 +28,7 @@ class MuscleAnalyticsRepository {
       debugPrint('🔍 [MuscleAnalytics] Fetching muscle heatmap');
 
       final response = await _apiClient.get(
-        '${ApiConstants.baseUrl}/muscle-analytics/heatmap',
+        '/muscle-analytics/heatmap',
         queryParameters: {
           'user_id': userId,
           'time_range': timeRange,
@@ -79,7 +78,7 @@ class MuscleAnalyticsRepository {
       debugPrint('🔍 [MuscleAnalytics] Fetching muscle frequency');
 
       final response = await _apiClient.get(
-        '${ApiConstants.baseUrl}/muscle-analytics/frequency',
+        '/muscle-analytics/frequency',
         queryParameters: {
           'user_id': userId,
         },
@@ -130,7 +129,7 @@ class MuscleAnalyticsRepository {
       debugPrint('🔍 [MuscleAnalytics] Fetching muscle balance');
 
       final response = await _apiClient.get(
-        '${ApiConstants.baseUrl}/muscle-analytics/balance',
+        '/muscle-analytics/balance',
         queryParameters: {
           'user_id': userId,
         },
@@ -211,7 +210,7 @@ class MuscleAnalyticsRepository {
 
       final encodedMuscle = Uri.encodeComponent(muscleGroup);
       final response = await _apiClient.get(
-        '${ApiConstants.baseUrl}/muscle-analytics/muscle/$encodedMuscle/exercises',
+        '/muscle-analytics/muscle/$encodedMuscle/exercises',
         queryParameters: {
           'user_id': userId,
         },
@@ -264,7 +263,7 @@ class MuscleAnalyticsRepository {
 
       final encodedMuscle = Uri.encodeComponent(muscleGroup);
       final response = await _apiClient.get(
-        '${ApiConstants.baseUrl}/muscle-analytics/muscle/$encodedMuscle/history',
+        '/muscle-analytics/muscle/$encodedMuscle/history',
         queryParameters: {
           'user_id': userId,
           'time_range': timeRange,
@@ -319,7 +318,7 @@ class MuscleAnalyticsRepository {
       if (userId == null) return;
 
       await _apiClient.post(
-        '${ApiConstants.baseUrl}/muscle-analytics/log-view',
+        '/muscle-analytics/log-view',
         data: {
           'user_id': userId,
           'view_type': viewType,

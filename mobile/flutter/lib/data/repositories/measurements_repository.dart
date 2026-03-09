@@ -1,3 +1,5 @@
+import 'dart:ui' show Color;
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -72,6 +74,11 @@ class MeasurementEntry {
   final String unit;
   final DateTime recordedAt;
   final String? notes;
+  final double? bmi;
+  final double? waistToHipRatio;
+  final double? waistToHeightRatio;
+  final double? weightChange;
+  final double? bodyFatChange;
 
   MeasurementEntry({
     required this.id,
@@ -81,6 +88,11 @@ class MeasurementEntry {
     required this.unit,
     required this.recordedAt,
     this.notes,
+    this.bmi,
+    this.waistToHipRatio,
+    this.waistToHeightRatio,
+    this.weightChange,
+    this.bodyFatChange,
   });
 
   factory MeasurementEntry.fromJson(Map<String, dynamic> json) {
@@ -95,6 +107,11 @@ class MeasurementEntry {
       unit: json['unit'] ?? type.metricUnit,
       recordedAt: DateTime.parse(json['recorded_at'] ?? json['created_at'] ?? DateTime.now().toIso8601String()),
       notes: json['notes'],
+      bmi: (json['bmi'] as num?)?.toDouble(),
+      waistToHipRatio: (json['waist_to_hip_ratio'] as num?)?.toDouble(),
+      waistToHeightRatio: (json['waist_to_height_ratio'] as num?)?.toDouble(),
+      weightChange: (json['weight_change_kg'] as num?)?.toDouble(),
+      bodyFatChange: (json['body_fat_change'] as num?)?.toDouble(),
     );
   }
 
@@ -106,6 +123,11 @@ class MeasurementEntry {
     'unit': unit,
     'recorded_at': recordedAt.toIso8601String(),
     if (notes != null) 'notes': notes,
+    if (bmi != null) 'bmi': bmi,
+    if (waistToHipRatio != null) 'waist_to_hip_ratio': waistToHipRatio,
+    if (waistToHeightRatio != null) 'waist_to_height_ratio': waistToHeightRatio,
+    if (weightChange != null) 'weight_change_kg': weightChange,
+    if (bodyFatChange != null) 'body_fat_change': bodyFatChange,
   };
 
   /// Get value converted to the specified unit system
@@ -130,10 +152,16 @@ class MeasurementEntry {
 class MeasurementsSummary {
   final Map<MeasurementType, MeasurementEntry> latestByType;
   final Map<MeasurementType, double> changeFromPrevious;
+  final double? latestBmi;
+  final double? latestWaistToHipRatio;
+  final double? latestWaistToHeightRatio;
 
   MeasurementsSummary({
     required this.latestByType,
     required this.changeFromPrevious,
+    this.latestBmi,
+    this.latestWaistToHipRatio,
+    this.latestWaistToHeightRatio,
   });
 }
 
@@ -229,11 +257,27 @@ class MeasurementsNotifier extends StateNotifier<MeasurementsState> {
         }
       }
 
+      double? latestBmi;
+      double? latestWhr;
+      double? latestWhtr;
+      for (final entries in historyByType.values) {
+        for (final e in entries) {
+          if (latestBmi == null && e.bmi != null) latestBmi = e.bmi;
+          if (latestWhr == null && e.waistToHipRatio != null) latestWhr = e.waistToHipRatio;
+          if (latestWhtr == null && e.waistToHeightRatio != null) latestWhtr = e.waistToHeightRatio;
+          if (latestBmi != null && latestWhr != null && latestWhtr != null) break;
+        }
+        if (latestBmi != null && latestWhr != null && latestWhtr != null) break;
+      }
+
       final newState = MeasurementsState(
         historyByType: historyByType,
         summary: MeasurementsSummary(
           latestByType: latestByType,
           changeFromPrevious: changeFromPrevious,
+          latestBmi: latestBmi,
+          latestWaistToHipRatio: latestWhr,
+          latestWaistToHeightRatio: latestWhtr,
         ),
       );
       _cache = newState;
@@ -285,11 +329,27 @@ class MeasurementsNotifier extends StateNotifier<MeasurementsState> {
         }
       }
 
+      double? latestBmi;
+      double? latestWhr;
+      double? latestWhtr;
+      for (final entries in historyByType.values) {
+        for (final e in entries) {
+          if (latestBmi == null && e.bmi != null) latestBmi = e.bmi;
+          if (latestWhr == null && e.waistToHipRatio != null) latestWhr = e.waistToHipRatio;
+          if (latestWhtr == null && e.waistToHeightRatio != null) latestWhtr = e.waistToHeightRatio;
+          if (latestBmi != null && latestWhr != null && latestWhtr != null) break;
+        }
+        if (latestBmi != null && latestWhr != null && latestWhtr != null) break;
+      }
+
       return MeasurementsState(
         historyByType: historyByType,
         summary: MeasurementsSummary(
           latestByType: latestByType,
           changeFromPrevious: changeFromPrevious,
+          latestBmi: latestBmi,
+          latestWaistToHipRatio: latestWhr,
+          latestWaistToHeightRatio: latestWhtr,
         ),
       );
     } catch (e) {
@@ -347,6 +407,9 @@ class MeasurementsNotifier extends StateNotifier<MeasurementsState> {
         summary: MeasurementsSummary(
           latestByType: latestByType,
           changeFromPrevious: changeFromPrevious,
+          latestBmi: state.summary?.latestBmi,
+          latestWaistToHipRatio: state.summary?.latestWaistToHipRatio,
+          latestWaistToHeightRatio: state.summary?.latestWaistToHeightRatio,
         ),
       );
       _cache = newState;
@@ -399,6 +462,9 @@ class MeasurementsNotifier extends StateNotifier<MeasurementsState> {
           summary: MeasurementsSummary(
             latestByType: latestByType,
             changeFromPrevious: changeFromPrevious,
+            latestBmi: state.summary?.latestBmi,
+            latestWaistToHipRatio: state.summary?.latestWaistToHipRatio,
+            latestWaistToHeightRatio: state.summary?.latestWaistToHeightRatio,
           ),
         );
         _cache = newState;
@@ -443,10 +509,11 @@ class MeasurementsRepository {
     String userId, {int limit = 300}
   ) async {
     try {
-      // Build select columns: id, user_id, measured_at, created_at, notes + all metric columns
+      // Build select columns: id, user_id, measured_at, created_at, notes + all metric columns + derived columns
       final cols = [
         'id', 'user_id', 'measured_at', 'created_at', 'notes',
         ...kMetricTypeToColumn.values,
+        'bmi', 'waist_to_hip_ratio', 'waist_to_height_ratio', 'weight_change_kg', 'body_fat_change',
       ].join(',');
 
       debugPrint('🔍 [Measurements] Direct Supabase query for $userId (limit: $limit)');
@@ -470,6 +537,11 @@ class MeasurementsRepository {
         final id = rowMap['id']?.toString() ?? '';
         final rowUserId = rowMap['user_id']?.toString() ?? '';
         final notes = rowMap['notes'] as String?;
+        final rowBmi = (rowMap['bmi'] as num?)?.toDouble();
+        final rowWhr = (rowMap['waist_to_hip_ratio'] as num?)?.toDouble();
+        final rowWhtr = (rowMap['waist_to_height_ratio'] as num?)?.toDouble();
+        final rowWeightChange = (rowMap['weight_change_kg'] as num?)?.toDouble();
+        final rowBodyFatChange = (rowMap['body_fat_change'] as num?)?.toDouble();
 
         for (final entry in kMetricTypeToColumn.entries) {
           final metricTypeKey = entry.key;
@@ -492,6 +564,11 @@ class MeasurementsRepository {
             unit: unit,
             recordedAt: DateTime.parse(recordedAt),
             notes: notes,
+            bmi: rowBmi,
+            waistToHipRatio: rowWhr,
+            waistToHeightRatio: rowWhtr,
+            weightChange: rowWeightChange,
+            bodyFatChange: rowBodyFatChange,
           );
 
           result.putIfAbsent(type, () => []).add(measurementEntry);
@@ -592,4 +669,247 @@ class MeasurementsRepository {
       return false;
     }
   }
+}
+
+/// Enum for derived metric types (display-only, computed client-side)
+enum DerivedMetricType {
+  bmi('BMI', ''),
+  waistToHipRatio('Waist-to-Hip Ratio', ''),
+  waistToHeightRatio('Waist-to-Height Ratio', ''),
+  ffmi('FFMI', ''),
+  leanBodyMass('Lean Body Mass', 'kg'),
+  shoulderToWaistRatio('Shoulder-to-Waist', ''),
+  chestToWaistRatio('Chest-to-Waist', ''),
+  armSymmetry('Arm Symmetry', '%'),
+  legSymmetry('Leg Symmetry', '%');
+
+  final String displayName;
+  final String unit;
+  const DerivedMetricType(this.displayName, this.unit);
+}
+
+/// Computed derived metric result
+class DerivedMetricResult {
+  final double value;
+  final String label;
+  final Color color;
+  final String? info;
+
+  const DerivedMetricResult({
+    required this.value,
+    required this.label,
+    required this.color,
+    this.info,
+  });
+}
+
+/// Compute derived body metrics from latest measurements.
+/// Returns only metrics that have sufficient input data.
+Map<DerivedMetricType, DerivedMetricResult> computeDerivedMetrics({
+  required MeasurementsSummary summary,
+  required double? heightCm,
+  String? gender, // 'male', 'female'
+}) {
+  final results = <DerivedMetricType, DerivedMetricResult>{};
+  final g = gender?.toLowerCase() ?? 'male';
+
+  final weightEntry = summary.latestByType[MeasurementType.weight];
+  final bodyFatEntry = summary.latestByType[MeasurementType.bodyFat];
+  final waistEntry = summary.latestByType[MeasurementType.waist];
+  final hipEntry = summary.latestByType[MeasurementType.hips];
+  final shoulderEntry = summary.latestByType[MeasurementType.shoulders];
+  final chestEntry = summary.latestByType[MeasurementType.chest];
+  final bicepsL = summary.latestByType[MeasurementType.bicepsLeft];
+  final bicepsR = summary.latestByType[MeasurementType.bicepsRight];
+  final thighL = summary.latestByType[MeasurementType.thighLeft];
+  final thighR = summary.latestByType[MeasurementType.thighRight];
+
+  // BMI - from DB or computed
+  if (summary.latestBmi != null) {
+    final bmi = summary.latestBmi!;
+    String label;
+    Color color;
+    if (bmi < 18.5) {
+      label = 'Underweight'; color = const Color(0xFF3B82F6);
+    } else if (bmi < 25) {
+      label = 'Normal'; color = const Color(0xFF22C55E);
+    } else if (bmi < 30) {
+      label = 'Overweight'; color = const Color(0xFFF59E0B);
+    } else {
+      label = 'Obese'; color = const Color(0xFFEF4444);
+    }
+    results[DerivedMetricType.bmi] = DerivedMetricResult(
+      value: bmi, label: label, color: color,
+      info: 'Body Mass Index measures body fat based on weight and height. Formula: weight(kg) / height(m)\u00B2. Categories: Underweight <18.5, Normal 18.5-24.9, Overweight 25-29.9, Obese 30+. Note: BMI doesn\'t distinguish muscle from fat. Source: WHO.',
+    );
+  } else if (weightEntry != null && heightCm != null && heightCm > 0) {
+    final heightM = heightCm / 100;
+    final bmi = weightEntry.value / (heightM * heightM);
+    String label;
+    Color color;
+    if (bmi < 18.5) {
+      label = 'Underweight'; color = const Color(0xFF3B82F6);
+    } else if (bmi < 25) {
+      label = 'Normal'; color = const Color(0xFF22C55E);
+    } else if (bmi < 30) {
+      label = 'Overweight'; color = const Color(0xFFF59E0B);
+    } else {
+      label = 'Obese'; color = const Color(0xFFEF4444);
+    }
+    results[DerivedMetricType.bmi] = DerivedMetricResult(
+      value: bmi, label: label, color: color,
+      info: 'Body Mass Index measures body fat based on weight and height. Formula: weight(kg) / height(m)\u00B2. Categories: Underweight <18.5, Normal 18.5-24.9, Overweight 25-29.9, Obese 30+. Note: BMI doesn\'t distinguish muscle from fat. Source: WHO.',
+    );
+  }
+
+  // WHR - Waist-to-Hip Ratio
+  if (summary.latestWaistToHipRatio != null) {
+    final whr = summary.latestWaistToHipRatio!;
+    String label; Color color;
+    if (g == 'female') {
+      if (whr < 0.80) { label = 'Low Risk'; color = const Color(0xFF22C55E); }
+      else if (whr < 0.85) { label = 'Moderate'; color = const Color(0xFFF59E0B); }
+      else { label = 'High Risk'; color = const Color(0xFFEF4444); }
+    } else {
+      if (whr < 0.90) { label = 'Low Risk'; color = const Color(0xFF22C55E); }
+      else if (whr < 0.95) { label = 'Moderate'; color = const Color(0xFFF59E0B); }
+      else { label = 'High Risk'; color = const Color(0xFFEF4444); }
+    }
+    results[DerivedMetricType.waistToHipRatio] = DerivedMetricResult(
+      value: whr, label: label, color: color,
+      info: 'Waist-to-Hip Ratio is the circumference of the waist divided by the circumference of the hips. It indicates fat distribution. ${g == "female" ? "Women: <0.80 low risk, 0.80-0.85 moderate, >0.85 high." : "Men: <0.90 low risk, 0.90-0.95 moderate, >0.95 high."} Source: WHO.',
+    );
+  } else if (waistEntry != null && hipEntry != null && hipEntry.value > 0) {
+    final whr = waistEntry.value / hipEntry.value;
+    String label; Color color;
+    if (g == 'female') {
+      if (whr < 0.80) { label = 'Low Risk'; color = const Color(0xFF22C55E); }
+      else if (whr < 0.85) { label = 'Moderate'; color = const Color(0xFFF59E0B); }
+      else { label = 'High Risk'; color = const Color(0xFFEF4444); }
+    } else {
+      if (whr < 0.90) { label = 'Low Risk'; color = const Color(0xFF22C55E); }
+      else if (whr < 0.95) { label = 'Moderate'; color = const Color(0xFFF59E0B); }
+      else { label = 'High Risk'; color = const Color(0xFFEF4444); }
+    }
+    results[DerivedMetricType.waistToHipRatio] = DerivedMetricResult(
+      value: whr, label: label, color: color,
+      info: 'Waist-to-Hip Ratio is the circumference of the waist divided by the circumference of the hips. It indicates fat distribution. ${g == "female" ? "Women: <0.80 low risk, 0.80-0.85 moderate, >0.85 high." : "Men: <0.90 low risk, 0.90-0.95 moderate, >0.95 high."} Source: WHO.',
+    );
+  }
+
+  // WHtR - Waist-to-Height Ratio
+  if (summary.latestWaistToHeightRatio != null) {
+    final whtr = summary.latestWaistToHeightRatio!;
+    String label; Color color;
+    if (whtr < 0.5) { label = 'Healthy'; color = const Color(0xFF22C55E); }
+    else if (whtr < 0.6) { label = 'At Risk'; color = const Color(0xFFF59E0B); }
+    else { label = 'High Risk'; color = const Color(0xFFEF4444); }
+    results[DerivedMetricType.waistToHeightRatio] = DerivedMetricResult(
+      value: whtr, label: label, color: color,
+      info: 'Waist-to-Height Ratio: waist circumference divided by height. A ratio below 0.5 is considered healthy regardless of gender. Simple and effective predictor of cardiovascular risk. Source: British Medical Journal.',
+    );
+  } else if (waistEntry != null && heightCm != null && heightCm > 0) {
+    final whtr = waistEntry.value / heightCm;
+    String label; Color color;
+    if (whtr < 0.5) { label = 'Healthy'; color = const Color(0xFF22C55E); }
+    else if (whtr < 0.6) { label = 'At Risk'; color = const Color(0xFFF59E0B); }
+    else { label = 'High Risk'; color = const Color(0xFFEF4444); }
+    results[DerivedMetricType.waistToHeightRatio] = DerivedMetricResult(
+      value: whtr, label: label, color: color,
+      info: 'Waist-to-Height Ratio: waist circumference divided by height. A ratio below 0.5 is considered healthy regardless of gender. Simple and effective predictor of cardiovascular risk. Source: British Medical Journal.',
+    );
+  }
+
+  // FFMI - Fat-Free Mass Index
+  if (weightEntry != null && bodyFatEntry != null && heightCm != null && heightCm > 0) {
+    final weightKg = weightEntry.value;
+    final bf = bodyFatEntry.value;
+    final heightM = heightCm / 100;
+    final leanMass = weightKg * (1 - bf / 100);
+    final ffmi = leanMass / (heightM * heightM) + 6.1 * (1.8 - heightM);
+    String label; Color color;
+    if (ffmi < 18) { label = 'Below Average'; color = const Color(0xFF3B82F6); }
+    else if (ffmi < 20) { label = 'Average'; color = const Color(0xFF22C55E); }
+    else if (ffmi < 22) { label = 'Above Average'; color = const Color(0xFF06B6D4); }
+    else if (ffmi < 23) { label = 'Excellent'; color = const Color(0xFF8B5CF6); }
+    else if (ffmi < 25) { label = 'Near Limit'; color = const Color(0xFFF59E0B); }
+    else { label = 'Exceptional'; color = const Color(0xFFEF4444); }
+    results[DerivedMetricType.ffmi] = DerivedMetricResult(
+      value: ffmi, label: label, color: color,
+      info: 'Fat-Free Mass Index measures lean body mass relative to height. Formula: lean_mass / height\u00B2 + 6.1 \u00D7 (1.8 - height). Normal 18-20, Above Avg 20-22, Excellent 22-23, Near Natural Limit 23-25. Values above 25 are rare without enhancement. Source: Kouri et al.',
+    );
+  }
+
+  // Lean Body Mass
+  if (weightEntry != null && bodyFatEntry != null) {
+    final lbm = weightEntry.value * (1 - bodyFatEntry.value / 100);
+    results[DerivedMetricType.leanBodyMass] = DerivedMetricResult(
+      value: lbm, label: '', color: const Color(0xFF22C55E),
+      info: 'Lean Body Mass is your total weight minus fat mass. Formula: weight \u00D7 (1 - body_fat% / 100). Useful for tracking muscle gain during a cut or recomp.',
+    );
+  }
+
+  // Shoulder-to-Waist Ratio
+  if (shoulderEntry != null && waistEntry != null && waistEntry.value > 0) {
+    final swr = shoulderEntry.value / waistEntry.value;
+    String label; Color color;
+    if (swr < 1.3) { label = 'Narrow'; color = const Color(0xFF3B82F6); }
+    else if (swr < 1.5) { label = 'Good'; color = const Color(0xFFF59E0B); }
+    else if (swr < 1.618) { label = 'Great'; color = const Color(0xFF22C55E); }
+    else { label = 'Golden Ratio'; color = const Color(0xFFEAB308); }
+    results[DerivedMetricType.shoulderToWaistRatio] = DerivedMetricResult(
+      value: swr, label: label, color: color,
+      info: 'Shoulder-to-Waist Ratio indicates the V-taper physique. Formula: shoulder / waist circumference. The "golden ratio" of 1.618 is considered the aesthetic ideal. <1.3 narrow, 1.3-1.5 good, 1.5-1.618 great, \u22651.618 golden ratio.',
+    );
+  }
+
+  // Chest-to-Waist Ratio
+  if (chestEntry != null && waistEntry != null && waistEntry.value > 0) {
+    final cwr = chestEntry.value / waistEntry.value;
+    String label; Color color;
+    if (cwr < 1.1) { label = 'Below Average'; color = const Color(0xFF3B82F6); }
+    else if (cwr < 1.2) { label = 'Average'; color = const Color(0xFFF59E0B); }
+    else if (cwr < 1.3) { label = 'Good'; color = const Color(0xFF22C55E); }
+    else { label = 'Excellent'; color = const Color(0xFF8B5CF6); }
+    results[DerivedMetricType.chestToWaistRatio] = DerivedMetricResult(
+      value: cwr, label: label, color: color,
+      info: 'Chest-to-Waist Ratio indicates upper body development. Formula: chest / waist circumference. A higher ratio indicates a more developed chest relative to waist. <1.1 below avg, 1.1-1.2 average, 1.2-1.3 good, >1.3 excellent.',
+    );
+  }
+
+  // Arm Symmetry
+  if (bicepsL != null && bicepsR != null) {
+    final maxVal = bicepsL.value > bicepsR.value ? bicepsL.value : bicepsR.value;
+    if (maxVal > 0) {
+      final diff = (bicepsL.value - bicepsR.value).abs();
+      final symmetry = diff / maxVal * 100;
+      String label; Color color;
+      if (symmetry < 5) { label = 'Balanced'; color = const Color(0xFF22C55E); }
+      else if (symmetry < 10) { label = 'Minor Imbalance'; color = const Color(0xFFF59E0B); }
+      else { label = 'Significant'; color = const Color(0xFFEF4444); }
+      results[DerivedMetricType.armSymmetry] = DerivedMetricResult(
+        value: symmetry, label: label, color: color,
+        info: 'Arm Symmetry measures the difference between left and right biceps. Formula: |left - right| / max \u00D7 100. <5% balanced, 5-10% minor imbalance, >10% significant imbalance. Consider unilateral exercises to correct.',
+      );
+    }
+  }
+
+  // Leg Symmetry
+  if (thighL != null && thighR != null) {
+    final maxVal = thighL.value > thighR.value ? thighL.value : thighR.value;
+    if (maxVal > 0) {
+      final diff = (thighL.value - thighR.value).abs();
+      final symmetry = diff / maxVal * 100;
+      String label; Color color;
+      if (symmetry < 5) { label = 'Balanced'; color = const Color(0xFF22C55E); }
+      else if (symmetry < 10) { label = 'Minor Imbalance'; color = const Color(0xFFF59E0B); }
+      else { label = 'Significant'; color = const Color(0xFFEF4444); }
+      results[DerivedMetricType.legSymmetry] = DerivedMetricResult(
+        value: symmetry, label: label, color: color,
+        info: 'Leg Symmetry measures the difference between left and right thighs. Formula: |left - right| / max \u00D7 100. <5% balanced, 5-10% minor imbalance, >10% significant imbalance. Consider unilateral exercises to correct.',
+      );
+    }
+  }
+
+  return results;
 }

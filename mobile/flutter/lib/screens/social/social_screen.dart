@@ -35,10 +35,22 @@ class _SocialScreenState extends ConsumerState<SocialScreen>
   void initState() {
     super.initState();
     _tabController = TabController(length: 4, vsync: this);
+    _tabController.addListener(_onTabChanged);
+  }
+
+  void _onTabChanged() {
+    // When leaving the Feed tab, disable auto-scroll to stop background timers
+    if (_tabController.index != 0 && !_tabController.indexIsChanging) {
+      final feedOn = ref.read(feedAutoScrollProvider);
+      final storiesOn = ref.read(storiesAutoScrollProvider);
+      if (feedOn) ref.read(feedAutoScrollProvider.notifier).state = false;
+      if (storiesOn) ref.read(storiesAutoScrollProvider.notifier).state = false;
+    }
   }
 
   @override
   void dispose() {
+    _tabController.removeListener(_onTabChanged);
     _tabController.dispose();
     super.dispose();
   }
@@ -56,14 +68,8 @@ class _SocialScreenState extends ConsumerState<SocialScreen>
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final backgroundColor = isDark ? AppColors.pureBlack : AppColorsLight.pureWhite;
 
-    // Get userId from authStateProvider (consistent with rest of app)
+    // Get auth state for user chip
     final authState = ref.watch(authStateProvider);
-    final userId = authState.user?.id;
-
-    // Watch activity feed for stats
-    final feedDataAsync = userId != null
-        ? ref.watch(activityFeedProvider(userId))
-        : null;
 
     return Scaffold(
       backgroundColor: backgroundColor,
@@ -115,13 +121,28 @@ class _SocialScreenState extends ConsumerState<SocialScreen>
               );
             },
           ),
+          // Feed options button (visible only on Feed tab) — rightmost
+          ListenableBuilder(
+            listenable: _tabController,
+            builder: (context, _) {
+              if (_tabController.index != 0) return const SizedBox.shrink();
+              return _buildFeedFilterButton(context, isDark);
+            },
+          ),
           const SizedBox(width: 8),
         ],
       ),
       body: Column(
         children: [
-          // Modern segmented tab bar
-          _buildSegmentedTabs(context, isDark),
+          // Tab pills (always visible)
+          _buildPillTabs(context, isDark),
+          // Subtle divider between nav pills and content
+          Divider(
+            height: 1,
+            thickness: 0.5,
+            color: (isDark ? AppColors.cardBorder : AppColorsLight.cardBorder)
+                .withValues(alpha: 0.5),
+          ),
           // Tab content
           Expanded(
             child: TabBarView(
@@ -139,294 +160,208 @@ class _SocialScreenState extends ConsumerState<SocialScreen>
     );
   }
 
-  Widget _buildSegmentedTabs(BuildContext context, bool isDark) {
-    final cardBg = isDark ? AppColors.elevated : AppColorsLight.elevated;
-    final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+  // Distinct pill colors per tab
+  static const _pillColors = [
+    Color(0xFF5B8DEF), // Feed — blue
+    Color(0xFFFFB020), // Challenges — amber
+    Color(0xFF34D399), // Ranks — emerald
+    Color(0xFFE879F9), // Friends — fuchsia
+  ];
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: Container(
-        decoration: BoxDecoration(
-          color: cardBg,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: cardBorder),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.08),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        padding: const EdgeInsets.all(4),
-        child: AnimatedBuilder(
-          animation: _tabController,
-          builder: (context, _) {
-            return Row(
-              children: [
-                _buildTabItem(
-                  context,
-                  index: 0,
-                  icon: Icons.dynamic_feed_rounded,
-                  label: 'Feed',
-                  isDark: isDark,
-                ),
-                _buildTabItem(
-                  context,
-                  index: 1,
-                  icon: Icons.emoji_events_rounded,
-                  label: 'Challenges',
-                  isDark: isDark,
-                ),
-                _buildTabItem(
-                  context,
-                  index: 2,
-                  icon: Icons.leaderboard_rounded,
-                  label: 'Ranks',
-                  isDark: isDark,
-                ),
-                _buildTabItem(
-                  context,
-                  index: 3,
-                  icon: Icons.people_rounded,
-                  label: 'Friends',
-                  isDark: isDark,
-                ),
-              ],
-            );
-          },
-        ),
-      ),
+  Widget _buildPillTabs(BuildContext context, bool isDark) {
+    return AnimatedBuilder(
+      animation: _tabController,
+      builder: (context, _) {
+        final animationValue = _tabController.animation?.value ?? 0.0;
+        return Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+          child: Row(
+            children: [
+              _buildPill(context, index: 0, label: 'Feed', animationValue: animationValue, isDark: isDark),
+              const SizedBox(width: 8),
+              _buildPill(context, index: 1, label: 'Challenges', animationValue: animationValue, isDark: isDark),
+              const SizedBox(width: 8),
+              _buildPill(context, index: 2, label: 'Ranks', animationValue: animationValue, isDark: isDark),
+              const SizedBox(width: 8),
+              _buildPill(context, index: 3, label: 'Friends', animationValue: animationValue, isDark: isDark),
+            ],
+          ),
+        );
+      },
     );
   }
 
-  Widget _buildTabItem(
+  Widget _buildPill(
     BuildContext context, {
     required int index,
-    required IconData icon,
     required String label,
+    required double animationValue,
     required bool isDark,
   }) {
-    final isSelected = _tabController.index == index;
-    final animationValue = _tabController.animation?.value ?? 0.0;
-    final colors = ref.colors(context);
-    final textMuted = colors.textMuted;
-    // Use user's accent color
-    final accentColor = colors.accent;
-
-    // Calculate selection progress for smooth animation
+    final pillColor = _pillColors[index];
     final selectionProgress = (1.0 - (animationValue - index).abs()).clamp(0.0, 1.0);
 
-    // Colors - accent-based style
-    final selectedBg = accentColor;
-    final unselectedBg = Colors.transparent;
-    // Contrast text based on accent color
-    final selectedFg = colors.accentContrast;
-    final unselectedFg = textMuted;
+    // Unselected: subtle tinted bg; Selected: full pill color
+    final unselectedBg = pillColor.withValues(alpha: isDark ? 0.12 : 0.10);
+    final bgColor = Color.lerp(unselectedBg, pillColor, selectionProgress)!;
 
-    // Interpolate colors based on selection progress
-    final bgColor = Color.lerp(unselectedBg, selectedBg, selectionProgress)!;
-    final fgColor = Color.lerp(unselectedFg, selectedFg, selectionProgress)!;
+    // Text: pill color when unselected, white/black contrast when selected
+    final contrastFg = ThemeData.estimateBrightnessForColor(pillColor) == Brightness.dark
+        ? Colors.white
+        : Colors.black;
+    final fgColor = Color.lerp(
+      isDark ? pillColor.withValues(alpha: 0.9) : pillColor.withValues(alpha: 0.8),
+      contrastFg,
+      selectionProgress,
+    )!;
 
-    return Expanded(
-      child: GestureDetector(
-        onTap: () {
-          HapticFeedback.lightImpact();
-          _tabController.animateTo(index);
-        },
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          curve: Curves.easeOutCubic,
-          padding: const EdgeInsets.symmetric(vertical: 10),
-          decoration: BoxDecoration(
-            color: bgColor,
-            borderRadius: BorderRadius.circular(12),
-            boxShadow: isSelected
-                ? [
-                    BoxShadow(
-                      color: accentColor.withValues(alpha: 0.4),
-                      blurRadius: 10,
-                      offset: const Offset(0, 2),
-                    ),
-                  ]
-                : null,
+    return GestureDetector(
+      onTap: () {
+        HapticFeedback.lightImpact();
+        _tabController.animateTo(index);
+      },
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        curve: Curves.easeOutCubic,
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+        decoration: BoxDecoration(
+          color: bgColor,
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: 13,
+            fontWeight: selectionProgress > 0.5 ? FontWeight.w600 : FontWeight.w500,
+            color: fgColor,
           ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFeedFilterButton(BuildContext context, bool isDark) {
+    final colors = ref.colors(context);
+    final sortBy = ref.watch(feedSortProvider);
+    final myPostsOnly = ref.watch(feedMyPostsOnlyProvider);
+    final feedAutoScroll = ref.watch(feedAutoScrollProvider);
+    final storiesAutoScroll = ref.watch(storiesAutoScrollProvider);
+    final anyAutoScroll = feedAutoScroll || storiesAutoScroll;
+
+    const sortOptions = [
+      ('recent', 'Recent'),
+      ('top', 'Top'),
+      ('trending', 'Trending'),
+    ];
+
+    return PopupMenuButton<String>(
+      icon: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          Icon(
+            Icons.more_vert_rounded,
+            color: isDark ? Colors.white : AppColors.pureBlack,
+            size: 22,
+          ),
+          // Accent dot when any auto-scroll is active
+          if (anyAutoScroll)
+            Positioned(
+              top: -2,
+              right: -2,
+              child: Container(
+                width: 8,
+                height: 8,
+                decoration: BoxDecoration(
+                  color: colors.accent,
+                  shape: BoxShape.circle,
+                ),
+              ),
+            ),
+        ],
+      ),
+      tooltip: 'Feed Options',
+      onSelected: (value) {
+        HapticFeedback.selectionClick();
+        if (value == 'my_posts_toggle') {
+          ref.read(feedMyPostsOnlyProvider.notifier).state = !myPostsOnly;
+        } else if (value == 'auto_scroll_feed_toggle') {
+          ref.read(feedAutoScrollProvider.notifier).state = !feedAutoScroll;
+        } else if (value == 'auto_scroll_stories_toggle') {
+          ref.read(storiesAutoScrollProvider.notifier).state = !storiesAutoScroll;
+        } else {
+          ref.read(feedSortProvider.notifier).state = value;
+        }
+      },
+      itemBuilder: (context) => [
+        // Show section
+        PopupMenuItem<String>(
+          value: 'my_posts_toggle',
+          child: Row(
             children: [
               Icon(
-                icon,
+                myPostsOnly ? Icons.check_box_rounded : Icons.check_box_outline_blank_rounded,
                 size: 20,
-                color: fgColor,
+                color: myPostsOnly ? colors.accent : (isDark ? AppColors.textMuted : AppColorsLight.textMuted),
               ),
-              const SizedBox(height: 4),
-              Text(
-                label,
-                style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-                  color: fgColor,
-                ),
-              ),
+              const SizedBox(width: 10),
+              const Text('My Posts Only'),
             ],
           ),
         ),
-      ),
-    );
-  }
-
-  Widget _buildStatsChips(
-    BuildContext context,
-    bool isDark,
-    AsyncValue<Map<String, dynamic>>? feedDataAsync,
-  ) {
-    // Extract stats from feed data if available
-    int friendsCount = 0;
-    int challengesCount = 0;
-    int reactionsCount = 0;
-
-    if (feedDataAsync != null) {
-      feedDataAsync.whenData((feedData) {
-        friendsCount = feedData['friends_count'] as int? ?? 0;
-        challengesCount = feedData['challenges_count'] as int? ?? 0;
-        reactionsCount = feedData['reactions_received_count'] as int? ?? 0;
-      });
-    }
-
-    final colors = ref.colors(context);
-    final cardBg = colors.elevated;
-    final cardBorder = colors.cardBorder;
-    // Use accent color for stats
-    final accentColor = colors.accent;
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-        decoration: BoxDecoration(
-          color: cardBg,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: cardBorder),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.08),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
-            ),
-          ],
+        const PopupMenuDivider(),
+        // Sort section header
+        const PopupMenuItem<String>(
+          enabled: false,
+          height: 32,
+          child: Text(
+            'Sort by',
+            style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+          ),
         ),
-        child: Row(
-          children: [
-            Expanded(
-              child: _buildStatChip(
-                context,
-                isDark: isDark,
-                icon: Icons.people_rounded,
-                value: friendsCount,
-                label: 'Friends',
-                color: accentColor,
-                onTap: () {
-                  HapticFeedback.lightImpact();
-                  _tabController.animateTo(3); // Friends tab
-                },
-              ),
-            ),
-            Container(
-              width: 1,
-              height: 32,
-              margin: const EdgeInsets.symmetric(horizontal: 8),
-              color: cardBorder,
-            ),
-            Expanded(
-              child: _buildStatChip(
-                context,
-                isDark: isDark,
-                icon: Icons.emoji_events_rounded,
-                value: challengesCount,
-                label: 'Challenges',
-                color: accentColor,
-                onTap: () {
-                  HapticFeedback.lightImpact();
-                  _tabController.animateTo(1); // Challenges tab
-                },
-              ),
-            ),
-            Container(
-              width: 1,
-              height: 32,
-              margin: const EdgeInsets.symmetric(horizontal: 8),
-              color: cardBorder,
-            ),
-            Expanded(
-              child: _buildStatChip(
-                context,
-                isDark: isDark,
-                icon: Icons.favorite_rounded,
-                value: reactionsCount,
-                label: 'Likes',
-                color: accentColor,
-                onTap: () {
-                  HapticFeedback.lightImpact();
-                  _tabController.animateTo(0); // Feed tab (where reactions are)
-                },
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildStatChip(
-    BuildContext context, {
-    required bool isDark,
-    required IconData icon,
-    required int value,
-    required String label,
-    required Color color,
-    required VoidCallback onTap,
-  }) {
-    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 4),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                mainAxisSize: MainAxisSize.min,
+        ...sortOptions.map((o) => PopupMenuItem<String>(
+              value: o.$1,
+              child: Row(
                 children: [
-                  Icon(icon, color: color, size: 16),
-                  const SizedBox(width: 6),
-                  Text(
-                    '$value',
-                    style: TextStyle(
-                      fontSize: 18,
-                      color: color,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
+                  if (sortBy == o.$1)
+                    Icon(Icons.check_rounded, size: 18, color: colors.accent)
+                  else
+                    const SizedBox(width: 18),
+                  const SizedBox(width: 10),
+                  Text(o.$2),
                 ],
               ),
-              const SizedBox(height: 2),
-              Text(
-                label,
-                style: TextStyle(
-                  fontSize: 11,
-                  color: textMuted,
-                  fontWeight: FontWeight.w500,
-                ),
+            )),
+        const PopupMenuDivider(),
+        // Auto-scroll section
+        PopupMenuItem<String>(
+          value: 'auto_scroll_feed_toggle',
+          child: Row(
+            children: [
+              Icon(
+                feedAutoScroll ? Icons.check_box_rounded : Icons.check_box_outline_blank_rounded,
+                size: 20,
+                color: feedAutoScroll ? colors.accent : (isDark ? AppColors.textMuted : AppColorsLight.textMuted),
               ),
+              const SizedBox(width: 10),
+              const Text('Auto-scroll Feed'),
             ],
           ),
         ),
-      ),
+        PopupMenuItem<String>(
+          value: 'auto_scroll_stories_toggle',
+          child: Row(
+            children: [
+              Icon(
+                storiesAutoScroll ? Icons.check_box_rounded : Icons.check_box_outline_blank_rounded,
+                size: 20,
+                color: storiesAutoScroll ? colors.accent : (isDark ? AppColors.textMuted : AppColorsLight.textMuted),
+              ),
+              const SizedBox(width: 10),
+              const Text('Auto-scroll Stories'),
+            ],
+          ),
+        ),
+      ],
     );
   }
 
@@ -605,6 +540,22 @@ class _MessagesScreenState extends ConsumerState<_MessagesScreen> {
                   _searchController.clear();
                 }
               });
+            },
+          ),
+          IconButton(
+            icon: Icon(
+              Icons.group_add_rounded,
+              color: isDark ? Colors.white : AppColors.pureBlack,
+            ),
+            tooltip: 'New Group',
+            onPressed: () {
+              HapticFeedback.lightImpact();
+              Navigator.push(
+                context,
+                AppPageRoute(
+                  builder: (_) => const _GroupCreateSheet(),
+                ),
+              );
             },
           ),
           IconButton(
@@ -896,6 +847,263 @@ class _NewMessagePickerScreen extends ConsumerWidget {
                           Icons.chat_bubble_outline_rounded,
                           size: 20,
                           color: colors.accent,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+}
+
+/// Group create screen for creating a new group conversation (F12)
+class _GroupCreateSheet extends ConsumerStatefulWidget {
+  const _GroupCreateSheet();
+
+  @override
+  ConsumerState<_GroupCreateSheet> createState() => _GroupCreateSheetState();
+}
+
+class _GroupCreateSheetState extends ConsumerState<_GroupCreateSheet> {
+  final _nameController = TextEditingController();
+  final Set<String> _selectedMemberIds = {};
+  bool _isCreating = false;
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _createGroup() async {
+    final name = _nameController.text.trim();
+    if (name.isEmpty || _selectedMemberIds.length < 2) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Enter a group name and select at least 2 members'),
+        ),
+      );
+      return;
+    }
+
+    setState(() => _isCreating = true);
+
+    try {
+      final socialService = ref.read(socialServiceProvider);
+      await socialService.createGroupConversation(
+        name: name,
+        memberIds: _selectedMemberIds.toList(),
+      );
+
+      if (mounted) {
+        Navigator.pop(context);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Group "$name" created')),
+        );
+      }
+    } catch (e) {
+      debugPrint('Failed to create group: $e');
+      if (mounted) {
+        setState(() => _isCreating = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Failed to create group')),
+        );
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final backgroundColor = isDark ? AppColors.pureBlack : AppColorsLight.pureWhite;
+    final authState = ref.watch(authStateProvider);
+    final userId = authState.user?.id;
+    final colors = ref.colors(context);
+
+    return Scaffold(
+      backgroundColor: backgroundColor,
+      appBar: AppBar(
+        backgroundColor: backgroundColor,
+        surfaceTintColor: Colors.transparent,
+        elevation: 0,
+        automaticallyImplyLeading: false,
+        leading: const GlassBackButton(),
+        title: Text(
+          'New Group',
+          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
+        ),
+        centerTitle: false,
+        actions: [
+          TextButton(
+            onPressed: _isCreating ? null : _createGroup,
+            child: _isCreating
+                ? SizedBox(
+                    width: 18,
+                    height: 18,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: colors.accent,
+                    ),
+                  )
+                : Text(
+                    'Create',
+                    style: TextStyle(
+                      color: colors.accent,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+          ),
+          const SizedBox(width: 8),
+        ],
+      ),
+      body: Column(
+        children: [
+          // Group name field
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: TextField(
+              controller: _nameController,
+              style: Theme.of(context).textTheme.bodyLarge,
+              decoration: InputDecoration(
+                hintText: 'Group name',
+                hintStyle: TextStyle(
+                  color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
+                ),
+                prefixIcon: Icon(Icons.group_rounded, color: colors.accent),
+                filled: true,
+                fillColor: isDark ? AppColors.elevated : AppColorsLight.elevated,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide.none,
+                ),
+              ),
+            ),
+          ),
+          // Selected count
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Row(
+              children: [
+                Text(
+                  'Select members (${_selectedMemberIds.length} selected)',
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 8),
+          // Friends list for selection
+          Expanded(
+            child: userId == null
+                ? const Center(child: Text('Not logged in'))
+                : _buildFriendsSelector(context, userId, isDark),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFriendsSelector(BuildContext context, String userId, bool isDark) {
+    final friendsAsync = ref.watch(friendsListProvider(userId));
+    final colors = ref.colors(context);
+
+    return friendsAsync.when(
+      loading: () => AppLoading.fullScreen(),
+      error: (_, __) => const Center(child: Text('Failed to load friends')),
+      data: (friends) {
+        if (friends.isEmpty) {
+          return Center(
+            child: Text(
+              'No friends to add',
+              style: TextStyle(
+                color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
+              ),
+            ),
+          );
+        }
+
+        return ListView.builder(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          itemCount: friends.length,
+          itemBuilder: (context, index) {
+            final friend = friends[index];
+            final friendId = friend['id'] as String? ?? '';
+            final name = friend['name'] as String? ?? 'Unknown';
+            final avatarUrl = friend['avatar_url'] as String?;
+            final isSelected = _selectedMemberIds.contains(friendId);
+            final cardBg = isDark ? AppColors.elevated : AppColorsLight.elevated;
+            final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: Material(
+                color: isSelected
+                    ? colors.accent.withValues(alpha: 0.1)
+                    : cardBg,
+                borderRadius: BorderRadius.circular(12),
+                child: InkWell(
+                  onTap: () {
+                    HapticFeedback.lightImpact();
+                    setState(() {
+                      if (isSelected) {
+                        _selectedMemberIds.remove(friendId);
+                      } else {
+                        _selectedMemberIds.add(friendId);
+                      }
+                    });
+                  },
+                  borderRadius: BorderRadius.circular(12),
+                  child: Padding(
+                    padding: const EdgeInsets.all(12),
+                    child: Row(
+                      children: [
+                        CircleAvatar(
+                          radius: 20,
+                          backgroundColor: colors.accent.withValues(alpha: 0.2),
+                          backgroundImage: avatarUrl != null
+                              ? NetworkImage(avatarUrl)
+                              : null,
+                          child: avatarUrl == null
+                              ? Text(
+                                  name.isNotEmpty ? name[0].toUpperCase() : '?',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                    color: colors.accent,
+                                  ),
+                                )
+                              : null,
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            name,
+                            style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w500,
+                              color: textPrimary,
+                            ),
+                          ),
+                        ),
+                        Icon(
+                          isSelected
+                              ? Icons.check_circle_rounded
+                              : Icons.circle_outlined,
+                          color: isSelected
+                              ? colors.accent
+                              : (isDark ? AppColors.textMuted : AppColorsLight.textMuted),
+                          size: 24,
                         ),
                       ],
                     ),

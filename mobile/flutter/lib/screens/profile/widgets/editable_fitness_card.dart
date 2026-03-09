@@ -29,6 +29,7 @@ class EditableFitnessCard extends ConsumerStatefulWidget {
 class EditableFitnessCardState extends ConsumerState<EditableFitnessCard> {
   bool _isEditing = false;
   bool _isSaving = false;
+  final _editNotifier = ValueNotifier<int>(0);
 
   /// Whether the card is currently in edit mode.
   bool get isEditing => _isEditing;
@@ -46,6 +47,12 @@ class EditableFitnessCardState extends ConsumerState<EditableFitnessCard> {
 
   /// Trigger save from outside the widget.
   Future<void> saveChanges() => _saveChanges();
+
+  /// setState + notify sheet listeners
+  void _updateField(VoidCallback fn) {
+    setState(fn);
+    _editNotifier.value++;
+  }
 
   String _selectedLevel = 'Intermediate';
   String _selectedGoal = 'Build Muscle';
@@ -193,9 +200,6 @@ class EditableFitnessCardState extends ConsumerState<EditableFitnessCard> {
     final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
-    // Use monochrome accent
-    final accentColor = isDark ? AppColors.accent : AppColorsLight.accent;
-
     // Watch the active gym profile
     final activeGymProfile = ref.watch(activeGymProfileProvider);
 
@@ -205,7 +209,6 @@ class EditableFitnessCardState extends ConsumerState<EditableFitnessCard> {
         isDark: isDark,
         elevated: elevated,
         textMuted: textMuted,
-        accentColor: accentColor,
       );
     }
 
@@ -228,11 +231,11 @@ class EditableFitnessCardState extends ConsumerState<EditableFitnessCard> {
           // Duration (editable range)
           _buildEditableRow(
             icon: Icons.timer_outlined,
-            iconColor: accentColor,
+            iconColor: AppColors.cyan,
             label: 'Duration',
             value: _formatDurationDisplay(),
             isEditing: _isEditing,
-            editWidget: _buildDurationRangeSelector(accentColor),
+            editWidget: _buildDurationRangeSelector(AppColors.cyan),
             isDark: isDark,
             textMuted: textMuted,
           ),
@@ -267,11 +270,11 @@ class EditableFitnessCardState extends ConsumerState<EditableFitnessCard> {
           // Goal
           _buildEditableRow(
             icon: Icons.flag,
-            iconColor: accentColor,
+            iconColor: AppColors.green,
             label: 'Goal',
             value: _selectedGoal,
             isEditing: _isEditing,
-            editWidget: _buildGoalSelector(accentColor, cardBorder, textSecondary),
+            editWidget: _buildGoalSelector(AppColors.green, cardBorder, textSecondary),
             isDark: isDark,
             textMuted: textMuted,
           ),
@@ -280,11 +283,11 @@ class EditableFitnessCardState extends ConsumerState<EditableFitnessCard> {
           // Level
           _buildEditableRow(
             icon: Icons.signal_cellular_alt,
-            iconColor: accentColor,
+            iconColor: AppColors.info,
             label: 'Level',
             value: _selectedLevel,
             isEditing: _isEditing,
-            editWidget: _buildLevelSelector(accentColor, cardBorder, textSecondary),
+            editWidget: _buildLevelSelector(AppColors.info, cardBorder, textSecondary),
             isDark: isDark,
             textMuted: textMuted,
           ),
@@ -293,13 +296,13 @@ class EditableFitnessCardState extends ConsumerState<EditableFitnessCard> {
           // Workout Days
           _buildEditableRow(
             icon: Icons.calendar_today,
-            iconColor: accentColor,
+            iconColor: AppColors.yellow,
             label: 'Workout Days',
             value: _selectedDays.isEmpty
                 ? 'Not set'
                 : _selectedDays.map((d) => ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'][d]).join(', '),
             isEditing: _isEditing,
-            editWidget: _buildDaysSelector(accentColor, cardBorder, textSecondary),
+            editWidget: _buildDaysSelector(AppColors.yellow, cardBorder, textSecondary),
             isDark: isDark,
             textMuted: textMuted,
           ),
@@ -330,11 +333,12 @@ class EditableFitnessCardState extends ConsumerState<EditableFitnessCard> {
     required bool isDark,
     required Color elevated,
     required Color textMuted,
-    required Color accentColor,
   }) {
     final gymName = activeGymProfile?.name ?? 'No gym';
     final gymColor = activeGymProfile?.profileColor ?? Colors.grey;
     final gymIcon = _getGymIconData(activeGymProfile?.icon ?? 'fitness_center');
+    final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+    final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
 
     // Format workout days for compact display
     final daysDisplay = _selectedDays.isEmpty
@@ -372,12 +376,55 @@ class EditableFitnessCardState extends ConsumerState<EditableFitnessCard> {
           showChevron: true,
         ),
         _FitnessTile(
+          icon: Icons.flag,
+          iconColor: AppColors.green,
+          label: 'Goal',
+          value: _selectedGoal,
+          backgroundColor: elevated,
+          textMutedColor: textMuted,
+          onTap: () => _showFieldEditor(
+            title: 'Fitness Goal',
+            icon: Icons.flag,
+            iconColor: AppColors.green,
+            isDark: isDark,
+            cardBorder: cardBorder,
+            textSecondary: textSecondary,
+            builder: () => _buildGoalSelector(AppColors.green, cardBorder, textSecondary),
+          ),
+        ),
+        _FitnessTile(
+          icon: Icons.signal_cellular_alt,
+          iconColor: AppColors.info,
+          label: 'Level',
+          value: _selectedLevel,
+          backgroundColor: elevated,
+          textMutedColor: textMuted,
+          onTap: () => _showFieldEditor(
+            title: 'Fitness Level',
+            icon: Icons.signal_cellular_alt,
+            iconColor: AppColors.info,
+            isDark: isDark,
+            cardBorder: cardBorder,
+            textSecondary: textSecondary,
+            builder: () => _buildLevelSelector(AppColors.info, cardBorder, textSecondary),
+          ),
+        ),
+        _FitnessTile(
           icon: Icons.timer_outlined,
-          iconColor: accentColor,
+          iconColor: AppColors.cyan,
           label: 'Duration',
           value: _formatDurationDisplay(),
           backgroundColor: elevated,
           textMutedColor: textMuted,
+          onTap: () => _showFieldEditor(
+            title: 'Workout Duration',
+            icon: Icons.timer_outlined,
+            iconColor: AppColors.cyan,
+            isDark: isDark,
+            cardBorder: cardBorder,
+            textSecondary: textSecondary,
+            builder: () => _buildDurationRangeSelector(AppColors.cyan),
+          ),
         ),
         _FitnessTile(
           icon: Icons.whatshot_outlined,
@@ -386,6 +433,15 @@ class EditableFitnessCardState extends ConsumerState<EditableFitnessCard> {
           value: '$_selectedWarmupDuration min',
           backgroundColor: elevated,
           textMutedColor: textMuted,
+          onTap: () => _showFieldEditor(
+            title: 'Warmup Duration',
+            icon: Icons.whatshot_outlined,
+            iconColor: AppColors.orange,
+            isDark: isDark,
+            cardBorder: cardBorder,
+            textSecondary: textSecondary,
+            builder: () => _buildWarmupSelector(AppColors.orange, cardBorder, textSecondary),
+          ),
         ),
         _FitnessTile(
           icon: Icons.self_improvement_outlined,
@@ -394,30 +450,32 @@ class EditableFitnessCardState extends ConsumerState<EditableFitnessCard> {
           value: '$_selectedStretchDuration min',
           backgroundColor: elevated,
           textMutedColor: textMuted,
-        ),
-        _FitnessTile(
-          icon: Icons.flag,
-          iconColor: accentColor,
-          label: 'Goal',
-          value: _selectedGoal,
-          backgroundColor: elevated,
-          textMutedColor: textMuted,
-        ),
-        _FitnessTile(
-          icon: Icons.signal_cellular_alt,
-          iconColor: accentColor,
-          label: 'Level',
-          value: _selectedLevel,
-          backgroundColor: elevated,
-          textMutedColor: textMuted,
+          onTap: () => _showFieldEditor(
+            title: 'Stretch Duration',
+            icon: Icons.self_improvement_outlined,
+            iconColor: AppColors.purple,
+            isDark: isDark,
+            cardBorder: cardBorder,
+            textSecondary: textSecondary,
+            builder: () => _buildStretchSelector(AppColors.purple, cardBorder, textSecondary),
+          ),
         ),
         _FitnessTile(
           icon: Icons.calendar_today,
-          iconColor: accentColor,
+          iconColor: AppColors.yellow,
           label: 'Days',
           value: daysDisplay,
           backgroundColor: elevated,
           textMutedColor: textMuted,
+          onTap: () => _showFieldEditor(
+            title: 'Workout Days',
+            icon: Icons.calendar_today,
+            iconColor: AppColors.yellow,
+            isDark: isDark,
+            cardBorder: cardBorder,
+            textSecondary: textSecondary,
+            builder: () => _buildDaysSelector(AppColors.yellow, cardBorder, textSecondary),
+          ),
         ),
         _FitnessTile(
           icon: Icons.healing,
@@ -426,8 +484,130 @@ class EditableFitnessCardState extends ConsumerState<EditableFitnessCard> {
           value: injuriesDisplay,
           backgroundColor: elevated,
           textMutedColor: textMuted,
+          onTap: () => _showFieldEditor(
+            title: 'Active Injuries',
+            icon: Icons.healing,
+            iconColor: AppColors.error,
+            isDark: isDark,
+            cardBorder: cardBorder,
+            textSecondary: textSecondary,
+            builder: () => _buildInjurySelector(cardBorder, textSecondary),
+          ),
         ),
       ],
+    );
+  }
+
+  /// Show a bottom sheet to edit a single fitness field
+  void _showFieldEditor({
+    required String title,
+    required IconData icon,
+    required Color iconColor,
+    required bool isDark,
+    required Color cardBorder,
+    required Color textSecondary,
+    required Widget Function() builder,
+  }) {
+    HapticFeedback.lightImpact();
+    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+
+    showGlassSheet(
+      context: context,
+      builder: (sheetContext) => GlassSheet(
+        child: StatefulBuilder(
+          builder: (ctx, setSheetState) {
+            return Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Header
+                  Row(
+                    children: [
+                      Container(
+                        width: 36,
+                        height: 36,
+                        decoration: BoxDecoration(
+                          color: iconColor.withValues(alpha: 0.15),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Icon(icon, color: iconColor, size: 20),
+                      ),
+                      const SizedBox(width: 12),
+                      Text(
+                        title,
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w700,
+                          color: textPrimary,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 20),
+                  // Editor content - rebuilds when selections change
+                  ValueListenableBuilder<int>(
+                    valueListenable: _editNotifier,
+                    builder: (_, __, ___) => builder(),
+                  ),
+                  const SizedBox(height: 20),
+                  // Save button
+                  SizedBox(
+                    width: double.infinity,
+                    child: FilledButton(
+                      onPressed: _isSaving
+                          ? null
+                          : () async {
+                              await _saveChanges();
+                              if (ctx.mounted) Navigator.pop(ctx);
+                            },
+                      style: FilledButton.styleFrom(
+                        backgroundColor: iconColor,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: _isSaving
+                          ? const SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Colors.white,
+                              ),
+                            )
+                          : const Text(
+                              'Save',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                    ),
+                  ),
+                  // Info
+                  const SizedBox(height: 12),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.info_outline, size: 12, color: textMuted),
+                      const SizedBox(width: 6),
+                      Text(
+                        'Changes affect your workout program',
+                        style: TextStyle(fontSize: 11, color: textMuted),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            );
+          },
+        ),
+      ),
     );
   }
 
@@ -443,7 +623,7 @@ class EditableFitnessCardState extends ConsumerState<EditableFitnessCard> {
           color: purple,
           borderColor: cardBorder,
           textColor: textSecondary,
-          onTap: _isSaving ? null : () => setState(() => _selectedGoal = goal),
+          onTap: _isSaving ? null : () => _updateField(() => _selectedGoal = goal),
         );
       }).toList(),
     );
@@ -461,7 +641,7 @@ class EditableFitnessCardState extends ConsumerState<EditableFitnessCard> {
             color: cyan,
             borderColor: cardBorder,
             textColor: textSecondary,
-            onTap: _isSaving ? null : () => setState(() => _selectedLevel = level),
+            onTap: _isSaving ? null : () => _updateField(() => _selectedLevel = level),
           ),
         );
       }).toList(),
@@ -525,7 +705,7 @@ class EditableFitnessCardState extends ConsumerState<EditableFitnessCard> {
             onChanged: _isSaving
                 ? null
                 : (RangeValues values) {
-                    setState(() {
+                    _updateField(() {
                       _selectedDurationMin = values.start;
                       _selectedDurationMax = values.end;
                     });
@@ -548,7 +728,7 @@ class EditableFitnessCardState extends ConsumerState<EditableFitnessCard> {
           color: color,
           borderColor: cardBorder,
           textColor: textSecondary,
-          onTap: _isSaving ? null : () => setState(() => _selectedWarmupDuration = duration),
+          onTap: _isSaving ? null : () => _updateField(() => _selectedWarmupDuration = duration),
         );
       }).toList(),
     );
@@ -566,7 +746,7 @@ class EditableFitnessCardState extends ConsumerState<EditableFitnessCard> {
           color: color,
           borderColor: cardBorder,
           textColor: textSecondary,
-          onTap: _isSaving ? null : () => setState(() => _selectedStretchDuration = duration),
+          onTap: _isSaving ? null : () => _updateField(() => _selectedStretchDuration = duration),
         );
       }).toList(),
     );
@@ -581,7 +761,7 @@ class EditableFitnessCardState extends ConsumerState<EditableFitnessCard> {
           onTap: _isSaving
               ? null
               : () {
-                  setState(() {
+                  _updateField(() {
                     if (isSelected) {
                       _selectedDays.remove(index);
                     } else {
@@ -627,7 +807,7 @@ class EditableFitnessCardState extends ConsumerState<EditableFitnessCard> {
           onTap: _isSaving
               ? null
               : () {
-                  setState(() {
+                  _updateField(() {
                     if (isSelected) {
                       _selectedInjuries.remove(injury);
                     } else {

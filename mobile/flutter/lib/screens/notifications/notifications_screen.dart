@@ -195,7 +195,14 @@ class NotificationsScreen extends ConsumerWidget {
         }
         break;
       case 'friend_request':
+      case 'friend_accepted':
         // Actions handled via inline Accept/Ignore buttons
+        break;
+      case 'reaction':
+      case 'comment':
+      case 'mention':
+        // Navigate to social feed
+        context.push('/social');
         break;
       case 'test':
         // Test notifications stay on this screen
@@ -296,11 +303,12 @@ class NotificationsScreen extends ConsumerWidget {
               itemBuilder: (context, index) {
                 final notification = notifications[index];
                 final isChallengeNotification = notification.id.startsWith('challenge_');
+                final isSocialNotification = notification.id.startsWith('social_');
                 final isFriendRequest = notification.type == 'friend_request';
 
                 return Dismissible(
                   key: Key(notification.id),
-                  direction: (isChallengeNotification || isFriendRequest)
+                  direction: (isChallengeNotification || isFriendRequest || isSocialNotification)
                       ? DismissDirection.none
                       : DismissDirection.endToStart,
                   background: Container(
@@ -373,6 +381,9 @@ class NotificationsScreen extends ConsumerWidget {
                       if (isChallengeNotification) {
                         ref.read(unifiedNotificationsProvider.notifier)
                             .markChallengeNotificationRead(notification.id);
+                      } else if (isSocialNotification) {
+                        ref.read(unifiedNotificationsProvider.notifier)
+                            .markSocialNotificationRead(notification.id);
                       } else if (!isFriendRequest) {
                         ref.read(notificationsProvider.notifier).markAsRead(notification.id);
                       }
@@ -571,6 +582,14 @@ class _NotificationCard extends StatelessWidget {
         return Icons.flag;
       case 'challenge_beaten':
         return Icons.military_tech;
+      case 'reaction':
+        return Icons.favorite;
+      case 'comment':
+        return Icons.chat_bubble;
+      case 'mention':
+        return Icons.alternate_email;
+      case 'friend_accepted':
+        return Icons.people;
       default:
         return Icons.notifications;
     }
@@ -604,6 +623,14 @@ class _NotificationCard extends StatelessWidget {
         return AppColors.success;
       case 'challenge_beaten':
         return const Color(0xFFFFD700);
+      case 'reaction':
+        return AppColors.pink;
+      case 'comment':
+        return AppColors.cyan;
+      case 'mention':
+        return AppColors.orange;
+      case 'friend_accepted':
+        return AppColors.success;
       default:
         return AppColors.cyan;
     }

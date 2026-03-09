@@ -60,6 +60,7 @@ import '../screens/ai_settings/ai_settings_screen.dart';
 import '../screens/notifications/notifications_screen.dart';
 import '../screens/measurements/measurements_screen.dart';
 import '../screens/measurements/measurement_detail_screen.dart';
+import '../screens/measurements/derived_metric_detail_screen.dart';
 import '../screens/glossary/glossary_screen.dart';
 import '../screens/personal_goals/personal_goals_screen.dart';
 import '../screens/paywall/paywall_features_screen.dart';
@@ -1302,6 +1303,10 @@ final routerProvider = Provider<GoRouter>((ref) {
           return MuscleDetailScreen(muscleGroup: muscleGroup);
         },
       ),
+      GoRoute(
+        path: '/stats/readiness',
+        builder: (context, state) => const ComprehensiveStatsScreen(initialTab: 2),
+      ),
 
       // Redirects from old /progress/* routes to /stats/*
       GoRoute(
@@ -1601,6 +1606,13 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/measurements',
         builder: (context, state) => const MeasurementsScreen(),
+      ),
+      GoRoute(
+        path: '/measurements/derived/:type',
+        builder: (context, state) {
+          final type = state.pathParameters['type'] ?? 'bmi';
+          return DerivedMetricDetailScreen(derivedType: type);
+        },
       ),
       GoRoute(
         path: '/measurements/:type',

@@ -314,6 +314,7 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet> {
         userId: widget.userId,
         description: _descriptionController.text.trim(),
         mealType: _selectedMealType.value,
+        moodBefore: _moodBefore?.value,
       )) {
         if (!mounted) return;
 

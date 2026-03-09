@@ -1,12 +1,18 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:go_router/go_router.dart';
+import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../data/services/challenges_service.dart';
 import '../../../data/services/saved_workouts_service.dart';
-import '../../../widgets/glass_sheet.dart';
+import '../../../data/services/social_service.dart';
 import '../../../data/services/api_client.dart';
+import '../../../widgets/glass_sheet.dart';
+import '../../../widgets/social_video_player.dart';
+import '../hashtag_feed_screen.dart';
+import '../friend_profile_screen.dart';
 import 'package:timeago/timeago.dart' as timeago;
 
 /// Reaction type enum matching backend
@@ -513,64 +519,154 @@ class _ActivityCardState extends State<ActivityCard> with SingleTickerProviderSt
     );
   }
 
-  /// Show report dialog
+  /// Show report dialog (F9 - full report with reason selection and description)
   void _showReportDialog(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    String? selectedReason;
+    final descriptionController = TextEditingController();
 
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: elevated,
-        title: const Text('Report Post'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Why are you reporting this post?',
-              style: TextStyle(fontSize: 14),
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (dialogContext, setDialogState) {
+          final reasons = ['spam', 'inappropriate', 'harassment', 'other'];
+          final reasonLabels = {
+            'spam': 'Spam or misleading',
+            'inappropriate': 'Inappropriate content',
+            'harassment': 'Harassment or bullying',
+            'other': 'Other',
+          };
+
+          return AlertDialog(
+            backgroundColor: elevated,
+            title: const Text('Report Post'),
+            content: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Why are you reporting this post?',
+                    style: TextStyle(fontSize: 14),
+                  ),
+                  const SizedBox(height: 16),
+                  ...reasons.map((reason) {
+                    final isSelected = selectedReason == reason;
+                    return InkWell(
+                      onTap: () {
+                        HapticFeedback.selectionClick();
+                        setDialogState(() => selectedReason = reason);
+                      },
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 10),
+                        child: Row(
+                          children: [
+                            Icon(
+                              isSelected
+                                  ? Icons.radio_button_checked
+                                  : Icons.radio_button_unchecked,
+                              size: 20,
+                              color: isSelected
+                                  ? Theme.of(dialogContext).colorScheme.primary
+                                  : AppColors.textMuted,
+                            ),
+                            const SizedBox(width: 12),
+                            Text(
+                              reasonLabels[reason] ?? reason,
+                              style: const TextStyle(fontSize: 14),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  }),
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: descriptionController,
+                    maxLines: 3,
+                    maxLength: 500,
+                    decoration: InputDecoration(
+                      hintText: 'Additional details (optional)',
+                      hintStyle: TextStyle(
+                        color: AppColors.textMuted.withValues(alpha: 0.5),
+                      ),
+                      filled: true,
+                      fillColor: isDark
+                          ? AppColors.pureBlack.withValues(alpha: 0.5)
+                          : Colors.grey.withValues(alpha: 0.1),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide.none,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
-            const SizedBox(height: 16),
-            _buildReportOption(context, 'Spam or misleading'),
-            _buildReportOption(context, 'Inappropriate content'),
-            _buildReportOption(context, 'Harassment or bullying'),
-            _buildReportOption(context, 'Other'),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-        ],
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(dialogContext),
+                child: const Text('Cancel'),
+              ),
+              TextButton(
+                onPressed: selectedReason == null
+                    ? null
+                    : () async {
+                        Navigator.pop(dialogContext);
+                        HapticFeedback.lightImpact();
+                        await _submitReport(
+                          selectedReason!,
+                          descriptionController.text.trim(),
+                        );
+                      },
+                child: const Text('Submit'),
+              ),
+            ],
+          );
+        },
       ),
-    );
+    ).then((_) {
+      descriptionController.dispose();
+    });
   }
 
-  Widget _buildReportOption(BuildContext context, String reason) {
-    return InkWell(
-      onTap: () {
-        Navigator.pop(context);
-        HapticFeedback.lightImpact();
+  /// Submit report to backend
+  Future<void> _submitReport(String reason, String description) async {
+    try {
+      final storage = const FlutterSecureStorage(
+        aOptions: AndroidOptions(encryptedSharedPreferences: true),
+        iOptions: IOSOptions(accessibility: KeychainAccessibility.first_unlock),
+      );
+      final socialService = SocialService(ApiClient(storage));
+      await socialService.reportContent(
+        contentType: 'post',
+        contentId: widget.activityId,
+        reportedUserId: widget.postUserId,
+        reason: reason,
+        description: description.isNotEmpty ? description : null,
+      );
+
+      if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Report submitted. Thank you for helping keep our community safe.'),
+            content: Text(
+                'Report submitted. Thank you for helping keep our community safe.'),
             behavior: SnackBarBehavior.floating,
           ),
         );
-      },
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 12),
-        child: Row(
-          children: [
-            Icon(Icons.radio_button_unchecked, size: 20, color: AppColors.textMuted),
-            const SizedBox(width: 12),
-            Text(reason, style: const TextStyle(fontSize: 14)),
-          ],
-        ),
-      ),
-    );
+      }
+    } catch (e) {
+      debugPrint('Error submitting report: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Failed to submit report. Please try again.'),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    }
   }
 
   /// Show inline reaction picker floating above the react button
@@ -730,6 +826,10 @@ class _ActivityCardState extends State<ActivityCard> with SingleTickerProviderSt
     final flairs = (widget.activityData['flairs'] as List<dynamic>?)?.cast<String>() ?? [];
     final hasImage = widget.activityData['has_image'] as bool? ?? false;
     final imageUrl = widget.activityData['image_url'] as String?;
+    final imageUrls = (widget.activityData['image_urls'] as List<dynamic>?)?.cast<String>();
+    final hasVideo = widget.activityData['has_video'] as bool? ?? false;
+    final videoUrl = widget.activityData['video_url'] as String?;
+    final thumbnailUrl = widget.activityData['thumbnail_url'] as String?;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -768,15 +868,23 @@ class _ActivityCardState extends State<ActivityCard> with SingleTickerProviderSt
           const SizedBox(height: 8),
         ],
 
-        // Caption text
-        if (caption.isNotEmpty)
-          Text(
-            caption,
-            style: const TextStyle(fontSize: 15),
-          ),
+        // Caption text with hashtag rendering (F10)
+        if (caption.isNotEmpty) _buildCaptionWithHashtags(caption, context),
 
-        // Image if present
-        if (hasImage && imageUrl != null) ...[
+        // Video if present (F2)
+        if (hasVideo && videoUrl != null) ...[
+          const SizedBox(height: 12),
+          SocialVideoPlayer(
+            videoUrl: videoUrl,
+            thumbnailUrl: thumbnailUrl,
+          ),
+        ],
+
+        // Multi-image carousel (F1) or single image
+        if (!hasVideo && imageUrls != null && imageUrls.length > 1) ...[
+          const SizedBox(height: 12),
+          _buildImageCarousel(context, imageUrls),
+        ] else if (!hasVideo && hasImage && imageUrl != null) ...[
           const SizedBox(height: 12),
           ClipRRect(
             borderRadius: BorderRadius.circular(12),
@@ -817,6 +925,160 @@ class _ActivityCardState extends State<ActivityCard> with SingleTickerProviderSt
         ],
       ],
     );
+  }
+
+  /// Build a multi-image carousel with page indicator (F1)
+  Widget _buildImageCarousel(BuildContext context, List<String> imageUrls) {
+    final pageController = PageController();
+    return Column(
+      children: [
+        SizedBox(
+          height: 300,
+          child: PageView.builder(
+            controller: pageController,
+            itemCount: imageUrls.length,
+            itemBuilder: (context, index) {
+              return ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: Image.network(
+                  imageUrls[index],
+                  fit: BoxFit.cover,
+                  width: double.infinity,
+                  loadingBuilder: (context, child, progress) {
+                    if (progress == null) return child;
+                    return Container(
+                      width: double.infinity,
+                      height: 300,
+                      decoration: BoxDecoration(
+                        color: AppColors.textMuted.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: const Center(
+                          child: CircularProgressIndicator(strokeWidth: 2)),
+                    );
+                  },
+                  errorBuilder: (context, error, stackTrace) {
+                    return Container(
+                      width: double.infinity,
+                      height: 300,
+                      decoration: BoxDecoration(
+                        color: AppColors.textMuted.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Icon(
+                        Icons.broken_image_outlined,
+                        color: AppColors.textMuted,
+                        size: 32,
+                      ),
+                    );
+                  },
+                ),
+              );
+            },
+          ),
+        ),
+        const SizedBox(height: 8),
+        SmoothPageIndicator(
+          controller: pageController,
+          count: imageUrls.length,
+          effect: WormEffect(
+            dotHeight: 8,
+            dotWidth: 8,
+            activeDotColor: Theme.of(context).colorScheme.primary,
+            dotColor: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.3),
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// Build caption text with tappable hashtags and @mentions
+  Widget _buildCaptionWithHashtags(String text, BuildContext context) {
+    final pattern = RegExp(r'(#\w+|@\w+)');
+    final hasSpecialText = pattern.hasMatch(text);
+
+    if (!hasSpecialText) {
+      return Text(text, style: const TextStyle(fontSize: 15));
+    }
+
+    final spans = <InlineSpan>[];
+    int lastEnd = 0;
+
+    for (final match in pattern.allMatches(text)) {
+      if (match.start > lastEnd) {
+        spans.add(TextSpan(text: text.substring(lastEnd, match.start)));
+      }
+      final token = match.group(0)!;
+      final isHashtag = token.startsWith('#');
+
+      spans.add(TextSpan(
+        text: token,
+        style: TextStyle(
+          color: isHashtag
+              ? Theme.of(context).colorScheme.primary
+              : Theme.of(context).colorScheme.tertiary,
+          fontWeight: FontWeight.w600,
+        ),
+        recognizer: TapGestureRecognizer()
+          ..onTap = () {
+            if (isHashtag) {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) =>
+                      HashtagFeedScreen(hashtagName: token.substring(1)),
+                ),
+              );
+            } else {
+              // @mention — navigate to friend profile
+              _navigateToMentionedUser(context, token.substring(1));
+            }
+          },
+      ));
+      lastEnd = match.end;
+    }
+    if (lastEnd < text.length) {
+      spans.add(TextSpan(text: text.substring(lastEnd)));
+    }
+
+    return RichText(
+      text: TextSpan(
+        style: DefaultTextStyle.of(context).style.copyWith(fontSize: 15),
+        children: spans,
+      ),
+    );
+  }
+
+  void _navigateToMentionedUser(BuildContext context, String username) async {
+    try {
+      final storage = const FlutterSecureStorage(
+        aOptions: AndroidOptions(encryptedSharedPreferences: true),
+        iOptions: IOSOptions(accessibility: KeychainAccessibility.first_unlock),
+      );
+      final socialService = SocialService(ApiClient(storage));
+      final result = await socialService.searchUsers(
+        userId: widget.currentUserId,
+        query: username,
+        limit: 1,
+      );
+
+      final users = result['results'] as List<dynamic>?;
+      if (users != null && users.isNotEmpty) {
+        final user = users[0] as Map<String, dynamic>;
+        final userId = user['id'] as String?;
+        if (userId != null && context.mounted) {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => FriendProfileScreen(targetUserId: userId),
+            ),
+          );
+          return;
+        }
+      }
+    } catch (e) {
+      debugPrint('Error navigating to mentioned user: $e');
+    }
   }
 
   /// Vibrant flair colors — always colorful regardless of monochrome theme

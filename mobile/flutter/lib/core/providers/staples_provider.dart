@@ -134,6 +134,7 @@ class StaplesNotifier extends StateNotifier<StaplesState> {
                 'old_exercise_name': swapExerciseId,
                 'new_exercise_name': exerciseName,
                 'section': section,
+                if (cardioParams != null) ...cardioParams,
               },
             );
             debugPrint('✅ Swapped "$swapExerciseId" with "$exerciseName"');
@@ -163,7 +164,7 @@ class StaplesNotifier extends StateNotifier<StaplesState> {
 
       // Only inject if not swapping (swap already placed the exercise)
       if (addToCurrentWorkout && swapExerciseId == null) {
-        await _injectIntoCurrentWorkout(exerciseName, section);
+        await _injectIntoCurrentWorkout(exerciseName, section, cardioParams: cardioParams);
       }
 
       // Invalidate providers to refresh UI with new workouts
@@ -179,7 +180,11 @@ class StaplesNotifier extends StateNotifier<StaplesState> {
   }
 
   /// Inject an exercise directly into the current/today's workout
-  Future<void> _injectIntoCurrentWorkout(String exerciseName, String section) async {
+  Future<void> _injectIntoCurrentWorkout(
+    String exerciseName,
+    String section, {
+    Map<String, double>? cardioParams,
+  }) async {
     try {
       final todayWorkoutAsync = _ref.read(todayWorkoutProvider);
       final response = todayWorkoutAsync.valueOrNull;
@@ -197,6 +202,7 @@ class StaplesNotifier extends StateNotifier<StaplesState> {
           'workout_id': workout.id,
           'exercise_name': exerciseName,
           'section': section,
+          if (cardioParams != null) ...cardioParams,
         },
       );
 

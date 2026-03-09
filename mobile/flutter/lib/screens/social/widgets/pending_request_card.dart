@@ -6,12 +6,14 @@ class PendingRequestCard extends StatelessWidget {
   final Map<String, dynamic> request;
   final VoidCallback onAccept;
   final VoidCallback onDecline;
+  final VoidCallback? onViewProfile;
 
   const PendingRequestCard({
     super.key,
     required this.request,
     required this.onAccept,
     required this.onDecline,
+    this.onViewProfile,
   });
 
   @override
@@ -84,6 +86,25 @@ class PendingRequestCard extends StatelessWidget {
           ],
 
           const Spacer(),
+
+          // View Profile button
+          if (onViewProfile != null) ...[
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: onViewProfile,
+                icon: const Icon(Icons.person_outline_rounded, size: 16),
+                label: const Text('View Profile'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: AppColors.textSecondary,
+                  side: BorderSide(color: AppColors.cardBorder.withValues(alpha: 0.5)),
+                  padding: const EdgeInsets.symmetric(vertical: 6),
+                  visualDensity: VisualDensity.compact,
+                ),
+              ),
+            ),
+            const SizedBox(height: 6),
+          ],
 
           // Action buttons
           Row(

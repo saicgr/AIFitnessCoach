@@ -23,7 +23,7 @@ class PhotoEditorScreen extends StatefulWidget {
 
 class _PhotoEditorScreenState extends State<PhotoEditorScreen> {
   File? _editedImage;
-  bool _showLogo = true;
+  bool _showLogo = false;
   bool _isSaving = false;
   bool _showPoseHint = true;
 

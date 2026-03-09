@@ -5,7 +5,7 @@ class AppColors {
   AppColors._();
 
   // Brand Colors - Monochrome
-  static const Color cyan = Color(0xFFE0E0E0); // Light gray accent
+  static const Color cyan = Color(0xFF06B6D4); // Vivid cyan accent
   static const Color cyanDark = Color(0xFFBDBDBD);
   static const Color electricBlue = Color(0xFFB0B0B0);
   static const Color teal = Color(0xFFC0C0C0);

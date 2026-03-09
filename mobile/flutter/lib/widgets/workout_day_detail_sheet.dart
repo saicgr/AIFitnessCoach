@@ -106,7 +106,9 @@ class _DetailContent extends StatelessWidget {
         ),
 
         // Content based on status
-        if (detail.statusEnum == CalendarStatus.completed)
+        if (detail.statusEnum == CalendarStatus.completed && detail.isHealthImport)
+          SliverToBoxAdapter(child: _buildHealthImportContent(context))
+        else if (detail.statusEnum == CalendarStatus.completed)
           ..._buildCompletedContent(context)
         else if (detail.statusEnum == CalendarStatus.missed)
           SliverToBoxAdapter(child: _buildMissedContent(context))
@@ -194,6 +196,92 @@ class _DetailContent extends StatelessWidget {
             label: 'Avg RPE',
           ),
       ],
+    );
+  }
+
+  Widget _buildHealthImportContent(BuildContext context) {
+    final meta = detail.importMetadata;
+    final sourceApp = meta?['source_app'] as String?;
+    final calories = meta?['calories_burned'];
+    final distance = meta?['distance_meters'];
+    final avgHR = meta?['avg_heart_rate'];
+    final maxHR = meta?['max_heart_rate'];
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      child: Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: AppColors.green.withOpacity(0.08),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: AppColors.green.withOpacity(0.25)),
+        ),
+        child: Column(
+          children: [
+            Icon(
+              Icons.watch_outlined,
+              color: AppColors.green,
+              size: 44,
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'Synced from Health',
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+            ),
+            if (sourceApp != null) ...[
+              const SizedBox(height: 4),
+              Text(
+                'Source: $sourceApp',
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: AppColors.textSecondary,
+                    ),
+              ),
+            ],
+            const SizedBox(height: 16),
+
+            // Metadata stats
+            Wrap(
+              spacing: 12,
+              runSpacing: 12,
+              alignment: WrapAlignment.center,
+              children: [
+                if (detail.durationMinutes != null)
+                  _ImportStat(
+                    icon: Icons.timer_outlined,
+                    value: detail.formattedDuration,
+                    label: 'Duration',
+                  ),
+                if (calories != null)
+                  _ImportStat(
+                    icon: Icons.local_fire_department_outlined,
+                    value: '${(calories is num ? calories.toInt() : calories)}',
+                    label: 'Calories',
+                  ),
+                if (distance != null && (distance as num) > 0)
+                  _ImportStat(
+                    icon: Icons.straighten,
+                    value: '${(distance / 1000).toStringAsFixed(1)} km',
+                    label: 'Distance',
+                  ),
+                if (avgHR != null)
+                  _ImportStat(
+                    icon: Icons.favorite_outline,
+                    value: '$avgHR',
+                    label: 'Avg HR',
+                  ),
+                if (maxHR != null)
+                  _ImportStat(
+                    icon: Icons.favorite,
+                    value: '$maxHR',
+                    label: 'Max HR',
+                  ),
+              ],
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -662,6 +750,49 @@ class _MuscleChip extends StatelessWidget {
               color: AppColors.cyan,
               fontWeight: FontWeight.w500,
             ),
+      ),
+    );
+  }
+}
+
+/// Stat chip for health-imported workout details
+class _ImportStat extends StatelessWidget {
+  final IconData icon;
+  final String value;
+  final String label;
+
+  const _ImportStat({
+    required this.icon,
+    required this.value,
+    required this.label,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      decoration: BoxDecoration(
+        color: AppColors.glassSurface,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        children: [
+          Icon(icon, color: AppColors.green, size: 18),
+          const SizedBox(height: 4),
+          Text(
+            value,
+            style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+          ),
+          Text(
+            label,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: AppColors.textMuted,
+                  fontSize: 10,
+                ),
+          ),
+        ],
       ),
     );
   }

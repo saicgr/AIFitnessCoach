@@ -5,12 +5,14 @@ import '../../../core/constants/app_colors.dart';
 class UserSearchResultCard extends StatelessWidget {
   final Map<String, dynamic> user;
   final VoidCallback onAction;
+  final VoidCallback? onTap;
   final bool showSuggestionReason;
 
   const UserSearchResultCard({
     super.key,
     required this.user,
     required this.onAction,
+    this.onTap,
     this.showSuggestionReason = false,
   });
 
@@ -35,7 +37,9 @@ class UserSearchResultCard extends StatelessWidget {
     final suggestionReason = user['suggestion_reason'] as String?;
     final mutualFriendsCount = user['mutual_friends_count'] as int? ?? 0;
 
-    return Container(
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: elevated,
@@ -77,6 +81,14 @@ class UserSearchResultCard extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
+                // Username
+                if (username != null && username.isNotEmpty)
+                  Text(
+                    '@$username',
+                    style: TextStyle(fontSize: 13, color: AppColors.textMuted),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 // Stats row
                 Row(
                   children: [
@@ -141,6 +153,7 @@ class UserSearchResultCard extends StatelessWidget {
             ),
         ],
       ),
+    ),
     );
   }
 
@@ -193,12 +206,12 @@ class UserSearchResultCard extends StatelessWidget {
     } else if (requiresApproval) {
       label = 'Request';
       icon = Icons.person_add_rounded;
-      color = AppColors.cyan;
+      color = AppColors.orange;
       isOutlined = false;
     } else {
-      label = 'Follow';
+      label = 'Add';
       icon = Icons.person_add_rounded;
-      color = AppColors.cyan;
+      color = AppColors.orange;
       isOutlined = false;
     }
 

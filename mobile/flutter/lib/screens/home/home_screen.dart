@@ -28,12 +28,14 @@ import '../nutrition/log_meal_sheet.dart';
 import 'widgets/components/components.dart';
 import 'widgets/cards/cards.dart';
 import 'widgets/daily_activity_card.dart';
+import 'widgets/edit_tracking_sheet.dart';
 import 'widgets/renewal_reminder_banner.dart';
 import 'widgets/missed_workout_banner.dart';
 import 'widgets/contextual_banner.dart';
 import 'widgets/tile_factory.dart';
 import 'widgets/my_program_summary_card.dart';
 import 'widgets/hero_workout_card.dart';
+import '../../core/providers/week_start_provider.dart';
 import 'widgets/hero_workout_carousel.dart';
 import 'widgets/sectioned_hero_area.dart';
 import 'widgets/habits_section.dart';
@@ -1433,7 +1435,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   }
 
   /// Build a section header for the home screen
-  Widget _buildHomeSectionHeader(String title, bool isDark, {IconData? icon}) {
+  Widget _buildHomeSectionHeader(String title, bool isDark, {IconData? icon, bool showEdit = false}) {
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final accentColor = isDark ? Colors.white : Colors.black;
 
@@ -1454,6 +1456,20 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
               letterSpacing: 1.2,
             ),
           ),
+          if (showEdit) ...[
+            const Spacer(),
+            GestureDetector(
+              onTap: () {
+                HapticService.light();
+                showEditTrackingSheet(context);
+              },
+              child: Icon(
+                Icons.edit_outlined,
+                size: 16,
+                color: textMuted,
+              ),
+            ),
+          ],
         ],
       ),
     );
@@ -1487,6 +1503,18 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
         .where((t) => t.isVisible && !deprecatedTiles.contains(t.type))
         .toList()
       ..sort((a, b) => a.order.compareTo(b.order));
+
+    // Migration: ensure dailyActivity tile exists in layout (for users who saved before it was added)
+    if (!layout.tiles.any((t) => t.type == TileType.dailyActivity)) {
+      final dailyActivityTile = HomeTile(
+        id: 'tile_daily_activity_migrated',
+        type: TileType.dailyActivity,
+        size: TileType.dailyActivity.defaultSize,
+        order: visibleTiles.isEmpty ? 0 : visibleTiles.last.order + 1,
+        isVisible: true,
+      );
+      visibleTiles.add(dailyActivityTile);
+    }
 
     if (visibleTiles.isEmpty) {
       return _buildFallbackTilesAsSlivers(context, isDark, todayWorkoutState, isAIGenerating);
@@ -1642,7 +1670,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     // Render tracking section
     if (trackingTilesList.isNotEmpty) {
       slivers.add(SliverToBoxAdapter(
-        child: _buildHomeSectionHeader('Tracking', isDark, icon: Icons.timeline),
+        child: _buildHomeSectionHeader('Tracking', isDark, icon: Icons.timeline, showEdit: true),
       ));
       renderTileGroup(trackingTilesList);
     }
@@ -1885,6 +1913,18 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
             .toList()
           ..sort((a, b) => a.order.compareTo(b.order));
 
+        // Migration: ensure dailyActivity tile exists in layout (for users who saved before it was added)
+        if (!layout.tiles.any((t) => t.type == TileType.dailyActivity)) {
+          final dailyActivityTile = HomeTile(
+            id: 'tile_daily_activity_migrated',
+            type: TileType.dailyActivity,
+            size: TileType.dailyActivity.defaultSize,
+            order: visibleTiles.isEmpty ? 0 : visibleTiles.last.order + 1,
+            isVisible: true,
+          );
+          visibleTiles.add(dailyActivityTile);
+        }
+
         if (visibleTiles.isEmpty) {
           return _buildDefaultTiles(
             context,
@@ -2082,6 +2122,18 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
             .where((t) => t.isVisible && !deprecatedTileTypes.contains(t.type))
             .toList()
           ..sort((a, b) => a.order.compareTo(b.order));
+
+        // Migration: ensure dailyActivity tile exists in layout (for users who saved before it was added)
+        if (!layout.tiles.any((t) => t.type == TileType.dailyActivity)) {
+          final dailyActivityTile = HomeTile(
+            id: 'tile_daily_activity_migrated',
+            type: TileType.dailyActivity,
+            size: TileType.dailyActivity.defaultSize,
+            order: visibleTiles.isEmpty ? 0 : visibleTiles.last.order + 1,
+            isVisible: true,
+          );
+          visibleTiles.add(dailyActivityTile);
+        }
 
         if (visibleTiles.isEmpty) {
           return _buildDefaultTilesLazy(context, isDark, todayWorkoutState, isAIGenerating);
@@ -2329,11 +2381,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     if (!_carouselPageController.hasClients) return;
 
     // Find the carousel item whose date matches or is closest to the tapped day
+    final weekConfig = ref.read(weekDisplayConfigProvider);
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
-    final todayIndex = today.weekday - 1;
-    final monday = today.subtract(Duration(days: todayIndex));
-    final tappedDate = monday.add(Duration(days: dayIndex));
+    final weekStart = weekConfig.weekStart(today);
+    final tappedDate = weekConfig.dateForDataIndex(weekStart, dayIndex);
 
     int bestIndex = 0;
     int bestDiff = 999;

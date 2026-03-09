@@ -150,6 +150,10 @@ class ChatMessage extends Equatable {
   @JsonKey(name: 'audio_duration_ms')
   final int? audioDurationMs;
 
+  /// Which coach persona sent this message (for preserving coach identity in history)
+  @JsonKey(name: 'coach_persona_id')
+  final String? coachPersonaId;
+
   const ChatMessage({
     this.id,
     this.userId,
@@ -167,6 +171,7 @@ class ChatMessage extends Equatable {
     this.isPinned = false,
     this.audioUrl,
     this.audioDurationMs,
+    this.coachPersonaId,
   });
 
   factory ChatMessage.fromJson(Map<String, dynamic> json) =>
@@ -215,7 +220,7 @@ class ChatMessage extends Equatable {
       actionData?['form_check_result'] as Map<String, dynamic>?;
 
   @override
-  List<Object?> get props => [id, userId, role, content, agentType, createdAt, actionData, mediaUrl, mediaType, mediaRefs, localFilePath, status, isPinned, audioUrl, audioDurationMs];
+  List<Object?> get props => [id, userId, role, content, agentType, createdAt, actionData, mediaUrl, mediaType, mediaRefs, localFilePath, status, isPinned, audioUrl, audioDurationMs, coachPersonaId];
 
   /// Check if this is a voice message
   bool get isVoiceMessage => audioUrl != null && audioUrl!.isNotEmpty;
@@ -238,6 +243,7 @@ class ChatMessage extends Equatable {
     bool? isPinned,
     String? audioUrl,
     int? audioDurationMs,
+    String? coachPersonaId,
   }) {
     return ChatMessage(
       id: id ?? this.id,
@@ -256,6 +262,7 @@ class ChatMessage extends Equatable {
       isPinned: isPinned ?? this.isPinned,
       audioUrl: audioUrl ?? this.audioUrl,
       audioDurationMs: audioDurationMs ?? this.audioDurationMs,
+      coachPersonaId: coachPersonaId ?? this.coachPersonaId,
     );
   }
 
@@ -378,6 +385,8 @@ class ChatHistoryItem {
   final String? audioUrl;
   @JsonKey(name: 'audio_duration_ms')
   final int? audioDurationMs;
+  @JsonKey(name: 'coach_persona_id')
+  final String? coachPersonaId;
 
   const ChatHistoryItem({
     this.id,
@@ -389,6 +398,7 @@ class ChatHistoryItem {
     this.isPinned = false,
     this.audioUrl,
     this.audioDurationMs,
+    this.coachPersonaId,
   });
 
   factory ChatHistoryItem.fromJson(Map<String, dynamic> json) =>
@@ -406,5 +416,6 @@ class ChatHistoryItem {
         isPinned: isPinned,
         audioUrl: audioUrl,
         audioDurationMs: audioDurationMs,
+        coachPersonaId: coachPersonaId,
       );
 }

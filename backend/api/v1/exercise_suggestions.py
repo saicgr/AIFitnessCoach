@@ -57,6 +57,8 @@ class SuggestionRequest(BaseModel):
     user_injuries: Optional[List[str]] = None
     user_fitness_level: Optional[str] = "intermediate"
     avoided_exercises: Optional[List[str]] = None  # Exercises user wants to avoid
+    existing_exercises: Optional[List[str]] = None  # Exercises already in the workout (for "add" mode)
+    mode: Optional[str] = "swap"  # "swap" or "add"
 
 
 class ExerciseSuggestion(BaseModel):
@@ -113,6 +115,8 @@ async def get_exercise_suggestions(request: Request, body: SuggestionRequest, cu
             "user_injuries": body.user_injuries,
             "user_fitness_level": body.user_fitness_level,
             "avoided_exercises": body.avoided_exercises,  # Pass avoided exercises to filter
+            "existing_exercises": body.existing_exercises,
+            "mode": body.mode or "swap",
             # Will be filled by nodes
             "swap_reason": None,
             "target_muscle_group": None,

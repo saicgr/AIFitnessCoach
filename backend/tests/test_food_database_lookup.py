@@ -349,8 +349,8 @@ class TestEnhanceFoodItemsWithNutritionDB:
         assert item["ai_per_gram"]["calories"] == round(400 / 300, 3)
 
     @pytest.mark.asyncio
-    async def test_enhance_food_zero_calories_uses_ai(self, gemini_service, mock_food_db_for_gemini):
-        """DB returns 0 calories -> falls back to AI estimate."""
+    async def test_enhance_food_zero_calories_trusts_db(self, gemini_service, mock_food_db_for_gemini):
+        """DB returns 0 calories with 0 macros (legit zero-cal food) -> trusts DB data."""
         food_items = [
             {"name": "Water", "calories": 0, "protein_g": 0.0,
              "carbs_g": 0.0, "fat_g": 0.0, "fiber_g": 0.0,
@@ -368,8 +368,36 @@ class TestEnhanceFoodItemsWithNutritionDB:
 
         assert len(result) == 1
         item = result[0]
-        # Zero calories from DB -> usda_data should be None (falls back to AI)
+        # Zero calories + zero macros from DB -> legitimate zero-cal food, trust DB
+        assert item["usda_data"] is not None
+        assert item["calories"] == 0
+        assert item["protein_g"] == 0.0
+        assert item["carbs_g"] == 0.0
+        assert item["fat_g"] == 0.0
+
+    @pytest.mark.asyncio
+    async def test_enhance_food_zero_calories_high_macros_uses_ai(self, gemini_service, mock_food_db_for_gemini):
+        """DB returns 0 calories but has high macros (incomplete data) -> falls back to AI."""
+        food_items = [
+            {"name": "Mystery Food", "calories": 200, "protein_g": 10.0,
+             "carbs_g": 25.0, "fat_g": 5.0, "fiber_g": 2.0,
+             "weight_g": 150, "amount": "1 serving"},
+        ]
+
+        mock_food_db_for_gemini.batch_lookup_foods.return_value = {
+            "Mystery Food": {
+                "calories_per_100g": 0.0, "protein_per_100g": 15.0,
+                "carbs_per_100g": 30.0, "fat_per_100g": 8.0, "fiber_per_100g": 3.0,
+            },
+        }
+
+        result = await gemini_service._enhance_food_items_with_nutrition_db(food_items)
+
+        assert len(result) == 1
+        item = result[0]
+        # Zero calories but high macros -> incomplete DB data, fall back to AI
         assert item["usda_data"] is None
+        assert item["ai_per_gram"] is not None
 
     @pytest.mark.asyncio
     async def test_enhance_with_use_usda_flag(self, gemini_service):

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../core/constants/api_constants.dart';
 import '../models/exercise_history.dart';
 import '../services/api_client.dart';
 
@@ -33,7 +32,7 @@ class ExerciseHistoryRepository {
 
       final encodedName = Uri.encodeComponent(exerciseName);
       final response = await _apiClient.get(
-        '${ApiConstants.baseUrl}/exercise-history/$encodedName',
+        '/exercise-history/$encodedName',
         queryParameters: {
           'user_id': userId,
           'time_range': timeRange,
@@ -105,7 +104,7 @@ class ExerciseHistoryRepository {
 
       final encodedName = Uri.encodeComponent(exerciseName);
       final response = await _apiClient.get(
-        '${ApiConstants.baseUrl}/exercise-history/$encodedName/chart',
+        '/exercise-history/$encodedName/chart',
         queryParameters: {
           'user_id': userId,
           'time_range': timeRange,
@@ -148,7 +147,7 @@ class ExerciseHistoryRepository {
 
       final encodedName = Uri.encodeComponent(exerciseName);
       final response = await _apiClient.get(
-        '${ApiConstants.baseUrl}/exercise-history/$encodedName/prs',
+        '/exercise-history/$encodedName/prs',
         queryParameters: {
           'user_id': userId,
         },
@@ -192,7 +191,7 @@ class ExerciseHistoryRepository {
       debugPrint('🔍 [ExerciseHistory] Fetching most performed exercises');
 
       final response = await _apiClient.get(
-        '${ApiConstants.baseUrl}/exercise-history/most-performed',
+        '/exercise-history/most-performed',
         queryParameters: {
           'user_id': userId,
           'limit': limit,
@@ -233,7 +232,7 @@ class ExerciseHistoryRepository {
       if (userId == null) return;
 
       await _apiClient.post(
-        '${ApiConstants.baseUrl}/exercise-history/log-view',
+        '/exercise-history/log-view',
         data: {
           'user_id': userId,
           'exercise_name': exerciseName,

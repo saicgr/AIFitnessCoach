@@ -136,6 +136,10 @@ dependencies:
   # Social Media Icons
   font_awesome_flutter: ^10.7.0
 
+  # Social Section Expansion
+  smooth_page_indicator: ^1.2.0+3
+  visibility_detector: ^0.4.0+2
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

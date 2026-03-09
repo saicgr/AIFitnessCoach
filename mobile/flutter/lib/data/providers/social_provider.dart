@@ -9,12 +9,16 @@ final socialServiceProvider = Provider<SocialService>((ref) {
   return SocialService(apiClient);
 });
 
-/// Activity feed provider (paginated)
+/// Feed sort order provider (F3)
+final feedSortProvider = StateProvider<String>((ref) => 'recent');
+
+/// Activity feed provider (paginated, supports sorting via feedSortProvider)
 /// Note: Removed autoDispose to prevent refetching on navigation
 final activityFeedProvider = FutureProvider.family<Map<String, dynamic>, String>(
   (ref, userId) async {
     final socialService = ref.watch(socialServiceProvider);
-    return await socialService.getActivityFeed(userId: userId);
+    final sortBy = ref.watch(feedSortProvider);
+    return await socialService.getActivityFeed(userId: userId, sortBy: sortBy);
   },
 );
 
@@ -135,5 +139,37 @@ final conversationMessagesProvider = FutureProvider.family<List<Map<String, dyna
     }
 
     return decryptedMessages;
+  },
+);
+
+/// Social stats provider (F7) - friends count, followers, following
+final socialStatsProvider = FutureProvider.autoDispose.family<Map<String, dynamic>, String>(
+  (ref, userId) async {
+    final socialService = ref.read(socialServiceProvider);
+    return await socialService.getSocialStats(userId: userId);
+  },
+);
+
+/// Stories feed provider (F11) - stories from friends
+final storiesFeedProvider = FutureProvider.autoDispose<List<Map<String, dynamic>>>(
+  (ref) async {
+    final socialService = ref.read(socialServiceProvider);
+    return await socialService.getStoriesFeed();
+  },
+);
+
+/// Story views provider (F11) - views for a specific story
+final storyViewsProvider = FutureProvider.autoDispose.family<List<Map<String, dynamic>>, String>(
+  (ref, storyId) async {
+    final socialService = ref.read(socialServiceProvider);
+    return await socialService.getStoryViews(storyId);
+  },
+);
+
+/// Trending hashtags provider (F10)
+final trendingHashtagsProvider = FutureProvider.autoDispose<List<Map<String, dynamic>>>(
+  (ref) async {
+    final socialService = ref.read(socialServiceProvider);
+    return await socialService.getTrendingHashtags();
   },
 );

@@ -607,7 +607,7 @@ async def get_calendar_heatmap(
 
         # Get all scheduled workouts in range
         workouts_response = db.client.table("workouts").select(
-            "id, name, scheduled_date, is_completed"
+            "id, name, scheduled_date, is_completed, generation_method"
         ).eq("user_id", user_id).gte(
             "scheduled_date", start_date.isoformat()
         ).lte(
@@ -621,9 +621,12 @@ async def get_calendar_heatmap(
             if "T" in scheduled_str:
                 scheduled_str = scheduled_str.split("T")[0]
             workout_date = date.fromisoformat(scheduled_str)
+            # Imported workouts from Health are always considered completed
+            # since they represent workouts already performed on the device
+            is_completed = workout["is_completed"] or workout.get("generation_method") == "health_connect_import"
             workout_map[workout_date] = {
                 "name": workout["name"],
-                "completed": workout["is_completed"],
+                "completed": is_completed,
             }
 
         # Build calendar data
@@ -720,7 +723,7 @@ async def get_day_detail(
         # Use date range to properly match timestamp column
         # Prioritize completed workouts, then most recent
         workout_response = db.client.table("workouts").select(
-            "id, name, type, difficulty, duration_minutes, exercises_json, is_completed"
+            "id, name, type, difficulty, duration_minutes, exercises_json, is_completed, generation_method"
         ).eq("user_id", user_id).gte(
             "scheduled_date", f"{date_str}T00:00:00"
         ).lt(
@@ -739,7 +742,8 @@ async def get_day_detail(
 
         workout = workout_response.data[0]
         workout_id = workout["id"]
-        is_completed = workout.get("is_completed", False)
+        # Imported workouts from Health are always considered completed
+        is_completed = workout.get("is_completed", False) or workout.get("generation_method") == "health_connect_import"
 
         if not is_completed:
             # Workout was scheduled but not completed
@@ -754,6 +758,27 @@ async def get_day_detail(
                 "exercises": [],
                 "muscles_worked": [ex.get("muscle_group") or ex.get("target_muscles", "") for ex in (workout.get("exercises_json") or []) if ex.get("muscle_group") or ex.get("target_muscles")],
             }
+
+        # For health-imported workouts, include import metadata
+        is_health_import = workout.get("generation_method") == "health_connect_import"
+        import_metadata = None
+        if is_health_import:
+            # Fetch generation_metadata for import details (calories, source app, etc.)
+            meta_response = safe_maybe_single(
+                db.client.table("workouts").select(
+                    "generation_metadata"
+                ).eq("id", workout_id).maybe_single()
+            )
+            raw_meta = (meta_response.data or {}).get("generation_metadata")
+            if raw_meta:
+                import json as json_mod
+                if isinstance(raw_meta, str):
+                    try:
+                        import_metadata = json_mod.loads(raw_meta)
+                    except Exception:
+                        import_metadata = None
+                elif isinstance(raw_meta, dict):
+                    import_metadata = raw_meta
 
         # Get workout log for completed workout
         log_response = safe_maybe_single(
@@ -889,6 +914,8 @@ async def get_day_detail(
             "coach_feedback": None,  # not yet implemented - coach feedback lookup pending
             "completed_at": log_data.get("completed_at"),
             "average_rpe": avg_rpe,
+            "is_health_import": is_health_import,
+            "import_metadata": import_metadata,
         }
 
     except ValueError as e:
