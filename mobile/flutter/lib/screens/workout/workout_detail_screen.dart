@@ -224,9 +224,10 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
     }
   }
 
-  /// Resolve 'dont_know' to actual training split based on workout days count
+  /// Resolve 'dont_know' or 'ai_decide' to actual training split based on workout days count
   String _resolveTrainingSplit(String split, int numDays) {
-    if (split.toLowerCase() != 'dont_know') {
+    final lower = split.toLowerCase();
+    if (lower != 'dont_know' && lower != 'ai_decide') {
       return split;  // Already a specific split
     }
 
@@ -673,7 +674,7 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
   /// Returns the program name if found, or null for special cases like 'nothing_structured'
   String? _getTrainingProgramName(String splitId) {
     // Handle special cases that are valid but don't have a display badge
-    if (splitId == 'nothing_structured' || splitId == 'dont_know') {
+    if (splitId == 'nothing_structured' || splitId == 'dont_know' || splitId == 'ai_decide') {
       // User chose "let AI decide" - no specific program badge to show
       return null;
     }

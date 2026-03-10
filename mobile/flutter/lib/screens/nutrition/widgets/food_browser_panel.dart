@@ -128,15 +128,23 @@ class _FoodBrowserPanelState extends ConsumerState<FoodBrowserPanel> {
     if (_lastReviewQuery == state.query) return;
     _lastReviewQuery = state.query;
 
-    // Pick top result for macros
-    final top = state.allResults.first;
+    // Aggregate macros from top results so the review reflects the full query
+    final topResults = state.allResults.take(5);
+    int totalCal = 0;
+    double totalProtein = 0, totalCarbs = 0, totalFat = 0;
+    for (final r in topResults) {
+      totalCal += r.calories;
+      totalProtein += r.protein ?? 0;
+      totalCarbs += r.carbs ?? 0;
+      totalFat += r.fat ?? 0;
+    }
     setState(() => _reviewLoading = true);
     ref.read(search.foodSearchServiceProvider).startReviewTimer(
-      top.name,
-      top.calories,
-      top.protein ?? 0,
-      top.carbs ?? 0,
-      top.fat ?? 0,
+      state.query,
+      totalCal,
+      totalProtein,
+      totalCarbs,
+      totalFat,
     );
   }
 
@@ -2638,7 +2646,7 @@ List<_GoalTag> _buildGoalTags({
 
 // ─── AI Food Review Card (Coach Tip) ───────────────────────────
 
-class _FoodReviewCard extends StatelessWidget {
+class _FoodReviewCard extends StatefulWidget {
   final search.FoodReview? review;
   final bool isLoading;
   final bool isDark;
@@ -2650,14 +2658,41 @@ class _FoodReviewCard extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
-    if (!isLoading && review == null) return const SizedBox.shrink();
+  State<_FoodReviewCard> createState() => _FoodReviewCardState();
+}
 
-    final teal = isDark ? AppColors.teal : AppColorsLight.teal;
-    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final encourageColor = isDark ? AppColors.green : AppColorsLight.green;
-    final warningColor = isDark ? AppColors.error : AppColorsLight.error;
-    final swapColor = isDark ? AppColors.purple : AppColorsLight.purple;
+class _FoodReviewCardState extends State<_FoodReviewCard> {
+  bool _isExpanded = false;
+
+  @override
+  Widget build(BuildContext context) {
+    if (!widget.isLoading && widget.review == null) return const SizedBox.shrink();
+
+    final teal = widget.isDark ? AppColors.teal : AppColorsLight.teal;
+    final textPrimary = widget.isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textMuted = widget.isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+
+    // While loading, show compact loading header
+    if (widget.isLoading) {
+      return _buildCollapsedHeader(teal, textPrimary, textMuted, loading: true);
+    }
+
+    final r = widget.review!;
+    final hasContent = r.encouragements.isNotEmpty ||
+        r.warnings.isNotEmpty ||
+        (r.aiSuggestion != null && r.aiSuggestion!.isNotEmpty) ||
+        (r.recommendedSwap != null && r.recommendedSwap!.isNotEmpty);
+    if (!hasContent) return const SizedBox.shrink();
+
+    // Collapsed: just the header row (icon + "Coach Tip" + score + chevron)
+    if (!_isExpanded) {
+      return _buildCollapsedHeader(teal, textPrimary, textMuted);
+    }
+
+    // Expanded: full card
+    final encourageColor = widget.isDark ? AppColors.green : AppColorsLight.green;
+    final warningColor = widget.isDark ? AppColors.error : AppColorsLight.error;
+    final swapColor = widget.isDark ? AppColors.purple : AppColorsLight.purple;
 
     return Container(
       padding: const EdgeInsets.all(12),
@@ -2673,70 +2708,153 @@ class _FoodReviewCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: teal.withValues(alpha: 0.2)),
       ),
-      child: isLoading ? _buildLoading(teal, textPrimary) : _buildContent(
-        textPrimary: textPrimary,
-        teal: teal,
-        encourageColor: encourageColor,
-        warningColor: warningColor,
-        swapColor: swapColor,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Tappable header
+          GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: () => setState(() => _isExpanded = false),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(5),
+                  decoration: BoxDecoration(
+                    color: teal.withValues(alpha: 0.2),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Icon(Icons.psychology, size: 16, color: teal),
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  'Coach Tip',
+                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: textPrimary),
+                ),
+                if (r.healthScore != null) ...[
+                  const SizedBox(width: 8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: _scoreColor(r.healthScore!).withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      '${r.healthScore}/10',
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        color: _scoreColor(r.healthScore!),
+                      ),
+                    ),
+                  ),
+                ],
+                const Spacer(),
+                Icon(Icons.expand_less, size: 18, color: textMuted),
+              ],
+            ),
+          ),
+
+          // Encouragements
+          if (r.encouragements.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            ...r.encouragements.take(2).map((e) => Padding(
+              padding: const EdgeInsets.only(bottom: 4),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(Icons.thumb_up, size: 12, color: encourageColor),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text(
+                      e,
+                      style: TextStyle(fontSize: 12, color: encourageColor),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
+              ),
+            )),
+          ],
+
+          // Warnings
+          if (r.warnings.isNotEmpty) ...[
+            const SizedBox(height: 4),
+            ...r.warnings.take(2).map((w) => Padding(
+              padding: const EdgeInsets.only(bottom: 4),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(Icons.warning_amber, size: 12, color: warningColor),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text(
+                      w,
+                      style: TextStyle(fontSize: 12, color: warningColor),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
+              ),
+            )),
+          ],
+
+          // AI suggestion
+          if (r.aiSuggestion != null && r.aiSuggestion!.isNotEmpty) ...[
+            const SizedBox(height: 4),
+            Text(
+              r.aiSuggestion!,
+              style: TextStyle(fontSize: 12, color: textPrimary),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
+
+          // Recommended swap
+          if (r.recommendedSwap != null && r.recommendedSwap!.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: swapColor.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: swapColor.withValues(alpha: 0.2)),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.swap_horiz, size: 14, color: swapColor),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text(
+                      r.recommendedSwap!,
+                      style: TextStyle(fontSize: 11, color: swapColor, fontWeight: FontWeight.w500),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ],
       ),
     );
   }
 
-  Widget _buildLoading(Color teal, Color textPrimary) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(5),
-              decoration: BoxDecoration(
-                color: teal.withValues(alpha: 0.2),
-                borderRadius: BorderRadius.circular(6),
-              ),
-              child: Icon(Icons.psychology, size: 16, color: teal),
-            ),
-            const SizedBox(width: 8),
-            Text(
-              'Coach Tip',
-              style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: textPrimary),
-            ),
-          ],
+  Widget _buildCollapsedHeader(Color teal, Color textPrimary, Color textMuted, {bool loading = false}) {
+    final r = widget.review;
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: loading ? null : () => setState(() => _isExpanded = true),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        decoration: BoxDecoration(
+          color: teal.withValues(alpha: 0.08),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: teal.withValues(alpha: 0.15)),
         ),
-        const SizedBox(height: 10),
-        // Shimmer placeholder
-        ...List.generate(2, (_) => Container(
-          height: 12,
-          margin: const EdgeInsets.only(bottom: 6),
-          decoration: BoxDecoration(
-            color: teal.withValues(alpha: 0.08),
-            borderRadius: BorderRadius.circular(4),
-          ),
-        )),
-      ],
-    );
-  }
-
-  Widget _buildContent({
-    required Color textPrimary,
-    required Color teal,
-    required Color encourageColor,
-    required Color warningColor,
-    required Color swapColor,
-  }) {
-    final r = review!;
-    final hasContent = r.encouragements.isNotEmpty ||
-        r.warnings.isNotEmpty ||
-        (r.aiSuggestion != null && r.aiSuggestion!.isNotEmpty) ||
-        (r.recommendedSwap != null && r.recommendedSwap!.isNotEmpty);
-    if (!hasContent) return const SizedBox.shrink();
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // Header
-        Row(
+        child: Row(
           children: [
             Container(
               padding: const EdgeInsets.all(5),
@@ -2751,12 +2869,12 @@ class _FoodReviewCard extends StatelessWidget {
               'Coach Tip',
               style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: textPrimary),
             ),
-            if (r.healthScore != null) ...[
-              const Spacer(),
+            if (!loading && r?.healthScore != null) ...[
+              const SizedBox(width: 8),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                 decoration: BoxDecoration(
-                  color: _scoreColor(r.healthScore!).withValues(alpha: 0.15),
+                  color: _scoreColor(r!.healthScore!).withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
@@ -2769,100 +2887,24 @@ class _FoodReviewCard extends StatelessWidget {
                 ),
               ),
             ],
+            const Spacer(),
+            if (loading)
+              SizedBox(
+                width: 14, height: 14,
+                child: CircularProgressIndicator(strokeWidth: 2, color: teal),
+              )
+            else
+              Icon(Icons.expand_more, size: 18, color: textMuted),
           ],
         ),
-
-        // Encouragements
-        if (r.encouragements.isNotEmpty) ...[
-          const SizedBox(height: 8),
-          ...r.encouragements.take(2).map((e) => Padding(
-            padding: const EdgeInsets.only(bottom: 4),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Icon(Icons.thumb_up, size: 12, color: encourageColor),
-                const SizedBox(width: 6),
-                Expanded(
-                  child: Text(
-                    e,
-                    style: TextStyle(fontSize: 12, color: encourageColor),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-              ],
-            ),
-          )),
-        ],
-
-        // Warnings
-        if (r.warnings.isNotEmpty) ...[
-          const SizedBox(height: 4),
-          ...r.warnings.take(2).map((w) => Padding(
-            padding: const EdgeInsets.only(bottom: 4),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Icon(Icons.warning_amber, size: 12, color: warningColor),
-                const SizedBox(width: 6),
-                Expanded(
-                  child: Text(
-                    w,
-                    style: TextStyle(fontSize: 12, color: warningColor),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-              ],
-            ),
-          )),
-        ],
-
-        // AI suggestion
-        if (r.aiSuggestion != null && r.aiSuggestion!.isNotEmpty) ...[
-          const SizedBox(height: 4),
-          Text(
-            r.aiSuggestion!,
-            style: TextStyle(fontSize: 12, color: textPrimary),
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-          ),
-        ],
-
-        // Recommended swap
-        if (r.recommendedSwap != null && r.recommendedSwap!.isNotEmpty) ...[
-          const SizedBox(height: 8),
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: swapColor.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: swapColor.withValues(alpha: 0.2)),
-            ),
-            child: Row(
-              children: [
-                Icon(Icons.swap_horiz, size: 14, color: swapColor),
-                const SizedBox(width: 6),
-                Expanded(
-                  child: Text(
-                    r.recommendedSwap!,
-                    style: TextStyle(fontSize: 11, color: swapColor, fontWeight: FontWeight.w500),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ],
+      ),
     );
   }
 
   Color _scoreColor(int score) {
-    if (score >= 7) return isDark ? AppColors.green : AppColorsLight.green;
+    if (score >= 7) return widget.isDark ? AppColors.green : AppColorsLight.green;
     if (score >= 4) return const Color(0xFFF97316);
-    return isDark ? AppColors.error : AppColorsLight.error;
+    return widget.isDark ? AppColors.error : AppColorsLight.error;
   }
 }
 

@@ -460,6 +460,7 @@ class UserNutritionProfileService:
 
     def __init__(self):
         self.chroma_client = get_chroma_cloud_client()
+        self.gemini_service = GeminiService()
         self.collection = self.chroma_client.get_or_create_collection(
             USER_NUTRITION_PROFILES_COLLECTION
         )
@@ -498,9 +499,13 @@ class UserNutritionProfileService:
         except Exception as e:
             logger.debug(f"ChromaDB delete before upsert: {e}")
 
+        # Generate embedding for the document
+        embedding = self.gemini_service.get_embedding(document_text)
+
         # Add the updated profile
         self.collection.add(
             documents=[document_text],
+            embeddings=[embedding],
             metadatas=[metadata],
             ids=[doc_id],
         )

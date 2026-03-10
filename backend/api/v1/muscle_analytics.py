@@ -358,22 +358,50 @@ async def get_muscle_training_frequency(
 
         logger.info(f"Getting muscle frequency for user {user_id}")
 
-        # Query muscle_training_frequency view
-        query = db.client.from_("muscle_training_frequency") \
-            .select("*") \
-            .eq("user_id", user_id)
+        # Compute frequency from exercise_workout_history (no dedicated view needed)
+        from datetime import timezone
+        from collections import defaultdict
+        now = datetime.now(timezone.utc)
+        d7 = (now - timedelta(days=7)).date().isoformat()
+        d30 = (now - timedelta(days=30)).date().isoformat()
 
-        result = query.execute()
+        # Use exercise_workout_history (same table the exercises endpoint uses)
+        try:
+            result = db.client.from_("exercise_workout_history") \
+                .select("muscle_group, workout_date, total_volume_kg") \
+                .eq("user_id", user_id) \
+                .gte("workout_date", d30) \
+                .not_.is_("muscle_group", "null") \
+                .execute()
+        except Exception:
+            result = type('R', (), {'data': []})()
+
         data = result.data or []
+
+        # Aggregate by muscle group
+        group_stats = defaultdict(lambda: {
+            "count_7d": 0, "count_30d": 0, "total_vol": 0.0,
+            "dates": [],
+        })
+
+        for row in data:
+            mg = row.get("muscle_group", "").lower()
+            if not mg:
+                continue
+            workout_date = row.get("workout_date", "")
+            group_stats[mg]["count_30d"] += 1
+            group_stats[mg]["total_vol"] += float(row.get("total_volume_kg", 0) or 0)
+            if workout_date:
+                group_stats[mg]["dates"].append(workout_date)
+                if workout_date >= d7:
+                    group_stats[mg]["count_7d"] += 1
 
         frequencies = []
         undertrained_count = 0
         overtrained_count = 0
 
-        for row in data:
-            # Calculate weekly frequency (sessions per week over 4 weeks)
-            sessions_30_days = row.get("workout_count_last_30_days", 0)
-            weekly_freq = sessions_30_days / 4 if sessions_30_days else 0
+        for mg, stats in group_stats.items():
+            weekly_freq = stats["count_30d"] / 4 if stats["count_30d"] else 0
             recommendation = get_frequency_recommendation(weekly_freq)
 
             if recommendation == "undertrained":
@@ -381,16 +409,27 @@ async def get_muscle_training_frequency(
             elif recommendation == "overtrained":
                 overtrained_count += 1
 
+            # Calculate days since last training
+            dates = sorted(stats["dates"], reverse=True)
+            last_date = dates[0] if dates else None
+            days_since = None
+            if last_date:
+                try:
+                    last_dt = datetime.fromisoformat(last_date.replace("Z", "+00:00"))
+                    days_since = (now - last_dt).days
+                except Exception:
+                    pass
+
             frequencies.append(MuscleFrequencyItem(
-                muscle_group=row.get("muscle_group", ""),
-                workout_count_last_7_days=row.get("workout_count_last_7_days", 0),
-                workout_count_last_30_days=sessions_30_days,
-                total_workout_count=row.get("total_workout_count", 0),
+                muscle_group=mg,
+                workout_count_last_7_days=stats["count_7d"],
+                workout_count_last_30_days=stats["count_30d"],
+                total_workout_count=stats["count_30d"],
                 weekly_frequency=round(weekly_freq, 1),
-                total_volume_kg=float(row.get("total_volume_all_time_kg", 0) or 0),
-                avg_days_between_training=row.get("avg_days_between_training"),
-                last_trained_date=row.get("last_workout_date"),
-                days_since_last_training=row.get("days_since_last_training"),
+                total_volume_kg=round(stats["total_vol"], 2),
+                avg_days_between_training=None,
+                last_trained_date=last_date,
+                days_since_last_training=days_since,
                 recommendation=recommendation,
             ))
 
@@ -427,118 +466,84 @@ async def get_muscle_balance(
 
         logger.info(f"Getting muscle balance for user {user_id}")
 
-        # Query muscle_balance_analysis view
-        query = db.client.from_("muscle_balance_analysis") \
-            .select("*") \
-            .eq("user_id", user_id) \
-            .limit(1)
+        # Compute balance from exercise_workout_history (no dedicated view needed)
+        from datetime import timezone
+        from collections import defaultdict
+        d90 = (datetime.now(timezone.utc) - timedelta(days=90)).isoformat()
 
-        result = query.execute()
-        data = result.data[0] if result.data else {}
+        try:
+            result = db.client.from_("exercise_workout_history") \
+                .select("muscle_group, total_volume_kg") \
+                .eq("user_id", user_id) \
+                .gte("workout_date", d90) \
+                .not_.is_("muscle_group", "null") \
+                .execute()
+        except Exception:
+            result = type('R', (), {'data': []})()
+
+        rows = result.data or []
+
+        # Aggregate volume by muscle group
+        vol_by_muscle = defaultdict(float)
+        for row in rows:
+            mg = (row.get("muscle_group") or "").lower()
+            if mg:
+                vol_by_muscle[mg] += float(row.get("total_volume_kg", 0) or 0)
+
+        # Muscle group classifications
+        push_muscles = {"chest", "shoulders", "triceps"}
+        pull_muscles = {"back", "lats", "upper_back", "biceps", "rear_delts"}
+        upper_muscles = {"chest", "shoulders", "triceps", "back", "lats", "upper_back", "biceps", "rear_delts", "forearms"}
+        lower_muscles = {"quads", "hamstrings", "glutes", "calves", "adductors", "abductors"}
+
+        push_vol = sum(vol_by_muscle[m] for m in push_muscles if m in vol_by_muscle)
+        pull_vol = sum(vol_by_muscle[m] for m in pull_muscles if m in vol_by_muscle)
+        upper_vol = sum(vol_by_muscle[m] for m in upper_muscles if m in vol_by_muscle)
+        lower_vol = sum(vol_by_muscle[m] for m in lower_muscles if m in vol_by_muscle)
+        chest_vol = vol_by_muscle.get("chest", 0)
+        back_vol = sum(vol_by_muscle.get(m, 0) for m in ("back", "lats", "upper_back"))
+        quad_vol = vol_by_muscle.get("quads", 0)
+        ham_vol = vol_by_muscle.get("hamstrings", 0)
 
         ratios = []
         recommendations = []
 
-        if data:
-            # Push/Pull Ratio
-            push_vol = float(data.get("push_volume_kg", 0) or 0)
-            pull_vol = float(data.get("pull_volume_kg", 0) or 0)
-            total_pp = push_vol + pull_vol
-            push_pct = (push_vol / total_pp * 100) if total_pp > 0 else 50
-            pull_pct = 100 - push_pct
-            pp_ratio = float(data.get("push_pull_ratio", 0) or 0)
-            pp_status, pp_rec = get_balance_status(pp_ratio, 0.8, 1.2)
+        def _build_ratio(cat, s1_name, s2_name, s1_vol, s2_vol, low, high):
+            total = s1_vol + s2_vol
+            s1_pct = (s1_vol / total * 100) if total > 0 else 50
+            s2_pct = 100 - s1_pct
+            ratio_val = (s1_vol / s2_vol) if s2_vol > 0 else 0
+            status, _ = get_balance_status(ratio_val, low, high)
+            return BalanceRatio(
+                category=cat, side1=s1_name, side2=s2_name,
+                side1_volume_kg=round(s1_vol, 2), side2_volume_kg=round(s2_vol, 2),
+                side1_percent=round(s1_pct, 1), side2_percent=round(s2_pct, 1),
+                ratio=round(ratio_val, 2), status=status, recommendation=None,
+            ), s1_pct, status
 
-            ratios.append(BalanceRatio(
-                category="push_pull",
-                side1="Push",
-                side2="Pull",
-                side1_volume_kg=round(push_vol, 2),
-                side2_volume_kg=round(pull_vol, 2),
-                side1_percent=round(push_pct, 1),
-                side2_percent=round(pull_pct, 1),
-                ratio=round(pp_ratio, 2),
-                status=pp_status,
-                recommendation="Add more pulling exercises (rows, pulldowns)" if push_pct > 55 else ("Add more pushing exercises" if pull_pct > 55 else None),
-            ))
+        # Push/Pull
+        pp, pp_pct, pp_status = _build_ratio("push_pull", "Push", "Pull", push_vol, pull_vol, 0.8, 1.2)
+        pp = pp.model_copy(update={"recommendation": "Add more pulling exercises (rows, pulldowns)" if pp_pct > 55 else ("Add more pushing exercises" if pp_pct < 45 else None)})
+        ratios.append(pp)
+        if pp_status in ("imbalanced", "severe_imbalance"):
+            recommendations.append("Add more pulling exercises to balance push/pull ratio" if pp_pct > 55 else "Add more pushing exercises to balance push/pull ratio")
 
-            if pp_status in ["imbalanced", "severe_imbalance"]:
-                if push_pct > 55:
-                    recommendations.append("Add more pulling exercises to balance push/pull ratio")
-                else:
-                    recommendations.append("Add more pushing exercises to balance push/pull ratio")
+        # Upper/Lower
+        ul, ul_pct, ul_status = _build_ratio("upper_lower", "Upper Body", "Lower Body", upper_vol, lower_vol, 0.8, 1.5)
+        ul = ul.model_copy(update={"recommendation": "Add more lower body exercises" if ul_pct > 60 else ("Add more upper body exercises" if ul_pct < 40 else None)})
+        ratios.append(ul)
+        if ul_status in ("imbalanced", "severe_imbalance"):
+            recommendations.append("Add more lower body exercises (squats, deadlifts, lunges)" if ul_pct > 60 else "Add more upper body exercises")
 
-            # Upper/Lower Ratio
-            upper_vol = float(data.get("upper_volume_kg", 0) or 0)
-            lower_vol = float(data.get("lower_volume_kg", 0) or 0)
-            total_ul = upper_vol + lower_vol
-            upper_pct = (upper_vol / total_ul * 100) if total_ul > 0 else 50
-            lower_pct = 100 - upper_pct
-            ul_ratio = float(data.get("upper_lower_ratio", 0) or 0)
-            ul_status, ul_rec = get_balance_status(ul_ratio, 0.8, 1.5)
+        # Chest/Back
+        cb, cb_pct, cb_status = _build_ratio("chest_back", "Chest", "Back", chest_vol, back_vol, 0.7, 1.0)
+        cb = cb.model_copy(update={"recommendation": "Add more back exercises for posture" if cb_pct > 55 else None})
+        ratios.append(cb)
 
-            ratios.append(BalanceRatio(
-                category="upper_lower",
-                side1="Upper Body",
-                side2="Lower Body",
-                side1_volume_kg=round(upper_vol, 2),
-                side2_volume_kg=round(lower_vol, 2),
-                side1_percent=round(upper_pct, 1),
-                side2_percent=round(lower_pct, 1),
-                ratio=round(ul_ratio, 2),
-                status=ul_status,
-                recommendation="Add more lower body exercises" if upper_pct > 60 else ("Add more upper body exercises" if lower_pct > 60 else None),
-            ))
-
-            if ul_status in ["imbalanced", "severe_imbalance"]:
-                if upper_pct > 60:
-                    recommendations.append("Add more lower body exercises (squats, deadlifts, lunges)")
-                else:
-                    recommendations.append("Add more upper body exercises")
-
-            # Chest/Back Ratio
-            chest_vol = float(data.get("chest_volume_kg", 0) or 0)
-            back_vol = float(data.get("back_volume_kg", 0) or 0)
-            total_cb = chest_vol + back_vol
-            chest_pct = (chest_vol / total_cb * 100) if total_cb > 0 else 50
-            back_pct = 100 - chest_pct
-            cb_ratio = float(data.get("chest_back_ratio", 0) or 0)
-            cb_status, _ = get_balance_status(cb_ratio, 0.7, 1.0)
-
-            ratios.append(BalanceRatio(
-                category="chest_back",
-                side1="Chest",
-                side2="Back",
-                side1_volume_kg=round(chest_vol, 2),
-                side2_volume_kg=round(back_vol, 2),
-                side1_percent=round(chest_pct, 1),
-                side2_percent=round(back_pct, 1),
-                ratio=round(cb_ratio, 2),
-                status=cb_status,
-                recommendation="Add more back exercises for posture" if chest_pct > 55 else None,
-            ))
-
-            # Quad/Hamstring Ratio
-            quad_vol = float(data.get("quad_volume_kg", 0) or 0)
-            ham_vol = float(data.get("hamstring_volume_kg", 0) or 0)
-            total_qh = quad_vol + ham_vol
-            quad_pct = (quad_vol / total_qh * 100) if total_qh > 0 else 50
-            ham_pct = 100 - quad_pct
-            qh_ratio = float(data.get("quad_hamstring_ratio", 0) or 0)
-            qh_status, _ = get_balance_status(qh_ratio, 1.5, 2.5)
-
-            ratios.append(BalanceRatio(
-                category="quad_hamstring",
-                side1="Quadriceps",
-                side2="Hamstrings",
-                side1_volume_kg=round(quad_vol, 2),
-                side2_volume_kg=round(ham_vol, 2),
-                side1_percent=round(quad_pct, 1),
-                side2_percent=round(ham_pct, 1),
-                ratio=round(qh_ratio, 2),
-                status=qh_status,
-                recommendation="Add more hamstring exercises (RDLs, leg curls)" if qh_ratio > 3 else None,
-            ))
+        # Quad/Hamstring
+        qh, _, qh_status = _build_ratio("quad_hamstring", "Quadriceps", "Hamstrings", quad_vol, ham_vol, 1.5, 2.5)
+        qh = qh.model_copy(update={"recommendation": "Add more hamstring exercises (RDLs, leg curls)" if qh.ratio > 3 else None})
+        ratios.append(qh)
 
         # Determine overall status
         imbalance_count = sum(1 for r in ratios if r.status in ["imbalanced", "severe_imbalance"])

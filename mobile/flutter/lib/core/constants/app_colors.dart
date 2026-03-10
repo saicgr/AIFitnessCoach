@@ -80,6 +80,10 @@ class AppColors {
   static const Color quickActionWater = Color(0xFF3B82F6); // Blue for hydration
   static const Color quickActionGenerate = Color(0xFFEAB308); // Yellow/gold for AI magic
 
+  // Hydration water fill - ALWAYS blue regardless of monochrome theme
+  static const Color waterBlue = Color(0xFF3B82F6);
+  static const Color waterBlueDark = Color(0xFF2563EB);
+
   /// Get RIR badge color based on RIR value
   static Color getRirColor(int rir) {
     switch (rir) {
@@ -242,6 +246,10 @@ class AppColorsLight {
   static const Color macroProtein = Color(0xFF9333EA); // Purple (darker for light bg)
   static const Color macroCarbs = Color(0xFF0891B2);   // Vivid cyan (darker for light bg)
   static const Color macroFat = Color(0xFFEA580C);     // Orange (darker for light bg)
+
+  // Hydration water fill - ALWAYS blue regardless of monochrome theme
+  static const Color waterBlue = Color(0xFF2563EB);
+  static const Color waterBlueDark = Color(0xFF1D4ED8);
 
   // Semantic Colors
   static const Color success = Color(0xFF16A34A);

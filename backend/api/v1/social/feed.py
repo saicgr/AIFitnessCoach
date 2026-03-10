@@ -172,13 +172,55 @@ async def upload_post_image(
         raise safe_internal_error(e, "feed_image_upload")
 
 
+def _fallback_feed_query(supabase, user_id, activity_type, page_size, offset, sort_by):
+    """Direct table query fallback when get_feed_for_user RPC is unavailable."""
+    # Get IDs the user follows
+    conn_result = supabase.table("user_connections").select("following_id").eq(
+        "follower_id", user_id
+    ).eq("status", "active").execute()
+    following_ids = [row["following_id"] for row in (conn_result.data or [])]
+    visible_ids = [user_id] + following_ids
+
+    # Query activity_feed with user join
+    query = supabase.table("activity_feed").select(
+        "*, users(name, avatar_url, is_support_user)", count="exact"
+    ).in_("user_id", visible_ids)
+
+    if activity_type:
+        query = query.eq("activity_type", activity_type.value)
+
+    # Sort (default: recent)
+    if sort_by == "top":
+        query = query.order("reaction_count", desc=True).order("created_at", desc=True)
+    else:
+        query = query.order("created_at", desc=True)
+
+    query = query.range(offset, offset + page_size - 1)
+    result = query.execute()
+
+    # Reshape rows to match the RPC output format that the caller expects
+    rows = []
+    for row in (result.data or []):
+        users_data = row.pop("users", None)
+        row["user_name"] = users_data.get("name") if users_data else None
+        row["user_avatar"] = users_data.get("avatar_url") if users_data else None
+        row["total_count"] = result.count or 0
+        rows.append(row)
+
+    # Wrap in a minimal object with .data attribute
+    class _FallbackResult:
+        def __init__(self, data):
+            self.data = data
+    return _FallbackResult(rows)
+
+
 @router.get("/feed/{user_id}")
 async def get_activity_feed(
     user_id: str,
     page: int = 1,
     page_size: int = 20,
     activity_type: Optional[ActivityType] = None,
-    sort_by: str = Query("recent", regex="^(recent|top|trending)$"),
+    sort_by: str = Query("recent", pattern="^(recent|top|trending)$"),
     current_user: dict = Depends(get_current_user),
 ):
     """
@@ -210,9 +252,17 @@ async def get_activity_feed(
             "p_offset": offset,
             "p_sort_by": sort_by,
         }).execute()
-    except Exception as e:
-        logger.error(f"[Social] Error fetching feed: {e}")
-        raise safe_internal_error(e, "feed_fetch")
+    except Exception as rpc_err:
+        # RPC may fail if the function has a type mismatch or doesn't exist yet.
+        # Fall back to a direct table query so the feed still loads.
+        logger.warning(f"[Social] RPC get_feed_for_user failed, using fallback query: {rpc_err}")
+        try:
+            feed_result = _fallback_feed_query(
+                supabase, user_id, activity_type, page_size, offset, sort_by,
+            )
+        except Exception as fallback_err:
+            logger.error(f"[Social] Fallback feed query also failed: {fallback_err}")
+            raise safe_internal_error(fallback_err, "feed_fetch")
 
     # Extract total_count from the window function (same on every row)
     total_count = 0

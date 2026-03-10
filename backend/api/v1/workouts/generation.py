@@ -427,6 +427,7 @@ async def generate_workout(request: GenerateWorkoutRequest, background_tasks: Ba
         plank_capacity = None
         squat_capacity = None
         cardio_capacity = None
+        training_experience = None
 
         if request.fitness_level and request.goals and request.equipment:
             fitness_level = request.fitness_level
@@ -504,9 +505,10 @@ async def generate_workout(request: GenerateWorkoutRequest, background_tasks: Ba
             plank_capacity = user.get("plank_capacity")
             squat_capacity = user.get("squat_capacity")
             cardio_capacity = user.get("cardio_capacity")
-            has_assessment = any([pushup_capacity, pullup_capacity, plank_capacity, squat_capacity, cardio_capacity])
+            training_experience = user.get("training_experience")
+            has_assessment = any([pushup_capacity, pullup_capacity, plank_capacity, squat_capacity, cardio_capacity, training_experience])
             if has_assessment:
-                logger.info(f"💪 [Workout Generation] User has fitness assessment: pushups={pushup_capacity}, pullups={pullup_capacity}, plank={plank_capacity}, squats={squat_capacity}, cardio={cardio_capacity}")
+                logger.info(f"💪 [Workout Generation] User has fitness assessment: pushups={pushup_capacity}, pullups={pullup_capacity}, plank={plank_capacity}, squats={squat_capacity}, cardio={cardio_capacity}, experience={training_experience}")
 
         # Fetch user's custom exercises
         logger.info(f"🏋️ [Workout Generation] Fetching custom exercises for user: {request.user_id}")
@@ -804,6 +806,7 @@ async def generate_workout(request: GenerateWorkoutRequest, background_tasks: Ba
                     plank_capacity=plank_capacity,
                     squat_capacity=squat_capacity,
                     cardio_capacity=cardio_capacity,
+                    training_experience=training_experience,
                     user_dob=user.get("date_of_birth") if user else None,
                 )
 
@@ -2391,7 +2394,7 @@ async def get_mood_history(
 
         # Build query
         query = db.client.table("mood_checkins") \
-            .select("*, workouts(id, name, type, difficulty, completed)") \
+            .select("*, workouts(id, name, type, difficulty, is_completed)") \
             .eq("user_id", user_id) \
             .order("check_in_time", desc=True)
 
@@ -2442,7 +2445,7 @@ async def get_mood_history(
                     "name": workout_data.get("name"),
                     "type": workout_data.get("type"),
                     "difficulty": workout_data.get("difficulty"),
-                    "completed": workout_data.get("completed"),
+                    "completed": workout_data.get("is_completed"),
                 } if workout_data else None,
                 "context": row.get("context", {}),
             })
@@ -2454,7 +2457,7 @@ async def get_mood_history(
         )
 
     except Exception as e:
-        logger.error(f"Failed to get mood history: {e}")
+        logger.error(f"Failed to get mood history for user {user_id}: {e}")
         raise safe_internal_error(e, "generation")
 
 

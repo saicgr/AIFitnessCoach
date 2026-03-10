@@ -7,6 +7,8 @@ This module handles challenge operations:
 - POST /challenges/participate - Join a challenge
 - PUT /challenges/participate/{challenge_id} - Update progress
 - GET /challenges/{challenge_id}/leaderboard - Get challenge leaderboard
+- GET /challenges/notifications - Get challenge notifications
+- PUT /challenges/notifications/{notification_id}/read - Mark notification as read
 """
 from collections import defaultdict
 from datetime import datetime, timezone
@@ -19,6 +21,9 @@ from models.social import (
     ChallengeParticipantCreate, ChallengeParticipantUpdate,
     ChallengeWithParticipation, ChallengeLeaderboard, ChallengeLeaderboardEntry,
     ChallengeType, ChallengeStatus,
+)
+from models.workout_challenges import (
+    ChallengeNotification, NotificationsResponse,
 )
 from core.auth import get_current_user
 from core.exceptions import safe_internal_error
@@ -306,3 +311,52 @@ async def get_challenge_leaderboard(
         entries=entries,
         user_rank=user_rank,
     )
+
+
+@router.get("/challenges/notifications", response_model=NotificationsResponse)
+async def get_challenge_notifications(
+    user_id: str = Query(..., description="User ID"),
+    unread_only: bool = Query(False),
+    current_user: dict = Depends(get_current_user),
+):
+    """Get challenge notifications for user."""
+    supabase = get_supabase_client()
+
+    query = supabase.table("challenge_notifications").select(
+        "*, challenge:workout_challenges(*)",
+        count="exact"
+    ).eq("user_id", user_id).order("created_at", desc=True)
+
+    if unread_only:
+        query = query.eq("is_read", False)
+
+    result = query.execute()
+
+    unread_result = supabase.table("challenge_notifications").select(
+        "id", count="exact"
+    ).eq("user_id", user_id).eq("is_read", False).execute()
+
+    notifications = [ChallengeNotification(**row) for row in result.data]
+
+    return NotificationsResponse(
+        notifications=notifications,
+        total=result.count or 0,
+        unread_count=unread_result.count or 0,
+    )
+
+
+@router.put("/challenges/notifications/{notification_id}/read")
+async def mark_challenge_notification_read(
+    notification_id: str,
+    user_id: str = Query(..., description="User ID"),
+    current_user: dict = Depends(get_current_user),
+):
+    """Mark a challenge notification as read."""
+    supabase = get_supabase_client()
+
+    supabase.table("challenge_notifications").update({
+        "is_read": True,
+        "read_at": datetime.now(timezone.utc).isoformat(),
+    }).eq("id", notification_id).eq("user_id", user_id).execute()
+
+    return {"message": "Notification marked as read"}

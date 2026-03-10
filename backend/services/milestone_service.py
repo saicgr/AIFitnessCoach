@@ -629,16 +629,16 @@ class MilestoneService:
 
             # Get first workout date
             first_workout = db.client.table("workout_logs").select(
-                "created_at"
+                "completed_at"
             ).eq("user_id", user_id).eq("status", "completed").order(
-                "created_at"
+                "completed_at"
             ).limit(1).execute()
 
             if not first_workout.data:
                 return 0.0
 
             first_date = datetime.fromisoformat(
-                first_workout.data[0]["created_at"].replace("Z", "+00:00")
+                first_workout.data[0]["completed_at"].replace("Z", "+00:00")
             )
             first_month_end = first_date + timedelta(days=30)
 

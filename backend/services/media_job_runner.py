@@ -5,7 +5,7 @@ Uses an asyncio semaphore to limit concurrency and supports automatic retry
 with exponential backoff for transient errors.
 """
 import asyncio
-from core.logger import get_logger
+from core.logger import get_logger, set_log_context
 from services.media_job_service import get_media_job_service
 
 logger = get_logger(__name__)
@@ -21,6 +21,12 @@ async def run_media_job(job_id: str):
     if not job:
         logger.error(f"Media job {job_id} not found")
         return
+
+    # Set log context so all logs in this task include user_id
+    uid = job.get("user_id")
+    if uid:
+        truncated = f"...{uid[-4:]}" if len(uid) > 4 else uid
+        set_log_context(user_id=truncated)
 
     async with _MEDIA_SEMAPHORE:
         service.update_job_status(job_id, "in_progress")

@@ -184,10 +184,18 @@ const quickActionRegistry = <String, QuickAction>{
     behavior: QuickActionBehavior.route,
     route: '/summaries',
   ),
+  'stats': QuickAction(
+    id: 'stats',
+    label: 'Stats',
+    icon: Icons.leaderboard_outlined,
+    color: Color(0xFF6366F1),
+    behavior: QuickActionBehavior.route,
+    route: '/stats',
+  ),
 };
 
 const defaultQuickActionOrder = [
   'quick_workout', 'food', 'water', 'chat', 'weight', 'photo', 'fasting', 'measure', 'mood',
   'history', 'steps', 'workout', 'programs', 'library', 'settings', 'schedule', 'habits',
-  'progress', 'achievements', 'hydration', 'summaries',
+  'progress', 'stats', 'achievements', 'hydration', 'summaries',
 ];

@@ -1,6 +1,5 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
@@ -222,8 +221,10 @@ class _ComprehensiveStatsScreenState extends ConsumerState<ComprehensiveStatsScr
       appBar: AppBar(
         backgroundColor: backgroundColor,
         foregroundColor: textPrimary,
-        automaticallyImplyLeading: false,
-        leading: const GlassBackButton(),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 18),
+          onPressed: () => context.canPop() ? context.pop() : null,
+        ),
         title: Text(
           'Stats & Scores',
           style: TextStyle(
@@ -541,6 +542,8 @@ class _PhotosTabState extends ConsumerState<_PhotosTab>
   bool _hasOpenedPhotoSheet = false;
   int _gridColumns = 3;
   bool _sortNewestFirst = true;
+  bool _latestByViewExpanded = true;
+  bool _savedComparisonsExpanded = false;
 
   @override
   bool get wantKeepAlive => true;
@@ -568,7 +571,9 @@ class _PhotosTabState extends ConsumerState<_PhotosTab>
     }
 
     final state = ref.watch(progressPhotosNotifierProvider(widget.userId!));
-    final colorScheme = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final accent = ref.watch(accentColorProvider);
+    final accentColor = accent.getColor(isDark);
 
     return Stack(
       children: [
@@ -661,8 +666,8 @@ class _PhotosTabState extends ConsumerState<_PhotosTab>
           bottom: 16,
           child: FloatingActionButton(
             onPressed: _showAddPhotoSheet,
-            backgroundColor: colorScheme.primary,
-            foregroundColor: colorScheme.onPrimary,
+            backgroundColor: accentColor,
+            foregroundColor: isDark ? Colors.black : Colors.white,
             child: const Icon(Icons.camera_alt),
           ),
         ),
@@ -672,119 +677,114 @@ class _PhotosTabState extends ConsumerState<_PhotosTab>
 
   Widget _buildPhotoStatsCard(ProgressPhotosState state) {
     final stats = state.stats;
-    final colorScheme = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final accent = ref.watch(accentColorProvider);
+    final accentColor = accent.getColor(isDark);
+    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+
+    final totalPhotos = stats?.totalPhotos ?? 0;
+    final viewsCaptured = stats?.viewTypesCaptured ?? 0;
+    final viewsTotal = PhotoViewType.values.length;
+    final tracking = stats?.formattedTrackingDuration ?? '-';
 
     return Container(
-      margin: const EdgeInsets.all(16),
-      padding: const EdgeInsets.all(16),
+      margin: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            colorScheme.primaryContainer,
-            colorScheme.primaryContainer.withOpacity(0.7),
-          ],
-        ),
-        borderRadius: BorderRadius.circular(16),
+        color: accentColor.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: accentColor.withValues(alpha: 0.2)),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Row(
         children: [
-          Row(
-            children: [
-              Icon(Icons.insights, color: colorScheme.onPrimaryContainer),
-              const SizedBox(width: 8),
-              Text(
-                'Photo Progress',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: colorScheme.onPrimaryContainer,
-                ),
-              ),
-              const Spacer(),
-              // Add Photo button
-              FilledButton.icon(
-                onPressed: () => _showAddPhotoSheet(),
-                icon: const Icon(Icons.add_a_photo, size: 18),
-                label: const Text('Add'),
-                style: FilledButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                ),
-              ),
-            ],
+          Text(
+            '$totalPhotos',
+            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: textPrimary),
           ),
-          const SizedBox(height: 16),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              _buildStatItem(
-                '${stats?.totalPhotos ?? 0}',
-                'Total Photos',
-                Icons.photo_library,
-              ),
-              _buildStatItem(
-                '${stats?.viewTypesCaptured ?? 0}/${PhotoViewType.values.length}',
-                'Views Captured',
-                Icons.view_carousel,
-              ),
-              _buildStatItem(
-                stats?.formattedTrackingDuration ?? '-',
-                'Tracking',
-                Icons.calendar_month,
-              ),
-            ],
+          Text(
+            ' photos',
+            style: TextStyle(fontSize: 13, color: textMuted),
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8),
+            child: Text('·', style: TextStyle(fontSize: 14, color: textMuted)),
+          ),
+          Text(
+            '$viewsCaptured/$viewsTotal',
+            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: textPrimary),
+          ),
+          Text(
+            ' views',
+            style: TextStyle(fontSize: 13, color: textMuted),
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8),
+            child: Text('·', style: TextStyle(fontSize: 14, color: textMuted)),
+          ),
+          Flexible(
+            child: Text(
+              '$tracking tracking',
+              style: TextStyle(fontSize: 13, color: textMuted),
+              overflow: TextOverflow.ellipsis,
+            ),
           ),
         ],
       ),
-    ).animate().fadeIn(duration: 300.ms).slideY(begin: -0.1, end: 0);
-  }
-
-  Widget _buildStatItem(String value, String label, IconData icon) {
-    final colorScheme = Theme.of(context).colorScheme;
-    return Column(
-      children: [
-        Icon(icon, size: 24, color: colorScheme.onPrimaryContainer),
-        const SizedBox(height: 4),
-        Text(
-          value,
-          style: TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-            color: colorScheme.onPrimaryContainer,
-          ),
-        ),
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 12,
-            color: colorScheme.onPrimaryContainer.withOpacity(0.8),
-          ),
-        ),
-      ],
     );
   }
 
   Widget _buildViewTypeFilter() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final accent = ref.watch(accentColorProvider);
+    final accentColor = accent.getColor(isDark);
+    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+    final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+    final accentContrast = isDark ? Colors.black : Colors.white;
+
+    Widget buildPill(String label, bool selected, VoidCallback onTap) {
+      return Padding(
+        padding: const EdgeInsets.only(right: 8),
+        child: GestureDetector(
+          onTap: () {
+            HapticService.light();
+            onTap();
+          },
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+            decoration: BoxDecoration(
+              color: selected ? accentColor : elevated,
+              borderRadius: BorderRadius.circular(20),
+              border: selected ? null : Border.all(color: cardBorder),
+            ),
+            child: Text(
+              label,
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: selected ? accentContrast : textSecondary,
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
     return SizedBox(
       height: 50,
       child: ListView(
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 16),
         children: [
-          FilterChip(
-            label: const Text('All'),
-            selected: _selectedViewFilter == null,
-            onSelected: (_) => setState(() => _selectedViewFilter = null),
-          ),
-          const SizedBox(width: 8),
-          ...PhotoViewType.values.map((type) => Padding(
-                padding: const EdgeInsets.only(right: 8),
-                child: FilterChip(
-                  label: Text(type.displayName),
-                  selected: _selectedViewFilter == type,
-                  onSelected: (_) =>
-                      setState(() => _selectedViewFilter = type),
-                ),
+          buildPill('All', _selectedViewFilter == null, () {
+            setState(() => _selectedViewFilter = null);
+          }),
+          ...PhotoViewType.values.map((type) => buildPill(
+                type.displayName,
+                _selectedViewFilter == type,
+                () => setState(() => _selectedViewFilter = type),
               )),
         ],
       ),
@@ -792,8 +792,13 @@ class _PhotosTabState extends ConsumerState<_PhotosTab>
   }
 
   Widget _buildGridControls() {
-    final colorScheme = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final accent = ref.watch(accentColorProvider);
+    final accentColor = accent.getColor(isDark);
+    final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final gridIcons = {2: Icons.grid_on, 3: Icons.grid_view, 4: Icons.apps};
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       child: Row(
@@ -810,15 +815,12 @@ class _PhotosTabState extends ConsumerState<_PhotosTab>
                   Icon(
                     _sortNewestFirst ? Icons.arrow_downward : Icons.arrow_upward,
                     size: 16,
-                    color: colorScheme.onSurfaceVariant,
+                    color: textSecondary,
                   ),
                   const SizedBox(width: 4),
                   Text(
                     _sortNewestFirst ? 'Newest' : 'Oldest',
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: colorScheme.onSurfaceVariant,
-                    ),
+                    style: TextStyle(fontSize: 13, color: textSecondary),
                   ),
                 ],
               ),
@@ -835,16 +837,14 @@ class _PhotosTabState extends ConsumerState<_PhotosTab>
                 padding: const EdgeInsets.all(6),
                 decoration: BoxDecoration(
                   color: _gridColumns == cols
-                      ? colorScheme.primaryContainer
+                      ? accentColor.withValues(alpha: 0.15)
                       : Colors.transparent,
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Icon(
                   gridIcons[cols] ?? Icons.grid_view,
                   size: 20,
-                  color: _gridColumns == cols
-                      ? colorScheme.onPrimaryContainer
-                      : colorScheme.onSurfaceVariant,
+                  color: _gridColumns == cols ? accentColor : textMuted,
                 ),
               ),
             ),
@@ -862,24 +862,34 @@ class _PhotosTabState extends ConsumerState<_PhotosTab>
 
     if (comparisons.isEmpty) return const SizedBox.shrink();
 
-    final colorScheme = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
-          padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+          padding: const EdgeInsets.fromLTRB(16, 8, 8, 8),
           child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
                 'Saved Comparisons (${comparisons.length})',
                 style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                  color: colorScheme.onSurface,
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                  color: textPrimary,
                 ),
               ),
+              IconButton(
+                icon: AnimatedRotation(
+                  turns: _savedComparisonsExpanded ? 0.5 : 0,
+                  duration: const Duration(milliseconds: 300),
+                  child: Icon(Icons.expand_more, color: textMuted),
+                ),
+                onPressed: () => setState(() => _savedComparisonsExpanded = !_savedComparisonsExpanded),
+              ),
+              const Spacer(),
               TextButton(
                 onPressed: () {
                   Navigator.push(
@@ -889,30 +899,44 @@ class _PhotosTabState extends ConsumerState<_PhotosTab>
                     ),
                   );
                 },
-                child: const Text('See all'),
+                child: const Text('View All'),
               ),
             ],
           ),
         ),
-        SizedBox(
-          height: 120,
-          child: ListView.builder(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            itemCount: comparisons.length > 5 ? 5 : comparisons.length,
-            itemBuilder: (context, index) {
-              final comparison = comparisons[index];
-              return _buildComparisonPreviewCard(comparison);
-            },
+        AnimatedCrossFade(
+          firstChild: Column(
+            children: [
+              SizedBox(
+                height: 120,
+                child: ListView.builder(
+                  scrollDirection: Axis.horizontal,
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  itemCount: comparisons.length > 5 ? 5 : comparisons.length,
+                  itemBuilder: (context, index) {
+                    final comparison = comparisons[index];
+                    return _buildComparisonPreviewCard(comparison);
+                  },
+                ),
+              ),
+              const SizedBox(height: 8),
+            ],
           ),
+          secondChild: const SizedBox.shrink(),
+          crossFadeState: _savedComparisonsExpanded
+              ? CrossFadeState.showFirst
+              : CrossFadeState.showSecond,
+          duration: const Duration(milliseconds: 300),
         ),
-        const SizedBox(height: 8),
       ],
     );
   }
 
   Widget _buildComparisonPreviewCard(PhotoComparison comparison) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
 
     return GestureDetector(
       onTap: () {
@@ -930,9 +954,9 @@ class _PhotosTabState extends ConsumerState<_PhotosTab>
         width: 180,
         margin: const EdgeInsets.only(right: 12),
         decoration: BoxDecoration(
-          color: colorScheme.surfaceContainerHighest,
+          color: elevated,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: colorScheme.outlineVariant.withOpacity(0.5)),
+          border: Border.all(color: cardBorder),
         ),
         clipBehavior: Clip.antiAlias,
         child: Column(
@@ -948,7 +972,7 @@ class _PhotosTabState extends ConsumerState<_PhotosTab>
                       fit: BoxFit.cover,
                     ),
                   ),
-                  Container(width: 1, color: colorScheme.outline),
+                  Container(width: 1, color: cardBorder),
                   Expanded(
                     child: CachedNetworkImage(
                       imageUrl: comparison.afterPhoto.thumbnailUrl ?? comparison.afterPhoto.photoUrl,
@@ -971,8 +995,8 @@ class _PhotosTabState extends ConsumerState<_PhotosTab>
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
                         color: (comparison.weightChangeKg ?? 0) < 0
-                            ? Colors.green
-                            : Colors.orange,
+                            ? (isDark ? AppColors.success : AppColorsLight.success)
+                            : (isDark ? AppColors.orange : AppColorsLight.orange),
                       ),
                     ),
                   if (comparison.formattedDuration != null)
@@ -980,7 +1004,7 @@ class _PhotosTabState extends ConsumerState<_PhotosTab>
                       comparison.formattedDuration!,
                       style: TextStyle(
                         fontSize: 11,
-                        color: colorScheme.onSurfaceVariant,
+                        color: textMuted,
                       ),
                     ),
                 ],
@@ -993,30 +1017,52 @@ class _PhotosTabState extends ConsumerState<_PhotosTab>
   }
 
   Widget _buildLatestPhotosByView(LatestPhotosByView latest) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'Latest by View',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-              color: colorScheme.onSurface,
-            ),
+          Row(
+            children: [
+              Text(
+                'Latest by View',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                  color: textPrimary,
+                ),
+              ),
+              IconButton(
+                icon: AnimatedRotation(
+                  turns: _latestByViewExpanded ? 0.5 : 0,
+                  duration: const Duration(milliseconds: 300),
+                  child: Icon(Icons.expand_more, color: textMuted),
+                ),
+                onPressed: () => setState(() => _latestByViewExpanded = !_latestByViewExpanded),
+              ),
+            ],
           ),
-          const SizedBox(height: 12),
-          SizedBox(
-            height: 120,
-            child: ListView(
-              scrollDirection: Axis.horizontal,
-              children: PhotoViewType.values.map((type) {
-                final photo = latest.getPhoto(type);
-                return _buildLatestViewCard(type, photo);
-              }).toList(),
+          const SizedBox(height: 4),
+          AnimatedCrossFade(
+            firstChild: SizedBox(
+              height: 140,
+              child: ListView(
+                scrollDirection: Axis.horizontal,
+                children: PhotoViewType.values.map((type) {
+                  final photo = latest.getPhoto(type);
+                  return _buildLatestViewCard(type, photo);
+                }).toList(),
+              ),
             ),
+            secondChild: const SizedBox.shrink(),
+            crossFadeState: _latestByViewExpanded
+                ? CrossFadeState.showFirst
+                : CrossFadeState.showSecond,
+            duration: const Duration(milliseconds: 300),
           ),
         ],
       ),
@@ -1024,67 +1070,83 @@ class _PhotosTabState extends ConsumerState<_PhotosTab>
   }
 
   Widget _buildLatestViewCard(PhotoViewType type, ProgressPhoto? photo) {
-    final colorScheme = Theme.of(context).colorScheme;
-    return Container(
-      width: 90,
-      margin: const EdgeInsets.only(right: 12),
-      child: Column(
-        children: [
-          Expanded(
-            child: Container(
-              decoration: BoxDecoration(
-                color: colorScheme.surfaceContainerHighest,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: photo != null
-                      ? colorScheme.primary.withOpacity(0.5)
-                      : colorScheme.outline.withOpacity(0.3),
-                  width: photo != null ? 2 : 1,
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final accent = ref.watch(accentColorProvider);
+    final accentColor = accent.getColor(isDark);
+    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+    final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+
+    return GestureDetector(
+      onTap: photo == null ? () => _showAddPhotoForType(type) : null,
+      child: Container(
+        width: 90,
+        margin: const EdgeInsets.only(right: 12),
+        child: Column(
+          children: [
+            Expanded(
+              child: Container(
+                decoration: BoxDecoration(
+                  color: elevated,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: photo != null
+                        ? accentColor.withValues(alpha: 0.3)
+                        : cardBorder,
+                    width: photo != null ? 2 : 1,
+                  ),
                 ),
+                child: photo != null
+                    ? ClipRRect(
+                        borderRadius: BorderRadius.circular(11),
+                        child: CachedNetworkImage(
+                          imageUrl: photo.thumbnailUrl ?? photo.photoUrl,
+                          fit: BoxFit.cover,
+                          placeholder: (_, __) => const Center(
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          ),
+                          errorWidget: (_, __, ___) => const Icon(
+                            Icons.broken_image,
+                            color: Colors.red,
+                          ),
+                        ),
+                      )
+                    : Center(
+                        child: Icon(
+                          Icons.add_a_photo,
+                          color: textMuted,
+                          size: 24,
+                        ),
+                      ),
               ),
-              child: photo != null
-                  ? ClipRRect(
-                      borderRadius: BorderRadius.circular(11),
-                      child: CachedNetworkImage(
-                        imageUrl: photo.thumbnailUrl ?? photo.photoUrl,
-                        fit: BoxFit.cover,
-                        placeholder: (_, __) => const Center(
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        ),
-                        errorWidget: (_, __, ___) => Icon(
-                          Icons.broken_image,
-                          color: colorScheme.error,
-                        ),
-                      ),
-                    )
-                  : Center(
-                      child: Icon(
-                        Icons.add_a_photo,
-                        color: colorScheme.outline,
-                        size: 28,
-                      ),
-                    ),
             ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            type.displayName,
-            style: TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.w500,
-              color: colorScheme.onSurface,
+            const SizedBox(height: 4),
+            Text(
+              type.displayName,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+                color: textSecondary,
+              ),
+              textAlign: TextAlign.center,
             ),
-            textAlign: TextAlign.center,
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
 
   Widget _buildPhotoCard(ProgressPhoto photo) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final accent = ref.watch(accentColorProvider);
+    final accentColor = accent.getColor(isDark);
+    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final dateStr = DateFormat('MMM d, yyyy').format(photo.takenAt);
     final timeStr = DateFormat('h:mm a').format(photo.takenAt);
+
     return GestureDetector(
       onTap: () => _showPhotoDetail(photo),
       child: Column(
@@ -1096,7 +1158,7 @@ class _PhotosTabState extends ConsumerState<_PhotosTab>
                 borderRadius: BorderRadius.circular(10),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.08),
+                    color: Colors.black.withValues(alpha: 0.08),
                     blurRadius: 4,
                     offset: const Offset(0, 2),
                   ),
@@ -1111,14 +1173,14 @@ class _PhotosTabState extends ConsumerState<_PhotosTab>
                       imageUrl: photo.thumbnailUrl ?? photo.photoUrl,
                       fit: BoxFit.cover,
                       placeholder: (_, __) => Container(
-                        color: colorScheme.surfaceContainerHighest,
+                        color: elevated,
                         child: const Center(
                           child: CircularProgressIndicator(strokeWidth: 2),
                         ),
                       ),
                       errorWidget: (_, __, ___) => Container(
-                        color: colorScheme.errorContainer,
-                        child: Icon(Icons.broken_image, color: colorScheme.error),
+                        color: elevated,
+                        child: const Icon(Icons.broken_image, color: Colors.red),
                       ),
                     ),
                     // View type badge
@@ -1126,10 +1188,10 @@ class _PhotosTabState extends ConsumerState<_PhotosTab>
                       top: 4,
                       left: 4,
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
                         decoration: BoxDecoration(
-                          color: Colors.black54,
-                          borderRadius: BorderRadius.circular(4),
+                          color: accentColor.withValues(alpha: 0.85),
+                          borderRadius: BorderRadius.circular(6),
                         ),
                         child: Text(
                           photo.viewTypeEnum.displayName,
@@ -1154,7 +1216,7 @@ class _PhotosTabState extends ConsumerState<_PhotosTab>
               style: TextStyle(
                 fontSize: 11,
                 fontWeight: FontWeight.w600,
-                color: colorScheme.onSurface,
+                color: textPrimary,
               ),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
@@ -1166,7 +1228,7 @@ class _PhotosTabState extends ConsumerState<_PhotosTab>
               timeStr,
               style: TextStyle(
                 fontSize: 10,
-                color: colorScheme.onSurfaceVariant,
+                color: textMuted,
               ),
               maxLines: 1,
             ),
@@ -1177,26 +1239,47 @@ class _PhotosTabState extends ConsumerState<_PhotosTab>
   }
 
   Widget _buildEmptyPhotosState() {
-    final colorScheme = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final accent = ref.watch(accentColorProvider);
+    final accentColor = accent.getColor(isDark);
+    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final accentContrast = isDark ? Colors.black : Colors.white;
+
     return Center(
-      child: Padding(
+      child: Container(
+        margin: const EdgeInsets.all(24),
         padding: const EdgeInsets.all(32),
+        decoration: BoxDecoration(
+          color: elevated,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: cardBorder),
+          boxShadow: [
+            BoxShadow(
+              color: accentColor.withValues(alpha: 0.1),
+              blurRadius: 20,
+            ),
+          ],
+        ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(
               Icons.photo_camera_outlined,
-              size: 64,
-              color: colorScheme.outline,
+              size: 56,
+              color: textMuted,
             ),
             const SizedBox(height: 16),
             Text(
               'No Progress Photos Yet',
               style: TextStyle(
                 fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: colorScheme.onSurface,
+                fontWeight: FontWeight.w700,
+                color: textPrimary,
               ),
             ),
             const SizedBox(height: 8),
@@ -1205,19 +1288,74 @@ class _PhotosTabState extends ConsumerState<_PhotosTab>
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 14,
-                color: colorScheme.onSurfaceVariant,
+                color: textSecondary,
               ),
             ),
             const SizedBox(height: 24),
-            ElevatedButton.icon(
+            FilledButton.icon(
               onPressed: _showAddPhotoSheet,
               icon: const Icon(Icons.camera_alt),
               label: const Text('Take First Photo'),
+              style: FilledButton.styleFrom(
+                backgroundColor: accentColor,
+                foregroundColor: accentContrast,
+              ),
             ),
           ],
         ),
       ),
     );
+  }
+
+  Future<void> _showAddPhotoForType(PhotoViewType type) async {
+    // Skip view type selection — go straight to image source picker
+    final source = await showGlassSheet<ImageSource>(
+      context: context,
+      useRootNavigator: true,
+      builder: (context) => GlassSheet(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(24, 8, 24, 24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                leading: const Icon(Icons.camera_alt),
+                title: const Text('Take Photo'),
+                subtitle: const Text('Use camera'),
+                onTap: () => Navigator.pop(context, ImageSource.camera),
+              ),
+              ListTile(
+                leading: const Icon(Icons.photo_library),
+                title: const Text('Choose from Gallery'),
+                subtitle: const Text('Select existing photo'),
+                onTap: () => Navigator.pop(context, ImageSource.gallery),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    if (source == null || !mounted) return;
+
+    final picker = ImagePicker();
+    final pickedFile = await picker.pickImage(source: source);
+
+    if (pickedFile == null || !mounted) return;
+
+    final editedFile = await Navigator.push<File>(
+      context,
+      AppPageRoute(
+        builder: (context) => PhotoEditorScreen(
+          imageFile: File(pickedFile.path),
+          viewTypeName: type.displayName,
+        ),
+      ),
+    );
+
+    if (editedFile != null && mounted) {
+      _uploadPhoto(editedFile, type);
+    }
   }
 
   Future<void> _showAddPhotoSheet() async {
@@ -1569,10 +1707,6 @@ class _StrengthTab extends ConsumerWidget {
                 _FitnessScoreCard(userId: userId!),
                 const SizedBox(height: 16),
 
-                // Daily Readiness Check-In
-                ReadinessCheckinCard(userId: userId!),
-                const SizedBox(height: 16),
-
                 // Strength Overview Card
                 StrengthOverviewCard(
                   userId: userId!,
@@ -1660,25 +1794,7 @@ class _FitnessScoreCard extends ConsumerWidget {
     final fitnessBreakdown = ref.watch(fitnessScoreBreakdownProvider);
 
     if (fitnessBreakdown == null) {
-      return Container(
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          color: elevated,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: cardBorder),
-        ),
-        child: Column(
-          children: [
-            Icon(Icons.insights_outlined, size: 40, color: textMuted),
-            const SizedBox(height: 8),
-            Text(
-              'Fitness score will appear after your first workout',
-              textAlign: TextAlign.center,
-              style: TextStyle(color: textMuted, fontSize: 13),
-            ),
-          ],
-        ),
-      );
+      return const SizedBox.shrink();
     }
 
     final overallScore = fitnessBreakdown.overallScore;
@@ -1926,10 +2042,38 @@ class _MeasurementsTabState extends ConsumerState<_MeasurementsTab> {
     );
   }
 
+  bool _seeded = false;
+
   Future<void> _loadMeasurements() async {
     final userId = widget.userId;
-    if (userId != null) {
-      ref.read(measurementsProvider.notifier).loadAllMeasurements(userId);
+    if (userId == null) return;
+
+    // Always force a fresh fetch from Supabase
+    await ref.read(measurementsProvider.notifier).forceRefresh(userId);
+
+    final state = ref.read(measurementsProvider);
+    final weightHistory = state.historyByType[MeasurementType.weight] ?? [];
+    debugPrint('🔍 [MeasurementsTab] Loaded ${weightHistory.length} weight entries, '
+        '${state.historyByType.length} total types with data');
+
+    // Seed body_measurements from profile if no weight data (one-time)
+    if (!_seeded) {
+      _seeded = true;
+      if (weightHistory.isEmpty) {
+        final auth = ref.read(authStateProvider);
+        final profileWeight = auth.user?.weightKg;
+        if (profileWeight != null && profileWeight > 0) {
+          debugPrint('🌱 [MeasurementsTab] Seeding weight from profile: $profileWeight kg');
+          final success = await ref.read(measurementsProvider.notifier).recordMeasurement(
+            userId: userId,
+            type: MeasurementType.weight,
+            value: profileWeight,
+            unit: 'kg',
+            notes: 'Initial weight from profile',
+          );
+          debugPrint('🌱 [MeasurementsTab] Seed result: $success');
+        }
+      }
     }
   }
 
@@ -1971,21 +2115,27 @@ class _MeasurementsTabState extends ConsumerState<_MeasurementsTab> {
 
     if (state.isLoading) return AppLoading.fullScreen();
 
-    // Determine which metric types have data
-    final typesWithData = state.historyByType.entries
-        .where((e) => e.value.isNotEmpty)
-        .map((e) => e.key)
-        .toList();
-
-    // Default selected metric to first with data (excluding weight since it has its own chart)
-    if (_selectedMetricType == null && typesWithData.isNotEmpty) {
-      _selectedMetricType = typesWithData.first;
+    // Compute derived metrics - use profile weight as fallback
+    Map<DerivedMetricType, DerivedMetricResult> derivedMetrics;
+    if (summary != null && summary.latestByType.isNotEmpty) {
+      derivedMetrics = computeDerivedMetrics(summary: summary, heightCm: heightCm, gender: gender);
+    } else {
+      // Fallback: compute from profile weight + height even with no measurements
+      derivedMetrics = computeDerivedMetrics(
+        summary: MeasurementsSummary(
+          latestByType: {
+            if (auth.user?.weightKg != null && auth.user!.weightKg! > 0)
+              MeasurementType.weight: MeasurementEntry(
+                id: '', userId: '', type: MeasurementType.weight,
+                value: auth.user!.weightKg!, unit: 'kg', recordedAt: DateTime.now(),
+              ),
+          },
+          changeFromPrevious: {},
+        ),
+        heightCm: heightCm,
+        gender: gender,
+      );
     }
-
-    // Compute derived metrics
-    final derivedMetrics = summary != null
-        ? computeDerivedMetrics(summary: summary, heightCm: heightCm, gender: gender)
-        : <DerivedMetricType, DerivedMetricResult>{};
 
     return Stack(
       children: [
@@ -1999,10 +2149,7 @@ class _MeasurementsTabState extends ConsumerState<_MeasurementsTab> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 // Weight Tracking section
-                _SectionHeader(
-                  title: 'Weight Tracking',
-                  onViewAll: () => context.push('/measurements'),
-                ),
+                const _SectionHeader(title: 'Weight Tracking'),
                 const SizedBox(height: 12),
 
                 // Time range chips
@@ -2020,74 +2167,74 @@ class _MeasurementsTabState extends ConsumerState<_MeasurementsTab> {
                 ),
                 const SizedBox(height: 24),
 
-                // Metric selector chips
-                if (typesWithData.isNotEmpty) ...[
-                  SizedBox(
-                    height: 36,
-                    child: ListView.separated(
-                      scrollDirection: Axis.horizontal,
-                      itemCount: typesWithData.length,
-                      separatorBuilder: (_, __) => const SizedBox(width: 8),
-                      itemBuilder: (context, index) {
-                        final type = typesWithData[index];
-                        final isSelected = _selectedMetricType == type;
-                        return GestureDetector(
-                          onTap: () => setState(() => _selectedMetricType = type),
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                            decoration: BoxDecoration(
-                              color: isSelected ? cyan.withOpacity(0.2) : elevated,
-                              borderRadius: BorderRadius.circular(18),
-                              border: Border.all(color: isSelected ? cyan : cardBorder),
-                            ),
-                            child: Text(
-                              type.displayName,
-                              style: TextStyle(
-                                fontSize: 13,
-                                fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-                                color: isSelected ? cyan : textMuted,
-                              ),
+                // Metric selector chips — always visible, all types
+                _SectionHeader(title: 'Metric Charts'),
+                const SizedBox(height: 12),
+                SizedBox(
+                  height: 36,
+                  child: ListView.separated(
+                    scrollDirection: Axis.horizontal,
+                    itemCount: _measurementOrder.length,
+                    separatorBuilder: (_, __) => const SizedBox(width: 8),
+                    itemBuilder: (context, index) {
+                      final type = _measurementOrder[index];
+                      // Skip weight since it has its own chart above
+                      if (type == MeasurementType.weight) return const SizedBox.shrink();
+                      final isSelected = (_selectedMetricType ?? MeasurementType.bodyFat) == type;
+                      final hasData = (state.historyByType[type]?.length ?? 0) >= 2;
+                      return GestureDetector(
+                        onTap: () => setState(() => _selectedMetricType = type),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                          decoration: BoxDecoration(
+                            color: isSelected ? cyan.withValues(alpha: 0.2) : elevated,
+                            borderRadius: BorderRadius.circular(18),
+                            border: Border.all(color: isSelected ? cyan : cardBorder),
+                          ),
+                          child: Text(
+                            type.displayName,
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                              color: isSelected ? cyan : (hasData ? textMuted : textMuted.withValues(alpha: 0.5)),
                             ),
                           ),
-                        );
-                      },
-                    ),
+                        ),
+                      );
+                    },
                   ),
-                  const SizedBox(height: 12),
+                ),
+                const SizedBox(height: 12),
 
-                  // Per-metric chart
-                  if (_selectedMetricType != null)
-                    _buildMetricChart(
-                      type: _selectedMetricType!,
-                      state: state,
-                      isDark: isDark,
-                      elevated: elevated,
-                      textMuted: textMuted,
-                      cyan: cyan,
-                    ),
-                  const SizedBox(height: 24),
-                ],
+                // Per-metric chart
+                _buildMetricChart(
+                  type: _selectedMetricType ?? MeasurementType.bodyFat,
+                  state: state,
+                  isDark: isDark,
+                  elevated: elevated,
+                  textMuted: textMuted,
+                  cyan: cyan,
+                ),
+                const SizedBox(height: 24),
 
-                // Body Metrics (derived)
-                if (derivedMetrics.isNotEmpty) ...[
-                  _SectionHeader(title: 'Body Metrics'),
-                  const SizedBox(height: 12),
-                  _buildDerivedMetricsCard(
-                    metrics: derivedMetrics,
-                    isDark: isDark,
-                    elevated: elevated,
-                    textPrimary: textPrimary,
-                    textMuted: textMuted,
-                    cardBorder: cardBorder,
-                  ),
-                  const SizedBox(height: 24),
-                ],
+                // Body Metrics (derived) - always shown
+                _SectionHeader(title: 'Body Metrics'),
+                const SizedBox(height: 12),
+                _buildAllDerivedMetrics(
+                  computed: derivedMetrics,
+                  isDark: isDark,
+                  elevated: elevated,
+                  textPrimary: textPrimary,
+                  textMuted: textMuted,
+                  cardBorder: cardBorder,
+                ),
+                const SizedBox(height: 24),
 
-                // Current Measurements
-                _SectionHeader(title: 'Current Measurements'),
+                // Body Measurements
+                _SectionHeader(title: 'Body Measurements'),
                 const SizedBox(height: 8),
                 Text(
-                  'Long-press to reorder',
+                  'Tap to log · Drag handle to reorder',
                   style: TextStyle(fontSize: 11, color: textMuted),
                 ),
                 const SizedBox(height: 8),
@@ -2107,17 +2254,129 @@ class _MeasurementsTabState extends ConsumerState<_MeasurementsTab> {
           ),
         ),
 
-        // Floating FAB
+        // Floating FAB - quick add measurement
         Positioned(
           right: 16,
           bottom: 16,
           child: FloatingActionButton(
-            onPressed: () => context.push('/measurements'),
+            onPressed: () => _showQuickAddSheet(context, ref, cyan),
             backgroundColor: cyan,
             child: Icon(Icons.add, color: isDark ? AppColors.pureBlack : Colors.white),
           ),
         ),
       ],
+    );
+  }
+
+  void _showQuickAddSheet(BuildContext context, WidgetRef ref, Color accent, [MeasurementType initialType = MeasurementType.weight]) {
+    final auth = ref.read(authStateProvider);
+    final userId = auth.user?.id;
+    if (userId == null) return;
+
+    MeasurementType selectedType = initialType;
+    final valueController = TextEditingController();
+    bool isSubmitting = false;
+
+    String _unitFor(MeasurementType t) =>
+        t == MeasurementType.weight ? 'kg' : (t == MeasurementType.bodyFat ? '%' : 'cm');
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (sheetContext) {
+        return StatefulBuilder(
+          builder: (ctx, setSheetState) {
+            final colorScheme = Theme.of(ctx).colorScheme;
+            return Padding(
+              padding: EdgeInsets.only(
+                left: 20, right: 20, top: 20,
+                bottom: MediaQuery.of(ctx).viewInsets.bottom + 20,
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Log ${selectedType.displayName}',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: colorScheme.onSurface)),
+                  const SizedBox(height: 16),
+                  SizedBox(
+                    height: 36,
+                    child: ListView.separated(
+                      scrollDirection: Axis.horizontal,
+                      itemCount: MeasurementType.values.length,
+                      separatorBuilder: (_, __) => const SizedBox(width: 8),
+                      itemBuilder: (_, index) {
+                        final type = MeasurementType.values[index];
+                        final isSelected = selectedType == type;
+                        return GestureDetector(
+                          onTap: () {
+                            setSheetState(() => selectedType = type);
+                            valueController.clear();
+                          },
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                            decoration: BoxDecoration(
+                              color: isSelected ? accent.withValues(alpha: 0.2) : colorScheme.surfaceContainerLow,
+                              borderRadius: BorderRadius.circular(18),
+                              border: Border.all(color: isSelected ? accent : colorScheme.outline.withValues(alpha: 0.2)),
+                            ),
+                            child: Text(type.displayName, style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                              color: isSelected ? accent : colorScheme.onSurfaceVariant,
+                            )),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: valueController,
+                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                    autofocus: true,
+                    decoration: InputDecoration(
+                      labelText: selectedType.displayName,
+                      suffixText: _unitFor(selectedType),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  SizedBox(
+                    width: double.infinity,
+                    child: FilledButton(
+                      onPressed: isSubmitting ? null : () async {
+                        final val = double.tryParse(valueController.text.trim());
+                        if (val == null || val <= 0) return;
+                        setSheetState(() => isSubmitting = true);
+                        final success = await ref.read(measurementsProvider.notifier).recordMeasurement(
+                          userId: userId, type: selectedType, value: val, unit: _unitFor(selectedType),
+                        );
+                        if (success && sheetContext.mounted) {
+                          Navigator.pop(sheetContext);
+                        }
+                        setSheetState(() => isSubmitting = false);
+                      },
+                      style: FilledButton.styleFrom(
+                        backgroundColor: accent,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
+                      child: isSubmitting
+                          ? const SizedBox(width: 20, height: 20,
+                              child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                          : const Text('Save', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
     );
   }
 
@@ -2168,6 +2427,7 @@ class _MeasurementsTabState extends ConsumerState<_MeasurementsTab> {
   }) {
     final weightHistory = state.historyByType[MeasurementType.weight] ?? [];
     final filtered = _filterByPeriod(weightHistory).reversed.toList();
+    debugPrint('📊 [WeightChart] total=${weightHistory.length}, filtered=${filtered.length}, period=$_selectedPeriod');
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -2177,7 +2437,7 @@ class _MeasurementsTabState extends ConsumerState<_MeasurementsTab> {
       ),
       child: SizedBox(
         height: 200,
-        child: filtered.length < 2
+        child: filtered.isEmpty
             ? Center(
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -2188,7 +2448,26 @@ class _MeasurementsTabState extends ConsumerState<_MeasurementsTab> {
                   ],
                 ),
               )
-            : _buildWeightLineChart(filtered, cyan: cyan, textMuted: textMuted, isDark: isDark),
+            : filtered.length == 1
+                ? Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          '${_formatValue(filtered.first.value)} kg',
+                          style: TextStyle(fontSize: 36, fontWeight: FontWeight.bold, color: cyan),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          DateFormat('MMM d, yyyy').format(filtered.first.recordedAt),
+                          style: TextStyle(fontSize: 13, color: textMuted),
+                        ),
+                        const SizedBox(height: 8),
+                        Text('Log again to see trends', style: TextStyle(fontSize: 12, color: textMuted)),
+                      ],
+                    ),
+                  )
+                : _buildWeightLineChart(filtered, cyan: cyan, textMuted: textMuted, isDark: isDark),
       ),
     );
   }
@@ -2447,6 +2726,125 @@ class _MeasurementsTabState extends ConsumerState<_MeasurementsTab> {
     );
   }
 
+  /// What data each derived metric needs
+  static const _metricRequirements = {
+    DerivedMetricType.bmi: 'Needs weight + height',
+    DerivedMetricType.waistToHipRatio: 'Needs waist + hips',
+    DerivedMetricType.waistToHeightRatio: 'Needs waist + height',
+    DerivedMetricType.ffmi: 'Needs weight + height + body fat',
+    DerivedMetricType.leanBodyMass: 'Needs weight + body fat',
+    DerivedMetricType.shoulderToWaistRatio: 'Needs shoulders + waist',
+    DerivedMetricType.chestToWaistRatio: 'Needs chest + waist',
+    DerivedMetricType.armSymmetry: 'Needs left + right biceps',
+    DerivedMetricType.legSymmetry: 'Needs left + right thigh',
+  };
+
+  Widget _buildAllDerivedMetrics({
+    required Map<DerivedMetricType, DerivedMetricResult> computed,
+    required bool isDark,
+    required Color elevated,
+    required Color textPrimary,
+    required Color textMuted,
+    required Color cardBorder,
+  }) {
+    return Container(
+      decoration: BoxDecoration(
+        color: elevated,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(
+        children: DerivedMetricType.values.asMap().entries.map((mapEntry) {
+          final index = mapEntry.key;
+          final type = mapEntry.value;
+          final result = computed[type];
+          final hasValue = result != null;
+
+          return Column(
+            children: [
+              if (index > 0)
+                Divider(height: 1, color: cardBorder),
+              InkWell(
+                onTap: hasValue ? () {
+                  HapticService.light();
+                  context.push('/measurements/derived/${type.name}');
+                } : null,
+                borderRadius: BorderRadius.circular(12),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              type.displayName,
+                              style: TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w500,
+                                color: hasValue ? textPrimary : textMuted,
+                              ),
+                            ),
+                            if (!hasValue)
+                              Text(
+                                _metricRequirements[type] ?? '',
+                                style: TextStyle(fontSize: 11, color: textMuted.withValues(alpha: 0.6)),
+                              ),
+                          ],
+                        ),
+                      ),
+                      if (hasValue) ...[
+                        if (result.info != null)
+                          GestureDetector(
+                            onTap: () => _showMetricInfo(context, type.displayName, result.info!, isDark),
+                            child: Padding(
+                              padding: const EdgeInsets.only(right: 8),
+                              child: Icon(Icons.info_outline, size: 18, color: textMuted),
+                            ),
+                          ),
+                        Text(
+                          type.unit.isNotEmpty
+                              ? '${_formatValue(result.value)} ${type.unit}'
+                              : _formatValue(result.value),
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.bold,
+                            color: textPrimary,
+                          ),
+                        ),
+                        if (result.label.isNotEmpty) ...[
+                          const SizedBox(width: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                            decoration: BoxDecoration(
+                              color: result.color.withValues(alpha: 0.15),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Text(
+                              result.label,
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600,
+                                color: result.color,
+                              ),
+                            ),
+                          ),
+                        ],
+                        const SizedBox(width: 4),
+                        Icon(Icons.chevron_right, size: 18, color: textMuted),
+                      ] else
+                        Text('—', style: TextStyle(fontSize: 15, color: textMuted.withValues(alpha: 0.4))),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          );
+        }).toList(),
+      ),
+    );
+  }
+
   Widget _buildDerivedMetricsCard({
     required Map<DerivedMetricType, DerivedMetricResult> metrics,
     required bool isDark,
@@ -2586,34 +2984,8 @@ class _MeasurementsTabState extends ConsumerState<_MeasurementsTab> {
     required Color cyan,
     required Color cardBorder,
   }) {
-    if (summary == null || summary.latestByType.isEmpty) {
-      return Container(
-        padding: const EdgeInsets.all(24),
-        decoration: BoxDecoration(
-          color: elevated,
-          borderRadius: BorderRadius.circular(16),
-        ),
-        child: Center(
-          child: Column(
-            children: [
-              Icon(Icons.straighten, size: 40, color: textMuted),
-              const SizedBox(height: 8),
-              Text('No measurements yet', style: TextStyle(color: textMuted)),
-              const SizedBox(height: 8),
-              TextButton(
-                onPressed: () => context.push('/measurements'),
-                child: Text('Log your first measurement', style: TextStyle(color: cyan)),
-              ),
-            ],
-          ),
-        ),
-      );
-    }
-
-    // Filter to types that have data, in the user's preferred order
-    final orderedTypes = _measurementOrder
-        .where((t) => summary.latestByType.containsKey(t))
-        .toList();
+    // Always show all 15 types in the user's preferred order
+    final orderedTypes = List<MeasurementType>.from(_measurementOrder);
 
     return Container(
       decoration: BoxDecoration(
@@ -2623,19 +2995,14 @@ class _MeasurementsTabState extends ConsumerState<_MeasurementsTab> {
       child: ReorderableListView.builder(
         shrinkWrap: true,
         physics: const NeverScrollableScrollPhysics(),
+        buildDefaultDragHandles: false,
         itemCount: orderedTypes.length,
         onReorder: (oldIndex, newIndex) {
           setState(() {
             if (newIndex > oldIndex) newIndex--;
             final item = orderedTypes.removeAt(oldIndex);
             orderedTypes.insert(newIndex, item);
-            // Rebuild full order preserving types without data
-            final newOrder = <MeasurementType>[];
-            newOrder.addAll(orderedTypes);
-            for (final t in _measurementOrder) {
-              if (!newOrder.contains(t)) newOrder.add(t);
-            }
-            _measurementOrder = newOrder;
+            _measurementOrder = List.from(orderedTypes);
           });
           _saveOrder();
         },
@@ -2648,8 +3015,11 @@ class _MeasurementsTabState extends ConsumerState<_MeasurementsTab> {
         },
         itemBuilder: (context, index) {
           final type = orderedTypes[index];
-          final entry = summary.latestByType[type]!;
-          final change = summary.changeFromPrevious[type];
+          final entry = summary?.latestByType[type];
+          final change = summary?.changeFromPrevious[type];
+          final hasData = entry != null;
+          final unit = type.apiValue == 'weight' ? 'kg'
+              : (type.apiValue == 'body_fat' ? '%' : 'cm');
 
           return Container(
             key: ValueKey(type),
@@ -2659,16 +3029,19 @@ class _MeasurementsTabState extends ConsumerState<_MeasurementsTab> {
                   : null,
             ),
             child: ListTile(
-              leading: Icon(Icons.drag_handle, color: textMuted, size: 20),
+              leading: ReorderableDragStartListener(
+                index: index,
+                child: Icon(Icons.drag_handle, color: textMuted, size: 20),
+              ),
               title: Text(
                 type.displayName,
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w500,
-                  color: textPrimary,
+                  color: hasData ? textPrimary : textMuted,
                 ),
               ),
-              subtitle: change != null && change.abs() >= 0.1
+              subtitle: hasData && change != null && change.abs() >= 0.1
                   ? Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
@@ -2690,14 +3063,19 @@ class _MeasurementsTabState extends ConsumerState<_MeasurementsTab> {
               trailing: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text(
-                    '${_formatValue(entry.value)} ${entry.unit}',
-                    style: TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.bold,
-                      color: textPrimary,
-                    ),
-                  ),
+                  hasData
+                    ? Text(
+                        '${_formatValue(entry.value)} ${entry.unit}',
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.bold,
+                          color: textPrimary,
+                        ),
+                      )
+                    : Text(
+                        '— $unit',
+                        style: TextStyle(fontSize: 14, color: textMuted.withValues(alpha: 0.5)),
+                      ),
                   const SizedBox(width: 4),
                   Icon(Icons.chevron_right, size: 18, color: textMuted),
                 ],

@@ -319,7 +319,10 @@ class _BodyScorePainter extends CustomPainter {
       }
     }
 
-    // ---- draw scored muscle groups (filled + badge) ----
+    // SVG midpoint separates front (left) and back (right) body views.
+    final svgMidX = svgBounds.center.dx;
+
+    // ---- draw scored muscle groups (filled + badge per body view) ----
     for (final groupEntry in groupScoreMap.entries) {
       final packageGroup = groupEntry.key;
       final scoreData = groupEntry.value;
@@ -332,37 +335,46 @@ class _BodyScorePainter extends CustomPainter {
         ..color = fillColor
         ..style = PaintingStyle.fill;
 
-      Rect? unionBounds;
+      // Separate paths by body view (front = left half, back = right half)
+      Rect? frontBounds;
+      Rect? backBounds;
+
       for (final id in pathIds) {
         final rawPath = musclePaths[id];
         if (rawPath == null) continue;
         final transformedPath = rawPath.transform(matrix);
         canvas.drawPath(transformedPath, fillPaint);
 
-        final bounds = transformedPath.getBounds();
-        if (unionBounds == null) {
-          unionBounds = bounds;
+        final rawCenterX = rawPath.getBounds().center.dx;
+        final tBounds = transformedPath.getBounds();
+
+        if (rawCenterX < svgMidX) {
+          frontBounds = frontBounds == null
+              ? tBounds
+              : frontBounds.expandToInclude(tBounds);
         } else {
-          unionBounds = unionBounds.expandToInclude(bounds);
+          backBounds = backBounds == null
+              ? tBounds
+              : backBounds.expandToInclude(tBounds);
         }
       }
 
-      // Draw score badge at center of union bounds
-      if (unionBounds != null) {
+      // Draw badge + status bar for each body view that has paths
+      for (final viewBounds in [frontBounds, backBounds]) {
+        if (viewBounds == null) continue;
         _drawScoreBadge(
           canvas,
-          unionBounds.center,
+          viewBounds.center,
           scoreData.strengthScore,
           Color(scoreData.levelColor),
         );
 
-        // Draw status bar below badge if available
         if (muscleStatuses != null) {
           final backendName = packageGroupToBackendMuscle[packageGroup];
           if (backendName != null) {
             final status = muscleStatuses![backendName];
             if (status != null) {
-              _drawStatusBar(canvas, unionBounds.center, status);
+              _drawStatusBar(canvas, viewBounds.center, status);
             }
           }
         }

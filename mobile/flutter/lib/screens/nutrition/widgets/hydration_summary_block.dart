@@ -25,8 +25,8 @@ class HydrationSummaryBlock extends ConsumerWidget {
 
     final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
     final electricBlue = isDark
-        ? AppColors.electricBlue
-        : AppColorsLight.electricBlue;
+        ? AppColors.waterBlue
+        : AppColorsLight.waterBlue;
     final textPrimary = isDark
         ? AppColors.textPrimary
         : AppColorsLight.textPrimary;

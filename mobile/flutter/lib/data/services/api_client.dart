@@ -41,12 +41,31 @@ class ApiClient with WidgetsBindingObserver {
   static const _refreshBufferMinutes = 5;
 
   /// Get the current valid access token from the live Supabase session.
+  /// If the token is expired or near expiry, refreshes it inline before returning.
   /// Falls back to the stored token if Supabase session is not available
   /// (e.g., during initial startup before Supabase is fully initialized).
   Future<String?> _getCurrentAccessToken() async {
     try {
-      final session = Supabase.instance.client.auth.currentSession;
+      var session = Supabase.instance.client.auth.currentSession;
       if (session != null) {
+        // Check if token is expired or about to expire (within 30s buffer)
+        final expiresAt = session.expiresAt;
+        if (expiresAt != null) {
+          final expiresAtDate = DateTime.fromMillisecondsSinceEpoch(expiresAt * 1000);
+          if (DateTime.now().isAfter(expiresAtDate.subtract(const Duration(seconds: 30)))) {
+            debugPrint('⚠️ [API] Token expired/expiring, refreshing inline before request...');
+            try {
+              final refreshed = await Supabase.instance.client.auth.refreshSession();
+              if (refreshed.session != null) {
+                debugPrint('✅ [API] Inline token refresh succeeded');
+                return refreshed.session!.accessToken;
+              }
+            } catch (e) {
+              debugPrint('❌ [API] Inline token refresh failed: $e');
+              // Return the expired token — the 401 interceptor will retry
+            }
+          }
+        }
         return session.accessToken;
       }
     } catch (e) {

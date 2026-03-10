@@ -18,6 +18,7 @@ from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from slowapi.middleware import SlowAPIMiddleware
 import asyncio
+import re
 import uvicorn
 import time
 import traceback
@@ -76,9 +77,15 @@ class SecurityHeadersMiddleware:
 class LoggingMiddleware:
     """Pure ASGI middleware to log all requests and responses with user context.
 
-    Extracts user_id from query parameters only (does not consume request body).
+    Extracts user_id from query parameters and path segments (UUID pattern).
     Sets request_id for tracing a single request through the system.
     """
+
+    # Pre-compiled UUID pattern for extracting user_id from path segments
+    _UUID_RE = re.compile(
+        r"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+        re.IGNORECASE,
+    )
 
     def __init__(self, app: ASGIApp):
         self.app = app
@@ -97,8 +104,13 @@ class LoggingMiddleware:
         # Generate unique request ID for tracing
         request_id = str(uuid.uuid4())[:8]
 
-        # Extract user_id from query parameters only (truncate for privacy)
+        # Extract user_id: prefer query param, fall back to first UUID in path
         raw_user_id = request.query_params.get("user_id")
+        if not raw_user_id:
+            # Many endpoints use /{user_id}/resource pattern
+            match = self._UUID_RE.search(path)
+            if match:
+                raw_user_id = match.group(0)
         user_id = f"...{raw_user_id[-4:]}" if raw_user_id and len(raw_user_id) > 4 else raw_user_id
 
         # Set logging context for this request
@@ -266,6 +278,7 @@ async def _resume_pending_jobs():
                         selected_days=job.get("selected_days", [0, 2, 4])
                     ),
                     name=f"resume-job-{job_id}",
+                    user_id=truncated_uid,
                 )
         else:
             logger.info("No pending workout generation jobs")
@@ -299,9 +312,29 @@ async def get_langgraph_service() -> LangGraphCoachService:
     return _langgraph_service
 
 
-def _create_safe_task(coro, name: str = None):
-    """Create an asyncio task with exception logging to prevent silent failures."""
-    task = asyncio.create_task(coro, name=name)
+def _create_safe_task(coro, name: str = None, user_id: str = None):
+    """Create an asyncio task with exception logging and log context propagation.
+
+    Args:
+        coro: Coroutine to run
+        name: Task name for logging
+        user_id: Optional user_id to set in the task's log context.
+                 If not provided, inherits from the current context (if any).
+    """
+    # Snapshot the current log context so the task can restore it
+    from core.logger import get_log_context
+    parent_ctx = get_log_context()
+    explicit_user_id = user_id
+
+    async def _wrapped():
+        # Restore parent context (or use explicit user_id) inside the new task
+        uid = explicit_user_id or parent_ctx.get("user_id")
+        rid = parent_ctx.get("request_id")
+        if uid or rid:
+            set_log_context(user_id=uid, request_id=rid)
+        await coro
+
+    task = asyncio.create_task(_wrapped(), name=name)
 
     def _on_done(t):
         if t.cancelled():

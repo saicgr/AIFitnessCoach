@@ -4573,6 +4573,7 @@ Return ONLY JSON (no markdown):
 {response_format}
 
 CRITICAL PORTION SIZE RULES:
+- HIGHEST PRIORITY: If user specifies an EXACT quantity (e.g., "500g rice", "300ml milk", "2 cups oats", "750g chicken"), ALWAYS use that exact quantity. User-specified amounts override ALL defaults below. Never reduce or round user-specified quantities.
 - If no size/portion specified, ALWAYS assume MEDIUM/REGULAR serving (not large)
 - For restaurant foods without size: use their "regular" or "medium" option
 - For packaged foods: use single serving from nutrition label
@@ -5630,6 +5631,7 @@ IMPORTANT RULES:
         plank_capacity: Optional[str] = None,
         squat_capacity: Optional[str] = None,
         cardio_capacity: Optional[str] = None,
+        training_experience: Optional[str] = None,
         user_dob: Optional[str] = None,
     ) -> Dict:
         """
@@ -5684,6 +5686,8 @@ IMPORTANT RULES:
                            (e.g., '0-10', '11-25', '26-40', '40+')
             cardio_capacity: Optional fitness assessment - cardio endurance
                             (e.g., '<5min', '5-15min', '15-30min', '30+min')
+            training_experience: Optional fitness assessment - weight training experience
+                                (e.g., 'never', '3-12mo', '1-3yr', '3-5yr', '5+yr')
 
         Returns:
             Dict with workout structure including name, type, difficulty, exercises
@@ -6280,6 +6284,8 @@ Use this split information to guide exercise selection and workout structure."""
             assessment_fields.append(f"Bodyweight squats: {squat_capacity}")
         if cardio_capacity:
             assessment_fields.append(f"Cardio endurance: {cardio_capacity}")
+        if training_experience:
+            assessment_fields.append(f"Training experience: {training_experience}")
 
         if assessment_fields:
             logger.info(f"💪 [Gemini Service] Including fitness assessment data: {assessment_fields}")
@@ -6318,6 +6324,11 @@ CRITICAL - USE THIS DATA TO PERSONALIZE THE WORKOUT:
    - <5min cardio capacity → very short cardio bursts (30-60 sec), more rest
    - 5-15min → moderate cardio intervals (1-2 min work periods)
    - 15-30min+ → longer cardio segments if workout type requires it
+
+7. EXERCISE COMPLEXITY BY TRAINING EXPERIENCE:
+   - 'never' to '1-3yr' → barbell compounds (squat, bench, deadlift, OHP, rows), cable variations, supersets, fundamental dumbbell movements, machine exercises, include form cues for newer lifters
+   - '3-5yr' → all of the above plus advanced techniques (drop sets, pause reps, tempo work), varied grips/stances, isolation work for weak points
+   - '5+yr' → all of the above plus advanced programming (cluster sets, mechanical drop sets, advanced supersets), complex movement patterns, periodization-aware exercise selection
 
 This assessment data reflects the user's ACTUAL capabilities - use it to create a workout that challenges them appropriately without being too easy or impossibly hard."""
 
@@ -7044,6 +7055,7 @@ If user has gym equipment (full_gym, barbell, dumbbells, cable_machine, machines
                 coach_style=coach_style,
                 coach_tone=coach_tone,
                 scheduled_date=scheduled_date,
+                user_dob=user_dob,
             ):
                 yield chunk
             return
@@ -7071,6 +7083,7 @@ If user has gym equipment (full_gym, barbell, dumbbells, cable_machine, machines
             coach_tone=coach_tone,
             scheduled_date=scheduled_date,
             strength_history=strength_history,
+            user_dob=user_dob,
         )
 
         try:
@@ -7169,6 +7182,7 @@ If user has gym equipment (full_gym, barbell, dumbbells, cable_machine, machines
         coach_tone: Optional[str],
         scheduled_date: Optional[str],
         strength_history: Optional[Dict],
+        user_dob: Optional[str] = None,
     ) -> str:
         """
         Build the user-specific prompt for cached generation.

@@ -216,8 +216,12 @@ class MeasurementsNotifier extends StateNotifier<MeasurementsState> {
 
   /// Load all measurement history for user with 3-tier cache.
   Future<void> loadAllMeasurements(String userId) async {
-    // Case 1: Instance state has data (navigate away -> come back) -> skip fetch
-    if (state.historyByType.isNotEmpty) return;
+    // Case 1: Instance state has data (navigate away -> come back)
+    // Show existing data instantly but always do a background refresh
+    if (state.historyByType.isNotEmpty) {
+      _fetchAndUpdate(userId);
+      return;
+    }
 
     // Case 2: Static in-memory cache exists (after ref.invalidate) -> show instantly + background refresh
     if (_cache != null && _cache!.historyByType.isNotEmpty) {
@@ -238,6 +242,11 @@ class MeasurementsNotifier extends StateNotifier<MeasurementsState> {
 
     // Case 4: First ever load -> show loading spinner -> fetch
     state = state.copyWith(isLoading: true, error: null);
+    await _fetchAndUpdate(userId);
+  }
+
+  /// Force a fresh fetch from Supabase, bypassing all caches.
+  Future<void> forceRefresh(String userId) async {
     await _fetchAndUpdate(userId);
   }
 

@@ -1,34 +1,30 @@
 /// Rest Tip Service
 ///
-/// Generates AI-powered tips during rest periods between sets.
-/// Uses smart caching to minimize API calls while keeping tips relevant.
+/// Generates context-aware tips during rest periods between sets.
+/// Uses smart caching to keep tips relevant.
 library;
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../data/services/api_client.dart';
 
 /// Provider for RestTipService
 final restTipServiceProvider = Provider<RestTipService>((ref) {
-  final apiClient = ref.watch(apiClientProvider);
-  return RestTipService(apiClient);
+  return RestTipService();
 });
 
-/// Service for generating AI tips during workout rest periods
+/// Service for generating tips during workout rest periods
 class RestTipService {
-  final ApiClient _apiClient;
-
   /// Cache: exerciseName -> (tip, lastRpe)
-  /// Re-fetches if RPE >= 8 (hard set) to provide more relevant advice
+  /// Regenerates if RPE >= 8 (hard set) to provide more relevant advice
   final Map<String, _CachedTip> _tipCache = {};
 
-  RestTipService(this._apiClient);
+  RestTipService();
 
   /// Generate a rest tip for the current exercise
   ///
   /// Uses smart caching:
   /// - Returns cached tip if available and RPE < 8
-  /// - Fetches new tip if first time or if user rated hard (RPE >= 8)
+  /// - Generates new tip if first time or if user rated hard (RPE >= 8)
   Future<String?> getRestTip({
     required String exerciseName,
     required double weightKg,
@@ -41,49 +37,14 @@ class RestTipService {
     // Check cache
     final cached = _tipCache[exerciseName];
     if (cached != null) {
-      // If user rated hard (RPE >= 8), fetch new tip
-      // Otherwise, reuse cached tip
       if (rpe == null || rpe < 8) {
-        debugPrint('💡 [RestTip] Using cached tip for $exerciseName');
         return cached.tip;
       }
-      debugPrint('💡 [RestTip] RPE >= 8, fetching fresh tip for $exerciseName');
     }
 
-    // Fetch new tip from API
-    try {
-      debugPrint('💡 [RestTip] Fetching tip for $exerciseName (${weightKg}kg x $reps, RPE: $rpe)');
-
-      final response = await _apiClient.post(
-        '/ai/rest-tip',
-        data: {
-          'exercise_name': exerciseName,
-          'weight_kg': weightKg,
-          'reps': reps,
-          'rpe': rpe,
-          'sets_remaining': setsRemaining,
-          if (exerciseInstructions != null) 'instructions': exerciseInstructions,
-          if (userId != null) 'user_id': userId,
-        },
-      );
-
-      if (response.statusCode == 200 && response.data != null) {
-        final tip = response.data['tip'] as String?;
-        if (tip != null && tip.isNotEmpty) {
-          // Cache the tip
-          _tipCache[exerciseName] = _CachedTip(tip: tip, lastRpe: rpe);
-          debugPrint('✅ [RestTip] Got tip: $tip');
-          return tip;
-        }
-      }
-
-      debugPrint('⚠️ [RestTip] No tip in response, using local fallback');
-      return _getLocalTip(exerciseName, weightKg, reps, rpe, setsRemaining);
-    } catch (e) {
-      debugPrint('❌ [RestTip] Error fetching tip: $e, using local fallback');
-      // Return cached tip or local fallback
-      return cached?.tip ?? _getLocalTip(exerciseName, weightKg, reps, rpe, setsRemaining);
-    }
+    final tip = _getLocalTip(exerciseName, weightKg, reps, rpe, setsRemaining);
+    _tipCache[exerciseName] = _CachedTip(tip: tip, lastRpe: rpe);
+    return tip;
   }
 
   /// Generate a local tip when API is unavailable

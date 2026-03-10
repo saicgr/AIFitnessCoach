@@ -79,7 +79,7 @@ class _BodyHydrationAnimationState extends State<BodyHydrationAnimation>
   @override
   Widget build(BuildContext context) {
     final waterColor =
-        widget.isDark ? AppColors.electricBlue : AppColorsLight.electricBlue;
+        widget.isDark ? AppColors.waterBlue : AppColorsLight.waterBlue;
     final bodyOutlineColor =
         widget.isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final textColor =

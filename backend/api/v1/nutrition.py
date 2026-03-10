@@ -403,7 +403,7 @@ class LogFoodResponse(BaseModel):
 async def list_food_logs(
     user_id: str,
     request: Request,
-    limit: int = Query(default=50, le=100),
+    limit: int = Query(default=50, le=500),
     from_date: Optional[str] = Query(default=None, description="Start date (YYYY-MM-DD)"),
     to_date: Optional[str] = Query(default=None, description="End date (YYYY-MM-DD)"),
     meal_type: Optional[str] = Query(default=None, description="Filter by meal type"),

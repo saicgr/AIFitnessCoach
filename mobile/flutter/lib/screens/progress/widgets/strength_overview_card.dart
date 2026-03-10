@@ -166,9 +166,6 @@ class _StrengthOverviewCardState extends ConsumerState<StrengthOverviewCard> {
             ),
           ),
 
-          // Readiness strip
-          _buildReadinessStrip(context, colorScheme),
-
           if (isLoading && strengthScores == null)
             const Padding(
               padding: EdgeInsets.all(32),
@@ -739,7 +736,7 @@ class _StrengthOverviewCardState extends ConsumerState<StrengthOverviewCard> {
           Padding(
             padding: const EdgeInsets.only(bottom: 8),
             child: Text(
-              'Long press to reorder \u00B7 Tap pin to keep on top',
+              'Drag \u2630 to reorder \u00B7 Tap pin to keep on top',
               style: TextStyle(fontSize: 10, color: colorScheme.onSurfaceVariant),
             ),
           ),
@@ -774,13 +771,10 @@ class _StrengthOverviewCardState extends ConsumerState<StrengthOverviewCard> {
             },
             itemBuilder: (context, index) {
               final muscle = muscles[index];
-              return ReorderableDragStartListener(
+              return Padding(
                 key: ValueKey(muscle.muscleGroup),
-                index: index,
-                child: Padding(
-                  padding: const EdgeInsets.only(bottom: 8),
-                  child: _buildMuscleCard(muscle, colorScheme, status: statuses[muscle.muscleGroup]),
-                ),
+                padding: const EdgeInsets.only(bottom: 8),
+                child: _buildMuscleCard(muscle, colorScheme, index: index, status: statuses[muscle.muscleGroup]),
               );
             },
           ),
@@ -812,7 +806,7 @@ class _StrengthOverviewCardState extends ConsumerState<StrengthOverviewCard> {
 
   // ─── Muscle Card with Score Grid ───────────────────────────────────
 
-  Widget _buildMuscleCard(StrengthScoreData muscle, ColorScheme colorScheme, {MuscleStatus? status}) {
+  Widget _buildMuscleCard(StrengthScoreData muscle, ColorScheme colorScheme, {required int index, MuscleStatus? status}) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final displayName = muscle.muscleGroupDisplayName;
     final assetPath = muscleGroupAssets[displayName];
@@ -874,19 +868,33 @@ class _StrengthOverviewCardState extends ConsumerState<StrengthOverviewCard> {
             Expanded(
               child: _buildScoreGridWithOverlay(score, isDark),
             ),
-            // Right: pin button
-            const SizedBox(width: 6),
-            GestureDetector(
-              onTap: () => _togglePinnedMuscle(muscle.muscleGroup),
-              behavior: HitTestBehavior.opaque,
-              child: Padding(
-                padding: const EdgeInsets.all(4),
-                child: Icon(
-                  isPinned ? Icons.push_pin : Icons.push_pin_outlined,
-                  size: 16,
-                  color: isPinned ? colorScheme.primary : colorScheme.outline.withValues(alpha: 0.5),
+            // Right: pin + drag handle
+            const SizedBox(width: 4),
+            Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                GestureDetector(
+                  onTap: () => _togglePinnedMuscle(muscle.muscleGroup),
+                  behavior: HitTestBehavior.opaque,
+                  child: Padding(
+                    padding: const EdgeInsets.all(4),
+                    child: Icon(
+                      isPinned ? Icons.push_pin : Icons.push_pin_outlined,
+                      size: 16,
+                      color: isPinned ? colorScheme.primary : colorScheme.outline.withValues(alpha: 0.5),
+                    ),
+                  ),
                 ),
-              ),
+                const SizedBox(height: 4),
+                ReorderableDragStartListener(
+                  index: index,
+                  child: Icon(
+                    Icons.drag_handle,
+                    size: 20,
+                    color: colorScheme.outline.withValues(alpha: 0.4),
+                  ),
+                ),
+              ],
             ),
           ],
         ),

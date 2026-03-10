@@ -28,7 +28,7 @@ import asyncio
 import threading
 
 from core.supabase_db import get_supabase_db
-from core.logger import get_logger
+from core.logger import get_logger, set_log_context
 from core.rate_limiter import limiter
 from models.gemini_schemas import WorkoutSuggestionsResponse
 from core.activity_logger import log_user_activity, log_user_error
@@ -561,6 +561,7 @@ async def complete_workout(workout_id: str, background_tasks: BackgroundTasks,
 
 async def _background_log_generation(user_id: str, workout_id: str, workout_name: str, workout_type: str, exercises_count: int, duration_minutes: int):
     """Background task: Log workout generation analytics (non-critical)."""
+    set_log_context(user_id=f"...{user_id[-4:]}" if len(user_id) > 4 else user_id)
     try:
         await log_user_activity(
             user_id=user_id,

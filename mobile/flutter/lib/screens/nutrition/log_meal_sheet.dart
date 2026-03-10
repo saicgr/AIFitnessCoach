@@ -513,6 +513,47 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet> {
         response.ironMg != null;
   }
 
+  /// Check if the user specified explicit quantities that the AI significantly changed.
+  /// Returns true if any user-specified quantity differs from AI result by >30%.
+  bool _hasQuantityMismatch(String description, List<FoodItemRanking> items) {
+    // Parse explicit quantities from user input: "500g rice", "300ml milk", "2kg chicken"
+    final quantityPattern = RegExp(r'(\d+(?:\.\d+)?)\s*(g|kg|ml|oz|lb)\b', caseSensitive: false);
+    final matches = quantityPattern.allMatches(description.toLowerCase());
+    if (matches.isEmpty) return false;
+
+    for (final match in matches) {
+      final userAmount = double.tryParse(match.group(1)!) ?? 0;
+      final unit = match.group(2)!.toLowerCase();
+      // Convert to grams for comparison
+      double userGrams;
+      switch (unit) {
+        case 'kg': userGrams = userAmount * 1000; break;
+        case 'lb': userGrams = userAmount * 453.6; break;
+        case 'oz': userGrams = userAmount * 28.35; break;
+        default: userGrams = userAmount; // g and ml
+      }
+      if (userGrams <= 0) continue;
+
+      // Find the closest matching food item by checking if any word after the number
+      // appears in the item name
+      final afterQuantity = description.substring(match.end).trim().toLowerCase();
+      final firstWord = afterQuantity.split(RegExp(r'\s+')).firstOrNull ?? '';
+      if (firstWord.isEmpty) continue;
+
+      for (final item in items) {
+        final itemName = item.name.toLowerCase();
+        if (itemName.contains(firstWord)) {
+          final aiWeight = item.weightG ?? 0;
+          if (aiWeight <= 0) continue;
+          final ratio = (aiWeight - userGrams).abs() / userGrams;
+          if (ratio > 0.3) return true;
+          break;
+        }
+      }
+    }
+    return false;
+  }
+
   // ─── Time Picker ──────────────────────────────────────────────
 
   Future<void> _showTimePicker() async {
@@ -1856,6 +1897,31 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet> {
                     ],
                   ],
                 ),
+                // Quantity mismatch warning
+                if (_hasQuantityMismatch(description, response.foodItemsRanked))
+                  Padding(
+                    padding: const EdgeInsets.only(top: 8),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: orange.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: orange.withValues(alpha: 0.2)),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(Icons.info_outline, size: 14, color: orange),
+                          const SizedBox(width: 6),
+                          Expanded(
+                            child: Text(
+                              'AI adjusted portions — review weights below',
+                              style: TextStyle(fontSize: 11, color: orange, fontWeight: FontWeight.w500),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
                 const SizedBox(height: 16),
 
                 // AI Estimated header row
@@ -2546,6 +2612,22 @@ class _AnimatedCalorieChipState extends State<_AnimatedCalorieChip>
   }
 
   @override
+  void didUpdateWidget(_AnimatedCalorieChip oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.calories != widget.calories) {
+      _countAnimation = IntTween(
+        begin: _countAnimation.value,
+        end: widget.calories,
+      ).animate(
+        CurvedAnimation(parent: _countController, curve: Curves.easeOutCubic),
+      );
+      _countController
+        ..reset()
+        ..forward();
+    }
+  }
+
+  @override
   void dispose() {
     _countController.dispose();
     _shimmerController.dispose();
@@ -2996,6 +3078,7 @@ class _FoodItemRankingCardState extends State<_FoodItemRankingCard> {
   late TextEditingController _countController;
   late double _currentWeight;
   late int _currentCount;
+  int? _displayCalories;
   _PortionDisplayMode _displayMode = _PortionDisplayMode.weight;
 
   @override
@@ -3046,10 +3129,43 @@ class _FoodItemRankingCardState extends State<_FoodItemRankingCard> {
         _currentCount = (newWeight / widget.item.weightPerUnitG!).round();
         _countController.text = _currentCount.toString();
       }
+      // Instantly show recalculated calories locally
+      final originalWeight = widget.item.weightG ?? 100.0;
+      if (originalWeight > 0) {
+        _displayCalories = ((widget.item.calories ?? 0) * (newWeight / originalWeight)).round();
+      }
     });
-    if (widget.onWeightChanged != null && widget.item.canScale) {
-      final updatedItem = widget.item.withWeight(newWeight);
-      widget.onWeightChanged!(updatedItem);
+    if (widget.onWeightChanged != null) {
+      if (widget.item.canScale) {
+        final updatedItem = widget.item.withWeight(newWeight);
+        widget.onWeightChanged!(updatedItem);
+      } else {
+        // Proportional fallback: scale all macros by weight ratio
+        final originalWeight = widget.item.weightG ?? 100.0;
+        if (originalWeight > 0) {
+          final ratio = newWeight / originalWeight;
+          final scaled = FoodItemRanking(
+            name: widget.item.name,
+            amount: '${newWeight.round()} ${widget.item.unit ?? "g"}',
+            calories: ((widget.item.calories ?? 0) * ratio).round(),
+            proteinG: (widget.item.proteinG ?? 0) * ratio,
+            carbsG: (widget.item.carbsG ?? 0) * ratio,
+            fatG: (widget.item.fatG ?? 0) * ratio,
+            fiberG: (widget.item.fiberG ?? 0) * ratio,
+            weightG: newWeight,
+            weightSource: 'exact',
+            goalScore: widget.item.goalScore,
+            goalAlignment: widget.item.goalAlignment,
+            reason: widget.item.reason,
+            usdaData: widget.item.usdaData,
+            aiPerGram: widget.item.aiPerGram,
+            count: widget.item.count,
+            weightPerUnitG: widget.item.weightPerUnitG,
+            unit: widget.item.unit,
+          );
+          widget.onWeightChanged!(scaled);
+        }
+      }
     }
   }
 
@@ -3063,10 +3179,47 @@ class _FoodItemRankingCardState extends State<_FoodItemRankingCard> {
         _currentWeight = newCount * widget.item.weightPerUnitG!;
         _weightController.text = _currentWeight.round().toString();
       }
+      // Instantly show recalculated calories locally
+      final originalWeight = widget.item.weightG ?? 100.0;
+      final newWeight = widget.item.weightPerUnitG != null
+          ? newCount * widget.item.weightPerUnitG!
+          : _currentWeight;
+      if (originalWeight > 0) {
+        _displayCalories = ((widget.item.calories ?? 0) * (newWeight / originalWeight)).round();
+      }
     });
-    if (widget.onWeightChanged != null && widget.item.canScaleByCount) {
-      final updatedItem = widget.item.withCount(newCount);
-      widget.onWeightChanged!(updatedItem);
+    if (widget.onWeightChanged != null) {
+      if (widget.item.canScaleByCount) {
+        final updatedItem = widget.item.withCount(newCount);
+        widget.onWeightChanged!(updatedItem);
+      } else if (widget.item.weightPerUnitG != null) {
+        // Proportional fallback for count-based items without USDA/AI data
+        final newWeight = newCount * widget.item.weightPerUnitG!;
+        final originalWeight = widget.item.weightG ?? 100.0;
+        if (originalWeight > 0) {
+          final ratio = newWeight / originalWeight;
+          final scaled = FoodItemRanking(
+            name: widget.item.name,
+            amount: '$newCount pieces (${newWeight.round()} ${widget.item.unit ?? "g"})',
+            calories: ((widget.item.calories ?? 0) * ratio).round(),
+            proteinG: (widget.item.proteinG ?? 0) * ratio,
+            carbsG: (widget.item.carbsG ?? 0) * ratio,
+            fatG: (widget.item.fatG ?? 0) * ratio,
+            fiberG: (widget.item.fiberG ?? 0) * ratio,
+            weightG: newWeight,
+            weightSource: 'exact',
+            goalScore: widget.item.goalScore,
+            goalAlignment: widget.item.goalAlignment,
+            reason: widget.item.reason,
+            usdaData: widget.item.usdaData,
+            aiPerGram: widget.item.aiPerGram,
+            count: newCount,
+            weightPerUnitG: widget.item.weightPerUnitG,
+            unit: widget.item.unit,
+          );
+          widget.onWeightChanged!(scaled);
+        }
+      }
     }
   }
 
@@ -3464,7 +3617,7 @@ class _FoodItemRankingCardState extends State<_FoodItemRankingCard> {
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   Text(
-                    '${widget.item.calories ?? 0}',
+                    '${_displayCalories ?? widget.item.calories ?? 0}',
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,

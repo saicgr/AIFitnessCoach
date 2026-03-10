@@ -86,8 +86,8 @@ class _HydrationTabState extends ConsumerState<HydrationTab> {
   Widget build(BuildContext context) {
     final state = ref.watch(hydrationProvider);
     final electricBlue = widget.isDark
-        ? AppColors.electricBlue
-        : AppColorsLight.electricBlue;
+        ? AppColors.waterBlue
+        : AppColorsLight.waterBlue;
 
     if (state.isLoading) {
       return Center(
@@ -248,8 +248,8 @@ class _HydrationTabState extends ConsumerState<HydrationTab> {
         ? AppColors.textSecondary
         : AppColorsLight.textSecondary;
     final electricBlue = widget.isDark
-        ? AppColors.electricBlue
-        : AppColorsLight.electricBlue;
+        ? AppColors.waterBlue
+        : AppColorsLight.waterBlue;
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -340,8 +340,8 @@ class _HydrationTabState extends ConsumerState<HydrationTab> {
         ? AppColors.textPrimary
         : AppColorsLight.textPrimary;
     final electricBlue = widget.isDark
-        ? AppColors.electricBlue
-        : AppColorsLight.electricBlue;
+        ? AppColors.waterBlue
+        : AppColorsLight.waterBlue;
 
     final result = await showGlassSheet<int>(
       context: context,
@@ -495,8 +495,8 @@ class _HydrationTabState extends ConsumerState<HydrationTab> {
         ? AppColors.textPrimary
         : AppColorsLight.textPrimary;
     final electricBlue = widget.isDark
-        ? AppColors.electricBlue
-        : AppColorsLight.electricBlue;
+        ? AppColors.waterBlue
+        : AppColorsLight.waterBlue;
 
     final result = await showGlassSheet<Map<String, dynamic>>(
       context: context,
@@ -627,8 +627,8 @@ class _HydrationTabState extends ConsumerState<HydrationTab> {
         ? AppColors.textPrimary
         : AppColorsLight.textPrimary;
     final electricBlue = widget.isDark
-        ? AppColors.electricBlue
-        : AppColorsLight.electricBlue;
+        ? AppColors.waterBlue
+        : AppColorsLight.waterBlue;
 
     showGlassSheet(
       context: context,
@@ -780,7 +780,7 @@ class _QuickAddSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final electricBlue =
-        isDark ? AppColors.electricBlue : AppColorsLight.electricBlue;
+        isDark ? AppColors.waterBlue : AppColorsLight.waterBlue;
     final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
     final textPrimary =
         isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
@@ -870,8 +870,8 @@ class _QuickAddButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
     final electricBlue = isDark
-        ? AppColors.electricBlue
-        : AppColorsLight.electricBlue;
+        ? AppColors.waterBlue
+        : AppColorsLight.waterBlue;
     final textPrimary = isDark
         ? AppColors.textPrimary
         : AppColorsLight.textPrimary;
@@ -1070,8 +1070,8 @@ class _BreakdownRow extends StatelessWidget {
         ? AppColors.glassSurface
         : AppColorsLight.glassSurface;
     final electricBlue = isDark
-        ? AppColors.electricBlue
-        : AppColorsLight.electricBlue;
+        ? AppColors.waterBlue
+        : AppColorsLight.waterBlue;
     final textSecondary = isDark
         ? AppColors.textSecondary
         : AppColorsLight.textSecondary;
@@ -1149,8 +1149,8 @@ class _LogEntry extends StatelessWidget {
         : AppColorsLight.textPrimary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final electricBlue = isDark
-        ? AppColors.electricBlue
-        : AppColorsLight.electricBlue;
+        ? AppColors.waterBlue
+        : AppColorsLight.waterBlue;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
