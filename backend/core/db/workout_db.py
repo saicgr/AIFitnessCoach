@@ -180,7 +180,7 @@ class WorkoutDB(BaseDB):
         """
         try:
             result = (
-                self.client.table("workouts").update(data).eq("id", workout_id).select("*").execute()
+                self.client.table("workouts").update(data).eq("id", workout_id).execute()
             )
             return result.data[0] if result.data else None
         except Exception as e:
@@ -189,7 +189,7 @@ class WorkoutDB(BaseDB):
             if "schema cache" in error_msg and "estimated_duration_minutes" in error_msg:
                 data_copy = {k: v for k, v in data.items() if k != "estimated_duration_minutes"}
                 result = (
-                    self.client.table("workouts").update(data_copy).eq("id", workout_id).select("*").execute()
+                    self.client.table("workouts").update(data_copy).eq("id", workout_id).execute()
                 )
                 return result.data[0] if result.data else None
             raise
