@@ -602,6 +602,31 @@ async def get_recently_used_exercises(user_id: str, days: int = 7) -> List[str]:
         return []
 
 
+async def get_recent_workout_name_words(user_id: str, days: int = 14) -> List[str]:
+    """Get significant words from recent workout names to avoid repetition."""
+    try:
+        db = get_supabase_db()
+        cutoff_date = (datetime.now() - timedelta(days=days)).isoformat()
+        response = db.client.table("workouts").select("name").eq(
+            "user_id", user_id
+        ).gte("scheduled_date", cutoff_date).neq("name", "Generating...").execute()
+
+        if not response.data:
+            return []
+
+        all_words = set()
+        for workout in response.data:
+            name = workout.get("name")
+            if name:
+                all_words.update(extract_name_words(name))
+
+        logger.info(f"[NameDedup] {len(all_words)} name words to avoid for user (last {days} days)")
+        return list(all_words)
+    except Exception as e:
+        logger.error(f"Error getting recent workout name words: {e}")
+        return []
+
+
 def _ensure_no_consecutive_same_focus(focus_map: dict, available_focuses: List[str]) -> dict:
     """Ensure no two adjacent workout days share the same focus.
 
@@ -1283,15 +1308,16 @@ async def mark_queued_exercises_used(user_id: str, exercise_names: List[str]):
         logger.warning(f"Could not mark queued exercises as used: {e}")
 
 
-async def get_user_staple_exercises(user_id: str, gym_profile_id: Optional[str] = None) -> List[dict]:
+async def get_user_staple_exercises(user_id: str, gym_profile_id: Optional[str] = None, scheduled_date: Optional[str] = None) -> List[dict]:
     """
     Get user's staple exercises with reasons from the database.
 
     When gym_profile_id is provided, returns staples for that profile AND "All Profiles" staples.
+    When scheduled_date is provided, filters staples by target_days (day-of-week matching).
     Also returns equipment and gym_profile_id fields for equipment guard filtering.
 
     Returns:
-        List of dicts with name, reason, muscle_group, gym_profile_id, and equipment.
+        List of dicts with name, reason, muscle_group, gym_profile_id, equipment, target_days.
         Reason can be: 'core_compound', 'favorite', 'rehab', 'strength_focus', 'other'
     """
     try:
@@ -1299,7 +1325,7 @@ async def get_user_staple_exercises(user_id: str, gym_profile_id: Optional[str] 
 
         # Use the view that joins exercise_library to get equipment info
         query = db.client.table("user_staples_with_details").select(
-            "exercise_name, reason, muscle_group, gym_profile_id, equipment"
+            "exercise_name, reason, muscle_group, gym_profile_id, equipment, target_days"
         ).eq("user_id", user_id)
 
         if gym_profile_id:
@@ -1318,9 +1344,33 @@ async def get_user_staple_exercises(user_id: str, gym_profile_id: Optional[str] 
                 "muscle_group": row.get("muscle_group"),
                 "gym_profile_id": row.get("gym_profile_id"),
                 "equipment": row.get("equipment"),
+                "target_days": row.get("target_days"),
             }
             for row in result.data
         ]
+
+        # Filter by day-of-week if scheduled_date is provided
+        if scheduled_date:
+            try:
+                from datetime import datetime as dt
+                parsed_date = dt.strptime(scheduled_date[:10], "%Y-%m-%d")
+                day_of_week = parsed_date.weekday()  # 0=Monday, 6=Sunday
+
+                filtered = []
+                for s in staples:
+                    td = s.get("target_days")
+                    if td is None:
+                        filtered.append(s)  # No day restriction — always include
+                    elif day_of_week in td:
+                        filtered.append(s)  # Day matches
+                    else:
+                        logger.info(f"Skipping staple '{s['name']}' — target_days {td} doesn't include day {day_of_week}")
+
+                logger.info(f"Filtered staples by day {day_of_week}: {len(staples)} → {len(filtered)}")
+                staples = filtered
+            except (ValueError, TypeError) as e:
+                logger.warning(f"Could not parse scheduled_date '{scheduled_date}' for day filtering: {e}")
+
         logger.info(f"Found {len(staples)} staple exercises for user {user_id} (profile: {gym_profile_id or 'all'}): {[s['name'] for s in staples]}")
         return staples
 

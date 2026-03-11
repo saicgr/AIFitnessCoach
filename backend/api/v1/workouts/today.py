@@ -363,16 +363,21 @@ async def auto_generate_workout(user_id: str, target_date: date, gym_profile_id:
         # Determine per-day focus area for workout variety
         focus_for_day = None
         workout_type = None
-        if selected_days and gym_profile_id:
+        if selected_days:
             try:
                 training_split = None
                 profile_focus_areas = []
-                profile = db.client.table("gym_profiles").select(
-                    "training_split, focus_areas"
-                ).eq("id", gym_profile_id).single().execute()
-                if profile.data:
-                    training_split = profile.data.get("training_split")
-                    profile_focus_areas = profile.data.get("focus_areas") or []
+                if gym_profile_id:
+                    profile = db.client.table("gym_profiles").select(
+                        "training_split, focus_areas"
+                    ).eq("id", gym_profile_id).single().execute()
+                    if profile.data:
+                        training_split = profile.data.get("training_split")
+                        profile_focus_areas = profile.data.get("focus_areas") or []
+                else:
+                    # Fallback: get split from user record
+                    user_record = db.get_user(user_id)
+                    training_split = user_record.get("training_split") if user_record else None
                 resolved_split = resolve_training_split(training_split, len(selected_days))
                 focus_map = get_workout_focus(resolved_split, selected_days, profile_focus_areas)
                 focus_for_day = focus_map.get(target_date.weekday())

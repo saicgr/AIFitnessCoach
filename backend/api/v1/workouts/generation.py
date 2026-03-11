@@ -103,6 +103,7 @@ from .utils import (
     # Favorite workouts context
     get_user_favorite_workouts,
     build_favorite_workouts_context,
+    get_recent_workout_name_words,
 )
 from services.adaptive_workout_service import (
     apply_age_caps,
@@ -486,6 +487,7 @@ async def generate_workout(request: GenerateWorkoutRequest, background_tasks: Ba
                 equipment_details = parse_json_field(user.get("equipment_details"), [])
                 workout_environment = preferences.get("workout_environment")
                 focus_areas = []  # No focus areas when no gym profile
+                training_split = user.get("training_split")  # Fallback to user record
 
             # Use explicit intensity_preference if set, otherwise derive from fitness level
             # This ensures beginners get 'easy' difficulty, not 'medium'
@@ -548,7 +550,7 @@ async def generate_workout(request: GenerateWorkoutRequest, background_tasks: Ba
         ) = await asyncio.gather(
             get_user_avoided_exercises(request.user_id),
             get_user_avoided_muscles(request.user_id),
-            get_user_staple_exercises(request.user_id, gym_profile_id=gym_profile_id),
+            get_user_staple_exercises(request.user_id, gym_profile_id=gym_profile_id, scheduled_date=request.scheduled_date),
             get_user_rep_preferences(request.user_id),
             get_user_progression_context(request.user_id),
             get_user_workout_patterns(request.user_id),
@@ -556,13 +558,20 @@ async def generate_workout(request: GenerateWorkoutRequest, background_tasks: Ba
             get_user_set_type_preferences(request.user_id, supabase_client=db.client),
             get_active_injuries_with_muscles(request.user_id),
             get_user_consistency_mode(request.user_id),
-            get_recently_used_exercises(request.user_id),
+            get_recently_used_exercises(request.user_id),  # lookback scaled below
             get_user_variation_percentage(request.user_id),
             get_user_favorite_exercises(request.user_id),
             get_user_exercise_queue(request.user_id),
             get_user_favorite_workouts(request.user_id),
         )
         logger.info(f"✅ [Workout Generation] All user preferences fetched in parallel")
+        # Scale lookback: higher variation → longer lookback to catch more recently used exercises
+        lookback_days = 7 + max(0, (variation_percentage - 10)) // 5
+        if lookback_days > 7:
+            recently_used_exercises = await get_recently_used_exercises(request.user_id, days=lookback_days)
+            logger.info(f"🔄 [Variety] Extended lookback to {lookback_days} days (variation={variation_percentage}%)")
+        # Fetch recent workout name words to avoid repetitive names
+        avoid_name_words = await get_recent_workout_name_words(request.user_id, days=lookback_days if lookback_days > 7 else 14)
         logger.info(f"🔄 [Consistency] Mode: {consistency_mode}, Recently used: {len(recently_used_exercises) if recently_used_exercises else 0}, Variation: {variation_percentage}%")
 
         # Merge adjacent-day exercises into the avoid list for variety
@@ -775,6 +784,7 @@ async def generate_workout(request: GenerateWorkoutRequest, background_tasks: Ba
                     focus_areas=request.focus_areas if request.focus_areas else [focus_area],
                     intensity_preference=intensity_preference,
                     workout_type_preference=request.workout_type,
+                    avoid_name_words=avoid_name_words,
                     user_dob=user.get("date_of_birth") if user else None,
                 )
             else:
@@ -786,6 +796,7 @@ async def generate_workout(request: GenerateWorkoutRequest, background_tasks: Ba
                     equipment=equipment if isinstance(equipment, list) else [],
                     duration_minutes=request.duration_minutes or 45,
                     focus_areas=request.focus_areas,
+                    avoid_name_words=avoid_name_words,
                     intensity_preference=intensity_preference,
                     custom_exercises=custom_exercises if custom_exercises else None,
                     workout_environment=workout_environment,
@@ -1458,7 +1469,7 @@ async def generate_workout_streaming(request: Request, body: GenerateWorkoutRequ
             ) = await asyncio.gather(
                 get_user_avoided_exercises(body.user_id),
                 get_user_avoided_muscles(body.user_id),
-                get_user_staple_exercises(body.user_id, gym_profile_id=gym_profile_id),
+                get_user_staple_exercises(body.user_id, gym_profile_id=gym_profile_id, scheduled_date=getattr(body, 'scheduled_date', None)),
                 get_user_rep_preferences(body.user_id),
                 get_user_progression_context(body.user_id),
                 get_user_hormonal_context(body.user_id),
@@ -3546,7 +3557,7 @@ async def extend_workout(request: ExtendWorkoutRequest,
         avoided_exercises, avoided_muscles, staple_exercises = await asyncio.gather(
             get_user_avoided_exercises(request.user_id),
             get_user_avoided_muscles(request.user_id),
-            get_user_staple_exercises(request.user_id),
+            get_user_staple_exercises(request.user_id, scheduled_date=getattr(request, 'scheduled_date', None)),
         )
         staple_names = get_staple_names(staple_exercises) if staple_exercises else []
 

@@ -1001,7 +1001,7 @@ class ExerciseRAGService:
                 # "vary" mode (default): penalize recently used exercises for variety
                 # Use variation_percentage to control penalty strength:
                 #   variation=100 -> full penalty (0.3x), variation=0 -> no penalty
-                penalty_factor = max(0.3, 1.0 - (variation_percentage / 100.0) * 0.7)
+                penalty_factor = max(0.25, 1.0 - (variation_percentage / 100.0) * 0.75 - 0.15)
                 penalized_count = 0
                 for candidate in candidates:
                     if candidate["name"].lower() in recently_used_lower:

@@ -9,6 +9,7 @@ RATE LIMITS:
 
 Updated: 2025-12-21 - Trigger Render redeploy for swap exercise feature
 """
+import re
 from fastapi import APIRouter, HTTPException, Request, Depends
 from typing import List, Optional, Dict, Any
 from pydantic import BaseModel
@@ -224,11 +225,20 @@ async def get_fast_exercise_suggestions(body: FastSuggestionRequest, current_use
             return []
 
         current_ex = current_result.data[0]
-        target_muscle = current_ex.get("target_muscle") or current_ex.get("body_part")
+        target_muscle_raw = current_ex.get("target_muscle") or current_ex.get("body_part")
         equipment = current_ex.get("equipment")
         body_part = current_ex.get("body_part")
 
-        logger.info(f"Current exercise: {current_ex['name']}, muscle: {target_muscle}, equipment: {equipment}")
+        # Strip parenthetical details from muscle names to avoid breaking
+        # PostgREST .or_() parser — e.g. "Chest (Pectoralis Major)" → "Chest"
+        def _strip_parens(value: str | None) -> str | None:
+            if not value:
+                return value
+            return re.sub(r"\s*\(.*?\)", "", value).strip() or value
+
+        target_muscle = _strip_parens(target_muscle_raw)
+
+        logger.info(f"Current exercise: {current_ex['name']}, muscle: {target_muscle} (raw: {target_muscle_raw}), equipment: {equipment}")
 
         # Build query for similar exercises
         # Query by target muscle OR body part for better matches
@@ -236,11 +246,13 @@ async def get_fast_exercise_suggestions(body: FastSuggestionRequest, current_use
             .select("name, target_muscle, body_part, equipment, gif_url, video_url")
 
         # Build OR filter for muscle/body part matching
+        # Strip parens from body_part too in case it contains them
+        clean_body_part = _strip_parens(body_part)
         filters = []
         if target_muscle:
             filters.append(f"target_muscle.ilike.%{target_muscle}%")
-        if body_part:
-            filters.append(f"body_part.ilike.%{body_part}%")
+        if clean_body_part:
+            filters.append(f"body_part.ilike.%{clean_body_part}%")
 
         if filters:
             query = query.or_(",".join(filters))

@@ -2111,7 +2111,7 @@ async def get_exercise_queue(user_id: str,
         raise safe_internal_error(e, "users")
 
 
-@router.post("/{user_id}/exercise-queue", response_model=QueuedExercise)
+@router.post("/{user_id}/exercise-queue")
 async def add_to_exercise_queue(user_id: str, request: QueueExerciseRequest,
     current_user: dict = Depends(get_current_user),
 ):
@@ -2154,11 +2154,14 @@ async def add_to_exercise_queue(user_id: str, request: QueueExerciseRequest,
         row = result.data[0]
         logger.info(f"Added to queue: {request.exercise_name} for user {user_id}")
 
-        # Invalidate only the next upcoming workout so it includes the queued exercise
-        from api.v1.workouts.utils import invalidate_upcoming_workouts
-        invalidate_upcoming_workouts(user_id, reason=f"exercise queued: {request.exercise_name}", only_next=True)
+        # Inject queued exercise into next workout using rule-based engine
+        from api.v1.workouts.preference_engine import inject_queued_exercise_into_next_workout
+        engine_result = await inject_queued_exercise_into_next_workout(
+            db, user_id, request.exercise_name, row["id"]
+        )
+        logger.info(f"Queue injection result: {engine_result.get('message', '')}")
 
-        return QueuedExercise(
+        response = QueuedExercise(
             id=row["id"],
             user_id=row["user_id"],
             exercise_name=row["exercise_name"],
@@ -2169,6 +2172,11 @@ async def add_to_exercise_queue(user_id: str, request: QueueExerciseRequest,
             expires_at=row["expires_at"],
             used_at=row.get("used_at"),
         )
+        # Return as dict with injection details
+        result = response.model_dump()
+        result["changes"] = engine_result.get("changes", [])
+        result["engine_message"] = engine_result.get("message", "")
+        return result
 
     except HTTPException:
         raise

@@ -48,6 +48,12 @@ class StapleExerciseCreate(BaseModel):
     user_rpm: Optional[int] = None
     user_resistance_level: Optional[int] = None
     user_stroke_rate_spm: Optional[int] = None
+    # Strength overrides (optional)
+    user_sets: Optional[int] = None
+    user_reps: Optional[str] = None  # "10" or "8-12" format
+    user_rest_seconds: Optional[int] = None
+    # Day-of-week targeting (optional): [0,2,4] = Mon/Wed/Fri, None = all days
+    target_days: Optional[List[int]] = None
 
     @field_validator('section')
     @classmethod
@@ -56,6 +62,14 @@ class StapleExerciseCreate(BaseModel):
         if v and v not in valid_sections:
             raise ValueError(f"section must be one of {valid_sections}")
         return v or 'main'
+
+    @field_validator('target_days')
+    @classmethod
+    def validate_target_days(cls, v):
+        if v is not None:
+            if not all(isinstance(d, int) and 0 <= d <= 6 for d in v):
+                raise ValueError("target_days must contain integers 0-6 (Mon=0, Sun=6)")
+        return v
 
 
 class StapleExerciseResponse(BaseModel):
@@ -90,6 +104,12 @@ class StapleExerciseResponse(BaseModel):
     user_rpm: Optional[int] = None
     user_resistance_level: Optional[int] = None
     user_stroke_rate_spm: Optional[int] = None
+    # Strength overrides
+    user_sets: Optional[int] = None
+    user_reps: Optional[str] = None
+    user_rest_seconds: Optional[int] = None
+    # Day-of-week targeting
+    target_days: Optional[List[int]] = None
     # Movement classification
     movement_pattern: Optional[str] = None
     energy_system: Optional[str] = None
@@ -241,6 +261,10 @@ async def get_user_staples(user_id: str, current_user: dict = Depends(get_curren
                 user_rpm=row.get("user_rpm"),
                 user_resistance_level=row.get("user_resistance_level"),
                 user_stroke_rate_spm=row.get("user_stroke_rate_spm"),
+                user_sets=row.get("user_sets"),
+                user_reps=row.get("user_reps"),
+                user_rest_seconds=row.get("user_rest_seconds"),
+                target_days=row.get("target_days"),
                 movement_pattern=row.get("movement_pattern"),
                 energy_system=row.get("energy_system"),
                 impact_level=row.get("impact_level"),
@@ -254,7 +278,7 @@ async def get_user_staples(user_id: str, current_user: dict = Depends(get_curren
         raise safe_internal_error(e, "exercise_preferences")
 
 
-@router.post("/staples", response_model=StapleExerciseResponse)
+@router.post("/staples")
 async def add_staple_exercise(request: StapleExerciseCreate, current_user: dict = Depends(get_current_user)):
     """
     Add an exercise to user's staples.
@@ -297,6 +321,10 @@ async def add_staple_exercise(request: StapleExerciseCreate, current_user: dict 
             "user_rpm": request.user_rpm,
             "user_resistance_level": request.user_resistance_level,
             "user_stroke_rate_spm": request.user_stroke_rate_spm,
+            "user_sets": request.user_sets,
+            "user_reps": request.user_reps,
+            "user_rest_seconds": request.user_rest_seconds,
+            "target_days": request.target_days,
         }
 
         # Remove None values to avoid DB errors for columns that may not exist yet
@@ -309,22 +337,11 @@ async def add_staple_exercise(request: StapleExerciseCreate, current_user: dict 
 
         row = result.data[0]
 
-        # Clear future incomplete workouts so they regenerate with the new staple
-        # Only clears tomorrow+ to preserve today's workout (injection handles today)
-        try:
-            today_str = date.today().isoformat()
-            deleted = db.client.table("workouts").delete().eq(
-                "user_id", request.user_id
-            ).gt(
-                "scheduled_date", today_str
-            ).eq(
-                "is_completed", False
-            ).execute()
-            deleted_count = len(deleted.data) if deleted.data else 0
-            if deleted_count > 0:
-                logger.info(f"⭐ Cleared {deleted_count} future workouts to include new staple: {request.exercise_name}")
-        except Exception as e:
-            logger.warning(f"Could not clear future workouts for staple: {e}")
+        # Resolve staple/avoid conflict
+        from api.v1.workouts.preference_engine import resolve_staple_avoid_conflict, apply_staple_to_workouts
+        conflict_msg = resolve_staple_avoid_conflict(db, request.user_id, request.exercise_name, "staple")
+        if conflict_msg:
+            logger.info(f"Conflict resolved: {conflict_msg}")
 
         # Get exercise details from library if library_id provided
         body_part = None
@@ -376,7 +393,30 @@ async def add_staple_exercise(request: StapleExerciseCreate, current_user: dict 
             except Exception as e:
                 logger.debug(f"Failed to get gym profile info: {e}")
 
-        return StapleExerciseResponse(
+        # Apply staple to upcoming workouts (rule-based, no regeneration)
+        staple_data = {
+            "exercise_name": request.exercise_name,
+            "section": request.section or "main",
+            "muscle_group": request.muscle_group,
+            "target_muscle": request.muscle_group,  # For compatibility
+            "equipment": equipment,
+            "gif_url": gif_url,
+            "category": category,
+            "user_sets": request.user_sets,
+            "user_reps": request.user_reps,
+            "user_rest_seconds": request.user_rest_seconds,
+            "user_duration_seconds": request.user_duration_seconds,
+            "user_speed_mph": request.user_speed_mph,
+            "user_incline_percent": request.user_incline_percent,
+            "user_rpm": request.user_rpm,
+            "user_resistance_level": request.user_resistance_level,
+            "user_stroke_rate_spm": request.user_stroke_rate_spm,
+            "default_duration_seconds": default_duration_seconds,
+            "target_days": request.target_days,
+        }
+        engine_result = await apply_staple_to_workouts(db, request.user_id, staple_data)
+
+        response = StapleExerciseResponse(
             id=row["id"],
             exercise_name=row["exercise_name"],
             library_id=row.get("library_id"),
@@ -402,11 +442,20 @@ async def add_staple_exercise(request: StapleExerciseCreate, current_user: dict 
             user_rpm=request.user_rpm,
             user_resistance_level=request.user_resistance_level,
             user_stroke_rate_spm=request.user_stroke_rate_spm,
+            user_sets=request.user_sets,
+            user_reps=request.user_reps,
+            user_rest_seconds=request.user_rest_seconds,
+            target_days=request.target_days,
             movement_pattern=movement_pattern,
             energy_system=energy_system,
             impact_level=impact_level,
             category=category,
-        )
+        ).model_dump()
+        response["changes"] = engine_result.get("changes", [])
+        response["engine_message"] = engine_result.get("message", "")
+        if conflict_msg:
+            response["conflict_resolved"] = conflict_msg
+        return response
 
     except HTTPException:
         raise
@@ -964,7 +1013,7 @@ async def get_avoided_exercises(user_id: str, include_expired: bool = False, cur
         raise safe_internal_error(e, "exercise_preferences")
 
 
-@router.post("/avoided-exercises/{user_id}", response_model=AvoidedExerciseResponse)
+@router.post("/avoided-exercises/{user_id}")
 async def add_avoided_exercise(user_id: str, request: AvoidedExerciseCreate, current_user: dict = Depends(get_current_user)):
     """
     Add an exercise to the user's avoidance list.
@@ -987,6 +1036,12 @@ async def add_avoided_exercise(user_id: str, request: AvoidedExerciseCreate, cur
         if existing.data:
             raise HTTPException(status_code=400, detail="Exercise is already in avoidance list")
 
+        # Resolve staple/avoid conflict
+        from api.v1.workouts.preference_engine import resolve_staple_avoid_conflict, apply_avoid_exercise_to_workouts
+        conflict_msg = resolve_staple_avoid_conflict(db, user_id, request.exercise_name, "avoid")
+        if conflict_msg:
+            logger.info(f"Conflict resolved: {conflict_msg}")
+
         # Insert new avoided exercise
         insert_data = {
             "user_id": user_id,
@@ -1004,11 +1059,10 @@ async def add_avoided_exercise(user_id: str, request: AvoidedExerciseCreate, cur
 
         row = result.data[0]
 
-        # Invalidate upcoming workouts so they regenerate without the avoided exercise
-        from api.v1.workouts.utils import invalidate_upcoming_workouts
-        invalidate_upcoming_workouts(user_id, reason=f"exercise avoided: {request.exercise_name}")
+        # Apply avoid to upcoming workouts (rule-based inline swaps, no regeneration)
+        engine_result = await apply_avoid_exercise_to_workouts(db, user_id, request.exercise_name)
 
-        return AvoidedExerciseResponse(
+        response = AvoidedExerciseResponse(
             id=row["id"],
             exercise_name=row["exercise_name"],
             exercise_id=row.get("exercise_id"),
@@ -1016,7 +1070,12 @@ async def add_avoided_exercise(user_id: str, request: AvoidedExerciseCreate, cur
             is_temporary=row.get("is_temporary", False),
             end_date=row.get("end_date"),
             created_at=row["created_at"],
-        )
+        ).model_dump()
+        response["changes"] = engine_result.get("changes", [])
+        response["engine_message"] = engine_result.get("message", "")
+        if conflict_msg:
+            response["conflict_resolved"] = conflict_msg
+        return response
 
     except HTTPException:
         raise
@@ -1092,11 +1151,10 @@ async def remove_avoided_exercise(user_id: str, exercise_id: str, current_user: 
         if not result.data:
             raise HTTPException(status_code=404, detail="Avoided exercise not found")
 
-        # Invalidate upcoming workouts so they can now include the previously-avoided exercise
-        from api.v1.workouts.utils import invalidate_upcoming_workouts
-        invalidate_upcoming_workouts(user_id, reason=f"exercise avoidance removed: {exercise_id}")
-
-        return {"success": True, "message": "Exercise removed from avoidance list"}
+        return {
+            "success": True,
+            "message": "Removed from avoid list. Existing workouts keep their current exercises. New workouts will include this exercise."
+        }
 
     except HTTPException:
         raise
@@ -1153,7 +1211,7 @@ async def get_avoided_muscles(user_id: str, include_expired: bool = False, curre
         raise safe_internal_error(e, "exercise_preferences")
 
 
-@router.post("/avoided-muscles/{user_id}", response_model=AvoidedMuscleResponse)
+@router.post("/avoided-muscles/{user_id}")
 async def add_avoided_muscle(user_id: str, request: AvoidedMuscleCreate, current_user: dict = Depends(get_current_user)):
     """
     Add a muscle group to the user's avoidance list.
@@ -1196,24 +1254,11 @@ async def add_avoided_muscle(user_id: str, request: AvoidedMuscleCreate, current
 
         row = result.data[0]
 
-        # Clear future incomplete workouts so they regenerate with muscle avoidance applied
-        # Only clears tomorrow+ to preserve today's workout
-        try:
-            today_str = date.today().isoformat()
-            deleted = db.client.table("workouts").delete().eq(
-                "user_id", user_id
-            ).gt(
-                "scheduled_date", today_str
-            ).eq(
-                "is_completed", False
-            ).execute()
-            deleted_count = len(deleted.data) if deleted.data else 0
-            if deleted_count > 0:
-                logger.info(f"🚫 Cleared {deleted_count} future workouts to {request.severity} muscle: {request.muscle_group}")
-        except Exception as e:
-            logger.warning(f"Could not clear future workouts for avoided muscle: {e}")
+        # Apply muscle avoidance to upcoming workouts (rule-based inline swaps, no regeneration)
+        from api.v1.workouts.preference_engine import apply_avoid_muscle_to_workouts
+        engine_result = await apply_avoid_muscle_to_workouts(db, user_id, request.muscle_group, request.severity)
 
-        return AvoidedMuscleResponse(
+        response = AvoidedMuscleResponse(
             id=row["id"],
             muscle_group=row["muscle_group"],
             reason=row.get("reason"),
@@ -1221,7 +1266,10 @@ async def add_avoided_muscle(user_id: str, request: AvoidedMuscleCreate, current
             end_date=row.get("end_date"),
             severity=row.get("severity", "avoid"),
             created_at=row["created_at"],
-        )
+        ).model_dump()
+        response["changes"] = engine_result.get("changes", [])
+        response["engine_message"] = engine_result.get("message", "")
+        return response
 
     except HTTPException:
         raise
@@ -1230,7 +1278,7 @@ async def add_avoided_muscle(user_id: str, request: AvoidedMuscleCreate, current
         raise safe_internal_error(e, "exercise_preferences")
 
 
-@router.put("/avoided-muscles/{user_id}/{muscle_id}", response_model=AvoidedMuscleResponse)
+@router.put("/avoided-muscles/{user_id}/{muscle_id}")
 async def update_avoided_muscle(user_id: str, muscle_id: str, request: AvoidedMuscleCreate, current_user: dict = Depends(get_current_user)):
     """
     Update an avoided muscle entry.
@@ -1260,11 +1308,11 @@ async def update_avoided_muscle(user_id: str, muscle_id: str, request: AvoidedMu
 
         row = result.data[0]
 
-        # Invalidate upcoming workouts so they regenerate respecting the muscle avoidance
-        from api.v1.workouts.utils import invalidate_upcoming_workouts
-        invalidate_upcoming_workouts(user_id, reason=f"muscle avoidance updated: {request.muscle_group}")
+        # Re-apply muscle avoidance to upcoming workouts with updated settings
+        from api.v1.workouts.preference_engine import apply_avoid_muscle_to_workouts
+        engine_result = await apply_avoid_muscle_to_workouts(db, user_id, request.muscle_group, request.severity)
 
-        return AvoidedMuscleResponse(
+        response = AvoidedMuscleResponse(
             id=row["id"],
             muscle_group=row["muscle_group"],
             reason=row.get("reason"),
@@ -1272,7 +1320,10 @@ async def update_avoided_muscle(user_id: str, muscle_id: str, request: AvoidedMu
             end_date=row.get("end_date"),
             severity=row.get("severity", "avoid"),
             created_at=row["created_at"],
-        )
+        ).model_dump()
+        response["changes"] = engine_result.get("changes", [])
+        response["engine_message"] = engine_result.get("message", "")
+        return response
 
     except HTTPException:
         raise

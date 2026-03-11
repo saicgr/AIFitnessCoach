@@ -6107,18 +6107,18 @@ The user prefers to minimize exercises for these muscle groups:
 
 Include at most 1 exercise targeting these muscles, and prefer compound movements over isolation."""
 
-        # Staple exercises - exercises user wants to ALWAYS include in every workout
+        # Staple exercises - pre-filtered for this workout's scheduled day
         if staple_exercises and len(staple_exercises) > 0:
             staple_names = [s.get("name", s) if isinstance(s, dict) else s for s in staple_exercises]
-            logger.info(f"⭐ [Gemini Service] User has {len(staple_exercises)} MANDATORY staple exercises: {staple_names}")
+            logger.info(f"⭐ [Gemini Service] User has {len(staple_names)} MANDATORY staple exercises for this workout: {staple_names}")
 
             preference_constraints_instruction += f"""
 
 ⭐ USER'S STAPLE EXERCISES - MANDATORY INCLUSION:
-The user has marked these exercises as STAPLES. You MUST include ALL of them in EVERY workout:
+The user has marked these exercises as STAPLES for this workout day. You MUST include ALL of them:
 {chr(10).join(f'  - {name}' for name in staple_names)}
 
-CRITICAL: Staple exercises are NON-NEGOTIABLE. Include every staple exercise listed above, regardless of the workout's target muscle group or training split."""
+CRITICAL: These staple exercises are NON-NEGOTIABLE for this workout. Include every one listed above. They have already been filtered for relevance to this workout day — just include them."""
 
         # Build comeback instruction for users returning from extended breaks
         comeback_instruction = ""
@@ -6849,8 +6849,8 @@ If user has gym equipment - most exercises MUST use that equipment!"""
                     preference_constraints += f"\n⚠️ MUSCLES TO MINIMIZE: {', '.join(reduce_usage)}"
 
             if staple_exercises and len(staple_exercises) > 0:
-                logger.info(f"⭐ [Streaming] User has {len(staple_exercises)} MANDATORY staple exercises")
-                preference_constraints += f"\n⭐ MANDATORY STAPLE EXERCISES - MUST include ALL: {', '.join(staple_exercises)}"
+                logger.info(f"⭐ [Streaming] User has {len(staple_exercises)} MANDATORY staple exercises for this day")
+                preference_constraints += f"\n⭐ MANDATORY STAPLE EXERCISES for this workout - MUST include ALL: {', '.join(staple_exercises)}"
 
             # Add progression philosophy if provided
             progression_instruction = ""
@@ -7234,7 +7234,7 @@ If user has gym equipment (full_gym, barbell, dumbbells, cable_machine, machines
                 user_context_parts.append(f"⚠️ MINIMIZE muscles: {', '.join(reduce_usage)}")
 
         if staple_exercises and len(staple_exercises) > 0:
-            user_context_parts.append(f"⭐ MUST INCLUDE these staple exercises: {', '.join(staple_exercises)}")
+            user_context_parts.append(f"⭐ MUST INCLUDE these staple exercises (pre-filtered for this day): {', '.join(staple_exercises)}")
 
         # Strength history for weight recommendations
         if strength_history:
