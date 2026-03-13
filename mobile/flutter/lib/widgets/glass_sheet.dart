@@ -125,6 +125,9 @@ class GlassSheet extends StatelessWidget {
                     ? Padding(padding: padding!, child: child)
                     : child,
               ),
+              // Fill the bottom safe area (home indicator) with the sheet's
+              // background color so the system white doesn't bleed through.
+              SizedBox(height: MediaQuery.of(context).padding.bottom),
             ],
           ),
         ),
