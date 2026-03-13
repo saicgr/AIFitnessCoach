@@ -74,78 +74,29 @@ class _FoodBrowserPanelState extends ConsumerState<FoodBrowserPanel> {
   _SearchDisplayMode _displayMode = _SearchDisplayMode.pages;
   String? _expandedSearchKey; // key of expanded search card (only one at a time)
 
-  // AI review state
-  StreamSubscription<search.FoodReview?>? _reviewSub;
-  search.FoodReview? _currentReview;
-  bool _reviewLoading = false;
-  String? _lastReviewQuery;
 
   @override
   void initState() {
     super.initState();
     _loadSavedFoods();
-    _reviewSub = ref.read(search.foodSearchServiceProvider).reviewStream.listen((review) {
-      if (!mounted) return;
-      setState(() {
-        _currentReview = review;
-        _reviewLoading = false;
-      });
-    });
   }
 
   @override
   void didUpdateWidget(FoodBrowserPanel oldWidget) {
     super.didUpdateWidget(oldWidget);
-    // Cancel review and reset search state when query changes
+    // Reset search state when query changes
     if (widget.searchQuery != oldWidget.searchQuery) {
-      _currentReview = null;
-      _reviewLoading = false;
-      _lastReviewQuery = null;
       _expandedSearchKey = null;
       _currentSearchPage = 0;
       _searchPageController?.dispose();
       _searchPageController = null;
-      ref.read(search.foodSearchServiceProvider).cancelReview();
     }
   }
 
   @override
   void dispose() {
-    _reviewSub?.cancel();
     _searchPageController?.dispose();
-    ref.read(search.foodSearchServiceProvider).cancelReview();
     super.dispose();
-  }
-
-  /// Trigger AI review for keyword search results if user has goals.
-  void _maybeStartReview(search.FoodSearchResults state) {
-    final user = ref.read(authStateProvider).user;
-    final goals = user?.goalsList ?? [];
-    if (goals.isEmpty) return;
-    if (state.isEmpty) return;
-
-    // Don't re-trigger for same query
-    if (_lastReviewQuery == state.query) return;
-    _lastReviewQuery = state.query;
-
-    // Aggregate macros from top results so the review reflects the full query
-    final topResults = state.allResults.take(5);
-    int totalCal = 0;
-    double totalProtein = 0, totalCarbs = 0, totalFat = 0;
-    for (final r in topResults) {
-      totalCal += r.calories;
-      totalProtein += r.protein ?? 0;
-      totalCarbs += r.carbs ?? 0;
-      totalFat += r.fat ?? 0;
-    }
-    setState(() => _reviewLoading = true);
-    ref.read(search.foodSearchServiceProvider).startReviewTimer(
-      state.query,
-      totalCal,
-      totalProtein,
-      totalCarbs,
-      totalFat,
-    );
   }
 
   Future<void> _loadSavedFoods() async {
@@ -661,8 +612,6 @@ class _FoodBrowserPanelState extends ConsumerState<FoodBrowserPanel> {
           }
 
           // Trigger AI review after results load
-          _maybeStartReview(state);
-
           // User goals for tag generation
           final userGoals = ref.read(authStateProvider).user?.goalsList ?? [];
 
@@ -677,7 +626,7 @@ class _FoodBrowserPanelState extends ConsumerState<FoodBrowserPanel> {
 
           return Column(
             children: [
-              // Search timing + review
+              // Search timing + results
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 4),
                 child: Column(
@@ -689,15 +638,6 @@ class _FoodBrowserPanelState extends ConsumerState<FoodBrowserPanel> {
                         child: Text(
                           '${state.totalCount} results \u00b7 ${state.searchTimeMs}ms',
                           style: TextStyle(fontSize: 11, color: textMuted),
-                        ),
-                      ),
-                    if (_currentReview != null || _reviewLoading)
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: 8),
-                        child: _FoodReviewCard(
-                          review: _currentReview,
-                          isLoading: _reviewLoading,
-                          isDark: widget.isDark,
                         ),
                       ),
                     // Personal results (always shown above groups)

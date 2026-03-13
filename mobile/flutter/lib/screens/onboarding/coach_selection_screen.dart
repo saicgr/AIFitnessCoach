@@ -702,9 +702,9 @@ class _CoachSelectionScreenState extends ConsumerState<CoachSelectionScreen> {
             );
             debugPrint('✅ [CoachSelection] Nutrition targets calculated and saved');
 
-            // Refresh nutrition preferences provider to load the new targets
-            await ref.read(nutritionPreferencesProvider.notifier).initialize(userId);
-            debugPrint('✅ [CoachSelection] Nutrition preferences provider refreshed');
+            // Force-refresh nutrition preferences (bypasses skip-if-already-loaded logic)
+            await ref.read(nutritionPreferencesProvider.notifier).forceRefreshPreferences(userId);
+            debugPrint('✅ [CoachSelection] Nutrition preferences provider force-refreshed');
           } catch (nutritionError) {
             debugPrint('⚠️ [CoachSelection] Failed to calculate nutrition targets: $nutritionError');
             // Non-critical - user can still use the app

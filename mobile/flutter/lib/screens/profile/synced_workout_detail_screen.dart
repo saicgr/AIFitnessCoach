@@ -11,255 +11,324 @@ class SyncedWorkoutDetailScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final metadata = workout.generationMetadata ?? {};
-    final sourceApp = metadata['source_app_name'] as String? ?? 'Health Connect';
+
+    // Key stored by health_import_provider is 'source_app'
+    final sourceApp = metadata['source_app'] as String?
+        ?? metadata['source_app_name'] as String?
+        ?? (Theme.of(context).platform == TargetPlatform.iOS ? 'Apple Health' : 'Health Connect');
     final calories = metadata['calories_burned'];
     final avgHR = metadata['avg_heart_rate'];
     final maxHR = metadata['max_heart_rate'];
+    final minHR = metadata['min_heart_rate'];
     final distance = metadata['distance_meters'];
-    final textPrimary = isDark ? Colors.white : Colors.black87;
+    final steps = metadata['total_steps'];
+
+    final textPrimary = isDark ? Colors.white : AppColorsLight.textPrimary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
-    final cardBorder = BorderSide(
-      color: (isDark ? Colors.white : Colors.black).withValues(alpha: 0.06),
-    );
+    final cardBorder = (isDark ? Colors.white : Colors.black).withValues(alpha: 0.06);
+    final backgroundColor = isDark ? AppColors.pureBlack : AppColorsLight.pureWhite;
+    final accentColor = isDark ? AppColors.accent : AppColorsLight.accent;
 
     return Scaffold(
-      backgroundColor: isDark ? AppColors.background : AppColorsLight.background,
-      appBar: AppBar(
-        title: Text(
-          workout.name ?? 'Synced Workout',
-          style: TextStyle(color: textPrimary, fontWeight: FontWeight.w600),
-        ),
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-      ),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
+      backgroundColor: backgroundColor,
+      body: Stack(
         children: [
-          // Source app badge
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-            decoration: BoxDecoration(
-              color: isDark ? Colors.white.withValues(alpha: 0.08) : Colors.black.withValues(alpha: 0.05),
-              borderRadius: BorderRadius.circular(20),
-            ),
+          // Scrollable content
+          CustomScrollView(
+            slivers: [
+              SliverToBoxAdapter(
+                child: SizedBox(height: MediaQuery.of(context).padding.top + 68),
+              ),
+
+              // Source badge
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: accentColor.withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.sync_rounded, size: 14, color: accentColor),
+                            const SizedBox(width: 6),
+                            Text(
+                              'Synced from $sourceApp',
+                              style: TextStyle(fontSize: 12, color: accentColor, fontWeight: FontWeight.w500),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+
+              // Health metrics card
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                  child: Container(
+                    padding: const EdgeInsets.all(20),
+                    decoration: BoxDecoration(
+                      color: elevated,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: cardBorder),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Activity Summary',
+                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: textPrimary),
+                        ),
+                        const SizedBox(height: 16),
+                        Wrap(
+                          spacing: 16,
+                          runSpacing: 16,
+                          children: [
+                            if (workout.durationMinutes != null)
+                              _MetricTile(
+                                icon: Icons.timer_outlined,
+                                label: 'Duration',
+                                value: '${workout.durationMinutes} min',
+                                color: accentColor,
+                                isDark: isDark,
+                              ),
+                            if (calories != null)
+                              _MetricTile(
+                                icon: Icons.local_fire_department_outlined,
+                                label: 'Calories',
+                                value: '${_formatNum(calories)} kcal',
+                                color: const Color(0xFFF97316),
+                                isDark: isDark,
+                              ),
+                            if (steps != null)
+                              _MetricTile(
+                                icon: Icons.directions_walk_outlined,
+                                label: 'Steps',
+                                value: _formatNum(steps),
+                                color: const Color(0xFF22C55E),
+                                isDark: isDark,
+                              ),
+                            if (distance != null)
+                              _MetricTile(
+                                icon: Icons.straighten_outlined,
+                                label: 'Distance',
+                                value: '${((distance as num) / 1000.0).toStringAsFixed(2)} km',
+                                color: const Color(0xFF8B5CF6),
+                                isDark: isDark,
+                              ),
+                            if (avgHR != null)
+                              _MetricTile(
+                                icon: Icons.favorite_outline,
+                                label: 'Avg HR',
+                                value: '$avgHR bpm',
+                                color: const Color(0xFFEF4444),
+                                isDark: isDark,
+                              ),
+                            if (maxHR != null)
+                              _MetricTile(
+                                icon: Icons.favorite,
+                                label: 'Max HR',
+                                value: '$maxHR bpm',
+                                color: const Color(0xFFEF4444),
+                                isDark: isDark,
+                              ),
+                            if (minHR != null)
+                              _MetricTile(
+                                icon: Icons.favorite_border,
+                                label: 'Min HR',
+                                value: '$minHR bpm',
+                                color: const Color(0xFFEF4444),
+                                isDark: isDark,
+                              ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+
+              // Workout info card
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                  child: Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: elevated,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: cardBorder),
+                    ),
+                    child: Column(
+                      children: [
+                        _buildInfoRow('Type', _capitalize(workout.type ?? 'General'), textPrimary, textMuted),
+                        if (workout.scheduledDate != null) ...[
+                          Divider(height: 24, color: cardBorder),
+                          _buildInfoRow('Date', _formatDate(workout.scheduledDate!), textPrimary, textMuted),
+                        ],
+                        Divider(height: 24, color: cardBorder),
+                        _buildInfoRow('Status', workout.isCompleted == true ? 'Completed' : 'Recorded', textPrimary, textMuted),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+
+              const SliverToBoxAdapter(child: SizedBox(height: 32)),
+            ],
+          ),
+
+          // Floating top bar
+          Positioned(
+            top: MediaQuery.of(context).padding.top + 8,
+            left: 16,
+            right: 16,
             child: Row(
-              mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(Icons.sync_rounded, size: 14, color: textMuted),
-                const SizedBox(width: 6),
-                Text(
-                  'Synced from $sourceApp',
-                  style: TextStyle(fontSize: 12, color: textMuted),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 16),
-
-          // Health data summary card
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: elevated,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: cardBorder.color),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Health Summary',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: textPrimary,
+                // Back button
+                GestureDetector(
+                  onTap: () => Navigator.of(context).pop(),
+                  child: Container(
+                    height: 44,
+                    width: 44,
+                    decoration: BoxDecoration(
+                      color: isDark ? const Color(0xFF1C1C1E) : AppColorsLight.elevated,
+                      borderRadius: BorderRadius.circular(22),
+                      border: isDark ? null : Border.all(color: cardBorder),
+                      boxShadow: [
+                        BoxShadow(
+                          color: isDark ? Colors.black.withValues(alpha: 0.4) : Colors.black.withValues(alpha: 0.1),
+                          blurRadius: 12,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: Icon(
+                      Icons.arrow_back_rounded,
+                      color: isDark ? Colors.white : AppColorsLight.textPrimary,
+                      size: 22,
+                    ),
                   ),
                 ),
-                const SizedBox(height: 16),
-                Wrap(
-                  spacing: 16,
-                  runSpacing: 16,
-                  children: [
-                    if (workout.durationMinutes != null)
-                      _buildMetricTile(
-                        icon: Icons.timer_outlined,
-                        label: 'Duration',
-                        value: '${workout.durationMinutes} min',
-                        isDark: isDark,
-                      ),
-                    if (calories != null)
-                      _buildMetricTile(
-                        icon: Icons.local_fire_department_outlined,
-                        label: 'Calories',
-                        value: '$calories kcal',
-                        isDark: isDark,
-                      ),
-                    if (avgHR != null)
-                      _buildMetricTile(
-                        icon: Icons.favorite_outline,
-                        label: 'Avg HR',
-                        value: '$avgHR bpm',
-                        isDark: isDark,
-                      ),
-                    if (maxHR != null)
-                      _buildMetricTile(
-                        icon: Icons.favorite,
-                        label: 'Max HR',
-                        value: '$maxHR bpm',
-                        isDark: isDark,
-                      ),
-                    if (distance != null)
-                      _buildMetricTile(
-                        icon: Icons.straighten_outlined,
-                        label: 'Distance',
-                        value: '${(distance / 1000.0).toStringAsFixed(2)} km',
-                        isDark: isDark,
-                      ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 16),
-
-          // Workout type + date info
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: elevated,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: cardBorder.color),
-            ),
-            child: Column(
-              children: [
-                _buildInfoRow('Type', workout.type ?? 'General', textPrimary, textMuted),
-                if (workout.scheduledDate != null) ...[
-                  const SizedBox(height: 12),
-                  _buildInfoRow('Date', workout.scheduledDate!, textPrimary, textMuted),
-                ],
-                if (workout.isCompleted == true) ...[
-                  const SizedBox(height: 12),
-                  _buildInfoRow('Status', 'Completed', textPrimary, textMuted),
-                ],
-              ],
-            ),
-          ),
-          const SizedBox(height: 16),
-
-          // Exercises section
-          if (workout.exercises.isNotEmpty) ...[
-            Text(
-              'Exercises',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-                color: textPrimary,
-              ),
-            ),
-            const SizedBox(height: 8),
-            ...workout.exercises.map((exercise) => Container(
-              margin: const EdgeInsets.only(bottom: 8),
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: elevated,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: cardBorder.color),
-              ),
-              child: Row(
-                children: [
-                  Icon(Icons.fitness_center, size: 18, color: textMuted),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      exercise.name,
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
-                        color: textPrimary,
+                const SizedBox(width: 12),
+                // Title pill
+                Expanded(
+                  child: Container(
+                    height: 44,
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    decoration: BoxDecoration(
+                      color: isDark ? const Color(0xFF1C1C1E) : AppColorsLight.elevated,
+                      borderRadius: BorderRadius.circular(22),
+                      border: isDark ? null : Border.all(color: cardBorder),
+                      boxShadow: [
+                        BoxShadow(
+                          color: isDark ? Colors.black.withValues(alpha: 0.4) : Colors.black.withValues(alpha: 0.1),
+                          blurRadius: 12,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: Center(
+                      child: Text(
+                        workout.name ?? 'Imported Workout',
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                          color: isDark ? Colors.white : AppColorsLight.textPrimary,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
                   ),
-                ],
-              ),
-            )),
-          ] else ...[
-            Container(
-              padding: const EdgeInsets.all(24),
-              decoration: BoxDecoration(
-                color: elevated,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: cardBorder.color),
-              ),
-              child: Center(
-                child: Column(
-                  children: [
-                    Icon(Icons.info_outline, size: 32, color: textMuted),
-                    const SizedBox(height: 8),
-                    Text(
-                      'No exercise details available',
-                      style: TextStyle(fontSize: 14, color: textMuted),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'This workout was synced without exercise data',
-                      style: TextStyle(fontSize: 12, color: textMuted.withValues(alpha: 0.7)),
-                    ),
-                  ],
                 ),
-              ),
+              ],
             ),
-          ],
-          const SizedBox(height: 32),
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildMetricTile({
-    required IconData icon,
-    required String label,
-    required String value,
-    required bool isDark,
-  }) {
+  String _formatNum(dynamic val) {
+    if (val == null) return '';
+    final n = num.tryParse(val.toString()) ?? 0;
+    if (n >= 1000) return '${(n / 1000).toStringAsFixed(1)}k';
+    return n.toStringAsFixed(0);
+  }
+
+  String _capitalize(String s) =>
+      s.isEmpty ? s : '${s[0].toUpperCase()}${s.substring(1)}';
+
+  String _formatDate(String raw) {
+    final dt = DateTime.tryParse(raw);
+    if (dt == null) return raw;
+    final months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    return '${months[dt.month - 1]} ${dt.day}, ${dt.year}';
+  }
+}
+
+class _MetricTile extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final String value;
+  final Color color;
+  final bool isDark;
+
+  const _MetricTile({
+    required this.icon,
+    required this.label,
+    required this.value,
+    required this.color,
+    required this.isDark,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final textPrimary = isDark ? Colors.white : AppColorsLight.textPrimary;
+
     return SizedBox(
       width: 140,
       child: Row(
         children: [
-          Icon(icon, size: 20, color: isDark ? AppColors.accent : AppColorsLight.accent),
-          const SizedBox(width: 8),
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(icon, size: 18, color: color),
+          ),
+          const SizedBox(width: 10),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                label,
-                style: TextStyle(
-                  fontSize: 11,
-                  color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
-                ),
-              ),
-              Text(
-                value,
-                style: TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w600,
-                  color: isDark ? Colors.white : Colors.black87,
-                ),
-              ),
+              Text(label, style: TextStyle(fontSize: 11, color: textMuted)),
+              Text(value, style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: textPrimary)),
             ],
           ),
         ],
       ),
     );
   }
+}
 
-  Widget _buildInfoRow(String label, String value, Color textPrimary, Color textMuted) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text(label, style: TextStyle(fontSize: 14, color: textMuted)),
-        Text(value, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: textPrimary)),
-      ],
-    );
-  }
+Widget _buildInfoRow(String label, String value, Color textPrimary, Color textMuted) {
+  return Row(
+    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    children: [
+      Text(label, style: TextStyle(fontSize: 14, color: textMuted)),
+      Text(value, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: textPrimary)),
+    ],
+  );
 }

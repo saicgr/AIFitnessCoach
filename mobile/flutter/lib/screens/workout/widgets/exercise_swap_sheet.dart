@@ -197,6 +197,7 @@ class _ExerciseSwapSheetState extends ConsumerState<_ExerciseSwapSheet>
 
   /// Load fast database-based suggestions (~500ms)
   Future<void> _loadSimilarExercises() async {
+    if (_isLoadingSimilar) return;
     setState(() => _isLoadingSimilar = true);
 
     try {
@@ -577,23 +578,45 @@ class _ExerciseSwapSheetState extends ConsumerState<_ExerciseSwapSheet>
     }
 
     if (_similarExercises.isEmpty) {
+      const accentColor = AppColors.cyan;
       return Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.fitness_center, size: 48, color: textMuted),
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: accentColor.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: const Icon(Icons.swap_horiz_rounded, size: 40, color: accentColor),
+            ),
             const SizedBox(height: 16),
             Text(
               'No similar exercises found',
-              style: TextStyle(
-                fontWeight: FontWeight.w600,
-                color: textMuted,
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: textPrimary),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              'No exercises match this muscle group',
+              style: TextStyle(fontSize: 13, color: textMuted),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 20),
+            OutlinedButton.icon(
+              onPressed: _loadSimilarExercises,
+              icon: const Icon(Icons.refresh_rounded, size: 16),
+              label: const Text('Try Again'),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: accentColor,
+                side: BorderSide(color: accentColor.withValues(alpha: 0.5)),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
               ),
             ),
             const SizedBox(height: 8),
             TextButton(
-              onPressed: _loadSimilarExercises,
-              child: const Text('Try Again'),
+              onPressed: () => _tabController.animateTo(3),
+              child: const Text('Try AI Suggestions', style: TextStyle(color: accentColor)),
             ),
           ],
         ),

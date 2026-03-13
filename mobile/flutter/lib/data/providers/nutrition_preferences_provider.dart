@@ -350,6 +350,28 @@ class NutritionPreferencesNotifier extends StateNotifier<NutritionPreferencesSta
     }
   }
 
+  /// Force-reload preferences from backend, bypassing the skip-if-already-loaded logic.
+  /// Use this after calculate-nutrition-targets so the Profile card reflects the new goal/macros.
+  Future<void> forceRefreshPreferences(String userId) async {
+    try {
+      debugPrint('🔄 [NutritionPrefsProvider] Force-refreshing preferences for $userId');
+      final results = await Future.wait([
+        _repository.getPreferences(userId),
+        _repository.getDynamicTargets(userId: userId).catchError((_) => const DynamicNutritionTargets()),
+      ]);
+      final preferences = results[0] as NutritionPreferences?;
+      final dynamicTargets = results[1] as DynamicNutritionTargets?;
+      state = state.copyWith(
+        preferences: preferences,
+        dynamicTargets: dynamicTargets,
+      );
+      _nutritionPrefsInMemoryCache = state;
+      debugPrint('✅ [NutritionPrefsProvider] Force-refresh done: goal=${preferences?.nutritionGoals}, cal=${preferences?.targetCalories}');
+    } catch (e) {
+      debugPrint('❌ [NutritionPrefsProvider] Force-refresh error: $e');
+    }
+  }
+
   /// Refresh dynamic targets
   Future<void> refreshDynamicTargets(String userId) async {
     try {

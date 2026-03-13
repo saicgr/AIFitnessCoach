@@ -149,6 +149,9 @@ class HealthImportNotifier extends StateNotifier<HealthImportState> {
       if (pending.distanceMeters != null) {
         metadata['distance_meters'] = pending.distanceMeters;
       }
+      if (pending.totalSteps != null) {
+        metadata['total_steps'] = pending.totalSteps;
+      }
 
       // 1. Create the workout via API.
       final createResponse = await _apiClient.post(
@@ -276,6 +279,9 @@ class HealthImportNotifier extends StateNotifier<HealthImportState> {
         }
         if (pending.sourceName != null) {
           metadata['source_app'] = pending.sourceName;
+        }
+        if (pending.totalSteps != null) {
+          metadata['total_steps'] = pending.totalSteps;
         }
 
         // Create workout

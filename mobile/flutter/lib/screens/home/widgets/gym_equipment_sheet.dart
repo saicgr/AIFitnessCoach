@@ -39,15 +39,19 @@ const Map<String, List<String>> gymEquipmentCategories = {
     'stair_climber',
     'assault_bike',
   ],
+  'Racks & Benches': [
+    'bench',
+    'squat_rack',
+    'adjustable_bench',
+    'flat_bench',
+    'incline_bench',
+    'decline_bench',
+  ],
   'Bodyweight & Accessories': [
     'bodyweight',
     'pull_up_bar',
     'dip_station',
     'resistance_bands',
-    'adjustable_bench',
-    'flat_bench',
-    'incline_bench',
-    'decline_bench',
     'yoga_mat',
     'stability_ball',
     'foam_roller',
@@ -91,6 +95,8 @@ const Map<String, IconData> equipmentIcons = {
   'pull_up_bar': Icons.straighten,
   'resistance_bands': Icons.waves,
   'bodyweight': Icons.accessibility_new,
+  'bench': Icons.weekend,
+  'squat_rack': Icons.fitness_center,
 };
 
 /// Format equipment name for display

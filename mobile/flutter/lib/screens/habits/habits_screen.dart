@@ -162,10 +162,15 @@ class HabitsScreenNotifier extends StateNotifier<HabitsScreenState> {
     }
   }
 
-  /// Refresh unified list with latest auto-tracked data
+  /// Refresh unified list with latest auto-tracked data.
+  /// Skipped while the initial load is running to prevent a race that could
+  /// blank the list before loadHabits() finishes populating customHabits.
   Future<void> refreshUnifiedList(List<HabitData> autoHabits) async {
+    if (state.isLoading) return;
     final savedOrder = await _loadSavedOrder();
     final unified = await _buildUnifiedList(autoHabits, state.customHabits, savedOrder);
+    // Never blank the list — if the rebuild somehow produces fewer items, keep current.
+    if (unified.isEmpty && state.unifiedHabits.isNotEmpty) return;
     state = state.copyWith(unifiedHabits: unified);
   }
 
@@ -421,12 +426,11 @@ final habitsScreenProvider = StateNotifierProvider.autoDispose<HabitsScreenNotif
   // Keep alive so data persists across navigation (no re-fetch on every visit)
   ref.keepAlive();
 
-  final repository = ref.watch(habitRepositoryProvider);
-  final authState = ref.watch(authStateProvider);
-  final userId = authState.user?.id ?? '';
-
-  final accentColorEnum = ref.watch(accentColorProvider);
-  final accentColor = accentColorEnum.getColor(false);
+  // Use ref.read (not ref.watch) so auth/accent changes do NOT recreate the
+  // notifier and reset state to empty, which caused the black-screen flicker.
+  final repository = ref.read(habitRepositoryProvider);
+  final userId = ref.read(authStateProvider).user?.id ?? '';
+  final accentColor = ref.read(accentColorProvider).getColor(false);
 
   return HabitsScreenNotifier(
     repository,
@@ -521,6 +525,15 @@ class HabitsScreen extends ConsumerWidget {
                     ),
                   ),
                 ),
+                // Show loading spinner while initial data is fetching
+                if (habitsState.isLoading && habitsState.unifiedHabits.isEmpty)
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 48),
+                      child: Center(child: CircularProgressIndicator(color: accentColor)),
+                    ),
+                  ),
+
                 // Unified reorderable list
                 SliverPadding(
                   padding: const EdgeInsets.symmetric(horizontal: 16),

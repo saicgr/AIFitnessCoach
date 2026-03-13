@@ -184,7 +184,7 @@ class _ExerciseImageState extends ConsumerState<ExerciseImage> {
       return Icon(
         Icons.fitness_center,
         color: fallbackIconColor,
-        size: widget.width * 0.5,
+        size: widget.width.isFinite ? widget.width * 0.5 : 40,
       );
     }
 
@@ -195,8 +195,8 @@ class _ExerciseImageState extends ConsumerState<ExerciseImage> {
       cacheKey: widget.exerciseName.isNotEmpty ? widget.exerciseName : null,
       fit: widget.fit,
       // Perf fix 2.2: constrain decoded image size in memory cache
-      memCacheWidth: (widget.width * 2).toInt().clamp(100, 400),
-      memCacheHeight: (widget.height * 2).toInt().clamp(100, 400),
+      memCacheWidth: widget.width.isFinite ? (widget.width * 2).toInt().clamp(100, 400) : null,
+      memCacheHeight: widget.height.isFinite ? (widget.height * 2).toInt().clamp(100, 400) : null,
       placeholder: (_, __) => const Center(
         child: SizedBox(
           width: 20,
@@ -207,7 +207,7 @@ class _ExerciseImageState extends ConsumerState<ExerciseImage> {
       errorWidget: (_, __, ___) => Icon(
         Icons.fitness_center,
         color: fallbackIconColor,
-        size: widget.width * 0.5,
+        size: widget.width.isFinite ? widget.width * 0.5 : 40,
       ),
     );
   }

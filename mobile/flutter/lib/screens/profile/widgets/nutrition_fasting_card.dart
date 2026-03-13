@@ -148,7 +148,7 @@ class NutritionFastingCard extends ConsumerWidget {
               icon: Icons.trending_down_outlined,
               iconColor: AppColors.orange,
               label: 'Weekly Rate',
-              value: _formatWeeklyRate(prefs!.rateOfChange!),
+              value: _formatWeeklyRate(prefs.rateOfChange!),
               isDark: isDark,
               textPrimary: textPrimary,
               textMuted: textMuted,
@@ -165,6 +165,70 @@ class NutritionFastingCard extends ConsumerWidget {
             textPrimary: textPrimary,
             textMuted: textMuted,
           ),
+
+          // Meal Pattern
+          Divider(height: 1, color: cardBorder, indent: 48, endIndent: 16),
+          _buildInfoRow(
+            icon: Icons.access_time_outlined,
+            iconColor: AppColors.cyan,
+            label: 'Meal Pattern',
+            value: _getMealPatternDisplay(prefs?.mealPattern),
+            isDark: isDark,
+            textPrimary: textPrimary,
+            textMuted: textMuted,
+          ),
+
+          // Cooking
+          Divider(height: 1, color: cardBorder, indent: 48, endIndent: 16),
+          _buildInfoRow(
+            icon: Icons.soup_kitchen_outlined,
+            iconColor: AppColors.info,
+            label: 'Cooking',
+            value: '${CookingSkill.fromString(prefs?.cookingSkill ?? 'intermediate').displayName} · ${prefs?.cookingTimeMinutes ?? 30} min',
+            isDark: isDark,
+            textPrimary: textPrimary,
+            textMuted: textMuted,
+          ),
+
+          // Budget
+          Divider(height: 1, color: cardBorder, indent: 48, endIndent: 16),
+          _buildInfoRow(
+            icon: Icons.account_balance_wallet_outlined,
+            iconColor: AppColors.green,
+            label: 'Budget',
+            value: BudgetLevel.fromString(prefs?.budgetLevel ?? 'moderate').displayName,
+            isDark: isDark,
+            textPrimary: textPrimary,
+            textMuted: textMuted,
+          ),
+
+          // Allergens (only if set)
+          if (prefs?.allergies.isNotEmpty == true) ...[
+            Divider(height: 1, color: cardBorder, indent: 48, endIndent: 16),
+            _buildInfoRow(
+              icon: Icons.warning_amber_outlined,
+              iconColor: AppColors.orange,
+              label: 'Allergens',
+              value: _formatAllergenList(prefs!.allergies),
+              isDark: isDark,
+              textPrimary: textPrimary,
+              textMuted: textMuted,
+            ),
+          ],
+
+          // Dietary Restrictions (only if set)
+          if (prefs?.dietaryRestrictions.isNotEmpty == true) ...[
+            Divider(height: 1, color: cardBorder, indent: 48, endIndent: 16),
+            _buildInfoRow(
+              icon: Icons.no_meals_outlined,
+              iconColor: AppColors.purple,
+              label: 'Restrictions',
+              value: _formatRestrictionList(prefs!.dietaryRestrictions),
+              isDark: isDark,
+              textPrimary: textPrimary,
+              textMuted: textMuted,
+            ),
+          ],
 
           // Fasting section if enabled
           if (fastingState.interestedInFasting) ...[
@@ -277,6 +341,41 @@ class NutritionFastingCard extends ConsumerWidget {
       default:
         return rateOfChange;
     }
+  }
+
+  String _getMealPatternDisplay(String? pattern) {
+    switch (pattern) {
+      case null:
+      case '3_meals': return '3 Meals';
+      case '3_meals_snacks': return '3 Meals + Snacks';
+      case '2_meals': return '2 Meals';
+      case 'omad': return 'OMAD';
+      case 'if_16_8': return 'IF 16:8';
+      case 'if_18_6': return 'IF 18:6';
+      case 'if_20_4': return 'IF 20:4';
+      case '5_6_small_meals': return '5-6 Small Meals';
+      case 'religious_fasting': return 'Religious Fast';
+      case 'custom': return 'Custom';
+      default: return pattern;
+    }
+  }
+
+  String _formatAllergenList(List<String> values) {
+    const max = 2;
+    final names = values.map((v) {
+      try { return FoodAllergen.values.firstWhere((e) => e.value == v || e.name == v).displayName; } catch (_) { return v; }
+    }).toList();
+    final shown = names.take(max).join(', ');
+    return names.length > max ? '$shown +${names.length - max} more' : shown;
+  }
+
+  String _formatRestrictionList(List<String> values) {
+    const max = 2;
+    final names = values.map((v) {
+      try { return DietaryRestriction.values.firstWhere((e) => e.value == v || e.name == v).displayName; } catch (_) { return v; }
+    }).toList();
+    final shown = names.take(max).join(', ');
+    return names.length > max ? '$shown +${names.length - max} more' : shown;
   }
 
   String _getDietTypeDisplay(String? dietType) {

@@ -240,79 +240,83 @@ class _HealthDisclaimerScreenState
 
   Widget _buildProgressIndicator(bool isDark) {
     const orange = Color(0xFFF97316);
+    final inactiveColor = isDark ? AppColors.glassSurface : AppColorsLight.glassSurface;
+    // Current step index (0-based): this is step 4 (Privacy)
+    const currentStep = 3;
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+      child: Row(
         children: [
-          Row(
-            children: [
-              _buildStepDot(1, 'Sign In', true, orange, isDark),
-              Expanded(child: Container(height: 2, color: orange)),
-              _buildStepDot(2, 'About You', true, orange, isDark),
-              Expanded(child: Container(height: 2, color: orange)),
-              _buildStepDot(3, 'Privacy', true, orange, isDark),
-              Expanded(child: Container(height: 2, color: orange)),
-              _buildStepDot(4, 'Safety', true, orange, isDark),
-              Expanded(
-                child: Container(
-                  height: 2,
-                  color: isDark
-                      ? AppColors.glassSurface
-                      : AppColorsLight.glassSurface,
-                ),
-              ),
-              _buildStepDot(5, 'Coach', false, orange, isDark),
-            ],
-          ),
+          _buildStepDot(1, 'Sign In', true, orange, isDark, 0),
+          _buildProgressLine(0, currentStep, orange, inactiveColor, 1),
+          _buildStepDot(2, 'About You', true, orange, isDark, 2),
+          _buildProgressLine(1, currentStep, orange, inactiveColor, 3),
+          _buildStepDot(3, 'Split', true, orange, isDark, 4),
+          _buildProgressLine(2, currentStep, orange, inactiveColor, 5),
+          _buildStepDot(4, 'Privacy', true, orange, isDark, 6),
+          _buildProgressLine(3, currentStep, orange, inactiveColor, 7),
+          _buildStepDot(5, 'Coach', false, orange, isDark, 8),
         ],
-      ).animate().fadeIn(delay: 200.ms),
+      ),
     );
   }
 
-  Widget _buildStepDot(
-      int step, String label, bool isComplete, Color activeColor, bool isDark) {
-    final textSecondary =
-        isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+  Widget _buildProgressLine(int segmentIndex, int currentStep, Color activeColor, Color inactiveColor, int animOrder) {
+    final isComplete = segmentIndex < currentStep;
+    final delay = 100 + (animOrder * 80);
+
+    return Expanded(
+      child: Container(
+        height: 2,
+        color: inactiveColor,
+        child: isComplete
+            ? Container(height: 2, color: activeColor)
+                .animate()
+                .scaleX(begin: 0, end: 1, alignment: Alignment.centerLeft,
+                    delay: Duration(milliseconds: delay), duration: 300.ms,
+                    curve: Curves.easeOut)
+            : null,
+      ),
+    );
+  }
+
+  Widget _buildStepDot(int step, String label, bool isComplete, Color activeColor, bool isDark, int animOrder) {
+    final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+    final delay = 100 + (animOrder * 80);
 
     return Column(
       children: [
         Container(
-          width: 28,
-          height: 28,
+          width: 24,
+          height: 24,
           decoration: BoxDecoration(
-            color: isComplete
-                ? activeColor
-                : (isDark
-                    ? AppColors.glassSurface
-                    : AppColorsLight.glassSurface),
+            color: isComplete ? activeColor : (isDark ? AppColors.glassSurface : AppColorsLight.glassSurface),
             shape: BoxShape.circle,
             border: Border.all(
-              color: isComplete
-                  ? activeColor
-                  : (isDark ? AppColors.cardBorder : AppColorsLight.cardBorder),
+              color: isComplete ? activeColor : (isDark ? AppColors.cardBorder : AppColorsLight.cardBorder),
               width: 2,
             ),
           ),
           child: Center(
             child: isComplete
-                ? const Icon(Icons.check, size: 16, color: Colors.white)
+                ? const Icon(Icons.check, size: 14, color: Colors.white)
                 : Text(
                     '$step',
                     style: TextStyle(
-                      fontSize: 12,
+                      fontSize: 10,
                       fontWeight: FontWeight.bold,
                       color: textSecondary,
                     ),
                   ),
           ),
-        ),
+        ).animate()
+         .scaleXY(begin: 0, end: 1, delay: Duration(milliseconds: delay), duration: 300.ms, curve: Curves.easeOutBack),
         const SizedBox(height: 4),
         Text(
           label,
           style: TextStyle(
-            fontSize: 10,
+            fontSize: 9,
             color: isComplete ? activeColor : textSecondary,
             fontWeight: isComplete ? FontWeight.w600 : FontWeight.normal,
           ),

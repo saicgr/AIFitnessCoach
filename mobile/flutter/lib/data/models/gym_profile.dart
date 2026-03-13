@@ -8,7 +8,7 @@ part 'gym_profile.g.dart';
 /// Default color palette for gym profiles
 class GymProfileColors {
   static const List<String> palette = [
-    '#00BCD4', // Cyan (default for first profile)
+    '#00BCD4', // Cyan
     '#F97316', // Orange
     '#8B5CF6', // Purple
     '#10B981', // Green
@@ -16,6 +16,14 @@ class GymProfileColors {
     '#F59E0B', // Amber
     '#EC4899', // Pink
     '#6366F1', // Indigo
+    '#3B82F6', // Blue
+    '#14B8A6', // Teal
+    '#84CC16', // Lime
+    '#F43F5E', // Rose
+    '#A855F7', // Violet
+    '#0EA5E9', // Sky
+    '#22C55E', // Emerald
+    '#FB923C', // Light Orange
   ];
 
   /// Get the next color in the palette based on existing profile count

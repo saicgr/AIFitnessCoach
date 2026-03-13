@@ -28,6 +28,19 @@ class _NutritionSettingsScreenState
   bool _isLoading = false;
 
   @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final userId = ref.read(authStateProvider).user?.id;
+      if (userId == null) return;
+      final prefsState = ref.read(nutritionPreferencesProvider);
+      if (prefsState.preferences == null) {
+        ref.read(nutritionPreferencesProvider.notifier).initialize(userId);
+      }
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final backgroundColor =
@@ -62,7 +75,7 @@ class _NutritionSettingsScreenState
         centerTitle: true,
       ),
       body: prefsState.isLoading || preferences == null
-          ? Center(child: CircularProgressIndicator(color: accentColor))
+          ? _buildSkeleton(isDark, elevated, cardBorder)
           : SingleChildScrollView(
               padding: const EdgeInsets.all(16),
               child: Column(
@@ -377,6 +390,28 @@ class _NutritionSettingsScreenState
                   ),
                   const SizedBox(height: 12),
                   _buildNutritionGoalsCard(
+                    context,
+                    isDark,
+                    elevated,
+                    cardBorder,
+                    textPrimary,
+                    textMuted,
+                    preferences,
+                    userId,
+                  ),
+
+                  const SizedBox(height: 24),
+
+                  // Food Preferences Section
+                  _buildSectionHeader(
+                    context,
+                    'Food Preferences',
+                    Icons.restaurant_menu_rounded,
+                    textPrimary,
+                    textPrimary,
+                  ),
+                  const SizedBox(height: 12),
+                  _buildFoodPreferencesCard(
                     context,
                     isDark,
                     elevated,
@@ -1573,6 +1608,348 @@ class _NutritionSettingsScreenState
     );
   }
 
+  /// Build the food preferences card (meal pattern, allergens, cooking, budget)
+  Widget _buildFoodPreferencesCard(
+    BuildContext context,
+    bool isDark,
+    Color elevated,
+    Color cardBorder,
+    Color textPrimary,
+    Color textMuted,
+    NutritionPreferences preferences,
+    String? userId,
+  ) {
+    return Container(
+      decoration: BoxDecoration(
+        color: elevated,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: cardBorder),
+      ),
+      child: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 16, 8, 8),
+            child: Row(
+              children: [
+                Text(
+                  'Your Preferences',
+                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: textPrimary),
+                ),
+                const Spacer(),
+                GestureDetector(
+                  onTap: () => _showEditFoodPrefsSheet(context, isDark, textPrimary, textMuted, elevated, preferences, userId),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: textPrimary.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.edit_outlined, size: 16, color: textPrimary),
+                        const SizedBox(width: 4),
+                        Text('Edit', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: textPrimary)),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          _buildPrefRow(Icons.access_time_outlined, AppColors.cyan, 'Meal Pattern', _mealPatternLabel(preferences.mealPattern), textPrimary, textMuted),
+          Divider(height: 1, color: cardBorder, indent: 48, endIndent: 16),
+          _buildPrefRow(Icons.soup_kitchen_outlined, AppColors.info, 'Cooking', '${CookingSkill.fromString(preferences.cookingSkill).displayName} · ${preferences.cookingTimeMinutes} min', textPrimary, textMuted),
+          Divider(height: 1, color: cardBorder, indent: 48, endIndent: 16),
+          _buildPrefRow(Icons.account_balance_wallet_outlined, AppColors.green, 'Budget', BudgetLevel.fromString(preferences.budgetLevel).displayName, textPrimary, textMuted),
+          if (preferences.allergies.isNotEmpty) ...[
+            Divider(height: 1, color: cardBorder, indent: 48, endIndent: 16),
+            _buildPrefRow(Icons.warning_amber_outlined, AppColors.orange, 'Allergens', _formatList(preferences.allergies, FoodAllergen.values.map((e) => MapEntry(e.value, e.displayName)).toList()), textPrimary, textMuted),
+          ],
+          if (preferences.dietaryRestrictions.isNotEmpty) ...[
+            Divider(height: 1, color: cardBorder, indent: 48, endIndent: 16),
+            _buildPrefRow(Icons.no_meals_outlined, AppColors.purple, 'Restrictions', _formatList(preferences.dietaryRestrictions, DietaryRestriction.values.map((e) => MapEntry(e.value, e.displayName)).toList()), textPrimary, textMuted),
+          ],
+          if (preferences.dislikedFoods.isNotEmpty) ...[
+            Divider(height: 1, color: cardBorder, indent: 48, endIndent: 16),
+            _buildPrefRow(Icons.thumb_down_outlined, AppColors.orange, 'Disliked', preferences.dislikedFoods.take(3).join(', ') + (preferences.dislikedFoods.length > 3 ? ' +${preferences.dislikedFoods.length - 3} more' : ''), textPrimary, textMuted),
+          ],
+          const SizedBox(height: 8),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPrefRow(IconData icon, Color iconColor, String label, String value, Color textPrimary, Color textMuted) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      child: Row(
+        children: [
+          Icon(icon, color: iconColor, size: 20),
+          const SizedBox(width: 12),
+          Text(label, style: TextStyle(fontSize: 14, color: textMuted)),
+          const Spacer(),
+          Flexible(
+            child: Text(value, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: textPrimary), textAlign: TextAlign.end),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _mealPatternLabel(String pattern) {
+    switch (pattern) {
+      case '3_meals': return '3 Meals';
+      case '3_meals_snacks': return '3 Meals + Snacks';
+      case '2_meals': return '2 Meals';
+      case 'omad': return 'OMAD';
+      case 'if_16_8': return 'IF 16:8';
+      case 'if_18_6': return 'IF 18:6';
+      case 'if_20_4': return 'IF 20:4';
+      case '5_6_small_meals': return '5-6 Small Meals';
+      case 'religious_fasting': return 'Religious Fast';
+      case 'custom': return 'Custom';
+      default: return pattern;
+    }
+  }
+
+  String _formatList(List<String> values, List<MapEntry<String, String>> lookup) {
+    const max = 2;
+    final names = values.map((v) {
+      try { return lookup.firstWhere((e) => e.key == v).value; } catch (_) { return v; }
+    }).toList();
+    final shown = names.take(max).join(', ');
+    return names.length > max ? '$shown +${names.length - max} more' : shown;
+  }
+
+  void _showEditFoodPrefsSheet(
+    BuildContext context,
+    bool isDark,
+    Color textPrimary,
+    Color textMuted,
+    Color elevated,
+    NutritionPreferences preferences,
+    String? userId,
+  ) {
+    if (userId == null) return;
+
+    String selectedMealPattern = preferences.mealPattern;
+    String selectedCookingSkill = preferences.cookingSkill;
+    int selectedCookingTime = preferences.cookingTimeMinutes;
+    String selectedBudget = preferences.budgetLevel;
+    List<String> selectedAllergens = List.from(preferences.allergies);
+    List<String> selectedRestrictions = List.from(preferences.dietaryRestrictions);
+    bool isSaving = false;
+
+    final mealPatterns = [
+      ('3_meals', '3 Meals'), ('3_meals_snacks', '3 Meals + Snacks'), ('2_meals', '2 Meals'),
+      ('omad', 'OMAD'), ('if_16_8', 'IF 16:8'), ('if_18_6', 'IF 18:6'), ('if_20_4', 'IF 20:4'),
+      ('5_6_small_meals', '5-6 Small Meals'), ('religious_fasting', 'Religious Fast'), ('custom', 'Custom'),
+    ];
+    const cookingTimes = [15, 20, 30, 45, 60, 90];
+
+    showGlassSheet(
+      context: context,
+      builder: (context) => GlassSheet(
+        child: StatefulBuilder(
+          builder: (context, setSheetState) => SingleChildScrollView(
+            padding: EdgeInsets.only(
+              left: 24, right: 24, top: 8,
+              bottom: MediaQuery.of(context).viewInsets.bottom + 24,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text('Food Preferences', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: textPrimary)),
+                    IconButton(onPressed: () => Navigator.pop(context), icon: Icon(Icons.close, color: textMuted)),
+                  ],
+                ),
+                const SizedBox(height: 16),
+
+                // Meal Pattern
+                Text('Meal Pattern', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: textPrimary)),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 8, runSpacing: 8,
+                  children: mealPatterns.map((mp) {
+                    final selected = selectedMealPattern == mp.$1;
+                    return GestureDetector(
+                      onTap: () => setSheetState(() => selectedMealPattern = mp.$1),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: selected ? textPrimary.withValues(alpha: 0.15) : elevated,
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(color: selected ? textPrimary.withValues(alpha: 0.4) : Colors.transparent),
+                        ),
+                        child: Text(mp.$2, style: TextStyle(fontSize: 13, fontWeight: selected ? FontWeight.w600 : FontWeight.w500, color: selected ? textPrimary : textMuted)),
+                      ),
+                    );
+                  }).toList(),
+                ),
+                const SizedBox(height: 20),
+
+                // Cooking Skill
+                Text('Cooking Skill', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: textPrimary)),
+                const SizedBox(height: 8),
+                Row(
+                  children: CookingSkill.values.map((skill) {
+                    final selected = selectedCookingSkill == skill.value;
+                    return Expanded(
+                      child: GestureDetector(
+                        onTap: () => setSheetState(() => selectedCookingSkill = skill.value),
+                        child: Container(
+                          margin: const EdgeInsets.symmetric(horizontal: 4),
+                          padding: const EdgeInsets.symmetric(vertical: 10),
+                          decoration: BoxDecoration(
+                            color: selected ? textPrimary.withValues(alpha: 0.15) : elevated,
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(color: selected ? textPrimary.withValues(alpha: 0.4) : Colors.transparent),
+                          ),
+                          child: Text(skill.displayName.split(' ').first, textAlign: TextAlign.center, style: TextStyle(fontSize: 13, fontWeight: selected ? FontWeight.w600 : FontWeight.w500, color: selected ? textPrimary : textMuted)),
+                        ),
+                      ),
+                    );
+                  }).toList(),
+                ),
+                const SizedBox(height: 20),
+
+                // Cooking Time
+                Text('Cooking Time (minutes)', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: textPrimary)),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 8, runSpacing: 8,
+                  children: cookingTimes.map((t) {
+                    final selected = selectedCookingTime == t;
+                    return GestureDetector(
+                      onTap: () => setSheetState(() => selectedCookingTime = t),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: selected ? textPrimary.withValues(alpha: 0.15) : elevated,
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(color: selected ? textPrimary.withValues(alpha: 0.4) : Colors.transparent),
+                        ),
+                        child: Text('$t min', style: TextStyle(fontSize: 13, fontWeight: selected ? FontWeight.w600 : FontWeight.w500, color: selected ? textPrimary : textMuted)),
+                      ),
+                    );
+                  }).toList(),
+                ),
+                const SizedBox(height: 20),
+
+                // Budget
+                Text('Budget', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: textPrimary)),
+                const SizedBox(height: 8),
+                Row(
+                  children: BudgetLevel.values.map((b) {
+                    final selected = selectedBudget == b.value;
+                    return Expanded(
+                      child: GestureDetector(
+                        onTap: () => setSheetState(() => selectedBudget = b.value),
+                        child: Container(
+                          margin: const EdgeInsets.symmetric(horizontal: 4),
+                          padding: const EdgeInsets.symmetric(vertical: 10),
+                          decoration: BoxDecoration(
+                            color: selected ? textPrimary.withValues(alpha: 0.15) : elevated,
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(color: selected ? textPrimary.withValues(alpha: 0.4) : Colors.transparent),
+                          ),
+                          child: Text(b.displayName.split('-').first.trim(), textAlign: TextAlign.center, style: TextStyle(fontSize: 12, fontWeight: selected ? FontWeight.w600 : FontWeight.w500, color: selected ? textPrimary : textMuted)),
+                        ),
+                      ),
+                    );
+                  }).toList(),
+                ),
+                const SizedBox(height: 20),
+
+                // Allergens
+                Text('Allergens', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: textPrimary)),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 8, runSpacing: 8,
+                  children: FoodAllergen.values.map((a) {
+                    final selected = selectedAllergens.contains(a.value);
+                    return GestureDetector(
+                      onTap: () => setSheetState(() => selected ? selectedAllergens.remove(a.value) : selectedAllergens.add(a.value)),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: selected ? AppColors.orange.withValues(alpha: 0.15) : elevated,
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(color: selected ? AppColors.orange.withValues(alpha: 0.5) : Colors.transparent),
+                        ),
+                        child: Text(a.displayName, style: TextStyle(fontSize: 13, fontWeight: selected ? FontWeight.w600 : FontWeight.w500, color: selected ? AppColors.orange : textMuted)),
+                      ),
+                    );
+                  }).toList(),
+                ),
+                const SizedBox(height: 20),
+
+                // Dietary Restrictions
+                Text('Dietary Restrictions', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: textPrimary)),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 8, runSpacing: 8,
+                  children: DietaryRestriction.values.map((r) {
+                    final selected = selectedRestrictions.contains(r.value);
+                    return GestureDetector(
+                      onTap: () => setSheetState(() => selected ? selectedRestrictions.remove(r.value) : selectedRestrictions.add(r.value)),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: selected ? AppColors.purple.withValues(alpha: 0.15) : elevated,
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(color: selected ? AppColors.purple.withValues(alpha: 0.5) : Colors.transparent),
+                        ),
+                        child: Text(r.displayName, style: TextStyle(fontSize: 13, fontWeight: selected ? FontWeight.w600 : FontWeight.w500, color: selected ? AppColors.purple : textMuted)),
+                      ),
+                    );
+                  }).toList(),
+                ),
+                const SizedBox(height: 24),
+
+                // Save button
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: isSaving ? null : () async {
+                      setSheetState(() => isSaving = true);
+                      try {
+                        final updated = preferences.copyWith(
+                          mealPattern: selectedMealPattern,
+                          cookingSkill: selectedCookingSkill,
+                          cookingTimeMinutes: selectedCookingTime,
+                          budgetLevel: selectedBudget,
+                          allergies: selectedAllergens,
+                          dietaryRestrictions: selectedRestrictions,
+                        );
+                        await ref.read(nutritionPreferencesProvider.notifier).savePreferences(userId: userId, preferences: updated);
+                        if (context.mounted) Navigator.pop(context);
+                      } catch (e) {
+                        setSheetState(() => isSaving = false);
+                      }
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: textPrimary,
+                      foregroundColor: isDark ? AppColors.pureBlack : AppColorsLight.pureWhite,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                    child: isSaving ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2)) : const Text('Save', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   /// Build the nutrition goals card showing current goals with edit option
   Widget _buildNutritionGoalsCard(
     BuildContext context,
@@ -2130,6 +2507,100 @@ class _NutritionSettingsScreenState
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildSkeleton(bool isDark, Color elevated, Color cardBorder) {
+    final shimmer = isDark
+        ? Colors.white.withValues(alpha: 0.06)
+        : Colors.black.withValues(alpha: 0.06);
+    final shimmerDark = isDark
+        ? Colors.white.withValues(alpha: 0.10)
+        : Colors.black.withValues(alpha: 0.10);
+
+    Widget block(double w, double h, {double radius = 8}) => Container(
+          width: w,
+          height: h,
+          decoration: BoxDecoration(
+            color: shimmer,
+            borderRadius: BorderRadius.circular(radius),
+          ),
+        );
+
+    Widget row() => Container(
+          margin: const EdgeInsets.only(bottom: 1),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          decoration: BoxDecoration(
+            color: elevated,
+            border: Border(bottom: BorderSide(color: cardBorder)),
+          ),
+          child: Row(
+            children: [
+              block(32, 32, radius: 10),
+              const SizedBox(width: 14),
+              Expanded(child: block(120, 14)),
+              block(60, 12),
+              const SizedBox(width: 8),
+              block(16, 16, radius: 4),
+            ],
+          ),
+        );
+
+    Widget section(String label, int count) => Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 20, 16, 8),
+              child: block(80, 11),
+            ),
+            Container(
+              decoration: BoxDecoration(
+                color: elevated,
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: cardBorder),
+              ),
+              clipBehavior: Clip.antiAlias,
+              child: Column(children: List.generate(count, (_) => row())),
+            ),
+          ],
+        );
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Macro targets card
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: elevated,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: shimmerDark),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                block(100, 14),
+                const SizedBox(height: 16),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    block(60, 36, radius: 10),
+                    block(60, 36, radius: 10),
+                    block(60, 36, radius: 10),
+                    block(60, 36, radius: 10),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          section('', 3),
+          section('', 2),
+          section('', 3),
+          const SizedBox(height: 32),
+        ],
       ),
     );
   }

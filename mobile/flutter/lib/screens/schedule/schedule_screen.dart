@@ -14,6 +14,7 @@ import '../../data/providers/schedule_provider.dart';
 import '../../data/repositories/schedule_repository.dart';
 import '../../data/repositories/workout_repository.dart';
 import '../../widgets/glass_sheet.dart';
+import '../profile/synced_workout_detail_screen.dart';
 import 'widgets/add_schedule_item_sheet.dart';
 import 'widgets/schedule_item_card.dart';
 import 'widgets/timeline_view.dart';
@@ -535,7 +536,15 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
               ...dayWorkouts.map((workout) => _AgendaWorkoutCard(
                 workout: workout,
                 colors: colors,
-                onTap: () => context.push('/workout/${workout.id}'),
+                onTap: () {
+                  if (workout.generationMethod == 'health_connect_import') {
+                    Navigator.of(context).push(MaterialPageRoute(
+                      builder: (_) => SyncedWorkoutDetailScreen(workout: workout),
+                    ));
+                  } else {
+                    context.push('/workout/${workout.id}');
+                  }
+                },
               )),
 
             // Divider between days

@@ -1,8 +1,12 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import '../core/constants/app_colors.dart';
+import '../data/services/haptic_service.dart';
 
-/// Glassmorphic circular back button used consistently across all screens.
+/// Back button used consistently across all full screens (AppBar.leading).
+///
+/// Matches [SheetBackButton] style exactly so all back buttons in the app
+/// look the same regardless of whether they appear in a sheet or a screen.
 ///
 /// Usage in AppBar:
 /// ```dart
@@ -19,51 +23,51 @@ class GlassBackButton extends StatelessWidget {
   const GlassBackButton({
     super.key,
     this.onTap,
-    this.icon = Icons.arrow_back_ios_new_rounded,
+    this.icon = Icons.arrow_back_rounded,
   });
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    const size = 34.0;
+    final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+    final glassSurface = isDark ? AppColors.glassSurface : AppColorsLight.glassSurface;
 
-    return GestureDetector(
-        onTap: onTap ?? () {
-          if (context.canPop()) {
+    return Center(
+      child: GestureDetector(
+        onTap: () {
+          HapticService.light();
+          if (onTap != null) {
+            onTap!();
+          } else if (context.canPop()) {
             context.pop();
           }
         },
-        child: SizedBox(
-            width: size,
-            height: size,
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(size / 2),
-              child: BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: isDark
-                        ? Colors.white.withValues(alpha: 0.12)
-                        : Colors.black.withValues(alpha: 0.06),
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                      color: isDark
-                          ? Colors.white.withValues(alpha: 0.15)
-                          : Colors.black.withValues(alpha: 0.08),
-                      width: 0.5,
-                    ),
-                  ),
-                  child: Center(
-                    child: Icon(
-                      icon,
-                      color: isDark ? Colors.white : Colors.black87,
-                      size: 16,
-                    ),
-                  ),
-                ),
-              ),
+        child: Container(
+          width: 40,
+          height: 40,
+          decoration: BoxDecoration(
+            color: glassSurface,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: isDark
+                  ? Colors.white.withValues(alpha: 0.12)
+                  : Colors.black.withValues(alpha: 0.08),
             ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.1),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Icon(
+            icon,
+            color: textSecondary,
+            size: 22,
+          ),
         ),
+      ),
     );
   }
 }

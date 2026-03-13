@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/providers/window_mode_provider.dart';
+import '../../core/theme/accent_color_provider.dart';
 import '../../widgets/glass_back_button.dart';
 import 'pre_auth_quiz_screen.dart';
 import 'widgets/foldable_quiz_scaffold.dart';
@@ -149,7 +150,7 @@ class _FitnessAssessmentScreenState
     }
   }
 
-  Widget _buildAssessmentInfo(bool isDark, Color textPrimary, Color textSecondary) {
+  Widget _buildAssessmentInfo(bool isDark, Color textPrimary, Color textSecondary, Color accentColor) {
     final items = [
       {'icon': Icons.fitness_center, 'label': 'Exercise difficulty'},
       {'icon': Icons.repeat, 'label': 'Sets & rep ranges'},
@@ -164,10 +165,10 @@ class _FitnessAssessmentScreenState
         Container(
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: AppColors.orange.withValues(alpha: 0.08),
+            color: accentColor.withValues(alpha: 0.08),
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color: AppColors.orange.withValues(alpha: 0.15),
+              color: accentColor.withValues(alpha: 0.15),
             ),
           ),
           child: Column(
@@ -175,14 +176,14 @@ class _FitnessAssessmentScreenState
             children: [
               Row(
                 children: [
-                  Icon(Icons.auto_awesome, size: 16, color: AppColors.orange),
+                  Icon(Icons.auto_awesome, size: 16, color: accentColor),
                   const SizedBox(width: 6),
                   Text(
                     'Why this matters',
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w700,
-                      color: AppColors.orange,
+                      color: accentColor,
                     ),
                   ),
                 ],
@@ -218,7 +219,7 @@ class _FitnessAssessmentScreenState
                   Icon(
                     item['icon'] as IconData,
                     size: 16,
-                    color: AppColors.orange,
+                    color: accentColor,
                   ),
                   const SizedBox(width: 8),
                   Text(
@@ -308,6 +309,9 @@ class _FitnessAssessmentScreenState
     final backgroundColor =
         isDark ? AppColors.pureBlack : AppColorsLight.pureWhite;
 
+    final accent = ref.watch(accentColorProvider);
+    final accentColor = accent.getColor(isDark);
+
     final windowState = ref.watch(windowModeProvider);
     final isFoldable = FoldableQuizScaffold.shouldUseFoldableLayout(windowState);
     final gap = isFoldable ? 8.0 : 16.0;
@@ -319,7 +323,7 @@ class _FitnessAssessmentScreenState
         child: FoldableQuizScaffold(
           headerTitle: 'Quick Fitness Check',
           headerSubtitle: 'Help us personalize your workouts (~2 min)',
-          headerExtra: _buildAssessmentInfo(isDark, textPrimary, textSecondary),
+          headerExtra: _buildAssessmentInfo(isDark, textPrimary, textSecondary, accentColor),
           headerOverlay: _buildHeaderOverlay(isDark),
           content: SingleChildScrollView(
             padding: EdgeInsets.symmetric(horizontal: hPad),
@@ -330,7 +334,7 @@ class _FitnessAssessmentScreenState
                 if (!isFoldable)
                   Padding(
                     padding: const EdgeInsets.only(bottom: 8),
-                    child: _buildHeader(textPrimary, textSecondary),
+                    child: _buildHeader(textPrimary, textSecondary, accentColor),
                   ),
 
                 SizedBox(height: isFoldable ? 4.0 : 8.0),
@@ -339,7 +343,8 @@ class _FitnessAssessmentScreenState
                 _buildQuestionCard(
                   index: 0,
                   icon: Icons.fitness_center,
-                  iconColor: AppColors.orange,
+                  iconColor: accentColor,
+                  accentColor: accentColor,
                   title: 'Push-ups',
                   subtitle: 'How many consecutive push-ups with good form?',
                   options: _pushupOptions,
@@ -357,6 +362,7 @@ class _FitnessAssessmentScreenState
                   index: 1,
                   icon: Icons.sports_gymnastics,
                   iconColor: AppColors.cyan,
+                  accentColor: accentColor,
                   title: 'Pull-ups',
                   subtitle: 'How many pull-ups can you do?',
                   options: _pullupOptions,
@@ -374,6 +380,7 @@ class _FitnessAssessmentScreenState
                   index: 2,
                   icon: Icons.accessibility_new,
                   iconColor: AppColors.purple,
+                  accentColor: accentColor,
                   title: 'Plank Hold',
                   subtitle: 'How long can you hold a plank?',
                   options: _plankOptions,
@@ -391,6 +398,7 @@ class _FitnessAssessmentScreenState
                   index: 3,
                   icon: Icons.airline_seat_legroom_extra,
                   iconColor: AppColors.success,
+                  accentColor: accentColor,
                   title: 'Bodyweight Squats',
                   subtitle: 'How many can you do continuously?',
                   options: _squatOptions,
@@ -408,6 +416,7 @@ class _FitnessAssessmentScreenState
                   index: 4,
                   icon: Icons.history,
                   iconColor: AppColors.warning,
+                  accentColor: accentColor,
                   title: 'Training Experience',
                   subtitle: 'How long have you been lifting weights?',
                   options: _experienceOptions,
@@ -425,6 +434,7 @@ class _FitnessAssessmentScreenState
                   index: 5,
                   icon: Icons.directions_run,
                   iconColor: AppColors.error,
+                  accentColor: accentColor,
                   title: 'Cardio Capacity',
                   subtitle: 'How long can you do continuous cardio?',
                   options: _cardioOptions,
@@ -439,13 +449,13 @@ class _FitnessAssessmentScreenState
               ],
             ),
           ),
-          button: _buildContinueButton(isDark),
+          button: _buildContinueButton(isDark, accentColor),
         ),
       ),
     );
   }
 
-  Widget _buildHeader(Color textPrimary, Color textSecondary) {
+  Widget _buildHeader(Color textPrimary, Color textSecondary, Color accentColor) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -455,7 +465,7 @@ class _FitnessAssessmentScreenState
               width: 48,
               height: 48,
               decoration: BoxDecoration(
-                color: AppColors.orange,
+                color: accentColor,
                 borderRadius: BorderRadius.circular(14),
               ),
               child:
@@ -495,6 +505,7 @@ class _FitnessAssessmentScreenState
     required int index,
     required IconData icon,
     required Color iconColor,
+    required Color accentColor,
     required String title,
     required String subtitle,
     required List<Map<String, dynamic>> options,
@@ -589,8 +600,8 @@ class _FitnessAssessmentScreenState
                     gradient: isSelected
                         ? LinearGradient(
                             colors: [
-                              AppColors.orange,
-                              AppColors.orange.withValues(alpha: 0.8)
+                              accentColor,
+                              accentColor.withValues(alpha: 0.8)
                             ],
                             begin: Alignment.topLeft,
                             end: Alignment.bottomRight,
@@ -603,7 +614,7 @@ class _FitnessAssessmentScreenState
                             : AppColorsLight.glassSurface),
                     borderRadius: BorderRadius.circular(20),
                     border: Border.all(
-                      color: isSelected ? AppColors.orange : cardBorder,
+                      color: isSelected ? accentColor : cardBorder,
                       width: isSelected ? 2 : 1,
                     ),
                   ),
@@ -624,7 +635,7 @@ class _FitnessAssessmentScreenState
     ).animate(delay: (100 + index * 80).ms).fadeIn().slideY(begin: 0.05);
   }
 
-  Widget _buildContinueButton(bool isDark) {
+  Widget _buildContinueButton(bool isDark, Color accentColor) {
     final isEnabled = _canContinue && !_isLoading;
 
     return Container(
@@ -650,7 +661,7 @@ class _FitnessAssessmentScreenState
             height: 56,
             decoration: BoxDecoration(
               color: isEnabled
-                  ? AppColors.orange
+                  ? accentColor
                   : (isDark ? AppColors.elevated : AppColorsLight.elevated),
               borderRadius: BorderRadius.circular(14),
               border: isEnabled

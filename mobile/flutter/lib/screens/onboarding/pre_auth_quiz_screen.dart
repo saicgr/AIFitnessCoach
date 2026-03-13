@@ -2723,7 +2723,9 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
         return _selectedLevel != null;
 
       case 2: // Schedule (days/week + duration both required)
-        return _selectedDays != null && _workoutDurationMax != null;
+        return _selectedDays != null &&
+               _workoutDurationMax != null &&
+               _selectedWorkoutDays.length == _selectedDays;
 
       case 3: // Workout Days [CONDITIONAL - only if feature flag enabled]
         if (_featureFlagWorkoutDays) {
@@ -3841,53 +3843,54 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
       context: context,
       builder: (ctx) => GlassSheet(
         child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Icon(Icons.info_outline, color: AppColors.accent),
-                const SizedBox(width: 12),
+                Row(
+                  children: [
+                    Icon(Icons.info_outline, color: AppColors.accent),
+                    const SizedBox(width: 12),
+                    Text(
+                      title,
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: textPrimary,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
                 Text(
-                  title,
+                  description,
                   style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: textPrimary,
+                    fontSize: 14,
+                    color: textSecondary,
+                    height: 1.5,
+                  ),
+                ),
+                const SizedBox(height: 24),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: () => Navigator.pop(ctx),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.accent,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    child: const Text('Got it'),
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 16),
-            Text(
-              description,
-              style: TextStyle(
-                fontSize: 14,
-                color: textSecondary,
-                height: 1.5,
-              ),
-            ),
-            const SizedBox(height: 24),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: () => Navigator.pop(ctx),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.accent,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                child: const Text('Got it'),
-              ),
-            ),
-          ],
+          ),
         ),
-      ),
       ),
     );
   }

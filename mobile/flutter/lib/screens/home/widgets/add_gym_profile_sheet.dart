@@ -9,6 +9,19 @@ import '../../../widgets/glass_sheet.dart';
 import '../../../widgets/sheet_header.dart';
 import 'gym_equipment_sheet.dart';
 
+/// Follow-up suggestion shown after selecting certain equipment
+class _EquipmentFollowUp {
+  final String suggest;
+  final String title;
+  final String subtitle;
+
+  const _EquipmentFollowUp({
+    required this.suggest,
+    required this.title,
+    required this.subtitle,
+  });
+}
+
 /// Bottom sheet for adding a new gym profile
 ///
 /// Provides two options:
@@ -36,9 +49,34 @@ class _AddGymProfileSheetState extends ConsumerState<AddGymProfileSheet> {
   String _selectedIcon = 'fitness_center';
   String _selectedColor = GymProfileColors.palette[0];
   bool _usingCustomColor = false;
+  bool _showCustomPicker = false;
   String _selectedEnvironment = 'commercial_gym';
-  List<String> _selectedEquipment = [];
+  List<String> _selectedEquipment = List<String>.from(
+    _environmentPresets['commercial_gym']!['defaultEquipment'] as List,
+  );
   List<Map<String, dynamic>> _equipmentDetails = []; // Equipment with weights
+
+  // Track follow-up dialogs already shown this session
+  final _shownFollowUps = <String>{};
+
+  // Follow-up suggestions: selecting a primary equipment suggests a secondary
+  static const _equipmentFollowUps = {
+    'dumbbells': _EquipmentFollowUp(
+      suggest: 'bench',
+      title: 'Do you have a weight bench?',
+      subtitle: 'Unlocks: Bench Press, Incline Press, Pullover, Chest-Supported Rows',
+    ),
+    'kettlebell': _EquipmentFollowUp(
+      suggest: 'bench',
+      title: 'Do you have a weight bench?',
+      subtitle: 'Unlocks: Chest-Supported KB Row, KB Floor Press alternatives',
+    ),
+    'barbell': _EquipmentFollowUp(
+      suggest: 'squat_rack',
+      title: 'Do you have a squat rack?',
+      subtitle: 'Required for: Barbell Squat, Overhead Press, Barbell Bench Press',
+    ),
+  };
 
   // Predefined environment presets
   static const Map<String, Map<String, dynamic>> _environmentPresets = {
@@ -112,7 +150,30 @@ class _AddGymProfileSheetState extends ConsumerState<AddGymProfileSheet> {
     {'id': 'sports_gymnastics', 'icon': Icons.sports_gymnastics_rounded},
     {'id': 'self_improvement', 'icon': Icons.self_improvement_rounded},
     {'id': 'directions_run', 'icon': Icons.directions_run_rounded},
+    {'id': 'sports_mma', 'icon': Icons.sports_mma_rounded},
+    {'id': 'pool', 'icon': Icons.pool_rounded},
+    {'id': 'directions_bike', 'icon': Icons.directions_bike_rounded},
+    {'id': 'hiking', 'icon': Icons.hiking_rounded},
+    {'id': 'local_fire_department', 'icon': Icons.local_fire_department_rounded},
+    {'id': 'emoji_events', 'icon': Icons.emoji_events_rounded},
+    {'id': 'monitor_heart', 'icon': Icons.monitor_heart_rounded},
+    {'id': 'apartment', 'icon': Icons.apartment_rounded},
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    // Pre-populate _shownFollowUps for follow-ups already satisfied by initial equipment
+    _initShownFollowUps();
+  }
+
+  void _initShownFollowUps() {
+    for (final entry in _equipmentFollowUps.entries) {
+      if (_selectedEquipment.contains(entry.value.suggest)) {
+        _shownFollowUps.add(entry.key);
+      }
+    }
+  }
 
   void _nextStep() {
     if (_currentStep < 2) {
@@ -138,6 +199,9 @@ class _AddGymProfileSheetState extends ConsumerState<AddGymProfileSheet> {
       _selectedEquipment = List<String>.from(preset['defaultEquipment'] as List);
       // Reset equipment details when changing environment
       _equipmentDetails = [];
+      // Re-init follow-ups based on new equipment
+      _shownFollowUps.clear();
+      _initShownFollowUps();
     });
     HapticService.medium();
   }
@@ -145,6 +209,7 @@ class _AddGymProfileSheetState extends ConsumerState<AddGymProfileSheet> {
   void _openEquipmentSheet() {
     // Convert equipment details to EquipmentItem list
     final equipmentItems = _equipmentDetails.map((e) => EquipmentItem.fromJson(e)).toList();
+    final previousEquipment = Set<String>.from(_selectedEquipment);
 
     showGlassSheet(
       context: context,
@@ -158,9 +223,83 @@ class _AddGymProfileSheetState extends ConsumerState<AddGymProfileSheet> {
               _selectedEquipment = equipment;
               _equipmentDetails = details;
             });
-            debugPrint('✅ [AddGymProfile] Equipment updated: ${equipment.length} items');
+            debugPrint('\u2705 [AddGymProfile] Equipment updated: ${equipment.length} items');
+            // Check follow-ups for newly added equipment
+            _checkEquipmentFollowUps(previousEquipment, equipment);
           },
         ),
+      ),
+    );
+  }
+
+  void _checkEquipmentFollowUps(Set<String> previous, List<String> current) {
+    final currentSet = current.toSet();
+    for (final entry in _equipmentFollowUps.entries) {
+      final itemId = entry.key;
+      final followUp = entry.value;
+      // Only trigger if newly added
+      if (!previous.contains(itemId) && currentSet.contains(itemId)) {
+        if (currentSet.contains(followUp.suggest)) continue;
+        if (_shownFollowUps.contains(itemId)) continue;
+        _shownFollowUps.add(itemId);
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) _showFollowUpDialog(followUp);
+        });
+        break; // Show one at a time
+      }
+    }
+  }
+
+  void _showFollowUpDialog(_EquipmentFollowUp followUp) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: isDark ? AppColors.elevated : AppColorsLight.elevated,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Text(
+          followUp.title,
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: 17,
+            color: textPrimary,
+          ),
+        ),
+        content: Text(
+          followUp.subtitle,
+          style: TextStyle(
+            fontSize: 14,
+            color: textSecondary,
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: Text(
+              'Skip',
+              style: TextStyle(color: textSecondary),
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              setState(() {
+                if (!_selectedEquipment.contains(followUp.suggest)) {
+                  _selectedEquipment.add(followUp.suggest);
+                }
+              });
+              Navigator.of(ctx).pop();
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.orange,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            ),
+            child: const Text('Yes, Add It'),
+          ),
+        ],
       ),
     );
   }
@@ -913,73 +1052,94 @@ class _AddGymProfileSheetState extends ConsumerState<AddGymProfileSheet> {
         Wrap(
           spacing: 10,
           runSpacing: 10,
-          children: GymProfileColors.palette.map((colorHex) {
-            final isSelected = _selectedColor == colorHex && !_usingCustomColor;
-            final color = GymProfileColors.fromHex(colorHex);
-            return GestureDetector(
+          children: [
+            // Palette swatches
+            ...GymProfileColors.palette.map((colorHex) {
+              final isSelected = _selectedColor == colorHex && !_usingCustomColor;
+              final color = GymProfileColors.fromHex(colorHex);
+              return GestureDetector(
+                onTap: () {
+                  setState(() {
+                    _selectedColor = colorHex;
+                    _usingCustomColor = false;
+                    _showCustomPicker = false;
+                  });
+                  HapticService.light();
+                },
+                child: Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: color,
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: isSelected ? Colors.white : Colors.transparent,
+                      width: 3,
+                    ),
+                    boxShadow: isSelected
+                        ? [BoxShadow(color: color.withOpacity(0.5), blurRadius: 12, spreadRadius: 2)]
+                        : null,
+                  ),
+                  child: isSelected ? const Icon(Icons.check_rounded, color: Colors.white, size: 20) : null,
+                ),
+              );
+            }),
+
+            // Custom color swatch — rainbow circle, becomes selected color when picked
+            GestureDetector(
               onTap: () {
-                setState(() {
-                  _selectedColor = colorHex;
-                  _usingCustomColor = false;
-                });
+                setState(() => _showCustomPicker = !_showCustomPicker);
                 HapticService.light();
               },
               child: Container(
                 width: 40,
                 height: 40,
                 decoration: BoxDecoration(
-                  color: color,
                   shape: BoxShape.circle,
+                  gradient: _usingCustomColor
+                      ? null
+                      : const SweepGradient(colors: [
+                          Color(0xFFFF0000),
+                          Color(0xFFFFFF00),
+                          Color(0xFF00FF00),
+                          Color(0xFF00FFFF),
+                          Color(0xFF0000FF),
+                          Color(0xFFFF00FF),
+                          Color(0xFFFF0000),
+                        ]),
+                  color: _usingCustomColor ? GymProfileColors.fromHex(_selectedColor) : null,
                   border: Border.all(
-                    color: isSelected ? Colors.white : Colors.transparent,
+                    color: _usingCustomColor || _showCustomPicker ? Colors.white : Colors.transparent,
                     width: 3,
                   ),
-                  boxShadow: isSelected
-                      ? [
-                          BoxShadow(
-                            color: color.withOpacity(0.5),
-                            blurRadius: 12,
-                            spreadRadius: 2,
-                          ),
-                        ]
+                  boxShadow: _usingCustomColor
+                      ? [BoxShadow(color: GymProfileColors.fromHex(_selectedColor).withOpacity(0.5), blurRadius: 12, spreadRadius: 2)]
                       : null,
                 ),
-                child: isSelected
-                    ? const Icon(
-                        Icons.check_rounded,
-                        color: Colors.white,
-                        size: 20,
-                      )
-                    : null,
+                child: _usingCustomColor
+                    ? const Icon(Icons.check_rounded, color: Colors.white, size: 20)
+                    : Icon(Icons.add_rounded, color: isDark ? Colors.white70 : Colors.black54, size: 20),
               ),
-            );
-          }).toList(),
+            ),
+          ],
         ),
 
-        const SizedBox(height: 16),
-
-        // Custom color picker - compact
-        Text(
-          'Custom Color',
-          style: TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-            color: textPrimary,
+        // Inline custom picker — only shown when the rainbow swatch is tapped
+        if (_showCustomPicker) ...[
+          const SizedBox(height: 14),
+          _ColorScalePicker(
+            selectedColor: _usingCustomColor ? GymProfileColors.fromHex(_selectedColor) : null,
+            isDark: isDark,
+            onColorSelected: (color) {
+              final hex = '#${color.toARGB32().toRadixString(16).substring(2).toUpperCase()}';
+              setState(() {
+                _selectedColor = hex;
+                _usingCustomColor = true;
+              });
+              HapticService.light();
+            },
           ),
-        ),
-        const SizedBox(height: 10),
-        _ColorScalePicker(
-          selectedColor: _usingCustomColor ? GymProfileColors.fromHex(_selectedColor) : null,
-          isDark: isDark,
-          onColorSelected: (color) {
-            final hex = '#${color.toARGB32().toRadixString(16).substring(2).toUpperCase()}';
-            setState(() {
-              _selectedColor = hex;
-              _usingCustomColor = true;
-            });
-            HapticService.light();
-          },
-        ),
+        ],
       ],
     );
   }
