@@ -796,15 +796,22 @@ async def get_all_users(
 
 @router.get("/by-auth/{auth_id}", response_model=User)
 async def get_user_by_auth(auth_id: str,
-    current_user: dict = Depends(get_current_user),
+    verified_token: dict = Depends(get_verified_auth_token),
 ):
     """
     Get a user by their Supabase auth_id.
 
     This endpoint is used during session restore when we have the Supabase Auth ID
     but need to look up the user's internal database ID.
+
+    Uses get_verified_auth_token (not get_current_user) because if the user
+    doesn't have a DB row yet, get_current_user would fail with 404 before
+    this endpoint runs — making it impossible to detect a missing DB row.
     """
     logger.info(f"Fetching user by auth_id: {auth_id}")
+    # Security: users can only look up their own auth record
+    if verified_token["auth_id"] != auth_id:
+        raise HTTPException(status_code=403, detail="Access denied")
     try:
         db = get_supabase_db()
         row = db.get_user_by_auth_id(auth_id)
@@ -1058,26 +1065,74 @@ class UserPreferencesRequest(BaseModel):
 
 @router.post("/{user_id}/preferences")
 async def save_user_preferences(user_id: str, request: UserPreferencesRequest,
-    current_user: dict = Depends(get_current_user),
+    verified_token: dict = Depends(get_verified_auth_token),
 ):
     """
     Save user preferences from pre-auth quiz.
 
     This endpoint is called after coach selection to persist all quiz data.
     Data is merged into the user's preferences JSON and relevant columns.
+
+    Uses get_verified_auth_token (not get_current_user) so it works even when
+    the user exists in Supabase Auth but doesn't have a backend DB row yet.
+    Auto-creates a minimal user record in that case.
     """
-    logger.info(f"Saving preferences for user: id={user_id}")
+    auth_id = verified_token["auth_id"]
+    email = verified_token.get("email") or ""
+
+    logger.info(f"Saving preferences for user: id={user_id}, auth_id={auth_id}")
+    actual_user_id = user_id  # fallback for error logging
     try:
         db = get_supabase_db()
 
-        # Check if user exists
-        existing = db.get_user(user_id)
+        # Look up by auth_id (canonical) — the URL user_id may be stale
+        existing = db.get_user_by_auth_id(auth_id)
         if not existing:
-            logger.warning(f"User not found for preferences: id={user_id}")
-            raise HTTPException(status_code=404, detail="User not found")
+            # User in Supabase Auth but not in our DB — create a minimal record
+            logger.warning(f"User not in DB for auth_id={auth_id}, auto-creating")
+            user_metadata = verified_token.get("user_metadata") or {}
+            full_name = (
+                user_metadata.get("full_name")
+                or user_metadata.get("name")
+                or (request.name if hasattr(request, "name") else None)
+                or email.split("@")[0]
+                or "User"
+            )
+            unique_username = generate_username_sync(name=full_name, email=email)
+            admin_service = get_admin_service()
+            is_admin = admin_service.should_be_admin(email)
+            is_support = admin_service.should_be_support_user(email)
+            new_user_data = {
+                "auth_id": auth_id,
+                "email": email,
+                "name": full_name,
+                "username": unique_username,
+                "role": "admin" if is_admin else "user",
+                "is_support_user": is_support,
+                "onboarding_completed": False,
+                "coach_selected": False,
+                "paywall_completed": False,
+                "fitness_level": "beginner",
+                "goals": "[]",
+                "equipment": "[]",
+                "preferences": {"name": full_name, "email": email},
+                "active_injuries": [],
+            }
+            existing = db.create_user(new_user_data)
+            logger.info(f"Auto-created user: id={existing['id']} for auth_id={auth_id}")
+
+        # Use the canonical ID from the DB row (not the potentially stale URL user_id)
+        actual_user_id = existing["id"]
 
         # Build update data
         update_data = {}
+
+        # If coach was selected as part of this submission, mark onboarding steps complete
+        # so the app doesn't loop back to onboarding even if the separate PUT call fails
+        if request.coach_id is not None:
+            update_data["coach_selected"] = True
+            update_data["onboarding_completed"] = True
+            update_data["onboarding_completed_at"] = datetime.utcnow().isoformat()
 
         # Direct column updates
         if request.fitness_level is not None:
@@ -1153,28 +1208,28 @@ async def save_user_preferences(user_id: str, request: UserPreferencesRequest,
         logger.info(f"🔍 [DEBUG] save_user_preferences - equipment: {update_data.get('equipment')}")
         logger.info(f"🔍 [DEBUG] save_user_preferences - preferences: {update_data.get('preferences')}")
         if update_data:
-            result = db.update_user(user_id, update_data)
-            logger.info(f"Saved {len(update_data)} preference fields for user {user_id}")
+            result = db.update_user(actual_user_id, update_data)
+            logger.info(f"Saved {len(update_data)} preference fields for user {actual_user_id}")
             logger.info(f"🔍 [DEBUG] save_user_preferences - update result: {result}")
 
         # Log activity
         await log_user_activity(
-            user_id=user_id,
+            user_id=actual_user_id,
             action="preferences_saved",
-            endpoint=f"/api/v1/users/{user_id}/preferences",
+            endpoint=f"/api/v1/users/{actual_user_id}/preferences",
             message="Pre-auth quiz preferences saved",
             metadata={"fields_count": len(update_data)},
             status_code=200
         )
 
-        return {"success": True, "message": "Preferences saved successfully"}
+        return {"success": True, "message": "Preferences saved successfully", "user_id": actual_user_id}
 
     except HTTPException:
         raise
     except Exception as e:
         logger.error(f"Failed to save preferences: {e}")
         await log_user_error(
-            user_id=user_id,
+            user_id=actual_user_id,
             action="preferences_saved",
             error=e,
             endpoint=f"/api/v1/users/{user_id}/preferences",

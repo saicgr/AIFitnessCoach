@@ -333,7 +333,7 @@ class _WeightProjectionScreenState
     final isLosingWeight = goalWeight < currentWeight;
 
     final backButton = Padding(
-      padding: const EdgeInsets.only(left: 16, top: 8),
+      padding: const EdgeInsets.only(left: 16, right: 16, top: 8),
       child: Align(
         alignment: Alignment.centerLeft,
         child: GlassBackButton(
@@ -764,7 +764,7 @@ class _WeightProjectionScreenState
     final unit = useMetric ? 'kg' : 'lbs';
 
     final maintainBackButton = Padding(
-      padding: const EdgeInsets.only(left: 16, top: 8),
+      padding: const EdgeInsets.only(left: 16, right: 16, top: 8),
       child: Align(
         alignment: Alignment.centerLeft,
         child: GlassBackButton(

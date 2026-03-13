@@ -3889,7 +3889,6 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
                 ),
               ],
             ),
-          ),
         ),
       ),
     );

@@ -150,6 +150,12 @@ class _AuthStateNotifier extends ChangeNotifier {
     _ref.listen<AccessibilitySettings>(accessibilityProvider, (_, __) {
       notifyListeners();
     });
+    // Re-run router redirect when AI consent loads from SharedPreferences.
+    // Without this, the router reads the default false value and incorrectly
+    // routes to /ai-consent on app reopen even when the user already accepted.
+    _ref.listen<bool>(aiConsentProvider, (_, __) {
+      notifyListeners();
+    });
   }
 
   final Ref _ref;
@@ -240,8 +246,14 @@ String? _getNextOnboardingStep(app_user.User user, Ref ref) {
   // Step 1.5: AI consent (after personal info, before coach selection)
   // Skip if user already selected a coach (existing users before this feature)
   if (!user.isCoachSelected) {
+    final consentNotifier = ref.read(aiConsentProvider.notifier);
     final hasAiConsent = ref.read(aiConsentProvider);
-    if (!hasAiConsent) {
+    // Only block on AI consent once SharedPreferences has loaded.
+    // On app reopen the notifier starts as false (default) before the async
+    // load completes. Routing to /ai-consent based on that false would force
+    // users who already accepted to re-accept. The router refreshes again
+    // once isLoaded=true (aiConsentProvider is in the refreshListenable).
+    if (consentNotifier.isLoaded && !hasAiConsent) {
       return '/ai-consent';
     }
   }

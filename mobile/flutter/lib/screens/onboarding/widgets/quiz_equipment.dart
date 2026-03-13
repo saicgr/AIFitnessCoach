@@ -267,16 +267,7 @@ class _QuizEquipmentState extends State<QuizEquipment> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: [
-                      ...QuizEquipment._equipment.map((item) =>
-                        _buildEquipmentChip(context, item, isDark, textPrimary, textSecondary),
-                      ),
-                      _buildOtherChip(context, isDark, textPrimary, textSecondary),
-                    ],
-                  ),
+                  _buildTwoColumnGrid(context, isDark, textPrimary, textSecondary),
                   // Quantity selectors shown below the grid when applicable
                   if (widget.selectedEquipment.contains('dumbbells') && !_hasFullGym) ...[
                     const SizedBox(height: 12),
@@ -515,6 +506,35 @@ class _QuizEquipmentState extends State<QuizEquipment> {
     ).animate().fadeIn(delay: 200.ms);
   }
 
+  Widget _buildTwoColumnGrid(BuildContext context, bool isDark, Color textPrimary, Color textSecondary) {
+    final chips = [
+      ...QuizEquipment._equipment.map((item) =>
+        _buildEquipmentChip(context, item, isDark, textPrimary, textSecondary),
+      ),
+      _buildOtherChip(context, isDark, textPrimary, textSecondary),
+    ];
+
+    final rows = <Widget>[];
+    for (int i = 0; i < chips.length; i += 2) {
+      if (i > 0) rows.add(const SizedBox(height: 8));
+      rows.add(
+        IntrinsicHeight(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Expanded(child: chips[i]),
+              const SizedBox(width: 8),
+              i + 1 < chips.length
+                  ? Expanded(child: chips[i + 1])
+                  : const Expanded(child: SizedBox()),
+            ],
+          ),
+        ),
+      );
+    }
+    return Column(children: rows);
+  }
+
   Widget _buildEquipmentChip(
     BuildContext context,
     Map<String, dynamic> item,
@@ -529,11 +549,7 @@ class _QuizEquipmentState extends State<QuizEquipment> {
     final subtitle = item['subtitle'] as String?;
     final recommended = _isRecommended(id);
 
-    return ConstrainedBox(
-      constraints: BoxConstraints(
-        minWidth: (MediaQuery.of(context).size.width - 48 - 8) / 2, // 2 columns with spacing
-      ),
-      child: GestureDetector(
+    return GestureDetector(
         onTap: () => _handleChipTap(id),
         child: Stack(
           clipBehavior: Clip.none,
@@ -563,7 +579,7 @@ class _QuizEquipmentState extends State<QuizEquipment> {
                 ),
               ),
               child: Row(
-                mainAxisSize: MainAxisSize.min,
+                mainAxisSize: MainAxisSize.max,
                 children: [
                   Icon(
                     item['icon'] as IconData,
@@ -641,7 +657,6 @@ class _QuizEquipmentState extends State<QuizEquipment> {
               ),
           ],
         ),
-      ),
     );
   }
 
@@ -654,65 +669,60 @@ class _QuizEquipmentState extends State<QuizEquipment> {
     final hasOtherSelected = widget.otherSelectedEquipment.isNotEmpty;
     final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
 
-    return ConstrainedBox(
-      constraints: BoxConstraints(
-        minWidth: (MediaQuery.of(context).size.width - 48 - 8) / 2,
-      ),
-      child: GestureDetector(
-        onTap: () {
-          HapticFeedback.selectionClick();
-          widget.onOtherTap?.call();
-        },
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-          decoration: BoxDecoration(
-            gradient: hasOtherSelected
-                ? LinearGradient(
-                    colors: [AppColors.orange, AppColors.orange.withOpacity(0.8)],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  )
-                : null,
-            color: hasOtherSelected
-                ? null
-                : (isDark ? AppColors.glassSurface : AppColorsLight.glassSurface),
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(
-              color: hasOtherSelected ? AppColors.orange : cardBorder,
-              width: hasOtherSelected ? 2 : 1,
+    return GestureDetector(
+      onTap: () {
+        HapticFeedback.selectionClick();
+        widget.onOtherTap?.call();
+      },
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        decoration: BoxDecoration(
+          gradient: hasOtherSelected
+              ? LinearGradient(
+                  colors: [AppColors.orange, AppColors.orange.withOpacity(0.8)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                )
+              : null,
+          color: hasOtherSelected
+              ? null
+              : (isDark ? AppColors.glassSurface : AppColorsLight.glassSurface),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+            color: hasOtherSelected ? AppColors.orange : cardBorder,
+            width: hasOtherSelected ? 2 : 1,
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.max,
+          children: [
+            Icon(
+              Icons.more_horiz,
+              color: hasOtherSelected ? Colors.white : textSecondary,
+              size: 18,
             ),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                Icons.more_horiz,
-                color: hasOtherSelected ? Colors.white : textSecondary,
-                size: 18,
-              ),
-              const SizedBox(width: 8),
-              Flexible(
-                child: Text(
-                  hasOtherSelected
-                      ? 'Other (${widget.otherSelectedEquipment.length})'
-                      : 'Other Equipment',
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: hasOtherSelected ? FontWeight.w600 : FontWeight.w500,
-                    color: hasOtherSelected ? Colors.white : textPrimary,
-                  ),
-                  overflow: TextOverflow.ellipsis,
+            const SizedBox(width: 8),
+            Flexible(
+              child: Text(
+                hasOtherSelected
+                    ? 'Other (${widget.otherSelectedEquipment.length})'
+                    : 'Other Equipment',
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: hasOtherSelected ? FontWeight.w600 : FontWeight.w500,
+                  color: hasOtherSelected ? Colors.white : textPrimary,
                 ),
+                overflow: TextOverflow.ellipsis,
               ),
-              const SizedBox(width: 6),
-              Icon(
-                Icons.search,
-                color: hasOtherSelected ? Colors.white70 : textSecondary,
-                size: 16,
-              ),
-            ],
-          ),
+            ),
+            const SizedBox(width: 6),
+            Icon(
+              Icons.search,
+              color: hasOtherSelected ? Colors.white70 : textSecondary,
+              size: 16,
+            ),
+          ],
         ),
       ),
     );

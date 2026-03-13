@@ -462,6 +462,17 @@ class AuthRepository {
       // Fixes race condition where home screen requests user ID before session restore finishes
       await _apiClient.setUserId(cachedUser.id);
       debugPrint('⚡ [Auth] Set user ID from cache: ${cachedUser.id}');
+
+      // Step 1.6: Eagerly set the auth token from the live Supabase session.
+      // Without this, API calls made immediately after the cached user is shown
+      // use whatever stale token is in secure storage, causing 401 errors.
+      // restoreSession() sets the token too, but it's async and may not complete
+      // before the first screen renders and makes API requests.
+      final session = _supabase.auth.currentSession;
+      if (session != null) {
+        await _apiClient.setAuthToken(session.accessToken);
+        debugPrint('⚡ [Auth] Eagerly set auth token from live Supabase session');
+      }
     }
 
     // Step 2: Create future for fresh data (runs in background)

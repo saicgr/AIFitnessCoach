@@ -32,8 +32,7 @@ class GlassBackButton extends StatelessWidget {
     final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
     final glassSurface = isDark ? AppColors.glassSurface : AppColorsLight.glassSurface;
 
-    return Center(
-      child: GestureDetector(
+    return GestureDetector(
         onTap: () {
           HapticService.light();
           if (onTap != null) {
@@ -67,7 +66,6 @@ class GlassBackButton extends StatelessWidget {
             size: 22,
           ),
         ),
-      ),
     );
   }
 }

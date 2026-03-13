@@ -149,6 +149,9 @@ class AnalyticsService {
     String? previousScreen,
     Map<String, dynamic>? extraParams,
   }) async {
+    // Skip analytics before user is authenticated
+    if (_userId == null) return null;
+
     final data = {
       'user_id': _userId,
       'session_id': _sessionId,

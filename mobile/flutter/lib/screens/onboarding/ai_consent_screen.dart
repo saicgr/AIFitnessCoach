@@ -22,6 +22,11 @@ final aiConsentProvider = StateNotifierProvider<AiConsentNotifier, bool>((ref) {
 });
 
 class AiConsentNotifier extends StateNotifier<bool> {
+  /// True once SharedPreferences has been read.
+  /// The router uses this to avoid routing to /ai-consent based on the
+  /// default false value before the real value has loaded.
+  bool isLoaded = false;
+
   AiConsentNotifier() : super(false) {
     _loadFromPrefs();
   }
@@ -29,12 +34,14 @@ class AiConsentNotifier extends StateNotifier<bool> {
   Future<void> _loadFromPrefs() async {
     final prefs = await SharedPreferences.getInstance();
     state = prefs.getBool(kAiConsentAcceptedKey) ?? false;
+    isLoaded = true;
   }
 
   Future<void> accept() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(kAiConsentAcceptedKey, true);
     state = true;
+    isLoaded = true;
   }
 }
 

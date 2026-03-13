@@ -82,7 +82,7 @@ class FoldableQuizScaffold extends ConsumerWidget {
   Widget _buildPhoneLayout(BuildContext context) {
     return Column(
       children: [
-        if (headerOverlay != null) headerOverlay!,
+        if (headerOverlay != null) SizedBox(width: double.infinity, child: headerOverlay!),
         if (progressBar != null) progressBar!,
         if (progressBar != null) const SizedBox(height: 8),
         Expanded(child: content),
@@ -113,7 +113,7 @@ class FoldableQuizScaffold extends ConsumerWidget {
 
     return Column(
       children: [
-        if (headerOverlay != null) headerOverlay!,
+        if (headerOverlay != null) SizedBox(width: double.infinity, child: headerOverlay!),
         // Progress bar spans full width across both panes
         if (progressBar != null) ...[
           progressBar!,
