@@ -7,6 +7,11 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../core/constants/api_constants.dart';
 
+/// Top-level function for decoding JSON string in an isolate via compute().
+Map<String, dynamic> _decodeJsonMap(String raw) {
+  return jsonDecode(raw) as Map<String, dynamic>;
+}
+
 /// Service that loads population-level exercise popularity scores
 /// for collaborative filtering in exercise selection.
 ///
@@ -154,7 +159,7 @@ class CollaborativeScoreService {
 
       if (raw == null) return false;
 
-      final data = jsonDecode(raw) as Map<String, dynamic>;
+      final data = await compute(_decodeJsonMap, raw);
       _cache = _parseCache(data);
 
       if (timestampMs != null) {
@@ -178,7 +183,7 @@ class CollaborativeScoreService {
       final jsonStr = await rootBundle.loadString(
         'assets/data/exercise_popularity.json',
       );
-      final data = jsonDecode(jsonStr) as Map<String, dynamic>;
+      final data = await compute(_decodeJsonMap, jsonStr);
       _cache = _parseCache(data);
       _bundledLoaded = true;
 
@@ -226,6 +231,27 @@ class CollaborativeScoreService {
     } catch (e) {
       debugPrint('[CollabScores] Failed to persist cache: $e');
     }
+  }
+
+  /// Get the maximum popularity score for each exercise across all
+  /// muscle groups and goals. Used by [ExerciseSearchRanker] for
+  /// fuzzy popularity resolution.
+  static Future<Map<String, double>> getAllMaxScores() async {
+    await _ensureLoaded();
+    final result = <String, double>{};
+    if (_cache == null) return result;
+
+    for (final muscleData in _cache!.values) {
+      for (final goalData in muscleData.values) {
+        for (final entry in goalData.entries) {
+          final current = result[entry.key] ?? 0.0;
+          if (entry.value > current) {
+            result[entry.key] = entry.value;
+          }
+        }
+      }
+    }
+    return result;
   }
 
   /// Whether we should trigger a background API refresh.

@@ -697,46 +697,50 @@ class _HeroWorkoutCardState extends ConsumerState<HeroWorkoutCard> {
     final dateLabel = _getScheduledDateLabel(workout.scheduledDate);
 
     final cardContent = Container(
-      height: 280,
+      constraints: const BoxConstraints(minHeight: 280),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(24),
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(24),
         child: Stack(
-          fit: StackFit.expand,
           children: [
-            // Background image or gradient
-            _buildBackground(isDark),
+            // Background image or gradient - fills the card
+            Positioned.fill(child: _buildBackground(isDark)),
 
             // Gradient overlay for readability - different for light/dark mode
-            Container(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: isDark
-                      ? [
-                          Colors.black.withValues(alpha: 0.4),
-                          Colors.black.withValues(alpha: 0.3),
-                          Colors.black.withValues(alpha: 0.85),
-                        ]
-                      : [
-                          Colors.white.withValues(alpha: 0.5),
-                          Colors.white.withValues(alpha: 0.3),
-                          Colors.white.withValues(alpha: 0.9),
-                        ],
-                  stops: const [0.0, 0.35, 1.0],
+            Positioned.fill(
+              child: Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: isDark
+                        ? [
+                            Colors.black.withValues(alpha: 0.4),
+                            Colors.black.withValues(alpha: 0.3),
+                            Colors.black.withValues(alpha: 0.85),
+                          ]
+                        : [
+                            Colors.white.withValues(alpha: 0.5),
+                            Colors.white.withValues(alpha: 0.3),
+                            Colors.white.withValues(alpha: 0.9),
+                          ],
+                    stops: const [0.0, 0.35, 1.0],
+                  ),
                 ),
               ),
             ),
 
-            // Content
+            // Content - drives the card height
             Padding(
               padding: const EdgeInsets.all(16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
                 children: [
+                  // Spacer replacement - fixed top padding for badges area
+                  const SizedBox(height: 4),
                   // Top row: Date label + Type chip + Menu button
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -844,7 +848,7 @@ class _HeroWorkoutCardState extends ConsumerState<HeroWorkoutCard> {
                     ],
                   ),
 
-                  const Spacer(),
+                  const SizedBox(height: 80),
 
                   // Workout title - large and prominent
                   Text(
@@ -1100,10 +1104,12 @@ class _HeroWorkoutCardState extends ConsumerState<HeroWorkoutCard> {
 
             // Loading indicator for skipping or marking done
             if (_isSkipping || _isMarkingDone)
-              Container(
-                color: Colors.black.withValues(alpha: 0.6),
-                child: const Center(
-                  child: CircularProgressIndicator(color: Colors.white),
+              Positioned.fill(
+                child: Container(
+                  color: Colors.black.withValues(alpha: 0.6),
+                  child: const Center(
+                    child: CircularProgressIndicator(color: Colors.white),
+                  ),
                 ),
               ),
 

@@ -6,12 +6,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/constants/app_colors.dart';
-import '../../widgets/app_dialog.dart';
+import '../../widgets/glass_back_button.dart';
 import '../../core/providers/window_mode_provider.dart';
 import '../../core/theme/accent_color_provider.dart';
 import '../../data/models/coach_persona.dart';
 import '../../data/repositories/auth_repository.dart';
-import '../../data/repositories/onboarding_repository.dart';
 import '../../data/repositories/chat_repository.dart';
 import '../../data/services/api_client.dart';
 import '../../core/constants/api_constants.dart';
@@ -684,7 +683,12 @@ class _CoachSelectionScreenState extends ConsumerState<CoachSelectionScreen> {
                 'age': quizData.age,
                 'gender': quizData.gender,
                 'activity_level': quizData.activityLevel ?? 'lightly_active',
-                'weight_direction': quizData.weightDirection ?? 'maintain',
+                'weight_direction': quizData.weightDirection ??
+                    (quizData.goals?.contains('lose_weight') == true
+                        ? 'lose'
+                        : quizData.goals?.contains('build_muscle') == true
+                            ? 'gain'
+                            : 'maintain'),
                 'weight_change_rate': quizData.weightChangeRate ?? 'moderate',
                 'goal_weight_kg': quizData.goalWeightKg ?? quizData.weightKg,
                 'nutrition_goals': quizData.nutritionGoals ??
@@ -692,7 +696,7 @@ class _CoachSelectionScreenState extends ConsumerState<CoachSelectionScreen> {
                         ? ['lose_fat']
                         : quizData.weightDirection == 'gain'
                             ? ['build_muscle']
-                            : ['maintain']),
+                            : _inferNutritionGoalsFromFitnessGoals(quizData.goals)),
                 'workout_days_per_week': quizData.daysPerWeek ?? 3,
               },
             );
@@ -745,6 +749,13 @@ class _CoachSelectionScreenState extends ConsumerState<CoachSelectionScreen> {
         // The local quiz data is still available for plan generation
       }
     });
+  }
+
+  static List<String> _inferNutritionGoalsFromFitnessGoals(List<String>? goals) {
+    if (goals == null || goals.isEmpty) return ['maintain'];
+    if (goals.contains('lose_weight')) return ['lose_fat'];
+    if (goals.contains('build_muscle') || goals.contains('increase_strength')) return ['build_muscle'];
+    return ['maintain'];
   }
 
   void _skip() {
@@ -984,87 +995,142 @@ class _CoachSelectionScreenState extends ConsumerState<CoachSelectionScreen> {
 
   Widget _buildHeaderOverlay(bool isDark) {
     return Padding(
-      padding: const EdgeInsets.all(16),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      padding: const EdgeInsets.only(left: 16, right: 16, top: 8),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          // Back button
-          GestureDetector(
-            onTap: () {
-              HapticFeedback.lightImpact();
-              if (widget.fromSettings) {
-                context.pop();
-              } else {
-                context.go('/weight-projection');
-              }
-            },
-            child: Container(
-              width: 44,
-              height: 44,
-              decoration: BoxDecoration(
-                color: isDark
-                    ? Colors.white.withValues(alpha: 0.15)
-                    : Colors.white.withValues(alpha: 0.85),
-                shape: BoxShape.circle,
-                border: Border.all(
-                  color: isDark
-                      ? Colors.white.withValues(alpha: 0.2)
-                      : Colors.black.withValues(alpha: 0.1),
-                  width: 1.5,
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: isDark ? 0.15 : 0.08),
-                    blurRadius: 12,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              GlassBackButton(
+                onTap: () {
+                  HapticFeedback.lightImpact();
+                  if (widget.fromSettings) {
+                    context.pop();
+                  } else {
+                    context.go('/ai-consent');
+                  }
+                },
               ),
-              child: Icon(
-                Icons.arrow_back_ios_rounded,
-                color: isDark ? Colors.white : const Color(0xFF0A0A0A),
-                size: 18,
-              ),
-            ),
-          ),
-
-          // Skip button (only during onboarding, not from settings)
-          if (!widget.fromSettings)
-            GestureDetector(
-              onTap: _skip,
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                decoration: BoxDecoration(
-                  color: isDark
-                      ? Colors.white.withValues(alpha: 0.15)
-                      : Colors.white.withValues(alpha: 0.85),
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(
-                    color: isDark
-                        ? Colors.white.withValues(alpha: 0.2)
-                        : Colors.black.withValues(alpha: 0.1),
-                    width: 1.5,
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: isDark ? 0.15 : 0.08),
-                      blurRadius: 12,
-                      offset: const Offset(0, 4),
+              // Skip button (only during onboarding, not from settings)
+              if (!widget.fromSettings)
+                GestureDetector(
+                  onTap: _skip,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: isDark
+                          ? Colors.white.withValues(alpha: 0.12)
+                          : Colors.black.withValues(alpha: 0.06),
+                      borderRadius: BorderRadius.circular(17),
+                      border: Border.all(
+                        color: isDark
+                            ? Colors.white.withValues(alpha: 0.15)
+                            : Colors.black.withValues(alpha: 0.08),
+                        width: 0.5,
+                      ),
                     ),
-                  ],
-                ),
-                child: Text(
-                  'Skip',
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: isDark ? Colors.white : const Color(0xFF0A0A0A),
+                    child: Text(
+                      'Skip',
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: isDark ? Colors.white : Colors.black87,
+                      ),
+                    ),
                   ),
                 ),
-              ),
-            ),
+            ],
+          ),
+          if (!widget.fromSettings) _buildProgressIndicator(isDark),
         ],
       ),
+    );
+  }
+
+  Widget _buildProgressIndicator(bool isDark) {
+    final accentColor = _selectedCoach?.primaryColor ?? const Color(0xFFF97316);
+    final inactiveColor = isDark ? AppColors.glassSurface : AppColorsLight.glassSurface;
+    const currentStep = 4; // Coach is step 5 (0-based: 4), all complete
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      child: Row(
+        children: [
+          _buildStepDot(1, 'Sign In', true, accentColor, isDark, 0),
+          _buildProgressLine(0, currentStep, accentColor, inactiveColor, 1),
+          _buildStepDot(2, 'About You', true, accentColor, isDark, 2),
+          _buildProgressLine(1, currentStep, accentColor, inactiveColor, 3),
+          _buildStepDot(3, 'Split', true, accentColor, isDark, 4),
+          _buildProgressLine(2, currentStep, accentColor, inactiveColor, 5),
+          _buildStepDot(4, 'Privacy', true, accentColor, isDark, 6),
+          _buildProgressLine(3, currentStep, accentColor, inactiveColor, 7),
+          _buildStepDot(5, 'Coach', true, accentColor, isDark, 8),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildProgressLine(int segmentIndex, int currentStep, Color activeColor, Color inactiveColor, int animOrder) {
+    final isComplete = segmentIndex < currentStep;
+    final delay = 100 + (animOrder * 80);
+
+    return Expanded(
+      child: Container(
+        height: 2,
+        color: inactiveColor,
+        child: isComplete
+            ? Container(height: 2, color: activeColor)
+                .animate()
+                .scaleX(begin: 0, end: 1, alignment: Alignment.centerLeft,
+                    delay: Duration(milliseconds: delay), duration: 300.ms,
+                    curve: Curves.easeOut)
+            : null,
+      ),
+    );
+  }
+
+  Widget _buildStepDot(int step, String label, bool isComplete, Color activeColor, bool isDark, int animOrder) {
+    final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+    final delay = 100 + (animOrder * 80);
+
+    return Column(
+      children: [
+        Container(
+          width: 24,
+          height: 24,
+          decoration: BoxDecoration(
+            color: isComplete ? activeColor : (isDark ? AppColors.glassSurface : AppColorsLight.glassSurface),
+            shape: BoxShape.circle,
+            border: Border.all(
+              color: isComplete ? activeColor : (isDark ? AppColors.cardBorder : AppColorsLight.cardBorder),
+              width: 2,
+            ),
+          ),
+          child: Center(
+            child: isComplete
+                ? const Icon(Icons.check, size: 14, color: Colors.white)
+                : Text(
+                    '$step',
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
+                      color: textSecondary,
+                    ),
+                  ),
+          ),
+        ).animate()
+         .scaleXY(begin: 0, end: 1, delay: Duration(milliseconds: delay), duration: 300.ms, curve: Curves.easeOutBack),
+        const SizedBox(height: 4),
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 9,
+            color: isComplete ? activeColor : textSecondary,
+            fontWeight: isComplete ? FontWeight.w600 : FontWeight.normal,
+          ),
+        ),
+      ],
     );
   }
 
@@ -1076,27 +1142,48 @@ class _CoachSelectionScreenState extends ConsumerState<CoachSelectionScreen> {
 
     final canContinue = _selectedCoach != null || (_isCustomMode && _customName.isNotEmpty);
 
+    final coachColor = _selectedCoach?.primaryColor ?? const Color(0xFFF97316);
+
     return Scaffold(
       backgroundColor: isDark ? AppColors.pureBlack : AppColorsLight.pureWhite,
-      body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: isDark
-                ? [
-                    AppColors.pureBlack,
-                    AppColors.pureBlack.withValues(alpha: 0.95),
-                    const Color(0xFF0D0D1A),
-                  ]
-                : [
-                    AppColorsLight.pureWhite,
-                    AppColorsLight.pureWhite.withValues(alpha: 0.95),
-                    const Color(0xFFF5F5FA),
-                  ],
+      body: Stack(
+        children: [
+          // Base gradient
+          Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: isDark
+                    ? [
+                        AppColors.pureBlack,
+                        AppColors.pureBlack.withValues(alpha: 0.95),
+                        const Color(0xFF0D0D1A),
+                      ]
+                    : [
+                        AppColorsLight.pureWhite,
+                        AppColorsLight.pureWhite.withValues(alpha: 0.95),
+                        const Color(0xFFF5F5FA),
+                      ],
+              ),
+            ),
           ),
-        ),
-        child: SafeArea(
+          // Coach-colored ambient glow at top
+          AnimatedContainer(
+            duration: const Duration(milliseconds: 400),
+            curve: Curves.easeInOut,
+            decoration: BoxDecoration(
+              gradient: RadialGradient(
+                center: const Alignment(0.0, -1.0),
+                radius: 1.2,
+                colors: [
+                  coachColor.withValues(alpha: isDark ? 0.12 : 0.08),
+                  coachColor.withValues(alpha: 0.0),
+                ],
+              ),
+            ),
+          ),
+          SafeArea(
           child: FoldableQuizScaffold(
             headerTitle: widget.fromSettings ? 'Change Coach' : 'Meet Your Coach',
             headerSubtitle: widget.fromSettings
@@ -1175,13 +1262,10 @@ class _CoachSelectionScreenState extends ConsumerState<CoachSelectionScreen> {
                             decoration: BoxDecoration(
                               color: index == _currentPageIndex
                                   ? coachColor
-                                  : (isDark ? AppColors.glassSurface : AppColorsLight.glassSurface),
+                                  : (isDark
+                                      ? Colors.white.withValues(alpha: 0.25)
+                                      : Colors.black.withValues(alpha: 0.15)),
                               borderRadius: BorderRadius.circular(4),
-                              border: Border.all(
-                                color: index == _currentPageIndex
-                                    ? coachColor
-                                    : (isDark ? AppColors.cardBorder : AppColorsLight.cardBorder),
-                              ),
                             ),
                           ),
                         );
@@ -1196,67 +1280,9 @@ class _CoachSelectionScreenState extends ConsumerState<CoachSelectionScreen> {
             button: _buildContinueButton(isDark, canContinue),
           ),
         ),
+        ],
       ),
     );
-  }
-
-  Future<void> _startOver() async {
-    HapticFeedback.mediumImpact();
-
-    // Show confirmation dialog
-    final confirmed = await AppDialog.destructive(
-      context,
-      title: 'Start Over?',
-      message: 'This will reset your progress and take you back to the welcome screen. You\'ll need to retake the quiz.',
-      confirmText: 'Start Over',
-      icon: Icons.restart_alt_rounded,
-    );
-
-    if (confirmed != true) return;
-
-    // Reset onboarding conversation state
-    ref.read(onboardingStateProvider.notifier).reset();
-
-    // Clear pre-auth quiz local storage data
-    await ref.read(preAuthQuizProvider.notifier).clear();
-
-    // Reset ALL flags in backend (Supabase)
-    try {
-      final apiClient = ref.read(apiClientProvider);
-      final userId = await apiClient.getUserId();
-      if (userId != null) {
-        await apiClient.put(
-          '${ApiConstants.users}/$userId',
-          data: {
-            'coach_selected': false,
-            'onboarding_completed': false,
-            'paywall_completed': false,
-          },
-        );
-      }
-      // Update local auth state - must happen before navigation
-      await ref.read(authStateProvider.notifier).markCoachNotSelected();
-      await ref.read(authStateProvider.notifier).markOnboardingIncomplete();
-      await ref.read(authStateProvider.notifier).markPaywallIncomplete();
-
-      // Clear SharedPreferences flags and cancel any scheduled notifications
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.remove('onboarding_completed');
-      await prefs.remove('paywall_completed');
-      ref.read(notificationServiceProvider).cancelAllScheduledNotifications();
-    } catch (e) {
-      debugPrint('❌ [CoachSelection] Failed to reset flags: $e');
-    }
-
-    // Navigate to welcome screen (pre-auth quiz)
-    // Use post-frame callback to ensure state has propagated before navigation
-    if (mounted) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) {
-          context.go('/pre-auth-quiz');
-        }
-      });
-    }
   }
 
   Widget _buildHeader(Color textPrimary, Color textSecondary) {
@@ -1302,44 +1328,11 @@ class _CoachSelectionScreenState extends ConsumerState<CoachSelectionScreen> {
                       fontSize: 14,
                       color: textSecondary,
                     ),
+                    maxLines: 1,
                   ),
                 ],
               ),
             ),
-            // Start Over button - only show during initial onboarding
-            if (!widget.fromSettings)
-              GestureDetector(
-                onTap: _startOver,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: coachColor.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(
-                      color: coachColor.withValues(alpha: 0.3),
-                    ),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        Icons.refresh,
-                        size: 14,
-                        color: coachColor,
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        'Start Over',
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                          color: coachColor,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
           ],
         ),
       ],

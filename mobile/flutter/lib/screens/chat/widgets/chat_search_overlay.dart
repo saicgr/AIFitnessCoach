@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fitwiz/core/theme/theme_colors.dart';
 import 'package:fitwiz/data/models/chat_message.dart';
 import 'package:fitwiz/data/repositories/chat_repository.dart';
+import 'package:fitwiz/widgets/glass_back_button.dart';
 
 /// Overlay that lets the user search through chat messages.
 class ChatSearchOverlay extends ConsumerStatefulWidget {
@@ -96,10 +97,8 @@ class _ChatSearchOverlayState extends ConsumerState<ChatSearchOverlay> {
           'Search Chat',
           style: TextStyle(color: colors.textPrimary),
         ),
-        leading: IconButton(
-          icon: Icon(Icons.close, color: colors.textPrimary),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
+        automaticallyImplyLeading: false,
+        leading: const GlassBackButton(icon: Icons.close),
       ),
       body: Column(
         children: [

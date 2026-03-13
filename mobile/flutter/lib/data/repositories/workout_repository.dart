@@ -19,10 +19,23 @@ export '../models/today_workout.dart';
 
 /// Top-level function for parsing workout lists in an isolate via compute().
 /// Must be top-level (not a closure or instance method) for compute() to work.
+/// Pre-decodes exercisesJson from String to List in the isolate so the
+/// exercises getter on the main thread skips the expensive jsonDecode call.
 List<Workout> _parseWorkoutList(List<dynamic> data) {
-  return data
-      .map((json) => Workout.fromJson(json as Map<String, dynamic>))
-      .toList();
+  return data.map((json) {
+    final map = json as Map<String, dynamic>;
+    // Pre-decode exercises_json String -> List in the isolate so the
+    // main-thread getter never needs to call jsonDecode.
+    final rawExercises = map['exercises_json'];
+    if (rawExercises is String && rawExercises.isNotEmpty) {
+      try {
+        map['exercises_json'] = jsonDecode(rawExercises);
+      } catch (_) {
+        // Leave as String; the getter will handle it
+      }
+    }
+    return Workout.fromJson(map);
+  }).toList();
 }
 
 /// Workout repository provider

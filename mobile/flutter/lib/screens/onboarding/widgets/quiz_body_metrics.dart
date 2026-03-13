@@ -1107,7 +1107,6 @@ class _QuizBodyMetricsState extends State<QuizBodyMetrics> {
   ) {
     final unit = _weightInMetric ? 'kg' : 'lbs';
     final directionLabel = widget.weightDirection == 'lose' ? 'lose' : 'gain';
-    const orange = Color(0xFFF97316);
 
     final compact = widget.compact;
     final cardPad = compact ? 12.0 : 16.0;
@@ -1143,72 +1142,90 @@ class _QuizBodyMetricsState extends State<QuizBodyMetrics> {
           SizedBox(height: innerGap),
 
           // +/- buttons with amount display (tap number to type)
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              _buildIncrementButton(
-                icon: Icons.remove,
-                onTap: () {
-                  if (_weightChangeAmount > 1) {
-                    setState(() {
-                      _weightChangeAmount -= 1;
-                    });
-                    widget.onWeightChangeAmountChanged?.call(_weightChangeAmount);
-                    _updateGoalWeight(widget.weightDirection!);
-                  }
-                },
-                isDark: isDark,
-                cardBorder: cardBorder,
-              ),
-              SizedBox(width: btnSpacing),
-              // Tappable amount display
-              GestureDetector(
-                onTap: () => _showAmountInputDialog(isDark, textPrimary, textSecondary, unit),
-                child: Container(
-                  padding: EdgeInsets.symmetric(horizontal: compact ? 12 : 16, vertical: compact ? 4 : 8),
-                  decoration: BoxDecoration(
-                    color: orange.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: orange.withValues(alpha: 0.3)),
-                  ),
-                  child: Column(
-                    children: [
-                      Text(
-                        _weightChangeAmount.round().toString(),
-                        style: TextStyle(
-                          fontSize: amountFontSize,
-                          fontWeight: FontWeight.bold,
-                          color: orange,
+          Builder(builder: (context) {
+            final amountColor = _getWeightChangeColor(_weightChangeAmount);
+            // Calculate max for stepper (same logic as slider)
+            final minMax = _weightInMetric ? 5.0 : 11.0;
+            double stepperMax;
+            if (widget.weightDirection == 'lose' && widget.weightKg != null) {
+              final cwu = _weightInMetric ? widget.weightKg! : widget.weightKg! * 2.20462;
+              stepperMax = (cwu * 0.5).roundToDouble().clamp(minMax, cwu - 1);
+            } else if (widget.weightDirection == 'gain') {
+              final cwu = widget.weightKg != null
+                  ? (_weightInMetric ? widget.weightKg! : widget.weightKg! * 2.20462)
+                  : (_weightInMetric ? 70.0 : 154.0);
+              stepperMax = (cwu * 0.5).roundToDouble().clamp(_weightInMetric ? 10.0 : 22.0, _weightInMetric ? 50.0 : 110.0);
+            } else {
+              stepperMax = _weightInMetric ? 40.0 : 88.0;
+            }
+            return Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                _buildIncrementButton(
+                  icon: Icons.remove,
+                  onTap: () {
+                    if (_weightChangeAmount > 1) {
+                      setState(() {
+                        _weightChangeAmount -= 1;
+                      });
+                      widget.onWeightChangeAmountChanged?.call(_weightChangeAmount);
+                      _updateGoalWeight(widget.weightDirection!);
+                    }
+                  },
+                  isDark: isDark,
+                  cardBorder: cardBorder,
+                ),
+                SizedBox(width: btnSpacing),
+                // Tappable amount display
+                GestureDetector(
+                  onTap: () => _showAmountInputDialog(isDark, textPrimary, textSecondary, unit),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 300),
+                    padding: EdgeInsets.symmetric(horizontal: compact ? 12 : 16, vertical: compact ? 4 : 8),
+                    decoration: BoxDecoration(
+                      color: amountColor.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: amountColor.withValues(alpha: 0.3)),
+                    ),
+                    child: Column(
+                      children: [
+                        Text(
+                          _weightChangeAmount.round().toString(),
+                          style: TextStyle(
+                            fontSize: amountFontSize,
+                            fontWeight: FontWeight.bold,
+                            color: amountColor,
+                          ),
                         ),
-                      ),
-                      Text(
-                        unit,
-                        style: TextStyle(
-                          fontSize: compact ? 12 : 14,
-                          color: textSecondary,
+                        Text(
+                          unit,
+                          style: TextStyle(
+                            fontSize: compact ? 12 : 14,
+                            color: textSecondary,
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
-              ),
-              SizedBox(width: btnSpacing),
-              _buildIncrementButton(
-                icon: Icons.add,
-                onTap: () {
-                  if (_weightChangeAmount < 100) {
-                    setState(() {
-                      _weightChangeAmount += 1;
-                    });
-                    widget.onWeightChangeAmountChanged?.call(_weightChangeAmount);
-                    _updateGoalWeight(widget.weightDirection!);
-                  }
-                },
-                isDark: isDark,
-                cardBorder: cardBorder,
-              ),
-            ],
-          ),
+                SizedBox(width: btnSpacing),
+                _buildIncrementButton(
+                  icon: Icons.add,
+                  onTap: () {
+                    if (_weightChangeAmount < stepperMax) {
+                      setState(() {
+                        _weightChangeAmount += 1;
+                      });
+                      widget.onWeightChangeAmountChanged?.call(_weightChangeAmount);
+                      _updateGoalWeight(widget.weightDirection!);
+                    }
+                  },
+                  isDark: isDark,
+                  cardBorder: cardBorder,
+                ),
+              ],
+            );
+          }),
 
           SizedBox(height: innerGap),
 
@@ -1298,38 +1315,81 @@ class _QuizBodyMetricsState extends State<QuizBodyMetrics> {
     );
   }
 
+  /// Get health-aware color for weight change amount
+  Color _getWeightChangeColor(double amount) {
+    if (widget.weightKg == null || widget.weightKg! <= 0) return const Color(0xFFF97316);
+
+    final currentWeightInUnit = _weightInMetric
+        ? widget.weightKg!
+        : widget.weightKg! * 2.20462;
+    final percent = (amount / currentWeightInUnit) * 100;
+
+    if (widget.weightDirection == 'gain') {
+      // Gain: green up to 10%, orange up to 20%, red beyond
+      if (percent <= 15) return const Color(0xFF22C55E);
+      if (percent <= 30) return const Color(0xFFF97316);
+      return const Color(0xFFEF4444);
+    }
+
+    // Lose: green up to 10%, orange up to 20%, red beyond
+    if (percent <= 15) return const Color(0xFF22C55E);
+    if (percent <= 30) return const Color(0xFFF97316);
+    return const Color(0xFFEF4444);
+  }
+
+  /// Get health label for current weight change amount
+  String _getWeightChangeLabel(double amount) {
+    if (widget.weightKg == null || widget.weightKg! <= 0) return '';
+
+    final currentWeightInUnit = _weightInMetric
+        ? widget.weightKg!
+        : widget.weightKg! * 2.20462;
+    final percent = (amount / currentWeightInUnit) * 100;
+
+    if (percent <= 5) return 'Gentle & sustainable';
+    if (percent <= 15) return 'Healthy goal';
+    if (percent <= 30) return 'Aggressive but achievable';
+    return 'Consult a professional first';
+  }
+
   Widget _buildWeightGoalSlider(bool isDark, Color textSecondary, Color cardBorder) {
     final unit = _weightInMetric ? 'kg' : 'lbs';
     const minAmount = 0.5;
-    const step = 0.5;
-    const orange = Color(0xFFF97316);
+    const step = 1.0;
 
-    // Calculate max amount based on direction
-    // For "lose": can't lose more than current weight minus 1 kg/lb (to stay positive)
-    // For "gain": use default max (100kg or 200lbs)
-    double defaultMax = _weightInMetric ? 100.0 : 200.0;
-    double maxAmount = defaultMax;
+    // Realistic max based on body weight
+    // Lose: cap at 40% of current weight (min 5kg/11lbs so light users still have range)
+    // Gain: cap at 30% of current weight (min 10kg/22lbs)
+    double maxAmount;
+    final minMax = _weightInMetric ? 5.0 : 11.0;
 
     if (widget.weightDirection == 'lose' && widget.weightKg != null) {
-      // Convert current weight to display unit if needed
       final currentWeightInUnit = _weightInMetric
           ? widget.weightKg!
           : widget.weightKg! * 2.20462;
-      // Max loss is current weight minus 1 (can't go to 0 or negative)
-      maxAmount = (currentWeightInUnit - 1).clamp(minAmount, defaultMax);
+      maxAmount = (currentWeightInUnit * 0.5).roundToDouble().clamp(minMax, currentWeightInUnit - 1);
+    } else if (widget.weightDirection == 'gain') {
+      final currentWeightInUnit = widget.weightKg != null
+          ? (_weightInMetric ? widget.weightKg! : widget.weightKg! * 2.20462)
+          : (_weightInMetric ? 70.0 : 154.0);
+      maxAmount = (currentWeightInUnit * 0.5).roundToDouble().clamp(_weightInMetric ? 10.0 : 22.0, _weightInMetric ? 50.0 : 110.0);
+    } else {
+      maxAmount = _weightInMetric ? 40.0 : 88.0;
     }
 
-    final divisions = ((maxAmount - minAmount) / step).toInt().clamp(1, 1000);
+    final divisions = ((maxAmount - minAmount) / step).toInt().clamp(1, 200);
+    final sliderColor = _getWeightChangeColor(_weightChangeAmount);
+    final healthLabel = _getWeightChangeLabel(_weightChangeAmount);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         SliderTheme(
           data: SliderTheme.of(context).copyWith(
-            activeTrackColor: orange,
-            inactiveTrackColor: orange.withValues(alpha: 0.2),
-            thumbColor: orange,
-            overlayColor: orange.withValues(alpha: 0.1),
+            activeTrackColor: sliderColor,
+            inactiveTrackColor: sliderColor.withValues(alpha: 0.15),
+            thumbColor: sliderColor,
+            overlayColor: sliderColor.withValues(alpha: 0.1),
             trackHeight: 6,
           ),
           child: Slider(
@@ -1354,9 +1414,13 @@ class _QuizBodyMetricsState extends State<QuizBodyMetrics> {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text('0.5 $unit', style: TextStyle(fontSize: 11, color: textSecondary)),
-              Text('${maxAmount.toStringAsFixed(maxAmount == maxAmount.roundToDouble() ? 0 : 1)} $unit',
-                   style: TextStyle(fontSize: 11, color: textSecondary)),
+              Text('${minAmount.toStringAsFixed(1)} $unit', style: TextStyle(fontSize: 11, color: textSecondary)),
+              if (healthLabel.isNotEmpty)
+                Text(
+                  healthLabel,
+                  style: TextStyle(fontSize: 11, fontWeight: FontWeight.w500, color: sliderColor),
+                ),
+              Text('${maxAmount.round()} $unit', style: TextStyle(fontSize: 11, color: textSecondary)),
             ],
           ),
         ),
@@ -1401,6 +1465,21 @@ class _QuizBodyMetricsState extends State<QuizBodyMetrics> {
     HapticFeedback.selectionClick();
     final controller = TextEditingController(text: _weightChangeAmount.round().toString());
     final directionLabel = widget.weightDirection == 'lose' ? 'lose' : 'gain';
+
+    // Calculate realistic max (same logic as slider)
+    final minMax = _weightInMetric ? 5.0 : 11.0;
+    double dialogMax;
+    if (widget.weightDirection == 'lose' && widget.weightKg != null) {
+      final cwu = _weightInMetric ? widget.weightKg! : widget.weightKg! * 2.20462;
+      dialogMax = (cwu * 0.5).roundToDouble().clamp(minMax, cwu - 1);
+    } else if (widget.weightDirection == 'gain') {
+      final cwu = widget.weightKg != null
+          ? (_weightInMetric ? widget.weightKg! : widget.weightKg! * 2.20462)
+          : (_weightInMetric ? 70.0 : 154.0);
+      dialogMax = (cwu * 0.5).roundToDouble().clamp(_weightInMetric ? 10.0 : 22.0, _weightInMetric ? 50.0 : 110.0);
+    } else {
+      dialogMax = _weightInMetric ? 40.0 : 88.0;
+    }
 
     showDialog(
       context: context,
@@ -1450,7 +1529,7 @@ class _QuizBodyMetricsState extends State<QuizBodyMetrics> {
             ),
             const SizedBox(height: 8),
             Text(
-              'Enter a value between 1-100 $unit',
+              'Enter a value between 1-${dialogMax.round()} $unit',
               style: TextStyle(
                 fontSize: 12,
                 color: textSecondary,
@@ -1469,7 +1548,7 @@ class _QuizBodyMetricsState extends State<QuizBodyMetrics> {
           ElevatedButton(
             onPressed: () {
               final value = double.tryParse(controller.text);
-              if (value != null && value >= 1 && value <= 100) {
+              if (value != null && value >= 1 && value <= dialogMax) {
                 setState(() {
                   _weightChangeAmount = value;
                 });
@@ -1520,18 +1599,21 @@ class _QuizBodyMetricsState extends State<QuizBodyMetrics> {
     }
 
     final isValid = goalWeight > 0 && goalWeight < 500;
-    const orange = Color(0xFFF97316);
+    final summaryColor = widget.weightDirection == 'maintain'
+        ? const Color(0xFF22C55E)
+        : _getWeightChangeColor(_weightChangeAmount);
 
-    return Container(
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 300),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: isValid
-            ? orange.withValues(alpha: 0.1)
+            ? summaryColor.withValues(alpha: 0.1)
             : AppColors.error.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
           color: isValid
-              ? orange.withValues(alpha: 0.3)
+              ? summaryColor.withValues(alpha: 0.3)
               : AppColors.error.withValues(alpha: 0.3),
         ),
       ),
@@ -1541,7 +1623,7 @@ class _QuizBodyMetricsState extends State<QuizBodyMetrics> {
             widget.weightDirection == 'maintain'
                 ? Icons.check_circle_outline
                 : Icons.trending_flat,
-            color: isValid ? orange : AppColors.error,
+            color: isValid ? summaryColor : AppColors.error,
             size: 20,
           ),
           const SizedBox(width: 10),
@@ -1571,7 +1653,7 @@ class _QuizBodyMetricsState extends State<QuizBodyMetrics> {
                         style: TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w600,
-                          color: isValid ? orange : AppColors.error,
+                          color: isValid ? summaryColor : AppColors.error,
                         ),
                       ),
                     ],

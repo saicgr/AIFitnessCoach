@@ -8,6 +8,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../local/database.dart';
 import '../local/database_provider.dart';
 
+/// Top-level function for parsing food seed JSON in an isolate via compute().
+List<Map<String, dynamic>> _parseFoodSeedJson(String jsonString) {
+  final List<dynamic> foods = jsonDecode(jsonString) as List<dynamic>;
+  return foods.map((f) => f as Map<String, dynamic>).toList();
+}
+
 /// Service for managing the offline food database.
 ///
 /// On first launch, loads embedded USDA food data from assets.
@@ -35,10 +41,10 @@ class FoodDatabaseService {
     try {
       final jsonString =
           await rootBundle.loadString('assets/data/food_seed_data.json');
-      final List<dynamic> foods = jsonDecode(jsonString) as List<dynamic>;
+      // Parse JSON in isolate to avoid blocking the UI thread
+      final foods = await compute(_parseFoodSeedJson, jsonString);
 
-      final companions = foods.map((food) {
-        final f = food as Map<String, dynamic>;
+      final companions = foods.map((f) {
         return CachedFoodsCompanion.insert(
           externalId: f['fdc_id'].toString(),
           description: f['description'] as String,

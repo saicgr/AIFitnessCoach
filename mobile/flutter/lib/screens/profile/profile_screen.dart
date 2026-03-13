@@ -846,15 +846,23 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         ),
         centerTitle: true,
         actions: [
-          IconButton(
+          TextButton(
             onPressed: () {
               HapticService.selection();
               context.push('/stats');
             },
-            icon: Icon(
-              Icons.bar_chart_rounded,
-              color: textMuted,
-              size: 22,
+            style: TextButton.styleFrom(
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+              minimumSize: Size.zero,
+              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            ),
+            child: Text(
+              'Stats',
+              style: TextStyle(
+                color: textMuted,
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+              ),
             ),
           ),
           IconButton(
@@ -886,6 +894,41 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               _buildFitnessSectionHeader(isDark, textMuted),
               const SizedBox(height: 8),
               EditableFitnessCard(key: _fitnessCardKey, user: user),
+              const SizedBox(height: 12),
+
+              // View Stats button
+              InkWell(
+                onTap: () {
+                  HapticService.selection();
+                  context.push('/stats');
+                },
+                borderRadius: BorderRadius.circular(12),
+                child: Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  decoration: BoxDecoration(
+                    color: elevated,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: cardBorder),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.bar_chart_rounded, color: AppColors.info, size: 20),
+                      const SizedBox(width: 10),
+                      Text(
+                        'View Stats',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: textPrimary,
+                        ),
+                      ),
+                      const Spacer(),
+                      Icon(Icons.chevron_right_rounded, color: textMuted, size: 20),
+                    ],
+                  ),
+                ),
+              ),
               const SizedBox(height: 24),
 
               // TRAINING

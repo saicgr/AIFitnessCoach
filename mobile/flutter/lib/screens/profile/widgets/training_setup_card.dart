@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/providers/training_preferences_provider.dart';
+import '../../../core/providers/variation_provider.dart';
 import '../../../data/models/user.dart';
 import '../../../data/providers/gym_profile_provider.dart';
 import '../../../widgets/glass_sheet.dart';
@@ -218,6 +219,13 @@ class TrainingSetupCard extends ConsumerWidget {
             textPrimary: textPrimary,
             textSecondary: textSecondary,
           ),
+          const SizedBox(height: 12),
+
+          // Weekly Variety row
+          _VarietyRow(
+            textPrimary: textPrimary,
+            textSecondary: textSecondary,
+          ),
 
           // Custom Equipment link
           if (onCustomEquipment != null) ...[
@@ -398,6 +406,110 @@ class _TrainingSplitRow extends ConsumerWidget {
       value: displayName,
       textPrimary: textPrimary,
       textSecondary: textSecondary,
+    );
+  }
+}
+
+/// Displays the weekly variety level with tap-to-edit.
+class _VarietyRow extends ConsumerWidget {
+  final Color textPrimary;
+  final Color textSecondary;
+
+  const _VarietyRow({
+    required this.textPrimary,
+    required this.textSecondary,
+  });
+
+  String _varietyLabel(int percentage) {
+    if (percentage <= 25) return 'Low ($percentage%)';
+    if (percentage <= 50) return 'Medium ($percentage%)';
+    return 'High ($percentage%)';
+  }
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final variationState = ref.watch(variationProvider);
+    final percentage = variationState.percentage;
+
+    return GestureDetector(
+      onTap: () {
+        HapticFeedback.selectionClick();
+        _showVariationSlider(context, ref, percentage);
+      },
+      behavior: HitTestBehavior.opaque,
+      child: _SetupRow(
+        icon: Icons.shuffle_rounded,
+        iconColor: AppColors.yellow,
+        label: 'Weekly Variety',
+        value: _varietyLabel(percentage),
+        textPrimary: textPrimary,
+        textSecondary: textSecondary,
+      ),
+    );
+  }
+
+  void _showVariationSlider(BuildContext context, WidgetRef ref, int currentPercentage) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: isDark ? const Color(0xFF1a1a1a) : Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'Weekly Variety',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                  color: isDark ? Colors.white : Colors.black87,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'How much exercise variety each week?',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: isDark ? Colors.white54 : Colors.black45,
+                ),
+              ),
+              const SizedBox(height: 20),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  _buildChip('Low', 25, currentPercentage, context, ref),
+                  _buildChip('Medium', 50, currentPercentage, context, ref),
+                  _buildChip('High', 75, currentPercentage, context, ref),
+                ],
+              ),
+              const SizedBox(height: 16),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildChip(String label, int value, int current, BuildContext context, WidgetRef ref) {
+    final presets = [25, 50, 75];
+    final closestPreset = presets.reduce((a, b) => (a - current).abs() < (b - current).abs() ? a : b);
+    final isSelected = value == closestPreset;
+    return ChoiceChip(
+      label: Text('$label ($value%)'),
+      selected: isSelected,
+      onSelected: (_) {
+        HapticFeedback.selectionClick();
+        ref.read(variationProvider.notifier).setVariation(value);
+        Navigator.pop(context);
+      },
+      selectedColor: AppColors.cyan.withValues(alpha: 0.2),
+      checkmarkColor: AppColors.cyan,
     );
   }
 }

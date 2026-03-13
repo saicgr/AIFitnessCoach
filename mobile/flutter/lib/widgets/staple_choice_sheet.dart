@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../core/constants/app_colors.dart';
+import '../core/providers/user_provider.dart';
 import '../data/providers/gym_profile_provider.dart';
 import '../data/providers/today_workout_provider.dart';
 import '../data/services/haptic_service.dart';
@@ -13,6 +14,10 @@ typedef StapleChoiceResult = ({
   String? gymProfileId,
   String? swapExerciseId,
   Map<String, double>? cardioParams,
+  int? userSets,
+  String? userReps,
+  int? userRestSeconds,
+  List<int>? targetDays,
 });
 
 /// Shows the staple choice sheet and returns the user's selection.
@@ -101,6 +106,18 @@ class _StapleChoiceSheetState extends ConsumerState<StapleChoiceSheet> {
   bool _profileIdInitialized = false;
   bool _showSwapList = false;
 
+  // Strength/timed controllers
+  final _setsController = TextEditingController(text: '3');
+  final _repsController = TextEditingController(text: '10');
+  final _restController = TextEditingController(text: '60');
+  bool _showStrengthParams = false;
+
+  // Day-of-week targeting (null = all days, empty set = expanded but none selected)
+  bool _showDayPicker = false;
+  final Set<int> _selectedDays = {}; // 0=Mon, 6=Sun
+
+  static const _dayLabels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+
   // Cardio controllers
   final _durationController = TextEditingController(text: '10');
   final _speedController = TextEditingController(text: '3.5');
@@ -117,6 +134,9 @@ class _StapleChoiceSheetState extends ConsumerState<StapleChoiceSheet> {
 
   @override
   void dispose() {
+    _setsController.dispose();
+    _repsController.dispose();
+    _restController.dispose();
     _durationController.dispose();
     _speedController.dispose();
     _inclineController.dispose();
@@ -135,6 +155,16 @@ class _StapleChoiceSheetState extends ConsumerState<StapleChoiceSheet> {
         eq.contains('rower') ||
         eq.contains('elliptical');
   }
+
+  bool get _isTimed {
+    final name = widget.exerciseName.toLowerCase();
+    final cat = widget.category?.toLowerCase() ?? '';
+    return name.contains('hold') || name.contains('plank') || name.contains('hang') ||
+           name.contains('isometric') || name.contains('static') || name.contains('wall sit') ||
+           cat == 'isometric' || cat == 'static' || cat == 'stretching';
+  }
+
+  bool get _isStrength => !_isCardio && !_isTimed;
 
   String get _cardioType {
     final eq = widget.equipmentValue?.toLowerCase() ?? '';
@@ -193,6 +223,10 @@ class _StapleChoiceSheetState extends ConsumerState<StapleChoiceSheet> {
       gymProfileId: _selectedProfileId,
       swapExerciseId: swapExerciseId,
       cardioParams: _buildCardioParams(),
+      userSets: _isStrength && _showStrengthParams ? int.tryParse(_setsController.text) : null,
+      userReps: _isStrength && _showStrengthParams ? _repsController.text : null,
+      userRestSeconds: _isStrength && _showStrengthParams ? int.tryParse(_restController.text) : null,
+      targetDays: _showDayPicker && _selectedDays.isNotEmpty ? (_selectedDays.toList()..sort()) : null,
     );
   }
 
@@ -282,6 +316,16 @@ class _StapleChoiceSheetState extends ConsumerState<StapleChoiceSheet> {
               _buildCardioSection(textPrimary, textMuted, cardColor, cardBorder),
               const SizedBox(height: 16),
             ],
+
+            // Strength/Timed settings (non-cardio)
+            if (_isStrength || _isTimed) ...[
+              _buildStrengthSection(textPrimary, textMuted, cardColor, cardBorder),
+              const SizedBox(height: 16),
+            ],
+
+            // Day-of-week targeting
+            _buildDayPickerSection(textPrimary, textMuted, cardColor, cardBorder),
+            const SizedBox(height: 16),
 
             // Title
             Text(
@@ -644,6 +688,269 @@ class _StapleChoiceSheetState extends ConsumerState<StapleChoiceSheet> {
                     );
                   }).toList(),
                 ),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStrengthSection(
+    Color textPrimary,
+    Color textMuted,
+    Color cardColor,
+    Color cardBorder,
+  ) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: GestureDetector(
+        onTap: () {
+          HapticService.light();
+          setState(() => _showStrengthParams = !_showStrengthParams);
+        },
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: cardColor,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: cardBorder),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(Icons.tune, color: AppColors.cyan, size: 18),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Customize (optional)',
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                        color: textPrimary,
+                      ),
+                    ),
+                  ),
+                  Icon(
+                    _showStrengthParams ? Icons.expand_less : Icons.expand_more,
+                    color: textMuted,
+                    size: 20,
+                  ),
+                ],
+              ),
+              if (_showStrengthParams) ...[
+                const SizedBox(height: 12),
+                _buildCardioField(
+                  label: 'Sets',
+                  controller: _setsController,
+                  suffix: '',
+                  textPrimary: textPrimary,
+                  textMuted: textMuted,
+                ),
+                const SizedBox(height: 8),
+                if (_isStrength)
+                  _buildCardioField(
+                    label: 'Reps',
+                    controller: _repsController,
+                    suffix: '',
+                    textPrimary: textPrimary,
+                    textMuted: textMuted,
+                  ),
+                const SizedBox(height: 8),
+                _buildCardioField(
+                  label: 'Rest',
+                  controller: _restController,
+                  suffix: 'sec',
+                  textPrimary: textPrimary,
+                  textMuted: textMuted,
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDayPickerSection(
+    Color textPrimary,
+    Color textMuted,
+    Color cardColor,
+    Color cardBorder,
+  ) {
+    // Get user's scheduled workout days (0=Mon, 6=Sun)
+    final userAsync = ref.watch(currentUserProvider);
+    final workoutDays = userAsync.valueOrNull?.workoutDays ?? [];
+    final workoutDaySet = workoutDays.toSet();
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: GestureDetector(
+        onTap: () {
+          HapticService.light();
+          setState(() => _showDayPicker = !_showDayPicker);
+        },
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: cardColor,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: cardBorder),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(Icons.calendar_today, color: AppColors.cyan, size: 18),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Specific days (optional)',
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w600,
+                            color: textPrimary,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          _showDayPicker && _selectedDays.isNotEmpty
+                              ? _selectedDays.toList()
+                                  .map((d) => _dayLabels[d])
+                                  .join(', ')
+                              : 'Every workout day',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: textMuted,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Icon(
+                    _showDayPicker ? Icons.expand_less : Icons.expand_more,
+                    color: textMuted,
+                    size: 20,
+                  ),
+                ],
+              ),
+              if (_showDayPicker) ...[
+                const SizedBox(height: 12),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: List.generate(7, (i) {
+                    final isSelected = _selectedDays.contains(i);
+                    final isWorkoutDay = workoutDaySet.contains(i);
+                    return GestureDetector(
+                      onTap: () {
+                        HapticService.light();
+                        setState(() {
+                          if (isSelected) {
+                            _selectedDays.remove(i);
+                          } else {
+                            _selectedDays.add(i);
+                          }
+                        });
+                      },
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Container(
+                            width: 40,
+                            height: 40,
+                            decoration: BoxDecoration(
+                              color: isSelected
+                                  ? AppColors.cyan
+                                  : Colors.transparent,
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                color: isSelected
+                                    ? AppColors.cyan
+                                    : isWorkoutDay
+                                        ? AppColors.cyan.withValues(alpha: 0.4)
+                                        : textMuted.withValues(alpha: 0.3),
+                                width: isWorkoutDay && !isSelected ? 1.5 : 1.0,
+                              ),
+                            ),
+                            alignment: Alignment.center,
+                            child: Text(
+                              _dayLabels[i].substring(0, 1),
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: isSelected
+                                    ? FontWeight.w700
+                                    : FontWeight.w400,
+                                color: isSelected ? Colors.white : textMuted,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          // Workout day indicator dot
+                          Container(
+                            width: 4,
+                            height: 4,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: isWorkoutDay
+                                  ? AppColors.cyan.withValues(alpha: 0.6)
+                                  : Colors.transparent,
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  }),
+                ),
+                if (workoutDaySet.isNotEmpty) ...[
+                  const SizedBox(height: 6),
+                  Text(
+                    'Dots = your workout days',
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: textMuted.withValues(alpha: 0.6),
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ],
+                if (_selectedDays.isNotEmpty) ...[
+                  const SizedBox(height: 6),
+                  // Show info if user selected a non-workout day
+                  if (_selectedDays.any((d) => !workoutDaySet.contains(d))) ...[
+                    Text(
+                      'Rest-day selections will create a light staple workout',
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: AppColors.orange.withValues(alpha: 0.8),
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 4),
+                  ],
+                  GestureDetector(
+                    onTap: () {
+                      HapticService.light();
+                      setState(() => _selectedDays.clear());
+                    },
+                    child: Align(
+                      alignment: Alignment.centerRight,
+                      child: Text(
+                        'Clear (all days)',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: AppColors.cyan,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ],
             ],
           ),

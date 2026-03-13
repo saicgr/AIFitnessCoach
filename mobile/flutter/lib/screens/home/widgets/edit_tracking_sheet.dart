@@ -14,6 +14,10 @@ class TrackingPillsState {
   final bool showCalories;
   final bool showWater;
   final bool showBurned;
+  final bool showSteps;
+  final bool showSleep;
+  final bool showStreak;
+  final bool showHabits;
   final bool isLoaded;
 
   const TrackingPillsState({
@@ -21,6 +25,10 @@ class TrackingPillsState {
     this.showCalories = true,
     this.showWater = true,
     this.showBurned = true,
+    this.showSteps = false,
+    this.showSleep = false,
+    this.showStreak = false,
+    this.showHabits = false,
     this.isLoaded = false,
   });
 
@@ -29,6 +37,10 @@ class TrackingPillsState {
     bool? showCalories,
     bool? showWater,
     bool? showBurned,
+    bool? showSteps,
+    bool? showSleep,
+    bool? showStreak,
+    bool? showHabits,
     bool? isLoaded,
   }) {
     return TrackingPillsState(
@@ -36,6 +48,10 @@ class TrackingPillsState {
       showCalories: showCalories ?? this.showCalories,
       showWater: showWater ?? this.showWater,
       showBurned: showBurned ?? this.showBurned,
+      showSteps: showSteps ?? this.showSteps,
+      showSleep: showSleep ?? this.showSleep,
+      showStreak: showStreak ?? this.showStreak,
+      showHabits: showHabits ?? this.showHabits,
       isLoaded: isLoaded ?? this.isLoaded,
     );
   }
@@ -44,7 +60,11 @@ class TrackingPillsState {
       (showGoals ? 1 : 0) +
       (showCalories ? 1 : 0) +
       (showWater ? 1 : 0) +
-      (showBurned ? 1 : 0);
+      (showBurned ? 1 : 0) +
+      (showSteps ? 1 : 0) +
+      (showSleep ? 1 : 0) +
+      (showStreak ? 1 : 0) +
+      (showHabits ? 1 : 0);
 }
 
 class TrackingPillsNotifier extends StateNotifier<TrackingPillsState> {
@@ -61,6 +81,10 @@ class TrackingPillsNotifier extends StateNotifier<TrackingPillsState> {
       showCalories: prefs.getBool('${_prefix}calories') ?? true,
       showWater: prefs.getBool('${_prefix}water') ?? true,
       showBurned: prefs.getBool('${_prefix}burned') ?? true,
+      showSteps: prefs.getBool('${_prefix}steps') ?? false,
+      showSleep: prefs.getBool('${_prefix}sleep') ?? false,
+      showStreak: prefs.getBool('${_prefix}streak') ?? false,
+      showHabits: prefs.getBool('${_prefix}habits') ?? false,
       isLoaded: true,
     );
   }
@@ -81,15 +105,26 @@ class TrackingPillsNotifier extends StateNotifier<TrackingPillsState> {
       case 'burned':
         state = state.copyWith(showBurned: value);
         break;
+      case 'steps':
+        state = state.copyWith(showSteps: value);
+        break;
+      case 'sleep':
+        state = state.copyWith(showSleep: value);
+        break;
+      case 'streak':
+        state = state.copyWith(showStreak: value);
+        break;
+      case 'habits':
+        state = state.copyWith(showHabits: value);
+        break;
     }
   }
 
   Future<void> resetToDefaults() async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.remove('${_prefix}goals');
-    await prefs.remove('${_prefix}calories');
-    await prefs.remove('${_prefix}water');
-    await prefs.remove('${_prefix}burned');
+    for (final key in ['goals', 'calories', 'water', 'burned', 'steps', 'sleep', 'streak', 'habits']) {
+      await prefs.remove('$_prefix$key');
+    }
     state = const TrackingPillsState(isLoaded: true);
   }
 }
@@ -146,6 +181,38 @@ class EditTrackingSheet extends ConsumerWidget {
         icon: Icons.local_fire_department,
         color: const Color(0xFFFF6B35),
         enabled: pillsState.showBurned,
+      ),
+      _PillOption(
+        key: 'steps',
+        title: 'Steps',
+        subtitle: 'Daily step count from health devices',
+        icon: Icons.directions_walk,
+        color: const Color(0xFF8B5CF6),
+        enabled: pillsState.showSteps,
+      ),
+      _PillOption(
+        key: 'sleep',
+        title: 'Sleep',
+        subtitle: 'Last night\'s sleep duration & quality',
+        icon: Icons.bedtime_outlined,
+        color: const Color(0xFF6366F1),
+        enabled: pillsState.showSleep,
+      ),
+      _PillOption(
+        key: 'streak',
+        title: 'Workout Streak',
+        subtitle: 'Consecutive workout days',
+        icon: Icons.local_fire_department_outlined,
+        color: const Color(0xFFF59E0B),
+        enabled: pillsState.showStreak,
+      ),
+      _PillOption(
+        key: 'habits',
+        title: 'Habits',
+        subtitle: 'Daily habit completion progress',
+        icon: Icons.check_circle_outline,
+        color: const Color(0xFF10B981),
+        enabled: pillsState.showHabits,
       ),
     ];
 

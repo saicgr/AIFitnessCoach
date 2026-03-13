@@ -51,6 +51,7 @@ class NutritionGoalsCard extends ConsumerWidget {
     final dynamicTargets = prefsState.dynamicTargets;
     final isTrainingDay = dynamicTargets?.isTrainingDay ?? false;
     final nutritionGoal = prefsState.preferences?.nutritionGoalEnum;
+    final prefs = prefsState.preferences;
 
     // Use dynamic targets if available, otherwise fall back to base targets
     final effectiveCalories = (dynamicTargets?.targetCalories ?? targets?.dailyCalorieTarget ?? 2000).toDouble();
@@ -229,6 +230,40 @@ class NutritionGoalsCard extends ConsumerWidget {
             ],
           ),
 
+          // Goal weight / target date / weekly rate (loss/gain goals only)
+          if (prefs != null && (prefs.goalWeightKg != null || prefs.goalDate != null ||
+              (prefs.rateOfChange != null &&
+               (prefs.primaryGoalEnum == NutritionGoal.loseFat ||
+                prefs.primaryGoalEnum == NutritionGoal.buildMuscle)))) ...[
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 12,
+              runSpacing: 4,
+              children: [
+                if (prefs.goalWeightKg != null)
+                  _GoalChip(
+                    icon: Icons.my_location_outlined,
+                    label: '${prefs.goalWeightKg!.toStringAsFixed(1)} kg goal',
+                    color: teal,
+                  ),
+                if (prefs.goalDate != null)
+                  _GoalChip(
+                    icon: Icons.calendar_today_outlined,
+                    label: _formatGoalDate(prefs.goalDate!, prefs.weeksToGoal),
+                    color: teal,
+                  ),
+                if (prefs.rateOfChange != null &&
+                    (prefs.primaryGoalEnum == NutritionGoal.loseFat ||
+                     prefs.primaryGoalEnum == NutritionGoal.buildMuscle))
+                  _GoalChip(
+                    icon: Icons.trending_down_outlined,
+                    label: _formatWeeklyRate(prefs.rateOfChange!),
+                    color: teal,
+                  ),
+              ],
+            ),
+          ],
+
           // Bottom info line: goal badge + calories burned + adjustment reason
           if (showBottomRow) ...[
             const SizedBox(height: 8),
@@ -320,6 +355,31 @@ class NutritionGoalsCard extends ConsumerWidget {
         ),
       ),
     );
+  }
+
+  static const _monthNames = [
+    '', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+  ];
+
+  String _formatGoalDate(DateTime date, int? weeksToGoal) {
+    final monthName = _monthNames[date.month];
+    final base = '$monthName ${date.year}';
+    if (weeksToGoal != null && weeksToGoal > 0) return '$base · $weeksToGoal wks';
+    return base;
+  }
+
+  String _formatWeeklyRate(String rateOfChange) {
+    switch (rateOfChange) {
+      case 'slow':
+        return '0.25 kg / wk';
+      case 'moderate':
+        return '0.5 kg / wk';
+      case 'aggressive':
+        return '0.75 kg / wk';
+      default:
+        return rateOfChange;
+    }
   }
 
   String _getGoalDisplayName(NutritionGoal goal) {
@@ -450,6 +510,38 @@ class _MacroProgressRing extends StatelessWidget {
           style: TextStyle(
             fontSize: 9,
             color: textMuted.withValues(alpha: 0.7),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// Small pill chip for displaying goal metadata (weight, date, rate)
+class _GoalChip extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final Color color;
+
+  const _GoalChip({
+    required this.icon,
+    required this.label,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, size: 12, color: color),
+        const SizedBox(width: 3),
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 11,
+            fontWeight: FontWeight.w500,
+            color: color,
           ),
         ),
       ],

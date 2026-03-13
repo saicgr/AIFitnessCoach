@@ -5,6 +5,7 @@ import 'package:flutter/rendering.dart';
 import 'package:image_cropper/image_cropper.dart';
 import 'package:path_provider/path_provider.dart';
 import '../../core/constants/app_colors.dart';
+import '../../widgets/glass_back_button.dart';
 
 /// Photo editor screen with cropping and FitWiz logo overlay
 class PhotoEditorScreen extends StatefulWidget {
@@ -160,10 +161,8 @@ class _PhotoEditorScreenState extends State<PhotoEditorScreen> {
       appBar: AppBar(
         backgroundColor: AppColors.nearBlack,
         title: Text('Edit ${widget.viewTypeName} Photo'),
-        leading: IconButton(
-          icon: const Icon(Icons.close),
-          onPressed: () => Navigator.pop(context),
-        ),
+        automaticallyImplyLeading: false,
+        leading: const GlassBackButton(icon: Icons.close),
         actions: [
           // Crop button
           IconButton(

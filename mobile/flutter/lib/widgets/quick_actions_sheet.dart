@@ -46,7 +46,8 @@ class _QuickActionsSheet extends ConsumerStatefulWidget {
 const _categories = <String, List<String>>{
   'Track': ['weight', 'food', 'water', 'photo', 'mood', 'measure'],
   'Workout': ['quick_workout', 'workout', 'steps', 'library'],
-  'Plan & Review': ['schedule', 'habits', 'fasting', 'history', 'progress', 'stats', 'summaries', 'achievements'],
+  // COMING SOON: 'fasting' removed — re-add when fasting feature launches
+  'Plan & Review': ['schedule', 'habits', 'history', 'progress', 'stats', 'summaries', 'achievements'],
   'Tools': ['chat', 'hydration', 'settings'],
 };
 

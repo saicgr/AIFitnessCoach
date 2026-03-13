@@ -4,6 +4,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:gal/gal.dart';
+import '../../../widgets/glass_back_button.dart';
 
 /// Full-screen image viewer with pinch-to-zoom and optional Hero animation.
 class FullscreenImageViewer extends StatelessWidget {
@@ -27,10 +28,8 @@ class FullscreenImageViewer extends StatelessWidget {
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.close, color: Colors.white),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
+        automaticallyImplyLeading: false,
+        leading: const GlassBackButton(icon: Icons.close),
       ),
       extendBodyBehindAppBar: true,
       body: Center(

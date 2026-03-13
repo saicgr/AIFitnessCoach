@@ -18,6 +18,11 @@ NutritionPreferences _$NutritionPreferencesFromJson(
       const ['maintain'],
   nutritionGoal: json['nutrition_goal'] as String? ?? 'maintain',
   rateOfChange: json['rate_of_change'] as String?,
+  goalWeightKg: (json['goal_weight_kg'] as num?)?.toDouble(),
+  goalDate: json['goal_date'] == null
+      ? null
+      : DateTime.parse(json['goal_date'] as String),
+  weeksToGoal: (json['weeks_to_goal'] as num?)?.toInt(),
   calculatedBmr: (json['calculated_bmr'] as num?)?.toInt(),
   calculatedTdee: (json['calculated_tdee'] as num?)?.toInt(),
   targetCalories: (json['target_calories'] as num?)?.toInt(),
@@ -97,6 +102,9 @@ Map<String, dynamic> _$NutritionPreferencesToJson(
   'nutrition_goals': instance.nutritionGoals,
   'nutrition_goal': instance.nutritionGoal,
   'rate_of_change': instance.rateOfChange,
+  'goal_weight_kg': instance.goalWeightKg,
+  'goal_date': instance.goalDate?.toIso8601String(),
+  'weeks_to_goal': instance.weeksToGoal,
   'calculated_bmr': instance.calculatedBmr,
   'calculated_tdee': instance.calculatedTdee,
   'target_calories': instance.targetCalories,

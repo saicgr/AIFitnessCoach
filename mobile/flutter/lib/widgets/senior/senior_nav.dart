@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants/app_colors.dart';
+import '../glass_back_button.dart';
 import '../floating_chat/floating_chat_overlay.dart';
 
 /// Simplified bottom navigation for Senior Mode
@@ -284,13 +285,9 @@ class SeniorPage extends StatelessWidget {
         elevation: 0,
         centerTitle: true,
         toolbarHeight: 72,
-        leading: IconButton(
-          onPressed: onBack ?? () => Navigator.of(context).pop(),
-          icon: Icon(
-            Icons.arrow_back_rounded,
-            size: 32,
-            color: isDark ? Colors.white : const Color(0xFF1A1A1A),
-          ),
+        automaticallyImplyLeading: false,
+        leading: GlassBackButton(
+          onTap: onBack ?? () => Navigator.of(context).pop(),
         ),
         title: Text(
           title,

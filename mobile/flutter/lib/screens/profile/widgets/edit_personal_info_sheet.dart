@@ -9,6 +9,7 @@ import '../../../widgets/app_snackbar.dart';
 import '../../../widgets/glass_sheet.dart';
 import '../../../data/repositories/auth_repository.dart';
 import '../../../data/services/api_client.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 /// Bottom sheet for editing personal information.
 class EditPersonalInfoSheet extends ConsumerStatefulWidget {
@@ -22,6 +23,8 @@ class _EditPersonalInfoSheetState extends ConsumerState<EditPersonalInfoSheet> {
   final _formKey = GlobalKey<FormState>();
   late TextEditingController _nameController;
   late TextEditingController _ageController;
+  late TextEditingController _emailController;
+  String? _email;
   String _selectedGender = 'male';
   String _selectedActivityLevel = 'moderately_active';
   bool _isSaving = false;
@@ -53,6 +56,7 @@ class _EditPersonalInfoSheetState extends ConsumerState<EditPersonalInfoSheet> {
     super.initState();
     _nameController = TextEditingController();
     _ageController = TextEditingController();
+    _emailController = TextEditingController();
     _refreshAndLoadProfile();
   }
 
@@ -65,6 +69,7 @@ class _EditPersonalInfoSheetState extends ConsumerState<EditPersonalInfoSheet> {
   void dispose() {
     _nameController.dispose();
     _ageController.dispose();
+    _emailController.dispose();
     super.dispose();
   }
 
@@ -82,6 +87,8 @@ class _EditPersonalInfoSheetState extends ConsumerState<EditPersonalInfoSheet> {
         _weightKg = user.weightKg;
         _targetWeightKg = user.targetWeightKg;
         _currentPhotoUrl = user.photoUrl;
+        _email = user.email;
+        _emailController.text = user.email ?? '';
         _isLoading = false;
       });
     } else {
@@ -262,12 +269,35 @@ class _EditPersonalInfoSheetState extends ConsumerState<EditPersonalInfoSheet> {
         data: data,
       );
 
+      // If email changed, update via Supabase Auth (sends confirmation link)
+      bool emailChanged = false;
+      final newEmail = _emailController.text.trim();
+      if (newEmail.isNotEmpty && newEmail != _email) {
+        try {
+          await Supabase.instance.client.auth.updateUser(
+            UserAttributes(email: newEmail),
+          );
+          emailChanged = true;
+          debugPrint('✅ [EditProfile] Email update requested, confirmation link sent');
+        } catch (e) {
+          debugPrint('❌ [EditProfile] Email update failed: $e');
+          if (mounted) {
+            AppSnackBar.error(context, 'Email update failed: $e');
+          }
+        }
+      }
+
       await ref.read(authStateProvider.notifier).refreshUser();
       debugPrint('✅ [EditProfile] Profile saved and user refreshed');
 
       if (mounted) {
         // Show snackbar BEFORE popping so it attaches to a valid scaffold
-        AppSnackBar.success(context, 'Profile updated successfully');
+        AppSnackBar.success(
+          context,
+          emailChanged
+              ? 'Profile updated. Check your new email for a confirmation link.'
+              : 'Profile updated successfully',
+        );
         Navigator.pop(context, true);
       }
     } catch (e) {
@@ -381,6 +411,8 @@ class _EditPersonalInfoSheetState extends ConsumerState<EditPersonalInfoSheet> {
             children: [
               _buildPhotoSection(isDark, elevatedColor, cardBorder, textMuted, cyan),
               const SizedBox(height: 20),
+              _buildEmailField(isDark, elevatedColor, cardBorder, textMuted),
+              const SizedBox(height: 14),
               _buildNameAgeRow(isDark, elevatedColor, cardBorder, textMuted),
               const SizedBox(height: 14),
               _buildGenderSelector(elevatedColor, cardBorder, textSecondary, cyan, textMuted),
@@ -502,6 +534,30 @@ class _EditPersonalInfoSheetState extends ConsumerState<EditPersonalInfoSheet> {
             'Tap to change photo',
             style: TextStyle(fontSize: 12, color: textMuted),
           ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildEmailField(bool isDark, Color elevatedColor, Color cardBorder, Color textMuted) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildSectionTitle('EMAIL', textMuted),
+        const SizedBox(height: 6),
+        _buildTextField(
+          controller: _emailController,
+          hint: 'your@email.com',
+          isDark: isDark,
+          elevatedColor: elevatedColor,
+          cardBorder: cardBorder,
+          keyboardType: TextInputType.emailAddress,
+          validator: (value) {
+            if (value != null && value.trim().isNotEmpty && !value.contains('@')) {
+              return 'Enter a valid email';
+            }
+            return null;
+          },
         ),
       ],
     );

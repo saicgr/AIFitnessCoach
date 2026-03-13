@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../data/models/coach_persona.dart';
 import '../../../widgets/coach_avatar.dart';
@@ -172,6 +173,11 @@ class CoachProfileCard extends StatelessWidget {
   }
 
   Widget _buildSampleMessage(bool isDark, Color textPrimary, Color textSecondary) {
+    final conversation = coach.sampleConversation;
+    // Base delay for stagger — each message appears 600ms apart
+    const baseDelay = 400;
+    const stagger = 600;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
@@ -185,7 +191,7 @@ class CoachProfileCard extends StatelessWidget {
             ),
             const SizedBox(width: 4),
             Text(
-              'How they talk',
+              'Sample conversation',
               style: TextStyle(
                 fontSize: 10,
                 fontWeight: FontWeight.w600,
@@ -194,31 +200,100 @@ class CoachProfileCard extends StatelessWidget {
             ),
           ],
         ),
-        const SizedBox(height: 4),
-        Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            color: isDark
-                ? AppColors.glassSurface
-                : AppColorsLight.glassSurface,
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(
-              color: coach.primaryColor.withValues(alpha: 0.3),
+        const SizedBox(height: 6),
+        ...conversation.asMap().entries.map((entry) {
+          final index = entry.key;
+          final exchange = entry.value;
+          final isUser = exchange.containsKey('user');
+          final message = isUser ? exchange['user']! : exchange['coach']!;
+          final delay = baseDelay + (index * stagger);
+
+          return Align(
+            alignment: isUser ? Alignment.centerRight : Alignment.centerLeft,
+            child: Container(
+              margin: EdgeInsets.only(
+                bottom: 4,
+                left: isUser ? 48 : 0,
+                right: isUser ? 0 : 48,
+              ),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              decoration: BoxDecoration(
+                color: isUser
+                    ? (isDark
+                        ? Colors.white.withValues(alpha: 0.12)
+                        : Colors.black.withValues(alpha: 0.06))
+                    : coach.primaryColor.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.only(
+                  topLeft: const Radius.circular(12),
+                  topRight: const Radius.circular(12),
+                  bottomLeft: Radius.circular(isUser ? 12 : 4),
+                  bottomRight: Radius.circular(isUser ? 4 : 12),
+                ),
+              ),
+              child: Text(
+                message,
+                style: TextStyle(
+                  fontSize: 11,
+                  height: 1.3,
+                  color: textPrimary,
+                  fontWeight: isUser ? FontWeight.w400 : FontWeight.w500,
+                ),
+                maxLines: 3,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ).animate()
+           .fadeIn(delay: Duration(milliseconds: delay), duration: 300.ms)
+           .slideY(begin: 0.15, duration: 300.ms, curve: Curves.easeOut);
+        }),
+        // Typing indicator — appears after all messages
+        Align(
+          alignment: Alignment.centerLeft,
+          child: Container(
+            margin: const EdgeInsets.only(right: 48),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            decoration: BoxDecoration(
+              color: coach.primaryColor.withValues(alpha: 0.12),
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(12),
+                topRight: Radius.circular(12),
+                bottomLeft: Radius.circular(4),
+                bottomRight: Radius.circular(12),
+              ),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: List.generate(3, (i) {
+                return Container(
+                  margin: const EdgeInsets.symmetric(horizontal: 2),
+                  width: 6,
+                  height: 6,
+                  decoration: BoxDecoration(
+                    color: coach.primaryColor.withValues(alpha: 0.5),
+                    shape: BoxShape.circle,
+                  ),
+                ).animate(
+                  onPlay: (c) => c.repeat(),
+                ).scaleXY(
+                  begin: 0.5,
+                  end: 1.0,
+                  delay: Duration(milliseconds: i * 200),
+                  duration: 400.ms,
+                  curve: Curves.easeInOut,
+                ).then().scaleXY(
+                  begin: 1.0,
+                  end: 0.5,
+                  duration: 400.ms,
+                  curve: Curves.easeInOut,
+                );
+              }),
             ),
           ),
-          child: Text(
-            coach.sampleMessage,
-            style: TextStyle(
-              fontSize: 12,
-              height: 1.25,
-              color: textPrimary,
-              fontStyle: FontStyle.italic,
-            ),
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-          ),
-        ),
+        ).animate()
+         .fadeIn(
+           delay: Duration(milliseconds: baseDelay + (conversation.length * stagger)),
+           duration: 300.ms,
+         ),
       ],
     );
   }

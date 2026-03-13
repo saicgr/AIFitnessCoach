@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/providers/window_mode_provider.dart';
+import '../../widgets/glass_back_button.dart';
 import 'pre_auth_quiz_screen.dart';
 import 'widgets/foldable_quiz_scaffold.dart';
 
@@ -332,42 +333,14 @@ class _WeightProjectionScreenState
     final isLosingWeight = goalWeight < currentWeight;
 
     final backButton = Padding(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.only(left: 16, top: 8),
       child: Align(
         alignment: Alignment.centerLeft,
-        child: GestureDetector(
+        child: GlassBackButton(
           onTap: () {
             HapticFeedback.lightImpact();
             context.go('/personal-info');
           },
-          child: Container(
-            width: 44,
-            height: 44,
-            decoration: BoxDecoration(
-              color: isDark
-                  ? Colors.white.withValues(alpha: 0.15)
-                  : Colors.white.withValues(alpha: 0.85),
-              shape: BoxShape.circle,
-              border: Border.all(
-                color: isDark
-                    ? Colors.white.withValues(alpha: 0.2)
-                    : Colors.black.withValues(alpha: 0.1),
-                width: 1.5,
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: isDark ? 0.15 : 0.08),
-                  blurRadius: 12,
-                  offset: const Offset(0, 4),
-                ),
-              ],
-            ),
-            child: Icon(
-              Icons.arrow_back_ios_rounded,
-              color: isDark ? Colors.white : const Color(0xFF0A0A0A),
-              size: 18,
-            ),
-          ),
         ),
       ),
     );
@@ -791,42 +764,14 @@ class _WeightProjectionScreenState
     final unit = useMetric ? 'kg' : 'lbs';
 
     final maintainBackButton = Padding(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.only(left: 16, top: 8),
       child: Align(
         alignment: Alignment.centerLeft,
-        child: GestureDetector(
+        child: GlassBackButton(
           onTap: () {
             HapticFeedback.lightImpact();
             context.go('/personal-info');
           },
-          child: Container(
-            width: 44,
-            height: 44,
-            decoration: BoxDecoration(
-              color: isDark
-                  ? Colors.white.withValues(alpha: 0.15)
-                  : Colors.white.withValues(alpha: 0.85),
-              shape: BoxShape.circle,
-              border: Border.all(
-                color: isDark
-                    ? Colors.white.withValues(alpha: 0.2)
-                    : Colors.black.withValues(alpha: 0.1),
-                width: 1.5,
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: isDark ? 0.15 : 0.08),
-                  blurRadius: 12,
-                  offset: const Offset(0, 4),
-                ),
-              ],
-            ),
-            child: Icon(
-              Icons.arrow_back_ios_rounded,
-              color: isDark ? Colors.white : const Color(0xFF0A0A0A),
-              size: 18,
-            ),
-          ),
         ),
       ),
     );

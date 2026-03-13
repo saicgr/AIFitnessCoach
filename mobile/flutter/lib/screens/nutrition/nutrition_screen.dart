@@ -31,14 +31,16 @@ import 'weekly_checkin_sheet.dart';
 import 'widgets/edit_targets_sheet.dart';
 import 'widgets/nutrition_goals_card.dart';
 import 'tabs/hydration_tab.dart';
-import 'tabs/fasting_tab.dart';
+// COMING SOON: Fasting tab — uncomment when fasting feature launches
+// import 'tabs/fasting_tab.dart';
 import '../../data/repositories/hydration_repository.dart';
 
 class NutritionScreen extends ConsumerStatefulWidget {
   /// Optional meal type to auto-open the log meal sheet (from deep link).
   final String? initialMeal;
 
-  /// Optional initial tab index (0=Daily, 1=Nutrients, 2=Water, 3=Fast).
+  /// Optional initial tab index (0=Daily, 1=Nutrients, 2=Water).
+  /// COMING SOON: Fasting will be index 3 when re-enabled.
   final int initialTab;
 
   const NutritionScreen({super.key, this.initialMeal, this.initialTab = 0});
@@ -64,7 +66,8 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 4, vsync: this, initialIndex: widget.initialTab);
+    // COMING SOON: Change back to length: 4 when fasting tab is re-enabled
+    _tabController = TabController(length: 3, vsync: this, initialIndex: widget.initialTab);
     _loadData();
     // Collapse nav bar labels on this secondary page
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -420,7 +423,8 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
                 SegmentedTabItem(label: 'Daily', icon: Icons.restaurant_menu_rounded),
                 SegmentedTabItem(label: 'Nutrients', icon: Icons.science_outlined),
                 SegmentedTabItem(label: 'Water', icon: Icons.water_drop_outlined),
-                SegmentedTabItem(label: 'Fast', icon: Icons.timer_outlined),
+                // COMING SOON: Fasting tab — uncomment when fasting feature launches
+                // SegmentedTabItem(label: 'Fast', icon: Icons.timer_outlined),
               ],
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
             ),
@@ -474,11 +478,11 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
                             isDark: isDark,
                           ),
 
-                          // Fasting Tab
-                          FastingTab(
-                            userId: _userId ?? '',
-                            isDark: isDark,
-                          ),
+                          // COMING SOON: Fasting Tab — uncomment when fasting feature launches
+                          // FastingTab(
+                          //   userId: _userId ?? '',
+                          //   isDark: isDark,
+                          // ),
                         ],
                       ),
           ),

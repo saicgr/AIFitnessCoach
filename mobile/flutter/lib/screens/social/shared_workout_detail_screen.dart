@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
+import '../../widgets/glass_back_button.dart';
 import '../../data/models/workout.dart';
 import '../../data/services/saved_workouts_service.dart';
 import '../../data/services/challenges_service.dart';
@@ -22,7 +23,7 @@ class SharedWorkoutDetailScreen extends ConsumerStatefulWidget {
   final String? posterAvatar;
   final String activityType;
   final Map<String, dynamic> activityData;
-  final SavedWorkoutsService savedWorkoutsService;
+  final SavedWorkoutsService? savedWorkoutsService;
 
   const SharedWorkoutDetailScreen({
     super.key,
@@ -32,7 +33,7 @@ class SharedWorkoutDetailScreen extends ConsumerStatefulWidget {
     this.posterAvatar,
     required this.activityType,
     required this.activityData,
-    required this.savedWorkoutsService,
+    this.savedWorkoutsService,
   });
 
   @override
@@ -80,10 +81,8 @@ class _SharedWorkoutDetailScreenState
             pinned: true,
             backgroundColor: bg,
             surfaceTintColor: Colors.transparent,
-            leading: IconButton(
-              icon: Icon(Icons.arrow_back_rounded, color: textColor),
-              onPressed: () => context.pop(),
-            ),
+            automaticallyImplyLeading: false,
+            leading: const GlassBackButton(),
             title: Text(
               'Workout Details',
               style: TextStyle(
@@ -223,8 +222,11 @@ class _SharedWorkoutDetailScreenState
                         color: cardBorder.withValues(alpha: 0.2),
                       ),
                       itemBuilder: (context, index) {
-                        final ex =
-                            _exercises[index] as Map<String, dynamic>;
+                        final rawEx = _exercises[index];
+                        if (rawEx is! Map<String, dynamic>) {
+                          return const SizedBox.shrink();
+                        }
+                        final ex = rawEx;
                         return _ExerciseTile(
                           index: index,
                           exercise: ex,
@@ -399,6 +401,9 @@ class _SharedWorkoutDetailScreenState
   }
 
   void _scheduleForLater(BuildContext context) {
+    final service = widget.savedWorkoutsService;
+    if (service == null) return;
+
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
 
@@ -409,7 +414,7 @@ class _SharedWorkoutDetailScreenState
         activityId: widget.activityId,
         currentUserId: widget.currentUserId,
         workoutName: _workoutName,
-        savedWorkoutsService: widget.savedWorkoutsService,
+        savedWorkoutsService: service,
         elevated: elevated,
       ),
     );

@@ -18,11 +18,11 @@ mixin PillSwipeNavigationMixin<T extends StatefulWidget> on State<T> {
   int get currentPillIndex;
 
   /// Routes corresponding to each pill index
+  // COMING SOON: Add '/fasting' back when fasting feature launches
   static const List<String?> pillRoutes = [
     null, // For You (Home) - no route, it's the base
     '/workouts',
     '/nutrition',
-    '/fasting',
   ];
 
   /// Wrap your body widget with this to enable swipe navigation

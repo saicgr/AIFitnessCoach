@@ -10,30 +10,22 @@ import '../constants/api_constants.dart';
 class StaplesState {
   final List<StapleExercise> staples;
   final bool isLoading;
-  final bool isRegenerating;
-  final String? regenerationMessage;
   final String? error;
 
   const StaplesState({
     this.staples = const [],
     this.isLoading = false,
-    this.isRegenerating = false,
-    this.regenerationMessage,
     this.error,
   });
 
   StaplesState copyWith({
     List<StapleExercise>? staples,
     bool? isLoading,
-    bool? isRegenerating,
-    String? regenerationMessage,
     String? error,
   }) {
     return StaplesState(
       staples: staples ?? this.staples,
       isLoading: isLoading ?? this.isLoading,
-      isRegenerating: isRegenerating ?? this.isRegenerating,
-      regenerationMessage: regenerationMessage ?? this.regenerationMessage,
       error: error,
     );
   }
@@ -114,6 +106,10 @@ class StaplesNotifier extends StateNotifier<StaplesState> {
     String? gymProfileId,
     String? swapExerciseId,
     Map<String, double>? cardioParams,
+    int? userSets,
+    String? userReps,
+    int? userRestSeconds,
+    List<int>? targetDays,
   }) async {
     try {
       final apiClient = _ref.read(apiClientProvider);
@@ -154,6 +150,10 @@ class StaplesNotifier extends StateNotifier<StaplesState> {
         gymProfileId: gymProfileId,
         section: section,
         cardioParams: cardioParams,
+        userSets: userSets,
+        userReps: userReps,
+        userRestSeconds: userRestSeconds,
+        targetDays: targetDays,
       );
 
       state = state.copyWith(
@@ -174,7 +174,6 @@ class StaplesNotifier extends StateNotifier<StaplesState> {
       return true;
     } catch (e) {
       debugPrint('Error adding staple: $e');
-      state = state.copyWith(isRegenerating: false, regenerationMessage: null);
       return false;
     }
   }
@@ -210,57 +209,6 @@ class StaplesNotifier extends StateNotifier<StaplesState> {
     } catch (e) {
       debugPrint('❌ Failed to inject exercise into workout: $e');
       // Don't fail the staple addition if injection fails
-    }
-  }
-
-  /// Regenerate today's workout to include the new staple exercise
-  Future<void> _regenerateTodayWorkout(String userId) async {
-    try {
-      state = state.copyWith(
-        isRegenerating: true,
-        regenerationMessage: 'Updating today\'s workout...',
-      );
-
-      // Get today's/next workout
-      final todayWorkoutAsync = _ref.read(todayWorkoutProvider);
-      final response = todayWorkoutAsync.valueOrNull;
-
-      // Get the workout to regenerate (today's or next upcoming)
-      final workoutToRegenerate = response?.todayWorkout ?? response?.nextWorkout;
-
-      if (workoutToRegenerate == null) {
-        debugPrint('⭐ No workout today - staple will apply to next generation');
-        state = state.copyWith(isRegenerating: false, regenerationMessage: null);
-        return;
-      }
-
-      final workoutRepo = _ref.read(workoutRepositoryProvider);
-
-      // Regenerate single workout using streaming API
-      await for (final progress in workoutRepo.regenerateWorkoutStreaming(
-        workoutId: workoutToRegenerate.id,
-        userId: userId,
-      )) {
-        debugPrint('🏋️ Staple regeneration: ${progress.message}');
-        state = state.copyWith(regenerationMessage: progress.message);
-
-        if (progress.isCompleted || progress.hasError) {
-          break;
-        }
-      }
-
-      debugPrint('✅ Workout regenerated with new staple');
-      state = state.copyWith(
-        isRegenerating: false,
-        regenerationMessage: null,
-      );
-    } catch (e) {
-      debugPrint('❌ Failed to regenerate workout: $e');
-      state = state.copyWith(
-        isRegenerating: false,
-        regenerationMessage: null,
-      );
-      // Don't fail the staple addition if regeneration fails
     }
   }
 

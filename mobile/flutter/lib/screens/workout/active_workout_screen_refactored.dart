@@ -381,7 +381,9 @@ class _ActiveWorkoutScreenState
     _fetchExerciseHistory();
 
     // Fetch smart weight for first exercise based on history
-    _fetchSmartWeightForExercise(_exercises.first);
+    if (_exercises.isNotEmpty) {
+      _fetchSmartWeightForExercise(_exercises.first);
+    }
 
     // Initialize time tracking
     _currentExerciseStartTime = DateTime.now();

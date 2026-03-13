@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../../core/constants/app_colors.dart';
+import '../../widgets/glass_back_button.dart';
 import '../../data/models/injury.dart';
 import '../../data/services/api_client.dart';
 import 'injuries_list_screen.dart';
@@ -157,10 +158,8 @@ class _ReportInjuryScreenState extends ConsumerState<ReportInjuryScreen> {
       appBar: AppBar(
         backgroundColor: backgroundColor,
         elevation: 0,
-        leading: IconButton(
-          icon: Icon(Icons.close, color: textPrimary),
-          onPressed: () => context.pop(),
-        ),
+        automaticallyImplyLeading: false,
+        leading: const GlassBackButton(icon: Icons.close),
         title: Text(
           'Report Injury',
           style: TextStyle(

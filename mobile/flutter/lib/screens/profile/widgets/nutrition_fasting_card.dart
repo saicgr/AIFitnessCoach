@@ -116,6 +116,44 @@ class NutritionFastingCard extends ConsumerWidget {
             textPrimary: textPrimary,
             textMuted: textMuted,
           ),
+          if (prefs?.goalWeightKg != null) ...[
+            Divider(height: 1, color: cardBorder, indent: 48, endIndent: 16),
+            _buildInfoRow(
+              icon: Icons.my_location_outlined,
+              iconColor: AppColors.green,
+              label: 'Goal Weight',
+              value: '${prefs!.goalWeightKg!.toStringAsFixed(1)} kg',
+              isDark: isDark,
+              textPrimary: textPrimary,
+              textMuted: textMuted,
+            ),
+          ],
+          if (prefs?.goalDate != null) ...[
+            Divider(height: 1, color: cardBorder, indent: 48, endIndent: 16),
+            _buildInfoRow(
+              icon: Icons.calendar_today_outlined,
+              iconColor: AppColors.purple,
+              label: 'Target Date',
+              value: _formatGoalDate(prefs!.goalDate!, prefs.weeksToGoal),
+              isDark: isDark,
+              textPrimary: textPrimary,
+              textMuted: textMuted,
+            ),
+          ],
+          if (prefs?.rateOfChange != null &&
+              (prefs!.primaryGoalEnum == NutritionGoal.loseFat ||
+               prefs.primaryGoalEnum == NutritionGoal.buildMuscle)) ...[
+            Divider(height: 1, color: cardBorder, indent: 48, endIndent: 16),
+            _buildInfoRow(
+              icon: Icons.trending_down_outlined,
+              iconColor: AppColors.orange,
+              label: 'Weekly Rate',
+              value: _formatWeeklyRate(prefs!.rateOfChange!),
+              isDark: isDark,
+              textPrimary: textPrimary,
+              textMuted: textMuted,
+            ),
+          ],
           Divider(height: 1, color: cardBorder, indent: 48, endIndent: 16),
 
           // Macros row
@@ -214,6 +252,31 @@ class NutritionFastingCard extends ConsumerWidget {
         ],
       ),
     );
+  }
+
+  static const _monthNames = [
+    '', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+  ];
+
+  String _formatGoalDate(DateTime date, int? weeksToGoal) {
+    final monthName = _monthNames[date.month];
+    final base = '$monthName ${date.year}';
+    if (weeksToGoal != null && weeksToGoal > 0) return '$base · $weeksToGoal wks';
+    return base;
+  }
+
+  String _formatWeeklyRate(String rateOfChange) {
+    switch (rateOfChange) {
+      case 'slow':
+        return '0.25 kg / week';
+      case 'moderate':
+        return '0.5 kg / week';
+      case 'aggressive':
+        return '0.75 kg / week';
+      default:
+        return rateOfChange;
+    }
   }
 
   String _getDietTypeDisplay(String? dietType) {

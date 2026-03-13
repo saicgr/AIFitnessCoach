@@ -1,7 +1,9 @@
 import 'dart:ui';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -17,7 +19,8 @@ import 'data/services/notification_service.dart';
 import 'data/services/widget_action_headless_service.dart';
 import 'data/services/background_sync_service.dart';
 import 'data/local/database_provider.dart';
-import 'package:flutter_gemma/flutter_gemma.dart';
+// FlutterGemma import removed -- initialization deferred to OnDeviceGemmaService.ensureInitialized()
+// to avoid ANR from heavy native ML runtime setup during app startup.
 import 'core/services/analytics_service.dart';
 import 'data/services/analytics_service.dart' as prod_analytics;
 
@@ -85,13 +88,29 @@ void main() async {
     ),
   );
 
-  // --- Non-critical initializations run in parallel AFTER runApp ---
-  // Performance fix H1: these no longer block first frame rendering.
-  // Each has .catchError() so one failure doesn't affect the others.
+  // --- Non-critical initializations deferred AFTER first frame renders ---
+  // ANR fix: Use addPostFrameCallback to ensure these heavy platform-channel
+  // operations don't block the main thread before the first frame.
+  // The old approach used `await Future.wait(...)` which, while async, still
+  // serialized platform channel calls on Android's main thread and prevented
+  // the UI from rendering smoothly.
+  SchedulerBinding.instance.addPostFrameCallback((_) {
+    _initNonCriticalServices(container, notificationService);
+  });
+}
+
+/// Initialize non-critical services after the first frame has rendered.
+///
+/// ANR fix: These are split into two phases to avoid overwhelming the main
+/// thread with platform channel calls. Phase 1 contains lightweight services,
+/// Phase 2 contains heavy platform SDK initializations that are further
+/// staggered to prevent main-thread contention.
+Future<void> _initNonCriticalServices(
+  ProviderContainer container,
+  NotificationService notificationService,
+) async {
+  // Phase 1: Lightweight Dart-only initializations (minimal platform channels)
   await Future.wait([
-    notificationService.initialize().catchError((e) {
-      debugPrint('⚠️ Notification service initialization failed: $e');
-    }),
     ImageUrlCache.initialize().catchError((e) {
       debugPrint('⚠️ ImageUrlCache initialization failed: $e');
     }),
@@ -101,16 +120,23 @@ void main() async {
     HapticService.initialize().catchError((e) {
       debugPrint('⚠️ HapticService initialization failed: $e');
     }),
-    SubscriptionNotifier.configureRevenueCat().catchError((e) {
-      debugPrint('⚠️ RevenueCat initialization failed: $e');
-    }),
-    BackgroundSyncService.initialize().catchError((e) {
-      debugPrint('⚠️ BackgroundSyncService initialization failed: $e');
-    }),
-    FlutterGemma.initialize().catchError((e) {
-      debugPrint('⚠️ FlutterGemma initialization failed: $e');
-    }),
   ]);
+
+  // Phase 2: Heavy platform SDK initializations -- staggered to avoid
+  // serializing too many platform channel calls on Android's main thread.
+  // These run sequentially so each SDK gets dedicated main-thread time
+  // without competing with the others.
+  await notificationService.initialize().catchError((e) {
+    debugPrint('⚠️ Notification service initialization failed: $e');
+  });
+
+  await SubscriptionNotifier.configureRevenueCat().catchError((e) {
+    debugPrint('⚠️ RevenueCat initialization failed: $e');
+  });
+
+  await BackgroundSyncService.initialize().catchError((e) {
+    debugPrint('⚠️ BackgroundSyncService initialization failed: $e');
+  });
 
   // Warm the Drift database (non-blocking, lazy open in background)
   try {
@@ -128,4 +154,10 @@ void main() async {
   } catch (e) {
     debugPrint('⚠️ Widget action headless service initialization failed: $e');
   }
+
+  // FlutterGemma is deferred to when user accesses on-device AI settings.
+  // It performs heavy native library loading and ML runtime setup that can
+  // take 2-5s on slower devices. Removing it from startup eliminates the
+  // single heaviest contributor to the ANR.
+  // See: services/on_device_gemma_service.dart for lazy initialization.
 }

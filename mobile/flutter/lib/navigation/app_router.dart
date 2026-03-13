@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -399,27 +400,39 @@ String? _handleAuthRedirect(
   return null;
 }
 
+/// Flag to ensure daily login XP is only processed once per app session.
+/// ANR fix: Without this, every router redirect (3-5 during startup) queued
+/// a microtask to process daily login XP, adding main-thread pressure.
+bool _dailyLoginXpProcessed = false;
+
 /// Router provider
 final routerProvider = Provider<GoRouter>((ref) {
   final authNotifier = _AuthStateNotifier(ref);
 
   final router = GoRouter(
     initialLocation: '/splash',
-    debugLogDiagnostics: true,
+    // ANR fix: GoRouter debug logging generates 50+ print() calls during
+    // startup redirect storm. Each print() is a synchronous platform channel
+    // call that blocks the main thread. Only enable in debug builds.
+    debugLogDiagnostics: kDebugMode,
     refreshListenable: authNotifier,
     redirect: (context, state) {
       final authState = ref.read(authStateProvider);
       final languageState = ref.read(languageProvider);
       final accessibilitySettings = ref.read(accessibilityProvider);
 
-      debugPrint('Router redirect - uri: ${state.uri}, matchedLocation: ${state.matchedLocation}');
+      // ANR fix: Gate verbose redirect logging behind kDebugMode
+      if (kDebugMode) {
+        debugPrint('Router redirect - uri: ${state.uri}, matchedLocation: ${state.matchedLocation}');
+      }
 
       // 1. Handle widget deep links
       final deepLink = _handleDeepLinkRedirect(state);
       if (deepLink != null) return deepLink;
 
-      // 2. Process daily login XP for authenticated users (fire-and-forget)
-      if (authState.status == AuthStatus.authenticated) {
+      // 2. Process daily login XP for authenticated users (fire-and-forget, once per session)
+      if (authState.status == AuthStatus.authenticated && !_dailyLoginXpProcessed) {
+        _dailyLoginXpProcessed = true;
         Future.microtask(() {
           ref.read(xpProvider.notifier).processDailyLogin();
         });
@@ -1042,7 +1055,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/admin-support/chat/:ticketId',
         builder: (context, state) {
-          final ticketId = state.pathParameters['ticketId']!;
+          final ticketId = state.pathParameters['ticketId'] ?? '';
           return AdminChatScreen(ticketId: ticketId);
         },
       ),
@@ -1052,7 +1065,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/workout/:id',
         builder: (context, state) {
-          final workoutId = state.pathParameters['id']!;
+          final workoutId = state.pathParameters['id'] ?? '';
           return WorkoutDetailScreen(workoutId: workoutId);
         },
       ),
@@ -1061,7 +1074,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/workout-summary/:id',
         builder: (context, state) {
-          final workoutId = state.pathParameters['id']!;
+          final workoutId = state.pathParameters['id'] ?? '';
           return WorkoutSummaryScreen(workoutId: workoutId);
         },
       ),
@@ -1192,7 +1205,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/challenge-compare',
         builder: (context, state) {
-          final challengeId = state.extra as String;
+          final challengeId = state.extra as String? ?? '';
           return ChallengeCompareScreen(challengeId: challengeId);
         },
       ),
@@ -1209,7 +1222,7 @@ final routerProvider = Provider<GoRouter>((ref) {
             posterAvatar: data['posterAvatar'] as String?,
             activityType: data['activityType'] as String? ?? 'workout_shared',
             activityData: data['activityData'] as Map<String, dynamic>? ?? {},
-            savedWorkoutsService: data['savedWorkoutsService'] as SavedWorkoutsService,
+            savedWorkoutsService: data['savedWorkoutsService'] as SavedWorkoutsService?,
           );
         },
       ),
@@ -1399,7 +1412,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/habit/:id',
         pageBuilder: (context, state) {
-          final habitId = state.pathParameters['id']!;
+          final habitId = state.pathParameters['id'] ?? '';
           return CustomTransitionPage(
             key: state.pageKey,
             child: HabitDetailScreen(habitId: habitId),
@@ -1584,7 +1597,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/support-tickets/:id',
         builder: (context, state) {
-          final ticketId = state.pathParameters['id']!;
+          final ticketId = state.pathParameters['id'] ?? '';
           return TicketDetailScreen(ticketId: ticketId);
         },
       ),
@@ -1710,7 +1723,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/skills/:chainId',
         builder: (context, state) {
-          final chainId = state.pathParameters['chainId']!;
+          final chainId = state.pathParameters['chainId'] ?? '';
           return ChainDetailScreen(chainId: chainId);
         },
       ),
@@ -1795,7 +1808,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/injuries/:id',
         builder: (context, state) => InjuryDetailScreen(
-          injuryId: state.pathParameters['id']!,
+          injuryId: state.pathParameters['id'] ?? '',
         ),
       ),
 
@@ -1959,7 +1972,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/wrapped/:periodKey',
         pageBuilder: (context, state) {
-          final periodKey = state.pathParameters['periodKey']!;
+          final periodKey = state.pathParameters['periodKey'] ?? '';
           return CustomTransitionPage(
             key: state.pageKey,
             child: WrappedViewerScreen(periodKey: periodKey),

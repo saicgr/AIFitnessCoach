@@ -195,7 +195,8 @@ const quickActionRegistry = <String, QuickAction>{
 };
 
 const defaultQuickActionOrder = [
-  'quick_workout', 'food', 'water', 'chat', 'weight', 'photo', 'fasting', 'measure', 'mood',
+  // COMING SOON: 'fasting' removed from default order — re-add when fasting feature launches
+  'quick_workout', 'food', 'water', 'chat', 'weight', 'photo', 'measure', 'mood',
   'history', 'steps', 'workout', 'programs', 'library', 'settings', 'schedule', 'habits',
   'progress', 'stats', 'achievements', 'hydration', 'summaries',
 ];

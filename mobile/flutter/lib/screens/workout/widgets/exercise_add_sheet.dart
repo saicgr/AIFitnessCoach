@@ -1,6 +1,8 @@
 import 'dart:convert';
 import 'package:drift/drift.dart' show Value;
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/providers/user_provider.dart';
@@ -8,18 +10,44 @@ import '../../../data/local/database.dart';
 import '../../../data/local/database_provider.dart';
 import '../../../data/models/workout.dart';
 import '../../../data/models/exercise.dart';
-import '../../../data/repositories/library_repository.dart';
 import '../../../data/repositories/workout_repository.dart';
 import '../../../data/repositories/exercise_preferences_repository.dart';
 import '../../../data/services/api_client.dart';
 import '../../../screens/library/providers/muscle_group_images_provider.dart';
 import '../../../services/exercise_selector.dart' as selector;
+import '../../../data/services/exercise_library_loader.dart';
 import '../../../services/offline_workout_generator.dart';
 import '../../../services/workout_templates.dart' show muscleAliases;
+import '../../../core/algorithms/exercise_search_ranker.dart';
+import '../../../core/providers/favorites_provider.dart';
 import '../../../widgets/exercise_image.dart';
 import '../../../widgets/glass_sheet.dart';
 import '../../../widgets/segmented_tab_bar.dart';
 import '../../../data/services/image_url_cache.dart';
+
+/// Top-level function for converting cached exercises in an isolate via compute().
+List<OfflineExercise> _convertCachedExercises(List<Map<String, dynamic>> rows) {
+  return rows.map((ce) {
+    List<String>? secondaryMuscles;
+    final sm = ce['secondaryMuscles'] as String?;
+    if (sm != null) {
+      try {
+        secondaryMuscles = (jsonDecode(sm) as List).cast<String>();
+      } catch (_) {}
+    }
+    return OfflineExercise(
+      id: ce['id'] as String?,
+      name: ce['name'] as String?,
+      bodyPart: ce['bodyPart'] as String?,
+      equipment: ce['equipment'] as String?,
+      targetMuscle: ce['targetMuscle'] as String?,
+      primaryMuscle: ce['primaryMuscle'] as String?,
+      secondaryMuscles: secondaryMuscles,
+      difficulty: ce['difficulty'] as String?,
+      difficultyNum: ce['difficultyNum'] as int?,
+    );
+  }).toList();
+}
 
 /// Shows exercise add sheet with Library tab first, AI Suggestions second
 Future<Workout?> showExerciseAddSheet(
@@ -81,6 +109,11 @@ class _ExerciseAddSheetState extends ConsumerState<_ExerciseAddSheet>
   String _userFitnessLevel = 'intermediate';
   List<String> _avoidedExercises = [];
   Set<String> _avoidedMuscles = {};
+
+  // Smart search ranking
+  ExerciseSearchRanker? _ranker;
+  List<RankedExercise> _rankedResults = [];
+  bool _isFuzzyResult = false;
 
   // AI Suggestions tab state
   bool _aiSuggestionsLoaded = false;
@@ -149,60 +182,31 @@ class _ExerciseAddSheetState extends ConsumerState<_ExerciseAddSheet>
 
       final db = ref.read(appDatabaseProvider);
 
-      // 1. Try local cache first
-      var cachedExercises = await db.exerciseLibraryDao.getAllCachedExercises();
+      // Ensure the bundled exercise library is seeded (2078 exercises)
+      await ExerciseLibraryLoader.seedDatabaseIfNeeded(db);
 
-      // 2. If cache is sparse, fetch from API and populate cache
-      if (cachedExercises.length < 200) {
-        try {
-          final libraryRepo = ref.read(libraryRepositoryProvider);
-          final apiExercises = await libraryRepo.searchExercises(limit: 500);
+      // Load full local cache
+      final cachedExercises = await db.exerciseLibraryDao.getAllCachedExercises();
 
-          if (apiExercises.isNotEmpty) {
-            final companions = apiExercises.map((e) => CachedExercisesCompanion(
-              id: Value(e.id),
-              name: Value(e.name),
-              bodyPart: Value(e.bodyPart),
-              equipment: Value(e.equipment),
-              targetMuscle: Value(e.targetMuscle),
-              primaryMuscle: Value(e.targetMuscle),
-              difficulty: Value(e.difficulty),
-              cachedAt: Value(DateTime.now()),
-            )).toList();
-
-            await db.exerciseLibraryDao.upsertExercises(companions);
-
-            // Re-read from cache (now populated)
-            cachedExercises = await db.exerciseLibraryDao.getAllCachedExercises();
-          }
-        } catch (e) {
-          debugPrint('⚠️ [Add] API fetch failed, using existing cache: $e');
-        }
-      }
-
-      // 3. Convert CachedExercise -> OfflineExercise
-      _allExercises = cachedExercises.map((ce) {
-        List<String>? secondaryMuscles;
-        if (ce.secondaryMuscles != null) {
-          try {
-            secondaryMuscles =
-                (jsonDecode(ce.secondaryMuscles!) as List).cast<String>();
-          } catch (_) {}
-        }
-        return OfflineExercise(
-          id: ce.id,
-          name: ce.name,
-          bodyPart: ce.bodyPart,
-          equipment: ce.equipment,
-          targetMuscle: ce.targetMuscle,
-          primaryMuscle: ce.primaryMuscle,
-          secondaryMuscles: secondaryMuscles,
-          difficulty: ce.difficulty,
-          difficultyNum: ce.difficultyNum,
-        );
+      // 3. Convert CachedExercise -> OfflineExercise (in isolate to avoid jank)
+      final rows = cachedExercises.map((ce) => <String, dynamic>{
+        'id': ce.id,
+        'name': ce.name,
+        'bodyPart': ce.bodyPart,
+        'equipment': ce.equipment,
+        'targetMuscle': ce.targetMuscle,
+        'primaryMuscle': ce.primaryMuscle,
+        'secondaryMuscles': ce.secondaryMuscles,
+        'difficulty': ce.difficulty,
+        'difficultyNum': ce.difficultyNum,
       }).toList();
+      _allExercises = await compute(_convertCachedExercises, rows);
 
-      // 4. Apply rule-based filter
+      // 4. Init search ranker with popularity data
+      _ranker = await ExerciseSearchRanker.create();
+      _ranker!.resolvePopularityForLibrary(_allExercises);
+
+      // 5. Apply rule-based filter
       _applyLibraryFilter();
 
       if (mounted) {
@@ -268,20 +272,38 @@ class _ExerciseAddSheetState extends ConsumerState<_ExerciseAddSheet>
       }
     }
 
-    // Text search filter
-    if (_librarySearchQuery.length >= 2) {
-      final query = _librarySearchQuery.toLowerCase();
-      result = result
-          .where((ex) => (ex.name ?? '').toLowerCase().contains(query))
-          .toList();
-    }
-
     // Exclude exercises already in workout
     result = result.where((ex) {
       final name = (ex.name ?? '').toLowerCase();
       return !widget.currentExerciseNames
           .any((n) => n.toLowerCase() == name);
     }).toList();
+
+    // Smart search ranking with multiplicative scoring
+    if (_librarySearchQuery.length >= 2 && _ranker != null) {
+      final query = _librarySearchQuery.toLowerCase();
+      final favorites = ref.read(favoritesProvider).favoriteNames;
+
+      // Try exact matching first
+      var matched = result
+          .where((ex) => (ex.name ?? '').toLowerCase().contains(query))
+          .toList();
+
+      if (matched.isEmpty && query.length >= 3) {
+        // Fuzzy fallback
+        matched = _ranker!.fuzzySearch(result, query);
+        _isFuzzyResult = matched.isNotEmpty;
+      } else {
+        _isFuzzyResult = false;
+      }
+
+      _rankedResults =
+          _ranker!.rank(matched, query, favoriteNames: favorites);
+      result = _rankedResults.map((r) => r.exercise).toList();
+    } else {
+      _rankedResults = [];
+      _isFuzzyResult = false;
+    }
 
     setState(() => _filteredExercises = result);
   }
@@ -459,7 +481,7 @@ class _ExerciseAddSheetState extends ConsumerState<_ExerciseAddSheet>
       children: [
         // Muscle image pill strip
         SizedBox(
-          height: 90,
+          height: 96,
           child: ListView(
             scrollDirection: Axis.horizontal,
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -541,31 +563,126 @@ class _ExerciseAddSheetState extends ConsumerState<_ExerciseAddSheet>
                         ],
                       ),
                     )
-                  : ListView.builder(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      itemCount: _filteredExercises.length,
-                      itemBuilder: (context, index) {
-                        final ex = _filteredExercises[index];
-                        final muscle =
-                            ex.targetMuscle ?? ex.bodyPart ?? '';
-                        final equip = ex.equipment ?? 'Bodyweight';
-
-                        return _ExerciseOptionCard(
-                          name: ex.name ?? 'Exercise',
-                          subtitle: muscle,
-                          badge: equip,
-                          badgeColor: AppColors.purple,
-                          onTap: () =>
-                              _addExercise(ex.name ?? 'Exercise'),
-                          textPrimary: textPrimary,
-                          textMuted: textMuted,
-                          actionIcon: Icons.add_circle,
-                          actionColor: AppColors.success,
-                        );
-                      },
-                    ),
+                  : _buildExerciseList(textPrimary, textMuted),
         ),
       ],
+    );
+  }
+
+  Widget _buildExerciseList(Color textPrimary, Color textMuted) {
+    final hasRecommendations = _rankedResults.any((r) => r.isRecommended);
+    final isSearchActive = _librarySearchQuery.length >= 2;
+
+    // No ranking or no recommendations — flat list
+    if (!isSearchActive || (!hasRecommendations && !_isFuzzyResult)) {
+      return ListView.builder(
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        itemCount: _filteredExercises.length,
+        itemBuilder: (context, index) =>
+            _buildExerciseCard(_filteredExercises[index], textPrimary, textMuted),
+      );
+    }
+
+    // Fuzzy fallback results
+    if (_isFuzzyResult) {
+      return ListView.builder(
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        itemCount: _filteredExercises.length + 1,
+        itemBuilder: (context, index) {
+          if (index == 0) {
+            return _buildSectionHeader('Similar exercises', textMuted);
+          }
+          return _buildExerciseCard(
+            _filteredExercises[index - 1], textPrimary, textMuted);
+        },
+      );
+    }
+
+    // Top Picks + More Results split
+    final topPicks = _rankedResults.where((r) => r.isRecommended).toList();
+    final moreResults = _rankedResults.where((r) => !r.isRecommended).toList();
+
+    return ListView.builder(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      itemCount: topPicks.length + moreResults.length +
+          1 + (moreResults.isNotEmpty ? 1 : 0),
+      itemBuilder: (context, index) {
+        // "Top Picks" header
+        if (index == 0) {
+          return _buildSectionHeader('Top Picks', textMuted, isTopPicks: true);
+        }
+        // Top picks cards
+        if (index <= topPicks.length) {
+          return _buildExerciseCard(
+            topPicks[index - 1].exercise, textPrimary, textMuted,
+            isRecommended: true,
+          );
+        }
+        // "More Results" header
+        final moreHeaderIndex = topPicks.length + 1;
+        if (index == moreHeaderIndex && moreResults.isNotEmpty) {
+          return _buildSectionHeader('More Results', textMuted);
+        }
+        // More results cards
+        final moreIndex = index - moreHeaderIndex - 1;
+        if (moreIndex >= 0 && moreIndex < moreResults.length) {
+          return _buildExerciseCard(
+            moreResults[moreIndex].exercise, textPrimary, textMuted);
+        }
+        return const SizedBox.shrink();
+      },
+    );
+  }
+
+  Widget _buildSectionHeader(String title, Color textMuted,
+      {bool isTopPicks = false}) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 8, bottom: 8),
+      child: Text(
+        title,
+        style: TextStyle(
+          fontSize: 13,
+          fontWeight: FontWeight.w600,
+          color: isTopPicks ? const Color(0xFFD4A017) : textMuted,
+          letterSpacing: 0.3,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildExerciseCard(
+    OfflineExercise ex,
+    Color textPrimary,
+    Color textMuted, {
+    bool isRecommended = false,
+  }) {
+    final muscle = ex.targetMuscle ?? ex.bodyPart ?? '';
+    final equip = ex.equipment ?? 'Bodyweight';
+
+    return _ExerciseOptionCard(
+      name: ex.name ?? 'Exercise',
+      subtitle: muscle,
+      badge: equip,
+      badgeColor: AppColors.purple,
+      isRecommended: isRecommended,
+      onTap: () => context.push(
+        '/exercise-detail',
+        extra: <String, dynamic>{
+          'name': ex.name,
+          'body_part': ex.bodyPart,
+          'equipment': ex.equipment,
+          'primary_muscle': ex.primaryMuscle ?? ex.targetMuscle,
+          'secondary_muscles': ex.secondaryMuscles,
+          'video_url': ex.videoUrl,
+          'image_s3_path': ex.imageS3Path,
+          'is_unilateral': ex.isUnilateral,
+        },
+      ),
+      onAdd: () => _addExercise(ex.name ?? 'Exercise'),
+      textPrimary: textPrimary,
+      textMuted: textMuted,
+      actionIcon: Icons.add_circle,
+      actionColor: AppColors.success,
     );
   }
 
@@ -738,7 +855,9 @@ class _ExerciseOptionCard extends ConsumerWidget {
   final String subtitle;
   final String badge;
   final Color badgeColor;
+  final bool isRecommended;
   final VoidCallback onTap;
+  final VoidCallback? onAdd;
   final Color textPrimary;
   final Color textMuted;
   final IconData actionIcon;
@@ -750,7 +869,9 @@ class _ExerciseOptionCard extends ConsumerWidget {
     required this.subtitle,
     required this.badge,
     required this.badgeColor,
+    this.isRecommended = false,
     required this.onTap,
+    this.onAdd,
     required this.textPrimary,
     required this.textMuted,
     this.actionIcon = Icons.add_circle,
@@ -767,6 +888,17 @@ class _ExerciseOptionCard extends ConsumerWidget {
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
+      decoration: isRecommended
+          ? BoxDecoration(
+              borderRadius: BorderRadius.circular(12),
+              border: const Border(
+                left: BorderSide(
+                  color: Color(0xFFD4A017),
+                  width: 2.5,
+                ),
+              ),
+            )
+          : null,
       child: Material(
         color: cardBackground,
         borderRadius: BorderRadius.circular(12),
@@ -838,17 +970,21 @@ class _ExerciseOptionCard extends ConsumerWidget {
                   ),
                 ),
 
-                // Add icon
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: actionColor.withOpacity(0.1),
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(
-                    actionIcon,
-                    color: actionColor,
-                    size: 20,
+                // Add button
+                GestureDetector(
+                  onTap: onAdd ?? onTap,
+                  behavior: HitTestBehavior.opaque,
+                  child: Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: actionColor.withOpacity(0.12),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      actionIcon,
+                      color: actionColor,
+                      size: 26,
+                    ),
                   ),
                 ),
               ],

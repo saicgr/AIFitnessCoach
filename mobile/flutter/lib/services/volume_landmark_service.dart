@@ -1,8 +1,14 @@
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
 import 'mrv_learning_service.dart';
+
+/// Top-level function for decoding volume landmarks JSON in an isolate.
+Map<String, dynamic> _decodeVolumeLandmarksJson(String jsonStr) {
+  return jsonDecode(jsonStr) as Map<String, dynamic>;
+}
 
 /// Volume landmarks (MEV/MAV/MRV) for a muscle at a given fitness level.
 class VolumeLandmarks {
@@ -53,7 +59,7 @@ class VolumeLandmarkService {
 
     final jsonStr =
         await rootBundle.loadString('assets/data/volume_landmarks.json');
-    final data = jsonDecode(jsonStr) as Map<String, dynamic>;
+    final data = await compute(_decodeVolumeLandmarksJson, jsonStr);
 
     final result = <String, Map<String, VolumeLandmarks>>{};
     for (final muscleEntry in data.entries) {

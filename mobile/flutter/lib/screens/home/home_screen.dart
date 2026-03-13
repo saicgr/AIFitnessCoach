@@ -79,6 +79,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   bool _isInitializing = true; // True until first workout check completes
   bool _isCheckingWorkouts = false;
   bool _isStreamingGeneration = false;
+  final Completer<void> _initCompleter = Completer<void>();
   String? _generationStartDate;
   int _generationWeeks = 0;
   int _totalExpected = 0;
@@ -115,19 +116,23 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     _carouselPageController = PageController(viewportFraction: 0.88);
     // Register for app lifecycle events
     WidgetsBinding.instance.addObserver(this);
-    WidgetsBinding.instance.addPostFrameCallback((_) {
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
       // Reset nav bar labels to expanded when on Home screen
       ref.read(navBarLabelsExpandedProvider.notifier).state = true;
-      // M4: Run initialization tasks in parallel so one doesn't block another
-      Future.wait([
+      // M4: Run critical initialization tasks first, then non-critical ones
+      await Future.wait([
         _initializeWorkouts().catchError((e) {
           debugPrint('❌ [Home] _initializeWorkouts error: $e');
         }),
-        Future(() => _checkPendingWidgetAction()).catchError((e) {
-          debugPrint('❌ [Home] _checkPendingWidgetAction error: $e');
-        }),
         Future(() => _initializeCurrentProgram()).catchError((e) {
           debugPrint('❌ [Home] _initializeCurrentProgram error: $e');
+        }),
+      ]);
+      // Non-critical tasks run after critical ones resolve
+      if (!mounted) return;
+      Future.wait([
+        Future(() => _checkPendingWidgetAction()).catchError((e) {
+          debugPrint('❌ [Home] _checkPendingWidgetAction error: $e');
         }),
         Future(() => _initializeWindowModeTracking()).catchError((e) {
           debugPrint('❌ [Home] _initializeWindowModeTracking error: $e');
@@ -208,19 +213,26 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   }
 
   /// Auto-show Health Connect popup if not connected and not recently dismissed.
-  /// Waits until workout initialization/generation finishes so it doesn't
-  /// overlay the loading screen.
+  /// Waits until the home screen has fully loaded (todayWorkoutProvider resolved)
+  /// so it doesn't overlay the loading screen.
   Future<void> _maybeShowHealthConnectPopup() async {
     if (_healthPopupShownThisSession) return;
 
-    // Wait until workout init and any streaming generation finishes
-    while (mounted && (_isInitializing || _isStreamingGeneration)) {
-      await Future.delayed(const Duration(milliseconds: 500));
-    }
+    // Wait until workout init finishes (Completer instead of polling)
+    await _initCompleter.future;
     if (!mounted) return;
 
-    // Extra small delay so the home content renders first
-    await Future.delayed(const Duration(milliseconds: 500));
+    // Wait until todayWorkoutProvider has resolved (data or error, not loading)
+    // This ensures the home screen content is visible before showing the popup
+    for (int i = 0; i < 30; i++) {
+      final state = ref.read(todayWorkoutProvider);
+      if (!state.isLoading) break;
+      await Future.delayed(const Duration(milliseconds: 500));
+      if (!mounted) return;
+    }
+
+    // Extra small delay so the home content renders after provider resolves
+    await Future.delayed(const Duration(milliseconds: 300));
     if (!mounted) return;
 
     final syncState = ref.read(healthSyncProvider);
@@ -1275,6 +1287,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     if (mounted) {
       setState(() => _isInitializing = false);
     }
+    if (!_initCompleter.isCompleted) {
+      _initCompleter.complete();
+    }
 
     // Process daily login for XP rewards (runs in background)
     _processDailyLogin();
@@ -1496,6 +1511,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       TileType.streakCounter,
       TileType.upcomingFeatures,
       TileType.weeklyProgress, // Deprecated
+      TileType.fasting, // COMING SOON: hidden pre-launch — remove from this set to re-enable
     };
 
     // Get visible tiles, sorted by order
@@ -1521,7 +1537,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     }
 
     // Define section groups and their tile types
-    const nutritionTileTypes = {TileType.caloriesSummary, TileType.macroRings, TileType.fasting};
+    // COMING SOON: TileType.fasting removed — re-add when fasting feature launches
+    const nutritionTileTypes = {TileType.caloriesSummary, TileType.macroRings};
     const insightsTiles = {TileType.aiCoachTip, TileType.personalRecords, TileType.fitnessScore};
     const goalsTiles = {TileType.weeklyGoals, TileType.weekChanges};
     const trackingTiles = {TileType.habits, TileType.bodyWeight, TileType.achievements, TileType.dailyStats, TileType.quickLogWeight, TileType.quickLogMeasurements, TileType.todayStats};
@@ -1906,6 +1923,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
           TileType.weightTrend,
           TileType.sleepScore,
           TileType.streakCounter,
+          TileType.fasting, // COMING SOON: hidden pre-launch — remove from this set to re-enable
         };
 
         final visibleTiles = layout.tiles
@@ -2115,6 +2133,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
           TileType.weightTrend,
           TileType.sleepScore,
           TileType.streakCounter,
+          TileType.fasting, // COMING SOON: hidden pre-launch — remove from this set to re-enable
         };
 
         // Get visible tiles sorted by order, filtering out deprecated types
@@ -3410,7 +3429,8 @@ class _WorkoutCategoryPillsState extends ConsumerState<WorkoutCategoryPills> {
     {'label': 'For You', 'icon': Icons.star_rounded, 'route': null, 'color': AppColors.textPrimary},
     {'label': 'Workout', 'icon': Icons.fitness_center, 'route': '/workouts', 'color': AppColors.textPrimary},
     {'label': 'Nutrition', 'icon': Icons.restaurant, 'route': '/nutrition', 'color': AppColors.textPrimary},
-    {'label': 'Fasting', 'icon': Icons.timer, 'route': '/fasting', 'color': AppColors.textPrimary},
+    // COMING SOON: Fasting pill — uncomment when fasting feature launches
+    // {'label': 'Fasting', 'icon': Icons.timer, 'route': '/fasting', 'color': AppColors.textPrimary},
   ];
 
   @override
@@ -3437,7 +3457,7 @@ class _WorkoutCategoryPillsState extends ConsumerState<WorkoutCategoryPills> {
     await Future.delayed(const Duration(milliseconds: 600));
     if (!mounted || !_scrollController.hasClients) return;
 
-    // Scroll right to show hidden pills (Fasting)
+    // Scroll right to show hidden pills
     await _scrollController.animateTo(
       _scrollController.position.maxScrollExtent,
       duration: const Duration(milliseconds: 400),
@@ -3467,9 +3487,11 @@ class _WorkoutCategoryPillsState extends ConsumerState<WorkoutCategoryPills> {
       activeIndex = 1;
     } else if (location.startsWith('/nutrition')) {
       activeIndex = 2;
-    } else if (location.startsWith('/fasting')) {
-      activeIndex = 3;
     }
+    // COMING SOON: uncomment when fasting pill is re-enabled
+    // else if (location.startsWith('/fasting')) {
+    //   activeIndex = 3;
+    // }
 
     // Get dynamic accent color from provider
     final colors = ref.colors(context);

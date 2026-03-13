@@ -413,15 +413,7 @@ class _AvoidedExercisesScreenState extends ConsumerState<AvoidedExercisesScreen>
     HapticService.light();
 
     try {
-      // Show the choice sheet using the scaffold context
-      final regenerateNow = await _showAvoidChoiceSheet(parentContext);
-
-      // User dismissed or cancelled
-      if (regenerateNow == null) {
-        return;
-      }
-
-      // Save the exercise
+      // Save the exercise — backend handles swaps inline (no regeneration needed)
       final repo = ref.read(exercisePreferencesRepositoryProvider);
       await repo.addAvoidedExercise(
         userId,
@@ -432,15 +424,13 @@ class _AvoidedExercisesScreenState extends ConsumerState<AvoidedExercisesScreen>
       );
 
       ref.invalidate(avoidedExercisesProvider(userId));
-
-      if (regenerateNow) {
-        await _regenerateCurrentWorkout(userId);
-      }
+      ref.invalidate(todayWorkoutProvider);
+      ref.invalidate(workoutsProvider);
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Added "$exerciseName" to avoid list'),
+            content: Text('Replaced "$exerciseName" in upcoming workouts'),
             backgroundColor: AppColors.success,
           ),
         );
@@ -461,129 +451,6 @@ class _AvoidedExercisesScreenState extends ConsumerState<AvoidedExercisesScreen>
 
   /// Shows the choice sheet: "Update current workout" vs "Apply to future only".
   /// Returns `true` for regenerate now, `false` for future only, `null` if cancelled/discarded.
-  Future<bool?> _showAvoidChoiceSheet(BuildContext context) async {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final backgroundColor = isDark ? AppColors.background : AppColorsLight.background;
-    final textColor = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    final elevatedColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
-
-    final result = await showGlassSheet<bool>(
-      context: context,
-      isDismissible: false,
-      enableDrag: false,
-      builder: (sheetContext) => GlassSheet(
-        padding: const EdgeInsets.all(24),
-        child: SafeArea(
-          child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  'When should this apply?',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: textColor,
-                  ),
-                ),
-                const SizedBox(height: 20),
-                // Option 1: Update current workout
-                _ChoiceOptionCard(
-                  icon: Icons.update,
-                  title: 'Update current workout',
-                  subtitle: 'Regenerate today\'s workout without this exercise',
-                  accentColor: AppColors.cyan,
-                  elevatedColor: elevatedColor,
-                  textColor: textColor,
-                  textMuted: textMuted,
-                  onTap: () => Navigator.pop(sheetContext, true),
-                ),
-                const SizedBox(height: 12),
-                // Option 2: Apply to future only
-                _ChoiceOptionCard(
-                  icon: Icons.skip_next,
-                  title: 'Apply to future workouts only',
-                  subtitle: 'Current workout stays unchanged',
-                  accentColor: textMuted,
-                  elevatedColor: elevatedColor,
-                  textColor: textColor,
-                  textMuted: textMuted,
-                  onTap: () => Navigator.pop(sheetContext, false),
-                ),
-                const SizedBox(height: 16),
-                // Cancel button
-                TextButton(
-                  onPressed: () async {
-                    final discard = await _showDiscardConfirmation(sheetContext);
-                    if (discard == true && sheetContext.mounted) {
-                      Navigator.pop(sheetContext, null);
-                    }
-                  },
-                  child: Text(
-                    'Cancel',
-                    style: TextStyle(color: textMuted, fontSize: 15),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-    );
-
-    return result;
-  }
-
-  /// Shows a discard confirmation dialog.
-  /// Returns `true` if user confirms discard, `false` if they go back.
-  Future<bool?> _showDiscardConfirmation(BuildContext context) {
-    return showDialog<bool>(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text('Discard selection?'),
-        content: const Text('Your exercise won\'t be added to the avoid list.'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext, false),
-            child: const Text('Go Back'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext, true),
-            child: Text('Discard', style: TextStyle(color: AppColors.error)),
-          ),
-        ],
-      ),
-    );
-  }
-
-  /// Regenerates the current workout via streaming API.
-  Future<void> _regenerateCurrentWorkout(String userId) async {
-    final response = ref.read(todayWorkoutProvider).valueOrNull;
-    final workoutToRegenerate = response?.todayWorkout ?? response?.nextWorkout;
-    if (workoutToRegenerate == null) return;
-
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text('Updating workout...'),
-          backgroundColor: AppColors.cyan,
-          duration: const Duration(seconds: 1),
-        ),
-      );
-    }
-
-    final workoutRepo = ref.read(workoutRepositoryProvider);
-    await for (final progress in workoutRepo.regenerateWorkoutStreaming(
-      workoutId: workoutToRegenerate.id,
-      userId: userId,
-    )) {
-      debugPrint('Avoided regeneration: ${progress.message}');
-      if (progress.isCompleted || progress.hasError) break;
-    }
-
-    ref.invalidate(todayWorkoutProvider);
-    ref.invalidate(workoutsProvider);
-  }
-
   Future<void> _removeExercise(String userId, AvoidedExercise exercise) async {
     HapticService.light();
 
@@ -630,82 +497,6 @@ class _AvoidedExercisesScreenState extends ConsumerState<AvoidedExercisesScreen>
         }
       }
     }
-  }
-}
-
-/// Option card used in the avoid choice sheet
-class _ChoiceOptionCard extends StatelessWidget {
-  final IconData icon;
-  final String title;
-  final String subtitle;
-  final Color accentColor;
-  final Color elevatedColor;
-  final Color textColor;
-  final Color textMuted;
-  final VoidCallback onTap;
-
-  const _ChoiceOptionCard({
-    required this.icon,
-    required this.title,
-    required this.subtitle,
-    required this.accentColor,
-    required this.elevatedColor,
-    required this.textColor,
-    required this.textMuted,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: elevatedColor,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: accentColor.withValues(alpha: 0.3)),
-        ),
-        child: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: accentColor.withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Icon(icon, color: accentColor, size: 22),
-            ),
-            const SizedBox(width: 14),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w600,
-                      color: textColor,
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    subtitle,
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: textMuted,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            Icon(Icons.chevron_right, color: textMuted, size: 20),
-          ],
-        ),
-      ),
-    );
   }
 }
 

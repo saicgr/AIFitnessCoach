@@ -56,26 +56,26 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
 
   /// Get the monthly equivalent price string for yearly plan
   String _getMonthlyEquivalent({required Offerings? offerings}) {
-    if (offerings?.current == null) return '\$5.83';
+    if (offerings?.current == null) return '\$4.17';
     for (final pkg in offerings!.current!.availablePackages) {
       if (pkg.storeProduct.identifier == SubscriptionNotifier.premiumYearlyId) {
         final monthly = pkg.storeProduct.price / 12;
         return '\$${monthly.toStringAsFixed(2)}';
       }
     }
-    return '\$5.83';
+    return '\$4.17';
   }
 
   /// Get per-day price string for yearly plan
   String _getDailyEquivalent({required Offerings? offerings}) {
-    if (offerings?.current == null) return '\$0.19';
+    if (offerings?.current == null) return '\$0.14';
     for (final pkg in offerings!.current!.availablePackages) {
       if (pkg.storeProduct.identifier == SubscriptionNotifier.premiumYearlyId) {
         final daily = pkg.storeProduct.price / 365;
         return '\$${daily.toStringAsFixed(2)}';
       }
     }
-    return '\$0.19';
+    return '\$0.14';
   }
 
   @override
@@ -236,11 +236,11 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
                         : _getDynamicPrice(
                             offerings: subscriptionState.offerings,
                             productId: SubscriptionNotifier.premiumMonthlyId,
-                            fallback: '\$6.99',
+                            fallback: '\$4.99',
                           ),
                     period: '/mo',
                     billedAs: _selectedBillingCycle == 'yearly'
-                        ? '${_getDynamicPrice(offerings: subscriptionState.offerings, productId: SubscriptionNotifier.premiumYearlyId, fallback: '\$69.99')}/year (${_getDailyEquivalent(offerings: subscriptionState.offerings)}/day)'
+                        ? '${_getDynamicPrice(offerings: subscriptionState.offerings, productId: SubscriptionNotifier.premiumYearlyId, fallback: '\$49.99')}/year (${_getDailyEquivalent(offerings: subscriptionState.offerings)}/day)'
                         : 'Billed monthly',
                     features: const [
                       '∞ Never repeat the same workout',
@@ -554,23 +554,23 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
       case 'premium_yearly':
         return {
           'name': 'Premium Yearly',
-          'price': 69.99,
+          'price': 49.99,
           'period': 'year',
-          'monthlyPrice': 5.83,
+          'monthlyPrice': 4.17,
         };
       case 'premium_yearly_discount':
         return {
           'name': 'Premium Yearly (Discounted)',
-          'price': 59.99,
+          'price': 39.99,
           'period': 'year',
-          'monthlyPrice': 5.00,
+          'monthlyPrice': 3.33,
         };
       case 'premium_monthly':
         return {
           'name': 'Premium Monthly',
-          'price': 6.99,
+          'price': 4.99,
           'period': 'month',
-          'monthlyPrice': 6.99,
+          'monthlyPrice': 4.99,
         };
       default:
         return {
@@ -1284,6 +1284,7 @@ class _DiscountPopup extends StatefulWidget {
 class _DiscountPopupState extends State<_DiscountPopup> {
   late int _secondsRemaining;
   Timer? _timer;
+  bool _isExpired = false;
 
   @override
   void initState() {
@@ -1292,7 +1293,7 @@ class _DiscountPopupState extends State<_DiscountPopup> {
     _timer = Timer.periodic(const Duration(seconds: 1), (_) {
       if (_secondsRemaining <= 0) {
         _timer?.cancel();
-        if (mounted) Navigator.pop(context, false);
+        if (mounted) setState(() => _isExpired = true);
         return;
       }
       setState(() => _secondsRemaining--);
@@ -1324,254 +1325,354 @@ class _DiscountPopupState extends State<_DiscountPopup> {
         decoration: BoxDecoration(
           color: colors.elevated,
           borderRadius: BorderRadius.circular(24),
-          border: Border.all(color: accentColor.withOpacity(0.5), width: 2),
+          border: Border.all(
+            color: _isExpired
+                ? colors.textSecondary.withOpacity(0.3)
+                : accentColor.withOpacity(0.5),
+            width: 2,
+          ),
           boxShadow: [
-            BoxShadow(
-              color: accentColor.withOpacity(0.3),
-              blurRadius: 30,
-              spreadRadius: 5,
-            ),
+            if (!_isExpired)
+              BoxShadow(
+                color: accentColor.withOpacity(0.3),
+                blurRadius: 30,
+                spreadRadius: 5,
+              ),
           ],
         ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Close button
-            Align(
-              alignment: Alignment.topRight,
-              child: GestureDetector(
-                onTap: () => Navigator.pop(context, false),
-                child: Container(
-                  padding: const EdgeInsets.all(4),
-                  decoration: BoxDecoration(
-                    color: colors.surface,
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(Icons.close, color: colors.textSecondary, size: 20),
-                ),
-              ),
-            ),
+        child: _isExpired
+            ? _buildExpiredContent(colors)
+            : _buildOfferContent(colors, accentColor),
+      ),
+      ),
+    );
+  }
 
-            // Fire emoji and title
-            const Text('🔥', style: TextStyle(fontSize: 40)),
-            const SizedBox(height: 8),
-            Text(
-              'Wait! Special Offer',
+  Widget _buildExpiredContent(ThemeColors colors) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        // Close button
+        Align(
+          alignment: Alignment.topRight,
+          child: GestureDetector(
+            onTap: () => Navigator.pop(context, false),
+            child: Container(
+              padding: const EdgeInsets.all(4),
+              decoration: BoxDecoration(
+                color: colors.surface,
+                shape: BoxShape.circle,
+              ),
+              child: Icon(Icons.close, color: colors.textSecondary, size: 20),
+            ),
+          ),
+        ),
+
+        const SizedBox(height: 8),
+        Icon(Icons.timer_off_outlined, size: 48, color: colors.textSecondary.withOpacity(0.5)),
+        const SizedBox(height: 12),
+        Text(
+          'Offer Expired',
+          style: TextStyle(
+            fontSize: 22,
+            fontWeight: FontWeight.bold,
+            color: colors.textPrimary,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          'This special discount is no longer available.',
+          style: TextStyle(
+            fontSize: 14,
+            color: colors.textSecondary,
+          ),
+          textAlign: TextAlign.center,
+        ),
+        const SizedBox(height: 20),
+
+        // Regular yearly option
+        Text(
+          'You can still get Premium Yearly for',
+          style: TextStyle(
+            fontSize: 13,
+            color: colors.textSecondary,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          '\$49.99/year',
+          style: TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+            color: colors.textPrimary,
+          ),
+        ),
+        const SizedBox(height: 20),
+
+        // CTA - go back to paywall
+        SizedBox(
+          width: double.infinity,
+          height: 48,
+          child: ElevatedButton(
+            onPressed: () => Navigator.pop(context, false),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: colors.surface,
+              foregroundColor: colors.textPrimary,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(14),
+              ),
+              elevation: 0,
+            ),
+            child: const Text(
+              'Back to Plans',
               style: TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.bold,
-                color: colors.textPrimary,
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
               ),
             ),
-            const SizedBox(height: 6),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildOfferContent(ThemeColors colors, Color accentColor) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        // Close button
+        Align(
+          alignment: Alignment.topRight,
+          child: GestureDetector(
+            onTap: () => Navigator.pop(context, false),
+            child: Container(
+              padding: const EdgeInsets.all(4),
+              decoration: BoxDecoration(
+                color: colors.surface,
+                shape: BoxShape.circle,
+              ),
+              child: Icon(Icons.close, color: colors.textSecondary, size: 20),
+            ),
+          ),
+        ),
+
+        // Fire emoji and title
+        const Text('\u{1F525}', style: TextStyle(fontSize: 40)),
+        const SizedBox(height: 8),
+        Text(
+          'Wait! Special Offer',
+          style: TextStyle(
+            fontSize: 22,
+            fontWeight: FontWeight.bold,
+            color: colors.textPrimary,
+          ),
+        ),
+        const SizedBox(height: 6),
+        Text(
+          'Exclusive yearly discount just for you!',
+          style: TextStyle(
+            fontSize: 13,
+            color: colors.textSecondary,
+          ),
+          textAlign: TextAlign.center,
+        ),
+
+        const SizedBox(height: 12),
+
+        // Countdown timer
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.timer_outlined, size: 16, color: Colors.orange),
+            const SizedBox(width: 6),
             Text(
-              'Exclusive yearly discount just for you!',
+              'Offer expires in ',
               style: TextStyle(
                 fontSize: 13,
                 color: colors.textSecondary,
               ),
-              textAlign: TextAlign.center,
             ),
-
-            const SizedBox(height: 12),
-
-            // Countdown timer
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(Icons.timer_outlined, size: 16, color: Colors.orange),
-                const SizedBox(width: 6),
-                Text(
-                  'Offer expires in ',
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: colors.textSecondary,
-                  ),
-                ),
-                Text(
-                  _formatTime(),
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                    fontFamily: 'monospace',
-                    color: Colors.orange,
-                  ),
-                ),
-              ],
-            ),
-
-            const SizedBox(height: 16),
-
-            // Price comparison
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [
-                    accentColor.withOpacity(0.15),
-                    accentColor.withOpacity(0.05),
-                  ],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: accentColor.withOpacity(0.3)),
-              ),
-              child: Column(
-                children: [
-                  Text(
-                    'PREMIUM YEARLY',
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold,
-                      color: accentColor,
-                      letterSpacing: 1.5,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      // Original price crossed out
-                      Text(
-                        '\$69.99',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w500,
-                          color: colors.textSecondary,
-                          decoration: TextDecoration.lineThrough,
-                          decorationColor: Colors.red,
-                          decorationThickness: 2.5,
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      // Arrow
-                      Icon(
-                        Icons.arrow_forward,
-                        color: accentColor,
-                        size: 18,
-                      ),
-                      const SizedBox(width: 8),
-                      // Discounted price
-                      Flexible(
-                        child: Column(
-                          children: [
-                            FittedBox(
-                              fit: BoxFit.scaleDown,
-                              child: Text(
-                                '\$59.99',
-                                style: TextStyle(
-                                  fontSize: 28,
-                                  fontWeight: FontWeight.bold,
-                                  color: accentColor,
-                                ),
-                              ),
-                            ),
-                            Text(
-                              '/year',
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: colors.textSecondary,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: Colors.green.withOpacity(0.2),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Text(
-                      'SAVE \$10 (14% OFF)',
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.green,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Just \$5.00/month',
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: colors.textSecondary,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    "That's just \$0.16/day — less than a coffee",
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: colors.textSecondary.withOpacity(0.8),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
-            const SizedBox(height: 14),
-
-            // Features
-            Column(
-              children: [
-                _discountFeatureRow('✓ Unlimited AI workout generation', colors),
-                _discountFeatureRow('✓ Full nutrition & food scanning', colors),
-                _discountFeatureRow('✓ Advanced analytics & insights', colors),
-                _discountFeatureRow('✓ 7-day free trial included', colors),
-              ],
-            ),
-
-            const SizedBox(height: 16),
-
-            // CTA Button
-            SizedBox(
-              width: double.infinity,
-              height: 48,
-              child: ElevatedButton(
-                onPressed: () => Navigator.pop(context, true),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: accentColor,
-                  foregroundColor: colors.accentContrast,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                  elevation: 0,
-                ),
-                child: const Text(
-                  'Get Yearly for \$59.99',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-            ),
-
-            const SizedBox(height: 10),
-
-            // No thanks link
-            GestureDetector(
-              onTap: () => Navigator.pop(context, false),
-              child: Text(
-                'No thanks, I\'ll pass',
-                style: TextStyle(
-                  fontSize: 13,
-                  color: colors.textSecondary,
-                  decoration: TextDecoration.underline,
-                ),
+            Text(
+              _formatTime(),
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+                fontFamily: 'monospace',
+                color: _secondsRemaining <= 60 ? Colors.red : Colors.orange,
               ),
             ),
           ],
         ),
-      ),
-      ),
+
+        const SizedBox(height: 16),
+
+        // Price comparison
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                accentColor.withOpacity(0.15),
+                accentColor.withOpacity(0.05),
+              ],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: accentColor.withOpacity(0.3)),
+          ),
+          child: Column(
+            children: [
+              Text(
+                'PREMIUM YEARLY',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                  color: accentColor,
+                  letterSpacing: 1.5,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  // Regular yearly price crossed out
+                  Text(
+                    '\$49.99',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w500,
+                      color: colors.textSecondary,
+                      decoration: TextDecoration.lineThrough,
+                      decorationColor: Colors.red,
+                      decorationThickness: 2.5,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  // Arrow
+                  Icon(
+                    Icons.arrow_forward,
+                    color: accentColor,
+                    size: 18,
+                  ),
+                  const SizedBox(width: 8),
+                  // Discounted yearly price (special offer)
+                  Flexible(
+                    child: Column(
+                      children: [
+                        FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Text(
+                            '\$39.99',
+                            style: TextStyle(
+                              fontSize: 28,
+                              fontWeight: FontWeight.bold,
+                              color: accentColor,
+                            ),
+                          ),
+                        ),
+                        Text(
+                          '/year',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: colors.textSecondary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                decoration: BoxDecoration(
+                  color: Colors.green.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text(
+                  'SAVE \$10 (20% OFF)',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.green,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Just \$3.33/month',
+                style: TextStyle(
+                  fontSize: 13,
+                  color: colors.textSecondary,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                "That's just \$0.11/day — less than a coffee",
+                style: TextStyle(
+                  fontSize: 12,
+                  color: colors.textSecondary.withOpacity(0.8),
+                ),
+              ),
+            ],
+          ),
+        ),
+
+        const SizedBox(height: 14),
+
+        // Features
+        Column(
+          children: [
+            _discountFeatureRow('\u2713 Unlimited AI workout generation', colors),
+            _discountFeatureRow('\u2713 Full nutrition & food scanning', colors),
+            _discountFeatureRow('\u2713 Advanced analytics & insights', colors),
+            _discountFeatureRow('\u2713 7-day free trial included', colors),
+          ],
+        ),
+
+        const SizedBox(height: 16),
+
+        // CTA Button
+        SizedBox(
+          width: double.infinity,
+          height: 48,
+          child: ElevatedButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: accentColor,
+              foregroundColor: colors.accentContrast,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(14),
+              ),
+              elevation: 0,
+            ),
+            child: const Text(
+              'Get Yearly for \$39.99',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+        ),
+
+        const SizedBox(height: 10),
+
+        // No thanks link
+        GestureDetector(
+          onTap: () => Navigator.pop(context, false),
+          child: Text(
+            'No thanks, I\'ll pass',
+            style: TextStyle(
+              fontSize: 13,
+              color: colors.textSecondary,
+              decoration: TextDecoration.underline,
+            ),
+          ),
+        ),
+      ],
     );
   }
 

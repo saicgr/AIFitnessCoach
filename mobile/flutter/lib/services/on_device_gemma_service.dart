@@ -31,6 +31,24 @@ class OnDeviceGemmaService {
   static const Duration _autoUnloadDelay = Duration(minutes: 5);
   static const Duration _inferenceTimeout = Duration(seconds: 30);
 
+  /// Whether FlutterGemma.initialize() has been called this session.
+  static bool _gemmaInitialized = false;
+
+  /// Lazily initialize FlutterGemma runtime.
+  /// ANR fix: Moved from main.dart startup to first use to avoid blocking
+  /// app launch with heavy native ML runtime initialization (2-5s).
+  static Future<void> ensureInitialized() async {
+    if (_gemmaInitialized) return;
+    try {
+      await FlutterGemma.initialize();
+      _gemmaInitialized = true;
+      debugPrint('✅ [OnDeviceGemma] FlutterGemma initialized lazily');
+    } catch (e) {
+      debugPrint('⚠️ [OnDeviceGemma] FlutterGemma initialization failed: $e');
+      // Don't set _gemmaInitialized to allow retry on next attempt
+    }
+  }
+
   /// Whether a model is currently loaded in memory.
   bool get isModelLoaded => _isLoaded;
 
@@ -48,6 +66,9 @@ class OnDeviceGemmaService {
   /// Throws if the model file cannot be loaded.
   Future<void> loadModel(String modelPath) async {
     debugPrint('🔍 [OnDeviceGemma] Loading model from: $modelPath');
+
+    // Ensure FlutterGemma runtime is initialized before loading a model
+    await ensureInitialized();
 
     try {
       // Install from file path

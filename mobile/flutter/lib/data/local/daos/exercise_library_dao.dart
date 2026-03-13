@@ -51,4 +51,12 @@ class ExerciseLibraryDao extends DatabaseAccessor<AppDatabase>
   Future<List<CachedExercise>> getAllCachedExercises() {
     return select(cachedExercises).get();
   }
+
+  /// Return the count of cached exercises without loading all rows.
+  Future<int> getCachedExerciseCount() async {
+    final count = countAll();
+    final query = selectOnly(cachedExercises)..addColumns([count]);
+    final result = await query.getSingle();
+    return result.read(count) ?? 0;
+  }
 }

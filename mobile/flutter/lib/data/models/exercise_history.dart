@@ -8,11 +8,14 @@ part 'exercise_history.g.dart';
 // ============================================================================
 
 /// Time range options for exercise history queries
+/// Must match backend TimeRange enum: 4_weeks, 8_weeks, 12_weeks, 6_months, 1_year, all_time
 enum ExerciseHistoryTimeRange {
-  @JsonValue('1_month')
-  oneMonth,
-  @JsonValue('3_months')
-  threeMonths,
+  @JsonValue('4_weeks')
+  fourWeeks,
+  @JsonValue('8_weeks')
+  eightWeeks,
+  @JsonValue('12_weeks')
+  twelveWeeks,
   @JsonValue('6_months')
   sixMonths,
   @JsonValue('1_year')
@@ -22,10 +25,12 @@ enum ExerciseHistoryTimeRange {
 
   String get value {
     switch (this) {
-      case ExerciseHistoryTimeRange.oneMonth:
-        return '1_month';
-      case ExerciseHistoryTimeRange.threeMonths:
-        return '3_months';
+      case ExerciseHistoryTimeRange.fourWeeks:
+        return '4_weeks';
+      case ExerciseHistoryTimeRange.eightWeeks:
+        return '8_weeks';
+      case ExerciseHistoryTimeRange.twelveWeeks:
+        return '12_weeks';
       case ExerciseHistoryTimeRange.sixMonths:
         return '6_months';
       case ExerciseHistoryTimeRange.oneYear:
@@ -37,10 +42,12 @@ enum ExerciseHistoryTimeRange {
 
   String get displayName {
     switch (this) {
-      case ExerciseHistoryTimeRange.oneMonth:
-        return '1 Month';
-      case ExerciseHistoryTimeRange.threeMonths:
-        return '3 Months';
+      case ExerciseHistoryTimeRange.fourWeeks:
+        return '4 Weeks';
+      case ExerciseHistoryTimeRange.eightWeeks:
+        return '8 Weeks';
+      case ExerciseHistoryTimeRange.twelveWeeks:
+        return '12 Weeks';
       case ExerciseHistoryTimeRange.sixMonths:
         return '6 Months';
       case ExerciseHistoryTimeRange.oneYear:
@@ -52,10 +59,12 @@ enum ExerciseHistoryTimeRange {
 
   int get days {
     switch (this) {
-      case ExerciseHistoryTimeRange.oneMonth:
-        return 30;
-      case ExerciseHistoryTimeRange.threeMonths:
-        return 90;
+      case ExerciseHistoryTimeRange.fourWeeks:
+        return 28;
+      case ExerciseHistoryTimeRange.eightWeeks:
+        return 56;
+      case ExerciseHistoryTimeRange.twelveWeeks:
+        return 84;
       case ExerciseHistoryTimeRange.sixMonths:
         return 180;
       case ExerciseHistoryTimeRange.oneYear:

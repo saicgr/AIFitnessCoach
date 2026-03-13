@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fl_chart/fl_chart.dart';
+import '../../../core/constants/app_colors.dart';
 import '../../../data/models/exercise_history.dart';
 import '../../../data/providers/exercise_history_provider.dart';
 import '../../../data/repositories/exercise_history_repository.dart';
+import '../../../widgets/glass_back_button.dart';
 import '../../../widgets/segmented_tab_bar.dart';
 
 /// Detail screen showing progression and history for a specific exercise
@@ -50,43 +52,73 @@ class _ExerciseProgressDetailScreenState extends ConsumerState<ExerciseProgressD
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final historyAsync = ref.watch(exerciseHistoryProvider(widget.exerciseName));
     final prsAsync = ref.watch(exercisePRsProvider(widget.exerciseName));
 
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textPrimary =
+        isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+
     return Scaffold(
-      appBar: AppBar(
-        title: Text(widget.exerciseName),
-      ),
-      body: Column(
-        children: [
-          SegmentedTabBar(
-            controller: _tabController,
-            showIcons: false,
-            tabs: const [
-              SegmentedTabItem(label: 'Progress'),
-              SegmentedTabItem(label: 'History'),
-            ],
-          ),
-          Expanded(
-            child: TabBarView(
-              controller: _tabController,
+      body: SafeArea(
+        child: Stack(
+          children: [
+            Column(
               children: [
-                // Progress Tab
-                _ProgressTab(
-                  exerciseName: widget.exerciseName,
-                  historyAsync: historyAsync,
-                  prsAsync: prsAsync,
+                // Header with title
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(56, 12, 16, 8),
+                  child: Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      widget.exerciseName,
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                            fontWeight: FontWeight.bold,
+                            color: textPrimary,
+                          ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
                 ),
-                // History Tab
-                _HistoryTab(
-                  exerciseName: widget.exerciseName,
-                  historyAsync: historyAsync,
+                SegmentedTabBar(
+                  controller: _tabController,
+                  showIcons: false,
+                  tabs: const [
+                    SegmentedTabItem(label: 'Progress'),
+                    SegmentedTabItem(label: 'History'),
+                  ],
+                ),
+                Expanded(
+                  child: TabBarView(
+                    controller: _tabController,
+                    children: [
+                      // Progress Tab
+                      _ProgressTab(
+                        exerciseName: widget.exerciseName,
+                        historyAsync: historyAsync,
+                        prsAsync: prsAsync,
+                      ),
+                      // History Tab
+                      _HistoryTab(
+                        exerciseName: widget.exerciseName,
+                        historyAsync: historyAsync,
+                      ),
+                    ],
+                  ),
                 ),
               ],
             ),
-          ),
-        ],
+            // Floating glass back button
+            Positioned(
+              top: 12,
+              left: 12,
+              child: GlassBackButton(
+                onTap: () => Navigator.of(context).pop(),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

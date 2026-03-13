@@ -80,7 +80,7 @@ class PlanPreviewScreen extends ConsumerWidget {
                     return const SizedBox.shrink();
                   }
                   return Padding(
-                    padding: const EdgeInsets.only(bottom: 12, top: 48),
+                    padding: const EdgeInsets.only(bottom: 12, top: 16),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [

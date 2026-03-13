@@ -7,9 +7,15 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../local/database.dart';
 
+/// Top-level function for parsing exercise JSON in an isolate via compute().
+List<Map<String, dynamic>> _parseExerciseJson(String jsonString) {
+  final List<dynamic> exercises = jsonDecode(jsonString) as List<dynamic>;
+  return exercises.map((e) => e as Map<String, dynamic>).toList();
+}
+
 /// Current version of the bundled exercise library asset.
 /// Bump this when re-exporting from Supabase to force a re-seed.
-const int _kSeedVersion = 1;
+const int _kSeedVersion = 2;
 
 const String _kSeedVersionKey = 'exercise_library_seed_version';
 
@@ -43,11 +49,10 @@ class ExerciseLibraryLoader {
 
       final jsonString =
           await rootBundle.loadString('assets/data/exercise_library.json');
-      final List<dynamic> exercises =
-          jsonDecode(jsonString) as List<dynamic>;
+      // Parse JSON in isolate to avoid blocking the UI thread
+      final exercises = await compute(_parseExerciseJson, jsonString);
 
-      final companions = exercises.map((e) {
-        final ex = e as Map<String, dynamic>;
+      final companions = exercises.map((ex) {
         return _mapToCompanion(ex);
       }).toList();
 
@@ -63,8 +68,7 @@ class ExerciseLibraryLoader {
 
   /// Return the number of cached exercises in the database.
   static Future<int> getSeededCount(AppDatabase db) async {
-    final all = await db.exerciseLibraryDao.getAllCachedExercises();
-    return all.length;
+    return db.exerciseLibraryDao.getCachedExerciseCount();
   }
 
   /// Map a JSON exercise object to a [CachedExercisesCompanion].

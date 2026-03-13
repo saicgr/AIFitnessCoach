@@ -80,28 +80,17 @@ class FoldableQuizScaffold extends ConsumerWidget {
   // ─── Phone / closed layout ────────────────────────────────────────
 
   Widget _buildPhoneLayout(BuildContext context) {
-    return Stack(
+    return Column(
       children: [
-        Column(
-          children: [
-            if (headerOverlay != null) const SizedBox(height: 72),
-            if (progressBar != null) progressBar!,
-            if (progressBar != null) const SizedBox(height: 32),
-            Expanded(child: content),
-            if (button != null) ...[
-              const SizedBox(height: 8),
-              button!,
-            ],
-            const SizedBox(height: 16),
-          ],
-        ),
-        if (headerOverlay != null)
-          Positioned(
-            top: 0,
-            left: 0,
-            right: 0,
-            child: headerOverlay!,
-          ),
+        if (headerOverlay != null) headerOverlay!,
+        if (progressBar != null) progressBar!,
+        if (progressBar != null) const SizedBox(height: 8),
+        Expanded(child: content),
+        if (button != null) ...[
+          const SizedBox(height: 8),
+          button!,
+        ],
+        const SizedBox(height: 16),
       ],
     );
   }
@@ -122,94 +111,83 @@ class FoldableQuizScaffold extends ConsumerWidget {
     final hingeLeft = (rawHingeLeft - safeLeft).clamp(100.0, double.infinity);
     final hingeWidth = hingeBounds?.width ?? 0;
 
-    return Stack(
+    return Column(
       children: [
-        Column(
-          children: [
-            if (headerOverlay != null) const SizedBox(height: 72),
-            // Progress bar spans full width across both panes
-            if (progressBar != null) ...[
-              progressBar!,
-              const SizedBox(height: 16),
-            ],
-            Expanded(
-              child: Row(
-                children: [
-                  // ── Left pane (header / context) ──
-                  SizedBox(
-                    width: hingeLeft,
-                    child: Center(
-                      child: SingleChildScrollView(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 28, vertical: 16),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              headerTitle,
-                              style: TextStyle(
-                                fontSize: 26,
-                                fontWeight: FontWeight.w700,
-                                color: textPrimary,
-                                height: 1.3,
-                                letterSpacing: -0.5,
-                              ),
-                            ),
-                            if (headerSubtitle != null) ...[
-                              const SizedBox(height: 10),
-                              Text(
-                                headerSubtitle!,
-                                style: TextStyle(
-                                  fontSize: 15,
-                                  color: textSecondary,
-                                  fontWeight: FontWeight.w500,
-                                  height: 1.4,
-                                ),
-                              ),
-                            ],
-                            if (headerExtra != null) ...[
-                              const SizedBox(height: 24),
-                              headerExtra!,
-                            ],
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-
-                  // ── Hinge gap ──
-                  SizedBox(width: hingeWidth),
-
-                  // ── Right pane (interactive content) ──
-                  Expanded(
+        if (headerOverlay != null) headerOverlay!,
+        // Progress bar spans full width across both panes
+        if (progressBar != null) ...[
+          progressBar!,
+          const SizedBox(height: 16),
+        ],
+        Expanded(
+          child: Row(
+            children: [
+              // ── Left pane (header / context) ──
+              SizedBox(
+                width: hingeLeft,
+                child: Center(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 28, vertical: 16),
                     child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const SizedBox(height: 4),
-                        Expanded(child: content),
-                        if (button != null) ...[
-                          const SizedBox(height: 4),
-                          Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 16),
-                            child: button!,
+                        Text(
+                          headerTitle,
+                          style: TextStyle(
+                            fontSize: 26,
+                            fontWeight: FontWeight.w700,
+                            color: textPrimary,
+                            height: 1.3,
+                            letterSpacing: -0.5,
+                          ),
+                        ),
+                        if (headerSubtitle != null) ...[
+                          const SizedBox(height: 10),
+                          Text(
+                            headerSubtitle!,
+                            style: TextStyle(
+                              fontSize: 15,
+                              color: textSecondary,
+                              fontWeight: FontWeight.w500,
+                              height: 1.4,
+                            ),
                           ),
                         ],
-                        const SizedBox(height: 8),
+                        if (headerExtra != null) ...[
+                          const SizedBox(height: 24),
+                          headerExtra!,
+                        ],
                       ],
                     ),
                   ),
-                ],
+                ),
               ),
-            ),
-          ],
-        ),
-        if (headerOverlay != null)
-          Positioned(
-            top: 0,
-            left: 0,
-            right: 0,
-            child: headerOverlay!,
+
+              // ── Hinge gap ──
+              SizedBox(width: hingeWidth),
+
+              // ── Right pane (interactive content) ──
+              Expanded(
+                child: Column(
+                  children: [
+                    const SizedBox(height: 4),
+                    Expanded(child: content),
+                    if (button != null) ...[
+                      const SizedBox(height: 4),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        child: button!,
+                      ),
+                    ],
+                    const SizedBox(height: 8),
+                  ],
+                ),
+              ),
+            ],
           ),
+        ),
       ],
     );
   }

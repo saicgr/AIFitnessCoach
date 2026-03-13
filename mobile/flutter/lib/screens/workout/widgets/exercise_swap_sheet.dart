@@ -1027,6 +1027,218 @@ class _ExerciseSwapSheetState extends ConsumerState<_ExerciseSwapSheet>
     );
   }
 
+  void _showExercisePreviewAndSwap({
+    required String name,
+    String? targetMuscle,
+    String? equipment,
+    String? instructions,
+    required String source,
+  }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final cardBg = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final textPrimary =
+        isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textSecondary =
+        isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final glassSurface =
+        isDark ? AppColors.glassSurface : AppColorsLight.glassSurface;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => Container(
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.of(context).size.height * 0.75,
+        ),
+        decoration: BoxDecoration(
+          color: isDark ? AppColors.surface : Colors.white,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Handle
+            Container(
+              margin: const EdgeInsets.only(top: 12),
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: textMuted.withOpacity(0.3),
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+
+            // Exercise image
+            Padding(
+              padding: const EdgeInsets.fromLTRB(24, 20, 24, 0),
+              child: Container(
+                height: 180,
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  color: glassSurface,
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                clipBehavior: Clip.hardEdge,
+                child: ExerciseImage(
+                  exerciseName: name,
+                  width: double.infinity,
+                  height: 180,
+                  borderRadius: 16,
+                  backgroundColor: glassSurface,
+                  iconColor: textMuted,
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+
+            // Exercise name
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              child: Text(
+                name,
+                style: TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                  color: textPrimary,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ),
+            const SizedBox(height: 8),
+
+            // Muscle + Equipment chips
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              child: Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                alignment: WrapAlignment.center,
+                children: [
+                  if (targetMuscle != null && targetMuscle.isNotEmpty)
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: AppColors.cyan.withOpacity(0.15),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Text(
+                        targetMuscle,
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w500,
+                          color: AppColors.cyan,
+                        ),
+                      ),
+                    ),
+                  if (equipment != null && equipment.isNotEmpty)
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: AppColors.purple.withOpacity(0.15),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Text(
+                        equipment,
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w500,
+                          color: AppColors.purple,
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+
+            // Instructions (scrollable)
+            if (instructions != null && instructions.isNotEmpty) ...[
+              const SizedBox(height: 16),
+              Flexible(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24),
+                  child: Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: cardBg,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: SingleChildScrollView(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              const Icon(Icons.lightbulb_outline,
+                                  size: 16, color: AppColors.orange),
+                              const SizedBox(width: 6),
+                              Text(
+                                'Instructions',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppColors.orange,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            instructions,
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: textSecondary,
+                              height: 1.5,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+
+            // Big swap button
+            Padding(
+              padding: const EdgeInsets.fromLTRB(24, 20, 24, 24),
+              child: SizedBox(
+                width: double.infinity,
+                height: 56,
+                child: ElevatedButton.icon(
+                  onPressed: () {
+                    Navigator.pop(ctx);
+                    _swapExercise(name, source: source);
+                  },
+                  icon: const Icon(Icons.swap_horiz, size: 22),
+                  label: const Text(
+                    'Swap to this exercise',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.cyan,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    elevation: 0,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildLibraryTab(
       Color cardBackground, Color textMuted, Color textPrimary) {
     return Column(
@@ -1080,7 +1292,14 @@ class _ExerciseSwapSheetState extends ConsumerState<_ExerciseSwapSheet>
                               exercise.targetMuscle ?? exercise.bodyPart ?? '',
                           badge: exercise.equipment ?? 'Bodyweight',
                           badgeColor: AppColors.purple,
-                          onTap: () => _swapExercise(exercise.name,
+                          onTap: () => _showExercisePreviewAndSwap(
+                            name: exercise.name,
+                            targetMuscle: exercise.targetMuscle,
+                            equipment: exercise.equipment,
+                            instructions: exercise.instructions,
+                            source: 'library_search',
+                          ),
+                          onSwap: () => _swapExercise(exercise.name,
                               source: 'library_search'),
                           textPrimary: textPrimary,
                           textMuted: textMuted,
@@ -1100,6 +1319,7 @@ class _ExerciseOptionCard extends ConsumerWidget {
   final String badge;
   final Color badgeColor;
   final VoidCallback onTap;
+  final VoidCallback? onSwap;
   final Color textPrimary;
   final Color textMuted;
 
@@ -1110,6 +1330,7 @@ class _ExerciseOptionCard extends ConsumerWidget {
     required this.badge,
     required this.badgeColor,
     required this.onTap,
+    this.onSwap,
     required this.textPrimary,
     required this.textMuted,
   });
@@ -1134,7 +1355,7 @@ class _ExerciseOptionCard extends ConsumerWidget {
             padding: const EdgeInsets.all(12),
             child: Row(
               children: [
-                // Exercise image (uses presigned URL directly if available)
+                // Exercise image
                 ExerciseImage(
                   exerciseName: name,
                   imageUrl: imageUrl,
@@ -1195,17 +1416,39 @@ class _ExerciseOptionCard extends ConsumerWidget {
                   ),
                 ),
 
-                // Swap icon
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: AppColors.cyan.withOpacity(0.1),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(
-                    Icons.swap_horiz,
-                    color: AppColors.cyan,
-                    size: 20,
+                const SizedBox(width: 8),
+
+                // Swap button
+                GestureDetector(
+                  onTap: onSwap ?? onTap,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 10,
+                    ),
+                    decoration: BoxDecoration(
+                      color: AppColors.cyan,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.swap_horiz,
+                          color: Colors.white,
+                          size: 18,
+                        ),
+                        SizedBox(width: 4),
+                        Text(
+                          'Swap',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 13,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ],

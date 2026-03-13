@@ -135,6 +135,7 @@ class _RoadmapTab extends StatelessWidget {
           textSecondary: textSecondary,
           textMuted: textMuted,
           features: [
+            _Feature(Icons.timer_outlined, AppColors.teal, 'Intermittent Fasting', 'Track fasting windows, get AI insights & monitor your fasting streaks', eta: 'Q2 2026'),
             _Feature(Icons.restaurant_outlined, AppColors.purple, 'AI Meal Plans', 'Personalized daily meal plans based on your macros & goals', eta: 'Q2 2026'),
             _Feature(Icons.menu_book_outlined, AppColors.orange, 'AI Recipe Suggestions', 'Get recipe ideas that fit your diet, culture & eating window', eta: 'Q2 2026'),
           ],

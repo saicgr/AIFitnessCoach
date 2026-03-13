@@ -48,6 +48,9 @@ class _EnhancedNotesSheetState extends State<EnhancedNotesSheet> {
   Duration _playbackPosition = Duration.zero;
   Duration _audioDuration = Duration.zero;
   Timer? _recordingTimer;
+  StreamSubscription<Duration>? _positionSub;
+  StreamSubscription<Duration>? _durationSub;
+  StreamSubscription<void>? _completeSub;
 
   // Photo state
   final ImagePicker _imagePicker = ImagePicker();
@@ -67,17 +70,17 @@ class _EnhancedNotesSheetState extends State<EnhancedNotesSheet> {
     _photoPaths = List.from(widget.initialPhotoPaths ?? []);
 
     // Listen to audio player state
-    _audioPlayer.onPositionChanged.listen((position) {
+    _positionSub = _audioPlayer.onPositionChanged.listen((position) {
       if (mounted) {
         setState(() => _playbackPosition = position);
       }
     });
-    _audioPlayer.onDurationChanged.listen((duration) {
+    _durationSub = _audioPlayer.onDurationChanged.listen((duration) {
       if (mounted) {
         setState(() => _audioDuration = duration);
       }
     });
-    _audioPlayer.onPlayerComplete.listen((_) {
+    _completeSub = _audioPlayer.onPlayerComplete.listen((_) {
       if (mounted) {
         setState(() {
           _isPlaying = false;
@@ -103,6 +106,9 @@ class _EnhancedNotesSheetState extends State<EnhancedNotesSheet> {
     _notesController.dispose();
     _notesFocusNode.dispose();
     _recordingTimer?.cancel();
+    _positionSub?.cancel();
+    _durationSub?.cancel();
+    _completeSub?.cancel();
     _audioRecorder.dispose();
     _audioPlayer.dispose();
     if (_isListening) _speechToText.stop();

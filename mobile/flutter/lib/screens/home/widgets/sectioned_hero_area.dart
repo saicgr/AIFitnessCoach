@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/theme/accent_color_provider.dart';
 import '../../../core/providers/user_provider.dart';
@@ -44,8 +43,8 @@ class SectionedHeroArea extends ConsumerStatefulWidget {
 }
 
 class _SectionedHeroAreaState extends ConsumerState<SectionedHeroArea> {
-  // Fixed height: utilityRow(18) + gap(4) + calendarStrip(61) + gap(8) + carousel(360) = 451
-  static const _kContentHeight = 451.0;
+  // Fixed height: calendarStrip(61) + gap(8) + carousel(360) = 429
+  static const _kContentHeight = 429.0;
 
   @override
   Widget build(BuildContext context) {
@@ -76,8 +75,6 @@ class _SectionedHeroAreaState extends ConsumerState<SectionedHeroArea> {
           child: Column(
             children: [
               if (currentFocus == HomeFocus.workout) ...[
-                _buildWorkoutUtilityRow(isDark),
-                const SizedBox(height: 4),
                 _buildWeekCalendarStrip(isDark),
                 const SizedBox(height: 8),
               ],
@@ -121,66 +118,6 @@ class _SectionedHeroAreaState extends ConsumerState<SectionedHeroArea> {
       externalPageController: widget.carouselPageController,
       onCarouselItemsChanged: widget.onCarouselItemsChanged,
       onPageChanged: widget.onPageChanged,
-    );
-  }
-
-  Widget _buildWorkoutUtilityRow(bool isDark) {
-    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    final startsSunday = ref.watch(weekStartsSundayProvider);
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: SizedBox(
-        height: 18,
-        child: Row(
-          children: [
-            GestureDetector(
-              behavior: HitTestBehavior.opaque,
-              onTap: () {
-                HapticService.light();
-                context.push('/library?tab=1');
-              },
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    'Programs',
-                    style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w500,
-                      color: textMuted,
-                    ),
-                  ),
-                  Icon(Icons.chevron_right, size: 13, color: textMuted),
-                ],
-              ),
-            ),
-            const Spacer(),
-            GestureDetector(
-              behavior: HitTestBehavior.opaque,
-              onTap: () {
-                HapticService.selection();
-                ref.read(weekStartsSundayProvider.notifier).toggle();
-              },
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(Icons.swap_horiz, size: 13, color: textMuted),
-                  const SizedBox(width: 2),
-                  Text(
-                    startsSunday ? 'Sun' : 'Mon',
-                    style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w500,
-                      color: textMuted,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
     );
   }
 
@@ -234,14 +171,15 @@ class _SectionedHeroAreaState extends ConsumerState<SectionedHeroArea> {
   }
 }
 
-/// Row of tab pills: Workouts | Nutrition | Fasting
-class _HeroTabPills extends StatelessWidget {
+/// Row of tab pills: Workouts | Nutrition | Fasting  +  Mon/Sun toggle on the right
+class _HeroTabPills extends ConsumerWidget {
   final HomeFocus currentFocus;
   final Color accentColor;
   final bool isDark;
   final ValueChanged<HomeFocus> onTabSelected;
 
-  static const _tabs = [HomeFocus.workout, HomeFocus.nutrition, HomeFocus.fasting];
+  // COMING SOON: Add HomeFocus.fasting back when fasting feature launches
+  static const _tabs = [HomeFocus.workout, HomeFocus.nutrition];
 
   const _HeroTabPills({
     required this.currentFocus,
@@ -264,52 +202,81 @@ class _HeroTabPills extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final startsSunday = ref.watch(weekStartsSundayProvider);
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Row(
-        children: _tabs.map((focus) {
-          final isActive = focus == currentFocus;
-          return Padding(
-            padding: const EdgeInsets.only(right: 24),
-            child: GestureDetector(
-              behavior: HitTestBehavior.opaque,
-              onTap: () => onTabSelected(focus),
-              child: Semantics(
-                selected: isActive,
-                label: '${_label(focus)} tab',
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 6),
-                      child: Text(
-                        _label(focus).toUpperCase(),
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: isActive ? FontWeight.w700 : FontWeight.w600,
-                          color: isActive ? accentColor : textSecondary,
-                          letterSpacing: 1.2,
+        children: [
+          ..._tabs.map((focus) {
+            final isActive = focus == currentFocus;
+            return Padding(
+              padding: const EdgeInsets.only(right: 24),
+              child: GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: () => onTabSelected(focus),
+                child: Semantics(
+                  selected: isActive,
+                  label: '${_label(focus)} tab',
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 6),
+                        child: Text(
+                          _label(focus).toUpperCase(),
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: isActive ? FontWeight.w700 : FontWeight.w600,
+                            color: isActive ? accentColor : textSecondary,
+                            letterSpacing: 1.2,
+                          ),
                         ),
                       ),
-                    ),
-                    AnimatedContainer(
-                      duration: const Duration(milliseconds: 200),
-                      height: 2,
-                      width: isActive ? 24 : 0,
-                      decoration: BoxDecoration(
-                        color: accentColor,
-                        borderRadius: BorderRadius.circular(1),
+                      AnimatedContainer(
+                        duration: const Duration(milliseconds: 200),
+                        height: 2,
+                        width: isActive ? 24 : 0,
+                        decoration: BoxDecoration(
+                          color: accentColor,
+                          borderRadius: BorderRadius.circular(1),
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
+            );
+          }),
+          const Spacer(),
+          // Mon/Sun day toggle
+          if (currentFocus == HomeFocus.workout)
+            GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: () {
+                HapticService.selection();
+                ref.read(weekStartsSundayProvider.notifier).toggle();
+              },
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.swap_horiz, size: 13, color: textMuted),
+                  const SizedBox(width: 2),
+                  Text(
+                    startsSunday ? 'Sun' : 'Mon',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w500,
+                      color: textMuted,
+                    ),
+                  ),
+                ],
+              ),
             ),
-          );
-        }).toList(),
+        ],
       ),
     );
   }

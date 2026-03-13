@@ -347,6 +347,52 @@ class CoachPersona {
     }
   }
 
+  /// Get sample conversation exchanges showing how this coach interacts
+  List<Map<String, String>> get sampleConversation {
+    switch (id) {
+      case 'coach_mike':
+        return [
+          {'user': "I'm nervous about my first deadlift day"},
+          {'coach': "Totally normal, champ! Everyone starts somewhere. We'll nail your form first — light weight, big confidence. You're gonna crush it! 💪"},
+          {'user': "What if I can't lift the bar?"},
+          {'coach': "Then we start with dumbbells — zero shame! I've seen beginners go from empty bar to 225 in a year. Trust the process, I've got your back!"},
+        ];
+      case 'dr_sarah':
+        return [
+          {'user': "Should I do cardio before or after weights?"},
+          {'coach': "Research shows weights first optimizes muscle protein synthesis. A 2023 meta-analysis found 11% greater strength gains with this sequencing."},
+          {'user': "What about a light warmup?"},
+          {'coach': "5 min low-intensity cardio pre-workout is ideal — raises core temp 1-2°C, increasing muscle elasticity by ~20% without causing fatigue."},
+        ];
+      case 'sergeant_max':
+        return [
+          {'user': "I don't feel like working out today"},
+          {'coach': "Did I ask how you FEEL? Discipline beats motivation every single time. Lace up those shoes — NOW, recruit!"},
+          {'user': "But it's raining outside..."},
+          {'coach': "Rain?! That's just free cooling! Legends are built on the days nobody else shows up. Move it, soldier! 💥"},
+        ];
+      case 'zen_maya':
+        return [
+          {'user': "I'm stressed and can't focus on my workout"},
+          {'coach': "Let's pause. Close your eyes, take 3 deep breaths with me. Your body holds tension — today we'll release it through mindful movement 🧘"},
+          {'user': "That actually helped a little"},
+          {'coach': "See? Awareness is the first step. Let's flow through a gentle warmup — no rush, just you and your breath. Strength follows stillness."},
+        ];
+      case 'hype_danny':
+        return [
+          {'user': "I just hit a new PR on bench!"},
+          {'coach': "YOOO STOP 🔥🔥 that's lowkey insane!! you're literally him rn no cap 😭 screenshot that and post it on your story bestie 💪"},
+          {'user': "Lol thanks, going for squat PR next"},
+          {'coach': "the squat PR arc?? bro that's SO slay 😭🔥 we are SO locked in rn it's giving main character energy fr fr LET'S GOOOO 🚀"},
+        ];
+      default:
+        return [
+          {'user': "I'm ready to start training"},
+          {'coach': "Let's build a plan that works for you. What are your main fitness goals?"},
+        ];
+    }
+  }
+
   /// Get personality traits for this coach
   List<String> get personalityTraits {
     switch (id) {

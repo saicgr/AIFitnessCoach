@@ -3753,7 +3753,7 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
 
       switch (envId) {
         case 'home':
-          _selectedEquipment.addAll(['bodyweight', 'resistance_bands']);
+          _selectedEquipment.addAll(['bodyweight']);
           break;
         case 'home_gym':
           _selectedEquipment.addAll([

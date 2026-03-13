@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../core/constants/app_colors.dart';
+import '../../widgets/glass_back_button.dart';
 import '../../core/theme/theme_colors.dart';
 import '../../data/providers/social_provider.dart';
 
@@ -159,10 +160,8 @@ class _StoryCreateScreenState extends ConsumerState<StoryCreateScreen> {
         backgroundColor: backgroundColor,
         surfaceTintColor: Colors.transparent,
         elevation: 0,
-        leading: IconButton(
-          onPressed: () => Navigator.pop(context),
-          icon: const Icon(Icons.close_rounded),
-        ),
+        automaticallyImplyLeading: false,
+        leading: const GlassBackButton(icon: Icons.close_rounded),
         title: Text(
           'New Story',
           style: Theme.of(context).textTheme.titleLarge?.copyWith(

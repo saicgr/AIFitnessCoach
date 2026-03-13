@@ -66,6 +66,12 @@ class StapleExercise {
   final String? energySystem;
   final String? impactLevel;
   final String? category;
+  // User-specified strength/timed params
+  final int? userSets;
+  final String? userReps;  // "10" or "8-12" format
+  final int? userRestSeconds;
+  // Day-of-week targeting: [0,2,4] = Mon/Wed/Fri, null = all days
+  final List<int>? targetDays;
 
   const StapleExercise({
     required this.id,
@@ -91,6 +97,10 @@ class StapleExercise {
     this.energySystem,
     this.impactLevel,
     this.category,
+    this.userSets,
+    this.userReps,
+    this.userRestSeconds,
+    this.targetDays,
   });
 
   factory StapleExercise.fromJson(Map<String, dynamic> json) {
@@ -118,6 +128,10 @@ class StapleExercise {
       energySystem: json['energy_system'] as String?,
       impactLevel: json['impact_level'] as String?,
       category: json['category'] as String?,
+      userSets: (json['user_sets'] as num?)?.toInt(),
+      userReps: json['user_reps'] as String?,
+      userRestSeconds: (json['user_rest_seconds'] as num?)?.toInt(),
+      targetDays: (json['target_days'] as List<dynamic>?)?.map((e) => (e as num).toInt()).toList(),
     );
   }
 
@@ -806,6 +820,10 @@ class ExercisePreferencesRepository {
     String? gymProfileId,
     String section = 'main',
     Map<String, double>? cardioParams,
+    int? userSets,
+    String? userReps,
+    int? userRestSeconds,
+    List<int>? targetDays,
   }) async {
     debugPrint('🔒 [ExercisePrefs] Adding staple: $exerciseName for user: $userId');
 
@@ -818,6 +836,10 @@ class ExercisePreferencesRepository {
         if (reason != null) 'reason': reason,
         if (gymProfileId != null) 'gym_profile_id': gymProfileId,
         'section': section,
+        if (userSets != null) 'user_sets': userSets,
+        if (userReps != null) 'user_reps': userReps,
+        if (userRestSeconds != null) 'user_rest_seconds': userRestSeconds,
+        if (targetDays != null) 'target_days': targetDays,
       };
 
       if (cardioParams != null) {

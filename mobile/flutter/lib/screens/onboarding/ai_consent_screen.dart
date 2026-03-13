@@ -7,6 +7,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/providers/window_mode_provider.dart';
+import '../../widgets/glass_back_button.dart';
 import '../../widgets/press_and_hold_button.dart';
 import 'health_disclaimer_screen.dart';
 import 'widgets/foldable_quiz_scaffold.dart';
@@ -108,8 +109,25 @@ class _AiConsentScreenState extends ConsumerState<AiConsentScreen> {
               ),
               child: const Icon(Icons.shield_outlined, color: Colors.white, size: 26),
             ),
-            progressBar: _buildProgressIndicator(isDark),
-            content: SingleChildScrollView(
+            headerOverlay: Padding(
+              padding: const EdgeInsets.only(left: 16, right: 16, top: 8),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: GlassBackButton(
+                      onTap: () {
+                        HapticFeedback.lightImpact();
+                        context.go('/training-split');
+                      },
+                    ),
+                  ),
+                  _buildProgressIndicator(isDark),
+                ],
+              ),
+            ),
+            content: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 24),
               child: Column(
                 children: [
@@ -120,15 +138,15 @@ class _AiConsentScreenState extends ConsumerState<AiConsentScreen> {
                       return const SizedBox.shrink();
                     }
                     return Padding(
-                      padding: const EdgeInsets.only(bottom: 8),
+                      padding: const EdgeInsets.only(bottom: 4),
                       child: _buildHeader(isDark, textPrimary, textSecondary),
                     );
                   }),
 
                   // --- Privacy section ---
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 6),
                   _buildSectionLabel('Your Data', Icons.lock_outline, isDark ? AppColors.cyan : AppColorsLight.cyan, isDark, textPrimary, 0),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 4),
                   _buildCompactPoint(
                     icon: Icons.shield_outlined,
                     text: 'Data is anonymized before AI processing',
@@ -137,7 +155,7 @@ class _AiConsentScreenState extends ConsumerState<AiConsentScreen> {
                     textPrimary: textPrimary,
                     accentColor: isDark ? AppColors.cyan : AppColorsLight.cyan,
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 4),
                   _buildCompactPoint(
                     icon: Icons.visibility_off_outlined,
                     text: 'AI sees fitness data only, never personal details',
@@ -146,7 +164,7 @@ class _AiConsentScreenState extends ConsumerState<AiConsentScreen> {
                     textPrimary: textPrimary,
                     accentColor: isDark ? AppColors.cyan : AppColorsLight.cyan,
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 4),
                   _buildCompactPoint(
                     icon: Icons.toggle_on_outlined,
                     text: 'Review, export, or delete your data anytime',
@@ -155,20 +173,29 @@ class _AiConsentScreenState extends ConsumerState<AiConsentScreen> {
                     textPrimary: textPrimary,
                     accentColor: isDark ? AppColors.cyan : AppColorsLight.cyan,
                   ),
+                  const SizedBox(height: 4),
+                  _buildCompactPoint(
+                    icon: Icons.block_outlined,
+                    text: 'Your data is never sold to third parties',
+                    delay: 175,
+                    isDark: isDark,
+                    textPrimary: textPrimary,
+                    accentColor: isDark ? AppColors.cyan : AppColorsLight.cyan,
+                  ),
 
                   // --- Health & Safety section ---
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 8),
                   _buildSectionLabel('Health & Safety', Icons.health_and_safety_outlined, isDark ? AppColors.warning : AppColorsLight.warning, isDark, textPrimary, 200),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 4),
                   _buildCompactPoint(
                     icon: Icons.phone_android_outlined,
-                    text: 'FitWiz is not a medical device or substitute for professional advice',
+                    text: 'Not a medical device or substitute for professional advice',
                     delay: 250,
                     isDark: isDark,
                     textPrimary: textPrimary,
                     accentColor: isDark ? AppColors.warning : AppColorsLight.warning,
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 4),
                   _buildCompactPoint(
                     icon: Icons.medical_services_outlined,
                     text: 'Consult your doctor before starting any exercise program',
@@ -177,18 +204,27 @@ class _AiConsentScreenState extends ConsumerState<AiConsentScreen> {
                     textPrimary: textPrimary,
                     accentColor: isDark ? AppColors.warning : AppColorsLight.warning,
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 4),
                   _buildCompactPoint(
                     icon: Icons.hearing_outlined,
-                    text: 'Stop if you feel pain or dizziness — AI cannot assess you in real-time, but AI Chat is always available',
+                    text: 'Stop if you feel pain or dizziness — AI Chat is always available',
                     delay: 350,
+                    isDark: isDark,
+                    textPrimary: textPrimary,
+                    accentColor: isDark ? AppColors.warning : AppColorsLight.warning,
+                  ),
+                  const SizedBox(height: 4),
+                  _buildCompactPoint(
+                    icon: Icons.accessibility_new_outlined,
+                    text: 'Workouts adapt to your injuries and limitations automatically',
+                    delay: 375,
                     isDark: isDark,
                     textPrimary: textPrimary,
                     accentColor: isDark ? AppColors.warning : AppColorsLight.warning,
                   ),
 
                   // Links row
-                  const SizedBox(height: 20),
+                  const Spacer(),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
@@ -206,7 +242,7 @@ class _AiConsentScreenState extends ConsumerState<AiConsentScreen> {
                       }, isDark),
                     ],
                   ).animate().fadeIn(delay: 450.ms),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 8),
                 ],
               ),
             ),
@@ -219,19 +255,19 @@ class _AiConsentScreenState extends ConsumerState<AiConsentScreen> {
 
   Widget _buildHeader(bool isDark, Color textPrimary, Color textSecondary) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(24, 16, 24, 8),
+      padding: const EdgeInsets.fromLTRB(0, 4, 0, 0),
       child: Row(
         children: [
           Container(
-            width: 48,
-            height: 48,
+            width: 40,
+            height: 40,
             decoration: BoxDecoration(
               color: isDark ? AppColors.cyan : AppColorsLight.cyan,
-              borderRadius: BorderRadius.circular(14),
+              borderRadius: BorderRadius.circular(12),
             ),
-            child: const Icon(Icons.shield_outlined, color: Colors.white, size: 26),
+            child: const Icon(Icons.shield_outlined, color: Colors.white, size: 22),
           ),
-          const SizedBox(width: 14),
+          const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -239,16 +275,15 @@ class _AiConsentScreenState extends ConsumerState<AiConsentScreen> {
                 Text(
                   'Privacy & Safety',
                   style: TextStyle(
-                    fontSize: 24,
+                    fontSize: 20,
                     fontWeight: FontWeight.bold,
                     color: textPrimary,
                   ),
                 ),
-                const SizedBox(height: 2),
                 Text(
                   'How we protect you and your data',
                   style: TextStyle(
-                    fontSize: 14,
+                    fontSize: 13,
                     color: textSecondary,
                   ),
                 ),
@@ -262,45 +297,55 @@ class _AiConsentScreenState extends ConsumerState<AiConsentScreen> {
 
   Widget _buildProgressIndicator(bool isDark) {
     const orange = Color(0xFFF97316);
+    final inactiveColor = isDark ? AppColors.glassSurface : AppColorsLight.glassSurface;
+    const currentStep = 3; // Privacy is step 4 (0-based: 3)
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      child: Row(
         children: [
-          Row(
-            children: [
-              _buildStepDot(1, 'Sign In', true, orange, isDark),
-              Expanded(
-                child: Container(height: 2, color: orange),
-              ),
-              _buildStepDot(2, 'About You', true, orange, isDark),
-              Expanded(
-                child: Container(height: 2, color: orange),
-              ),
-              _buildStepDot(3, 'Privacy', true, orange, isDark),
-              Expanded(
-                child: Container(
-                  height: 2,
-                  color: isDark ? AppColors.glassSurface : AppColorsLight.glassSurface,
-                ),
-              ),
-              _buildStepDot(4, 'Coach', false, orange, isDark),
-            ],
-          ),
+          _buildStepDot(1, 'Sign In', true, orange, isDark, 0),
+          _buildProgressLine(0, currentStep, orange, inactiveColor, 1),
+          _buildStepDot(2, 'About You', true, orange, isDark, 2),
+          _buildProgressLine(1, currentStep, orange, inactiveColor, 3),
+          _buildStepDot(3, 'Split', true, orange, isDark, 4),
+          _buildProgressLine(2, currentStep, orange, inactiveColor, 5),
+          _buildStepDot(4, 'Privacy', true, orange, isDark, 6),
+          _buildProgressLine(3, currentStep, orange, inactiveColor, 7),
+          _buildStepDot(5, 'Coach', false, orange, isDark, 8),
         ],
-      ).animate().fadeIn(delay: 200.ms),
+      ),
     );
   }
 
-  Widget _buildStepDot(int step, String label, bool isComplete, Color activeColor, bool isDark) {
+  Widget _buildProgressLine(int segmentIndex, int currentStep, Color activeColor, Color inactiveColor, int animOrder) {
+    final isComplete = segmentIndex < currentStep;
+    final delay = 100 + (animOrder * 80);
+
+    return Expanded(
+      child: Container(
+        height: 2,
+        color: inactiveColor,
+        child: isComplete
+            ? Container(height: 2, color: activeColor)
+                .animate()
+                .scaleX(begin: 0, end: 1, alignment: Alignment.centerLeft,
+                    delay: Duration(milliseconds: delay), duration: 300.ms,
+                    curve: Curves.easeOut)
+            : null,
+      ),
+    );
+  }
+
+  Widget _buildStepDot(int step, String label, bool isComplete, Color activeColor, bool isDark, int animOrder) {
     final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+    final delay = 100 + (animOrder * 80);
 
     return Column(
       children: [
         Container(
-          width: 28,
-          height: 28,
+          width: 24,
+          height: 24,
           decoration: BoxDecoration(
             color: isComplete ? activeColor : (isDark ? AppColors.glassSurface : AppColorsLight.glassSurface),
             shape: BoxShape.circle,
@@ -311,22 +356,23 @@ class _AiConsentScreenState extends ConsumerState<AiConsentScreen> {
           ),
           child: Center(
             child: isComplete
-                ? const Icon(Icons.check, size: 16, color: Colors.white)
+                ? const Icon(Icons.check, size: 14, color: Colors.white)
                 : Text(
                     '$step',
                     style: TextStyle(
-                      fontSize: 12,
+                      fontSize: 10,
                       fontWeight: FontWeight.bold,
                       color: textSecondary,
                     ),
                   ),
           ),
-        ),
+        ).animate()
+         .scaleXY(begin: 0, end: 1, delay: Duration(milliseconds: delay), duration: 300.ms, curve: Curves.easeOutBack),
         const SizedBox(height: 4),
         Text(
           label,
           style: TextStyle(
-            fontSize: 10,
+            fontSize: 9,
             color: isComplete ? activeColor : textSecondary,
             fontWeight: isComplete ? FontWeight.w600 : FontWeight.normal,
           ),
@@ -362,10 +408,10 @@ class _AiConsentScreenState extends ConsumerState<AiConsentScreen> {
     required Color accentColor,
   }) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       decoration: BoxDecoration(
         color: isDark ? AppColors.elevated : AppColorsLight.elevated,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(10),
         border: Border.all(
           color: isDark ? AppColors.cardBorder : AppColorsLight.cardBorder,
         ),
@@ -373,23 +419,23 @@ class _AiConsentScreenState extends ConsumerState<AiConsentScreen> {
       child: Row(
         children: [
           Container(
-            width: 32,
-            height: 32,
+            width: 28,
+            height: 28,
             decoration: BoxDecoration(
               color: accentColor.withValues(alpha: 0.15),
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(7),
             ),
-            child: Icon(icon, color: accentColor, size: 18),
+            child: Icon(icon, color: accentColor, size: 15),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: 10),
           Expanded(
             child: Text(
               text,
               style: TextStyle(
-                fontSize: 13,
+                fontSize: 12.5,
                 fontWeight: FontWeight.w500,
                 color: textPrimary,
-                height: 1.3,
+                height: 1.25,
               ),
             ),
           ),
@@ -417,7 +463,7 @@ class _AiConsentScreenState extends ConsumerState<AiConsentScreen> {
 
   Widget _buildBottomButton(bool isDark) {
     return Container(
-      padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
+      padding: const EdgeInsets.fromLTRB(24, 8, 24, 16),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topCenter,

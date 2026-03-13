@@ -12,7 +12,7 @@ import '../models/exercises_state.dart';
 // Re-export exceptions for consumers
 export '../../../core/exceptions/app_exceptions.dart';
 
-// In-memory cache for category exercises (H5: avoid re-fetching 500 exercises)
+// In-memory cache for category exercises (H5: avoid re-fetching all exercises)
 CategoryExercisesData? _categoryExercisesCache;
 DateTime? _categoryCacheTime;
 const _categoryCacheDuration = Duration(hours: 24);
@@ -350,10 +350,13 @@ class CategoryExercisesData {
   final Map<String, List<LibraryExercise>> preview;
   /// All exercises for each category (for See All screen)
   final Map<String, List<LibraryExercise>> all;
+  /// Flat list of every exercise (deduplicated, sorted A-Z) for "All Exercises" section
+  final List<LibraryExercise> allExercisesSorted;
 
   const CategoryExercisesData({
     required this.preview,
     required this.all,
+    this.allExercisesSorted = const [],
   });
 }
 
@@ -375,9 +378,9 @@ final categoryExercisesProvider =
   final all = <String, List<LibraryExercise>>{};
 
   try {
-    // Fetch more exercises from API for better See All experience
+    // Fetch all exercises from API for accurate counts and All Exercises section
     final response = await apiClient.get(
-      '${ApiConstants.library}/exercises?limit=500&offset=0',
+      '${ApiConstants.library}/exercises?limit=5000&offset=0',
     );
 
     if (response.statusCode != 200) {
@@ -446,11 +449,19 @@ final categoryExercisesProvider =
       preview['Core'] = byBodyPart['Core']!.take(20).toList();
     }
 
+    // Sort all exercises alphabetically for "All Exercises" section
+    final sortedAll = List<LibraryExercise>.from(allExercises)
+      ..sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
+
     // H5: Store result in cache
-    final result = CategoryExercisesData(preview: preview, all: all);
+    final result = CategoryExercisesData(
+      preview: preview,
+      all: all,
+      allExercisesSorted: sortedAll,
+    );
     _categoryExercisesCache = result;
     _categoryCacheTime = DateTime.now();
-    debugPrint('✅ [CategoryExercises] Cached ${all.length} categories');
+    debugPrint('✅ [CategoryExercises] Cached ${all.length} categories, ${sortedAll.length} total exercises');
 
     return result;
   } catch (e) {

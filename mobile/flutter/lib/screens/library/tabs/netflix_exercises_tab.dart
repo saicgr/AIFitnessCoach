@@ -43,6 +43,29 @@ class _NetflixExercisesTabState extends ConsumerState<NetflixExercisesTab> {
   // Track whether we've already prefetched exercise images
   bool _imagesPrefetched = false;
 
+  // "All Exercises" pagination: show N exercises at a time for performance
+  int _displayedAllExercisesCount = 100;
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController.addListener(_onScroll);
+  }
+
+  void _onScroll() {
+    if (!_scrollController.hasClients) return;
+    if (_scrollController.position.pixels >=
+        _scrollController.position.maxScrollExtent - 300) {
+      final oldCount = _displayedAllExercisesCount;
+      final newCount = oldCount + 100;
+      if (newCount != oldCount) {
+        setState(() {
+          _displayedAllExercisesCount = newCount;
+        });
+      }
+    }
+  }
+
   /// Prefetch first batch of exercise images into CachedNetworkImage's
   /// disk + memory cache so they appear instantly.
   void _prefetchImages(List<LibraryExercise> exercises) {
@@ -66,6 +89,7 @@ class _NetflixExercisesTabState extends ConsumerState<NetflixExercisesTab> {
 
   @override
   void dispose() {
+    _scrollController.removeListener(_onScroll);
     _scrollController.dispose();
     _searchController.dispose();
     _searchFocusNode.dispose();
@@ -491,6 +515,102 @@ class _NetflixExercisesTabState extends ConsumerState<NetflixExercisesTab> {
         // 3. Training Splits (discovery, lower priority)
         _buildGravlSplitsSection(isDark)
             .animate().fadeIn(delay: const Duration(milliseconds: 200)),
+
+        // 4. All Exercises (paginated, alphabetical)
+        _buildAllExercisesSection(
+          categoryData.allExercisesSorted,
+          isDark,
+          textMuted,
+        ).animate().fadeIn(delay: const Duration(milliseconds: 300)),
+      ],
+    );
+  }
+
+  /// Build "All Exercises" section with client-side pagination
+  Widget _buildAllExercisesSection(
+    List<LibraryExercise> sortedExercises,
+    bool isDark,
+    Color textMuted,
+  ) {
+    if (sortedExercises.isEmpty) return const SizedBox.shrink();
+
+    final displayCount = _displayedAllExercisesCount.clamp(0, sortedExercises.length);
+    final displayedExercises = sortedExercises.take(displayCount).toList();
+    final hasMore = displayCount < sortedExercises.length;
+    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Section header
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 24, 16, 12),
+          child: Row(
+            children: [
+              Text(
+                'All Exercises',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w700,
+                  color: textPrimary,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                '${sortedExercises.length}',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
+                  color: textMuted,
+                ),
+              ),
+            ],
+          ),
+        ),
+        // Exercise list (non-scrollable, inside parent ListView)
+        ListView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          itemCount: displayedExercises.length + (hasMore ? 1 : 0),
+          itemBuilder: (context, index) {
+            if (index >= displayedExercises.length) {
+              // Loading indicator at bottom
+              return Padding(
+                padding: const EdgeInsets.symmetric(vertical: 24),
+                child: Center(
+                  child: SizedBox(
+                    width: 24,
+                    height: 24,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: textMuted,
+                    ),
+                  ),
+                ),
+              );
+            }
+            final exercise = displayedExercises[index];
+            return _ExerciseListCard(
+              exercise: exercise,
+              isDark: isDark,
+              onTap: () => _showExerciseDetail(exercise),
+            );
+          },
+        ),
+        if (!hasMore)
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 16),
+            child: Center(
+              child: Text(
+                'All ${sortedExercises.length} exercises loaded',
+                style: TextStyle(
+                  fontSize: 13,
+                  color: textMuted,
+                ),
+              ),
+            ),
+          ),
       ],
     );
   }

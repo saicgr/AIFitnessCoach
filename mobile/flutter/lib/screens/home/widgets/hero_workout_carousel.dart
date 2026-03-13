@@ -8,6 +8,7 @@ import '../../../data/models/workout.dart';
 import '../../../data/repositories/workout_repository.dart';
 import '../../../data/providers/today_workout_provider.dart';
 import '../../../data/services/haptic_service.dart';
+import '../../../core/providers/variation_provider.dart';
 import 'hero_workout_card.dart';
 
 /// Represents either a workout or a placeholder date in the carousel
@@ -253,18 +254,34 @@ class _HeroWorkoutCarouselState extends ConsumerState<HeroWorkoutCarousel> {
             }
           }
 
-          // Handle quick workouts on rest days (today not in workoutDays)
+          // Handle workouts on non-workout days (staple-only workouts, quick workouts)
+          // Check all days this week for workouts that exist in DB but aren't workout days
           final now = DateTime.now();
           final today = DateTime(now.year, now.month, now.day);
-          final todayKey = _dateKey(today);
-          final isTodayWorkoutDay = workoutDates.any((d) => _dateKey(d) == todayKey);
-          if (!isTodayWorkoutDay) {
-            final restDayWorkouts = _findAllWorkoutsForDate(mergedWorkouts, today);
+          final workoutDateKeys = workoutDates.map(_dateKey).toSet();
+
+          // Scan ONLY remaining days in the current display week for non-workout-day workouts
+          final weekEnd = weekConfig.weekStart(today).add(const Duration(days: 6));
+          for (int dayOffset = 0; dayOffset < 7; dayOffset++) {
+            final checkDate = today.add(Duration(days: dayOffset));
+            if (checkDate.isAfter(weekEnd)) break; // Don't spill into next week
+            final checkKey = _dateKey(checkDate);
+            if (workoutDateKeys.contains(checkKey)) continue; // Already handled
+
+            final restDayWorkouts = _findAllWorkoutsForDate(mergedWorkouts, checkDate);
             for (final workout in restDayWorkouts) {
               final wId = workout.id ?? '';
               if (wId.isNotEmpty && addedWorkoutIds.add(wId)) {
-                // Insert at the start so today's quick workout is visible first
-                carouselItems.insert(0, CarouselItem.workout(workout));
+                // Insert in chronological order
+                int insertIdx = carouselItems.length;
+                for (int i = 0; i < carouselItems.length; i++) {
+                  final itemDate = carouselItems[i].date;
+                  if (itemDate != null && checkDate.isBefore(itemDate)) {
+                    insertIdx = i;
+                    break;
+                  }
+                }
+                carouselItems.insert(insertIdx, CarouselItem.workout(workout));
               }
             }
           }
@@ -288,51 +305,158 @@ class _HeroWorkoutCarouselState extends ConsumerState<HeroWorkoutCarousel> {
         // Show single card if only one item (no carousel needed)
         if (carouselItems.length == 1) {
           final item = carouselItems.first;
-          return SizedBox(
-            height: HeroWorkoutCarousel.cardHeight,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: item.isWorkout
-                  ? HeroWorkoutCard(workout: item.workout!, inCarousel: false)
-                  : _buildPendingCard(item.placeholderDate!, isDark, accentColor),
-            ),
+          return Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              SizedBox(
+                height: HeroWorkoutCarousel.cardHeight,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: item.isWorkout
+                      ? HeroWorkoutCard(workout: item.workout!, inCarousel: false)
+                      : _buildPendingCard(item.placeholderDate!, isDark, accentColor),
+                ),
+              ),
+              _buildVarietyChip(isDark),
+            ],
           );
         }
 
         // PageView carousel for multiple items
-        return SizedBox(
-          height: 360,
-          child: PageView.builder(
-            controller: _pageController,
-            itemCount: carouselItems.length,
-            onPageChanged: (index) {
-              HapticService.selection();
-              setState(() => _currentPage = index);
-              widget.onPageChanged?.call(index);
-            },
-            itemBuilder: (context, index) {
-              final item = carouselItems[index];
+        return Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            SizedBox(
+              height: 360,
+              child: PageView.builder(
+                controller: _pageController,
+                itemCount: carouselItems.length,
+                onPageChanged: (index) {
+                  HapticService.selection();
+                  setState(() => _currentPage = index);
+                  widget.onPageChanged?.call(index);
+                },
+                itemBuilder: (context, index) {
+                  final item = carouselItems[index];
 
-              // Scale down and slightly dim non-active cards
-              final isActive = index == _currentPage;
-              final scale = isActive ? 1.0 : 0.92;
-              final opacity = isActive ? 1.0 : 0.8;
+                  // Scale down and slightly dim non-active cards
+                  final isActive = index == _currentPage;
+                  final scale = isActive ? 1.0 : 0.92;
+                  final opacity = isActive ? 1.0 : 0.8;
 
-              return AnimatedScale(
-                scale: scale,
-                duration: const Duration(milliseconds: 200),
-                child: AnimatedOpacity(
-                  opacity: opacity,
-                  duration: const Duration(milliseconds: 200),
-                  child: item.isWorkout
-                      ? HeroWorkoutCard(workout: item.workout!, inCarousel: true)
-                      : _buildPendingCard(item.placeholderDate!, isDark, accentColor),
-                ),
-              );
-            },
-          ),
+                  return AnimatedScale(
+                    scale: scale,
+                    duration: const Duration(milliseconds: 200),
+                    child: AnimatedOpacity(
+                      opacity: opacity,
+                      duration: const Duration(milliseconds: 200),
+                      child: item.isWorkout
+                          ? HeroWorkoutCard(workout: item.workout!, inCarousel: true)
+                          : _buildPendingCard(item.placeholderDate!, isDark, accentColor),
+                    ),
+                  );
+                },
+              ),
+            ),
+            _buildVarietyChip(isDark),
+          ],
         );
       },
+    );
+  }
+
+  Widget _buildVarietyChip(bool isDark) {
+    final variationState = ref.watch(variationProvider);
+    final percentage = variationState.percentage;
+    final label = percentage <= 25 ? 'Low' : (percentage <= 50 ? 'Medium' : 'High');
+    final textMuted = isDark ? Colors.white38 : Colors.black38;
+
+    return Padding(
+      padding: const EdgeInsets.only(left: 20, top: 8),
+      child: Align(
+        alignment: Alignment.centerLeft,
+        child: GestureDetector(
+          onTap: () => _showVariationSlider(isDark),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.shuffle_rounded, size: 14, color: textMuted),
+              const SizedBox(width: 4),
+              Text(
+                'Variety: $label',
+                style: TextStyle(fontSize: 12, color: textMuted),
+              ),
+              const SizedBox(width: 2),
+              Icon(Icons.chevron_right, size: 14, color: textMuted),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showVariationSlider(bool isDark) {
+    final currentPercentage = ref.read(variationProvider).percentage;
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: isDark ? const Color(0xFF1a1a1a) : Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (sheetContext) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'Weekly Variety',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                  color: isDark ? Colors.white : Colors.black87,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'How much exercise variety each week?',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: isDark ? Colors.white54 : Colors.black45,
+                ),
+              ),
+              const SizedBox(height: 20),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  _buildVarietyOption('Low', 25, currentPercentage, sheetContext),
+                  _buildVarietyOption('Medium', 50, currentPercentage, sheetContext),
+                  _buildVarietyOption('High', 75, currentPercentage, sheetContext),
+                ],
+              ),
+              const SizedBox(height: 16),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildVarietyOption(String label, int value, int current, BuildContext sheetContext) {
+    final presets = [25, 50, 75];
+    final closestPreset = presets.reduce((a, b) => (a - current).abs() < (b - current).abs() ? a : b);
+    final isSelected = value == closestPreset;
+    return ChoiceChip(
+      label: Text('$label ($value%)'),
+      selected: isSelected,
+      onSelected: (_) {
+        HapticService.selection();
+        ref.read(variationProvider.notifier).setVariation(value);
+        Navigator.pop(sheetContext);
+      },
+      selectedColor: const Color(0xFF00BCD4).withValues(alpha: 0.2),
+      checkmarkColor: const Color(0xFF00BCD4),
     );
   }
 

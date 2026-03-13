@@ -788,15 +788,15 @@ final subscriptionProvider = StateNotifierProvider<SubscriptionNotifier, Subscri
 class ProductPricing {
   static const Map<String, Map<String, dynamic>> products = {
     'premium_monthly': {
-      'price': 6.99,
+      'price': 4.99,
       'period': 'month',
       'trialDays': 0,
     },
     'premium_yearly': {
-      'price': 69.99,
+      'price': 49.99,
       'period': 'year',
-      'monthlyEquivalent': 5.83,
-      'savings': '17%',
+      'monthlyEquivalent': 4.17,
+      'savings': '16%',
       'trialDays': 7,
     },
   };

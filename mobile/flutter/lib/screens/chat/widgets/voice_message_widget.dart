@@ -154,6 +154,7 @@ class _VoiceMessageBubbleState extends State<VoiceMessageBubble> {
   Duration _duration = Duration.zero;
   StreamSubscription<Duration>? _positionSub;
   StreamSubscription<PlayerState>? _stateSub;
+  StreamSubscription<Duration>? _durationSub;
 
   @override
   void initState() {
@@ -169,14 +170,16 @@ class _VoiceMessageBubbleState extends State<VoiceMessageBubble> {
         setState(() => _isPlaying = state == PlayerState.playing);
       }
       if (state == PlayerState.completed) {
-        setState(() {
-          _isPlaying = false;
-          _position = Duration.zero;
-        });
+        if (mounted) {
+          setState(() {
+            _isPlaying = false;
+            _position = Duration.zero;
+          });
+        }
       }
     });
 
-    _player.onDurationChanged.listen((d) {
+    _durationSub = _player.onDurationChanged.listen((d) {
       if (mounted && d.inMilliseconds > 0) {
         setState(() => _duration = d);
       }
@@ -187,6 +190,7 @@ class _VoiceMessageBubbleState extends State<VoiceMessageBubble> {
   void dispose() {
     _positionSub?.cancel();
     _stateSub?.cancel();
+    _durationSub?.cancel();
     _player.dispose();
     super.dispose();
   }

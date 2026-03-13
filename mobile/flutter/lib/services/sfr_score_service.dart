@@ -1,5 +1,11 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
+
+/// Top-level function for decoding SFR JSON in an isolate.
+Map<String, dynamic> _decodeSfrJson(String jsonStr) {
+  return jsonDecode(jsonStr) as Map<String, dynamic>;
+}
 
 /// SFR (Stimulus-to-Fatigue Ratio) data for a single exercise.
 class ExerciseSfr {
@@ -30,7 +36,7 @@ class SfrScoreService {
     if (_patternCache != null) return;
 
     final jsonStr = await rootBundle.loadString('assets/data/exercise_sfr.json');
-    final data = jsonDecode(jsonStr) as Map<String, dynamic>;
+    final data = await compute(_decodeSfrJson, jsonStr);
 
     final patterns = data['patterns'] as Map<String, dynamic>;
     _patternCache = {};

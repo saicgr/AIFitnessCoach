@@ -300,6 +300,12 @@ class NutritionPreferences {
   final String nutritionGoal; // Legacy field for backward compatibility
   @JsonKey(name: 'rate_of_change')
   final String? rateOfChange;
+  @JsonKey(name: 'goal_weight_kg')
+  final double? goalWeightKg;
+  @JsonKey(name: 'goal_date')
+  final DateTime? goalDate;
+  @JsonKey(name: 'weeks_to_goal')
+  final int? weeksToGoal;
 
   // Calculated targets
   @JsonKey(name: 'calculated_bmr')
@@ -406,6 +412,9 @@ class NutritionPreferences {
     this.nutritionGoals = const ['maintain'],
     this.nutritionGoal = 'maintain',
     this.rateOfChange,
+    this.goalWeightKg,
+    this.goalDate,
+    this.weeksToGoal,
     this.calculatedBmr,
     this.calculatedTdee,
     this.targetCalories,
@@ -504,6 +513,9 @@ class NutritionPreferences {
     List<String>? nutritionGoals,
     String? nutritionGoal,
     String? rateOfChange,
+    double? goalWeightKg,
+    DateTime? goalDate,
+    int? weeksToGoal,
     int? calculatedBmr,
     int? calculatedTdee,
     int? targetCalories,
@@ -550,6 +562,9 @@ class NutritionPreferences {
       nutritionGoals: nutritionGoals ?? this.nutritionGoals,
       nutritionGoal: nutritionGoal ?? this.nutritionGoal,
       rateOfChange: rateOfChange ?? this.rateOfChange,
+      goalWeightKg: goalWeightKg ?? this.goalWeightKg,
+      goalDate: goalDate ?? this.goalDate,
+      weeksToGoal: weeksToGoal ?? this.weeksToGoal,
       calculatedBmr: calculatedBmr ?? this.calculatedBmr,
       calculatedTdee: calculatedTdee ?? this.calculatedTdee,
       targetCalories: targetCalories ?? this.targetCalories,

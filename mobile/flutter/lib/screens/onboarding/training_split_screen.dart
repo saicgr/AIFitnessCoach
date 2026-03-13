@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/providers/training_preferences_provider.dart';
 import '../../core/providers/window_mode_provider.dart';
+import '../../widgets/glass_back_button.dart';
 import 'pre_auth_quiz_screen.dart';
 import 'widgets/foldable_quiz_scaffold.dart';
 
@@ -191,7 +192,24 @@ class _TrainingSplitScreenState extends ConsumerState<TrainingSplitScreen> {
               ),
               child: const Icon(Icons.fitness_center, color: Colors.white, size: 26),
             ),
-            progressBar: _buildProgressIndicator(isDark),
+            headerOverlay: Padding(
+              padding: const EdgeInsets.only(left: 16, right: 16, top: 8),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: GlassBackButton(
+                      onTap: () {
+                        HapticFeedback.lightImpact();
+                        context.go('/weight-projection');
+                      },
+                    ),
+                  ),
+                  _buildProgressIndicator(isDark),
+                ],
+              ),
+            ),
             content: SingleChildScrollView(
               padding: const EdgeInsets.symmetric(horizontal: 24),
               child: Column(
@@ -477,42 +495,50 @@ class _TrainingSplitScreenState extends ConsumerState<TrainingSplitScreen> {
 
   Widget _buildProgressIndicator(bool isDark) {
     const orange = Color(0xFFF97316);
+    final inactiveColor = isDark ? AppColors.glassSurface : AppColorsLight.glassSurface;
+    // Current step index (0-based): this is step 3 (Split)
+    const currentStep = 2;
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+      child: Row(
         children: [
-          Row(
-            children: [
-              _buildStepDot(1, 'Sign In', true, orange, isDark),
-              Expanded(child: Container(height: 2, color: orange)),
-              _buildStepDot(2, 'About You', true, orange, isDark),
-              Expanded(child: Container(height: 2, color: orange)),
-              _buildStepDot(3, 'Split', true, orange, isDark),
-              Expanded(
-                child: Container(
-                  height: 2,
-                  color: isDark ? AppColors.glassSurface : AppColorsLight.glassSurface,
-                ),
-              ),
-              _buildStepDot(4, 'Privacy', false, orange, isDark),
-              Expanded(
-                child: Container(
-                  height: 2,
-                  color: isDark ? AppColors.glassSurface : AppColorsLight.glassSurface,
-                ),
-              ),
-              _buildStepDot(5, 'Coach', false, orange, isDark),
-            ],
-          ),
+          _buildStepDot(1, 'Sign In', true, orange, isDark, 0),
+          _buildProgressLine(0, currentStep, orange, inactiveColor, 1),
+          _buildStepDot(2, 'About You', true, orange, isDark, 2),
+          _buildProgressLine(1, currentStep, orange, inactiveColor, 3),
+          _buildStepDot(3, 'Split', true, orange, isDark, 4),
+          _buildProgressLine(2, currentStep, orange, inactiveColor, 5),
+          _buildStepDot(4, 'Privacy', false, orange, isDark, 6),
+          _buildProgressLine(3, currentStep, orange, inactiveColor, 7),
+          _buildStepDot(5, 'Coach', false, orange, isDark, 8),
         ],
-      ).animate().fadeIn(delay: 200.ms),
+      ),
     );
   }
 
-  Widget _buildStepDot(int step, String label, bool isComplete, Color activeColor, bool isDark) {
+  Widget _buildProgressLine(int segmentIndex, int currentStep, Color activeColor, Color inactiveColor, int animOrder) {
+    final isComplete = segmentIndex < currentStep;
+    final delay = 100 + (animOrder * 80);
+
+    return Expanded(
+      child: Container(
+        height: 2,
+        color: inactiveColor,
+        child: isComplete
+            ? Container(height: 2, color: activeColor)
+                .animate()
+                .scaleX(begin: 0, end: 1, alignment: Alignment.centerLeft,
+                    delay: Duration(milliseconds: delay), duration: 300.ms,
+                    curve: Curves.easeOut)
+            : null,
+      ),
+    );
+  }
+
+  Widget _buildStepDot(int step, String label, bool isComplete, Color activeColor, bool isDark, int animOrder) {
     final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+    final delay = 100 + (animOrder * 80);
 
     return Column(
       children: [
@@ -539,7 +565,8 @@ class _TrainingSplitScreenState extends ConsumerState<TrainingSplitScreen> {
                     ),
                   ),
           ),
-        ),
+        ).animate()
+         .scaleXY(begin: 0, end: 1, delay: Duration(milliseconds: delay), duration: 300.ms, curve: Curves.easeOutBack),
         const SizedBox(height: 4),
         Text(
           label,

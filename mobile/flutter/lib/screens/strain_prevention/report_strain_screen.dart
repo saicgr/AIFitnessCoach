@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
 import '../../data/services/api_client.dart';
+import '../../widgets/glass_back_button.dart';
 import 'strain_dashboard_screen.dart';
 
 class ReportStrainScreen extends ConsumerStatefulWidget {
@@ -75,7 +76,7 @@ class _ReportStrainScreenState extends ConsumerState<ReportStrainScreen> {
     final el = d ? AppColors.elevated : AppColorsLight.elevated;
     return Scaffold(
       backgroundColor: bg,
-      appBar: AppBar(backgroundColor: bg, elevation: 0, leading: IconButton(icon: Icon(Icons.close, color: tp), onPressed: () => context.pop()), title: Text('Report Strain', style: TextStyle(fontWeight: FontWeight.bold, color: tp)), centerTitle: true),
+      appBar: AppBar(backgroundColor: bg, elevation: 0, automaticallyImplyLeading: false, leading: const GlassBackButton(icon: Icons.close), title: Text('Report Strain', style: TextStyle(fontWeight: FontWeight.bold, color: tp)), centerTitle: true),
       body: SafeArea(child: SingleChildScrollView(padding: const EdgeInsets.all(16), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         _section('Affected Muscles', _buildMuscleGrid(d, tp, tm, el)),
         const SizedBox(height: 24),

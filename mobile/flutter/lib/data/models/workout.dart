@@ -105,10 +105,10 @@ class Workout extends Equatable {
     if (exercisesJson == null) return const [];
     try {
       List<dynamic> exercisesList;
-      if (exercisesJson is String) {
-        exercisesList = jsonDecode(exercisesJson as String) as List;
-      } else if (exercisesJson is List) {
+      if (exercisesJson is List) {
         exercisesList = exercisesJson as List;
+      } else if (exercisesJson is String) {
+        exercisesList = jsonDecode(exercisesJson as String) as List;
       } else {
         return const [];
       }

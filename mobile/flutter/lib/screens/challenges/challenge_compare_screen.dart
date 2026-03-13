@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
 import '../../data/services/api_client.dart';
 import '../../data/services/challenges_service.dart';
+import '../../widgets/glass_back_button.dart';
 
 /// Full-screen side-by-side comparison of challenge results.
 ///
@@ -71,10 +72,8 @@ class _ChallengeCompareScreenState
       appBar: AppBar(
         backgroundColor: bg,
         surfaceTintColor: Colors.transparent,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back_rounded, color: textColor),
-          onPressed: () => context.pop(),
-        ),
+        automaticallyImplyLeading: false,
+        leading: const GlassBackButton(),
         title: Text(
           'Challenge Results',
           style: TextStyle(

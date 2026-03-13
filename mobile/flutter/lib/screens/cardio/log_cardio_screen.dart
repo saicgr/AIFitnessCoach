@@ -6,6 +6,7 @@ import '../../core/constants/app_colors.dart';
 import '../../data/models/cardio_session.dart';
 import '../../data/providers/cardio_session_provider.dart';
 import '../../data/services/api_client.dart';
+import '../../widgets/glass_back_button.dart';
 
 class LogCardioScreen extends ConsumerStatefulWidget {
   final String? workoutId;
@@ -85,10 +86,8 @@ class _LogCardioScreenState extends ConsumerState<LogCardioScreen> {
         backgroundColor: backgroundColor,
         foregroundColor: textPrimary,
         title: Text('Log Cardio', style: TextStyle(color: textPrimary)),
-        leading: IconButton(
-          icon: Icon(Icons.close, color: textPrimary),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
+        automaticallyImplyLeading: false,
+        leading: const GlassBackButton(icon: Icons.close),
       ),
       body: GestureDetector(
         onTap: () => FocusScope.of(context).unfocus(),

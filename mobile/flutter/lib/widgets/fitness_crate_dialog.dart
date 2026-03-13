@@ -101,6 +101,7 @@ class _FitnessCrateDialogState extends ConsumerState<FitnessCrateDialog>
     _rewards = _generateRewards();
 
     // Open reveal
+    if (!mounted) return;
     setState(() => _isOpened = true);
     _confettiController.play();
     HapticService.success();

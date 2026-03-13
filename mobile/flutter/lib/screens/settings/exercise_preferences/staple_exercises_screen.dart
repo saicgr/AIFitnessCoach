@@ -55,6 +55,10 @@ class StapleExercisesScreen extends ConsumerWidget {
         gymProfileId: choice.gymProfileId,
         swapExerciseId: choice.swapExerciseId,
         cardioParams: choice.cardioParams,
+        userSets: choice.userSets,
+        userReps: choice.userReps,
+        userRestSeconds: choice.userRestSeconds,
+        targetDays: choice.targetDays,
       );
 
       if (context.mounted) {
@@ -97,10 +101,6 @@ class StapleExercisesScreen extends ConsumerWidget {
                     textMuted,
                     elevated,
                   ),
-
-        // Regeneration overlay
-        if (staplesState.isRegenerating)
-          _buildRegenerationOverlay(context, staplesState.regenerationMessage, isDark),
       ],
     );
 
@@ -123,63 +123,15 @@ class StapleExercisesScreen extends ConsumerWidget {
           ),
         ),
       ),
-      floatingActionButton: staplesState.isRegenerating
-          ? null
-          : FloatingActionButton(
-              onPressed: () {
-                HapticService.light();
-                _showAddExercisePicker(context, ref);
-              },
-              backgroundColor: AppColors.cyan,
-              child: const Icon(Icons.add, color: Colors.white),
-            ),
-      body: body,
-    );
-  }
-
-  Widget _buildRegenerationOverlay(BuildContext context, String? message, bool isDark) {
-    return Container(
-      color: (isDark ? Colors.black : Colors.white).withValues(alpha: 0.85),
-      child: Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const CircularProgressIndicator(
-              valueColor: AlwaysStoppedAnimation<Color>(AppColors.cyan),
-            ),
-            const SizedBox(height: 24),
-            Text(
-              'Regenerating Workouts',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
-                color: isDark ? AppColors.textPrimary : AppColorsLight.textPrimary,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 32),
-              child: Text(
-                message ?? 'Adding staple to upcoming workouts...',
-                style: TextStyle(
-                  fontSize: 14,
-                  color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
-                ),
-                textAlign: TextAlign.center,
-              ),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              'This may take a moment',
-              style: TextStyle(
-                fontSize: 12,
-                color: (isDark ? AppColors.textMuted : AppColorsLight.textMuted)
-                    .withValues(alpha: 0.7),
-              ),
-            ),
-          ],
-        ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          HapticService.light();
+          _showAddExercisePicker(context, ref);
+        },
+        backgroundColor: AppColors.cyan,
+        child: const Icon(Icons.add, color: Colors.white),
       ),
+      body: body,
     );
   }
 

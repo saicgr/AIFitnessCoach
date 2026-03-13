@@ -233,6 +233,17 @@ class _NetflixHeroSectionState extends ConsumerState<NetflixHeroSection>
   }
 
   @override
+  void didUpdateWidget(covariant NetflixHeroSection oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.exercises.length != oldWidget.exercises.length) {
+      final maxPage = widget.exercises.isEmpty ? 0 : widget.exercises.length - 1;
+      if (_currentPage > maxPage) {
+        _currentPage = maxPage;
+      }
+    }
+  }
+
+  @override
   void dispose() {
     _fadeController.dispose();
     _slideController.dispose();

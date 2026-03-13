@@ -221,10 +221,8 @@ class _ComprehensiveStatsScreenState extends ConsumerState<ComprehensiveStatsScr
       appBar: AppBar(
         backgroundColor: backgroundColor,
         foregroundColor: textPrimary,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 18),
-          onPressed: () => context.canPop() ? context.pop() : null,
-        ),
+        automaticallyImplyLeading: false,
+        leading: const GlassBackButton(),
         title: Text(
           'Stats & Scores',
           style: TextStyle(
@@ -1988,7 +1986,7 @@ class _MeasurementsTab extends ConsumerStatefulWidget {
 
 class _MeasurementsTabState extends ConsumerState<_MeasurementsTab> {
   String _selectedPeriod = '30d';
-  MeasurementType? _selectedMetricType;
+  MeasurementType _selectedType = MeasurementType.weight;
   List<MeasurementType> _measurementOrder = [];
 
   static const _defaultOrder = [
@@ -2007,6 +2005,47 @@ class _MeasurementsTabState extends ConsumerState<_MeasurementsTab> {
     {'label': '90D', 'value': '90d', 'days': 90},
     {'label': 'All', 'value': 'all', 'days': 365},
   ];
+
+  static const _measurementGroups = [
+    {
+      'title': 'Body Composition',
+      'types': [MeasurementType.weight, MeasurementType.bodyFat],
+    },
+    {
+      'title': 'Upper Body',
+      'types': [
+        MeasurementType.neck,
+        MeasurementType.shoulders,
+        MeasurementType.chest,
+        MeasurementType.bicepsLeft,
+        MeasurementType.bicepsRight,
+        MeasurementType.forearmLeft,
+        MeasurementType.forearmRight,
+      ],
+    },
+    {
+      'title': 'Core',
+      'types': [MeasurementType.waist, MeasurementType.hips],
+    },
+    {
+      'title': 'Lower Body',
+      'types': [
+        MeasurementType.thighLeft,
+        MeasurementType.thighRight,
+        MeasurementType.calfLeft,
+        MeasurementType.calfRight,
+      ],
+    },
+  ];
+
+  static const _derivedMetricPlacement = <MeasurementType, List<DerivedMetricType>>{
+    MeasurementType.weight: [DerivedMetricType.bmi, DerivedMetricType.ffmi, DerivedMetricType.leanBodyMass],
+    MeasurementType.waist: [DerivedMetricType.waistToHipRatio, DerivedMetricType.waistToHeightRatio],
+    MeasurementType.shoulders: [DerivedMetricType.shoulderToWaistRatio],
+    MeasurementType.chest: [DerivedMetricType.chestToWaistRatio],
+    MeasurementType.bicepsRight: [DerivedMetricType.armSymmetry],
+    MeasurementType.thighRight: [DerivedMetricType.legSymmetry],
+  };
 
   @override
   void initState() {
@@ -2120,7 +2159,6 @@ class _MeasurementsTabState extends ConsumerState<_MeasurementsTab> {
     if (summary != null && summary.latestByType.isNotEmpty) {
       derivedMetrics = computeDerivedMetrics(summary: summary, heightCm: heightCm, gender: gender);
     } else {
-      // Fallback: compute from profile weight + height even with no measurements
       derivedMetrics = computeDerivedMetrics(
         summary: MeasurementsSummary(
           latestByType: {
@@ -2148,98 +2186,24 @@ class _MeasurementsTabState extends ConsumerState<_MeasurementsTab> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Weight Tracking section
-                const _SectionHeader(title: 'Weight Tracking'),
-                const SizedBox(height: 12),
-
-                // Time range chips
-                _buildTimeRangeChips(cyan: cyan, elevated: elevated, textMuted: textMuted, cardBorder: cardBorder),
-                const SizedBox(height: 12),
-
-                // Weight trend chart
-                _buildWeightChart(
+                // Hero chart card
+                _buildHeroChart(
                   state: state,
+                  summary: summary,
                   isDark: isDark,
                   elevated: elevated,
                   textPrimary: textPrimary,
                   textMuted: textMuted,
                   cyan: cyan,
-                ),
-                const SizedBox(height: 24),
-
-                // Metric selector chips — always visible, all types
-                _SectionHeader(title: 'Metric Charts'),
-                const SizedBox(height: 12),
-                SizedBox(
-                  height: 36,
-                  child: ListView.separated(
-                    scrollDirection: Axis.horizontal,
-                    itemCount: _measurementOrder.length,
-                    separatorBuilder: (_, __) => const SizedBox(width: 8),
-                    itemBuilder: (context, index) {
-                      final type = _measurementOrder[index];
-                      // Skip weight since it has its own chart above
-                      if (type == MeasurementType.weight) return const SizedBox.shrink();
-                      final isSelected = (_selectedMetricType ?? MeasurementType.bodyFat) == type;
-                      final hasData = (state.historyByType[type]?.length ?? 0) >= 2;
-                      return GestureDetector(
-                        onTap: () => setState(() => _selectedMetricType = type),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                          decoration: BoxDecoration(
-                            color: isSelected ? cyan.withValues(alpha: 0.2) : elevated,
-                            borderRadius: BorderRadius.circular(18),
-                            border: Border.all(color: isSelected ? cyan : cardBorder),
-                          ),
-                          child: Text(
-                            type.displayName,
-                            style: TextStyle(
-                              fontSize: 13,
-                              fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-                              color: isSelected ? cyan : (hasData ? textMuted : textMuted.withValues(alpha: 0.5)),
-                            ),
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-                ),
-                const SizedBox(height: 12),
-
-                // Per-metric chart
-                _buildMetricChart(
-                  type: _selectedMetricType ?? MeasurementType.bodyFat,
-                  state: state,
-                  isDark: isDark,
-                  elevated: elevated,
-                  textMuted: textMuted,
-                  cyan: cyan,
-                ),
-                const SizedBox(height: 24),
-
-                // Body Metrics (derived) - always shown
-                _SectionHeader(title: 'Body Metrics'),
-                const SizedBox(height: 12),
-                _buildAllDerivedMetrics(
-                  computed: derivedMetrics,
-                  isDark: isDark,
-                  elevated: elevated,
-                  textPrimary: textPrimary,
-                  textMuted: textMuted,
                   cardBorder: cardBorder,
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: 16),
 
-                // Body Measurements
-                _SectionHeader(title: 'Body Measurements'),
-                const SizedBox(height: 8),
-                Text(
-                  'Tap to log · Drag handle to reorder',
-                  style: TextStyle(fontSize: 11, color: textMuted),
-                ),
-                const SizedBox(height: 8),
-                _buildMeasurementsList(
+                // Unified grouped list
+                _buildGroupedList(
+                  state: state,
                   summary: summary,
+                  derivedMetrics: derivedMetrics,
                   isDark: isDark,
                   elevated: elevated,
                   textPrimary: textPrimary,
@@ -2259,7 +2223,7 @@ class _MeasurementsTabState extends ConsumerState<_MeasurementsTab> {
           right: 16,
           bottom: 16,
           child: FloatingActionButton(
-            onPressed: () => _showQuickAddSheet(context, ref, cyan),
+            onPressed: () => _showQuickAddSheet(context, ref, cyan, _selectedType),
             backgroundColor: cyan,
             child: Icon(Icons.add, color: isDark ? AppColors.pureBlack : Colors.white),
           ),
@@ -2417,17 +2381,23 @@ class _MeasurementsTabState extends ConsumerState<_MeasurementsTab> {
     );
   }
 
-  Widget _buildWeightChart({
+  Widget _buildHeroChart({
     required MeasurementsState state,
+    required MeasurementsSummary? summary,
     required bool isDark,
     required Color elevated,
     required Color textPrimary,
     required Color textMuted,
     required Color cyan,
+    required Color cardBorder,
   }) {
-    final weightHistory = state.historyByType[MeasurementType.weight] ?? [];
-    final filtered = _filterByPeriod(weightHistory).reversed.toList();
-    debugPrint('📊 [WeightChart] total=${weightHistory.length}, filtered=${filtered.length}, period=$_selectedPeriod');
+    final history = state.historyByType[_selectedType] ?? [];
+    final filtered = _filterByPeriod(history).reversed.toList();
+    final latest = summary?.latestByType[_selectedType];
+    final change = summary?.changeFromPrevious[_selectedType];
+    final unit = _selectedType == MeasurementType.weight
+        ? 'kg'
+        : (_selectedType == MeasurementType.bodyFat ? '%' : 'cm');
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -2435,39 +2405,223 @@ class _MeasurementsTabState extends ConsumerState<_MeasurementsTab> {
         color: elevated,
         borderRadius: BorderRadius.circular(16),
       ),
-      child: SizedBox(
-        height: 200,
-        child: filtered.isEmpty
-            ? Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.show_chart, size: 40, color: textMuted),
-                    const SizedBox(height: 8),
-                    Text('Log weight to see trends', style: TextStyle(color: textMuted)),
-                  ],
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Title row: type name (left), latest value + change (right)
+          Row(
+            children: [
+              Text(
+                _selectedType.displayName,
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: textPrimary,
                 ),
-              )
-            : filtered.length == 1
-                ? Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          '${_formatValue(filtered.first.value)} kg',
-                          style: TextStyle(fontSize: 36, fontWeight: FontWeight.bold, color: cyan),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          DateFormat('MMM d, yyyy').format(filtered.first.recordedAt),
-                          style: TextStyle(fontSize: 13, color: textMuted),
-                        ),
-                        const SizedBox(height: 8),
-                        Text('Log again to see trends', style: TextStyle(fontSize: 12, color: textMuted)),
-                      ],
+              ),
+              const Spacer(),
+              if (latest != null) ...[
+                Text(
+                  '${_formatValue(latest.value)} $unit',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: textPrimary,
+                  ),
+                ),
+                if (change != null && change.abs() >= 0.1) ...[
+                  const SizedBox(width: 6),
+                  Icon(
+                    change > 0 ? Icons.arrow_upward : Icons.arrow_downward,
+                    size: 14,
+                    color: _getChangeColor(_selectedType, change),
+                  ),
+                  Text(
+                    _formatValue(change.abs()),
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: _getChangeColor(_selectedType, change),
                     ),
-                  )
-                : _buildWeightLineChart(filtered, cyan: cyan, textMuted: textMuted, isDark: isDark),
+                  ),
+                ],
+              ] else
+                Text('— $unit', style: TextStyle(fontSize: 16, color: textMuted)),
+            ],
+          ),
+          const SizedBox(height: 12),
+
+          // Time range chips
+          _buildTimeRangeChips(cyan: cyan, elevated: elevated, textMuted: textMuted, cardBorder: cardBorder),
+          const SizedBox(height: 12),
+
+          // Chart area with animated transitions
+          SizedBox(
+            height: 200,
+            child: AnimatedSwitcher(
+              duration: const Duration(milliseconds: 300),
+              child: _buildHeroChartContent(
+                key: ValueKey('${_selectedType.name}_$_selectedPeriod'),
+                filtered: filtered,
+                isDark: isDark,
+                textMuted: textMuted,
+                cyan: cyan,
+                unit: unit,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHeroChartContent({
+    required Key key,
+    required List<MeasurementEntry> filtered,
+    required bool isDark,
+    required Color textMuted,
+    required Color cyan,
+    required String unit,
+  }) {
+    if (filtered.isEmpty) {
+      return Center(
+        key: key,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.show_chart, size: 40, color: textMuted),
+            const SizedBox(height: 8),
+            Text(
+              'Log ${_selectedType.displayName.toLowerCase()} to see trends',
+              style: TextStyle(color: textMuted),
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (filtered.length == 1) {
+      return Center(
+        key: key,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+              '${_formatValue(filtered.first.value)} $unit',
+              style: TextStyle(fontSize: 36, fontWeight: FontWeight.bold, color: cyan),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              DateFormat('MMM d, yyyy').format(filtered.first.recordedAt),
+              style: TextStyle(fontSize: 13, color: textMuted),
+            ),
+            const SizedBox(height: 8),
+            Text('Log again to see trends', style: TextStyle(fontSize: 12, color: textMuted)),
+          ],
+        ),
+      );
+    }
+
+    // 2+ entries: show chart
+    if (_selectedType == MeasurementType.weight) {
+      return KeyedSubtree(
+        key: key,
+        child: _buildWeightLineChart(filtered, cyan: cyan, textMuted: textMuted, isDark: isDark),
+      );
+    }
+    return KeyedSubtree(
+      key: key,
+      child: _buildSingleLineChart(filtered, cyan: cyan, textMuted: textMuted, isDark: isDark),
+    );
+  }
+
+  Widget _buildSingleLineChart(
+    List<MeasurementEntry> data, {
+    required Color cyan,
+    required Color textMuted,
+    required bool isDark,
+  }) {
+    final spots = data.asMap().entries.map((e) =>
+      FlSpot(e.key.toDouble(), e.value.value)).toList();
+    final values = spots.map((s) => s.y).toList();
+    final minY = values.reduce((a, b) => a < b ? a : b) * 0.95;
+    final maxY = values.reduce((a, b) => a > b ? a : b) * 1.05;
+
+    return LineChart(
+      LineChartData(
+        gridData: FlGridData(
+          show: true,
+          drawVerticalLine: false,
+          horizontalInterval: (maxY - minY) / 3,
+          getDrawingHorizontalLine: (value) => FlLine(
+            color: isDark ? AppColors.cardBorder : AppColorsLight.cardBorder,
+            strokeWidth: 0.5,
+          ),
+        ),
+        titlesData: FlTitlesData(
+          leftTitles: AxisTitles(
+            sideTitles: SideTitles(
+              showTitles: true,
+              reservedSize: 40,
+              getTitlesWidget: (value, meta) => Text(
+                _formatValue(value),
+                style: TextStyle(fontSize: 10, color: textMuted),
+              ),
+            ),
+          ),
+          bottomTitles: AxisTitles(
+            sideTitles: SideTitles(
+              showTitles: true,
+              reservedSize: 25,
+              interval: (data.length / 4).ceil().toDouble().clamp(1, double.infinity),
+              getTitlesWidget: (value, meta) {
+                final index = value.toInt();
+                if (index >= 0 && index < data.length) {
+                  return Padding(
+                    padding: const EdgeInsets.only(top: 8),
+                    child: Text(
+                      DateFormat('M/d').format(data[index].recordedAt),
+                      style: TextStyle(fontSize: 9, color: textMuted),
+                    ),
+                  );
+                }
+                return const SizedBox.shrink();
+              },
+            ),
+          ),
+          rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+          topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+        ),
+        borderData: FlBorderData(show: false),
+        minY: minY,
+        maxY: maxY,
+        lineBarsData: [
+          LineChartBarData(
+            spots: spots,
+            isCurved: true,
+            color: cyan,
+            barWidth: 2.5,
+            isStrokeCapRound: true,
+            dotData: FlDotData(
+              show: data.length < 20,
+              getDotPainter: (spot, percent, barData, index) => FlDotCirclePainter(
+                radius: 3,
+                color: cyan,
+                strokeWidth: 1.5,
+                strokeColor: isDark ? AppColors.pureBlack : Colors.white,
+              ),
+            ),
+            belowBarData: BarAreaData(
+              show: true,
+              gradient: LinearGradient(
+                colors: [cyan.withOpacity(0.2), cyan.withOpacity(0.0)],
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+              ),
+            ),
+          ),
+        ],
+        lineTouchData: const LineTouchData(enabled: false),
       ),
     );
   }
@@ -2610,373 +2764,191 @@ class _MeasurementsTabState extends ConsumerState<_MeasurementsTab> {
     );
   }
 
-  Widget _buildMetricChart({
+  Widget _buildDerivedPills({
     required MeasurementType type,
-    required MeasurementsState state,
+    required Map<DerivedMetricType, DerivedMetricResult> derivedMetrics,
     required bool isDark,
-    required Color elevated,
     required Color textMuted,
-    required Color cyan,
   }) {
-    final history = state.historyByType[type] ?? [];
-    final filtered = _filterByPeriod(history).reversed.toList();
+    final placements = _derivedMetricPlacement[type];
+    if (placements == null || placements.isEmpty) return const SizedBox.shrink();
 
-    if (filtered.length < 2) {
-      return Container(
-        height: 150,
-        decoration: BoxDecoration(
-          color: elevated,
-          borderRadius: BorderRadius.circular(16),
-        ),
-        child: Center(
-          child: Text('Not enough data for ${type.displayName}', style: TextStyle(color: textMuted)),
+    final pills = <Widget>[];
+    for (final dType in placements) {
+      final result = derivedMetrics[dType];
+      if (result == null) continue;
+      final valueStr = dType.unit.isNotEmpty
+          ? '${_formatValue(result.value)} ${dType.unit}'
+          : _formatValue(result.value);
+
+      pills.add(
+        GestureDetector(
+          onTap: () {
+            HapticService.light();
+            context.push('/measurements/derived/${dType.name}');
+          },
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            decoration: BoxDecoration(
+              color: result.color.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Text(
+              result.label.isNotEmpty
+                  ? '${dType.displayName} $valueStr ${result.label}'
+                  : '${dType.displayName} $valueStr',
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+                color: result.color,
+              ),
+            ),
+          ),
         ),
       );
     }
 
-    final spots = filtered.asMap().entries.map((e) =>
-      FlSpot(e.key.toDouble(), e.value.value)).toList();
-    final values = spots.map((s) => s.y).toList();
-    final minY = values.reduce((a, b) => a < b ? a : b) * 0.95;
-    final maxY = values.reduce((a, b) => a > b ? a : b) * 1.05;
+    if (pills.isEmpty) return const SizedBox.shrink();
 
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: elevated,
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: SizedBox(
-        height: 150,
-        child: LineChart(
-          LineChartData(
-            gridData: FlGridData(
-              show: true,
-              drawVerticalLine: false,
-              horizontalInterval: (maxY - minY) / 3,
-              getDrawingHorizontalLine: (value) => FlLine(
-                color: isDark ? AppColors.cardBorder : AppColorsLight.cardBorder,
-                strokeWidth: 0.5,
-              ),
-            ),
-            titlesData: FlTitlesData(
-              leftTitles: AxisTitles(
-                sideTitles: SideTitles(
-                  showTitles: true,
-                  reservedSize: 40,
-                  getTitlesWidget: (value, meta) => Text(
-                    _formatValue(value),
-                    style: TextStyle(fontSize: 10, color: textMuted),
-                  ),
-                ),
-              ),
-              bottomTitles: AxisTitles(
-                sideTitles: SideTitles(
-                  showTitles: true,
-                  reservedSize: 25,
-                  interval: (filtered.length / 3).ceil().toDouble().clamp(1, double.infinity),
-                  getTitlesWidget: (value, meta) {
-                    final index = value.toInt();
-                    if (index >= 0 && index < filtered.length) {
-                      return Text(
-                        DateFormat('M/d').format(filtered[index].recordedAt),
-                        style: TextStyle(fontSize: 9, color: textMuted),
-                      );
-                    }
-                    return const SizedBox.shrink();
-                  },
-                ),
-              ),
-              rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-              topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-            ),
-            borderData: FlBorderData(show: false),
-            minY: minY,
-            maxY: maxY,
-            lineBarsData: [
-              LineChartBarData(
-                spots: spots,
-                isCurved: true,
-                color: cyan,
-                barWidth: 2.5,
-                isStrokeCapRound: true,
-                dotData: FlDotData(
-                  show: filtered.length < 20,
-                  getDotPainter: (spot, percent, barData, index) => FlDotCirclePainter(
-                    radius: 3,
-                    color: cyan,
-                    strokeWidth: 1.5,
-                    strokeColor: isDark ? AppColors.pureBlack : Colors.white,
-                  ),
-                ),
-                belowBarData: BarAreaData(
-                  show: true,
-                  gradient: LinearGradient(
-                    colors: [cyan.withOpacity(0.2), cyan.withOpacity(0.0)],
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                  ),
-                ),
-              ),
-            ],
-            lineTouchData: const LineTouchData(enabled: false),
-          ),
-        ),
+    return Padding(
+      padding: const EdgeInsets.only(left: 48, right: 16, bottom: 8, top: 2),
+      child: Wrap(
+        spacing: 6,
+        runSpacing: 4,
+        children: pills,
       ),
     );
   }
 
-  /// What data each derived metric needs
-  static const _metricRequirements = {
-    DerivedMetricType.bmi: 'Needs weight + height',
-    DerivedMetricType.waistToHipRatio: 'Needs waist + hips',
-    DerivedMetricType.waistToHeightRatio: 'Needs waist + height',
-    DerivedMetricType.ffmi: 'Needs weight + height + body fat',
-    DerivedMetricType.leanBodyMass: 'Needs weight + body fat',
-    DerivedMetricType.shoulderToWaistRatio: 'Needs shoulders + waist',
-    DerivedMetricType.chestToWaistRatio: 'Needs chest + waist',
-    DerivedMetricType.armSymmetry: 'Needs left + right biceps',
-    DerivedMetricType.legSymmetry: 'Needs left + right thigh',
-  };
-
-  Widget _buildAllDerivedMetrics({
-    required Map<DerivedMetricType, DerivedMetricResult> computed,
+  Widget _buildMeasurementRow({
+    required MeasurementType type,
+    required int index,
+    required MeasurementsSummary? summary,
+    required Map<DerivedMetricType, DerivedMetricResult> derivedMetrics,
     required bool isDark,
     required Color elevated,
     required Color textPrimary,
     required Color textMuted,
+    required Color cyan,
     required Color cardBorder,
+    required bool isLast,
   }) {
+    final entry = summary?.latestByType[type];
+    final change = summary?.changeFromPrevious[type];
+    final hasData = entry != null;
+    final unit = type == MeasurementType.weight
+        ? 'kg'
+        : (type == MeasurementType.bodyFat ? '%' : 'cm');
+    final isSelected = _selectedType == type;
+
     return Container(
+      key: ValueKey(type),
       decoration: BoxDecoration(
-        color: elevated,
-        borderRadius: BorderRadius.circular(16),
+        color: isSelected ? cyan.withValues(alpha: 0.06) : null,
+        border: Border(
+          left: isSelected
+              ? BorderSide(color: cyan, width: 3)
+              : BorderSide.none,
+          bottom: isLast
+              ? BorderSide.none
+              : BorderSide(color: cardBorder, width: 0.5),
+        ),
       ),
       child: Column(
-        children: DerivedMetricType.values.asMap().entries.map((mapEntry) {
-          final index = mapEntry.key;
-          final type = mapEntry.value;
-          final result = computed[type];
-          final hasValue = result != null;
-
-          return Column(
-            children: [
-              if (index > 0)
-                Divider(height: 1, color: cardBorder),
-              InkWell(
-                onTap: hasValue ? () {
-                  HapticService.light();
-                  context.push('/measurements/derived/${type.name}');
-                } : null,
-                borderRadius: BorderRadius.circular(12),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              type.displayName,
-                              style: TextStyle(
-                                fontSize: 15,
-                                fontWeight: FontWeight.w500,
-                                color: hasValue ? textPrimary : textMuted,
-                              ),
-                            ),
-                            if (!hasValue)
-                              Text(
-                                _metricRequirements[type] ?? '',
-                                style: TextStyle(fontSize: 11, color: textMuted.withValues(alpha: 0.6)),
-                              ),
-                          ],
-                        ),
-                      ),
-                      if (hasValue) ...[
-                        if (result.info != null)
-                          GestureDetector(
-                            onTap: () => _showMetricInfo(context, type.displayName, result.info!, isDark),
-                            child: Padding(
-                              padding: const EdgeInsets.only(right: 8),
-                              child: Icon(Icons.info_outline, size: 18, color: textMuted),
-                            ),
-                          ),
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          InkWell(
+            onTap: () {
+              HapticService.light();
+              setState(() => _selectedType = type);
+            },
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 4),
+              child: Row(
+                children: [
+                  ReorderableDragStartListener(
+                    index: index,
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 8),
+                      child: Icon(Icons.drag_handle, color: textMuted, size: 20),
+                    ),
+                  ),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
                         Text(
-                          type.unit.isNotEmpty
-                              ? '${_formatValue(result.value)} ${type.unit}'
-                              : _formatValue(result.value),
+                          type.displayName,
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                            color: hasData ? textPrimary : textMuted,
+                          ),
+                        ),
+                        if (hasData && change != null && change.abs() >= 0.1)
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                change > 0 ? Icons.arrow_upward : Icons.arrow_downward,
+                                size: 12,
+                                color: _getChangeColor(type, change),
+                              ),
+                              Text(
+                                '${_formatValue(change.abs())} ${entry.unit}',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: _getChangeColor(type, change),
+                                ),
+                              ),
+                            ],
+                          ),
+                      ],
+                    ),
+                  ),
+                  hasData
+                      ? Text(
+                          '${_formatValue(entry.value)} ${entry.unit}',
                           style: TextStyle(
                             fontSize: 15,
                             fontWeight: FontWeight.bold,
                             color: textPrimary,
                           ),
+                        )
+                      : Text(
+                          '— $unit',
+                          style: TextStyle(fontSize: 14, color: textMuted.withValues(alpha: 0.5)),
                         ),
-                        if (result.label.isNotEmpty) ...[
-                          const SizedBox(width: 8),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                            decoration: BoxDecoration(
-                              color: result.color.withValues(alpha: 0.15),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Text(
-                              result.label,
-                              style: TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w600,
-                                color: result.color,
-                              ),
-                            ),
-                          ),
-                        ],
-                        const SizedBox(width: 4),
-                        Icon(Icons.chevron_right, size: 18, color: textMuted),
-                      ] else
-                        Text('—', style: TextStyle(fontSize: 15, color: textMuted.withValues(alpha: 0.4))),
-                    ],
+                  const SizedBox(width: 4),
+                  GestureDetector(
+                    onTap: () {
+                      HapticService.light();
+                      context.push('/measurements/${type.name}');
+                    },
+                    child: Padding(
+                      padding: const EdgeInsets.all(4),
+                      child: Icon(Icons.chevron_right, size: 18, color: textMuted),
+                    ),
                   ),
-                ),
-              ),
-            ],
-          );
-        }).toList(),
-      ),
-    );
-  }
-
-  Widget _buildDerivedMetricsCard({
-    required Map<DerivedMetricType, DerivedMetricResult> metrics,
-    required bool isDark,
-    required Color elevated,
-    required Color textPrimary,
-    required Color textMuted,
-    required Color cardBorder,
-  }) {
-    return Container(
-      decoration: BoxDecoration(
-        color: elevated,
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Column(
-        children: metrics.entries.map((entry) {
-          final type = entry.key;
-          final result = entry.value;
-          final valueStr = type.unit.isNotEmpty
-              ? '${_formatValue(result.value)} ${type.unit}'
-              : _formatValue(result.value);
-
-          return Column(
-            children: [
-              if (entry.key != metrics.keys.first)
-                Divider(height: 1, color: cardBorder),
-              InkWell(
-                onTap: () {
-                  HapticService.light();
-                  context.push('/measurements/derived/${type.name}');
-                },
-                borderRadius: BorderRadius.circular(12),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          type.displayName,
-                          style: TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w500,
-                            color: textPrimary,
-                          ),
-                        ),
-                      ),
-                      // Info icon
-                      if (result.info != null)
-                        GestureDetector(
-                          onTap: () => _showMetricInfo(context, type.displayName, result.info!, isDark),
-                          child: Padding(
-                            padding: const EdgeInsets.only(right: 8),
-                            child: Icon(Icons.info_outline, size: 18, color: textMuted),
-                          ),
-                        ),
-                      Text(
-                        valueStr,
-                        style: TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.bold,
-                          color: textPrimary,
-                        ),
-                      ),
-                      if (result.label.isNotEmpty) ...[
-                        const SizedBox(width: 8),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                          decoration: BoxDecoration(
-                            color: result.color.withOpacity(0.15),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Text(
-                            result.label,
-                            style: TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w600,
-                              color: result.color,
-                            ),
-                          ),
-                        ),
-                      ],
-                      const SizedBox(width: 4),
-                      Icon(Icons.chevron_right, size: 18, color: textMuted),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          );
-        }).toList(),
-      ),
-    );
-  }
-
-  void _showMetricInfo(BuildContext context, String title, String info, bool isDark) {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: isDark ? AppColors.nearBlack : Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (context) => Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              title,
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: isDark ? AppColors.textPrimary : AppColorsLight.textPrimary,
+                ],
               ),
             ),
-            const SizedBox(height: 12),
-            Text(
-              info,
-              style: TextStyle(
-                fontSize: 14,
-                color: isDark ? AppColors.textSecondary : AppColorsLight.textSecondary,
-                height: 1.5,
-              ),
-            ),
-            const SizedBox(height: 16),
-          ],
-        ),
+          ),
+          _buildDerivedPills(
+            type: type,
+            derivedMetrics: derivedMetrics,
+            isDark: isDark,
+            textMuted: textMuted,
+          ),
+        ],
       ),
     );
   }
 
-  Widget _buildMeasurementsList({
+  Widget _buildGroupedList({
+    required MeasurementsState state,
     required MeasurementsSummary? summary,
+    required Map<DerivedMetricType, DerivedMetricResult> derivedMetrics,
     required bool isDark,
     required Color elevated,
     required Color textPrimary,
@@ -2984,109 +2956,98 @@ class _MeasurementsTabState extends ConsumerState<_MeasurementsTab> {
     required Color cyan,
     required Color cardBorder,
   }) {
-    // Always show all 15 types in the user's preferred order
-    final orderedTypes = List<MeasurementType>.from(_measurementOrder);
-
     return Container(
       decoration: BoxDecoration(
         color: elevated,
         borderRadius: BorderRadius.circular(16),
       ),
-      child: ReorderableListView.builder(
-        shrinkWrap: true,
-        physics: const NeverScrollableScrollPhysics(),
-        buildDefaultDragHandles: false,
-        itemCount: orderedTypes.length,
-        onReorder: (oldIndex, newIndex) {
-          setState(() {
-            if (newIndex > oldIndex) newIndex--;
-            final item = orderedTypes.removeAt(oldIndex);
-            orderedTypes.insert(newIndex, item);
-            _measurementOrder = List.from(orderedTypes);
-          });
-          _saveOrder();
-        },
-        proxyDecorator: (child, index, animation) {
-          return Material(
-            elevation: 4,
-            borderRadius: BorderRadius.circular(12),
-            child: child,
-          );
-        },
-        itemBuilder: (context, index) {
-          final type = orderedTypes[index];
-          final entry = summary?.latestByType[type];
-          final change = summary?.changeFromPrevious[type];
-          final hasData = entry != null;
-          final unit = type.apiValue == 'weight' ? 'kg'
-              : (type.apiValue == 'body_fat' ? '%' : 'cm');
-
-          return Container(
-            key: ValueKey(type),
-            decoration: BoxDecoration(
-              border: index < orderedTypes.length - 1
-                  ? Border(bottom: BorderSide(color: cardBorder, width: 0.5))
-                  : null,
-            ),
-            child: ListTile(
-              leading: ReorderableDragStartListener(
-                index: index,
-                child: Icon(Icons.drag_handle, color: textMuted, size: 20),
+      clipBehavior: Clip.antiAlias,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          for (int gi = 0; gi < _measurementGroups.length; gi++) ...[
+            // Group header
+            Padding(
+              padding: EdgeInsets.only(
+                left: 16, right: 16,
+                top: gi == 0 ? 16 : 20,
+                bottom: 4,
               ),
-              title: Text(
-                type.displayName,
+              child: Text(
+                (_measurementGroups[gi]['title'] as String).toUpperCase(),
                 style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
-                  color: hasData ? textPrimary : textMuted,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: textMuted,
+                  letterSpacing: 0.8,
                 ),
               ),
-              subtitle: hasData && change != null && change.abs() >= 0.1
-                  ? Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          change > 0 ? Icons.arrow_upward : Icons.arrow_downward,
-                          size: 12,
-                          color: _getChangeColor(type, change),
-                        ),
-                        Text(
-                          '${_formatValue(change.abs())} ${entry.unit}',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: _getChangeColor(type, change),
-                          ),
-                        ),
-                      ],
-                    )
-                  : null,
-              trailing: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  hasData
-                    ? Text(
-                        '${_formatValue(entry.value)} ${entry.unit}',
-                        style: TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.bold,
-                          color: textPrimary,
-                        ),
-                      )
-                    : Text(
-                        '— $unit',
-                        style: TextStyle(fontSize: 14, color: textMuted.withValues(alpha: 0.5)),
-                      ),
-                  const SizedBox(width: 4),
-                  Icon(Icons.chevron_right, size: 18, color: textMuted),
-                ],
-              ),
-              onTap: () {
-                HapticService.light();
-                context.push('/measurements/${type.name}');
-              },
             ),
-          );
-        },
+            // Group rows - get types for this group, filtered to user order
+            Builder(builder: (context) {
+              final groupTypes = _measurementGroups[gi]['types'] as List<MeasurementType>;
+              // Order by the user's preference within the group
+              final orderedGroupTypes = <MeasurementType>[];
+              for (final t in _measurementOrder) {
+                if (groupTypes.contains(t)) orderedGroupTypes.add(t);
+              }
+              // Add any missing types from the group
+              for (final t in groupTypes) {
+                if (!orderedGroupTypes.contains(t)) orderedGroupTypes.add(t);
+              }
+
+              return ReorderableListView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                buildDefaultDragHandles: false,
+                itemCount: orderedGroupTypes.length,
+                onReorder: (oldIndex, newIndex) {
+                  if (newIndex > oldIndex) newIndex--;
+                  setState(() {
+                    // Update position in the flat _measurementOrder
+                    final item = orderedGroupTypes[oldIndex];
+                    final otherItem = orderedGroupTypes[newIndex];
+                    final flatOld = _measurementOrder.indexOf(item);
+                    final flatNew = _measurementOrder.indexOf(otherItem);
+                    if (flatOld >= 0 && flatNew >= 0) {
+                      _measurementOrder.removeAt(flatOld);
+                      final insertAt = _measurementOrder.indexOf(otherItem);
+                      _measurementOrder.insert(
+                        oldIndex < newIndex ? insertAt + 1 : insertAt,
+                        item,
+                      );
+                    }
+                  });
+                  _saveOrder();
+                },
+                proxyDecorator: (child, index, animation) {
+                  return Material(
+                    elevation: 4,
+                    borderRadius: BorderRadius.circular(12),
+                    child: child,
+                  );
+                },
+                itemBuilder: (context, index) {
+                  final type = orderedGroupTypes[index];
+                  return _buildMeasurementRow(
+                    type: type,
+                    index: index,
+                    summary: summary,
+                    derivedMetrics: derivedMetrics,
+                    isDark: isDark,
+                    elevated: elevated,
+                    textPrimary: textPrimary,
+                    textMuted: textMuted,
+                    cyan: cyan,
+                    cardBorder: cardBorder,
+                    isLast: index == orderedGroupTypes.length - 1 && gi == _measurementGroups.length - 1,
+                  );
+                },
+              );
+            }),
+          ],
+          const SizedBox(height: 8),
+        ],
       ),
     );
   }

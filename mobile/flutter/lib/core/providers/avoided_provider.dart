@@ -9,30 +9,22 @@ import '../../data/services/api_client.dart';
 class AvoidedState {
   final List<AvoidedExercise> avoided;
   final bool isLoading;
-  final bool isRegenerating;
-  final String? regenerationMessage;
   final String? error;
 
   const AvoidedState({
     this.avoided = const [],
     this.isLoading = false,
-    this.isRegenerating = false,
-    this.regenerationMessage,
     this.error,
   });
 
   AvoidedState copyWith({
     List<AvoidedExercise>? avoided,
     bool? isLoading,
-    bool? isRegenerating,
-    String? regenerationMessage,
     String? error,
   }) {
     return AvoidedState(
       avoided: avoided ?? this.avoided,
       isLoading: isLoading ?? this.isLoading,
-      isRegenerating: isRegenerating ?? this.isRegenerating,
-      regenerationMessage: regenerationMessage ?? this.regenerationMessage,
       error: error,
     );
   }
@@ -105,7 +97,6 @@ class AvoidedNotifier extends StateNotifier<AvoidedState> {
     String? reason,
     bool isTemporary = false,
     DateTime? endDate,
-    bool regenerateNow = true,
   }) async {
     // Optimistic update
     final optimisticAvoided = AvoidedExercise(
@@ -152,12 +143,7 @@ class AvoidedNotifier extends StateNotifier<AvoidedState> {
         ],
       );
 
-      debugPrint('🚫 [AvoidedProvider] Added avoided: $exerciseName (regenerateNow=$regenerateNow)');
-
-      // Regenerate today's workout to remove the avoided exercise
-      if (regenerateNow) {
-        await _regenerateTodayWorkout(userId);
-      }
+      debugPrint('🚫 [AvoidedProvider] Added avoided: $exerciseName');
 
       // Invalidate workout providers to trigger UI refresh
       _ref.invalidate(todayWorkoutProvider);
@@ -222,57 +208,6 @@ class AvoidedNotifier extends StateNotifier<AvoidedState> {
       return await removeAvoided(exerciseName);
     } else {
       return await addAvoided(exerciseName, exerciseId: exerciseId);
-    }
-  }
-
-  /// Regenerate today's workout without the avoided exercise
-  Future<void> _regenerateTodayWorkout(String userId) async {
-    try {
-      state = state.copyWith(
-        isRegenerating: true,
-        regenerationMessage: 'Updating workout...',
-      );
-
-      // Get today's/next workout
-      final todayWorkoutAsync = _ref.read(todayWorkoutProvider);
-      final response = todayWorkoutAsync.valueOrNull;
-
-      // Get the workout to regenerate (today's or next upcoming)
-      final workoutToRegenerate = response?.todayWorkout ?? response?.nextWorkout;
-
-      if (workoutToRegenerate == null) {
-        debugPrint('🚫 No workout today - avoided exercise will apply to next generation');
-        state = state.copyWith(isRegenerating: false, regenerationMessage: null);
-        return;
-      }
-
-      final workoutRepo = _ref.read(workoutRepositoryProvider);
-
-      // Regenerate single workout using streaming API
-      await for (final progress in workoutRepo.regenerateWorkoutStreaming(
-        workoutId: workoutToRegenerate.id,
-        userId: userId,
-      )) {
-        debugPrint('🏋️ Avoided regeneration: ${progress.message}');
-        state = state.copyWith(regenerationMessage: progress.message);
-
-        if (progress.isCompleted || progress.hasError) {
-          break;
-        }
-      }
-
-      debugPrint('✅ Workout regenerated without avoided exercise');
-      state = state.copyWith(
-        isRegenerating: false,
-        regenerationMessage: null,
-      );
-    } catch (e) {
-      debugPrint('❌ Failed to regenerate workout: $e');
-      state = state.copyWith(
-        isRegenerating: false,
-        regenerationMessage: null,
-      );
-      // Don't fail the avoid addition if regeneration fails
     }
   }
 

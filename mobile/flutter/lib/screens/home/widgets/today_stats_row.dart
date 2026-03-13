@@ -3,6 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../data/providers/xp_provider.dart';
+import '../../../data/providers/consistency_provider.dart';
+import '../../../data/providers/habit_provider.dart';
+import '../../../data/providers/recovery_provider.dart';
+import '../../../data/repositories/auth_repository.dart';
 import '../../../data/repositories/hydration_repository.dart';
 import '../../../data/repositories/nutrition_repository.dart';
 import '../../../data/services/haptic_service.dart';
@@ -18,29 +22,48 @@ class TodayStatsRow extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final pills = ref.watch(trackingPillsProvider);
 
-    final children = <Widget>[];
+    final pillWidgets = <Widget>[];
 
-    if (pills.showGoals) {
-      children.add(const Expanded(child: _GoalsPill(key: ValueKey('goals_pill'))));
-    }
-    if (pills.showCalories) {
-      if (children.isNotEmpty) children.add(const SizedBox(width: 6));
-      children.add(Expanded(flex: pills.visibleCount <= 2 ? 2 : 2, child: const _CaloriesPill(key: ValueKey('calories_pill'))));
-    }
-    if (pills.showWater) {
-      if (children.isNotEmpty) children.add(const SizedBox(width: 6));
-      children.add(const Expanded(child: _WaterPill(key: ValueKey('water_pill'))));
-    }
-    if (pills.showBurned) {
-      if (children.isNotEmpty) children.add(const SizedBox(width: 6));
-      children.add(const Expanded(child: _BurnedPill(key: ValueKey('burned_pill'))));
+    if (pills.showGoals) pillWidgets.add(const _GoalsPill(key: ValueKey('goals_pill')));
+    if (pills.showCalories) pillWidgets.add(const _CaloriesPill(key: ValueKey('calories_pill')));
+    if (pills.showWater) pillWidgets.add(const _WaterPill(key: ValueKey('water_pill')));
+    if (pills.showBurned) pillWidgets.add(const _BurnedPill(key: ValueKey('burned_pill')));
+    if (pills.showSteps) pillWidgets.add(const _StepsPill(key: ValueKey('steps_pill')));
+    if (pills.showSleep) pillWidgets.add(const _SleepPill(key: ValueKey('sleep_pill')));
+    if (pills.showStreak) pillWidgets.add(const _StreakPill(key: ValueKey('streak_pill')));
+    if (pills.showHabits) pillWidgets.add(const _HabitsPill(key: ValueKey('habits_pill')));
+
+    if (pillWidgets.isEmpty) return const SizedBox.shrink();
+
+    // Use Expanded row for <=4 pills, scrollable row for 5+
+    if (pillWidgets.length <= 4) {
+      final children = <Widget>[];
+      for (int i = 0; i < pillWidgets.length; i++) {
+        if (i > 0) children.add(const SizedBox(width: 6));
+        children.add(Expanded(child: pillWidgets[i]));
+      }
+      return Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        child: Row(children: children),
+      );
     }
 
-    if (children.isEmpty) return const SizedBox.shrink();
-
+    // Scrollable for 5+ pills
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: Row(children: children),
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: SizedBox(
+        height: 58,
+        child: ListView.separated(
+          scrollDirection: Axis.horizontal,
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          itemCount: pillWidgets.length,
+          separatorBuilder: (_, __) => const SizedBox(width: 6),
+          itemBuilder: (_, i) => SizedBox(
+            width: MediaQuery.of(context).size.width * 0.22,
+            child: pillWidgets[i],
+          ),
+        ),
+      ),
     );
   }
 }
@@ -336,6 +359,214 @@ class _BurnedPill extends ConsumerWidget {
             color: connected && burned > 0
                 ? const Color(0xFFFF6B35)
                 : Theme.of(context).colorScheme.onSurfaceVariant,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// =============================================================================
+// Pill 5 - Steps
+// =============================================================================
+
+class _StepsPill extends ConsumerWidget {
+  const _StepsPill({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final activityState = ref.watch(dailyActivityProvider);
+    final syncState = ref.watch(healthSyncProvider);
+    final activity = activityState.today;
+
+    final bool connected = syncState.isConnected;
+    final int steps = activity?.steps ?? 0;
+
+    return _StatPillContainer(
+      onTap: () {
+        HapticService.light();
+        context.push('/stats');
+      },
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            connected ? _formatSteps(steps) : '--',
+            style: const TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.bold,
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+          const SizedBox(height: 4),
+          Icon(
+            Icons.directions_walk,
+            size: 14,
+            color: connected && steps > 0
+                ? const Color(0xFF8B5CF6)
+                : Theme.of(context).colorScheme.onSurfaceVariant,
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _formatSteps(int steps) {
+    if (steps >= 1000) {
+      final k = steps / 1000;
+      return '${k.toStringAsFixed(k >= 10 ? 0 : 1)}k';
+    }
+    return steps.toString();
+  }
+}
+
+// =============================================================================
+// Pill 6 - Sleep
+// =============================================================================
+
+class _SleepPill extends ConsumerWidget {
+  const _SleepPill({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final sleepAsync = ref.watch(sleepProvider);
+    final syncState = ref.watch(healthSyncProvider);
+    final connected = syncState.isConnected;
+
+    final sleep = sleepAsync.valueOrNull;
+    final int totalMin = sleep?.totalMinutes ?? 0;
+    final int hours = totalMin ~/ 60;
+    final int mins = totalMin % 60;
+
+    return _StatPillContainer(
+      onTap: () {
+        HapticService.light();
+        context.push('/stats');
+      },
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            connected && totalMin > 0 ? '${hours}h${mins > 0 ? ' ${mins}m' : ''}' : '--',
+            style: const TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.bold,
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+          const SizedBox(height: 4),
+          Icon(
+            Icons.bedtime_outlined,
+            size: 14,
+            color: connected && totalMin > 0
+                ? const Color(0xFF6366F1)
+                : Theme.of(context).colorScheme.onSurfaceVariant,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// =============================================================================
+// Pill 7 - Workout Streak
+// =============================================================================
+
+class _StreakPill extends ConsumerWidget {
+  const _StreakPill({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final consistencyState = ref.watch(consistencyProvider);
+    final streak = consistencyState.currentStreak;
+    final isActive = consistencyState.isStreakActive;
+
+    return _StatPillContainer(
+      onTap: () {
+        HapticService.light();
+        context.push('/stats');
+      },
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            '$streak',
+            style: const TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Icon(
+            Icons.local_fire_department_outlined,
+            size: 14,
+            color: isActive && streak > 0
+                ? const Color(0xFFF59E0B)
+                : Theme.of(context).colorScheme.onSurfaceVariant,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// =============================================================================
+// Pill 8 - Habits
+// =============================================================================
+
+class _HabitsPill extends ConsumerWidget {
+  const _HabitsPill({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final authState = ref.watch(authStateProvider);
+    final userId = authState.user?.id;
+
+    if (userId == null) {
+      return _StatPillContainer(
+        onTap: () {},
+        child: const Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text('--', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
+            SizedBox(height: 4),
+            Icon(Icons.check_circle_outline, size: 14),
+          ],
+        ),
+      );
+    }
+
+    final habitsState = ref.watch(habitsProvider(userId));
+    final completed = habitsState.completedToday;
+    final total = habitsState.totalHabits;
+    final allDone = habitsState.allCompleted;
+
+    return _StatPillContainer(
+      onTap: () {
+        HapticService.light();
+        context.push('/habits');
+      },
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            total > 0 ? '$completed/$total' : '--',
+            style: const TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Icon(
+            allDone ? Icons.check_circle : Icons.check_circle_outline,
+            size: 14,
+            color: allDone
+                ? const Color(0xFF10B981)
+                : (completed > 0
+                    ? const Color(0xFF10B981).withValues(alpha: 0.6)
+                    : Theme.of(context).colorScheme.onSurfaceVariant),
           ),
         ],
       ),
