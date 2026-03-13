@@ -152,7 +152,25 @@ def _build_equipment_usage_rule(equipment) -> str:
         )
 
     equip_names = ", ".join(real_equipment)
-    return (
+
+    # Detect bench and rack availability
+    has_bench = any("bench" in e for e in normalised) or any("home_gym" in e or "full_gym" in e for e in normalised)
+    has_rack = any("squat_rack" in e or "rack" in e or "power_rack" in e for e in normalised) or any("full_gym" in e for e in normalised)
+
+    equipment_restrictions = []
+    if real_equipment and not has_bench:
+        equipment_restrictions.append(
+            "⚠️ NO BENCH: Exclude Bench Press, Pullover, Incline Press, "
+            "Decline Press, Preacher Curl. Use: Floor Press, Push-Ups instead."
+        )
+    if any("barbell" in e for e in normalised) and not has_rack:
+        equipment_restrictions.append(
+            "⚠️ NO SQUAT RACK: Exclude Barbell Squat, Barbell Bench Press, "
+            "Overhead Press (racked). Use: Deadlift, RDL, Bent-Over Row instead."
+        )
+    restriction_text = "\n".join(equipment_restrictions)
+
+    base_rule = (
         f"IF THE USER HAS EQUIPMENT, YOU **MUST** USE IT! This is NON-NEGOTIABLE.\n"
         f"The user owns: {equip_names}\n"
         f"  → AT LEAST 4-5 exercises (out of 6-8 total) MUST use the user's equipment\n"
@@ -160,6 +178,10 @@ def _build_equipment_usage_rule(equipment) -> str:
         f"  → NEVER generate a mostly bodyweight workout when the user has equipment!\n"
         f"  → Prioritise the user's specific equipment ({equip_names}) over generic bodyweight moves."
     )
+
+    if restriction_text:
+        return f"{base_rule}\n\n{restriction_text}"
+    return base_rule
 
 
 def infer_set_type(exercise: Dict, set_target: Dict, set_index: int, total_sets: int) -> str:
@@ -6332,6 +6354,21 @@ CRITICAL - USE THIS DATA TO PERSONALIZE THE WORKOUT:
 
 This assessment data reflects the user's ACTUAL capabilities - use it to create a workout that challenges them appropriately without being too easy or impossibly hard."""
 
+        # Detect bench/rack availability for conditional exercise examples
+        _eq_normalised = [e.strip().lower() if isinstance(e, str) else (e.get("name") or e.get("value") or "").strip().lower() for e in (equipment or [])]
+        has_bench_in_equipment = any("bench" in e for e in _eq_normalised) or any("home_gym" in e or "full_gym" in e for e in _eq_normalised)
+        has_rack_in_equipment = any("squat_rack" in e or "rack" in e or "power_rack" in e for e in _eq_normalised) or any("full_gym" in e for e in _eq_normalised)
+        dumbbell_examples = (
+            "Dumbbell Bench Press, Dumbbell Rows, Dumbbell Lunges, Dumbbell Shoulder Press, Goblet Squats, Dumbbell Curls"
+            if has_bench_in_equipment else
+            "Dumbbell Floor Press, Dumbbell Rows, Dumbbell Lunges, Dumbbell Shoulder Press, Goblet Squats, Dumbbell Curls, Dumbbell Deadlift"
+        )
+        barbell_examples = (
+            "Barbell Squat, Deadlift, Bench Press, Barbell Row, Overhead Press"
+            if has_rack_in_equipment else
+            "Deadlift, Romanian Deadlift, Barbell Row, Good Morning, Barbell Hip Thrust"
+        )
+
         prompt = f"""Generate a {duration_text}-minute workout plan for a user with:
 - Fitness Level: {fitness_level}
 - Goals: {safe_join_list(goals, 'General fitness')}
@@ -6603,8 +6640,8 @@ Available equipment: {safe_join_list(equipment, 'bodyweight only')}
 
 MANDATORY EQUIPMENT-BASED EXERCISES (include these when equipment is available):
 - full_gym/commercial_gym: Barbell Squat, Bench Press, Lat Pulldown, Cable Row, Leg Press, Dumbbell Rows
-- dumbbells: Dumbbell Bench Press, Dumbbell Rows, Dumbbell Lunges, Dumbbell Shoulder Press, Goblet Squats, Dumbbell Curls
-- barbell: Barbell Squat, Deadlift, Bench Press, Barbell Row, Overhead Press
+- dumbbells: {dumbbell_examples}
+- barbell: {barbell_examples}
 - cable_machine: Cable Fly, Face Pull, Tricep Pushdown, Cable Row, Lat Pulldown
 - machines: Leg Press, Chest Press Machine, Lat Pulldown, Leg Curl, Shoulder Press Machine
 - kettlebell/kettlebells: Kettlebell Swings, Goblet Squats, KB Clean & Press, KB Turkish Get-up, KB Deadlift, KB Snatch

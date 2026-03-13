@@ -11,7 +11,8 @@ from contextlib import asynccontextmanager
 from datetime import datetime
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, HTMLResponse
+from fastapi.staticfiles import StaticFiles
 from starlette.middleware.gzip import GZipMiddleware
 from starlette.types import ASGIApp, Receive, Scope, Send
 from slowapi import _rate_limit_exceeded_handler
@@ -495,6 +496,9 @@ app.add_middleware(RateLimitCacheCleanupMiddleware)
 # Include API routes
 app.include_router(v1_router, prefix="/api")
 
+# Serve static assets (logo used in emails, etc.)
+app.mount("/static", StaticFiles(directory="static"), name="static")
+
 
 @app.get("/")
 async def root():
@@ -523,6 +527,44 @@ async def health_keep_alive():
         "timestamp": datetime.utcnow().isoformat(),
         "redis": "connected" if redis_ok else "unavailable",
     }
+
+
+@app.get("/open", include_in_schema=False)
+async def open_app():
+    """
+    Deep-link bounce page linked from emails.
+    On mobile: immediately redirects to the FitWiz app via the fitwiz:// custom scheme.
+    On desktop: shows a friendly page with App Store / Play Store links.
+    """
+    html = """<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="refresh" content="0;url=fitwiz://">
+<title>Opening FitWiz…</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:#000;color:#fafafa;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+       display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;text-align:center;padding:24px}
+  img{width:96px;height:96px;border-radius:22px;margin-bottom:24px}
+  h1{font-size:28px;font-weight:800;margin-bottom:8px}
+  p{color:#a1a1aa;margin-bottom:32px;font-size:15px}
+  .btn{display:inline-block;background:#06b6d4;color:#000;font-weight:700;font-size:15px;
+       padding:14px 32px;border-radius:50px;text-decoration:none;margin:6px}
+  .btn-outline{background:transparent;color:#06b6d4;border:2px solid #06b6d4}
+</style>
+</head>
+<body>
+<img src="/static/logo.png" alt="FitWiz">
+<h1>Opening FitWiz…</h1>
+<p>If the app doesn't open automatically, tap below.</p>
+<a href="fitwiz://" class="btn">Open App</a><br>
+<a href="https://apps.apple.com/app/fitwiz/id0000000000" class="btn btn-outline">App Store</a>
+<a href="https://play.google.com/store/apps/details?id=com.fitwiz.app" class="btn btn-outline">Google Play</a>
+</body>
+</html>"""
+    return HTMLResponse(content=html)
 
 
 if __name__ == "__main__":

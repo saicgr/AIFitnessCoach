@@ -248,9 +248,13 @@ async def get_fast_exercise_suggestions(body: FastSuggestionRequest, current_use
         # Build OR filter for muscle/body part matching
         # Strip parens from body_part too in case it contains them
         clean_body_part = _strip_parens(body_part)
+        # Split multi-muscle values (e.g., "Chest, Middle  Back") into separate ilike
+        # conditions so PostgREST doesn't corrupt the query on the embedded commas.
+        # Also normalize whitespace per segment ("Middle  Back" → "Middle Back").
+        target_muscles = [" ".join(m.split()) for m in target_muscle.split(",") if m.strip()] if target_muscle else []
         filters = []
-        if target_muscle:
-            filters.append(f"target_muscle.ilike.%{target_muscle}%")
+        for muscle in target_muscles:
+            filters.append(f"target_muscle.ilike.%{muscle}%")
         if clean_body_part:
             filters.append(f"body_part.ilike.%{clean_body_part}%")
 
@@ -282,9 +286,21 @@ async def get_fast_exercise_suggestions(body: FastSuggestionRequest, current_use
             score = 0.0
             reasons = []
 
-            # Exact muscle match = higher score
-            ex_muscle = ex.get("target_muscle") or ""
-            if target_muscle and target_muscle.lower() in ex_muscle.lower():
+            # Muscle match — score proportional to overlap across multi-muscle values
+            ex_muscle = " ".join((ex.get("target_muscle") or "").split()).lower()
+            if target_muscles:
+                matched = [m for m in target_muscles if m.lower() in ex_muscle]
+                n_matched = len(matched)
+                if n_matched == len(target_muscles):
+                    score += 2.0
+                    reasons.append("Targets all muscle groups")
+                elif n_matched > 0:
+                    score += 2.0 * (n_matched / len(target_muscles))
+                    reasons.append(f"Targets {', '.join(matched)}")
+                elif body_part and body_part.lower() in (ex.get("body_part") or "").lower():
+                    score += 1.5
+                    reasons.append(f"Works {body_part}")
+            elif target_muscle and target_muscle.lower() in ex_muscle:
                 score += 2.0
                 reasons.append(f"Targets {target_muscle}")
             elif body_part and body_part.lower() in (ex.get("body_part") or "").lower():

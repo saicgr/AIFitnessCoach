@@ -1894,12 +1894,21 @@ async def get_substitute_exercise(
         # Normalize for matching
         avoided_lower = [ae.lower() for ae in avoided_exercises]
 
-        # Query the exercise library for exercises targeting the same muscle
-        query = db.client.table("exercise_library_cleaned").select(
-            "name, target_muscle, body_part, equipment, secondary_muscles"
-        ).or_(
-            f"target_muscle.ilike.%{muscle_group}%,body_part.ilike.%{muscle_group}%"
-        ).limit(50)
+        # Query the exercise library for exercises targeting the same muscle.
+        # Split multi-muscle values so PostgREST doesn't corrupt the OR filter.
+        muscles = [" ".join(m.split()) for m in muscle_group.split(",") if m.strip()] if muscle_group else []
+        if muscles:
+            conditions = ",".join(
+                f"target_muscle.ilike.%{m}%,body_part.ilike.%{m}%"
+                for m in muscles
+            )
+            query = db.client.table("exercise_library_cleaned").select(
+                "name, target_muscle, body_part, equipment, secondary_muscles"
+            ).or_(conditions).limit(50)
+        else:
+            query = db.client.table("exercise_library_cleaned").select(
+                "name, target_muscle, body_part, equipment, secondary_muscles"
+            ).limit(50)
 
         result = query.execute()
 

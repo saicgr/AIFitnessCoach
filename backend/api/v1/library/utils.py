@@ -19,6 +19,56 @@ from .models import LibraryExercise, LibraryProgram
 
 _presign_error_logged = False  # Log first error only to avoid log spam
 
+# Ordered list of (compiled_regex, simplified_base_name).
+# First matching pattern wins — put MORE SPECIFIC patterns before generic ones.
+# Why regex instead of an exact-name dict:
+#   - "bodyweight squat" and "bodyweight squats" → 1 pattern, not 2 entries
+#   - "push-up" and "push up" and "pushup" → 1 pattern
+#   - New exercises added to the library auto-match if they contain the keyword
+#   - To add a new movement type: add one tuple. No DB changes needed.
+_SIMPLIFIED_PATTERNS: list[tuple[re.Pattern, str]] = [
+    # ── Planks — specific before generic ──────────────────
+    (re.compile(r'\bside\s+plank\b'),                          "Side Plank"),
+    (re.compile(r'\breverse\s+plank\b'),                       "Reverse Plank"),
+    (re.compile(r'\bplank\b'),                                 "Plank"),
+    # ── Upper body push ───────────────────────────────────
+    (re.compile(r'\bpush[\s\-]?up\b|\bpushup\b'),              "Push Up"),
+    # ── Upper body pull ───────────────────────────────────
+    (re.compile(r'\bpull[\s\-]?up\b|\bpullup\b'),              "Pull Up"),
+    (re.compile(r'\bchin[\s\-]?up\b|\bchinup\b'),              "Chin Up"),
+    # ── Compound press ────────────────────────────────────
+    (re.compile(r'\bbench\s+press\b'),                         "Bench Press"),
+    (re.compile(r'\bleg\s+press\b'),                           "Leg Press"),
+    # ── Hinge / compound lower ────────────────────────────
+    (re.compile(r'\bdeadlift\b'),                              "Deadlift"),
+    (re.compile(r'\bsquat\b'),                                 "Squat"),
+    (re.compile(r'\blunge\b'),                                 "Lunge"),
+    # ── Pulls / rows ──────────────────────────────────────
+    (re.compile(r'\brow\b'),                                   "Row"),
+    # ── Curls — specific before generic ───────────────────
+    (re.compile(r'\bleg\s+curl\b'),                            "Leg Curl"),
+    (re.compile(r'\bwrist\s+curl\b'),                          "Wrist Curl"),
+    (re.compile(r'\bcurl\b'),                                  "Curl"),
+    # ── Cardio ────────────────────────────────────────────
+    (re.compile(r'\btreadmill\b'),                             "Treadmill"),
+    (re.compile(r'\bstationary\s+bike\b|\bspin\s+bike\b|\bexercise\s+bike\b'), "Stationary Bike"),
+    (re.compile(r'\bcycling\b|\bcycle\b'),                     "Cycling"),
+    (re.compile(r'\browing\s+machine\b|\bgym\s+row'),          "Rowing Machine"),
+    (re.compile(r'\belliptical\b'),                            "Elliptical"),
+    (re.compile(r'\bjump\s+rope\b|\bjumping\s+rope\b'),        "Jump Rope"),
+    (re.compile(r'\bstair\s+(?:climb|step|mill)'),             "Stair Climber"),
+    (re.compile(r'\bski\s+erg(?:ometer)?\b'),                  "Ski Erg"),
+]
+
+
+def _get_exercise_simplified_name(name_lower: str) -> Optional[str]:
+    """Return the simplified base name for an exercise, or None if no pattern matches.
+    First matching pattern wins — order of _SIMPLIFIED_PATTERNS matters."""
+    for pattern, simplified in _SIMPLIFIED_PATTERNS:
+        if pattern.search(name_lower):
+            return simplified
+    return None
+
 # S3 prefixes that are publicly readable (no presigning needed)
 _STATIC_PREFIXES = ("ILLUSTRATIONS/", "Ultimate-Muscle-Visuals/")
 
@@ -137,8 +187,10 @@ async def fetch_all_rows(
         if difficulty_filter:
             query = query.eq("difficulty_level", difficulty_filter)
         if search_filter:
-            # Fallback to ILIKE if fuzzy search disabled
-            query = query.or_(f"name.ilike.%{search_filter}%,original_name.ilike.%{search_filter}%")
+            # Fallback to ILIKE if fuzzy search disabled; strip commas so the
+            # PostgREST OR filter isn't corrupted by embedded commas.
+            safe_filter = search_filter.replace(",", " ").strip()
+            query = query.or_(f"name.ilike.%{safe_filter}%,original_name.ilike.%{safe_filter}%")
 
         if order_by:
             query = query.order(order_by)
@@ -197,9 +249,11 @@ async def fetch_fuzzy_search_results(
 
     except Exception as e:
         logger.warning(f"Fuzzy search RPC failed, falling back to ILIKE: {e}")
-        # Fallback to regular ILIKE search if fuzzy function not available
+        # Fallback to regular ILIKE search if fuzzy function not available;
+        # strip commas so the PostgREST OR filter isn't corrupted.
+        safe_term = search_term.replace(",", " ").strip()
         query = db.client.table("exercise_library_cleaned").select("*")
-        query = query.or_(f"name.ilike.%{search_term}%,original_name.ilike.%{search_term}%,equipment.ilike.%{search_term}%")
+        query = query.or_(f"name.ilike.%{safe_term}%,original_name.ilike.%{safe_term}%,equipment.ilike.%{safe_term}%")
         if equipment_filter:
             query = query.ilike("equipment", f"%{equipment_filter}%")
         result = query.limit(limit).execute()
@@ -207,16 +261,16 @@ async def fetch_fuzzy_search_results(
 
 
 def sort_by_relevance(exercises: List['LibraryExercise'], search_query: str) -> List['LibraryExercise']:
-    """
-    Sort exercises by relevance to the search query.
+    """Sort exercises by relevance to the search query.
 
-    Ranking priority:
-    1. Exact match (case-insensitive) - highest priority
-    2. Name starts with search query
-    3. Name contains search as a complete word
-    4. Other matches - alphabetical
-
-    This ensures "Push Up" appears before "Incline Push Up" when searching "push up".
+    Tiers (lower = higher rank):
+      0 — Exact name match
+      1 — Simplified base name matches search (e.g., "High Plank" when searching "plank")
+          Tiebreaker within tier: word_count ASC, length ASC (simpler = fewer words = first)
+      2 — Name starts with search query; same tiebreakers
+      3 — Search appears as a complete word in the name
+      4 — Partial (substring) match
+      5 — Everything else (trigram matches returned by SQL)
     """
     if not search_query:
         return exercises
@@ -225,28 +279,24 @@ def sort_by_relevance(exercises: List['LibraryExercise'], search_query: str) -> 
 
     def relevance_score(exercise: 'LibraryExercise') -> tuple:
         name_lower = (exercise.name or "").lower()
+        simplified = _get_exercise_simplified_name(name_lower)
 
-        # Tier 1: Exact match (score 0)
         if name_lower == search_lower:
-            return (0, name_lower)
+            return (0, 0, 0, name_lower)
 
-        # Tier 2: Name starts with search query (score 1)
+        if simplified and simplified.lower() == search_lower:
+            return (1, len(name_lower.split()), len(name_lower), name_lower)
+
         if name_lower.startswith(search_lower):
-            return (1, name_lower)
+            return (2, len(name_lower.split()), len(name_lower), name_lower)
 
-        # Tier 3: Search is a complete word in the name (score 2)
-        # e.g., "Push Up" contains "push up" as complete words
-        import re
-        pattern = r'\b' + re.escape(search_lower) + r'\b'
-        if re.search(pattern, name_lower):
-            return (2, name_lower)
+        if re.search(r'\b' + re.escape(search_lower) + r'\b', name_lower):
+            return (3, 0, len(name_lower), name_lower)
 
-        # Tier 4: Partial match (score 3)
         if search_lower in name_lower:
-            return (3, name_lower)
+            return (4, 0, len(name_lower), name_lower)
 
-        # Tier 5: Everything else (score 4)
-        return (4, name_lower)
+        return (5, 0, len(name_lower), name_lower)
 
     return sorted(exercises, key=relevance_score)
 

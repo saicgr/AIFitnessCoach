@@ -112,6 +112,9 @@ class Settings(BaseSettings):
     # Static CDN for public assets (set to CloudFront URL when available)
     static_cdn_base_url: str = ""
 
+    # Public-facing backend URL used in emails (must match deployment URL)
+    backend_base_url: str = "https://aifitnesscoach-zqi3.onrender.com"
+
     # Redis (shared cache across workers)
     redis_url: Optional[str] = None
 

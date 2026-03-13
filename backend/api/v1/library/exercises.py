@@ -366,15 +366,10 @@ async def list_exercises(
         # Convert to exercises (from cleaned view)
         exercises = [row_to_library_exercise(row, from_cleaned_view=True) for row in all_rows]
 
-        # Apply relevance sorting when searching (before other filters)
-        # NOTE: If using fuzzy search (default), results are already sorted by similarity
-        # from the database RPC function. Only apply Python sorting for non-fuzzy fallback.
-        # The fuzzy search handles: exact match > prefix match > substring > similarity score
-        if search and not needs_post_filter:
-            # When fuzzy search was used, results are already well-sorted
-            # Only apply Python sort if we fetched without fuzzy search
-            pass
-        elif search:
+        # Always apply Python relevance sort when searching.
+        # SQL trigram is a good first-pass filter but has no concept of simplified base names
+        # (e.g., it can't know "High Plank" should rank above "Plank Jack" for query "plank").
+        if search:
             exercises = sort_by_relevance(exercises, search)
 
         # Apply post-filters

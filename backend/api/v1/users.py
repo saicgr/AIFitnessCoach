@@ -40,6 +40,7 @@ from core.activity_logger import log_user_activity, log_user_error
 from core.username_generator import generate_username_sync
 from models.schemas import User, UserCreate, UserUpdate
 from services.admin_service import get_admin_service, SUPPORT_EMAIL
+from services.email_service import get_email_service
 from core.config import get_settings
 
 
@@ -214,6 +215,7 @@ def row_to_user(row: dict, is_new_user: bool = False, support_friend_added: bool
 @router.post("/auth/google", response_model=User)
 @limiter.limit("5/minute")
 async def google_auth(request: Request, body: GoogleAuthRequest,
+    background_tasks: BackgroundTasks,
     verified_token: dict = Depends(get_verified_auth_token),
 ):
     """
@@ -304,6 +306,12 @@ async def google_auth(request: Request, body: GoogleAuthRequest,
             except Exception as friend_error:
                 logger.warning(f"Failed to auto-add support friend: {friend_error}")
 
+        # Send welcome email in background (non-blocking)
+        if email:
+            background_tasks.add_task(
+                get_email_service().send_welcome_email, email, full_name or ""
+            )
+
         return row_to_user(created, is_new_user=True, support_friend_added=support_friend_added)
 
     except HTTPException:
@@ -319,6 +327,7 @@ async def google_auth(request: Request, body: GoogleAuthRequest,
 @router.post("/auth/email", response_model=User)
 @limiter.limit("5/minute")
 async def email_auth(request: Request, body: EmailAuthRequest,
+    background_tasks: BackgroundTasks,
     verified_token: dict = Depends(get_verified_auth_token),
 ):
     """
@@ -408,6 +417,12 @@ async def email_auth(request: Request, body: EmailAuthRequest,
             except Exception as friend_error:
                 logger.warning(f"Failed to auto-add support friend: {friend_error}")
 
+        # Send welcome email in background (non-blocking)
+        if email:
+            background_tasks.add_task(
+                get_email_service().send_welcome_email, email, full_name or ""
+            )
+
         return row_to_user(created, is_new_user=True, support_friend_added=support_friend_added)
 
     except HTTPException:
@@ -423,6 +438,7 @@ async def email_auth(request: Request, body: EmailAuthRequest,
 @router.post("/auth/email/signup", response_model=User)
 @limiter.limit("5/minute")
 async def email_signup(request: Request, body: EmailSignupRequest,
+    background_tasks: BackgroundTasks,
     verified_token: dict = Depends(get_verified_auth_token),
 ):
     """
@@ -509,6 +525,12 @@ async def email_signup(request: Request, body: EmailSignupRequest,
                         logger.warning(f"Failed to send welcome message: {msg_error}")
             except Exception as friend_error:
                 logger.warning(f"Failed to auto-add support friend: {friend_error}")
+
+        # Send welcome email in background (non-blocking)
+        if email:
+            background_tasks.add_task(
+                get_email_service().send_welcome_email, email, full_name or ""
+            )
 
         return row_to_user(created, is_new_user=True, support_friend_added=support_friend_added)
 

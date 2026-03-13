@@ -32,6 +32,204 @@ class EmailService:
         """Check if the email service is properly configured."""
         return bool(self.api_key)
 
+    async def send_welcome_email(
+        self,
+        to_email: str,
+        user_name: str,
+    ) -> Dict[str, Any]:
+        """
+        Send a welcome email to a new user immediately after signup.
+
+        Args:
+            to_email: User's email address
+            user_name: User's display name (may be empty)
+
+        Returns:
+            Response from Resend API
+        """
+        if not self.is_configured():
+            logger.error("❌ Cannot send welcome email - Resend API key not configured")
+            return {"error": "Email service not configured"}
+
+        from core.config import get_settings
+        backend_url = get_settings().backend_base_url
+        logo_url = f"{backend_url}/static/logo.png"
+        open_url = f"{backend_url}/open"
+
+        display_name = user_name.split()[0] if user_name else "there"
+
+        html_content = f"""<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Welcome to FitWiz</title>
+</head>
+<body style="margin:0;padding:0;background-color:#000000;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
+
+  <!-- Outer wrapper -->
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0"
+         style="background-color:#000000;min-height:100vh;">
+    <tr>
+      <td align="center" style="padding:40px 16px;">
+
+        <!-- Card -->
+        <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0"
+               style="max-width:560px;background-color:#0f0f0f;border-radius:20px;overflow:hidden;border:1px solid #1a1a1a;">
+
+          <!-- Hero gradient bar -->
+          <tr>
+            <td style="background:linear-gradient(135deg,#0891b2 0%,#06b6d4 50%,#22d3ee 100%);height:4px;font-size:0;line-height:0;">&nbsp;</td>
+          </tr>
+
+          <!-- Logo + brand -->
+          <tr>
+            <td align="center" style="padding:48px 40px 32px;">
+              <img src="{logo_url}" alt="FitWiz" width="88" height="88"
+                   style="display:block;border-radius:20px;border:0;width:88px;height:88px;object-fit:cover;">
+              <p style="margin:20px 0 0;font-size:13px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:#06b6d4;">
+                FITWIZ
+              </p>
+            </td>
+          </tr>
+
+          <!-- Headline -->
+          <tr>
+            <td align="center" style="padding:0 40px 12px;">
+              <h1 style="margin:0;font-size:36px;font-weight:800;color:#ffffff;line-height:1.15;letter-spacing:-0.5px;">
+                Welcome, {display_name}!
+              </h1>
+            </td>
+          </tr>
+
+          <!-- Subline -->
+          <tr>
+            <td align="center" style="padding:0 48px 40px;">
+              <p style="margin:0;font-size:16px;line-height:1.65;color:#a1a1aa;text-align:center;">
+                You're all set. Your AI-powered training partner is ready to build your first personalised workout plan.
+              </p>
+            </td>
+          </tr>
+
+          <!-- CTA button -->
+          <tr>
+            <td align="center" style="padding:0 40px 48px;">
+              <a href="{open_url}"
+                 style="display:inline-block;background:#06b6d4;color:#000000;font-size:16px;font-weight:700;
+                        text-decoration:none;padding:16px 44px;border-radius:50px;letter-spacing:0.2px;">
+                Open FitWiz
+              </a>
+            </td>
+          </tr>
+
+          <!-- Divider -->
+          <tr>
+            <td style="padding:0 32px;">
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+                <tr><td style="border-top:1px solid #1e1e1e;font-size:0;line-height:0;">&nbsp;</td></tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Features -->
+          <tr>
+            <td style="padding:40px 40px 16px;">
+
+              <!-- Feature 1 -->
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin-bottom:28px;">
+                <tr>
+                  <td width="48" valign="top">
+                    <div style="width:40px;height:40px;background:#0f2733;border-radius:12px;text-align:center;line-height:40px;font-size:20px;">
+                      &#127947;
+                    </div>
+                  </td>
+                  <td style="padding-left:16px;" valign="top">
+                    <p style="margin:0 0 4px;font-size:15px;font-weight:700;color:#ffffff;">AI-Generated Workout Plans</p>
+                    <p style="margin:0;font-size:14px;color:#71717a;line-height:1.5;">Personalised monthly plans built around your goals, schedule, and equipment.</p>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- Feature 2 -->
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin-bottom:28px;">
+                <tr>
+                  <td width="48" valign="top">
+                    <div style="width:40px;height:40px;background:#0f2733;border-radius:12px;text-align:center;line-height:40px;font-size:20px;">
+                      &#129303;
+                    </div>
+                  </td>
+                  <td style="padding-left:16px;" valign="top">
+                    <p style="margin:0 0 4px;font-size:15px;font-weight:700;color:#ffffff;">Your 24/7 AI Coach</p>
+                    <p style="margin:0;font-size:14px;color:#71717a;line-height:1.5;">Ask anything — form tips, nutrition advice, or swap an exercise — anytime.</p>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- Feature 3 -->
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin-bottom:8px;">
+                <tr>
+                  <td width="48" valign="top">
+                    <div style="width:40px;height:40px;background:#0f2733;border-radius:12px;text-align:center;line-height:40px;font-size:20px;">
+                      &#128200;
+                    </div>
+                  </td>
+                  <td style="padding-left:16px;" valign="top">
+                    <p style="margin:0 0 4px;font-size:15px;font-weight:700;color:#ffffff;">Track Your Evolution</p>
+                    <p style="margin:0;font-size:14px;color:#71717a;line-height:1.5;">Log sets, see your strength curve, and watch your body transform week by week.</p>
+                  </td>
+                </tr>
+              </table>
+
+            </td>
+          </tr>
+
+          <!-- Bottom gradient bar -->
+          <tr>
+            <td style="padding:40px 40px 0;">
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+                <tr><td style="border-top:1px solid #1e1e1e;font-size:0;line-height:0;">&nbsp;</td></tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td align="center" style="padding:28px 40px 40px;">
+              <p style="margin:0 0 4px;font-size:12px;color:#3f3f46;">
+                FitWiz &mdash; Your Personal AI Training Assistant
+              </p>
+              <p style="margin:0;font-size:12px;color:#3f3f46;">
+                You received this because you created a FitWiz account.
+              </p>
+            </td>
+          </tr>
+
+        </table>
+        <!-- /Card -->
+
+      </td>
+    </tr>
+  </table>
+
+</body>
+</html>"""
+
+        try:
+            params = {
+                "from": self.from_email,
+                "to": [to_email],
+                "subject": "Welcome to FitWiz!",
+                "html": html_content,
+            }
+
+            response = resend.Emails.send(params)
+            logger.info(f"✅ Welcome email sent to {to_email}: {response}")
+            return {"success": True, "id": response.get("id")}
+
+        except Exception as e:
+            logger.error(f"❌ Failed to send welcome email to {to_email}: {e}")
+            return {"error": str(e)}
+
     async def send_workout_reminder(
         self,
         to_email: str,

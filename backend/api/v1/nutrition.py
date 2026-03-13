@@ -4373,6 +4373,9 @@ class NutritionPreferencesResponse(BaseModel):
     nutrition_goals: List[str] = []  # Multi-select goals array
     nutrition_goal: str = "maintain"  # Legacy field (primary goal)
     rate_of_change: Optional[str] = None
+    goal_weight_kg: Optional[float] = None
+    goal_date: Optional[str] = None
+    weeks_to_goal: Optional[int] = None
     calculated_bmr: Optional[int] = None
     calculated_tdee: Optional[int] = None
     target_calories: Optional[int] = None
@@ -4479,12 +4482,24 @@ async def get_nutrition_preferences(user_id: str, current_user: dict = Depends(g
         if not nutrition_goals and data.get("nutrition_goal"):
             nutrition_goals = [data.get("nutrition_goal")]
 
+        # goal_weight_kg is stored as target_weight_kg in the users table
+        goal_weight_kg = None
+        try:
+            user_result = db.client.table("users").select("target_weight_kg").eq("id", user_id).maybe_single().execute()
+            if user_result and user_result.data:
+                goal_weight_kg = user_result.data.get("target_weight_kg")
+        except Exception:
+            pass
+
         return NutritionPreferencesResponse(
             id=data.get("id"),
             user_id=data.get("user_id", user_id),
             nutrition_goals=nutrition_goals,
             nutrition_goal=data.get("nutrition_goal") or (nutrition_goals[0] if nutrition_goals else "maintain"),
             rate_of_change=data.get("rate_of_change"),
+            goal_weight_kg=goal_weight_kg,
+            goal_date=str(data["goal_date"]) if data.get("goal_date") else None,
+            weeks_to_goal=data.get("weeks_to_goal"),
             calculated_bmr=data.get("calculated_bmr"),
             calculated_tdee=data.get("calculated_tdee"),
             target_calories=data.get("target_calories"),

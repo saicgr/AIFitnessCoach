@@ -79,6 +79,36 @@ VALID_FITNESS_LEVELS = {"beginner", "intermediate", "advanced"}
 # Default fitness level when None/empty/invalid
 DEFAULT_FITNESS_LEVEL = "intermediate"
 
+# Exercises that require a flat bench (not cable/machine variants)
+_BENCH_REQUIRED_PATTERNS = frozenset([
+    "pullover",
+    "bench press",
+    "incline press",
+    "decline press",
+    "chest supported",
+    "preacher",
+])
+
+# Exercises that require a squat rack / power rack
+_SQUAT_RACK_REQUIRED_PATTERNS = frozenset([
+    "barbell squat",
+    "back squat",
+    "front squat",
+    "barbell overhead press",
+    "barbell bench press",
+])
+
+
+def _needs_bench(name: str) -> bool:
+    """Returns True if exercise name implies a bench is required."""
+    n = name.lower()
+    # Cable, machine, floor, and ball exercises don't need a flat bench
+    if "cable" in n or "machine" in n or "pulldown" in n:
+        return False
+    if "on floor" in n or "on exercise ball" in n or "floor press" in n:
+        return False
+    return any(p in n for p in _BENCH_REQUIRED_PATTERNS)
+
 
 def validate_fitness_level(fitness_level: Optional[str]) -> str:
     """
@@ -409,6 +439,7 @@ class ExerciseRAGService:
                     "has_video": "true",
                     "single_dumbbell_friendly": "true" if ex.get("single_dumbbell_friendly") else "false",
                     "single_kettlebell_friendly": "true" if ex.get("single_kettlebell_friendly") else "false",
+                    "bench_required": "true" if _needs_bench(ex.get("name", "")) else "false",
                 })
 
             try:
@@ -647,7 +678,18 @@ class ExerciseRAGService:
         # Search for candidate exercises
         # Home/outdoor environments need a larger pool since most exercises require gym equipment
         is_constrained_env = workout_environment and workout_environment.lower() in ("home", "outdoor", "park")
-        candidate_count = min(count * 12, 80) if is_constrained_env else min(count * 6, 40)
+        # Increase pool when user has dumbbells but no bench — many dumbbell exercises get filtered
+        eq_lower = [eq.lower() for eq in equipment]
+        has_dumbbells_no_bench = (
+            any("dumbbell" in eq for eq in eq_lower) and
+            not any("bench" in eq or "home_gym" in eq or "full_gym" in eq for eq in eq_lower)
+        )
+        if is_constrained_env:
+            candidate_count = min(count * 12, 80)
+        elif has_dumbbells_no_bench:
+            candidate_count = min(count * 8, 60)
+        else:
+            candidate_count = min(count * 6, 40)
 
         results = self.collection.query(
             query_embeddings=[query_embedding],
@@ -665,6 +707,19 @@ class ExerciseRAGService:
             filtered_candidates = []
             seen = []
             no_media_count = 0
+
+            # Pre-compute bench/rack availability (constant across all exercises)
+            user_equipment_lower = [eq.lower() for eq in equipment]
+            user_has_bench = (
+                any("bench" in eq for eq in user_equipment_lower) or
+                any("home_gym" in eq or "full_gym" in eq for eq in user_equipment_lower)
+            )
+            user_has_rack = (
+                any("squat_rack" in eq or "power_rack" in eq or "rack" in eq
+                    for eq in user_equipment_lower) or
+                any("full_gym" in eq for eq in user_equipment_lower)
+            )
+            user_has_barbell = any("barbell" in eq for eq in user_equipment_lower)
 
             for i, doc_id in enumerate(results["ids"][0]):
                 meta = results["metadatas"][0][i]
@@ -687,6 +742,20 @@ class ExerciseRAGService:
                 if not filter_by_equipment(ex_equipment, equipment, meta.get("name", "")):
                     logger.debug(f"Filtered out '{meta.get('name')}' - equipment mismatch")
                     continue
+
+                # Secondary equipment safety filters (bench + rack)
+                ex_name_lower = meta.get("name", "").lower()
+                bench_required_field = str(meta.get("bench_required", "")).lower()
+
+                if not user_has_bench:
+                    if bench_required_field == "true" or _needs_bench(meta.get("name", "")):
+                        logger.debug(f"Bench-filter: '{meta.get('name')}' removed - requires bench")
+                        continue
+
+                if not user_has_rack and user_has_barbell:
+                    if any(pat in ex_name_lower for pat in _SQUAT_RACK_REQUIRED_PATTERNS):
+                        logger.debug(f"Rack-filter: '{meta.get('name')}' removed - requires squat rack")
+                        continue
 
                 # Filter out exercises without media (optional based on require_media flag)
                 has_video = meta.get("has_video", "false") == "true"
