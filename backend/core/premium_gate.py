@@ -5,6 +5,7 @@ Provides `check_premium_gate()` for backend endpoints to enforce
 free-tier limits on AI features. Premium/premium_plus users
 get unlimited access.
 """
+import os
 from datetime import date, datetime
 from typing import Optional, Tuple
 from fastapi import HTTPException
@@ -13,6 +14,8 @@ from core.supabase_client import get_supabase
 from core.logger import get_logger
 
 logger = get_logger(__name__)
+
+_is_production = os.getenv("RENDER", "false").lower() == "true" or os.getenv("ENV", "dev") == "production"
 
 # Feature keys that this module manages
 PREMIUM_FEATURE_KEYS = [
@@ -33,6 +36,10 @@ async def check_premium_gate(user_id: str, feature_key: str) -> Tuple[bool, Opti
     Raises:
         HTTPException(402) if user has exhausted their free-tier limit.
     """
+    # Dev environment: skip all gates for full access
+    if not _is_production:
+        return True, None
+
     supabase = get_supabase()
 
     # Get user's subscription tier
@@ -58,9 +65,13 @@ async def check_premium_gate(user_id: str, feature_key: str) -> Tuple[bool, Opti
             .single()\
             .execute()
     except Exception:
-        # Gate not found - allow by default
-        logger.warning(f"Feature gate '{feature_key}' not found, allowing access")
-        return True, None
+        # Gate not found — apply conservative defaults for known features
+        if feature_key in PREMIUM_FEATURE_KEYS:
+            logger.warning(f"Feature gate '{feature_key}' not found in DB, applying fallback limits")
+            gate_result = type('obj', (object,), {'data': _get_fallback_gate(feature_key)})()
+        else:
+            logger.warning(f"Unknown feature gate '{feature_key}', allowing access")
+            return True, None
 
     if not gate_result.data:
         return True, None
@@ -112,6 +123,17 @@ async def check_premium_gate(user_id: str, feature_key: str) -> Tuple[bool, Opti
         )
 
     return True, remaining
+
+
+def _get_fallback_gate(feature_key: str) -> dict:
+    """Hardcoded fallback limits when the feature_gates table is missing rows."""
+    fallbacks = {
+        "ai_workout_generation": {"free_limit": 2, "reset_period": "monthly", "minimum_tier": "free", "is_enabled": True},
+        "food_scanning": {"free_limit": 1, "reset_period": "daily", "minimum_tier": "free", "is_enabled": True},
+        "form_video_analysis": {"free_limit": 0, "reset_period": None, "minimum_tier": "premium", "is_enabled": True},
+        "text_to_calories": {"free_limit": 3, "reset_period": "daily", "minimum_tier": "free", "is_enabled": True},
+    }
+    return fallbacks.get(feature_key, {"free_limit": None, "reset_period": None, "minimum_tier": "free", "is_enabled": True})
 
 
 async def track_premium_usage(user_id: str, feature_key: str):

@@ -346,8 +346,9 @@ def generate_migration_sql(cc, country_name, demonym, slug, migration_num, foods
         # Build normalized name
         norm_name = f"{normalize_name(base_name)}_{demonym_lower}"
 
-        # Build display name
-        display_name = f"{base_name} ({demonym})"
+        # Build display name — just the food name, no country suffix
+        # The region column handles country association
+        display_name = base_name
 
         # Build variant names array
         variants = [base_name.lower()]

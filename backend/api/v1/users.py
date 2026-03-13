@@ -1337,19 +1337,48 @@ async def update_user(user_id: str, user: UserUpdate,
 
             # NEW: Create gym profile(s) when onboarding is completed
             if user.onboarding_completed and update_data.get("onboarding_completed"):
+                # Fetch fresh user data to get equipment saved by the preferences endpoint
+                # (equipment is saved in a separate prior request, not in this update_data)
                 try:
-                    prefs = update_data.get("preferences", {})
+                    user_row = db.client.table("users").select(
+                        "equipment, equipment_details, preferences"
+                    ).eq("id", user_id).single().execute().data
+                except Exception:
+                    user_row = {}
+
+                db_equipment = user_row.get("equipment") or []
+                if isinstance(db_equipment, str):
+                    try:
+                        db_equipment = json.loads(db_equipment)
+                    except (json.JSONDecodeError, TypeError):
+                        db_equipment = []
+                db_equipment_details = user_row.get("equipment_details") or []
+                if isinstance(db_equipment_details, str):
+                    try:
+                        db_equipment_details = json.loads(db_equipment_details)
+                    except (json.JSONDecodeError, TypeError):
+                        db_equipment_details = []
+                db_prefs = user_row.get("preferences") or {}
+                if isinstance(db_prefs, str):
+                    try:
+                        db_prefs = json.loads(db_prefs)
+                    except (json.JSONDecodeError, TypeError):
+                        db_prefs = {}
+
+                prefs = update_data.get("preferences", {}) or db_prefs
+
+                try:
                     logger.info(f"🏋️ [GymProfile] Onboarding completed - preferences: {prefs}")
-                    logger.info(f"🏋️ [GymProfile] Equipment: {update_data.get('equipment', [])}")
-                    logger.info(f"🏋️ [GymProfile] Equipment details: {len(update_data.get('equipment_details', []))} items")
+                    logger.info(f"🏋️ [GymProfile] Equipment (from DB): {db_equipment}")
+                    logger.info(f"🏋️ [GymProfile] Equipment details: {len(db_equipment_details)} items")
 
                     await create_gym_profiles_from_onboarding(
                         user_id=user_id,
                         gym_name=prefs.get("gym_name"),
-                        workout_environment=prefs.get("workout_environment"),
-                        equipment=update_data.get("equipment", []),
-                        equipment_details=update_data.get("equipment_details", []),
-                        preferences=prefs,
+                        workout_environment=prefs.get("workout_environment") or db_prefs.get("workout_environment"),
+                        equipment=db_equipment,
+                        equipment_details=db_equipment_details,
+                        preferences=prefs if prefs else db_prefs,
                     )
                     logger.info(f"🏋️ [GymProfile] ✅ Created gym profile(s) for user {user_id} during onboarding")
                 except Exception as gym_error:
@@ -1358,20 +1387,13 @@ async def update_user(user_id: str, user: UserUpdate,
                     logger.error(f"⚠️ [GymProfile] Traceback: {traceback.format_exc()}")
                     # Don't fail onboarding if gym profile creation fails
 
-            # If onboarding was just completed, index preferences to ChromaDB for AI
-            if user.onboarding_completed and update_data.get("onboarding_completed"):
+                # Index preferences to ChromaDB for AI
                 try:
                     from services.rag_service import WorkoutRAGService
                     from services.gemini_service import GeminiService
 
                     gemini_service = GeminiService()
                     rag_service = WorkoutRAGService(gemini_service)
-
-                    # Get preferences from the update
-                    prefs = update_data.get("preferences", {})
-                    if isinstance(prefs, str):
-                        # json is already imported at module level
-                        prefs = json.loads(prefs)
 
                     # Parse goals from update_data (stored as JSON string)
                     goals_data = update_data.get("goals")
@@ -1387,7 +1409,7 @@ async def update_user(user_id: str, user: UserUpdate,
                         duration_minutes=prefs.get("workout_duration"),
                         workout_type=prefs.get("training_split"),
                         workout_days=prefs.get("workout_days"),
-                        equipment=update_data.get("equipment", []),
+                        equipment=db_equipment,
                         focus_areas=prefs.get("focus_areas"),
                         injuries=update_data.get("active_injuries", []),
                         goals=goals_data if isinstance(goals_data, list) else None,
@@ -1395,7 +1417,7 @@ async def update_user(user_id: str, user: UserUpdate,
                         dumbbell_count=prefs.get("dumbbell_count"),
                         kettlebell_count=prefs.get("kettlebell_count"),
                         training_experience=prefs.get("training_experience"),
-                        workout_environment=prefs.get("workout_environment"),
+                        workout_environment=prefs.get("workout_environment") or db_prefs.get("workout_environment"),
                         change_reason="onboarding_completed",
                     )
                     logger.info(f"📊 Indexed onboarding preferences to ChromaDB for user {user_id}")
