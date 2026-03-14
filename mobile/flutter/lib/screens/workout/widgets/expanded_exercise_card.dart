@@ -1352,13 +1352,16 @@ class _ExpandedExerciseCardState extends ConsumerState<ExpandedExerciseCard> {
               // LAST column - previous session data
               Expanded(
                 flex: 3,
-                child: Text(
-                  'LAST',
-                  style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
-                    color: textMuted,
-                    letterSpacing: 0.3,
+                child: Padding(
+                  padding: const EdgeInsets.only(left: 8),
+                  child: Text(
+                    'LAST',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      color: textMuted,
+                      letterSpacing: 0.3,
+                    ),
                   ),
                 ),
               ),
@@ -2052,13 +2055,21 @@ class _ExpandedExerciseCardState extends ConsumerState<ExpandedExerciseCard> {
           // LAST column - previous session data (shows "—" for preview)
           Expanded(
             flex: 3,
-            child: Text(
-              '—',
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
-                color: textMuted,
-                height: 1.5, // Match line height with TARGET column
+            child: Padding(
+              padding: const EdgeInsets.only(left: 8),
+              child: SizedBox(
+                height: 34, // Match SET badge height (32) + top padding (2)
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    '—',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                      color: textMuted,
+                    ),
+                  ),
+                ),
               ),
             ),
           ),

@@ -85,6 +85,7 @@ class Settings(BaseSettings):
     # RevenueCat Configuration
     revcat_api_key: Optional[str] = None
     revenuecat_webhook_secret: Optional[str] = None
+    cron_secret: Optional[str] = None
 
     # USDA FoodData Central API Configuration
     # Get API key from: https://fdc.nal.usda.gov/api-key-signup.html

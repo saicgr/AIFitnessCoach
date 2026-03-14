@@ -2890,6 +2890,7 @@ class _ExpandableSearchCard extends StatefulWidget {
   final search.FoodSearchService searchService;
 
   const _ExpandableSearchCard({
+    super.key,
     required this.result,
     this.logState,
     required this.isExpanded,
@@ -3613,7 +3614,7 @@ class _SearchResultsPageViewState extends State<_SearchResultsPageView> {
     final textMuted = widget.isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final teal = widget.isDark ? AppColors.teal : AppColorsLight.teal;
     final cardBorder = widget.isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
-    final key = 'search_db_${result.id}';
+    final key = 'search_db_${result.id}_${result.name.hashCode}';
 
     return GestureDetector(
       onTap: () => widget.onExpandCard(key),
@@ -3670,8 +3671,10 @@ class _SearchResultsPageViewState extends State<_SearchResultsPageView> {
   }
 
   Widget _buildResultCard(search.FoodSearchResult result) {
-    final key = 'search_db_${result.id}';
+    // Include name hash in key so items with fallback id='0' don't share the same key
+    final key = 'search_db_${result.id}_${result.name.hashCode}';
     return _ExpandableSearchCard(
+      key: ValueKey(key),
       result: result,
       logState: widget.logStates[key],
       isExpanded: widget.expandedSearchKey == key,

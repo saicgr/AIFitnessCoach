@@ -102,6 +102,7 @@ import '../../screens/onboarding/widgets/foldable_quiz_scaffold.dart';
 import 'foldable/foldable_workout_layout.dart';
 import 'foldable/foldable_warmup_layout.dart';
 import '../../services/intra_workout_autoregulator.dart';
+import '../../widgets/app_tour/app_tour_controller.dart';
 
 /// Active workout screen with modular composition
 class ActiveWorkoutScreen extends ConsumerStatefulWidget {
@@ -228,6 +229,51 @@ class _ActiveWorkoutScreenState
     _loadWarmupAndStretches();
     _checkWarmupEnabled();
     _initBleHrAutoReconnect();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      _triggerWorkoutTour();
+    });
+  }
+
+  void _triggerWorkoutTour() {
+    final steps = [
+      AppTourStep(
+        id: 'workout_step_exercise',
+        targetKey: AppTourKeys.exerciseCardKey,
+        title: 'Current Exercise',
+        description: 'Follow along with the video. Tap the card to see full details and instructions.',
+        position: TooltipPosition.below,
+      ),
+      AppTourStep(
+        id: 'workout_step_sets',
+        targetKey: AppTourKeys.setLoggingKey,
+        title: 'Log Your Sets',
+        description: 'Tap to record reps and weight after each set. Your history saves automatically.',
+        position: TooltipPosition.below,
+      ),
+      AppTourStep(
+        id: 'workout_step_rest',
+        targetKey: AppTourKeys.restTimerKey,
+        title: 'Rest Timer',
+        description: 'Starts automatically between sets. Skip it whenever you\'re ready to go again.',
+        position: TooltipPosition.below,
+      ),
+      AppTourStep(
+        id: 'workout_step_swap',
+        targetKey: AppTourKeys.swapExerciseKey,
+        title: "Can't Do This?",
+        description: 'Swap any exercise for a suitable alternative with one tap.',
+        position: TooltipPosition.above,
+      ),
+      AppTourStep(
+        id: 'workout_step_ai',
+        targetKey: AppTourKeys.workoutAiKey,
+        title: 'Mid-Workout Help',
+        description: 'Your AI coach is available during workouts — ask for form tips or modifications.',
+        position: TooltipPosition.above,
+      ),
+    ];
+    ref.read(appTourControllerProvider.notifier).checkAndShow('workout_tour', steps);
   }
 
   /// Attempt BLE HR auto-reconnect if enabled.
@@ -3331,38 +3377,40 @@ class _ActiveWorkoutScreenState
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         // Exercise title and set counter with info button
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 16),
-                          child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              // Exercise name and set counter (long-press for options)
-                              Expanded(
-                                child: GestureDetector(
-                                  onLongPress: () => _showExerciseOptionsSheet(_viewingExerciseIndex),
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        _exercises[_viewingExerciseIndex].name,
-                                        style: WorkoutDesign.titleStyle.copyWith(
-                                          fontSize: 26, // Bigger font size
-                                          color: isDark ? WorkoutDesign.textPrimary : Colors.grey.shade900,
+                        Container(
+                          key: AppTourKeys.exerciseCardKey,
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                // Exercise name and set counter (long-press for options)
+                                Expanded(
+                                  child: GestureDetector(
+                                    onLongPress: () => _showExerciseOptionsSheet(_viewingExerciseIndex),
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          _exercises[_viewingExerciseIndex].name,
+                                          style: WorkoutDesign.titleStyle.copyWith(
+                                            fontSize: 26, // Bigger font size
+                                            color: isDark ? WorkoutDesign.textPrimary : Colors.grey.shade900,
+                                          ),
+                                          maxLines: 2,
+                                          overflow: TextOverflow.ellipsis,
                                         ),
-                                        maxLines: 2,
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
-                                      const SizedBox(height: 4),
-                                      Text(
-                                        'Set ${(_completedSets[_viewingExerciseIndex]?.length ?? 0) + 1} of ${_totalSetsPerExercise[_viewingExerciseIndex] ?? 3}',
-                                        style: WorkoutDesign.subtitleStyle.copyWith(
-                                          color: isDark ? WorkoutDesign.textSecondary : Colors.grey.shade600,
+                                        const SizedBox(height: 4),
+                                        Text(
+                                          'Set ${(_completedSets[_viewingExerciseIndex]?.length ?? 0) + 1} of ${_totalSetsPerExercise[_viewingExerciseIndex] ?? 3}',
+                                          style: WorkoutDesign.subtitleStyle.copyWith(
+                                            color: isDark ? WorkoutDesign.textSecondary : Colors.grey.shade600,
+                                          ),
                                         ),
-                                      ),
-                                    ],
+                                      ],
+                                    ),
                                   ),
                                 ),
-                              ),
                               const SizedBox(width: 8),
                               // Live heart rate display (merged WearOS + BLE)
                               Row(
@@ -3434,11 +3482,14 @@ class _ActiveWorkoutScreenState
                             ],
                           ),
                         ),
+                        ),
 
                         const SizedBox(height: 12),
 
                         // Action chips row (Superset, Warm Up, etc.) - Video moved to bottom, Info moved to title
-                        ActionChipsRow(
+                        Container(
+                          key: AppTourKeys.swapExerciseKey,
+                          child: ActionChipsRow(
                           chips: _buildActionChipsForCurrentExercise()
                               .where((chip) => chip.label != 'Video' && chip.label != 'Info')
                               .toList(),
@@ -3446,6 +3497,7 @@ class _ActiveWorkoutScreenState
                           showAiChip: false,
                           hasAiNotification: _currentWeightSuggestion != null,
                           onAiChipTapped: () => _showAICoachSheet(currentExercise),
+                        ),
                         ),
 
                         const SizedBox(height: 8),
@@ -3456,8 +3508,10 @@ class _ActiveWorkoutScreenState
                             child: Column(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                SetTrackingTable(
-                                  key: ValueKey('set_tracking_$_viewingExerciseIndex'),
+                                Container(
+                                  key: AppTourKeys.setLoggingKey,
+                                  child: SetTrackingTable(
+                                    key: ValueKey('set_tracking_$_viewingExerciseIndex'),
                                   exercise: _exercises[_viewingExerciseIndex],
                                   sets: setRows,
                                   useKg: _useKg,
@@ -3489,7 +3543,8 @@ class _ActiveWorkoutScreenState
                                   showInlineRest: _showInlineRest &&
                                       _viewingExerciseIndex == _currentExerciseIndex &&
                                       !_isRestingBetweenExercises,
-                                  inlineRestRowWidget: _buildInlineRestRowV2(),
+                                    inlineRestRowWidget: _buildInlineRestRowV2(),
+                                  ),
                                 ),
 
                                 // AI Text Input Bar (below set table, within scrollable area)
@@ -3568,6 +3623,7 @@ class _ActiveWorkoutScreenState
             // Wrapped in RepaintBoundary to isolate per-second rest timer repaints
             if (_isResting && _isRestingBetweenExercises)
               Positioned.fill(
+                key: AppTourKeys.restTimerKey,
                 child: RepaintBoundary(
                   child: RestTimerOverlay(
                     restSecondsRemaining: _timerController.restSecondsRemaining,
@@ -3623,6 +3679,7 @@ class _ActiveWorkoutScreenState
             // Floating AI Coach FAB (positioned above thumbnail strip)
             if (!_isResting && !_hideAICoachForSession && ref.watch(aiSettingsProvider).showAICoachDuringWorkouts)
               Positioned(
+                key: AppTourKeys.workoutAiKey,
                 bottom: MediaQuery.of(context).padding.bottom + 100, // Above thumbnail strip (~80px height + padding)
                 right: 20,
                 child: _buildFloatingAICoachButton(currentExercise),

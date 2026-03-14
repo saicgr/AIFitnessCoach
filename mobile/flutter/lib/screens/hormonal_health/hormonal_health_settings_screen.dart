@@ -5,6 +5,7 @@ import '../../data/providers/hormonal_health_provider.dart';
 import '../../data/repositories/hormonal_health_repository.dart';
 import '../../core/providers/user_provider.dart';
 import '../settings/sections/kegel_settings_section.dart';
+import '../../widgets/glass_back_button.dart';
 import '../../widgets/glass_sheet.dart';
 
 /// Settings screen for hormonal health configuration
@@ -29,6 +30,8 @@ class _HormonalHealthSettingsScreenState
     return Scaffold(
       appBar: AppBar(
         title: const Text('Hormonal Health Settings'),
+        automaticallyImplyLeading: false,
+        leading: const GlassBackButton(),
       ),
       body: profileAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),

@@ -27,6 +27,7 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen> {
 
   // Personal info state
   String? _name;
+  String? _nameError;
   DateTime? _dateOfBirth;
   String? _gender;
   double? _heightCm;
@@ -69,11 +70,59 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen> {
     return age;
   }
 
+  /// Returns an error message if the name is invalid, or null if it's fine.
+  String? _validateName(String name) {
+    final trimmed = name.trim();
+
+    // Too short
+    if (trimmed.length < 2) return 'Name must be at least 2 characters';
+
+    // Only digits
+    if (RegExp(r'^\d+$').hasMatch(trimmed)) return 'Please enter a real name';
+
+    // All same character (e.g. "xxx", "aaaa")
+    if (RegExp(r'^(.)\1+$').hasMatch(trimmed.toLowerCase())) {
+      return 'Please enter a real name';
+    }
+
+    // Keyboard walk / gibberish patterns
+    const _gibberish = {
+      'asdf', 'qwerty', 'qwert', 'zxcv', 'abcd', 'abcde', 'efgh', 'hjkl',
+      'aaaa', 'bbbb', 'cccc', 'dddd', 'eeee', 'ffff', 'gggg', 'hhhh',
+    };
+    // Common fake/test names
+    const _fakeNames = {
+      'test', 'fake', 'user', 'name', 'noname', 'n/a', 'na', 'none',
+      'unknown', 'anon', 'anonymous', 'admin', 'temp', 'demo',
+    };
+    final lower = trimmed.toLowerCase();
+    if (_gibberish.contains(lower) || _fakeNames.contains(lower)) {
+      return 'Please enter your real name';
+    }
+
+    // Profanity check (compact list of clearly offensive words)
+    const _profanity = {
+      'fuck', 'fucku', 'fck', 'shit', 'shite', 'crap', 'ass', 'arse',
+      'bitch', 'bastard', 'cunt', 'cock', 'dick', 'prick', 'pussy',
+      'asshole', 'arsehole', 'wanker', 'twat', 'bollocks', 'motherfucker',
+      'whore', 'slut', 'fag', 'faggot', 'nigger', 'nigga',
+    };
+    // Check if any profanity word appears as a word within the name
+    for (final word in _profanity) {
+      if (lower.split(RegExp(r'\s+')).any((w) => w == word)) {
+        return 'Please enter an appropriate name';
+      }
+    }
+
+    return null; // Valid
+  }
+
   bool get _canContinue {
     // Require name, DOB, gender, height, weight, AND weight goal
     // Also enforce minimum age of 16
     return _name != null &&
         _name!.isNotEmpty &&
+        _nameError == null &&
         _dateOfBirth != null &&
         _userAge != null &&
         _userAge! >= 16 &&
@@ -252,7 +301,11 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen> {
                     useMetric: _useMetric,
                     weightDirection: _weightDirection,
                     weightChangeAmount: _weightChangeAmount,
-                    onNameChanged: (name) => setState(() => _name = name),
+                    onNameChanged: (name) => setState(() {
+                      _name = name.isEmpty ? null : name;
+                      _nameError = name.isEmpty ? null : _validateName(name);
+                    }),
+                    nameError: _nameError,
                     onDateOfBirthChanged: (dob) => setState(() => _dateOfBirth = dob),
                     onGenderChanged: (gender) => setState(() => _gender = gender),
                     onHeightChanged: (height) => setState(() => _heightCm = height),

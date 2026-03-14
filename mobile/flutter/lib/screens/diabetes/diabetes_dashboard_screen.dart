@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants/app_colors.dart';
 import '../../data/providers/diabetes_provider.dart';
 import '../../data/services/haptic_service.dart';
+import '../../widgets/glass_back_button.dart';
 import '../../widgets/glass_sheet.dart';
 
 // ============================================
@@ -568,6 +569,8 @@ class _DiabetesDashboardScreenState
       backgroundColor: backgroundColor,
       appBar: AppBar(
         backgroundColor: backgroundColor,
+        automaticallyImplyLeading: false,
+        leading: const GlassBackButton(),
         title: Text(
           'Diabetes',
           style: TextStyle(

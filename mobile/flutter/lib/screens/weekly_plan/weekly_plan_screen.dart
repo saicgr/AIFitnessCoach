@@ -7,6 +7,7 @@ import 'widgets/day_card.dart';
 import 'widgets/plan_header.dart';
 import 'widgets/generate_plan_sheet.dart';
 import 'daily_plan_detail_sheet.dart';
+import '../../widgets/glass_back_button.dart';
 
 /// Weekly plan screen showing the holistic plan calendar view
 class WeeklyPlanScreen extends ConsumerStatefulWidget {
@@ -53,6 +54,8 @@ class _WeeklyPlanScreenState extends ConsumerState<WeeklyPlanScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Weekly Plan'),
+        automaticallyImplyLeading: false,
+        leading: const GlassBackButton(),
         actions: [
           if (planState.currentPlan != null)
             IconButton(

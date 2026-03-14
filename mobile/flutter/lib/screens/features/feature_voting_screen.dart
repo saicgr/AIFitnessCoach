@@ -5,6 +5,7 @@ import '../../models/feature_request.dart';
 import '../../widgets/app_loading.dart';
 import '../../data/providers/feature_provider.dart';
 import '../../widgets/glass_sheet.dart';
+import '../../widgets/glass_back_button.dart';
 import '../../widgets/segmented_tab_bar.dart';
 import 'widgets/suggest_feature_sheet.dart';
 
@@ -51,6 +52,8 @@ class _FeatureVotingScreenState extends ConsumerState<FeatureVotingScreen>
         title: const Text('Upcoming Features'),
         backgroundColor: isDark ? const Color(0xFF1A1F3A) : Colors.white,
         elevation: 0,
+        automaticallyImplyLeading: false,
+        leading: const GlassBackButton(),
         actions: [
           IconButton(
             icon: const Icon(Icons.add_circle_outline),

@@ -86,7 +86,6 @@ class _WarmupSettingsCard extends ConsumerWidget {
                           HapticFeedback.lightImpact();
                           ref.read(warmupDurationProvider.notifier).setWarmupEnabled(value);
                         },
-                  activeColor: orange,
                 ),
               ],
             ),

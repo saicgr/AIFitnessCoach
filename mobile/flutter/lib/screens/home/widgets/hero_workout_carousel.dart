@@ -51,6 +51,9 @@ class HeroWorkoutCarousel extends ConsumerStatefulWidget {
   /// Fires when the visible page changes (swipe or programmatic)
   final ValueChanged<int>? onPageChanged;
 
+  /// Optional key for app tour spotlight targeting
+  final GlobalKey? carouselKey;
+
   /// Shared card height constant
   static const double cardHeight = 360;
 
@@ -59,6 +62,7 @@ class HeroWorkoutCarousel extends ConsumerStatefulWidget {
     this.externalPageController,
     this.onCarouselItemsChanged,
     this.onPageChanged,
+    this.carouselKey,
   });
 
   /// Reset auto-generation flag (call on pull-to-refresh, regeneration, or logout)
@@ -177,7 +181,9 @@ class _HeroWorkoutCarouselState extends ConsumerState<HeroWorkoutCarousel> {
     // Also watch todayWorkoutProvider as fallback to ensure today's workout shows
     final todayWorkoutAsync = ref.watch(todayWorkoutProvider);
 
-    return userAsync.when(
+    return KeyedSubtree(
+      key: widget.carouselKey,
+      child: userAsync.when(
       loading: () => _buildLoadingState(isDark, accentColor),
       error: (_, __) => _buildErrorState(isDark),
       data: (user) {
@@ -349,6 +355,7 @@ class _HeroWorkoutCarouselState extends ConsumerState<HeroWorkoutCarousel> {
           ),
         );
       },
+    ),
     );
   }
 

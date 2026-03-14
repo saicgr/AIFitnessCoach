@@ -6,6 +6,7 @@ import '../../data/providers/device_capability_provider.dart';
 import '../../data/providers/model_download_provider.dart';
 import '../../services/device_capability_service.dart';
 import '../../services/model_download_service.dart';
+import '../../widgets/glass_back_button.dart';
 
 /// Dedicated screen for managing on-device AI model downloads.
 ///
@@ -94,6 +95,8 @@ class _AiModelDownloadScreenState
         title: const Text('On-Device AI Model'),
         backgroundColor: Colors.transparent,
         elevation: 0,
+        automaticallyImplyLeading: false,
+        leading: const GlassBackButton(),
       ),
       body: ListView(
         padding: const EdgeInsets.all(16),
@@ -610,7 +613,6 @@ class _ModelOptionTile extends StatelessWidget {
                 value: true,
                 groupValue: isSelected ? true : null,
                 onChanged: isEnabled ? (_) => onSelect?.call() : null,
-                activeColor: AppColors.orange,
               ),
               Expanded(
                 child: Column(

@@ -77,6 +77,7 @@ from api.v1 import exercise_popularity  # Collaborative filtering exercise score
 from api.v1 import beast_mode  # Beast mode custom training preferences
 from api.v1 import wrapped  # Fitness Wrapped monthly recap cards
 from api.v1 import plateau  # Plateau detection (exercise + weight stalling)
+from api.v1 import email_cron  # Lifecycle email cron jobs
 
 # Create v1 router
 router = APIRouter(prefix="/v1")
@@ -349,3 +350,6 @@ router.include_router(wrapped.router, prefix="/wrapped", tags=["Wrapped"])
 
 # Plateau detection (exercise + weight stalling, recommendations)
 router.include_router(plateau.router, prefix="/plateau", tags=["Plateau Detection"])
+
+# Lifecycle email cron endpoint (secured by X-Cron-Secret header)
+router.include_router(email_cron.router, prefix="/emails", tags=["Email Cron"])

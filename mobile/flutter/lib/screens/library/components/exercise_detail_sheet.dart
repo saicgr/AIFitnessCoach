@@ -1709,7 +1709,7 @@ class _ExerciseActionButtonsState extends ConsumerState<_ExerciseActionButtons> 
                   icon: isQueued ? Icons.playlist_add_check : Icons.playlist_add,
                   label: 'Queue',
                   isActive: isQueued,
-                  activeColor: AppColors.cyan,
+                  activeColor: Theme.of(context).colorScheme.primary,
                   inactiveColor: textMuted,
                   onTap: () {
                     HapticService.light();

@@ -1,0 +1,29 @@
+name: Daily Email Cron
+
+on:
+  schedule:
+    - cron: '0 6 * * *'  # daily at 6 AM UTC
+  workflow_dispatch:       # allow manual trigger from GitHub UI
+
+jobs:
+  run-email-cron:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger email cron endpoint
+        run: |
+          response=$(curl -s -w "\n%{http_code}" -X POST \
+            https://aifitnesscoach-zqi3.onrender.com/api/v1/emails/cron \
+            -H "X-Cron-Secret: ${{ secrets.CRON_SECRET }}" \
+            -H "Content-Type: application/json" \
+            -d "{}")
+
+          body=$(echo "$response" | head -n -1)
+          status=$(echo "$response" | tail -n 1)
+
+          echo "Status: $status"
+          echo "Response: $body"
+
+          if [ "$status" != "200" ]; then
+            echo "Cron job failed with status $status"
+            exit 1
+          fi

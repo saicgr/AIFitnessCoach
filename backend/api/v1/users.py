@@ -1527,7 +1527,6 @@ async def update_user(user_id: str, user: UserUpdate,
             # Index exercise variety/consistency settings to ChromaDB for AI context
             prefs = update_data.get("preferences", {})
             if isinstance(prefs, str):
-                import json
                 prefs = json.loads(prefs)
 
             has_exercise_variety_settings = any([

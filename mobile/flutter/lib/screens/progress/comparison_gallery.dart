@@ -7,6 +7,7 @@ import '../../widgets/app_loading.dart';
 import '../../widgets/app_snackbar.dart';
 import '../../data/models/progress_photos.dart';
 import '../../data/repositories/progress_photos_repository.dart';
+import '../../widgets/glass_back_button.dart';
 import '../../widgets/glass_sheet.dart';
 import 'comparison_view.dart';
 
@@ -41,6 +42,8 @@ class _ComparisonGalleryScreenState
         centerTitle: true,
         backgroundColor: colorScheme.surface,
         surfaceTintColor: Colors.transparent,
+        automaticallyImplyLeading: false,
+        leading: const GlassBackButton(),
         actions: [
           IconButton(
             icon: Icon(

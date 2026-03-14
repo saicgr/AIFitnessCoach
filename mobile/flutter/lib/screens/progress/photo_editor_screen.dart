@@ -359,7 +359,6 @@ class _PhotoEditorScreenState extends State<PhotoEditorScreen> {
                             value: _logoScale,
                             min: 0.5,
                             max: 3.0,
-                            activeColor: AppColors.cyan,
                             inactiveColor: AppColors.cardBorder,
                             onChanged: (value) {
                               setState(() => _logoScale = value);

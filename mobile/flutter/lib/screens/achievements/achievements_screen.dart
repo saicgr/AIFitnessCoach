@@ -6,6 +6,7 @@ import '../../data/models/achievement.dart';
 import '../../data/repositories/achievements_repository.dart';
 import '../../data/services/api_client.dart';
 import '../../widgets/lottie_animations.dart';
+import '../../widgets/glass_back_button.dart';
 import '../../widgets/segmented_tab_bar.dart';
 
 class AchievementsScreen extends ConsumerStatefulWidget {
@@ -57,6 +58,8 @@ class _AchievementsScreenState extends ConsumerState<AchievementsScreen>
         backgroundColor: backgroundColor,
         foregroundColor: textPrimary,
         title: Text('Achievements', style: TextStyle(color: textPrimary)),
+        automaticallyImplyLeading: false,
+        leading: const GlassBackButton(),
       ),
       body: Column(
         children: [

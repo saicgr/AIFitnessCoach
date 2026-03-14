@@ -34,6 +34,7 @@ import 'tabs/hydration_tab.dart';
 // COMING SOON: Fasting tab — uncomment when fasting feature launches
 // import 'tabs/fasting_tab.dart';
 import '../../data/repositories/hydration_repository.dart';
+import '../../widgets/app_tour/app_tour_controller.dart';
 
 class NutritionScreen extends ConsumerStatefulWidget {
   /// Optional meal type to auto-open the log meal sheet (from deep link).
@@ -79,6 +80,7 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
         final isDark = Theme.of(context).brightness == Brightness.dark;
         _showLogMealSheet(isDark, mealType: widget.initialMeal);
       }
+      _triggerNutritionTour();
     });
   }
 
@@ -100,6 +102,40 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
   void dispose() {
     _tabController.dispose();
     super.dispose();
+  }
+
+  void _triggerNutritionTour() {
+    final steps = [
+      AppTourStep(
+        id: 'nutrition_step_macro',
+        targetKey: AppTourKeys.macroGoalsKey,
+        title: 'Your Daily Targets',
+        description: 'Calorie and macro targets auto-set from your goals. Tap to adjust anytime.',
+        position: TooltipPosition.below,
+      ),
+      AppTourStep(
+        id: 'nutrition_step_add_meal',
+        targetKey: AppTourKeys.addMealKey,
+        title: 'Log a Meal',
+        description: 'Tap + next to any meal to scan food with your camera or search the database.',
+        position: TooltipPosition.below,
+      ),
+      AppTourStep(
+        id: 'nutrition_step_tabs',
+        targetKey: AppTourKeys.nutritionTabsKey,
+        title: 'More Detail',
+        description: 'Switch tabs to track micronutrients, hydration, and detailed nutrient breakdowns.',
+        position: TooltipPosition.below,
+      ),
+      AppTourStep(
+        id: 'nutrition_step_history',
+        targetKey: AppTourKeys.nutritionHistoryKey,
+        title: 'Track Over Time',
+        description: 'View your full nutrition history and weekly summaries here.',
+        position: TooltipPosition.below,
+      ),
+    ];
+    ref.read(appTourControllerProvider.notifier).checkAndShow('nutrition_tour', steps);
   }
 
   Future<void> _loadData() async {
@@ -335,27 +371,30 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
                   ),
                   const Spacer(),
                   // History
-                  GestureDetector(
-                    onTap: () {
-                      if (_userId != null) {
-                        Navigator.push(
-                          context,
-                          AppPageRoute(
-                            builder: (_) => FoodHistoryScreen(userId: _userId!),
+                  Container(
+                    key: AppTourKeys.nutritionHistoryKey,
+                    child: GestureDetector(
+                      onTap: () {
+                        if (_userId != null) {
+                          Navigator.push(
+                            context,
+                            AppPageRoute(
+                              builder: (_) => FoodHistoryScreen(userId: _userId!),
+                            ),
+                          );
+                        }
+                      },
+                      child: Tooltip(
+                        message: 'History',
+                        child: Container(
+                          width: 32,
+                          height: 32,
+                          decoration: BoxDecoration(
+                            color: glassSurface,
+                            borderRadius: BorderRadius.circular(16),
                           ),
-                        );
-                      }
-                    },
-                    child: Tooltip(
-                      message: 'History',
-                      child: Container(
-                        width: 32,
-                        height: 32,
-                        decoration: BoxDecoration(
-                          color: glassSurface,
-                          borderRadius: BorderRadius.circular(16),
+                          child: Icon(Icons.history, size: 18, color: isDark ? AppColors.teal : AppColorsLight.teal),
                         ),
-                        child: Icon(Icons.history, size: 18, color: isDark ? AppColors.teal : AppColorsLight.teal),
                       ),
                     ),
                   ),
@@ -416,6 +455,7 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
             ),
             // Tab Bar with colored tabs
             SegmentedTabBar(
+              key: AppTourKeys.nutritionTabsKey,
               controller: _tabController,
               showIcons: true,
               showBorder: true,
@@ -1174,28 +1214,34 @@ class _DailyTabState extends ConsumerState<_DailyTab> {
 
                 // 2. GOALS - Nutrition Goals Card
                 if (!widget.calmMode)
-                  NutritionGoalsCard(
-                    targets: widget.targets,
-                    summary: widget.summary,
-                    isDark: widget.isDark,
-                    onEdit: () => _showEditTargetsSheet(context),
-                    onRecalculate: () => _recalculateTargets(),
-                    onHydrationTap: widget.onSwitchToHydrationTab,
+                  Container(
+                    key: AppTourKeys.macroGoalsKey,
+                    child: NutritionGoalsCard(
+                      targets: widget.targets,
+                      summary: widget.summary,
+                      isDark: widget.isDark,
+                      onEdit: () => _showEditTargetsSheet(context),
+                      onRecalculate: () => _recalculateTargets(),
+                      onHydrationTap: widget.onSwitchToHydrationTab,
+                    ),
                   ),
 
                 if (!widget.calmMode) const SizedBox(height: 8),
 
                 // 3. MEAL SECTIONS - All 4 meal types always visible with inline add
-                _LoggedMealsSection(
-                  meals: widget.summary?.meals ?? [],
-                  onDeleteMeal: widget.onDeleteMeal,
-                  onCopyMeal: widget.onCopyMeal,
-                  onLogMeal: widget.onLogMeal,
-                  isDark: widget.isDark,
-                  userId: widget.userId,
-                  onFoodSaved: _loadFavorites,
-                  calorieTarget: widget.targets?.dailyCalorieTarget,
-                  totalCaloriesEaten: widget.summary?.totalCalories ?? 0,
+                Container(
+                  key: AppTourKeys.addMealKey,
+                  child: _LoggedMealsSection(
+                    meals: widget.summary?.meals ?? [],
+                    onDeleteMeal: widget.onDeleteMeal,
+                    onCopyMeal: widget.onCopyMeal,
+                    onLogMeal: widget.onLogMeal,
+                    isDark: widget.isDark,
+                    userId: widget.userId,
+                    onFoodSaved: _loadFavorites,
+                    calorieTarget: widget.targets?.dailyCalorieTarget,
+                    totalCaloriesEaten: widget.summary?.totalCalories ?? 0,
+                  ),
                 ),
                 const SizedBox(height: 12),
 

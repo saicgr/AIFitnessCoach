@@ -25,6 +25,7 @@ import 'widgets/widgets.dart';
 import '../../data/providers/synced_workouts_provider.dart';
 import '../../data/providers/wrapped_provider.dart';
 import 'synced_workout_detail_screen.dart';
+import '../../widgets/app_tour/app_tour_controller.dart';
 
 /// Main profile screen displaying user information, stats, and settings.
 ///
@@ -66,7 +67,35 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     // Load bio from backend
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _loadBio();
+      _triggerProfileTour();
     });
+  }
+
+  void _triggerProfileTour() {
+    final steps = [
+      AppTourStep(
+        id: 'profile_step_stats',
+        targetKey: AppTourKeys.viewStatsKey,
+        title: 'Track Your Progress',
+        description: 'Tap here for detailed strength charts, volume trends, and body composition.',
+        position: TooltipPosition.below,
+      ),
+      AppTourStep(
+        id: 'profile_step_synced',
+        targetKey: AppTourKeys.syncedWorkoutsKey,
+        title: 'Connect Health Apps',
+        description: 'Link Apple Health or Google Fit to sync workouts automatically.',
+        position: TooltipPosition.below,
+      ),
+      AppTourStep(
+        id: 'profile_step_wrapped',
+        targetKey: AppTourKeys.wrappedKey,
+        title: 'Your Fitness Story',
+        description: 'Monthly and yearly summaries of your achievements, volume, and streaks.',
+        position: TooltipPosition.below,
+      ),
+    ];
+    ref.read(appTourControllerProvider.notifier).checkAndShow('profile_tour', steps);
   }
 
   Future<void> _loadBio() async {
@@ -897,35 +926,38 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               const SizedBox(height: 12),
 
               // View Stats button
-              InkWell(
-                onTap: () {
-                  HapticService.selection();
-                  context.push('/stats');
-                },
-                borderRadius: BorderRadius.circular(12),
-                child: Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                  decoration: BoxDecoration(
-                    color: elevated,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: cardBorder),
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(Icons.bar_chart_rounded, color: AppColors.info, size: 20),
-                      const SizedBox(width: 10),
-                      Text(
-                        'View Stats',
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          color: textPrimary,
+              Container(
+                key: AppTourKeys.viewStatsKey,
+                child: InkWell(
+                  onTap: () {
+                    HapticService.selection();
+                    context.push('/stats');
+                  },
+                  borderRadius: BorderRadius.circular(12),
+                  child: Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    decoration: BoxDecoration(
+                      color: elevated,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: cardBorder),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(Icons.bar_chart_rounded, color: AppColors.info, size: 20),
+                        const SizedBox(width: 10),
+                        Text(
+                          'View Stats',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: textPrimary,
+                          ),
                         ),
-                      ),
-                      const Spacer(),
-                      Icon(Icons.chevron_right_rounded, color: textMuted, size: 20),
-                    ],
+                        const Spacer(),
+                        Icon(Icons.chevron_right_rounded, color: textMuted, size: 20),
+                      ],
+                    ),
                   ),
                 ),
               ),
@@ -955,22 +987,28 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 style: TextStyle(fontSize: 12, color: textMuted.withValues(alpha: 0.7)),
               ),
               const SizedBox(height: 8),
-              _SyncedWorkoutsRow(
-                elevated: elevated,
-                cardBorder: cardBorder,
-                textPrimary: textPrimary,
-                textMuted: textMuted,
+              Container(
+                key: AppTourKeys.syncedWorkoutsKey,
+                child: _SyncedWorkoutsRow(
+                  elevated: elevated,
+                  cardBorder: cardBorder,
+                  textPrimary: textPrimary,
+                  textMuted: textMuted,
+                ),
               ),
               const SizedBox(height: 24),
 
               // MY WRAPPED
               _buildSectionLabel('MY WRAPPED', AppColors.yellow),
               const SizedBox(height: 8),
-              _WrappedPeriodsRow(
-                elevated: elevated,
-                cardBorder: cardBorder,
-                textPrimary: textPrimary,
-                textMuted: textMuted,
+              Container(
+                key: AppTourKeys.wrappedKey,
+                child: _WrappedPeriodsRow(
+                  elevated: elevated,
+                  cardBorder: cardBorder,
+                  textPrimary: textPrimary,
+                  textMuted: textMuted,
+                ),
               ),
               const SizedBox(height: 24),
 

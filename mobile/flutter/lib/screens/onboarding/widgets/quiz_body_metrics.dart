@@ -28,6 +28,8 @@ class QuizBodyMetrics extends StatefulWidget {
   final bool showHeader;
   /// When true, reduces spacing/padding to fit foldable right-pane without scrolling.
   final bool compact;
+  /// Validation error for the name field. Shown inline below the text field.
+  final String? nameError;
 
   const QuizBodyMetrics({
     super.key,
@@ -51,6 +53,7 @@ class QuizBodyMetrics extends StatefulWidget {
     this.onWeightChangeAmountChanged,
     this.showHeader = true,
     this.compact = false,
+    this.nameError,
   });
 
   /// Calculate age from date of birth
@@ -333,7 +336,9 @@ class _QuizBodyMetricsState extends State<QuizBodyMetrics> {
           decoration: BoxDecoration(
             color: cardBg,
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: cardBorder),
+            border: Border.all(
+              color: widget.nameError != null ? Colors.red.shade400 : cardBorder,
+            ),
           ),
           child: TextField(
             controller: _nameController,
@@ -354,12 +359,23 @@ class _QuizBodyMetricsState extends State<QuizBodyMetrics> {
               border: InputBorder.none,
             ),
             onChanged: (value) {
-              if (value.trim().isNotEmpty) {
-                widget.onNameChanged(value.trim());
-              }
+              widget.onNameChanged(value.trim());
             },
           ),
         ),
+        if (widget.nameError != null) ...[
+          const SizedBox(height: 6),
+          Row(
+            children: [
+              Icon(Icons.info_outline, size: 14, color: Colors.red.shade400),
+              const SizedBox(width: 4),
+              Text(
+                widget.nameError!,
+                style: TextStyle(fontSize: 12, color: Colors.red.shade400),
+              ),
+            ],
+          ),
+        ],
       ],
     ).animate().fadeIn(delay: 250.ms).slideX(begin: 0.05);
   }

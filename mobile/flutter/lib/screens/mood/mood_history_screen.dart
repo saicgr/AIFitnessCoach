@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../../core/constants/app_colors.dart';
 import '../../widgets/app_loading.dart';
+import '../../widgets/glass_back_button.dart';
 import '../../data/providers/mood_history_provider.dart';
 import 'widgets/mood_analytics_card.dart';
 import 'widgets/mood_calendar_heatmap.dart';
@@ -56,6 +57,8 @@ class _MoodHistoryScreenState extends ConsumerState<MoodHistoryScreen> {
       backgroundColor: background,
       appBar: AppBar(
         backgroundColor: background,
+        automaticallyImplyLeading: false,
+        leading: const GlassBackButton(),
         title: const Text('Mood History & Analysis'),
         actions: [
           IconButton(

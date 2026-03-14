@@ -9,6 +9,7 @@ import '../../widgets/app_loading.dart';
 import '../../widgets/app_snackbar.dart';
 import '../../data/providers/consistency_provider.dart';
 import '../../data/services/api_client.dart';
+import '../../widgets/glass_back_button.dart';
 
 /// Consistency Insights Dashboard Screen
 /// Displays streak information, workout patterns, and recovery options
@@ -71,6 +72,8 @@ class _ConsistencyScreenState extends ConsumerState<ConsistencyScreen>
         centerTitle: true,
         backgroundColor: colorScheme.surface,
         surfaceTintColor: Colors.transparent,
+        automaticallyImplyLeading: false,
+        leading: const GlassBackButton(),
       ),
       body: _isLoading || _userId == null
           ? AppLoading.fullScreen()

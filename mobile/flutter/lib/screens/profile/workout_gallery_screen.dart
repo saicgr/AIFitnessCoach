@@ -7,6 +7,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 
 import '../../core/animations/app_animations.dart';
 import '../../core/constants/app_colors.dart';
+import '../../widgets/glass_back_button.dart';
 import '../../widgets/glass_sheet.dart';
 import '../../data/providers/workout_gallery_provider.dart';
 import '../../data/services/api_client.dart';
@@ -133,6 +134,8 @@ class _WorkoutGalleryScreenState extends ConsumerState<WorkoutGalleryScreen> {
         backgroundColor: backgroundColor,
         title: const Text('Workout Gallery'),
         centerTitle: true,
+        automaticallyImplyLeading: false,
+        leading: const GlassBackButton(),
         actions: [
           IconButton(
             onPressed: _loadImages,

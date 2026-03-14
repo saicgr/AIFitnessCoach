@@ -82,11 +82,18 @@ DEFAULT_FITNESS_LEVEL = "intermediate"
 # Exercises that require a flat bench (not cable/machine variants)
 _BENCH_REQUIRED_PATTERNS = frozenset([
     "pullover",
+    "pull over",         # space-separated variant (e.g. "Dumbbell Chest Pull Over")
     "bench press",
     "incline press",
+    "incline dumbbell",  # incline dumbbell fly, incline dumbbell row on bench
     "decline press",
+    "decline dumbbell",
     "chest supported",
     "preacher",
+    "tate press",        # tricep exercise performed lying on a bench
+    "jm press",          # bench-based tricep compound
+    "lying tricep",      # e.g. "Lying Tricep Extension"
+    "lying extension",
 ])
 
 # Exercises that require a squat rack / power rack
@@ -1592,8 +1599,8 @@ Select exactly {count} UNIQUE exercises that are SAFE for this user."""
                 # Compounds: More sets for strength development
                 base_sets = {"beginner": 3, "intermediate": 4, "advanced": 5}
             else:
-                # Isolation/Bodyweight: Fewer sets
-                base_sets = {"beginner": 2, "intermediate": 3, "advanced": 4}
+                # Isolation/Bodyweight: min 3 sets so the UI never shows "2 sets"
+                base_sets = {"beginner": 3, "intermediate": 3, "advanced": 4}
             sets = base_sets.get(validated_level, 3)
 
             # 4. DETERMINE REPS based on exercise type + fitness level

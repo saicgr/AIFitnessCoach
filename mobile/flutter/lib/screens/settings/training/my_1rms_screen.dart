@@ -792,7 +792,6 @@ class _LinkExerciseSheetState extends ConsumerState<_LinkExerciseSheet> {
               max: 1.0,
               divisions: 10,
               onChanged: (value) => setState(() => _multiplier = value),
-              activeColor: AppColors.cyan,
             ),
             const SizedBox(height: 16),
 

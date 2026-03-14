@@ -284,7 +284,6 @@ class _ChallengeFriendsDialogState extends ConsumerState<ChallengeFriendsDialog>
                                   )
                                 : null,
                           ),
-                          activeColor: AppColors.orange,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
                           ),

@@ -6,15 +6,16 @@ import '../constants/app_colors.dart';
 class AppTheme {
   AppTheme._();
 
-  static ThemeData get darkTheme {
+  static ThemeData buildDarkTheme(Color primary) {
+    final onPrimary = primary.computeLuminance() > 0.4 ? Colors.black : Colors.white;
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.dark,
 
       // Color Scheme
-      colorScheme: const ColorScheme.dark(
-        primary: AppColors.cyan,
-        onPrimary: AppColors.pureBlack,
+      colorScheme: ColorScheme.dark(
+        primary: primary,
+        onPrimary: onPrimary,
         secondary: AppColors.purple,
         onSecondary: AppColors.textPrimary,
         surface: AppColors.nearBlack,
@@ -46,9 +47,9 @@ class AppTheme {
       ),
 
       // Bottom Navigation
-      bottomNavigationBarTheme: const BottomNavigationBarThemeData(
+      bottomNavigationBarTheme: BottomNavigationBarThemeData(
         backgroundColor: AppColors.nearBlack,
-        selectedItemColor: AppColors.cyan,
+        selectedItemColor: primary,
         unselectedItemColor: AppColors.textMuted,
         type: BottomNavigationBarType.fixed,
         elevation: 0,
@@ -65,13 +66,13 @@ class AppTheme {
       // Navigation Bar (Material 3)
       navigationBarTheme: NavigationBarThemeData(
         backgroundColor: AppColors.nearBlack,
-        indicatorColor: AppColors.cyan.withOpacity(0.2),
+        indicatorColor: primary.withOpacity(0.2),
         labelTextStyle: WidgetStateProperty.resolveWith((states) {
           if (states.contains(WidgetState.selected)) {
-            return const TextStyle(
+            return TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w600,
-              color: AppColors.cyan,
+              color: primary,
             );
           }
           return const TextStyle(
@@ -82,7 +83,7 @@ class AppTheme {
         }),
         iconTheme: WidgetStateProperty.resolveWith((states) {
           if (states.contains(WidgetState.selected)) {
-            return const IconThemeData(color: AppColors.cyan, size: 24);
+            return IconThemeData(color: primary, size: 24);
           }
           return const IconThemeData(color: AppColors.textMuted, size: 24);
         }),
@@ -106,8 +107,8 @@ class AppTheme {
       // Buttons
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.cyan,
-          foregroundColor: AppColors.pureBlack,
+          backgroundColor: primary,
+          foregroundColor: onPrimary,
           elevation: 0,
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
           shape: RoundedRectangleBorder(
@@ -137,7 +138,7 @@ class AppTheme {
 
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
-          foregroundColor: AppColors.cyan,
+          foregroundColor: primary,
           textStyle: const TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.w500,
@@ -169,7 +170,7 @@ class AppTheme {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: AppColors.cyan),
+          borderSide: BorderSide(color: primary),
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
@@ -271,8 +272,8 @@ class AppTheme {
       ),
 
       // Progress Indicator
-      progressIndicatorTheme: const ProgressIndicatorThemeData(
-        color: AppColors.cyan,
+      progressIndicatorTheme: ProgressIndicatorThemeData(
+        color: primary,
         linearTrackColor: AppColors.glassSurface,
         circularTrackColor: AppColors.glassSurface,
       ),
@@ -324,6 +325,19 @@ class AppTheme {
           borderRadius: BorderRadius.circular(8),
         ),
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      ),
+
+      // Switch
+      switchTheme: SwitchThemeData(
+        thumbColor: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) return primary;
+          return null;
+        }),
+        trackColor: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) return primary.withOpacity(0.5);
+          return null;
+        }),
+        trackOutlineColor: WidgetStateProperty.all(Colors.transparent),
       ),
     );
   }

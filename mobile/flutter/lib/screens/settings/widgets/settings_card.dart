@@ -1515,6 +1515,7 @@ class SettingsCard extends ConsumerWidget {
                 subtitle: item.subtitle,
                 onTap: onTap,
                 trailing: trailing,
+                iconColor: item.iconColor,
                 showChevron: !item.isThemeToggle &&
                     !item.isFollowSystemToggle &&
                     !item.isThemeSelector &&

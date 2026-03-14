@@ -6,6 +6,7 @@ import 'core/theme/accent_color_provider.dart';
 import 'core/theme/app_theme.dart';
 import 'core/theme/theme_provider.dart';
 import 'data/providers/admin_provider.dart';
+import 'data/providers/gym_profile_provider.dart';
 import 'core/accessibility/accessibility_provider.dart';
 import 'data/repositories/auth_repository.dart';
 import 'data/services/api_client.dart';
@@ -57,6 +58,11 @@ class _FitWizAppState extends ConsumerState<FitWizApp> {
   Widget build(BuildContext context) {
     final router = ref.watch(routerProvider);
     final themeMode = ref.watch(themeModeProvider);
+    final accent = ref.watch(accentColorProvider);
+    final gymOverride = ref.watch(gymAccentColorProvider);
+    final isDark = themeMode == ThemeMode.dark || (themeMode == ThemeMode.system && MediaQuery.platformBrightnessOf(context) == Brightness.dark);
+    // Gym profile color takes priority over coach/settings accent
+    final effectivePrimary = gymOverride ?? accent.getColor(isDark);
     // Only watch the status field to avoid unnecessary rebuilds when other
     // AuthState fields change (e.g., user object reference updates).
     // Performance fix M5: use .select() to minimize rebuilds.
@@ -70,13 +76,13 @@ class _FitWizAppState extends ConsumerState<FitWizApp> {
     }
 
     return MaterialApp.router(
-      // Use a key that changes with theme to force a clean rebuild
+      // Use a key that changes with theme/accent/gym-profile to force a clean rebuild
       // This prevents GlobalKey conflicts when theme changes
-      key: ValueKey('app_${themeMode.name}'),
+      key: ValueKey('app_${themeMode.name}_${accent.name}_${gymOverride?.value ?? "none"}'),
       title: 'FitWiz',
       debugShowCheckedModeBanner: false,
-      theme: AppThemeLight.theme,
-      darkTheme: AppTheme.darkTheme,
+      theme: AppThemeLight.buildTheme(effectivePrimary),
+      darkTheme: AppTheme.buildDarkTheme(effectivePrimary),
       themeMode: themeMode,
       routerConfig: router,
       builder: (context, child) {

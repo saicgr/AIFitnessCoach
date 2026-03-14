@@ -18,7 +18,7 @@ ENDPOINTS:
 - POST /api/v1/subscriptions/{user_id}/accept-offer - Accept retention offer
 """
 from datetime import datetime, date, timedelta
-from fastapi import APIRouter, HTTPException, Request, Header, Depends
+from fastapi import APIRouter, BackgroundTasks, HTTPException, Request, Header, Depends
 from typing import Optional, List
 from pydantic import BaseModel
 from enum import Enum
@@ -32,6 +32,7 @@ from core.config import get_settings
 from core.activity_logger import log_user_activity, log_user_error
 from core.auth import get_current_user
 from core.exceptions import safe_internal_error
+from services.email_service import get_email_service
 
 audit_logger = logging.getLogger("audit.subscriptions")
 
@@ -623,6 +624,7 @@ class RevenueCatEvent(BaseModel):
 @router.post("/webhook/revenuecat")
 async def revenuecat_webhook(
     request: Request,
+    background_tasks: BackgroundTasks,
     authorization: Optional[str] = Header(None)
 ):
     """
@@ -673,7 +675,7 @@ async def revenuecat_webhook(
 
         handler = handlers.get(event_type)
         if handler:
-            await handler(supabase, body.get("event", {}))
+            await handler(supabase, body.get("event", {}), background_tasks)
             return {"status": "processed", "event_type": event_type}
 
         logger.info(f"Unhandled event type: {event_type}")
@@ -685,7 +687,7 @@ async def revenuecat_webhook(
         raise safe_internal_error(e, "revenuecat_webhook")
 
 
-async def _handle_initial_purchase(supabase, event: dict):
+async def _handle_initial_purchase(supabase, event: dict, background_tasks=None):
     """Handle new subscription purchase."""
     user_id = event.get("app_user_id")
     product_id = event.get("product_id", "")
@@ -751,8 +753,28 @@ async def _handle_initial_purchase(supabase, event: dict):
             "metadata": event
         }).execute()
 
+    # Send purchase confirmation email (not for trial starts)
+    if not is_trial and background_tasks:
+        try:
+            user_result = supabase.client.table("users") \
+                .select("email, name") \
+                .eq("id", user_id) \
+                .single() \
+                .execute()
+            if user_result.data:
+                background_tasks.add_task(
+                    get_email_service().send_purchase_confirmation,
+                    user_result.data["email"],
+                    user_result.data.get("name", ""),
+                    tier,
+                    price,
+                    currency,
+                )
+        except Exception as email_err:
+            logger.error(f"❌ Failed to queue purchase confirmation email: {email_err}")
 
-async def _handle_renewal(supabase, event: dict):
+
+async def _handle_renewal(supabase, event: dict, background_tasks=None):
     """Handle subscription renewal."""
     user_id = event.get("app_user_id")
     expiration_at = event.get("expiration_at_ms")
@@ -781,7 +803,7 @@ async def _handle_renewal(supabase, event: dict):
     }).execute()
 
 
-async def _handle_cancellation(supabase, event: dict):
+async def _handle_cancellation(supabase, event: dict, background_tasks=None):
     """Handle subscription cancellation."""
     user_id = event.get("app_user_id")
     expiration_at = event.get("expiration_at_ms")
@@ -806,8 +828,48 @@ async def _handle_cancellation(supabase, event: dict):
         "metadata": event
     }).execute()
 
+    # Send cancellation retention email (gate: promotional preference)
+    if background_tasks:
+        try:
+            user_result = supabase.client.table("users") \
+                .select("email, name") \
+                .eq("id", user_id) \
+                .single() \
+                .execute()
+            sub_result = supabase.client.table("user_subscriptions") \
+                .select("tier") \
+                .eq("user_id", user_id) \
+                .single() \
+                .execute()
+            pref_result = supabase.client.table("email_preferences") \
+                .select("promotional") \
+                .eq("user_id", user_id) \
+                .single() \
+                .execute()
+            promotional_ok = True
+            if pref_result.data and pref_result.data.get("promotional") is False:
+                promotional_ok = False
+            if user_result.data and promotional_ok:
+                tier_name = sub_result.data.get("tier", "premium") if sub_result.data else "premium"
+                workout_count_result = supabase.client.table("workout_logs") \
+                    .select("id") \
+                    .eq("user_id", user_id) \
+                    .execute()
+                workout_count = len(workout_count_result.data or [])
+                background_tasks.add_task(
+                    get_email_service().send_cancellation_retention,
+                    user_result.data["email"],
+                    user_result.data.get("name", ""),
+                    tier_name,
+                    workout_count,
+                    0.0,  # total_volume_kg simplified
+                    0,    # current_streak simplified
+                )
+        except Exception as email_err:
+            logger.error(f"❌ Failed to queue cancellation retention email: {email_err}")
 
-async def _handle_expiration(supabase, event: dict):
+
+async def _handle_expiration(supabase, event: dict, background_tasks=None):
     """Handle subscription expiration."""
     user_id = event.get("app_user_id")
 
@@ -842,8 +904,32 @@ async def _handle_expiration(supabase, event: dict):
         "metadata": event
     }).execute()
 
+    # Send trial-expired email if this was a trial expiration
+    is_trial = event.get("is_trial_period", False)
+    if is_trial and background_tasks:
+        try:
+            user_result = supabase.client.table("users") \
+                .select("email, name") \
+                .eq("id", user_id) \
+                .single() \
+                .execute()
+            if user_result.data:
+                workout_count_result = supabase.client.table("workout_logs") \
+                    .select("id") \
+                    .eq("user_id", user_id) \
+                    .execute()
+                workout_count = len(workout_count_result.data or [])
+                background_tasks.add_task(
+                    get_email_service().send_trial_expired,
+                    user_result.data["email"],
+                    user_result.data.get("name", ""),
+                    workout_count,
+                )
+        except Exception as email_err:
+            logger.error(f"❌ Failed to queue trial expired email: {email_err}")
 
-async def _handle_product_change(supabase, event: dict):
+
+async def _handle_product_change(supabase, event: dict, background_tasks=None):
     """Handle subscription upgrade/downgrade."""
     user_id = event.get("app_user_id")
     new_product_id = event.get("new_product_id", "")
@@ -880,7 +966,7 @@ async def _handle_product_change(supabase, event: dict):
     }).execute()
 
 
-async def _handle_billing_issue(supabase, event: dict):
+async def _handle_billing_issue(supabase, event: dict, background_tasks=None):
     """Handle billing/payment issue."""
     user_id = event.get("app_user_id")
 
@@ -900,8 +986,32 @@ async def _handle_billing_issue(supabase, event: dict):
         "metadata": event
     }).execute()
 
+    # Send billing issue email (always — critical transactional email)
+    if background_tasks:
+        try:
+            user_result = supabase.client.table("users") \
+                .select("email, name") \
+                .eq("id", user_id) \
+                .single() \
+                .execute()
+            sub_result = supabase.client.table("user_subscriptions") \
+                .select("tier") \
+                .eq("user_id", user_id) \
+                .single() \
+                .execute()
+            if user_result.data:
+                tier_name = sub_result.data.get("tier", "premium") if sub_result.data else "premium"
+                background_tasks.add_task(
+                    get_email_service().send_billing_issue,
+                    user_result.data["email"],
+                    user_result.data.get("name", ""),
+                    tier_name,
+                )
+        except Exception as email_err:
+            logger.error(f"❌ Failed to queue billing issue email: {email_err}")
 
-async def _handle_subscriber_alias(supabase, event: dict):
+
+async def _handle_subscriber_alias(supabase, event: dict, background_tasks=None):
     """Handle customer ID alias update."""
     user_id = event.get("app_user_id")
     new_customer_id = event.get("new_customer_id")

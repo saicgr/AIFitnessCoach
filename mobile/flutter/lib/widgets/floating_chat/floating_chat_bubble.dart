@@ -7,6 +7,7 @@ import '../../data/models/coach_persona.dart';
 import '../../data/providers/xp_provider.dart';
 import '../../data/repositories/chat_repository.dart';
 import '../../screens/ai_settings/ai_settings_screen.dart';
+import '../app_tour/app_tour_controller.dart';
 import '../coach_avatar.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'floating_chat_provider.dart';
@@ -15,6 +16,7 @@ import 'floating_chat_provider.dart';
 /// This is a self-contained widget that can be added to any Stack
 /// Uses floatingChatProvider for persistent state across navigation
 class FloatingChatBubble extends ConsumerWidget {
+
   const FloatingChatBubble({super.key});
 
   @override
@@ -46,6 +48,7 @@ class FloatingChatBubble extends ConsumerWidget {
           scale: chatState.isDragging ? 1.1 : 1.0,
           duration: const Duration(milliseconds: 150),
           child: Container(
+            key: AppTourKeys.aiChatKey,
             width: 56,
             height: 56,
             decoration: BoxDecoration(

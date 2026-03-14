@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/theme/accent_color_provider.dart';
 import '../../data/models/workout.dart';
 import '../../data/repositories/workout_repository.dart';
 import '../../data/services/api_client.dart';
@@ -242,6 +243,10 @@ class _WorkoutGenerationScreenState extends ConsumerState<WorkoutGenerationScree
     final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
 
+    final accent = ref.watch(accentColorProvider);
+    final accentColor = accent.getColor(isDark);
+    final accentColorLight = Color.lerp(accentColor, Colors.white, 0.4)!;
+
     return Scaffold(
       backgroundColor: backgroundColor,
       body: SafeArea(
@@ -272,7 +277,7 @@ class _WorkoutGenerationScreenState extends ConsumerState<WorkoutGenerationScree
                   constraints: const BoxConstraints(maxWidth: 480),
                   child: _errorMessage != null
                       ? _buildErrorState(isDark, textPrimary, textSecondary)
-                      : _buildGeneratingState(isDark, textPrimary, textSecondary),
+                      : _buildGeneratingState(isDark, textPrimary, textSecondary, accentColor, accentColorLight),
                 ),
               ),
             ),
@@ -282,9 +287,7 @@ class _WorkoutGenerationScreenState extends ConsumerState<WorkoutGenerationScree
     );
   }
 
-  Widget _buildGeneratingState(bool isDark, Color textPrimary, Color textSecondary) {
-    final accentColor = isDark ? AppColors.orange : AppColorsLight.orange;
-    final accentColorLight = isDark ? AppColors.orangeLight : AppColorsLight.orangeLight;
+  Widget _buildGeneratingState(bool isDark, Color textPrimary, Color textSecondary, Color accentColor, Color accentColorLight) {
 
     // Current step label
     final stepLabel = _currentStep < _steps.length

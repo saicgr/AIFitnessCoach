@@ -7,6 +7,7 @@ import '../../../data/models/muscle_status.dart';
 import '../../../data/providers/muscle_analytics_provider.dart';
 import '../../../data/providers/scores_provider.dart';
 import '../../../data/repositories/muscle_analytics_repository.dart';
+import '../../../widgets/glass_back_button.dart';
 
 /// Detail screen showing analytics for a specific muscle group
 class MuscleDetailScreen extends ConsumerStatefulWidget {
@@ -66,6 +67,8 @@ class _MuscleDetailScreenState extends ConsumerState<MuscleDetailScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text(_formatMuscleName(widget.muscleGroup)),
+        automaticallyImplyLeading: false,
+        leading: const GlassBackButton(),
       ),
       body: RefreshIndicator(
         onRefresh: () async {

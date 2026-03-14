@@ -46,7 +46,7 @@ class GlassBackButton extends StatelessWidget {
           height: 40,
           decoration: BoxDecoration(
             color: glassSurface,
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(20),
             border: Border.all(
               color: isDark
                   ? Colors.white.withValues(alpha: 0.12)

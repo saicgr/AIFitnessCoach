@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
@@ -1281,10 +1282,13 @@ class _DiscountPopup extends StatefulWidget {
   State<_DiscountPopup> createState() => _DiscountPopupState();
 }
 
-class _DiscountPopupState extends State<_DiscountPopup> {
+class _DiscountPopupState extends State<_DiscountPopup> with TickerProviderStateMixin {
   late int _secondsRemaining;
   Timer? _timer;
   bool _isExpired = false;
+
+  late final AnimationController _borderController;
+  late final AnimationController _glowController;
 
   @override
   void initState() {
@@ -1298,11 +1302,25 @@ class _DiscountPopupState extends State<_DiscountPopup> {
       }
       setState(() => _secondsRemaining--);
     });
+
+    // Rotating gradient border — full rotation every 4 s
+    _borderController = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 4),
+    )..repeat();
+
+    // Pulsing glow — breathes in/out every 1.8 s
+    _glowController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1800),
+    )..repeat(reverse: true);
   }
 
   @override
   void dispose() {
     _timer?.cancel();
+    _borderController.dispose();
+    _glowController.dispose();
     super.dispose();
   }
 
@@ -1320,30 +1338,63 @@ class _DiscountPopupState extends State<_DiscountPopup> {
       backgroundColor: Colors.transparent,
       insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
       child: SingleChildScrollView(
-        child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: colors.elevated,
-          borderRadius: BorderRadius.circular(24),
-          border: Border.all(
-            color: _isExpired
-                ? colors.textSecondary.withOpacity(0.3)
-                : accentColor.withOpacity(0.5),
-            width: 2,
-          ),
-          boxShadow: [
-            if (!_isExpired)
-              BoxShadow(
-                color: accentColor.withOpacity(0.3),
-                blurRadius: 30,
-                spreadRadius: 5,
+        child: AnimatedBuilder(
+          animation: Listenable.merge([_borderController, _glowController]),
+          builder: (context, _) {
+            final glow = _glowController.value; // 0.0 → 1.0, pulsing
+            return Container(
+              // Gradient border layer: 2.5 px thick
+              padding: const EdgeInsets.all(2.5),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(26.5),
+                gradient: _isExpired
+                    ? null
+                    : SweepGradient(
+                        transform: GradientRotation(
+                          _borderController.value * 2 * math.pi,
+                        ),
+                        colors: [
+                          accentColor.withOpacity(0.25),
+                          accentColor.withOpacity(0.9),
+                          Colors.white.withOpacity(0.85),
+                          accentColor.withOpacity(0.9),
+                          accentColor.withOpacity(0.25),
+                        ],
+                        stops: const [0.0, 0.25, 0.5, 0.75, 1.0],
+                      ),
+                color: _isExpired
+                    ? colors.textSecondary.withOpacity(0.3)
+                    : null,
+                boxShadow: [
+                  if (!_isExpired) ...[
+                    // Inner close glow (always on)
+                    BoxShadow(
+                      color: accentColor.withOpacity(0.35 + 0.2 * glow),
+                      blurRadius: 12 + 8 * glow,
+                      spreadRadius: 0,
+                    ),
+                    // Outer wide halo (pulses)
+                    BoxShadow(
+                      color: accentColor.withOpacity(0.15 + 0.2 * glow),
+                      blurRadius: 30 + 20 * glow,
+                      spreadRadius: 4 + 6 * glow,
+                    ),
+                  ],
+                ],
               ),
-          ],
+              child: Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: colors.elevated,
+                  borderRadius: BorderRadius.circular(24),
+                ),
+                child: _isExpired
+                    ? _buildExpiredContent(colors)
+                    : _buildOfferContent(colors, accentColor),
+              ),
+            );
+          },
         ),
-        child: _isExpired
-            ? _buildExpiredContent(colors)
-            : _buildOfferContent(colors, accentColor),
-      ),
       ),
     );
   }

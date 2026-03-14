@@ -556,6 +556,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         return 'Bro Split';
       case 'dont_know':
         return 'Auto';
+      case 'ai_decide':
+        return 'AI Decide';
       default:
         return split.replaceAll('_', ' ');
     }

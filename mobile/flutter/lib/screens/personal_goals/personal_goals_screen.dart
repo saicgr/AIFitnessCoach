@@ -14,6 +14,7 @@ import 'widgets/goal_leaderboard_sheet.dart';
 import 'widgets/goal_history_sheet.dart';
 import 'create_goal_sheet.dart';
 import 'record_attempt_dialog.dart';
+import '../../widgets/glass_back_button.dart';
 
 /// Main screen for viewing and managing personal weekly goals
 class PersonalGoalsScreen extends ConsumerStatefulWidget {
@@ -244,6 +245,8 @@ class _PersonalGoalsScreenState extends ConsumerState<PersonalGoalsScreen> {
         title: const Text('Weekly Goals'),
         backgroundColor: backgroundColor,
         elevation: 0,
+        automaticallyImplyLeading: false,
+        leading: const GlassBackButton(),
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),

@@ -5,6 +5,7 @@ import '../../../data/models/muscle_analytics.dart';
 import '../../../widgets/app_loading.dart';
 import '../../../data/providers/muscle_analytics_provider.dart';
 import '../../../data/repositories/muscle_analytics_repository.dart';
+import '../../../widgets/glass_back_button.dart';
 import '../../../widgets/segmented_tab_bar.dart';
 import 'widgets/muscle_heatmap_widget.dart';
 import 'widgets/muscle_balance_chart.dart';
@@ -63,6 +64,8 @@ class _MuscleAnalyticsScreenState extends ConsumerState<MuscleAnalyticsScreen>
     return Scaffold(
       appBar: AppBar(
         title: const Text('Muscle Analytics'),
+        automaticallyImplyLeading: false,
+        leading: const GlassBackButton(),
         actions: [
           PopupMenuButton<String>(
             icon: const Icon(Icons.calendar_today),

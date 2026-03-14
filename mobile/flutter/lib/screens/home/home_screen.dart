@@ -59,6 +59,7 @@ import '../../data/repositories/hydration_repository.dart';
 import '../../data/providers/billing_reminder_provider.dart';
 import '../../data/providers/scheduling_provider.dart';
 import '../../widgets/usage_counter_strip.dart';
+import '../../widgets/app_tour/app_tour_controller.dart';
 
 /// The main home screen displaying workouts, progress, and quick actions
 class HomeScreen extends ConsumerStatefulWidget {
@@ -148,6 +149,59 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
         }),
       ]);
     });
+    // Trigger nav tour after initialization completes
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      _triggerNavTour();
+    });
+  }
+
+  void _triggerNavTour() {
+    final steps = [
+      AppTourStep(
+        id: 'nav_step_carousel',
+        targetKey: AppTourKeys.heroCarouselKey,
+        title: 'Your AI Workout',
+        description: 'Swipe to see this week\'s plan. Tap to start today\'s workout.',
+        position: TooltipPosition.below,
+      ),
+      AppTourStep(
+        id: 'nav_step_quicklog',
+        targetKey: AppTourKeys.quickLogKey,
+        title: 'Quick Log',
+        description: 'Log weight, meals, and mood in seconds. Build your daily habit.',
+        position: TooltipPosition.above,
+      ),
+      AppTourStep(
+        id: 'nav_step_workout',
+        targetKey: AppTourKeys.workoutNavKey,
+        title: 'Exercise Library',
+        description: 'Browse 2,000+ exercises filtered by muscle or equipment.',
+        position: TooltipPosition.above,
+      ),
+      AppTourStep(
+        id: 'nav_step_ai_chat',
+        targetKey: AppTourKeys.aiChatKey,
+        title: 'Your AI Coach',
+        description: 'Ask anything — modify workouts, get form tips, nutrition advice.',
+        position: TooltipPosition.above,
+      ),
+      AppTourStep(
+        id: 'nav_step_nutrition',
+        targetKey: AppTourKeys.nutritionNavKey,
+        title: 'Track Nutrition',
+        description: 'Scan meals with your camera. Track macros and fasting.',
+        position: TooltipPosition.above,
+      ),
+      AppTourStep(
+        id: 'nav_step_profile',
+        targetKey: AppTourKeys.profileNavKey,
+        title: 'Your Progress',
+        description: 'View strength charts, streaks, XP, and achievements.',
+        position: TooltipPosition.above,
+      ),
+    ];
+    ref.read(appTourControllerProvider.notifier).checkAndShow('nav_tour', steps);
   }
 
   @override
@@ -2376,6 +2430,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   ) {
     return SectionedHeroArea(
       carouselPageController: _carouselPageController,
+      carouselKey: AppTourKeys.heroCarouselKey,
       onCarouselItemsChanged: (items) {
         if (mounted && items.length != _carouselItems.length ||
             (items.isNotEmpty && _carouselItems.isNotEmpty &&
@@ -2450,40 +2505,43 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   Widget _buildTrendsSection(bool isDark) {
     final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Section header - larger font for readability
-          Padding(
-            padding: const EdgeInsets.only(bottom: 12),
-            child: Text(
-              'Your Progress',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w700,
-                color: textPrimary,
+    return Container(
+      key: AppTourKeys.quickLogKey,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Section header - larger font for readability
+            Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: Text(
+                'Your Progress',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                  color: textPrimary,
+                ),
               ),
             ),
-          ),
 
-          // Two half-width cards in a row - IntrinsicHeight ensures matching heights
-          IntrinsicHeight(
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Expanded(
-                  child: DailyStatsCard(size: TileSize.half, isDark: isDark),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: QuickLogWeightCard(size: TileSize.half, isDark: isDark),
-                ),
-              ],
+            // Two half-width cards in a row - IntrinsicHeight ensures matching heights
+            IntrinsicHeight(
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Expanded(
+                    child: DailyStatsCard(size: TileSize.half, isDark: isDark),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: QuickLogWeightCard(size: TileSize.half, isDark: isDark),
+                  ),
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

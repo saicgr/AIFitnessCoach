@@ -4,6 +4,7 @@ import '../../core/constants/app_colors.dart';
 import '../../data/providers/neat_provider.dart' as real_neat;
 import '../../data/services/api_client.dart';
 import '../../data/services/haptic_service.dart';
+import '../../widgets/glass_back_button.dart';
 
 // ============================================
 // NEAT Data Models
@@ -409,6 +410,8 @@ class _NeatDashboardScreenState extends ConsumerState<NeatDashboardScreen>
       backgroundColor: backgroundColor,
       appBar: AppBar(
         backgroundColor: backgroundColor,
+        automaticallyImplyLeading: false,
+        leading: const GlassBackButton(),
         title: Text(
           'Daily Activity',
           style: TextStyle(
@@ -2180,7 +2183,6 @@ class _MovementReminderCard extends StatelessWidget {
               min: 100,
               max: 500,
               divisions: 8,
-              activeColor: AppColors.cyan,
               inactiveColor: textMuted.withOpacity(0.3),
               onChanged: (value) {
                 onSettingsChanged(

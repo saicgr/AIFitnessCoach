@@ -94,7 +94,6 @@ class _TemplateEditorSheetState extends State<TemplateEditorSheet> {
               const Spacer(),
               Switch(
                 value: _supersets,
-                activeColor: AppColors.orange,
                 onChanged: (v) => setState(() => _supersets = v),
               ),
             ],

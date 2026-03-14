@@ -160,8 +160,15 @@ def _build_equipment_usage_rule(equipment) -> str:
     equipment_restrictions = []
     if real_equipment and not has_bench:
         equipment_restrictions.append(
-            "⚠️ NO BENCH: Exclude Bench Press, Pullover, Incline Press, "
-            "Decline Press, Preacher Curl. Use: Floor Press, Push-Ups instead."
+            "⚠️ NO BENCH AVAILABLE: The user does NOT have a weight bench.\n"
+            "STRICTLY EXCLUDE all exercises that require lying on a bench:\n"
+            "  - Bench Press (flat, incline, decline — any variation)\n"
+            "  - Pullover / Pull Over (Dumbbell Chest Pullover, Dumbbell Chest Pull Over, etc.)\n"
+            "  - Tate Press, JM Press, Lying Tricep Extension, Lying Extension\n"
+            "  - Preacher Curl, Chest-Supported Row, Chest-Supported Fly\n"
+            "  - Any exercise whose name contains 'bench', 'incline dumbbell', 'decline dumbbell', or 'lying extension'\n"
+            "SAFE ALTERNATIVES: Floor Press, Push-Ups, Dumbbell Floor Flye, "
+            "Standing/Seated Overhead Press, Dips."
         )
     if any("barbell" in e for e in normalised) and not has_rack:
         equipment_restrictions.append(
@@ -355,8 +362,10 @@ def validate_set_targets_strict(exercises: List[Dict], user_context: Dict = None
         raise ValueError(error_msg)
 
     # Enforce MINIMUM 3 working sets per exercise (warmup/drop/failure don't count)
+    # Auto-repair instead of raising so RAG-generated exercises (already pre-validated)
+    # don't abort the whole workout.
     MIN_WORKING_SETS = 3
-    too_few_sets = []
+    _effective_types = {'working', 'drop', 'failure', 'amrap'}
     for exercise in exercises:
         if not isinstance(exercise, dict):
             continue
@@ -366,16 +375,42 @@ def validate_set_targets_strict(exercises: List[Dict], user_context: Dict = None
             continue
         working_count = sum(
             1 for st in targets
-            if isinstance(st, dict) and st.get('set_type', 'working').lower() in ('working', 'drop', 'failure', 'amrap')
+            if isinstance(st, dict) and st.get('set_type', 'working').lower() in _effective_types
         )
         if working_count < MIN_WORKING_SETS:
-            too_few_sets.append(f"{ex_name} ({working_count} effective sets)")
-            logger.warning(f"⚠️ [set_targets] '{ex_name}' has only {working_count} effective sets (min {MIN_WORKING_SETS})")
+            logger.warning(
+                f"⚠️ [set_targets] '{ex_name}' has only {working_count} effective sets "
+                f"(min {MIN_WORKING_SETS}) — auto-repairing"
+            )
+            # Find last effective set to duplicate
+            last_eff = next(
+                (st for st in reversed(targets)
+                 if isinstance(st, dict) and st.get('set_type', 'working').lower() in _effective_types),
+                None
+            )
+            if last_eff is None:
+                # No effective set at all — create a basic working set
+                last_eff = {
+                    'set_type': 'working',
+                    'target_reps': exercise.get('reps', 10),
+                    'target_weight_kg': None,
+                    'target_rpe': 8,
+                    'target_rir': 2,
+                }
+            while working_count < MIN_WORKING_SETS:
+                new_set = dict(last_eff)
+                new_set['set_number'] = len(targets) + 1
+                # Never add another failure/amrap — keep added sets as working
+                if new_set.get('set_type', 'working').lower() in ('failure', 'amrap'):
+                    new_set['set_type'] = 'working'
+                    new_set['target_rpe'] = min(9, (new_set.get('target_rpe') or 8))
+                    new_set['target_rir'] = max(1, (new_set.get('target_rir') or 1))
+                targets.append(new_set)
+                working_count += 1
 
-    if too_few_sets:
-        error_msg = f"Gemini generated too few effective sets for {len(too_few_sets)} exercises (min {MIN_WORKING_SETS}): {too_few_sets}"
-        logger.error(f"❌ [FATAL] {error_msg}")
-        raise ValueError(error_msg)
+            exercise['set_targets'] = targets
+            exercise['sets'] = len(targets)
+            logger.info(f"✅ [set_targets] '{ex_name}' repaired to {len(targets)} sets")
 
     # Log summary of set types found
     logger.info(f"📊 [set_targets] Summary ({total_sets} total sets):")
@@ -6219,6 +6254,16 @@ The user wants BOTH strength AND muscle size. You MUST:
 - Mix of compound and isolation exercises
 - Include both strength techniques (heavy singles/doubles) and hypertrophy techniques (drop sets)
 - RPE varies: 8-9 for compounds, 7-8 for isolation""",
+                'endurance': """
+🎯 PRIMARY TRAINING FOCUS: MUSCULAR ENDURANCE (Stamina)
+The user's primary goal is to BUILD STAMINA and MUSCULAR ENDURANCE. You MUST:
+- Use SHORT rest periods (30-60 seconds) between sets to build lactate threshold
+- Prioritize higher total volume — more sets per session at a sustainable effort
+- Structure workouts as circuits or supersets where possible to maintain elevated heart rate
+- Select exercises that translate to cardiovascular endurance (compound movements, bodyweight, cardio-adjacent like battle ropes, sled push, box jumps)
+- Avoid training to failure — RPE typically 6-8 (challenging but maintainable pace)
+- Focus on smooth continuous tension and controlled breathing between reps
+- Prefer exercise variety within a session to engage multiple energy systems""",
             }
             primary_goal_instruction = goal_mappings.get(primary_goal, "")
 

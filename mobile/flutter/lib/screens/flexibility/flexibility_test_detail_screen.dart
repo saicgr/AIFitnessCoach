@@ -4,6 +4,7 @@ import '../../data/models/flexibility_assessment.dart';
 import '../../data/providers/flexibility_provider.dart';
 import 'widgets/flexibility_progress_chart.dart';
 import 'widgets/record_assessment_sheet.dart';
+import '../../widgets/glass_back_button.dart';
 import '../../widgets/glass_sheet.dart';
 
 /// Detailed view of a specific flexibility test with progress tracking
@@ -50,6 +51,8 @@ class _FlexibilityTestDetailScreenState extends ConsumerState<FlexibilityTestDet
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.test.name),
+        automaticallyImplyLeading: false,
+        leading: const GlassBackButton(),
         actions: [
           IconButton(
             onPressed: () => _showRecordSheet(),

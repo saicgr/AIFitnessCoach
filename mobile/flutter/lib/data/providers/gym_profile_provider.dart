@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/theme/accent_color_provider.dart';
 import '../models/gym_profile.dart';
@@ -58,6 +59,15 @@ final activeProfileEnvironmentProvider = Provider<String>((ref) {
 final activeGymProfileIdProvider = Provider<String?>((ref) {
   final activeProfile = ref.watch(activeGymProfileProvider);
   return activeProfile?.id;
+});
+
+/// Provides the active gym profile's Color for MaterialApp theme override.
+///
+/// Returns null when no gym profiles exist (app falls back to accentColorProvider).
+/// Priority: active gym profile color > user accent color selection.
+final gymAccentColorProvider = Provider<Color?>((ref) {
+  final activeProfile = ref.watch(activeGymProfileProvider);
+  return activeProfile?.profileColor;
 });
 
 /// State notifier for managing gym profiles with cache-first pattern

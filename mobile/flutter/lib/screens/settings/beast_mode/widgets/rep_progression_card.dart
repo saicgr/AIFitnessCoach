@@ -41,7 +41,6 @@ class RepProgressionCard extends ConsumerWidget {
             max: 30,
             divisions: 29,
             labels: RangeLabels('${prefs.preferredMinReps}', '${prefs.preferredMaxReps}'),
-            activeColor: AppColors.orange,
             onChanged: (values) {
               ref.read(exerciseProgressionProvider.notifier).setRepRange(values.start.round(), values.end.round());
             },
@@ -57,7 +56,6 @@ class RepProgressionCard extends ConsumerWidget {
             max: 8,
             divisions: 7,
             labels: RangeLabels('${prefs.minSetsPerExercise}', '${prefs.maxSetsPerExercise}'),
-            activeColor: AppColors.orange,
             onChanged: (values) {
               ref.read(exerciseProgressionProvider.notifier).setSetsRange(values.start.round(), values.end.round());
             },

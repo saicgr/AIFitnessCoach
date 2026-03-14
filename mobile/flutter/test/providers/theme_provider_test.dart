@@ -149,20 +149,20 @@ void main() {
 
   group('AppThemeLight', () {
     test('should return light theme', () {
-      final theme = AppThemeLight.theme;
+      final theme = AppThemeLight.buildTheme(const Color(0xFF00BCD4));
 
       expect(theme.brightness, Brightness.light);
       expect(theme.useMaterial3, true);
     });
 
     test('should have proper scaffold background color', () {
-      final theme = AppThemeLight.theme;
+      final theme = AppThemeLight.buildTheme(const Color(0xFF00BCD4));
 
       expect(theme.scaffoldBackgroundColor, isNotNull);
     });
 
     test('should have proper app bar theme', () {
-      final theme = AppThemeLight.theme;
+      final theme = AppThemeLight.buildTheme(const Color(0xFF00BCD4));
 
       expect(theme.appBarTheme.backgroundColor, isNotNull);
       expect(theme.appBarTheme.elevation, 0);
@@ -170,14 +170,14 @@ void main() {
     });
 
     test('should have proper card theme', () {
-      final theme = AppThemeLight.theme;
+      final theme = AppThemeLight.buildTheme(const Color(0xFF00BCD4));
 
       expect(theme.cardTheme.elevation, 0);
       expect(theme.cardTheme.margin, EdgeInsets.zero);
     });
 
     test('should have proper text theme', () {
-      final theme = AppThemeLight.theme;
+      final theme = AppThemeLight.buildTheme(const Color(0xFF00BCD4));
 
       expect(theme.textTheme.displayLarge, isNotNull);
       expect(theme.textTheme.bodyLarge, isNotNull);

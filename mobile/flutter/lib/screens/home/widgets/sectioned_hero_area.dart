@@ -18,6 +18,7 @@ import '../../wrapped/widgets/wrapped_banner.dart';
 /// Calendar strip only shows for the Workouts tab.
 class SectionedHeroArea extends ConsumerStatefulWidget {
   final PageController carouselPageController;
+  final GlobalKey? carouselKey;
   final ValueChanged<List<CarouselItem>>? onCarouselItemsChanged;
   final ValueChanged<int>? onPageChanged;
   final AsyncValue<TodayWorkoutResponse?> todayWorkoutState;
@@ -29,6 +30,7 @@ class SectionedHeroArea extends ConsumerStatefulWidget {
   const SectionedHeroArea({
     super.key,
     required this.carouselPageController,
+    this.carouselKey,
     this.onCarouselItemsChanged,
     this.onPageChanged,
     required this.todayWorkoutState,
@@ -118,6 +120,7 @@ class _SectionedHeroAreaState extends ConsumerState<SectionedHeroArea> {
       externalPageController: widget.carouselPageController,
       onCarouselItemsChanged: widget.onCarouselItemsChanged,
       onPageChanged: widget.onPageChanged,
+      carouselKey: widget.carouselKey,
     );
   }
 

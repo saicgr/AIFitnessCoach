@@ -2432,7 +2432,6 @@ class _EscalateToHumanDialogState extends ConsumerState<_EscalateToHumanDialog> 
           ),
           value: category,
           groupValue: _selectedCategory,
-          activeColor: AppColors.cyan,
           onChanged: (value) {
             if (value != null) {
               setState(() {

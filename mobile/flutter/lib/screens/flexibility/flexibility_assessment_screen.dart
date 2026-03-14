@@ -9,6 +9,7 @@ import 'widgets/record_assessment_sheet.dart';
 import 'flexibility_test_detail_screen.dart';
 import 'flexibility_history_screen.dart';
 import '../../widgets/glass_sheet.dart';
+import '../../widgets/glass_back_button.dart';
 import '../../widgets/segmented_tab_bar.dart';
 
 /// Main flexibility assessment screen showing all tests and user progress
@@ -55,6 +56,8 @@ class _FlexibilityAssessmentScreenState extends ConsumerState<FlexibilityAssessm
     return Scaffold(
       appBar: AppBar(
         title: const Text('Flexibility Assessment'),
+        automaticallyImplyLeading: false,
+        leading: const GlassBackButton(),
         actions: [
           IconButton(
             icon: const Icon(Icons.history),

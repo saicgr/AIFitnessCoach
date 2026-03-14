@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/theme/accent_color_provider.dart';
 import '../../../data/models/gym_profile.dart';
 import '../../../data/providers/gym_profile_provider.dart';
 import '../../../data/services/haptic_service.dart';
@@ -49,6 +50,7 @@ class _AddGymProfileSheetState extends ConsumerState<AddGymProfileSheet> {
   String _selectedIcon = 'fitness_center';
   String _selectedColor = GymProfileColors.palette[0];
   bool _usingCustomColor = false;
+  bool _usingAppTheme = false;
   bool _showCustomPicker = false;
   String _selectedEnvironment = 'commercial_gym';
   List<String> _selectedEquipment = List<String>.from(
@@ -165,6 +167,18 @@ class _AddGymProfileSheetState extends ConsumerState<AddGymProfileSheet> {
     super.initState();
     // Pre-populate _shownFollowUps for follow-ups already satisfied by initial equipment
     _initShownFollowUps();
+    // Pre-select app theme color as default
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final gymColor = ref.read(gymAccentColorProvider);
+      final accentColor = gymColor ?? ref.read(accentColorProvider).getColor(true);
+      final hex = '#${accentColor.toARGB32().toRadixString(16).substring(2).toUpperCase()}';
+      setState(() {
+        _selectedColor = hex;
+        _usingAppTheme = true;
+        _usingCustomColor = false;
+      });
+    });
   }
 
   void _initShownFollowUps() {
@@ -1049,6 +1063,65 @@ class _AddGymProfileSheetState extends ConsumerState<AddGymProfileSheet> {
           ),
         ),
         const SizedBox(height: 10),
+        // Match app theme option
+        Builder(builder: (context) {
+          final gymColor = ref.read(gymAccentColorProvider);
+          final accent = ref.read(accentColorProvider);
+          final appThemeColor = gymColor ?? accent.getColor(isDark);
+          final onAppThemeColor = appThemeColor.computeLuminance() > 0.4 ? Colors.black : Colors.white;
+          return GestureDetector(
+            onTap: () {
+              final hex = '#${appThemeColor.toARGB32().toRadixString(16).substring(2).toUpperCase()}';
+              setState(() {
+                _selectedColor = hex;
+                _usingCustomColor = false;
+                _usingAppTheme = true;
+                _showCustomPicker = false;
+              });
+              HapticService.light();
+            },
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              margin: const EdgeInsets.only(bottom: 10),
+              decoration: BoxDecoration(
+                color: _usingAppTheme
+                    ? appThemeColor.withOpacity(0.15)
+                    : (isDark ? Colors.white.withOpacity(0.05) : Colors.black.withOpacity(0.03)),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(
+                  color: _usingAppTheme ? appThemeColor : Colors.transparent,
+                  width: 2,
+                ),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 24,
+                    height: 24,
+                    decoration: BoxDecoration(
+                      color: appThemeColor,
+                      shape: BoxShape.circle,
+                    ),
+                    child: _usingAppTheme
+                        ? Icon(Icons.check_rounded, size: 14, color: onAppThemeColor)
+                        : null,
+                  ),
+                  const SizedBox(width: 10),
+                  Text(
+                    'Match app theme',
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: _usingAppTheme ? FontWeight.w600 : FontWeight.w400,
+                      color: _usingAppTheme ? appThemeColor : textSecondary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        }),
+        const SizedBox(height: 4),
         Wrap(
           spacing: 10,
           runSpacing: 10,
@@ -1062,6 +1135,7 @@ class _AddGymProfileSheetState extends ConsumerState<AddGymProfileSheet> {
                   setState(() {
                     _selectedColor = colorHex;
                     _usingCustomColor = false;
+                    _usingAppTheme = false;
                     _showCustomPicker = false;
                   });
                   HapticService.light();
@@ -1135,6 +1209,7 @@ class _AddGymProfileSheetState extends ConsumerState<AddGymProfileSheet> {
               setState(() {
                 _selectedColor = hex;
                 _usingCustomColor = true;
+                _usingAppTheme = false;
               });
               HapticService.light();
             },

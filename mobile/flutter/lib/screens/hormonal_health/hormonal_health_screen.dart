@@ -8,6 +8,7 @@ import 'widgets/cycle_tracker_widget.dart';
 import 'widgets/hormone_log_sheet.dart';
 import 'widgets/hormone_goals_card.dart';
 import 'widgets/quick_stats_card.dart';
+import '../../widgets/glass_back_button.dart';
 import '../../widgets/glass_sheet.dart';
 
 /// Main screen for hormonal health tracking and insights
@@ -29,6 +30,8 @@ class _HormonalHealthScreenState extends ConsumerState<HormonalHealthScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Hormonal Health'),
+        automaticallyImplyLeading: false,
+        leading: const GlassBackButton(),
         actions: [
           IconButton(
             icon: const Icon(Icons.settings_outlined),

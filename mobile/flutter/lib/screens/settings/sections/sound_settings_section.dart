@@ -82,7 +82,6 @@ class SoundSettingsSection extends ConsumerWidget {
                 trailing: Switch.adaptive(
                   value: prefs.countdownSoundEnabled,
                   onChanged: (enabled) => notifier.setCountdownEnabled(enabled),
-                  activeColor: AppColors.cyan,
                 ),
               ),
               if (prefs.countdownSoundEnabled) ...[
@@ -106,7 +105,6 @@ class SoundSettingsSection extends ConsumerWidget {
                 trailing: Switch.adaptive(
                   value: prefs.restTimerSoundEnabled,
                   onChanged: (enabled) => notifier.setRestTimerEnabled(enabled),
-                  activeColor: AppColors.cyan,
                 ),
               ),
               if (prefs.restTimerSoundEnabled) ...[
@@ -131,7 +129,6 @@ class SoundSettingsSection extends ConsumerWidget {
                   value: prefs.exerciseCompletionSoundEnabled,
                   onChanged: (enabled) =>
                       notifier.setExerciseCompletionEnabled(enabled),
-                  activeColor: AppColors.cyan,
                 ),
               ),
               if (prefs.exerciseCompletionSoundEnabled) ...[
@@ -157,7 +154,6 @@ class SoundSettingsSection extends ConsumerWidget {
                   value: prefs.workoutCompletionSoundEnabled,
                   onChanged: (enabled) =>
                       notifier.setWorkoutCompletionEnabled(enabled),
-                  activeColor: AppColors.cyan,
                 ),
               ),
               if (prefs.workoutCompletionSoundEnabled) ...[
@@ -188,7 +184,6 @@ class SoundSettingsSection extends ConsumerWidget {
                   min: 0.0,
                   max: 1.0,
                   divisions: 10,
-                  activeColor: AppColors.cyan,
                 ),
               ),
               const SizedBox(height: 8),

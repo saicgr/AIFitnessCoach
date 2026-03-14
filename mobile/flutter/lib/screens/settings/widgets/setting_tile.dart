@@ -102,12 +102,16 @@ class SettingItemData {
   /// Whether this item is the week start day selector (Mon/Sun).
   final bool isWeekStartSelector;
 
+  /// Optional icon color for colored icon backgrounds.
+  final Color? iconColor;
+
   const SettingItemData({
     required this.icon,
     required this.title,
     this.subtitle,
     this.onTap,
     this.trailing,
+    this.iconColor,
     this.isThemeToggle = false,
     this.isFollowSystemToggle = false,
     this.isThemeSelector = false,
@@ -192,11 +196,22 @@ class SettingTile extends StatelessWidget {
         padding: const EdgeInsets.all(16),
         child: Row(
           children: [
-            Icon(
-              icon,
-              color: iconColor ?? textSecondary,
-              size: 22,
-            ),
+            if (iconColor != null)
+              Container(
+                width: 32,
+                height: 32,
+                decoration: BoxDecoration(
+                  color: iconColor!.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(icon, color: iconColor, size: 18),
+              )
+            else
+              Icon(
+                icon,
+                color: textSecondary,
+                size: 22,
+              ),
             const SizedBox(width: 12),
             Expanded(
               child: Column(

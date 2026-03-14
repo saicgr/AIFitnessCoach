@@ -18,6 +18,9 @@ import '../screens/ai_settings/ai_settings_screen.dart';
 import '../screens/nutrition/quick_log_overlay.dart';
 import '../screens/workout/widgets/quick_workout_sheet.dart';
 import 'coach_avatar.dart';
+import 'app_tour/app_tour_controller.dart';
+import 'app_tour/app_tour_overlay.dart';
+import 'floating_chat/floating_chat_bubble.dart';
 import 'floating_chat/floating_chat_overlay.dart';
 import 'offline_banner.dart';
 
@@ -240,6 +243,10 @@ class MainShell extends ConsumerWidget {
           ),
           // Note: Workout mini player is now handled globally in app.dart
           // Edge handle removed to reduce UI clutter (chat accessible via nav bar + floating overlay)
+          // Floating AI chat bubble
+          const FloatingChatBubble(),
+          // App tour overlay (topmost)
+          const AppTourOverlay(),
         ],
       ),
     );
@@ -585,6 +592,7 @@ class _FloatingNavBarWithAI extends ConsumerWidget {
                     isDark: isDark,
                   ),
                   _ExpandableNavItem(
+                    key: AppTourKeys.workoutNavKey,
                     icon: Icons.fitness_center_outlined,
                     selectedIcon: Icons.fitness_center,
                     label: 'Workout',
@@ -595,6 +603,7 @@ class _FloatingNavBarWithAI extends ConsumerWidget {
                     isDark: isDark,
                   ),
                   _ExpandableNavItem(
+                    key: AppTourKeys.nutritionNavKey,
                     icon: Icons.restaurant_outlined,
                     selectedIcon: Icons.restaurant,
                     label: 'Nutrition',
@@ -615,6 +624,7 @@ class _FloatingNavBarWithAI extends ConsumerWidget {
                     isDark: isDark,
                   ),
                   _ExpandableNavItem(
+                    key: AppTourKeys.profileNavKey,
                     icon: Icons.person_outline,
                     selectedIcon: Icons.person,
                     label: 'Profile',
@@ -646,6 +656,7 @@ class _ExpandableNavItem extends StatelessWidget {
   final bool isDark;
 
   const _ExpandableNavItem({
+    super.key,
     required this.icon,
     required this.selectedIcon,
     required this.label,

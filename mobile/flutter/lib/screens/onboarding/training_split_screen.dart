@@ -20,6 +20,253 @@ class TrainingSplitScreen extends ConsumerStatefulWidget {
   ConsumerState<TrainingSplitScreen> createState() => _TrainingSplitScreenState();
 }
 
+// ─── Training Split Info Data ────────────────────────────────────────────────
+
+class _SplitInfo {
+  final String title;
+  final String tagline;
+  final String description;
+  final List<String> schedule;
+  final String bestFor;
+  final List<String> pros;
+  final List<String> cons;
+
+  const _SplitInfo({
+    required this.title,
+    required this.tagline,
+    required this.description,
+    required this.schedule,
+    required this.bestFor,
+    required this.pros,
+    required this.cons,
+  });
+}
+
+const _kSplitInfoMap = <String, _SplitInfo>{
+  'push_pull_legs': _SplitInfo(
+    title: 'Push / Pull / Legs (PPL)',
+    tagline: '3-day cycle, 5–6 days/week',
+    description:
+        'You alternate three types of sessions: Push (chest, shoulders, triceps), '
+        'Pull (back, biceps), and Legs. Running the cycle twice per week gives every '
+        'muscle 2 hits, making PPL one of the best evidence-based programs for muscle growth.',
+    schedule: [
+      'Mon — Push  (Chest · Shoulders · Triceps)',
+      'Tue — Pull  (Back · Biceps · Rear Delts)',
+      'Wed — Legs  (Quads · Hamstrings · Glutes · Calves)',
+      'Thu — Push  (repeat)',
+      'Fri — Pull  (repeat)',
+      'Sat — Legs  (repeat)',
+      'Sun — Rest',
+    ],
+    bestFor: 'Intermediate to advanced lifters training 5–6 days/week who want to build muscle efficiently.',
+    pros: [
+      'High muscle frequency (2×/week per group)',
+      'Clear, simple structure',
+      'Scales well with volume',
+    ],
+    cons: [
+      'Needs 5–6 days to work as designed',
+      'Leg sessions can be very demanding',
+    ],
+  ),
+  'full_body': _SplitInfo(
+    title: 'Full Body',
+    tagline: 'All muscles every session, 2–4 days/week',
+    description:
+        'Every session trains all major muscle groups (chest, back, legs, shoulders, arms). '
+        'Each workout uses compound movements — squats, deadlifts, bench press, rows — '
+        'so you hit every muscle frequently with less time in the gym.',
+    schedule: [
+      'Mon — Full Body (Squat · Press · Row · Core)',
+      'Tue — Rest',
+      'Wed — Full Body (Deadlift · Press · Pull · Core)',
+      'Thu — Rest',
+      'Fri — Full Body (variation)',
+      'Sat — Rest',
+      'Sun — Rest',
+    ],
+    bestFor: 'Beginners, people with 2–3 days available, or those returning after a break.',
+    pros: [
+      'Maximum muscle frequency per week',
+      'Time-efficient — works on 2 days/week',
+      'Great for strength & beginners',
+    ],
+    cons: [
+      'Each session is long and tiring',
+      'Limited specialization per muscle',
+    ],
+  ),
+  'upper_lower': _SplitInfo(
+    title: 'Upper / Lower',
+    tagline: 'Alternating upper & lower days, 4 days/week',
+    description:
+        'You alternate between upper-body days (chest, back, shoulders, arms) and '
+        'lower-body days (quads, hamstrings, glutes, calves). Each muscle group gets '
+        'trained twice per week with built-in rest for recovery.',
+    schedule: [
+      'Mon — Upper  (Bench · Row · Overhead · Curls)',
+      'Tue — Lower  (Squat · Romanian Deadlift · Leg Press)',
+      'Wed — Rest',
+      'Thu — Upper  (repeat, varied)',
+      'Fri — Lower  (Deadlift · Bulgarian Split · Calf)',
+      'Sat — Rest',
+      'Sun — Rest',
+    ],
+    bestFor: 'Intermediate lifters who want high frequency with manageable session length.',
+    pros: [
+      'Good balance of frequency & volume',
+      'Manageable session lengths',
+      'Flexible — add a 5th day easily',
+    ],
+    cons: [
+      'Needs at least 4 days to be effective',
+      'Less daily volume than body-part splits',
+    ],
+  ),
+  'phul': _SplitInfo(
+    title: 'PHUL — Power Hypertrophy Upper Lower',
+    tagline: '4 days/week · Strength + Size',
+    description:
+        'Created by powerlifter Brandon Campbell, PHUL combines heavy power training '
+        '(low reps, compound lifts) with high-volume hypertrophy work. Two days focus '
+        'on maximal strength; two days on muscle-building volume.',
+    schedule: [
+      'Mon — Upper Power  (heavy Bench · Row · Press · Pull)',
+      'Tue — Lower Power  (heavy Squat · Deadlift · Leg Press)',
+      'Wed — Rest',
+      'Thu — Upper Hypertrophy  (moderate weight, more sets)',
+      'Fri — Lower Hypertrophy  (lunges · leg curls · extensions)',
+      'Sat — Rest',
+      'Sun — Rest',
+    ],
+    bestFor: 'Intermediate lifters who want to get both stronger and bigger at the same time.',
+    pros: [
+      'Develops strength AND muscle simultaneously',
+      'Well-structured 4-day schedule',
+      'Excellent for intermediate progress',
+    ],
+    cons: [
+      'Power days are demanding — requires good technique',
+      'Not ideal for pure beginners',
+    ],
+  ),
+  'phat': _SplitInfo(
+    title: 'PHAT — Power Hypertrophy Adaptive Training',
+    tagline: '5 days/week · Power + Volume blend',
+    description:
+        'Designed by Dr. Layne Norton (PhD Nutritional Sciences, natural bodybuilder & powerlifter), '
+        'PHAT uses 2 power days and 3 hypertrophy days across 5 sessions. Each muscle gets both '
+        'heavy compound work and high-rep isolation work every week.',
+    schedule: [
+      'Mon — Upper Power  (heavy compounds)',
+      'Tue — Lower Power  (squat / deadlift focus)',
+      'Wed — Rest',
+      'Thu — Back/Shoulders Hypertrophy',
+      'Fri — Lower Hypertrophy',
+      'Sat — Chest/Arms Hypertrophy',
+      'Sun — Rest',
+    ],
+    bestFor: 'Dedicated intermediate/advanced lifters wanting peak strength AND aesthetics.',
+    pros: [
+      'Covers both strength and hypertrophy goals',
+      'Science-backed by Layne Norton',
+      'Good weekly volume per muscle',
+    ],
+    cons: [
+      'Complex — requires planning and tracking',
+      'Demanding 5-day commitment',
+      'Not for beginners',
+    ],
+  ),
+  'pplul': _SplitInfo(
+    title: 'PPLUL — Push / Pull / Legs / Upper / Lower',
+    tagline: '5 days/week · High variety',
+    description:
+        'A hybrid that blends the PPL cycle with an Upper/Lower finish for maximum '
+        'weekly volume and variety. You get the muscle-isolation focus of PPL plus '
+        'the compound frequency of Upper/Lower in one 5-day block.',
+    schedule: [
+      'Mon — Push  (Chest · Shoulders · Triceps)',
+      'Tue — Pull  (Back · Biceps)',
+      'Wed — Legs  (Quads · Hamstrings · Glutes)',
+      'Thu — Upper  (balanced compound day)',
+      'Fri — Lower  (Deadlift variation focus)',
+      'Sat — Rest',
+      'Sun — Rest',
+    ],
+    bestFor: 'Intermediate lifters training 5 days who want variety and high volume without repeating sessions.',
+    pros: [
+      'High training variety — no repeated sessions',
+      'Good volume distribution across 5 days',
+      'Balances isolation and compound work',
+    ],
+    cons: [
+      'Can feel inconsistent vs. pure PPL',
+      'Harder to track progressive overload across 5 different sessions',
+    ],
+  ),
+  'body_part': _SplitInfo(
+    title: 'Body Part Split (Bro Split)',
+    tagline: '1 muscle group per day, 5–6 days/week',
+    description:
+        'The classic bodybuilder "bro split" — one dedicated day per muscle group. '
+        'You can hammer each muscle with extremely high volume in a single session, '
+        'then let it rest for the rest of the week.',
+    schedule: [
+      'Mon — Chest  (all chest exercises)',
+      'Tue — Back  (all back exercises)',
+      'Wed — Shoulders  (all shoulder exercises)',
+      'Thu — Arms  (Biceps + Triceps)',
+      'Fri — Legs  (all leg exercises)',
+      'Sat — Rest or Abs/Cardio',
+      'Sun — Rest',
+    ],
+    bestFor: 'Experienced lifters who can sustain high volume per session and have 5+ days/week.',
+    pros: [
+      'Extremely high volume per muscle group',
+      'Long recovery time per muscle (6 days)',
+      'Proven by classic bodybuilders',
+    ],
+    cons: [
+      'Low muscle frequency (each muscle hit once/week)',
+      'Modern research favors 2× frequency',
+      'Requires 5–6 days',
+    ],
+  ),
+  'arnold_split': _SplitInfo(
+    title: 'Arnold Split',
+    tagline: '6 days/week · Chest+Back · Shoulders+Arms · Legs',
+    description:
+        'The training split used by Arnold Schwarzenegger in his prime. '
+        'Three muscle pairings are trained twice per week on a 6-day schedule: '
+        'Chest & Back together (the pump from chest stretches the back and vice versa), '
+        'Shoulders & Arms, and Legs.',
+    schedule: [
+      'Mon — Chest + Back',
+      'Tue — Shoulders + Arms (Biceps & Triceps)',
+      'Wed — Legs',
+      'Thu — Chest + Back (repeat)',
+      'Fri — Shoulders + Arms (repeat)',
+      'Sat — Legs (repeat)',
+      'Sun — Rest',
+    ],
+    bestFor: 'Advanced lifters who can recover from 6-day training and want classic bodybuilder volume.',
+    pros: [
+      'Pairs antagonist muscles efficiently',
+      'High frequency (2×/week per group)',
+      'Battle-tested by elite bodybuilders',
+    ],
+    cons: [
+      'Chest + Back sessions are very long',
+      'Requires high recovery capacity',
+      'Not sustainable for most natural lifters',
+    ],
+  ),
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+
 class _TrainingSplitScreenState extends ConsumerState<TrainingSplitScreen> {
   String? _selectedSplit;
   bool _isLoading = false;
@@ -591,6 +838,7 @@ class _TrainingSplitScreenState extends ConsumerState<TrainingSplitScreen> {
     final isSelected = _selectedSplit == id;
     final textPrimary = isDark ? Colors.white : const Color(0xFF0A0A0A);
     final textSecondary = isDark ? const Color(0xFFD4D4D8) : const Color(0xFF52525B);
+    final hasInfo = _kSplitInfoMap.containsKey(id);
 
     return GestureDetector(
       onTap: () {
@@ -638,12 +886,14 @@ class _TrainingSplitScreenState extends ConsumerState<TrainingSplitScreen> {
                 children: [
                   Row(
                     children: [
-                      Text(
-                        title,
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                          color: isSelected ? AppColors.orange : textPrimary,
+                      Flexible(
+                        child: Text(
+                          title,
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            color: isSelected ? AppColors.orange : textPrimary,
+                          ),
                         ),
                       ),
                       if (recommended) ...[
@@ -677,10 +927,292 @@ class _TrainingSplitScreenState extends ConsumerState<TrainingSplitScreen> {
                 ],
               ),
             ),
+            // Info button — only for named splits
+            if (hasInfo) ...[
+              const SizedBox(width: 8),
+              GestureDetector(
+                onTap: () {
+                  HapticFeedback.lightImpact();
+                  _showSplitInfoSheet(context, id);
+                },
+                behavior: HitTestBehavior.opaque,
+                child: Padding(
+                  padding: const EdgeInsets.all(4),
+                  child: Icon(
+                    Icons.info_outline_rounded,
+                    size: 22,
+                    color: isSelected
+                        ? AppColors.orange
+                        : (isDark ? const Color(0xFF71717A) : const Color(0xFF9CA3AF)),
+                  ),
+                ),
+              ),
+            ],
           ],
         ),
       ),
     ).animate().fadeIn(delay: delay).slideX(begin: -0.05);
+  }
+
+  void _showSplitInfoSheet(BuildContext context, String id) {
+    final info = _kSplitInfoMap[id];
+    if (info == null) return;
+
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textPrimary = isDark ? Colors.white : const Color(0xFF0A0A0A);
+    final textSecondary = isDark ? const Color(0xFFD4D4D8) : const Color(0xFF52525B);
+    final surface = isDark ? const Color(0xFF1C1C28) : Colors.white;
+    const orange = Color(0xFFF97316);
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) {
+        return DraggableScrollableSheet(
+          initialChildSize: 0.72,
+          minChildSize: 0.4,
+          maxChildSize: 0.92,
+          builder: (_, controller) {
+            return Container(
+              decoration: BoxDecoration(
+                color: surface,
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+              ),
+              child: Column(
+                children: [
+                  // Drag handle
+                  const SizedBox(height: 12),
+                  Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: isDark ? Colors.white24 : Colors.black12,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  // Scrollable content
+                  Expanded(
+                    child: ListView(
+                      controller: controller,
+                      padding: const EdgeInsets.fromLTRB(24, 0, 24, 32),
+                      children: [
+                        // Title row
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Container(
+                              width: 44,
+                              height: 44,
+                              decoration: BoxDecoration(
+                                color: orange.withValues(alpha: 0.15),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: const Icon(Icons.fitness_center_rounded, color: orange, size: 22),
+                            ),
+                            const SizedBox(width: 14),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    info.title,
+                                    style: TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold,
+                                      color: textPrimary,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                    decoration: BoxDecoration(
+                                      color: orange.withValues(alpha: 0.12),
+                                      borderRadius: BorderRadius.circular(6),
+                                    ),
+                                    child: Text(
+                                      info.tagline,
+                                      style: const TextStyle(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w600,
+                                        color: orange,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 20),
+
+                        // Description
+                        Text(
+                          info.description,
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: textSecondary,
+                            height: 1.6,
+                          ),
+                        ),
+                        const SizedBox(height: 24),
+
+                        // Weekly schedule
+                        _infoSectionHeader('Weekly Schedule', Icons.calendar_month_rounded, textPrimary),
+                        const SizedBox(height: 10),
+                        ...info.schedule.map((day) => Padding(
+                              padding: const EdgeInsets.only(bottom: 8),
+                              child: Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Container(
+                                    width: 6,
+                                    height: 6,
+                                    margin: const EdgeInsets.only(top: 7),
+                                    decoration: const BoxDecoration(
+                                      color: orange,
+                                      shape: BoxShape.circle,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 10),
+                                  Expanded(
+                                    child: Text(
+                                      day,
+                                      style: TextStyle(
+                                        fontSize: 13,
+                                        color: textSecondary,
+                                        height: 1.5,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            )),
+                        const SizedBox(height: 24),
+
+                        // Best for
+                        _infoSectionHeader('Best For', Icons.person_rounded, textPrimary),
+                        const SizedBox(height: 10),
+                        Container(
+                          padding: const EdgeInsets.all(14),
+                          decoration: BoxDecoration(
+                            color: orange.withValues(alpha: 0.08),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: orange.withValues(alpha: 0.2)),
+                          ),
+                          child: Text(
+                            info.bestFor,
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: textSecondary,
+                              height: 1.5,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 24),
+
+                        // Pros & Cons
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  _infoSectionHeader('Pros', Icons.thumb_up_rounded, textPrimary),
+                                  const SizedBox(height: 10),
+                                  ...info.pros.map((p) => _bulletItem(p, Colors.green.shade400, textSecondary)),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(width: 16),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  _infoSectionHeader('Cons', Icons.thumb_down_rounded, textPrimary),
+                                  const SizedBox(height: 10),
+                                  ...info.cons.map((c) => _bulletItem(c, Colors.red.shade400, textSecondary)),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 32),
+
+                        // Close button
+                        GestureDetector(
+                          onTap: () => Navigator.of(ctx).pop(),
+                          child: Container(
+                            height: 52,
+                            decoration: BoxDecoration(
+                              color: orange,
+                              borderRadius: BorderRadius.circular(14),
+                            ),
+                            child: const Center(
+                              child: Text(
+                                'Got it',
+                                style: TextStyle(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Widget _infoSectionHeader(String label, IconData icon, Color textPrimary) {
+    return Row(
+      children: [
+        Icon(icon, size: 16, color: const Color(0xFFF97316)),
+        const SizedBox(width: 8),
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w700,
+            color: textPrimary,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _bulletItem(String text, Color dotColor, Color textColor) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 6,
+            height: 6,
+            margin: const EdgeInsets.only(top: 6),
+            decoration: BoxDecoration(color: dotColor, shape: BoxShape.circle),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              text,
+              style: TextStyle(fontSize: 12, color: textColor, height: 1.5),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   Widget _buildContinueButton(bool isDark) {

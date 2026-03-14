@@ -375,7 +375,6 @@ class _AiModelsSectionState extends ConsumerState<AiModelsSection> {
                 groupValue: isSelected ? true : null,
                 onChanged:
                     isSupported ? (_) => ref.read(modelDownloadProvider.notifier).selectModel(modelType) : null,
-                activeColor: AppColors.orange,
                 materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                 visualDensity: VisualDensity.compact,
               ),
