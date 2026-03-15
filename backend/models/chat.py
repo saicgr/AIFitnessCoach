@@ -63,6 +63,7 @@ class MediaRef(BaseModel):
     media_type: str = Field(..., max_length=10, description="'image' or 'video'")
     mime_type: str = Field(..., max_length=50, description="MIME type (e.g., 'video/mp4', 'image/jpeg')")
     duration_seconds: Optional[float] = Field(default=None, ge=0, le=300, description="Video duration in seconds (null for images)")
+    gemini_file_name: Optional[str] = Field(default=None, max_length=200, description="Gemini Files API file name (e.g. 'files/abc123'). When present, backend skips S3 download and uses this file directly.")
 
 
 class AISettings(BaseModel):
@@ -173,6 +174,11 @@ class ChatRequest(BaseModel):
         default=None,
         max_length=17_800_000,
         description="Base64 encoded image for food analysis (max ~10MB decoded, ~13.3MB base64)"
+    )
+    video_frames: Optional[List[str]] = Field(
+        default=None,
+        description="Pre-extracted base64-encoded JPEG keyframes (legacy, max 20 frames). "
+                    "Kept for backward compatibility — new clients always send media_ref instead."
     )
     media_ref: Optional[MediaRef] = Field(
         default=None,
