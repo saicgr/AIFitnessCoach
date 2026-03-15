@@ -4,7 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
 import '../../data/services/api_client.dart';
-import '../../widgets/glass_back_button.dart';
+import '../../widgets/pill_app_bar.dart';
 import 'strain_dashboard_screen.dart';
 
 class ReportStrainScreen extends ConsumerStatefulWidget {
@@ -76,8 +76,8 @@ class _ReportStrainScreenState extends ConsumerState<ReportStrainScreen> {
     final el = d ? AppColors.elevated : AppColorsLight.elevated;
     return Scaffold(
       backgroundColor: bg,
-      appBar: AppBar(backgroundColor: bg, elevation: 0, automaticallyImplyLeading: false, leading: const GlassBackButton(icon: Icons.close), title: Text('Report Strain', style: TextStyle(fontWeight: FontWeight.bold, color: tp)), centerTitle: true),
-      body: SafeArea(child: SingleChildScrollView(padding: const EdgeInsets.all(16), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      appBar: const PillAppBar(title: 'Report Strain'),
+      body: SingleChildScrollView(padding: const EdgeInsets.all(16), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         _section('Affected Muscles', _buildMuscleGrid(d, tp, tm, el)),
         const SizedBox(height: 24),
         _section('Fatigue Level', _buildSlider('How tired are these muscles?', _fatigueLevel, (v) => setState(() => _fatigueLevel = v), d, tp, tm)),
@@ -89,7 +89,7 @@ class _ReportStrainScreenState extends ConsumerState<ReportStrainScreen> {
         _section('Notes (optional)', _buildNotesField(d, tp, tm, el)),
         const SizedBox(height: 32),
         _buildSubmitButton(d),
-      ]))),
+      ])),
     );
   }
 

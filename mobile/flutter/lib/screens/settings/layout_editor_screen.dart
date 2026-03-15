@@ -6,8 +6,8 @@ import '../../core/theme/theme_colors.dart';
 import '../../data/models/home_layout.dart';
 import '../../data/providers/local_layout_provider.dart';
 import '../../data/services/haptic_service.dart';
-import '../../widgets/glass_back_button.dart';
 import '../../widgets/glass_sheet.dart';
+import '../../widgets/pill_app_bar.dart';
 import '../../widgets/segmented_tab_bar.dart';
 import 'widgets/preview_tile_mock.dart';
 
@@ -59,55 +59,10 @@ class _LayoutEditorScreenState extends ConsumerState<LayoutEditorScreen>
     final accentColor = ref.colors(context).accent;
     return Scaffold(
       backgroundColor: backgroundColor,
-      appBar: AppBar(
-        backgroundColor: backgroundColor,
-        elevation: 0,
-        title: Text(
-          'My Space',
-          style: TextStyle(
-            color: textColor,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        automaticallyImplyLeading: false,
-        leading: const GlassBackButton(),
+      appBar: PillAppBar(
+        title: 'My Space',
         actions: [
-          // Reset button - always available
-          IconButton(
-              icon: Icon(Icons.refresh, color: accentColor),
-              tooltip: 'Reset to Original',
-              onPressed: _showResetDialog,
-            ),
-          // More options menu
-          PopupMenuButton<String>(
-            icon: Icon(Icons.more_vert, color: textMuted),
-            onSelected: _handleMenuAction,
-            itemBuilder: (context) => [
-              PopupMenuItem(
-                value: 'set_default',
-                child: Row(
-                  children: [
-                    Icon(Icons.bookmark_outline, size: 20, color: textColor),
-                    const SizedBox(width: 12),
-                    Text('Set as My Default',
-                        style: TextStyle(color: textColor)),
-                  ],
-                ),
-              ),
-              if (_hasUserDefault)
-                PopupMenuItem(
-                  value: 'apply_default',
-                  child: Row(
-                    children: [
-                      Icon(Icons.bookmark, size: 20, color: AppColors.purple),
-                      const SizedBox(width: 12),
-                      Text('Apply My Default',
-                          style: TextStyle(color: textColor)),
-                    ],
-                  ),
-                ),
-            ],
-          ),
+          PillAppBarAction(icon: Icons.refresh_rounded, onTap: _showResetDialog),
         ],
       ),
       body: Column(

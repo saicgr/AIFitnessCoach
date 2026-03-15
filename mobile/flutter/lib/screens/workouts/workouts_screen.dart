@@ -289,17 +289,20 @@ class _WorkoutsScreenState extends ConsumerState<WorkoutsScreen>
 
         // Today's/Next Workout Section (using todayWorkoutProvider - same as Home)
         // Priority: 1. Loading, 2. Error, 3. Generating, 4. Has workout, 5. Completed, 6. Preparing
-        ..._buildWorkoutSection(
-          context,
-          textSecondary,
-          todayWorkoutState,
-          todayOrNextWorkout,
-          isToday,
-          isNextWeek,
-          daysUntilNext,
-          isGenerating,
-          generationMessage,
-          completedToday,
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: _buildWorkoutSection(
+            context,
+            textSecondary,
+            todayWorkoutState,
+            todayOrNextWorkout,
+            isToday,
+            isNextWeek,
+            daysUntilNext,
+            isGenerating,
+            generationMessage,
+            completedToday,
+          ),
         ),
 
         // Weekly Progress

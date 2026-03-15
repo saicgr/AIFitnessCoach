@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../data/models/gym_location.dart';
-import '../../widgets/glass_back_button.dart';
+import '../../widgets/pill_app_bar.dart';
 
 /// Gym location picker — Google Maps temporarily removed for v1.
 /// Re-enable by uncommenting google_maps_flutter in pubspec.yaml
@@ -18,10 +18,8 @@ class GymLocationPickerScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Gym Location'),
-        automaticallyImplyLeading: false,
-        leading: const GlassBackButton(),
+      appBar: PillAppBar(
+        title: 'Gym Location',
       ),
       body: const Center(
         child: Padding(

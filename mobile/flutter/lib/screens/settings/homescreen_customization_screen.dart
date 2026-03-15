@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/constants/app_colors.dart';
 import '../../data/services/haptic_service.dart';
-import '../../widgets/glass_back_button.dart';
+import '../../widgets/pill_app_bar.dart';
 
 /// Provider for homescreen card visibility settings
 final homescreenCardsProvider =
@@ -162,21 +162,12 @@ class HomescreenCustomizationScreen extends ConsumerWidget {
 
     return Scaffold(
       backgroundColor: backgroundColor,
-      appBar: AppBar(
-        backgroundColor: backgroundColor,
-        elevation: 0,
-        title: Text(
-          'Customize Home',
-          style: TextStyle(
-            color: textColor,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        automaticallyImplyLeading: false,
-        leading: const GlassBackButton(),
+      appBar: PillAppBar(
+        title: 'Customize Home',
         actions: [
-          TextButton(
-            onPressed: () {
+          PillAppBarAction(
+            icon: Icons.refresh_rounded,
+            onTap: () {
               HapticService.light();
               cardsNotifier.resetToDefaults();
               ScaffoldMessenger.of(context).showSnackBar(
@@ -186,13 +177,6 @@ class HomescreenCustomizationScreen extends ConsumerWidget {
                 ),
               );
             },
-            child: Text(
-              'Reset',
-              style: TextStyle(
-                color: AppColors.cyan,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
           ),
         ],
       ),

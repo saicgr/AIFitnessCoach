@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../data/models/home_layout.dart';
+import '../../../widgets/app_tour/app_tour_controller.dart';
 import '../../../data/repositories/workout_repository.dart';
 import '../../../widgets/xp_progress_card.dart';
 import 'cards/cards.dart';
@@ -35,9 +36,10 @@ class TileFactory {
       case TileType.dailyActivity:
         return const DailyActivityCard();
       case TileType.quickActions:
-        return const Padding(
-          padding: EdgeInsets.only(top: 8, bottom: 8),
-          child: QuickActionsRow(),
+        return Padding(
+          key: AppTourKeys.quickLogKey,
+          padding: const EdgeInsets.only(top: 8, bottom: 8),
+          child: const QuickActionsRow(),
         );
       case TileType.weeklyProgress:
         // Removed feature - return empty widget

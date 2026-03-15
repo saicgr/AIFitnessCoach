@@ -202,6 +202,8 @@ class _EditPersonalInfoSheetState extends ConsumerState<EditPersonalInfoSheet> {
             _selectedPhotoFile = null;
           });
           debugPrint('✅ [EditProfile] Photo uploaded successfully: $photoUrl');
+          // Refresh auth state so the profile header reflects the new photo immediately
+          await ref.read(authStateProvider.notifier).refreshUser();
           return true;
         }
       }

@@ -19,7 +19,6 @@ import '../../data/providers/offline_coach_provider.dart';
 import '../../data/repositories/chat_repository.dart';
 import '../../data/services/haptic_service.dart';
 import '../../widgets/coach_avatar.dart';
-import '../../widgets/glass_back_button.dart';
 import '../../widgets/floating_chat/floating_chat_overlay.dart';
 import '../../widgets/medical_disclaimer_banner.dart';
 import '../ai_settings/ai_settings_screen.dart';
@@ -403,143 +402,29 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     final coach = CoachPersona.findById(aiSettings.coachPersonaId) ?? CoachPersona.defaultCoach;
     final coachName = coach.name;
 
+    final topBarColor = isDark ? const Color(0xFF1C1C1E) : AppColorsLight.elevated;
+    final topBarBorder = isDark
+        ? null
+        : Border.all(color: (isDark ? AppColors.cardBorder : AppColorsLight.cardBorder).withValues(alpha: 0.3));
+    final topBarShadow = BoxShadow(
+      color: isDark ? Colors.black.withValues(alpha: 0.4) : Colors.black.withValues(alpha: 0.1),
+      blurRadius: 12,
+      offset: const Offset(0, 4),
+    );
+    final statusColor = _isLoading
+        ? AppColors.orange
+        : offlineChatState.isAvailable
+            ? Colors.amber
+            : AppColors.success;
+
     return Scaffold(
       backgroundColor: backgroundColor,
-      appBar: AppBar(
-        backgroundColor: backgroundColor,
-        automaticallyImplyLeading: false,
-        titleSpacing: 0,
-        leading: GlassBackButton(
-          onTap: () {
-            HapticService.light();
-            context.pop();
-          },
-        ),
-        title: Row(
-          children: [
-            CoachAvatar(
-              coach: coach,
-              size: 36,
-              showBorder: true,
-              showShadow: false,
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    coachName,
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                    ),
-                    overflow: TextOverflow.ellipsis,
-                    maxLines: 1,
-                  ),
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Container(
-                      width: 8,
-                      height: 8,
-                      margin: const EdgeInsets.only(right: 6),
-                      decoration: BoxDecoration(
-                        color: _isLoading
-                            ? AppColors.orange
-                            : offlineChatState.isAvailable
-                                ? Colors.amber
-                                : AppColors.success,
-                        shape: BoxShape.circle,
-                      ),
-                    ),
-                    Flexible(
-                      child: Text(
-                        _isLoading
-                            ? 'Typing...'
-                            : offlineChatState.isAvailable
-                                ? 'Offline (${offlineChatState.modelName ?? "Local AI"})'
-                                : 'Online',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: _isLoading
-                              ? AppColors.orange
-                              : offlineChatState.isAvailable
-                                  ? Colors.amber
-                                  : AppColors.success,
-                        ),
-                        overflow: TextOverflow.ellipsis,
-                        maxLines: 1,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-            ),
-          ],
-        ),
-        actions: [
-          // Search button
-          IconButton(
-            icon: const Icon(Icons.search, size: 20),
-            tooltip: 'Search',
-            visualDensity: VisualDensity.compact,
-            onPressed: () {
-              HapticService.light();
-              final messagesData = ref.read(chatMessagesProvider).valueOrNull ?? [];
-              Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (_) => ChatSearchOverlay(
-                    messages: messagesData,
-                    onScrollToMessage: (messageId) {
-                      Navigator.of(context).pop();
-                      _scrollToMessage(messageId);
-                    },
-                  ),
-                ),
-              );
-            },
-          ),
-          // Help button - shows help options sheet
-          IconButton(
-            icon: const Icon(Icons.support_agent, size: 20),
-            tooltip: 'Help',
-            visualDensity: VisualDensity.compact,
-            onPressed: () {
-              HapticService.light();
-              _showHelpSheet();
-            },
-          ),
-          // Swap coach button
-          IconButton(
-            icon: const Icon(Icons.swap_horiz, size: 20),
-            tooltip: 'Change coach',
-            visualDensity: VisualDensity.compact,
-            onPressed: () {
-              HapticService.light();
-              context.push('/coach-selection?fromSettings=true');
-            },
-          ),
-          // Minimize button - animate back to floating chat overlay
-          IconButton(
-            icon: const Icon(Icons.close_fullscreen, size: 20),
-            tooltip: 'Minimize',
-            visualDensity: VisualDensity.compact,
-            onPressed: () => _minimizeToFloatingChat(),
-          ),
-          IconButton(
-            icon: const Icon(Icons.more_vert, size: 20),
-            visualDensity: VisualDensity.compact,
-            onPressed: () {
-              HapticService.light();
-              _showOptionsMenu(context);
-            },
-          ),
-        ],
-      ),
-      body: Column(
+      body: Stack(
         children: [
+          // Main chat content — padded below the top bar
+          Column(
+            children: [
+              SizedBox(height: MediaQuery.of(context).padding.top + 60),
           // Pinned message bar
           if (messagesState.valueOrNull != null)
             Builder(builder: (context) {
@@ -745,7 +630,164 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
           ),
         ],
       ),
-    );
+
+      // Floating pill top bar — matches workout detail screen style
+      Positioned(
+        top: MediaQuery.of(context).padding.top + 8,
+        left: 16,
+        right: 16,
+        child: Row(
+          children: [
+            // Back button circle
+            GestureDetector(
+              onTap: () {
+                HapticService.light();
+                context.pop();
+              },
+              child: Container(
+                height: 44,
+                width: 44,
+                decoration: BoxDecoration(
+                  color: topBarColor,
+                  borderRadius: BorderRadius.circular(22),
+                  border: topBarBorder,
+                  boxShadow: [topBarShadow],
+                ),
+                child: Icon(
+                  Icons.arrow_back_rounded,
+                  color: isDark ? Colors.white : AppColorsLight.textPrimary,
+                  size: 22,
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            // Coach name + status — expanded pill
+            Expanded(
+              child: Container(
+                height: 44,
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                decoration: BoxDecoration(
+                  color: topBarColor,
+                  borderRadius: BorderRadius.circular(22),
+                  border: topBarBorder,
+                  boxShadow: [topBarShadow],
+                ),
+                child: Row(
+                  children: [
+                    CoachAvatar(
+                      coach: coach,
+                      size: 30,
+                      showBorder: true,
+                      showShadow: false,
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            coachName,
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                              color: isDark ? Colors.white : AppColorsLight.textPrimary,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                            maxLines: 1,
+                          ),
+                          Row(
+                            children: [
+                              Container(
+                                width: 6,
+                                height: 6,
+                                margin: const EdgeInsets.only(right: 4),
+                                decoration: BoxDecoration(
+                                  color: statusColor,
+                                  shape: BoxShape.circle,
+                                ),
+                              ),
+                              Flexible(
+                                child: Text(
+                                  _isLoading
+                                      ? 'Typing...'
+                                      : offlineChatState.isAvailable
+                                          ? 'Offline'
+                                          : 'Online',
+                                  style: TextStyle(fontSize: 11, color: statusColor),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            // Search button circle
+            GestureDetector(
+              onTap: () {
+                HapticService.light();
+                final messagesData = ref.read(chatMessagesProvider).valueOrNull ?? [];
+                Navigator.of(context).push(MaterialPageRoute(
+                  builder: (_) => ChatSearchOverlay(
+                    messages: messagesData,
+                    onScrollToMessage: (messageId) {
+                      Navigator.of(context).pop();
+                      _scrollToMessage(messageId);
+                    },
+                  ),
+                ));
+              },
+              child: Container(
+                height: 44,
+                width: 44,
+                decoration: BoxDecoration(
+                  color: topBarColor,
+                  borderRadius: BorderRadius.circular(22),
+                  border: topBarBorder,
+                  boxShadow: [topBarShadow],
+                ),
+                child: Icon(
+                  Icons.search_rounded,
+                  color: isDark ? Colors.white70 : AppColorsLight.textSecondary,
+                  size: 20,
+                ),
+              ),
+            ),
+            const SizedBox(width: 8),
+            // More menu circle
+            GestureDetector(
+              onTap: () {
+                HapticService.light();
+                _showOptionsMenu(context);
+              },
+              child: Container(
+                height: 44,
+                width: 44,
+                decoration: BoxDecoration(
+                  color: topBarColor,
+                  borderRadius: BorderRadius.circular(22),
+                  border: topBarBorder,
+                  boxShadow: [topBarShadow],
+                ),
+                child: Icon(
+                  Icons.more_vert_rounded,
+                  color: isDark ? Colors.white70 : AppColorsLight.textSecondary,
+                  size: 20,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    ],
+  ),
+);
   }
 
   bool _isSameDay(DateTime a, DateTime b) {
@@ -1406,7 +1448,15 @@ class _MessageBubble extends ConsumerWidget {
                                 ),
                               ),
                             ),
-                          if (message.mediaType == 'video')
+                          // Upload/analyze progress overlay — shown while video is processing
+                          if (message.uploadPhase != null)
+                            Positioned.fill(
+                              child: _MediaUploadOverlay(
+                                phase: message.uploadPhase!,
+                                progress: message.uploadProgress,
+                              ),
+                            )
+                          else if (message.mediaType == 'video')
                             const Positioned.fill(
                               child: Center(
                                 child: Icon(Icons.play_circle_outline, color: Colors.white70, size: 40),
@@ -2671,6 +2721,92 @@ class _EscalateToHumanDialogState extends ConsumerState<_EscalateToHumanDialog> 
       title: _buildTitle(),
       content: _buildContent(),
       actions: _buildActions(),
+    );
+  }
+}
+
+/// Overlay shown on top of a video thumbnail while it is uploading or being analyzed.
+///
+/// - 'uploading': shows a real progress bar (0–100%) with upload icon
+/// - 'analyzing': shows a pulsing shimmer bar with AI icon (indeterminate)
+class _MediaUploadOverlay extends StatefulWidget {
+  final String phase; // 'uploading' | 'analyzing'
+  final double? progress; // 0.0–1.0 for uploading; null for analyzing
+
+  const _MediaUploadOverlay({required this.phase, this.progress});
+
+  @override
+  State<_MediaUploadOverlay> createState() => _MediaUploadOverlayState();
+}
+
+class _MediaUploadOverlayState extends State<_MediaUploadOverlay>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _shimmer;
+
+  @override
+  void initState() {
+    super.initState();
+    _shimmer = AnimationController(vsync: this, duration: const Duration(milliseconds: 1200))
+      ..repeat();
+  }
+
+  @override
+  void dispose() {
+    _shimmer.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isUploading = widget.phase == 'uploading';
+    final label = isUploading
+        ? 'Uploading ${widget.progress != null ? '${(widget.progress! * 100).toInt()}%' : ''}'
+        : 'Analyzing...';
+    final icon = isUploading ? Icons.cloud_upload_outlined : Icons.auto_awesome;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.black.withOpacity(0.65),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Center(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, color: Colors.white, size: 22),
+              const SizedBox(height: 8),
+              Text(
+                label,
+                style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w600),
+              ),
+              const SizedBox(height: 8),
+              SizedBox(
+                width: 100,
+                child: isUploading
+                    ? LinearProgressIndicator(
+                        value: widget.progress,
+                        backgroundColor: Colors.white24,
+                        valueColor: const AlwaysStoppedAnimation<Color>(Colors.white),
+                        borderRadius: BorderRadius.circular(4),
+                        minHeight: 3,
+                      )
+                    : AnimatedBuilder(
+                        animation: _shimmer,
+                        builder: (_, __) => LinearProgressIndicator(
+                          value: null, // indeterminate
+                          backgroundColor: Colors.white24,
+                          valueColor: const AlwaysStoppedAnimation<Color>(Colors.white),
+                          borderRadius: BorderRadius.circular(4),
+                          minHeight: 3,
+                        ),
+                      ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

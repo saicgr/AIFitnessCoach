@@ -11,7 +11,7 @@ import 'widgets/strength_chart.dart';
 import 'widgets/summary_cards.dart';
 import 'widgets/time_range_selector.dart';
 import 'widgets/muscle_group_filter.dart';
-import '../../../widgets/glass_back_button.dart';
+import '../../../widgets/pill_app_bar.dart';
 import '../../../widgets/segmented_tab_bar.dart';
 
 /// Visual Progress Charts Screen
@@ -63,21 +63,13 @@ class _ProgressChartsScreenState extends ConsumerState<ProgressChartsScreen>
 
     return Scaffold(
       backgroundColor: colorScheme.surface,
-      appBar: AppBar(
-        title: const Text('Progress Charts'),
-        centerTitle: true,
-        backgroundColor: colorScheme.surface,
-        surfaceTintColor: Colors.transparent,
-        automaticallyImplyLeading: false,
-        leading: const GlassBackButton(),
+      appBar: PillAppBar(
+        title: 'Progress Charts',
         actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            tooltip: 'Refresh',
-            onPressed: state.isLoading
-                ? null
-                : () =>
-                    ref.read(progressChartsProvider.notifier).refresh(userId: _userId),
+          PillAppBarAction(
+            icon: Icons.refresh,
+            visible: !state.isLoading,
+            onTap: () => ref.read(progressChartsProvider.notifier).refresh(userId: _userId),
           ),
         ],
       ),

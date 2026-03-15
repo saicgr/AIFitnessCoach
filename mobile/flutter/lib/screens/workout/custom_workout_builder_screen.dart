@@ -6,7 +6,7 @@ import '../../core/constants/app_colors.dart';
 import '../../data/repositories/workout_repository.dart';
 import '../../data/repositories/library_repository.dart';
 import '../../data/services/api_client.dart';
-import '../../widgets/glass_back_button.dart';
+import '../../widgets/pill_app_bar.dart';
 import '../../widgets/lottie_animations.dart';
 
 /// Custom Workout Builder Screen
@@ -236,28 +236,13 @@ class _CustomWorkoutBuilderScreenState
         isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Build Custom Workout'),
-        automaticallyImplyLeading: false,
-        leading: const GlassBackButton(icon: Icons.close),
+      appBar: PillAppBar(
+        title: 'Build Custom Workout',
         actions: [
-          TextButton(
-            onPressed: _isCreating ? null : _createWorkout,
-            child: _isCreating
-                ? const SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: LottieLoading(size: 20, useDots: true),
-                  )
-                : Text(
-                    'Start',
-                    style: TextStyle(
-                      color: _selectedExercises.isEmpty
-                          ? textSecondary
-                          : AppColors.cyan,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
+          PillAppBarAction(
+            icon: Icons.play_arrow_rounded,
+            visible: !_isCreating,
+            onTap: _selectedExercises.isEmpty ? null : _createWorkout,
           ),
         ],
       ),

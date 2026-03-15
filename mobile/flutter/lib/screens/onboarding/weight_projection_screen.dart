@@ -21,6 +21,33 @@ class WeightDataPoint {
 
 /// Calculator for weight projection
 class WeightProjectionCalculator {
+  /// Calculate weekly rate in kg based on user's rate preference and workout frequency
+  static double calculateWeeklyRate({
+    required double currentWeight,
+    required double goalWeight,
+    required int workoutDaysPerWeek,
+    String? weightChangeRate,
+  }) {
+    if (weightChangeRate != null) {
+      switch (weightChangeRate) {
+        case 'slow':
+          return goalWeight < currentWeight ? 0.25 : 0.25;
+        case 'moderate':
+          return goalWeight < currentWeight ? 0.5 : 0.35;
+        case 'fast':
+          return goalWeight < currentWeight ? 0.75 : 0.5;
+        case 'aggressive':
+          return goalWeight < currentWeight ? 1.0 : 0.5;
+        default:
+          return goalWeight < currentWeight ? 0.5 : 0.35;
+      }
+    } else if (goalWeight < currentWeight) {
+      return 0.5 + (workoutDaysPerWeek / 14);
+    } else {
+      return 0.25 + (workoutDaysPerWeek / 28);
+    }
+  }
+
   /// Calculate goal date based on current weight, goal weight, and rate preference
   static DateTime calculateGoalDate({
     required double currentWeight,
@@ -29,34 +56,12 @@ class WeightProjectionCalculator {
     String? weightChangeRate,
   }) {
     final weightDiff = (currentWeight - goalWeight).abs();
-
-    // Use rate preference if available, otherwise calculate based on workout frequency
-    double weeklyRate;
-    if (weightChangeRate != null) {
-      // Use the selected rate
-      switch (weightChangeRate) {
-        case 'slow':
-          weeklyRate = goalWeight < currentWeight ? 0.25 : 0.25;
-          break;
-        case 'moderate':
-          weeklyRate = goalWeight < currentWeight ? 0.5 : 0.35;
-          break;
-        case 'fast':
-          weeklyRate = goalWeight < currentWeight ? 0.75 : 0.5;
-          break;
-        case 'aggressive':
-          weeklyRate = goalWeight < currentWeight ? 1.0 : 0.5;
-          break;
-        default:
-          weeklyRate = goalWeight < currentWeight ? 0.5 : 0.35;
-      }
-    } else if (goalWeight < currentWeight) {
-      // Weight loss: 0.5-1 kg/week based on workout frequency
-      weeklyRate = 0.5 + (workoutDaysPerWeek / 14); // 0.5-1.0
-    } else {
-      // Weight gain: 0.25-0.5 kg/week (muscle gain is slower)
-      weeklyRate = 0.25 + (workoutDaysPerWeek / 28); // 0.25-0.5
-    }
+    final weeklyRate = calculateWeeklyRate(
+      currentWeight: currentWeight,
+      goalWeight: goalWeight,
+      workoutDaysPerWeek: workoutDaysPerWeek,
+      weightChangeRate: weightChangeRate,
+    );
 
     final weeksNeeded = (weightDiff / weeklyRate).ceil();
     return DateTime.now().add(Duration(days: weeksNeeded * 7));
@@ -140,11 +145,15 @@ class _WeightProjectionScreenState
     required bool useMetric,
     required bool isLosingWeight,
     required int workoutDays,
+    double? weeklyRateKg,
   }) {
     final unit = useMetric ? 'kg' : 'lbs';
     final displayCurrent = useMetric ? currentWeight : currentWeight * 2.205;
     final displayGoal = useMetric ? goalWeight : goalWeight * 2.205;
     final diff = (displayCurrent - displayGoal).abs();
+    final displayWeeklyRate = weeklyRateKg != null
+        ? (useMetric ? weeklyRateKg : weeklyRateKg * 2.205)
+        : null;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -188,9 +197,11 @@ class _WeightProjectionScreenState
             const SizedBox(width: 8),
             Expanded(
               child: _buildStatCard(
-                label: 'Training',
-                value: '$workoutDays days/wk',
-                icon: Icons.calendar_today_rounded,
+                label: 'Per week',
+                value: displayWeeklyRate != null
+                    ? '${displayWeeklyRate.toStringAsFixed(1)} $unit'
+                    : '$workoutDays days/wk',
+                icon: Icons.speed_rounded,
                 color: isDark ? AppColors.cyan : AppColorsLight.cyan,
                 isDark: isDark,
               ),
@@ -316,6 +327,13 @@ class _WeightProjectionScreenState
       );
     }
 
+    final weeklyRate = WeightProjectionCalculator.calculateWeeklyRate(
+      currentWeight: currentWeight,
+      goalWeight: goalWeight,
+      workoutDaysPerWeek: workoutDays,
+      weightChangeRate: weightChangeRate,
+    );
+
     final goalDate = WeightProjectionCalculator.calculateGoalDate(
       currentWeight: currentWeight,
       goalWeight: goalWeight,
@@ -360,9 +378,10 @@ class _WeightProjectionScreenState
             useMetric: useMetric,
             isLosingWeight: isLosingWeight,
             workoutDays: workoutDays,
+            weeklyRateKg: weeklyRate,
           ),
           headerOverlay: backButton,
-          content: SingleChildScrollView(
+          content: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 24),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -395,31 +414,86 @@ class _WeightProjectionScreenState
                   ).animate().fadeIn(delay: 200.ms).slideY(begin: -0.1);
                 }),
 
-                const SizedBox(height: 40),
+                const SizedBox(height: 24),
 
-                // Chart
-                _buildChart(
-                  projectionData,
-                  currentWeight,
-                  goalWeight,
-                  useMetric,
-                  isDark,
-                  textPrimary,
-                  textSecondary,
-                  isLosingWeight,
+                // Chart — flexible to fill available space
+                Flexible(
+                  child: _buildChart(
+                    projectionData,
+                    currentWeight,
+                    goalWeight,
+                    useMetric,
+                    isDark,
+                    textPrimary,
+                    textSecondary,
+                    isLosingWeight,
+                  ),
                 ),
 
-                const SizedBox(height: 60),
+                const SizedBox(height: 16),
 
-                // CTA Section
-                _buildCtaSection(
-                  isDark,
-                  textPrimary,
-                  textSecondary,
-                  isLosingWeight,
-                ),
+                // Weight summary stats (phone only — foldable shows in header)
+                Consumer(builder: (context, ref, _) {
+                  final windowState = ref.watch(windowModeProvider);
+                  if (FoldableQuizScaffold.shouldUseFoldableLayout(windowState)) {
+                    return const SizedBox.shrink();
+                  }
+                  return _buildWeightSummary(
+                    isDark, textPrimary, textSecondary,
+                    currentWeight: currentWeight,
+                    goalWeight: goalWeight,
+                    useMetric: useMetric,
+                    isLosingWeight: isLosingWeight,
+                    workoutDays: workoutDays,
+                    weeklyRateKg: weeklyRate,
+                  ).animate().fadeIn(delay: 600.ms);
+                }),
 
-                const SizedBox(height: 40),
+                const SizedBox(height: 20),
+
+                // CTA Button
+                GestureDetector(
+                  onTap: () {
+                    HapticFeedback.mediumImpact();
+                    context.go('/training-split');
+                  },
+                  child: Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(vertical: 18),
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [AppColors.orange, Color(0xFFEA580C)],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      borderRadius: BorderRadius.circular(16),
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppColors.orange.withValues(alpha: 0.4),
+                          blurRadius: 20,
+                          offset: const Offset(0, 8),
+                        ),
+                      ],
+                    ),
+                    child: const Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.rocket_launch, color: Colors.white, size: 20),
+                        SizedBox(width: 10),
+                        Text(
+                          'Continue',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ).animate().fadeIn(delay: 800.ms).slideY(begin: 0.2),
+
+                const SizedBox(height: 24),
               ],
             ),
           ),
@@ -454,8 +528,7 @@ class _WeightProjectionScreenState
             (_lineAnimation.value * data.length).ceil().clamp(1, data.length);
         final visibleData = data.sublist(0, visiblePointCount);
 
-        return SizedBox(
-          height: 280,
+        return SizedBox.expand(
           child: Stack(
             children: [
               // Gradient background
@@ -656,98 +729,6 @@ class _WeightProjectionScreenState
           ),
         ],
       ),
-    );
-  }
-
-  Widget _buildCtaSection(
-    bool isDark,
-    Color textPrimary,
-    Color textSecondary,
-    bool isLosingWeight,
-  ) {
-    return Column(
-      children: [
-        // Title
-        RichText(
-          textAlign: TextAlign.center,
-          text: TextSpan(
-            style: TextStyle(
-              fontSize: 26,
-              fontWeight: FontWeight.bold,
-              color: textPrimary,
-              height: 1.3,
-            ),
-            children: const [
-              TextSpan(text: 'Let\'s make it '),
-              TextSpan(
-                text: 'happen',
-                style: TextStyle(
-                  color: AppColors.orange,
-                ),
-              ),
-            ],
-          ),
-        ).animate().fadeIn(delay: 800.ms),
-
-        const SizedBox(height: 12),
-
-        // Subtitle
-        Text(
-          isLosingWeight
-              ? 'Your personalized workout plan is ready. We\'ll help you reach your goal weight safely and sustainably.'
-              : 'Your personalized workout plan is designed to help you build muscle and reach your target weight.',
-          textAlign: TextAlign.center,
-          style: TextStyle(
-            fontSize: 15,
-            color: textSecondary,
-            height: 1.5,
-          ),
-        ).animate().fadeIn(delay: 900.ms),
-
-        const SizedBox(height: 32),
-
-        // CTA Button
-        GestureDetector(
-          onTap: () {
-            HapticFeedback.mediumImpact();
-            context.go('/training-split');
-          },
-          child: Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(vertical: 18),
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [AppColors.orange, Color(0xFFEA580C)],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-              borderRadius: BorderRadius.circular(16),
-              boxShadow: [
-                BoxShadow(
-                  color: AppColors.orange.withValues(alpha: 0.4),
-                  blurRadius: 20,
-                  offset: const Offset(0, 8),
-                ),
-              ],
-            ),
-            child: const Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(Icons.rocket_launch, color: Colors.white, size: 20),
-                SizedBox(width: 10),
-                Text(
-                  'Continue',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                    color: Colors.white,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ).animate().fadeIn(delay: 1000.ms).slideY(begin: 0.2),
-      ],
     );
   }
 

@@ -9,7 +9,7 @@ import 'widgets/record_assessment_sheet.dart';
 import 'flexibility_test_detail_screen.dart';
 import 'flexibility_history_screen.dart';
 import '../../widgets/glass_sheet.dart';
-import '../../widgets/glass_back_button.dart';
+import '../../widgets/pill_app_bar.dart';
 import '../../widgets/segmented_tab_bar.dart';
 
 /// Main flexibility assessment screen showing all tests and user progress
@@ -54,23 +54,13 @@ class _FlexibilityAssessmentScreenState extends ConsumerState<FlexibilityAssessm
     final theme = Theme.of(context);
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Flexibility Assessment'),
-        automaticallyImplyLeading: false,
-        leading: const GlassBackButton(),
+      appBar: PillAppBar(
+        title: 'Flexibility Assessment',
         actions: [
-          IconButton(
-            icon: const Icon(Icons.history),
-            onPressed: () => _openHistory(context),
-            tooltip: 'View History',
-          ),
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: () {
-              ref.read(flexibilityProvider.notifier).refresh(userId: widget.userId);
-            },
-            tooltip: 'Refresh',
-          ),
+          PillAppBarAction(icon: Icons.history, onTap: () => _openHistory(context)),
+          PillAppBarAction(icon: Icons.refresh, onTap: () {
+            ref.read(flexibilityProvider.notifier).refresh(userId: widget.userId);
+          }),
         ],
       ),
       body: Column(

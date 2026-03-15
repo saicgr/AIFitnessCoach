@@ -21,7 +21,7 @@ import '../../data/services/api_client.dart';
 import '../../data/providers/beast_mode_provider.dart';
 import '../../data/services/haptic_service.dart';
 import '../../widgets/app_snackbar.dart';
-import '../../widgets/glass_back_button.dart';
+import '../../widgets/app_tour/app_tour_controller.dart';
 import 'beast_mode_unlock_dialog.dart';
 import 'sections/sections.dart';
 import 'widgets/widgets.dart';
@@ -1152,6 +1152,29 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             route: '/features',
             sectionKeys: const ['feature_requests'],
           ),
+          _SettingsRow(
+            icon: Icons.play_circle_outline_rounded,
+            iconColor: isDark ? AppColors.orange : AppColorsLight.orange,
+            title: 'Replay Tutorials',
+            value: 'Reset all app tours',
+            sectionKeys: const ['tutorial', 'help_center'],
+            onTap: () async {
+              final prefs = await SharedPreferences.getInstance();
+              // Reset remaining tour keys (nav_tour + workout_tour)
+              const tourKeys = [
+                'has_seen_nav_tour',
+                'has_seen_workout_tour',
+              ];
+              for (final key in tourKeys) {
+                await prefs.remove(key);
+              }
+              ref.read(appTourControllerProvider.notifier).dismiss();
+              if (context.mounted) {
+                context.go('/home');
+                AppSnackBar.info(context, 'Tutorials have been reset. They will replay on the home and workout screens.');
+              }
+            },
+          ),
         ],
       ),
       _SettingsSection(
@@ -1215,33 +1238,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
     return Scaffold(
       backgroundColor: backgroundColor,
-      appBar: AppBar(
-        backgroundColor: backgroundColor,
-        elevation: 0,
-        automaticallyImplyLeading: false,
-        leading: const GlassBackButton(),
-        title: Text(
-          'Settings',
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            color: textPrimary,
-          ),
-        ),
-        centerTitle: true,
-        actions: [
-          TextButton(
-            onPressed: () => context.push('/help'),
-            child: Text(
-              'Help',
-              style: TextStyle(
-                color: AppColors.error,
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
-        ],
-      ),
       body: Stack(
         children: [
           SafeArea(
@@ -1249,7 +1245,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               padding: EdgeInsets.only(
                 left: 16,
                 right: 16,
-                top: 16,
+                top: 72,
                 bottom: 80 + bottomPadding,
               ),
               child: Column(
@@ -1345,6 +1341,113 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     _buildNoResultsMessage(context, textMuted),
                 ],
               ),
+            ),
+          ),
+
+          // Top navigation bar — pill row matching workout detail style
+          Positioned(
+            top: MediaQuery.of(context).padding.top + 8,
+            left: 16,
+            right: 16,
+            child: Row(
+              children: [
+                // Back button circle
+                GestureDetector(
+                  onTap: () {
+                    HapticService.light();
+                    context.pop();
+                  },
+                  child: Container(
+                    height: 44,
+                    width: 44,
+                    decoration: BoxDecoration(
+                      color: isDark ? const Color(0xFF1C1C1E) : elevated,
+                      borderRadius: BorderRadius.circular(22),
+                      border: isDark
+                          ? null
+                          : Border.all(color: cardBorder.withValues(alpha: 0.3)),
+                      boxShadow: [
+                        BoxShadow(
+                          color: isDark
+                              ? Colors.black.withValues(alpha: 0.4)
+                              : Colors.black.withValues(alpha: 0.1),
+                          blurRadius: 12,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: Icon(
+                      Icons.arrow_back_rounded,
+                      color: isDark ? Colors.white : AppColorsLight.textPrimary,
+                      size: 22,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                // Title pill
+                Expanded(
+                  child: Container(
+                    height: 44,
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    decoration: BoxDecoration(
+                      color: isDark ? const Color(0xFF1C1C1E) : elevated,
+                      borderRadius: BorderRadius.circular(22),
+                      border: isDark
+                          ? null
+                          : Border.all(color: cardBorder.withValues(alpha: 0.3)),
+                      boxShadow: [
+                        BoxShadow(
+                          color: isDark
+                              ? Colors.black.withValues(alpha: 0.4)
+                              : Colors.black.withValues(alpha: 0.1),
+                          blurRadius: 12,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: Center(
+                      child: Text(
+                        'Settings',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: isDark ? Colors.white : AppColorsLight.textPrimary,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                // Help button circle
+                GestureDetector(
+                  onTap: () => context.push('/help'),
+                  child: Container(
+                    height: 44,
+                    width: 44,
+                    decoration: BoxDecoration(
+                      color: isDark ? const Color(0xFF1C1C1E) : elevated,
+                      borderRadius: BorderRadius.circular(22),
+                      border: isDark
+                          ? null
+                          : Border.all(color: cardBorder.withValues(alpha: 0.3)),
+                      boxShadow: [
+                        BoxShadow(
+                          color: isDark
+                              ? Colors.black.withValues(alpha: 0.4)
+                              : Colors.black.withValues(alpha: 0.1),
+                          blurRadius: 12,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: Icon(
+                      Icons.help_outline_rounded,
+                      color: AppColors.error,
+                      size: 20,
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
 

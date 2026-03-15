@@ -9,7 +9,7 @@ import '../../data/models/coach_persona.dart';
 import '../../data/repositories/chat_repository.dart';
 import '../../data/services/api_client.dart';
 import '../../data/services/notification_service.dart';
-import '../../widgets/glass_back_button.dart';
+import '../../widgets/pill_app_bar.dart';
 
 /// AI Settings storage provider - loads from API when user is authenticated
 final aiSettingsProvider = StateNotifierProvider<AISettingsNotifier, AISettings>((ref) {
@@ -456,22 +456,8 @@ class _AISettingsScreenState extends ConsumerState<AISettingsScreen> {
 
     return Scaffold(
       backgroundColor: backgroundColor,
-      appBar: AppBar(
-        backgroundColor: backgroundColor,
-        elevation: 0,
-        automaticallyImplyLeading: false,
-        leading: const GlassBackButton(),
-        title: Text(
-          'AI Settings',
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            color: textPrimary,
-          ),
-        ),
-        centerTitle: true,
-      ),
-      body: SafeArea(
-        child: SingleChildScrollView(
+      appBar: const PillAppBar(title: 'AI Settings'),
+      body: SingleChildScrollView(
           padding: const EdgeInsets.all(16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -531,7 +517,6 @@ class _AISettingsScreenState extends ConsumerState<AISettingsScreen> {
             ],
           ),
         ),
-      ),
     );
   }
 }

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
-import '../../../widgets/glass_back_button.dart';
+import '../../../widgets/pill_app_bar.dart';
 import 'favorite_exercises_screen.dart';
 import 'staple_exercises_screen.dart';
 import 'exercise_queue_screen.dart';
@@ -55,8 +55,7 @@ class _MyExercisesScreenState extends ConsumerState<MyExercisesScreen>
       appBar: AppBar(
         backgroundColor: backgroundColor,
         elevation: 0,
-        automaticallyImplyLeading: false,
-        leading: const GlassBackButton(),
+        automaticallyImplyLeading: true,
         title: Text(
           'My Exercises',
           style: TextStyle(

@@ -18,8 +18,6 @@ import '../profile/synced_workout_detail_screen.dart';
 import 'widgets/add_schedule_item_sheet.dart';
 import 'widgets/schedule_item_card.dart';
 import 'widgets/timeline_view.dart';
-import '../../widgets/app_tour/app_tour_controller.dart';
-
 /// Helper: compute start of week for a given date, using weekStartDay (1=Mon, 7=Sun)
 DateTime _weekStartFor(DateTime date, int weekStartDay) {
   // DateTime.weekday: 1=Mon..7=Sun
@@ -57,37 +55,6 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) return;
-      _triggerScheduleTour();
-    });
-  }
-
-  void _triggerScheduleTour() {
-    final steps = [
-      AppTourStep(
-        id: 'schedule_step_calendar',
-        targetKey: AppTourKeys.weeklyCalendarKey,
-        title: 'Your Week',
-        description: 'See your entire workout plan at a glance. Tap any day to view details.',
-        position: TooltipPosition.below,
-      ),
-      AppTourStep(
-        id: 'schedule_step_card',
-        targetKey: AppTourKeys.scheduleWorkoutCardKey,
-        title: 'Reschedule Easily',
-        description: 'Long-press and drag any workout to move it to a different day.',
-        position: TooltipPosition.below,
-      ),
-      AppTourStep(
-        id: 'schedule_step_toggle',
-        targetKey: AppTourKeys.viewModeToggleKey,
-        title: 'Three Views',
-        description: 'Switch between Agenda, Week, and Timeline to see your plan differently.',
-        position: TooltipPosition.below,
-      ),
-    ];
-    ref.read(appTourControllerProvider.notifier).checkAndShow('schedule_tour', steps);
   }
 
   @override
@@ -105,21 +72,18 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
         centerTitle: true,
         actions: [
           // View toggle button - cycles through agenda -> week -> timeline
-          Container(
-            key: AppTourKeys.viewModeToggleKey,
-            child: IconButton(
-              icon: Icon(
-                _viewModeIcon,
-                color: colors.textPrimary,
-              ),
-              onPressed: () {
-                HapticFeedback.lightImpact();
-                setState(() {
-                  _viewMode = _nextViewMode;
-                });
-              },
-              tooltip: _viewModeTooltip,
+          IconButton(
+            icon: Icon(
+              _viewModeIcon,
+              color: colors.textPrimary,
             ),
+            onPressed: () {
+              HapticFeedback.lightImpact();
+              setState(() {
+                _viewMode = _nextViewMode;
+              });
+            },
+            tooltip: _viewModeTooltip,
           ),
           IconButton(
             icon: Icon(Icons.today, color: colors.textPrimary),
@@ -131,15 +95,13 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
       body: Column(
         children: [
           // Week selector with Sun/Mon toggle
-          Container(
-            key: AppTourKeys.weeklyCalendarKey,
-            child: _WeekSelector(
-              selectedWeek: selectedWeek,
-              onPreviousWeek: () => _changeWeek(ref, -1),
-              onNextWeek: () => _changeWeek(ref, 1),
-              colors: colors,
-              weekStartDay: ref.watch(weekStartDayProvider),
-              onToggleWeekStart: () {
+          _WeekSelector(
+            selectedWeek: selectedWeek,
+            onPreviousWeek: () => _changeWeek(ref, -1),
+            onNextWeek: () => _changeWeek(ref, 1),
+            colors: colors,
+            weekStartDay: ref.watch(weekStartDayProvider),
+            onToggleWeekStart: () {
               ref.read(weekStartDayProvider.notifier).toggle();
               // Re-compute selected week with new start day
               final now = DateTime.now();
@@ -147,7 +109,6 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
               ref.read(selectedWeekProvider.notifier).state =
                   _weekStartFor(now, newStartDay);
             },
-            ),
           ),
 
           // Generate This Week banner
@@ -590,13 +551,6 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
                     }
                   },
                 );
-                // Assign tour key to the very first workout card rendered
-                if (index == 0 && entry.key == 0) {
-                  return Container(
-                    key: AppTourKeys.scheduleWorkoutCardKey,
-                    child: workoutCard,
-                  );
-                }
                 return workoutCard;
               }),
 

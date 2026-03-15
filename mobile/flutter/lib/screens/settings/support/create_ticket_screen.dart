@@ -8,7 +8,7 @@ import '../../../data/providers/support_provider.dart';
 import '../../../data/repositories/auth_repository.dart';
 import '../../../data/repositories/support_repository.dart';
 import '../../../models/support_ticket.dart';
-import '../../../widgets/glass_back_button.dart';
+import '../../../widgets/pill_app_bar.dart';
 
 /// Screen context options for "Where did this happen?"
 const _screenContextOptions = [
@@ -347,19 +347,8 @@ class _CreateTicketScreenState extends ConsumerState<CreateTicketScreen> {
 
     return Scaffold(
       backgroundColor: backgroundColor,
-      appBar: AppBar(
-        backgroundColor: backgroundColor,
-        elevation: 0,
-        automaticallyImplyLeading: false,
-        leading: const GlassBackButton(),
-        title: Text(
-          'Create Ticket',
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            color: textPrimary,
-          ),
-        ),
-        centerTitle: true,
+      appBar: const PillAppBar(
+        title: 'Create Ticket',
       ),
       body: Form(
         key: _formKey,

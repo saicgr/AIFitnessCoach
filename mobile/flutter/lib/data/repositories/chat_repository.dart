@@ -1,4 +1,6 @@
+import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -252,6 +254,8 @@ class ChatRepository {
     String? unifiedContext,
     Map<String, dynamic>? mediaRef,
     List<Map<String, dynamic>>? mediaRefs,
+    String? imageBase64,
+    List<String>? videoFrames,
   }) async {
     try {
       debugPrint('🔍 [Chat] Sending message: ${message.substring(0, message.length.clamp(0, 50))}...');
@@ -261,7 +265,11 @@ class ChatRepository {
       if (unifiedContext != null) {
         debugPrint('🎯 [Chat] Including unified fasting/nutrition/workout context');
       }
+      if (videoFrames != null) {
+        debugPrint('🎬 [Chat] Sending ${videoFrames.length} pre-extracted video frames');
+      }
 
+      final hasMedia = imageBase64 != null || videoFrames != null || mediaRef != null || (mediaRefs != null && mediaRefs.isNotEmpty);
       final response = await _apiClient.post(
         '${ApiConstants.chat}/send',
         data: ChatRequest(
@@ -275,7 +283,11 @@ class ChatRepository {
           unifiedContext: unifiedContext,
           mediaRef: mediaRef,
           mediaRefs: mediaRefs,
+          imageBase64: imageBase64,
+          videoFrames: videoFrames,
         ).toJson(),
+        // Media requests go through Gemini Vision — allow up to 3 minutes
+        options: hasMedia ? Options(receiveTimeout: const Duration(minutes: 3)) : null,
       );
 
       if (response.statusCode == 200) {
@@ -423,6 +435,57 @@ class ChatRepository {
       );
     } catch (e) {
       debugPrint('❌ [Chat] Error toggling pin: $e');
+    }
+  }
+
+  /// Upload video directly to backend for parallel S3 + Gemini processing.
+  /// Returns {s3_key, public_url, gemini_file_name, mime_type}.
+  Future<Map<String, dynamic>> uploadVideoForAnalysis({
+    required File file,
+    required String mimeType,
+    Duration? duration,
+    void Function(int sent, int total)? onProgress,
+  }) async {
+    try {
+      debugPrint('🎬 [Chat] Uploading video to backend for parallel S3+Gemini processing');
+      final formData = FormData.fromMap({
+        'file': await MultipartFile.fromFile(
+          file.path,
+          filename: file.path.split('/').last,
+          contentType: DioMediaType.parse(mimeType),
+        ),
+        'media_type': 'video',
+        if (duration != null) 'duration_seconds': duration.inSeconds.toString(),
+      });
+
+      final response = await _apiClient.post(
+        '${ApiConstants.chat}/media/upload',
+        data: formData,
+        options: Options(
+          receiveTimeout: const Duration(minutes: 5),
+          sendTimeout: const Duration(minutes: 5),
+        ),
+        onSendProgress: onProgress,
+      );
+
+      if (response.statusCode == 200) {
+        final data = response.data as Map<String, dynamic>;
+        debugPrint('✅ [Chat] Video upload complete: s3_key=${data['s3_key']}, gemini=${data['gemini_file_name']}');
+        return data;
+      }
+      throw Exception('Video upload failed: ${response.statusCode}');
+    } on DioException catch (e) {
+      debugPrint('❌ [Chat] Error uploading video for analysis: $e');
+      if (e.type == DioExceptionType.connectionTimeout ||
+          e.type == DioExceptionType.sendTimeout) {
+        throw Exception('Upload timed out. The file may be too large or your connection is slow.');
+      } else if (e.type == DioExceptionType.connectionError) {
+        throw Exception('Upload failed. Please check your internet connection.');
+      }
+      throw Exception('Failed to upload video. Please try again.');
+    } catch (e) {
+      debugPrint('❌ [Chat] Error uploading video for analysis: $e');
+      rethrow;
     }
   }
 }
@@ -833,7 +896,8 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
   }
 
   /// Send a message with media attachment (image or video).
-  /// Orchestrates: compress -> presign -> upload to S3 -> send message with media_ref.
+  /// Images: presign -> upload to S3 in parallel with AI call.
+  /// Videos: upload to backend (parallel S3 + Gemini Files API) -> send message with gemini_file_name.
   Future<void> sendMessageWithMedia(String message, PickedMedia media) async {
     if (_isLoading) {
       debugPrint('⚠️ [Chat] Already loading, ignoring message');
@@ -861,79 +925,19 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
 
     _isLoading = true;
 
+    // Helper: update the upload overlay on the user's video message
+    void setOverlay(String? phase, double? progress) {
+      final msgs = state.valueOrNull ?? [];
+      state = AsyncValue.data(msgs.map((m) =>
+        m.role == 'user' && m.localFilePath == media.file.path
+            ? m.withUploadState(phase, progress)
+            : m,
+      ).toList());
+    }
+
     try {
-      // Step 1: Show upload progress system message
-      final uploadMsg = ChatMessage(
-        role: 'system',
-        content: media.type == ChatMediaType.video
-            ? 'Uploading video (${media.formattedSize})...'
-            : 'Uploading image (${media.formattedSize})...',
-        createdAt: DateTime.now().toIso8601String(),
-      );
-      state = AsyncValue.data([...messagesWithUser, uploadMsg]);
-
-      // Step 2: Get presigned URL
-      final filename = media.file.path.split('/').last;
-      final presignData = await _repository.getPresignedUrl(
-        filename: filename,
-        contentType: media.mimeType,
-        mediaType: media.type == ChatMediaType.video ? 'video' : 'image',
-        expectedSizeBytes: media.sizeBytes,
-      );
-
-      final presignedUrl = presignData['presigned_url'] as String? ?? presignData['url'] as String;
-      final s3Key = presignData['s3_key'] as String;
-      final fields = presignData['presigned_fields'] as Map<String, dynamic>?;
-      final publicUrl = presignData['public_url'] as String?;
-
-      // Step 3: Upload to S3
-      await _repository.uploadToS3(
-        presignedUrl: presignedUrl,
-        fields: fields,
-        file: media.file,
-        contentType: media.mimeType,
-      );
-      if (!mounted) return;
-
-      // Update user message with persistent public URL
-      if (publicUrl != null) {
-        userMessage = userMessage.copyWith(mediaUrl: publicUrl);
-        final updatedMsgs = (state.valueOrNull ?? []).map((m) =>
-            m == userMessage || (m.role == 'user' && m.localFilePath == media.file.path && m.mediaUrl == null)
-                ? userMessage
-                : m).toList();
-        state = AsyncValue.data(updatedMsgs);
-      }
-
-      // Step 4: Show analyzing system message
-      final analyzingMsg = ChatMessage(
-        role: 'system',
-        content: media.type == ChatMediaType.video
-            ? 'Analyzing your form...'
-            : 'Analyzing image...',
-        createdAt: DateTime.now().toIso8601String(),
-      );
-      // Remove upload msg, add analyzing msg
-      final msgsAfterUpload = state.valueOrNull ?? [];
-      final filteredMsgs = msgsAfterUpload.where((m) =>
-          !(m.role == 'system' && (m.content.contains('Uploading') || m.content.contains('Analyzing')))).toList();
-      state = AsyncValue.data([...filteredMsgs, analyzingMsg]);
-
-      // Step 5: Build media_ref and send message
-      final mediaRef = {
-        's3_key': s3Key,
-        'media_type': media.type == ChatMediaType.video ? 'video' : 'image',
-        'mime_type': media.mimeType,
-        'filename': filename,
-      };
-
-      // Build conversation history
-      final history = currentMessages.map((m) => {
-        'role': m.role,
-        'content': m.content,
-      }).toList();
-
-      // Build user profile
+      // Build shared context
+      final history = currentMessages.map((m) => {'role': m.role, 'content': m.content}).toList();
       Map<String, dynamic>? userProfile;
       if (_user != null) {
         userProfile = {
@@ -944,28 +948,108 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
           'active_injuries': _user.injuriesList,
         };
       }
-
       final currentAISettings = _getAISettings();
       final unifiedContext = _getUnifiedContext();
+      final effectiveMessage = message.isNotEmpty
+          ? message
+          : (media.type == ChatMediaType.video ? 'Check my form' : 'What do you see?');
 
-      final response = await _repository.sendMessage(
-        message: message.isNotEmpty ? message : (media.type == ChatMediaType.video ? 'Check my form' : 'What do you see?'),
-        userId: userId,
-        userProfile: userProfile,
-        conversationHistory: history,
-        aiSettings: currentAISettings.toJson(),
-        unifiedContext: unifiedContext,
-        mediaRef: mediaRef,
-      );
+      ChatResponse response;
+
+      if (media.type == ChatMediaType.image) {
+        // Image: get presigned URL, update message with public URL, then upload to S3
+        // in parallel with the AI call (using base64 inline)
+        final filename = media.file.path.split('/').last;
+        final presignData = await _repository.getPresignedUrl(
+          filename: filename,
+          contentType: media.mimeType,
+          mediaType: 'image',
+          expectedSizeBytes: media.sizeBytes,
+        );
+
+        final presignedUrl = presignData['presigned_url'] as String? ?? presignData['url'] as String;
+        final s3Key = presignData['s3_key'] as String;
+        final fields = presignData['presigned_fields'] as Map<String, dynamic>?;
+        final publicUrl = presignData['public_url'] as String?;
+
+        // Update user message with public URL immediately (URL is known before upload)
+        if (publicUrl != null) {
+          userMessage = userMessage.copyWith(mediaUrl: publicUrl);
+          final updatedMsgs = (state.valueOrNull ?? []).map((m) =>
+              m.role == 'user' && m.localFilePath == media.file.path
+                  ? userMessage
+                  : m).toList();
+          state = AsyncValue.data(updatedMsgs);
+        }
+
+        setOverlay('analyzing', null);
+        final imageBytes = await media.file.readAsBytes();
+        final imageBase64 = base64Encode(imageBytes);
+        final results = await Future.wait([
+          _repository.uploadToS3(presignedUrl: presignedUrl, fields: fields, file: media.file, contentType: media.mimeType),
+          _repository.sendMessage(
+            message: effectiveMessage, userId: userId, userProfile: userProfile,
+            conversationHistory: history, aiSettings: currentAISettings.toJson(),
+            unifiedContext: unifiedContext, imageBase64: imageBase64,
+          ),
+        ]);
+        response = results[1] as ChatResponse;
+
+      } else {
+        // Video: upload to backend which handles S3 + Gemini in parallel
+        debugPrint('🎬 [Chat] Uploading video (${(media.sizeBytes / 1024 / 1024).toStringAsFixed(1)}MB) to backend for parallel S3+Gemini processing');
+        setOverlay('uploading', 0.0);
+
+        final uploadResult = await _repository.uploadVideoForAnalysis(
+          file: media.file,
+          mimeType: media.mimeType,
+          duration: media.duration,
+          onProgress: (sent, total) {
+            if (total > 0) setOverlay('uploading', sent / total);
+          },
+        );
+
+        if (!mounted) return;
+        setOverlay('analyzing', null);
+
+        final s3Key = uploadResult['s3_key'] as String;
+        final publicUrl = uploadResult['public_url'] as String?;
+        final geminiFileName = uploadResult['gemini_file_name'] as String;
+
+        // Update video message with public URL from upload response
+        if (publicUrl != null) {
+          userMessage = userMessage.copyWith(mediaUrl: publicUrl);
+          final updatedMsgs = (state.valueOrNull ?? []).map((m) =>
+              m.role == 'user' && m.localFilePath == media.file.path
+                  ? userMessage
+                  : m).toList();
+          state = AsyncValue.data(updatedMsgs);
+        }
+
+        final mediaRef = {
+          's3_key': s3Key,
+          'media_type': 'video',
+          'mime_type': media.mimeType,
+          'gemini_file_name': geminiFileName,  // backend uses this directly, skips S3 download
+          if (media.duration != null) 'duration_seconds': media.duration!.inSeconds.toDouble(),
+        };
+        response = await _repository.sendMessage(
+          message: effectiveMessage, userId: userId, userProfile: userProfile,
+          conversationHistory: history, aiSettings: currentAISettings.toJson(),
+          unifiedContext: unifiedContext, mediaRef: mediaRef,
+        );
+      }
+
       if (!mounted) return;
+
+      // Clear upload overlay before showing result
+      setOverlay(null, null);
 
       // Process action_data
       await _processActionData(response.actionData);
       if (!mounted) return;
 
-      // Remove system messages (upload/analyzing) and add the assistant response
-      final finalMsgs = (state.valueOrNull ?? []).where((m) =>
-          !(m.role == 'system' && (m.content.contains('Uploading') || m.content.contains('Analyzing')))).toList();
+      final finalMsgs = state.valueOrNull ?? [];
 
       final assistantMessage = ChatMessage(
         role: 'assistant',

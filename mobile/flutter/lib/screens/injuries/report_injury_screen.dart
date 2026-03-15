@@ -4,7 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../../core/constants/app_colors.dart';
-import '../../widgets/glass_back_button.dart';
+import '../../widgets/pill_app_bar.dart';
 import '../../data/models/injury.dart';
 import '../../data/services/api_client.dart';
 import 'injuries_list_screen.dart';
@@ -155,20 +155,7 @@ class _ReportInjuryScreenState extends ConsumerState<ReportInjuryScreen> {
 
     return Scaffold(
       backgroundColor: backgroundColor,
-      appBar: AppBar(
-        backgroundColor: backgroundColor,
-        elevation: 0,
-        automaticallyImplyLeading: false,
-        leading: const GlassBackButton(icon: Icons.close),
-        title: Text(
-          'Report Injury',
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            color: textPrimary,
-          ),
-        ),
-        centerTitle: true,
-      ),
+      appBar: const PillAppBar(title: 'Report Injury'),
       body: Form(
         key: _formKey,
         child: SingleChildScrollView(

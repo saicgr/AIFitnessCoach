@@ -30,14 +30,14 @@ import asyncio
 import json
 import time
 import uuid
-from fastapi import APIRouter, HTTPException, Depends, Request, BackgroundTasks, Query
+from fastapi import APIRouter, HTTPException, Depends, Request, BackgroundTasks, Query, UploadFile, File, Form
 from typing import Dict, List, Optional
 from pydantic import BaseModel, Field
 from models.chat import ChatRequest, ChatResponse
 from services.gemini_service import GeminiService
 from services.rag_service import RAGService
 from services.langgraph_service import LangGraphCoachService
-from core.logger import get_logger
+from core.logger import get_logger, set_log_context
 from core.supabase_db import get_supabase_db
 from core.supabase_client import get_supabase
 from core.rate_limiter import limiter
@@ -870,6 +870,136 @@ async def presign_media_upload(
     except Exception as e:
         logger.error(f"Failed to generate presigned URL for user {user_id}: {e}")
         raise safe_internal_error(e, "media_presign")
+
+
+# ── Direct Media Upload (S3 + Gemini Files API in parallel) ─────────
+
+class MediaUploadResponse(BaseModel):
+    """Response from direct video upload — both S3 and Gemini file are ready."""
+    s3_key: str
+    public_url: str
+    gemini_file_name: str  # e.g. "files/abc123xyz" — pass back in media_ref
+    mime_type: str
+
+
+@router.post("/media/upload", response_model=MediaUploadResponse)
+@limiter.limit("10/minute")
+async def upload_media_for_analysis(
+    request: Request,
+    file: UploadFile = File(...),
+    media_type: str = Form(...),  # "video" or "image"
+    duration_seconds: Optional[float] = Form(default=None),
+    current_user: dict = Depends(get_current_user),
+):
+    """
+    Upload media directly to the server.
+    Backend simultaneously uploads to S3 (storage) and Gemini Files API (analysis).
+    Returns both references so form analysis can skip S3 download entirely.
+
+    Use instead of /media/presign for video form analysis to enable parallel
+    S3 + Gemini upload and eliminate the S3 download step.
+    """
+    import tempfile
+    import os
+    import boto3
+    from google.genai import types as genai_types
+    from core.gemini_client import get_genai_client
+
+    user_id = str(current_user["id"])
+    set_log_context(user_id=f"...{user_id[-4:]}" if len(user_id) > 4 else user_id)
+    mime_type = file.content_type or "video/mp4"
+
+    # Validate content type and media type only (size validated after reading)
+    if mime_type not in ALLOWED_CONTENT_TYPES:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Unsupported content type: {mime_type}. Allowed: {', '.join(sorted(ALLOWED_CONTENT_TYPES))}"
+        )
+    if media_type == "video" and not mime_type.startswith("video/"):
+        raise HTTPException(status_code=400, detail="media_type 'video' requires a video/* content_type")
+    if media_type == "image" and not mime_type.startswith("image/"):
+        raise HTTPException(status_code=400, detail="media_type 'image' requires an image/* content_type")
+
+    ext = EXT_MAP.get(mime_type, "bin")
+    s3_key = f"chat_media/{user_id}/{uuid.uuid4().hex}.{ext}"
+
+    logger.info(f"Direct upload for user {user_id}: {s3_key} ({mime_type})")
+
+    # Read file bytes once
+    file_bytes = await file.read()
+    file_size = len(file_bytes)
+    logger.info(f"Received {file_size} bytes for upload")
+
+    # Validate size after reading
+    _validate_media_file(mime_type, media_type, file_size)
+
+    settings = get_settings()
+
+    if not settings.s3_bucket_name:
+        raise HTTPException(status_code=503, detail="Media upload not configured")
+
+    # Write to temp file for Gemini Files API (needs a file path)
+    fd, tmp_path = tempfile.mkstemp(suffix=f".{ext}", prefix="upload_")
+    os.close(fd)
+    try:
+        with open(tmp_path, "wb") as f:
+            f.write(file_bytes)
+
+        async def upload_to_s3():
+            s3_client = boto3.client(
+                "s3",
+                aws_access_key_id=settings.aws_access_key_id,
+                aws_secret_access_key=settings.aws_secret_access_key,
+                region_name=settings.aws_default_region,
+            )
+            await asyncio.to_thread(
+                s3_client.put_object,
+                Bucket=settings.s3_bucket_name,
+                Key=s3_key,
+                Body=file_bytes,
+                ContentType=mime_type,
+            )
+            logger.info(f"S3 upload complete: {s3_key}")
+
+        async def upload_to_gemini():
+            client = get_genai_client()
+            gemini_file = await asyncio.to_thread(
+                client.files.upload,
+                file=tmp_path,
+                config=genai_types.UploadFileConfig(
+                    mime_type=mime_type,
+                    display_name=f"form_{uuid.uuid4().hex[:8]}",
+                ),
+            )
+            logger.info(f"Gemini upload complete: {gemini_file.name}, state={gemini_file.state}")
+            return gemini_file
+
+        # Upload to S3 and Gemini in parallel
+        _, gemini_file = await asyncio.gather(
+            upload_to_s3(),
+            upload_to_gemini(),
+        )
+
+        public_url = f"https://{settings.s3_bucket_name}.s3.{settings.aws_default_region}.amazonaws.com/{s3_key}"
+
+        return MediaUploadResponse(
+            s3_key=s3_key,
+            public_url=public_url,
+            gemini_file_name=gemini_file.name,
+            mime_type=mime_type,
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Direct media upload failed for user {user_id}: {e}")
+        raise safe_internal_error(e, "media_upload")
+    finally:
+        if os.path.exists(tmp_path):
+            try:
+                os.unlink(tmp_path)
+            except OSError:
+                pass
 
 
 # ── Batch Media Upload (Presigned S3 POST) ──────────────────────────

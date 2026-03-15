@@ -6,7 +6,7 @@ import 'package:go_router/go_router.dart';
 import '../../data/models/kegel.dart';
 import '../../data/providers/kegel_provider.dart';
 import '../../core/providers/user_provider.dart';
-import '../../widgets/glass_back_button.dart';
+import '../../widgets/pill_app_bar.dart';
 import '../../widgets/glass_sheet.dart';
 
 /// Guided kegel/pelvic floor exercise session with timer
@@ -282,21 +282,17 @@ class _KegelSessionScreenState extends ConsumerState<KegelSessionScreen>
               ? theme.colorScheme.primaryContainer.withValues(alpha: 0.3)
               : theme.colorScheme.secondaryContainer.withValues(alpha: 0.3))
           : null,
-      appBar: AppBar(
-        title: Text(_isActive
+      appBar: PillAppBar(
+        title: _isActive
             ? (_selectedExercise?.displayName ?? 'Kegel Session')
-            : 'Pelvic Floor Exercises'),
-        automaticallyImplyLeading: false,
-        leading: GlassBackButton(
-          icon: Icons.close,
-          onTap: () {
-            if (_isActive) {
-              _showExitConfirmation();
-            } else {
-              context.pop();
-            }
-          },
-        ),
+            : 'Pelvic Floor Exercises',
+        onBack: () {
+          if (_isActive) {
+            _showExitConfirmation();
+          } else {
+            context.pop();
+          }
+        },
       ),
       body: _isActive
           ? _buildActiveSession(theme)

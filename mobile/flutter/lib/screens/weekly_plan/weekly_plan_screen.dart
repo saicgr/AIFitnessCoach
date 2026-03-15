@@ -7,7 +7,7 @@ import 'widgets/day_card.dart';
 import 'widgets/plan_header.dart';
 import 'widgets/generate_plan_sheet.dart';
 import 'daily_plan_detail_sheet.dart';
-import '../../widgets/glass_back_button.dart';
+import '../../widgets/pill_app_bar.dart';
 
 /// Weekly plan screen showing the holistic plan calendar view
 class WeeklyPlanScreen extends ConsumerStatefulWidget {
@@ -52,17 +52,11 @@ class _WeeklyPlanScreenState extends ConsumerState<WeeklyPlanScreen> {
     final colorScheme = theme.colorScheme;
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Weekly Plan'),
-        automaticallyImplyLeading: false,
-        leading: const GlassBackButton(),
+      appBar: PillAppBar(
+        title: 'Weekly Plan',
         actions: [
           if (planState.currentPlan != null)
-            IconButton(
-              icon: const Icon(Icons.refresh),
-              tooltip: 'Regenerate Plan',
-              onPressed: _showGeneratePlanSheet,
-            ),
+            PillAppBarAction(icon: Icons.refresh, onTap: _showGeneratePlanSheet),
         ],
       ),
       body: _buildBody(planState, colorScheme),

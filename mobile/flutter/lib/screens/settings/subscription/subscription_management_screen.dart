@@ -11,8 +11,8 @@ import '../../../data/repositories/subscription_repository.dart';
 import '../../../data/services/api_client.dart';
 import 'cancel_confirmation_sheet.dart';
 import 'pause_subscription_sheet.dart';
-import '../../../widgets/glass_back_button.dart';
 import '../../../widgets/glass_sheet.dart';
+import '../../../widgets/pill_app_bar.dart';
 
 /// Subscription Management Screen
 /// Shows current subscription status with cancel, pause, and resume options
@@ -236,18 +236,8 @@ class _SubscriptionManagementScreenState
 
     return Scaffold(
       backgroundColor: backgroundColor,
-      appBar: AppBar(
-        backgroundColor: backgroundColor,
-        elevation: 0,
-        title: Text(
-          'Manage Subscription',
-          style: TextStyle(
-            color: textPrimary,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-        automaticallyImplyLeading: false,
-        leading: const GlassBackButton(),
+      appBar: const PillAppBar(
+        title: 'Manage Subscription',
       ),
       body: _isLoading
           ? const Center(

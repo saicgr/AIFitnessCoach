@@ -5,7 +5,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/providers/subscription_provider.dart';
 import '../../../data/providers/beast_mode_provider.dart';
 import '../../../widgets/app_snackbar.dart';
-import '../../../widgets/glass_back_button.dart';
+import '../../../widgets/pill_app_bar.dart';
 import 'beast_mode_constants.dart';
 import 'widgets/about_section.dart';
 import 'widgets/beast_header_card.dart';
@@ -53,27 +53,10 @@ class BeastModeScreen extends ConsumerWidget {
 
     return Scaffold(
       backgroundColor: backgroundColor,
-      appBar: AppBar(
-        backgroundColor: backgroundColor,
-        elevation: 0,
-        leading: const GlassBackButton(),
-        title: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(Icons.local_fire_department,
-                color: AppColors.orange, size: 22),
-            const SizedBox(width: 8),
-            Text(
-              'Beast Mode',
-              style: TextStyle(
-                  fontWeight: FontWeight.bold, color: t.textPrimary),
-            ),
-          ],
-        ),
-        centerTitle: true,
+      appBar: const PillAppBar(
+        title: 'Beast Mode',
       ),
-      body: SafeArea(
-        child: SingleChildScrollView(
+      body: SingleChildScrollView(
           padding: const EdgeInsets.all(16),
           child: Column(
             children: [
@@ -162,7 +145,6 @@ class BeastModeScreen extends ConsumerWidget {
             ],
           ),
         ),
-      ),
     );
   }
 

@@ -5,7 +5,7 @@ import '../../data/providers/scores_provider.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../../data/services/context_logging_service.dart';
 import '../../data/services/haptic_service.dart';
-import '../../widgets/glass_back_button.dart';
+import '../../widgets/pill_app_bar.dart';
 import 'widgets/overall_score_hero.dart';
 import 'widgets/score_breakdown_section.dart';
 import 'widgets/nutrition_score_card.dart';
@@ -73,30 +73,17 @@ class _ScoringScreenState extends ConsumerState<ScoringScreen> {
         ),
         slivers: [
           // App bar
-          SliverAppBar(
-            backgroundColor: backgroundColor,
-            elevation: 0,
-            floating: true,
-            pinned: false,
-            title: Text(
-              'Fitness Score',
-              style: TextStyle(
-                color: textColor,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            centerTitle: true,
-            automaticallyImplyLeading: false,
-            leading: const GlassBackButton(),
-            actions: [
-              IconButton(
-                icon: Icon(
-                  Icons.refresh,
-                  color: scoresState.isLoading ? AppColors.textMuted : textColor,
+          SliverToBoxAdapter(
+            child: PillAppBar(
+              title: 'Fitness Score',
+              actions: [
+                PillAppBarAction(
+                  icon: Icons.refresh,
+                  visible: !scoresState.isLoading,
+                  onTap: _onRefresh,
                 ),
-                onPressed: scoresState.isLoading ? null : _onRefresh,
-              ),
-            ],
+              ],
+            ),
           ),
           // Content
           if (scoresState.isLoading && scoresState.overview == null)

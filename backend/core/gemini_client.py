@@ -82,14 +82,19 @@ def get_genai_client() -> genai.Client:
     return genai.Client(api_key=settings.gemini_api_key)
 
 
-def get_langchain_llm(temperature: float = 0.7, timeout: Optional[int] = None, model_kwargs: Optional[dict] = None):
+def get_langchain_llm(
+    temperature: float = 0.7,
+    timeout: Optional[int] = None,
+    model_kwargs: Optional[dict] = None,
+    disable_thinking: bool = True,
+):
     """
     Return a LangChain ChatGoogleGenerativeAI instance.
 
-    When GCP_PROJECT_ID is set, _setup_credentials() configures env vars
-    (GOOGLE_GENAI_USE_VERTEXAI, GOOGLE_CLOUD_PROJECT, GOOGLE_CLOUD_LOCATION)
-    that the google-genai SDK auto-detects. This avoids needing the heavy
-    langchain-google-vertexai / google-cloud-aiplatform dependency.
+    disable_thinking: Set thinking_budget=0 to prevent Gemini 2.5 thinking models
+      from embedding thought_signatures in function calls. LangChain strips these
+      during message serialization, causing a 400 on the tool-result round-trip.
+      Defaults to True for all tool-calling agents.
     """
     from langchain_google_genai import ChatGoogleGenerativeAI
 
@@ -109,6 +114,15 @@ def get_langchain_llm(temperature: float = 0.7, timeout: Optional[int] = None, m
 
     if timeout is not None:
         kwargs["timeout"] = timeout
+
+    # Disable thinking budget: prevents Gemini 2.5 thinking models from embedding
+    # thought_signature tokens in function calls. LangChain v2.x strips these during
+    # AIMessage serialization, causing a 400 error on the tool-result round-trip.
+    # thinking_budget=0 is a top-level ChatGoogleGenerativeAI field in v2.x.
+    if disable_thinking:
+        kwargs["thinking_budget"] = 0
+
     if model_kwargs is not None:
         kwargs["model_kwargs"] = model_kwargs
+
     return ChatGoogleGenerativeAI(**kwargs)

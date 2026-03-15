@@ -8,7 +8,7 @@ import '../../data/providers/nutrition_preferences_provider.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../../data/services/api_client.dart';
 import '../../data/services/haptic_service.dart';
-import '../../widgets/glass_back_button.dart';
+import '../../widgets/pill_app_bar.dart';
 import '../../widgets/glass_sheet.dart';
 import 'widgets/edit_targets_sheet.dart';
 import 'food_library_screen.dart';
@@ -60,20 +60,7 @@ class _NutritionSettingsScreenState
 
     return Scaffold(
       backgroundColor: backgroundColor,
-      appBar: AppBar(
-        backgroundColor: backgroundColor,
-        elevation: 0,
-        automaticallyImplyLeading: false,
-        leading: const GlassBackButton(),
-        title: Text(
-          'Nutrition Settings',
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            color: textPrimary,
-          ),
-        ),
-        centerTitle: true,
-      ),
+      appBar: const PillAppBar(title: 'Nutrition Settings'),
       body: prefsState.isLoading || preferences == null
           ? _buildSkeleton(isDark, elevated, cardBorder)
           : SingleChildScrollView(

@@ -5,7 +5,7 @@ import '../../../data/models/muscle_analytics.dart';
 import '../../../widgets/app_loading.dart';
 import '../../../data/providers/muscle_analytics_provider.dart';
 import '../../../data/repositories/muscle_analytics_repository.dart';
-import '../../../widgets/glass_back_button.dart';
+import '../../../widgets/pill_app_bar.dart';
 import '../../../widgets/segmented_tab_bar.dart';
 import 'widgets/muscle_heatmap_widget.dart';
 import 'widgets/muscle_balance_chart.dart';
@@ -62,24 +62,28 @@ class _MuscleAnalyticsScreenState extends ConsumerState<MuscleAnalyticsScreen>
     final timeRange = ref.watch(muscleAnalyticsTimeRangeProvider);
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Muscle Analytics'),
-        automaticallyImplyLeading: false,
-        leading: const GlassBackButton(),
+      appBar: PillAppBar(
+        title: 'Muscle Analytics',
         actions: [
-          PopupMenuButton<String>(
-            icon: const Icon(Icons.calendar_today),
-            tooltip: 'Time Range',
-            onSelected: (value) {
-              ref.read(muscleAnalyticsTimeRangeProvider.notifier).state = value;
+          PillAppBarAction(
+            icon: Icons.calendar_today,
+            onTap: () {
+              showMenu(
+                context: context,
+                position: const RelativeRect.fromLTRB(100, 100, 0, 0),
+                items: [
+                  _buildTimeRangeItem('1_week', '1 Week', timeRange),
+                  _buildTimeRangeItem('2_weeks', '2 Weeks', timeRange),
+                  _buildTimeRangeItem('4_weeks', '4 Weeks', timeRange),
+                  _buildTimeRangeItem('8_weeks', '8 Weeks', timeRange),
+                  _buildTimeRangeItem('12_weeks', '12 Weeks', timeRange),
+                ],
+              ).then((value) {
+                if (value != null) {
+                  ref.read(muscleAnalyticsTimeRangeProvider.notifier).state = value;
+                }
+              });
             },
-            itemBuilder: (context) => [
-              _buildTimeRangeItem('1_week', '1 Week', timeRange),
-              _buildTimeRangeItem('2_weeks', '2 Weeks', timeRange),
-              _buildTimeRangeItem('4_weeks', '4 Weeks', timeRange),
-              _buildTimeRangeItem('8_weeks', '8 Weeks', timeRange),
-              _buildTimeRangeItem('12_weeks', '12 Weeks', timeRange),
-            ],
           ),
         ],
       ),

@@ -5039,7 +5039,7 @@ async def complete_nutrition_onboarding(request: NutritionOnboardingRequest, cur
 
         # Get user profile for BMR/TDEE calculation
         user_result = db.client.table("users")\
-            .select("weight_kg, height_cm, age, gender, activity_level")\
+            .select("weight_kg, height_cm, age, gender, activity_level, preferences")\
             .eq("id", request.user_id)\
             .single()\
             .execute()
@@ -5053,6 +5053,24 @@ async def complete_nutrition_onboarding(request: NutritionOnboardingRequest, cur
         age = int(user.get("age") or 30)
         gender = user.get("gender", "male").lower()
         activity_level = user.get("activity_level", "moderately_active")
+
+        # Resolve nutrition goals from weight_direction when goals are empty or default "maintain"
+        # This prevents the mismatch where user selects "lose weight" but profile shows "Maintain Weight"
+        user_prefs = user.get("preferences") or {}
+        weight_direction = user_prefs.get("weight_direction")
+        if weight_direction and weight_direction != "maintain":
+            has_meaningful_goals = (
+                request.nutrition_goals
+                and request.nutrition_goals != ["maintain"]
+            )
+            if not has_meaningful_goals:
+                if weight_direction == "lose":
+                    request.nutrition_goals = ["lose_fat"]
+                    request.nutrition_goal = "lose_fat"
+                elif weight_direction == "gain":
+                    request.nutrition_goals = ["build_muscle"]
+                    request.nutrition_goal = "build_muscle"
+                logger.info(f"Resolved nutrition goal from weight_direction='{weight_direction}': {request.nutrition_goals}")
 
         # Calculate BMR using Mifflin-St Jeor equation
         if gender == "male":

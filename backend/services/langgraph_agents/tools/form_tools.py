@@ -24,17 +24,27 @@ def _dispatch_async_form_job(
     mime_types: List[str],
     media_types: List[str],
     params: Dict[str, Any],
+    video_frames: Optional[List[str]] = None,
+    gemini_file_name: Optional[str] = None,
 ) -> Dict[str, Any]:
     """Create a background media job and return an async response."""
     try:
         service = get_media_job_service()
+        # Embed Gemini file ref or pre-extracted frames in params so the runner skips S3 download
+        effective_params = dict(params)
+        if gemini_file_name:
+            effective_params["gemini_file_name"] = gemini_file_name
+            logger.info(f"Embedding Gemini file ref {gemini_file_name} in job params (skips S3 download)")
+        if video_frames:
+            effective_params["video_frames"] = video_frames
+            logger.info(f"Embedding {len(video_frames)} pre-extracted frames in job params")
         job_id = service.create_job(
             user_id=user_id,
             job_type=job_type,
             s3_keys=s3_keys,
             mime_types=mime_types,
             media_types=media_types,
-            params=params,
+            params=effective_params,
         )
 
         # Kick off the job in the background
@@ -76,6 +86,8 @@ def check_exercise_form(
     media_type: str,
     exercise_name: Optional[str] = None,
     user_message: Optional[str] = None,
+    video_frames: Optional[List[str]] = None,
+    gemini_file_name: Optional[str] = None,
 ) -> Dict[str, Any]:
     """
     Analyze exercise form from an uploaded video or image.
@@ -90,6 +102,7 @@ def check_exercise_form(
         media_type: Type of media ('video' or 'image')
         exercise_name: Optional name of the exercise being performed
         user_message: Optional message from the user about the exercise
+        gemini_file_name: Optional pre-uploaded Gemini Files API file name (skips S3 download)
 
     Returns:
         Result dict with form analysis, score, issues, and recommendations
@@ -105,13 +118,19 @@ def check_exercise_form(
             if user_message:
                 params["user_context"] = user_message
 
+            # When pre-extracted frames provided, s3_key may be empty (upload pending/skipped)
+            s3_keys = [s3_key] if s3_key else []
+            mime_types_list = [mime_type] if mime_type else []
+
             return _dispatch_async_form_job(
                 user_id=user_id,
                 job_type="form_analysis",
-                s3_keys=[s3_key],
-                mime_types=[mime_type],
+                s3_keys=s3_keys,
+                mime_types=mime_types_list,
                 media_types=[media_type],
                 params=params,
+                video_frames=video_frames,
+                gemini_file_name=gemini_file_name,
             )
 
         # Images are fast enough for synchronous processing

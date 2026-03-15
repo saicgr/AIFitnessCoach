@@ -3,7 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
-import '../../widgets/glass_back_button.dart';
+import '../../widgets/pill_app_bar.dart';
 
 final seniorSettingsProvider = StateNotifierProvider<SeniorSettingsNotifier, SeniorSettingsState>((ref) => SeniorSettingsNotifier());
 
@@ -52,8 +52,8 @@ class _SeniorFitnessScreenState extends ConsumerState<SeniorFitnessScreen> {
     final st = ref.watch(seniorSettingsProvider);
     return Scaffold(
       backgroundColor: bg,
-      appBar: AppBar(backgroundColor: bg, elevation: 0, automaticallyImplyLeading: false, leading: const GlassBackButton(), title: Text('Senior Fitness', style: TextStyle(fontWeight: FontWeight.bold, color: tp)), centerTitle: true),
-      body: SafeArea(child: st.isLoading ? const Center(child: CircularProgressIndicator()) : SingleChildScrollView(padding: const EdgeInsets.all(16), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      appBar: const PillAppBar(title: 'Senior Fitness'),
+      body: st.isLoading ? const Center(child: CircularProgressIndicator()) : SingleChildScrollView(padding: const EdgeInsets.all(16), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         _buildInfoCard(d, tp, tm, el),
         const SizedBox(height: 24),
         _section('Recovery Settings', tp),
@@ -73,7 +73,7 @@ class _SeniorFitnessScreenState extends ConsumerState<SeniorFitnessScreen> {
         _buildToggle('Reduced Impact', 'Avoid jumping and high-impact moves', st.reducedImpact, (v) => ref.read(seniorSettingsProvider.notifier).setReducedImpact(v), Icons.do_not_step, AppColors.success, d, tp, tm, el),
         const SizedBox(height: 32),
         _buildSaveButton(st, d),
-      ]))),
+      ])),
     );
   }
 

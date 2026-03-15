@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../data/models/flexibility_assessment.dart';
 import '../../data/providers/flexibility_provider.dart';
-import '../../widgets/glass_back_button.dart';
+import '../../widgets/pill_app_bar.dart';
 import '../../widgets/glass_sheet.dart';
 
 /// Screen showing flexibility assessment history
@@ -50,10 +50,8 @@ class _FlexibilityHistoryScreenState extends ConsumerState<FlexibilityHistoryScr
         : state.assessmentHistory;
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Assessment History'),
-        automaticallyImplyLeading: false,
-        leading: const GlassBackButton(),
+      appBar: PillAppBar(
+        title: 'Assessment History',
       ),
       body: Column(
         children: [

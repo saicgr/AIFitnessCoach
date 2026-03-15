@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
-import '../../../widgets/glass_back_button.dart';
+import '../../../widgets/pill_app_bar.dart';
 import '../sections/sections.dart';
 
 class EquipmentPage extends ConsumerWidget {
@@ -17,16 +17,7 @@ class EquipmentPage extends ConsumerWidget {
 
     return Scaffold(
       backgroundColor: backgroundColor,
-      appBar: AppBar(
-        backgroundColor: backgroundColor,
-        elevation: 0,
-        leading: const GlassBackButton(),
-        title: Text(
-          'Equipment',
-          style: TextStyle(fontWeight: FontWeight.bold, color: textPrimary),
-        ),
-        centerTitle: true,
-      ),
+      appBar: const PillAppBar(title: 'Equipment'),
       body: const SafeArea(
         child: SingleChildScrollView(
           padding: EdgeInsets.all(16),

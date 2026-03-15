@@ -3,8 +3,8 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
-import '../../../widgets/glass_back_button.dart';
 import '../../../widgets/main_shell.dart';
+import '../../../widgets/pill_app_bar.dart';
 import '../sections/sections.dart';
 
 /// Sub-page for AI Coach settings: voice, edge handle, privacy.
@@ -24,22 +24,8 @@ class AiCoachPage extends ConsumerWidget {
 
     return Scaffold(
       backgroundColor: backgroundColor,
-      appBar: AppBar(
-        backgroundColor: backgroundColor,
-        elevation: 0,
-        automaticallyImplyLeading: false,
-        leading: const GlassBackButton(),
-        title: Text(
-          'AI Coach',
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            color: textPrimary,
-          ),
-        ),
-        centerTitle: true,
-      ),
-      body: SafeArea(
-        child: SingleChildScrollView(
+      appBar: const PillAppBar(title: 'AI Coach'),
+      body: SingleChildScrollView(
           padding: const EdgeInsets.all(16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -76,7 +62,6 @@ class AiCoachPage extends ConsumerWidget {
             ],
           ),
         ),
-      ),
     );
   }
 
@@ -153,7 +138,7 @@ class AiCoachPage extends ConsumerWidget {
       child: Row(
         children: [
           Icon(
-            Icons.swipe_left,
+            Icons.chat_bubble_outline,
             color: AppColors.info,
             size: 20,
           ),
@@ -163,7 +148,7 @@ class AiCoachPage extends ConsumerWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Edge AI Coach Handle',
+                  'Floating AI Chat Bubble',
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w500,
@@ -171,7 +156,7 @@ class AiCoachPage extends ConsumerWidget {
                   ),
                 ),
                 Text(
-                  'Swipe from edge to open AI Coach',
+                  'Show floating bubble for quick AI Coach access',
                   style: TextStyle(
                     fontSize: 11,
                     color: textMuted,

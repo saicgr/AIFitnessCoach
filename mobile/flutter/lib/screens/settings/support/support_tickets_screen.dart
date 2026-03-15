@@ -4,7 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../data/providers/support_provider.dart';
 import '../../../models/support_ticket.dart';
-import '../../../widgets/glass_back_button.dart';
+import '../../../widgets/pill_app_bar.dart';
 import '../../../widgets/segmented_tab_bar.dart';
 
 /// Screen showing all user's support tickets
@@ -47,19 +47,8 @@ class _SupportTicketsScreenState extends ConsumerState<SupportTicketsScreen>
 
     return Scaffold(
       backgroundColor: backgroundColor,
-      appBar: AppBar(
-        backgroundColor: backgroundColor,
-        elevation: 0,
-        automaticallyImplyLeading: false,
-        leading: const GlassBackButton(),
-        title: Text(
-          'Support Tickets',
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            color: textPrimary,
-          ),
-        ),
-        centerTitle: true,
+      appBar: const PillAppBar(
+        title: 'Support Tickets',
       ),
       body: Column(
         children: [

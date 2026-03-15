@@ -5,7 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/providers/exercise_queue_provider.dart';
 import '../../../data/repositories/exercise_preferences_repository.dart';
-import '../../../widgets/glass_back_button.dart';
+import '../../../widgets/pill_app_bar.dart';
 import 'widgets/exercise_picker_sheet.dart';
 
 /// Screen for managing the exercise queue.
@@ -80,25 +80,10 @@ class ExerciseQueueScreen extends ConsumerWidget {
 
     return Scaffold(
       backgroundColor: backgroundColor,
-      appBar: AppBar(
-        backgroundColor: backgroundColor,
-        elevation: 0,
-        automaticallyImplyLeading: false,
-        leading: const GlassBackButton(),
-        title: Text(
-          'Exercise Queue',
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            color: textPrimary,
-          ),
-        ),
-        centerTitle: true,
+      appBar: PillAppBar(
+        title: 'Exercise Queue',
         actions: [
-          IconButton(
-            icon: Icon(Icons.add, color: AppColors.cyan),
-            onPressed: () => _showAddExercisePicker(context, ref),
-            tooltip: 'Add to queue',
-          ),
+          PillAppBarAction(icon: Icons.add, onTap: () => _showAddExercisePicker(context, ref)),
         ],
       ),
       body: body,

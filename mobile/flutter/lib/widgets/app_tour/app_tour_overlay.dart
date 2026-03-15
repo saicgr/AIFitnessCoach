@@ -14,8 +14,28 @@ class AppTourOverlay extends ConsumerStatefulWidget {
   ConsumerState<AppTourOverlay> createState() => _AppTourOverlayState();
 }
 
-class _AppTourOverlayState extends ConsumerState<AppTourOverlay> {
+class _AppTourOverlayState extends ConsumerState<AppTourOverlay>
+    with SingleTickerProviderStateMixin {
   Rect _previousRect = Rect.zero;
+  int _retryCount = 0;
+  String? _lastStepId;
+  static const int _maxRetries = 10;
+  late final AnimationController _gradientController;
+
+  @override
+  void initState() {
+    super.initState();
+    _gradientController = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 2),
+    )..repeat();
+  }
+
+  @override
+  void dispose() {
+    _gradientController.dispose();
+    super.dispose();
+  }
 
   /// Get the bounding rect of a widget in global screen coordinates
   Rect _getTargetRect(GlobalKey key) {
@@ -72,6 +92,12 @@ class _AppTourOverlayState extends ConsumerState<AppTourOverlay> {
     final accentColor = ref.read(accentColorProvider).getColor(isDark);
     final controller = ref.read(appTourControllerProvider.notifier);
 
+    // Reset retry counter whenever the step changes
+    if (step.id != _lastStepId) {
+      _lastStepId = step.id;
+      _retryCount = 0;
+    }
+
     final targetRect = _getTargetRect(step.targetKey);
     final isTargetFound = targetRect != Rect.zero;
 
@@ -79,10 +105,62 @@ class _AppTourOverlayState extends ConsumerState<AppTourOverlay> {
     final beginRect = _previousRect == Rect.zero ? targetRect : _previousRect;
     final endRect = isTargetFound ? targetRect : Rect.zero;
 
-    // Schedule rect update after frame so animation plays correctly
+    // Continuously re-measure the target rect while the tour is visible.
+    // Async data loads (e.g. profile) can shift widgets after the initial
+    // measurement, so we must keep tracking until the tour step changes.
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted && isTargetFound) {
-        _previousRect = targetRect;
+      if (!mounted) return;
+      final currentTour = ref.read(appTourControllerProvider);
+      if (!currentTour.isVisible) return;
+
+      final freshRect = _getTargetRect(step.targetKey);
+      final freshFound = freshRect != Rect.zero;
+
+      if (freshFound) {
+        // Check if target is off-screen (above or below visible area)
+        final screenH = MediaQuery.of(context).size.height;
+        final isOffScreen = freshRect.bottom < 0 || freshRect.top > screenH;
+        if (isOffScreen) {
+          // Scroll the target into view
+          final targetContext = step.targetKey.currentContext;
+          if (targetContext != null) {
+            Scrollable.ensureVisible(
+              targetContext,
+              duration: const Duration(milliseconds: 400),
+              curve: Curves.easeInOut,
+              alignment: 0.3, // Position target at ~30% from top
+            ).then((_) {
+              if (mounted) setState(() {});
+            });
+          }
+          return;
+        }
+        if (freshRect != _previousRect) {
+          _previousRect = freshRect;
+          setState(() {}); // target moved, update spotlight
+        } else {
+          // Even if unchanged, schedule another check for future shifts
+          Future.delayed(const Duration(milliseconds: 500), () {
+            if (mounted) setState(() {});
+          });
+        }
+        _retryCount = 0;
+      } else {
+        // Target not found — try scrolling it into view
+        final targetContext = step.targetKey.currentContext;
+        if (targetContext != null) {
+          Scrollable.ensureVisible(
+            targetContext,
+            duration: const Duration(milliseconds: 400),
+            curve: Curves.easeInOut,
+            alignment: 0.3,
+          ).then((_) {
+            if (mounted) setState(() {});
+          });
+        } else if (_retryCount < _maxRetries) {
+          _retryCount++;
+          setState(() {}); // re-check now the frame has settled
+        }
       }
     });
 
@@ -117,10 +195,28 @@ class _AppTourOverlayState extends ConsumerState<AppTourOverlay> {
                 curve: Curves.easeInOutCubic,
                 builder: (_, rect, __) {
                   final paintRect = rect ?? endRect;
+                  final hasGradient = step.highlightColors != null;
+                  final radius = step.cornerRadius ?? 12.0;
+                  if (hasGradient) {
+                    return AnimatedBuilder(
+                      animation: _gradientController,
+                      builder: (_, __) => CustomPaint(
+                        painter: AppTourSpotlightPainter(
+                          spotlightRect: paintRect,
+                          ringColor: accentColor,
+                          cornerRadius: radius,
+                          spotlightPadding: spotlightPadding,
+                          ringGradientColors: step.highlightColors,
+                          gradientRotation: _gradientController.value,
+                        ),
+                      ),
+                    );
+                  }
                   return CustomPaint(
                     painter: AppTourSpotlightPainter(
                       spotlightRect: paintRect,
                       ringColor: accentColor,
+                      cornerRadius: radius,
                       spotlightPadding: spotlightPadding,
                     ),
                   );

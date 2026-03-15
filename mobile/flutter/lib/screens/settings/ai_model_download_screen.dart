@@ -6,7 +6,7 @@ import '../../data/providers/device_capability_provider.dart';
 import '../../data/providers/model_download_provider.dart';
 import '../../services/device_capability_service.dart';
 import '../../services/model_download_service.dart';
-import '../../widgets/glass_back_button.dart';
+import '../../widgets/pill_app_bar.dart';
 
 /// Dedicated screen for managing on-device AI model downloads.
 ///
@@ -91,12 +91,8 @@ class _AiModelDownloadScreenState
     return Scaffold(
       backgroundColor:
           isDark ? AppColors.background : AppColorsLight.background,
-      appBar: AppBar(
-        title: const Text('On-Device AI Model'),
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        automaticallyImplyLeading: false,
-        leading: const GlassBackButton(),
+      appBar: const PillAppBar(
+        title: 'On-Device AI Model',
       ),
       body: ListView(
         padding: const EdgeInsets.all(16),

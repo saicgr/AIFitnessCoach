@@ -4,10 +4,16 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/models/quick_action.dart';
 
 const _quickActionOrderKey = 'quick_action_order';
+const _quickActionExpandedKey = 'quick_action_expanded';
 
 final quickActionOrderProvider =
     StateNotifierProvider<QuickActionOrderNotifier, List<String>>((ref) {
   return QuickActionOrderNotifier();
+});
+
+final quickActionsExpandedProvider =
+    StateNotifierProvider<QuickActionsExpandedNotifier, bool>((ref) {
+  return QuickActionsExpandedNotifier();
 });
 
 class QuickActionOrderNotifier extends StateNotifier<List<String>> {
@@ -48,6 +54,23 @@ class QuickActionOrderNotifier extends StateNotifier<List<String>> {
   }
 }
 
+class QuickActionsExpandedNotifier extends StateNotifier<bool> {
+  QuickActionsExpandedNotifier() : super(false) {
+    _load();
+  }
+
+  Future<void> _load() async {
+    final prefs = await SharedPreferences.getInstance();
+    state = prefs.getBool(_quickActionExpandedKey) ?? false;
+  }
+
+  Future<void> toggle() async {
+    state = !state;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_quickActionExpandedKey, state);
+  }
+}
+
 final pinnedQuickActionsProvider = Provider<List<QuickAction>>((ref) {
   final order = ref.watch(quickActionOrderProvider);
   return order
@@ -59,6 +82,15 @@ final pinnedQuickActionsProvider = Provider<List<QuickAction>>((ref) {
 final orderedQuickActionsProvider = Provider<List<QuickAction>>((ref) {
   final order = ref.watch(quickActionOrderProvider);
   return order
+      .map((id) => quickActionRegistry[id]!)
+      .toList();
+});
+
+final secondRowActionsProvider = Provider<List<QuickAction>>((ref) {
+  final order = ref.watch(quickActionOrderProvider);
+  return order
+      .skip(4)
+      .take(5)
       .map((id) => quickActionRegistry[id]!)
       .toList();
 });

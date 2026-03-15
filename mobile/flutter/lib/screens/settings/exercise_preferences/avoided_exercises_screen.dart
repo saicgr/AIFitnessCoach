@@ -8,8 +8,8 @@ import '../../../data/repositories/auth_repository.dart';
 import '../../../data/repositories/exercise_preferences_repository.dart';
 import '../../../data/repositories/workout_repository.dart';
 import '../../../data/services/haptic_service.dart';
-import '../../../widgets/glass_back_button.dart';
 import '../../../widgets/glass_sheet.dart';
+import '../../../widgets/pill_app_bar.dart';
 import 'widgets/exercise_picker_sheet.dart';
 
 /// Provider for avoided exercises list
@@ -155,23 +155,10 @@ class _AvoidedExercisesScreenState extends ConsumerState<AvoidedExercisesScreen>
 
     return Scaffold(
       backgroundColor: backgroundColor,
-      appBar: AppBar(
-        backgroundColor: backgroundColor,
-        elevation: 0,
-        automaticallyImplyLeading: false,
-        leading: const GlassBackButton(),
-        title: Text(
-          'Exercises to Avoid',
-          style: TextStyle(
-            color: textColor,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
+      appBar: PillAppBar(
+        title: 'Exercises to Avoid',
         actions: [
-          IconButton(
-            icon: Icon(Icons.add, color: AppColors.cyan),
-            onPressed: () => _showAddExerciseSheet(context, userId),
-          ),
+          PillAppBarAction(icon: Icons.add, onTap: () => _showAddExerciseSheet(context, userId)),
         ],
       ),
       body: body,

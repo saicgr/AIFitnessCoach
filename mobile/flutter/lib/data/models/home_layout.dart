@@ -792,7 +792,7 @@ const List<TileType> defaultVisibleTiles = [
   TileType.quickActions, // Quick actions row (compact: Workout, Food, Water, Chat, +)
   TileType.todayStats, // Goals, calories, water pills
   TileType.habits, // Daily habits and goals tracker
-  TileType.achievements, // Recent badges and next milestone
+  TileType.weeklyGoals, // Weekly workout goals progress
 ];
 
 /// Hidden tiles available in the layout editor
@@ -804,7 +804,7 @@ const List<TileType> defaultHiddenTiles = [
   TileType.upcomingWorkouts,
   TileType.aiCoachTip,
   TileType.personalRecords,
-  TileType.weeklyGoals,
+  TileType.achievements,
   TileType.weekChanges,
   TileType.quickStart,
   TileType.moodPicker,

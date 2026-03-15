@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../core/constants/app_colors.dart';
-import '../../widgets/glass_back_button.dart';
+import '../../widgets/pill_app_bar.dart';
 
 /// Screen displaying the medical disclaimer for AI-generated fitness content.
 class MedicalDisclaimerScreen extends StatelessWidget {
@@ -19,19 +19,8 @@ class MedicalDisclaimerScreen extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: backgroundColor,
-      appBar: AppBar(
-        backgroundColor: backgroundColor,
-        elevation: 0,
-        automaticallyImplyLeading: false,
-        leading: const GlassBackButton(),
-        title: Text(
-          'Medical Disclaimer',
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            color: textPrimary,
-          ),
-        ),
-        centerTitle: true,
+      appBar: const PillAppBar(
+        title: 'Medical Disclaimer',
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),

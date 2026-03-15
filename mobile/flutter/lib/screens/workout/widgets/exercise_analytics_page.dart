@@ -13,7 +13,7 @@ import 'package:flutter/services.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../data/models/exercise.dart';
-import '../../../widgets/glass_back_button.dart';
+import '../../../widgets/pill_app_bar.dart';
 import '../../../widgets/segmented_tab_bar.dart';
 
 /// Exercise Analytics Page - full page with My Analytics and Friends tabs
@@ -60,34 +60,7 @@ class _ExerciseAnalyticsPageState extends State<ExerciseAnalyticsPage>
 
     return Scaffold(
       backgroundColor: isDark ? AppColors.pureBlack : Colors.grey.shade50,
-      appBar: AppBar(
-        backgroundColor: isDark ? AppColors.surface : Colors.white,
-        elevation: 0,
-        automaticallyImplyLeading: false,
-        leading: const GlassBackButton(),
-        title: Column(
-          children: [
-            Text(
-              widget.exercise.name,
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-                color: textPrimary,
-              ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-            Text(
-              'Analytics',
-              style: TextStyle(
-                fontSize: 12,
-                color: textMuted,
-              ),
-            ),
-          ],
-        ),
-        centerTitle: true,
-      ),
+      appBar: PillAppBar(title: '${widget.exercise.name} Analytics'),
       body: Column(
         children: [
           SegmentedTabBar(

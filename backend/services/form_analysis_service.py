@@ -14,6 +14,7 @@ Supports:
 - Single video/image form analysis
 - Multi-video form comparison (e.g., comparing sets or sessions)
 """
+from __future__ import annotations
 
 import asyncio
 import json
@@ -357,6 +358,81 @@ class FormAnalysisService:
         )
         self._bucket = settings.s3_bucket_name
 
+    async def _analyze_from_frames(
+        self,
+        frames_base64: List[str],
+        exercise_name: Optional[str] = None,
+        user_context: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        """Analyze form using pre-extracted base64 JPEG frames (no S3 download needed)."""
+        import base64
+
+        logger.info(f"Analyzing form from {len(frames_base64)} pre-extracted frames")
+        client = get_genai_client()
+        settings = get_settings()
+
+        parts = []
+        for frame_b64 in frames_base64:
+            try:
+                jpeg_bytes = base64.b64decode(frame_b64)
+                parts.append(genai_types.Part.from_bytes(data=jpeg_bytes, mime_type="image/jpeg"))
+            except Exception as e:
+                logger.warning(f"Skipping invalid frame (base64 decode error): {e}")
+
+        if not parts:
+            raise ValueError("No valid frames could be decoded from video_frames")
+
+        cache_name = _get_form_cache()
+        if cache_name:
+            prompt = _build_form_analysis_prompt(exercise_name, user_context, using_keyframes=True)
+        else:
+            prompt = _build_form_analysis_prompt_full(exercise_name, user_context, using_keyframes=True)
+        parts.append(genai_types.Part.from_text(text=prompt))
+
+        gen_config = genai_types.GenerateContentConfig(
+            temperature=0.1,
+            response_mime_type="application/json",
+            response_schema=FORM_ANALYSIS_SCHEMA,
+        )
+        if cache_name:
+            gen_config.cached_content = cache_name
+
+        response = await asyncio.to_thread(
+            client.models.generate_content,
+            model=settings.gemini_model,
+            contents=[genai_types.Content(parts=parts)],
+            config=gen_config,
+        )
+
+        response_text = None
+        try:
+            response_text = response.text
+        except (ValueError, AttributeError) as e:
+            logger.debug(f"Failed to get response text: {e}")
+
+        if not response_text:
+            logger.warning("Gemini blocked pre-extracted frame analysis response")
+            return {
+                "content_type": "not_exercise",
+                "not_exercise_reason": "I wasn't able to analyze this video.",
+                "exercise_identified": "N/A",
+                "rep_count": 0,
+                "form_score": 0,
+                "overall_assessment": "",
+                "issues": [],
+                "positives": [],
+                "breathing_analysis": {"pattern_observed": "N/A", "is_correct": True, "recommendation": ""},
+                "tempo_analysis": {"observed_tempo": "N/A", "is_appropriate": True, "recommendation": ""},
+                "recommendations": [],
+                "video_quality": {"is_analyzable": False, "confidence": "low", "issues": [], "rerecord_suggestion": ""},
+            }
+
+        logger.info(f"Pre-extracted frame analysis response received ({len(response_text)} chars)")
+        result = json.loads(response_text)
+        if "rep_count" not in result:
+            result["rep_count"] = 0
+        return result
+
     async def _download_s3_to_temp(self, s3_key: str, mime_type: str, prefix: str = "form_") -> str:
         """Download an S3 object to a temp file. Returns the temp file path."""
         ext = mime_type.split("/")[-1].replace("quicktime", "mov")
@@ -389,15 +465,113 @@ class FormAnalysisService:
         media_type: str,
         exercise_name: Optional[str] = None,
         user_context: Optional[str] = None,
+        video_frames: Optional[List[str]] = None,
+        gemini_file_name: Optional[str] = None,
     ) -> Dict[str, Any]:
         """
-        Analyze exercise form from an S3-stored video or image.
+        Analyze exercise form.
 
-        Uses keyframe extraction for long videos (>30s) to skip Gemini Files API.
-        Falls back to Gemini Files API for short videos and images.
+        Priority:
+        1. gemini_file_name — file already uploaded to Gemini, skip S3 download entirely
+        2. video_frames — pre-extracted JPEG keyframes (legacy)
+        3. S3 download → Gemini Files API
         """
         async with _semaphore:
+            if gemini_file_name:
+                return await self._analyze_from_gemini_file(gemini_file_name, mime_type, media_type, exercise_name, user_context)
+            if video_frames:
+                return await self._analyze_from_frames(video_frames, exercise_name, user_context)
             return await self._do_analyze(s3_key, mime_type, media_type, exercise_name, user_context)
+
+    async def _analyze_from_gemini_file(
+        self,
+        gemini_file_name: str,
+        mime_type: str,
+        media_type: str,
+        exercise_name: Optional[str] = None,
+        user_context: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        """Use an already-uploaded Gemini file for analysis. Skips S3 download entirely."""
+        client = get_genai_client()
+        settings = get_settings()
+
+        logger.info(f"Using pre-uploaded Gemini file: {gemini_file_name}")
+
+        # Get file and wait for ACTIVE state if still processing
+        gemini_file = await asyncio.to_thread(client.files.get, name=gemini_file_name)
+        logger.info(f"Gemini file state: {gemini_file.state}")
+
+        if media_type == "video":
+            start_poll = time.time()
+            timeout = 120
+            while gemini_file.state.name == "PROCESSING":
+                elapsed = time.time() - start_poll
+                if elapsed > timeout:
+                    raise TimeoutError(f"Gemini file processing timed out after {timeout}s")
+                logger.debug(f"Gemini file still processing ({elapsed:.0f}s)...")
+                await asyncio.sleep(2)
+                gemini_file = await asyncio.to_thread(client.files.get, name=gemini_file_name)
+
+            if gemini_file.state.name == "FAILED":
+                raise RuntimeError(f"Gemini file processing failed: {gemini_file.state}")
+
+        logger.info(f"Gemini file ready: {gemini_file_name}")
+
+        cache_name = _get_form_cache()
+        prompt = (
+            _build_form_analysis_prompt(exercise_name, user_context)
+            if cache_name
+            else _build_form_analysis_prompt_full(exercise_name, user_context)
+        )
+
+        parts = [
+            genai_types.Part.from_uri(file_uri=gemini_file.uri, mime_type=mime_type),
+            genai_types.Part.from_text(text=prompt),
+        ]
+
+        gen_config = genai_types.GenerateContentConfig(
+            temperature=0.1,
+            response_mime_type="application/json",
+            response_schema=FORM_ANALYSIS_SCHEMA,
+        )
+        if cache_name:
+            gen_config.cached_content = cache_name
+
+        response = await asyncio.to_thread(
+            client.models.generate_content,
+            model=settings.gemini_model,
+            contents=[genai_types.Content(parts=parts)],
+            config=gen_config,
+        )
+
+        response_text = None
+        try:
+            response_text = response.text
+        except (ValueError, AttributeError) as e:
+            logger.debug(f"Failed to get response text: {e}")
+
+        if not response_text:
+            logger.warning(f"Gemini blocked response for file {gemini_file_name}")
+            return {
+                "content_type": "not_exercise",
+                "not_exercise_reason": "I wasn't able to analyze this video.",
+                "exercise_identified": "N/A",
+                "rep_count": 0,
+                "form_score": 0,
+                "overall_assessment": "",
+                "issues": [],
+                "positives": [],
+                "breathing_analysis": {"pattern_observed": "N/A", "is_correct": True, "recommendation": ""},
+                "tempo_analysis": {"observed_tempo": "N/A", "is_appropriate": True, "recommendation": ""},
+                "recommendations": [],
+                "video_quality": {"is_analyzable": False, "confidence": "low", "issues": [], "rerecord_suggestion": ""},
+            }
+
+        logger.info(f"Gemini file analysis complete ({len(response_text)} chars)")
+        result = json.loads(response_text)
+        if "rep_count" not in result:
+            result["rep_count"] = 0
+        return result
 
     async def _do_analyze(
         self,
@@ -407,7 +581,7 @@ class FormAnalysisService:
         exercise_name: Optional[str],
         user_context: Optional[str],
     ) -> Dict[str, Any]:
-        """Internal analysis implementation with keyframe + cache support."""
+        """Download from S3 then send to Gemini via the Files API."""
         tmp_path = None
         gemini_file = None
 
@@ -418,125 +592,59 @@ class FormAnalysisService:
             client = get_genai_client()
             settings = get_settings()
 
-            # Step 2: Decide keyframe vs Gemini Files API path
-            use_keyframes = False
+            cache_name = _get_form_cache()
+
+            # Files API path: upload to Gemini, wait for ACTIVE, then analyze
+            gemini_file = await asyncio.to_thread(
+                client.files.upload,
+                file=tmp_path,
+                config=genai_types.UploadFileConfig(
+                    mime_type=mime_type,
+                    display_name=f"form_analysis_{uuid.uuid4().hex[:8]}",
+                ),
+            )
+            logger.info(f"Gemini file created: {gemini_file.name}, state={gemini_file.state}")
+
             if media_type == "video":
-                from services.keyframe_extractor import should_use_keyframes, get_video_duration, extract_key_frames
+                start_poll = time.time()
+                timeout = 120
+                while gemini_file.state.name == "PROCESSING":
+                    elapsed = time.time() - start_poll
+                    if elapsed > timeout:
+                        raise TimeoutError(f"Gemini file processing timed out after {timeout}s")
+                    logger.debug(f"Gemini file still processing ({elapsed:.0f}s)...")
+                    await asyncio.sleep(2)
+                    gemini_file = await asyncio.to_thread(client.files.get, name=gemini_file.name)
 
-                try:
-                    duration = await get_video_duration(tmp_path)
-                    use_keyframes = should_use_keyframes(
-                        media_type=media_type,
-                        video_duration_hint=duration,
-                    )
-                except Exception as e:
-                    logger.warning(f"Could not determine video duration, falling back to Files API: {e}")
+                if gemini_file.state.name == "FAILED":
+                    raise RuntimeError(f"Gemini file processing failed: {gemini_file.state}")
 
-            if use_keyframes:
-                # Keyframe path: extract frames, send as image parts
-                logger.info(f"Using keyframe extraction for {s3_key} (duration={duration:.1f}s)")
-                frames = await extract_key_frames(tmp_path, num_frames=settings.keyframe_default_count)
+            logger.info(f"Gemini file ready: state={gemini_file.state.name}")
+            prompt = (
+                _build_form_analysis_prompt(exercise_name, user_context)
+                if cache_name
+                else _build_form_analysis_prompt_full(exercise_name, user_context)
+            )
+            parts = [
+                genai_types.Part.from_uri(file_uri=gemini_file.uri, mime_type=mime_type),
+                genai_types.Part.from_text(text=prompt),
+            ]
 
-                if not frames:
-                    logger.warning("No keyframes extracted, falling back to Gemini Files API")
-                    use_keyframes = False
+            # Send to Gemini
+            gen_config = genai_types.GenerateContentConfig(
+                temperature=0.1,
+                response_mime_type="application/json",
+                response_schema=FORM_ANALYSIS_SCHEMA,
+            )
+            if cache_name:
+                gen_config.cached_content = cache_name
 
-            if use_keyframes:
-                # Build parts from keyframes
-                parts = []
-                for i, (jpeg_bytes, frame_mime) in enumerate(frames):
-                    parts.append(genai_types.Part.from_bytes(data=jpeg_bytes, mime_type=frame_mime))
-
-                # Build prompt (dynamic per-request part only if cache available)
-                cache_name = _get_form_cache()
-                if cache_name:
-                    prompt = _build_form_analysis_prompt(exercise_name, user_context, using_keyframes=True)
-                else:
-                    prompt = _build_form_analysis_prompt_full(exercise_name, user_context, using_keyframes=True)
-
-                parts.append(genai_types.Part.from_text(text=prompt))
-
-                gen_config = genai_types.GenerateContentConfig(
-                    temperature=0.1,
-                    response_mime_type="application/json",
-                    response_schema=FORM_ANALYSIS_SCHEMA,
-                )
-                if cache_name:
-                    gen_config.cached_content = cache_name
-
-                response = await asyncio.to_thread(
-                    client.models.generate_content,
-                    model=settings.gemini_model,
-                    contents=[genai_types.Content(parts=parts)],
-                    config=gen_config,
-                )
-            else:
-                # Gemini Files API path (original flow)
-                logger.info(f"Uploading to Gemini Files API (mime_type={mime_type})")
-
-                gemini_file = await asyncio.to_thread(
-                    client.files.upload,
-                    file=tmp_path,
-                    config=genai_types.UploadFileConfig(
-                        mime_type=mime_type,
-                        display_name=f"form_analysis_{uuid.uuid4().hex[:8]}",
-                    ),
-                )
-
-                logger.info(f"Gemini file created: {gemini_file.name}, state={gemini_file.state}")
-
-                # Poll until ACTIVE (videos need processing)
-                if media_type == "video":
-                    start_poll = time.time()
-                    timeout = 120  # 2 minutes max
-                    while gemini_file.state.name == "PROCESSING":
-                        elapsed = time.time() - start_poll
-                        if elapsed > timeout:
-                            raise TimeoutError(f"Gemini file processing timed out after {timeout}s")
-
-                        logger.debug(f"Gemini file still processing ({elapsed:.0f}s elapsed)...")
-                        await asyncio.sleep(2)
-                        gemini_file = await asyncio.to_thread(
-                            client.files.get,
-                            name=gemini_file.name,
-                        )
-
-                    if gemini_file.state.name == "FAILED":
-                        raise RuntimeError(f"Gemini file processing failed: {gemini_file.state}")
-
-                logger.info(f"Gemini file ready: state={gemini_file.state.name}")
-
-                # Build prompt
-                cache_name = _get_form_cache()
-                if cache_name:
-                    prompt = _build_form_analysis_prompt(exercise_name, user_context)
-                else:
-                    prompt = _build_form_analysis_prompt_full(exercise_name, user_context)
-
-                gen_config = genai_types.GenerateContentConfig(
-                    temperature=0.1,
-                    response_mime_type="application/json",
-                    response_schema=FORM_ANALYSIS_SCHEMA,
-                )
-                if cache_name:
-                    gen_config.cached_content = cache_name
-
-                response = await asyncio.to_thread(
-                    client.models.generate_content,
-                    model=settings.gemini_model,
-                    contents=[
-                        genai_types.Content(
-                            parts=[
-                                genai_types.Part.from_uri(
-                                    file_uri=gemini_file.uri,
-                                    mime_type=mime_type,
-                                ),
-                                genai_types.Part.from_text(text=prompt),
-                            ]
-                        )
-                    ],
-                    config=gen_config,
-                )
+            response = await asyncio.to_thread(
+                client.models.generate_content,
+                model=settings.gemini_model,
+                contents=[genai_types.Content(parts=parts)],
+                config=gen_config,
+            )
 
             # Parse the response
             response_text = None

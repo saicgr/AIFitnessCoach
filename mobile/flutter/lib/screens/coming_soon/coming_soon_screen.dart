@@ -4,7 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
 import '../../data/providers/feature_provider.dart';
 import '../../models/feature_request.dart';
-import '../../widgets/glass_back_button.dart';
+import '../../widgets/pill_app_bar.dart';
 import '../../widgets/glass_sheet.dart';
 import '../../widgets/segmented_tab_bar.dart';
 import '../features/widgets/suggest_feature_sheet.dart';
@@ -40,20 +40,7 @@ class _ComingSoonScreenState extends ConsumerState<ComingSoonScreen>
 
     return Scaffold(
       backgroundColor: backgroundColor,
-      appBar: AppBar(
-        backgroundColor: backgroundColor,
-        elevation: 0,
-        automaticallyImplyLeading: false,
-        leading: const GlassBackButton(),
-        title: Text(
-          'Coming Soon',
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            color: textPrimary,
-          ),
-        ),
-        centerTitle: true,
-      ),
+      appBar: const PillAppBar(title: 'Coming Soon'),
       body: Column(
         children: [
           SegmentedTabBar(

@@ -5,7 +5,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/providers/subscription_provider.dart';
 import '../../../data/repositories/subscription_repository.dart';
 import '../../../data/services/api_client.dart';
-import '../../../widgets/glass_back_button.dart';
+import '../../../widgets/pill_app_bar.dart';
 
 /// Request Refund Screen
 /// Allows users to request a refund with reason selection and optional comments
@@ -135,18 +135,8 @@ class _RequestRefundScreenState extends ConsumerState<RequestRefundScreen> {
 
     return Scaffold(
       backgroundColor: backgroundColor,
-      appBar: AppBar(
-        backgroundColor: backgroundColor,
-        elevation: 0,
-        title: Text(
-          'Request Refund',
-          style: TextStyle(
-            color: textPrimary,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-        automaticallyImplyLeading: false,
-        leading: const GlassBackButton(),
+      appBar: const PillAppBar(
+        title: 'Request Refund',
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),

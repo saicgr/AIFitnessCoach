@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants/app_colors.dart';
 import '../../data/providers/diabetes_provider.dart';
 import '../../data/services/haptic_service.dart';
-import '../../widgets/glass_back_button.dart';
+import '../../widgets/pill_app_bar.dart';
 import '../../widgets/glass_sheet.dart';
 
 // ============================================
@@ -567,38 +567,14 @@ class _DiabetesDashboardScreenState
 
     return Scaffold(
       backgroundColor: backgroundColor,
-      appBar: AppBar(
-        backgroundColor: backgroundColor,
-        automaticallyImplyLeading: false,
-        leading: const GlassBackButton(),
-        title: Text(
-          'Diabetes',
-          style: TextStyle(
-            color: textPrimary,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
+      appBar: PillAppBar(
+        title: 'Diabetes',
         actions: [
-          if (diabetesState.isSyncing)
-            Padding(
-              padding: const EdgeInsets.only(right: 16),
-              child: SizedBox(
-                width: 20,
-                height: 20,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  color: AppColors.cyan,
-                ),
-              ),
-            )
-          else
-            IconButton(
-              icon: Icon(Icons.refresh, color: textMuted),
-              onPressed: () {
-                HapticService.light();
-                _loadData();
-              },
-            ),
+          if (!diabetesState.isSyncing)
+            PillAppBarAction(icon: Icons.refresh, onTap: () {
+              HapticService.light();
+              _loadData();
+            }),
         ],
       ),
       body: RefreshIndicator(

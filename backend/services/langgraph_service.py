@@ -585,6 +585,7 @@ class LangGraphCoachService:
             base_state["modification"] = extraction_data.get("modification")
             base_state["media_ref"] = request.media_ref.model_dump() if hasattr(request, "media_ref") and request.media_ref else None
             base_state["media_refs"] = media_refs_dicts
+            base_state["video_frames"] = getattr(request, "video_frames", None)
             base_state["beast_mode_config"] = beast_mode_config
             base_state["tool_calls"] = []
             base_state["tool_results"] = []
@@ -643,29 +644,18 @@ class LangGraphCoachService:
             # 1. Detect @mention
             mentioned_agent, cleaned_message = self._detect_agent_mention(request.message)
 
-            # 2. Extract intent
-            intent, extraction_data = await self._extract_intent(cleaned_message)
-            logger.info(f"Extracted intent: {intent.value}")
-
-            # 3. Get RAG context
-            rag_context, rag_used, similar_questions = await self._get_rag_context(
-                cleaned_message, request.user_id
-            )
-
-            # 4. Select agent - compute media signals
+            # 2. Compute media signals (sync — no I/O)
             has_image = request.image_base64 is not None
             has_video = False
             has_multi_images = False
             has_multi_videos = False
 
-            # Check singular media_ref
             if hasattr(request, "media_ref") and request.media_ref:
                 if request.media_ref.media_type == "video":
                     has_video = True
                 elif request.media_ref.media_type == "image":
                     has_image = True
 
-            # Check plural media_refs for multi-media signals
             if hasattr(request, "media_refs") and request.media_refs:
                 image_refs = [r for r in request.media_refs if r.media_type == "image"]
                 video_refs = [r for r in request.media_refs if r.media_type == "video"]
@@ -675,16 +665,34 @@ class LangGraphCoachService:
                 if len(video_refs) > 1:
                     has_multi_videos = True
                     has_video = True
-                # Single items in media_refs also count
                 if len(image_refs) == 1:
                     has_image = True
                 if len(video_refs) == 1:
                     has_video = True
 
-            # 4a. Classify media content for intelligent routing (only when media is present)
-            media_content_type = None
-            if has_image or has_video or has_multi_images or has_multi_videos:
-                media_content_type = await self._classify_media(request)
+            # Also treat inline video or pre-extracted frames as video media signals
+            if getattr(request, "video_frames", None):
+                has_video = True
+
+            has_media = has_image or has_video or has_multi_images or has_multi_videos
+
+            # 3. Run intent extraction and media classification in parallel.
+            #    RAG is skipped for media messages — the image/video IS the content;
+            #    past Q&A and training settings add latency with no benefit for vision tasks.
+            if has_media:
+                (intent, extraction_data), media_content_type = await asyncio.gather(
+                    self._extract_intent(cleaned_message),
+                    self._classify_media(request),
+                )
+                rag_context, rag_used, similar_questions = "", False, []
+            else:
+                (intent, extraction_data), (rag_context, rag_used, similar_questions) = \
+                    await asyncio.gather(
+                        self._extract_intent(cleaned_message),
+                        self._get_rag_context(cleaned_message, request.user_id),
+                    )
+                media_content_type = None
+            logger.info(f"Extracted intent: {intent.value}")
 
             selected_agent = self._select_agent(
                 mentioned_agent, intent, cleaned_message, has_image,

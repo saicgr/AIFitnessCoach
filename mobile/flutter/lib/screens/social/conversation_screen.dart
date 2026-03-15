@@ -11,7 +11,7 @@ import '../../data/providers/e2ee_provider.dart';
 import '../../data/providers/social_provider.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../../widgets/app_loading.dart';
-import '../../widgets/glass_back_button.dart';
+import '../../widgets/pill_app_bar.dart';
 import '../../widgets/main_shell.dart';
 import 'friend_profile_screen.dart';
 import 'group_settings_screen.dart';
@@ -218,63 +218,13 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen> {
 
     return Scaffold(
       backgroundColor: backgroundColor,
-      appBar: AppBar(
-        backgroundColor: backgroundColor,
-        surfaceTintColor: Colors.transparent,
-        elevation: 0,
-        automaticallyImplyLeading: false,
-        leading: const GlassBackButton(),
-        title: GestureDetector(
-          onTap: () {
-            HapticFeedback.lightImpact();
-            if (!widget.isGroup) {
-              Navigator.push(
-                context,
-                AppPageRoute(
-                  builder: (_) => FriendProfileScreen(
-                    targetUserId: widget.otherUserId,
-                  ),
-                ),
-              );
-            }
-          },
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              CircleAvatar(
-                radius: 16,
-                backgroundColor: widget.isGroup
-                    ? AppColors.purple.withValues(alpha: 0.2)
-                    : colors.accent.withValues(alpha: 0.2),
-                backgroundImage: displayAvatar != null
-                    ? NetworkImage(displayAvatar)
-                    : null,
-                child: displayAvatar == null
-                    ? Icon(
-                        widget.isGroup ? Icons.group_rounded : Icons.person,
-                        size: 18,
-                        color: widget.isGroup ? AppColors.purple : colors.accent,
-                      )
-                    : null,
-              ),
-              const SizedBox(width: 10),
-              Flexible(
-                child: Text(
-                  displayName,
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w600,
-                      ),
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-            ],
-          ),
-        ),
-        centerTitle: false,
+      appBar: PillAppBar(
+        title: displayName,
         actions: [
           if (widget.isGroup)
-            IconButton(
-              onPressed: () {
+            PillAppBarAction(
+              icon: Icons.settings_rounded,
+              onTap: () {
                 HapticFeedback.lightImpact();
                 Navigator.push(
                   context,
@@ -287,7 +237,6 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen> {
                   ),
                 );
               },
-              icon: const Icon(Icons.settings_rounded, size: 22),
             ),
         ],
       ),

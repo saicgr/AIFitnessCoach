@@ -10,7 +10,7 @@ import '../../data/services/api_client.dart';
 import '../../data/services/haptic_service.dart';
 import '../../data/providers/xp_provider.dart';
 import '../../widgets/app_dialog.dart';
-import '../../widgets/glass_back_button.dart';
+import '../../widgets/pill_app_bar.dart';
 import '../../widgets/glass_sheet.dart';
 import '../../widgets/segmented_tab_bar.dart';
 import 'recipe_builder_sheet.dart';
@@ -619,27 +619,9 @@ class _FoodLibraryScreenState extends ConsumerState<FoodLibraryScreen>
 
     return Scaffold(
       backgroundColor: backgroundColor,
-      appBar: AppBar(
-        backgroundColor: backgroundColor,
-        elevation: 0,
-        scrolledUnderElevation: 0,
-        automaticallyImplyLeading: false,
-        leading: const GlassBackButton(),
-        title: Text(
-          'Food Library',
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            color: textPrimary,
-          ),
-        ),
-        centerTitle: true,
-        actions: [
-          IconButton(
-            icon: Icon(Icons.sort_rounded, color: textMuted),
-            onPressed: _showSortOptions,
-            tooltip: 'Sort',
-          ),
-        ],
+      appBar: PillAppBar(
+        title: 'Food Library',
+        actions: [PillAppBarAction(icon: Icons.sort_rounded, onTap: _showSortOptions)],
       ),
       body: Column(
         children: [

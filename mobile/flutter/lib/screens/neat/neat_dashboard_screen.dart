@@ -4,7 +4,7 @@ import '../../core/constants/app_colors.dart';
 import '../../data/providers/neat_provider.dart' as real_neat;
 import '../../data/services/api_client.dart';
 import '../../data/services/haptic_service.dart';
-import '../../widgets/glass_back_button.dart';
+import '../../widgets/pill_app_bar.dart';
 
 // ============================================
 // NEAT Data Models
@@ -408,25 +408,13 @@ class _NeatDashboardScreenState extends ConsumerState<NeatDashboardScreen>
 
     return Scaffold(
       backgroundColor: backgroundColor,
-      appBar: AppBar(
-        backgroundColor: backgroundColor,
-        automaticallyImplyLeading: false,
-        leading: const GlassBackButton(),
-        title: Text(
-          'Daily Activity',
-          style: TextStyle(
-            color: textPrimary,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
+      appBar: PillAppBar(
+        title: 'Daily Activity',
         actions: [
-          IconButton(
-            icon: Icon(Icons.refresh, color: textMuted),
-            onPressed: () {
-              HapticService.light();
-              _loadData();
-            },
-          ),
+          PillAppBarAction(icon: Icons.refresh, onTap: () {
+            HapticService.light();
+            _loadData();
+          }),
         ],
       ),
       body: RefreshIndicator(

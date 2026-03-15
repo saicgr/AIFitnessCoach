@@ -5,7 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
 import '../../data/models/injury.dart';
 import '../../data/services/api_client.dart';
-import '../../widgets/glass_back_button.dart';
+import '../../widgets/pill_app_bar.dart';
 
 final injuriesListProvider = StateNotifierProvider<InjuriesListNotifier, InjuriesListState>((ref) => InjuriesListNotifier(ref));
 
@@ -78,8 +78,8 @@ class _InjuriesListScreenState extends ConsumerState<InjuriesListScreen> {
     final st = ref.watch(injuriesListProvider);
     return Scaffold(
       backgroundColor: bg,
-      appBar: AppBar(backgroundColor: bg, elevation: 0, automaticallyImplyLeading: false, leading: const GlassBackButton(), title: Text('Injury Management', style: TextStyle(fontWeight: FontWeight.bold, color: tp)), centerTitle: true, actions: [IconButton(icon: Icon(Icons.add_circle_outline, color: AppColors.error), onPressed: () => context.push('/injuries/report'))]),
-      body: SafeArea(child: Column(children: [_filters(d, st.filter), Expanded(child: _content(d, tp, tm, el, st))])),
+      appBar: PillAppBar(title: 'Injury Management', actions: [PillAppBarAction(icon: Icons.add_circle_outline, iconColor: AppColors.error, onTap: () => context.push('/injuries/report'))]),
+      body: Column(children: [_filters(d, st.filter), Expanded(child: _content(d, tp, tm, el, st))]),
       floatingActionButton: FloatingActionButton.extended(onPressed: () => context.push('/injuries/report'), backgroundColor: AppColors.error, icon: const Icon(Icons.add), label: const Text('Report Injury')),
     );
   }

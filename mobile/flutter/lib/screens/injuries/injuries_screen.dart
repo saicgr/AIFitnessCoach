@@ -5,7 +5,7 @@ import '../../core/constants/app_colors.dart';
 import '../../widgets/app_loading.dart';
 import '../../widgets/app_snackbar.dart';
 import '../../data/models/injury.dart';
-import '../../widgets/glass_back_button.dart';
+import '../../widgets/pill_app_bar.dart';
 import '../../widgets/segmented_tab_bar.dart';
 import 'widgets/injury_card.dart';
 
@@ -188,24 +188,10 @@ class _InjuriesScreenState extends ConsumerState<InjuriesScreen>
 
     return Scaffold(
       backgroundColor: backgroundColor,
-      appBar: AppBar(
-        backgroundColor: backgroundColor,
-        elevation: 0,
-        automaticallyImplyLeading: false,
-        leading: const GlassBackButton(),
-        title: Text(
-          'Injury Tracker',
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            color: textPrimary,
-          ),
-        ),
-        centerTitle: true,
+      appBar: PillAppBar(
+        title: 'Injury Tracker',
         actions: [
-          IconButton(
-            icon: Icon(Icons.refresh, color: textPrimary),
-            onPressed: _loadInjuries,
-          ),
+          PillAppBarAction(icon: Icons.refresh, onTap: _loadInjuries),
         ],
       ),
       body: Column(

@@ -7,7 +7,7 @@ import '../../widgets/app_loading.dart';
 import '../../widgets/app_snackbar.dart';
 import '../../data/models/progress_photos.dart';
 import '../../data/repositories/progress_photos_repository.dart';
-import '../../widgets/glass_back_button.dart';
+import '../../widgets/pill_app_bar.dart';
 import '../../widgets/glass_sheet.dart';
 import 'comparison_view.dart';
 
@@ -37,20 +37,12 @@ class _ComparisonGalleryScreenState
 
     return Scaffold(
       backgroundColor: colorScheme.surface,
-      appBar: AppBar(
-        title: const Text('Saved Comparisons'),
-        centerTitle: true,
-        backgroundColor: colorScheme.surface,
-        surfaceTintColor: Colors.transparent,
-        automaticallyImplyLeading: false,
-        leading: const GlassBackButton(),
+      appBar: PillAppBar(
+        title: 'Saved Comparisons',
         actions: [
-          IconButton(
-            icon: Icon(
-              _sortNewestFirst ? Icons.arrow_downward : Icons.arrow_upward,
-            ),
-            tooltip: _sortNewestFirst ? 'Showing newest first' : 'Showing oldest first',
-            onPressed: () {
+          PillAppBarAction(
+            icon: _sortNewestFirst ? Icons.arrow_downward : Icons.arrow_upward,
+            onTap: () {
               setState(() => _sortNewestFirst = !_sortNewestFirst);
             },
           ),

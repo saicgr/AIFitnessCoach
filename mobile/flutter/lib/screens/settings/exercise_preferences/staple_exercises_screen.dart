@@ -10,8 +10,8 @@ import '../../../data/repositories/exercise_preferences_repository.dart';
 import '../../../data/repositories/library_repository.dart';
 import '../../../data/services/haptic_service.dart';
 import '../../../widgets/exercise_image.dart';
-import '../../../widgets/glass_back_button.dart';
 import '../../../widgets/glass_sheet.dart';
+import '../../../widgets/pill_app_bar.dart';
 import '../../../widgets/staple_choice_sheet.dart';
 import '../../library/components/exercise_detail_sheet.dart';
 import 'widgets/exercise_picker_sheet.dart';
@@ -108,20 +108,8 @@ class StapleExercisesScreen extends ConsumerWidget {
 
     return Scaffold(
       backgroundColor: backgroundColor,
-      appBar: AppBar(
-        backgroundColor: backgroundColor,
-        surfaceTintColor: Colors.transparent,
-        automaticallyImplyLeading: false,
-        leading: const GlassBackButton(),
-        centerTitle: true,
-        title: Text(
-          'Staple Exercises',
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-            color: textPrimary,
-          ),
-        ),
+      appBar: const PillAppBar(
+        title: 'Staple Exercises',
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {

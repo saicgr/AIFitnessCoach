@@ -5,7 +5,7 @@ import 'package:flutter/rendering.dart';
 import 'package:image_cropper/image_cropper.dart';
 import 'package:path_provider/path_provider.dart';
 import '../../core/constants/app_colors.dart';
-import '../../widgets/glass_back_button.dart';
+import '../../widgets/pill_app_bar.dart';
 
 /// Photo editor screen with cropping and FitWiz logo overlay
 class PhotoEditorScreen extends StatefulWidget {
@@ -158,48 +158,12 @@ class _PhotoEditorScreenState extends State<PhotoEditorScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.pureBlack,
-      appBar: AppBar(
-        backgroundColor: AppColors.nearBlack,
-        title: Text('Edit ${widget.viewTypeName} Photo'),
-        automaticallyImplyLeading: false,
-        leading: const GlassBackButton(icon: Icons.close),
+      appBar: PillAppBar(
+        title: 'Edit ${widget.viewTypeName} Photo',
         actions: [
-          // Crop button
-          IconButton(
-            icon: const Icon(Icons.crop),
-            tooltip: 'Crop',
-            onPressed: _cropImage,
-          ),
-          // Toggle logo button
-          IconButton(
-            icon: Icon(
-              _showLogo ? Icons.branding_watermark : Icons.branding_watermark_outlined,
-              color: _showLogo ? AppColors.cyan : null,
-            ),
-            tooltip: _showLogo ? 'Hide Logo' : 'Show Logo',
-            onPressed: () => setState(() => _showLogo = !_showLogo),
-          ),
-          // Save button
-          _isSaving
-              ? const Padding(
-                  padding: EdgeInsets.all(12),
-                  child: SizedBox(
-                    width: 24,
-                    height: 24,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  ),
-                )
-              : TextButton(
-                  onPressed: _saveAndReturn,
-                  child: Text(
-                    'Save',
-                    style: TextStyle(
-                      color: AppColors.cyan,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                    ),
-                  ),
-                ),
+          PillAppBarAction(icon: Icons.crop, onTap: _cropImage),
+          PillAppBarAction(icon: Icons.branding_watermark, onTap: () => setState(() => _showLogo = !_showLogo)),
+          PillAppBarAction(icon: Icons.save_outlined, visible: !_isSaving, onTap: _saveAndReturn),
         ],
       ),
       body: Column(

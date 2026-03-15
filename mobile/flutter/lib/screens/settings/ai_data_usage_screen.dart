@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../core/constants/app_colors.dart';
-import '../../widgets/glass_back_button.dart';
+import '../../widgets/pill_app_bar.dart';
 
 /// Screen explaining how AI uses user data, what it sees and doesn't see,
 /// and how data is protected.
@@ -20,19 +20,8 @@ class AIDataUsageScreen extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: backgroundColor,
-      appBar: AppBar(
-        backgroundColor: backgroundColor,
-        elevation: 0,
-        automaticallyImplyLeading: false,
-        leading: const GlassBackButton(),
-        title: Text(
-          'How AI Uses Your Data',
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            color: textPrimary,
-          ),
-        ),
-        centerTitle: true,
+      appBar: const PillAppBar(
+        title: 'How AI Uses Your Data',
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),

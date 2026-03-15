@@ -8,7 +8,7 @@ import '../../data/models/custom_goal.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../../data/services/api_client.dart';
 import '../../widgets/app_dialog.dart';
-import '../../widgets/glass_back_button.dart';
+import '../../widgets/pill_app_bar.dart';
 import '../../widgets/glass_sheet.dart';
 
 /// Suggestions for custom goals
@@ -306,14 +306,8 @@ class _CustomGoalsScreenState extends ConsumerState<CustomGoalsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(
-        backgroundColor: AppColors.background,
-        title: const Text(
-          'Custom Goals',
-          style: TextStyle(color: AppColors.textPrimary),
-        ),
-        automaticallyImplyLeading: false,
-        leading: const GlassBackButton(),
+      appBar: const PillAppBar(
+        title: 'Custom Goals',
       ),
       body: Column(
         children: [

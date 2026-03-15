@@ -4,7 +4,7 @@ import 'package:intl/intl.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../data/repositories/subscription_repository.dart';
 import '../../../data/services/api_client.dart';
-import '../../../widgets/glass_back_button.dart';
+import '../../../widgets/pill_app_bar.dart';
 
 /// Subscription History Screen
 /// Shows a timeline of all subscription events with color-coded badges
@@ -73,18 +73,8 @@ class _SubscriptionHistoryScreenState extends ConsumerState<SubscriptionHistoryS
 
     return Scaffold(
       backgroundColor: backgroundColor,
-      appBar: AppBar(
-        backgroundColor: backgroundColor,
-        elevation: 0,
-        title: Text(
-          'Subscription History',
-          style: TextStyle(
-            color: textPrimary,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-        automaticallyImplyLeading: false,
-        leading: const GlassBackButton(),
+      appBar: const PillAppBar(
+        title: 'Subscription History',
       ),
       body: RefreshIndicator(
         onRefresh: _loadHistory,

@@ -427,12 +427,14 @@ class ApiClient with WidgetsBindingObserver {
     dynamic data,
     Map<String, dynamic>? queryParameters,
     Options? options,
+    void Function(int, int)? onSendProgress,
   }) async {
     return _dio.post<T>(
       path,
       data: data,
       queryParameters: queryParameters,
       options: options,
+      onSendProgress: onSendProgress,
     );
   }
 

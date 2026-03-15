@@ -505,11 +505,11 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
     }
   }
 
-  /// Navigate to workout loading after paywall completion
+  /// Navigate to subscription success screen after paywall completion
   Future<void> _navigateAfterPaywall(BuildContext context, WidgetRef ref) async {
     if (context.mounted) {
-      debugPrint('🏠 [Paywall] Navigating to workout loading');
-      context.go('/workout-loading');
+      debugPrint('🎉 [Paywall] Navigating to subscription success');
+      context.go('/subscription-success');
     }
   }
 

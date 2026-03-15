@@ -7,7 +7,7 @@ import '../../data/models/fasting_impact.dart';
 import '../../data/providers/fasting_impact_provider.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../../data/services/context_logging_service.dart';
-import '../../widgets/glass_back_button.dart';
+import '../../widgets/pill_app_bar.dart';
 import 'widgets/fasting_calendar_widget.dart';
 import 'widgets/fasting_impact_card.dart';
 import 'widgets/weight_fasting_chart.dart';
@@ -108,26 +108,13 @@ class _FastingImpactScreenState extends ConsumerState<FastingImpactScreen> {
 
     return Scaffold(
       backgroundColor: backgroundColor,
-      appBar: AppBar(
-        backgroundColor: backgroundColor,
-        surfaceTintColor: Colors.transparent,
-        title: Text(
-          'Fasting Impact',
-          style: TextStyle(
-            color: textPrimary,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        automaticallyImplyLeading: false,
-        leading: const GlassBackButton(),
+      appBar: PillAppBar(
+        title: 'Fasting Impact',
         actions: [
-          IconButton(
-            icon: Icon(Icons.refresh, color: textMuted),
-            onPressed: state.isLoading || _userId == null
-                ? null
-                : () => ref
-                    .read(fastingImpactProvider.notifier)
-                    .refresh(_userId!),
+          PillAppBarAction(
+            icon: Icons.refresh,
+            visible: !state.isLoading && _userId != null,
+            onTap: () => ref.read(fastingImpactProvider.notifier).refresh(_userId!),
           ),
         ],
       ),

@@ -7,7 +7,7 @@ import '../../data/models/workout.dart';
 import '../../data/models/exercise.dart';
 import '../../data/providers/today_workout_provider.dart';
 import '../../data/repositories/workout_repository.dart';
-import '../../widgets/glass_back_button.dart';
+import '../../widgets/pill_app_bar.dart';
 import '../../widgets/glass_sheet.dart';
 import 'widgets/share_workout_sheet.dart';
 
@@ -50,20 +50,7 @@ class _WorkoutSummaryScreenState extends ConsumerState<WorkoutSummaryScreen> {
 
     return Scaffold(
       backgroundColor: isDark ? AppColors.pureBlack : Colors.white,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        automaticallyImplyLeading: false,
-        leading: const GlassBackButton(),
-        title: Text(
-          'Workout Summary',
-          style: TextStyle(
-            color: isDark ? AppColors.textPrimary : Colors.black87,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-        centerTitle: true,
-      ),
+      appBar: const PillAppBar(title: 'Workout Summary'),
       body: FutureBuilder<WorkoutSummaryResponse?>(
         future: _summaryFuture,
         builder: (context, snapshot) {

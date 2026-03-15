@@ -33,8 +33,8 @@ class SegmentedTabBar extends StatelessWidget {
       child: Container(
         decoration: BoxDecoration(
           color: isDark
-              ? Colors.white.withValues(alpha: 0.05)
-              : Colors.black.withValues(alpha: 0.04),
+              ? AppColors.glassSurface
+              : AppColorsLight.elevated,
           borderRadius: BorderRadius.circular(borderRadius + 4),
           border: showBorder
               ? Border.all(

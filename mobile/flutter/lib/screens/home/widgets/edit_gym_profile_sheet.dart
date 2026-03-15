@@ -1,10 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../core/constants/api_constants.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/providers/variation_provider.dart';
 import '../../../core/utils/time_slot_utils.dart';
 import '../../../data/models/gym_location.dart';
 import '../../../data/models/gym_profile.dart';
+import '../../../data/repositories/auth_repository.dart';
 import '../../../data/providers/gym_profile_provider.dart';
+import '../../../data/services/api_client.dart';
 import '../../../data/services/haptic_service.dart';
 import '../../../models/equipment_item.dart';
 import '../../../widgets/glass_sheet.dart';
@@ -48,6 +53,10 @@ class _EditGymProfileSheetState extends ConsumerState<EditGymProfileSheet> {
   String? _selectedTrainingSplit;
   late List<int> _selectedWorkoutDays;
   late int _selectedDuration;
+  // User-level training preferences
+  String? _selectedExperience;
+  List<String> _selectedFocusAreas = [];
+  int _selectedVarietyPct = 50; // 25 = Low, 50 = Medium, 75 = High
   bool _isLoading = false;
   bool _hasChanges = false;
 
@@ -129,6 +138,13 @@ class _EditGymProfileSheetState extends ConsumerState<EditGymProfileSheet> {
     _selectedTrainingSplit = widget.profile.trainingSplit;
     _selectedWorkoutDays = List.from(widget.profile.workoutDays);
     _selectedDuration = widget.profile.durationMinutes;
+    // Initialize user-level preferences (experience, focus areas, variety)
+    final user = ref.read(authStateProvider).user;
+    if (user != null) {
+      _selectedExperience = user.trainingExperience;
+      _selectedFocusAreas = List.from(user.focusAreas);
+    }
+    _selectedVarietyPct = ref.read(variationProvider).percentage;
   }
 
   void _openEquipmentSheet() {
@@ -231,6 +247,23 @@ class _EditGymProfileSheetState extends ConsumerState<EditGymProfileSheet> {
       await ref
           .read(gymProfilesProvider.notifier)
           .updateProfile(widget.profile.id, update);
+
+      // Save user-level training preferences (experience, focus areas, variety)
+      final user = ref.read(authStateProvider).user;
+      if (user != null) {
+        final apiClient = ref.read(apiClientProvider);
+        await apiClient.post(
+          '${ApiConstants.users}/${user.id}/preferences',
+          data: {
+            if (_selectedExperience != null) 'training_experience': _selectedExperience,
+            if (_selectedFocusAreas.isNotEmpty) 'focus_areas': _selectedFocusAreas,
+          },
+        );
+        // Refresh user so UI reflects new experience/focus areas immediately
+        await ref.read(authStateProvider.notifier).refreshUser();
+      }
+      // Save weekly variety
+      ref.read(variationProvider.notifier).setVariation(_selectedVarietyPct);
 
       HapticService.success();
 
@@ -709,6 +742,72 @@ class _EditGymProfileSheetState extends ConsumerState<EditGymProfileSheet> {
                       isDark: isDark,
                       textPrimary: textPrimary,
                       textSecondary: textSecondary,
+                      selectedColorObj: selectedColorObj,
+                    ),
+
+                    const SizedBox(height: 16),
+
+                    // Experience selector
+                    Text(
+                      'Experience Level',
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                        color: textPrimary,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    _buildExperienceSelector(
+                      isDark: isDark,
+                      textPrimary: textPrimary,
+                      textSecondary: textSecondary,
+                      selectedColorObj: selectedColorObj,
+                    ),
+
+                    const SizedBox(height: 16),
+
+                    // Focus Areas selector
+                    Text(
+                      'Focus Areas',
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                        color: textPrimary,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Muscle groups to prioritize',
+                      style: TextStyle(fontSize: 12, color: textSecondary),
+                    ),
+                    const SizedBox(height: 8),
+                    _buildFocusAreasSelector(
+                      isDark: isDark,
+                      textPrimary: textPrimary,
+                      textSecondary: textSecondary,
+                      selectedColorObj: selectedColorObj,
+                    ),
+
+                    const SizedBox(height: 16),
+
+                    // Weekly Variety selector
+                    Text(
+                      'Weekly Variety',
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                        color: textPrimary,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'How much exercise variety each week',
+                      style: TextStyle(fontSize: 12, color: textSecondary),
+                    ),
+                    const SizedBox(height: 8),
+                    _buildVarietySelector(
+                      isDark: isDark,
+                      textPrimary: textPrimary,
                       selectedColorObj: selectedColorObj,
                     ),
 
@@ -1625,6 +1724,217 @@ class _EditGymProfileSheetState extends ConsumerState<EditGymProfileSheet> {
           size: 20,
         ),
       ),
+    );
+  }
+
+  static const _experienceOptions = [
+    {'id': 'never', 'label': 'Never lifted'},
+    {'id': 'less_than_6_months', 'label': '< 6 months'},
+    {'id': '6_months_to_2_years', 'label': '6m – 2 yrs'},
+    {'id': '2_to_5_years', 'label': '2–5 years'},
+    {'id': '5_plus_years', 'label': '5+ years'},
+  ];
+
+  Widget _buildExperienceSelector({
+    required bool isDark,
+    required Color textPrimary,
+    required Color textSecondary,
+    required Color selectedColorObj,
+  }) {
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: _experienceOptions.map((opt) {
+        final id = opt['id'] as String;
+        final label = opt['label'] as String;
+        final isSelected = _selectedExperience == id;
+        return GestureDetector(
+          onTap: () {
+            HapticFeedback.selectionClick();
+            setState(() => _selectedExperience = id);
+            _markChanged();
+          },
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 150),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            decoration: BoxDecoration(
+              color: isSelected
+                  ? selectedColorObj.withValues(alpha: 0.15)
+                  : (isDark
+                      ? Colors.white.withValues(alpha: 0.05)
+                      : Colors.black.withValues(alpha: 0.04)),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(
+                color: isSelected
+                    ? selectedColorObj
+                    : (isDark
+                        ? Colors.white.withValues(alpha: 0.1)
+                        : Colors.black.withValues(alpha: 0.08)),
+                width: isSelected ? 1.5 : 1,
+              ),
+            ),
+            child: Text(
+              label,
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                color: isSelected ? selectedColorObj : textSecondary,
+              ),
+            ),
+          ),
+        );
+      }).toList(),
+    );
+  }
+
+  static const _focusAreaOptions = [
+    {'id': 'chest', 'label': 'Chest'},
+    {'id': 'back', 'label': 'Back'},
+    {'id': 'shoulders', 'label': 'Shoulders'},
+    {'id': 'arms', 'label': 'Arms'},
+    {'id': 'core', 'label': 'Core'},
+    {'id': 'legs', 'label': 'Legs'},
+    {'id': 'glutes', 'label': 'Glutes'},
+    {'id': 'full_body', 'label': 'Full Body'},
+  ];
+
+  Widget _buildFocusAreasSelector({
+    required bool isDark,
+    required Color textPrimary,
+    required Color textSecondary,
+    required Color selectedColorObj,
+  }) {
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: _focusAreaOptions.map((opt) {
+        final id = opt['id'] as String;
+        final label = opt['label'] as String;
+        final isSelected = _selectedFocusAreas.contains(id);
+        return GestureDetector(
+          onTap: () {
+            HapticFeedback.selectionClick();
+            setState(() {
+              if (id == 'full_body') {
+                // Full Body clears specific areas
+                _selectedFocusAreas = isSelected ? [] : ['full_body'];
+              } else {
+                if (isSelected) {
+                  _selectedFocusAreas.remove(id);
+                } else {
+                  _selectedFocusAreas
+                    ..remove('full_body')
+                    ..add(id);
+                }
+              }
+            });
+            _markChanged();
+          },
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 150),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            decoration: BoxDecoration(
+              color: isSelected
+                  ? selectedColorObj.withValues(alpha: 0.15)
+                  : (isDark
+                      ? Colors.white.withValues(alpha: 0.05)
+                      : Colors.black.withValues(alpha: 0.04)),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(
+                color: isSelected
+                    ? selectedColorObj
+                    : (isDark
+                        ? Colors.white.withValues(alpha: 0.1)
+                        : Colors.black.withValues(alpha: 0.08)),
+                width: isSelected ? 1.5 : 1,
+              ),
+            ),
+            child: Text(
+              label,
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                color: isSelected ? selectedColorObj : textSecondary,
+              ),
+            ),
+          ),
+        );
+      }).toList(),
+    );
+  }
+
+  Widget _buildVarietySelector({
+    required bool isDark,
+    required Color textPrimary,
+    required Color selectedColorObj,
+  }) {
+    const options = [
+      {'pct': 25, 'label': 'Low', 'sub': 'Same exercises weekly'},
+      {'pct': 50, 'label': 'Medium', 'sub': 'Some rotation'},
+      {'pct': 75, 'label': 'High', 'sub': 'Always fresh'},
+    ];
+    return Row(
+      children: options.map((opt) {
+        final pct = opt['pct'] as int;
+        final label = opt['label'] as String;
+        final sub = opt['sub'] as String;
+        final isSelected = _selectedVarietyPct == pct;
+        return Expanded(
+          child: GestureDetector(
+            onTap: () {
+              HapticFeedback.selectionClick();
+              setState(() => _selectedVarietyPct = pct);
+              _markChanged();
+            },
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 150),
+              margin: EdgeInsets.only(right: pct != 75 ? 8 : 0),
+              padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
+              decoration: BoxDecoration(
+                color: isSelected
+                    ? selectedColorObj.withValues(alpha: 0.15)
+                    : (isDark
+                        ? Colors.white.withValues(alpha: 0.05)
+                        : Colors.black.withValues(alpha: 0.04)),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(
+                  color: isSelected
+                      ? selectedColorObj
+                      : (isDark
+                          ? Colors.white.withValues(alpha: 0.1)
+                          : Colors.black.withValues(alpha: 0.08)),
+                  width: isSelected ? 1.5 : 1,
+                ),
+              ),
+              child: Column(
+                children: [
+                  Text(
+                    label,
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                      color: isSelected ? selectedColorObj : textPrimary,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    sub,
+                    style: TextStyle(
+                      fontSize: 10,
+                      color: isSelected
+                          ? selectedColorObj.withValues(alpha: 0.8)
+                          : (isDark
+                              ? Colors.white38
+                              : Colors.black38),
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      }).toList(),
     );
   }
 }

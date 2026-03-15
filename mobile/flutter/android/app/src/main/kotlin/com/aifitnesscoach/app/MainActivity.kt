@@ -1,6 +1,5 @@
 package com.aifitnesscoach.app
 
-import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
@@ -45,10 +44,10 @@ class MainActivity : FlutterFragmentActivity() {
         }
     }
 
-    override fun provideFlutterEngine(context: Context): FlutterEngine? {
-        // Use cached engine if available
-        return FlutterEngineCache.getInstance().get(WIDGET_ENGINE_ID) ?: super.provideFlutterEngine(context)
-    }
+    // Do NOT override provideFlutterEngine — the widget engine is a separate
+    // pre-warmed engine for widget actions only.  Returning it here caused
+    // "FlutterEngine already attached to another activity" crashes when
+    // deep links (e.g. fitwiz://chat) triggered a new activity lifecycle.
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)

@@ -646,6 +646,8 @@ def merge_extended_fields_into_preferences(
     workout_duration_max: Optional[int] = None,
     # Exercise consistency preference
     workout_variety: Optional[str] = None,  # 'consistent' or 'varied'
+    # Focus areas (muscle groups / body parts to prioritize)
+    focus_areas: Optional[List[str]] = None,
 ) -> dict:
     """Merge extended onboarding fields into preferences dict."""
     try:
@@ -705,6 +707,8 @@ def merge_extended_fields_into_preferences(
         prefs["coach_id"] = coach_id
     if training_experience is not None:
         prefs["training_experience"] = training_experience
+    if focus_areas is not None:
+        prefs["focus_areas"] = focus_areas
     if workout_days is not None:
         prefs["workout_days"] = workout_days
     # Sleep schedule for fasting optimization
@@ -1059,6 +1063,9 @@ class UserPreferencesRequest(BaseModel):
     # Motivations
     motivations: Optional[List[str]] = None
 
+    # Focus areas (muscle groups / body parts to prioritize)
+    focus_areas: Optional[List[str]] = None
+
     # Coach
     coach_id: Optional[str] = None
 
@@ -1200,6 +1207,8 @@ async def save_user_preferences(user_id: str, request: UserPreferencesRequest,
             request.workout_duration_max,
             # Exercise consistency preference
             workout_variety=request.workout_variety,
+            # Focus areas
+            focus_areas=request.focus_areas,
         )
         update_data["preferences"] = final_preferences
 
@@ -2426,6 +2435,25 @@ async def calculate_nutrition_targets(user_id: str, request: NutritionCalculatio
 
         logger.info(f"Calculated nutrition targets for user {user_id}: {metrics.get('calories')} cal")
 
+        # Explicitly save nutrition_goals to nutrition_preferences.
+        # The RPC saves macros/calories but does NOT update the nutrition_goals array,
+        # so the profile goal always falls back to "maintain" without this explicit write.
+        try:
+            await asyncio.get_event_loop().run_in_executor(
+                None,
+                lambda: db.client.table("nutrition_preferences").upsert(
+                    {
+                        "user_id": user_id,
+                        "nutrition_goals": nutrition_goals,
+                        "nutrition_goal": nutrition_goals[0] if nutrition_goals else "maintain",
+                    },
+                    on_conflict="user_id",
+                ).execute()
+            )
+            logger.info(f"Saved nutrition_goals={nutrition_goals} to nutrition_preferences for user {user_id}")
+        except Exception as _goal_save_err:
+            logger.warning(f"Could not persist nutrition_goals to nutrition_preferences: {_goal_save_err}")
+
         # Index for RAG in background (non-blocking)
         async def _index_rag():
             try:
@@ -2649,6 +2677,15 @@ async def sync_fasting_preferences(user_id: str, request: SyncFastingRequest,
 # =============================================================================
 
 
+_COACH_COLORS = {
+    "coach_mike": "#FF9800",    # Orange
+    "dr_sarah": "#2196F3",      # Blue
+    "sergeant_max": "#F44336",  # Red
+    "zen_maya": "#4CAF50",      # Green
+    "hype_danny": "#9C27B0",    # Purple
+}
+
+
 async def create_gym_profiles_from_onboarding(
     user_id: str,
     gym_name: Optional[str],
@@ -2656,6 +2693,7 @@ async def create_gym_profiles_from_onboarding(
     equipment: list,
     equipment_details: list,
     preferences: dict,
+    coach_id: Optional[str] = None,
 ):
     """
     Create gym profile(s) from onboarding data.
@@ -2680,6 +2718,11 @@ async def create_gym_profiles_from_onboarding(
     gym_name = gym_name or "My Gym"
     workout_environment = workout_environment or "commercial_gym"
 
+    # Resolve coach color (fall back to orange — the default accent — if no coach matched)
+    resolved_coach_id = coach_id or preferences.get("coach_id")
+    profile_color = _COACH_COLORS.get(resolved_coach_id, "#FF9800")
+    logger.info(f"🎨 [GymProfile] Coach '{resolved_coach_id}' → color {profile_color}")
+
     # Auto-populate equipment based on environment if not provided
     if not equipment:
         equipment = get_default_equipment_for_environment(workout_environment)
@@ -2697,7 +2740,7 @@ async def create_gym_profiles_from_onboarding(
             "user_id": user_id,
             "name": name,
             "icon": icon,
-            "color": "#00BCD4",
+            "color": profile_color,
             "equipment": equipment,
             "equipment_details": equipment_details,
             "workout_environment": environment,
@@ -2819,6 +2862,7 @@ async def upload_profile_photo_to_s3(
         Key=storage_key,
         Body=contents,
         ContentType=file.content_type or 'image/jpeg',
+        ACL='public-read',
     )
 
     # Generate URL

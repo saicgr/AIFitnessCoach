@@ -4,7 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
-import '../../widgets/glass_back_button.dart';
+import '../../widgets/pill_app_bar.dart';
 import '../../data/models/workout.dart';
 import '../../data/services/saved_workouts_service.dart';
 import '../../data/services/challenges_service.dart';
@@ -77,20 +77,8 @@ class _SharedWorkoutDetailScreenState
       body: CustomScrollView(
         slivers: [
           // App bar
-          SliverAppBar(
-            pinned: true,
-            backgroundColor: bg,
-            surfaceTintColor: Colors.transparent,
-            automaticallyImplyLeading: false,
-            leading: const GlassBackButton(),
-            title: Text(
-              'Workout Details',
-              style: TextStyle(
-                color: textColor,
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
+          const SliverToBoxAdapter(
+            child: PillAppBar(title: 'Workout Details'),
           ),
 
           SliverPadding(

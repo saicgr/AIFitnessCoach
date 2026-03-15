@@ -49,7 +49,7 @@ final edgeHandlePositionProvider =
 class EdgeHandleEnabledNotifier extends StateNotifier<bool> {
   static const _key = 'edge_handle_enabled';
 
-  EdgeHandleEnabledNotifier() : super(true) {
+  EdgeHandleEnabledNotifier() : super(false) {
     _load();
   }
 
@@ -242,9 +242,9 @@ class MainShell extends ConsumerWidget {
             ),
           ),
           // Note: Workout mini player is now handled globally in app.dart
-          // Edge handle removed to reduce UI clutter (chat accessible via nav bar + floating overlay)
-          // Floating AI chat bubble
-          const FloatingChatBubble(),
+          // Floating AI Chat bubble (toggled in Settings > AI Coach)
+          if (ref.watch(edgeHandleEnabledProvider))
+            const FloatingChatBubble(),
           // App tour overlay (topmost)
           const AppTourOverlay(),
         ],

@@ -8,7 +8,7 @@ import 'widgets/cycle_tracker_widget.dart';
 import 'widgets/hormone_log_sheet.dart';
 import 'widgets/hormone_goals_card.dart';
 import 'widgets/quick_stats_card.dart';
-import '../../widgets/glass_back_button.dart';
+import '../../widgets/pill_app_bar.dart';
 import '../../widgets/glass_sheet.dart';
 
 /// Main screen for hormonal health tracking and insights
@@ -28,16 +28,10 @@ class _HormonalHealthScreenState extends ConsumerState<HormonalHealthScreen> {
     final theme = Theme.of(context);
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Hormonal Health'),
-        automaticallyImplyLeading: false,
-        leading: const GlassBackButton(),
+      appBar: PillAppBar(
+        title: 'Hormonal Health',
         actions: [
-          IconButton(
-            icon: const Icon(Icons.settings_outlined),
-            onPressed: () => _navigateToSettings(context),
-            tooltip: 'Hormonal Health Settings',
-          ),
+          PillAppBarAction(icon: Icons.settings_outlined, onTap: () => _navigateToSettings(context)),
         ],
       ),
       body: profileAsync.when(

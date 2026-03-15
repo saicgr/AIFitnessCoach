@@ -8,8 +8,8 @@ import '../../../data/repositories/exercise_preferences_repository.dart';
 import '../../../data/repositories/workout_repository.dart';
 import '../../../data/services/haptic_service.dart';
 import '../../../widgets/body_muscle_selector.dart';
-import '../../../widgets/glass_back_button.dart';
 import '../../../widgets/glass_sheet.dart';
+import '../../../widgets/pill_app_bar.dart';
 
 /// Provider for avoided muscles list
 final avoidedMusclesProvider =
@@ -289,33 +289,20 @@ class _AvoidedMusclesScreenState extends ConsumerState<AvoidedMusclesScreen> {
 
     return Scaffold(
       backgroundColor: backgroundColor,
-      appBar: AppBar(
-        backgroundColor: backgroundColor,
-        elevation: 0,
-        automaticallyImplyLeading: false,
-        leading: const GlassBackButton(),
-        title: Text(
-          'Muscles to Avoid',
-          style: TextStyle(
-            color: textColor,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
+      appBar: PillAppBar(
+        title: 'Muscles to Avoid',
         actions: [
-          if (_pendingMuscles.isNotEmpty)
-            TextButton(
-              onPressed: () {
-                setState(() {
-                  _pendingMuscles.clear();
-                  _bodySelectorKey++;
-                });
-                HapticService.light();
-              },
-              child: Text(
-                'Clear',
-                style: TextStyle(color: textMuted),
-              ),
-            ),
+          PillAppBarAction(
+            icon: Icons.clear_all_rounded,
+            visible: _pendingMuscles.isNotEmpty,
+            onTap: () {
+              setState(() {
+                _pendingMuscles.clear();
+                _bodySelectorKey++;
+              });
+              HapticService.light();
+            },
+          ),
         ],
       ),
       body: body,

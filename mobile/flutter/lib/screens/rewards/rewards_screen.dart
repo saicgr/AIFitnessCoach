@@ -4,7 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../data/providers/xp_provider.dart';
 import '../../widgets/app_snackbar.dart';
 import '../../data/services/api_client.dart';
-import '../../widgets/glass_back_button.dart';
+import '../../widgets/pill_app_bar.dart';
 import '../../widgets/segmented_tab_bar.dart';
 
 /// Screen displaying available and claimed rewards
@@ -169,19 +169,8 @@ class _RewardsScreenState extends ConsumerState<RewardsScreen>
 
     return Scaffold(
       backgroundColor: Colors.black,
-      appBar: AppBar(
-        backgroundColor: Colors.black,
-        elevation: 0,
-        automaticallyImplyLeading: false,
-        leading: const GlassBackButton(),
-        title: const Text(
-          'Rewards',
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
+      appBar: const PillAppBar(
+        title: 'Rewards',
       ),
       body: Column(
         children: [

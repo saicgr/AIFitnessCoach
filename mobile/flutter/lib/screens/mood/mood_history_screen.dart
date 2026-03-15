@@ -4,7 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../../core/constants/app_colors.dart';
 import '../../widgets/app_loading.dart';
-import '../../widgets/glass_back_button.dart';
+import '../../widgets/pill_app_bar.dart';
 import '../../data/providers/mood_history_provider.dart';
 import 'widgets/mood_analytics_card.dart';
 import 'widgets/mood_calendar_heatmap.dart';
@@ -55,17 +55,10 @@ class _MoodHistoryScreenState extends ConsumerState<MoodHistoryScreen> {
 
     return Scaffold(
       backgroundColor: background,
-      appBar: AppBar(
-        backgroundColor: background,
-        automaticallyImplyLeading: false,
-        leading: const GlassBackButton(),
-        title: const Text('Mood History & Analysis'),
+      appBar: PillAppBar(
+        title: 'Mood History & Analysis',
         actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: () => ref.read(moodHistoryProvider.notifier).refresh(),
-            tooltip: 'Refresh',
-          ),
+          PillAppBarAction(icon: Icons.refresh, onTap: () => ref.read(moodHistoryProvider.notifier).refresh()),
         ],
       ),
       body: state.isLoading

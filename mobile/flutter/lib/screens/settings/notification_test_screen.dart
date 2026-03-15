@@ -4,7 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants/app_colors.dart';
 import '../../data/services/api_client.dart';
 import '../../data/services/notification_service.dart';
-import '../../widgets/glass_back_button.dart';
+import '../../widgets/pill_app_bar.dart';
 
 /// Screen for testing all notification types via Firebase
 class NotificationTestScreen extends ConsumerStatefulWidget {
@@ -75,18 +75,8 @@ class _NotificationTestScreenState extends ConsumerState<NotificationTestScreen>
 
     return Scaffold(
       backgroundColor: backgroundColor,
-      appBar: AppBar(
-        backgroundColor: backgroundColor,
-        elevation: 0,
-        automaticallyImplyLeading: false,
-        leading: const GlassBackButton(),
-        title: Text(
-          'Notification Testing',
-          style: TextStyle(
-            color: textPrimary,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
+      appBar: const PillAppBar(
+        title: 'Notification Testing',
       ),
       body: ListView(
         padding: const EdgeInsets.all(16),

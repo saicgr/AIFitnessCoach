@@ -13,7 +13,7 @@ import 'tabs/leaderboard_tab.dart';
 import 'tabs/friends_tab.dart';
 import 'tabs/messages_tab.dart';
 import '../../widgets/app_loading.dart';
-import '../../widgets/glass_back_button.dart';
+import '../../widgets/pill_app_bar.dart';
 import '../../widgets/main_shell.dart';
 import 'friend_search_screen.dart';
 import 'conversation_screen.dart';
@@ -495,43 +495,12 @@ class _MessagesScreenState extends ConsumerState<_MessagesScreen> {
 
     return Scaffold(
       backgroundColor: backgroundColor,
-      appBar: AppBar(
-        backgroundColor: backgroundColor,
-        surfaceTintColor: Colors.transparent,
-        elevation: 0,
-        automaticallyImplyLeading: false,
-        leading: const GlassBackButton(),
-        title: _isSearching
-            ? TextField(
-                controller: _searchController,
-                autofocus: true,
-                style: Theme.of(context).textTheme.bodyLarge,
-                decoration: InputDecoration(
-                  hintText: 'Search conversations...',
-                  hintStyle: TextStyle(
-                    color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
-                  ),
-                  border: InputBorder.none,
-                ),
-                onChanged: (value) {
-                  setState(() => _searchQuery = value.toLowerCase());
-                },
-              )
-            : Text(
-                'Messages',
-                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-              ),
-        centerTitle: false,
+      appBar: PillAppBar(
+        title: 'Messages',
         actions: [
-          IconButton(
-            icon: Icon(
-              _isSearching ? Icons.close_rounded : Icons.search_rounded,
-              color: isDark ? Colors.white : AppColors.pureBlack,
-            ),
-            tooltip: _isSearching ? 'Close search' : 'Search',
-            onPressed: () {
+          PillAppBarAction(
+            icon: _isSearching ? Icons.close_rounded : Icons.search_rounded,
+            onTap: () {
               HapticFeedback.lightImpact();
               setState(() {
                 _isSearching = !_isSearching;
@@ -542,13 +511,9 @@ class _MessagesScreenState extends ConsumerState<_MessagesScreen> {
               });
             },
           ),
-          IconButton(
-            icon: Icon(
-              Icons.group_add_rounded,
-              color: isDark ? Colors.white : AppColors.pureBlack,
-            ),
-            tooltip: 'New Group',
-            onPressed: () {
+          PillAppBarAction(
+            icon: Icons.group_add_rounded,
+            onTap: () {
               HapticFeedback.lightImpact();
               Navigator.push(
                 context,
@@ -558,15 +523,7 @@ class _MessagesScreenState extends ConsumerState<_MessagesScreen> {
               );
             },
           ),
-          IconButton(
-            icon: Icon(
-              Icons.edit_square,
-              color: isDark ? Colors.white : AppColors.pureBlack,
-            ),
-            tooltip: 'New Message',
-            onPressed: _handleNewMessage,
-          ),
-          const SizedBox(width: 8),
+          PillAppBarAction(icon: Icons.edit_square, onTap: _handleNewMessage),
         ],
       ),
       body: _searchQuery.isNotEmpty
@@ -718,20 +675,7 @@ class _NewMessagePickerScreen extends ConsumerWidget {
 
     return Scaffold(
       backgroundColor: backgroundColor,
-      appBar: AppBar(
-        backgroundColor: backgroundColor,
-        surfaceTintColor: Colors.transparent,
-        elevation: 0,
-        automaticallyImplyLeading: false,
-        leading: const GlassBackButton(),
-        title: Text(
-          'New Message',
-          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
-        ),
-        centerTitle: false,
-      ),
+      appBar: const PillAppBar(title: 'New Message'),
       body: userId == null
           ? const Center(child: Text('Not logged in'))
           : _buildFriendsList(context, ref, userId, isDark),
@@ -927,40 +871,14 @@ class _GroupCreateSheetState extends ConsumerState<_GroupCreateSheet> {
 
     return Scaffold(
       backgroundColor: backgroundColor,
-      appBar: AppBar(
-        backgroundColor: backgroundColor,
-        surfaceTintColor: Colors.transparent,
-        elevation: 0,
-        automaticallyImplyLeading: false,
-        leading: const GlassBackButton(),
-        title: Text(
-          'New Group',
-          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
-        ),
-        centerTitle: false,
+      appBar: PillAppBar(
+        title: 'New Group',
         actions: [
-          TextButton(
-            onPressed: _isCreating ? null : _createGroup,
-            child: _isCreating
-                ? SizedBox(
-                    width: 18,
-                    height: 18,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: colors.accent,
-                    ),
-                  )
-                : Text(
-                    'Create',
-                    style: TextStyle(
-                      color: colors.accent,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
+          PillAppBarAction(
+            icon: Icons.check_rounded,
+            visible: !_isCreating,
+            onTap: _createGroup,
           ),
-          const SizedBox(width: 8),
         ],
       ),
       body: Column(

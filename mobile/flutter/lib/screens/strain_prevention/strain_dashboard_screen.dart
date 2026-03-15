@@ -10,8 +10,8 @@ import 'widgets/strain_risk_card.dart';
 import 'widgets/volume_alert_card.dart';
 import 'volume_history_screen.dart';
 import 'report_strain_screen.dart';
-import '../../widgets/glass_back_button.dart';
 import '../../widgets/glass_sheet.dart';
+import '../../widgets/pill_app_bar.dart';
 
 /// Provider for strain dashboard data
 final strainDashboardProvider =
@@ -181,24 +181,11 @@ class _StrainDashboardScreenState extends ConsumerState<StrainDashboardScreen> {
 
     return Scaffold(
       backgroundColor: colorScheme.surface,
-      appBar: AppBar(
-        title: const Text('Strain Prevention'),
-        centerTitle: true,
-        backgroundColor: colorScheme.surface,
-        surfaceTintColor: Colors.transparent,
-        automaticallyImplyLeading: false,
-        leading: const GlassBackButton(),
+      appBar: PillAppBar(
+        title: 'Strain Prevention',
         actions: [
-          IconButton(
-            icon: const Icon(Icons.history),
-            tooltip: 'Volume History',
-            onPressed: () => _navigateToVolumeHistory(),
-          ),
-          IconButton(
-            icon: const Icon(Icons.add_circle_outline),
-            tooltip: 'Report Strain',
-            onPressed: () => _navigateToReportStrain(),
-          ),
+          PillAppBarAction(icon: Icons.history, onTap: _navigateToVolumeHistory),
+          PillAppBarAction(icon: Icons.add_circle_outline, onTap: _navigateToReportStrain),
         ],
       ),
       body: state.isLoading

@@ -5,8 +5,8 @@ import '../../../core/animations/app_animations.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/providers/environment_equipment_provider.dart';
 import 'environment_detail_screen.dart';
-import '../../../widgets/glass_back_button.dart';
 import '../../../widgets/glass_sheet.dart';
+import '../../../widgets/pill_app_bar.dart';
 
 /// Screen showing list of workout environments with their equipment.
 class EnvironmentListScreen extends ConsumerStatefulWidget {
@@ -25,27 +25,10 @@ class _EnvironmentListScreenState extends ConsumerState<EnvironmentListScreen> {
 
     return Scaffold(
       backgroundColor: isDark ? AppColors.pureBlack : AppColorsLight.background,
-      appBar: AppBar(
-        backgroundColor: isDark ? AppColors.pureBlack : AppColorsLight.background,
-        elevation: 0,
-        automaticallyImplyLeading: false,
-        leading: const GlassBackButton(),
-        title: Text(
-          'Workout Environment',
-          style: TextStyle(
-            color: isDark ? Colors.white : AppColorsLight.textPrimary,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
+      appBar: PillAppBar(
+        title: 'Workout Environment',
         actions: [
-          IconButton(
-            icon: Icon(
-              Icons.add,
-              color: AppColors.cyan,
-            ),
-            onPressed: () => _showAddEnvironmentSheet(context),
-            tooltip: 'Add Custom Environment',
-          ),
+          PillAppBarAction(icon: Icons.add, onTap: () => _showAddEnvironmentSheet(context)),
         ],
       ),
       body: ListView(

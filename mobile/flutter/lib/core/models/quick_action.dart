@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-enum QuickActionBehavior { route, waterQuickAdd, foodLog, weightLog, moodLog, fastingNav, quickWorkout }
+enum QuickActionBehavior { route, waterQuickAdd, foodLog, weightLog, moodLog, fastingNav, quickWorkout, chat }
 
 class QuickAction {
   final String id;
@@ -120,6 +120,13 @@ const quickActionRegistry = <String, QuickAction>{
     behavior: QuickActionBehavior.route,
     route: '/library?tab=1',
   ),
+  'chat': QuickAction(
+    id: 'chat',
+    label: 'Chat',
+    icon: Icons.auto_awesome,
+    color: Color(0xFF9B59B6),
+    behavior: QuickActionBehavior.chat,
+  ),
   'settings': QuickAction(
     id: 'settings',
     label: 'Settings',
@@ -127,14 +134,6 @@ const quickActionRegistry = <String, QuickAction>{
     color: Color(0xFF64748B),
     behavior: QuickActionBehavior.route,
     route: '/settings',
-  ),
-  'chat': QuickAction(
-    id: 'chat',
-    label: 'Chat',
-    icon: Icons.chat_outlined,
-    color: Color(0xFF06B6D4),
-    behavior: QuickActionBehavior.route,
-    route: '/chat',
   ),
   'schedule': QuickAction(
     id: 'schedule',

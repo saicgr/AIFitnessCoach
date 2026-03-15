@@ -8,7 +8,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:fl_chart/fl_chart.dart';
 import '../../core/constants/app_colors.dart';
 import '../../widgets/app_loading.dart';
-import '../../widgets/glass_back_button.dart';
+import '../../widgets/pill_app_bar.dart';
 import '../../core/theme/accent_color_provider.dart';
 import '../../data/models/progress_photos.dart';
 import '../../data/providers/consistency_provider.dart';
@@ -218,61 +218,30 @@ class _ComprehensiveStatsScreenState extends ConsumerState<ComprehensiveStatsScr
 
     return Scaffold(
       backgroundColor: backgroundColor,
-      appBar: AppBar(
-        backgroundColor: backgroundColor,
-        foregroundColor: textPrimary,
-        automaticallyImplyLeading: false,
-        leading: const GlassBackButton(),
-        title: Text(
-          'Stats & Scores',
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.w600,
-            color: textPrimary,
-          ),
-        ),
-        centerTitle: false,
+      appBar: PillAppBar(
+        title: 'Stats & Scores',
         actions: [
-          // Compare Photos (only show on Photos tab - index 1)
-          if (_userId != null && _currentTabIndex == 1)
-            TextButton(
-              onPressed: () => _showComparisonPicker(),
-              child: Text(
-                'Compare',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: textPrimary,
-                ),
-              ),
-            ),
+          // Compare Photos (only on Photos tab)
+          PillAppBarAction(
+            icon: Icons.compare_arrows_rounded,
+            visible: _userId != null && _currentTabIndex == 1,
+            onTap: () => _showComparisonPicker(),
+          ),
           // Time Range Selector (hide on Photos tab)
-          if (_currentTabIndex != 1)
-            IconButton(
-              icon: Icon(Icons.calendar_month_outlined, color: textPrimary),
-              onPressed: () {
-                HapticService.light();
-                DateRangeFilterSheet.show(context, ref);
-              },
-              tooltip: 'Time Range',
-            ),
+          PillAppBarAction(
+            icon: Icons.calendar_month_outlined,
+            visible: _currentTabIndex != 1,
+            onTap: () => DateRangeFilterSheet.show(context, ref),
+          ),
           // Export
-          IconButton(
-            icon: Icon(Icons.file_download_outlined, color: textPrimary),
-            onPressed: () {
-              HapticService.light();
-              ExportStatsSheet.show(context, ref);
-            },
-            tooltip: 'Export',
+          PillAppBarAction(
+            icon: Icons.file_download_outlined,
+            onTap: () => ExportStatsSheet.show(context, ref),
           ),
           // Share
-          IconButton(
-            icon: Icon(Icons.ios_share_outlined, color: textPrimary),
-            onPressed: () {
-              HapticService.light();
-              ShareStatsSheet.show(context, ref);
-            },
-            tooltip: 'Share',
+          PillAppBarAction(
+            icon: Icons.ios_share_outlined,
+            onTap: () => ShareStatsSheet.show(context, ref),
           ),
         ],
       ),

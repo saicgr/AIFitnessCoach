@@ -15,7 +15,7 @@ services:
     branch: main
     rootDir: backend
     buildCommand: chmod +x build.sh && ./build.sh
-    startCommand: gunicorn main:app -w 4 -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:$PORT --timeout 120
+    startCommand: gunicorn main:app -w 4 -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:$PORT --timeout 180
     healthCheckPath: /
     envVars:
       - key: PYTHON_VERSION

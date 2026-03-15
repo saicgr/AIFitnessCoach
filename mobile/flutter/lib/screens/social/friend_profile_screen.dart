@@ -7,7 +7,7 @@ import '../../core/theme/theme_colors.dart';
 import '../../data/providers/social_provider.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../../widgets/app_loading.dart';
-import '../../widgets/glass_back_button.dart';
+import '../../widgets/pill_app_bar.dart';
 import '../../widgets/main_shell.dart';
 import 'conversation_screen.dart';
 
@@ -128,22 +128,22 @@ class _FriendProfileScreenState extends ConsumerState<FriendProfileScreen> {
 
     return Scaffold(
       backgroundColor: backgroundColor,
-      appBar: AppBar(
-        backgroundColor: backgroundColor,
-        surfaceTintColor: Colors.transparent,
-        elevation: 0,
-        automaticallyImplyLeading: false,
-        leading: const GlassBackButton(),
-        title: Text(
-          'Profile',
-          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
-        ),
-        centerTitle: false,
+      appBar: PillAppBar(
+        title: 'Profile',
         actions: [
-          PopupMenuButton<String>(
-            onSelected: (value) async {
+          PillAppBarAction(
+            icon: Icons.more_vert,
+            onTap: () async {
+              final value = await showMenu<String>(
+                context: context,
+                position: const RelativeRect.fromLTRB(100, 100, 0, 0),
+                items: [
+                  const PopupMenuItem(
+                    value: 'block',
+                    child: Text('Block User', style: TextStyle(color: Colors.red)),
+                  ),
+                ],
+              );
               if (value == 'block') {
                 final confirm = await showDialog<bool>(
                   context: context,
@@ -184,12 +184,6 @@ class _FriendProfileScreenState extends ConsumerState<FriendProfileScreen> {
                 }
               }
             },
-            itemBuilder: (context) => [
-              const PopupMenuItem(
-                value: 'block',
-                child: Text('Block User', style: TextStyle(color: Colors.red)),
-              ),
-            ],
           ),
         ],
       ),

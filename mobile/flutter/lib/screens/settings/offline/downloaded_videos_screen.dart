@@ -4,7 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/providers/video_cache_provider.dart';
 import '../../../data/services/video_cache_service.dart';
-import '../../../widgets/glass_back_button.dart';
+import '../../../widgets/pill_app_bar.dart';
 
 /// Screen for managing downloaded exercise videos
 class DownloadedVideosScreen extends ConsumerWidget {
@@ -21,25 +21,14 @@ class DownloadedVideosScreen extends ConsumerWidget {
 
     return Scaffold(
       backgroundColor: backgroundColor,
-      appBar: AppBar(
-        backgroundColor: backgroundColor,
-        elevation: 0,
-        title: Text(
-          'Downloaded Videos',
-          style: TextStyle(
-            color: textPrimary,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        automaticallyImplyLeading: false,
-        leading: const GlassBackButton(),
+      appBar: PillAppBar(
+        title: 'Downloaded Videos',
         actions: [
-          if (cacheState.cachedVideoCount > 0)
-            IconButton(
-              icon: Icon(Icons.delete_sweep, color: AppColors.error),
-              onPressed: () => _showClearAllDialog(context, ref),
-              tooltip: 'Clear all downloads',
-            ),
+          PillAppBarAction(
+            icon: Icons.delete_sweep,
+            visible: cacheState.cachedVideoCount > 0,
+            onTap: () => _showClearAllDialog(context, ref),
+          ),
         ],
       ),
       body: Column(

@@ -8,7 +8,7 @@ import '../../data/providers/live_chat_provider.dart';
 import '../../data/services/haptic_service.dart';
 import 'widgets/agent_info_header.dart';
 import 'widgets/live_chat_input_bar.dart';
-import '../../widgets/glass_back_button.dart';
+import '../../widgets/pill_app_bar.dart';
 import '../../widgets/glass_sheet.dart';
 import 'widgets/live_chat_message_bubble.dart';
 import 'widgets/queue_position_card.dart';
@@ -345,31 +345,23 @@ class _LiveChatScreenState extends ConsumerState<LiveChatScreen> {
 
   PreferredSizeWidget _buildAppBar(
       LiveChatSession? session, _ScreenStatus screenStatus) {
-    return AppBar(
-      backgroundColor: AppColors.pureBlack,
-      automaticallyImplyLeading: false,
-      leading: GlassBackButton(
-        onTap: () {
-          HapticService.light();
-          if (screenStatus == _ScreenStatus.connected) {
-            _showEndChatDialog();
-          } else {
-            context.pop();
-          }
-        },
-      ),
+    return PillAppBar(
       title: screenStatus == _ScreenStatus.connected && session?.agentName != null
-          ? AgentInfoHeader(
-              agentName: session!.agentName!,
-              isTyping: session.isAgentTyping,
-              isOnline: true,
-            )
-          : const Text('Live Chat'),
+          ? session!.agentName!
+          : 'Live Chat',
+      onBack: () {
+        HapticService.light();
+        if (screenStatus == _ScreenStatus.connected) {
+          _showEndChatDialog();
+        } else {
+          context.pop();
+        }
+      },
       actions: [
         if (screenStatus == _ScreenStatus.connected)
-          IconButton(
-            icon: const Icon(Icons.more_vert),
-            onPressed: () {
+          PillAppBarAction(
+            icon: Icons.more_vert,
+            onTap: () {
               HapticService.light();
               _showOptionsMenu();
             },

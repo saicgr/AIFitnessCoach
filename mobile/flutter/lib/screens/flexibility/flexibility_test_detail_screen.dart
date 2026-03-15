@@ -4,7 +4,7 @@ import '../../data/models/flexibility_assessment.dart';
 import '../../data/providers/flexibility_provider.dart';
 import 'widgets/flexibility_progress_chart.dart';
 import 'widgets/record_assessment_sheet.dart';
-import '../../widgets/glass_back_button.dart';
+import '../../widgets/pill_app_bar.dart';
 import '../../widgets/glass_sheet.dart';
 
 /// Detailed view of a specific flexibility test with progress tracking
@@ -49,16 +49,10 @@ class _FlexibilityTestDetailScreenState extends ConsumerState<FlexibilityTestDet
     final trend = state.selectedTestTrend;
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(widget.test.name),
-        automaticallyImplyLeading: false,
-        leading: const GlassBackButton(),
+      appBar: PillAppBar(
+        title: widget.test.name,
         actions: [
-          IconButton(
-            onPressed: () => _showRecordSheet(),
-            icon: const Icon(Icons.add_circle_outline),
-            tooltip: 'Record Assessment',
-          ),
+          PillAppBarAction(icon: Icons.add_circle_outline, onTap: () => _showRecordSheet()),
         ],
       ),
       body: RefreshIndicator(

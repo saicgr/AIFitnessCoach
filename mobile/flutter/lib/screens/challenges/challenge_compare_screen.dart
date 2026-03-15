@@ -5,7 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
 import '../../data/services/api_client.dart';
 import '../../data/services/challenges_service.dart';
-import '../../widgets/glass_back_button.dart';
+import '../../widgets/pill_app_bar.dart';
 
 /// Full-screen side-by-side comparison of challenge results.
 ///
@@ -69,19 +69,8 @@ class _ChallengeCompareScreenState
 
     return Scaffold(
       backgroundColor: bg,
-      appBar: AppBar(
-        backgroundColor: bg,
-        surfaceTintColor: Colors.transparent,
-        automaticallyImplyLeading: false,
-        leading: const GlassBackButton(),
-        title: Text(
-          'Challenge Results',
-          style: TextStyle(
-            color: textColor,
-            fontSize: 18,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
+      appBar: const PillAppBar(
+        title: 'Challenge Results',
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())

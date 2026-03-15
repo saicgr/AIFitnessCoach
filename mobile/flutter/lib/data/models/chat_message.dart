@@ -138,6 +138,15 @@ class ChatMessage extends Equatable {
   @JsonKey(includeFromJson: false, includeToJson: false)
   final MessageStatus status;
 
+  /// Transient upload phase shown as overlay on video thumbnail:
+  /// 'uploading' (real progress), 'analyzing' (indeterminate), null = done
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  final String? uploadPhase;
+
+  /// Upload progress 0.0–1.0 during 'uploading' phase; null = indeterminate
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  final double? uploadProgress;
+
   /// Whether this message is pinned by the user
   @JsonKey(defaultValue: false)
   final bool isPinned;
@@ -172,6 +181,8 @@ class ChatMessage extends Equatable {
     this.audioUrl,
     this.audioDurationMs,
     this.coachPersonaId,
+    this.uploadPhase,
+    this.uploadProgress,
   });
 
   factory ChatMessage.fromJson(Map<String, dynamic> json) =>
@@ -224,6 +235,31 @@ class ChatMessage extends Equatable {
 
   /// Check if this is a voice message
   bool get isVoiceMessage => audioUrl != null && audioUrl!.isNotEmpty;
+
+  /// Create a copy with updated upload overlay state (use null to clear)
+  ChatMessage withUploadState(String? phase, double? progress) {
+    return ChatMessage(
+      id: id,
+      userId: userId,
+      role: role,
+      content: content,
+      intent: intent,
+      agentType: agentType,
+      createdAt: createdAt,
+      actionData: actionData,
+      mediaUrl: mediaUrl,
+      mediaType: mediaType,
+      mediaRefs: mediaRefs,
+      localFilePath: localFilePath,
+      status: status,
+      isPinned: isPinned,
+      audioUrl: audioUrl,
+      audioDurationMs: audioDurationMs,
+      coachPersonaId: coachPersonaId,
+      uploadPhase: phase,
+      uploadProgress: progress,
+    );
+  }
 
   /// Create a copy with optional field overrides
   ChatMessage copyWith({
@@ -321,6 +357,11 @@ class ChatRequest {
   final Map<String, dynamic>? mediaRef;
   @JsonKey(name: 'media_refs')
   final List<Map<String, dynamic>>? mediaRefs;
+  @JsonKey(name: 'image_base64')
+  final String? imageBase64;
+
+  @JsonKey(name: 'video_frames')
+  final List<String>? videoFrames;
 
   const ChatRequest({
     required this.message,
@@ -333,6 +374,8 @@ class ChatRequest {
     this.unifiedContext,
     this.mediaRef,
     this.mediaRefs,
+    this.imageBase64,
+    this.videoFrames,
   });
 
   factory ChatRequest.fromJson(Map<String, dynamic> json) =>

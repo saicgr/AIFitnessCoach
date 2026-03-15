@@ -7,7 +7,7 @@ import '../../core/constants/app_colors.dart';
 import '../../widgets/app_loading.dart';
 import '../../data/models/injury.dart';
 import '../../data/services/api_client.dart';
-import '../../widgets/glass_back_button.dart';
+import '../../widgets/pill_app_bar.dart';
 import '../../widgets/glass_sheet.dart';
 import 'injuries_list_screen.dart';
 import 'widgets/rehab_exercise_card.dart';
@@ -216,26 +216,11 @@ class _InjuryDetailScreenState extends ConsumerState<InjuryDetailScreen> {
 
     return Scaffold(
       backgroundColor: backgroundColor,
-      appBar: AppBar(
-        backgroundColor: backgroundColor,
-        elevation: 0,
-        automaticallyImplyLeading: false,
-        leading: const GlassBackButton(),
-        title: Text(
-          'Injury Details',
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            color: textPrimary,
-          ),
-        ),
-        centerTitle: true,
+      appBar: PillAppBar(
+        title: 'Injury Details',
         actions: [
           if (_injury != null && _injury!.status.toLowerCase() != 'healed')
-            IconButton(
-              icon: Icon(Icons.edit_note, color: textPrimary),
-              onPressed: _showCheckInSheet,
-              tooltip: 'Log Check-in',
-            ),
+            PillAppBarAction(icon: Icons.edit_note, onTap: _showCheckInSheet),
         ],
       ),
       body: _isLoading

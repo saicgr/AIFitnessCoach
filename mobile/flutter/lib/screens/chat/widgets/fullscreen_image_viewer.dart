@@ -4,7 +4,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:gal/gal.dart';
-import '../../../widgets/glass_back_button.dart';
+import '../../../widgets/pill_app_bar.dart';
 
 /// Full-screen image viewer with pinch-to-zoom and optional Hero animation.
 class FullscreenImageViewer extends StatelessWidget {
@@ -25,11 +25,8 @@ class FullscreenImageViewer extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: Colors.black,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        automaticallyImplyLeading: false,
-        leading: const GlassBackButton(icon: Icons.close),
+      appBar: const PillAppBar(
+        title: '',
       ),
       extendBodyBehindAppBar: true,
       body: Center(

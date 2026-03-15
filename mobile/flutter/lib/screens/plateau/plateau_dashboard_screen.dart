@@ -5,7 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
 import '../../data/services/api_client.dart';
 import '../../data/repositories/auth_repository.dart';
-import '../../widgets/glass_back_button.dart';
+import '../../widgets/pill_app_bar.dart';
 
 /// Provider for plateau dashboard data
 final plateauDashboardProvider =
@@ -88,13 +88,8 @@ class _PlateauDashboardScreenState
 
     return Scaffold(
       backgroundColor: colorScheme.surface,
-      appBar: AppBar(
-        title: const Text('Plateau Detection'),
-        centerTitle: true,
-        backgroundColor: colorScheme.surface,
-        surfaceTintColor: Colors.transparent,
-        automaticallyImplyLeading: false,
-        leading: const GlassBackButton(),
+      appBar: const PillAppBar(
+        title: 'Plateau Detection',
       ),
       body: state.isLoading
           ? const Center(child: CircularProgressIndicator())

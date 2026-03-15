@@ -6,7 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants/app_colors.dart';
 import '../../data/providers/social_provider.dart';
 import '../../data/repositories/auth_repository.dart';
-import '../../widgets/glass_back_button.dart';
+import '../../widgets/pill_app_bar.dart';
 import 'friend_profile_screen.dart';
 import 'widgets/user_search_result_card.dart';
 
@@ -266,16 +266,12 @@ class _FriendSearchScreenState extends ConsumerState<FriendSearchScreen>
 
     return Scaffold(
       backgroundColor: backgroundColor,
-      appBar: AppBar(
-        backgroundColor: backgroundColor,
-        automaticallyImplyLeading: false,
-        leading: const GlassBackButton(),
-        title: const Text('Find Friends'),
-        centerTitle: true,
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(60),
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+      appBar: const PillAppBar(title: 'Find Friends'),
+      body: Column(
+        children: [
+          // Search field
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
             child: TextField(
               controller: _searchController,
               focusNode: _searchFocusNode,
@@ -320,10 +316,6 @@ class _FriendSearchScreenState extends ConsumerState<FriendSearchScreen>
               ),
             ),
           ),
-        ),
-      ),
-      body: Column(
-        children: [
           // Modern segmented tabs
           _buildSegmentedTabs(isDark),
 

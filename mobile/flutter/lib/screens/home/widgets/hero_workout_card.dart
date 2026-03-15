@@ -700,9 +700,15 @@ class _HeroWorkoutCardState extends ConsumerState<HeroWorkoutCard> {
       constraints: const BoxConstraints(minHeight: 280),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(24),
+        border: Border.all(
+          color: isDark
+              ? Colors.white.withValues(alpha: 0.12)
+              : Colors.black.withValues(alpha: 0.08),
+          width: 1.0,
+        ),
       ),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(23),
         child: Stack(
           children: [
             // Background image or gradient - fills the card

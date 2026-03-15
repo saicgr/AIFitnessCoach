@@ -52,7 +52,7 @@ class TodayStatsRow extends ConsumerWidget {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: SizedBox(
-        height: 58,
+        height: 68,
         child: ListView.separated(
           scrollDirection: Axis.horizontal,
           padding: const EdgeInsets.symmetric(horizontal: 16),

@@ -4,8 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/providers/environment_equipment_provider.dart';
 import '../../../models/equipment_item.dart';
-import '../../../widgets/glass_back_button.dart';
 import '../../../widgets/glass_sheet.dart';
+import '../../../widgets/pill_app_bar.dart';
 
 /// Screen showing equipment details for a specific workout environment.
 class EnvironmentDetailScreen extends ConsumerStatefulWidget {
@@ -41,39 +41,15 @@ class _EnvironmentDetailScreenState extends ConsumerState<EnvironmentDetailScree
 
     return Scaffold(
       backgroundColor: isDark ? AppColors.pureBlack : AppColorsLight.background,
-      appBar: AppBar(
-        backgroundColor: isDark ? AppColors.pureBlack : AppColorsLight.background,
-        elevation: 0,
-        automaticallyImplyLeading: false,
-        leading: GlassBackButton(onTap: () => _handleBack()),
-        title: Row(
-          children: [
-            Text(
-              widget.environment.icon,
-              style: const TextStyle(fontSize: 24),
-            ),
-            const SizedBox(width: 8),
-            Text(
-              widget.environment.displayName,
-              style: TextStyle(
-                color: isDark ? Colors.white : AppColorsLight.textPrimary,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ],
-        ),
+      appBar: PillAppBar(
+        title: widget.environment.displayName,
+        onBack: _handleBack,
         actions: [
-          if (_hasChanges)
-            TextButton(
-              onPressed: _saveChanges,
-              child: Text(
-                'Save',
-                style: TextStyle(
-                  color: AppColors.cyan,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ),
+          PillAppBarAction(
+            icon: Icons.save_rounded,
+            visible: _hasChanges,
+            onTap: _saveChanges,
+          ),
         ],
       ),
       body: Column(

@@ -5,7 +5,7 @@ import '../../models/feature_request.dart';
 import '../../widgets/app_loading.dart';
 import '../../data/providers/feature_provider.dart';
 import '../../widgets/glass_sheet.dart';
-import '../../widgets/glass_back_button.dart';
+import '../../widgets/pill_app_bar.dart';
 import '../../widgets/segmented_tab_bar.dart';
 import 'widgets/suggest_feature_sheet.dart';
 
@@ -48,18 +48,10 @@ class _FeatureVotingScreenState extends ConsumerState<FeatureVotingScreen>
 
     return Scaffold(
       backgroundColor: isDark ? const Color(0xFF0A0E21) : Colors.grey[50],
-      appBar: AppBar(
-        title: const Text('Upcoming Features'),
-        backgroundColor: isDark ? const Color(0xFF1A1F3A) : Colors.white,
-        elevation: 0,
-        automaticallyImplyLeading: false,
-        leading: const GlassBackButton(),
+      appBar: PillAppBar(
+        title: 'Upcoming Features',
         actions: [
-          IconButton(
-            icon: const Icon(Icons.add_circle_outline),
-            onPressed: () => _showSuggestFeatureSheet(context),
-            tooltip: 'Suggest a Feature',
-          ),
+          PillAppBarAction(icon: Icons.add_circle_outline, onTap: () => _showSuggestFeatureSheet(context)),
         ],
       ),
       body: Column(

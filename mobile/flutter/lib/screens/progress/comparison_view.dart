@@ -9,7 +9,7 @@ import '../../data/models/progress_photos.dart';
 import '../../data/repositories/measurements_repository.dart';
 import '../../data/providers/scores_provider.dart';
 import '../../data/repositories/progress_photos_repository.dart';
-import '../../widgets/glass_back_button.dart';
+import '../../widgets/pill_app_bar.dart';
 import 'comparison_layouts.dart';
 import 'comparison_export_service.dart';
 
@@ -300,44 +300,27 @@ class _ComparisonViewState extends ConsumerState<ComparisonView> {
 
   PreferredSizeWidget _buildAppBar(ColorScheme colorScheme) {
     const titles = ['Choose Layout', 'Select Photos', 'Customize'];
-    return AppBar(
-      title: Text(titles[_currentStep]),
-      centerTitle: true,
-      backgroundColor: colorScheme.surface,
-      surfaceTintColor: Colors.transparent,
-      automaticallyImplyLeading: false,
-      leading: GlassBackButton(
-        onTap: () {
-          if (_currentStep > 0 && widget.existingComparison == null) {
-            setState(() => _currentStep--);
-          } else {
-            Navigator.pop(context);
-          }
-        },
-      ),
-      actions: _currentStep == 2
-          ? [
-              IconButton(
-                icon: _isSaving
-                    ? SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: colorScheme.onSurface,
-                        ),
-                      )
-                    : const Icon(Icons.save_outlined),
-                tooltip: 'Save comparison',
-                onPressed: _isSaving ? null : _saveComparison,
-              ),
-              IconButton(
-                icon: const Icon(Icons.share_outlined),
-                tooltip: 'Share',
-                onPressed: _isSaving ? null : _shareComparison,
-              ),
-            ]
-          : null,
+    return PillAppBar(
+      title: titles[_currentStep],
+      onBack: () {
+        if (_currentStep > 0 && widget.existingComparison == null) {
+          setState(() => _currentStep--);
+        } else {
+          Navigator.pop(context);
+        }
+      },
+      actions: [
+        PillAppBarAction(
+          icon: Icons.save_outlined,
+          visible: _currentStep == 2 && !_isSaving,
+          onTap: _saveComparison,
+        ),
+        PillAppBarAction(
+          icon: Icons.share_outlined,
+          visible: _currentStep == 2 && !_isSaving,
+          onTap: _shareComparison,
+        ),
+      ],
     );
   }
 

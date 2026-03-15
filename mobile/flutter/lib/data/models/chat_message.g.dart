@@ -68,6 +68,10 @@ ChatRequest _$ChatRequestFromJson(Map<String, dynamic> json) => ChatRequest(
   mediaRefs: (json['media_refs'] as List<dynamic>?)
       ?.map((e) => e as Map<String, dynamic>)
       .toList(),
+  imageBase64: json['image_base64'] as String?,
+  videoFrames: (json['video_frames'] as List<dynamic>?)
+      ?.map((e) => e as String)
+      .toList(),
 );
 
 Map<String, dynamic> _$ChatRequestToJson(ChatRequest instance) =>
@@ -83,6 +87,8 @@ Map<String, dynamic> _$ChatRequestToJson(ChatRequest instance) =>
       if (instance.unifiedContext case final value?) 'unified_context': value,
       if (instance.mediaRef case final value?) 'media_ref': value,
       if (instance.mediaRefs case final value?) 'media_refs': value,
+      if (instance.imageBase64 case final value?) 'image_base64': value,
+      if (instance.videoFrames case final value?) 'video_frames': value,
     };
 
 ChatResponse _$ChatResponseFromJson(Map<String, dynamic> json) => ChatResponse(

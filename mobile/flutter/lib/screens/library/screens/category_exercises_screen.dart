@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../data/models/exercise.dart';
 import '../../../data/services/api_client.dart';
-import '../../../widgets/glass_back_button.dart';
+import '../../../widgets/pill_app_bar.dart';
 import '../widgets/exercise_card.dart';
 
 /// Screen showing all exercises for a specific category
@@ -162,92 +162,13 @@ class _CategoryExercisesScreenState
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final backgroundColor =
         isDark ? AppColors.nearBlack : AppColorsLight.pureWhite;
-    final textPrimary =
-        isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final cyan = isDark ? AppColors.cyan : AppColorsLight.cyan;
-    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
 
     return Scaffold(
       backgroundColor: backgroundColor,
-      appBar: AppBar(
-        backgroundColor: backgroundColor,
-        elevation: 0,
-        automaticallyImplyLeading: false,
-        leading: const GlassBackButton(),
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              widget.categoryName,
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: textPrimary,
-              ),
-            ),
-            Text(
-              '${_exercises.length} exercises',
-              style: TextStyle(
-                fontSize: 12,
-                color: textMuted,
-              ),
-            ),
-          ],
-        ),
-        actions: [
-          // Sort button
-          PopupMenuButton<String>(
-            icon: Icon(Icons.sort, color: textMuted),
-            color: elevated,
-            onSelected: _sortExercises,
-            itemBuilder: (context) => [
-              PopupMenuItem(
-                value: 'name',
-                child: Row(
-                  children: [
-                    Icon(
-                      Icons.sort_by_alpha,
-                      size: 20,
-                      color: _sortBy == 'name' ? cyan : textMuted,
-                    ),
-                    const SizedBox(width: 12),
-                    Text(
-                      'Name',
-                      style: TextStyle(
-                        color: _sortBy == 'name' ? cyan : textPrimary,
-                        fontWeight:
-                            _sortBy == 'name' ? FontWeight.w600 : FontWeight.normal,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              PopupMenuItem(
-                value: 'difficulty',
-                child: Row(
-                  children: [
-                    Icon(
-                      Icons.signal_cellular_alt,
-                      size: 20,
-                      color: _sortBy == 'difficulty' ? cyan : textMuted,
-                    ),
-                    const SizedBox(width: 12),
-                    Text(
-                      'Difficulty',
-                      style: TextStyle(
-                        color: _sortBy == 'difficulty' ? cyan : textPrimary,
-                        fontWeight: _sortBy == 'difficulty'
-                            ? FontWeight.w600
-                            : FontWeight.normal,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ],
+      appBar: PillAppBar(
+        title: widget.categoryName,
       ),
       body: _exercises.isEmpty
           ? Center(

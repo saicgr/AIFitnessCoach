@@ -1,6 +1,5 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
-import '../glass_sheet.dart';
 
 /// Glassmorphic tooltip card shown during app tours
 class AppTourTooltipCard extends StatelessWidget {
@@ -33,12 +32,16 @@ class AppTourTooltipCard extends StatelessWidget {
     final cardWidth = (screenWidth - 48).clamp(0.0, 360.0);
     final isLastStep = currentStep == totalSteps;
 
-    final bgColor = GlassSheetStyle.backgroundColor(isDark);
-    final borderColor = GlassSheetStyle.borderColor(isDark);
-    final textPrimary = isDark ? Colors.white : Colors.black;
+    final bgColor = isDark
+        ? Colors.black.withValues(alpha: 0.75)
+        : Colors.white.withValues(alpha: 0.92);
+    final borderColor = isDark
+        ? Colors.white.withValues(alpha: 0.15)
+        : Colors.black.withValues(alpha: 0.06);
+    final textPrimary = isDark ? Colors.white : Colors.black87;
     final textSecondary = isDark
-        ? Colors.white.withValues(alpha: 0.6)
-        : Colors.black.withValues(alpha: 0.5);
+        ? Colors.white.withValues(alpha: 0.65)
+        : Colors.black.withValues(alpha: 0.55);
 
     return ClipRRect(
       borderRadius: BorderRadius.circular(16),
@@ -134,12 +137,19 @@ class _CardContent extends StatelessWidget {
               const Spacer(),
               GestureDetector(
                 onTap: onSkip,
-                child: Text(
-                  'Skip',
-                  style: TextStyle(
-                    color: textSecondary,
-                    fontSize: 13,
-                    fontWeight: FontWeight.w500,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    border: Border.all(color: textSecondary.withValues(alpha: 0.4)),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    'Skip tutorial',
+                    style: TextStyle(
+                      color: textSecondary,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
                 ),
               ),
@@ -179,7 +189,7 @@ class _CardContent extends StatelessWidget {
                   decoration: BoxDecoration(
                     color: isActive
                         ? accentColor
-                        : accentColor.withValues(alpha: 0.3),
+                        : accentColor.withValues(alpha: 0.5),
                     borderRadius: BorderRadius.circular(3),
                   ),
                 );

@@ -10,6 +10,11 @@ class AppTourStep {
   final String title;
   final String description;
   final TooltipPosition position;
+  /// Optional gradient colors for an animated spotlight ring.
+  /// When set, the ring cycles through these colors.
+  final List<Color>? highlightColors;
+  /// Override the spotlight corner radius (default 12). Use 999 for circular.
+  final double? cornerRadius;
 
   const AppTourStep({
     required this.id,
@@ -17,6 +22,8 @@ class AppTourStep {
     required this.title,
     required this.description,
     this.position = TooltipPosition.below,
+    this.highlightColors,
+    this.cornerRadius,
   });
 }
 
@@ -90,6 +97,8 @@ class AppTourController extends StateNotifier<AppTourState> {
   }
 
   Future<void> checkAndShow(String tourId, List<AppTourStep> steps) async {
+    // Don't start a new tour if one is already visible
+    if (state.isVisible) return;
     final prefs = await SharedPreferences.getInstance();
     final hasSeen = prefs.getBool('has_seen_$tourId') ?? false;
     if (!hasSeen && steps.isNotEmpty) {
@@ -119,6 +128,7 @@ class AppTourKeys {
   // Tour 2: Active Workout Tour
   static final exerciseCardKey = GlobalKey(debugLabel: 'tour_exerciseCard');
   static final setLoggingKey = GlobalKey(debugLabel: 'tour_setLogging');
+  static final rirBarKey = GlobalKey(debugLabel: 'tour_rirBar');
   static final restTimerKey = GlobalKey(debugLabel: 'tour_restTimer');
   static final swapExerciseKey = GlobalKey(debugLabel: 'tour_swapExercise');
   static final workoutAiKey = GlobalKey(debugLabel: 'tour_workoutAi');
@@ -138,4 +148,10 @@ class AppTourKeys {
   static final viewStatsKey = GlobalKey(debugLabel: 'tour_viewStats');
   static final syncedWorkoutsKey = GlobalKey(debugLabel: 'tour_syncedWorkouts');
   static final wrappedKey = GlobalKey(debugLabel: 'tour_wrapped');
+
+  // Tour 6: Workouts Tab Tour
+  static final workoutsQuickActionsKey = GlobalKey(debugLabel: 'tour_workoutsQuickActions');
+  static final workoutsTodayKey = GlobalKey(debugLabel: 'tour_workoutsToday');
+  static final workoutsWeeklyKey = GlobalKey(debugLabel: 'tour_workoutsWeekly');
+  static final workoutsLibraryKey = GlobalKey(debugLabel: 'tour_workoutsLibrary');
 }

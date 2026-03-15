@@ -10,6 +10,7 @@ This module handles exercise library operations:
 - GET /exercises/types - Get all exercise types
 - GET /exercises/filter-options - Get all filter options
 """
+from __future__ import annotations
 from typing import List, Dict, Any, Optional
 
 import difflib

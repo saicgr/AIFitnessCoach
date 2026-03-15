@@ -39,6 +39,14 @@ from core.exceptions import safe_internal_error
 router = APIRouter()
 logger = get_logger(__name__)
 
+_COACH_COLORS = {
+    "coach_mike": "#FF9800",    # Orange
+    "dr_sarah": "#2196F3",      # Blue
+    "sergeant_max": "#F44336",  # Red
+    "zen_maya": "#4CAF50",      # Green
+    "hype_danny": "#9C27B0",    # Purple
+}
+
 
 # =============================================================================
 # HELPER FUNCTIONS
@@ -161,11 +169,13 @@ async def create_default_profile_if_needed(user_id: str) -> Optional[GymProfile]
 
         # Create default profile from user's settings
         now = datetime.utcnow().isoformat()
+        coach_id = preferences.get("coach_id")
+        profile_color = _COACH_COLORS.get(coach_id, "#FF9800")
         profile_data = {
             "user_id": user_id,
             "name": "My Gym",
             "icon": "fitness_center",
-            "color": "#00BCD4",
+            "color": profile_color,
             "equipment": user_equipment,
             "equipment_details": user.get("equipment_details") or [],
             "workout_environment": workout_environment,

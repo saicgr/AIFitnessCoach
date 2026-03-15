@@ -91,12 +91,22 @@ async def _execute_form_analysis(job: dict) -> dict:
     mime_types = job.get("mime_types", [])
     media_types = job.get("media_types", [])
 
+    gemini_file_name = params.get("gemini_file_name")
+    video_frames = params.get("video_frames")
+
+    if gemini_file_name:
+        logger.info(f"Using pre-uploaded Gemini file: {gemini_file_name} (skipping S3 download)")
+    elif video_frames:
+        logger.info(f"Using {len(video_frames)} pre-extracted frames (skipping S3 download)")
+
     return await service.analyze_form(
-        s3_key=s3_keys[0],
-        mime_type=mime_types[0],
-        media_type=media_types[0],
+        s3_key=s3_keys[0] if s3_keys else "",
+        mime_type=mime_types[0] if mime_types else "video/mp4",
+        media_type=media_types[0] if media_types else "video",
         exercise_name=params.get("exercise_name"),
         user_context=params.get("user_context"),
+        video_frames=video_frames,
+        gemini_file_name=gemini_file_name,
     )
 
 

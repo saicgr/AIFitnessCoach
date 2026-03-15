@@ -168,22 +168,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       AppTourStep(
         id: 'nav_step_quicklog',
         targetKey: AppTourKeys.quickLogKey,
-        title: 'Quick Log',
-        description: 'Log weight, meals, and mood in seconds. Build your daily habit.',
+        title: 'Quick Actions',
+        description: 'Quick workout generation, weight logging, food logging and more.',
         position: TooltipPosition.above,
       ),
       AppTourStep(
         id: 'nav_step_workout',
         targetKey: AppTourKeys.workoutNavKey,
-        title: 'Exercise Library',
-        description: 'Browse 2,000+ exercises filtered by muscle or equipment.',
-        position: TooltipPosition.above,
-      ),
-      AppTourStep(
-        id: 'nav_step_ai_chat',
-        targetKey: AppTourKeys.aiChatKey,
-        title: 'Your AI Coach',
-        description: 'Ask anything — modify workouts, get form tips, nutrition advice.',
+        title: 'Workouts',
+        description: 'View your workout history, build custom workouts, and browse the exercise library.',
         position: TooltipPosition.above,
       ),
       AppTourStep(
@@ -1778,10 +1771,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
         child: _buildHeroSectionFixed(context, todayWorkoutState, isAIGenerating, isDark),
       ),
       // Quick actions row
-      const SliverToBoxAdapter(
+      SliverToBoxAdapter(
         child: Padding(
-          padding: EdgeInsets.symmetric(vertical: 12),
-          child: QuickActionsRow(),
+          padding: const EdgeInsets.symmetric(vertical: 12),
+          child: const QuickActionsRow(),
         ),
       ),
       // Free-tier usage counters (hidden for premium)
@@ -2302,10 +2295,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   ) {
     return [
       // Quick Actions Row - Food, Water, Fasting, Stats
-      const SliverToBoxAdapter(
+      SliverToBoxAdapter(
         child: Padding(
-          padding: EdgeInsets.only(top: 8, bottom: 8),
-          child: QuickActionsRow(),
+          padding: const EdgeInsets.only(top: 8, bottom: 8),
+          child: const QuickActionsRow(),
         ),
       ),
 
@@ -2505,43 +2498,40 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   Widget _buildTrendsSection(bool isDark) {
     final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
 
-    return Container(
-      key: AppTourKeys.quickLogKey,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Section header - larger font for readability
-            Padding(
-              padding: const EdgeInsets.only(bottom: 12),
-              child: Text(
-                'Your Progress',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w700,
-                  color: textPrimary,
-                ),
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Section header - larger font for readability
+          Padding(
+            padding: const EdgeInsets.only(bottom: 12),
+            child: Text(
+              'Your Progress',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w700,
+                color: textPrimary,
               ),
             ),
+          ),
 
-            // Two half-width cards in a row - IntrinsicHeight ensures matching heights
-            IntrinsicHeight(
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Expanded(
-                    child: DailyStatsCard(size: TileSize.half, isDark: isDark),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: QuickLogWeightCard(size: TileSize.half, isDark: isDark),
-                  ),
-                ],
-              ),
+          // Two half-width cards in a row - IntrinsicHeight ensures matching heights
+          IntrinsicHeight(
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Expanded(
+                  child: DailyStatsCard(size: TileSize.half, isDark: isDark),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: QuickLogWeightCard(size: TileSize.half, isDark: isDark),
+                ),
+              ],
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -3308,10 +3298,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       ),
 
       // Quick Actions Row
-      const SliverToBoxAdapter(
+      SliverToBoxAdapter(
         child: Padding(
-          padding: EdgeInsets.only(top: 8, bottom: 8),
-          child: QuickActionsRow(),
+          padding: const EdgeInsets.only(top: 8, bottom: 8),
+          child: const QuickActionsRow(),
         ),
       ),
 

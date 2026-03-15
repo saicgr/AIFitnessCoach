@@ -2,7 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import '../../core/constants/app_colors.dart';
+import '../../core/theme/theme_colors.dart';
 import '../../data/models/today_workout.dart';
 import '../../data/providers/today_workout_provider.dart';
 import '../../widgets/gradient_circular_progress_indicator.dart';
@@ -147,13 +147,14 @@ class _WorkoutLoadingScreenState extends ConsumerState<WorkoutLoadingScreen>
       (_, next) => _onProviderStateChanged(next),
     );
 
+    final colors = ref.colors(context);
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final backgroundColor = isDark ? AppColors.pureBlack : AppColorsLight.pureWhite;
-    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
-    final accentColor = isDark ? AppColors.orange : AppColorsLight.orange;
-    final accentColorLight = isDark ? AppColors.orangeLight : AppColorsLight.orangeLight;
-    final trackColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final backgroundColor = colors.background;
+    final textPrimary = colors.textPrimary;
+    final textSecondary = colors.textSecondary;
+    final accentColor = colors.accent;
+    final accentColorLight = HSLColor.fromColor(colors.accent).withLightness(0.65).toColor();
+    final trackColor = colors.elevated;
 
     final stepLabel = _currentStep < _steps.length
         ? _steps[_currentStep].label
@@ -235,7 +236,7 @@ class _WorkoutLoadingScreenState extends ConsumerState<WorkoutLoadingScreen>
                             if (_progress >= 1.0)
                               Icon(
                                 Icons.check_circle_rounded,
-                                color: AppColors.success,
+                                color: colors.success,
                                 size: 32,
                               )
                             else

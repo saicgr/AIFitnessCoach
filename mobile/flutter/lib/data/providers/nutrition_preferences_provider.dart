@@ -105,23 +105,26 @@ class NutritionPreferencesNotifier extends StateNotifier<NutritionPreferencesSta
     debugPrint('🧹 [NutritionPrefsProvider] In-memory cache cleared');
   }
 
-  /// Initialize nutrition preferences for a user
-  Future<void> initialize(String userId) async {
-    // Skip re-initialization if already loaded and onboarding is complete
-    // The in-memory flag is preserved once set
-    if (state.preferences != null && state.onboardingCompleted) {
-      debugPrint('🥗 [NutritionPrefsProvider] Already initialized and onboarding complete, skipping');
-      return;
-    }
-
-    // Also skip if we already have preferences with backend flag set
-    // This handles the case where we navigated away and back
-    if (state.preferences?.nutritionOnboardingCompleted == true) {
-      debugPrint('🥗 [NutritionPrefsProvider] Backend flag says complete, skipping reinit');
-      if (!state.onboardingCompleted) {
-        state = state.copyWith(onboardingCompleted: true);
+  /// Initialize nutrition preferences for a user.
+  /// Set [forceRefresh] to bypass the in-memory cache and re-fetch from backend.
+  Future<void> initialize(String userId, {bool forceRefresh = false}) async {
+    if (!forceRefresh) {
+      // Skip re-initialization if already loaded and onboarding is complete
+      // The in-memory flag is preserved once set
+      if (state.preferences != null && state.onboardingCompleted) {
+        debugPrint('🥗 [NutritionPrefsProvider] Already initialized and onboarding complete, skipping');
+        return;
       }
-      return;
+
+      // Also skip if we already have preferences with backend flag set
+      // This handles the case where we navigated away and back
+      if (state.preferences?.nutritionOnboardingCompleted == true) {
+        debugPrint('🥗 [NutritionPrefsProvider] Backend flag says complete, skipping reinit');
+        if (!state.onboardingCompleted) {
+          state = state.copyWith(onboardingCompleted: true);
+        }
+        return;
+      }
     }
 
     state = state.copyWith(isLoading: true, clearError: true);

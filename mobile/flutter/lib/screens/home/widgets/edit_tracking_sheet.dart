@@ -27,7 +27,7 @@ class TrackingPillsState {
     this.showBurned = true,
     this.showSteps = false,
     this.showSleep = false,
-    this.showStreak = false,
+    this.showStreak = true,
     this.showHabits = false,
     this.isLoaded = false,
   });
@@ -83,7 +83,7 @@ class TrackingPillsNotifier extends StateNotifier<TrackingPillsState> {
       showBurned: prefs.getBool('${_prefix}burned') ?? true,
       showSteps: prefs.getBool('${_prefix}steps') ?? false,
       showSleep: prefs.getBool('${_prefix}sleep') ?? false,
-      showStreak: prefs.getBool('${_prefix}streak') ?? false,
+      showStreak: prefs.getBool('${_prefix}streak') ?? true,
       showHabits: prefs.getBool('${_prefix}habits') ?? false,
       isLoaded: true,
     );
@@ -258,22 +258,31 @@ class EditTrackingSheet extends ConsumerWidget {
           ),
           const SizedBox(height: 16),
 
-          // Pill toggles
-          for (int i = 0; i < pills.length; i++) ...[
-            _buildPillToggle(
-              context,
-              pills[i],
-              isDark: isDark,
-              textPrimary: textPrimary,
-              textMuted: textMuted,
-              isLastEnabled: pillsState.visibleCount <= 1 && pills[i].enabled,
-              onChanged: (value) {
-                HapticService.light();
-                notifier.toggle(pills[i].key, value);
-              },
+          // Pill toggles (scrollable when content exceeds available space)
+          Flexible(
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  for (int i = 0; i < pills.length; i++) ...[
+                    _buildPillToggle(
+                      context,
+                      pills[i],
+                      isDark: isDark,
+                      textPrimary: textPrimary,
+                      textMuted: textMuted,
+                      isLastEnabled: pillsState.visibleCount <= 1 && pills[i].enabled,
+                      onChanged: (value) {
+                        HapticService.light();
+                        notifier.toggle(pills[i].key, value);
+                      },
+                    ),
+                    if (i < pills.length - 1) const SizedBox(height: 8),
+                  ],
+                ],
+              ),
             ),
-            if (i < pills.length - 1) const SizedBox(height: 8),
-          ],
+          ),
 
           const SizedBox(height: 16),
 

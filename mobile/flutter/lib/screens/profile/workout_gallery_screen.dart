@@ -7,7 +7,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 
 import '../../core/animations/app_animations.dart';
 import '../../core/constants/app_colors.dart';
-import '../../widgets/glass_back_button.dart';
+import '../../widgets/pill_app_bar.dart';
 import '../../widgets/glass_sheet.dart';
 import '../../data/providers/workout_gallery_provider.dart';
 import '../../data/services/api_client.dart';
@@ -130,17 +130,10 @@ class _WorkoutGalleryScreenState extends ConsumerState<WorkoutGalleryScreen> {
 
     return Scaffold(
       backgroundColor: backgroundColor,
-      appBar: AppBar(
-        backgroundColor: backgroundColor,
-        title: const Text('Workout Gallery'),
-        centerTitle: true,
-        automaticallyImplyLeading: false,
-        leading: const GlassBackButton(),
+      appBar: PillAppBar(
+        title: 'Workout Gallery',
         actions: [
-          IconButton(
-            onPressed: _loadImages,
-            icon: const Icon(Icons.refresh_rounded),
-          ),
+          PillAppBarAction(icon: Icons.refresh_rounded, onTap: _loadImages),
         ],
       ),
       body: Column(

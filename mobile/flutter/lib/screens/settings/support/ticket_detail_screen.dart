@@ -6,7 +6,7 @@ import '../../../widgets/app_dialog.dart';
 import '../../../data/providers/support_provider.dart';
 import '../../../data/repositories/auth_repository.dart';
 import '../../../models/support_ticket.dart';
-import '../../../widgets/glass_back_button.dart';
+import '../../../widgets/pill_app_bar.dart';
 
 /// Screen showing ticket details and message thread
 class TicketDetailScreen extends ConsumerStatefulWidget {
@@ -141,64 +141,8 @@ class _TicketDetailScreenState extends ConsumerState<TicketDetailScreen> {
 
     return Scaffold(
       backgroundColor: backgroundColor,
-      appBar: AppBar(
-        backgroundColor: backgroundColor,
-        elevation: 0,
-        automaticallyImplyLeading: false,
-        leading: const GlassBackButton(),
-        title: ticketAsync.when(
-          data: (ticket) => Text(
-            ticket?.ticketNumber ?? 'Ticket',
-            style: TextStyle(
-              fontWeight: FontWeight.bold,
-              color: textPrimary,
-            ),
-          ),
-          loading: () => Text(
-            'Loading...',
-            style: TextStyle(color: textPrimary),
-          ),
-          error: (_, __) => Text(
-            'Error',
-            style: TextStyle(color: textPrimary),
-          ),
-        ),
-        centerTitle: true,
-        actions: [
-          ticketAsync.when(
-            data: (ticket) {
-              if (ticket != null && ticket.canReply) {
-                return PopupMenuButton<String>(
-                  icon: Icon(Icons.more_vert, color: textPrimary),
-                  color: elevated,
-                  onSelected: (value) {
-                    if (value == 'close') {
-                      _closeTicket();
-                    }
-                  },
-                  itemBuilder: (context) => [
-                    PopupMenuItem(
-                      value: 'close',
-                      child: Row(
-                        children: [
-                          const Icon(Icons.close, color: AppColors.error, size: 20),
-                          const SizedBox(width: 12),
-                          Text(
-                            'Close Ticket',
-                            style: TextStyle(color: textPrimary),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                );
-              }
-              return const SizedBox.shrink();
-            },
-            loading: () => const SizedBox.shrink(),
-            error: (_, __) => const SizedBox.shrink(),
-          ),
-        ],
+      appBar: const PillAppBar(
+        title: 'Ticket Detail',
       ),
       body: ticketAsync.when(
         loading: () => const Center(

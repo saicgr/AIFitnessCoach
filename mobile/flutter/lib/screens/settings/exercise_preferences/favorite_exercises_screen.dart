@@ -5,7 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/providers/favorites_provider.dart';
 import '../../../data/repositories/exercise_preferences_repository.dart';
-import '../../../widgets/glass_back_button.dart';
+import '../../../widgets/pill_app_bar.dart';
 import 'widgets/exercise_picker_sheet.dart';
 
 /// Screen for managing favorite exercises.
@@ -78,25 +78,10 @@ class FavoriteExercisesScreen extends ConsumerWidget {
 
     return Scaffold(
       backgroundColor: backgroundColor,
-      appBar: AppBar(
-        backgroundColor: backgroundColor,
-        elevation: 0,
-        automaticallyImplyLeading: false,
-        leading: const GlassBackButton(),
-        title: Text(
-          'Favorite Exercises',
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            color: textPrimary,
-          ),
-        ),
-        centerTitle: true,
+      appBar: PillAppBar(
+        title: 'Favorite Exercises',
         actions: [
-          IconButton(
-            icon: Icon(Icons.add, color: AppColors.error),
-            onPressed: () => _showAddExercisePicker(context, ref),
-            tooltip: 'Add favorite',
-          ),
+          PillAppBarAction(icon: Icons.add, onTap: () => _showAddExercisePicker(context, ref)),
         ],
       ),
       body: body,

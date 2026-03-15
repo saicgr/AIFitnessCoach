@@ -9,7 +9,7 @@ import '../../data/repositories/auth_repository.dart';
 import '../../data/repositories/xp_repository.dart';
 import '../../data/services/api_client.dart';
 import '../../data/services/haptic_service.dart';
-import '../../widgets/glass_back_button.dart';
+import '../../widgets/pill_app_bar.dart';
 
 /// XP Leaderboard screen showing top users by level and XP
 class XPLeaderboardScreen extends ConsumerStatefulWidget {
@@ -81,27 +81,7 @@ class _XPLeaderboardScreenState extends ConsumerState<XPLeaderboardScreen> {
 
     return Scaffold(
       backgroundColor: bgColor,
-      appBar: AppBar(
-        backgroundColor: bgColor,
-        surfaceTintColor: Colors.transparent,
-        automaticallyImplyLeading: false,
-        leading: const GlassBackButton(),
-        title: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(Icons.leaderboard, color: accentColor, size: 24),
-            const SizedBox(width: 8),
-            Text(
-              'XP Leaderboard',
-              style: TextStyle(
-                color: textColor,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ],
-        ),
-        centerTitle: true,
-      ),
+      appBar: const PillAppBar(title: 'XP Leaderboard'),
       body: RefreshIndicator(
         onRefresh: _loadData,
         child: CustomScrollView(

@@ -25,6 +25,9 @@ class WorkoutAgentState(TypedDict):
     media_ref: Optional[Dict[str, Any]]
     media_refs: Optional[List[Dict[str, Any]]]  # Multi-media references for batch comparison
 
+    # Pre-extracted video keyframes (base64 JPEG) — fallback for large videos
+    video_frames: Optional[List[str]]
+
     # Beast mode configuration
     beast_mode_config: Optional[Dict[str, Any]]
 

@@ -187,6 +187,10 @@ class _QuickActionsSheetState extends ConsumerState<_QuickActionsSheet> {
           Navigator.pop(context);
           showMoodPickerSheet(context, widget.ref);
           return;
+        case 'chat':
+          Navigator.pop(context);
+          context.push('/chat');
+          return;
         default:
           Navigator.pop(context);
           if (action.route != null) {
@@ -464,10 +468,43 @@ class _QuickActionsSheetState extends ConsumerState<_QuickActionsSheet> {
               ),
             ),
             Padding(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
               child: Text(
                 'Drag to reorder. Top 4 appear in your shortcut bar.',
                 style: TextStyle(fontSize: 13, color: textMuted),
+              ),
+            ),
+            // Two-row toggle
+            Padding(
+              padding: const EdgeInsets.fromLTRB(8, 0, 8, 8),
+              child: Container(
+                decoration: BoxDecoration(
+                  color: isDark
+                      ? Colors.white.withValues(alpha: 0.06)
+                      : Colors.black.withValues(alpha: 0.04),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: SwitchListTile.adaptive(
+                  dense: true,
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 12),
+                  title: Text(
+                    'Show two rows',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                      color: textColor,
+                    ),
+                  ),
+                  subtitle: Text(
+                    'Display extra shortcuts on home',
+                    style: TextStyle(fontSize: 12, color: textMuted),
+                  ),
+                  value: ref.watch(quickActionsExpandedProvider),
+                  onChanged: (_) {
+                    HapticFeedback.lightImpact();
+                    ref.read(quickActionsExpandedProvider.notifier).toggle();
+                  },
+                ),
               ),
             ),
             // Reorderable list in a constrained height container

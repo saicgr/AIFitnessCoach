@@ -67,6 +67,7 @@ import '../screens/personal_goals/personal_goals_screen.dart';
 import '../screens/paywall/paywall_features_screen.dart';
 import '../screens/paywall/paywall_timeline_screen.dart';
 import '../screens/paywall/paywall_pricing_screen.dart';
+import '../screens/paywall/subscription_success_screen.dart';
 import '../screens/loading/workout_loading_screen.dart';
 import '../screens/profile/workout_gallery_screen.dart';
 // Progress screen removed - functionality merged into Stats screen
@@ -381,6 +382,12 @@ String? _handleAuthRedirect(
   }
 
   // Paywall screens - allow if user hasn't completed paywall yet
+  // Subscription success screen - always allow for logged-in users
+  // (paywall is already marked complete by the time we navigate here)
+  if (loc == '/subscription-success') {
+    return isLoggedIn ? null : '/stats-welcome';
+  }
+
   const paywallScreens = {'/paywall-features', '/paywall-timeline', '/paywall-pricing'};
   if (paywallScreens.contains(loc)) {
     if (isLoggedIn) {
@@ -951,6 +958,11 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/senior-home',
         builder: (context, state) => const SeniorHomeScreen(),
+      ),
+
+      GoRoute(
+        path: '/subscription-success',
+        builder: (context, state) => const SubscriptionSuccessScreen(),
       ),
 
       GoRoute(

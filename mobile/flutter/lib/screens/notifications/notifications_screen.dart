@@ -5,7 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/constants/app_colors.dart';
 import '../../data/providers/unified_notifications_provider.dart';
-import '../../widgets/glass_back_button.dart';
+import '../../widgets/pill_app_bar.dart';
 
 /// Model for a notification item
 class NotificationItem {
@@ -226,51 +226,45 @@ class NotificationsScreen extends ConsumerWidget {
 
     return Scaffold(
       backgroundColor: backgroundColor,
-      appBar: AppBar(
-        backgroundColor: backgroundColor,
-        elevation: 0,
-        automaticallyImplyLeading: false,
-        leading: const GlassBackButton(),
-        title: Text(
-          'Notifications',
-          style: TextStyle(
-            color: textPrimary,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
+      appBar: PillAppBar(
+        title: 'Notifications',
         actions: [
-          PopupMenuButton<String>(
-            icon: Icon(Icons.more_vert, color: textMuted),
-            color: elevatedColor,
-            onSelected: (value) {
-              if (value == 'mark_all_read') {
-                ref.read(notificationsProvider.notifier).markAllAsRead();
-              } else if (value == 'clear_all') {
-                ref.read(notificationsProvider.notifier).clearAll();
-              }
+          PillAppBarAction(
+            icon: Icons.more_vert,
+            onTap: () {
+              showMenu<String>(
+                context: context,
+                position: const RelativeRect.fromLTRB(100, 100, 0, 0),
+                items: [
+                  PopupMenuItem(
+                    value: 'mark_all_read',
+                    child: Row(
+                      children: [
+                        Icon(Icons.done_all, size: 20, color: AppColors.cyan),
+                        const SizedBox(width: 12),
+                        const Text('Mark all as read'),
+                      ],
+                    ),
+                  ),
+                  PopupMenuItem(
+                    value: 'clear_all',
+                    child: Row(
+                      children: [
+                        Icon(Icons.clear_all, size: 20, color: AppColors.error),
+                        const SizedBox(width: 12),
+                        const Text('Clear all'),
+                      ],
+                    ),
+                  ),
+                ],
+              ).then((value) {
+                if (value == 'mark_all_read') {
+                  ref.read(notificationsProvider.notifier).markAllAsRead();
+                } else if (value == 'clear_all') {
+                  ref.read(notificationsProvider.notifier).clearAll();
+                }
+              });
             },
-            itemBuilder: (context) => [
-              PopupMenuItem(
-                value: 'mark_all_read',
-                child: Row(
-                  children: [
-                    Icon(Icons.done_all, size: 20, color: AppColors.cyan),
-                    const SizedBox(width: 12),
-                    const Text('Mark all as read'),
-                  ],
-                ),
-              ),
-              PopupMenuItem(
-                value: 'clear_all',
-                child: Row(
-                  children: [
-                    Icon(Icons.clear_all, size: 20, color: AppColors.error),
-                    const SizedBox(width: 12),
-                    const Text('Clear all'),
-                  ],
-                ),
-              ),
-            ],
           ),
         ],
       ),

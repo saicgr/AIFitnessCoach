@@ -1,12 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants/app_colors.dart';
 import '../glass_back_button.dart';
-import '../floating_chat/floating_chat_overlay.dart';
 
 /// Simplified bottom navigation for Senior Mode
-/// 4 items: Home, Workouts, Food, Settings + AI Coach floating button
+/// 4 items: Home, Workouts, Food, Settings
 class SeniorBottomNav extends StatelessWidget {
   final int currentIndex;
   final ValueChanged<int> onTap;
@@ -146,7 +144,6 @@ class SeniorScaffold extends ConsumerWidget {
   final Widget? floatingActionButton;
   final bool showBackButton;
   final VoidCallback? onBack;
-  final bool showAICoachButton;
 
   const SeniorScaffold({
     super.key,
@@ -158,7 +155,6 @@ class SeniorScaffold extends ConsumerWidget {
     this.floatingActionButton,
     this.showBackButton = false,
     this.onBack,
-    this.showAICoachButton = true,
   });
 
   @override
@@ -192,68 +188,11 @@ class SeniorScaffold extends ConsumerWidget {
         ),
         actions: actions,
       ),
-      body: Stack(
-        children: [
-          body,
-          // Floating AI Coach button
-          if (showAICoachButton)
-            Positioned(
-              right: 20,
-              bottom: 16,
-              child: _SeniorAICoachButton(
-                onTap: () {
-                  HapticFeedback.mediumImpact();
-                  showChatBottomSheet(context, ref);
-                },
-              ),
-            ),
-        ],
-      ),
+      body: body,
       floatingActionButton: floatingActionButton,
       bottomNavigationBar: SeniorBottomNav(
         currentIndex: currentIndex,
         onTap: onNavTap,
-      ),
-    );
-  }
-}
-
-/// Large AI Coach button for Senior Mode
-class _SeniorAICoachButton extends StatelessWidget {
-  final VoidCallback onTap;
-
-  const _SeniorAICoachButton({required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: 64,
-        height: 64,
-        decoration: BoxDecoration(
-          gradient: const LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [AppColors.purple, AppColors.cyan],
-          ),
-          borderRadius: BorderRadius.circular(32),
-          boxShadow: [
-            BoxShadow(
-              color: AppColors.cyan.withValues(alpha: 0.4),
-              blurRadius: 16,
-              offset: const Offset(0, 4),
-              spreadRadius: 2,
-            ),
-          ],
-        ),
-        child: const Center(
-          child: Icon(
-            Icons.auto_awesome,
-            color: Colors.white,
-            size: 32,
-          ),
-        ),
       ),
     );
   }

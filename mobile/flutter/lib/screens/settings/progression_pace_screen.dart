@@ -3,7 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
-import '../../widgets/glass_back_button.dart';
+import '../../widgets/pill_app_bar.dart';
 
 final progressionPaceProvider = StateNotifierProvider<ProgressionPaceNotifier, ProgressionPaceState>((ref) => ProgressionPaceNotifier());
 
@@ -51,8 +51,8 @@ class _ProgressionPaceScreenState extends ConsumerState<ProgressionPaceScreen> {
     final st = ref.watch(progressionPaceProvider);
     return Scaffold(
       backgroundColor: bg,
-      appBar: AppBar(backgroundColor: bg, elevation: 0, automaticallyImplyLeading: false, leading: const GlassBackButton(), title: Text('Progression Pace', style: TextStyle(fontWeight: FontWeight.bold, color: tp)), centerTitle: true),
-      body: SafeArea(child: st.isLoading ? const Center(child: CircularProgressIndicator()) : SingleChildScrollView(padding: const EdgeInsets.all(16), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      appBar: const PillAppBar(title: 'Progression Pace'),
+      body: st.isLoading ? const Center(child: CircularProgressIndicator()) : SingleChildScrollView(padding: const EdgeInsets.all(16), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         _buildInfoCard(d, tp, tm),
         const SizedBox(height: 24),
         _section('Progression Speed', tp),
@@ -71,7 +71,7 @@ class _ProgressionPaceScreenState extends ConsumerState<ProgressionPaceScreen> {
         if (st.autoDeload) ...[const SizedBox(height: 12), _buildDeloadFrequency(st, d, tp, tm, el)],
         const SizedBox(height: 32),
         _buildSaveButton(st, d),
-      ]))),
+      ])),
     );
   }
 

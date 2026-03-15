@@ -13,6 +13,7 @@ import 'package:flutter/services.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/workout_design.dart';
+import '../../../widgets/app_tour/app_tour_controller.dart';
 import '../../../core/theme/accent_color_provider.dart';
 import '../../../data/models/exercise.dart';
 import '../../../widgets/glass_sheet.dart';
@@ -286,7 +287,7 @@ class _SetTrackingTableState extends State<SetTrackingTable> {
       // Insert RIR quick-select bar below the active set row
       if (set.isActive && !set.isCompleted && widget.onActiveRirChanged != null) {
         setRows.add(_RirQuickSelectBar(
-          key: const ValueKey('rir_quick_select'),
+          key: AppTourKeys.rirBarKey,
           selectedRir: widget.activeRir,
           onRirSelected: widget.onActiveRirChanged!,
           isDark: isDark,

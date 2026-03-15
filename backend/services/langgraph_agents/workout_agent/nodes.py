@@ -152,8 +152,8 @@ def should_use_tools(state: WorkoutAgentState) -> Literal["agent", "respond"]:
     SIMPLE: Always give the LLM access to tools. Let the AI decide.
     The LLM is smart enough to know when to modify workouts vs just answer questions.
     """
-    # If media is attached, always route to agent for form analysis tool
-    if state.get("media_ref"):
+    # If media is attached (including inline video or pre-extracted frames), always route to agent
+    if state.get("media_ref") or state.get("video_frames"):
         logger.info("[Workout Router] -> agent (media attached, form analysis)")
         return "agent"
 
@@ -210,8 +210,9 @@ async def workout_agent_node(state: WorkoutAgentState) -> Dict[str, Any]:
     if state.get("rag_context_formatted"):
         context_parts.append(f"\nPrevious context:\n{state['rag_context_formatted']}")
 
-    # Media context for form analysis (single media)
+    # Media context for form analysis (single media or pre-extracted frames)
     media_ref = state.get("media_ref")
+    video_frames = state.get("video_frames")
     if media_ref:
         media_type = media_ref.get("media_type", "media")
         context_parts.append(f"\nHAS_MEDIA: The user has uploaded a {media_type} for form analysis.")
@@ -220,6 +221,10 @@ async def workout_agent_node(state: WorkoutAgentState) -> Dict[str, Any]:
         context_parts.append(f"Media type: {media_type}")
         if media_ref.get("duration_seconds"):
             context_parts.append(f"Duration: {media_ref['duration_seconds']:.1f}s")
+        context_parts.append("You MUST call check_exercise_form to analyze their form.")
+    elif video_frames:
+        context_parts.append(f"\nHAS_MEDIA: The user has uploaded a video for form analysis ({len(video_frames)} keyframes pre-extracted).")
+        context_parts.append("Media type: video")
         context_parts.append("You MUST call check_exercise_form to analyze their form.")
 
     # Multi-media context for form comparison
@@ -279,8 +284,8 @@ async def workout_agent_node(state: WorkoutAgentState) -> Dict[str, Any]:
     llm = get_langchain_llm(temperature=0.7)
 
     # Force tool choice based on context
-    if media_ref:
-        # Single media attached -> force form analysis
+    if media_ref or video_frames:
+        # Single media or pre-extracted frames attached -> force form analysis
         llm_with_tools = llm.bind_tools(
             WORKOUT_TOOLS,
             tool_choice="check_exercise_form"
@@ -431,14 +436,29 @@ async def workout_tool_executor_node(state: WorkoutAgentState) -> Dict[str, Any]
         tool_id = tool_call.get("id", tool_name)
 
         # Auto-inject media_ref fields for check_exercise_form
-        if tool_name == "check_exercise_form" and media_ref:
-            tool_args["s3_key"] = media_ref.get("s3_key", tool_args.get("s3_key", ""))
-            tool_args["mime_type"] = media_ref.get("mime_type", tool_args.get("mime_type", ""))
-            tool_args["media_type"] = media_ref.get("media_type", tool_args.get("media_type", ""))
-            if "user_id" not in tool_args or not tool_args["user_id"]:
+        if tool_name == "check_exercise_form":
+            if media_ref:
+                tool_args["s3_key"] = media_ref.get("s3_key", tool_args.get("s3_key", ""))
+                tool_args["mime_type"] = media_ref.get("mime_type", tool_args.get("mime_type", ""))
+                tool_args["media_type"] = media_ref.get("media_type", tool_args.get("media_type", "video"))
+            elif not tool_args.get("s3_key"):
+                # No media_ref but may have video_frames — set defaults
+                tool_args["s3_key"] = ""
+                tool_args["mime_type"] = tool_args.get("mime_type", "video/mp4")
+                tool_args["media_type"] = tool_args.get("media_type", "video")
+            if "user_id" not in tool_args or not tool_args["user_id"] or str(tool_args["user_id"]) in ("None", "null", ""):
                 tool_args["user_id"] = str(user_id_for_tools) if user_id_for_tools else ""
             if not tool_args.get("user_message"):
                 tool_args["user_message"] = state.get("user_message", "")
+            video_frames = state.get("video_frames")
+            if video_frames:
+                tool_args["video_frames"] = video_frames
+            # If Gemini file already uploaded, pass it through (skips S3 download)
+            gemini_file_name = None
+            if media_ref:
+                gemini_file_name = media_ref.get("gemini_file_name")
+            if gemini_file_name:
+                tool_args["gemini_file_name"] = gemini_file_name
 
         # Auto-inject media_refs fields for compare_exercise_form
         if tool_name == "compare_exercise_form" and media_refs:
@@ -446,7 +466,7 @@ async def workout_tool_executor_node(state: WorkoutAgentState) -> Dict[str, Any]
             if video_refs:
                 tool_args["s3_keys"] = ",".join(r.get("s3_key", "") for r in video_refs)
                 tool_args["mime_types"] = ",".join(r.get("mime_type", "") for r in video_refs)
-            if "user_id" not in tool_args or not tool_args["user_id"]:
+            if "user_id" not in tool_args or not tool_args["user_id"] or str(tool_args["user_id"]) in ("None", "null", ""):
                 tool_args["user_id"] = str(user_id_for_tools) if user_id_for_tools else ""
             if not tool_args.get("user_message"):
                 tool_args["user_message"] = state.get("user_message", "")

@@ -4,7 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants/app_colors.dart';
 import '../../data/providers/social_provider.dart';
 import '../../data/repositories/auth_repository.dart';
-import '../../widgets/glass_back_button.dart';
+import '../../widgets/pill_app_bar.dart';
 import 'widgets/activity_card.dart';
 import 'widgets/comments_sheet.dart';
 import '../../widgets/glass_sheet.dart';
@@ -163,13 +163,7 @@ class _HashtagFeedScreenState extends ConsumerState<HashtagFeedScreen> {
 
     return Scaffold(
       backgroundColor: backgroundColor,
-      appBar: AppBar(
-        backgroundColor: backgroundColor,
-        automaticallyImplyLeading: false,
-        leading: const GlassBackButton(),
-        title: Text('#${widget.hashtagName}'),
-        centerTitle: true,
-      ),
+      appBar: PillAppBar(title: '#${widget.hashtagName}'),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : _error != null && _posts.isEmpty
