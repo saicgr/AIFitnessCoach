@@ -11,7 +11,7 @@ from datetime import datetime
 
 from langchain_core.messages import HumanMessage, SystemMessage, AIMessage, ToolMessage
 
-from core.gemini_client import get_langchain_llm
+from core.gemini_client import get_langchain_llm, sanitize_messages_for_response
 from .state import WorkoutAgentState
 from ..tools import (
     add_exercise_to_workout,
@@ -556,10 +556,23 @@ IMPORTANT:
     messages = state.get("messages", [])
     tool_messages = state.get("tool_messages", [])
 
-    # Log message types for debugging thought_signature flow
-    logger.debug(f"[Workout Response] Message types: {[type(m).__name__ for m in messages]}")
+    # Sanitize: remove AIMessages with tool_calls and ToolMessages to avoid
+    # Gemini thought_signature round-trip errors (stripped by LangChain serialization)
+    clean_messages = sanitize_messages_for_response(messages + tool_messages)
 
-    messages_with_system = [SystemMessage(content=system_prompt)] + messages + tool_messages
+    # Add tool results as a HumanMessage so the LLM has context to respond to
+    tool_results_summary = []
+    for result in state.get("tool_results", []):
+        if isinstance(result, dict):
+            msg = result.get("message", "")
+            if msg:
+                tool_results_summary.append(msg[:500])
+    if tool_results_summary:
+        clean_messages.append(HumanMessage(
+            content="[SYSTEM: The following actions were completed]\n" + "\n".join(tool_results_summary)
+        ))
+
+    messages_with_system = [SystemMessage(content=system_prompt)] + clean_messages
 
     llm = get_langchain_llm(temperature=0.7)
 

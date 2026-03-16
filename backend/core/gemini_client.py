@@ -126,3 +126,22 @@ def get_langchain_llm(
         kwargs["model_kwargs"] = model_kwargs
 
     return ChatGoogleGenerativeAI(**kwargs)
+
+
+def sanitize_messages_for_response(messages):
+    """Remove AIMessages with tool_calls and ToolMessages to avoid thought_signature errors.
+
+    Gemini thinking models embed thought_signature tokens in function call parts.
+    LangChain strips these during AIMessage serialization. On the tool-result
+    round-trip, Gemini rejects the request with "Function call is missing a
+    thought_signature". This function removes the problematic messages so the
+    response node can generate a clean reply using only the system prompt context
+    and conversation history.
+    """
+    from langchain_core.messages import AIMessage, ToolMessage
+
+    return [
+        m for m in messages
+        if not isinstance(m, ToolMessage)
+        and not (isinstance(m, AIMessage) and getattr(m, "tool_calls", None))
+    ]

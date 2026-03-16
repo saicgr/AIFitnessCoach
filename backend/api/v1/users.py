@@ -256,6 +256,10 @@ async def google_auth(request: Request, body: GoogleAuthRequest,
 
         if existing:
             logger.info(f"Existing user found: id={existing['id']}")
+            # Ensure 'fitwiz' is in the apps list
+            current_apps = existing.get("apps") or []
+            if "fitwiz" not in current_apps:
+                db.update_user(existing["id"], {"apps": current_apps + ["fitwiz"]})
             return row_to_user(existing)
 
         # Create new user
@@ -285,6 +289,7 @@ async def google_auth(request: Request, body: GoogleAuthRequest,
             "equipment": "[]",  # VARCHAR column - needs JSON string
             "preferences": {"name": full_name, "email": email},  # JSONB - can be dict
             "active_injuries": [],  # JSONB - can be list
+            "apps": ["fitwiz"],  # Track which apps this user uses
         }
 
         created = db.create_user(new_user_data)
