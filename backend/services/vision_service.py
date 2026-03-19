@@ -158,7 +158,7 @@ Guidelines:
             gen_config = types.GenerateContentConfig(
                 response_mime_type="application/json",
                 response_schema=FoodAnalysisResponse,
-                max_output_tokens=3000,
+                max_output_tokens=1500,
                 temperature=0.3,
             )
             if cache_name:

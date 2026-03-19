@@ -7,6 +7,7 @@ logging food from text descriptions, and retrieving recent meals.
 
 from typing import Dict, Any, List, Optional
 from datetime import datetime
+import asyncio
 import json
 
 from langchain_core.tools import tool
@@ -26,7 +27,7 @@ def _get_gemini_service():
 
 
 @tool
-def analyze_food_image(
+async def analyze_food_image(
     user_id: str,
     image_base64: str,
     user_message: str = None
@@ -34,7 +35,7 @@ def analyze_food_image(
     """
     Analyze a food image to estimate calories, macros, and nutritional content.
 
-    Uses GPT-4o-mini Vision to analyze the food in the image.
+    Uses Gemini Vision to analyze the food in the image.
 
     Args:
         user_id: The user's ID (UUID string)
@@ -66,10 +67,10 @@ def analyze_food_image(
             if user_message:
                 user_context = f"{user_context or ''}\nUser says: {user_message}"
 
-        # Analyze the image using Vision service
-        analysis_result = run_async_in_sync(
+        # Analyze the image using Vision service (async — stays on main event loop)
+        analysis_result = await asyncio.wait_for(
             vision_service.analyze_food_image(image_base64, user_context),
-            timeout=60
+            timeout=90
         )
 
         # VisionService returns the result directly (not wrapped in success/data)
@@ -82,7 +83,7 @@ def analyze_food_image(
             }
 
         # Apply calorie estimate bias (AI estimates only)
-        bias = run_async_in_sync(get_user_calorie_bias(user_id), timeout=10)
+        bias = await asyncio.wait_for(get_user_calorie_bias(user_id), timeout=10)
         if bias != 0:
             analysis_result = apply_calorie_bias(analysis_result, bias)
 
@@ -165,6 +166,14 @@ def analyze_food_image(
             "message": message
         }
 
+    except asyncio.TimeoutError:
+        logger.error(f"Food image analysis timed out after 90s for user {user_id}")
+        return {
+            "success": False,
+            "action": "analyze_food_image",
+            "user_id": user_id,
+            "message": "Food analysis timed out. Please try again."
+        }
     except Exception as e:
         logger.error(f"Analyze food image failed: {e}")
         return {
@@ -176,7 +185,7 @@ def analyze_food_image(
 
 
 @tool
-def analyze_multi_food_images(
+async def analyze_multi_food_images(
     user_id: str,
     s3_keys: List[str],
     mime_types: List[str],
@@ -241,7 +250,7 @@ def analyze_multi_food_images(
                     nutrition_context["remaining"] = remaining
 
         # Call vision service for multi-image analysis
-        analysis_result = run_async_in_sync(
+        analysis_result = await asyncio.wait_for(
             vision_service.analyze_food_from_s3_keys(
                 s3_keys=s3_keys,
                 mime_types=mime_types,
@@ -265,7 +274,7 @@ def analyze_multi_food_images(
         # For plate mode: apply calorie bias and auto-save
         if actual_mode == "plate":
             # Apply calorie estimate bias
-            bias = run_async_in_sync(get_user_calorie_bias(user_id), timeout=10)
+            bias = await asyncio.wait_for(get_user_calorie_bias(user_id), timeout=10)
             if bias != 0:
                 analysis_result = apply_calorie_bias(analysis_result, bias)
 
@@ -374,6 +383,14 @@ def analyze_multi_food_images(
             "message": message,
         }
 
+    except asyncio.TimeoutError:
+        logger.error(f"Multi food image analysis timed out for user {user_id}")
+        return {
+            "success": False,
+            "action": "analyze_multi_food_images",
+            "user_id": user_id,
+            "message": "Food analysis timed out. Please try again.",
+        }
     except Exception as e:
         logger.error(f"Analyze multi food images failed: {e}")
         return {
@@ -385,7 +402,7 @@ def analyze_multi_food_images(
 
 
 @tool
-def parse_app_screenshot(
+async def parse_app_screenshot(
     user_id: str,
     s3_keys: List[str] = None,
     mime_types: List[str] = None,
@@ -418,7 +435,7 @@ def parse_app_screenshot(
         mime_type = mime_types[0] if mime_types else "image/jpeg"
 
         # Analyze the screenshot
-        analysis_result = run_async_in_sync(
+        analysis_result = await asyncio.wait_for(
             vision_service.analyze_app_screenshot(
                 image_base64=image_base64,
                 s3_key=s3_key,
@@ -437,7 +454,7 @@ def parse_app_screenshot(
             }
 
         # Apply calorie bias
-        bias = run_async_in_sync(get_user_calorie_bias(user_id), timeout=10)
+        bias = await asyncio.wait_for(get_user_calorie_bias(user_id), timeout=10)
         if bias != 0:
             analysis_result = apply_calorie_bias(analysis_result, bias)
 
@@ -530,7 +547,7 @@ def parse_app_screenshot(
 
 
 @tool
-def parse_nutrition_label(
+async def parse_nutrition_label(
     user_id: str,
     s3_keys: List[str] = None,
     mime_types: List[str] = None,
@@ -565,7 +582,7 @@ def parse_nutrition_label(
         mime_type = mime_types[0] if mime_types else "image/jpeg"
 
         # Analyze the nutrition label
-        analysis_result = run_async_in_sync(
+        analysis_result = await asyncio.wait_for(
             vision_service.analyze_nutrition_label(
                 image_base64=image_base64,
                 s3_key=s3_key,
@@ -585,7 +602,7 @@ def parse_nutrition_label(
             }
 
         # Apply calorie bias
-        bias = run_async_in_sync(get_user_calorie_bias(user_id), timeout=10)
+        bias = await asyncio.wait_for(get_user_calorie_bias(user_id), timeout=10)
         if bias != 0:
             analysis_result = apply_calorie_bias(analysis_result, bias)
 
@@ -862,7 +879,7 @@ def get_recent_meals(
 
 
 @tool
-def log_food_from_text(
+async def log_food_from_text(
     user_id: str,
     food_description: str,
     meal_type: str = None
@@ -929,7 +946,7 @@ def log_food_from_text(
             logger.warning(f"Could not fetch nutrition_preferences: {e}")
 
         # Parse the food description using Gemini
-        analysis_result = run_async_in_sync(
+        analysis_result = await asyncio.wait_for(
             gemini_service.parse_food_description(
                 description=food_description,
                 user_goals=user_goals if user_goals else None,
@@ -947,7 +964,7 @@ def log_food_from_text(
             }
 
         # Apply calorie estimate bias (AI estimates only)
-        bias = run_async_in_sync(get_user_calorie_bias(user_id), timeout=10)
+        bias = await asyncio.wait_for(get_user_calorie_bias(user_id), timeout=10)
         if bias != 0:
             analysis_result = apply_calorie_bias(analysis_result, bias)
 

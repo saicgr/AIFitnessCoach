@@ -30,25 +30,11 @@ async def readiness_check():
 
 @router.get("/debug/gemini")
 async def debug_gemini():
-    """Debug endpoint to test Gemini API connectivity."""
-    from services.gemini_service import GeminiService
-
-    result = {
+    """Debug endpoint - shows Gemini config without making API calls."""
+    return {
         "model": settings.gemini_model,
         "embedding_model": settings.gemini_embedding_model,
         "api_key_set": bool(settings.gemini_api_key),
-        "api_key_prefix": settings.gemini_api_key[:10] + "..." if settings.gemini_api_key else None,
+        "cache_enabled": getattr(settings, 'gemini_cache_enabled', False),
+        "status": "configured",
     }
-
-    try:
-        service = GeminiService()
-        extraction = await service.extract_intent("Hello")
-        result["gemini_test"] = "success"
-        result["intent"] = extraction.intent.value
-    except Exception as e:
-        result["gemini_test"] = "failed"
-        result["error"] = str(e)
-        result["error_type"] = type(e).__name__
-        logger.error(f"Gemini debug test failed: {e}")
-
-    return result

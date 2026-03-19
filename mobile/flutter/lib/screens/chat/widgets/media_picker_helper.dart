@@ -156,8 +156,8 @@ class MediaPickerHelper {
   /// Pick an image from the given source
   static Future<PickedMedia?> pickImage(ImageSource source, {BuildContext? context}) async {
     try {
-      // Check permissions when context is provided
-      if (context != null) {
+      // Check permissions when context is provided and still mounted
+      if (context != null && context.mounted) {
         if (source == ImageSource.camera) {
           if (!await _requestCameraPermission(context)) return null;
         } else {
@@ -210,7 +210,7 @@ class MediaPickerHelper {
   /// Pick multiple images from gallery (max 5)
   static Future<List<PickedMedia>> pickMultipleImages({BuildContext? context}) async {
     try {
-      if (context != null) {
+      if (context != null && context.mounted) {
         if (!await _requestGalleryPermission(context)) return [];
       }
 
@@ -255,8 +255,8 @@ class MediaPickerHelper {
   /// Pick a video from the given source with auto-compression
   static Future<PickedMedia?> pickVideo(ImageSource source, {BuildContext? context}) async {
     try {
-      // Check permissions when context is provided
-      if (context != null) {
+      // Check permissions when context is provided and still mounted
+      if (context != null && context.mounted) {
         if (source == ImageSource.camera) {
           if (!await _requestCameraPermission(context)) return null;
         } else {

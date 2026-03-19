@@ -155,7 +155,8 @@ class UnifiedNotificationsNotifier extends StateNotifier<AsyncValue<List<Unified
 
   UnifiedNotificationsNotifier(this._ref) : super(const AsyncValue.loading()) {
     _loadAll();
-    _startPolling();
+    // TODO: Re-enable when social features are launched
+    // _startPolling();
     // Re-fetch when auth state changes (userId becomes available after login)
     _ref.listen<String?>(currentUserIdProvider, (prev, next) {
       if (prev != next && next != null) {
@@ -211,43 +212,45 @@ class UnifiedNotificationsNotifier extends StateNotifier<AsyncValue<List<Unified
         }
       }
 
+      // TODO: Re-enable when social features are launched
       // Fetch pending friend requests
-      List<UnifiedNotification> friendRequestUnified = [];
-      if (userId != null) {
-        try {
-          final socialService = _ref.read(socialServiceProvider);
-          final requests = await socialService.getReceivedFriendRequests(
-            userId: userId,
-            status: 'pending',
-          );
-          friendRequestUnified = requests
-              .map((r) => UnifiedNotification.fromFriendRequest(r))
-              .toList();
-        } catch (e) {
-          debugPrint('🔔 [UnifiedNotifications] Error fetching friend requests: $e');
-        }
-      }
+      // List<UnifiedNotification> friendRequestUnified = [];
+      // if (userId != null) {
+      //   try {
+      //     final socialService = _ref.read(socialServiceProvider);
+      //     final requests = await socialService.getReceivedFriendRequests(
+      //       userId: userId,
+      //       status: 'pending',
+      //     );
+      //     friendRequestUnified = requests
+      //         .map((r) => UnifiedNotification.fromFriendRequest(r))
+      //         .toList();
+      //   } catch (e) {
+      //     debugPrint('🔔 [UnifiedNotifications] Error fetching friend requests: $e');
+      //   }
+      // }
 
+      // TODO: Re-enable when social features are launched
       // Fetch social notifications (reactions, comments, mentions)
-      List<UnifiedNotification> socialUnified = [];
-      if (userId != null) {
-        try {
-          final socialService = _ref.read(socialServiceProvider);
-          final response = await socialService.getSocialNotifications(
-            userId: userId,
-            limit: 50,
-          );
-          final items = response['notifications'] as List<dynamic>? ?? [];
-          socialUnified = items
-              .map((n) => UnifiedNotification.fromSocialNotification(n as Map<String, dynamic>))
-              .toList();
-        } catch (e) {
-          debugPrint('🔔 [UnifiedNotifications] Error fetching social notifications: $e');
-        }
-      }
+      // List<UnifiedNotification> socialUnified = [];
+      // if (userId != null) {
+      //   try {
+      //     final socialService = _ref.read(socialServiceProvider);
+      //     final response = await socialService.getSocialNotifications(
+      //       userId: userId,
+      //       limit: 50,
+      //     );
+      //     final items = response['notifications'] as List<dynamic>? ?? [];
+      //     socialUnified = items
+      //         .map((n) => UnifiedNotification.fromSocialNotification(n as Map<String, dynamic>))
+      //         .toList();
+      //   } catch (e) {
+      //     debugPrint('🔔 [UnifiedNotifications] Error fetching social notifications: $e');
+      //   }
+      // }
 
       // Merge and sort by timestamp (newest first)
-      final all = [...socialUnified, ...challengeUnified, ...friendRequestUnified, ...localUnified];
+      final all = [...challengeUnified, ...localUnified];
       all.sort((a, b) => b.timestamp.compareTo(a.timestamp));
 
       state = AsyncValue.data(all);

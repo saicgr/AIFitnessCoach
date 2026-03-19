@@ -79,6 +79,28 @@ _intent_cache = RedisCache(prefix="intent", ttl_seconds=600, max_size=200)      
 _food_text_cache = RedisCache(prefix="food_text", ttl_seconds=1800, max_size=150) # 30min for food text analysis
 _embedding_cache = RedisCache(prefix="embedding", ttl_seconds=3600, max_size=100) # 1hr for embedding vectors (reduced for 512MB)
 
+# Token usage logger for cost tracking
+_token_logger = logging.getLogger("token_usage")
+
+
+def _log_token_usage(response, method_name: str, user_id: str = "unknown") -> None:
+    """Log token usage from a Gemini API response for cost tracking."""
+    try:
+        if response is None:
+            return
+        usage = getattr(response, 'usage_metadata', None)
+        if usage is None:
+            return
+        input_tokens = getattr(usage, 'prompt_token_count', 0) or 0
+        output_tokens = getattr(usage, 'candidates_token_count', 0) or 0
+        cached_tokens = getattr(usage, 'cached_content_token_count', 0) or 0
+        _token_logger.info(
+            f"[Tokens] user={user_id} method={method_name} "
+            f"in={input_tokens} out={output_tokens} cached={cached_tokens}"
+        )
+    except Exception:
+        pass  # Never let logging break a request
+
 
 def safe_join_list(items, default: str = "") -> str:
     """
@@ -450,7 +472,6 @@ class GeminiService:
     _nutrition_analysis_cache: Optional[str] = None
     _nutrition_analysis_cache_created_at: Optional[datetime] = None
     _nutrition_cache_lock = None  # Will be initialized as asyncio.Lock()
-    _cache_refresh_task = None  # Background refresh task
     _initialized = False
 
     def __init__(self):
@@ -471,26 +492,24 @@ class GeminiService:
         Call this from your FastAPI lifespan or startup event.
 
         This will:
-        1. Clean up any orphaned caches from previous server runs
-        2. Pre-warm the cache so first request is fast
-        3. Start background refresh task
+        1. Clean up DUPLICATE caches (keep one per type, delete extras)
+        2. Pre-warm caches by reusing existing server-side caches when possible
+        No background refresh — caches refresh on-demand when requests come in.
         """
         if cls._initialized:
             logger.info("[CacheManager] Already initialized")
             return
 
         cls._initialized = True
-        logger.info("[CacheManager] Initializing automatic cache management...")
+        logger.info("[CacheManager] Initializing cache management (demand-driven, no background refresh)...")
 
-        # Clean up old caches first
+        # Clean up duplicate caches (keep one per type)
         await cls._cleanup_old_caches()
 
-        # Pre-warm the cache
+        # Pre-warm by adopting existing server-side caches or creating new ones
         await cls._prewarm_cache()
 
-        # Start background refresh task
-        cls._cache_refresh_task = asyncio.create_task(cls._background_cache_refresh())
-        logger.info("✅ [CacheManager] Automatic cache management started")
+        logger.info("✅ [CacheManager] Cache management initialized (demand-driven)")
 
     @classmethod
     async def shutdown_cache_manager(cls):
@@ -498,215 +517,169 @@ class GeminiService:
         Shutdown the cache manager gracefully.
         Call this from your FastAPI shutdown event.
         """
-        if cls._cache_refresh_task:
-            cls._cache_refresh_task.cancel()
-            try:
-                await cls._cache_refresh_task
-            except asyncio.CancelledError:
-                pass
-            cls._cache_refresh_task = None
+        cls._initialized = False
         logger.info("[CacheManager] Cache manager shut down")
 
     @classmethod
     async def _cleanup_old_caches(cls):
-        """Clean up orphaned workout/form/nutrition caches from previous server runs."""
+        """Deduplicate caches: keep one per type, delete extras. Adopt surviving caches."""
         try:
-            deleted_count = 0
+            # Group caches by display_name prefix
+            cache_groups: Dict[str, list] = {}
             cache_prefixes = ("workout_generation", "form_analysis", "nutrition_analysis")
+
             for cache in client.caches.list():
-                # Delete our managed caches
-                if cache.display_name and any(p in cache.display_name for p in cache_prefixes):
+                if not cache.display_name:
+                    continue
+                for prefix in cache_prefixes:
+                    if prefix in cache.display_name:
+                        cache_groups.setdefault(prefix, []).append(cache)
+                        break
+
+            deleted_count = 0
+            for prefix, caches in cache_groups.items():
+                if len(caches) <= 1:
+                    # One or zero caches — adopt it if it exists
+                    if caches:
+                        cls._adopt_existing_cache(prefix, caches[0])
+                    continue
+
+                # Sort by create_time descending (keep newest), fallback to name
+                caches.sort(key=lambda c: getattr(c, 'create_time', '') or '', reverse=True)
+                keeper = caches[0]
+                cls._adopt_existing_cache(prefix, keeper)
+                logger.info(f"[CacheManager] Keeping cache {keeper.name} for {prefix}")
+
+                # Delete duplicates
+                for dup in caches[1:]:
                     try:
-                        client.caches.delete(name=cache.name)
+                        client.caches.delete(name=dup.name)
                         deleted_count += 1
-                        logger.info(f"[CacheManager] Cleaned up old cache: {cache.name}")
+                        logger.info(f"[CacheManager] Deleted duplicate cache: {dup.name}")
                     except Exception as e:
-                        logger.warning(f"[CacheManager] Failed to delete cache {cache.name}: {e}")
+                        logger.warning(f"[CacheManager] Failed to delete cache {dup.name}: {e}")
 
             if deleted_count > 0:
-                logger.info(f"[CacheManager] Cleaned up {deleted_count} old cache(s)")
+                logger.info(f"[CacheManager] Cleaned up {deleted_count} duplicate cache(s)")
         except Exception as e:
             logger.warning(f"[CacheManager] Cache cleanup failed: {e}")
 
     @classmethod
+    def _adopt_existing_cache(cls, prefix: str, cache) -> None:
+        """Adopt an existing server-side cache into the in-memory class variables."""
+        now = datetime.now()
+        # Estimate remaining TTL — assume ~50 min if we can't determine exact age
+        if prefix == "workout_generation":
+            cls._workout_cache = cache.name
+            cls._workout_cache_created_at = now
+            logger.info(f"[CacheManager] Adopted existing workout cache: {cache.name}")
+        elif prefix == "form_analysis":
+            cls._form_analysis_cache = cache.name
+            cls._form_analysis_cache_created_at = now
+            logger.info(f"[CacheManager] Adopted existing form analysis cache: {cache.name}")
+        elif prefix == "nutrition_analysis":
+            cls._nutrition_analysis_cache = cache.name
+            cls._nutrition_analysis_cache_created_at = now
+            logger.info(f"[CacheManager] Adopted existing nutrition analysis cache: {cache.name}")
+
+    @classmethod
     async def _prewarm_cache(cls):
-        """Pre-warm all caches on server startup so first request is fast."""
+        """Pre-warm caches that weren't already adopted from the server."""
         try:
             service = cls()
-            cache_name = await service._get_or_create_workout_cache()
-            if cache_name:
-                logger.info(f"✅ [CacheManager] Workout cache pre-warmed: {cache_name}")
-            else:
-                logger.warning("[CacheManager] Workout cache pre-warm failed, will retry on first request")
 
-            # Also prewarm form and nutrition caches if enabled
+            # Only create caches that don't already exist (adopted from cleanup)
+            if not cls._workout_cache:
+                cache_name = await service._get_or_create_workout_cache()
+                if cache_name:
+                    logger.info(f"✅ [CacheManager] Workout cache pre-warmed: {cache_name}")
+                else:
+                    logger.warning("[CacheManager] Workout cache pre-warm failed, will create on first request")
+            else:
+                logger.info(f"[CacheManager] Workout cache already adopted, skipping pre-warm")
+
             cache_settings = get_settings()
             if getattr(cache_settings, 'form_cache_enabled', True) is not False and cache_settings.gemini_cache_enabled:
-                form_cache = await service._get_or_create_form_analysis_cache()
-                if form_cache:
-                    logger.info(f"✅ [CacheManager] Form analysis cache pre-warmed: {form_cache}")
+                if not cls._form_analysis_cache:
+                    form_cache = await service._get_or_create_form_analysis_cache()
+                    if form_cache:
+                        logger.info(f"✅ [CacheManager] Form analysis cache pre-warmed: {form_cache}")
+                else:
+                    logger.info(f"[CacheManager] Form analysis cache already adopted, skipping pre-warm")
+
             if getattr(cache_settings, 'nutrition_cache_enabled', True) is not False and cache_settings.gemini_cache_enabled:
-                nutrition_cache = await service._get_or_create_nutrition_analysis_cache()
-                if nutrition_cache:
-                    logger.info(f"✅ [CacheManager] Nutrition analysis cache pre-warmed: {nutrition_cache}")
+                if not cls._nutrition_analysis_cache:
+                    nutrition_cache = await service._get_or_create_nutrition_analysis_cache()
+                    if nutrition_cache:
+                        logger.info(f"✅ [CacheManager] Nutrition analysis cache pre-warmed: {nutrition_cache}")
+                else:
+                    logger.info(f"[CacheManager] Nutrition analysis cache already adopted, skipping pre-warm")
         except Exception as e:
             logger.warning(f"[CacheManager] Cache pre-warm failed: {e}")
 
-    @classmethod
-    async def _background_cache_refresh(cls):
-        """
-        Background task that proactively refreshes all caches before expiry.
-        Runs every 45 minutes to ensure caches are always fresh.
-        """
-        refresh_interval = 45 * 60  # 45 minutes
-
-        # Create one instance outside the loop to avoid leaking on each iteration
-        service = cls()
-
-        while True:
-            try:
-                await asyncio.sleep(refresh_interval)
-
-                # --- Refresh workout cache ---
-                if cls._workout_cache and cls._workout_cache_created_at:
-                    age_seconds = (datetime.now() - cls._workout_cache_created_at).total_seconds()
-
-                    if age_seconds >= 2700:  # 45 minutes - proactively refresh
-                        logger.info(f"[CacheManager] Proactively refreshing workout cache (age: {age_seconds:.0f}s)")
-
-                        old_cache = cls._workout_cache
-                        cls._workout_cache = None
-                        cls._workout_cache_created_at = None
-
-                        new_cache = await service._get_or_create_workout_cache()
-
-                        if new_cache:
-                            logger.info(f"✅ [CacheManager] Workout cache refreshed: {new_cache}")
-                            if old_cache:
-                                try:
-                                    client.caches.delete(name=old_cache)
-                                    logger.info(f"[CacheManager] Deleted old workout cache: {old_cache}")
-                                except Exception as e:
-                                    logger.warning(f"Failed to delete old workout cache: {e}")
-                        else:
-                            cls._workout_cache = old_cache
-                            logger.warning("[CacheManager] Workout cache refresh failed, keeping old cache")
-                else:
-                    logger.info("[CacheManager] No workout cache exists, creating...")
-                    await service._get_or_create_workout_cache()
-
-                # --- Refresh form analysis cache ---
-                if cls._form_analysis_cache and cls._form_analysis_cache_created_at:
-                    age_seconds = (datetime.now() - cls._form_analysis_cache_created_at).total_seconds()
-
-                    if age_seconds >= 2700:
-                        logger.info(f"[CacheManager] Proactively refreshing form analysis cache (age: {age_seconds:.0f}s)")
-
-                        old_cache = cls._form_analysis_cache
-                        cls._form_analysis_cache = None
-                        cls._form_analysis_cache_created_at = None
-
-                        new_cache = await service._get_or_create_form_analysis_cache()
-
-                        if new_cache:
-                            logger.info(f"✅ [CacheManager] Form analysis cache refreshed: {new_cache}")
-                            if old_cache:
-                                try:
-                                    client.caches.delete(name=old_cache)
-                                    logger.info(f"[CacheManager] Deleted old form analysis cache: {old_cache}")
-                                except Exception as e:
-                                    logger.warning(f"Failed to delete old form cache: {e}")
-                        else:
-                            cls._form_analysis_cache = old_cache
-                            logger.warning("[CacheManager] Form analysis cache refresh failed, keeping old cache")
-
-                # --- Refresh nutrition analysis cache ---
-                if cls._nutrition_analysis_cache and cls._nutrition_analysis_cache_created_at:
-                    age_seconds = (datetime.now() - cls._nutrition_analysis_cache_created_at).total_seconds()
-
-                    if age_seconds >= 2700:
-                        logger.info(f"[CacheManager] Proactively refreshing nutrition analysis cache (age: {age_seconds:.0f}s)")
-
-                        old_cache = cls._nutrition_analysis_cache
-                        cls._nutrition_analysis_cache = None
-                        cls._nutrition_analysis_cache_created_at = None
-
-                        new_cache = await service._get_or_create_nutrition_analysis_cache()
-
-                        if new_cache:
-                            logger.info(f"✅ [CacheManager] Nutrition analysis cache refreshed: {new_cache}")
-                            if old_cache:
-                                try:
-                                    client.caches.delete(name=old_cache)
-                                    logger.info(f"[CacheManager] Deleted old nutrition analysis cache: {old_cache}")
-                                except Exception as e:
-                                    logger.warning(f"Failed to delete old nutrition cache: {e}")
-                        else:
-                            cls._nutrition_analysis_cache = old_cache
-                            logger.warning("[CacheManager] Nutrition analysis cache refresh failed, keeping old cache")
-
-            except asyncio.CancelledError:
-                logger.info("[CacheManager] Background refresh task cancelled")
-                break
-            except Exception as e:
-                logger.error(f"[CacheManager] Background refresh error: {e}")
-                await asyncio.sleep(60)  # Wait a minute before retrying
+    @staticmethod
+    def _find_existing_server_cache(display_name_prefix: str):
+        """Check Vertex AI for an existing cache with the given display_name prefix."""
+        try:
+            for cache in client.caches.list():
+                if cache.display_name and display_name_prefix in cache.display_name:
+                    return cache
+        except Exception as e:
+            logger.warning(f"[Cache] Failed to list server caches: {e}")
+        return None
 
     async def _get_or_create_workout_cache(self) -> Optional[str]:
         """
         Get existing workout generation cache or create a new one.
-
-        The cache contains static content that's identical for every workout request:
-        - System instructions for workout generation
-        - Exercise generation rules and guidelines
-        - Set target examples and schema
+        Checks server-side first to avoid duplicates across workers.
 
         Returns:
             Cache name (str) if successful, None if caching fails (will fallback to non-cached)
         """
         async with GeminiService._cache_lock:
             try:
-                # Check if cache exists and is valid (< 50 minutes old to refresh before 1-hour expiry)
+                # Check in-memory reference first
                 if GeminiService._workout_cache and GeminiService._workout_cache_created_at:
                     age_seconds = (datetime.now() - GeminiService._workout_cache_created_at).total_seconds()
                     if age_seconds < 3000:  # 50 minutes
                         logger.debug(f"[Cache] Using existing workout cache (age: {age_seconds:.0f}s)")
                         return GeminiService._workout_cache
 
-                    # Cache is expiring soon, try to refresh
                     logger.info(f"[Cache] Workout cache expiring (age: {age_seconds:.0f}s), refreshing...")
 
-                # Build static system instruction for workout generation
-                system_instruction = self._build_workout_cache_system_instruction()
+                # Check server-side for existing cache (prevents cross-worker duplication)
+                existing = self._find_existing_server_cache("workout_generation")
+                if existing:
+                    GeminiService._workout_cache = existing.name
+                    GeminiService._workout_cache_created_at = datetime.now()
+                    logger.info(f"[Cache] Reusing existing server-side workout cache: {existing.name}")
+                    return existing.name
 
-                # Build static content to cache (rules, examples, guidelines)
+                # No cache exists anywhere — create a new one
+                system_instruction = self._build_workout_cache_system_instruction()
                 static_content = self._build_workout_cache_content()
 
                 logger.info(f"[Cache] Creating new workout generation cache...")
-                logger.info(f"[Cache] System instruction length: {len(system_instruction)} chars")
-                logger.info(f"[Cache] Static content length: {len(static_content)} chars")
 
-                # Create the cache
                 cache = client.caches.create(
                     model=self.model,
                     config=types.CreateCachedContentConfig(
                         display_name="workout_generation_v1",
                         system_instruction=system_instruction,
                         contents=[static_content],
-                        ttl="3600s",  # 1 hour cache TTL
+                        ttl="3600s",
                     )
                 )
 
-                # Store cache reference
                 GeminiService._workout_cache = cache.name
                 GeminiService._workout_cache_created_at = datetime.now()
 
                 logger.info(f"✅ [Cache] Created new workout cache: {cache.name}")
+                _log_token_usage(None, "create_workout_cache", user_id="system")
                 return cache.name
 
             except Exception as e:
                 logger.warning(f"⚠️ [Cache] Failed to create workout cache: {e}")
-                logger.warning(f"[Cache] Falling back to non-cached generation")
                 return None
 
     def _build_workout_cache_system_instruction(self) -> str:
@@ -876,31 +849,30 @@ Create engaging, creative names that:
     async def _get_or_create_form_analysis_cache(self) -> Optional[str]:
         """
         Get existing form analysis cache or create a new one.
-
-        The cache contains static content for exercise form analysis:
-        - System instructions for form analysis
-        - Per-exercise form guides for ~40 exercises
-        - Biomechanics principles and video analysis methodology
-
-        Returns:
-            Cache name (str) if successful, None if caching fails
+        Checks server-side first to avoid duplicates across workers.
         """
         async with GeminiService._form_cache_lock:
             try:
                 if GeminiService._form_analysis_cache and GeminiService._form_analysis_cache_created_at:
                     age_seconds = (datetime.now() - GeminiService._form_analysis_cache_created_at).total_seconds()
-                    if age_seconds < 3000:  # 50 minutes
+                    if age_seconds < 3000:
                         logger.debug(f"[Cache] Using existing form analysis cache (age: {age_seconds:.0f}s)")
                         return GeminiService._form_analysis_cache
 
                     logger.info(f"[Cache] Form analysis cache expiring (age: {age_seconds:.0f}s), refreshing...")
 
+                # Check server-side for existing cache
+                existing = self._find_existing_server_cache("form_analysis")
+                if existing:
+                    GeminiService._form_analysis_cache = existing.name
+                    GeminiService._form_analysis_cache_created_at = datetime.now()
+                    logger.info(f"[Cache] Reusing existing server-side form analysis cache: {existing.name}")
+                    return existing.name
+
                 system_instruction = self._build_form_analysis_cache_system_instruction()
                 static_content = self._build_form_analysis_cache_content()
 
                 logger.info(f"[Cache] Creating new form analysis cache...")
-                logger.info(f"[Cache] Form system instruction length: {len(system_instruction)} chars")
-                logger.info(f"[Cache] Form static content length: {len(static_content)} chars")
 
                 cache = client.caches.create(
                     model=self.model,
@@ -916,42 +888,40 @@ Create engaging, creative names that:
                 GeminiService._form_analysis_cache_created_at = datetime.now()
 
                 logger.info(f"✅ [Cache] Created new form analysis cache: {cache.name}")
+                _log_token_usage(None, "create_form_cache", user_id="system")
                 return cache.name
 
             except Exception as e:
                 logger.warning(f"⚠️ [Cache] Failed to create form analysis cache: {e}")
-                logger.warning(f"[Cache] Falling back to non-cached form analysis")
                 return None
 
     async def _get_or_create_nutrition_analysis_cache(self) -> Optional[str]:
         """
         Get existing nutrition analysis cache or create a new one.
-
-        The cache contains static content for food/nutrition analysis:
-        - System instructions for nutrition analysis
-        - USDA reference data for common foods
-        - Cultural cuisine references
-        - Portion estimation rules
-
-        Returns:
-            Cache name (str) if successful, None if caching fails
+        Checks server-side first to avoid duplicates across workers.
         """
         async with GeminiService._nutrition_cache_lock:
             try:
                 if GeminiService._nutrition_analysis_cache and GeminiService._nutrition_analysis_cache_created_at:
                     age_seconds = (datetime.now() - GeminiService._nutrition_analysis_cache_created_at).total_seconds()
-                    if age_seconds < 3000:  # 50 minutes
+                    if age_seconds < 3000:
                         logger.debug(f"[Cache] Using existing nutrition analysis cache (age: {age_seconds:.0f}s)")
                         return GeminiService._nutrition_analysis_cache
 
                     logger.info(f"[Cache] Nutrition analysis cache expiring (age: {age_seconds:.0f}s), refreshing...")
 
+                # Check server-side for existing cache
+                existing = self._find_existing_server_cache("nutrition_analysis")
+                if existing:
+                    GeminiService._nutrition_analysis_cache = existing.name
+                    GeminiService._nutrition_analysis_cache_created_at = datetime.now()
+                    logger.info(f"[Cache] Reusing existing server-side nutrition analysis cache: {existing.name}")
+                    return existing.name
+
                 system_instruction = self._build_nutrition_analysis_cache_system_instruction()
                 static_content = self._build_nutrition_analysis_cache_content()
 
                 logger.info(f"[Cache] Creating new nutrition analysis cache...")
-                logger.info(f"[Cache] Nutrition system instruction length: {len(system_instruction)} chars")
-                logger.info(f"[Cache] Nutrition static content length: {len(static_content)} chars")
 
                 cache = client.caches.create(
                     model=self.model,
@@ -967,11 +937,11 @@ Create engaging, creative names that:
                 GeminiService._nutrition_analysis_cache_created_at = datetime.now()
 
                 logger.info(f"✅ [Cache] Created new nutrition analysis cache: {cache.name}")
+                _log_token_usage(None, "create_nutrition_cache", user_id="system")
                 return cache.name
 
             except Exception as e:
                 logger.warning(f"⚠️ [Cache] Failed to create nutrition analysis cache: {e}")
-                logger.warning(f"[Cache] Falling back to non-cached nutrition analysis")
                 return None
 
     def _build_form_analysis_cache_system_instruction(self) -> str:
@@ -3597,6 +3567,8 @@ User message: "''' + _sanitize_for_prompt(user_message) + '"'
                 timeout=15,  # Intent extraction should be fast
             )
 
+            _log_token_usage(response, "extract_intent")
+
             # Use response.parsed for structured output - SDK handles JSON parsing
             data = response.parsed
             if not data:
@@ -4338,6 +4310,8 @@ WEIGHT/COUNT FIELDS (required for portion editing):
                     "elapsed_seconds": elapsed,
                 }
 
+            _log_token_usage(response, "analyze_food_image")
+
             # Check for blocked/filtered response
             if hasattr(response, 'prompt_feedback') and response.prompt_feedback:
                 feedback = response.prompt_feedback
@@ -4699,6 +4673,8 @@ IMPORTANT - ALWAYS identify foods:
                     last_error = f"Timeout after {attempt_timeout}s"
                     await asyncio.sleep(1 + attempt)
                     continue
+
+                _log_token_usage(response, "parse_food_description")
 
                 # Use response.parsed for structured output - SDK handles JSON parsing
                 parsed = response.parsed
@@ -6774,6 +6750,8 @@ If user has gym equipment - most exercises MUST use that equipment!"""
                 ),
                 timeout=90,  # 90s for full workout generation (large prompt + response)
             )
+
+            _log_token_usage(response, "generate_workout_plan")
 
             # Use response.parsed for structured output - SDK handles JSON parsing
             parsed = response.parsed

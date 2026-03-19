@@ -499,6 +499,7 @@ _PREMIUM_FEATURE_KEYS = [
     "form_video_analysis",
     "text_to_calories",
     "ai_meal_plan",
+    "ai_chat_messages",
 ]
 
 
