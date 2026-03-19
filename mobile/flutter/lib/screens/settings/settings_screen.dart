@@ -582,6 +582,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   // --- Social media icon row ---
   Widget _buildSocialRow(bool isDark) {
     const socials = [
+      _SocialIcon(FontAwesomeIcons.discord, Color(0xFF5865F2), 'Discord'),
       _SocialIcon(FontAwesomeIcons.reddit, Color(0xFFFF4500), 'Reddit'),
       _SocialIcon(FontAwesomeIcons.xTwitter, Color(0xFF14171A), 'X'),
       _SocialIcon(FontAwesomeIcons.instagram, Color(0xFFE4405F), 'Instagram'),
@@ -876,7 +877,17 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
       if (response.statusCode == 200) {
         final prefs = await SharedPreferences.getInstance();
+        // Preserve tour flags so tutorials don't replay after reset
+        final tourFlags = <String, bool>{};
+        for (final key in prefs.getKeys()) {
+          if (key.startsWith('has_seen_')) {
+            tourFlags[key] = prefs.getBool(key) ?? false;
+          }
+        }
         await prefs.clear();
+        for (final entry in tourFlags.entries) {
+          await prefs.setBool(entry.key, entry.value);
+        }
         ref.read(onboardingStateProvider.notifier).reset();
         await ref.read(authStateProvider.notifier).signOut();
         router.go('/stats-welcome');

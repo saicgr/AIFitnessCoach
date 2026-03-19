@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/constants/app_colors.dart';
 import '../../widgets/app_snackbar.dart';
+import '../../widgets/pill_app_bar.dart';
 import '../../core/providers/user_provider.dart';
 import '../../core/theme/theme_colors.dart';
 import '../../data/models/schedule_item.dart';
@@ -65,30 +66,21 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
 
     return Scaffold(
       backgroundColor: colors.background,
-      appBar: AppBar(
-        backgroundColor: colors.background,
-        foregroundColor: colors.textPrimary,
-        title: Text('Schedule', style: TextStyle(color: colors.textPrimary)),
-        centerTitle: true,
+      appBar: PillAppBar(
+        title: 'Schedule',
         actions: [
-          // View toggle button - cycles through agenda -> week -> timeline
-          IconButton(
-            icon: Icon(
-              _viewModeIcon,
-              color: colors.textPrimary,
-            ),
-            onPressed: () {
+          PillAppBarAction(
+            icon: _viewModeIcon,
+            onTap: () {
               HapticFeedback.lightImpact();
               setState(() {
                 _viewMode = _nextViewMode;
               });
             },
-            tooltip: _viewModeTooltip,
           ),
-          IconButton(
-            icon: Icon(Icons.today, color: colors.textPrimary),
-            onPressed: () => _goToToday(ref),
-            tooltip: 'Go to today',
+          PillAppBarAction(
+            icon: Icons.today,
+            onTap: () => _goToToday(ref),
           ),
         ],
       ),

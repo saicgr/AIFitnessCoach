@@ -6,6 +6,7 @@ import '../../data/providers/recipe_suggestion_provider.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../../data/providers/xp_provider.dart';
 import '../../widgets/glass_sheet.dart';
+import '../../widgets/pill_app_bar.dart';
 import '../../widgets/segmented_tab_bar.dart';
 import 'widgets/recipe_suggestion_card.dart';
 import 'widgets/recipe_preferences_sheet.dart';
@@ -85,14 +86,12 @@ class _RecipeSuggestionsScreenState extends ConsumerState<RecipeSuggestionsScree
 
     return Scaffold(
       backgroundColor: background,
-      appBar: AppBar(
-        backgroundColor: background,
-        title: const Text('Recipe Suggestions'),
+      appBar: PillAppBar(
+        title: 'Recipe Suggestions',
         actions: [
-          IconButton(
-            icon: const Icon(Icons.tune),
-            onPressed: _showPreferencesSheet,
-            tooltip: 'Recipe Preferences',
+          PillAppBarAction(
+            icon: Icons.tune,
+            onTap: _showPreferencesSheet,
           ),
         ],
       ),

@@ -27,6 +27,13 @@ class AppTourSpotlightPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final fullRect = Offset.zero & size;
 
+    // When spotlight rect is zero (target not yet visible), just draw the
+    // full overlay without a cutout hole or ring.
+    if (spotlightRect == Rect.zero) {
+      canvas.drawRect(fullRect, Paint()..color = overlayColor);
+      return;
+    }
+
     // Inflate rect with padding
     final inflated = spotlightRect.inflate(spotlightPadding);
     final rRect = RRect.fromRectAndRadius(inflated, Radius.circular(cornerRadius));

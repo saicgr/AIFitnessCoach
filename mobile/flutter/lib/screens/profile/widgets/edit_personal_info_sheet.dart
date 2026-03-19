@@ -24,6 +24,7 @@ class _EditPersonalInfoSheetState extends ConsumerState<EditPersonalInfoSheet> {
   late TextEditingController _nameController;
   late TextEditingController _ageController;
   late TextEditingController _emailController;
+  late TextEditingController _bioController;
   String? _email;
   String _selectedGender = 'male';
   String _selectedActivityLevel = 'moderately_active';
@@ -57,12 +58,35 @@ class _EditPersonalInfoSheetState extends ConsumerState<EditPersonalInfoSheet> {
     _nameController = TextEditingController();
     _ageController = TextEditingController();
     _emailController = TextEditingController();
+    _bioController = TextEditingController();
     _refreshAndLoadProfile();
   }
 
   Future<void> _refreshAndLoadProfile() async {
     await ref.read(authStateProvider.notifier).refreshUser();
     _loadCurrentProfile();
+    _loadBio();
+  }
+
+  Future<void> _loadBio() async {
+    try {
+      final authState = ref.read(authStateProvider);
+      final userId = authState.user?.id;
+      if (userId == null) return;
+      final apiClient = ref.read(apiClientProvider);
+      final response = await apiClient.get('${ApiConstants.users}/$userId');
+      if (response.statusCode == 200 && response.data != null) {
+        final userData = response.data as Map<String, dynamic>;
+        final bio = userData['bio'] as String?;
+        if (mounted && bio != null && bio.isNotEmpty) {
+          setState(() {
+            _bioController.text = bio;
+          });
+        }
+      }
+    } catch (e) {
+      debugPrint('Error loading bio: $e');
+    }
   }
 
   @override
@@ -70,6 +94,7 @@ class _EditPersonalInfoSheetState extends ConsumerState<EditPersonalInfoSheet> {
     _nameController.dispose();
     _ageController.dispose();
     _emailController.dispose();
+    _bioController.dispose();
     super.dispose();
   }
 
@@ -251,6 +276,7 @@ class _EditPersonalInfoSheetState extends ConsumerState<EditPersonalInfoSheet> {
         'name': _nameController.text.trim(),
         'gender': _selectedGender,
         'activity_level': _selectedActivityLevel,
+        'bio': _bioController.text.trim(),
       };
 
       if (_heightCm != null) {
@@ -416,6 +442,8 @@ class _EditPersonalInfoSheetState extends ConsumerState<EditPersonalInfoSheet> {
               _buildEmailField(isDark, elevatedColor, cardBorder, textMuted),
               const SizedBox(height: 14),
               _buildNameAgeRow(isDark, elevatedColor, cardBorder, textMuted),
+              const SizedBox(height: 14),
+              _buildBioField(isDark, elevatedColor, cardBorder, textMuted),
               const SizedBox(height: 14),
               _buildGenderSelector(elevatedColor, cardBorder, textSecondary, cyan, textMuted),
               const SizedBox(height: 14),
@@ -607,6 +635,46 @@ class _EditPersonalInfoSheetState extends ConsumerState<EditPersonalInfoSheet> {
                 keyboardType: TextInputType.number,
               ),
             ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildBioField(bool isDark, Color elevatedColor, Color cardBorder, Color textMuted) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildSectionTitle('BIO', textMuted),
+        const SizedBox(height: 6),
+        TextFormField(
+          controller: _bioController,
+          maxLines: 3,
+          maxLength: 300,
+          textCapitalization: TextCapitalization.sentences,
+          enabled: !_isSaving,
+          style: const TextStyle(fontSize: 14),
+          decoration: InputDecoration(
+            hintText: 'Tell us about yourself...',
+            hintStyle: TextStyle(
+              color: textMuted.withValues(alpha: 0.5),
+            ),
+            filled: true,
+            fillColor: elevatedColor,
+            isDense: true,
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide: BorderSide(color: cardBorder),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide: BorderSide(color: cardBorder),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide: BorderSide(color: isDark ? AppColors.accent : AppColorsLight.accent),
+            ),
+            contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
           ),
         ),
       ],

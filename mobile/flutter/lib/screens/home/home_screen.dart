@@ -183,7 +183,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
         id: 'nav_step_nutrition',
         targetKey: AppTourKeys.nutritionNavKey,
         title: 'Track Nutrition',
-        description: 'Scan meals with your camera. Track macros and fasting.',
+        description: 'Scan meals with your camera. Track macros easily.',
         position: TooltipPosition.above,
       ),
       AppTourStep(

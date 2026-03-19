@@ -7,6 +7,7 @@ import '../../data/local/database.dart';
 import '../../data/local/database_provider.dart';
 import '../../data/services/sync_engine.dart';
 import '../../data/services/sync_failure_service.dart';
+import '../../widgets/pill_app_bar.dart';
 
 /// Screen showing details about failed sync items (dead letters).
 /// Provides actions to retry, export, or re-authenticate.
@@ -132,15 +133,7 @@ class _SyncDetailsScreenState extends ConsumerState<SyncDetailsScreen> {
 
     return Scaffold(
       backgroundColor: backgroundColor,
-      appBar: AppBar(
-        title: Text(
-          'Sync Details',
-          style: TextStyle(color: textPrimary),
-        ),
-        backgroundColor: backgroundColor,
-        iconTheme: IconThemeData(color: textPrimary),
-        elevation: 0,
-      ),
+      appBar: const PillAppBar(title: 'Sync Details'),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : _deadLetterItems.isEmpty

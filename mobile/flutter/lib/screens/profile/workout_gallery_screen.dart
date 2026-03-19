@@ -527,15 +527,16 @@ class _WorkoutGalleryScreenState extends ConsumerState<WorkoutGalleryScreen> {
                   await _reshareImage(image);
                 },
               ),
-              if (!image.sharedToFeed)
-                ListTile(
-                  leading: Icon(Icons.feed_rounded, color: AppColors.purple),
-                  title: const Text('Post to Feed'),
-                  onTap: () async {
-                    Navigator.pop(context);
-                    await _postToFeed(image);
-                  },
-                ),
+              // TODO: Re-enable social features when user base grows
+              // if (!image.sharedToFeed)
+              //   ListTile(
+              //     leading: Icon(Icons.feed_rounded, color: AppColors.purple),
+              //     title: const Text('Post to Feed'),
+              //     onTap: () async {
+              //       Navigator.pop(context);
+              //       await _postToFeed(image);
+              //     },
+              //   ),
               ListTile(
                 leading: Icon(Icons.delete_outline_rounded, color: AppColors.error),
                 title: Text(
@@ -715,10 +716,8 @@ class _FullImageScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.black,
-      appBar: AppBar(
-        backgroundColor: Colors.black,
-        foregroundColor: Colors.white,
-        title: Text(image.workoutName ?? 'Workout Recap'),
+      appBar: PillAppBar(
+        title: image.workoutName ?? 'Workout Recap',
       ),
       body: InteractiveViewer(
         child: Center(

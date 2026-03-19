@@ -9,6 +9,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fl_chart/fl_chart.dart';
 import '../../widgets/app_loading.dart';
+import '../../widgets/pill_app_bar.dart';
 
 import '../../core/constants/app_colors.dart';
 import '../../data/models/subjective_feedback.dart';
@@ -56,11 +57,8 @@ class _FeelResultsScreenState extends ConsumerState<FeelResultsScreen> {
 
     return Scaffold(
       backgroundColor: backgroundColor,
-      appBar: AppBar(
-        title: const Text('Feel Results'),
-        centerTitle: true,
-        backgroundColor: backgroundColor,
-        surfaceTintColor: Colors.transparent,
+      appBar: PillAppBar(
+        title: 'Feel Results',
       ),
       body: feedbackState.isLoading
           ? AppLoading.fullScreen()

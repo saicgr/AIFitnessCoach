@@ -23,8 +23,9 @@ class PrivacyDataPage extends ConsumerWidget {
           padding: EdgeInsets.all(16),
           child: Column(
             children: [
-              SocialPrivacySection(),
-              SizedBox(height: 16),
+              // TODO: Re-enable social features when user base grows
+              // SocialPrivacySection(),
+              // SizedBox(height: 16),
               EmailPreferencesSection(),
               SizedBox(height: 16),
               DataManagementSection(),

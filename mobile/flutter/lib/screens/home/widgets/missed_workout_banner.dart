@@ -125,6 +125,29 @@ class _MissedWorkoutBannerState extends ConsumerState<MissedWorkoutBanner>
     }
   }
 
+  static String _formatType(String type) {
+    const typeLabels = {
+      'push': 'Push',
+      'pull': 'Pull',
+      'legs': 'Legs',
+      'full_body': 'Full Body',
+      'upper': 'Upper Body',
+      'upper_body': 'Upper Body',
+      'lower': 'Lower Body',
+      'lower_body': 'Lower Body',
+      'core': 'Core',
+      'strength': 'Strength',
+      'recovery': 'Recovery',
+      'cardio': 'Cardio',
+      'mobility': 'Mobility',
+    };
+    if (type.isEmpty) return '';
+    return typeLabels[type.toLowerCase()] ??
+        type.split('_').map((w) => w.isNotEmpty
+            ? '${w[0].toUpperCase()}${w.substring(1)}'
+            : w).join(' ');
+  }
+
   @override
   Widget build(BuildContext context) {
     if (_isDismissed) {
@@ -266,7 +289,7 @@ class _MissedWorkoutBannerState extends ConsumerState<MissedWorkoutBanner>
                 children: [
                   _InfoChip(
                     icon: Icons.fitness_center,
-                    label: workout.type,
+                    label: _formatType(workout.type),
                     isDark: isDark,
                   ),
                   const SizedBox(width: 8),

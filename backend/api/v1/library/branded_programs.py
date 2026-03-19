@@ -271,10 +271,11 @@ async def assign_program(request: AssignProgramRequest):
         raise safe_internal_error(e, "branded_programs")
 
 
-@router.get("/branded-programs/current", response_model=Dict[str, Any])
+@router.get("/branded-programs/current", response_model=Optional[Dict[str, Any]])
 async def get_current_program(user_id: str = Query(...)):
     """
     Get the user's current active program.
+    Returns null if no active program (this is an expected state, not an error).
     """
     try:
         db = get_supabase_db()
@@ -283,7 +284,7 @@ async def get_current_program(user_id: str = Query(...)):
         result = db.client.table("user_program_assignments").select("*").eq("user_id", user_id).eq("is_active", True).eq("status", "active").order("started_at", desc=True).limit(1).execute()
 
         if not result.data:
-            raise HTTPException(status_code=404, detail="No active program found")
+            return None
 
         assignment = result.data[0]
 
@@ -298,8 +299,6 @@ async def get_current_program(user_id: str = Query(...)):
 
         return row_to_user_program(assignment, program_data)
 
-    except HTTPException:
-        raise
     except Exception as e:
         logger.error(f"Error getting current program for user {user_id}: {e}")
         raise safe_internal_error(e, "branded_programs")

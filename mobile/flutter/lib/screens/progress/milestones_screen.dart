@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:share_plus/share_plus.dart';
 import '../../core/constants/app_colors.dart';
 import '../../widgets/app_loading.dart';
+import '../../widgets/pill_app_bar.dart';
 import '../../data/models/milestone.dart';
 import '../../data/providers/milestones_provider.dart';
 import '../../data/repositories/auth_repository.dart';
@@ -62,16 +63,8 @@ class _MilestonesScreenState extends ConsumerState<MilestonesScreen>
 
     return Scaffold(
       backgroundColor: backgroundColor,
-      appBar: AppBar(
-        title: Text(
-          'Your Journey',
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            color: textColor,
-          ),
-        ),
-        backgroundColor: backgroundColor,
-        elevation: 0,
+      appBar: PillAppBar(
+        title: 'Your Journey',
       ),
       body: Column(
         children: [

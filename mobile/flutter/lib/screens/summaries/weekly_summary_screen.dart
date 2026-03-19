@@ -6,6 +6,7 @@ import '../../data/models/weekly_summary.dart';
 import '../../data/repositories/weekly_summary_repository.dart';
 import '../../data/services/api_client.dart';
 import '../../widgets/glass_sheet.dart';
+import '../../widgets/pill_app_bar.dart';
 
 class WeeklySummaryScreen extends ConsumerStatefulWidget {
   const WeeklySummaryScreen({super.key});
@@ -44,17 +45,14 @@ class _WeeklySummaryScreenState extends ConsumerState<WeeklySummaryScreen> {
 
     return Scaffold(
       backgroundColor: backgroundColor,
-      appBar: AppBar(
-        backgroundColor: backgroundColor,
-        foregroundColor: textPrimary,
-        title: Text('Weekly Summaries', style: TextStyle(color: textPrimary)),
+      appBar: PillAppBar(
+        title: 'Weekly Summaries',
         actions: [
-          if (!state.isGenerating)
-            IconButton(
-              icon: Icon(Icons.add, color: textPrimary),
-              onPressed: _generateSummary,
-              tooltip: 'Generate Summary',
-            ),
+          PillAppBarAction(
+            icon: Icons.add,
+            onTap: _generateSummary,
+            visible: !state.isGenerating,
+          ),
         ],
       ),
       body: state.isLoading

@@ -1,13 +1,40 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/providers/week_start_provider.dart';
 import '../../../core/theme/accent_color_provider.dart';
 import '../../../data/services/haptic_service.dart';
 
+/// Persisted collapsed state for the week calendar strip.
+final weekCalendarCollapsedProvider =
+    StateNotifierProvider<_CollapsedNotifier, bool>((ref) {
+  return _CollapsedNotifier();
+});
+
+class _CollapsedNotifier extends StateNotifier<bool> {
+  static const _key = 'week_calendar_collapsed';
+
+  _CollapsedNotifier() : super(false) {
+    _load();
+  }
+
+  Future<void> _load() async {
+    final prefs = await SharedPreferences.getInstance();
+    state = prefs.getBool(_key) ?? false;
+  }
+
+  Future<void> toggle() async {
+    state = !state;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_key, state);
+  }
+}
+
 /// Compact week calendar strip showing Mon-Sun with date numbers,
 /// today highlight, and colored dots for workout status.
-/// Placed above the hero workout carousel to provide date context.
+/// Supports collapsing into a single-line summary showing the selected date.
 class WeekCalendarStrip extends ConsumerWidget {
   /// User's workout day indices (0=Mon..6=Sun)
   final List<int> workoutDays;
@@ -35,6 +62,7 @@ class WeekCalendarStrip extends ConsumerWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final accentColorEnum = ref.watch(accentColorProvider);
     final accentColor = accentColorEnum.getColor(isDark);
+    final isCollapsed = ref.watch(weekCalendarCollapsedProvider);
 
     final weekConfig = ref.watch(weekDisplayConfigProvider);
 
@@ -42,6 +70,24 @@ class WeekCalendarStrip extends ConsumerWidget {
     final today = DateTime(now.year, now.month, now.day);
     final todayIndex = today.weekday - 1; // 0=Mon (data model)
     final weekStart = weekConfig.weekStart(today);
+
+    // Determine the selected date for collapsed view
+    final selectedDisplayIndex = weekConfig.displayOrder.indexOf(selectedDayIndex);
+    final selectedDate = weekStart.add(Duration(days: selectedDisplayIndex >= 0 ? selectedDisplayIndex : 0));
+
+    if (isCollapsed) {
+      return _CollapsedStrip(
+        selectedDate: selectedDate,
+        accentColor: accentColor,
+        isDark: isDark,
+        onExpand: () {
+          HapticService.selection();
+          ref.read(weekCalendarCollapsedProvider.notifier).toggle();
+        },
+      );
+    }
+
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -81,7 +127,80 @@ class WeekCalendarStrip extends ConsumerWidget {
               );
             }),
           ),
+          // Collapse affordance
+          GestureDetector(
+            onTap: () {
+              HapticService.selection();
+              ref.read(weekCalendarCollapsedProvider.notifier).toggle();
+            },
+            behavior: HitTestBehavior.opaque,
+            child: Padding(
+              padding: const EdgeInsets.only(top: 2),
+              child: Icon(
+                Icons.expand_less,
+                size: 18,
+                color: textMuted,
+              ),
+            ),
+          ),
         ],
+      ),
+    );
+  }
+}
+
+/// Collapsed single-line view showing the selected date with an expand icon.
+class _CollapsedStrip extends StatelessWidget {
+  final DateTime selectedDate;
+  final Color accentColor;
+  final bool isDark;
+  final VoidCallback onExpand;
+
+  const _CollapsedStrip({
+    required this.selectedDate,
+    required this.accentColor,
+    required this.isDark,
+    required this.onExpand,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final textColor = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final isToday = DateUtils.isSameDay(selectedDate, DateTime.now());
+    final dateLabel = isToday
+        ? 'Today, ${DateFormat('MMM d').format(selectedDate)}'
+        : DateFormat('EEE, MMM d').format(selectedDate);
+
+    return GestureDetector(
+      onTap: onExpand,
+      behavior: HitTestBehavior.opaque,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+        child: Row(
+          children: [
+            Icon(
+              Icons.calendar_today,
+              size: 14,
+              color: accentColor,
+            ),
+            const SizedBox(width: 8),
+            Text(
+              dateLabel,
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: textColor,
+              ),
+            ),
+            const SizedBox(width: 6),
+            Icon(
+              Icons.expand_more,
+              size: 18,
+              color: textMuted,
+            ),
+          ],
+        ),
       ),
     );
   }

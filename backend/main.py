@@ -138,8 +138,10 @@ class LoggingMiddleware:
         try:
             await self.app(scope, receive, send_with_logging)
             duration = (time.time() - start_time) * 1000
-            if status_code < 400:
+            if status_code < 400 or status_code == 404:
                 logger.info(f"Response: {status_code} ({duration:.0f}ms)")
+            elif status_code >= 500:
+                logger.error(f"Response: {status_code} ({duration:.0f}ms)")
             else:
                 logger.warning(f"Response: {status_code} ({duration:.0f}ms)")
         except Exception as e:

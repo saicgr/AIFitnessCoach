@@ -86,9 +86,9 @@ class _LogWeightSheetState extends ConsumerState<_LogWeightSheet>
   bool _showSuccess = false;
   String? _errorMessage;
 
-  // Fasting day detection
-  bool? _isFastingDay;
-  bool _isCheckingFastingDay = false;
+  // TODO: Re-enable fasting day detection when fasting feature launches
+  // bool? _isFastingDay;
+  // bool _isCheckingFastingDay = false;
 
   // Animation controller for the circular weight input
   late AnimationController _pulseController;
@@ -101,8 +101,8 @@ class _LogWeightSheetState extends ConsumerState<_LogWeightSheet>
       duration: const Duration(milliseconds: 1500),
     )..repeat(reverse: true);
 
-    // Check if today is a fasting day
-    _checkFastingDay();
+    // TODO: Re-enable fasting day check when fasting feature launches
+    // _checkFastingDay();
   }
 
   @override
@@ -113,45 +113,45 @@ class _LogWeightSheetState extends ConsumerState<_LogWeightSheet>
     super.dispose();
   }
 
-  Future<void> _checkFastingDay() async {
-    final authState = ref.read(authStateProvider);
-    final userId = authState.user?.id;
-    if (userId == null) return;
-
-    setState(() => _isCheckingFastingDay = true);
-
-    try {
-      final fastingRepo = ref.read(fastingRepositoryProvider);
-      final history = await fastingRepo.getFastingHistory(
-        userId: userId,
-        limit: 10,
-        fromDate: _selectedDate.subtract(const Duration(days: 1)).toIso8601String().split('T')[0],
-        toDate: _selectedDate.add(const Duration(days: 1)).toIso8601String().split('T')[0],
-      );
-
-      // Check if any fast was active on the selected date
-      final isFasting = history.any((record) {
-        final startDate = record.startTime;
-        final endDate = record.endTime ?? DateTime.now();
-        return _selectedDate.isAfter(startDate.subtract(const Duration(days: 1))) &&
-               _selectedDate.isBefore(endDate.add(const Duration(days: 1)));
-      });
-
-      if (mounted) {
-        setState(() {
-          _isFastingDay = isFasting;
-          _isCheckingFastingDay = false;
-        });
-      }
-    } catch (e) {
-      if (mounted) {
-        setState(() {
-          _isFastingDay = null;
-          _isCheckingFastingDay = false;
-        });
-      }
-    }
-  }
+  // TODO: Re-enable _checkFastingDay when fasting feature launches
+  // Future<void> _checkFastingDay() async {
+  //   final authState = ref.read(authStateProvider);
+  //   final userId = authState.user?.id;
+  //   if (userId == null) return;
+  //
+  //   setState(() => _isCheckingFastingDay = true);
+  //
+  //   try {
+  //     final fastingRepo = ref.read(fastingRepositoryProvider);
+  //     final history = await fastingRepo.getFastingHistory(
+  //       userId: userId,
+  //       limit: 10,
+  //       fromDate: _selectedDate.subtract(const Duration(days: 1)).toIso8601String().split('T')[0],
+  //       toDate: _selectedDate.add(const Duration(days: 1)).toIso8601String().split('T')[0],
+  //     );
+  //
+  //     final isFasting = history.any((record) {
+  //       final startDate = record.startTime;
+  //       final endDate = record.endTime ?? DateTime.now();
+  //       return _selectedDate.isAfter(startDate.subtract(const Duration(days: 1))) &&
+  //              _selectedDate.isBefore(endDate.add(const Duration(days: 1)));
+  //     });
+  //
+  //     if (mounted) {
+  //       setState(() {
+  //         _isFastingDay = isFasting;
+  //         _isCheckingFastingDay = false;
+  //       });
+  //     }
+  //   } catch (e) {
+  //     if (mounted) {
+  //       setState(() {
+  //         _isFastingDay = null;
+  //         _isCheckingFastingDay = false;
+  //       });
+  //     }
+  //   }
+  // }
 
   void _incrementWeight() {
     HapticService.increment();
@@ -211,7 +211,8 @@ class _LogWeightSheetState extends ConsumerState<_LogWeightSheet>
       setState(() {
         _selectedDate = pickedDate;
       });
-      _checkFastingDay();
+      // TODO: Re-enable when fasting feature launches
+      // _checkFastingDay();
     }
   }
 
@@ -262,7 +263,8 @@ class _LogWeightSheetState extends ConsumerState<_LogWeightSheet>
         setState(() {
           _isSubmitting = false;
           _showSuccess = true;
-          _isFastingDay = result.isFastingDay;
+          // TODO: Re-enable when fasting feature launches
+          // _isFastingDay = result.isFastingDay;
         });
 
         // Wait a moment to show success animation
@@ -275,7 +277,8 @@ class _LogWeightSheetState extends ConsumerState<_LogWeightSheet>
             notes: _notesController.text.trim().isEmpty
                 ? null
                 : _notesController.text.trim(),
-            wasFastingDay: result.isFastingDay,
+            // TODO: Re-enable when fasting feature launches
+            // wasFastingDay: result.isFastingDay,
             message: 'Weight logged successfully',
           ));
         }
@@ -353,34 +356,32 @@ class _LogWeightSheetState extends ConsumerState<_LogWeightSheet>
           )
               .animate()
               .fadeIn(delay: 300.ms),
-          if (_isFastingDay == true) ...[
-            const SizedBox(height: 16),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              decoration: BoxDecoration(
-                color: colors.purple.withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: colors.purple.withValues(alpha: 0.3)),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(Icons.bolt, color: colors.purple, size: 18),
-                  const SizedBox(width: 6),
-                  Text(
-                    'Fasting Day',
-                    style: TextStyle(
-                      color: colors.purple,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ],
-              ),
-            )
-                .animate()
-                .fadeIn(delay: 400.ms)
-                .shimmer(duration: 1500.ms, color: colors.purple.withValues(alpha: 0.3)),
-          ],
+          // TODO: Re-enable fasting day badge in success state when fasting feature launches
+          // if (_isFastingDay == true) ...[
+          //   const SizedBox(height: 16),
+          //   Container(
+          //     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          //     decoration: BoxDecoration(
+          //       color: colors.purple.withValues(alpha: 0.15),
+          //       borderRadius: BorderRadius.circular(20),
+          //       border: Border.all(color: colors.purple.withValues(alpha: 0.3)),
+          //     ),
+          //     child: Row(
+          //       mainAxisSize: MainAxisSize.min,
+          //       children: [
+          //         Icon(Icons.bolt, color: colors.purple, size: 18),
+          //         const SizedBox(width: 6),
+          //         Text(
+          //           'Fasting Day',
+          //           style: TextStyle(
+          //             color: colors.purple,
+          //             fontWeight: FontWeight.w600,
+          //           ),
+          //         ),
+          //       ],
+          //     ),
+          //   ),
+          // ],
         ],
       ),
     );
@@ -399,7 +400,8 @@ class _LogWeightSheetState extends ConsumerState<_LogWeightSheet>
           const SizedBox(height: 16),
           _buildWeightInput(colors),
           const SizedBox(height: 16),
-          _buildFastingDayIndicator(colors),
+          // TODO: Re-enable fasting day indicator when fasting feature launches
+          // _buildFastingDayIndicator(colors),
           _buildNotesInput(colors),
           if (_errorMessage != null) ...[
             const SizedBox(height: 8),
@@ -496,7 +498,8 @@ class _LogWeightSheetState extends ConsumerState<_LogWeightSheet>
                       onTap: () {
                         HapticService.light();
                         setState(() => _selectedDate = DateTime.now());
-                        _checkFastingDay();
+                        // TODO: Re-enable when fasting feature launches
+                        // _checkFastingDay();
                       },
                       child: Icon(Icons.close, color: colors.textMuted, size: 16),
                     ),
@@ -652,33 +655,7 @@ class _LogWeightSheetState extends ConsumerState<_LogWeightSheet>
               },
               colors: colors,
             ),
-            const SizedBox(width: 28),
-            GestureDetector(
-              onTap: () => _showDirectInput(colors),
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
-                decoration: BoxDecoration(
-                  color: colors.glassSurface.withValues(alpha: 0.3),
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: colors.cardBorder.withValues(alpha: 0.3)),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(Icons.edit, color: colors.textMuted, size: 14),
-                    const SizedBox(width: 5),
-                    Text(
-                      'Type',
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: colors.textMuted,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(width: 28),
+            const SizedBox(width: 48),
             _WeightAdjustButton(
               icon: Icons.add,
               onTap: _incrementWeight,
@@ -788,84 +765,8 @@ class _LogWeightSheetState extends ConsumerState<_LogWeightSheet>
     );
   }
 
-  Widget _buildFastingDayIndicator(SheetColors colors) {
-    if (_isCheckingFastingDay) {
-      return Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 24),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          decoration: BoxDecoration(
-            color: colors.glassSurface.withValues(alpha: 0.3),
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              SizedBox(
-                width: 16,
-                height: 16,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  color: colors.textMuted,
-                ),
-              ),
-              const SizedBox(width: 10),
-              Text(
-                'Checking fasting status...',
-                style: TextStyle(
-                  fontSize: 13,
-                  color: colors.textMuted,
-                ),
-              ),
-            ],
-          ),
-        ),
-      );
-    }
-
-    if (_isFastingDay == null) return const SizedBox.shrink();
-
-    final isFasting = _isFastingDay!;
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        decoration: BoxDecoration(
-          color: (isFasting ? colors.purple : colors.success).withValues(alpha: 0.1),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: (isFasting ? colors.purple : colors.success).withValues(alpha: 0.3),
-          ),
-        ),
-        child: Row(
-          children: [
-            Icon(
-              isFasting ? Icons.bolt : Icons.restaurant,
-              color: isFasting ? colors.purple : colors.success,
-              size: 20,
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Text(
-                isFasting
-                    ? 'This is a fasting day - weight tracked for fasting insights'
-                    : 'Regular eating day',
-                style: TextStyle(
-                  fontSize: 13,
-                  color: isFasting ? colors.purple : colors.success,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    )
-        .animate()
-        .fadeIn(delay: 150.ms)
-        .slideX(begin: 0.1, end: 0);
-  }
+  // TODO: Re-enable _buildFastingDayIndicator when fasting feature launches
+  // Widget _buildFastingDayIndicator(SheetColors colors) { ... }
 
   Widget _buildNotesInput(SheetColors colors) {
     return Padding(

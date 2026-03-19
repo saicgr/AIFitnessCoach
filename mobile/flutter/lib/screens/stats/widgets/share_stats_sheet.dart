@@ -539,16 +539,17 @@ class _ShareStatsSheetState extends ConsumerState<ShareStatsSheet> {
                   // Secondary buttons row
                   Row(
                     children: [
-                      Expanded(
-                        child: _buildShareButton(
-                          onPressed: _postToFeed,
-                          icon: Icons.feed_rounded,
-                          label: 'Post to Feed',
-                          isPrimary: false,
-                          isLoading: _isSharing,
-                        ),
-                      ),
-                      const SizedBox(width: 12),
+                      // TODO: Re-enable social features when user base grows
+                      // Expanded(
+                      //   child: _buildShareButton(
+                      //     onPressed: _postToFeed,
+                      //     icon: Icons.feed_rounded,
+                      //     label: 'Post to Feed',
+                      //     isPrimary: false,
+                      //     isLoading: _isSharing,
+                      //   ),
+                      // ),
+                      // const SizedBox(width: 12),
                       Expanded(
                         child: _buildShareButton(
                           onPressed: _saveToGallery,

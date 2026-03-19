@@ -9,7 +9,8 @@ import '../../../data/services/haptic_service.dart';
 import 'hero_workout_carousel.dart';
 import 'hero_workout_card.dart';
 import 'hero_nutrition_card.dart';
-import 'hero_fasting_card.dart';
+// TODO: Re-enable when fasting feature launches
+// import 'hero_fasting_card.dart';
 import 'week_calendar_strip.dart';
 import 'swipeable_hero_section.dart' show HomeFocus, homeFocusProvider;
 import '../../wrapped/widgets/wrapped_banner.dart';
@@ -46,7 +47,9 @@ class SectionedHeroArea extends ConsumerStatefulWidget {
 
 class _SectionedHeroAreaState extends ConsumerState<SectionedHeroArea> {
   // Fixed height: calendarStrip(61) + gap(8) + carousel(360) = 429
-  static const _kContentHeight = 429.0;
+  static const _kContentHeightExpanded = 429.0;
+  // Collapsed strip is shorter: collapsedStrip(30) + gap(8) + carousel(360) = 398
+  static const _kContentHeightCollapsed = 398.0;
 
   @override
   Widget build(BuildContext context) {
@@ -54,6 +57,11 @@ class _SectionedHeroAreaState extends ConsumerState<SectionedHeroArea> {
     final currentFocus = ref.watch(homeFocusProvider);
     final accentColorEnum = ref.watch(accentColorProvider);
     final accentColor = accentColorEnum.getColor(isDark);
+    final isCalendarCollapsed = ref.watch(weekCalendarCollapsedProvider);
+
+    final contentHeight = (currentFocus == HomeFocus.workout && isCalendarCollapsed)
+        ? _kContentHeightCollapsed
+        : _kContentHeightExpanded;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -72,8 +80,10 @@ class _SectionedHeroAreaState extends ConsumerState<SectionedHeroArea> {
         const SizedBox(height: 8),
         // Fixed height so all tabs occupy identical space — content
         // below never shifts. Cards stretch via Expanded to fill.
-        SizedBox(
-          height: _kContentHeight,
+        AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          curve: Curves.easeInOut,
+          height: contentHeight,
           child: Column(
             children: [
               if (currentFocus == HomeFocus.workout) ...[
@@ -95,8 +105,9 @@ class _SectionedHeroAreaState extends ConsumerState<SectionedHeroArea> {
         return _buildWorkoutContent(isDark);
       case HomeFocus.nutrition:
         return const HeroNutritionCard();
+      // TODO: Re-enable when fasting feature launches
       case HomeFocus.fasting:
-        return const HeroFastingCard();
+        return const SizedBox.shrink(); // was: HeroFastingCard()
     }
   }
 

@@ -4,6 +4,7 @@ import '../../../models/program_history.dart';
 import '../../../data/repositories/workout_repository.dart';
 import '../../../data/repositories/auth_repository.dart';
 import '../../../widgets/app_dialog.dart';
+import '../../../widgets/pill_app_bar.dart';
 import 'components/sheet_theme_colors.dart';
 
 class ProgramHistoryScreen extends ConsumerStatefulWidget {
@@ -112,10 +113,8 @@ class _ProgramHistoryScreenState extends ConsumerState<ProgramHistoryScreen> {
 
     return Scaffold(
       backgroundColor: isDark ? const Color(0xFF0A0E21) : Colors.grey[50],
-      appBar: AppBar(
-        title: const Text('Program History'),
-        backgroundColor: isDark ? const Color(0xFF1A1F3A) : Colors.white,
-        elevation: 0,
+      appBar: const PillAppBar(
+        title: 'Program History',
       ),
       body: _isLoading
           ? Center(child: CircularProgressIndicator(color: colors.cyan))

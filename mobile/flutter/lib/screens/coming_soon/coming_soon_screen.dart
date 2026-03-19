@@ -16,22 +16,7 @@ class ComingSoonScreen extends ConsumerStatefulWidget {
   ConsumerState<ComingSoonScreen> createState() => _ComingSoonScreenState();
 }
 
-class _ComingSoonScreenState extends ConsumerState<ComingSoonScreen>
-    with SingleTickerProviderStateMixin {
-  late TabController _tabController;
-
-  @override
-  void initState() {
-    super.initState();
-    _tabController = TabController(length: 2, vsync: this);
-  }
-
-  @override
-  void dispose() {
-    _tabController.dispose();
-    super.dispose();
-  }
-
+class _ComingSoonScreenState extends ConsumerState<ComingSoonScreen> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -41,27 +26,7 @@ class _ComingSoonScreenState extends ConsumerState<ComingSoonScreen>
     return Scaffold(
       backgroundColor: backgroundColor,
       appBar: const PillAppBar(title: 'Coming Soon'),
-      body: Column(
-        children: [
-          SegmentedTabBar(
-            controller: _tabController,
-            showIcons: false,
-            tabs: const [
-              SegmentedTabItem(label: 'Roadmap'),
-              SegmentedTabItem(label: 'Popular Requests'),
-            ],
-          ),
-          Expanded(
-            child: TabBarView(
-              controller: _tabController,
-              children: [
-                _RoadmapTab(),
-                const _PopularRequestsTab(),
-              ],
-            ),
-          ),
-        ],
-      ),
+      body: _RoadmapTab(),
     );
   }
 }
@@ -140,6 +105,20 @@ class _RoadmapTab extends StatelessWidget {
           features: [
             _Feature(Icons.add_circle_outline, AppColors.coral, 'Custom Exercises', 'Create your own exercises with custom tracking', eta: 'Q2 2026'),
             _Feature(Icons.show_chart_outlined, AppColors.green, 'Inline Progress Charts', 'Exercise progress graphs inside workout view', eta: 'Q2 2026'),
+          ],
+        ),
+
+        const SizedBox(height: 16),
+
+        _buildSectionLabel('SOCIAL', textMuted),
+        _buildFeatureGroup(
+          cardColor: cardColor,
+          borderColor: borderColor,
+          textPrimary: textPrimary,
+          textSecondary: textSecondary,
+          textMuted: textMuted,
+          features: [
+            _Feature(Icons.people_outline, AppColors.purple, 'Social & Challenges', 'Connect with friends, join challenges, and share progress', eta: 'Q3 2026'),
           ],
         ),
 

@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
 import '../../data/providers/admin_provider.dart';
 import '../../data/services/haptic_service.dart';
+import '../../widgets/pill_app_bar.dart';
 import 'admin_support_provider.dart';
 
 /// Admin support chat list screen - shows all active support chats
@@ -32,9 +33,8 @@ class _AdminSupportListScreenState extends ConsumerState<AdminSupportListScreen>
     if (!isAdmin) {
       return Scaffold(
         backgroundColor: AppColors.pureBlack,
-        appBar: AppBar(
-          backgroundColor: AppColors.pureBlack,
-          title: const Text('Admin Support'),
+        appBar: const PillAppBar(
+          title: 'Admin Support',
         ),
         body: const Center(
           child: Column(
@@ -65,13 +65,12 @@ class _AdminSupportListScreenState extends ConsumerState<AdminSupportListScreen>
 
     return Scaffold(
       backgroundColor: AppColors.pureBlack,
-      appBar: AppBar(
-        backgroundColor: AppColors.pureBlack,
-        title: const Text('Support Chats'),
+      appBar: PillAppBar(
+        title: 'Support Chats',
         actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: () {
+          PillAppBarAction(
+            icon: Icons.refresh,
+            onTap: () {
               HapticService.light();
               ref.read(adminSupportChatsProvider.notifier).refreshChats();
             },

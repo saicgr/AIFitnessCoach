@@ -8,6 +8,7 @@ import '../../../data/providers/exercise_history_provider.dart';
 import '../../../data/providers/scores_provider.dart';
 import '../../../data/repositories/exercise_history_repository.dart';
 import '../../../data/services/api_client.dart';
+import '../../../widgets/pill_app_bar.dart';
 
 /// Main screen showing list of most performed exercises and personal records
 /// Two-tab layout: "Exercises" tab and "PRs" tab
@@ -54,21 +55,27 @@ class _ExerciseHistoryScreenState extends ConsumerState<ExerciseHistoryScreen>
     final theme = Theme.of(context);
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Exercises & PRs'),
-        bottom: TabBar(
-          controller: _tabController,
-          tabs: const [
-            Tab(icon: Icon(Icons.fitness_center), text: 'Exercises'),
-            Tab(icon: Icon(Icons.emoji_events), text: 'PRs'),
-          ],
-        ),
+      appBar: const PillAppBar(
+        title: 'Exercises & PRs',
       ),
-      body: TabBarView(
-        controller: _tabController,
+      body: Column(
         children: [
-          _buildExercisesTab(theme),
-          const _PRsTab(),
+          TabBar(
+            controller: _tabController,
+            tabs: const [
+              Tab(icon: Icon(Icons.fitness_center), text: 'Exercises'),
+              Tab(icon: Icon(Icons.emoji_events), text: 'PRs'),
+            ],
+          ),
+          Expanded(
+            child: TabBarView(
+              controller: _tabController,
+              children: [
+                _buildExercisesTab(theme),
+                const _PRsTab(),
+              ],
+            ),
+          ),
         ],
       ),
     );

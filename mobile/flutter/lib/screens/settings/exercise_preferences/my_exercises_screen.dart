@@ -52,45 +52,39 @@ class _MyExercisesScreenState extends ConsumerState<MyExercisesScreen>
 
     return Scaffold(
       backgroundColor: backgroundColor,
-      appBar: AppBar(
-        backgroundColor: backgroundColor,
-        elevation: 0,
-        automaticallyImplyLeading: true,
-        title: Text(
-          'My Exercises',
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            color: textPrimary,
+      appBar: const PillAppBar(title: 'Exercise Prefs'),
+      body: Column(
+        children: [
+          TabBar(
+            controller: _tabController,
+            labelColor: textPrimary,
+            unselectedLabelColor: textMuted,
+            indicatorColor: AppColors.cyan,
+            indicatorWeight: 3,
+            labelStyle: const TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+            ),
+            unselectedLabelStyle: const TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w400,
+            ),
+            tabs: const [
+              Tab(text: 'Favorites'),
+              Tab(text: 'Avoided'),
+              Tab(text: 'Queue'),
+            ],
           ),
-        ),
-        centerTitle: true,
-        bottom: TabBar(
-          controller: _tabController,
-          labelColor: textPrimary,
-          unselectedLabelColor: textMuted,
-          indicatorColor: AppColors.cyan,
-          indicatorWeight: 3,
-          labelStyle: const TextStyle(
-            fontSize: 13,
-            fontWeight: FontWeight.w600,
+          Expanded(
+            child: TabBarView(
+              controller: _tabController,
+              children: const [
+                _FavoritesTab(),
+                _AvoidedTab(),
+                _QueueTab(),
+              ],
+            ),
           ),
-          unselectedLabelStyle: const TextStyle(
-            fontSize: 13,
-            fontWeight: FontWeight.w400,
-          ),
-          tabs: const [
-            Tab(text: 'Favorites'),
-            Tab(text: 'Avoided'),
-            Tab(text: 'Queue'),
-          ],
-        ),
-      ),
-      body: TabBarView(
-        controller: _tabController,
-        children: const [
-          _FavoritesTab(),
-          _AvoidedTab(),
-          _QueueTab(),
         ],
       ),
     );

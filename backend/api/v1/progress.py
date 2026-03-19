@@ -8,6 +8,9 @@ Provides endpoints for:
 - User context logging for analytics
 """
 
+import asyncio
+from concurrent.futures import ThreadPoolExecutor
+
 from fastapi import APIRouter, Depends, HTTPException, Query
 from core.auth import get_current_user
 from core.exceptions import safe_internal_error
@@ -20,6 +23,9 @@ from core.supabase_db import get_supabase_db
 from core.logger import get_logger
 
 router = APIRouter(prefix="/progress", tags=["Progress"])
+
+# Thread pool for running synchronous Supabase calls concurrently
+_db_executor = ThreadPoolExecutor(max_workers=10)
 logger = get_logger(__name__)
 
 
@@ -369,21 +375,48 @@ async def get_progress_summary(
 
     try:
         db = get_supabase_db()
+        loop = asyncio.get_event_loop()
 
-        # Call the summary function
-        summary_result = db.client.rpc(
-            "get_user_progress_summary",
-            {"p_user_id": user_id}
-        ).execute()
+        # Define each independent query as a callable for run_in_executor
+        def _fetch_summary():
+            return db.client.rpc(
+                "get_user_progress_summary",
+                {"p_user_id": user_id}
+            ).execute()
+
+        def _fetch_muscle_groups():
+            return db.client.table("muscle_group_weekly_volume") \
+                .select("muscle_group, total_sets, total_volume_kg") \
+                .eq("user_id", user_id) \
+                .gte("week_start", (datetime.now() - timedelta(weeks=4)).date().isoformat()) \
+                .execute()
+
+        def _fetch_recent_prs():
+            return db.client.table("personal_records") \
+                .select("exercise_name, record_value, record_unit, achieved_at") \
+                .eq("user_id", user_id) \
+                .gte("achieved_at", (datetime.now() - timedelta(days=30)).isoformat()) \
+                .order("achieved_at", desc=True) \
+                .limit(5) \
+                .execute()
+
+        def _fetch_best_week():
+            return db.client.table("weekly_progress_summary") \
+                .select("week_start, total_volume_kg, workouts_completed, total_sets") \
+                .eq("user_id", user_id) \
+                .order("total_volume_kg", desc=True) \
+                .limit(1) \
+                .execute()
+
+        # Run all 4 independent queries in parallel
+        summary_result, muscle_result, prs_result, best_week_result = await asyncio.gather(
+            loop.run_in_executor(_db_executor, _fetch_summary),
+            loop.run_in_executor(_db_executor, _fetch_muscle_groups),
+            loop.run_in_executor(_db_executor, _fetch_recent_prs),
+            loop.run_in_executor(_db_executor, _fetch_best_week),
+        )
 
         summary_data = summary_result.data[0] if summary_result.data else {}
-
-        # Get muscle group breakdown (last 4 weeks)
-        muscle_result = db.client.table("muscle_group_weekly_volume") \
-            .select("muscle_group, total_sets, total_volume_kg") \
-            .eq("user_id", user_id) \
-            .gte("week_start", (datetime.now() - timedelta(weeks=4)).date().isoformat()) \
-            .execute()
 
         # Aggregate muscle data
         muscle_breakdown = {}
@@ -394,15 +427,6 @@ async def get_progress_summary(
             muscle_breakdown[mg]["total_sets"] += row.get("total_sets", 0)
             muscle_breakdown[mg]["total_volume_kg"] += float(row.get("total_volume_kg", 0))
 
-        # Get recent PRs (last 30 days)
-        prs_result = db.client.table("personal_records") \
-            .select("exercise_name, record_value, record_unit, achieved_at") \
-            .eq("user_id", user_id) \
-            .gte("achieved_at", (datetime.now() - timedelta(days=30)).isoformat()) \
-            .order("achieved_at", desc=True) \
-            .limit(5) \
-            .execute()
-
         recent_prs = [
             {
                 "exercise_name": pr["exercise_name"],
@@ -412,14 +436,6 @@ async def get_progress_summary(
             }
             for pr in prs_result.data or []
         ]
-
-        # Get best week by volume
-        best_week_result = db.client.table("weekly_progress_summary") \
-            .select("week_start, total_volume_kg, workouts_completed, total_sets") \
-            .eq("user_id", user_id) \
-            .order("total_volume_kg", desc=True) \
-            .limit(1) \
-            .execute()
 
         best_week = None
         if best_week_result.data:

@@ -101,6 +101,10 @@ class _AppTourOverlayState extends ConsumerState<AppTourOverlay>
     final targetRect = _getTargetRect(step.targetKey);
     final isTargetFound = targetRect != Rect.zero;
 
+    // Check if target is off-screen (above or below visible area)
+    final isOffScreen = isTargetFound &&
+        (targetRect.bottom < 0 || targetRect.top > screenSize.height);
+
     // Use previous rect as animation start, then update for next step
     final beginRect = _previousRect == Rect.zero ? targetRect : _previousRect;
     final endRect = isTargetFound ? targetRect : Rect.zero;
@@ -163,6 +167,25 @@ class _AppTourOverlayState extends ConsumerState<AppTourOverlay>
         }
       }
     });
+
+    // Don't render spotlight or tooltip while the target is off-screen;
+    // the post-frame callback above will scroll it into view and rebuild.
+    if (isOffScreen || !isTargetFound) {
+      return Positioned.fill(
+        child: GestureDetector(
+          onTap: () {},
+          behavior: HitTestBehavior.opaque,
+          child: CustomPaint(
+            painter: AppTourSpotlightPainter(
+              spotlightRect: Rect.zero,
+              ringColor: accentColor,
+              cornerRadius: 12.0,
+              spotlightPadding: 10.0,
+            ),
+          ),
+        ),
+      );
+    }
 
     const spotlightPadding = 10.0;
     const estimatedCardHeight = 180.0;

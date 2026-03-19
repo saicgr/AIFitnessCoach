@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../data/repositories/workout_history_repository.dart';
 import '../../data/services/api_client.dart';
 import '../../data/repositories/auth_repository.dart';
+import '../../widgets/pill_app_bar.dart';
 
 /// Screen for importing past workout history to seed AI learning.
 /// Addresses the "weird weights" issue by allowing users to input
@@ -149,9 +150,7 @@ class _WorkoutHistoryImportScreenState
     final colorScheme = theme.colorScheme;
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Import Workout History'),
-      ),
+      appBar: const PillAppBar(title: 'Import Workout History'),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : SingleChildScrollView(

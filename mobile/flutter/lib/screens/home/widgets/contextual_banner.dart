@@ -4,7 +4,8 @@ import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../data/models/weekly_plan.dart';
-import '../../../data/providers/fasting_provider.dart';
+// TODO: Re-enable when fasting feature launches
+// import '../../../data/providers/fasting_provider.dart';
 import '../../../data/providers/scores_provider.dart';
 import '../../../data/providers/weekly_plan_provider.dart';
 import '../../../data/services/haptic_service.dart';
@@ -175,33 +176,31 @@ class _ContextualBannerState extends ConsumerState<ContextualBanner>
     final todayKey = '${today.year}-${today.month}-${today.day}';
     final weekKey = _getWeekKey(today);
 
+    // TODO: Re-enable fasting banner when fasting feature launches
     // Priority 1: Fasting window ending soon
-    final fastingState = ref.watch(fastingProvider);
-    if (fastingState.activeFast != null) {
-      final fast = fastingState.activeFast!;
-      final remainingMinutes = fast.goalDurationMinutes - fast.elapsedMinutes;
-
-      // Show when less than 2 hours remaining
-      if (remainingMinutes > 0 && remainingMinutes <= 120) {
-        final fastDismissKey = 'fasting_${fast.id}';
-        if (!_dismissedKeys.contains(fastDismissKey)) {
-          final hours = remainingMinutes ~/ 60;
-          final mins = remainingMinutes % 60;
-          final timeStr = hours > 0 ? '${hours}h ${mins}m' : '${mins}m';
-
-          return BannerContent(
-            type: ContextualBannerType.fasting,
-            title: 'Almost there!',
-            subtitle: 'Fasting window ends in $timeStr',
-            icon: Icons.timer_outlined,
-            accentColor: AppColors.orange,
-            actionLabel: 'View Fast',
-            actionRoute: '/fasting',
-            dismissKey: fastDismissKey,
-          );
-        }
-      }
-    }
+    // final fastingState = ref.watch(fastingProvider);
+    // if (fastingState.activeFast != null) {
+    //   final fast = fastingState.activeFast!;
+    //   final remainingMinutes = fast.goalDurationMinutes - fast.elapsedMinutes;
+    //   if (remainingMinutes > 0 && remainingMinutes <= 120) {
+    //     final fastDismissKey = 'fasting_${fast.id}';
+    //     if (!_dismissedKeys.contains(fastDismissKey)) {
+    //       final hours = remainingMinutes ~/ 60;
+    //       final mins = remainingMinutes % 60;
+    //       final timeStr = hours > 0 ? '${hours}h ${mins}m' : '${mins}m';
+    //       return BannerContent(
+    //         type: ContextualBannerType.fasting,
+    //         title: 'Almost there!',
+    //         subtitle: 'Fasting window ends in $timeStr',
+    //         icon: Icons.timer_outlined,
+    //         accentColor: AppColors.orange,
+    //         actionLabel: 'View Fast',
+    //         actionRoute: '/fasting',
+    //         dismissKey: fastDismissKey,
+    //       );
+    //     }
+    //   }
+    // }
 
     // Priority 2: Weekly goal progress (Thu-Sun)
     final dayOfWeek = today.weekday; // 1 = Monday, 7 = Sunday

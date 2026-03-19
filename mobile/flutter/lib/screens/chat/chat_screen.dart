@@ -532,18 +532,21 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                         }
                       }
 
-                      // Date separator: show when date differs from PREVIOUS message
-                      // (In reversed list, previous = msgIndex+1 = older message visually above)
+                      // Date separator: In a reversed list, index 0 = newest (bottom).
+                      // Show separator BELOW a message when the NEXT message (index-1,
+                      // visually below) belongs to a different day. This places the
+                      // date header between the two day groups.
                       Widget? dateSeparator;
-                      final prevIndex = msgIndex + 1;
-                      if (prevIndex < messages.length) {
+                      final nextIndex = msgIndex - 1;
+                      if (nextIndex >= 0) {
                         final currentDate = message.timestamp ?? DateTime.now();
-                        final prevDate = messages[prevIndex].timestamp ?? DateTime.now();
-                        if (!_isSameDay(currentDate, prevDate)) {
+                        final nextDate = messages[nextIndex].timestamp ?? DateTime.now();
+                        if (!_isSameDay(currentDate, nextDate)) {
                           dateSeparator = _buildDateSeparator(currentDate);
                         }
-                      } else {
-                        // Oldest message gets a date header
+                      }
+                      // Oldest visible message in list (top) always gets a header
+                      if (msgIndex == messages.length - 1) {
                         dateSeparator = _buildDateSeparator(message.timestamp ?? DateTime.now());
                       }
 
@@ -572,9 +575,15 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                           : bubble;
 
                       if (dateSeparator != null) {
-                        // In reversed list, dateSeparator goes AFTER bubble (visually above)
+                        // In reversed list, this item is visually ABOVE lower-indexed
+                        // items. Place separator AFTER (below) the bubble so it sits
+                        // between this day group and the next day group below.
+                        // For the oldest message, separator goes BEFORE (above) the bubble.
+                        final isOldest = msgIndex == messages.length - 1;
                         return Column(
-                          children: [wrappedBubble, dateSeparator],
+                          children: isOldest
+                              ? [dateSeparator, wrappedBubble]
+                              : [wrappedBubble, dateSeparator],
                         );
                       }
                       return wrappedBubble;
@@ -798,6 +807,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
     final messageDate = DateTime(date.year, date.month, date.day);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     String label;
     if (messageDate == today) {
@@ -816,14 +826,16 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
           decoration: BoxDecoration(
-            color: AppColors.elevated.withOpacity(0.7),
+            color: isDark
+                ? AppColors.elevated.withOpacity(0.7)
+                : Colors.grey.shade200,
             borderRadius: BorderRadius.circular(12),
           ),
           child: Text(
             label,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 12,
-              color: AppColors.textMuted,
+              color: isDark ? AppColors.textMuted : Colors.grey.shade600,
               fontWeight: FontWeight.w500,
             ),
           ),
@@ -1961,8 +1973,10 @@ class _InputBarState extends State<_InputBar> {
   }
 
   void _pickMedia() async {
+    debugPrint('🔍 [_InputBar] _pickMedia called');
     try {
       final result = await MediaPickerHelper.showMediaPickerSheet(context);
+      debugPrint('🔍 [_InputBar] _pickMedia result: ${result?.media.length ?? 'null'}');
       if (result != null && result.isNotEmpty && mounted) {
         setState(() {
           // Append picked media, enforce max 5
@@ -1979,12 +1993,16 @@ class _InputBarState extends State<_InputBar> {
           ),
         );
       }
+    } catch (e, stackTrace) {
+      debugPrint('❌ [_InputBar] _pickMedia unexpected error: $e');
+      debugPrint('❌ [_InputBar] Stack trace: $stackTrace');
     }
   }
 
   void _pickImageFromCamera() async {
+    debugPrint('🔍 [_InputBar] _pickImageFromCamera called');
     try {
-      final media = await MediaPickerHelper.pickImage(ImageSource.camera);
+      final media = await MediaPickerHelper.pickImage(ImageSource.camera, context: context);
       if (media != null && mounted) {
         setState(() {
           final combined = [..._selectedMedia, media];
@@ -2004,6 +2022,7 @@ class _InputBarState extends State<_InputBar> {
   }
 
   void _pickVideo() {
+    debugPrint('🔍 [_InputBar] _pickVideo called');
     final colors = ThemeColors.of(context);
     final isDark = colors.isDark;
 
@@ -2158,6 +2177,7 @@ class _InputBarState extends State<_InputBar> {
                   children: [
                     // Camera button (quick image)
                     GestureDetector(
+                      behavior: HitTestBehavior.opaque,
                       onTap: widget.isLoading ? null : _pickImageFromCamera,
                       child: Container(
                         width: 36,
@@ -2181,6 +2201,7 @@ class _InputBarState extends State<_InputBar> {
 
                     // Video button
                     GestureDetector(
+                      behavior: HitTestBehavior.opaque,
                       onTap: widget.isLoading ? null : _pickVideo,
                       child: Container(
                         width: 36,
@@ -2204,6 +2225,7 @@ class _InputBarState extends State<_InputBar> {
 
                     // Media picker button (gallery + video)
                     GestureDetector(
+                      behavior: HitTestBehavior.opaque,
                       onTap: widget.isLoading ? null : _pickMedia,
                       child: Container(
                         width: 36,

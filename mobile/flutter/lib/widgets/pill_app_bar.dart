@@ -23,8 +23,11 @@ class PillAppBarAction {
 }
 
 /// Drop-in [AppBar] replacement that renders the back button, title, and
-/// action buttons as a connected row of pills — exactly like the workout
-/// detail screen.
+/// action buttons as a connected row of pills — exactly like the Settings
+/// screen.
+///
+/// Uses `MediaQuery.of(context).padding.top + 8` for precise status-bar
+/// spacing (same approach as the Settings screen).
 ///
 /// **Usage:**
 /// ```dart
@@ -32,16 +35,9 @@ class PillAppBarAction {
 ///   title: 'Stats & Scores',
 ///   actions: [
 ///     PillAppBarAction(icon: Icons.calendar_month_outlined, onTap: () {}),
-///     PillAppBarAction(icon: Icons.download_rounded, onTap: () {}),
-///     PillAppBarAction(icon: Icons.ios_share_rounded, onTap: () {}),
 ///   ],
 /// ),
 /// ```
-///
-/// The Scaffold still provides status-bar safe area handling.
-/// The pill row sits 8 px below the top edge of the AppBar area with a
-/// `preferredSize` height of 60 px (same visual weight as the workout detail
-/// screen's floating bar).
 class PillAppBar extends StatelessWidget implements PreferredSizeWidget {
   final String title;
 
@@ -50,15 +46,19 @@ class PillAppBar extends StatelessWidget implements PreferredSizeWidget {
 
   final List<PillAppBarAction> actions;
 
+  /// Set to false for top-level tabs that have no back navigation.
+  final bool showBack;
+
   const PillAppBar({
     super.key,
     required this.title,
     this.onBack,
     this.actions = const [],
+    this.showBack = true,
   });
 
   @override
-  Size get preferredSize => const Size.fromHeight(60);
+  Size get preferredSize => const Size.fromHeight(kToolbarHeight);
 
   @override
   Widget build(BuildContext context) {
@@ -89,76 +89,84 @@ class PillAppBar extends StatelessWidget implements PreferredSizeWidget {
     final visibleActions =
         actions.where((a) => a.visible).toList();
 
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-      child: Row(
-        children: [
-          // Back button circle
-          GestureDetector(
-            onTap: () {
-              HapticService.light();
-              if (onBack != null) {
-                onBack!();
-              } else if (context.canPop()) {
-                context.pop();
-              }
-            },
-            child: Container(
-              width: 44,
-              height: 44,
-              decoration: pillDecor(),
-              child: Icon(
-                Icons.arrow_back_rounded,
-                color: textPrimary,
-                size: 22,
-              ),
-            ),
-          ),
-          const SizedBox(width: 12),
+    // Use the same spacing as the Settings screen:
+    // MediaQuery.padding.top + 8px
+    final statusBarHeight = MediaQuery.of(context).padding.top;
 
-          // Title pill — expands to fill remaining space
-          Expanded(
-            child: Container(
-              height: 44,
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              decoration: pillDecor(),
-              child: Align(
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  title,
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
+    return SizedBox(
+      height: statusBarHeight + 8 + 44 + 8, // status bar + gap + pill + bottom
+      child: Padding(
+        padding: EdgeInsets.fromLTRB(16, statusBarHeight + 8, 16, 8),
+        child: Row(
+          children: [
+            // Back button circle (hidden for top-level tabs)
+            if (showBack) ...[
+              GestureDetector(
+                onTap: () {
+                  HapticService.light();
+                  if (onBack != null) {
+                    onBack!();
+                  } else if (context.canPop()) {
+                    context.pop();
+                  }
+                },
+                child: Container(
+                  width: 44,
+                  height: 44,
+                  decoration: pillDecor(),
+                  child: Icon(
+                    Icons.arrow_back_rounded,
                     color: textPrimary,
+                    size: 22,
                   ),
-                  overflow: TextOverflow.ellipsis,
-                  maxLines: 1,
                 ),
               ),
-            ),
-          ),
+              const SizedBox(width: 12),
+            ],
 
-          // Action circles
-          for (final action in visibleActions) ...[
-            const SizedBox(width: 8),
-            GestureDetector(
-              onTap: () {
-                HapticService.light();
-                action.onTap?.call();
-              },
+            // Title pill — expands to fill remaining space
+            Expanded(
               child: Container(
-                width: 44,
                 height: 44,
+                padding: const EdgeInsets.symmetric(horizontal: 16),
                 decoration: pillDecor(),
-                child: Icon(
-                  action.icon,
-                  color: action.iconColor ?? iconColor,
-                  size: 20,
+                child: Center(
+                  child: Text(
+                    title,
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: textPrimary,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                    maxLines: 1,
+                  ),
                 ),
               ),
             ),
+
+            // Action circles
+            for (final action in visibleActions) ...[
+              const SizedBox(width: 8),
+              GestureDetector(
+                onTap: () {
+                  HapticService.light();
+                  action.onTap?.call();
+                },
+                child: Container(
+                  width: 44,
+                  height: 44,
+                  decoration: pillDecor(),
+                  child: Icon(
+                    action.icon,
+                    color: action.iconColor ?? iconColor,
+                    size: 20,
+                  ),
+                ),
+              ),
+            ],
           ],
-        ],
+        ),
       ),
     );
   }

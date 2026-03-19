@@ -5,6 +5,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/providers/training_intensity_provider.dart';
 import '../../../data/models/training_intensity.dart';
 import '../../../widgets/glass_sheet.dart';
+import '../../../widgets/pill_app_bar.dart';
 
 // Import linked exercises types
 export '../../../data/models/training_intensity.dart' show LinkedExercise, ExerciseLinkSuggestion;
@@ -32,39 +33,13 @@ class _My1RMsScreenState extends ConsumerState<My1RMsScreen> {
 
     return Scaffold(
       backgroundColor: isDark ? AppColors.pureBlack : AppColorsLight.background,
-      appBar: AppBar(
-        backgroundColor: isDark ? AppColors.pureBlack : AppColorsLight.background,
-        surfaceTintColor: Colors.transparent,
-        elevation: 0,
-        title: Text(
-          'My 1RMs',
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.w600,
-            color: textPrimary,
-          ),
-        ),
+      appBar: PillAppBar(
+        title: 'My 1RMs',
         actions: [
           if (!oneRMsState.isLoading)
-            PopupMenuButton<String>(
-              icon: Icon(Icons.more_vert, color: textMuted),
-              onSelected: (value) async {
-                if (value == 'auto_populate') {
-                  await _autoPopulate();
-                }
-              },
-              itemBuilder: (context) => [
-                PopupMenuItem(
-                  value: 'auto_populate',
-                  child: Row(
-                    children: [
-                      Icon(Icons.auto_awesome, size: 20, color: textMuted),
-                      const SizedBox(width: 12),
-                      const Text('Auto-populate from history'),
-                    ],
-                  ),
-                ),
-              ],
+            PillAppBarAction(
+              icon: Icons.auto_awesome,
+              onTap: _autoPopulate,
             ),
         ],
       ),

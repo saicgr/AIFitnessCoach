@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants/app_colors.dart';
 import '../../data/services/haptic_service.dart';
 import '../../widgets/glass_sheet.dart';
+import '../../widgets/pill_app_bar.dart';
 import 'admin_support_provider.dart';
 
 /// Admin chat screen - reply to user support messages
@@ -159,39 +160,20 @@ class _AdminChatScreenState extends ConsumerState<AdminChatScreen> {
 
     return Scaffold(
       backgroundColor: AppColors.pureBlack,
-      appBar: AppBar(
-        backgroundColor: AppColors.pureBlack,
+      appBar: PillAppBar(
         title: chatDetailAsync.when(
-          data: (chat) => Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                chat?.userName ?? 'Support Chat',
-                style: const TextStyle(fontSize: 16),
-              ),
-              Text(
-                chat?.category ?? '',
-                style: const TextStyle(
-                  fontSize: 12,
-                  color: AppColors.textSecondary,
-                  fontWeight: FontWeight.normal,
-                ),
-              ),
-            ],
-          ),
-          loading: () => const Text('Loading...'),
-          error: (_, __) => const Text('Support Chat'),
+          data: (chat) => chat?.userName ?? 'Support Chat',
+          loading: () => 'Loading...',
+          error: (_, __) => 'Support Chat',
         ),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.check_circle_outline),
-            tooltip: 'Close Chat',
-            onPressed: _showCloseDialog,
+          PillAppBarAction(
+            icon: Icons.check_circle_outline,
+            onTap: _showCloseDialog,
           ),
-          IconButton(
-            icon: const Icon(Icons.info_outline),
-            tooltip: 'User Info',
-            onPressed: () => _showUserInfo(context, chatDetailAsync.valueOrNull),
+          PillAppBarAction(
+            icon: Icons.info_outline,
+            onTap: () => _showUserInfo(context, chatDetailAsync.valueOrNull),
           ),
         ],
       ),

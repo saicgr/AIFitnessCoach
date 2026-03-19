@@ -76,7 +76,8 @@ class TileFactory {
       case TileType.leaderboardRank:
         return LeaderboardRankCard(size: tile.size, isDark: isDark);
       case TileType.fasting:
-        return FastingTimerCard(size: tile.size, isDark: isDark);
+        // TODO: Re-enable when fasting feature launches
+        return const SizedBox.shrink(); // was: FastingTimerCard
       case TileType.weeklyCalendar:
         return WeeklyCalendarCard(size: tile.size, isDark: isDark);
       case TileType.muscleHeatmap:

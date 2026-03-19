@@ -47,7 +47,7 @@ class _AvoidedExercisesScreenState extends ConsumerState<AvoidedExercisesScreen>
       if (widget.embedded) return notLoggedIn;
       return Scaffold(
         backgroundColor: backgroundColor,
-        appBar: AppBar(title: const Text('Exercises to Avoid')),
+        appBar: const PillAppBar(title: 'Exercises to Avoid'),
         body: notLoggedIn,
       );
     }

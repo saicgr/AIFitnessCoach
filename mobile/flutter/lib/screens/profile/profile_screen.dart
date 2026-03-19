@@ -3,6 +3,7 @@ import 'dart:io' show Platform;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import '../../widgets/pill_app_bar.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -201,92 +202,88 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     final userEmail = user?.email ?? '';
     final photoUrl = user?.photoUrl;
 
-    return Container(
-      decoration: BoxDecoration(
-        color: elevated,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: cardBorder),
-      ),
-      child: Column(
-        children: [
-          // Main user row (tappable)
-          GestureDetector(
-            onTap: () => _showEditPersonalInfoSheet(context),
-            child: Padding(
+    return GestureDetector(
+      onTap: () => _showEditPersonalInfoSheet(context),
+      child: Container(
+        decoration: BoxDecoration(
+          color: elevated,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: cardBorder),
+        ),
+        child: Stack(
+          children: [
+            Padding(
               padding: const EdgeInsets.all(16),
-              child: Row(
+              child: Column(
                 children: [
-                  Container(
-                    width: 52,
-                    height: 52,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: const Color(0xFF06B6D4).withValues(alpha: 0.15),
-                      image: photoUrl != null && photoUrl.isNotEmpty
-                          ? DecorationImage(
-                              image: NetworkImage(photoUrl),
-                              fit: BoxFit.cover,
-                              onError: (exception, stackTrace) {
-                                debugPrint('❌ [Profile] Failed to load photo: $exception');
-                              },
-                            )
-                          : null,
-                    ),
-                    child: photoUrl == null || photoUrl.isEmpty
-                        ? const Icon(
-                            Icons.person,
-                            color: Color(0xFF06B6D4),
-                            size: 28,
-                          )
-                        : null,
-                  ),
-                  const SizedBox(width: 14),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          userName,
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w700,
-                            color: textPrimary,
-                          ),
+                  // Main user row
+                  Row(
+                    children: [
+                      Container(
+                        width: 52,
+                        height: 52,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: const Color(0xFF06B6D4).withValues(alpha: 0.15),
+                          image: photoUrl != null && photoUrl.isNotEmpty
+                              ? DecorationImage(
+                                  image: NetworkImage(photoUrl),
+                                  fit: BoxFit.cover,
+                                  onError: (exception, stackTrace) {
+                                    debugPrint('❌ [Profile] Failed to load photo: $exception');
+                                  },
+                                )
+                              : null,
                         ),
-                        if (userEmail.isNotEmpty) ...[
-                          const SizedBox(height: 2),
-                          Text(
-                            userEmail,
-                            style: TextStyle(
-                              fontSize: 13,
-                              color: textMuted,
+                        child: photoUrl == null || photoUrl.isEmpty
+                            ? const Icon(
+                                Icons.person,
+                                color: Color(0xFF06B6D4),
+                                size: 28,
+                              )
+                            : null,
+                      ),
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              userName,
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.w700,
+                                color: textPrimary,
+                              ),
                             ),
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ],
-                      ],
-                    ),
+                            if (userEmail.isNotEmpty) ...[
+                              const SizedBox(height: 2),
+                              Text(
+                                userEmail,
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  color: textMuted,
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ],
+                          ],
+                        ),
+                      ),
+                      // Spacer for the edit icon in the top-right
+                      const SizedBox(width: 28),
+                    ],
                   ),
-                  Icon(Icons.chevron_right, color: textMuted, size: 20),
-                ],
-              ),
-            ),
-          ),
 
-          // Bio row (F6 - tappable to edit)
-          if (_bioLoaded)
-            GestureDetector(
-              onTap: _showEditBioDialog,
-              child: Container(
-                width: double.infinity,
-                padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                child: Row(
-                  children: [
-                    Expanded(
+                  // Bio display
+                  if (_bioLoaded) ...[
+                    const SizedBox(height: 10),
+                    Align(
+                      alignment: Alignment.centerLeft,
                       child: Text(
                         _bio != null && _bio!.isNotEmpty
                             ? _bio!
-                            : 'Add a bio...',
+                            : 'Tap to add a bio...',
                         style: TextStyle(
                           fontSize: 13,
                           color: _bio != null && _bio!.isNotEmpty
@@ -300,13 +297,31 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
-                    const SizedBox(width: 8),
-                    Icon(Icons.edit_outlined, color: textMuted, size: 16),
                   ],
+                ],
+              ),
+            ),
+
+            // Edit pencil icon in top-right corner
+            Positioned(
+              top: 12,
+              right: 12,
+              child: Container(
+                width: 28,
+                height: 28,
+                decoration: BoxDecoration(
+                  color: textMuted.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(
+                  Icons.edit_outlined,
+                  color: textMuted,
+                  size: 15,
                 ),
               ),
             ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -349,12 +364,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         iconColor: isDark ? AppColors.success : AppColorsLight.success,
         title: 'Manage Membership',
         onTap: () => context.push('/subscription-management'),
-      ),
-      _AccountRowData(
-        icon: Icons.person_outline,
-        iconColor: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
-        title: 'Edit Profile',
-        onTap: () => _showEditPersonalInfoSheet(context),
       ),
     ];
 
@@ -468,84 +477,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     );
   }
 
-  // --- Bio edit (F6) ---
-
-  void _showEditBioDialog() {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
-    final bioController = TextEditingController(text: _bio ?? '');
-
-    showDialog(
-      context: context,
-      builder: (dialogContext) => StatefulBuilder(
-        builder: (dialogContext, setDialogState) {
-          return AlertDialog(
-            backgroundColor: elevated,
-            title: const Text('Edit Bio'),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextField(
-                  controller: bioController,
-                  maxLines: 4,
-                  maxLength: 300,
-                  textCapitalization: TextCapitalization.sentences,
-                  decoration: InputDecoration(
-                    hintText: 'Tell us about yourself...',
-                    hintStyle: TextStyle(
-                      color: (isDark ? AppColors.textMuted : AppColorsLight.textMuted)
-                          .withValues(alpha: 0.5),
-                    ),
-                    filled: true,
-                    fillColor: isDark
-                        ? AppColors.pureBlack.withValues(alpha: 0.5)
-                        : Colors.grey.withValues(alpha: 0.1),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide.none,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(dialogContext),
-                child: Text(
-                  'Cancel',
-                  style: TextStyle(
-                    color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
-                  ),
-                ),
-              ),
-              TextButton(
-                onPressed: () async {
-                  Navigator.pop(dialogContext);
-                  final newBio = bioController.text.trim();
-                  try {
-                    await ref
-                        .read(authStateProvider.notifier)
-                        .updateUserProfile({'bio': newBio});
-                    if (mounted) {
-                      setState(() => _bio = newBio.isEmpty ? null : newBio);
-                      AppSnackBar.success(context, 'Bio updated');
-                    }
-                  } catch (e) {
-                    debugPrint('Error updating bio: $e');
-                    if (mounted) {
-                      AppSnackBar.error(context, 'Failed to update bio');
-                    }
-                  }
-                },
-                child: const Text('Save'),
-              ),
-            ],
-          );
-        },
-      ),
-    ).then((_) => bioController.dispose());
-  }
-
   // --- Sheet launchers ---
 
   void _showEditPersonalInfoSheet(BuildContext context) {
@@ -553,9 +484,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       context: context,
       builder: (context) => const EditPersonalInfoSheet(),
     ).then((result) {
-      // Force refresh user data when sheet closes (in case photo was updated)
+      // Force refresh user data and bio when sheet closes
       if (result == true) {
         ref.read(authStateProvider.notifier).refreshUser();
+        _loadBio();
       }
     });
   }
@@ -791,7 +723,17 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 
       if (response.statusCode == 200) {
         final prefs = await SharedPreferences.getInstance();
+        // Preserve tour flags so tutorials don't replay after reset
+        final tourFlags = <String, bool>{};
+        for (final key in prefs.getKeys()) {
+          if (key.startsWith('has_seen_')) {
+            tourFlags[key] = prefs.getBool(key) ?? false;
+          }
+        }
         await prefs.clear();
+        for (final entry in tourFlags.entries) {
+          await prefs.setBool(entry.key, entry.value);
+        }
         ref.read(onboardingStateProvider.notifier).reset();
         await ref.read(authStateProvider.notifier).signOut();
         router.go('/stats-welcome');
@@ -832,48 +774,23 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     return Scaffold(
       key: const ValueKey('profile_scaffold'),
       backgroundColor: backgroundColor,
-      appBar: AppBar(
-        backgroundColor: backgroundColor,
-        elevation: 0,
-        automaticallyImplyLeading: false,
-        title: Text(
-          'Profile',
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            color: textPrimary,
-          ),
-        ),
-        centerTitle: true,
+      appBar: PillAppBar(
+        title: 'Profile',
+        showBack: false,
         actions: [
-          TextButton(
-            onPressed: () {
+          PillAppBarAction(
+            icon: Icons.bar_chart_rounded,
+            onTap: () {
               HapticService.selection();
               context.push('/stats');
             },
-            style: TextButton.styleFrom(
-              padding: const EdgeInsets.symmetric(horizontal: 8),
-              minimumSize: Size.zero,
-              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-            ),
-            child: Text(
-              'Stats',
-              style: TextStyle(
-                color: textMuted,
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
           ),
-          IconButton(
-            onPressed: () {
+          PillAppBarAction(
+            icon: Icons.settings_outlined,
+            onTap: () {
               HapticService.selection();
               context.push('/settings');
             },
-            icon: Icon(
-              Icons.settings_outlined,
-              color: textMuted,
-              size: 22,
-            ),
           ),
         ],
       ),

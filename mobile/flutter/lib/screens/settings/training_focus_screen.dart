@@ -6,6 +6,7 @@ import '../../core/constants/app_colors.dart';
 import '../../core/constants/api_constants.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../../data/services/api_client.dart';
+import '../../widgets/pill_app_bar.dart';
 
 /// Screen for editing training focus settings:
 /// - Primary goal (hypertrophy, strength, or both)
@@ -106,25 +107,13 @@ class _TrainingFocusScreenState extends ConsumerState<TrainingFocusScreen> {
 
     return Scaffold(
       backgroundColor: isDark ? AppColors.pureBlack : Colors.white,
-      appBar: AppBar(
-        title: const Text('Training Focus'),
-        backgroundColor: isDark ? AppColors.pureBlack : Colors.white,
+      appBar: PillAppBar(
+        title: 'Training Focus',
         actions: [
-          TextButton(
-            onPressed: _isLoading ? null : _saveSettings,
-            child: _isLoading
-                ? const SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
-                : Text(
-                    'Save',
-                    style: TextStyle(
-                      color: _hasChanges ? AppColors.accent : textSecondary,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
+          PillAppBarAction(
+            icon: _isLoading ? Icons.hourglass_empty : Icons.check_rounded,
+            iconColor: _hasChanges ? AppColors.accent : textSecondary,
+            onTap: _isLoading ? null : _saveSettings,
           ),
         ],
       ),

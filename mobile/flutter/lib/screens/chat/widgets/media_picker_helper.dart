@@ -373,11 +373,17 @@ class MediaPickerHelper {
   /// Show bottom sheet with media picker options
   /// Returns a PickedMediaResult (which may contain one or multiple media items)
   static Future<PickedMediaResult?> showMediaPickerSheet(BuildContext context) async {
+    debugPrint('🔍 [MediaPicker] showMediaPickerSheet called, context.mounted=${context.mounted}');
     final completer = Completer<PickedMediaResult?>();
+    // Track whether a pick operation was initiated so the .then() dismissal
+    // callback doesn't race ahead and complete the completer with null before
+    // the picker returns.
+    bool pickingInProgress = false;
 
     showModalBottomSheet<void>(
       context: context,
       backgroundColor: Colors.transparent,
+      isScrollControlled: true,
       builder: (ctx) {
         final colors = ThemeColors.of(ctx);
         final isDark = colors.isDark;
@@ -387,8 +393,10 @@ class MediaPickerHelper {
             color: isDark ? AppColors.elevated : Colors.white,
             borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
           ),
-          padding: const EdgeInsets.all(20),
-          child: SafeArea(
+          padding: EdgeInsets.fromLTRB(
+            20, 20, 20, 20 + MediaQuery.of(ctx).viewPadding.bottom,
+          ),
+          child: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -419,9 +427,12 @@ class MediaPickerHelper {
                   subtitle: 'From gallery',
                   color: AppColors.info,
                   onTap: () async {
+                    pickingInProgress = true;
                     Navigator.pop(ctx);
                     HapticService.selection();
+                    debugPrint('🔍 [MediaPicker] Picking single image from gallery...');
                     final media = await pickImage(ImageSource.gallery, context: context);
+                    debugPrint('🔍 [MediaPicker] pickImage returned: ${media != null ? 'file(${media.formattedSize})' : 'null'}');
                     if (!completer.isCompleted) {
                       completer.complete(media != null ? PickedMediaResult(media: [media]) : null);
                     }
@@ -434,9 +445,12 @@ class MediaPickerHelper {
                   subtitle: 'Select up to 5 from gallery',
                   color: const Color(0xFF00BCD4),
                   onTap: () async {
+                    pickingInProgress = true;
                     Navigator.pop(ctx);
                     HapticService.selection();
+                    debugPrint('🔍 [MediaPicker] Picking multiple images from gallery...');
                     final mediaList = await pickMultipleImages(context: context);
+                    debugPrint('🔍 [MediaPicker] pickMultipleImages returned ${mediaList.length} items');
                     if (!completer.isCompleted) {
                       completer.complete(mediaList.isNotEmpty ? PickedMediaResult(media: mediaList) : null);
                     }
@@ -449,9 +463,12 @@ class MediaPickerHelper {
                   subtitle: 'Use camera',
                   color: AppColors.success,
                   onTap: () async {
+                    pickingInProgress = true;
                     Navigator.pop(ctx);
                     HapticService.selection();
+                    debugPrint('🔍 [MediaPicker] Taking photo with camera...');
                     final media = await pickImage(ImageSource.camera, context: context);
+                    debugPrint('🔍 [MediaPicker] pickImage (camera) returned: ${media != null ? 'file(${media.formattedSize})' : 'null'}');
                     if (!completer.isCompleted) {
                       completer.complete(media != null ? PickedMediaResult(media: [media]) : null);
                     }
@@ -496,9 +513,12 @@ class MediaPickerHelper {
                   subtitle: 'From gallery (max 60s)',
                   color: AppColors.purple,
                   onTap: () async {
+                    pickingInProgress = true;
                     Navigator.pop(ctx);
                     HapticService.selection();
+                    debugPrint('🔍 [MediaPicker] Picking video from gallery...');
                     final media = await pickVideo(ImageSource.gallery, context: context);
+                    debugPrint('🔍 [MediaPicker] pickVideo returned: ${media != null ? 'file(${media.formattedSize})' : 'null'}');
                     if (!completer.isCompleted) {
                       completer.complete(media != null ? PickedMediaResult(media: [media]) : null);
                     }
@@ -511,9 +531,12 @@ class MediaPickerHelper {
                   subtitle: 'Use camera (max 60s)',
                   color: AppColors.orange,
                   onTap: () async {
+                    pickingInProgress = true;
                     Navigator.pop(ctx);
                     HapticService.selection();
+                    debugPrint('🔍 [MediaPicker] Recording video with camera...');
                     final media = await pickVideo(ImageSource.camera, context: context);
+                    debugPrint('🔍 [MediaPicker] pickVideo (camera) returned: ${media != null ? 'file(${media.formattedSize})' : 'null'}');
                     if (!completer.isCompleted) {
                       completer.complete(media != null ? PickedMediaResult(media: [media]) : null);
                     }
@@ -525,8 +548,12 @@ class MediaPickerHelper {
         );
       },
     ).then((_) {
-      // Sheet dismissed without picking (swipe down / tap outside)
-      if (!completer.isCompleted) {
+      // Sheet dismissed without picking (swipe down / tap outside).
+      // Only complete with null if no pick operation is in progress -
+      // otherwise the picker's own completion will handle it.
+      debugPrint('🔍 [MediaPicker] Sheet dismissed. pickingInProgress=$pickingInProgress, completer.isCompleted=${completer.isCompleted}');
+      if (!pickingInProgress && !completer.isCompleted) {
+        debugPrint('🔍 [MediaPicker] No pick in progress, completing with null (user dismissed sheet)');
         completer.complete(null);
       }
     });

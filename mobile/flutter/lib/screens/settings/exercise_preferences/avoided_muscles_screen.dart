@@ -56,7 +56,7 @@ class _AvoidedMusclesScreenState extends ConsumerState<AvoidedMusclesScreen> {
       if (widget.embedded) return notLoggedIn;
       return Scaffold(
         backgroundColor: backgroundColor,
-        appBar: AppBar(title: const Text('Muscles to Avoid')),
+        appBar: const PillAppBar(title: 'Muscles to Avoid'),
         body: notLoggedIn,
       );
     }

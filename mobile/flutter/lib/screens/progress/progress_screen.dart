@@ -20,6 +20,7 @@ import '../../data/repositories/measurements_repository.dart';
 import '../../data/repositories/progress_photos_repository.dart';
 import '../../data/services/api_client.dart';
 import '../../widgets/glass_sheet.dart';
+import '../../widgets/pill_app_bar.dart';
 import '../../widgets/segmented_tab_bar.dart';
 import '../../widgets/main_shell.dart';
 import 'log_measurement_sheet.dart';
@@ -191,16 +192,12 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen>
     return MainShell(
       child: Scaffold(
         backgroundColor: colorScheme.surface,
-        appBar: AppBar(
-          title: const Text('Progress'),
-          centerTitle: true,
-          backgroundColor: colorScheme.surface,
-          surfaceTintColor: Colors.transparent,
+        appBar: PillAppBar(
+          title: 'Progress',
           actions: [
-            IconButton(
-              icon: const Icon(Icons.compare_arrows),
-              tooltip: 'Compare Photos',
-              onPressed: _userId != null ? _showComparisonPicker : null,
+            PillAppBarAction(
+              icon: Icons.compare_arrows,
+              onTap: _userId != null ? _showComparisonPicker : null,
             ),
           ],
         ),

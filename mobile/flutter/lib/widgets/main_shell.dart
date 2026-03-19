@@ -118,8 +118,9 @@ class MainShell extends ConsumerWidget {
     if (location.startsWith('/home')) return 0;
     if (location.startsWith('/workouts')) return 1;
     if (location.startsWith('/nutrition')) return 2;
-    if (location.startsWith('/social')) return 3;
-    if (location.startsWith('/profile')) return 4;
+    // TODO: Re-enable social features when user base grows
+    // if (location.startsWith('/social')) return 3;
+    if (location.startsWith('/profile')) return 3;
     return 0;
   }
 
@@ -140,10 +141,11 @@ class MainShell extends ConsumerWidget {
       case 2:
         context.go('/nutrition');
         break;
+      // TODO: Re-enable social features when user base grows
+      // case 3:
+      //   context.go('/social');
+      //   break;
       case 3:
-        context.go('/social');
-        break;
-      case 4:
         context.go('/profile');
         break;
     }
@@ -613,23 +615,24 @@ class _FloatingNavBarWithAI extends ConsumerWidget {
                     mutedColor: iconMuted,
                     isDark: isDark,
                   ),
-                  _ExpandableNavItem(
-                    icon: Icons.public_outlined,
-                    selectedIcon: Icons.public,
-                    label: 'Social',
-                    isSelected: selectedIndex == 3,
-                    onTap: () => onItemTapped(3),
-                    accentColor: accentColor,
-                    mutedColor: iconMuted,
-                    isDark: isDark,
-                  ),
+                  // TODO: Re-enable social features when user base grows
+                  // _ExpandableNavItem(
+                  //   icon: Icons.public_outlined,
+                  //   selectedIcon: Icons.public,
+                  //   label: 'Social',
+                  //   isSelected: selectedIndex == 3,
+                  //   onTap: () => onItemTapped(3),
+                  //   accentColor: accentColor,
+                  //   mutedColor: iconMuted,
+                  //   isDark: isDark,
+                  // ),
                   _ExpandableNavItem(
                     key: AppTourKeys.profileNavKey,
                     icon: Icons.person_outline,
                     selectedIcon: Icons.person,
                     label: 'Profile',
-                    isSelected: selectedIndex == 4,
-                    onTap: () => onItemTapped(4),
+                    isSelected: selectedIndex == 3,
+                    onTap: () => onItemTapped(3),
                     accentColor: accentColor,
                     mutedColor: iconMuted,
                     isDark: isDark,
