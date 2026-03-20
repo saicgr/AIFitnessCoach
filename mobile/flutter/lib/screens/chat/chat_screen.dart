@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -41,9 +42,18 @@ import '../../core/models/chat_quick_action.dart';
 import '../../core/providers/usage_tracking_provider.dart';
 import '../../widgets/upgrade_prompt_sheet.dart';
 
+/// Media send status for progressive loading states
+enum _MediaSendStatus {
+  idle,
+  uploading,     // "Uploading image..." / "Uploading video..."
+  analyzing,     // "Analyzing nutrition..." / "Checking exercise form..." / "Reading menu..."
+  generating,    // "Generating response..." / "Thinking..."
+}
+
 /// Feature keys for premium gating
 const _kFoodScanning = 'food_scanning';
 const _kFormVideoAnalysis = 'form_video_analysis';
+const _kAiChatMessages = 'ai_chat_messages';
 
 /// Quick action IDs that require food_scanning gate
 const _foodScanActions = {'scan_food', 'analyze_menu', 'calorie_check'};
@@ -67,10 +77,59 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   final _scrollController = ScrollController();
   final _textController = TextEditingController();
   final _focusNode = FocusNode();
-  bool _isLoading = false;
+  _MediaSendStatus _sendStatus = _MediaSendStatus.idle;
+  DateTime? _sendStartTime;
+  Timer? _elapsedTimer;
   bool _initialMessageSent = false;
   bool _showScrollFAB = false;
   String? _highlightedMessageId;
+
+  bool get _isLoading => _sendStatus != _MediaSendStatus.idle;
+
+  String get _statusLabel {
+    switch (_sendStatus) {
+      case _MediaSendStatus.idle:
+        return '';
+      case _MediaSendStatus.uploading:
+        return 'Uploading...';
+      case _MediaSendStatus.analyzing:
+        return 'Analyzing...';
+      case _MediaSendStatus.generating:
+        return 'Thinking...';
+    }
+  }
+
+  String get _elapsedLabel {
+    if (_sendStartTime == null) return '';
+    final elapsed = DateTime.now().difference(_sendStartTime!).inSeconds;
+    return '(${elapsed}s)';
+  }
+
+  void _startSendStatus(_MediaSendStatus status) {
+    setState(() {
+      _sendStatus = status;
+      _sendStartTime = DateTime.now();
+    });
+    _elapsedTimer?.cancel();
+    _elapsedTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (mounted && _isLoading) setState(() {});
+    });
+  }
+
+  void _updateSendStatus(_MediaSendStatus status) {
+    if (mounted) setState(() => _sendStatus = status);
+  }
+
+  void _stopSendStatus() {
+    _elapsedTimer?.cancel();
+    _elapsedTimer = null;
+    if (mounted) {
+      setState(() {
+        _sendStatus = _MediaSendStatus.idle;
+        _sendStartTime = null;
+      });
+    }
+  }
 
   /// Callback for _InputBar to send single media message
   Future<void> _sendMessageWithMedia(PickedMedia media) async {
@@ -95,9 +154,17 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
 
     HapticService.medium();
     _textController.clear();
-    setState(() => _isLoading = true);
+    _startSendStatus(_MediaSendStatus.uploading);
 
     try {
+      // Transition to analyzing after a short delay (upload is fast for images)
+      if (!isVideo) {
+        Future.delayed(const Duration(milliseconds: 500), () {
+          if (_sendStatus == _MediaSendStatus.uploading) {
+            _updateSendStatus(_MediaSendStatus.analyzing);
+          }
+        });
+      }
       await ref.read(chatMessagesProvider.notifier).sendMessageWithMedia(message, media);
       _scrollToBottom();
       ref.read(xpProvider.notifier).checkFirstChatBonus();
@@ -122,7 +189,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
         );
       }
     } finally {
-      setState(() => _isLoading = false);
+      _stopSendStatus();
       _scrollToBottom();
     }
   }
@@ -149,9 +216,14 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
 
     HapticService.medium();
     _textController.clear();
-    setState(() => _isLoading = true);
+    _startSendStatus(_MediaSendStatus.uploading);
 
     try {
+      Future.delayed(const Duration(seconds: 2), () {
+        if (_sendStatus == _MediaSendStatus.uploading) {
+          _updateSendStatus(_MediaSendStatus.analyzing);
+        }
+      });
       await ref.read(chatMessagesProvider.notifier).sendMessageWithMultiMedia(message, mediaList);
       _scrollToBottom();
       ref.read(xpProvider.notifier).checkFirstChatBonus();
@@ -175,14 +247,14 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
         );
       }
     } finally {
-      setState(() => _isLoading = false);
+      _stopSendStatus();
       _scrollToBottom();
     }
   }
 
   /// Callback for _InputBar to send a voice message
   Future<void> _sendVoiceMessage(File audioFile, int durationMs) async {
-    setState(() => _isLoading = true);
+    _startSendStatus(_MediaSendStatus.generating);
     try {
       await ref.read(chatMessagesProvider.notifier).sendVoiceMessage(audioFile, durationMs);
       _scrollToBottom();
@@ -193,7 +265,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
         );
       }
     } finally {
-      setState(() => _isLoading = false);
+      _stopSendStatus();
     }
   }
 
@@ -230,6 +302,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
 
   @override
   void dispose() {
+    _elapsedTimer?.cancel();
     _scrollController.dispose();
     _textController.dispose();
     _focusNode.dispose();
@@ -347,9 +420,17 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     final message = _textController.text.trim();
     if (message.isEmpty || _isLoading) return;
 
+    // Gate check for chat messages
+    final usageNotifier = ref.read(usageTrackingProvider.notifier);
+    if (!usageNotifier.hasAccess(_kAiChatMessages)) {
+      showUpgradePromptSheet(context,
+          featureKey: _kAiChatMessages, featureName: 'AI Coach Messages');
+      return;
+    }
+
     HapticService.medium();
     _textController.clear();
-    setState(() => _isLoading = true);
+    _startSendStatus(_MediaSendStatus.generating);
 
     try {
       await ref.read(chatMessagesProvider.notifier).sendMessage(message);
@@ -357,6 +438,9 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
 
       // Award first-time chat bonus (+50 XP)
       ref.read(xpProvider.notifier).checkFirstChatBonus();
+
+      // Optimistically decrement chat message usage
+      usageNotifier.decrementLocal(_kAiChatMessages);
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -367,7 +451,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
         );
       }
     } finally {
-      setState(() => _isLoading = false);
+      _stopSendStatus();
       _scrollToBottom();
     }
   }
@@ -501,7 +585,10 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                       // With reverse: true, index 0 = bottom (newest).
                       // Typing indicator is the newest item (index 0).
                       if (index == 0 && _isLoading) {
-                        return const _TypingIndicator();
+                        return _TypingIndicator(
+                          statusText: _statusLabel,
+                          elapsed: _elapsedLabel,
+                        );
                       }
 
                       // Loading-more indicator at the END (visually at top in reversed list)
@@ -533,20 +620,19 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                       }
 
                       // Date separator: In a reversed list, index 0 = newest (bottom).
-                      // Show separator BELOW a message when the NEXT message (index-1,
-                      // visually below) belongs to a different day. This places the
-                      // date header between the two day groups.
+                      // Show separator ABOVE a message when the OLDER message (index+1,
+                      // visually above) belongs to a different day. This places the
+                      // date header at the start of each new day group.
                       Widget? dateSeparator;
-                      final nextIndex = msgIndex - 1;
-                      if (nextIndex >= 0) {
+                      final olderIndex = msgIndex + 1;
+                      if (olderIndex < messages.length) {
                         final currentDate = message.timestamp ?? DateTime.now();
-                        final nextDate = messages[nextIndex].timestamp ?? DateTime.now();
-                        if (!_isSameDay(currentDate, nextDate)) {
+                        final olderDate = messages[olderIndex].timestamp ?? DateTime.now();
+                        if (!_isSameDay(currentDate, olderDate)) {
                           dateSeparator = _buildDateSeparator(currentDate);
                         }
-                      }
-                      // Oldest visible message in list (top) always gets a header
-                      if (msgIndex == messages.length - 1) {
+                      } else {
+                        // Oldest visible message in list (top) always gets a header
                         dateSeparator = _buildDateSeparator(message.timestamp ?? DateTime.now());
                       }
 
@@ -575,15 +661,10 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                           : bubble;
 
                       if (dateSeparator != null) {
-                        // In reversed list, this item is visually ABOVE lower-indexed
-                        // items. Place separator AFTER (below) the bubble so it sits
-                        // between this day group and the next day group below.
-                        // For the oldest message, separator goes BEFORE (above) the bubble.
-                        final isOldest = msgIndex == messages.length - 1;
+                        // In reversed list, separator goes BEFORE (above) the bubble
+                        // to mark the start of a new day group.
                         return Column(
-                          children: isOldest
-                              ? [dateSeparator, wrappedBubble]
-                              : [wrappedBubble, dateSeparator],
+                          children: [dateSeparator, wrappedBubble],
                         );
                       }
                       return wrappedBubble;
@@ -610,6 +691,32 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
             ],
           ),
           ),
+
+          // Low usage warning strip
+          Builder(builder: (context) {
+            final usageState = ref.watch(usageTrackingProvider);
+            if (usageState.isPremium) return const SizedBox.shrink();
+            final feature = usageState.limits[_kAiChatMessages];
+            if (feature == null) return const SizedBox.shrink();
+            final remaining = feature.remaining ?? ((feature.limit ?? 0) - feature.used);
+            final limit = feature.limit ?? 0;
+            if (remaining > 5 || remaining <= 0 || limit == 0) return const SizedBox.shrink();
+            final isDark = Theme.of(context).brightness == Brightness.dark;
+            return Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+              color: AppColors.warning.withOpacity(isDark ? 0.15 : 0.1),
+              child: Text(
+                '$remaining message${remaining == 1 ? '' : 's'} left today',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                  color: isDark ? AppColors.warning : Colors.orange.shade800,
+                ),
+              ),
+            );
+          }),
 
           // Medical disclaimer
           const MedicalDisclaimerBanner(),
@@ -736,7 +843,55 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                 ),
               ),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: 8),
+            // Usage info button circle
+            GestureDetector(
+              onTap: () {
+                HapticService.light();
+                _showUsageInfoSheet(context);
+              },
+              child: Container(
+                height: 44,
+                width: 44,
+                decoration: BoxDecoration(
+                  color: topBarColor,
+                  borderRadius: BorderRadius.circular(22),
+                  border: topBarBorder,
+                  boxShadow: [topBarShadow],
+                ),
+                child: Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    Icon(
+                      Icons.info_outline_rounded,
+                      color: isDark ? Colors.white70 : AppColorsLight.textSecondary,
+                      size: 20,
+                    ),
+                    // Warning dot when messages are running low
+                    Builder(builder: (context) {
+                      final remaining = ref.watch(usageTrackingProvider).limits[_kAiChatMessages];
+                      final left = remaining?.remaining ?? remaining?.limit;
+                      if (left != null && left <= 5 && left > 0) {
+                        return Positioned(
+                          top: 8,
+                          right: 8,
+                          child: Container(
+                            width: 8,
+                            height: 8,
+                            decoration: const BoxDecoration(
+                              color: AppColors.warning,
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                        );
+                      }
+                      return const SizedBox.shrink();
+                    }),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(width: 8),
             // Search button circle
             GestureDetector(
               onTap: () {
@@ -797,6 +952,161 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     ],
   ),
 );
+  }
+
+  void _showUsageInfoSheet(BuildContext context) {
+    final usageState = ref.read(usageTrackingProvider);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: isDark ? const Color(0xFF1C1C1E) : Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) {
+        final features = usageState.limits.entries.toList()
+          ..sort((a, b) => a.key.compareTo(b.key));
+
+        return Padding(
+          padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: isDark ? Colors.white24 : Colors.grey.shade300,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                "Today's Usage",
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                  color: isDark ? Colors.white : Colors.black,
+                ),
+              ),
+              const SizedBox(height: 16),
+              if (usageState.isPremium)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 16),
+                  child: Text(
+                    'Unlimited access with Premium',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: AppColors.success,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                )
+              else ...[
+                ...features.map((entry) {
+                  final feature = entry.value;
+                  final used = feature.used;
+                  final limit = feature.limit ?? 0;
+                  if (limit == 0) return const SizedBox.shrink();
+                  final remaining = feature.remaining ?? (limit - used);
+                  final progress = limit > 0 ? (used / limit).clamp(0.0, 1.0) : 0.0;
+                  final isLow = remaining <= (limit * 0.25).ceil() && remaining > 0;
+                  final isExhausted = remaining <= 0;
+
+                  const displayNames = {
+                    'ai_chat_messages': 'Messages',
+                    'food_scanning': 'Food Scans',
+                    'form_video_analysis': 'Form Checks',
+                    'text_to_calories': 'Text Logging',
+                    'ai_workout_generation': 'Workout Gen',
+                    'ai_meal_plan': 'Meal Plans',
+                  };
+
+                  Color barColor = AppColors.cyan;
+                  if (isExhausted) barColor = AppColors.error;
+                  else if (isLow) barColor = AppColors.warning;
+
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              displayNames[entry.key] ?? entry.key.replaceAll('_', ' '),
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: isDark ? Colors.white70 : Colors.black87,
+                              ),
+                            ),
+                            Text(
+                              '$used/$limit',
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                                color: isExhausted
+                                    ? AppColors.error
+                                    : isLow
+                                        ? AppColors.warning
+                                        : (isDark ? Colors.white : Colors.black),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 6),
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(4),
+                          child: LinearProgressIndicator(
+                            value: progress,
+                            backgroundColor: isDark ? Colors.white10 : Colors.grey.shade200,
+                            valueColor: AlwaysStoppedAnimation<Color>(barColor),
+                            minHeight: 6,
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                }),
+                const SizedBox(height: 8),
+                Text(
+                  'Resets at midnight',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: isDark ? Colors.white38 : Colors.grey.shade500,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton(
+                    onPressed: () {
+                      Navigator.pop(ctx);
+                      showUpgradePromptSheet(context,
+                          featureKey: _kAiChatMessages, featureName: 'AI Coach');
+                    },
+                    style: OutlinedButton.styleFrom(
+                      side: const BorderSide(color: AppColors.cyan),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                    ),
+                    child: const Text(
+                      'Upgrade for Unlimited',
+                      style: TextStyle(color: AppColors.cyan, fontWeight: FontWeight.w600),
+                    ),
+                  ),
+                ),
+              ],
+            ],
+          ),
+        );
+      },
+    );
   }
 
   bool _isSameDay(DateTime a, DateTime b) {
@@ -1878,40 +2188,56 @@ class _MessageBubble extends ConsumerWidget {
 // ─────────────────────────────────────────────────────────────────
 
 class _TypingIndicator extends StatelessWidget {
-  const _TypingIndicator();
+  final String? statusText;
+  final String? elapsed;
+
+  const _TypingIndicator({this.statusText, this.elapsed});
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Align(
       alignment: Alignment.centerLeft,
       child: Container(
         margin: const EdgeInsets.only(bottom: 12),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(
-          color: AppColors.elevated,
+          color: isDark ? AppColors.elevated : Colors.grey.shade100,
           borderRadius: BorderRadius.circular(16).copyWith(
             bottomLeft: const Radius.circular(4),
           ),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
-          children: List.generate(3, (index) {
-            return Container(
-              width: 8,
-              height: 8,
-              margin: const EdgeInsets.symmetric(horizontal: 2),
-              decoration: const BoxDecoration(
-                color: AppColors.textMuted,
-                shape: BoxShape.circle,
+          children: [
+            ...List.generate(3, (index) {
+              return Container(
+                width: 8,
+                height: 8,
+                margin: const EdgeInsets.symmetric(horizontal: 2),
+                decoration: BoxDecoration(
+                  color: isDark ? AppColors.textMuted : Colors.grey.shade400,
+                  shape: BoxShape.circle,
+                ),
+              )
+                  .animate(
+                    onPlay: (controller) => controller.repeat(),
+                  )
+                  .fadeIn(delay: Duration(milliseconds: index * 200))
+                  .then()
+                  .fadeOut(delay: const Duration(milliseconds: 400));
+            }),
+            if (statusText != null && statusText!.isNotEmpty) ...[
+              const SizedBox(width: 10),
+              Text(
+                '$statusText${elapsed != null && elapsed!.isNotEmpty ? ' $elapsed' : ''}',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: isDark ? AppColors.textMuted : Colors.grey.shade500,
+                ),
               ),
-            )
-                .animate(
-                  onPlay: (controller) => controller.repeat(),
-                )
-                .fadeIn(delay: Duration(milliseconds: index * 200))
-                .then()
-                .fadeOut(delay: const Duration(milliseconds: 400));
-          }),
+            ],
+          ],
         ),
       ),
     );

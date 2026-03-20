@@ -70,8 +70,9 @@ from core.redis_cache import RedisCache
 # Keep ResponseCache as an alias for backwards compatibility (used by smart_search.py)
 ResponseCache = RedisCache
 
-# Concurrency limiter for Gemini API calls (prevents overloading quota)
-_gemini_semaphore = asyncio.Semaphore(10)
+# Concurrency limiter for Gemini API calls — per-user fairness + global cap
+from services.fair_semaphore import FairGeminiSemaphore
+_gemini_semaphore = FairGeminiSemaphore(global_limit=10, per_user_limit=3)
 
 # Module-level caches with purpose-tuned TTLs and sizes
 _summary_cache = RedisCache(prefix="summary", ttl_seconds=3600, max_size=100)   # 1hr for workout summaries
@@ -567,20 +568,29 @@ class GeminiService:
     @classmethod
     def _adopt_existing_cache(cls, prefix: str, cache) -> None:
         """Adopt an existing server-side cache into the in-memory class variables."""
-        now = datetime.now()
-        # Estimate remaining TTL — assume ~50 min if we can't determine exact age
+        # Compute real created_at from expire_time (TTL is 3600s) to avoid hiding server-side age
+        expire_time = getattr(cache, 'expire_time', None)
+        if expire_time:
+            created_at = expire_time.replace(tzinfo=None) - timedelta(seconds=3600)
+            age_seconds = (datetime.now() - created_at).total_seconds()
+            logger.info(f"[CacheManager] Cache expire_time={expire_time}, computed age={age_seconds:.0f}s")
+        else:
+            created_at = datetime.now()
+            age_seconds = 0
+            logger.info(f"[CacheManager] No expire_time on cache, using now as created_at")
+
         if prefix == "workout_generation":
             cls._workout_cache = cache.name
-            cls._workout_cache_created_at = now
-            logger.info(f"[CacheManager] Adopted existing workout cache: {cache.name}")
+            cls._workout_cache_created_at = created_at
+            logger.info(f"[CacheManager] Adopted existing workout cache: {cache.name} (age: {age_seconds:.0f}s)")
         elif prefix == "form_analysis":
             cls._form_analysis_cache = cache.name
-            cls._form_analysis_cache_created_at = now
-            logger.info(f"[CacheManager] Adopted existing form analysis cache: {cache.name}")
+            cls._form_analysis_cache_created_at = created_at
+            logger.info(f"[CacheManager] Adopted existing form analysis cache: {cache.name} (age: {age_seconds:.0f}s)")
         elif prefix == "nutrition_analysis":
             cls._nutrition_analysis_cache = cache.name
-            cls._nutrition_analysis_cache_created_at = now
-            logger.info(f"[CacheManager] Adopted existing nutrition analysis cache: {cache.name}")
+            cls._nutrition_analysis_cache_created_at = created_at
+            logger.info(f"[CacheManager] Adopted existing nutrition analysis cache: {cache.name} (age: {age_seconds:.0f}s)")
 
     @classmethod
     async def _prewarm_cache(cls):
@@ -623,6 +633,14 @@ class GeminiService:
         try:
             for cache in client.caches.list():
                 if cache.display_name and display_name_prefix in cache.display_name:
+                    # Skip caches with <5 min remaining — not worth adopting
+                    expire_time = getattr(cache, 'expire_time', None)
+                    if expire_time:
+                        from datetime import timezone
+                        remaining = (expire_time - datetime.now(timezone.utc)).total_seconds()
+                        if remaining < 300:
+                            logger.info(f"[Cache] Skipping near-expiry cache {cache.name} ({remaining:.0f}s remaining)")
+                            continue
                     return cache
         except Exception as e:
             logger.warning(f"[Cache] Failed to list server caches: {e}")
@@ -651,7 +669,12 @@ class GeminiService:
                 existing = self._find_existing_server_cache("workout_generation")
                 if existing:
                     GeminiService._workout_cache = existing.name
-                    GeminiService._workout_cache_created_at = datetime.now()
+                    # Compute real age from expire_time instead of using now()
+                    expire_time = getattr(existing, 'expire_time', None)
+                    if expire_time:
+                        GeminiService._workout_cache_created_at = expire_time.replace(tzinfo=None) - timedelta(seconds=3600)
+                    else:
+                        GeminiService._workout_cache_created_at = datetime.now()
                     logger.info(f"[Cache] Reusing existing server-side workout cache: {existing.name}")
                     return existing.name
 
@@ -865,7 +888,11 @@ Create engaging, creative names that:
                 existing = self._find_existing_server_cache("form_analysis")
                 if existing:
                     GeminiService._form_analysis_cache = existing.name
-                    GeminiService._form_analysis_cache_created_at = datetime.now()
+                    expire_time = getattr(existing, 'expire_time', None)
+                    if expire_time:
+                        GeminiService._form_analysis_cache_created_at = expire_time.replace(tzinfo=None) - timedelta(seconds=3600)
+                    else:
+                        GeminiService._form_analysis_cache_created_at = datetime.now()
                     logger.info(f"[Cache] Reusing existing server-side form analysis cache: {existing.name}")
                     return existing.name
 
@@ -914,7 +941,11 @@ Create engaging, creative names that:
                 existing = self._find_existing_server_cache("nutrition_analysis")
                 if existing:
                     GeminiService._nutrition_analysis_cache = existing.name
-                    GeminiService._nutrition_analysis_cache_created_at = datetime.now()
+                    expire_time = getattr(existing, 'expire_time', None)
+                    if expire_time:
+                        GeminiService._nutrition_analysis_cache_created_at = expire_time.replace(tzinfo=None) - timedelta(seconds=3600)
+                    else:
+                        GeminiService._nutrition_analysis_cache_created_at = datetime.now()
                     logger.info(f"[Cache] Reusing existing server-side nutrition analysis cache: {existing.name}")
                     return existing.name
 
@@ -3419,7 +3450,7 @@ Foods that are calorie-dense with low nutritional value, highly processed, or ha
 
         return response.text
 
-    async def extract_intent(self, user_message: str) -> IntentExtraction:
+    async def extract_intent(self, user_message: str, user_id: Optional[str] = None) -> IntentExtraction:
         """
         Extract structured intent from user message using AI.
 
@@ -3553,19 +3584,20 @@ User message: "''' + _sanitize_for_prompt(user_message) + '"'
             logger.warning(f"[IntentCache] Cache lookup error (falling through): {cache_err}")
 
         try:
-            response = await asyncio.wait_for(
-                client.aio.models.generate_content(
-                    model=self.model,
-                    contents=extraction_prompt,
-                    config=types.GenerateContentConfig(
-                        response_mime_type="application/json",
-                        response_schema=IntentExtractionResponse,
-                        max_output_tokens=2000,  # Increased for thinking models
-                        temperature=0.1,  # Low temp for consistent extraction
+            async with _gemini_semaphore(user_id=user_id):
+                response = await asyncio.wait_for(
+                    client.aio.models.generate_content(
+                        model=self.model,
+                        contents=extraction_prompt,
+                        config=types.GenerateContentConfig(
+                            response_mime_type="application/json",
+                            response_schema=IntentExtractionResponse,
+                            max_output_tokens=2000,  # Increased for thinking models
+                            temperature=0.1,  # Low temp for consistent extraction
+                        ),
                     ),
-                ),
-                timeout=15,  # Intent extraction should be fast
-            )
+                    timeout=15,  # Intent extraction should be fast
+                )
 
             _log_token_usage(response, "extract_intent")
 
@@ -4171,7 +4203,7 @@ INPUT TO PARSE:
         except Exception as cache_err:
             logger.warning(f"[EmbeddingCache] Cache lookup error (falling through): {cache_err}")
 
-        async with _gemini_semaphore:
+        async with _gemini_semaphore(user_id=None):
             result = await client.aio.models.embed_content(
                 model=self.embedding_model,
                 contents=text,
@@ -4206,6 +4238,7 @@ INPUT TO PARSE:
         image_base64: str,
         mime_type: str = "image/jpeg",
         request_id: str = None,
+        user_id: Optional[str] = None,
     ) -> Dict:
         """
         Analyze a food image and extract nutrition information using Gemini Vision.
@@ -4261,7 +4294,7 @@ WEIGHT/COUNT FIELDS (required for portion editing):
 - For non-countable items (curry, rice, dal): count=null, weight_per_unit_g=null'''
 
         # Timeout for image analysis - needs to be generous for complex images
-        IMAGE_ANALYSIS_TIMEOUT = 60  # 60 seconds for images with many food items
+        IMAGE_ANALYSIS_TIMEOUT = 20  # 20 seconds — most images analyze in 2-8s, fail fast on stalls
         start_time = time.time()
 
         try:
@@ -4284,19 +4317,20 @@ WEIGHT/COUNT FIELDS (required for portion editing):
             # Add timeout to prevent hanging on slow Gemini responses
             logger.info(f"[IMAGE-ANALYSIS:{req_id}] Sending to Gemini API | model={self.model} | timeout={IMAGE_ANALYSIS_TIMEOUT}s")
             try:
-                response = await asyncio.wait_for(
-                    client.aio.models.generate_content(
-                        model=self.model,
-                        contents=[prompt, image_part],
-                        config=types.GenerateContentConfig(
-                            response_mime_type="application/json",
-                            response_schema=FoodAnalysisResponse,
-                            max_output_tokens=8192,  # High limit to prevent truncation with micronutrients
-                            temperature=0.3,
+                async with _gemini_semaphore(user_id=user_id):
+                    response = await asyncio.wait_for(
+                        client.aio.models.generate_content(
+                            model=self.model,
+                            contents=[prompt, image_part],
+                            config=types.GenerateContentConfig(
+                                response_mime_type="application/json",
+                                response_schema=FoodAnalysisResponse,
+                                max_output_tokens=8192,  # High limit to prevent truncation with micronutrients
+                                temperature=0.3,
+                            ),
                         ),
-                    ),
-                    timeout=IMAGE_ANALYSIS_TIMEOUT
-                )
+                        timeout=IMAGE_ANALYSIS_TIMEOUT
+                    )
                 elapsed = time.time() - start_time
                 logger.info(f"[IMAGE-ANALYSIS:{req_id}] Gemini API responded | elapsed={elapsed:.2f}s")
             except asyncio.TimeoutError:
@@ -4467,6 +4501,7 @@ WEIGHT/COUNT FIELDS (required for portion editing):
         rag_context: Optional[str] = None,
         mood_before: Optional[str] = None,
         meal_type: Optional[str] = None,
+        user_id: Optional[str] = None,
     ) -> Optional[Dict]:
         """
         Parse a text description of food and extract nutrition information with goal-based rankings.
@@ -4655,19 +4690,20 @@ IMPORTANT - ALWAYS identify foods:
                 # Add timeout to prevent hanging on slow Gemini responses
                 try:
                     attempt_timeout = FOOD_ANALYSIS_TIMEOUT + (attempt * 10)
-                    response = await asyncio.wait_for(
-                        client.aio.models.generate_content(
-                            model=self.model,
-                            contents=prompt,
-                            config=types.GenerateContentConfig(
-                                response_mime_type="application/json",
-                                response_schema=FoodAnalysisResponse,
-                                max_output_tokens=8192,  # High limit to prevent truncation (MAX_TOKENS causes parsed=None)
-                                temperature=0.2,  # Lower = faster, more deterministic
+                    async with _gemini_semaphore(user_id=user_id):
+                        response = await asyncio.wait_for(
+                            client.aio.models.generate_content(
+                                model=self.model,
+                                contents=prompt,
+                                config=types.GenerateContentConfig(
+                                    response_mime_type="application/json",
+                                    response_schema=FoodAnalysisResponse,
+                                    max_output_tokens=8192,  # High limit to prevent truncation (MAX_TOKENS causes parsed=None)
+                                    temperature=0.2,  # Lower = faster, more deterministic
+                                ),
                             ),
-                        ),
-                        timeout=attempt_timeout
-                    )
+                            timeout=attempt_timeout
+                        )
                 except asyncio.TimeoutError:
                     logger.warning(f"[Gemini] Request timed out after {attempt_timeout}s (attempt {attempt + 1})")
                     last_error = f"Timeout after {attempt_timeout}s"
@@ -5666,6 +5702,7 @@ IMPORTANT RULES:
         cardio_capacity: Optional[str] = None,
         training_experience: Optional[str] = None,
         user_dob: Optional[str] = None,
+        user_id: Optional[str] = None,
     ) -> Dict:
         """
         Generate a personalized workout plan using AI.
@@ -6737,19 +6774,20 @@ If user has gym equipment - most exercises MUST use that equipment!"""
         logger.info("=" * 80)
 
         try:
-            response = await asyncio.wait_for(
-                client.aio.models.generate_content(
-                    model=self.model,
-                    contents=prompt,
-                    config=types.GenerateContentConfig(
-                        response_mime_type="application/json",
-                        response_schema=GeneratedWorkoutResponse,
-                        temperature=0.7,  # Higher creativity for unique workout names
-                        max_output_tokens=8000  # Increased for detailed workout plans with set_targets
+            async with _gemini_semaphore(user_id=user_id):
+                response = await asyncio.wait_for(
+                    client.aio.models.generate_content(
+                        model=self.model,
+                        contents=prompt,
+                        config=types.GenerateContentConfig(
+                            response_mime_type="application/json",
+                            response_schema=GeneratedWorkoutResponse,
+                            temperature=0.7,  # Higher creativity for unique workout names
+                            max_output_tokens=8000  # Increased for detailed workout plans with set_targets
+                        ),
                     ),
-                ),
-                timeout=90,  # 90s for full workout generation (large prompt + response)
-            )
+                    timeout=90,  # 90s for full workout generation (large prompt + response)
+                )
 
             _log_token_usage(response, "generate_workout_plan")
 
@@ -6828,6 +6866,7 @@ If user has gym equipment - most exercises MUST use that equipment!"""
         coach_tone: Optional[str] = None,
         scheduled_date: Optional[str] = None,
         user_dob: Optional[str] = None,
+        user_id: Optional[str] = None,
     ):
         """
         Generate a workout plan using streaming for faster perceived response.
@@ -7065,6 +7104,7 @@ If user has gym equipment (full_gym, barbell, dumbbells, cable_machine, machines
         scheduled_date: Optional[str] = None,
         strength_history: Optional[Dict] = None,
         user_dob: Optional[str] = None,
+        user_id: Optional[str] = None,
     ):
         """
         FAST workout generation using Gemini context caching.

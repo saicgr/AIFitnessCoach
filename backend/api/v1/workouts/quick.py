@@ -37,8 +37,8 @@ from .utils import (
 router = APIRouter()
 logger = get_logger(__name__)
 
-# Concurrency semaphore to cap concurrent Gemini calls
-_gemini_semaphore = asyncio.Semaphore(10)
+# Use shared fair semaphore from gemini_service (global + per-user limits)
+from services.gemini_service import _gemini_semaphore
 
 
 # ============================================
@@ -316,7 +316,7 @@ async def generate_quick_workout(request: Request, body: QuickWorkoutRequest, ba
             last_error = None
             for attempt in range(2):  # 1 initial + 1 retry
                 try:
-                    async with _gemini_semaphore:
+                    async with _gemini_semaphore(user_id=body.user_id):
                         response = await client.aio.models.generate_content(
                             model=settings.gemini_model,
                             contents=prompt,

@@ -1750,10 +1750,10 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet> {
     final protein = summary?.totalProteinG.round() ?? 0;
     final fat = summary?.totalFatG.round() ?? 0;
 
-    final calTarget = dynamicTargets?.targetCalories ?? targets?.dailyCalorieTarget ?? 2000;
-    final carbsTarget = dynamicTargets?.targetCarbsG ?? targets?.dailyCarbsTargetG?.round() ?? 200;
-    final proteinTarget = dynamicTargets?.targetProteinG ?? targets?.dailyProteinTargetG?.round() ?? 150;
-    final fatTarget = dynamicTargets?.targetFatG ?? targets?.dailyFatTargetG?.round() ?? 65;
+    final calTarget = prefsState.currentCalorieTarget;
+    final carbsTarget = prefsState.currentCarbsTarget;
+    final proteinTarget = prefsState.currentProteinTarget;
+    final fatTarget = prefsState.currentFatTarget;
 
     // Build adjustment label for training/rest day
     final adjustmentLabel = dynamicTargets != null &&

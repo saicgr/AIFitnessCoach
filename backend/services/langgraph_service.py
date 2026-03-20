@@ -303,14 +303,14 @@ class LangGraphCoachService:
 
         return None
 
-    async def _extract_intent(self, message: str) -> Tuple[CoachIntent, Dict[str, Any]]:
+    async def _extract_intent(self, message: str, user_id: Optional[str] = None) -> Tuple[CoachIntent, Dict[str, Any]]:
         """
         Extract intent and entities from user message.
 
         Returns:
             Tuple of (intent, extraction_data)
         """
-        extraction = await self.gemini_service.extract_intent(message)
+        extraction = await self.gemini_service.extract_intent(message, user_id=user_id)
         return extraction.intent, {
             "exercises": extraction.exercises,
             "muscle_groups": extraction.muscle_groups,
@@ -681,14 +681,14 @@ class LangGraphCoachService:
             #    past Q&A and training settings add latency with no benefit for vision tasks.
             if has_media:
                 (intent, extraction_data), media_content_type = await asyncio.gather(
-                    self._extract_intent(cleaned_message),
+                    self._extract_intent(cleaned_message, user_id=request.user_id),
                     self._classify_media(request),
                 )
                 rag_context, rag_used, similar_questions = "", False, []
             else:
                 (intent, extraction_data), (rag_context, rag_used, similar_questions) = \
                     await asyncio.gather(
-                        self._extract_intent(cleaned_message),
+                        self._extract_intent(cleaned_message, user_id=request.user_id),
                         self._get_rag_context(cleaned_message, request.user_id),
                     )
                 media_content_type = None

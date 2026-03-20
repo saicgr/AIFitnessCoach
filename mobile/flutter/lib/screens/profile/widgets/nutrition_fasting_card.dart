@@ -5,6 +5,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../data/models/nutrition_preferences.dart';
 import '../../../data/providers/nutrition_preferences_provider.dart';
 import '../../../data/services/haptic_service.dart';
+import '../../../core/providers/user_provider.dart';
 import '../../settings/sections/nutrition_fasting_section.dart';
 
 /// Displays nutrition and fasting profile information from onboarding
@@ -21,6 +22,14 @@ class NutritionFastingCard extends ConsumerWidget {
     final nutritionState = ref.watch(nutritionPreferencesProvider);
     final fastingState = ref.watch(fastingSettingsProvider);
     final prefs = nutritionState.preferences;
+
+    // Ensure provider is initialized if preferences haven't loaded yet
+    if (prefs == null && !nutritionState.isLoading) {
+      final userId = ref.read(currentUserIdProvider);
+      if (userId != null) {
+        Future.microtask(() => ref.read(nutritionPreferencesProvider.notifier).initialize(userId));
+      }
+    }
 
     // Use current targets (dynamic if available, otherwise base) for consistency with nutrition tab
     final currentCalories = nutritionState.currentCalorieTarget;

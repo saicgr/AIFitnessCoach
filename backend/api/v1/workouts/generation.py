@@ -819,6 +819,7 @@ async def generate_workout(request: GenerateWorkoutRequest, background_tasks: Ba
                     cardio_capacity=cardio_capacity,
                     training_experience=training_experience,
                     user_dob=user.get("date_of_birth") if user else None,
+                    user_id=request.user_id,
                 )
 
             # Ensure workout_data is a dict (guard against Gemini returning a string)
@@ -1606,6 +1607,7 @@ async def generate_workout_streaming(request: Request, body: GenerateWorkoutRequ
                     "coach_tone": ai_coach_settings.get("communication_tone") if ai_coach_settings else None,
                     "scheduled_date": scheduled_date,
                     "user_dob": user.get("date_of_birth") if user else None,
+                    "user_id": body.user_id,
                 }
 
                 # Add strength_history for cached version
@@ -3878,6 +3880,7 @@ async def generate_onboarding_workout_streaming(request: Request, body: Onboardi
                     "coach_tone": None,
                     "scheduled_date": scheduled_date,
                     "user_dob": onboarding_dob,
+                    "user_id": body.user_id,
                 }
 
                 if use_cached:

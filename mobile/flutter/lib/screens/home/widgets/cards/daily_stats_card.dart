@@ -69,7 +69,7 @@ class _DailyStatsCardState extends ConsumerState<DailyStatsCard> {
     final nutritionState = ref.watch(nutritionProvider);
     final prefsState = ref.watch(nutritionPreferencesProvider);
     final caloriesConsumed = nutritionState.todaySummary?.totalCalories ?? 0;
-    final calorieTarget = prefsState.dynamicTargets?.targetCalories ?? nutritionState.targets?.dailyCalorieTarget ?? 2000;
+    final calorieTarget = prefsState.currentCalorieTarget;
 
     // Calculate deficit: target - consumed + exercise burned
     // Positive = in deficit (good for fat loss), Negative = over calories

@@ -63,8 +63,8 @@ class _HeroNutritionCardState extends ConsumerState<HeroNutritionCard>
       ref.read(nutritionPreferencesProvider.notifier).initialize(userId);
 
       // Check if targets are null - if so, try to calculate them from user profile
-      final nutritionState = ref.read(nutritionProvider);
-      if (nutritionState.targets?.dailyCalorieTarget == null) {
+      final prefsStateCheck = ref.read(nutritionPreferencesProvider);
+      if (prefsStateCheck.preferences?.targetCalories == null) {
         await _calculateTargetsFromProfile(userId, apiClient);
         await ref.read(nutritionProvider.notifier).loadTargets(userId);
       }
@@ -160,7 +160,7 @@ class _HeroNutritionCardState extends ConsumerState<HeroNutritionCard>
     final waterGoalMl = hydrationState.todaySummary?.goalMl ?? hydrationState.dailyGoalMl;
 
     final caloriesConsumed = summary?.totalCalories ?? 0;
-    final calorieTarget = dynamicTargets?.targetCalories ?? targets?.dailyCalorieTarget ?? 2000;
+    final calorieTarget = prefsState.currentCalorieTarget;
     final proteinConsumed = (summary?.totalProteinG ?? 0).round();
     final carbsConsumed = (summary?.totalCarbsG ?? 0).round();
     final fatConsumed = (summary?.totalFatG ?? 0).round();

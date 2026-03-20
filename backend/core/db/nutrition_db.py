@@ -393,6 +393,21 @@ class NutritionDB(BaseDB):
             result = (
                 self.client.table("users").update(data).eq("id", user_id).execute()
             )
+            # Sync to nutrition_preferences for consistency
+            try:
+                prefs_sync = {}
+                if daily_calorie_target is not None:
+                    prefs_sync["target_calories"] = daily_calorie_target
+                if daily_protein_target_g is not None:
+                    prefs_sync["target_protein_g"] = daily_protein_target_g
+                if daily_carbs_target_g is not None:
+                    prefs_sync["target_carbs_g"] = daily_carbs_target_g
+                if daily_fat_target_g is not None:
+                    prefs_sync["target_fat_g"] = daily_fat_target_g
+                if prefs_sync:
+                    self.client.table("nutrition_preferences").update(prefs_sync).eq("user_id", user_id).execute()
+            except Exception as e:
+                logger.warning(f"Failed to sync targets to nutrition_preferences: {e}")
             return result.data[0] if result.data else None
         return None
 

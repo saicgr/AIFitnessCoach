@@ -1411,6 +1411,7 @@ async def log_food_from_image(
             gemini_service.analyze_food_image(
                 image_base64=image_base64,
                 mime_type=content_type,
+                user_id=user_id,
             ),
             upload_food_image_to_s3(
                 file_bytes=image_bytes,
@@ -2502,6 +2503,7 @@ async def log_food_from_image_streaming(
                 gemini_service.analyze_food_image(
                     image_base64=image_base64,
                     mime_type=content_type,
+                    user_id=user_id,
                 ),
                 upload_food_image_to_s3(
                     file_bytes=image_bytes,
@@ -2729,6 +2731,7 @@ async def analyze_food_from_image_streaming(
                 image_base64=image_base64,
                 mime_type=content_type,
                 request_id=request_id,
+                user_id=user_id,
             ))
             while not analysis_task.done():
                 try:
@@ -5215,6 +5218,17 @@ async def complete_nutrition_onboarding(request: NutritionOnboardingRequest, cur
         if not result.data:
             raise HTTPException(status_code=500, detail="Failed to save preferences")
 
+        # Sync targets to users table for consistency
+        try:
+            db.client.table("users").update({
+                "daily_calorie_target": final_calories,
+                "daily_protein_target_g": final_protein,
+                "daily_carbs_target_g": final_carbs,
+                "daily_fat_target_g": final_fat,
+            }).eq("id", request.user_id).execute()
+        except Exception as sync_err:
+            logger.warning(f"Failed to sync onboarding targets to users table: {sync_err}")
+
         # Initialize nutrition streak
         streak_exists = db.client.table("nutrition_streaks")\
             .select("id")\
@@ -5467,6 +5481,17 @@ async def recalculate_nutrition_targets(user_id: str, current_user: dict = Depen
             .update(update_data)\
             .eq("user_id", user_id)\
             .execute()
+
+        # Sync targets to users table for consistency
+        try:
+            db.client.table("users").update({
+                "daily_calorie_target": target_calories,
+                "daily_protein_target_g": target_protein,
+                "daily_carbs_target_g": target_carbs,
+                "daily_fat_target_g": target_fat,
+            }).eq("id", user_id).execute()
+        except Exception as sync_err:
+            logger.warning(f"Failed to sync recalculated targets to users table: {sync_err}")
 
         return await get_nutrition_preferences(user_id)
 
