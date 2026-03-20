@@ -179,6 +179,8 @@ async def create_pre_workout_checkin(checkin: PreWorkoutCheckinCreate,
     This is called before starting a workout to capture baseline mood/energy.
     Quick and skippable - designed to take less than 5 seconds.
     """
+    if str(current_user["id"]) != str(checkin.user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     logger.info(f"Creating pre-workout check-in for user {checkin.user_id}")
 
     try:
@@ -270,6 +272,8 @@ async def create_post_workout_checkin(workout_id: str, checkin: PostWorkoutCheck
     This is called after completing a workout to capture how the user feels.
     Updates an existing pre-checkin record or creates a new one.
     """
+    if str(current_user["id"]) != str(checkin.user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     logger.info(f"Creating post-workout check-in for workout {workout_id}")
 
     try:

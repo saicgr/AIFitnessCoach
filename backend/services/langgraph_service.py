@@ -524,6 +524,19 @@ class LangGraphCoachService:
             logger.warning(f"Video keyframe classification failed: {e}")
             return None
 
+    def _enrich_user_profile(self, request) -> Optional[Dict[str, Any]]:
+        """Anonymize and enrich user profile with nutrition_preferences targets."""
+        if not request.user_profile:
+            return None
+        user_profile_dict = anonymize_user_data(request.user_profile.model_dump())
+        if user_profile_dict:
+            try:
+                db = get_supabase_db()
+                user_profile_dict = db.enrich_user_with_nutrition_targets(user_profile_dict)
+            except Exception as e:
+                logger.warning(f"Failed to enrich user profile with nutrition targets: {e}")
+        return user_profile_dict
+
     def _build_agent_state(
         self,
         agent_type: AgentType,
@@ -541,7 +554,7 @@ class LangGraphCoachService:
         base_state = {
             "user_message": cleaned_message,
             "user_id": request.user_id,
-            "user_profile": anonymize_user_data(request.user_profile.model_dump()) if request.user_profile else None,
+            "user_profile": self._enrich_user_profile(request),
             "conversation_history": request.conversation_history,
             "intent": intent,
             "rag_documents": [],

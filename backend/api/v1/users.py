@@ -1257,6 +1257,8 @@ async def update_user(user_id: str, user: UserUpdate,
     current_user: dict = Depends(get_current_user),
 ):
     """Update a user."""
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     logger.info(f"Updating user: id={user_id}")
     # DEBUG: Log incoming data
     logger.info(f"🔍 [DEBUG] Incoming user data:")

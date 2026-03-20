@@ -6,14 +6,11 @@ import android.util.Log
 import com.aifitnesscoach.app.wearable.WearableMethodChannel
 import io.flutter.embedding.android.FlutterFragmentActivity
 import io.flutter.embedding.engine.FlutterEngine
-import io.flutter.embedding.engine.FlutterEngineCache
-import io.flutter.embedding.engine.dart.DartExecutor
 import io.flutter.plugin.common.MethodChannel
 
 class MainActivity : FlutterFragmentActivity() {
     companion object {
         private const val CHANNEL = "com.aifitnesscoach.app/widget_actions"
-        private const val WIDGET_ENGINE_ID = "widget_engine"
     }
 
     private var methodChannel: MethodChannel? = null
@@ -21,28 +18,14 @@ class MainActivity : FlutterFragmentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
-        // Pre-warm Flutter engine for widget actions
-        warmUpFlutterEngine()
-
         handleIntent(intent)
     }
 
-    private fun warmUpFlutterEngine() {
-        // Check if engine already cached
-        if (FlutterEngineCache.getInstance().get(WIDGET_ENGINE_ID) == null) {
-            try {
-                val engine = FlutterEngine(this)
-                engine.dartExecutor.executeDartEntrypoint(
-                    DartExecutor.DartEntrypoint.createDefault()
-                )
-                FlutterEngineCache.getInstance().put(WIDGET_ENGINE_ID, engine)
-                Log.d("MainActivity", "✅ Flutter engine pre-warmed for widgets")
-            } catch (e: Exception) {
-                Log.e("MainActivity", "❌ Failed to pre-warm Flutter engine: $e")
-            }
-        }
-    }
+    // Widget engine pre-warming removed from MainActivity to prevent
+    // "FlutterEngine already attached to another activity" crash.
+    // Creating a second engine with DartEntrypoint.createDefault() inside
+    // FlutterFragmentActivity conflicts with the Activity's own engine.
+    // Widget actions should use the main engine via methodChannel instead.
 
     // Do NOT override provideFlutterEngine — the widget engine is a separate
     // pre-warmed engine for widget actions only.  Returning it here caused

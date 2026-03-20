@@ -1577,6 +1577,7 @@ async def log_food_from_text(body: LogTextRequest, background_tasks: BackgroundT
         try:
             user = db.get_user(body.user_id)
             if user:
+                user = db.enrich_user_with_nutrition_targets(user)
                 # Parse goals from JSON string
                 goals_str = user.get('goals', '[]')
                 if isinstance(goals_str, str):
@@ -1925,6 +1926,7 @@ async def log_food_from_text_streaming(request: Request, body: LogTextRequest, c
             try:
                 user = db.get_user(body.user_id)
                 if user:
+                    user = db.enrich_user_with_nutrition_targets(user)
                     goals_str = user.get('goals', '[]')
                     if isinstance(goals_str, str):
                         try:
@@ -2281,6 +2283,7 @@ async def analyze_food_from_text_streaming(request: Request, body: LogTextReques
 
                 # Process user profile
                 if user:
+                    user = db.enrich_user_with_nutrition_targets(user)
                     goals_str = user.get('goals', '[]')
                     if isinstance(goals_str, str):
                         try:

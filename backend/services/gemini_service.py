@@ -57,7 +57,7 @@ def _sanitize_for_prompt(text: str, max_len: int = 1000) -> str:
     """
     if not text:
         return ""
-    return re.sub(r'[\'\"\\`]', '', text)[:max_len]
+    return re.sub(r'[\'"\\`\n\r{}]', '', text)[:max_len]
 
 
 # ===========================================================================
@@ -3756,7 +3756,7 @@ EXAMPLES:
 - "pull-ups 3x12" → name="Pull-ups", sets=3, reps=12, weight=null
 
 INPUT TO PARSE:
-"{combined_input or 'See image below'}"
+"{_sanitize_for_prompt(combined_input, max_len=2000) or 'See image below'}"
 
 Return a summary describing what was found and any warnings about unclear parsing.'''
 
@@ -4061,7 +4061,7 @@ IMPORTANT RULES:
 ═══════════════════════════════════════════════════════════════
 INPUT TO PARSE:
 ═══════════════════════════════════════════════════════════════
-{combined_input or "See image below"}
+{_sanitize_for_prompt(combined_input, max_len=2000) or "See image below"}
 '''
 
         try:

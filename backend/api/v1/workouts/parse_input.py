@@ -151,6 +151,8 @@ async def parse_workout_input(request: Request, body: ParseWorkoutInputRequest,
     - "bench press 4 sets of 8 at 80"
     - Photo of workout log
     """
+    if str(current_user["id"]) != str(body.user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     logger.info(f"🤖 [ParseInput] Request from user {body.user_id}: text={bool(body.input_text)}, image={bool(body.image_base64)}, voice={bool(body.voice_transcript)}")
 
     # Validate at least one input is provided
@@ -224,6 +226,8 @@ async def parse_workout_input_v2(request: Request, body: ParseWorkoutInputV2Requ
     - "3x10 deadlift at 135" -> Add Deadlift exercise
     - "20*5\\n25*6\\n3x10 bench at 135" -> Log 2 sets AND add Bench Press
     """
+    if str(current_user["id"]) != str(body.user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     logger.info(
         f"🤖 [ParseInputV2] Request from user {body.user_id}: "
         f"exercise={body.current_exercise_name}, "
@@ -329,6 +333,8 @@ async def add_exercises_batch(request: Request, body: BatchAddExercisesRequest,
     Enriches exercises with library metadata (gif, muscle group, equipment)
     and generates set_targets for consistency with AI-generated workouts.
     """
+    if str(current_user["id"]) != str(body.user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     logger.info(f"🔍 [BatchAdd] Adding {len(body.exercises)} exercises to workout {body.workout_id}")
 
     try:

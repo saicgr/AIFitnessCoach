@@ -568,24 +568,46 @@ class NutritionGoalsCard extends ConsumerWidget {
             ),
             const SizedBox(height: 16),
 
-            // Recalculate button
-            SizedBox(
-              width: double.infinity,
-              child: OutlinedButton.icon(
-                onPressed: () {
-                  Navigator.pop(ctx);
-                  onRecalculate?.call();
-                },
-                icon: Icon(Icons.refresh, size: 18, color: teal),
-                label: Text('Recalculate', style: TextStyle(color: teal)),
-                style: OutlinedButton.styleFrom(
-                  side: BorderSide(color: teal.withValues(alpha: 0.5)),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
+            // Edit + Recalculate buttons
+            Row(
+              children: [
+                Expanded(
+                  child: FilledButton.icon(
+                    onPressed: () {
+                      Navigator.pop(ctx);
+                      onEdit?.call();
+                    },
+                    icon: const Icon(Icons.edit_outlined, size: 18),
+                    label: const Text('Edit Targets'),
+                    style: FilledButton.styleFrom(
+                      backgroundColor: teal,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                    ),
                   ),
-                  padding: const EdgeInsets.symmetric(vertical: 12),
                 ),
-              ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: () {
+                      Navigator.pop(ctx);
+                      onRecalculate?.call();
+                    },
+                    icon: Icon(Icons.refresh, size: 18, color: teal),
+                    label: Text('Recalculate', style: TextStyle(color: teal)),
+                    style: OutlinedButton.styleFrom(
+                      side: BorderSide(color: teal.withValues(alpha: 0.5)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                    ),
+                  ),
+                ),
+              ],
             ),
           ],
         ),

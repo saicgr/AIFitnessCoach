@@ -42,6 +42,8 @@ async def upload_stats_image(
 
     The image is stored as a base64 data URL and metadata is saved to the database.
     """
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     try:
         supabase = get_supabase_db()
 

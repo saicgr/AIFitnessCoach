@@ -64,6 +64,7 @@ class _WorkoutHistoryImportScreenState
         _repository!.getHistory(userId: user.id, limit: 10),
       ]);
 
+      if (!mounted) return;
       setState(() {
         _strengthSummary = results[0] as List<StrengthSummary>;
         _recentHistory = results[1] as List<WorkoutHistoryRecord>;
@@ -71,7 +72,7 @@ class _WorkoutHistoryImportScreenState
     } catch (e) {
       debugPrint('Error loading data: $e');
     } finally {
-      setState(() => _isLoading = false);
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 

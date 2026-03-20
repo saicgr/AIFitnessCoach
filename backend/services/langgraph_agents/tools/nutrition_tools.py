@@ -53,6 +53,8 @@ async def analyze_food_image(
 
         # Get user's nutrition targets for context
         user = db.get_user(user_id)
+        if user:
+            user = db.enrich_user_with_nutrition_targets(user)
         user_context = None
         if user:
             targets = {
@@ -218,6 +220,8 @@ async def analyze_multi_food_images(
 
         # Get user from DB for nutrition targets
         user = db.get_user(user_id)
+        if user:
+            user = db.enrich_user_with_nutrition_targets(user)
         nutrition_context = None
         if user:
             targets = {
@@ -907,6 +911,8 @@ async def log_food_from_text(
 
         # Get user's nutrition targets and goals for context
         user = db.get_user(user_id)
+        if user:
+            user = db.enrich_user_with_nutrition_targets(user)
         user_goals = []
         nutrition_targets = {}
 
@@ -915,7 +921,7 @@ async def log_food_from_text(
             if user.get("fitness_goals"):
                 user_goals = user.get("fitness_goals", [])
 
-            # Get nutrition targets
+            # Get nutrition targets (enriched from nutrition_preferences)
             nutrition_targets = {
                 "daily_calorie_target": user.get("daily_calorie_target"),
                 "daily_protein_target_g": user.get("daily_protein_target_g"),
@@ -923,27 +929,6 @@ async def log_food_from_text(
                 "daily_fat_target_g": user.get("daily_fat_target_g"),
             }
             nutrition_targets = {k: v for k, v in nutrition_targets.items() if v is not None}
-
-        # Also check nutrition_preferences table
-        try:
-            prefs_result = db.client.table("nutrition_preferences").select(
-                "target_calories, target_protein_g, target_carbs_g, target_fat_g, nutrition_goals"
-            ).eq("user_id", user_id).maybe_single().execute()
-
-            if prefs_result and prefs_result.data:
-                prefs = prefs_result.data
-                if prefs.get("target_calories") and not nutrition_targets.get("daily_calorie_target"):
-                    nutrition_targets["daily_calorie_target"] = prefs["target_calories"]
-                if prefs.get("target_protein_g") and not nutrition_targets.get("daily_protein_target_g"):
-                    nutrition_targets["daily_protein_target_g"] = prefs["target_protein_g"]
-                if prefs.get("target_carbs_g") and not nutrition_targets.get("daily_carbs_target_g"):
-                    nutrition_targets["daily_carbs_target_g"] = prefs["target_carbs_g"]
-                if prefs.get("target_fat_g") and not nutrition_targets.get("daily_fat_target_g"):
-                    nutrition_targets["daily_fat_target_g"] = prefs["target_fat_g"]
-                if prefs.get("nutrition_goals") and not user_goals:
-                    user_goals = prefs["nutrition_goals"]
-        except Exception as e:
-            logger.warning(f"Could not fetch nutrition_preferences: {e}")
 
         # Parse the food description using Gemini
         analysis_result = await asyncio.wait_for(

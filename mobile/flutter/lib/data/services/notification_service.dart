@@ -438,19 +438,24 @@ class NotificationService {
     // This is separate from Firebase Messaging permission and required for
     // flutter_local_notifications to show notifications
     if (Platform.isAndroid) {
-      final androidPlugin = _localNotifications
-          .resolvePlatformSpecificImplementation<
-              AndroidFlutterLocalNotificationsPlugin>();
-      if (androidPlugin != null) {
-        // Check if permission is already granted
-        final granted = await androidPlugin.areNotificationsEnabled() ?? false;
-        debugPrint('🔔 [Local] Android notifications enabled: $granted');
+      try {
+        final androidPlugin = _localNotifications
+            .resolvePlatformSpecificImplementation<
+                AndroidFlutterLocalNotificationsPlugin>();
+        if (androidPlugin != null) {
+          // Check if permission is already granted
+          final granted = await androidPlugin.areNotificationsEnabled() ?? false;
+          debugPrint('🔔 [Local] Android notifications enabled: $granted');
 
-        if (!granted) {
-          // Request permission - this shows the system dialog on Android 13+
-          final result = await androidPlugin.requestNotificationsPermission();
-          debugPrint('🔔 [Local] Android notification permission result: $result');
+          if (!granted) {
+            // Request permission - this shows the system dialog on Android 13+
+            final result = await androidPlugin.requestNotificationsPermission();
+            debugPrint('🔔 [Local] Android notification permission result: $result');
+          }
         }
+      } catch (e) {
+        // Can fail with null context if Activity is not yet fully attached
+        debugPrint('⚠️ [Local] Android notification permission request failed: $e');
       }
     }
 

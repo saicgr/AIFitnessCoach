@@ -228,6 +228,8 @@ async def exclude_body_parts_from_workout(
     - User has knee issues: exclude 'knee' to filter squats, lunges, etc.
     - User has wrist pain: exclude 'wrists' to filter push-ups, curls, etc.
     """
+    if str(current_user["id"]) != str(request.user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     logger.info(f"🏋️ Excluding body parts {request.body_parts} from workout {workout_id}")
 
     try:
@@ -352,6 +354,8 @@ async def replace_exercise_in_workout(
 
     If no suitable replacement is found, the exercise is marked as skipped.
     """
+    if str(current_user["id"]) != str(request.user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     logger.info(
         f"🔄 Replacing exercise '{request.exercise_name}' in workout {workout_id}, "
         f"reason: {request.reason}, avoiding: {request.body_part_to_avoid}"

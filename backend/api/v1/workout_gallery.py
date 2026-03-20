@@ -41,6 +41,8 @@ async def upload_gallery_image(
 
     The image is stored in Supabase Storage and metadata is saved to the database.
     """
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     try:
         supabase = get_supabase_db()
 

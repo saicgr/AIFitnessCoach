@@ -75,6 +75,13 @@ class GymProfilesNotifier extends StateNotifier<AsyncValue<List<GymProfile>>> {
   final GymProfileRepository _repository;
   final String? _userId;
   final Ref _ref;
+  bool _disposed = false;
+
+  @override
+  void dispose() {
+    _disposed = true;
+    super.dispose();
+  }
 
   GymProfilesNotifier(this._repository, this._userId, this._ref)
       : super(
@@ -161,8 +168,8 @@ class GymProfilesNotifier extends StateNotifier<AsyncValue<List<GymProfile>>> {
 
   /// Fetch fresh profiles from API
   Future<void> _fetchFromApi({bool showLoading = false}) async {
-    if (_userId == null) {
-      state = const AsyncValue.data([]);
+    if (_userId == null || _disposed) {
+      if (!_disposed) state = const AsyncValue.data([]);
       return;
     }
 
@@ -173,6 +180,7 @@ class GymProfilesNotifier extends StateNotifier<AsyncValue<List<GymProfile>>> {
       debugPrint('🔄 [GymProfileProvider] Loading profiles for user: $_userId');
 
       final response = await _repository.getProfiles(_userId!);
+      if (_disposed) return;
       state = AsyncValue.data(response.profiles);
 
       // Save to cache for next app open

@@ -243,6 +243,8 @@ class HolisticPlanService:
         if not user:
             raise ValueError(f"User {user_id} not found")
 
+        # Enrich user with nutrition_preferences targets (source of truth)
+        user = self.db.enrich_user_with_nutrition_targets(user)
         # Get base nutrition targets from user profile
         base_nutrition = self._get_base_nutrition(user)
 

@@ -106,7 +106,7 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
 
   Future<void> _loadData() async {
     final userId = await ref.read(apiClientProvider).getUserId();
-    if (userId != null) {
+    if (userId != null && mounted) {
       setState(() => _userId = userId);
 
       final dateStr = DateFormat('yyyy-MM-dd').format(_selectedDate);
@@ -124,6 +124,7 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
 
       // Phase 2: Load secondary data in background (non-blocking)
       // These run without await to not block UI
+      if (!mounted) return;
       Future.wait([
         ref.read(nutritionPreferencesProvider.notifier).initialize(userId),
         ref.read(nutritionProvider.notifier).loadRecentLogs(userId),
@@ -131,6 +132,7 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
       ], eagerError: false);
 
       // Log state after initialization for debugging
+      if (!mounted) return;
       final initState = ref.read(nutritionPreferencesProvider);
       debugPrint('🥗 [NutritionScreen] After init: prefs=${initState.preferences != null}, calories=${initState.preferences?.targetCalories}');
 

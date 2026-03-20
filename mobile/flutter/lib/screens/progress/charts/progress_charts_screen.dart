@@ -38,8 +38,6 @@ class _ProgressChartsScreenState extends ConsumerState<ProgressChartsScreen>
 
   @override
   void dispose() {
-    // Log exit analytics
-    ref.read(progressChartsProvider.notifier).onScreenExit();
     _tabController.dispose();
     super.dispose();
   }

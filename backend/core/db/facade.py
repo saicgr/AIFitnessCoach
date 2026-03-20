@@ -648,6 +648,10 @@ class SupabaseDB:
         """Get user's daily nutrition targets."""
         return self._nutrition_db.get_user_nutrition_targets(user_id)
 
+    def enrich_user_with_nutrition_targets(self, user_dict: dict) -> dict:
+        """Overlay nutrition_preferences targets onto user dict."""
+        return self._nutrition_db.enrich_user_with_nutrition_targets(user_dict)
+
     # ==================== ACTIVITY OPERATIONS ====================
     # Delegated to ActivityDB
 

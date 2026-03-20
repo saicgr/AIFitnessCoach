@@ -471,6 +471,24 @@ class NutritionDB(BaseDB):
 
         return empty_response
 
+    def enrich_user_with_nutrition_targets(self, user_dict: dict) -> dict:
+        """Overlay nutrition_preferences targets onto user dict.
+
+        Ensures user dict always has the latest targets from nutrition_preferences
+        (the source of truth), falling back to whatever is already in user_dict.
+        """
+        if not user_dict or not user_dict.get("id"):
+            return user_dict
+        try:
+            targets = self.get_user_nutrition_targets(user_dict["id"])
+            if targets:
+                for col, val in targets.items():
+                    if val is not None:
+                        user_dict[col] = val
+        except Exception as e:
+            logger.warning(f"Failed to enrich user nutrition targets: {e}")
+        return user_dict
+
     # ==================== WEIGHT LOGS ====================
 
     def create_weight_log(

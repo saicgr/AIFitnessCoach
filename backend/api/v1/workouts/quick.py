@@ -271,6 +271,8 @@ async def generate_quick_workout(request: Request, body: QuickWorkoutRequest, ba
 
     Returns a complete workout that can be started immediately.
     """
+    if str(current_user["id"]) != str(body.user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     logger.info(f"Generating quick workout for user {body.user_id}: {body.duration}min, focus={body.focus}, difficulty={body.difficulty}, source={body.source}")
 
     try:
