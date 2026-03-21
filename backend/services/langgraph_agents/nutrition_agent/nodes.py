@@ -309,7 +309,7 @@ async def nutrition_tool_executor_node(state: NutritionAgentState) -> Dict[str, 
             logger.info(f"[Nutrition Tool Executor] Running: {tool_name}")
             try:
                 tool_fn = tools_map[tool_name]
-                result = tool_fn.invoke(tool_args)
+                result = await tool_fn.ainvoke(tool_args)
                 tool_results.append(result)
 
                 tool_messages.append(ToolMessage(

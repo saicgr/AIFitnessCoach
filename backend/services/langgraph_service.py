@@ -31,6 +31,7 @@ from services.langgraph_agents.coach_agent import build_coach_agent_graph
 from core.logger import get_logger
 from core.anonymize import anonymize_user_data
 from core.supabase_client import get_supabase
+from core.db.facade import get_supabase_db
 
 
 def _ensure_str(content) -> str:

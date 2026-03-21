@@ -118,6 +118,7 @@ class AppTourKeys {
   AppTourKeys._();
 
   // Tour 1: Nav Tour (home screen + nav bar)
+  static final topBarKey = GlobalKey(debugLabel: 'tour_topBar');
   static final heroCarouselKey = GlobalKey(debugLabel: 'tour_heroCarousel');
   static final quickLogKey = GlobalKey(debugLabel: 'tour_quickLog');
   static final workoutNavKey = GlobalKey(debugLabel: 'tour_workoutNav');

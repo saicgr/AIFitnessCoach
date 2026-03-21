@@ -730,13 +730,13 @@ class FoodDatabaseLookupService:
                     session.execute(
                         text("""
                             SELECT *,
-                                   similarity(food_name_normalized, :q) AS similarity_score
+                                   similarity(name_normalized, :q) AS similarity_score
                             FROM food_database
                             WHERE is_primary = TRUE
                               AND confidence_score >= 0.6
-                              AND food_name_normalized % :q
+                              AND name_normalized % :q
                             ORDER BY confidence_score DESC,
-                                     similarity(food_name_normalized, :q) DESC
+                                     similarity(name_normalized, :q) DESC
                             LIMIT :lim OFFSET :off
                         """),
                         {"q": query.lower().strip(), "lim": limit, "off": offset},

@@ -93,6 +93,7 @@ COUNTRIES = [
     ("FJ", "Fiji", "Fijian", "fiji"),
     ("FI", "Finland", "Finnish", "finland"),
     ("FR", "France", "French", "france"),
+    ("GF", "French Guiana", "French Guianese", "french_guiana"),
     ("GA", "Gabon", "Gabonese", "gabon"),
     ("GM", "Gambia", "Gambian", "gambia"),
     ("GE", "Georgia", "Georgian", "georgia"),
@@ -180,6 +181,7 @@ COUNTRIES = [
     ("PW", "Palau", "Palauan", "palau"),
     ("PS", "Palestine", "Palestinian", "palestine"),
     ("PA", "Panama", "Panamanian", "panama"),
+    ("PF", "French Polynesia", "French Polynesian", "french_polynesia"),
     ("PG", "Papua New Guinea", "Papua New Guinean", "papua_new_guinea"),
     ("PY", "Paraguay", "Paraguayan", "paraguay"),
     ("PE", "Peru", "Peruvian", "peru"),
@@ -242,6 +244,7 @@ COUNTRIES = [
     ("YE", "Yemen", "Yemeni", "yemen"),
     ("ZM", "Zambia", "Zambian", "zambia"),
     ("ZW", "Zimbabwe", "Zimbabwean", "zimbabwe"),
+    ("FO", "Faroe Islands", "Faroese", "faroe_islands"),
 ]
 
 # ═══════════════════════════════════════════════════════════════
