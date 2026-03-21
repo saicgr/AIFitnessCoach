@@ -253,6 +253,7 @@ class _TodayWorkoutCardState extends ConsumerState<TodayWorkoutCard>
       builder: (context, child) {
         return Transform.scale(
           scale: _pulseAnimation.value,
+          alignment: Alignment.center,
           child: Container(
             decoration: BoxDecoration(
               gradient: LinearGradient(

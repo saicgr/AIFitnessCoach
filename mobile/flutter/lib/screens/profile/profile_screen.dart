@@ -225,23 +225,25 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
                           color: const Color(0xFF06B6D4).withValues(alpha: 0.15),
-                          image: photoUrl != null && photoUrl.isNotEmpty
-                              ? DecorationImage(
-                                  image: NetworkImage(photoUrl),
-                                  fit: BoxFit.cover,
-                                  onError: (exception, stackTrace) {
-                                    debugPrint('❌ [Profile] Failed to load photo: $exception');
-                                  },
-                                )
-                              : null,
                         ),
-                        child: photoUrl == null || photoUrl.isEmpty
-                            ? const Icon(
+                        clipBehavior: Clip.antiAlias,
+                        child: photoUrl != null && photoUrl.isNotEmpty
+                            ? Image.network(
+                                photoUrl,
+                                width: 52,
+                                height: 52,
+                                fit: BoxFit.cover,
+                                errorBuilder: (_, __, ___) => const Icon(
+                                  Icons.person,
+                                  color: Color(0xFF06B6D4),
+                                  size: 28,
+                                ),
+                              )
+                            : const Icon(
                                 Icons.person,
                                 color: Color(0xFF06B6D4),
                                 size: 28,
-                              )
-                            : null,
+                              ),
                       ),
                       const SizedBox(width: 14),
                       Expanded(

@@ -127,7 +127,7 @@ class ChallengeCompleteDialog extends StatelessWidget {
           RichText(
             textAlign: TextAlign.center,
             text: TextSpan(
-              style: DefaultTextStyle.of(context).style.copyWith(fontSize: 15),
+              style: DefaultTextStyle.of(context).style.copyWith(fontSize: 15, inherit: false),
               children: [
                 TextSpan(
                   text: didBeat ? 'You beat ' : 'You challenged ',

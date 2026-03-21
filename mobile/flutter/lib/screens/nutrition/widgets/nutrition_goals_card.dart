@@ -597,7 +597,7 @@ class NutritionGoalsCard extends ConsumerWidget {
                       onRecalculate?.call();
                     },
                     icon: Icon(Icons.refresh, size: 18, color: teal),
-                    label: Text('Recalculate', style: TextStyle(color: teal)),
+                    label: Text('Recalculate', style: TextStyle(inherit: false, color: teal, fontSize: 14, fontWeight: FontWeight.w500)),
                     style: OutlinedButton.styleFrom(
                       side: BorderSide(color: teal.withValues(alpha: 0.5)),
                       shape: RoundedRectangleBorder(
@@ -697,11 +697,12 @@ class _MacroProgressRing extends StatelessWidget {
           height: 44,
           child: Stack(
             alignment: Alignment.center,
+            clipBehavior: Clip.none,
             children: [
               // Background ring - tinted with macro color
               SizedBox(
-                width: 56,
-                height: 56,
+                width: 44,
+                height: 44,
                 child: CircularProgressIndicator(
                   value: 1.0,
                   strokeWidth: 4,
@@ -711,8 +712,8 @@ class _MacroProgressRing extends StatelessWidget {
               ),
               // Progress ring
               SizedBox(
-                width: 56,
-                height: 56,
+                width: 44,
+                height: 44,
                 child: CircularProgressIndicator(
                   value: percentage,
                   strokeWidth: 4,

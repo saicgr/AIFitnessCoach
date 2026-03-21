@@ -844,9 +844,11 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
       }
 
       // Add assistant response with agent type AND action_data (for "Go to Workout" button)
+      // Strip any raw action_data JSON that the AI accidentally included in the message text
+      final cleanedMessage = _stripActionDataFromMessage(response.message);
       final assistantMessage = ChatMessage(
         role: 'assistant',
-        content: response.message,
+        content: cleanedMessage,
         intent: response.intent,
         agentType: response.agentType,
         createdAt: DateTime.now().toIso8601String(),
@@ -1053,7 +1055,7 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
 
       final assistantMessage = ChatMessage(
         role: 'assistant',
-        content: response.message,
+        content: _stripActionDataFromMessage(response.message),
         intent: response.intent,
         agentType: response.agentType,
         createdAt: DateTime.now().toIso8601String(),
@@ -1069,6 +1071,9 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
       debugPrint('❌ [Chat] Error sending message with media: $e');
       debugPrint('❌ [Chat] Stack trace: $stackTrace');
       if (!mounted) return;
+
+      // Clear upload overlay on the user's media message
+      setOverlay(null, null);
 
       // Remove system messages, add error
       final errorMsgs = (state.valueOrNull ?? []).where((m) =>
@@ -1256,7 +1261,7 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
 
       final assistantMessage = ChatMessage(
         role: 'assistant',
-        content: response.message,
+        content: _stripActionDataFromMessage(response.message),
         intent: response.intent,
         agentType: response.agentType,
         createdAt: DateTime.now().toIso8601String(),
@@ -1573,7 +1578,7 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
 
       final assistantMessage = ChatMessage(
         role: 'assistant',
-        content: response.message,
+        content: _stripActionDataFromMessage(response.message),
         intent: response.intent,
         agentType: response.agentType,
         createdAt: DateTime.now().toIso8601String(),
@@ -1633,6 +1638,27 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
   void queueOfflineMessage(String message) {
     _pendingOfflineMessages.add(message);
     debugPrint('📝 [Chat] Queued message for offline sync (${_pendingOfflineMessages.length} pending)');
+  }
+
+  /// Clean AI message text for display:
+  /// 1. Strip raw action_data JSON blobs the AI sometimes embeds in message text
+  /// 2. Convert basic markdown bold (**text**) to plain text since chat has no markdown renderer
+  String _stripActionDataFromMessage(String message) {
+    // Strip JSON objects containing "action" key at the end of the message
+    // e.g. {"action": "navigate", "destination": "nutrition"}
+    final actionPattern = RegExp(
+      r'\s*\{["\s]*"?action"?\s*:\s*"[^"]*"[^}]*\}\s*$',
+      multiLine: true,
+    );
+    var cleaned = message.replaceAll(actionPattern, '').trimRight();
+
+    // Convert markdown bold **text** to plain text
+    cleaned = cleaned.replaceAllMapped(
+      RegExp(r'\*\*(.+?)\*\*'),
+      (m) => m.group(1)!,
+    );
+
+    return cleaned.isEmpty ? message : cleaned;
   }
 
   /// Process action_data from AI response

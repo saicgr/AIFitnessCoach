@@ -119,7 +119,7 @@ class UsageTrackingNotifier extends StateNotifier<UsageLimitsState> {
       final data = response.data as Map<String, dynamic>;
       final limitsMap = <String, FeatureLimit>{};
 
-      final features = data['features'] as Map<String, dynamic>? ?? data;
+      final features = data['limits'] as Map<String, dynamic>? ?? data['features'] as Map<String, dynamic>? ?? data;
       for (final entry in features.entries) {
         if (entry.value is Map<String, dynamic>) {
           limitsMap[entry.key] = FeatureLimit.fromJson(

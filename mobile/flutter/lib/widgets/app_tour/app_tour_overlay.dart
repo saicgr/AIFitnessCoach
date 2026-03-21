@@ -15,12 +15,15 @@ class AppTourOverlay extends ConsumerStatefulWidget {
 }
 
 class _AppTourOverlayState extends ConsumerState<AppTourOverlay>
-    with SingleTickerProviderStateMixin {
+    with TickerProviderStateMixin {
   Rect _previousRect = Rect.zero;
   int _retryCount = 0;
   String? _lastStepId;
   static const int _maxRetries = 10;
   late final AnimationController _gradientController;
+  late final AnimationController _fadeController;
+  late final Animation<double> _fadeAnimation;
+  bool _wasVisible = false;
 
   @override
   void initState() {
@@ -29,11 +32,20 @@ class _AppTourOverlayState extends ConsumerState<AppTourOverlay>
       vsync: this,
       duration: const Duration(seconds: 2),
     )..repeat();
+    _fadeController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 400),
+    );
+    _fadeAnimation = CurvedAnimation(
+      parent: _fadeController,
+      curve: Curves.easeOut,
+    );
   }
 
   @override
   void dispose() {
     _gradientController.dispose();
+    _fadeController.dispose();
     super.dispose();
   }
 
@@ -82,7 +94,19 @@ class _AppTourOverlayState extends ConsumerState<AppTourOverlay>
   Widget build(BuildContext context) {
     final tourState = ref.watch(appTourControllerProvider);
 
-    if (!tourState.isVisible) return const SizedBox.shrink();
+    if (!tourState.isVisible) {
+      if (_wasVisible) {
+        _wasVisible = false;
+        _fadeController.reset();
+      }
+      return const SizedBox.shrink();
+    }
+
+    // Trigger fade-in when tour first becomes visible
+    if (!_wasVisible) {
+      _wasVisible = true;
+      _fadeController.forward();
+    }
 
     final step = tourState.currentTourStep;
     if (step == null) return const SizedBox.shrink();
@@ -204,11 +228,13 @@ class _AppTourOverlayState extends ConsumerState<AppTourOverlay>
     final tooltipLeft = ((screenSize.width - cardWidth) / 2).clamp(24.0, double.infinity);
 
     return Positioned.fill(
-      child: GestureDetector(
-        // Tapping overlay background advances the tour
-        onTap: () => controller.next(),
-        behavior: HitTestBehavior.opaque,
-        child: Stack(
+      child: FadeTransition(
+        opacity: _fadeAnimation,
+        child: GestureDetector(
+          // Tapping overlay background advances the tour
+          onTap: () => controller.next(),
+          behavior: HitTestBehavior.opaque,
+          child: Stack(
           children: [
             // Spotlight painter with animated rect transition
             Positioned.fill(
@@ -268,6 +294,7 @@ class _AppTourOverlayState extends ConsumerState<AppTourOverlay>
             ),
           ],
         ),
+      ),
       ),
     );
   }

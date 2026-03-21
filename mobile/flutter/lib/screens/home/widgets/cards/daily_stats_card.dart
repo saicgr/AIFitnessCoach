@@ -479,7 +479,7 @@ class _StatItem extends StatelessWidget {
                   fontSize: compact ? 24 : 32,
                   fontWeight: FontWeight.bold,
                   color: textColor,
-                  height: 1.0,
+                  height: 1.1,
                 ),
                 maxLines: 1,
               ),

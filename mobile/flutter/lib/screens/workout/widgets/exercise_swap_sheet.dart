@@ -50,7 +50,7 @@ class _ExerciseSwapSheetState extends ConsumerState<_ExerciseSwapSheet>
   late TabController _tabController;
 
   // Similar tab (fast DB queries)
-  bool _isLoadingSimilar = true;
+  bool _isLoadingSimilar = false;
   List<Map<String, dynamic>> _similarExercises = [];
 
   // AI Picks tab (slow AI suggestions)
@@ -211,22 +211,19 @@ class _ExerciseSwapSheetState extends ConsumerState<_ExerciseSwapSheet>
       );
 
       if (mounted) {
-        // Batch pre-fetch images BEFORE showing results so the cache
-        // is populated when ExerciseImage widgets render.
+        setState(() {
+          _similarExercises = suggestions;
+          _isLoadingSimilar = false;
+        });
+
+        // Pre-fetch images in background (non-blocking)
         final exerciseNames = suggestions
             .map((s) => s['name'] as String?)
             .whereType<String>()
             .toList();
         if (exerciseNames.isNotEmpty) {
           final apiClient = ref.read(apiClientProvider);
-          await ImageUrlCache.batchPreFetch(exerciseNames, apiClient);
-        }
-
-        if (mounted) {
-          setState(() {
-            _similarExercises = suggestions;
-            _isLoadingSimilar = false;
-          });
+          ImageUrlCache.batchPreFetch(exerciseNames, apiClient);
         }
       }
     } catch (e) {
@@ -268,22 +265,20 @@ class _ExerciseSwapSheetState extends ConsumerState<_ExerciseSwapSheet>
       );
 
       if (mounted) {
-        // Batch pre-fetch images BEFORE showing AI results
+        setState(() {
+          _aiSuggestions = suggestions;
+          _isLoadingAI = false;
+          _aiLoaded = true;
+        });
+
+        // Pre-fetch images in background (non-blocking)
         final aiNames = suggestions
             .map((s) => s['name'] as String?)
             .whereType<String>()
             .toList();
         if (aiNames.isNotEmpty) {
           final apiClient = ref.read(apiClientProvider);
-          await ImageUrlCache.batchPreFetch(aiNames, apiClient);
-        }
-
-        if (mounted) {
-          setState(() {
-            _aiSuggestions = suggestions;
-            _isLoadingAI = false;
-            _aiLoaded = true;
-          });
+          ImageUrlCache.batchPreFetch(aiNames, apiClient);
         }
       }
     } catch (e) {
@@ -304,14 +299,24 @@ class _ExerciseSwapSheetState extends ConsumerState<_ExerciseSwapSheet>
       _isLoadingLibrary = true;
     });
 
-    final libraryRepo = ref.read(libraryRepositoryProvider);
-    final exercises = await libraryRepo.searchExercises(query: query);
+    try {
+      final libraryRepo = ref.read(libraryRepositoryProvider);
+      final exercises = await libraryRepo.searchExercises(query: query);
 
-    if (mounted) {
-      setState(() {
-        _libraryExercises = exercises;
-        _isLoadingLibrary = false;
-      });
+      if (mounted) {
+        setState(() {
+          _libraryExercises = exercises;
+          _isLoadingLibrary = false;
+        });
+      }
+    } catch (e) {
+      debugPrint('Error searching library: $e');
+      if (mounted) {
+        setState(() {
+          _libraryExercises = [];
+          _isLoadingLibrary = false;
+        });
+      }
     }
   }
 

@@ -7,6 +7,7 @@ import '../../../data/providers/xp_provider.dart';
 import '../../../data/services/haptic_service.dart';
 import 'components/components.dart';
 import 'gym_profile_switcher.dart';
+import '../../../widgets/app_tour/app_tour_controller.dart';
 
 /// Clean, minimal header for the "Minimalist" home screen preset.
 ///
@@ -27,6 +28,7 @@ class MinimalHeader extends ConsumerWidget {
     final progress = xpState.progressFraction.clamp(0.0, 1.0);
 
     return Padding(
+      key: AppTourKeys.topBarKey,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Row(
         children: [

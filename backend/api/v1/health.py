@@ -4,6 +4,7 @@ Health check endpoints.
 from fastapi import APIRouter
 from core.config import get_settings
 from core.logger import get_logger
+from services.gemini_service import cost_tracker
 
 router = APIRouter()
 logger = get_logger(__name__)
@@ -38,3 +39,9 @@ async def debug_gemini():
         "cache_enabled": getattr(settings, 'gemini_cache_enabled', False),
         "status": "configured",
     }
+
+
+@router.get("/debug/costs")
+async def debug_costs():
+    """Debug endpoint - shows accumulated Vertex AI cost estimates since last deploy."""
+    return cost_tracker.snapshot()

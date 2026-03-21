@@ -31,7 +31,7 @@ class Settings(BaseSettings):
     # Context caching for faster workout generation (TTL in seconds, default 1 hour)
     gemini_cache_ttl_seconds: int = 3600
     # Enable/disable context caching (set to False to use non-cached generation)
-    gemini_cache_enabled: bool = True
+    gemini_cache_enabled: bool = False
     # Per-domain cache overrides (None = falls back to gemini_cache_enabled)
     form_cache_enabled: Optional[bool] = None
     nutrition_cache_enabled: Optional[bool] = None

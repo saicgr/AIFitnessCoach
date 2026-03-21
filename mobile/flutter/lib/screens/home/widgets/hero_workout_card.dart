@@ -854,7 +854,7 @@ class _HeroWorkoutCardState extends ConsumerState<HeroWorkoutCard> {
                     ],
                   ),
 
-                  const SizedBox(height: 80),
+                  const SizedBox(height: 60),
 
                   // Workout title - large and prominent
                   Text(

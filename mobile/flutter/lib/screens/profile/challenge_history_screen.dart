@@ -851,7 +851,7 @@ class _RetryConfirmationDialog extends StatelessWidget {
             RichText(
               textAlign: TextAlign.center,
               text: TextSpan(
-                style: DefaultTextStyle.of(context).style.copyWith(fontSize: 14),
+                style: DefaultTextStyle.of(context).style.copyWith(fontSize: 14, inherit: false),
                 children: [
                   const TextSpan(text: 'Ready to take on '),
                   TextSpan(

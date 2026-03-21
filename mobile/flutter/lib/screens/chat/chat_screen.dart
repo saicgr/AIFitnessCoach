@@ -620,19 +620,21 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                       }
 
                       // Date separator: In a reversed list, index 0 = newest (bottom).
-                      // Show separator ABOVE a message when the OLDER message (index+1,
-                      // visually above) belongs to a different day. This places the
-                      // date header at the start of each new day group.
+                      // Show a date header above the FIRST message of each day group.
+                      // In reversed order, check if the NEWER message (index-1, visually
+                      // below) belongs to a different day. If so, this message is the
+                      // last of its day group (visually topmost), so place the header here.
                       Widget? dateSeparator;
-                      final olderIndex = msgIndex + 1;
-                      if (olderIndex < messages.length) {
+                      final newerIndex = msgIndex - 1;
+                      if (newerIndex >= 0) {
                         final currentDate = message.timestamp ?? DateTime.now();
-                        final olderDate = messages[olderIndex].timestamp ?? DateTime.now();
-                        if (!_isSameDay(currentDate, olderDate)) {
+                        final newerDate = messages[newerIndex].timestamp ?? DateTime.now();
+                        if (!_isSameDay(currentDate, newerDate)) {
                           dateSeparator = _buildDateSeparator(currentDate);
                         }
-                      } else {
-                        // Oldest visible message in list (top) always gets a header
+                      }
+                      // Always show header for the newest message group (index 0)
+                      if (msgIndex == 0) {
                         dateSeparator = _buildDateSeparator(message.timestamp ?? DateTime.now());
                       }
 
@@ -661,8 +663,8 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                           : bubble;
 
                       if (dateSeparator != null) {
-                        // In reversed list, separator goes BEFORE (above) the bubble
-                        // to mark the start of a new day group.
+                        // Column renders top-to-bottom even inside a reversed ListView.
+                        // Separator above, bubble below.
                         return Column(
                           children: [dateSeparator, wrappedBubble],
                         );
@@ -1110,13 +1112,17 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   }
 
   bool _isSameDay(DateTime a, DateTime b) {
-    return a.year == b.year && a.month == b.month && a.day == b.day;
+    // Convert to local time so UTC timestamps compare correctly with local dates
+    final la = a.toLocal();
+    final lb = b.toLocal();
+    return la.year == lb.year && la.month == lb.month && la.day == lb.day;
   }
 
   Widget _buildDateSeparator(DateTime date) {
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
-    final messageDate = DateTime(date.year, date.month, date.day);
+    final local = date.toLocal();
+    final messageDate = DateTime(local.year, local.month, local.day);
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     String label;

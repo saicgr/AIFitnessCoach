@@ -44,7 +44,20 @@ void main() async {
   ]);
 
   // Wire up Crashlytics error handlers
-  FlutterError.onError = FirebaseCrashlytics.instance.recordFlutterFatalError;
+  // Only report truly fatal errors as fatal; rendering/layout errors are non-fatal
+  FlutterError.onError = (FlutterErrorDetails details) {
+    final message = details.exceptionAsString();
+    final isRenderingError = message.contains('RenderFlex overflowed') ||
+        message.contains('Failed to interpolate TextStyles') ||
+        message.contains('Error thrown resolving an image codec') ||
+        details.library == 'rendering library';
+    if (isRenderingError) {
+      // Non-fatal: log but don't crash
+      FirebaseCrashlytics.instance.recordFlutterError(details);
+    } else {
+      FirebaseCrashlytics.instance.recordFlutterFatalError(details);
+    }
+  };
   PlatformDispatcher.instance.onError = (error, stack) {
     FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
     return true;

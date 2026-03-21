@@ -1043,7 +1043,7 @@ class _ActivityCardState extends State<ActivityCard> with SingleTickerProviderSt
 
     return RichText(
       text: TextSpan(
-        style: DefaultTextStyle.of(context).style.copyWith(fontSize: 15),
+        style: DefaultTextStyle.of(context).style.copyWith(fontSize: 15, inherit: false),
         children: spans,
       ),
     );

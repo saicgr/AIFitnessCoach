@@ -84,6 +84,115 @@ _embedding_cache = RedisCache(prefix="embedding", ttl_seconds=3600, max_size=100
 _token_logger = logging.getLogger("token_usage")
 
 
+# ===========================================================================
+# In-Memory Cost Tracker for Vertex AI spend visibility
+# ===========================================================================
+
+class _CostTracker:
+    """Accumulates Vertex AI token usage and estimated costs in-memory.
+
+    Vertex AI pricing (Gemini Flash as of 2025):
+        Input:          $0.10 / 1M tokens
+        Output:         $0.40 / 1M tokens
+        Cached input:   $0.025 / 1M tokens
+        Cache storage:  $1.00 / 1M tokens / hour
+    """
+
+    # Pricing per token
+    INPUT_RATE = 0.10 / 1_000_000
+    OUTPUT_RATE = 0.40 / 1_000_000
+    CACHED_INPUT_RATE = 0.025 / 1_000_000
+    CACHE_STORAGE_RATE = 1.00 / 1_000_000  # per hour
+
+    def __init__(self):
+        self._start_time = time.time()
+        # Per-method stats: {method: {calls, input_tokens, output_tokens, cached_tokens, cost_usd}}
+        self._by_method: Dict[str, Dict] = {}
+        # Per-user stats: {user_id: {calls, total_tokens, cost_usd}}
+        self._by_user: Dict[str, Dict] = {}
+        # Active caches: {cache_name: {tokens, created_at_ts, prefix}}
+        self._active_caches: Dict[str, Dict] = {}
+
+    def record(self, method: str, user_id: str, input_tokens: int, output_tokens: int, cached_tokens: int) -> None:
+        """Record a single Gemini API call."""
+        # Cost for this call: cached tokens are charged at reduced rate instead of full input rate
+        billable_input = input_tokens - cached_tokens
+        cost = (
+            billable_input * self.INPUT_RATE
+            + output_tokens * self.OUTPUT_RATE
+            + cached_tokens * self.CACHED_INPUT_RATE
+        )
+
+        # Method accumulation
+        m = self._by_method.setdefault(method, {"calls": 0, "input_tokens": 0, "output_tokens": 0, "cached_tokens": 0, "cost_usd": 0.0})
+        m["calls"] += 1
+        m["input_tokens"] += input_tokens
+        m["output_tokens"] += output_tokens
+        m["cached_tokens"] += cached_tokens
+        m["cost_usd"] += cost
+
+        # User accumulation
+        u = self._by_user.setdefault(user_id, {"calls": 0, "total_tokens": 0, "cost_usd": 0.0})
+        u["calls"] += 1
+        u["total_tokens"] += input_tokens + output_tokens
+        u["cost_usd"] += cost
+
+    def track_cache(self, cache_name: str, prefix: str, token_count: int) -> None:
+        """Track an active Vertex AI cache for storage cost computation."""
+        self._active_caches[cache_name] = {
+            "tokens": token_count,
+            "created_at_ts": time.time(),
+            "prefix": prefix,
+        }
+
+    def remove_cache(self, cache_name: str) -> None:
+        """Remove a cache from tracking (e.g. after deletion)."""
+        self._active_caches.pop(cache_name, None)
+
+    def snapshot(self) -> Dict:
+        """Return a full cost snapshot for the debug endpoint."""
+        now = time.time()
+        uptime_hours = (now - self._start_time) / 3600
+
+        # Compute cache storage costs
+        cache_storage_cost = 0.0
+        active_caches_info = {}
+        for name, info in self._active_caches.items():
+            age_hours = (now - info["created_at_ts"]) / 3600
+            hourly_cost = info["tokens"] * self.CACHE_STORAGE_RATE
+            storage_cost = hourly_cost * age_hours
+            cache_storage_cost += storage_cost
+            active_caches_info[name] = {
+                "prefix": info["prefix"],
+                "tokens_stored": info["tokens"],
+                "age_hours": round(age_hours, 2),
+                "hourly_storage_cost_usd": round(hourly_cost, 6),
+                "total_storage_cost_usd": round(storage_cost, 6),
+            }
+
+        total_api_cost = sum(m["cost_usd"] for m in self._by_method.values())
+
+        return {
+            "uptime_hours": round(uptime_hours, 2),
+            "total_estimated_cost_usd": round(total_api_cost + cache_storage_cost, 6),
+            "api_cost_usd": round(total_api_cost, 6),
+            "cache_storage_cost_usd": round(cache_storage_cost, 6),
+            "by_method": {
+                k: {**v, "cost_usd": round(v["cost_usd"], 6)}
+                for k, v in sorted(self._by_method.items(), key=lambda x: x[1]["cost_usd"], reverse=True)
+            },
+            "by_user": {
+                k: {**v, "cost_usd": round(v["cost_usd"], 6)}
+                for k, v in sorted(self._by_user.items(), key=lambda x: x[1]["cost_usd"], reverse=True)
+            },
+            "active_caches": active_caches_info,
+        }
+
+
+# Singleton tracker — importable by health.py
+cost_tracker = _CostTracker()
+
+
 def _log_token_usage(response, method_name: str, user_id: str = "unknown") -> None:
     """Log token usage from a Gemini API response for cost tracking."""
     try:
@@ -99,6 +208,7 @@ def _log_token_usage(response, method_name: str, user_id: str = "unknown") -> No
             f"[Tokens] user={user_id} method={method_name} "
             f"in={input_tokens} out={output_tokens} cached={cached_tokens}"
         )
+        cost_tracker.record(method_name, user_id, input_tokens, output_tokens, cached_tokens)
     except Exception:
         pass  # Never let logging break a request
 
@@ -555,6 +665,7 @@ class GeminiService:
                 for dup in caches[1:]:
                     try:
                         client.caches.delete(name=dup.name)
+                        cost_tracker.remove_cache(dup.name)
                         deleted_count += 1
                         logger.info(f"[CacheManager] Deleted duplicate cache: {dup.name}")
                     except Exception as e:
@@ -579,6 +690,12 @@ class GeminiService:
             age_seconds = 0
             logger.info(f"[CacheManager] No expire_time on cache, using now as created_at")
 
+        # Track cache tokens for cost tracking
+        cache_tokens = 0
+        cache_usage = getattr(cache, 'usage_metadata', None)
+        if cache_usage:
+            cache_tokens = getattr(cache_usage, 'total_token_count', 0) or 0
+
         if prefix == "workout_generation":
             cls._workout_cache = cache.name
             cls._workout_cache_created_at = created_at
@@ -592,6 +709,9 @@ class GeminiService:
             cls._nutrition_analysis_cache_created_at = created_at
             logger.info(f"[CacheManager] Adopted existing nutrition analysis cache: {cache.name} (age: {age_seconds:.0f}s)")
 
+        if cache_tokens > 0:
+            cost_tracker.track_cache(cache.name, prefix, cache_tokens)
+
     @classmethod
     async def _prewarm_cache(cls):
         """Pre-warm caches that weren't already adopted from the server."""
@@ -599,6 +719,11 @@ class GeminiService:
             service = cls()
 
             # Only create caches that don't already exist (adopted from cleanup)
+            cache_settings = get_settings()
+            if not cache_settings.gemini_cache_enabled:
+                logger.info("[CacheManager] Context caching disabled (gemini_cache_enabled=False), skipping all cache pre-warm")
+                return
+
             if not cls._workout_cache:
                 cache_name = await service._get_or_create_workout_cache()
                 if cache_name:
@@ -608,7 +733,6 @@ class GeminiService:
             else:
                 logger.info(f"[CacheManager] Workout cache already adopted, skipping pre-warm")
 
-            cache_settings = get_settings()
             if getattr(cache_settings, 'form_cache_enabled', True) is not False and cache_settings.gemini_cache_enabled:
                 if not cls._form_analysis_cache:
                     form_cache = await service._get_or_create_form_analysis_cache()
@@ -654,6 +778,8 @@ class GeminiService:
         Returns:
             Cache name (str) if successful, None if caching fails (will fallback to non-cached)
         """
+        if not get_settings().gemini_cache_enabled:
+            return None
         async with GeminiService._cache_lock:
             try:
                 # Check in-memory reference first
@@ -699,6 +825,12 @@ class GeminiService:
 
                 logger.info(f"✅ [Cache] Created new workout cache: {cache.name}")
                 _log_token_usage(None, "create_workout_cache", user_id="system")
+                # Track cache tokens for cost tracking
+                cache_usage = getattr(cache, 'usage_metadata', None)
+                if cache_usage:
+                    ct = getattr(cache_usage, 'total_token_count', 0) or 0
+                    if ct > 0:
+                        cost_tracker.track_cache(cache.name, "workout_generation", ct)
                 return cache.name
 
             except Exception as e:
@@ -874,6 +1006,8 @@ Create engaging, creative names that:
         Get existing form analysis cache or create a new one.
         Checks server-side first to avoid duplicates across workers.
         """
+        if not get_settings().gemini_cache_enabled:
+            return None
         async with GeminiService._form_cache_lock:
             try:
                 if GeminiService._form_analysis_cache and GeminiService._form_analysis_cache_created_at:
@@ -916,6 +1050,11 @@ Create engaging, creative names that:
 
                 logger.info(f"✅ [Cache] Created new form analysis cache: {cache.name}")
                 _log_token_usage(None, "create_form_cache", user_id="system")
+                cache_usage = getattr(cache, 'usage_metadata', None)
+                if cache_usage:
+                    ct = getattr(cache_usage, 'total_token_count', 0) or 0
+                    if ct > 0:
+                        cost_tracker.track_cache(cache.name, "form_analysis", ct)
                 return cache.name
 
             except Exception as e:
@@ -927,6 +1066,8 @@ Create engaging, creative names that:
         Get existing nutrition analysis cache or create a new one.
         Checks server-side first to avoid duplicates across workers.
         """
+        if not get_settings().gemini_cache_enabled:
+            return None
         async with GeminiService._nutrition_cache_lock:
             try:
                 if GeminiService._nutrition_analysis_cache and GeminiService._nutrition_analysis_cache_created_at:
@@ -969,6 +1110,11 @@ Create engaging, creative names that:
 
                 logger.info(f"✅ [Cache] Created new nutrition analysis cache: {cache.name}")
                 _log_token_usage(None, "create_nutrition_cache", user_id="system")
+                cache_usage = getattr(cache, 'usage_metadata', None)
+                if cache_usage:
+                    ct = getattr(cache_usage, 'total_token_count', 0) or 0
+                    if ct > 0:
+                        cost_tracker.track_cache(cache.name, "nutrition_analysis", ct)
                 return cache.name
 
             except Exception as e:

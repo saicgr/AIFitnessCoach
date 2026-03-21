@@ -148,16 +148,25 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
           debugPrint('❌ [Home] _initializeNutritionAndHydration error: $e');
         }),
       ]);
-    });
-    // Trigger nav tour after initialization completes
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) return;
-      _triggerNavTour();
+      // Trigger nav tour after critical data has loaded so the home screen
+      // is populated (workout card, calendar, etc.) before the spotlight appears.
+      // Short delay lets the user see their home screen before the tour starts.
+      Future.delayed(const Duration(milliseconds: 800), () {
+        if (!mounted) return;
+        _triggerNavTour();
+      });
     });
   }
 
   void _triggerNavTour() {
     final steps = [
+      AppTourStep(
+        id: 'nav_step_topbar',
+        targetKey: AppTourKeys.topBarKey,
+        title: 'Your Command Center',
+        description: 'Switch between gyms, customize your home screen layout, access settings, and track your level.',
+        position: TooltipPosition.below,
+      ),
       AppTourStep(
         id: 'nav_step_carousel',
         targetKey: AppTourKeys.heroCarouselKey,
@@ -176,7 +185,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
         id: 'nav_step_workout',
         targetKey: AppTourKeys.workoutNavKey,
         title: 'Workouts',
-        description: 'View your workout history, build custom workouts, and browse the exercise library.',
+        description: 'View your workout history and browse the exercise library.',
         position: TooltipPosition.above,
       ),
       AppTourStep(

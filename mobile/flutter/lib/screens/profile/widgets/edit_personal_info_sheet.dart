@@ -489,21 +489,28 @@ class _EditPersonalInfoSheetState extends ConsumerState<EditPersonalInfoSheet> {
                             image: FileImage(_selectedPhotoFile!),
                             fit: BoxFit.cover,
                           )
-                        : _currentPhotoUrl != null && _currentPhotoUrl!.isNotEmpty
-                            ? DecorationImage(
-                                image: NetworkImage(_currentPhotoUrl!),
-                                fit: BoxFit.cover,
-                              )
-                            : null,
+                        : null,
                   ),
-                  child: (_selectedPhotoFile == null &&
-                          (_currentPhotoUrl == null || _currentPhotoUrl!.isEmpty))
-                      ? Icon(
-                          Icons.person,
-                          size: 48,
-                          color: textMuted,
-                        )
-                      : null,
+                  clipBehavior: Clip.antiAlias,
+                  child: _selectedPhotoFile != null
+                      ? null
+                      : _currentPhotoUrl != null && _currentPhotoUrl!.isNotEmpty
+                          ? Image.network(
+                              _currentPhotoUrl!,
+                              width: 100,
+                              height: 100,
+                              fit: BoxFit.cover,
+                              errorBuilder: (_, __, ___) => Icon(
+                                Icons.person,
+                                size: 48,
+                                color: textMuted,
+                              ),
+                            )
+                          : Icon(
+                              Icons.person,
+                              size: 48,
+                              color: textMuted,
+                            ),
                 ),
                 // Edit badge
                 Positioned(
