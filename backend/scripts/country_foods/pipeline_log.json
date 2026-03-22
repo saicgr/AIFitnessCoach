@@ -1,0 +1,1341 @@
+{
+  "launched": {
+    "mg_part1": {
+      "status": "launched",
+      "launched_at": "2026-03-21T16:50:58.701902"
+    },
+    "mg_part2": {
+      "status": "launched",
+      "launched_at": "2026-03-21T16:50:58.701902"
+    },
+    "mg_part3": {
+      "status": "launched",
+      "launched_at": "2026-03-21T16:50:58.701902"
+    },
+    "mg_part4": {
+      "status": "launched",
+      "launched_at": "2026-03-21T16:50:58.701902"
+    },
+    "mw_part1": {
+      "status": "launched",
+      "launched_at": "2026-03-21T16:50:58.701902"
+    },
+    "mw_part2": {
+      "status": "launched",
+      "launched_at": "2026-03-21T16:50:58.701902"
+    },
+    "mw_part3": {
+      "status": "launched",
+      "launched_at": "2026-03-21T16:50:58.701902"
+    },
+    "mw_part4": {
+      "status": "launched",
+      "launched_at": "2026-03-21T16:50:58.701902"
+    },
+    "mw_part5": {
+      "status": "launched",
+      "launched_at": "2026-03-21T16:50:58.701902"
+    },
+    "mv_part1": {
+      "status": "launched",
+      "launched_at": "2026-03-21T16:50:58.701902"
+    },
+    "mv_part2": {
+      "status": "launched",
+      "launched_at": "2026-03-21T16:50:58.701902"
+    },
+    "mv_part3": {
+      "status": "launched",
+      "launched_at": "2026-03-21T16:50:58.701902"
+    },
+    "mv_part4": {
+      "status": "launched",
+      "launched_at": "2026-03-21T16:50:58.701902"
+    },
+    "mv_part5": {
+      "status": "launched",
+      "launched_at": "2026-03-21T16:50:58.701902"
+    },
+    "ml_part1": {
+      "status": "launched",
+      "launched_at": "2026-03-21T16:50:58.701902"
+    },
+    "ml_part2": {
+      "status": "launched",
+      "launched_at": "2026-03-21T16:50:58.701902"
+    },
+    "ml_part3": {
+      "status": "launched",
+      "launched_at": "2026-03-21T16:50:58.701902"
+    },
+    "ml_part4": {
+      "status": "launched",
+      "launched_at": "2026-03-21T16:50:58.701902"
+    },
+    "ml_part5": {
+      "status": "launched",
+      "launched_at": "2026-03-21T16:50:58.701902"
+    },
+    "mt_part1": {
+      "status": "launched",
+      "launched_at": "2026-03-21T16:50:58.701902"
+    },
+    "mt_part2": {
+      "status": "launched",
+      "launched_at": "2026-03-21T16:50:58.701902"
+    },
+    "mt_part3": {
+      "status": "launched",
+      "launched_at": "2026-03-21T16:50:58.701902"
+    },
+    "mt_part4": {
+      "status": "launched",
+      "launched_at": "2026-03-21T16:50:58.701902"
+    },
+    "mt_part5": {
+      "status": "launched",
+      "launched_at": "2026-03-21T16:50:58.701902"
+    },
+    "mh_part1": {
+      "status": "launched",
+      "launched_at": "2026-03-21T12:10:55.888126"
+    },
+    "mh_part2": {
+      "status": "launched",
+      "launched_at": "2026-03-21T12:10:55.888126"
+    },
+    "mh_part3": {
+      "status": "launched",
+      "launched_at": "2026-03-21T12:10:55.888126"
+    },
+    "mh_part4": {
+      "status": "launched",
+      "launched_at": "2026-03-21T12:10:55.888126"
+    },
+    "mh_part5": {
+      "status": "launched",
+      "launched_at": "2026-03-21T12:10:55.888126"
+    },
+    "mq_part1": {
+      "status": "launched",
+      "launched_at": "2026-03-21T12:10:55.888126"
+    },
+    "mq_part2": {
+      "status": "launched",
+      "launched_at": "2026-03-21T12:10:55.888126"
+    },
+    "mq_part3": {
+      "status": "launched",
+      "launched_at": "2026-03-21T12:10:55.888126"
+    },
+    "mq_part4": {
+      "status": "launched",
+      "launched_at": "2026-03-21T12:10:55.888126"
+    },
+    "mq_part5": {
+      "status": "launched",
+      "launched_at": "2026-03-21T12:10:55.888126"
+    },
+    "mr_part1": {
+      "status": "launched",
+      "launched_at": "2026-03-21T12:10:55.888126"
+    },
+    "mr_part2": {
+      "status": "launched",
+      "launched_at": "2026-03-21T12:10:55.888126"
+    },
+    "mr_part3": {
+      "status": "launched",
+      "launched_at": "2026-03-21T12:10:55.888126"
+    },
+    "mr_part4": {
+      "status": "launched",
+      "launched_at": "2026-03-21T12:10:55.888126"
+    },
+    "mr_part5": {
+      "status": "launched",
+      "launched_at": "2026-03-21T12:10:55.888126"
+    },
+    "mu_part1": {
+      "status": "launched",
+      "launched_at": "2026-03-21T12:10:55.888126"
+    },
+    "mu_part2": {
+      "status": "launched",
+      "launched_at": "2026-03-21T12:10:55.888126"
+    },
+    "mu_part3": {
+      "status": "launched",
+      "launched_at": "2026-03-21T12:10:55.888126"
+    },
+    "mu_part4": {
+      "status": "launched",
+      "launched_at": "2026-03-21T12:10:55.888126"
+    },
+    "mu_part5": {
+      "status": "launched",
+      "launched_at": "2026-03-21T12:10:55.888126"
+    },
+    "yt_part1": {
+      "status": "launched",
+      "launched_at": "2026-03-21T12:10:55.888126"
+    },
+    "yt_part2": {
+      "status": "launched",
+      "launched_at": "2026-03-21T12:10:55.888126"
+    },
+    "yt_part3": {
+      "status": "launched",
+      "launched_at": "2026-03-21T12:10:55.888126"
+    },
+    "yt_part4": {
+      "status": "launched",
+      "launched_at": "2026-03-21T12:10:55.888126"
+    },
+    "yt_part5": {
+      "status": "launched",
+      "launched_at": "2026-03-21T12:10:55.888126"
+    },
+    "fm_part1": {
+      "status": "launched",
+      "launched_at": "2026-03-21T12:25:48.738174"
+    },
+    "fm_part2": {
+      "status": "launched",
+      "launched_at": "2026-03-21T12:25:48.738174"
+    },
+    "fm_part3": {
+      "status": "launched",
+      "launched_at": "2026-03-21T12:25:48.738174"
+    },
+    "fm_part4": {
+      "status": "launched",
+      "launched_at": "2026-03-21T12:25:48.738174"
+    },
+    "fm_part5": {
+      "status": "launched",
+      "launched_at": "2026-03-21T12:25:48.738174"
+    },
+    "md_part1": {
+      "status": "launched",
+      "launched_at": "2026-03-21T12:25:48.738174"
+    },
+    "md_part2": {
+      "status": "launched",
+      "launched_at": "2026-03-21T12:25:48.738174"
+    },
+    "md_part3": {
+      "status": "launched",
+      "launched_at": "2026-03-21T12:25:48.738174"
+    },
+    "md_part4": {
+      "status": "launched",
+      "launched_at": "2026-03-21T12:25:48.738174"
+    },
+    "md_part5": {
+      "status": "launched",
+      "launched_at": "2026-03-21T12:25:48.738174"
+    },
+    "mc_part1": {
+      "status": "launched",
+      "launched_at": "2026-03-21T12:25:48.738174"
+    },
+    "mc_part2": {
+      "status": "launched",
+      "launched_at": "2026-03-21T12:25:48.738174"
+    },
+    "mc_part3": {
+      "status": "launched",
+      "launched_at": "2026-03-21T12:25:48.738174"
+    },
+    "mc_part4": {
+      "status": "launched",
+      "launched_at": "2026-03-21T12:25:48.738174"
+    },
+    "mc_part5": {
+      "status": "launched",
+      "launched_at": "2026-03-21T12:25:48.738174"
+    },
+    "mn_part1": {
+      "status": "launched",
+      "launched_at": "2026-03-21T12:25:48.738174"
+    },
+    "mn_part2": {
+      "status": "launched",
+      "launched_at": "2026-03-21T12:25:48.738174"
+    },
+    "mn_part3": {
+      "status": "launched",
+      "launched_at": "2026-03-21T12:25:48.738174"
+    },
+    "mn_part4": {
+      "status": "launched",
+      "launched_at": "2026-03-21T12:25:48.738174"
+    },
+    "mn_part5": {
+      "status": "launched",
+      "launched_at": "2026-03-21T12:25:48.738174"
+    },
+    "me_part1": {
+      "status": "launched",
+      "launched_at": "2026-03-21T12:25:48.738174"
+    },
+    "me_part2": {
+      "status": "launched",
+      "launched_at": "2026-03-21T12:25:48.738174"
+    },
+    "me_part3": {
+      "status": "launched",
+      "launched_at": "2026-03-21T12:25:48.738174"
+    },
+    "me_part4": {
+      "status": "launched",
+      "launched_at": "2026-03-21T12:25:48.738174"
+    },
+    "me_part5": {
+      "status": "launched",
+      "launched_at": "2026-03-21T12:25:48.738174"
+    },
+    "ma_part1": {
+      "status": "launched",
+      "launched_at": "2026-03-21T12:40:16.045825"
+    },
+    "ma_part2": {
+      "status": "launched",
+      "launched_at": "2026-03-21T12:40:16.045825"
+    },
+    "ma_part3": {
+      "status": "launched",
+      "launched_at": "2026-03-21T12:40:16.045825"
+    },
+    "ma_part4": {
+      "status": "launched",
+      "launched_at": "2026-03-21T12:40:16.045825"
+    },
+    "ma_part5": {
+      "status": "launched",
+      "launched_at": "2026-03-21T12:40:16.045825"
+    },
+    "mz_part1": {
+      "status": "launched",
+      "launched_at": "2026-03-21T12:40:16.045825"
+    },
+    "mz_part2": {
+      "status": "launched",
+      "launched_at": "2026-03-21T12:40:16.045825"
+    },
+    "mz_part3": {
+      "status": "launched",
+      "launched_at": "2026-03-21T12:40:16.045825"
+    },
+    "mz_part4": {
+      "status": "launched",
+      "launched_at": "2026-03-21T12:40:16.045825"
+    },
+    "mz_part5": {
+      "status": "launched",
+      "launched_at": "2026-03-21T12:40:16.045825"
+    },
+    "mm_part1": {
+      "status": "launched",
+      "launched_at": "2026-03-21T12:40:16.045825"
+    },
+    "mm_part2": {
+      "status": "launched",
+      "launched_at": "2026-03-21T12:40:16.045825"
+    },
+    "mm_part3": {
+      "status": "launched",
+      "launched_at": "2026-03-21T12:40:16.045825"
+    },
+    "mm_part4": {
+      "status": "launched",
+      "launched_at": "2026-03-21T12:40:16.045825"
+    },
+    "mm_part5": {
+      "status": "launched",
+      "launched_at": "2026-03-21T12:40:16.045825"
+    },
+    "na_part1": {
+      "status": "launched",
+      "launched_at": "2026-03-21T12:40:16.045825"
+    },
+    "na_part2": {
+      "status": "launched",
+      "launched_at": "2026-03-21T12:40:16.045825"
+    },
+    "na_part3": {
+      "status": "launched",
+      "launched_at": "2026-03-21T12:40:16.045825"
+    },
+    "na_part4": {
+      "status": "launched",
+      "launched_at": "2026-03-21T12:40:16.045825"
+    },
+    "na_part5": {
+      "status": "launched",
+      "launched_at": "2026-03-21T12:40:16.045825"
+    },
+    "np_part1": {
+      "status": "launched",
+      "launched_at": "2026-03-21T12:40:16.045825"
+    },
+    "np_part2": {
+      "status": "launched",
+      "launched_at": "2026-03-21T12:40:16.045825"
+    },
+    "np_part3": {
+      "status": "launched",
+      "launched_at": "2026-03-21T12:40:16.045825"
+    },
+    "np_part4": {
+      "status": "launched",
+      "launched_at": "2026-03-21T12:40:16.045825"
+    },
+    "np_part5": {
+      "status": "launched",
+      "launched_at": "2026-03-21T12:40:16.045825"
+    },
+    "re_part1": {
+      "status": "launched",
+      "launched_at": "2026-03-21T19:18:13.204126"
+    },
+    "re_part2": {
+      "status": "launched",
+      "launched_at": "2026-03-21T19:18:13.204126"
+    },
+    "re_part3": {
+      "status": "launched",
+      "launched_at": "2026-03-21T19:18:13.204126"
+    },
+    "re_part4": {
+      "status": "launched",
+      "launched_at": "2026-03-21T19:18:13.204126"
+    },
+    "re_part5": {
+      "status": "launched",
+      "launched_at": "2026-03-21T19:18:13.204126"
+    },
+    "ro_part1": {
+      "status": "launched",
+      "launched_at": "2026-03-21T19:18:13.204126"
+    },
+    "ro_part2": {
+      "status": "launched",
+      "launched_at": "2026-03-21T19:18:13.204126"
+    },
+    "ro_part3": {
+      "status": "launched",
+      "launched_at": "2026-03-21T19:18:13.204126"
+    },
+    "ro_part4": {
+      "status": "launched",
+      "launched_at": "2026-03-21T19:18:13.204126"
+    },
+    "ro_part5": {
+      "status": "launched",
+      "launched_at": "2026-03-21T19:18:13.204126"
+    },
+    "rw_part1": {
+      "status": "launched",
+      "launched_at": "2026-03-21T19:18:13.204126"
+    },
+    "rw_part2": {
+      "status": "launched",
+      "launched_at": "2026-03-21T19:18:13.204126"
+    },
+    "rw_part3": {
+      "status": "launched",
+      "launched_at": "2026-03-21T19:18:13.204126"
+    },
+    "rw_part4": {
+      "status": "launched",
+      "launched_at": "2026-03-21T19:18:13.204126"
+    },
+    "rw_part5": {
+      "status": "launched",
+      "launched_at": "2026-03-21T19:18:13.204126"
+    },
+    "an_part1": {
+      "status": "launched",
+      "launched_at": "2026-03-21T19:18:13.204126"
+    },
+    "an_part2": {
+      "status": "launched",
+      "launched_at": "2026-03-21T19:18:13.204126"
+    },
+    "an_part3": {
+      "status": "launched",
+      "launched_at": "2026-03-21T19:18:13.204126"
+    },
+    "an_part4": {
+      "status": "launched",
+      "launched_at": "2026-03-21T19:18:13.204126"
+    },
+    "an_part5": {
+      "status": "launched",
+      "launched_at": "2026-03-21T19:18:13.204126"
+    },
+    "kn_part1": {
+      "status": "launched",
+      "launched_at": "2026-03-21T19:47:10.340401"
+    },
+    "kn_part2": {
+      "status": "launched",
+      "launched_at": "2026-03-21T19:47:10.340401"
+    },
+    "kn_part3": {
+      "status": "launched",
+      "launched_at": "2026-03-21T19:47:10.340401"
+    },
+    "kn_part4": {
+      "status": "launched",
+      "launched_at": "2026-03-21T19:47:10.340401"
+    },
+    "kn_part5": {
+      "status": "launched",
+      "launched_at": "2026-03-21T19:47:10.340401"
+    },
+    "lc_part1": {
+      "status": "launched",
+      "launched_at": "2026-03-21T19:47:10.340401"
+    },
+    "lc_part2": {
+      "status": "launched",
+      "launched_at": "2026-03-21T19:47:10.340401"
+    },
+    "lc_part3": {
+      "status": "launched",
+      "launched_at": "2026-03-21T19:47:10.340401"
+    },
+    "lc_part4": {
+      "status": "launched",
+      "launched_at": "2026-03-21T19:47:10.340401"
+    },
+    "lc_part5": {
+      "status": "launched",
+      "launched_at": "2026-03-21T19:47:10.340401"
+    },
+    "mf_part1": {
+      "status": "relaunched",
+      "launched_at": "2026-03-21T20:11:11.708537"
+    },
+    "mf_part2": {
+      "status": "relaunched",
+      "launched_at": "2026-03-21T20:11:11.708537"
+    },
+    "mf_part3": {
+      "status": "relaunched",
+      "launched_at": "2026-03-21T20:11:11.708537"
+    },
+    "mf_part4": {
+      "status": "relaunched",
+      "launched_at": "2026-03-21T20:11:11.708537"
+    },
+    "mf_part5": {
+      "status": "relaunched",
+      "launched_at": "2026-03-21T20:11:11.708537"
+    },
+    "vc_part1": {
+      "status": "launched",
+      "launched_at": "2026-03-21T19:51:14.038893"
+    },
+    "vc_part2": {
+      "status": "launched",
+      "launched_at": "2026-03-21T19:51:14.038893"
+    },
+    "vc_part3": {
+      "status": "launched",
+      "launched_at": "2026-03-21T19:51:14.038893"
+    },
+    "vc_part4": {
+      "status": "launched",
+      "launched_at": "2026-03-21T19:51:14.038893"
+    },
+    "vc_part5": {
+      "status": "launched",
+      "launched_at": "2026-03-21T19:51:14.038893"
+    },
+    "ws_part1": {
+      "status": "launched",
+      "launched_at": "2026-03-21T19:51:14.038893"
+    },
+    "ws_part2": {
+      "status": "launched",
+      "launched_at": "2026-03-21T19:51:14.038893"
+    },
+    "ws_part3": {
+      "status": "launched",
+      "launched_at": "2026-03-21T19:51:14.038893"
+    },
+    "ws_part4": {
+      "status": "launched",
+      "launched_at": "2026-03-21T19:51:14.038893"
+    },
+    "ws_part5": {
+      "status": "launched",
+      "launched_at": "2026-03-21T19:51:14.038893"
+    },
+    "sm_part1": {
+      "status": "launched",
+      "launched_at": "2026-03-21T19:51:14.038893"
+    },
+    "sm_part2": {
+      "status": "launched",
+      "launched_at": "2026-03-21T19:51:14.038893"
+    },
+    "sm_part3": {
+      "status": "launched",
+      "launched_at": "2026-03-21T19:51:14.038893"
+    },
+    "sm_part4": {
+      "status": "launched",
+      "launched_at": "2026-03-21T19:51:14.038893"
+    },
+    "sm_part5": {
+      "status": "launched",
+      "launched_at": "2026-03-21T19:51:14.038893"
+    },
+    "zw_part1": {
+      "status": "launched",
+      "launched_at": "2026-03-21T19:51:14.038893"
+    },
+    "zw_part2": {
+      "status": "launched",
+      "launched_at": "2026-03-21T19:51:14.038893"
+    },
+    "zw_part3": {
+      "status": "launched",
+      "launched_at": "2026-03-21T19:51:14.038893"
+    },
+    "zw_part4": {
+      "status": "launched",
+      "launched_at": "2026-03-21T19:51:14.038893"
+    },
+    "zw_part5": {
+      "status": "launched",
+      "launched_at": "2026-03-21T19:51:14.038893"
+    },
+    "st_part1": {
+      "status": "launched",
+      "launched_at": "2026-03-21T20:10:19.081730"
+    },
+    "st_part2": {
+      "status": "launched",
+      "launched_at": "2026-03-21T20:10:19.081730"
+    },
+    "st_part3": {
+      "status": "launched",
+      "launched_at": "2026-03-21T20:10:19.081730"
+    },
+    "st_part4": {
+      "status": "launched",
+      "launched_at": "2026-03-21T20:10:19.081730"
+    },
+    "st_part5": {
+      "status": "launched",
+      "launched_at": "2026-03-21T20:10:19.081730"
+    },
+    "sn_part1": {
+      "status": "launched",
+      "launched_at": "2026-03-21T20:10:19.081730"
+    },
+    "sn_part2": {
+      "status": "launched",
+      "launched_at": "2026-03-21T20:10:19.081730"
+    },
+    "sn_part3": {
+      "status": "launched",
+      "launched_at": "2026-03-21T20:10:19.081730"
+    },
+    "sn_part4": {
+      "status": "launched",
+      "launched_at": "2026-03-21T20:10:19.081730"
+    },
+    "sn_part5": {
+      "status": "launched",
+      "launched_at": "2026-03-21T20:10:19.081730"
+    },
+    "rs_part1": {
+      "status": "launched",
+      "launched_at": "2026-03-21T20:10:19.081730"
+    },
+    "rs_part2": {
+      "status": "launched",
+      "launched_at": "2026-03-21T20:10:19.081730"
+    },
+    "rs_part3": {
+      "status": "launched",
+      "launched_at": "2026-03-21T20:10:19.081730"
+    },
+    "rs_part4": {
+      "status": "launched",
+      "launched_at": "2026-03-21T20:10:19.081730"
+    },
+    "rs_part5": {
+      "status": "launched",
+      "launched_at": "2026-03-21T20:10:19.081730"
+    },
+    "sc_part1": {
+      "status": "launched",
+      "launched_at": "2026-03-21T20:10:19.081730"
+    },
+    "sc_part2": {
+      "status": "launched",
+      "launched_at": "2026-03-21T20:10:19.081730"
+    },
+    "sc_part3": {
+      "status": "launched",
+      "launched_at": "2026-03-21T20:10:19.081730"
+    },
+    "sc_part4": {
+      "status": "launched",
+      "launched_at": "2026-03-21T20:10:19.081730"
+    },
+    "sc_part5": {
+      "status": "launched",
+      "launched_at": "2026-03-21T20:10:19.081730"
+    },
+    "sl_part1": {
+      "status": "launched",
+      "launched_at": "2026-03-21T20:10:19.081730"
+    },
+    "sl_part2": {
+      "status": "launched",
+      "launched_at": "2026-03-21T20:10:19.081730"
+    },
+    "sl_part3": {
+      "status": "launched",
+      "launched_at": "2026-03-21T20:10:19.081730"
+    },
+    "sl_part4": {
+      "status": "launched",
+      "launched_at": "2026-03-21T20:10:19.081730"
+    },
+    "sl_part5": {
+      "status": "launched",
+      "launched_at": "2026-03-21T20:10:19.081730"
+    },
+    "sk_part1": {
+      "status": "launched",
+      "launched_at": "2026-03-21T20:10:19.081730"
+    },
+    "sk_part2": {
+      "status": "launched",
+      "launched_at": "2026-03-21T20:10:19.081730"
+    },
+    "sk_part3": {
+      "status": "launched",
+      "launched_at": "2026-03-21T20:10:19.081730"
+    },
+    "sk_part4": {
+      "status": "launched",
+      "launched_at": "2026-03-21T20:10:19.081730"
+    },
+    "sk_part5": {
+      "status": "launched",
+      "launched_at": "2026-03-21T20:10:19.081730"
+    },
+    "si_part1": {
+      "status": "launched",
+      "launched_at": "2026-03-21T20:10:19.081730"
+    },
+    "si_part2": {
+      "status": "launched",
+      "launched_at": "2026-03-21T20:10:19.081730"
+    },
+    "si_part3": {
+      "status": "launched",
+      "launched_at": "2026-03-21T20:10:19.081730"
+    },
+    "si_part4": {
+      "status": "launched",
+      "launched_at": "2026-03-21T20:10:19.081730"
+    },
+    "si_part5": {
+      "status": "launched",
+      "launched_at": "2026-03-21T20:10:19.081730"
+    },
+    "sb_part1": {
+      "status": "launched",
+      "launched_at": "2026-03-21T20:10:19.081730"
+    },
+    "sb_part2": {
+      "status": "launched",
+      "launched_at": "2026-03-21T20:10:19.081730"
+    },
+    "sb_part3": {
+      "status": "launched",
+      "launched_at": "2026-03-21T20:10:19.081730"
+    },
+    "sb_part4": {
+      "status": "launched",
+      "launched_at": "2026-03-21T20:10:19.081730"
+    },
+    "sb_part5": {
+      "status": "launched",
+      "launched_at": "2026-03-21T20:10:19.081730"
+    },
+    "so_part1": {
+      "status": "launched",
+      "launched_at": "2026-03-21T20:10:19.081730"
+    },
+    "so_part2": {
+      "status": "launched",
+      "launched_at": "2026-03-21T20:10:19.081730"
+    },
+    "so_part3": {
+      "status": "launched",
+      "launched_at": "2026-03-21T20:10:19.081730"
+    },
+    "so_part4": {
+      "status": "launched",
+      "launched_at": "2026-03-21T20:10:19.081730"
+    },
+    "so_part5": {
+      "status": "launched",
+      "launched_at": "2026-03-21T20:10:19.081730"
+    },
+    "lk_part1": {
+      "status": "launched",
+      "launched_at": "2026-03-21T20:39:53.741025"
+    },
+    "lk_part2": {
+      "status": "launched",
+      "launched_at": "2026-03-21T20:39:53.741025"
+    },
+    "lk_part3": {
+      "status": "launched",
+      "launched_at": "2026-03-21T20:39:53.741025"
+    },
+    "lk_part4": {
+      "status": "launched",
+      "launched_at": "2026-03-21T20:39:53.741025"
+    },
+    "lk_part5": {
+      "status": "launched",
+      "launched_at": "2026-03-21T20:39:53.741025"
+    },
+    "sr_part1": {
+      "status": "launched",
+      "launched_at": "2026-03-21T20:39:53.741025"
+    },
+    "sr_part2": {
+      "status": "launched",
+      "launched_at": "2026-03-21T20:39:53.741025"
+    },
+    "sr_part3": {
+      "status": "launched",
+      "launched_at": "2026-03-21T20:39:53.741025"
+    },
+    "sr_part4": {
+      "status": "launched",
+      "launched_at": "2026-03-21T20:39:53.741025"
+    },
+    "sr_part5": {
+      "status": "launched",
+      "launched_at": "2026-03-21T20:39:53.741025"
+    },
+    "sz_part1": {
+      "status": "launched",
+      "launched_at": "2026-03-21T20:39:53.741025"
+    },
+    "sz_part2": {
+      "status": "launched",
+      "launched_at": "2026-03-21T20:39:53.741025"
+    },
+    "sz_part3": {
+      "status": "launched",
+      "launched_at": "2026-03-21T20:39:53.741025"
+    },
+    "sz_part4": {
+      "status": "launched",
+      "launched_at": "2026-03-21T20:39:53.741025"
+    },
+    "sz_part5": {
+      "status": "launched",
+      "launched_at": "2026-03-21T20:39:53.741025"
+    },
+    "ch_part1": {
+      "status": "launched",
+      "launched_at": "2026-03-21T20:39:53.741025"
+    },
+    "ch_part2": {
+      "status": "launched",
+      "launched_at": "2026-03-21T20:39:53.741025"
+    },
+    "ch_part3": {
+      "status": "launched",
+      "launched_at": "2026-03-21T20:39:53.741025"
+    },
+    "ch_part4": {
+      "status": "launched",
+      "launched_at": "2026-03-21T20:39:53.741025"
+    },
+    "ch_part5": {
+      "status": "launched",
+      "launched_at": "2026-03-21T20:39:53.741025"
+    },
+    "sy_part1": {
+      "status": "launched",
+      "launched_at": "2026-03-21T20:39:53.741025"
+    },
+    "sy_part2": {
+      "status": "launched",
+      "launched_at": "2026-03-21T20:39:53.741025"
+    },
+    "sy_part3": {
+      "status": "launched",
+      "launched_at": "2026-03-21T20:39:53.741025"
+    },
+    "sy_part4": {
+      "status": "launched",
+      "launched_at": "2026-03-21T20:39:53.741025"
+    },
+    "sy_part5": {
+      "status": "launched",
+      "launched_at": "2026-03-21T20:39:53.741025"
+    },
+    "tw_part1": {
+      "status": "launched",
+      "launched_at": "2026-03-21T20:39:53.741025"
+    },
+    "tw_part2": {
+      "status": "launched",
+      "launched_at": "2026-03-21T20:39:53.741025"
+    },
+    "tw_part3": {
+      "status": "launched",
+      "launched_at": "2026-03-21T20:39:53.741025"
+    },
+    "tw_part4": {
+      "status": "launched",
+      "launched_at": "2026-03-21T20:39:53.741025"
+    },
+    "tw_part5": {
+      "status": "launched",
+      "launched_at": "2026-03-21T20:39:53.741025"
+    },
+    "tj_part1": {
+      "status": "launched",
+      "launched_at": "2026-03-21T20:39:53.741025"
+    },
+    "tj_part2": {
+      "status": "launched",
+      "launched_at": "2026-03-21T20:39:53.741025"
+    },
+    "tj_part3": {
+      "status": "launched",
+      "launched_at": "2026-03-21T20:39:53.741025"
+    },
+    "tj_part4": {
+      "status": "launched",
+      "launched_at": "2026-03-21T20:39:53.741025"
+    },
+    "tj_part5": {
+      "status": "launched",
+      "launched_at": "2026-03-21T20:39:53.741025"
+    },
+    "tz_part1": {
+      "status": "launched",
+      "launched_at": "2026-03-21T20:39:53.741025"
+    },
+    "tz_part2": {
+      "status": "launched",
+      "launched_at": "2026-03-21T20:39:53.741025"
+    },
+    "tz_part3": {
+      "status": "launched",
+      "launched_at": "2026-03-21T20:39:53.741025"
+    },
+    "tz_part4": {
+      "status": "launched",
+      "launched_at": "2026-03-21T20:39:53.741025"
+    },
+    "tz_part5": {
+      "status": "launched",
+      "launched_at": "2026-03-21T20:39:53.741025"
+    },
+    "tl_part1": {
+      "status": "launched",
+      "launched_at": "2026-03-21T15:56:46.332214"
+    },
+    "tl_part2": {
+      "status": "launched",
+      "launched_at": "2026-03-21T15:56:46.332214"
+    },
+    "tl_part3": {
+      "status": "launched",
+      "launched_at": "2026-03-21T15:56:46.332214"
+    },
+    "tl_part4": {
+      "status": "launched",
+      "launched_at": "2026-03-21T15:56:46.332214"
+    },
+    "tl_part5": {
+      "status": "launched",
+      "launched_at": "2026-03-21T15:56:46.332214"
+    },
+    "tg_part1": {
+      "status": "launched",
+      "launched_at": "2026-03-21T15:56:46.332214"
+    },
+    "tg_part2": {
+      "status": "launched",
+      "launched_at": "2026-03-21T15:56:46.332214"
+    },
+    "tg_part3": {
+      "status": "launched",
+      "launched_at": "2026-03-21T15:56:46.332214"
+    },
+    "tg_part4": {
+      "status": "launched",
+      "launched_at": "2026-03-21T15:56:46.332214"
+    },
+    "tg_part5": {
+      "status": "launched",
+      "launched_at": "2026-03-21T15:56:46.332214"
+    },
+    "to_part1": {
+      "status": "launched",
+      "launched_at": "2026-03-21T15:56:46.332214"
+    },
+    "to_part2": {
+      "status": "launched",
+      "launched_at": "2026-03-21T15:56:46.332214"
+    },
+    "to_part3": {
+      "status": "launched",
+      "launched_at": "2026-03-21T15:56:46.332214"
+    },
+    "to_part4": {
+      "status": "launched",
+      "launched_at": "2026-03-21T15:56:46.332214"
+    },
+    "to_part5": {
+      "status": "launched",
+      "launched_at": "2026-03-21T15:56:46.332214"
+    },
+    "tt_part1": {
+      "status": "launched",
+      "launched_at": "2026-03-21T15:56:46.332214"
+    },
+    "tt_part2": {
+      "status": "launched",
+      "launched_at": "2026-03-21T15:56:46.332214"
+    },
+    "tt_part3": {
+      "status": "launched",
+      "launched_at": "2026-03-21T15:56:46.332214"
+    },
+    "tt_part4": {
+      "status": "launched",
+      "launched_at": "2026-03-21T15:56:46.332214"
+    },
+    "tt_part5": {
+      "status": "launched",
+      "launched_at": "2026-03-21T15:56:46.332214"
+    },
+    "tn_part1": {
+      "status": "launched",
+      "launched_at": "2026-03-21T15:56:46.332214"
+    },
+    "tn_part2": {
+      "status": "launched",
+      "launched_at": "2026-03-21T15:56:46.332214"
+    },
+    "tn_part3": {
+      "status": "launched",
+      "launched_at": "2026-03-21T15:56:46.332214"
+    },
+    "tn_part4": {
+      "status": "launched",
+      "launched_at": "2026-03-21T15:56:46.332214"
+    },
+    "tn_part5": {
+      "status": "launched",
+      "launched_at": "2026-03-21T15:56:46.332214"
+    },
+    "tm_part1": {
+      "status": "launched",
+      "launched_at": "2026-03-21T15:56:46.332214"
+    },
+    "tm_part2": {
+      "status": "launched",
+      "launched_at": "2026-03-21T15:56:46.332214"
+    },
+    "tm_part3": {
+      "status": "launched",
+      "launched_at": "2026-03-21T15:56:46.332214"
+    },
+    "tm_part4": {
+      "status": "launched",
+      "launched_at": "2026-03-21T15:56:46.332214"
+    },
+    "tm_part5": {
+      "status": "launched",
+      "launched_at": "2026-03-21T15:56:46.332214"
+    },
+    "tc_part1": {
+      "status": "launched",
+      "launched_at": "2026-03-21T15:56:46.332214"
+    },
+    "tc_part2": {
+      "status": "launched",
+      "launched_at": "2026-03-21T15:56:46.332214"
+    },
+    "tc_part3": {
+      "status": "launched",
+      "launched_at": "2026-03-21T15:56:46.332214"
+    },
+    "tc_part4": {
+      "status": "launched",
+      "launched_at": "2026-03-21T15:56:46.332214"
+    },
+    "tc_part5": {
+      "status": "launched",
+      "launched_at": "2026-03-21T15:56:46.332214"
+    },
+    "ug_part1": {
+      "status": "launched",
+      "launched_at": "2026-03-21T15:56:46.332214"
+    },
+    "ug_part2": {
+      "status": "launched",
+      "launched_at": "2026-03-21T15:56:46.332214"
+    },
+    "ug_part3": {
+      "status": "launched",
+      "launched_at": "2026-03-21T15:56:46.332214"
+    },
+    "ug_part4": {
+      "status": "launched",
+      "launched_at": "2026-03-21T15:56:46.332214"
+    },
+    "ug_part5": {
+      "status": "launched",
+      "launched_at": "2026-03-21T15:56:46.332214"
+    },
+    "uy_part1": {
+      "status": "launched",
+      "launched_at": "2026-03-21T15:56:46.332214"
+    },
+    "uy_part2": {
+      "status": "launched",
+      "launched_at": "2026-03-21T15:56:46.332214"
+    },
+    "uy_part3": {
+      "status": "launched",
+      "launched_at": "2026-03-21T15:56:46.332214"
+    },
+    "uy_part4": {
+      "status": "launched",
+      "launched_at": "2026-03-21T15:56:46.332214"
+    },
+    "uy_part5": {
+      "status": "launched",
+      "launched_at": "2026-03-21T15:56:46.332214"
+    },
+    "uz_part1": {
+      "status": "launched",
+      "launched_at": "2026-03-21T15:56:46.332214"
+    },
+    "uz_part2": {
+      "status": "launched",
+      "launched_at": "2026-03-21T15:56:46.332214"
+    },
+    "uz_part3": {
+      "status": "launched",
+      "launched_at": "2026-03-21T15:56:46.332214"
+    },
+    "uz_part4": {
+      "status": "launched",
+      "launched_at": "2026-03-21T15:56:46.332214"
+    },
+    "uz_part5": {
+      "status": "launched",
+      "launched_at": "2026-03-21T15:56:46.332214"
+    },
+    "vu_part1": {
+      "status": "launched",
+      "launched_at": "2026-03-21T15:56:46.332214"
+    },
+    "vu_part2": {
+      "status": "launched",
+      "launched_at": "2026-03-21T15:56:46.332214"
+    },
+    "vu_part3": {
+      "status": "launched",
+      "launched_at": "2026-03-21T15:56:46.332214"
+    },
+    "vu_part4": {
+      "status": "launched",
+      "launched_at": "2026-03-21T15:56:46.332214"
+    },
+    "vu_part5": {
+      "status": "launched",
+      "launched_at": "2026-03-21T15:56:46.332214"
+    },
+    "ve_part1": {
+      "status": "launched",
+      "launched_at": "2026-03-21T15:56:46.332214"
+    },
+    "ve_part2": {
+      "status": "launched",
+      "launched_at": "2026-03-21T15:56:46.332214"
+    },
+    "ve_part3": {
+      "status": "launched",
+      "launched_at": "2026-03-21T15:56:46.332214"
+    },
+    "ve_part4": {
+      "status": "launched",
+      "launched_at": "2026-03-21T15:56:46.332214"
+    },
+    "ve_part5": {
+      "status": "launched",
+      "launched_at": "2026-03-21T15:56:46.332214"
+    },
+    "vi_part1": {
+      "status": "launched",
+      "launched_at": "2026-03-21T15:56:46.332214"
+    },
+    "vi_part2": {
+      "status": "launched",
+      "launched_at": "2026-03-21T15:56:46.332214"
+    },
+    "vi_part3": {
+      "status": "launched",
+      "launched_at": "2026-03-21T15:56:46.332214"
+    },
+    "vi_part4": {
+      "status": "launched",
+      "launched_at": "2026-03-21T15:56:46.332214"
+    },
+    "vi_part5": {
+      "status": "launched",
+      "launched_at": "2026-03-21T15:56:46.332214"
+    },
+    "eh_part1": {
+      "status": "launched",
+      "launched_at": "2026-03-21T15:56:46.332214"
+    },
+    "eh_part2": {
+      "status": "launched",
+      "launched_at": "2026-03-21T15:56:46.332214"
+    },
+    "eh_part3": {
+      "status": "launched",
+      "launched_at": "2026-03-21T15:56:46.332214"
+    },
+    "eh_part4": {
+      "status": "launched",
+      "launched_at": "2026-03-21T15:56:46.332214"
+    },
+    "eh_part5": {
+      "status": "launched",
+      "launched_at": "2026-03-21T15:56:46.332214"
+    },
+    "ye_part1": {
+      "status": "launched",
+      "launched_at": "2026-03-21T15:56:46.332214"
+    },
+    "ye_part2": {
+      "status": "launched",
+      "launched_at": "2026-03-21T15:56:46.332214"
+    },
+    "ye_part3": {
+      "status": "launched",
+      "launched_at": "2026-03-21T15:56:46.332214"
+    },
+    "ye_part4": {
+      "status": "launched",
+      "launched_at": "2026-03-21T15:56:46.332214"
+    },
+    "ye_part5": {
+      "status": "launched",
+      "launched_at": "2026-03-21T15:56:46.332214"
+    },
+    "zm_part1": {
+      "status": "launched",
+      "launched_at": "2026-03-21T15:56:46.332214"
+    },
+    "zm_part2": {
+      "status": "launched",
+      "launched_at": "2026-03-21T15:56:46.332214"
+    },
+    "zm_part3": {
+      "status": "launched",
+      "launched_at": "2026-03-21T15:56:46.332214"
+    },
+    "zm_part4": {
+      "status": "launched",
+      "launched_at": "2026-03-21T15:56:46.332214"
+    },
+    "zm_part5": {
+      "status": "launched",
+      "launched_at": "2026-03-21T15:56:46.332214"
+    }
+  },
+  "completed_sql": [
+    "MV",
+    "MT",
+    "MG",
+    "MW",
+    "ML",
+    "MH",
+    "MQ",
+    "MR",
+    "MU",
+    "YT",
+    "FM",
+    "MD",
+    "MC",
+    "MN",
+    "ME",
+    "MA",
+    "NA",
+    "NP",
+    "MM",
+    "MZ",
+    "NC",
+    "NI",
+    "NE",
+    "NG",
+    "MP",
+    "OM",
+    "PA",
+    "PY",
+    "QA",
+    "PE",
+    "PG",
+    "PR",
+    "RE",
+    "RW",
+    "RO",
+    "AN",
+    "KN",
+    "LC",
+    "VC",
+    "WS",
+    "SM",
+    "ZW",
+    "SC",
+    "SL",
+    "SB",
+    "SN",
+    "SI",
+    "SK",
+    "ST",
+    "SO",
+    "RS",
+    "MF",
+    "LK",
+    "SR",
+    "SZ",
+    "TC",
+    "TL",
+    "TT",
+    "UY"
+  ]
+}

@@ -141,50 +141,62 @@ class NutritionGoalsCard extends ConsumerWidget {
                 ),
               ],
               const Spacer(),
-              // Compact water display
-              GestureDetector(
-                onTap: onHydrationTap,
+              // Compact water display + edit + refresh — wrapped in Flexible to prevent overflow
+              Flexible(
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(
-                      Icons.water_drop,
-                      size: 14,
-                      color: hydrationPct >= 0.75
-                          ? electricBlue
-                          : hydrationPct >= 0.25
-                              ? electricBlue.withValues(alpha: 0.7)
-                              : textMuted,
-                    ),
-                    const SizedBox(width: 3),
-                    Text(
-                      '$currentMl/${goalMl}ml',
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
-                        color: hydrationPct >= 0.75 ? electricBlue : textSecondary,
+                    // Water display
+                    GestureDetector(
+                      onTap: onHydrationTap,
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.water_drop,
+                            size: 14,
+                            color: hydrationPct >= 0.75
+                                ? electricBlue
+                                : hydrationPct >= 0.25
+                                    ? electricBlue.withValues(alpha: 0.7)
+                                    : textMuted,
+                          ),
+                          const SizedBox(width: 3),
+                          Flexible(
+                            child: Text(
+                              _formatWaterAmount(currentMl, goalMl),
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600,
+                                color: hydrationPct >= 0.75 ? electricBlue : textSecondary,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                              maxLines: 1,
+                            ),
+                          ),
+                        ],
                       ),
+                    ),
+                    const SizedBox(width: 8),
+                    // Edit button
+                    IconButton(
+                      onPressed: onEdit,
+                      icon: Icon(Icons.edit_outlined, size: 18, color: textMuted),
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                      tooltip: 'Edit Goals',
+                    ),
+                    const SizedBox(width: 6),
+                    // Recalculate button
+                    IconButton(
+                      onPressed: onRecalculate,
+                      icon: Icon(Icons.refresh, size: 18, color: textMuted),
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                      tooltip: 'Recalculate',
                     ),
                   ],
                 ),
-              ),
-              const SizedBox(width: 8),
-              // Edit button
-              IconButton(
-                onPressed: onEdit,
-                icon: Icon(Icons.edit_outlined, size: 18, color: textMuted),
-                padding: EdgeInsets.zero,
-                constraints: const BoxConstraints(),
-                tooltip: 'Edit Goals',
-              ),
-              const SizedBox(width: 6),
-              // Recalculate button
-              IconButton(
-                onPressed: onRecalculate,
-                icon: Icon(Icons.refresh, size: 18, color: textMuted),
-                padding: EdgeInsets.zero,
-                constraints: const BoxConstraints(),
-                tooltip: 'Recalculate',
               ),
             ],
           ),
@@ -630,6 +642,21 @@ class NutritionGoalsCard extends ConsumerWidget {
       return '$prefix${abs ~/ 1000},${(abs % 1000).toString().padLeft(3, '0')}';
     }
     return n.toString();
+  }
+
+  /// Format water amount — abbreviate to liters when ≥ 1000ml
+  String _formatWaterAmount(int currentMl, int goalMl) {
+    String fmt(int ml) {
+      if (ml >= 1000) {
+        final liters = ml / 1000;
+        // Show one decimal if not whole, otherwise no decimal
+        return liters == liters.roundToDouble()
+            ? '${liters.toInt()}L'
+            : '${liters.toStringAsFixed(1)}L';
+      }
+      return '${ml}ml';
+    }
+    return '${fmt(currentMl)}/${fmt(goalMl)}';
   }
 
   String _getGoalDisplayName(NutritionGoal goal) {

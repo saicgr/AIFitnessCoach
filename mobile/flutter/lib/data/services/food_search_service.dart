@@ -501,6 +501,9 @@ class FoodSearchService {
   // Current database source filter
   String? _currentSource;
 
+  // Current country filter (ISO alpha-2, e.g. 'US', 'JP')
+  String? _currentCountry;
+
   FoodSearchService({
     required NutritionRepository nutritionRepository,
     required ApiClient apiClient,
@@ -526,6 +529,11 @@ class FoodSearchService {
   /// Set database source filter for food database search
   void setSource(String? source) {
     _currentSource = source;
+  }
+
+  /// Set country filter (ISO alpha-2) for food database search
+  void setCountry(String? country) {
+    _currentCountry = country?.toUpperCase().trim().isEmpty == true ? null : country?.toUpperCase().trim();
   }
 
   /// Fetch dynamic food modifiers for a specific food from backend.
@@ -567,10 +575,13 @@ class FoodSearchService {
     }
   }
 
-  /// Cache key combining query and source filter
+  /// Cache key combining query, source, and country filters
   String _cacheKey(String normalizedQuery) {
-    if (_currentSource != null) {
-      return '$normalizedQuery|$_currentSource';
+    final parts = [normalizedQuery];
+    if (_currentSource != null) parts.add(_currentSource!);
+    if (_currentCountry != null) parts.add(_currentCountry!);
+    if (parts.length > 1) {
+      return parts.join('|');
     }
     return normalizedQuery;
   }
@@ -827,6 +838,9 @@ class FoodSearchService {
       };
       if (_currentSource != null) {
         queryParams['source'] = _currentSource!;
+      }
+      if (_currentCountry != null) {
+        queryParams['country'] = _currentCountry!;
       }
       final response = await _apiClient.get(
         '/nutrition/food-search',

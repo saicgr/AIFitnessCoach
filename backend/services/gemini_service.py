@@ -4723,6 +4723,7 @@ SCORING (1-10): Be strict. Restaurant/fast food: 4-6. Whole foods: 7-8. Score 9-
   "calcium_mg": 100,
   "iron_mg": 2,
   "potassium_mg": 300,
+  "corrected_query": "Corrected food description or null if no typos",
   "overall_meal_score": 7,
   "encouragements": ["What's good about this meal for their goals"],
   "warnings": ["Any concerns - skip if none"],
@@ -4748,6 +4749,7 @@ SCORING (1-10): Be strict. Restaurant/fast food: 4-6. Whole foods: 7-8. Score 9-
   "calcium_mg": 100,
   "iron_mg": 2,
   "potassium_mg": 300,
+  "corrected_query": "Corrected food description or null if no typos",
   "encouragements": ["What's good about this meal"],
   "warnings": ["Any concerns - skip if none"],
   "ai_suggestion": "Next time: specific actionable tip",
@@ -4814,6 +4816,14 @@ MEASUREMENT UNITS - Use "unit" field to specify the most natural unit:
 - Examples: protein shake → unit: "ml", 2 cups milkshake → unit: "cups", 1 tbsp peanut butter → unit: "tbsp"
 
 Rules: Use USDA data. Sum totals from items. Account for prep methods (fried adds fat).
+
+SPELLING CORRECTION - Detect and correct misspelled food names:
+- If the user misspells a food/brand name, correct it and use the CORRECT name for nutrition lookup
+- Set "corrected_query" to the corrected version of the FULL input (e.g., "mchiken wrap" → "McChicken Wrap")
+- Use the CORRECT food's nutrition data, not a random similar food
+- Common fast food misspellings: mchiken/mchicken → McChicken, mcflury → McFlurry, bic mac → Big Mac, whooper → Whopper, chik fil a → Chick-fil-A, subwey → Subway, etc.
+- If no misspellings detected, set "corrected_query" to null
+- The "name" field in food_items should always use the CORRECT spelling
 
 IMPORTANT - ALWAYS identify foods:
 - For ANY food description, ALWAYS return valid food items with estimated nutrition

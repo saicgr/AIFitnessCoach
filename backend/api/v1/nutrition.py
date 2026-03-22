@@ -1039,6 +1039,11 @@ async def search_foods(
         max_length=50,
         description="Filter by food category (e.g. burgers, drinks, breakfast)"
     ),
+    country: Optional[str] = Query(
+        default=None,
+        max_length=2,
+        description="ISO 3166-1 alpha-2 country code to filter country foods (e.g. 'US', 'IN', 'JP')"
+    ),
 ):
     """
     Search the food database for foods matching a query.
@@ -1064,6 +1069,7 @@ async def search_foods(
                 page=page,
                 restaurant=restaurant,
                 food_category=category,
+                region=country,
             )
         else:
             results = await food_db_service.search_foods(
@@ -1073,6 +1079,7 @@ async def search_foods(
                 source=source,
                 restaurant=restaurant,
                 food_category=category,
+                region=country,
             )
         _search_time_ms = int((time.time() - _search_start) * 1000)
 

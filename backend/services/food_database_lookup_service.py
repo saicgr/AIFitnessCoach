@@ -351,23 +351,25 @@ class FoodDatabaseLookupService:
         query: str,
         restaurant: Optional[str] = None,
         food_category: Optional[str] = None,
+        region: Optional[str] = None,
     ) -> List[Dict]:
         """Find overrides matching a search query for injection into search results.
         Uses word-level inverted index for fast lookup instead of iterating all overrides.
-        Optionally filters by restaurant_name and/or food_category."""
+        Optionally filters by restaurant_name, food_category, and/or region (ISO alpha-2)."""
         if not self._overrides_list:
             return []
 
         query_lower = query.lower().strip() if query else ""
         restaurant_lower = restaurant.lower().strip() if restaurant else None
         category_lower = food_category.lower().strip() if food_category else None
+        region_upper = region.upper().strip() if region else None
 
         seen_display_names: set = set()
         matches: List[Dict] = []
 
-        # If no query, browse by restaurant/category (iterate filtered subset)
+        # If no query, browse by restaurant/category/region (iterate filtered subset)
         if not query_lower:
-            if not restaurant_lower and not category_lower:
+            if not restaurant_lower and not category_lower and not region_upper:
                 return []
             for override in self._overrides_list:
                 if restaurant_lower:
@@ -375,6 +377,9 @@ class FoodDatabaseLookupService:
                         continue
                 if category_lower:
                     if category_lower != (override.get("food_category") or "").lower():
+                        continue
+                if region_upper:
+                    if (override.get("region") or "").upper() != region_upper:
                         continue
                 display = override["display_name"]
                 if display not in seen_display_names:
@@ -428,6 +433,10 @@ class FoodDatabaseLookupService:
             # Filter by food_category if specified
             if category_lower:
                 if category_lower != (override.get("food_category") or "").lower():
+                    continue
+            # Filter by region (ISO alpha-2) if specified
+            if region_upper:
+                if (override.get("region") or "").upper() != region_upper:
                     continue
 
             display = override["display_name"]
@@ -784,18 +793,19 @@ class FoodDatabaseLookupService:
         source: Optional[str] = None,
         restaurant: Optional[str] = None,
         food_category: Optional[str] = None,
+        region: Optional[str] = None,
     ) -> List[Dict]:
         """
         Search the food database with pagination.
         Override entries matching the query appear first with source='verified'.
-        Optionally filter overrides by restaurant and/or food_category.
+        Optionally filter overrides by restaurant, food_category, and/or region (ISO alpha-2).
         """
         # Normalize smart quotes from mobile keyboards (curly → straight)
         query = query.replace('\u2019', "'").replace('\u2018', "'").replace('\u201c', '"').replace('\u201d', '"').strip()
-        if not query and not restaurant and not food_category:
+        if not query and not restaurant and not food_category and not region:
             return []
 
-        cache_key = f"search:{(query or '').lower()}:{page_size}:{page}:{category}:{source}:{restaurant}:{food_category}"
+        cache_key = f"search:{(query or '').lower()}:{page_size}:{page}:{category}:{source}:{restaurant}:{food_category}:{region}"
         cached = self._get_cached(cache_key)
         if cached is not None:
             return cached
@@ -818,6 +828,7 @@ class FoodDatabaseLookupService:
                     query=part, page_size=per_part_limit, page=1,
                     category=category, source=source,
                     restaurant=restaurant, food_category=food_category,
+                    region=region,
                 )
                 for r in part_results:
                     name_lower = r.get("name", "").lower()
@@ -837,7 +848,7 @@ class FoodDatabaseLookupService:
             override_results = []
             if page == 1:
                 override_results = self._find_matching_overrides_for_search(
-                    query, restaurant=restaurant, food_category=food_category,
+                    query, restaurant=restaurant, food_category=food_category, region=region,
                 )
 
             # Step 2: Search food_database (quality-filtered by confidence_score >= 0.6)
@@ -908,6 +919,7 @@ class FoodDatabaseLookupService:
         page: int = 1,
         restaurant: Optional[str] = None,
         food_category: Optional[str] = None,
+        region: Optional[str] = None,
     ) -> List[Dict]:
         """
         Search food database unified with user's saved foods.
@@ -915,16 +927,16 @@ class FoodDatabaseLookupService:
         Falls back to regular search_foods if user_id is empty.
         """
         query = query.strip()
-        if not query and not restaurant and not food_category:
+        if not query and not restaurant and not food_category and not region:
             return []
 
         if not user_id:
             return await self.search_foods(
                 query=query, page_size=page_size, page=page,
-                restaurant=restaurant, food_category=food_category,
+                restaurant=restaurant, food_category=food_category, region=region,
             )
 
-        cache_key = f"unified_search:{(query or '').lower()}:{user_id}:{page_size}:{page}:{restaurant}:{food_category}"
+        cache_key = f"unified_search:{(query or '').lower()}:{user_id}:{page_size}:{page}:{restaurant}:{food_category}:{region}"
         cached = self._get_cached(cache_key)
         if cached is not None:
             return cached
@@ -946,7 +958,7 @@ class FoodDatabaseLookupService:
                 part_results = await self.search_foods_unified(
                     query=part, user_id=user_id,
                     page_size=per_part_limit, page=1,
-                    restaurant=restaurant, food_category=food_category,
+                    restaurant=restaurant, food_category=food_category, region=region,
                 )
                 for r in part_results:
                     name_lower = r.get("name", "").lower()
@@ -966,7 +978,7 @@ class FoodDatabaseLookupService:
             override_results = []
             if page == 1:
                 override_results = self._find_matching_overrides_for_search(
-                    query, restaurant=restaurant, food_category=food_category,
+                    query, restaurant=restaurant, food_category=food_category, region=region,
                 )
 
             # Step 2: Fetch saved foods (fast LIKE on user's small table, <100ms)

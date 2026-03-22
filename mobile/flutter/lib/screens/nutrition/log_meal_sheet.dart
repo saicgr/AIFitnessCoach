@@ -21,6 +21,7 @@ import '../../widgets/guest_upgrade_sheet.dart';
 import '../../widgets/main_shell.dart';
 import '../../data/providers/nutrition_preferences_provider.dart';
 import '../../data/services/food_search_service.dart' as search;
+import '../../widgets/app_tour/app_tour_controller.dart';
 import 'widgets/food_browser_panel.dart';
 import 'widgets/inflammation_analysis_widget.dart';
 import 'widgets/portion_amount_input.dart';
@@ -118,6 +119,7 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet> {
   LogFoodResponse? _analyzedResponse;
   bool _isAnalyzing = false;
   bool _isSaved = false;
+  bool _hasLoggedThisSession = false;
   bool _isSaving = false;
   String _sourceType = 'text';
   int? _analysisElapsedMs;
@@ -350,6 +352,8 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet> {
           _showLoadingIndicator = false;
           _analyzedResponse = response;
         });
+        // Show "Log This Meal" tooltip tour on first analysis
+        _triggerLogMealTour();
       } else if (mounted) {
         setState(() {
           _isAnalyzing = false;
@@ -419,6 +423,7 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet> {
         confidenceScore: _analyzedResponse!.confidenceScore,
         confidenceLevel: _analyzedResponse!.confidenceLevel,
         sourceType: _analyzedResponse!.sourceType,
+        correctedQuery: _analyzedResponse!.correctedQuery,
         sodiumMg: _analyzedResponse!.sodiumMg,
         sugarG: _analyzedResponse!.sugarG,
         saturatedFatG: _analyzedResponse!.saturatedFatG,
@@ -433,8 +438,29 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet> {
     });
   }
 
+  /// Show a one-time tooltip on the "Log This Meal" button after first analysis
+  void _triggerLogMealTour() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      ref.read(appTourControllerProvider.notifier).checkAndShow(
+        'nutrition_log_tour',
+        [
+          AppTourStep(
+            id: 'log_meal_button',
+            targetKey: AppTourKeys.logMealButtonKey,
+            title: 'Log This Meal',
+            description: 'Tap here to save your meal to your daily log. Analyzing alone doesn\'t log it!',
+            position: TooltipPosition.above,
+          ),
+        ],
+      );
+    });
+  }
+
   Future<void> _handleLog() async {
     if (_analyzedResponse == null) return;
+
+    setState(() => _hasLoggedThisSession = true);
 
     final response = _analyzedResponse!;
     final repository = ref.read(nutritionRepositoryProvider);
@@ -1433,7 +1459,20 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet> {
         ? screenHeight - keyboardHeight - MediaQuery.of(context).padding.top - 20
         : screenHeight * 0.85;
 
-    return Padding(
+    return PopScope(
+      canPop: _analyzedResponse == null || _hasLoggedThisSession,
+      onPopInvokedWithResult: (didPop, _) async {
+        if (didPop) return;
+        // User has unlogged analysis results — confirm discard
+        final shouldDiscard = await _showDiscardAnalysisDialog(isDark);
+        if (shouldDiscard == true && mounted) {
+          Navigator.pop(context);
+        } else if (shouldDiscard == false && mounted) {
+          // User chose "Log This Meal" from the dialog
+          _handleLog();
+        }
+      },
+      child: Padding(
       padding: EdgeInsets.only(bottom: keyboardHeight),
       child: ClipRRect(
         borderRadius: const BorderRadius.vertical(top: Radius.circular(GlassSheetStyle.borderRadius)),
@@ -1511,6 +1550,49 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet> {
             ),
           ),
         ),
+      ),
+    ),
+    );
+  }
+
+  /// Dismiss confirmation dialog when user has unlogged analysis results.
+  /// Returns true = discard, false = log the meal, null = cancel (stay).
+  Future<bool?> _showDiscardAnalysisDialog(bool isDark) {
+    final teal = isDark ? AppColors.teal : AppColorsLight.teal;
+    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final nearBlack = isDark ? AppColors.nearBlack : AppColorsLight.nearWhite;
+
+    return showDialog<bool>(
+      context: context,
+      barrierColor: Colors.black54,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: nearBlack,
+        surfaceTintColor: Colors.transparent,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Text(
+          'Discard analysis?',
+          style: TextStyle(fontSize: 17, fontWeight: FontWeight.w600, color: textPrimary),
+        ),
+        content: Text(
+          "You haven't logged this meal yet. Your analysis results will be lost.",
+          style: TextStyle(fontSize: 14, color: textMuted),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true), // Discard
+            child: Text('Discard', style: TextStyle(color: textMuted)),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(ctx, false), // Log This Meal
+            style: ElevatedButton.styleFrom(
+              backgroundColor: teal,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            ),
+            child: const Text('Log This Meal'),
+          ),
+        ],
       ),
     );
   }
@@ -1863,10 +1945,29 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet> {
                             const SizedBox(height: 4),
                             Text(
                               description,
-                              style: TextStyle(color: textSecondary, fontSize: 13, fontStyle: FontStyle.italic),
+                              style: TextStyle(color: textSecondary, fontSize: 13, fontStyle: FontStyle.italic, decoration: response.correctedQuery != null ? TextDecoration.lineThrough : null),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                             ),
+                            // "Did you mean" correction hint
+                            if (response.correctedQuery != null) ...[
+                              const SizedBox(height: 6),
+                              Row(
+                                children: [
+                                  Icon(Icons.auto_fix_high, size: 13, color: isDark ? AppColors.purple : AppColorsLight.purple),
+                                  const SizedBox(width: 5),
+                                  Text('Did you mean: ', style: TextStyle(color: textMuted, fontSize: 11)),
+                                  Expanded(
+                                    child: Text(
+                                      response.correctedQuery!,
+                                      style: TextStyle(color: isDark ? AppColors.purple : AppColorsLight.purple, fontSize: 12, fontWeight: FontWeight.w600),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
                             const SizedBox(height: 8),
                             Row(
                               children: [
@@ -2050,6 +2151,7 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet> {
 
         // Fixed Log button at bottom
         Padding(
+          key: AppTourKeys.logMealButtonKey,
           padding: EdgeInsets.fromLTRB(16, 8, 16, MediaQuery.of(context).padding.bottom + 12),
           child: SizedBox(
             width: double.infinity,

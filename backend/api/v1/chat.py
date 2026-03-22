@@ -87,7 +87,7 @@ def get_rag_service() -> RAGService:
     return rag_service
 
 
-def _save_chat_to_db(user_id: str, message: str, response_message: str, response_intent, response_agent_type, response_rag_context_used: bool, response_action_data, coach_persona_id: Optional[str] = None):
+def _save_chat_to_db(user_id: str, message: str, response_message: str, response_intent, response_agent_type, response_rag_context_used: bool, response_action_data, coach_persona_id: Optional[str] = None, media_url: Optional[str] = None, media_type: Optional[str] = None):
     """Background task: Save chat message to database for persistence."""
     try:
         db = get_supabase_db()
@@ -107,6 +107,10 @@ def _save_chat_to_db(user_id: str, message: str, response_message: str, response
             "ai_response": response_message,
             "context_json": json.dumps(context_dict) if response_intent else None,
         }
+        if media_url:
+            chat_data["media_url"] = media_url
+        if media_type:
+            chat_data["media_type"] = media_type
         db.create_chat_message(chat_data)
         logger.debug(f"[Background] Chat message saved to database for user {user_id}, intent={response_intent}, agent={response_agent_type}")
     except Exception as db_error:
@@ -238,6 +242,15 @@ async def send_message(
         # Move DB writes to background tasks with retry - these don't block the response.
         # Chat history is only read on subsequent requests (GET /history), not in this flow.
         _coach_persona_id = chat_request.ai_settings.coach_persona_id if chat_request.ai_settings else None
+        # Derive media_type for persistence: image_base64 means image; media_ref carries its own media_type
+        _media_url = chat_request.media_url
+        _media_type: Optional[str] = None
+        if chat_request.image_base64:
+            _media_type = "image"
+        elif chat_request.media_ref:
+            _media_type = chat_request.media_ref.media_type
+        elif chat_request.media_refs:
+            _media_type = chat_request.media_refs[0].media_type
         background_tasks.add_task(
             _retry_task,
             _save_chat_to_db,
@@ -249,6 +262,8 @@ async def send_message(
             response.rag_context_used,
             response.action_data,
             _coach_persona_id,
+            _media_url,
+            _media_type,
             task_name="save_chat_to_db",
         )
 
@@ -305,6 +320,8 @@ class ChatHistoryItem(BaseModel):
     audio_url: Optional[str] = None
     audio_duration_ms: Optional[int] = None
     coach_persona_id: Optional[str] = None  # Which coach persona sent this message
+    media_url: Optional[str] = None  # Public S3 URL for image/video messages
+    media_type: Optional[str] = None  # 'image' or 'video'
 
 
 @router.get("/history/{user_id}", response_model=List[ChatHistoryItem])
@@ -362,6 +379,8 @@ async def get_chat_history(
             is_pinned = row.get("is_pinned", False)
             audio_url = row.get("audio_url")
             audio_duration_ms = row.get("audio_duration_ms")
+            media_url = row.get("media_url")
+            media_type = row.get("media_type")
 
             # Add user message
             if row.get("user_message"):
@@ -375,6 +394,8 @@ async def get_chat_history(
                     is_pinned=is_pinned,
                     audio_url=audio_url,
                     audio_duration_ms=audio_duration_ms,
+                    media_url=media_url,
+                    media_type=media_type,
                 ))
 
             # Add assistant response

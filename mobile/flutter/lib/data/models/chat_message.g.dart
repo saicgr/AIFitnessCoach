@@ -72,6 +72,7 @@ ChatRequest _$ChatRequestFromJson(Map<String, dynamic> json) => ChatRequest(
   videoFrames: (json['video_frames'] as List<dynamic>?)
       ?.map((e) => e as String)
       .toList(),
+  mediaUrl: json['media_url'] as String?,
 );
 
 Map<String, dynamic> _$ChatRequestToJson(ChatRequest instance) =>
@@ -89,6 +90,7 @@ Map<String, dynamic> _$ChatRequestToJson(ChatRequest instance) =>
       if (instance.mediaRefs case final value?) 'media_refs': value,
       if (instance.imageBase64 case final value?) 'image_base64': value,
       if (instance.videoFrames case final value?) 'video_frames': value,
+      if (instance.mediaUrl case final value?) 'media_url': value,
     };
 
 ChatResponse _$ChatResponseFromJson(Map<String, dynamic> json) => ChatResponse(
@@ -124,6 +126,8 @@ ChatHistoryItem _$ChatHistoryItemFromJson(Map<String, dynamic> json) =>
       audioUrl: json['audio_url'] as String?,
       audioDurationMs: (json['audio_duration_ms'] as num?)?.toInt(),
       coachPersonaId: json['coach_persona_id'] as String?,
+      mediaUrl: json['media_url'] as String?,
+      mediaType: json['media_type'] as String?,
     );
 
 Map<String, dynamic> _$ChatHistoryItemToJson(ChatHistoryItem instance) =>
@@ -138,4 +142,6 @@ Map<String, dynamic> _$ChatHistoryItemToJson(ChatHistoryItem instance) =>
       'audio_url': instance.audioUrl,
       'audio_duration_ms': instance.audioDurationMs,
       'coach_persona_id': instance.coachPersonaId,
+      'media_url': instance.mediaUrl,
+      'media_type': instance.mediaType,
     };

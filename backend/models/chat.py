@@ -198,6 +198,11 @@ class ChatRequest(BaseModel):
         max_length=50000,
         description="Unified fasting/nutrition/workout context string"
     )
+    media_url: Optional[str] = Field(
+        default=None,
+        max_length=2000,
+        description="Public S3 URL of the uploaded media (for persistence in chat history)"
+    )
 
 
 class IntentExtraction(BaseModel):

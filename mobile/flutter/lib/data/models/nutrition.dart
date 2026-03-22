@@ -618,6 +618,9 @@ class LogFoodResponse {
   final String? confidenceLevel;  // 'low', 'medium', 'high'
   @JsonKey(name: 'source_type')
   final String? sourceType;  // 'image', 'text', 'barcode', 'restaurant'
+  // Spelling correction
+  @JsonKey(name: 'corrected_query')
+  final String? correctedQuery;  // Corrected food description if user had typos
 
   // Micronutrients (vitamins & minerals)
   @JsonKey(name: 'sodium_mg')
@@ -660,6 +663,7 @@ class LogFoodResponse {
     this.confidenceScore,
     this.confidenceLevel,
     this.sourceType,
+    this.correctedQuery,
     this.sodiumMg,
     this.sugarG,
     this.saturatedFatG,

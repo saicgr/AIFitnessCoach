@@ -8,6 +8,7 @@ import '../../../data/services/api_client.dart';
 import '../../../data/services/food_search_service.dart' as search;
 import '../../../data/providers/xp_provider.dart';
 import '../../../data/repositories/auth_repository.dart';
+import '../../../core/constants/country_codes.dart';
 import '../food_history_screen.dart';
 import 'food_report_dialog.dart';
 
@@ -61,6 +62,9 @@ class _FoodBrowserPanelState extends ConsumerState<FoodBrowserPanel> {
 
   // Source filter for Food DB tab and search mode
   String? _selectedDbSource;
+
+  // Country filter (ISO alpha-2) for food database search
+  String? _selectedCountry;
 
   // Per-item logging state: food name -> logging/done
   final Map<String, _LogState> _logStates = {};
@@ -499,20 +503,37 @@ class _FoodBrowserPanelState extends ConsumerState<FoodBrowserPanel> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Source filter chips
-        _SourceDropdownPill(
-          selected: _selectedDbSource,
-          onChanged: (source) {
-            setState(() => _selectedDbSource = source);
-            final service = ref.read(search.foodSearchServiceProvider);
-            service.setSource(source);
-            // Re-trigger search with new source
-            if (widget.searchQuery.trim().isNotEmpty) {
-              final cachedLogs = ref.read(nutritionProvider).recentLogs;
-              service.search(widget.searchQuery, widget.userId, cachedLogs: cachedLogs);
-            }
-          },
-          isDark: widget.isDark,
+        // Filter row: source + country
+        Row(
+          children: [
+            _SourceDropdownPill(
+              selected: _selectedDbSource,
+              onChanged: (source) {
+                setState(() => _selectedDbSource = source);
+                final service = ref.read(search.foodSearchServiceProvider);
+                service.setSource(source);
+                if (widget.searchQuery.trim().isNotEmpty) {
+                  final cachedLogs = ref.read(nutritionProvider).recentLogs;
+                  service.search(widget.searchQuery, widget.userId, cachedLogs: cachedLogs);
+                }
+              },
+              isDark: widget.isDark,
+            ),
+            const SizedBox(width: 8),
+            _CountrySearchPill(
+              selected: _selectedCountry,
+              onChanged: (code) {
+                setState(() => _selectedCountry = code);
+                final service = ref.read(search.foodSearchServiceProvider);
+                service.setCountry(code);
+                if (widget.searchQuery.trim().isNotEmpty) {
+                  final cachedLogs = ref.read(nutritionProvider).recentLogs;
+                  service.search(widget.searchQuery, widget.userId, cachedLogs: cachedLogs);
+                }
+              },
+              isDark: widget.isDark,
+            ),
+          ],
         ),
         const SizedBox(height: 8),
         // Search results
@@ -1226,6 +1247,253 @@ class _SourceDropdownPill extends StatelessWidget {
               ),
               const SizedBox(width: 2),
               Icon(Icons.arrow_drop_down, size: 16, color: isFiltered ? Colors.white : textMuted),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ─── Country Search Pill ────────────────────────────────────────
+
+class _CountrySearchPill extends StatelessWidget {
+  final String? selected;
+  final ValueChanged<String?> onChanged;
+  final bool isDark;
+
+  const _CountrySearchPill({
+    required this.selected,
+    required this.onChanged,
+    required this.isDark,
+  });
+
+  String get _selectedLabel {
+    if (selected == null) return 'Country';
+    return kCountryCodes
+        .firstWhere((c) => c.code == selected,
+            orElse: () => const CountryCode(code: '', name: 'Country', flag: ''))
+        .name;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final cyan = isDark ? AppColors.cyan : AppColorsLight.cyan;
+    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+    final isFiltered = selected != null;
+
+    return GestureDetector(
+      onTap: () => _openPicker(context),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        decoration: BoxDecoration(
+          color: isFiltered ? cyan : elevated,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: isFiltered ? cyan : cardBorder),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.public, size: 14, color: isFiltered ? Colors.white : textMuted),
+            const SizedBox(width: 4),
+            Text(
+              _selectedLabel,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: isFiltered ? Colors.white : textMuted,
+              ),
+            ),
+            const SizedBox(width: 2),
+            Icon(Icons.arrow_drop_down,
+                size: 16, color: isFiltered ? Colors.white : textMuted),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _openPicker(BuildContext context) {
+    final isDarkLocal = isDark;
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => _CountryPickerSheet(
+        selected: selected,
+        onChanged: (code) {
+          onChanged(code);
+          Navigator.of(context).pop();
+        },
+        isDark: isDarkLocal,
+      ),
+    );
+  }
+}
+
+class _CountryPickerSheet extends StatefulWidget {
+  final String? selected;
+  final ValueChanged<String?> onChanged;
+  final bool isDark;
+
+  const _CountryPickerSheet({
+    required this.selected,
+    required this.onChanged,
+    required this.isDark,
+  });
+
+  @override
+  State<_CountryPickerSheet> createState() => _CountryPickerSheetState();
+}
+
+class _CountryPickerSheetState extends State<_CountryPickerSheet> {
+  final _searchCtrl = TextEditingController();
+  List<CountryCode> _filtered = kCountryCodes;
+
+  @override
+  void initState() {
+    super.initState();
+    _searchCtrl.addListener(_onSearch);
+  }
+
+  @override
+  void dispose() {
+    _searchCtrl.removeListener(_onSearch);
+    _searchCtrl.dispose();
+    super.dispose();
+  }
+
+  void _onSearch() {
+    final q = _searchCtrl.text.trim().toLowerCase();
+    setState(() {
+      _filtered = q.isEmpty
+          ? kCountryCodes
+          : kCountryCodes
+              .where((c) => c.name.toLowerCase().contains(q))
+              .toList();
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = widget.isDark;
+    final bg = isDark ? const Color(0xFF1C1C1E) : Colors.white;
+    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+    final cyan = isDark ? AppColors.cyan : AppColorsLight.cyan;
+    final inputBg = isDark ? AppColors.elevated : AppColorsLight.elevated;
+
+    return DraggableScrollableSheet(
+      initialChildSize: 0.7,
+      minChildSize: 0.4,
+      maxChildSize: 0.92,
+      expand: false,
+      builder: (_, scrollCtrl) => ClipRRect(
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+        child: Container(
+          color: bg,
+          child: Column(
+            children: [
+              // Handle
+              Padding(
+                padding: const EdgeInsets.only(top: 10, bottom: 4),
+                child: Container(
+                  width: 36,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: cardBorder,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              // Title
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
+                child: Text(
+                  'Filter by Country',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    color: textPrimary,
+                  ),
+                ),
+              ),
+              // Search field
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: inputBg,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: cardBorder),
+                  ),
+                  child: TextField(
+                    controller: _searchCtrl,
+                    autofocus: true,
+                    style: TextStyle(fontSize: 14, color: textPrimary),
+                    decoration: InputDecoration(
+                      hintText: 'Search countries…',
+                      hintStyle: TextStyle(color: textMuted, fontSize: 14),
+                      prefixIcon: Icon(Icons.search, size: 18, color: textMuted),
+                      border: InputBorder.none,
+                      contentPadding: const EdgeInsets.symmetric(vertical: 10),
+                    ),
+                  ),
+                ),
+              ),
+              // List
+              Expanded(
+                child: ListView.builder(
+                  controller: scrollCtrl,
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  itemCount: _filtered.length + 1, // +1 for "All Countries"
+                  itemBuilder: (_, i) {
+                    if (i == 0) {
+                      // "All Countries" row
+                      final isActive = widget.selected == null;
+                      return ListTile(
+                        dense: true,
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 8),
+                        leading: Text('🌐', style: const TextStyle(fontSize: 20)),
+                        title: Text(
+                          'All Countries',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: isActive ? FontWeight.w700 : FontWeight.w400,
+                            color: isActive ? cyan : textPrimary,
+                          ),
+                        ),
+                        trailing: isActive
+                            ? Icon(Icons.check, size: 18, color: cyan)
+                            : null,
+                        onTap: () => widget.onChanged(null),
+                      );
+                    }
+                    final country = _filtered[i - 1];
+                    final isActive = widget.selected == country.code;
+                    return ListTile(
+                      dense: true,
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 8),
+                      leading: Text(country.flag, style: const TextStyle(fontSize: 20)),
+                      title: Text(
+                        country.name,
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: isActive ? FontWeight.w700 : FontWeight.w400,
+                          color: isActive ? cyan : textPrimary,
+                        ),
+                      ),
+                      trailing: isActive
+                          ? Icon(Icons.check, size: 18, color: cyan)
+                          : null,
+                      onTap: () => widget.onChanged(country.code),
+                    );
+                  },
+                ),
+              ),
             ],
           ),
         ),

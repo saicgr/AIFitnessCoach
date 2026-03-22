@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 enum TooltipPosition { above, below, center }
 
@@ -91,8 +92,29 @@ class AppTourController extends StateNotifier<AppTourState> {
     final tourId = state.tourId;
     state = const AppTourState();
     if (tourId != null) {
+      // Save locally for fast access on next launch
       final prefs = await SharedPreferences.getInstance();
       await prefs.setBool('has_seen_$tourId', true);
+      // Also persist to Supabase user metadata so it survives reinstalls
+      _markSeenInCloud(tourId);
+    }
+  }
+
+  /// Updates Supabase Auth user_metadata with the completed tour ID.
+  /// Fire-and-forget — local prefs are the source of truth for speed.
+  void _markSeenInCloud(String tourId) {
+    try {
+      final user = Supabase.instance.client.auth.currentUser;
+      if (user == null) return;
+      final existing = List<String>.from(
+          user.userMetadata?['seen_tours'] as List<dynamic>? ?? []);
+      if (!existing.contains(tourId)) {
+        existing.add(tourId);
+        Supabase.instance.client.auth
+            .updateUser(UserAttributes(data: {'seen_tours': existing}));
+      }
+    } catch (_) {
+      // Non-critical — local prefs still work
     }
   }
 
@@ -100,8 +122,26 @@ class AppTourController extends StateNotifier<AppTourState> {
     // Don't start a new tour if one is already visible
     if (state.isVisible) return;
     final prefs = await SharedPreferences.getInstance();
-    final hasSeen = prefs.getBool('has_seen_$tourId') ?? false;
-    if (!hasSeen && steps.isNotEmpty) {
+    final seenLocally = prefs.getBool('has_seen_$tourId') ?? false;
+    if (seenLocally) return;
+
+    // Not seen locally — check Supabase user metadata (survives reinstalls)
+    try {
+      final user = Supabase.instance.client.auth.currentUser;
+      if (user != null) {
+        final seenTours = List<String>.from(
+            user.userMetadata?['seen_tours'] as List<dynamic>? ?? []);
+        if (seenTours.contains(tourId)) {
+          // Restore the flag locally so future checks are instant
+          await prefs.setBool('has_seen_$tourId', true);
+          return;
+        }
+      }
+    } catch (_) {
+      // Ignore errors — fall through and show the tour
+    }
+
+    if (steps.isNotEmpty) {
       show(tourId, steps);
     }
   }
@@ -139,6 +179,9 @@ class AppTourKeys {
   static final addMealKey = GlobalKey(debugLabel: 'tour_addMeal');
   static final nutritionTabsKey = GlobalKey(debugLabel: 'tour_nutritionTabs');
   static final nutritionHistoryKey = GlobalKey(debugLabel: 'tour_nutritionHistory');
+
+  // Tour 7: Nutrition Log Tour (inside log meal sheet)
+  static final logMealButtonKey = GlobalKey(debugLabel: 'tour_logMealButton');
 
   // Tour 4: Schedule Tour
   static final weeklyCalendarKey = GlobalKey(debugLabel: 'tour_weeklyCalendar');

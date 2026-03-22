@@ -363,6 +363,9 @@ class ChatRequest {
   @JsonKey(name: 'video_frames')
   final List<String>? videoFrames;
 
+  @JsonKey(name: 'media_url')
+  final String? mediaUrl;
+
   const ChatRequest({
     required this.message,
     required this.userId,
@@ -376,6 +379,7 @@ class ChatRequest {
     this.mediaRefs,
     this.imageBase64,
     this.videoFrames,
+    this.mediaUrl,
   });
 
   factory ChatRequest.fromJson(Map<String, dynamic> json) =>
@@ -430,6 +434,10 @@ class ChatHistoryItem {
   final int? audioDurationMs;
   @JsonKey(name: 'coach_persona_id')
   final String? coachPersonaId;
+  @JsonKey(name: 'media_url')
+  final String? mediaUrl;
+  @JsonKey(name: 'media_type')
+  final String? mediaType;
 
   const ChatHistoryItem({
     this.id,
@@ -442,6 +450,8 @@ class ChatHistoryItem {
     this.audioUrl,
     this.audioDurationMs,
     this.coachPersonaId,
+    this.mediaUrl,
+    this.mediaType,
   });
 
   factory ChatHistoryItem.fromJson(Map<String, dynamic> json) =>
@@ -460,5 +470,7 @@ class ChatHistoryItem {
         audioUrl: audioUrl,
         audioDurationMs: audioDurationMs,
         coachPersonaId: coachPersonaId,
+        mediaUrl: mediaUrl,
+        mediaType: mediaType,
       );
 }

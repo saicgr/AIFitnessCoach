@@ -209,6 +209,8 @@ class FoodAnalysisResponse(BaseModel):
     calcium_mg: Optional[float] = Field(default=None, description="Calcium in mg")
     iron_mg: Optional[float] = Field(default=None, description="Iron in mg")
     potassium_mg: Optional[float] = Field(default=None, description="Potassium in mg")
+    # Spelling correction
+    corrected_query: Optional[str] = Field(default=None, description="Corrected food description if user had typos/misspellings, null if no correction needed")
     # Feedback fields
     feedback: Optional[str] = Field(default=None, description="Nutritional feedback")
     overall_meal_score: Optional[int] = Field(default=None, description="Overall score 1-10")

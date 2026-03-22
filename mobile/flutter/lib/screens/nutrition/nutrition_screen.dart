@@ -107,37 +107,21 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
   Future<void> _loadData() async {
     final userId = await ref.read(apiClientProvider).getUserId();
     if (userId != null && mounted) {
+      // Set userId immediately so the widget tree builds with defaults/zeros
       setState(() => _userId = userId);
 
       final dateStr = DateFormat('yyyy-MM-dd').format(_selectedDate);
 
-      // Fire recipes load independently (non-blocking, doesn't affect layout)
+      // Fire ALL data loads as non-blocking background work.
+      // Providers already emit state changes that trigger rebuilds,
+      // so the UI renders instantly with defaults and fills in as data arrives.
       _loadRecipes(userId);
-
-      // Phase 1: Load essential data + micronutrients in parallel (blocking)
-      // Micronutrients must be awaited because _PinnedNutrientsCard affects layout
-      await Future.wait([
-        ref.read(nutritionProvider.notifier).loadTodaySummary(userId),
-        ref.read(nutritionProvider.notifier).loadTargets(userId),
-        _loadMicronutrients(userId, dateStr),
-      ], eagerError: false);
-
-      // Phase 2: Load secondary data in background (non-blocking)
-      // These run without await to not block UI
-      if (!mounted) return;
-      Future.wait([
-        ref.read(nutritionPreferencesProvider.notifier).initialize(userId),
-        ref.read(nutritionProvider.notifier).loadRecentLogs(userId),
-        ref.read(hydrationProvider.notifier).loadTodaySummary(userId),
-      ], eagerError: false);
-
-      // Log state after initialization for debugging
-      if (!mounted) return;
-      final initState = ref.read(nutritionPreferencesProvider);
-      debugPrint('🥗 [NutritionScreen] After init: prefs=${initState.preferences != null}, calories=${initState.preferences?.targetCalories}');
-
-      // Note: Removed ref.invalidate(quickAddSuggestionsProvider) to prevent unnecessary refetching
-      // Quick add suggestions will be loaded on-demand when the sheet opens
+      ref.read(nutritionProvider.notifier).loadTodaySummary(userId);
+      ref.read(nutritionProvider.notifier).loadTargets(userId);
+      _loadMicronutrients(userId, dateStr);
+      ref.read(nutritionPreferencesProvider.notifier).initialize(userId);
+      ref.read(nutritionProvider.notifier).loadRecentLogs(userId);
+      ref.read(hydrationProvider.notifier).loadTodaySummary(userId);
     }
   }
 

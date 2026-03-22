@@ -256,6 +256,7 @@ class ChatRepository {
     List<Map<String, dynamic>>? mediaRefs,
     String? imageBase64,
     List<String>? videoFrames,
+    String? mediaUrl,
   }) async {
     try {
       debugPrint('🔍 [Chat] Sending message: ${message.substring(0, message.length.clamp(0, 50))}...');
@@ -285,6 +286,7 @@ class ChatRepository {
           mediaRefs: mediaRefs,
           imageBase64: imageBase64,
           videoFrames: videoFrames,
+          mediaUrl: mediaUrl,
         ).toJson(),
         // Media requests go through Gemini Vision — allow up to 3 minutes
         options: hasMedia ? Options(receiveTimeout: const Duration(minutes: 3)) : null,
@@ -993,6 +995,7 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
             message: effectiveMessage, userId: userId, userProfile: userProfile,
             conversationHistory: history, aiSettings: currentAISettings.toJson(),
             unifiedContext: unifiedContext, imageBase64: imageBase64,
+            mediaUrl: publicUrl,
           ),
         ]);
         response = results[1] as ChatResponse;
@@ -1039,6 +1042,7 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
           message: effectiveMessage, userId: userId, userProfile: userProfile,
           conversationHistory: history, aiSettings: currentAISettings.toJson(),
           unifiedContext: unifiedContext, mediaRef: mediaRef,
+          mediaUrl: publicUrl,
         );
       }
 

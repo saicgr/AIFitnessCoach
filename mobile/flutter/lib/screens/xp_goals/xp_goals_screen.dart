@@ -280,6 +280,28 @@ class _XPGoalsScreenState extends ConsumerState<XPGoalsScreen>
   }
 
 
+  /// Maps backend icon name strings to Material IconData for monthly achievements.
+  IconData _monthlyIcon(String name) {
+    const map = <String, IconData>{
+      'calendar': Icons.calendar_today,
+      'flag': Icons.flag,
+      'restaurant': Icons.restaurant,
+      'check_circle': Icons.check_circle_outline,
+      'water_drop': Icons.water_drop,
+      'monitor': Icons.monitor_weight,
+      'checklist': Icons.checklist,
+      'emoji_events': Icons.emoji_events,
+      'share': Icons.share,
+      'favorite': Icons.favorite,
+      'star': Icons.star,
+      'fitness_center': Icons.fitness_center,
+      'local_fire_department': Icons.local_fire_department,
+      'trending_up': Icons.trending_up,
+      'bolt': Icons.bolt,
+    };
+    return map[name] ?? Icons.emoji_events;
+  }
+
   /// Daily tab content
   Widget _buildDailyTab(
     BuildContext context,
@@ -1383,9 +1405,10 @@ class _XPGoalsScreenState extends ConsumerState<XPGoalsScreen>
                         child: Center(
                           child: achievement.completed
                               ? const Icon(Icons.check, size: 14, color: Colors.purple)
-                              : Text(
-                                  achievement.icon.isNotEmpty ? achievement.icon : '🏆',
-                                  style: const TextStyle(fontSize: 12),
+                              : Icon(
+                                  _monthlyIcon(achievement.icon),
+                                  size: 14,
+                                  color: isDark ? textMuted : Colors.grey.shade600,
                                 ),
                         ),
                       ),

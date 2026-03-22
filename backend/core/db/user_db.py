@@ -382,7 +382,7 @@ class UserDB(BaseDB):
         """
         result = (
             self.client.table("chat_history")
-            .select("id, user_id, user_message, ai_response, context_json, timestamp, is_pinned, audio_url, audio_duration_ms")
+            .select("id, user_id, user_message, ai_response, context_json, timestamp, is_pinned, audio_url, audio_duration_ms, media_url, media_type")
             .eq("user_id", user_id)
             .order("timestamp", desc=False)
             .offset(offset)
@@ -433,7 +433,7 @@ class UserDB(BaseDB):
         """
         result = (
             self.client.table("chat_history")
-            .select("id, user_id, user_message, ai_response, context_json, timestamp, is_pinned, audio_url, audio_duration_ms")
+            .select("id, user_id, user_message, ai_response, context_json, timestamp, is_pinned, audio_url, audio_duration_ms, media_url, media_type")
             .eq("user_id", user_id)
             .or_(f"user_message.ilike.%{query}%,ai_response.ilike.%{query}%")
             .order("timestamp", desc=True)
