@@ -311,7 +311,7 @@ async def create_async_challenge(
             notification_sent=False,  # Only notified if you beat it
         )
     except ValueError as e:
-        raise HTTPException(status_code=404, detail=str(e))
+        raise HTTPException(status_code=404, detail="Resource not found")
     except Exception as e:
         raise safe_internal_error(e, "leaderboard_challenge")
 

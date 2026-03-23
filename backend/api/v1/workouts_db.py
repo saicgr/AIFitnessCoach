@@ -1640,7 +1640,7 @@ async def revert_workout(request: RevertWorkoutRequest,
         return reverted_workout
 
     except ValueError as e:
-        raise HTTPException(status_code=404, detail=str(e))
+        raise HTTPException(status_code=404, detail="Workout version not found")
     except Exception as e:
         logger.error(f"Failed to revert workout: {e}")
         raise safe_internal_error(e, "workouts_db")

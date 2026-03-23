@@ -46,12 +46,12 @@ import asyncio
 import boto3
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, UploadFile, File, Form, Request
 from fastapi.responses import StreamingResponse
-from pydantic import BaseModel, validator
+from pydantic import BaseModel, Field, validator
 
 from core.timezone_utils import resolve_timezone, local_date_to_utc_range, get_user_today, get_user_now_iso
 
 from core.rate_limiter import limiter
-from core.auth import get_current_user
+from core.auth import get_current_user, verify_user_ownership, verify_resource_ownership
 from core.exceptions import safe_internal_error
 
 from core.supabase_db import get_supabase_db
@@ -268,8 +268,8 @@ class BarcodeProductResponse(BaseModel):
 class LogBarcodeRequest(BaseModel):
     """Request to log food from barcode."""
     user_id: str
-    barcode: str
-    meal_type: str  # breakfast, lunch, dinner, snack
+    barcode: str = Field(..., max_length=100)
+    meal_type: str = Field(..., max_length=20)  # breakfast, lunch, dinner, snack
     servings: float = 1.0
     serving_size_g: Optional[float] = None  # Override serving size
 
@@ -293,14 +293,14 @@ class LogBarcodeResponse(BaseModel):
 
 class AnalyzeTextRequest(BaseModel):
     """Request to analyze food from text description (no logging)."""
-    description: str
+    description: str = Field(..., max_length=2000)
 
 
 class LogTextRequest(BaseModel):
     """Request to log food from text description."""
     user_id: str
-    description: str  # e.g., "2 eggs, toast with butter, and orange juice"
-    meal_type: str  # breakfast, lunch, dinner, snack
+    description: str = Field(..., max_length=2000)  # e.g., "2 eggs, toast with butter, and orange juice"
+    meal_type: str = Field(..., max_length=20)  # breakfast, lunch, dinner, snack
     mood_before: Optional[str] = None  # e.g., "bloated", "hungry", "tired"
 
     @validator('user_id')
@@ -313,15 +313,15 @@ class LogTextRequest(BaseModel):
 class LogDirectRequest(BaseModel):
     """Request to log already-analyzed food directly (e.g., from restaurant mode with portion adjustments)."""
     user_id: str
-    meal_type: str  # breakfast, lunch, dinner, snack
+    meal_type: str = Field(..., max_length=20)  # breakfast, lunch, dinner, snack
     food_items: List[dict]
     total_calories: int
     total_protein: int
     total_carbs: int
     total_fat: int
     total_fiber: Optional[int] = None
-    source_type: str = "restaurant"  # restaurant, manual, adjusted
-    notes: Optional[str] = None
+    source_type: str = Field(default="restaurant", max_length=50)  # restaurant, manual, adjusted
+    notes: Optional[str] = Field(default=None, max_length=500)
     # Micronutrients
     sodium_mg: Optional[float] = None
     sugar_g: Optional[float] = None
@@ -520,6 +520,8 @@ async def delete_food_log(log_id: str, current_user: dict = Depends(get_current_
 
     try:
         db = get_supabase_db()
+        log = db.get_food_log(log_id)
+        verify_resource_ownership(current_user, log, "Food log")
         success = db.delete_food_log(log_id)
 
         if not success:
@@ -762,6 +764,7 @@ async def get_nutrition_targets(user_id: str, current_user: dict = Depends(get_c
     logger.info(f"Getting nutrition targets for user {user_id}")
 
     try:
+        verify_user_ownership(current_user, user_id)
         db = get_supabase_db()
         targets = db.get_user_nutrition_targets(user_id)
 
@@ -784,6 +787,7 @@ async def update_nutrition_targets(user_id: str, request: UpdateNutritionTargets
     logger.info(f"Updating nutrition targets for user {user_id}")
 
     try:
+        verify_user_ownership(current_user, user_id)
         db = get_supabase_db()
 
         # Update targets
@@ -1201,7 +1205,7 @@ async def search_foods(
             )
         except Exception as usda_error:
             logger.error(f"Both local DB and USDA search failed: {usda_error}")
-            raise HTTPException(status_code=500, detail=str(usda_error))
+            raise safe_internal_error(usda_error, "food_search")
 
 
 @router.get("/food/{fdc_id}", response_model=USDAFoodResponse)
@@ -1401,9 +1405,20 @@ async def log_food_from_image(
     """
     logger.info(f"Logging food from image for user {user_id}, meal_type={meal_type}")
 
+    # SECURITY: Validate file type and size before processing
+    ALLOWED_IMAGE_TYPES = {'image/jpeg', 'image/png', 'image/webp', 'image/heic'}
+    MAX_IMAGE_SIZE = 10 * 1024 * 1024  # 10MB
+
+    if image.content_type and image.content_type not in ALLOWED_IMAGE_TYPES:
+        raise HTTPException(status_code=400, detail=f"Invalid image type. Allowed: {', '.join(ALLOWED_IMAGE_TYPES)}")
+
+    verify_user_ownership(current_user, user_id)
+
     try:
         # Read and encode image
         image_bytes = await image.read()
+        if len(image_bytes) > MAX_IMAGE_SIZE:
+            raise HTTPException(status_code=400, detail="Image too large (max 10MB)")
         image_base64 = base64.b64encode(image_bytes).decode('utf-8')
 
         # Determine mime type
@@ -2472,8 +2487,19 @@ async def log_food_from_image_streaming(
     """
     logger.info(f"[STREAM] Logging food from image for user {user_id}, meal_type={meal_type}")
 
+    # SECURITY: Validate file type and size before processing
+    ALLOWED_IMAGE_TYPES = {'image/jpeg', 'image/png', 'image/webp', 'image/heic'}
+    MAX_IMAGE_SIZE = 10 * 1024 * 1024  # 10MB
+
+    if image.content_type and image.content_type not in ALLOWED_IMAGE_TYPES:
+        raise HTTPException(status_code=400, detail=f"Invalid image type. Allowed: {', '.join(ALLOWED_IMAGE_TYPES)}")
+
+    verify_user_ownership(current_user, user_id)
+
     # Read image upfront (before generator)
     image_bytes = await image.read()
+    if len(image_bytes) > MAX_IMAGE_SIZE:
+        raise HTTPException(status_code=400, detail="Image too large (max 10MB)")
     content_type = image.content_type or 'image/jpeg'
 
     async def generate_sse() -> AsyncGenerator[str, None]:
@@ -2669,11 +2695,22 @@ async def analyze_food_from_image_streaming(
 
     Returns SSE events with progress updates and final analysis (no save).
     """
+    # SECURITY: Validate file type and size before processing
+    ALLOWED_IMAGE_TYPES = {'image/jpeg', 'image/png', 'image/webp', 'image/heic'}
+    MAX_IMAGE_SIZE = 10 * 1024 * 1024  # 10MB
+
+    if image.content_type and image.content_type not in ALLOWED_IMAGE_TYPES:
+        raise HTTPException(status_code=400, detail=f"Invalid image type. Allowed: {', '.join(ALLOWED_IMAGE_TYPES)}")
+
+    verify_user_ownership(current_user, user_id)
+
     import uuid
     request_id = f"req_{uuid.uuid4().hex[:12]}"
 
     # Read image upfront (before generator)
     image_bytes = await image.read()
+    if len(image_bytes) > MAX_IMAGE_SIZE:
+        raise HTTPException(status_code=400, detail="Image too large (max 10MB)")
     content_type = image.content_type or 'image/jpeg'
     image_size_kb = len(image_bytes) // 1024
 
@@ -6033,9 +6070,9 @@ class WeeklySummaryResponse(BaseModel):
 
 
 @router.get("/weekly-summary/{user_id}", response_model=WeeklySummaryResponse)
-async def get_weekly_summary(request: Request, user_id: str, current_user: dict = Depends(get_current_user)):
+async def get_checkin_weekly_summary(request: Request, user_id: str, current_user: dict = Depends(get_current_user)):
     """
-    Get the weekly nutrition summary for a user (last 7 days).
+    Get the weekly nutrition summary for a user (last 7 days) — used by the weekly check-in sheet.
     """
     logger.info(f"Getting weekly summary for user {user_id}")
 
@@ -6456,6 +6493,7 @@ class DetailedTDEEResponse(BaseModel):
     weight_logs_count: int
     weight_trend: dict
     metabolic_adaptation: Optional[dict] = None
+    confidence_level: str = "low"
 
 
 class AdherenceSummaryResponse(BaseModel):
@@ -6664,6 +6702,7 @@ async def get_detailed_tdee(request: Request, user_id: str, days: int = Query(de
                 "confidence": trend.confidence if trend else "low",
             },
             metabolic_adaptation=adaptation.to_dict() if adaptation else None,
+            confidence_level="high" if calculation.data_quality_score >= 0.7 else "medium" if calculation.data_quality_score >= 0.4 else "low",
         )
 
     except HTTPException:
@@ -6790,6 +6829,9 @@ async def get_recommendation_options(user_id: str, current_user: dict = Depends(
     - Moderate (always shown, recommended)
     - Conservative (if adherence <70% or adaptation detected)
     """
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Unauthorized")
+
     logger.info(f"Getting recommendation options for user {user_id}")
 
     try:
@@ -7051,6 +7093,9 @@ async def select_recommendation(user_id: str, request: SelectRecommendationReque
 
     This updates the user's nutrition targets to match the selected option.
     """
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Unauthorized")
+
     logger.info(f"User {user_id} selecting recommendation: {request.option_type}")
 
     try:

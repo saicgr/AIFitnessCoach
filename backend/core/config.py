@@ -86,6 +86,7 @@ class Settings(BaseSettings):
     revcat_api_key: Optional[str] = None
     revenuecat_webhook_secret: Optional[str] = None
     cron_secret: Optional[str] = None
+    cron_allowed_ips: Optional[str] = None  # Comma-separated IPs allowed to call cron endpoints
 
     # USDA FoodData Central API Configuration
     # Get API key from: https://fdc.nal.usda.gov/api-key-signup.html

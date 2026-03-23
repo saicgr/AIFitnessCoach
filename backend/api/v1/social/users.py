@@ -10,7 +10,7 @@ import logging
 from typing import List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query
-from core.auth import get_current_user
+from core.auth import get_current_user, verify_user_ownership
 from core.exceptions import safe_internal_error
 
 from models.friend_request import UserSearchResult, UserSuggestion
@@ -62,6 +62,7 @@ async def search_users(
     Returns:
         Paginated list of matching users with relationship status
     """
+    verify_user_ownership(current_user, user_id)
     if not query.strip():
         return {"results": [], "total_count": 0, "has_more": False}
 
@@ -198,6 +199,7 @@ async def get_friend_suggestions(
     Returns:
         Paginated list of suggested users with reasons
     """
+    verify_user_ownership(current_user, user_id)
     try:
         supabase = get_supabase_client()
 
@@ -378,6 +380,7 @@ async def get_user_profile(
     Returns:
         User profile with relationship status
     """
+    verify_user_ownership(current_user, user_id)
     supabase = get_supabase_client()
 
     # Get user profile with bio (F6)

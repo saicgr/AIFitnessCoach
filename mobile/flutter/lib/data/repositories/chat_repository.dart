@@ -989,13 +989,20 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
         setOverlay('analyzing', null);
         final imageBytes = await media.file.readAsBytes();
         final imageBase64 = base64Encode(imageBytes);
+        // Send both imageBase64 (for immediate analysis) and mediaRef with s3_key
+        // (for menu/buffet/multi-image tools that need S3 keys)
+        final imageMediaRef = {
+          's3_key': s3Key,
+          'media_type': 'image',
+          'mime_type': media.mimeType,
+        };
         final results = await Future.wait([
           _repository.uploadToS3(presignedUrl: presignedUrl, fields: fields, file: media.file, contentType: media.mimeType),
           _repository.sendMessage(
             message: effectiveMessage, userId: userId, userProfile: userProfile,
             conversationHistory: history, aiSettings: currentAISettings.toJson(),
             unifiedContext: unifiedContext, imageBase64: imageBase64,
-            mediaUrl: publicUrl,
+            mediaRef: imageMediaRef, mediaUrl: publicUrl,
           ),
         ]);
         response = results[1] as ChatResponse;

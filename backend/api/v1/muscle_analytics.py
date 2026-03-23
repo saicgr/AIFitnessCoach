@@ -10,7 +10,7 @@ Provides endpoints for:
 """
 
 from fastapi import APIRouter, Depends, HTTPException, Query
-from core.auth import get_current_user
+from core.auth import get_current_user, verify_user_ownership
 from core.exceptions import safe_internal_error
 from typing import List, Optional, Dict, Any
 from datetime import datetime, date, timedelta
@@ -239,6 +239,7 @@ async def get_muscle_heatmap_data(
     Returns intensity scores and colors for each muscle group
     based on training volume in the specified time period.
     """
+    verify_user_ownership(current_user, user_id)
     try:
         db = get_supabase_db()
         days_back = get_days_for_time_range(time_range)
@@ -353,6 +354,7 @@ async def get_muscle_training_frequency(
     Shows how often each muscle is trained with recommendations
     for optimal training frequency.
     """
+    verify_user_ownership(current_user, user_id)
     try:
         db = get_supabase_db()
 
@@ -461,6 +463,7 @@ async def get_muscle_balance(
     Analyzes push/pull ratio, upper/lower ratio, and other
     antagonist muscle pair balances.
     """
+    verify_user_ownership(current_user, user_id)
     try:
         db = get_supabase_db()
 
@@ -579,6 +582,7 @@ async def get_exercises_for_muscle(
     Shows which exercises target this muscle with volume
     and frequency statistics.
     """
+    verify_user_ownership(current_user, user_id)
     try:
         db = get_supabase_db()
 
@@ -688,6 +692,7 @@ async def get_muscle_history(
 
     Shows weekly training volume trends over time.
     """
+    verify_user_ownership(current_user, user_id)
     try:
         db = get_supabase_db()
         days_back = get_days_for_time_range(time_range)
@@ -766,6 +771,7 @@ async def log_muscle_analytics_view(request: ViewLogRequest,
     """
     Log when a user views muscle analytics for tracking engagement.
     """
+    verify_user_ownership(current_user, request.user_id)
     try:
         db = get_supabase_db()
 
@@ -783,4 +789,4 @@ async def log_muscle_analytics_view(request: ViewLogRequest,
 
     except Exception as e:
         logger.warning(f"Failed to log muscle analytics view: {e}")
-        return {"status": "error", "message": str(e)}
+        return {"status": "error", "message": "Failed to log view"}

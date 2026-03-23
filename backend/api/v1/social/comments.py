@@ -10,8 +10,10 @@ This module handles comment operations:
 from datetime import datetime, timezone
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query
-from core.auth import get_current_user
+from starlette.requests import Request
+from core.auth import get_current_user, verify_user_ownership
 from core.exceptions import safe_internal_error
+from core.rate_limiter import limiter
 from core.logger import get_logger
 
 from models.social import (
@@ -87,7 +89,9 @@ def _bg_notify_comment(activity_id: str, commenter_id: str, comment_text: str):
 
 
 @router.post("/comments", response_model=ActivityComment)
+@limiter.limit("20/minute")
 async def add_comment(
+    request: Request,
     user_id: str,
     comment: ActivityCommentCreate,
     background_tasks: BackgroundTasks,
@@ -103,6 +107,7 @@ async def add_comment(
     Returns:
         Created comment
     """
+    verify_user_ownership(current_user, user_id)
     supabase = get_supabase_client()
 
     result = supabase.table("activity_comments").insert({
@@ -127,7 +132,9 @@ async def add_comment(
 
 
 @router.put("/comments/{comment_id}", response_model=ActivityComment)
+@limiter.limit("20/minute")
 async def update_comment(
+    request: Request,
     user_id: str,
     comment_id: str,
     update: ActivityCommentUpdate,
@@ -144,6 +151,7 @@ async def update_comment(
     Returns:
         Updated comment
     """
+    verify_user_ownership(current_user, user_id)
     supabase = get_supabase_client()
 
     # Verify ownership
@@ -165,7 +173,9 @@ async def update_comment(
 
 
 @router.delete("/comments/{comment_id}")
+@limiter.limit("10/minute")
 async def delete_comment(
+    request: Request,
     user_id: str,
     comment_id: str,
     current_user: dict = Depends(get_current_user),
@@ -180,6 +190,7 @@ async def delete_comment(
     Returns:
         Success message
     """
+    verify_user_ownership(current_user, user_id)
     supabase = get_supabase_client()
 
     # Verify ownership

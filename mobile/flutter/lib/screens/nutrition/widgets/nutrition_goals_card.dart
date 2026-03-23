@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/providers/user_provider.dart';
 import '../../../data/models/nutrition.dart';
 import '../../../data/models/nutrition_preferences.dart';
 import '../../../data/providers/nutrition_preferences_provider.dart';
@@ -75,7 +76,6 @@ class NutritionGoalsCard extends ConsumerWidget {
         dynamicTargets!.adjustmentReason != 'base_targets';
     final hasCaloriesBurned = caloriesBurned > 0;
     final hasGoal = nutritionGoal != null;
-    final showBottomRow = hasGoal || hasAdjustment || hasCaloriesBurned;
 
     return Container(
       decoration: BoxDecoration(
@@ -250,8 +250,9 @@ class NutritionGoalsCard extends ConsumerWidget {
             ],
           ),
 
-          // Goal weight / target date / weekly rate (loss/gain goals only)
+          // Goal weight / target date / weekly rate / goal badge (loss/gain goals only)
           if (prefs != null && (prefs.goalWeightKg != null || prefs.goalDate != null ||
+              hasGoal ||
               (prefs.rateOfChange != null &&
                (prefs.primaryGoalEnum == NutritionGoal.loseFat ||
                 prefs.primaryGoalEnum == NutritionGoal.buildMuscle)))) ...[
@@ -280,30 +281,21 @@ class NutritionGoalsCard extends ConsumerWidget {
                     label: _formatWeeklyRate(prefs.rateOfChange!),
                     color: teal,
                   ),
+                if (hasGoal)
+                  _GoalChip(
+                    icon: null,
+                    label: _getGoalDisplayName(nutritionGoal),
+                    color: teal,
+                  ),
               ],
             ),
           ],
 
-          // Bottom info line: goal badge + calories burned + adjustment reason
-          if (showBottomRow) ...[
+          // Bottom info line: calories burned + adjustment reason
+          if (hasCaloriesBurned || hasAdjustment) ...[
             const SizedBox(height: 8),
             Row(
               children: [
-                if (hasGoal) ...[
-                  Text(
-                    _getGoalDisplayName(nutritionGoal),
-                    style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w500,
-                      color: teal,
-                    ),
-                  ),
-                  if (hasCaloriesBurned || hasAdjustment)
-                    Text(
-                      '  ·  ',
-                      style: TextStyle(fontSize: 11, color: textMuted),
-                    ),
-                ],
                 if (hasCaloriesBurned)
                   GestureDetector(
                     onTap: () => showCaloriesBurnedSheet(context, caloriesBurned),
@@ -341,7 +333,7 @@ class NutritionGoalsCard extends ConsumerWidget {
                             ),
                           ),
                           content: Text(
-                            _getAdjustmentReasonDisplay(dynamicTargets!.adjustmentReason),
+                            _getAdjustmentReasonDisplay(dynamicTargets.adjustmentReason),
                             style: TextStyle(
                               fontSize: 14,
                               color: isDark ? Colors.white70 : Colors.black54,
@@ -403,226 +395,26 @@ class NutritionGoalsCard extends ConsumerWidget {
   }
 
   void _showCalculationInfo(BuildContext context, NutritionPreferences prefs, bool isDark) {
-    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    final teal = isDark ? AppColors.teal : AppColorsLight.teal;
-    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
-    final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
-
-    final bmr = prefs.calculatedBmr ?? 0;
-    final tdee = prefs.calculatedTdee ?? 0;
-    final targetCal = prefs.targetCalories ?? 2000;
-    final goalAdjustment = targetCal - tdee;
-    final goal = prefs.primaryGoalEnum;
-    final dietType = prefs.dietTypeEnum;
-    final rate = prefs.rateOfChange;
-
-    // Derive activity multiplier from BMR/TDEE
-    final activityMultiplier = bmr > 0 ? (tdee / bmr) : 1.2;
-    final activityLabel = _getActivityLabel(activityMultiplier);
-
-    // Macro percentages from diet type
-    final carbPct = dietType.carbPercent;
-    final proteinPct = dietType.proteinPercent;
-    final fatPct = dietType.fatPercent;
-
     showModalBottomSheet(
       context: context,
-      backgroundColor: elevated,
+      backgroundColor: isDark ? AppColors.elevated : AppColorsLight.elevated,
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      builder: (ctx) => Padding(
-        padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Handle bar
-            Center(
-              child: Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: textMuted.withValues(alpha: 0.3),
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              'How your targets are calculated',
-              style: TextStyle(
-                fontSize: 17,
-                fontWeight: FontWeight.bold,
-                color: textPrimary,
-              ),
-            ),
-            const SizedBox(height: 16),
-
-            // BMR
-            _CalcRow(
-              label: 'BMR (Basal Metabolic Rate)',
-              value: '${_formatNumber(bmr)} cal',
-              isDark: isDark,
-            ),
-            Padding(
-              padding: const EdgeInsets.only(left: 12, bottom: 12),
-              child: Text(
-                'Mifflin-St Jeor formula based on your\nheight, weight, age, and gender',
-                style: TextStyle(fontSize: 11, color: textMuted, height: 1.4),
-              ),
-            ),
-
-            // Activity multiplier
-            _CalcRow(
-              label: 'Activity Multiplier (×${activityMultiplier.toStringAsFixed(2)})',
-              value: activityLabel,
-              isDark: isDark,
-            ),
-            const SizedBox(height: 12),
-
-            // TDEE
-            _CalcRow(
-              label: 'TDEE (Daily Energy Needs)',
-              value: '${_formatNumber(tdee)} cal',
-              isDark: isDark,
-              isBold: true,
-            ),
-            const SizedBox(height: 12),
-
-            // Divider
-            Divider(color: cardBorder, height: 1),
-            const SizedBox(height: 12),
-
-            // Goal adjustment
-            _CalcRow(
-              label: 'Goal Adjustment',
-              value: '${goalAdjustment >= 0 ? '+' : ''}${_formatNumber(goalAdjustment)} cal',
-              isDark: isDark,
-            ),
-            Padding(
-              padding: const EdgeInsets.only(left: 12, bottom: 12),
-              child: Text(
-                '${goal.displayName}${rate != null ? ' (${RateOfChange.fromString(rate).displayName.toLowerCase()})' : ''}',
-                style: TextStyle(fontSize: 11, color: textMuted),
-              ),
-            ),
-
-            // Final target
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-              decoration: BoxDecoration(
-                color: teal.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: teal.withValues(alpha: 0.3)),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    'Daily Calorie Target',
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: textPrimary,
-                    ),
-                  ),
-                  Text(
-                    '${_formatNumber(targetCal)} cal',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: teal,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 16),
-
-            // Macro split
-            Divider(color: cardBorder, height: 1),
-            const SizedBox(height: 12),
-            Text(
-              'Macro Split (${dietType.displayName}: $carbPct/$proteinPct/$fatPct)',
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-                color: textPrimary,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                _MacroChip(
-                  label: 'Protein',
-                  grams: prefs.targetProteinG ?? 0,
-                  pct: proteinPct,
-                  color: isDark ? AppColors.purple : AppColorsLight.purple,
-                ),
-                const SizedBox(width: 8),
-                _MacroChip(
-                  label: 'Carbs',
-                  grams: prefs.targetCarbsG ?? 0,
-                  pct: carbPct,
-                  color: isDark ? AppColors.cyan : AppColorsLight.cyan,
-                ),
-                const SizedBox(width: 8),
-                _MacroChip(
-                  label: 'Fat',
-                  grams: prefs.targetFatG ?? 0,
-                  pct: fatPct,
-                  color: isDark ? AppColors.orange : AppColorsLight.orange,
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-
-            // Edit + Recalculate buttons
-            Row(
-              children: [
-                Expanded(
-                  child: FilledButton.icon(
-                    onPressed: () {
-                      Navigator.pop(ctx);
-                      onEdit?.call();
-                    },
-                    icon: const Icon(Icons.edit_outlined, size: 18),
-                    label: const Text('Edit Targets'),
-                    style: FilledButton.styleFrom(
-                      backgroundColor: teal,
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: OutlinedButton.icon(
-                    onPressed: () {
-                      Navigator.pop(ctx);
-                      onRecalculate?.call();
-                    },
-                    icon: Icon(Icons.refresh, size: 18, color: teal),
-                    label: Text('Recalculate', style: TextStyle(inherit: false, color: teal, fontSize: 14, fontWeight: FontWeight.w500)),
-                    style: OutlinedButton.styleFrom(
-                      side: BorderSide(color: teal.withValues(alpha: 0.5)),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
+      builder: (ctx) => _CalculationInfoSheet(
+        prefs: prefs,
+        isDark: isDark,
+        onEdit: () {
+          Navigator.pop(ctx);
+          onEdit?.call();
+        },
+        onRecalculate: () {
+          Navigator.pop(ctx);
+          onRecalculate?.call();
+        },
+        formatNumber: _formatNumber,
+        getActivityLabel: _getActivityLabel,
       ),
     );
   }
@@ -687,6 +479,418 @@ class NutritionGoalsCard extends ConsumerWidget {
       default:
         return reason;
     }
+  }
+}
+
+/// Stateful sheet that shows the full calculation breakdown with expandable BMR details
+class _CalculationInfoSheet extends ConsumerStatefulWidget {
+  final NutritionPreferences prefs;
+  final bool isDark;
+  final VoidCallback? onEdit;
+  final VoidCallback? onRecalculate;
+  final String Function(int) formatNumber;
+  final String Function(double) getActivityLabel;
+
+  const _CalculationInfoSheet({
+    required this.prefs,
+    required this.isDark,
+    this.onEdit,
+    this.onRecalculate,
+    required this.formatNumber,
+    required this.getActivityLabel,
+  });
+
+  @override
+  ConsumerState<_CalculationInfoSheet> createState() => _CalculationInfoSheetState();
+}
+
+class _CalculationInfoSheetState extends ConsumerState<_CalculationInfoSheet> {
+  bool _bmrExpanded = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final prefs = widget.prefs;
+    final isDark = widget.isDark;
+    final fmt = widget.formatNumber;
+    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final teal = isDark ? AppColors.teal : AppColorsLight.teal;
+    final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+
+    final bmr = prefs.calculatedBmr ?? 0;
+    final tdee = prefs.calculatedTdee ?? 0;
+    final targetCal = prefs.targetCalories ?? 2000;
+    final goalAdjustment = targetCal - tdee;
+    final goal = prefs.primaryGoalEnum;
+    final dietType = prefs.dietTypeEnum;
+    final rate = prefs.rateOfChange;
+
+    final activityMultiplier = bmr > 0 ? (tdee / bmr) : 1.2;
+    final activityLabel = widget.getActivityLabel(activityMultiplier);
+
+    final carbPct = dietType.carbPercent;
+    final proteinPct = dietType.proteinPercent;
+    final fatPct = dietType.fatPercent;
+
+    // Get user profile for BMR breakdown
+    final userAsync = ref.watch(currentUserProvider);
+    final user = userAsync.valueOrNull;
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Handle bar
+          Center(
+            child: Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: textMuted.withValues(alpha: 0.3),
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'How your targets are calculated',
+            style: TextStyle(
+              fontSize: 17,
+              fontWeight: FontWeight.bold,
+              color: textPrimary,
+            ),
+          ),
+          const SizedBox(height: 16),
+
+          // BMR — tappable to expand formula breakdown
+          GestureDetector(
+            onTap: () => setState(() => _bmrExpanded = !_bmrExpanded),
+            behavior: HitTestBehavior.opaque,
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    'BMR (Basal Metabolic Rate)',
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: textPrimary,
+                    ),
+                  ),
+                ),
+                Text(
+                  '${fmt(bmr)} cal',
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
+                    color: textPrimary,
+                  ),
+                ),
+                const SizedBox(width: 4),
+                AnimatedRotation(
+                  turns: _bmrExpanded ? 0.25 : 0,
+                  duration: const Duration(milliseconds: 200),
+                  child: Icon(Icons.chevron_right, size: 18, color: teal),
+                ),
+              ],
+            ),
+          ),
+
+          // Expandable BMR calculation breakdown
+          AnimatedCrossFade(
+            firstChild: Padding(
+              padding: const EdgeInsets.only(left: 12, top: 4, bottom: 12),
+              child: Text(
+                'Mifflin-St Jeor formula · tap to see details',
+                style: TextStyle(fontSize: 11, color: textMuted),
+              ),
+            ),
+            secondChild: _buildBmrBreakdown(user, bmr, isDark, textPrimary, textMuted, teal, cardBorder),
+            crossFadeState: _bmrExpanded ? CrossFadeState.showSecond : CrossFadeState.showFirst,
+            duration: const Duration(milliseconds: 250),
+          ),
+
+          // Activity multiplier
+          _CalcRow(
+            label: 'Activity Multiplier (×${activityMultiplier.toStringAsFixed(2)})',
+            value: activityLabel,
+            isDark: isDark,
+          ),
+          const SizedBox(height: 12),
+
+          // TDEE
+          _CalcRow(
+            label: 'TDEE (Daily Energy Needs)',
+            value: '${fmt(tdee)} cal',
+            isDark: isDark,
+            isBold: true,
+          ),
+          const SizedBox(height: 12),
+
+          Divider(color: cardBorder, height: 1),
+          const SizedBox(height: 12),
+
+          // Goal adjustment
+          _CalcRow(
+            label: 'Goal Adjustment',
+            value: '${goalAdjustment >= 0 ? '+' : ''}${fmt(goalAdjustment)} cal',
+            isDark: isDark,
+          ),
+          Padding(
+            padding: const EdgeInsets.only(left: 12, bottom: 12),
+            child: Text(
+              '${goal.displayName}${rate != null ? ' (${RateOfChange.fromString(rate).displayName.toLowerCase()})' : ''}',
+              style: TextStyle(fontSize: 11, color: textMuted),
+            ),
+          ),
+
+          // Final target
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            decoration: BoxDecoration(
+              color: teal.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: teal.withValues(alpha: 0.3)),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Daily Calorie Target',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: textPrimary,
+                  ),
+                ),
+                Text(
+                  '${fmt(targetCal)} cal',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: teal,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+
+          // Macro split
+          Divider(color: cardBorder, height: 1),
+          const SizedBox(height: 12),
+          Text(
+            'Macro Split (${dietType.displayName}: $carbPct/$proteinPct/$fatPct)',
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: textPrimary,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              _MacroChip(
+                label: 'Protein',
+                grams: prefs.targetProteinG ?? 0,
+                pct: proteinPct,
+                color: isDark ? AppColors.purple : AppColorsLight.purple,
+              ),
+              const SizedBox(width: 8),
+              _MacroChip(
+                label: 'Carbs',
+                grams: prefs.targetCarbsG ?? 0,
+                pct: carbPct,
+                color: isDark ? AppColors.cyan : AppColorsLight.cyan,
+              ),
+              const SizedBox(width: 8),
+              _MacroChip(
+                label: 'Fat',
+                grams: prefs.targetFatG ?? 0,
+                pct: fatPct,
+                color: isDark ? AppColors.orange : AppColorsLight.orange,
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+
+          // Edit + Recalculate buttons
+          Row(
+            children: [
+              Expanded(
+                child: FilledButton.icon(
+                  onPressed: widget.onEdit,
+                  icon: const Icon(Icons.edit_outlined, size: 18),
+                  label: const Text('Edit Targets'),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: teal,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: widget.onRecalculate,
+                  icon: Icon(Icons.refresh, size: 18, color: teal),
+                  label: Text('Recalculate', style: TextStyle(inherit: false, color: teal, fontSize: 14, fontWeight: FontWeight.w500)),
+                  style: OutlinedButton.styleFrom(
+                    side: BorderSide(color: teal.withValues(alpha: 0.5)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBmrBreakdown(
+    dynamic user,
+    int bmr,
+    bool isDark,
+    Color textPrimary,
+    Color textMuted,
+    Color teal,
+    Color cardBorder,
+  ) {
+    final weight = user?.weightKg;
+    final height = user?.heightCm;
+    final age = user?.age;
+    final gender = user?.gender?.toString().toLowerCase() ?? 'male';
+    final isMale = gender == 'male';
+
+    if (weight == null || height == null || age == null) {
+      return Padding(
+        padding: const EdgeInsets.only(left: 12, top: 4, bottom: 12),
+        child: Text(
+          'Mifflin-St Jeor formula (profile data unavailable for breakdown)',
+          style: TextStyle(fontSize: 11, color: textMuted),
+        ),
+      );
+    }
+
+    // Mifflin-St Jeor: (10 × weight) + (6.25 × height) - (5 × age) + offset
+    final weightTerm = 10.0 * weight;
+    final heightTerm = 6.25 * height;
+    final ageTerm = (5 * age).toDouble();
+    final offset = isMale ? 5 : -161;
+
+    return Container(
+      margin: const EdgeInsets.only(left: 8, top: 6, bottom: 12, right: 0),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: teal.withValues(alpha: 0.05),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: cardBorder),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Mifflin-St Jeor Equation${isMale ? ' (Male)' : ' (Female)'}',
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: teal,
+            ),
+          ),
+          const SizedBox(height: 8),
+          _BmrFormulaRow(label: '10 × ${weight.toStringAsFixed(1)} kg', value: weightTerm, isDark: isDark, hint: 'more mass = more energy at rest'),
+          _BmrFormulaRow(label: '6.25 × ${height.toStringAsFixed(1)} cm', value: heightTerm, isDark: isDark, prefix: '+', hint: 'taller = larger surface area'),
+          _BmrFormulaRow(label: '5 × $age yrs', value: ageTerm.toDouble(), isDark: isDark, prefix: '−', hint: 'metabolism slows with age'),
+          _BmrFormulaRow(label: isMale ? 'Male constant' : 'Female constant', value: offset.toDouble(), isDark: isDark, prefix: offset >= 0 ? '+' : '−', showAbs: true, hint: isMale ? 'males have more lean mass' : 'females have different body composition'),
+          const SizedBox(height: 4),
+          Divider(color: cardBorder, height: 1),
+          const SizedBox(height: 6),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'BMR',
+                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: textPrimary),
+              ),
+              Text(
+                '= $bmr cal',
+                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: teal),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// A single row in the BMR formula breakdown
+class _BmrFormulaRow extends StatelessWidget {
+  final String label;
+  final double value;
+  final bool isDark;
+  final String prefix;
+  final bool showAbs;
+  final String? hint;
+
+  const _BmrFormulaRow({
+    required this.label,
+    required this.value,
+    required this.isDark,
+    this.prefix = '',
+    this.showAbs = false,
+    this.hint,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final displayValue = showAbs ? value.abs() : value;
+    return Padding(
+      padding: EdgeInsets.only(top: 2, bottom: hint != null ? 6 : 2),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              SizedBox(
+                width: 16,
+                child: prefix.isNotEmpty
+                    ? Text(prefix, style: TextStyle(fontSize: 11, color: textMuted))
+                    : null,
+              ),
+              Expanded(
+                child: Text(
+                  label,
+                  style: TextStyle(fontSize: 11, color: textMuted),
+                ),
+              ),
+              Text(
+                '= ${displayValue.toStringAsFixed(1)}',
+                style: TextStyle(fontSize: 11, color: textPrimary),
+              ),
+            ],
+          ),
+          if (hint != null)
+            Padding(
+              padding: const EdgeInsets.only(left: 16, top: 1),
+              child: Text(
+                hint!,
+                style: TextStyle(fontSize: 9.5, color: textMuted.withValues(alpha: 0.6), fontStyle: FontStyle.italic),
+              ),
+            ),
+        ],
+      ),
+    );
   }
 }
 
@@ -797,7 +1001,7 @@ class _MacroProgressRing extends StatelessWidget {
 
 /// Small pill chip for displaying goal metadata (weight, date, rate)
 class _GoalChip extends StatelessWidget {
-  final IconData icon;
+  final IconData? icon;
   final String label;
   final Color color;
 
@@ -812,8 +1016,10 @@ class _GoalChip extends StatelessWidget {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(icon, size: 12, color: color),
-        const SizedBox(width: 3),
+        if (icon != null) ...[
+          Icon(icon, size: 12, color: color),
+          const SizedBox(width: 3),
+        ],
         Text(
           label,
           style: TextStyle(

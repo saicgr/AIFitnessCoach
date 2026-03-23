@@ -25,6 +25,8 @@ import '../../widgets/medical_disclaimer_banner.dart';
 import '../ai_settings/ai_settings_screen.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../data/repositories/nutrition_repository.dart';
+import 'widgets/food_analysis_inline_card.dart';
+import '../../screens/nutrition/menu_analysis_sheet.dart';
 import 'widgets/food_analysis_result_card.dart';
 import 'widgets/form_check_result_card.dart';
 import 'widgets/form_comparison_result_card.dart';
@@ -337,9 +339,9 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
 
       for (final item in items) {
         final cal = (item['calories'] as num? ?? 0).toInt();
-        final protein = (item['protein'] as num? ?? 0).toInt();
-        final carbs = (item['carbs'] as num? ?? 0).toInt();
-        final fat = (item['fat'] as num? ?? 0).toInt();
+        final protein = (item['protein_g'] as num? ?? item['protein'] as num? ?? 0).toInt();
+        final carbs = (item['carbs_g'] as num? ?? item['carbs'] as num? ?? 0).toInt();
+        final fat = (item['fat_g'] as num? ?? item['fat'] as num? ?? 0).toInt();
 
         totalCal += cal;
         totalProtein += protein;
@@ -366,6 +368,11 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
         totalFat: totalFat,
         sourceType: 'image',
       );
+
+      // Refresh nutrition tab
+      if (userId.isNotEmpty) {
+        ref.read(nutritionProvider.notifier).loadTodaySummary(userId, forceRefresh: true);
+      }
 
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -1869,6 +1876,24 @@ class _MessageBubble extends ConsumerWidget {
           // Show form check result card for assistant messages
           if (!isUser && message.hasFormCheckResult)
             FormCheckResultCard(result: message.formCheckResult!),
+          // Show inline food analysis card for plate scans (1-5 items)
+          if (!isUser && message.hasFoodAnalysis &&
+              (message.actionData!['food_items'] as List).length <= 5)
+            FoodAnalysisInlineCard(
+              foodItems: (message.actionData!['food_items'] as List)
+                  .cast<Map<String, dynamic>>(),
+              onLogItems: onLogAnalysisItems != null
+                  ? (items) => onLogAnalysisItems!(items)
+                  : (_) {},
+            ),
+          // Show compact summary for plate scans with 6+ items (opens MenuAnalysisSheet)
+          if (!isUser && message.hasFoodAnalysis &&
+              (message.actionData!['food_items'] as List).length > 5)
+            _FoodAnalysisSummaryCard(
+              foodItems: (message.actionData!['food_items'] as List)
+                  .cast<Map<String, dynamic>>(),
+              onViewAll: onLogAnalysisItems,
+            ),
           // Show multi-food/buffet/menu analysis result card
           if (!isUser && (message.hasBuffetAnalysis || message.hasMenuAnalysis ||
               (message.actionData?['action'] == 'analyze_multi_food_images')))
@@ -3160,6 +3185,132 @@ class _MediaUploadOverlayState extends State<_MediaUploadOverlay>
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+/// Compact summary card for food analysis with 6+ items.
+/// Shows total count + macros and a "View All & Log" button that opens
+/// the MenuAnalysisSheet.
+class _FoodAnalysisSummaryCard extends StatelessWidget {
+  final List<Map<String, dynamic>> foodItems;
+  final void Function(List<Map<String, dynamic>>)? onViewAll;
+
+  const _FoodAnalysisSummaryCard({
+    required this.foodItems,
+    required this.onViewAll,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = ThemeColors.of(context);
+    final isDark = colors.isDark;
+
+    int totalCal = 0;
+    int totalProtein = 0;
+    for (final item in foodItems) {
+      totalCal += (item['calories'] as num? ?? 0).toInt();
+      totalProtein += (item['protein_g'] as num? ?? item['protein'] as num? ?? 0).toInt();
+    }
+
+    return Container(
+      margin: const EdgeInsets.only(top: 8),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.glassSurface : Colors.grey.shade50,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: isDark ? AppColors.cardBorder : Colors.grey.shade200,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 28,
+                height: 28,
+                decoration: BoxDecoration(
+                  color: AppColors.green.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(Icons.restaurant_rounded, size: 16, color: AppColors.green),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  '${foodItems.length} items found',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: colors.textPrimary,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Text(
+                '$totalCal cal total',
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.coral,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                '${totalProtein}g protein',
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.macroProtein,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              onPressed: () {
+                _openMenuSheet(context, isDark);
+              },
+              icon: const Icon(Icons.visibility_outlined, size: 16),
+              label: const Text('View All & Log'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.orange,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 10),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                textStyle: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _openMenuSheet(BuildContext context, bool isDark) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => MenuAnalysisSheet(
+        foodItems: foodItems,
+        analysisType: 'plate',
+        isDark: isDark,
+        onLogItems: (selected) => onViewAll?.call(selected),
       ),
     );
   }

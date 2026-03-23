@@ -209,7 +209,7 @@ async def generate_weekly_plan(body: GenerateWeeklyPlanRequest, request: Request
 
     except ValueError as e:
         logger.error(f"Validation error generating plan: {e}")
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail="Invalid request")
     except Exception as e:
         logger.error(f"Error generating weekly plan: {e}")
         raise safe_internal_error(e, "weekly_plan_generate")

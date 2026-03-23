@@ -438,6 +438,68 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet> {
     });
   }
 
+  void _handleFoodItemRemoved(int index) {
+    if (_analyzedResponse == null) return;
+
+    final currentItems = List<Map<String, dynamic>>.from(_analyzedResponse!.foodItems);
+    if (index < 0 || index >= currentItems.length) return;
+    currentItems.removeAt(index);
+
+    if (currentItems.isEmpty) {
+      // All items removed — clear the response to go back to input
+      setState(() => _analyzedResponse = null);
+      return;
+    }
+
+    int totalCalories = 0;
+    double totalProtein = 0;
+    double totalCarbs = 0;
+    double totalFat = 0;
+    double totalFiber = 0;
+
+    for (final item in currentItems) {
+      totalCalories += (item['calories'] as num?)?.toInt() ?? 0;
+      totalProtein += (item['protein_g'] as num?)?.toDouble() ?? 0;
+      totalCarbs += (item['carbs_g'] as num?)?.toDouble() ?? 0;
+      totalFat += (item['fat_g'] as num?)?.toDouble() ?? 0;
+      totalFiber += (item['fiber_g'] as num?)?.toDouble() ?? 0;
+    }
+
+    setState(() {
+      _analyzedResponse = LogFoodResponse(
+        success: _analyzedResponse!.success,
+        foodLogId: _analyzedResponse!.foodLogId,
+        foodItems: currentItems,
+        totalCalories: totalCalories,
+        proteinG: totalProtein,
+        carbsG: totalCarbs,
+        fatG: totalFat,
+        fiberG: totalFiber,
+        overallMealScore: _analyzedResponse!.overallMealScore,
+        healthScore: _analyzedResponse!.healthScore,
+        goalAlignmentPercentage: _analyzedResponse!.goalAlignmentPercentage,
+        aiSuggestion: _analyzedResponse!.aiSuggestion,
+        encouragements: _analyzedResponse!.encouragements,
+        warnings: _analyzedResponse!.warnings,
+        recommendedSwap: _analyzedResponse!.recommendedSwap,
+        confidenceScore: _analyzedResponse!.confidenceScore,
+        confidenceLevel: _analyzedResponse!.confidenceLevel,
+        sourceType: _analyzedResponse!.sourceType,
+        correctedQuery: _analyzedResponse!.correctedQuery,
+        sodiumMg: _analyzedResponse!.sodiumMg,
+        sugarG: _analyzedResponse!.sugarG,
+        saturatedFatG: _analyzedResponse!.saturatedFatG,
+        cholesterolMg: _analyzedResponse!.cholesterolMg,
+        potassiumMg: _analyzedResponse!.potassiumMg,
+        vitaminAIu: _analyzedResponse!.vitaminAIu,
+        vitaminCMg: _analyzedResponse!.vitaminCMg,
+        vitaminDIu: _analyzedResponse!.vitaminDIu,
+        calciumMg: _analyzedResponse!.calciumMg,
+        ironMg: _analyzedResponse!.ironMg,
+      );
+    });
+  }
+
   /// Show a one-time tooltip on the "Log This Meal" button after first analysis
   void _triggerLogMealTour() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -718,44 +780,13 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet> {
           return;
         }
 
-        final detectedFoodNames = response.foodItems.isNotEmpty
-            ? response.foodItems.map((f) => f['name']?.toString() ?? 'Food').join(', ')
-            : 'Detected food';
-        final result = await _showRainbowNutritionConfirmation(response, detectedFoodNames);
-
-        if (result != null && result.confirmed && mounted) {
-          final adjustedResponse = result.multiplier != 1.0
-              ? response.copyWithMultiplier(result.multiplier)
-              : response;
-
-          setState(() { _isLoading = true; _progressMessage = 'Saving your meal...'; });
-
-          try {
-            await repository.logFoodDirect(
-              userId: widget.userId,
-              mealType: _selectedMealType.value,
-              analyzedFood: adjustedResponse,
-              sourceType: 'image',
-            );
-
-            if (mounted) {
-              ref.read(xpProvider.notifier).markMealLogged();
-              Navigator.pop(context);
-              _showSuccessSnackbar(adjustedResponse.totalCalories);
-              ref.read(nutritionProvider.notifier).loadTodaySummary(widget.userId);
-            }
-          } catch (saveError) {
-            debugPrint('❌ [LogMeal] Save failed | error=$saveError');
-            if (mounted) {
-              setState(() {
-                _isLoading = false;
-                _error = 'Failed to save meal: $saveError';
-              });
-            }
-          }
-        } else {
-          debugPrint('📋 [LogMeal] User cancelled or dismissed confirmation dialog');
-        }
+        // Use the rich preview (same as text search) instead of the bare dialog
+        setState(() {
+          _analyzedResponse = response;
+          _sourceType = 'image';
+        });
+        // _buildNutritionPreview renders with food items, AI tips, editing.
+        // "Log This Meal" button calls _handleLog() which saves.
       } else if (mounted && response == null) {
         // Stream completed but no response - show error
         debugPrint('❌ [LogMeal] Stream completed but response is null');
@@ -896,12 +927,12 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet> {
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
 
-    // Rainbow colors for nutrition values
-    const caloriesColor = AppColors.textPrimary;  // Red/Coral
-    const proteinColor = AppColors.textSecondary;   // Yellow/Gold
-    const carbsColor = AppColors.textMuted;     // Green
-    const fatColor = AppColors.textSecondary;       // Blue
-    const fiberColor = AppColors.textMuted;     // Purple
+    // Macro colors
+    final caloriesColor = isDark ? AppColors.coral : AppColorsLight.coral;
+    final proteinColor = isDark ? AppColors.macroProtein : AppColorsLight.macroProtein;
+    final carbsColor = isDark ? AppColors.macroCarbs : AppColorsLight.macroCarbs;
+    final fatColor = isDark ? AppColors.macroFat : AppColorsLight.macroFat;
+    final fiberColor = isDark ? AppColors.green : AppColorsLight.green;
 
     // Portion multiplier state
     double portionMultiplier = 1.0;
@@ -1921,87 +1952,10 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Food description with Goal Score
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    Expanded(
-                      child: Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: elevated,
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              children: [
-                                Icon(Icons.search, size: 14, color: textMuted),
-                                const SizedBox(width: 6),
-                                Text('You searched:', style: TextStyle(color: textMuted, fontSize: 11, fontWeight: FontWeight.w500)),
-                              ],
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              description,
-                              style: TextStyle(color: textSecondary, fontSize: 13, fontStyle: FontStyle.italic, decoration: response.correctedQuery != null ? TextDecoration.lineThrough : null),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                            // "Did you mean" correction hint
-                            if (response.correctedQuery != null) ...[
-                              const SizedBox(height: 6),
-                              Row(
-                                children: [
-                                  Icon(Icons.auto_fix_high, size: 13, color: isDark ? AppColors.purple : AppColorsLight.purple),
-                                  const SizedBox(width: 5),
-                                  Text('Did you mean: ', style: TextStyle(color: textMuted, fontSize: 11)),
-                                  Expanded(
-                                    child: Text(
-                                      response.correctedQuery!,
-                                      style: TextStyle(color: isDark ? AppColors.purple : AppColorsLight.purple, fontSize: 12, fontWeight: FontWeight.w600),
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ],
-                            const SizedBox(height: 8),
-                            Row(
-                              children: [
-                                Icon(Icons.restaurant, size: 14, color: isDark ? AppColors.teal : AppColorsLight.teal),
-                                const SizedBox(width: 6),
-                                Text('Found:', style: TextStyle(color: isDark ? AppColors.teal : AppColorsLight.teal, fontSize: 11, fontWeight: FontWeight.w600)),
-                              ],
-                            ),
-                            const SizedBox(height: 4),
-                            ...response.foodItemsRanked.take(3).map((item) => Padding(
-                              padding: const EdgeInsets.only(bottom: 2),
-                              child: Text(
-                                item.amount != null && item.amount!.isNotEmpty ? '${item.name} (${item.amount})' : item.name,
-                                style: TextStyle(color: textPrimary, fontSize: 14, fontWeight: FontWeight.w600),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            )),
-                            if (response.foodItemsRanked.length > 3)
-                              Text('+${response.foodItemsRanked.length - 3} more items', style: TextStyle(color: textMuted, fontSize: 12)),
-                          ],
-                        ),
-                      ),
-                    ),
-                    if (response.overallMealScore != null) ...[
-                      const SizedBox(width: 10),
-                      _CompactGoalScore(score: response.overallMealScore!, isDark: isDark),
-                    ],
-                  ],
-                ),
                 // Quantity mismatch warning
                 if (_hasQuantityMismatch(description, response.foodItemsRanked))
                   Padding(
-                    padding: const EdgeInsets.only(top: 8),
+                    padding: const EdgeInsets.only(bottom: 8),
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                       decoration: BoxDecoration(
@@ -2015,7 +1969,7 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet> {
                           const SizedBox(width: 6),
                           Expanded(
                             child: Text(
-                              'AI adjusted portions — review weights below',
+                              'Portions adjusted — review weights below',
                               style: TextStyle(fontSize: 11, color: orange, fontWeight: FontWeight.w500),
                             ),
                           ),
@@ -2023,14 +1977,17 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet> {
                       ),
                     ),
                   ),
-                const SizedBox(height: 16),
 
-                // AI Estimated header row
+                // Estimated Nutrition header row
                 Row(
                   children: [
                     Icon(Icons.auto_awesome, color: isDark ? AppColors.textSecondary : AppColorsLight.textSecondary, size: 20),
                     const SizedBox(width: 8),
-                    Text('AI Estimated', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: textPrimary)),
+                    Text('Estimated Nutrition', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: textPrimary)),
+                    if (response.overallMealScore != null) ...[
+                      const SizedBox(width: 8),
+                      _CompactGoalScore(score: response.overallMealScore!, isDark: isDark),
+                    ],
                     if (_analysisElapsedMs != null) ...[
                       const SizedBox(width: 8),
                       Text('(${(_analysisElapsedMs! / 1000).toStringAsFixed(1)}s)', style: TextStyle(fontSize: 12, color: textMuted)),
@@ -2077,7 +2034,29 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet> {
                 ),
                 const SizedBox(height: 12),
 
-                // "More details" toggle
+                // Food items — always visible (primary content)
+                if (response.foodItems.isNotEmpty)
+                  _CollapsibleFoodItemsSection(
+                    foodItems: response.foodItemsRanked,
+                    isDark: isDark,
+                    onItemWeightChanged: (index, updatedItem) => _handleFoodItemWeightChange(index, updatedItem),
+                    onItemRemoved: _handleFoodItemRemoved,
+                  ),
+                if (response.foodItems.isNotEmpty) const SizedBox(height: 12),
+
+                // AI Coach Tip — collapsed by default
+                if (response.aiSuggestion != null || (response.encouragements != null && response.encouragements!.isNotEmpty) || (response.warnings != null && response.warnings!.isNotEmpty))
+                  _CollapsibleAISuggestion(
+                    suggestion: response.aiSuggestion,
+                    encouragements: response.encouragements,
+                    warnings: response.warnings,
+                    recommendedSwap: response.recommendedSwap,
+                    isDark: isDark,
+                  ),
+
+                const SizedBox(height: 12),
+
+                // "More details" toggle — mood tracking + micronutrients only
                 GestureDetector(
                   onTap: () => setState(() => _showMealDetails = !_showMealDetails),
                   child: Row(
@@ -2101,7 +2080,6 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet> {
                   ),
                 ),
 
-                // Optional sections gated behind "More details"
                 if (_showMealDetails) ...[
                   const SizedBox(height: 12),
 
@@ -2117,33 +2095,14 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet> {
                   ),
                   const SizedBox(height: 12),
 
-                  // Collapsible food items
-                  if (response.foodItems.isNotEmpty)
-                    _CollapsibleFoodItemsSection(
-                      foodItems: response.foodItemsRanked,
-                      isDark: isDark,
-                      onItemWeightChanged: (index, updatedItem) => _handleFoodItemWeightChange(index, updatedItem),
-                    ),
-                  if (response.foodItems.isNotEmpty) const SizedBox(height: 12),
-
                   // Micronutrients
                   if (_hasMicronutrients(response))
                     _MicronutrientsSection(response: response, isDark: isDark),
                   if (_hasMicronutrients(response)) const SizedBox(height: 12),
-
-                  // AI Suggestion
-                  if (response.aiSuggestion != null || (response.encouragements != null && response.encouragements!.isNotEmpty) || (response.warnings != null && response.warnings!.isNotEmpty))
-                    _AISuggestionCard(
-                      suggestion: response.aiSuggestion,
-                      encouragements: response.encouragements,
-                      warnings: response.warnings,
-                      recommendedSwap: response.recommendedSwap,
-                      isDark: isDark,
-                    ),
                 ],
 
                 const SizedBox(height: 8),
-                Text('AI estimates based on your description', style: TextStyle(fontSize: 11, color: textMuted, fontStyle: FontStyle.italic), textAlign: TextAlign.center),
+                Text('Estimates based on your photo/description', style: TextStyle(fontSize: 11, color: textMuted, fontStyle: FontStyle.italic), textAlign: TextAlign.center),
               ],
             ),
           ),
@@ -3058,11 +3017,13 @@ class _CollapsibleFoodItemsSection extends StatefulWidget {
   final List<FoodItemRanking> foodItems;
   final bool isDark;
   final void Function(int index, FoodItemRanking updatedItem)? onItemWeightChanged;
+  final void Function(int index)? onItemRemoved;
 
   const _CollapsibleFoodItemsSection({
     required this.foodItems,
     required this.isDark,
     this.onItemWeightChanged,
+    this.onItemRemoved,
   });
 
   @override
@@ -3145,6 +3106,9 @@ class _CollapsibleFoodItemsSectionState extends State<_CollapsibleFoodItemsSecti
                   onWeightChanged: widget.onItemWeightChanged != null
                       ? (updatedItem) => widget.onItemWeightChanged!(entry.key, updatedItem)
                       : null,
+                  onRemoved: widget.onItemRemoved != null
+                      ? () => widget.onItemRemoved!(entry.key)
+                      : null,
                 )),
               ],
             ),
@@ -3161,11 +3125,13 @@ class _FoodItemRankingCard extends StatefulWidget {
   final FoodItemRanking item;
   final bool isDark;
   final void Function(FoodItemRanking updatedItem)? onWeightChanged;
+  final VoidCallback? onRemoved;
 
   const _FoodItemRankingCard({
     required this.item,
     required this.isDark,
     this.onWeightChanged,
+    this.onRemoved,
   });
 
   @override
@@ -3384,13 +3350,28 @@ class _FoodItemRankingCardState extends State<_FoodItemRankingCard> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      widget.item.name,
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
-                        color: textPrimary,
-                      ),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            widget.item.name,
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
+                              color: textPrimary,
+                            ),
+                          ),
+                        ),
+                        if (widget.onRemoved != null)
+                          GestureDetector(
+                            onTap: widget.onRemoved,
+                            behavior: HitTestBehavior.opaque,
+                            child: Padding(
+                              padding: const EdgeInsets.all(4),
+                              child: Icon(Icons.close, size: 16, color: widget.isDark ? AppColors.error : AppColorsLight.error),
+                            ),
+                          ),
+                      ],
                     ),
                     // Weight/Count editing row (if scalable)
                     if (canScale)
@@ -3741,7 +3722,170 @@ class _FoodItemRankingCardState extends State<_FoodItemRankingCard> {
 }
 
 // ─────────────────────────────────────────────────────────────────
-// AI Suggestion Card
+// Collapsible AI Coach Tip (collapsed by default)
+// ─────────────────────────────────────────────────────────────────
+
+class _CollapsibleAISuggestion extends StatefulWidget {
+  final String? suggestion;
+  final List<String>? encouragements;
+  final List<String>? warnings;
+  final String? recommendedSwap;
+  final bool isDark;
+
+  const _CollapsibleAISuggestion({
+    this.suggestion,
+    this.encouragements,
+    this.warnings,
+    this.recommendedSwap,
+    required this.isDark,
+  });
+
+  @override
+  State<_CollapsibleAISuggestion> createState() => _CollapsibleAISuggestionState();
+}
+
+class _CollapsibleAISuggestionState extends State<_CollapsibleAISuggestion> {
+  bool _isExpanded = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final textPrimary = widget.isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textMuted = widget.isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final teal = widget.isDark ? AppColors.teal : AppColorsLight.teal;
+
+    return GestureDetector(
+      onTap: () => setState(() => _isExpanded = !_isExpanded),
+      child: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              teal.withValues(alpha: 0.1),
+              teal.withValues(alpha: 0.05),
+            ],
+          ),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: teal.withValues(alpha: 0.2)),
+        ),
+        child: Column(
+          children: [
+            // Header — always visible
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+              child: Row(
+                children: [
+                  Icon(Icons.psychology, size: 18, color: teal),
+                  const SizedBox(width: 8),
+                  Text(
+                    'Coach Tip',
+                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: textPrimary),
+                  ),
+                  const Spacer(),
+                  AnimatedRotation(
+                    turns: _isExpanded ? 0.5 : 0,
+                    duration: const Duration(milliseconds: 200),
+                    child: Icon(Icons.expand_more, size: 20, color: textMuted),
+                  ),
+                ],
+              ),
+            ),
+            // Expanded content
+            AnimatedCrossFade(
+              firstChild: const SizedBox.shrink(),
+              secondChild: Padding(
+                padding: const EdgeInsets.fromLTRB(14, 0, 14, 14),
+                child: _AISuggestionContent(
+                  suggestion: widget.suggestion,
+                  encouragements: widget.encouragements,
+                  warnings: widget.warnings,
+                  recommendedSwap: widget.recommendedSwap,
+                  isDark: widget.isDark,
+                ),
+              ),
+              crossFadeState: _isExpanded ? CrossFadeState.showSecond : CrossFadeState.showFirst,
+              duration: const Duration(milliseconds: 200),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Inner content of the AI suggestion (shared by both collapsible and standalone cards)
+class _AISuggestionContent extends StatelessWidget {
+  final String? suggestion;
+  final List<String>? encouragements;
+  final List<String>? warnings;
+  final String? recommendedSwap;
+  final bool isDark;
+
+  const _AISuggestionContent({
+    this.suggestion,
+    this.encouragements,
+    this.warnings,
+    this.recommendedSwap,
+    required this.isDark,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final encourageColor = isDark ? AppColors.green : AppColorsLight.green;
+    final warningColor = isDark ? AppColors.error : AppColorsLight.error;
+    final swapColor = isDark ? AppColors.purple : AppColorsLight.purple;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (encouragements != null && encouragements!.isNotEmpty) ...[
+          ...encouragements!.map((e) => Padding(
+            padding: const EdgeInsets.only(bottom: 6),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(Icons.thumb_up, size: 14, color: encourageColor),
+                const SizedBox(width: 8),
+                Expanded(child: Text(e, style: TextStyle(fontSize: 13, color: encourageColor))),
+              ],
+            ),
+          )),
+        ],
+        if (warnings != null && warnings!.isNotEmpty) ...[
+          if (encouragements != null && encouragements!.isNotEmpty) const SizedBox(height: 4),
+          ...warnings!.map((w) => Padding(
+            padding: const EdgeInsets.only(bottom: 6),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(Icons.warning_amber, size: 14, color: warningColor),
+                const SizedBox(width: 8),
+                Expanded(child: Text(w, style: TextStyle(fontSize: 13, color: warningColor))),
+              ],
+            ),
+          )),
+        ],
+        if (recommendedSwap != null) ...[
+          const SizedBox(height: 4),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(Icons.swap_horiz, size: 14, color: swapColor),
+              const SizedBox(width: 8),
+              Expanded(child: Text('Try: $recommendedSwap', style: TextStyle(fontSize: 13, color: swapColor))),
+            ],
+          ),
+        ],
+        if (suggestion != null && (encouragements == null || encouragements!.isEmpty) && (warnings == null || warnings!.isEmpty)) ...[
+          Text(suggestion!, style: TextStyle(fontSize: 13, color: textMuted)),
+        ],
+      ],
+    );
+  }
+}
+
+// AI Suggestion Card (standalone, used elsewhere)
 // ─────────────────────────────────────────────────────────────────
 
 class _AISuggestionCard extends StatelessWidget {

@@ -10,9 +10,10 @@ Endpoints for AI-powered recipe suggestions based on:
 
 import logging
 from typing import List, Optional
-from fastapi import APIRouter, Depends, HTTPException, Query
-from core.auth import get_current_user
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
+from core.auth import get_current_user, verify_user_ownership, verify_resource_ownership
 from core.exceptions import safe_internal_error
+from core.rate_limiter import limiter
 from pydantic import BaseModel, Field
 
 from services.recipe_suggestion_service import (
@@ -122,7 +123,8 @@ class UpdatePreferencesRequest(BaseModel):
 
 
 @router.post("/{user_id}/suggest", response_model=SuggestRecipesResponse)
-async def suggest_recipes(user_id: str, request: SuggestRecipesRequest,
+@limiter.limit("5/minute")
+async def suggest_recipes(req: Request, user_id: str, request: SuggestRecipesRequest,
     current_user: dict = Depends(get_current_user),
 ):
     """
@@ -135,6 +137,7 @@ async def suggest_recipes(user_id: str, request: SuggestRecipesRequest,
 
     Returns 1-5 AI-generated recipes tailored to the user.
     """
+    verify_user_ownership(current_user, user_id)
     logger.info(f"🍳 [API] Recipe suggestion request for user {user_id}: {request.meal_type}, count={request.count}")
 
     try:
@@ -216,7 +219,7 @@ async def suggest_recipes(user_id: str, request: SuggestRecipesRequest,
 
     except ValueError as e:
         logger.error(f"❌ [API] Recipe suggestion error: {e}")
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail="Invalid request")
     except Exception as e:
         logger.error(f"❌ [API] Recipe suggestion error: {e}")
         raise safe_internal_error(e, "recipe_suggestions")
@@ -230,6 +233,7 @@ async def get_saved_suggestions(
     current_user: dict = Depends(get_current_user),
 ):
     """Get user's previous recipe suggestions."""
+    verify_user_ownership(current_user, user_id)
     logger.info(f"🍳 [API] Getting suggestions for user {user_id}, saved_only={saved_only}")
 
     try:
@@ -281,6 +285,7 @@ async def rate_suggestion(user_id: str, suggestion_id: str, request: RateSuggest
     current_user: dict = Depends(get_current_user),
 ):
     """Rate a recipe suggestion (1-5 stars)."""
+    verify_user_ownership(current_user, user_id)
     logger.info(f"🍳 [API] Rating suggestion {suggestion_id} with {request.rating} stars")
 
     success = await recipe_suggestion_service.rate_suggestion(
@@ -317,6 +322,7 @@ async def save_suggestion(user_id: str, suggestion_id: str,
     current_user: dict = Depends(get_current_user),
 ):
     """Save/favorite a recipe suggestion."""
+    verify_user_ownership(current_user, user_id)
     logger.info(f"🍳 [API] Saving suggestion {suggestion_id}")
 
     success = await recipe_suggestion_service.save_suggestion(
@@ -350,6 +356,7 @@ async def mark_cooked(user_id: str, suggestion_id: str,
     current_user: dict = Depends(get_current_user),
 ):
     """Mark a recipe suggestion as cooked."""
+    verify_user_ownership(current_user, user_id)
     logger.info(f"🍳 [API] Marking suggestion {suggestion_id} as cooked")
 
     success = await recipe_suggestion_service.mark_cooked(
@@ -383,6 +390,7 @@ async def convert_to_recipe(user_id: str, suggestion_id: str,
     current_user: dict = Depends(get_current_user),
 ):
     """Convert a suggestion to a user recipe in the recipe library."""
+    verify_user_ownership(current_user, user_id)
     logger.info(f"🍳 [API] Converting suggestion {suggestion_id} to user recipe")
 
     recipe_id = await recipe_suggestion_service.convert_to_user_recipe(
@@ -421,6 +429,7 @@ async def update_recipe_preferences(user_id: str, request: UpdatePreferencesRequ
     """
     Update user's recipe-related preferences (body type, cuisines, spice tolerance).
     """
+    verify_user_ownership(current_user, user_id)
     logger.info(f"🍳 [API] Updating recipe preferences for user {user_id}")
 
     try:

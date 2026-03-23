@@ -412,7 +412,7 @@ async def generate_quick_workout(request: Request, body: QuickWorkoutRequest, ba
             raise
         except Exception as ai_error:
             logger.error(f"AI generation failed: {ai_error}")
-            raise HTTPException(status_code=500, detail=f"Failed to generate workout: {str(ai_error)}")
+            raise safe_internal_error(ai_error, "quick_workout")
 
         # Save the workout
         workout_db_data = {

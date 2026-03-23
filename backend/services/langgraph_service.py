@@ -200,6 +200,26 @@ class LangGraphCoachService:
             )
 
     @staticmethod
+    def _trim_conversation_history(history: list, max_total_chars: int = 50_000) -> list:
+        """Trim conversation history to fit within a total character budget.
+
+        Keeps the most recent messages, dropping oldest first.
+        Prevents excessively large payloads from being sent to Gemini.
+        50,000 chars ≈ 12,500 tokens.
+        """
+        if not history:
+            return history
+        total_chars = sum(len(msg.get("content", "")) for msg in history)
+        if total_chars <= max_total_chars:
+            return history
+        # Drop oldest messages until within budget
+        trimmed = list(history)
+        while trimmed and total_chars > max_total_chars:
+            removed = trimmed.pop(0)
+            total_chars -= len(removed.get("content", ""))
+        return trimmed
+
+    @staticmethod
     async def _check_media_usage(user_id: str, media_count: int = 1) -> None:
         """Check daily media usage cap for the user.
 
@@ -275,6 +295,53 @@ class LangGraphCoachService:
                 logger.info(f"Detected @mention: {agent_type.value}, cleaned message: {cleaned[:50]}...")
                 return agent_type, cleaned
         return None, message
+
+    @staticmethod
+    def _sanitize_user_message(message: str) -> str:
+        """Sanitize user message against prompt injection attacks.
+
+        Strips known injection patterns that attempt to override system prompts
+        or manipulate the AI into ignoring its instructions. This is a defense-in-depth
+        measure — the AI should also be resilient via its system prompt, but stripping
+        obvious attack patterns reduces risk.
+
+        Args:
+            message: The user's raw message
+
+        Returns:
+            Sanitized message with injection patterns removed
+
+        Notes:
+            - EDGE CASE: Legitimate messages like "ignore my previous message" are preserved
+              because we only match patterns with "instructions"/"prompts"/"system" context
+            - Patterns are case-insensitive
+            - This is NOT a complete solution — AI safety also requires output validation
+        """
+        # Patterns that attempt to override system instructions
+        injection_patterns = [
+            r'ignore\s+(all\s+)?previous\s+instructions',
+            r'ignore\s+(all\s+)?prior\s+instructions',
+            r'disregard\s+(all\s+)?previous\s+instructions',
+            r'forget\s+(all\s+)?previous\s+instructions',
+            r'override\s+(all\s+)?previous\s+instructions',
+            r'you\s+are\s+now\s+(?:a\s+)?(?:new|different)',
+            r'SYSTEM\s*:\s*',  # Fake system message injection
+            r'ASSISTANT\s*:\s*',  # Fake assistant role injection
+            r'<\|?(?:system|endoftext|im_start|im_end)\|?>',  # Token injection attempts
+            r'###\s*(?:SYSTEM|INSTRUCTION|NEW\s+ROLE)',  # Markdown-style injection
+        ]
+
+        sanitized = message
+        for pattern in injection_patterns:
+            sanitized = re.sub(pattern, '', sanitized, flags=re.IGNORECASE)
+
+        # Collapse multiple spaces from removals
+        sanitized = re.sub(r'\s{2,}', ' ', sanitized).strip()
+
+        if sanitized != message:
+            logger.warning(f"⚠️ [Security] Prompt injection pattern detected and sanitized for message (length {len(message)})")
+
+        return sanitized or message  # Never return empty string
 
     def _infer_agent_from_intent(self, intent: CoachIntent) -> AgentType:
         """Infer which agent should handle based on intent."""
@@ -556,7 +623,7 @@ class LangGraphCoachService:
             "user_message": cleaned_message,
             "user_id": request.user_id,
             "user_profile": self._enrich_user_profile(request),
-            "conversation_history": request.conversation_history,
+            "conversation_history": self._trim_conversation_history(request.conversation_history),
             "intent": intent,
             "rag_documents": [],
             "rag_context_formatted": rag_context,
@@ -655,8 +722,9 @@ class LangGraphCoachService:
                 self._validate_media_request(all_media)
                 await self._check_media_usage(request.user_id, len(all_media))
 
-            # 1. Detect @mention
+            # 1. Detect @mention and sanitize against prompt injection
             mentioned_agent, cleaned_message = self._detect_agent_mention(request.message)
+            cleaned_message = self._sanitize_user_message(cleaned_message)
 
             # 2. Compute media signals (sync — no I/O)
             has_image = request.image_base64 is not None

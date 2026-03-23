@@ -1396,7 +1396,7 @@ async def get_ai_fasting_insight(
     except ValueError as e:
         # Validation errors from AI parsing
         logger.error(f"Validation error getting AI insight: {e}")
-        raise HTTPException(status_code=422, detail=str(e))
+        raise HTTPException(status_code=422, detail="Invalid data format")
 
     except Exception as e:
         logger.error(f"Error getting AI fasting insight: {e}")

@@ -222,8 +222,10 @@ EXAMPLES:
 {f'MEDIA_CONTENT_TYPE: {state.get("media_content_type")}' if state.get('media_content_type') else 'MEDIA_CONTENT_TYPE: none'}
 {f'ACTION REQUIRED: This is an app screenshot. Call parse_app_screenshot with the s3_keys and mime_types from media_refs.' if state.get('media_content_type') == 'app_screenshot' else ''}
 {f'ACTION REQUIRED: This is a nutrition label. Call parse_nutrition_label with the s3_keys and mime_types from media_refs.' if state.get('media_content_type') == 'nutrition_label' else ''}
-{f'ACTION REQUIRED: This is a restaurant menu. Call analyze_multi_food_images with s3_keys and mime_types from media_refs and analysis_mode="menu".' if state.get('media_content_type') == 'food_menu' else ''}
-{f'ACTION REQUIRED: This is a buffet spread. Call analyze_multi_food_images with s3_keys and mime_types from media_refs and analysis_mode="buffet".' if state.get('media_content_type') == 'food_buffet' else ''}
+{f'ACTION REQUIRED: This is a restaurant menu. Call analyze_multi_food_images with s3_keys and mime_types from media_refs and analysis_mode="menu".' if state.get('media_content_type') == 'food_menu' and state.get('media_refs') else ''}
+{f'ACTION REQUIRED: This is a restaurant menu image. Call analyze_food_image with the image_base64. Set user_message to "Analyze this restaurant menu and list all dishes with estimated nutrition".' if state.get('media_content_type') == 'food_menu' and not state.get('media_refs') and state.get('image_base64') else ''}
+{f'ACTION REQUIRED: This is a buffet spread. Call analyze_multi_food_images with s3_keys and mime_types from media_refs and analysis_mode="buffet".' if state.get('media_content_type') == 'food_buffet' and state.get('media_refs') else ''}
+{f'ACTION REQUIRED: This is a buffet spread image. Call analyze_food_image with the image_base64. Set user_message to "Analyze this buffet and identify all visible dishes with estimated nutrition".' if state.get('media_content_type') == 'food_buffet' and not state.get('media_refs') and state.get('image_base64') else ''}
 
 USER_ID: {state['user_id']}"""
 
@@ -366,7 +368,12 @@ CONTEXT:
 IMPORTANT:
 - The nutrition actions have been completed successfully
 - Respond naturally based on your personality settings
-- NEVER mention tool names or technical details"""
+- NEVER mention tool names or technical details
+- If a food analysis tool returned "no food items identified" or failed:
+  * Acknowledge you received the image but couldn't identify specific items
+  * Suggest the image may be unclear, too dark, or an unusual angle
+  * Offer to help if the user describes what's in the image or retakes the photo
+  * Do NOT claim "the image didn't load" — it loaded fine, the AI just couldn't identify items"""
 
     messages = state.get("messages", [])
     tool_messages = state.get("tool_messages", [])
@@ -477,27 +484,34 @@ async def nutrition_action_data_node(state: NutritionAgentState) -> Dict[str, An
     for result in tool_results:
         action = result.get("action")
 
-        if action == "analyze_food_image":
-            action_data = {
-                "action": "food_logged",
-                "food_log_id": result.get("food_log_id"),
-                "meal_type": result.get("meal_type"),
-                "total_calories": result.get("total_calories"),
-                "success": result.get("success", False),
-            }
-        elif action == "analyze_multi_food_images":
+        if action in ("analyze_food_image", "analyze_multi_food_images"):
+            # Determine analysis type
             analysis_type = result.get("analysis_type", "plate")
+            if action == "analyze_multi_food_images":
+                analysis_type = result.get("analysis_type", result.get("result", {}).get("analysis_type", "plate"))
+
+            # Get food items - could be in result directly or nested in result.result
+            food_items = result.get("food_items", [])
+            if not food_items and isinstance(result.get("result"), dict):
+                food_items = result["result"].get("food_items", [])
+                # Also check for dishes (buffet/menu format)
+                if not food_items:
+                    food_items = result["result"].get("dishes", [])
+
             action_data = {
-                "action": f"food_analysis_{analysis_type}",
+                "action": "food_analysis",
                 "analysis_type": analysis_type,
+                "food_items": food_items,
+                "total_calories": result.get("total_calories", 0),
+                "protein_g": result.get("protein_g", 0),
+                "carbs_g": result.get("carbs_g", 0),
+                "fat_g": result.get("fat_g", 0),
+                "fiber_g": result.get("fiber_g", 0),
+                "health_score": result.get("health_score"),
+                "ai_feedback": result.get("ai_feedback", ""),
+                "meal_type": result.get("meal_type", "snack"),
                 "success": result.get("success", False),
             }
-            # For plate mode, include food_log_id
-            inner_result = result.get("result", {})
-            if analysis_type == "plate" and inner_result.get("food_log_id"):
-                action_data["food_log_id"] = inner_result["food_log_id"]
-                action_data["total_calories"] = inner_result.get("total_calories", 0)
-                action_data["meal_type"] = inner_result.get("meal_type", "snack")
         elif action in ("parse_app_screenshot", "parse_nutrition_label"):
             action_data = {
                 "action": "food_logged",

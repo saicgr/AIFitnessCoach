@@ -51,6 +51,22 @@ class NotificationPrefsKeys {
   static const movementStepThreshold = 'notif_movement_step_threshold';
   // Smart timing
   static const smartTimingEnabled = 'notif_smart_timing_enabled';
+  // Accountability Coach
+  static const missedWorkoutNudge = 'notif_missed_workout_nudge';
+  static const missedWorkoutTime = 'notif_missed_workout_time';
+  static const postWorkoutMealReminder = 'notif_post_workout_meal_reminder';
+  static const postWorkoutMealDelayMinutes = 'notif_post_workout_meal_delay';
+  static const habitReminders = 'notif_habit_reminders';
+  static const habitReminderTime = 'notif_habit_reminder_time';
+  static const weeklyCheckinReminder = 'notif_weekly_checkin_reminder';
+  static const weeklyCheckinDay = 'notif_weekly_checkin_day';
+  static const weeklyCheckinTime = 'notif_weekly_checkin_time';
+  static const streakCelebration = 'notif_streak_celebration';
+  static const milestoneCelebration = 'notif_milestone_celebration';
+  static const dailyNudgeLimit = 'notif_daily_nudge_limit';
+  static const accountabilityIntensity = 'notif_accountability_intensity';
+  static const aiPersonalizedNudges = 'notif_ai_personalized_nudges';
+  static const guiltNotifications = 'notif_guilt_notifications';
   // Cached user context
   static const cachedUserName = 'notif_cached_user_name';
   static const cachedStreak = 'notif_cached_streak';
@@ -89,6 +105,23 @@ class NotificationPreferences {
   // Smart timing
   final bool smartTimingEnabled;
 
+  // Accountability Coach Nudge Preferences (synced to backend)
+  final bool missedWorkoutNudge;
+  final String missedWorkoutTime;
+  final bool postWorkoutMealReminder;
+  final int postWorkoutMealDelayMinutes;
+  final bool habitReminders;
+  final String habitReminderTime;
+  final bool weeklyCheckinReminder;
+  final int weeklyCheckinDay; // 0=Sunday
+  final String weeklyCheckinTime;
+  final bool streakCelebration;
+  final bool milestoneCelebration;
+  final int dailyNudgeLimit; // 1-8
+  final String accountabilityIntensity; // gentle/balanced/tough_love/off
+  final bool aiPersonalizedNudges;
+  final bool guiltNotifications;
+
   const NotificationPreferences({
     this.workoutReminders = true,
     this.nutritionReminders = true,
@@ -118,6 +151,22 @@ class NotificationPreferences {
     this.movementStepThreshold = 250, // 250 steps per hour threshold
     // Smart timing
     this.smartTimingEnabled = false,
+    // Accountability Coach defaults
+    this.missedWorkoutNudge = true,
+    this.missedWorkoutTime = '19:00',
+    this.postWorkoutMealReminder = true,
+    this.postWorkoutMealDelayMinutes = 30,
+    this.habitReminders = true,
+    this.habitReminderTime = '20:00',
+    this.weeklyCheckinReminder = true,
+    this.weeklyCheckinDay = 0,
+    this.weeklyCheckinTime = '09:00',
+    this.streakCelebration = true,
+    this.milestoneCelebration = true,
+    this.dailyNudgeLimit = 4,
+    this.accountabilityIntensity = 'balanced',
+    this.aiPersonalizedNudges = true,
+    this.guiltNotifications = true,
   });
 
   NotificationPreferences copyWith({
@@ -146,6 +195,22 @@ class NotificationPreferences {
     String? movementReminderEndTime,
     int? movementStepThreshold,
     bool? smartTimingEnabled,
+    // Accountability Coach
+    bool? missedWorkoutNudge,
+    String? missedWorkoutTime,
+    bool? postWorkoutMealReminder,
+    int? postWorkoutMealDelayMinutes,
+    bool? habitReminders,
+    String? habitReminderTime,
+    bool? weeklyCheckinReminder,
+    int? weeklyCheckinDay,
+    String? weeklyCheckinTime,
+    bool? streakCelebration,
+    bool? milestoneCelebration,
+    int? dailyNudgeLimit,
+    String? accountabilityIntensity,
+    bool? aiPersonalizedNudges,
+    bool? guiltNotifications,
   }) {
     return NotificationPreferences(
       workoutReminders: workoutReminders ?? this.workoutReminders,
@@ -173,6 +238,22 @@ class NotificationPreferences {
       movementReminderEndTime: movementReminderEndTime ?? this.movementReminderEndTime,
       movementStepThreshold: movementStepThreshold ?? this.movementStepThreshold,
       smartTimingEnabled: smartTimingEnabled ?? this.smartTimingEnabled,
+      // Accountability Coach
+      missedWorkoutNudge: missedWorkoutNudge ?? this.missedWorkoutNudge,
+      missedWorkoutTime: missedWorkoutTime ?? this.missedWorkoutTime,
+      postWorkoutMealReminder: postWorkoutMealReminder ?? this.postWorkoutMealReminder,
+      postWorkoutMealDelayMinutes: postWorkoutMealDelayMinutes ?? this.postWorkoutMealDelayMinutes,
+      habitReminders: habitReminders ?? this.habitReminders,
+      habitReminderTime: habitReminderTime ?? this.habitReminderTime,
+      weeklyCheckinReminder: weeklyCheckinReminder ?? this.weeklyCheckinReminder,
+      weeklyCheckinDay: weeklyCheckinDay ?? this.weeklyCheckinDay,
+      weeklyCheckinTime: weeklyCheckinTime ?? this.weeklyCheckinTime,
+      streakCelebration: streakCelebration ?? this.streakCelebration,
+      milestoneCelebration: milestoneCelebration ?? this.milestoneCelebration,
+      dailyNudgeLimit: dailyNudgeLimit ?? this.dailyNudgeLimit,
+      accountabilityIntensity: accountabilityIntensity ?? this.accountabilityIntensity,
+      aiPersonalizedNudges: aiPersonalizedNudges ?? this.aiPersonalizedNudges,
+      guiltNotifications: guiltNotifications ?? this.guiltNotifications,
     );
   }
 
@@ -202,6 +283,22 @@ class NotificationPreferences {
         'movement_reminder_end_time': movementReminderEndTime,
         'movement_step_threshold': movementStepThreshold,
         'smart_timing_enabled': smartTimingEnabled,
+        // Accountability Coach
+        'missed_workout_nudge': missedWorkoutNudge,
+        'missed_workout_time': missedWorkoutTime,
+        'post_workout_meal_reminder': postWorkoutMealReminder,
+        'post_workout_meal_delay_minutes': postWorkoutMealDelayMinutes,
+        'habit_reminders': habitReminders,
+        'habit_reminder_time': habitReminderTime,
+        'weekly_checkin_reminder': weeklyCheckinReminder,
+        'weekly_checkin_day': weeklyCheckinDay,
+        'weekly_checkin_time': weeklyCheckinTime,
+        'streak_celebration': streakCelebration,
+        'milestone_celebration': milestoneCelebration,
+        'daily_nudge_limit': dailyNudgeLimit,
+        'accountability_intensity': accountabilityIntensity,
+        'ai_personalized_nudges': aiPersonalizedNudges,
+        'guilt_notifications': guiltNotifications,
       };
 }
 
@@ -257,6 +354,11 @@ class NotificationService {
 
   /// Callback for FCM token refresh - set this to sync token to backend
   OnTokenRefreshCallback? onTokenRefresh;
+
+  /// Callback when an accountability coach nudge arrives in foreground.
+  /// Set by the chat screen to trigger a message list refresh when the user
+  /// is already viewing the chat while a proactive coach message arrives.
+  VoidCallback? onCoachNudgeReceived;
 
   String? get fcmToken => _fcmToken;
 
@@ -648,6 +750,15 @@ class NotificationService {
 
     // Get notification type from data payload
     final notificationType = message.data['type'] as String?;
+
+    // ACCOUNTABILITY COACH: If a nudge arrives while user is in the chat,
+    // trigger a chat refresh so the new coach message appears in real-time.
+    // The message is already saved in chat_messages DB by the backend.
+    if (notificationType == 'ai_coach_accountability' ||
+        (message.data['accountability'] == 'true')) {
+      onCoachNudgeReceived?.call();
+      debugPrint('🤖 [FCM] Coach nudge received in foreground — triggering chat refresh');
+    }
 
     // Show local notification with appropriate channel
     final notification = message.notification;
@@ -1761,6 +1872,22 @@ class NotificationPreferencesNotifier extends StateNotifier<NotificationPreferen
       movementStepThreshold: _prefs.getInt(NotificationPrefsKeys.movementStepThreshold) ?? 250,
       // Smart timing
       smartTimingEnabled: _prefs.getBool(NotificationPrefsKeys.smartTimingEnabled) ?? false,
+      // Accountability Coach
+      missedWorkoutNudge: _prefs.getBool(NotificationPrefsKeys.missedWorkoutNudge) ?? true,
+      missedWorkoutTime: _prefs.getString(NotificationPrefsKeys.missedWorkoutTime) ?? '19:00',
+      postWorkoutMealReminder: _prefs.getBool(NotificationPrefsKeys.postWorkoutMealReminder) ?? true,
+      postWorkoutMealDelayMinutes: _prefs.getInt(NotificationPrefsKeys.postWorkoutMealDelayMinutes) ?? 30,
+      habitReminders: _prefs.getBool(NotificationPrefsKeys.habitReminders) ?? true,
+      habitReminderTime: _prefs.getString(NotificationPrefsKeys.habitReminderTime) ?? '20:00',
+      weeklyCheckinReminder: _prefs.getBool(NotificationPrefsKeys.weeklyCheckinReminder) ?? true,
+      weeklyCheckinDay: _prefs.getInt(NotificationPrefsKeys.weeklyCheckinDay) ?? 0,
+      weeklyCheckinTime: _prefs.getString(NotificationPrefsKeys.weeklyCheckinTime) ?? '09:00',
+      streakCelebration: _prefs.getBool(NotificationPrefsKeys.streakCelebration) ?? true,
+      milestoneCelebration: _prefs.getBool(NotificationPrefsKeys.milestoneCelebration) ?? true,
+      dailyNudgeLimit: _prefs.getInt(NotificationPrefsKeys.dailyNudgeLimit) ?? 4,
+      accountabilityIntensity: _prefs.getString(NotificationPrefsKeys.accountabilityIntensity) ?? 'balanced',
+      aiPersonalizedNudges: _prefs.getBool(NotificationPrefsKeys.aiPersonalizedNudges) ?? true,
+      guiltNotifications: _prefs.getBool(NotificationPrefsKeys.guiltNotifications) ?? true,
     );
     // Schedule notifications on load
     _rescheduleNotifications();
@@ -1926,6 +2053,93 @@ class NotificationPreferencesNotifier extends StateNotifier<NotificationPreferen
     await _prefs.setBool(NotificationPrefsKeys.smartTimingEnabled, value);
     state = state.copyWith(smartTimingEnabled: value);
     await _rescheduleNotifications();
+    await _syncPreferencesToBackend();
+  }
+
+  // ─── Accountability Coach Setters ──────────────────────────────
+
+  Future<void> setMissedWorkoutNudge(bool value) async {
+    await _prefs.setBool(NotificationPrefsKeys.missedWorkoutNudge, value);
+    state = state.copyWith(missedWorkoutNudge: value);
+    await _syncPreferencesToBackend();
+  }
+
+  Future<void> setMissedWorkoutTime(String time) async {
+    await _prefs.setString(NotificationPrefsKeys.missedWorkoutTime, time);
+    state = state.copyWith(missedWorkoutTime: time);
+    await _syncPreferencesToBackend();
+  }
+
+  Future<void> setPostWorkoutMealReminder(bool value) async {
+    await _prefs.setBool(NotificationPrefsKeys.postWorkoutMealReminder, value);
+    state = state.copyWith(postWorkoutMealReminder: value);
+    await _syncPreferencesToBackend();
+  }
+
+  Future<void> setPostWorkoutMealDelay(int minutes) async {
+    await _prefs.setInt(NotificationPrefsKeys.postWorkoutMealDelayMinutes, minutes);
+    state = state.copyWith(postWorkoutMealDelayMinutes: minutes);
+    await _syncPreferencesToBackend();
+  }
+
+  Future<void> setHabitReminders(bool value) async {
+    await _prefs.setBool(NotificationPrefsKeys.habitReminders, value);
+    state = state.copyWith(habitReminders: value);
+    await _syncPreferencesToBackend();
+  }
+
+  Future<void> setHabitReminderTime(String time) async {
+    await _prefs.setString(NotificationPrefsKeys.habitReminderTime, time);
+    state = state.copyWith(habitReminderTime: time);
+    await _syncPreferencesToBackend();
+  }
+
+  Future<void> setWeeklyCheckinReminder(bool value) async {
+    await _prefs.setBool(NotificationPrefsKeys.weeklyCheckinReminder, value);
+    state = state.copyWith(weeklyCheckinReminder: value);
+    await _syncPreferencesToBackend();
+  }
+
+  Future<void> setWeeklyCheckinSchedule(int day, String time) async {
+    await _prefs.setInt(NotificationPrefsKeys.weeklyCheckinDay, day);
+    await _prefs.setString(NotificationPrefsKeys.weeklyCheckinTime, time);
+    state = state.copyWith(weeklyCheckinDay: day, weeklyCheckinTime: time);
+    await _syncPreferencesToBackend();
+  }
+
+  Future<void> setStreakCelebration(bool value) async {
+    await _prefs.setBool(NotificationPrefsKeys.streakCelebration, value);
+    state = state.copyWith(streakCelebration: value);
+    await _syncPreferencesToBackend();
+  }
+
+  Future<void> setMilestoneCelebration(bool value) async {
+    await _prefs.setBool(NotificationPrefsKeys.milestoneCelebration, value);
+    state = state.copyWith(milestoneCelebration: value);
+    await _syncPreferencesToBackend();
+  }
+
+  Future<void> setDailyNudgeLimit(int limit) async {
+    await _prefs.setInt(NotificationPrefsKeys.dailyNudgeLimit, limit);
+    state = state.copyWith(dailyNudgeLimit: limit);
+    await _syncPreferencesToBackend();
+  }
+
+  Future<void> setAccountabilityIntensity(String intensity) async {
+    await _prefs.setString(NotificationPrefsKeys.accountabilityIntensity, intensity);
+    state = state.copyWith(accountabilityIntensity: intensity);
+    await _syncPreferencesToBackend();
+  }
+
+  Future<void> setAiPersonalizedNudges(bool value) async {
+    await _prefs.setBool(NotificationPrefsKeys.aiPersonalizedNudges, value);
+    state = state.copyWith(aiPersonalizedNudges: value);
+    await _syncPreferencesToBackend();
+  }
+
+  Future<void> setGuiltNotifications(bool value) async {
+    await _prefs.setBool(NotificationPrefsKeys.guiltNotifications, value);
+    state = state.copyWith(guiltNotifications: value);
     await _syncPreferencesToBackend();
   }
 }

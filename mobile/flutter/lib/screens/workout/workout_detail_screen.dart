@@ -20,8 +20,11 @@ import '../../data/models/workout_generation_params.dart';
 import '../../data/models/coach_persona.dart';
 import '../ai_settings/ai_settings_screen.dart';
 import '../../data/repositories/workout_repository.dart';
+import '../../data/models/sauna_log.dart';
 import '../../data/repositories/auth_repository.dart';
+import '../../data/repositories/sauna_repository.dart';
 import '../../data/services/haptic_service.dart';
+import 'widgets/sauna_dialog.dart';
 import '../home/widgets/components/training_program_selector.dart';
 import 'widgets/workout_actions_sheet.dart';
 import 'widgets/exercise_swap_sheet.dart';
@@ -77,6 +80,10 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
   Timer? _autoSaveTimer;
   bool _isSaving = false;
   bool _isFavorite = false;
+
+  // Sauna post-workout logging
+  SaunaLog? _saunaLog;
+  bool _isLoadingSauna = false;
 
   /// Toggle between kg and lbs units locally
   void _toggleUnit() {
@@ -192,6 +199,10 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
       _loadWorkoutSummary();
       _loadTrainingSplit();
       _loadGenerationParams();
+      // Load sauna log for completed workouts
+      if (workout.isCompleted == true) {
+        _loadSaunaLog();
+      }
     } catch (e) {
       debugPrint('❌ [WorkoutDetail] Failed to load workout ${widget.workoutId}: $e');
       setState(() {
@@ -314,6 +325,66 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
       if (mounted) {
         setState(() => _isLoadingParams = false);
       }
+    }
+  }
+
+  // ─────────────────────────────────────────────────────────────────
+  // SAUNA POST-WORKOUT LOGGING
+  // ─────────────────────────────────────────────────────────────────
+
+  Future<void> _loadSaunaLog() async {
+    if (_workout?.id == null) return;
+    setState(() => _isLoadingSauna = true);
+    try {
+      final authState = ref.read(authStateProvider);
+      final userId = authState.user?.id;
+      if (userId == null) return;
+      final repo = ref.read(saunaRepositoryProvider);
+      final logs = await repo.getLogs(userId, workoutId: _workout!.id!);
+      if (mounted) {
+        setState(() {
+          _saunaLog = logs.isNotEmpty ? logs.first : null;
+          _isLoadingSauna = false;
+        });
+      }
+    } catch (e) {
+      debugPrint('❌ [WorkoutDetail] Error loading sauna log: $e');
+      if (mounted) setState(() => _isLoadingSauna = false);
+    }
+  }
+
+  Future<void> _addSaunaToWorkout() async {
+    final result = await showSaunaDialog(context: context);
+    if (result != null && mounted) {
+      try {
+        final authState = ref.read(authStateProvider);
+        final userId = authState.user?.id;
+        if (userId == null) return;
+        final repo = ref.read(saunaRepositoryProvider);
+        final log = await repo.logSauna(
+          userId: userId,
+          durationMinutes: result.durationMinutes,
+          workoutId: _workout?.id,
+        );
+        if (mounted) {
+          setState(() => _saunaLog = log);
+        }
+      } catch (e) {
+        debugPrint('❌ [WorkoutDetail] Error logging sauna: $e');
+      }
+    }
+  }
+
+  Future<void> _deleteSaunaLog() async {
+    if (_saunaLog == null) return;
+    try {
+      final repo = ref.read(saunaRepositoryProvider);
+      await repo.deleteLog(_saunaLog!.id);
+      if (mounted) {
+        setState(() => _saunaLog = null);
+      }
+    } catch (e) {
+      debugPrint('❌ [WorkoutDetail] Error deleting sauna log: $e');
     }
   }
 
@@ -1584,6 +1655,70 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
           ],
 
           // ─────────────────────────────────────────────────────────────────
+          // POST-WORKOUT SECTION (Sauna - only for completed workouts)
+          // ─────────────────────────────────────────────────────────────────
+          if (workout.isCompleted == true && !_isLoadingSauna)
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+                child: _saunaLog != null
+                    ? Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFE65100).withOpacity(0.08),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: const Color(0xFFE65100).withOpacity(0.2)),
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.hot_tub_rounded, size: 20, color: Color(0xFFE65100)),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    '${_saunaLog!.durationMinutes} min sauna',
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w600,
+                                      color: isDark ? AppColors.textPrimary : AppColorsLight.textPrimary,
+                                    ),
+                                  ),
+                                  if (_saunaLog!.estimatedCalories != null)
+                                    Text(
+                                      '~${_saunaLog!.estimatedCalories} cal burned',
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
+                                      ),
+                                    ),
+                                ],
+                              ),
+                            ),
+                            GestureDetector(
+                              onTap: _deleteSaunaLog,
+                              child: Icon(
+                                Icons.close,
+                                size: 18,
+                                color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
+                              ),
+                            ),
+                          ],
+                        ),
+                      )
+                    : TextButton.icon(
+                        onPressed: _addSaunaToWorkout,
+                        icon: const Icon(Icons.hot_tub_rounded, size: 18),
+                        label: const Text('Add Sauna Time'),
+                        style: TextButton.styleFrom(
+                          foregroundColor: const Color(0xFFE65100),
+                        ),
+                      ),
+              ),
+            ),
+
+          // ─────────────────────────────────────────────────────────────────
           // WARMUP SECTION (Collapsible)
           // ─────────────────────────────────────────────────────────────────
           SliverToBoxAdapter(
@@ -1881,7 +2016,7 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
               child: _buildCollapsibleSectionHeader(
                 title: 'COOL DOWN STRETCHES',
                 icon: Icons.self_improvement,
-                color: AppColors.green,
+                color: AppColors.purple,
                 isExpanded: _isStretchesExpanded,
                 onTap: () {
                   setState(() => _isStretchesExpanded = !_isStretchesExpanded);
@@ -2435,21 +2570,6 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  // Draggable handle bar
-                  GestureDetector(
-                    behavior: HitTestBehavior.opaque,
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      child: Container(
-                        width: 40,
-                        height: 4,
-                        decoration: BoxDecoration(
-                          color: textMuted.withValues(alpha: 0.5),
-                          borderRadius: BorderRadius.circular(2),
-                        ),
-                      ),
-                    ),
-                  ),
                   // Header with headline
                   Padding(
                     padding: const EdgeInsets.fromLTRB(20, 0, 12, 16),

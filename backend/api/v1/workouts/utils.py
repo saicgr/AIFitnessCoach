@@ -1125,6 +1125,7 @@ def format_performance_context(
         last_weight = hist.get("last_weight_kg", 0)
         last_reps = hist.get("last_reps", 0)
         max_weight = hist.get("max_weight_kg", 0)
+        session_count = hist.get("session_count", 0)
 
         if last_weight > 0:
             if last_reps > 0:
@@ -1144,6 +1145,26 @@ def format_performance_context(
         elif max_weight > 0 and max_weight > last_weight:
             # Fallback to max from strength_history if no PR table entry
             parts.append(f"Max: {max_weight}kg")
+
+        # Progressive overload recommendation
+        if last_weight > 0:
+            # Determine equipment increment
+            name_lower = name.lower()
+            if any(kw in name_lower for kw in ["barbell", "squat", "bench press", "deadlift", "overhead press"]):
+                increment = 2.5
+            else:
+                increment = 2.0  # dumbbell default
+
+            suggested_weight = round(last_weight + increment, 1)
+            if last_reps and last_reps < 6:
+                # Low reps = heavy, suggest same weight more reps first
+                parts.append(f"Suggest: {last_weight}kg x {last_reps + 1} reps (add reps)")
+            elif session_count and session_count >= 3 and max_weight and last_weight >= max_weight:
+                # Plateaued at max weight for 3+ sessions
+                parts.append(f"Suggest: {last_weight}kg x {(last_reps or 8) + 2} reps (plateau - add reps)")
+            else:
+                # Standard linear progression
+                parts.append(f"Suggest: {suggested_weight}kg x {last_reps or 8} reps")
 
         if parts:
             lines.append(f"- {name}: {' | '.join(parts)}")

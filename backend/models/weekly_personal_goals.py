@@ -25,6 +25,18 @@ class GoalStatus(str, Enum):
     abandoned = "abandoned"
 
 
+class GoalUnit(str, Enum):
+    """Unit for goal values."""
+    REPS = "reps"
+    SECONDS = "seconds"
+    MINUTES = "minutes"
+    KG = "kg"
+    KM = "km"
+    MILES = "miles"
+    STEPS = "steps"
+    CALORIES = "calories"
+
+
 # ============================================================
 # REQUEST MODELS
 # ============================================================
@@ -33,20 +45,21 @@ class CreateGoalRequest(BaseModel):
     """Request to create a new weekly goal."""
     exercise_name: str = Field(..., max_length=255, description="Exercise name (e.g., 'Push-ups')")
     goal_type: GoalType = Field(..., description="Type of goal: single_max or weekly_volume")
-    target_value: int = Field(..., gt=0, le=10000, description="Target reps/volume")
+    target_value: float = Field(..., gt=0, le=10000, description="Target reps/volume")
+    unit: GoalUnit = GoalUnit.REPS
     week_start: Optional[date_type] = Field(None, description="Week start date (defaults to current week Monday)")
 
 
 class RecordAttemptRequest(BaseModel):
     """Request to record a single_max attempt."""
-    attempt_value: int = Field(..., gt=0, le=10000, description="Reps achieved in this attempt")
+    attempt_value: float = Field(..., gt=0, le=10000, description="Reps achieved in this attempt")
     attempt_notes: Optional[str] = Field(None, max_length=500, description="Optional notes about the attempt")
     workout_log_id: Optional[str] = Field(None, max_length=100, description="Link to workout if done during workout")
 
 
 class AddVolumeRequest(BaseModel):
     """Request to add volume to a weekly_volume goal."""
-    volume_to_add: int = Field(..., gt=0, le=10000, description="Reps to add to current total")
+    volume_to_add: float = Field(..., gt=0, le=10000, description="Reps to add to current total")
     workout_log_id: Optional[str] = Field(None, max_length=100, description="Link to workout if done during workout")
 
 
@@ -59,7 +72,7 @@ class GoalAttempt(BaseModel):
     id: str
     goal_id: str
     user_id: str
-    attempt_value: int
+    attempt_value: float
     attempt_notes: Optional[str] = None
     attempted_at: datetime
     workout_log_id: Optional[str] = None
@@ -74,11 +87,12 @@ class WeeklyPersonalGoal(BaseModel):
     user_id: str
     exercise_name: str
     goal_type: GoalType
-    target_value: int
+    target_value: float
     week_start: date_type
     week_end: date_type
-    current_value: int = 0
-    personal_best: Optional[int] = None
+    current_value: float = 0
+    personal_best: Optional[float] = None
+    unit: str = "reps"
     is_pr_beaten: bool = False
     status: GoalStatus = GoalStatus.active
     completed_at: Optional[datetime] = None
@@ -103,8 +117,8 @@ class PersonalGoalRecord(BaseModel):
     user_id: str
     exercise_name: str
     goal_type: GoalType
-    record_value: int
-    previous_value: Optional[int] = None
+    record_value: float
+    previous_value: Optional[float] = None
     achieved_at: datetime
     goal_id: Optional[str] = None
 
@@ -134,12 +148,22 @@ class PersonalRecordsResponse(BaseModel):
     total_records: int = 0
 
 
+class GoalProgressPreview(BaseModel):
+    """Preview of a single active goal's progress."""
+    exercise_name: str
+    current_value: float
+    target_value: float
+    unit: str
+    progress_percentage: float
+
+
 class GoalSummary(BaseModel):
     """Summary of weekly goals for quick display."""
     active_goals: int = 0
     completed_this_week: int = 0
     prs_this_week: int = 0
-    total_volume_this_week: int = 0
+    total_volume_this_week: float = 0
+    active_goal_previews: List[GoalProgressPreview] = []
 
 
 # ============================================================
@@ -152,6 +176,7 @@ class ExercisePerformance(BaseModel):
     total_reps: int = 0
     total_sets: int = 0
     max_reps_in_set: int = 0  # For single_max goals
+    max_weight_kg: Optional[float] = None  # For kg single_max goals
 
 
 class WorkoutSyncRequest(BaseModel):

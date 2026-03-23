@@ -10,8 +10,10 @@ Allows users to:
 """
 
 from fastapi import APIRouter, Depends, HTTPException, Query
-from core.auth import get_current_user
+from starlette.requests import Request
+from core.auth import get_current_user, verify_user_ownership
 from core.exceptions import safe_internal_error
+from core.rate_limiter import limiter
 from typing import Optional, List
 from datetime import datetime
 
@@ -88,7 +90,9 @@ def _check_blocked(db, user_id: str, other_user_id: str) -> bool:
 # =============================================================================
 
 @router.get("/conversations", response_model=ConversationsResponse)
+@limiter.limit("30/minute")
 async def get_conversations(
+    request: Request,
     user_id: str = Query(..., description="Current user's ID"),
     current_user: dict = Depends(get_current_user),
 ):
@@ -98,6 +102,7 @@ async def get_conversations(
     Returns conversations sorted by most recent message.
     Includes participant info and last message preview.
     """
+    verify_user_ownership(current_user, user_id)
     logger.info(f"[Messages] Getting conversations for user {user_id}")
 
     try:
@@ -169,7 +174,9 @@ async def get_conversations(
 # =============================================================================
 
 @router.get("/conversations/{conversation_id}", response_model=MessagesResponse)
+@limiter.limit("30/minute")
 async def get_messages(
+    request: Request,
     conversation_id: str,
     user_id: str = Query(..., description="Current user's ID"),
     page: int = Query(1, ge=1),
@@ -183,6 +190,7 @@ async def get_messages(
     Also marks messages as read for the current user.
     Includes read receipt data for group messages (F13).
     """
+    verify_user_ownership(current_user, user_id)
     logger.info(f"[Messages] Getting messages for conversation {conversation_id}, user {user_id}")
 
     try:
@@ -272,8 +280,10 @@ async def get_messages(
 # =============================================================================
 
 @router.post("/send", response_model=DirectMessage)
+@limiter.limit("30/minute")
 async def send_message(
-    request: DirectMessageCreate,
+    request: Request,
+    body: DirectMessageCreate,
     user_id: str = Query(..., description="Sender's user ID"),
     current_user: dict = Depends(get_current_user),
 ):
@@ -283,12 +293,13 @@ async def send_message(
     Creates a new conversation if one doesn't exist between the users.
     For group conversations, provide conversation_id (no recipient_id needed).
     """
-    logger.info(f"[Messages] Sending message from {user_id} to {request.recipient_id}")
+    verify_user_ownership(current_user, user_id)
+    logger.info(f"[Messages] Sending message from {user_id} to {body.recipient_id}")
 
     try:
         db = get_supabase_db()
 
-        conversation_id = request.conversation_id
+        conversation_id = body.conversation_id
 
         # If conversation_id is provided, check if it's a group conversation
         if conversation_id:
@@ -305,11 +316,11 @@ async def send_message(
                     raise HTTPException(status_code=403, detail="Not a member of this group")
             else:
                 # DM with existing conversation - check blocks (F9)
-                if request.recipient_id and _check_blocked(db, user_id, request.recipient_id):
+                if body.recipient_id and _check_blocked(db, user_id, body.recipient_id):
                     raise HTTPException(status_code=403, detail="Cannot send message to this user")
         else:
             # New DM - check blocks (F9)
-            if request.recipient_id and _check_blocked(db, user_id, request.recipient_id):
+            if body.recipient_id and _check_blocked(db, user_id, body.recipient_id):
                 raise HTTPException(status_code=403, detail="Cannot send message to this user")
 
         # If no conversation_id provided, get or create one
@@ -317,7 +328,7 @@ async def send_message(
             # Check if conversation exists
             existing_result = db.client.rpc(
                 "get_or_create_conversation",
-                {"user1_id": user_id, "user2_id": request.recipient_id}
+                {"user1_id": user_id, "user2_id": body.recipient_id}
             ).execute()
 
             if existing_result.data:
@@ -333,22 +344,22 @@ async def send_message(
                 # Add participants
                 db.client.table("conversation_participants").insert([
                     {"conversation_id": conversation_id, "user_id": user_id},
-                    {"conversation_id": conversation_id, "user_id": request.recipient_id},
+                    {"conversation_id": conversation_id, "user_id": body.recipient_id},
                 ]).execute()
 
         # Insert the message
         message_data = {
             "conversation_id": conversation_id,
             "sender_id": user_id,
-            "content": request.content if not request.encrypted_content else "[encrypted]",
+            "content": body.content if not body.encrypted_content else "[encrypted]",
             "is_system_message": False,
         }
 
         # Add encryption fields if present
-        if request.encrypted_content:
-            message_data["encrypted_content"] = request.encrypted_content
-            message_data["encryption_nonce"] = request.encryption_nonce
-            message_data["encryption_version"] = request.encryption_version
+        if body.encrypted_content:
+            message_data["encrypted_content"] = body.encrypted_content
+            message_data["encryption_nonce"] = body.encryption_nonce
+            message_data["encryption_version"] = body.encryption_version
 
         message_result = db.client.table("direct_messages").insert(message_data).execute()
 
@@ -380,8 +391,8 @@ async def send_message(
             message="Sent a direct message",
             metadata={
                 "conversation_id": conversation_id,
-                "recipient_id": request.recipient_id,
-                "message_length": len(request.encrypted_content or request.content or ""),
+                "recipient_id": body.recipient_id,
+                "message_length": len(body.encrypted_content or body.content or ""),
             },
             status_code=200
         )
@@ -394,10 +405,10 @@ async def send_message(
                 "feature": "direct_messages",
                 "action": "message_sent",
                 "conversation_id": conversation_id,
-                "recipient_id": request.recipient_id,
+                "recipient_id": body.recipient_id,
             },
             context={
-                "message_length": len(request.encrypted_content or request.content or ""),
+                "message_length": len(body.encrypted_content or body.content or ""),
             },
         )
 
@@ -412,7 +423,7 @@ async def send_message(
             action="direct_message_sent",
             error=e,
             endpoint="/api/v1/social/messages/send",
-            metadata={"recipient_id": request.recipient_id},
+            metadata={"recipient_id": body.recipient_id},
             status_code=500
         )
         raise safe_internal_error(e, "messages")
@@ -423,7 +434,9 @@ async def send_message(
 # =============================================================================
 
 @router.post("/conversations/{conversation_id}/read")
+@limiter.limit("30/minute")
 async def mark_as_read(
+    request: Request,
     conversation_id: str,
     user_id: str = Query(..., description="Current user's ID"),
     current_user: dict = Depends(get_current_user),
@@ -431,6 +444,7 @@ async def mark_as_read(
     """
     Mark all messages in a conversation as read.
     """
+    verify_user_ownership(current_user, user_id)
     logger.info(f"[Messages] Marking conversation {conversation_id} as read for user {user_id}")
 
     try:
@@ -474,6 +488,7 @@ async def get_conversation_with_user(
 
     Returns None if no conversation exists.
     """
+    verify_user_ownership(current_user, user_id)
     logger.info(f"[Messages] Getting conversation between {user_id} and {other_user_id}")
 
     try:
@@ -539,7 +554,9 @@ async def get_conversation_with_user(
 # =============================================================================
 
 @router.post("/conversations/group")
+@limiter.limit("5/minute")
 async def create_group_conversation(
+    request: Request,
     group: GroupCreate,
     user_id: str = Query(..., description="Creator's user ID"),
     current_user: dict = Depends(get_current_user),
@@ -550,6 +567,7 @@ async def create_group_conversation(
     The creator is automatically added as an admin member.
     Requires at least 2 other member IDs.
     """
+    verify_user_ownership(current_user, user_id)
     logger.info(f"[Messages] Creating group '{group.name}' by user {user_id}")
 
     try:
@@ -621,6 +639,7 @@ async def update_group_members(
     """
     Add or remove members from a group conversation (admin only).
     """
+    verify_user_ownership(current_user, user_id)
     logger.info(f"[Messages] Updating members for group {conversation_id}")
 
     try:
@@ -690,6 +709,7 @@ async def update_group_settings(
     """
     Update group conversation settings (admin only).
     """
+    verify_user_ownership(current_user, user_id)
     logger.info(f"[Messages] Updating settings for group {conversation_id}")
 
     try:
@@ -732,7 +752,9 @@ async def update_group_settings(
 
 
 @router.post("/conversations/{conversation_id}/leave")
+@limiter.limit("10/minute")
 async def leave_group(
+    request: Request,
     conversation_id: str,
     user_id: str = Query(..., description="User leaving the group"),
     current_user: dict = Depends(get_current_user),
@@ -740,6 +762,7 @@ async def leave_group(
     """
     Leave a group conversation.
     """
+    verify_user_ownership(current_user, user_id)
     logger.info(f"[Messages] User {user_id} leaving group {conversation_id}")
 
     try:

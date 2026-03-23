@@ -13,7 +13,7 @@ Provides endpoints for:
 """
 
 from fastapi import APIRouter, Depends, HTTPException, Query
-from core.auth import get_current_user
+from core.auth import get_current_user, verify_user_ownership
 from core.exceptions import safe_internal_error
 from typing import Optional, List
 from datetime import datetime
@@ -89,6 +89,7 @@ async def get_user_milestones(user_id: str,
     logger.info(f"Getting milestones for user: {user_id}")
 
     try:
+        verify_user_ownership(current_user, user_id)
         progress = await milestone_service.get_milestone_progress(user_id)
 
         # Log milestone view
@@ -131,6 +132,7 @@ async def get_uncelebrated_milestones(user_id: str,
     logger.info(f"Getting uncelebrated milestones for user: {user_id}")
 
     try:
+        verify_user_ownership(current_user, user_id)
         uncelebrated = await milestone_service.get_uncelebrated_milestones(user_id)
         return uncelebrated
     except Exception as e:
@@ -153,6 +155,7 @@ async def mark_milestones_celebrated(
     logger.info(f"Marking milestones celebrated for user: {user_id}")
 
     try:
+        verify_user_ownership(current_user, user_id)
         success = await milestone_service.mark_milestones_celebrated(
             user_id=user_id,
             milestone_ids=request.milestone_ids,
@@ -190,6 +193,7 @@ async def record_milestone_share(
     logger.info(f"Recording milestone share for user: {user_id}")
 
     try:
+        verify_user_ownership(current_user, user_id)
         success = await milestone_service.record_milestone_share(
             user_id=user_id,
             milestone_id=request.milestone_id,
@@ -239,6 +243,7 @@ async def check_milestones(user_id: str,
     logger.info(f"Checking milestones for user: {user_id}")
 
     try:
+        verify_user_ownership(current_user, user_id)
         result = await milestone_service.check_and_award_milestones(user_id)
 
         if result.new_milestones:
@@ -292,6 +297,7 @@ async def get_roi_metrics(
     logger.info(f"Getting ROI metrics for user: {user_id}, recalculate={recalculate}")
 
     try:
+        verify_user_ownership(current_user, user_id)
         metrics = await milestone_service.get_roi_metrics(
             user_id=user_id,
             recalculate=recalculate,
@@ -333,6 +339,7 @@ async def get_roi_summary(user_id: str,
     logger.info(f"Getting ROI summary for user: {user_id}")
 
     try:
+        verify_user_ownership(current_user, user_id)
         summary = await milestone_service.get_roi_summary(user_id)
         return summary
     except Exception as e:
@@ -357,6 +364,7 @@ async def get_progress_overview(user_id: str,
     logger.info(f"Getting progress overview for user: {user_id}")
 
     try:
+        verify_user_ownership(current_user, user_id)
         # Fetch both in parallel
         milestones = await milestone_service.get_milestone_progress(user_id)
         roi_summary = await milestone_service.get_roi_summary(user_id)

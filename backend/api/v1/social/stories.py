@@ -12,8 +12,10 @@ import uuid
 from datetime import datetime, timezone, timedelta
 
 from fastapi import APIRouter, Depends, HTTPException, Query
-from core.auth import get_current_user
+from starlette.requests import Request
+from core.auth import get_current_user, verify_user_ownership
 from core.exceptions import safe_internal_error
+from core.rate_limiter import limiter
 from core.config import get_settings
 from core.logger import get_logger
 
@@ -44,7 +46,9 @@ def _get_s3_client():
 
 
 @router.post("/presign")
+@limiter.limit("5/minute")
 async def get_story_presigned_url(
+    request: Request,
     user_id: str = Query(..., description="User ID requesting upload"),
     file_extension: str = Query("jpg", description="File extension"),
     content_type: str = Query("image/jpeg", description="Content type"),
@@ -53,6 +57,7 @@ async def get_story_presigned_url(
     """
     Get a pre-signed URL for direct story upload to S3.
     """
+    verify_user_ownership(current_user, user_id)
     allowed_types = [
         'image/jpeg', 'image/png', 'image/gif', 'image/webp',
         'video/mp4', 'video/quicktime',
@@ -93,7 +98,9 @@ async def get_story_presigned_url(
 
 
 @router.post("/")
+@limiter.limit("5/minute")
 async def create_story(
+    request: Request,
     user_id: str = Query(..., description="User ID"),
     media_url: str = Query(..., description="Media URL"),
     media_type: str = Query("image", description="Media type (image or video)"),
@@ -116,6 +123,7 @@ async def create_story(
     Returns:
         Created story record
     """
+    verify_user_ownership(current_user, user_id)
     if caption and len(caption) > 500:
         raise HTTPException(status_code=400, detail="Caption must be 500 characters or less")
 
@@ -165,6 +173,7 @@ async def get_stories_feed(
     Returns:
         List of story groups, each containing a user and their active stories
     """
+    verify_user_ownership(current_user, user_id)
     try:
         supabase = get_supabase_client()
 
@@ -266,6 +275,7 @@ async def get_story_views(
     Returns:
         List of viewers with timestamps
     """
+    verify_user_ownership(current_user, user_id)
     try:
         supabase = get_supabase_client()
 
@@ -330,6 +340,7 @@ async def delete_story(
     Returns:
         Success message
     """
+    verify_user_ownership(current_user, user_id)
     try:
         supabase = get_supabase_client()
 

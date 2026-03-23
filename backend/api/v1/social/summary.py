@@ -9,7 +9,7 @@ import logging
 from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends
-from core.auth import get_current_user
+from core.auth import get_current_user, verify_user_ownership
 from core.exceptions import safe_internal_error
 
 logger = logging.getLogger(__name__)
@@ -68,6 +68,7 @@ async def get_social_summary(user_id: str,
     Returns:
         Social feed summary with activity feed, challenges, suggestions
     """
+    verify_user_ownership(current_user, user_id)
     supabase = get_supabase_client()
 
     # Get activity feed (first 10 items)
@@ -124,6 +125,7 @@ async def get_senior_social_summary(user_id: str,
     Returns:
         Simplified social summary with easy-to-understand content
     """
+    verify_user_ownership(current_user, user_id)
     supabase = get_supabase_client()
 
     # Get recent activities (simplified)

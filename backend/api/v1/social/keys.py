@@ -7,7 +7,7 @@ Allows users to:
 """
 
 from fastapi import APIRouter, Depends, HTTPException, Query
-from core.auth import get_current_user
+from core.auth import get_current_user, verify_user_ownership
 from core.exceptions import safe_internal_error
 from datetime import datetime
 
@@ -30,6 +30,7 @@ async def upload_public_key(
 
     Revokes any previous active key and inserts a new one with incremented version.
     """
+    verify_user_ownership(current_user, user_id)
     logger.info(f"[Keys] Uploading public key for user {user_id}")
 
     try:

@@ -2,7 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:health/health.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../data/models/sauna_log.dart';
 import '../../../data/providers/today_workout_provider.dart';
+import '../../../data/repositories/auth_repository.dart';
+import '../../../data/repositories/sauna_repository.dart';
 import '../../../data/services/health_service.dart';
 import '../../../widgets/glass_sheet.dart';
 
@@ -19,11 +22,36 @@ class CaloriesBurnedSheet extends ConsumerStatefulWidget {
 class _CaloriesBurnedSheetState extends ConsumerState<CaloriesBurnedSheet> {
   List<_WorkoutEntry> _healthWorkouts = [];
   bool _loadingHealth = true;
+  DailySaunaSummary? _saunaSummary;
+  bool _loadingSauna = true;
 
   @override
   void initState() {
     super.initState();
     _loadHealthWorkouts();
+    _loadSaunaSummary();
+  }
+
+  Future<void> _loadSaunaSummary() async {
+    try {
+      final authState = ref.read(authStateProvider);
+      final userId = authState.user?.id;
+      if (userId == null) {
+        if (mounted) setState(() => _loadingSauna = false);
+        return;
+      }
+      final repo = ref.read(saunaRepositoryProvider);
+      final summary = await repo.getDailySummary(userId);
+      if (mounted) {
+        setState(() {
+          _saunaSummary = summary;
+          _loadingSauna = false;
+        });
+      }
+    } catch (e) {
+      debugPrint('❌ Error loading sauna summary: $e');
+      if (mounted) setState(() => _loadingSauna = false);
+    }
   }
 
   Future<void> _loadHealthWorkouts() async {
@@ -125,8 +153,9 @@ class _CaloriesBurnedSheetState extends ConsumerState<CaloriesBurnedSheet> {
       ));
     }
 
+    final hasSauna = _saunaSummary != null && _saunaSummary!.entries.isNotEmpty;
     final hasAnyWorkouts =
-        fitWizWorkouts.isNotEmpty || _healthWorkouts.isNotEmpty;
+        fitWizWorkouts.isNotEmpty || _healthWorkouts.isNotEmpty || hasSauna;
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
@@ -222,8 +251,33 @@ class _CaloriesBurnedSheetState extends ConsumerState<CaloriesBurnedSheet> {
               ),
           ],
 
+          // Sauna section
+          if (!_loadingSauna && _saunaSummary != null && _saunaSummary!.entries.isNotEmpty) ...[
+            _SectionLabel(
+              label: 'Sauna',
+              color: const Color(0xFFE65100),
+            ),
+            const SizedBox(height: 8),
+            for (final entry in _saunaSummary!.entries)
+              _WorkoutTile(
+                entry: _WorkoutEntry(
+                  name: 'Sauna Session',
+                  durationMinutes: entry.durationMinutes,
+                  caloriesBurned: entry.estimatedCalories?.toDouble(),
+                  source: 'FitWiz',
+                  isFromHealth: false,
+                ),
+                isDark: isDark,
+                elevated: elevated,
+                cardBorder: cardBorder,
+                textPrimary: textPrimary,
+                textMuted: textMuted,
+              ),
+            const SizedBox(height: 12),
+          ],
+
           // Empty state
-          if (!_loadingHealth && !hasAnyWorkouts)
+          if (!_loadingHealth && !hasAnyWorkouts && (_saunaSummary == null || _saunaSummary!.entries.isEmpty))
             Container(
               width: double.infinity,
               padding: const EdgeInsets.symmetric(vertical: 24),

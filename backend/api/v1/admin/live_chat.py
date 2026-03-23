@@ -11,7 +11,7 @@ Provides admin-specific functionality for:
 - Support ticket and report management
 """
 
-from fastapi import APIRouter, HTTPException, Depends, Header
+from fastapi import APIRouter, HTTPException, Depends, Header, Request
 from typing import Optional, List
 from datetime import datetime, timedelta
 
@@ -19,6 +19,7 @@ from core.supabase_db import get_supabase_db
 from core.supabase_client import get_supabase
 from core.logger import get_logger
 from core.exceptions import safe_internal_error
+from core.rate_limiter import limiter
 from core.activity_logger import log_user_activity
 from models.admin import (
     AdminLoginRequest,
@@ -93,9 +94,10 @@ async def verify_admin_token(authorization: str = Header(...)) -> AdminProfile:
         user_id = user_response.user.id
 
         # Get user details including role from database
+        # SECURITY: Only fetch needed columns — avoid exposing sensitive data
         db = get_supabase_db()
 
-        result = db.client.table("users").select("*").eq("id", user_id).execute()
+        result = db.client.table("users").select("id, email, name, role, avatar_url, created_at").eq("id", user_id).execute()
 
         if not result.data:
             raise HTTPException(status_code=401, detail="User not found")
@@ -231,7 +233,8 @@ async def _send_push_notification_to_user(
 # =============================================================================
 
 @router.post("/login", response_model=AdminLoginResponse)
-async def admin_login(request: AdminLoginRequest):
+@limiter.limit("5/minute")
+async def admin_login(req: Request, request: AdminLoginRequest):
     """
     Admin login endpoint.
 

@@ -10,7 +10,7 @@ but then hit a paywall to even see how the app works, let alone what your plan
 might look like."
 """
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query, Request, Depends
 from pydantic import BaseModel
 from typing import Optional, List, Dict, Any
 from datetime import datetime, timedelta
@@ -18,6 +18,8 @@ import uuid
 import logging
 
 from core.db import get_supabase_db
+from core.rate_limiter import limiter
+from core.auth import get_admin_user
 from core.exceptions import safe_internal_error
 from services.exercise_library_service import ExerciseLibraryService
 
@@ -210,7 +212,8 @@ def _get_exercises_for_muscles(
 # ============================================================================
 
 @router.post("/generate-preview-plan")
-async def generate_preview_plan(request: PreviewPlanRequest):
+@limiter.limit("3/hour")
+async def generate_preview_plan(request: Request, body: PreviewPlanRequest):
     """
     Generate a preview workout plan based on quiz answers.
 
@@ -222,21 +225,21 @@ async def generate_preview_plan(request: PreviewPlanRequest):
     """
     try:
         # Generate session_id if not provided
-        session_id = request.session_id or str(uuid.uuid4())
+        session_id = body.session_id or str(uuid.uuid4())
 
         # Get workout template based on training split
-        split = request.training_split or "push_pull_legs"
+        split = body.training_split or "push_pull_legs"
         templates = WORKOUT_TEMPLATES.get(split, WORKOUT_TEMPLATES["full_body"])
 
         # Generate workout days
         plan_days = []
-        for i in range(request.days_per_week):
+        for i in range(body.days_per_week):
             template = templates[i % len(templates)]
 
             # Get exercises for this day
             exercises = _get_exercises_for_muscles(
                 template["focus"],
-                request.fitness_level,
+                body.fitness_level,
                 count=5
             )
 
@@ -257,10 +260,10 @@ async def generate_preview_plan(request: PreviewPlanRequest):
                 "session_id": session_id,
                 "action_type": "preview_plan_generated",
                 "metadata": {
-                    "goals": request.goals,
-                    "fitness_level": request.fitness_level,
-                    "equipment_count": len(request.equipment),
-                    "days_per_week": request.days_per_week,
+                    "goals": body.goals,
+                    "fitness_level": body.fitness_level,
+                    "equipment_count": len(body.equipment),
+                    "days_per_week": body.days_per_week,
                     "training_split": split,
                 }
             }).execute()
@@ -271,7 +274,7 @@ async def generate_preview_plan(request: PreviewPlanRequest):
             "session_id": session_id,
             "plan": {
                 "weeks": 4,
-                "days_per_week": request.days_per_week,
+                "days_per_week": body.days_per_week,
                 "training_split": split,
                 "workout_days": plan_days,
                 "program_structure": {
@@ -284,13 +287,13 @@ async def generate_preview_plan(request: PreviewPlanRequest):
             "personalization": {
                 "goal_match": True,
                 "equipment_match": True,
-                "fitness_level": request.fitness_level,
+                "fitness_level": body.fitness_level,
                 "total_exercises": sum(len(d["exercises"]) for d in plan_days),
                 "estimated_weekly_duration": sum(d["duration_minutes"] for d in plan_days),
             },
             "social_proof": {
                 "similar_users": 10847,
-                "avg_results_weeks": 4 if "lose_weight" in request.goals else 6,
+                "avg_results_weeks": 4 if "lose_weight" in body.goals else 6,
                 "success_rate": 87,
             }
         }
@@ -301,11 +304,12 @@ async def generate_preview_plan(request: PreviewPlanRequest):
 
 
 @router.post("/session/start")
-async def start_demo_session(request: DemoSession):
+@limiter.limit("5/hour")
+async def start_demo_session(request: Request, body: DemoSession):
     """Start or resume a demo session."""
     try:
         db = get_supabase_db()
-        session_id = request.session_id or str(uuid.uuid4())
+        session_id = body.session_id or str(uuid.uuid4())
 
         # Check if session exists
         existing = db.client.table("demo_sessions").select("*").eq(
@@ -315,8 +319,8 @@ async def start_demo_session(request: DemoSession):
         if existing.data:
             # Update existing session
             db.client.table("demo_sessions").update({
-                "quiz_data": request.quiz_data or existing.data[0].get("quiz_data", {}),
-                "device_info": request.device_info or existing.data[0].get("device_info", {}),
+                "quiz_data": body.quiz_data or existing.data[0].get("quiz_data", {}),
+                "device_info": body.device_info or existing.data[0].get("device_info", {}),
             }).eq("session_id", session_id).execute()
 
             return {
@@ -328,8 +332,8 @@ async def start_demo_session(request: DemoSession):
             # Create new session
             result = db.client.table("demo_sessions").insert({
                 "session_id": session_id,
-                "quiz_data": request.quiz_data or {},
-                "device_info": request.device_info or {},
+                "quiz_data": body.quiz_data or {},
+                "device_info": body.device_info or {},
             }).execute()
 
             return {
@@ -344,18 +348,19 @@ async def start_demo_session(request: DemoSession):
 
 
 @router.post("/interaction")
-async def log_demo_interaction(request: DemoInteraction):
+@limiter.limit("30/hour")
+async def log_demo_interaction(request: Request, body: DemoInteraction):
     """Log a demo user interaction for analytics."""
     try:
         db = get_supabase_db()
 
         db.client.table("demo_interactions").insert({
-            "session_id": request.session_id,
-            "action_type": request.action_type,
-            "screen": request.screen,
-            "feature": request.feature,
-            "duration_seconds": request.duration_seconds,
-            "metadata": request.metadata or {},
+            "session_id": body.session_id,
+            "action_type": body.action_type,
+            "screen": body.screen,
+            "feature": body.feature,
+            "duration_seconds": body.duration_seconds,
+            "metadata": body.metadata or {},
         }).execute()
 
         return {"status": "logged"}
@@ -367,7 +372,8 @@ async def log_demo_interaction(request: DemoInteraction):
 
 
 @router.post("/personalized-sample-workout")
-async def generate_personalized_sample_workout(request: PersonalizedSampleWorkoutRequest):
+@limiter.limit("3/hour")
+async def generate_personalized_sample_workout(request: Request, body: PersonalizedSampleWorkoutRequest):
     """
     Generate a personalized sample workout using REAL exercises from the database.
 
@@ -379,7 +385,7 @@ async def generate_personalized_sample_workout(request: PersonalizedSampleWorkou
     This addresses the complaint: "workouts look generic with no videos"
     """
     try:
-        session_id = request.session_id or str(uuid.uuid4())
+        session_id = body.session_id or str(uuid.uuid4())
 
         # Determine workout focus based on goals
         goal_to_focus = {
@@ -393,7 +399,7 @@ async def generate_personalized_sample_workout(request: PersonalizedSampleWorkou
             'general_health': 'full_body',
         }
 
-        primary_goal = request.goals[0] if request.goals else 'general_health'
+        primary_goal = body.goals[0] if body.goals else 'general_health'
         focus_area = goal_to_focus.get(primary_goal, 'full_body')
 
         # Map equipment values to match exercise library format
@@ -410,7 +416,7 @@ async def generate_personalized_sample_workout(request: PersonalizedSampleWorkou
 
         # Convert equipment list
         mapped_equipment = []
-        for eq in request.equipment:
+        for eq in body.equipment:
             eq_lower = eq.lower()
             if eq_lower in equipment_mapping:
                 mapping = equipment_mapping[eq_lower]
@@ -430,7 +436,7 @@ async def generate_personalized_sample_workout(request: PersonalizedSampleWorkou
             focus_area=focus_area,
             equipment=mapped_equipment,
             count=6,
-            fitness_level=request.fitness_level
+            fitness_level=body.fitness_level
         )
 
         # If we didn't get enough exercises, try with just bodyweight
@@ -439,7 +445,7 @@ async def generate_personalized_sample_workout(request: PersonalizedSampleWorkou
                 focus_area=focus_area,
                 equipment=['body weight'],
                 count=6,
-                fitness_level=request.fitness_level
+                fitness_level=body.fitness_level
             )
 
         # Calculate workout metadata
@@ -447,7 +453,7 @@ async def generate_personalized_sample_workout(request: PersonalizedSampleWorkou
         estimated_calories = 150 + (len(exercises) * 30)
 
         # Determine workout name based on goals and fitness level
-        workout_name = _get_personalized_workout_name(primary_goal, request.fitness_level)
+        workout_name = _get_personalized_workout_name(primary_goal, body.fitness_level)
 
         # Log the generation
         try:
@@ -456,9 +462,9 @@ async def generate_personalized_sample_workout(request: PersonalizedSampleWorkou
                 "session_id": session_id,
                 "action_type": "personalized_sample_generated",
                 "metadata": {
-                    "goals": request.goals,
-                    "fitness_level": request.fitness_level,
-                    "equipment": request.equipment,
+                    "goals": body.goals,
+                    "fitness_level": body.fitness_level,
+                    "equipment": body.equipment,
                     "exercise_count": len(exercises),
                     "has_gif_urls": sum(1 for ex in exercises if ex.get('gif_url')),
                 }
@@ -474,16 +480,16 @@ async def generate_personalized_sample_workout(request: PersonalizedSampleWorkou
                 "description": f"A personalized workout designed for your {primary_goal.replace('_', ' ')} goals. "
                                f"This preview uses real exercises from our library of 1700+ exercises.",
                 "duration_minutes": duration_minutes,
-                "difficulty": request.fitness_level,
+                "difficulty": body.fitness_level,
                 "calories_estimate": estimated_calories,
-                "type": request.workout_type_preference or "strength",
+                "type": body.workout_type_preference or "strength",
                 "target_muscles": list(set(ex.get('body_part', '') for ex in exercises if ex.get('body_part'))),
                 "equipment": list(set(ex.get('equipment', '') for ex in exercises if ex.get('equipment'))),
                 "exercises": exercises,
             },
             "personalization": {
-                "based_on_goals": request.goals,
-                "fitness_level": request.fitness_level,
+                "based_on_goals": body.goals,
+                "fitness_level": body.fitness_level,
                 "equipment_matched": True,
                 "exercises_with_videos": sum(1 for ex in exercises if ex.get('gif_url')),
                 "total_exercises": len(exercises),
@@ -629,7 +635,8 @@ async def get_sample_workouts(
 
 
 @router.post("/session/convert")
-async def convert_demo_session(request: SessionConvertRequest):
+@limiter.limit("3/hour")
+async def convert_demo_session(request: Request, body: SessionConvertRequest):
     """
     Mark a demo session as converted to a real user.
 
@@ -640,14 +647,14 @@ async def convert_demo_session(request: SessionConvertRequest):
 
         # Update the session
         db.client.table("demo_sessions").update({
-            "converted_to_user_id": request.user_id,
-            "conversion_trigger": request.trigger,
+            "converted_to_user_id": body.user_id,
+            "conversion_trigger": body.trigger,
             "ended_at": datetime.utcnow().isoformat(),
-        }).eq("session_id", request.session_id).execute()
+        }).eq("session_id", body.session_id).execute()
 
         # Get session to calculate duration
         session = db.client.table("demo_sessions").select("*").eq(
-            "session_id", request.session_id
+            "session_id", body.session_id
         ).execute()
 
         duration_seconds = None
@@ -660,11 +667,11 @@ async def convert_demo_session(request: SessionConvertRequest):
 
                     db.client.table("demo_sessions").update({
                         "duration_seconds": duration_seconds,
-                    }).eq("session_id", request.session_id).execute()
+                    }).eq("session_id", body.session_id).execute()
                 except Exception as e:
                     logger.warning(f"Failed to calculate duration: {e}")
 
-        logger.info(f"Demo session {request.session_id} converted to user {request.user_id} via {request.trigger}")
+        logger.info(f"Demo session {body.session_id} converted to user {body.user_id} via {body.trigger}")
 
         return {
             "status": "converted",
@@ -709,8 +716,8 @@ async def get_demo_session(session_id: str):
 
 
 @router.get("/analytics/conversion")
-async def get_conversion_analytics(days: int = Query(30, ge=1, le=90)):
-    """Get demo-to-signup conversion analytics."""
+async def get_conversion_analytics(days: int = Query(30, ge=1, le=90), admin: dict = Depends(get_admin_user)):
+    """Get demo-to-signup conversion analytics. SECURITY: Admin-only."""
     try:
         db = get_supabase_db()
 
@@ -728,8 +735,8 @@ async def get_conversion_analytics(days: int = Query(30, ge=1, le=90)):
 
 
 @router.get("/analytics/features")
-async def get_feature_analytics():
-    """Get feature engagement analytics for demo users."""
+async def get_feature_analytics(admin: dict = Depends(get_admin_user)):
+    """Get feature engagement analytics for demo users. SECURITY: Admin-only."""
     try:
         db = get_supabase_db()
 
@@ -801,7 +808,8 @@ DEFAULT_TOUR_CONFIG = {
 
 
 @router.post("/tour/start")
-async def start_app_tour(request: TourStartRequest):
+@limiter.limit("5/hour")
+async def start_app_tour(request: Request, body: TourStartRequest):
     """
     Start an app tour session.
 
@@ -816,18 +824,18 @@ async def start_app_tour(request: TourStartRequest):
         should_show_tour = True
 
         # Check if user has already completed the tour (only for new_user source)
-        if request.source == "new_user":
-            if request.user_id:
+        if body.source == "new_user":
+            if body.user_id:
                 existing = db.client.table("app_tour_sessions").select(
                     "id, status"
-                ).eq("user_id", request.user_id).eq("status", "completed").execute()
+                ).eq("user_id", body.user_id).eq("status", "completed").execute()
 
                 if existing.data:
                     should_show_tour = False
-            elif request.device_id:
+            elif body.device_id:
                 existing = db.client.table("app_tour_sessions").select(
                     "id, status"
-                ).eq("device_id", request.device_id).eq("status", "completed").execute()
+                ).eq("device_id", body.device_id).eq("status", "completed").execute()
 
                 if existing.data:
                     should_show_tour = False
@@ -835,12 +843,12 @@ async def start_app_tour(request: TourStartRequest):
         # Create tour session
         session_data = {
             "session_id": session_id,
-            "user_id": request.user_id,
-            "device_id": request.device_id,
-            "source": request.source,
-            "device_info": request.device_info or {},
-            "app_version": request.app_version,
-            "platform": request.platform,
+            "user_id": body.user_id,
+            "device_id": body.device_id,
+            "source": body.source,
+            "device_info": body.device_info or {},
+            "app_version": body.app_version,
+            "platform": body.platform,
             "status": "started",
             "steps_completed": [],
             "deep_links_clicked": [],
@@ -850,15 +858,15 @@ async def start_app_tour(request: TourStartRequest):
         db.client.table("app_tour_sessions").insert(session_data).execute()
 
         # Log to user_context_logs if user_id provided
-        if request.user_id:
+        if body.user_id:
             try:
                 db.client.table("user_context_logs").insert({
-                    "user_id": request.user_id,
+                    "user_id": body.user_id,
                     "event_type": "app_tour_started",
                     "event_data": {
                         "session_id": session_id,
-                        "source": request.source,
-                        "platform": request.platform,
+                        "source": body.source,
+                        "platform": body.platform,
                     },
                 }).execute()
             except Exception as e:
@@ -876,7 +884,8 @@ async def start_app_tour(request: TourStartRequest):
 
 
 @router.post("/tour/step-completed")
-async def complete_tour_step(request: TourStepCompletedRequest):
+@limiter.limit("30/hour")
+async def complete_tour_step(request: Request, body: TourStepCompletedRequest):
     """
     Log tour step completion.
 
@@ -888,7 +897,7 @@ async def complete_tour_step(request: TourStepCompletedRequest):
 
         # Get current session
         result = db.client.table("app_tour_sessions").select("*").eq(
-            "session_id", request.session_id
+            "session_id", body.session_id
         ).execute()
 
         if not result.data:
@@ -899,19 +908,19 @@ async def complete_tour_step(request: TourStepCompletedRequest):
         # Update steps_completed array
         steps_completed = session.get("steps_completed", []) or []
         step_data = {
-            "step_id": request.step_id,
+            "step_id": body.step_id,
             "completed_at": datetime.utcnow().isoformat(),
-            "duration_seconds": request.duration_seconds,
-            "action_taken": request.action_taken,
+            "duration_seconds": body.duration_seconds,
+            "action_taken": body.action_taken,
         }
         steps_completed.append(step_data)
 
         # Track deep_links_clicked
         deep_links_clicked = session.get("deep_links_clicked", []) or []
-        if request.deep_link_target:
+        if body.deep_link_target:
             deep_links_clicked.append({
-                "step_id": request.step_id,
-                "target": request.deep_link_target,
+                "step_id": body.step_id,
+                "target": body.deep_link_target,
                 "clicked_at": datetime.utcnow().isoformat(),
             })
 
@@ -920,11 +929,11 @@ async def complete_tour_step(request: TourStepCompletedRequest):
             "steps_completed": steps_completed,
             "deep_links_clicked": deep_links_clicked,
             "last_activity_at": datetime.utcnow().isoformat(),
-        }).eq("session_id", request.session_id).execute()
+        }).eq("session_id", body.session_id).execute()
 
         return {
             "status": "logged",
-            "step_id": request.step_id,
+            "step_id": body.step_id,
             "total_steps_completed": len(steps_completed),
         }
 
@@ -936,7 +945,8 @@ async def complete_tour_step(request: TourStepCompletedRequest):
 
 
 @router.post("/tour/completed")
-async def complete_app_tour(request: TourCompletedRequest):
+@limiter.limit("5/hour")
+async def complete_app_tour(request: Request, body: TourCompletedRequest):
     """
     Mark tour as completed or skipped.
 
@@ -948,7 +958,7 @@ async def complete_app_tour(request: TourCompletedRequest):
 
         # Get current session
         result = db.client.table("app_tour_sessions").select("*").eq(
-            "session_id", request.session_id
+            "session_id", body.session_id
         ).execute()
 
         if not result.data:
@@ -957,7 +967,7 @@ async def complete_app_tour(request: TourCompletedRequest):
         session = result.data[0]
 
         # Calculate duration
-        total_duration = request.total_duration_seconds
+        total_duration = body.total_duration_seconds
         if not total_duration and session.get("started_at"):
             try:
                 started_at = datetime.fromisoformat(
@@ -971,19 +981,19 @@ async def complete_app_tour(request: TourCompletedRequest):
 
         # Update session with completion data
         update_data = {
-            "status": request.status,
+            "status": body.status,
             "completed_at": datetime.utcnow().isoformat(),
-            "skip_step": request.skip_step,
-            "demo_workout_started": request.demo_workout_started,
-            "demo_workout_completed": request.demo_workout_completed,
-            "plan_preview_viewed": request.plan_preview_viewed,
+            "skip_step": body.skip_step,
+            "demo_workout_started": body.demo_workout_started,
+            "demo_workout_completed": body.demo_workout_completed,
+            "plan_preview_viewed": body.plan_preview_viewed,
             "total_duration_seconds": total_duration,
         }
 
         # Merge deep_links_clicked with existing
-        if request.deep_links_clicked:
+        if body.deep_links_clicked:
             existing_links = session.get("deep_links_clicked", []) or []
-            for link in request.deep_links_clicked:
+            for link in body.deep_links_clicked:
                 if link not in [dl.get("target") for dl in existing_links]:
                     existing_links.append({
                         "target": link,
@@ -992,7 +1002,7 @@ async def complete_app_tour(request: TourCompletedRequest):
             update_data["deep_links_clicked"] = existing_links
 
         db.client.table("app_tour_sessions").update(update_data).eq(
-            "session_id", request.session_id
+            "session_id", body.session_id
         ).execute()
 
         # Log to user_context_logs
@@ -1001,14 +1011,14 @@ async def complete_app_tour(request: TourCompletedRequest):
             try:
                 db.client.table("user_context_logs").insert({
                     "user_id": user_id,
-                    "event_type": f"app_tour_{request.status}",
+                    "event_type": f"app_tour_{body.status}",
                     "event_data": {
-                        "session_id": request.session_id,
-                        "skip_step": request.skip_step,
-                        "demo_workout_started": request.demo_workout_started,
-                        "demo_workout_completed": request.demo_workout_completed,
+                        "session_id": body.session_id,
+                        "skip_step": body.skip_step,
+                        "demo_workout_started": body.demo_workout_started,
+                        "demo_workout_completed": body.demo_workout_completed,
                         "total_duration_seconds": total_duration,
-                        "deep_links_clicked": request.deep_links_clicked,
+                        "deep_links_clicked": body.deep_links_clicked,
                     },
                 }).execute()
             except Exception as e:
@@ -1024,8 +1034,8 @@ async def complete_app_tour(request: TourCompletedRequest):
 
                 if user_result.data:
                     current_state = user_result.data[0].get("ui_onboarding_state", {}) or {}
-                    current_state["app_tour_completed"] = request.status == "completed"
-                    current_state["app_tour_skipped"] = request.status == "skipped"
+                    current_state["app_tour_completed"] = body.status == "completed"
+                    current_state["app_tour_skipped"] = body.status == "skipped"
                     current_state["app_tour_completed_at"] = datetime.utcnow().isoformat()
 
                     db.client.table("users").update({
@@ -1035,7 +1045,7 @@ async def complete_app_tour(request: TourCompletedRequest):
                 logger.warning(f"Failed to update ui_onboarding_state: {e}")
 
         return {
-            "status": request.status,
+            "status": body.status,
             "total_duration_seconds": total_duration,
             "steps_completed": len(session.get("steps_completed", []) or []),
         }
@@ -1112,6 +1122,7 @@ async def get_tour_analytics(
     days: int = Query(30, ge=1, le=90, description="Number of days to analyze"),
     source: Optional[str] = Query(None, description="Filter by source"),
     platform: Optional[str] = Query(None, description="Filter by platform"),
+    admin: dict = Depends(get_admin_user),  # SECURITY: Admin-only
 ):
     """
     Get tour analytics (admin endpoint).
@@ -1375,7 +1386,8 @@ async def get_preview_workout(
 
 
 @router.post("/try-workout")
-async def start_try_workout(request: TryWorkoutRequest):
+@limiter.limit("5/hour")
+async def start_try_workout(request: Request, body: TryWorkoutRequest):
     """
     Let users try ONE workout before subscribing.
 
@@ -1392,7 +1404,7 @@ async def start_try_workout(request: TryWorkoutRequest):
 
         # Check if this session has already tried a workout
         existing = db.client.table("demo_interactions").select("id").eq(
-            "session_id", request.session_id
+            "session_id", body.session_id
         ).eq(
             "action_type", "try_workout_started"
         ).execute()
@@ -1414,7 +1426,7 @@ async def start_try_workout(request: TryWorkoutRequest):
         sample_workouts = await get_sample_workouts()
         workout = None
         for w in sample_workouts["workouts"]:
-            if w["id"] == request.workout_id:
+            if w["id"] == body.workout_id:
                 workout = w
                 break
 
@@ -1427,14 +1439,14 @@ async def start_try_workout(request: TryWorkoutRequest):
 
         # Log the try workout start
         db.client.table("demo_interactions").insert({
-            "session_id": request.session_id,
+            "session_id": body.session_id,
             "action_type": "try_workout_started",
             "feature": "try_workout",
             "metadata": {
                 "workout_id": workout["id"],
                 "workout_name": workout["name"],
                 "try_token": try_token,
-                "started_at": request.started_at or datetime.utcnow().isoformat(),
+                "started_at": body.started_at or datetime.utcnow().isoformat(),
             }
         }).execute()
 
@@ -1470,7 +1482,8 @@ async def start_try_workout(request: TryWorkoutRequest):
 
 
 @router.post("/try-workout/complete")
-async def complete_try_workout(request: TryWorkoutCompleteRequest):
+@limiter.limit("5/hour")
+async def complete_try_workout(request: Request, body: TryWorkoutCompleteRequest):
     """
     Complete a try workout and record the experience.
 
@@ -1482,30 +1495,30 @@ async def complete_try_workout(request: TryWorkoutCompleteRequest):
 
         # Log the completion
         db.client.table("demo_interactions").insert({
-            "session_id": request.session_id,
+            "session_id": body.session_id,
             "action_type": "try_workout_completed",
             "feature": "try_workout",
-            "duration_seconds": request.duration_seconds,
+            "duration_seconds": body.duration_seconds,
             "metadata": {
-                "workout_id": request.workout_id,
-                "exercises_completed": request.exercises_completed,
-                "exercises_total": request.exercises_total,
-                "completion_rate": round(request.exercises_completed / request.exercises_total * 100, 1) if request.exercises_total > 0 else 0,
-                "feedback": request.feedback,
+                "workout_id": body.workout_id,
+                "exercises_completed": body.exercises_completed,
+                "exercises_total": body.exercises_total,
+                "completion_rate": round(body.exercises_completed / body.exercises_total * 100, 1) if body.exercises_total > 0 else 0,
+                "feedback": body.feedback,
             }
         }).execute()
 
         # Calculate a mock "results" to show value
-        completion_rate = (request.exercises_completed / request.exercises_total * 100) if request.exercises_total > 0 else 0
+        completion_rate = (body.exercises_completed / body.exercises_total * 100) if body.exercises_total > 0 else 0
 
         return {
             "status": "completed",
             "summary": {
-                "duration_minutes": round(request.duration_seconds / 60, 1),
-                "exercises_completed": request.exercises_completed,
-                "exercises_total": request.exercises_total,
+                "duration_minutes": round(body.duration_seconds / 60, 1),
+                "exercises_completed": body.exercises_completed,
+                "exercises_total": body.exercises_total,
                 "completion_rate": round(completion_rate, 1),
-                "estimated_calories": 50 + (request.exercises_completed * 25),
+                "estimated_calories": 50 + (body.exercises_completed * 25),
             },
             "motivation": _get_completion_motivation(completion_rate),
             "conversion_offer": {

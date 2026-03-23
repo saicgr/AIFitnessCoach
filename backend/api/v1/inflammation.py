@@ -75,7 +75,7 @@ async def analyze_inflammation(
 
     except ValueError as e:
         logger.error(f"Inflammation analysis failed: {e}")
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail="Invalid request data")
     except Exception as e:
         logger.error(f"Inflammation analysis error: {e}")
         raise safe_internal_error(e, "endpoint")

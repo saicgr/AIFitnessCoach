@@ -12,6 +12,7 @@ import '../../data/repositories/progress_photos_repository.dart';
 import '../../widgets/pill_app_bar.dart';
 import 'comparison_layouts.dart';
 import 'comparison_export_service.dart';
+import 'widgets/ghost_overlay_widget.dart';
 
 // =============================================================================
 // StatCategory - Rich stat categories for comparison stats bar
@@ -117,6 +118,10 @@ class _ComparisonViewState extends ConsumerState<ComparisonView> {
   Color _photoBorderColor = Colors.white;
   double _photoBorderWidth = 2.0;
   double _photoSpacing = 2.0;
+
+  // Ghost overlay controls
+  bool _ghostOverlayEnabled = false;
+  double _ghostOpacity = 0.4;
 
   @override
   void initState() {
@@ -728,6 +733,21 @@ class _ComparisonViewState extends ConsumerState<ComparisonView> {
                           ),
                         ),
 
+                        // 1b. Ghost overlay on top of the photo layout
+                        if (_ghostOverlayEnabled &&
+                            _selectedLayout != ComparisonLayout.ghostOverlay &&
+                            _selectedPhotos.length >= 2)
+                          Positioned.fill(
+                            child: Padding(
+                              padding: _computeCanvasPhotoPadding(),
+                              child: GhostOverlayWidget(
+                                beforeImageUrl: _selectedPhotos[0].photoUrl,
+                                opacity: _ghostOpacity,
+                                showGuides: true,
+                              ),
+                            ),
+                          ),
+
                         // 2. Background decorative pattern
                         Positioned.fill(
                           child: IgnorePointer(
@@ -837,6 +857,8 @@ class _ComparisonViewState extends ConsumerState<ComparisonView> {
         return _buildFourPanelLayout();
       case ComparisonLayout.monthlyGrid:
         return _buildMonthlyGridLayout();
+      case ComparisonLayout.ghostOverlay:
+        return _buildGhostOverlayLayout();
     }
   }
 
@@ -1984,6 +2006,18 @@ class _ComparisonViewState extends ConsumerState<ComparisonView> {
                     colorScheme: colorScheme,
                     onTap: _handleAiSummaryToggle,
                   ),
+                  const SizedBox(width: 8),
+
+                  // Ghost Overlay toggle
+                  _ToolbarChip(
+                    label: 'Ghost',
+                    icon: Icons.layers_outlined,
+                    isActive: _ghostOverlayEnabled,
+                    colorScheme: colorScheme,
+                    onTap: () => setState(() {
+                      _ghostOverlayEnabled = !_ghostOverlayEnabled;
+                    }),
+                  ),
                   const SizedBox(width: 16),
 
                   // Background color picker
@@ -2004,6 +2038,9 @@ class _ComparisonViewState extends ConsumerState<ComparisonView> {
 
             // Style controls: Shape, Border, Spacing
             _buildStyleControls(colorScheme),
+
+            // Ghost overlay opacity slider (shown when Ghost is active)
+            _buildGhostOpacitySlider(colorScheme),
           ],
         ),
       ),
@@ -2373,6 +2410,102 @@ class _ComparisonViewState extends ConsumerState<ComparisonView> {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildGhostOpacitySlider(ColorScheme colorScheme) {
+    return AnimatedSize(
+      duration: const Duration(milliseconds: 200),
+      curve: Curves.easeInOut,
+      child: _ghostOverlayEnabled && _selectedPhotos.length >= 2
+          ? Padding(
+              padding: const EdgeInsets.only(top: 8),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.opacity,
+                    size: 14,
+                    color: colorScheme.onSurfaceVariant,
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    'Ghost',
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: colorScheme.onSurfaceVariant,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  Expanded(
+                    child: SliderTheme(
+                      data: SliderTheme.of(context).copyWith(
+                        trackHeight: 3,
+                        thumbShape: const RoundSliderThumbShape(
+                            enabledThumbRadius: 6),
+                      ),
+                      child: Slider(
+                        value: _ghostOpacity,
+                        min: 0.1,
+                        max: 0.9,
+                        onChanged: (v) =>
+                            setState(() => _ghostOpacity = v),
+                      ),
+                    ),
+                  ),
+                  SizedBox(
+                    width: 32,
+                    child: Text(
+                      '${(_ghostOpacity * 100).round()}%',
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            )
+          : const SizedBox.shrink(),
+    );
+  }
+
+  /// Builds a ghost overlay layout: the "after" (second) photo is shown at full
+  /// opacity with the "before" (first) photo overlaid semi-transparently using
+  /// [GhostOverlayWidget], plus optional crosshair alignment guides.
+  Widget _buildGhostOverlayLayout() {
+    if (_selectedPhotos.length < 2) {
+      return const Center(
+        child: Text(
+          'Select 2 photos',
+          style: TextStyle(color: Colors.white54),
+        ),
+      );
+    }
+
+    final beforePhoto = _selectedPhotos[0];
+    final afterPhoto = _selectedPhotos[1];
+
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        // Base layer: "after" image at full opacity
+        CachedNetworkImage(
+          imageUrl: afterPhoto.photoUrl,
+          fit: BoxFit.contain,
+          placeholder: (_, __) => const Center(
+            child: CircularProgressIndicator(strokeWidth: 2),
+          ),
+          errorWidget: (_, __, ___) => const Center(
+            child: Icon(Icons.broken_image, color: Colors.white38),
+          ),
+        ),
+        // Ghost overlay: "before" image at selected opacity
+        GhostOverlayWidget(
+          beforeImageUrl: beforePhoto.photoUrl,
+          opacity: _ghostOpacity,
+          showGuides: _ghostOverlayEnabled,
+        ),
+      ],
     );
   }
 

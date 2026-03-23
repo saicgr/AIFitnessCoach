@@ -13,7 +13,7 @@ from typing import List, Optional
 from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, Query
-from core.auth import get_current_user
+from core.auth import get_current_user, verify_user_ownership
 from core.exceptions import safe_internal_error
 
 from models.friend_request import (
@@ -99,6 +99,7 @@ async def send_friend_request(
         400: If trying to send request to self or duplicate request
         404: If target user not found
     """
+    verify_user_ownership(current_user, user_id)
     supabase = get_supabase_client()
 
     # Prevent self-requests
@@ -205,6 +206,7 @@ async def get_received_requests(
     Returns:
         List of friend requests with sender profiles
     """
+    verify_user_ownership(current_user, user_id)
     supabase = get_supabase_client()
 
     query = supabase.table("friend_requests").select(
@@ -254,6 +256,7 @@ async def get_sent_requests(
     Returns:
         List of friend requests with recipient profiles
     """
+    verify_user_ownership(current_user, user_id)
     supabase = get_supabase_client()
 
     query = supabase.table("friend_requests").select(
@@ -301,6 +304,7 @@ async def get_pending_count(
     Returns:
         Count of pending requests
     """
+    verify_user_ownership(current_user, user_id)
     supabase = get_supabase_client()
 
     result = supabase.table("friend_requests").select(
@@ -330,6 +334,7 @@ async def accept_friend_request(
         403: If user is not the recipient
         404: If request not found or not pending
     """
+    verify_user_ownership(current_user, user_id)
     supabase = get_supabase_client()
 
     # Get the friend request
@@ -447,6 +452,7 @@ async def decline_friend_request(
         403: If user is not the recipient
         404: If request not found or not pending
     """
+    verify_user_ownership(current_user, user_id)
     supabase = get_supabase_client()
 
     # Get the friend request
@@ -497,6 +503,7 @@ async def cancel_friend_request(
         403: If user is not the sender
         404: If request not found
     """
+    verify_user_ownership(current_user, user_id)
     supabase = get_supabase_client()
 
     # Get the friend request

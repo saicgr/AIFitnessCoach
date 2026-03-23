@@ -8,7 +8,7 @@ This module handles privacy settings:
 from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, HTTPException
-from core.auth import get_current_user
+from core.auth import get_current_user, verify_user_ownership
 from core.exceptions import safe_internal_error
 
 from models.social import (
@@ -32,6 +32,7 @@ async def get_privacy_settings(user_id: str,
     Returns:
         Privacy settings
     """
+    verify_user_ownership(current_user, user_id)
     supabase = get_supabase_client()
 
     result = supabase.table("user_privacy_settings").select("*").eq("user_id", user_id).execute()
@@ -62,6 +63,7 @@ async def update_privacy_settings(
     Returns:
         Updated privacy settings
     """
+    verify_user_ownership(current_user, user_id)
     supabase = get_supabase_client()
 
     # Build update dict (only include non-None values)

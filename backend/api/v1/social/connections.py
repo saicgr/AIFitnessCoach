@@ -11,7 +11,7 @@ This module handles user connection operations:
 from typing import List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query
-from core.auth import get_current_user
+from core.auth import get_current_user, verify_user_ownership
 from core.exceptions import safe_internal_error
 
 from models.social import (
@@ -44,6 +44,7 @@ async def create_connection(
         400: If trying to follow self or already following
         404: If target user not found
     """
+    verify_user_ownership(current_user, user_id)
     supabase = get_supabase_client()
 
     # Prevent self-following
@@ -92,6 +93,7 @@ async def delete_connection(
         403: If trying to unfollow the support user
         404: If connection not found
     """
+    verify_user_ownership(current_user, user_id)
     supabase = get_supabase_client()
 
     # Check if trying to unfollow the support user
@@ -132,6 +134,7 @@ async def get_followers(
     Returns:
         Paginated followers with profile data
     """
+    verify_user_ownership(current_user, user_id)
     supabase = get_supabase_client()
 
     query = supabase.table("user_connections").select(
@@ -194,6 +197,7 @@ async def get_following(
     Returns:
         Paginated following connections with profile data
     """
+    verify_user_ownership(current_user, user_id)
     supabase = get_supabase_client()
 
     query = supabase.table("user_connections").select(
@@ -249,6 +253,7 @@ async def get_friends(user_id: str,
     Returns:
         List of friend profiles
     """
+    verify_user_ownership(current_user, user_id)
     supabase = get_supabase_client()
 
     # Get friend IDs from the user_friends view (bounded)

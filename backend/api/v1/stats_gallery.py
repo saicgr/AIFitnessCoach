@@ -10,7 +10,7 @@ from datetime import datetime
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query
-from core.auth import get_current_user
+from core.auth import get_current_user, verify_user_ownership, verify_resource_ownership
 from core.exceptions import safe_internal_error
 
 from core.supabase_db import get_supabase_db
@@ -51,7 +51,7 @@ async def upload_stats_image(
         try:
             image_bytes = base64.b64decode(request.image_base64)
         except Exception as e:
-            raise HTTPException(status_code=400, detail=f"Invalid base64 image: {e}")
+            raise HTTPException(status_code=400, detail="Invalid image data")
 
         # Store image as base64 data URL
         image_url = f"data:image/png;base64,{request.image_base64}"
@@ -120,6 +120,7 @@ async def list_stats_images(
     """
     List stats gallery images for a user with pagination.
     """
+    verify_user_ownership(current_user, user_id)
     try:
         supabase = get_supabase_db()
 
@@ -164,6 +165,7 @@ async def get_stats_image(
     """
     Get a specific stats gallery image by ID.
     """
+    verify_user_ownership(current_user, user_id)
     try:
         supabase = get_supabase_db()
 
@@ -196,6 +198,7 @@ async def delete_stats_image(
     """
     Soft delete a stats gallery image.
     """
+    verify_user_ownership(current_user, user_id)
     try:
         supabase = get_supabase_db()
 
@@ -244,6 +247,7 @@ async def share_stats_to_feed(
 
     Creates a new activity in the social feed with the stats image.
     """
+    verify_user_ownership(current_user, user_id)
     try:
         supabase = get_supabase_db()
 
@@ -329,6 +333,7 @@ async def track_external_share(
 
     Increments the external_shares_count and sets shared_externally to true.
     """
+    verify_user_ownership(current_user, user_id)
     try:
         supabase = get_supabase_db()
 

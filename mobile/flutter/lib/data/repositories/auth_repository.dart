@@ -302,6 +302,18 @@ class AuthRepository {
       await prefs.remove('onboarding_completed');
       await prefs.remove('paywall_completed');
 
+      // SECURITY: Clear watch credentials on logout
+      try {
+        await WearableService.instance.syncUserCredentials(
+          userId: '',
+          authToken: '',
+          refreshToken: '',
+        );
+        debugPrint('✅ [Auth] Watch credentials cleared');
+      } catch (_) {
+        // Non-critical — watch may not be connected
+      }
+
       debugPrint('✅ [Auth] Sign-out success (all caches cleared)');
     } catch (e) {
       debugPrint('❌ [Auth] Sign-out error: $e');

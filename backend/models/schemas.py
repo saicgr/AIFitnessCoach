@@ -39,6 +39,12 @@ from models.nutrition import (
     HydrationReminderSettings,
 )
 
+from models.sauna import (
+    SaunaLogCreate,
+    SaunaLog,
+    DailySaunaSummary,
+)
+
 from models.feedback import (
     WorkoutExitCreate,
     WorkoutExit,

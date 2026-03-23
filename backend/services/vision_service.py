@@ -98,7 +98,7 @@ class VisionService:
 
         if cache_name:
             # Dynamic-only prompt (static guidelines/schema/reference data are in the cache)
-            prompt = f"""Analyze this food image and provide detailed nutrition estimates.
+            prompt = f"""Analyze this food or beverage image and provide detailed nutrition estimates. Include drinks (cocktails, smoothies, juices, coffee, protein shakes), beverages, and any consumable items.
 
 Current time suggests this is likely {suggested_meal}, but override based on the food if it clearly indicates otherwise.
 
@@ -107,7 +107,7 @@ Current time suggests this is likely {suggested_meal}, but override based on the
 Use the plate analysis JSON schema from your cached reference. Return valid JSON."""
         else:
             # Full prompt (no cache available — include everything inline)
-            prompt = f"""Analyze this food image and provide detailed nutrition estimates.
+            prompt = f"""Analyze this food or beverage image and provide detailed nutrition estimates. Include drinks (cocktails, smoothies, juices, coffee, protein shakes), beverages, and any consumable items.
 
 Current time suggests this is likely {suggested_meal}, but override based on the food if it clearly indicates otherwise (e.g., pancakes are breakfast even at dinner time).
 
@@ -123,7 +123,10 @@ Return ONLY valid JSON with this exact structure:
             "calories": <integer>,
             "protein_g": <float>,
             "carbs_g": <float>,
-            "fat_g": <float>
+            "fat_g": <float>,
+            "weight_g": <float - estimated weight in grams>,
+            "count": <integer or null - number of countable items like eggs, cookies>,
+            "weight_per_unit_g": <float or null - weight of one piece for countable items>
         }}
     ],
     "total_calories": <integer>,
@@ -158,7 +161,7 @@ Guidelines:
             gen_config = types.GenerateContentConfig(
                 response_mime_type="application/json",
                 response_schema=FoodAnalysisResponse,
-                max_output_tokens=1500,
+                max_output_tokens=4000,
                 temperature=0.3,
             )
             if cache_name:
@@ -171,10 +174,41 @@ Guidelines:
                 config=gen_config,
             )
 
-            # Parse the response - structured output guarantees valid JSON
-            content = response.text.strip()
+            # Parse the response - try structured parsed result first, fall back to text
             logger.info(f"✅ Vision API response received")
-            result = json.loads(content)
+
+            # Try to get parsed result from structured output first
+            result = None
+            try:
+                # Gemini structured output may have a parsed attribute
+                if hasattr(response, 'parsed') and response.parsed:
+                    result = response.parsed if isinstance(response.parsed, dict) else json.loads(str(response.parsed))
+            except Exception:
+                pass
+
+            if result is None:
+                content = response.text.strip()
+                try:
+                    result = json.loads(content)
+                except json.JSONDecodeError:
+                    # Try to repair truncated/malformed JSON by extracting food_items
+                    logger.warning(f"⚠️ JSON parse failed, attempting repair. Raw: {content[:300]}...")
+                    import re
+                    # Extract what we can from the partial JSON
+                    repaired = content
+                    # Close any unclosed arrays/objects
+                    open_brackets = repaired.count('[') - repaired.count(']')
+                    open_braces = repaired.count('{') - repaired.count('}')
+                    # Remove trailing comma before closing
+                    repaired = re.sub(r',\s*$', '', repaired)
+                    repaired += ']' * open_brackets + '}' * open_braces
+                    try:
+                        result = json.loads(repaired)
+                        logger.info(f"✅ JSON repair successful")
+                    except json.JSONDecodeError as e2:
+                        logger.error(f"❌ JSON repair also failed: {e2}")
+                        logger.error(f"Raw content: {content[:500]}...")
+                        raise ValueError(f"Invalid JSON in vision response: {e2}")
 
             # Validate required fields
             required_fields = [
@@ -202,6 +236,9 @@ Guidelines:
             result["carbs_g"] = result.get("total_carbs_g", 0.0)
             result["fat_g"] = result.get("total_fat_g", 0.0)
             result["fiber_g"] = result.get("total_fiber_g", 0.0)
+
+            if not result.get("food_items"):
+                logger.warning(f"⚠️ Gemini returned 0 food items. Raw response: {content[:500]}")
 
             logger.info(
                 f"✅ Food analysis complete: {result['total_calories']} cal, "
@@ -302,19 +339,29 @@ Guidelines:
             return "unknown"
 
     async def _download_image_from_s3(self, s3_key: str) -> bytes:
-        """Download an image from S3 into memory (max ~1.5MB per image)."""
+        """Download an image from S3 into memory (max ~1.5MB per image).
+        Retries once after 2s on NoSuchKey — covers parallel upload race condition."""
         if not self._s3_client or not self._bucket:
             raise RuntimeError("S3 client not configured for multi-image analysis")
 
-        s3_obj = await asyncio.to_thread(
-            self._s3_client.get_object,
-            Bucket=self._bucket,
-            Key=s3_key,
-        )
-        body = s3_obj["Body"]
-        data = await asyncio.to_thread(body.read)
-        logger.debug(f"Downloaded {len(data)} bytes from S3 key: {s3_key}")
-        return data
+        for attempt in range(2):
+            try:
+                s3_obj = await asyncio.to_thread(
+                    self._s3_client.get_object,
+                    Bucket=self._bucket,
+                    Key=s3_key,
+                )
+                body = s3_obj["Body"]
+                data = await asyncio.to_thread(body.read)
+                logger.debug(f"Downloaded {len(data)} bytes from S3 key: {s3_key}")
+                return data
+            except Exception as e:
+                if "NoSuchKey" in str(type(e).__name__) or "NoSuchKey" in str(e):
+                    if attempt == 0:
+                        logger.warning(f"⚠️ S3 key not found (attempt 1), retrying in 2s: {s3_key}")
+                        await asyncio.sleep(2)
+                        continue
+                raise
 
     async def _classify_food_images(self, image_parts: list) -> str:
         """Quick classification: plate, buffet, or menu."""

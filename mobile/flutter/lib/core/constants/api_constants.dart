@@ -35,9 +35,11 @@ class ApiConstants {
   /// AI-specific receive timeout (longer for AI responses)
   static const Duration aiReceiveTimeout = Duration(minutes: 2);
 
-  /// Google OAuth Web Client ID
-  static const String googleWebClientId =
-      '843677137160-h1jh9t4d0s6mui2eqsek2h0rnq27n19o.apps.googleusercontent.com';
+  /// Google OAuth Web Client ID — injected via --dart-define at build time
+  static const String googleWebClientId = String.fromEnvironment(
+    'GOOGLE_WEB_CLIENT_ID',
+    defaultValue: '843677137160-h1jh9t4d0s6mui2eqsek2h0rnq27n19o.apps.googleusercontent.com',
+  );
 
   /// RevenueCat API Keys - supplied via --dart-define at build time
   static const String revenueCatAppleApiKey = String.fromEnvironment(
@@ -76,4 +78,5 @@ class ApiConstants {
   static const String scheduling = '/scheduling';
   static const String dailySchedule = '/daily-schedule';
   static const String supersets = '/supersets';
+  static const String dashboard = '/dashboard';
 }

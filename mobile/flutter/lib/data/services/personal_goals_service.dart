@@ -49,7 +49,8 @@ class PersonalGoalsService {
     required String userId,
     required String exerciseName,
     required PersonalGoalType goalType,
-    required int targetValue,
+    required double targetValue,
+    String unit = 'reps',
     String? weekStart,
   }) async {
     try {
@@ -62,6 +63,7 @@ class PersonalGoalsService {
           'exercise_name': exerciseName,
           'goal_type': goalType.value,
           'target_value': targetValue,
+          'unit': unit,
           if (weekStart != null) 'week_start': weekStart,
         },
       );
@@ -486,12 +488,14 @@ class ExercisePerformanceData {
   final int totalReps;
   final int totalSets;
   final int maxRepsInSet;
+  final double? maxWeightKg;
 
   ExercisePerformanceData({
     required this.exerciseName,
     this.totalReps = 0,
     this.totalSets = 0,
     this.maxRepsInSet = 0,
+    this.maxWeightKg,
   });
 
   Map<String, dynamic> toJson() => {
@@ -499,6 +503,7 @@ class ExercisePerformanceData {
     'total_reps': totalReps,
     'total_sets': totalSets,
     'max_reps_in_set': maxRepsInSet,
+    if (maxWeightKg != null) 'max_weight_kg': maxWeightKg,
   };
 }
 
@@ -656,6 +661,7 @@ class GoalSuggestionItem {
   final String exerciseName;
   final PersonalGoalType goalType;
   final int suggestedTarget;
+  final String unit;
   final String reasoning;
   final SuggestionType suggestionType;
   final SuggestionCategory category;
@@ -671,6 +677,7 @@ class GoalSuggestionItem {
     required this.exerciseName,
     required this.goalType,
     required this.suggestedTarget,
+    this.unit = 'reps',
     required this.reasoning,
     required this.suggestionType,
     required this.category,
@@ -688,6 +695,7 @@ class GoalSuggestionItem {
       exerciseName: json['exercise_name'] as String,
       goalType: PersonalGoalType.fromString(json['goal_type'] as String),
       suggestedTarget: json['suggested_target'] as int,
+      unit: json['unit'] as String? ?? 'reps',
       reasoning: json['reasoning'] as String,
       suggestionType: SuggestionType.fromString(json['suggestion_type'] as String),
       category: SuggestionCategory.fromString(json['category'] as String),

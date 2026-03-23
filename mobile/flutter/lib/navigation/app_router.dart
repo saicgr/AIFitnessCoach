@@ -138,6 +138,7 @@ import '../screens/kegel/kegel_session_screen.dart';
 import '../screens/habits/habits_screen.dart';
 import '../screens/habits/habit_detail_screen.dart';
 import '../screens/wrapped/wrapped_viewer_screen.dart';
+import '../screens/dashboard/coach_dashboard_screen.dart';
 
 /// Listenable for auth, language, and accessibility state changes to trigger router refresh
 class _AuthStateNotifier extends ChangeNotifier {
@@ -2015,6 +2016,31 @@ final routerProvider = Provider<GoRouter>((ref) {
             },
           );
         },
+      ),
+      // Coach Dashboard - Weekly overview with compliance, readiness, and goals
+      GoRoute(
+        path: '/dashboard',
+        pageBuilder: (context, state) => CustomTransitionPage(
+          key: state.pageKey,
+          child: const CoachDashboardScreen(),
+          transitionDuration: const Duration(milliseconds: 300),
+          reverseTransitionDuration: const Duration(milliseconds: 200),
+          transitionsBuilder: (context, animation, secondaryAnimation, child) {
+            return FadeTransition(
+              opacity: animation,
+              child: SlideTransition(
+                position: Tween<Offset>(
+                  begin: const Offset(0.05, 0),
+                  end: Offset.zero,
+                ).animate(CurvedAnimation(
+                  parent: animation,
+                  curve: Curves.easeOutCubic,
+                )),
+                child: child,
+              ),
+            );
+          },
+        ),
       ),
     ],
     errorBuilder: (context, state) => Scaffold(

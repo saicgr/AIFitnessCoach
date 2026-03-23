@@ -2176,7 +2176,7 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
   //           5-Limitations, 6-PrimaryGoal+Generate, 7-PersonalizationGate, 8-MuscleFocus,
   //           9-TrainingStyle, 10-Progression(pace), 11-NutritionGate, 12-NutritionDetails
   int get _totalQuestions {
-    int total = 13; // New flow: 13 screens total
+    int total = 11; // Flow: 11 screens total (screens 11-12 nutrition gate removed)
     if (!_featureFlagWorkoutDays) {
       total -= 1; // Skip Screen 3 (Workout Days)
     }
@@ -2319,9 +2319,9 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
       case 8:  // Muscle Focus - optional (Phase 2)
       case 9:  // Training Style - optional (Phase 2)
       case 10: // Progression Pace - optional (Phase 2)
-      case 12: // Nutrition Details - optional (Phase 3)
         return true;
-      default: // Gate screens (7, 11) have their own skip handling
+      // case 12: // Nutrition Details - optional (Phase 3) — REMOVED
+      default: // Gate screens (7) have their own skip handling
         return false;
     }
   }
@@ -2344,8 +2344,8 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
       return;
     }
 
-    // Screen 12 is the last screen - skip means finish
-    if (_currentQuestion == 12) {
+    // Screen 10 is now the last screen - skip means finish
+    if (_currentQuestion == 10) {
       _finishOnboarding();
       return;
     }
@@ -2385,9 +2385,9 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
     // Note: This should be triggered by button in _buildPrimaryGoal, not auto-advance
     // The preview screen will handle navigation to Screen 7 or 11
 
-    // Check if this is the last question (screen 12 - Nutrition Details)
-    // Note: _totalQuestions adjusts for feature flags but screen indices stay fixed (0-12)
-    if (_currentQuestion == 12) {
+    // Screen 10 (Progression Pace) is now the last optional screen —
+    // screens 11-12 (nutrition gate) have been removed from the flow.
+    if (_currentQuestion == 10) {
       _finishOnboarding();
       return;
     }
@@ -2484,14 +2484,13 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
         }
         break;
 
-      // PHASE 3: OPTIONAL NUTRITION (Screens 11-12)
-      case 11: // Nutrition Opt-In Gate (handled in button callbacks)
-        break;
-
-      case 12: // Nutrition Details (merged nutrition + fasting)
-        await _saveNutritionData();
-        await _saveFastingData();
-        break;
+      // PHASE 3: OPTIONAL NUTRITION (Screens 11-12) — REMOVED
+      // case 11: // Nutrition Opt-In Gate (handled in button callbacks)
+      //   break;
+      // case 12: // Nutrition Details (merged nutrition + fasting)
+      //   await _saveNutritionData();
+      //   await _saveFastingData();
+      //   break;
     }
   }
 
@@ -2631,11 +2630,8 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
             onStartNow: () {
               navigator.pop();
               if (!mounted) return;
-              setState(() {
-                _skipPersonalization = true;
-                _currentQuestion = 11; // Skip to nutrition gate
-              });
-              _questionController.forward(from: 0);
+              setState(() => _skipPersonalization = true);
+              _finishOnboarding(); // Screens 11-12 (nutrition gate) removed — finish directly
             },
           ),
         ),
@@ -2696,13 +2692,7 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
     if (_currentQuestion > 0) {
       HapticFeedback.lightImpact();
       setState(() {
-        // If on nutrition gate (11) and personalization was skipped,
-        // jump back to personalization gate (7) instead of question 10
-        if (_currentQuestion == 11 && _skipPersonalization) {
-          _currentQuestion = 7;
-        } else {
-          _currentQuestion--;
-        }
+        _currentQuestion--;
       });
       _questionController.forward(from: 0);
     }
@@ -2719,8 +2709,10 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
       case 0: // Goals (must select at least 1)
         return _selectedGoals.isNotEmpty;
 
-      case 1: // Fitness Level + Training Experience (fitness required, experience optional)
-        return _selectedLevel != null;
+      case 1: // Fitness Level + Training Experience + Activity Level (all required)
+        return _selectedLevel != null &&
+               _selectedTrainingExperience != null &&
+               _selectedActivityLevel != null;
 
       case 2: // Schedule (days/week + duration both required)
         return _selectedDays != null &&
@@ -3176,8 +3168,8 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
         ),
       ).animate().fadeIn(delay: 400.ms).slideY(begin: 0.1);
     }
-    // Cases 7 and 11 have their own action buttons (gate screens)
-    if (_currentQuestion == 7 || _currentQuestion == 11) {
+    // Case 7 (personalization gate) has its own action buttons
+    if (_currentQuestion == 7) {
       return null;
     }
     // All other cases: standard continue button with optional skip
@@ -3186,7 +3178,7 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
       isLastQuestion: _currentQuestion == _totalQuestions - 1,
       onPressed: _nextQuestion,
       onSkip: _isCurrentPageSkippable ? _skipCurrentPage : null,
-      skipText: _currentQuestion == 12 ? 'Skip & Finish' : 'Skip',
+      skipText: _currentQuestion == 10 ? 'Skip & Finish' : 'Skip',
     );
   }
 
@@ -3255,11 +3247,8 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
           onSkip: () {
             HapticFeedback.selectionClick();
             AnalyticsService.logPersonalizationSkipped();
-            setState(() {
-              _skipPersonalization = true;
-              _currentQuestion = 11; // Jump to nutrition gate
-            });
-            _questionController.forward(from: 0);
+            setState(() => _skipPersonalization = true);
+            _finishOnboarding(); // Screens 11-12 (nutrition gate) removed — finish directly
           },
         );
 
@@ -3293,29 +3282,11 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
           showHeader: showHeader,
         );
 
-      // PHASE 3: OPTIONAL NUTRITION (Screens 11-12)
-      case 11: // Nutrition Opt-In Gate
-        return QuizNutritionGate(
-          key: const ValueKey('nutrition_gate'),
-          goals: _selectedGoals.toList(),
-          onSetNutrition: () async {
-            HapticFeedback.mediumImpact();
-            AnalyticsService.logNutritionOptIn(true);
-            await ref.read(preAuthQuizProvider.notifier).setNutritionEnabled(true);
-            setState(() => _nutritionEnabled = true);
-            _nextQuestion();
-          },
-          onSkip: () async {
-            HapticFeedback.selectionClick();
-            AnalyticsService.logNutritionOptIn(false);
-            await ref.read(preAuthQuizProvider.notifier).setNutritionEnabled(false);
-            setState(() => _nutritionEnabled = false);
-            _finishOnboarding();
-          },
-        );
-
-      case 12: // Nutrition Details (merged nutrition + fasting)
-        return _buildNutritionGoals(showHeader: showHeader);
+      // PHASE 3: OPTIONAL NUTRITION (Screens 11-12) — REMOVED
+      // case 11: // Nutrition Opt-In Gate
+      //   return QuizNutritionGate(...);
+      // case 12: // Nutrition Details (merged nutrition + fasting)
+      //   return _buildNutritionGoals(showHeader: showHeader);
 
       default:
         return const SizedBox.shrink();

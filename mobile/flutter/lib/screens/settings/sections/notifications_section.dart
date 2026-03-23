@@ -85,6 +85,180 @@ class _NotificationsCardState extends ConsumerState<_NotificationsCard> {
             ),
           Divider(height: 1, color: cardBorder, indent: 50),
 
+          // ─── Accountability Coach Section ─────────────────────
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+            child: Row(
+              children: [
+                Icon(Icons.sports, size: 16, color: AppColors.warning),
+                const SizedBox(width: 8),
+                Text(
+                  'ACCOUNTABILITY COACH',
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.warning,
+                    letterSpacing: 1.2,
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          // Accountability Intensity
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Icon(Icons.tune, size: 20, color: textSecondary),
+                    const SizedBox(width: 12),
+                    Text('Accountability Intensity', style: TextStyle(fontSize: 14, color: isDark ? Colors.white : Colors.black87)),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Padding(
+                  padding: const EdgeInsets.only(left: 32),
+                  child: SegmentedButton<String>(
+                    segments: const [
+                      ButtonSegment(value: 'gentle', label: Text('Gentle', style: TextStyle(fontSize: 11))),
+                      ButtonSegment(value: 'balanced', label: Text('Balanced', style: TextStyle(fontSize: 11))),
+                      ButtonSegment(value: 'tough_love', label: Text('Tough', style: TextStyle(fontSize: 11))),
+                      ButtonSegment(value: 'off', label: Text('Off', style: TextStyle(fontSize: 11))),
+                    ],
+                    selected: {notifPrefs.accountabilityIntensity},
+                    onSelectionChanged: (values) {
+                      ref.read(notificationPreferencesProvider.notifier).setAccountabilityIntensity(values.first);
+                    },
+                    style: ButtonStyle(
+                      visualDensity: VisualDensity.compact,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          // Daily Notification Limit
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+            child: Row(
+              children: [
+                Icon(Icons.notifications_active, size: 20, color: textSecondary),
+                const SizedBox(width: 12),
+                Text('Daily Limit', style: TextStyle(fontSize: 14, color: isDark ? Colors.white : Colors.black87)),
+                const Spacer(),
+                Text('${notifPrefs.dailyNudgeLimit}', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppColors.cyan)),
+                SizedBox(
+                  width: 140,
+                  child: Slider(
+                    value: notifPrefs.dailyNudgeLimit.toDouble(),
+                    min: 1,
+                    max: 8,
+                    divisions: 7,
+                    onChanged: (value) {
+                      ref.read(notificationPreferencesProvider.notifier).setDailyNudgeLimit(value.toInt());
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          // AI Personalized Messages
+          SettingSwitchTile(
+            icon: Icons.auto_awesome,
+            iconColor: AppColors.purple,
+            title: 'AI-Personalized Messages',
+            subtitle: 'Use AI to match your coach\'s personality',
+            value: notifPrefs.aiPersonalizedNudges,
+            onChanged: (value) {
+              ref.read(notificationPreferencesProvider.notifier).setAiPersonalizedNudges(value);
+            },
+          ),
+
+          // Guilt Notifications (Duolingo-style)
+          SettingSwitchTile(
+            icon: Icons.sentiment_dissatisfied,
+            iconColor: AppColors.warning,
+            title: 'Guilt Notifications',
+            subtitle: 'Escalating nudges when you\'re inactive',
+            value: notifPrefs.guiltNotifications,
+            onChanged: (value) {
+              ref.read(notificationPreferencesProvider.notifier).setGuiltNotifications(value);
+            },
+          ),
+
+          // Missed Workout Nudge
+          SettingSwitchTile(
+            icon: Icons.alarm,
+            iconColor: AppColors.error,
+            title: 'Missed Workout Nudge',
+            subtitle: 'Remind if you haven\'t worked out by evening',
+            value: notifPrefs.missedWorkoutNudge,
+            onChanged: (value) {
+              ref.read(notificationPreferencesProvider.notifier).setMissedWorkoutNudge(value);
+            },
+          ),
+
+          // Post-Workout Meal Reminder
+          SettingSwitchTile(
+            icon: Icons.lunch_dining,
+            iconColor: AppColors.success,
+            title: 'Post-Workout Meal Reminder',
+            subtitle: 'Remind to refuel ${notifPrefs.postWorkoutMealDelayMinutes} min after workout',
+            value: notifPrefs.postWorkoutMealReminder,
+            onChanged: (value) {
+              ref.read(notificationPreferencesProvider.notifier).setPostWorkoutMealReminder(value);
+            },
+          ),
+
+          // Habit Reminders
+          SettingSwitchTile(
+            icon: Icons.checklist,
+            iconColor: AppColors.cyan,
+            title: 'Habit Reminders',
+            subtitle: 'Evening reminder to complete daily habits',
+            value: notifPrefs.habitReminders,
+            onChanged: (value) {
+              ref.read(notificationPreferencesProvider.notifier).setHabitReminders(value);
+            },
+          ),
+
+          // Streak Celebrations
+          SettingSwitchTile(
+            icon: Icons.celebration,
+            iconColor: AppColors.warning,
+            title: 'Streak Celebrations',
+            subtitle: 'Celebrate streak milestones',
+            value: notifPrefs.streakCelebration,
+            onChanged: (value) {
+              ref.read(notificationPreferencesProvider.notifier).setStreakCelebration(value);
+            },
+          ),
+
+          Divider(height: 1, color: cardBorder, indent: 16),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+            child: Row(
+              children: [
+                Icon(Icons.notifications, size: 16, color: textMuted),
+                const SizedBox(width: 8),
+                Text(
+                  'STANDARD NOTIFICATIONS',
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    color: textMuted,
+                    letterSpacing: 1.2,
+                  ),
+                ),
+              ],
+            ),
+          ),
+
           // Workout Reminders
           _buildNotificationToggleWithTime(
             sectionKey: 'workout',

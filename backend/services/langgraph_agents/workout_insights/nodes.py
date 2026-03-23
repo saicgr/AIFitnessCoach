@@ -127,17 +127,50 @@ async def generate_structured_insights_node(state: WorkoutInsightsState) -> Dict
     exercises = state.get("exercises", [])
     duration = state.get("duration_minutes", 45)
     workout_focus = state.get("workout_focus", "full body")
+    user_goals = state.get("user_goals") or []
+    fitness_level = state.get("fitness_level") or "intermediate"
+    difficulty = state.get("difficulty") or "intermediate"
+    total_sets = state.get("total_sets", 0)
+    exercise_count = state.get("exercise_count", len(exercises))
 
-    # Get up to 5 exercise names for context
-    exercise_list = [e.get("name", "") for e in exercises[:5] if e.get("name")]
-    exercises_str = ", ".join(exercise_list) if exercise_list else "various exercises"
+    # Build exercise detail string with sets/reps context
+    exercise_details = []
+    for e in exercises[:6]:
+        name = e.get("name", "")
+        sets = e.get("sets", "")
+        reps = e.get("reps", "")
+        if name:
+            detail = name
+            if sets and reps:
+                detail += f" ({sets}x{reps})"
+            exercise_details.append(detail)
+    exercises_str = ", ".join(exercise_details) if exercise_details else "various exercises"
 
-    # Build the prompt (simpler since schema enforces structure)
-    prompt = f"""Generate 2 short workout insights as JSON.
+    goals_str = ", ".join(user_goals) if user_goals else "general fitness"
 
-Workout: {workout_name} | Focus: {workout_focus} | {duration} min | Exercises: {exercises_str}
+    prompt = f"""You are a personal fitness coach writing brief, actionable workout notes for a user about to do this session.
 
-Rules: headline 3-5 words, each section content 6-10 words, exactly 2 sections. Icons: 💪🎯🔥⚡ Colors: cyan, purple, orange, green."""
+Workout: {workout_name}
+Focus: {workout_focus} | Duration: {duration} min | Difficulty: {difficulty}
+Exercises ({exercise_count} total, {total_sets} sets): {exercises_str}
+User goals: {goals_str} | Fitness level: {fitness_level}
+
+Generate exactly 3 insight sections as JSON. Each section must be specific, actionable, and directly reference the actual exercises or muscles in this workout — not generic advice.
+
+Section ideas (pick the 3 most relevant):
+- Why this workout serves their goal (specific to {goals_str})
+- A technique tip for a key exercise in this session (e.g. depth on squats, grip on deadlifts)
+- What muscles this targets and why that matters now
+- Recovery/nutrition note relevant to this session's intensity
+- A mind-muscle connection cue for the primary lift
+
+Rules:
+- headline: 3-5 words, punchy motivational
+- section title: 2-4 words
+- section content: 1-2 sentences, specific and actionable (not generic fluff)
+- icon: one emoji relevant to the section
+- color: one of cyan, purple, orange, green
+- exactly 3 sections"""
 
     # Initialize google.genai client
     from core.gemini_client import get_genai_client
@@ -145,10 +178,12 @@ Rules: headline 3-5 words, each section content 6-10 words, exactly 2 sections. 
 
     # Deterministic fallback based on workout data (no AI needed)
     def _build_fallback(headline_text: str = None):
-        fb_headline = headline_text or "Let's crush this workout!"
+        fb_headline = headline_text or "Time to get to work"
+        first_exercise = exercises[0].get("name", workout_focus) if exercises else workout_focus
         fb_sections = [
-            {"icon": "🎯", "title": "Focus", "content": f"Target {workout_focus} with intensity", "color": "cyan"},
-            {"icon": "💪", "title": "Duration", "content": f"{duration} min of focused training", "color": "purple"},
+            {"icon": "🎯", "title": "Today's Target", "content": f"This session hits your {workout_focus} — {exercise_count} exercises, {total_sets} total sets. Stay controlled on each rep.", "color": "cyan"},
+            {"icon": "💪", "title": "Key Lift", "content": f"Lead with {first_exercise} while your energy is highest. Focus on form before weight.", "color": "orange"},
+            {"icon": "🔋", "title": "Recovery", "content": f"After {duration} min of {workout_focus} work, prioritise protein and sleep tonight to maximise adaptation.", "color": "purple"},
         ]
         return {
             "headline": fb_headline,
@@ -240,7 +275,7 @@ Rules: headline 3-5 words, each section content 6-10 words, exactly 2 sections. 
             sections = insights.get("sections", [])
 
             # Validate section count
-            if len(sections) < 2:
+            if len(sections) < 3:
                 logger.warning(f"[Generate Node] Insufficient sections: {len(sections)}")
                 if attempt < max_retries:
                     continue  # Retry

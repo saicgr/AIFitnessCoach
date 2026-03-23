@@ -2,11 +2,12 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/constants/goal_unit.dart';
 import '../../data/services/personal_goals_service.dart';
 
 /// Bottom sheet for creating a new weekly personal goal
 class CreateGoalSheet extends StatefulWidget {
-  final Future<void> Function(String exerciseName, PersonalGoalType goalType, int targetValue) onSubmit;
+  final Future<void> Function(String exerciseName, PersonalGoalType goalType, double targetValue, GoalUnit unit) onSubmit;
 
   const CreateGoalSheet({
     super.key,
@@ -21,6 +22,7 @@ class _CreateGoalSheetState extends State<CreateGoalSheet> {
   final _exerciseController = TextEditingController();
   final _targetController = TextEditingController();
   PersonalGoalType _selectedType = PersonalGoalType.singleMax;
+  GoalUnit _selectedUnit = GoalUnit.reps;
   bool _isSubmitting = false;
 
   // Common exercises for quick selection
@@ -53,7 +55,7 @@ class _CreateGoalSheetState extends State<CreateGoalSheet> {
       return;
     }
 
-    final target = int.tryParse(targetText);
+    final target = double.tryParse(targetText);
     if (target == null || target <= 0) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Please enter a valid target')),
@@ -64,7 +66,7 @@ class _CreateGoalSheetState extends State<CreateGoalSheet> {
     setState(() => _isSubmitting = true);
 
     try {
-      await widget.onSubmit(exercise, _selectedType, target);
+      await widget.onSubmit(exercise, _selectedType, target, _selectedUnit);
       if (mounted) {
         Navigator.of(context).pop();
       }
@@ -183,6 +185,41 @@ class _CreateGoalSheetState extends State<CreateGoalSheet> {
             ),
             const SizedBox(height: 24),
 
+            // Unit selection
+            Text(
+              'Unit',
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+                color: textPrimary,
+              ),
+            ),
+            const SizedBox(height: 8),
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: GoalUnit.values.map((unit) {
+                  final isSelected = _selectedUnit == unit;
+                  return Padding(
+                    padding: const EdgeInsets.only(right: 8),
+                    child: ChoiceChip(
+                      label: Text(unit.label),
+                      selected: isSelected,
+                      onSelected: (_) => setState(() => _selectedUnit = unit),
+                      selectedColor: AppColors.cyan,
+                      labelStyle: TextStyle(
+                        color: isSelected ? Colors.white : textSecondary,
+                        fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                      ),
+                      backgroundColor: elevated,
+                      side: BorderSide(color: isSelected ? AppColors.cyan : cardBorder),
+                    ),
+                  );
+                }).toList(),
+              ),
+            ),
+            const SizedBox(height: 16),
+
             // Exercise name
             Text(
               'Exercise',
@@ -258,8 +295,8 @@ class _CreateGoalSheetState extends State<CreateGoalSheet> {
             // Target value
             Text(
               _selectedType == PersonalGoalType.singleMax
-                  ? 'Target Reps (in one set)'
-                  : 'Target Total Reps (this week)',
+                  ? 'Target ${_selectedUnit.fullLabel} (best in one session)'
+                  : 'Target ${_selectedUnit.fullLabel} (total this week)',
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
@@ -269,8 +306,10 @@ class _CreateGoalSheetState extends State<CreateGoalSheet> {
             const SizedBox(height: 12),
             TextField(
               controller: _targetController,
-              keyboardType: TextInputType.number,
-              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+              keyboardType: TextInputType.numberWithOptions(decimal: _selectedUnit.isDecimal),
+              inputFormatters: _selectedUnit.isDecimal
+                  ? [FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*'))]
+                  : [FilteringTextInputFormatter.digitsOnly],
               style: TextStyle(color: textPrimary, fontSize: 24, fontWeight: FontWeight.bold),
               textAlign: TextAlign.center,
               decoration: InputDecoration(
@@ -290,7 +329,7 @@ class _CreateGoalSheetState extends State<CreateGoalSheet> {
                   borderRadius: BorderRadius.circular(12),
                   borderSide: const BorderSide(color: AppColors.cyan, width: 2),
                 ),
-                suffixText: 'reps',
+                suffixText: _selectedUnit.label,
                 suffixStyle: TextStyle(color: textSecondary, fontSize: 16),
               ),
             ),

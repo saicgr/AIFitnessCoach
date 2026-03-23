@@ -402,6 +402,68 @@ async def _gather_week_stats(db, user_id: str, start_date: date, end_date: date)
         for pr in prs_result.data
     ]
 
+    # --- Nutrition adherence ---
+    nutrition_adherence_pct = None
+    try:
+        from services.adherence_tracking_service import get_adherence_tracking_service
+        adherence_svc = get_adherence_tracking_service()
+        weekly_adherence = await adherence_svc.get_weekly_summary(user_id, str(start_date), str(end_date))
+        if weekly_adherence:
+            nutrition_adherence_pct = weekly_adherence.get("avg_calorie_adherence") or weekly_adherence.get("overall_adherence_pct")
+    except Exception as e:
+        logger.debug(f"Failed to get nutrition adherence: {e}")
+
+    # --- Readiness scores ---
+    avg_readiness_score = None
+    readiness_trend = "stable"
+    mood_distribution = {}
+    try:
+        readiness_result = db.client.table("readiness_scores").select(
+            "readiness_score, mood, mood_emoji, measured_at"
+        ).eq("user_id", user_id).gte(
+            "measured_at", str(start_date)
+        ).lte("measured_at", str(end_date) + "T23:59:59").order("measured_at").execute()
+
+        readiness_data = readiness_result.data or []
+        if readiness_data:
+            scores = [r["readiness_score"] for r in readiness_data if r.get("readiness_score")]
+            if scores:
+                avg_readiness_score = round(sum(scores) / len(scores))
+                # Trend: compare first half vs second half
+                mid = len(scores) // 2
+                if mid > 0:
+                    first_half_avg = sum(scores[:mid]) / mid
+                    second_half_avg = sum(scores[mid:]) / len(scores[mid:])
+                    if second_half_avg > first_half_avg + 5:
+                        readiness_trend = "improving"
+                    elif second_half_avg < first_half_avg - 5:
+                        readiness_trend = "declining"
+
+            # Mood distribution
+            for r in readiness_data:
+                mood = r.get("mood_emoji") or r.get("mood") or "unknown"
+                mood_distribution[mood] = mood_distribution.get(mood, 0) + 1
+    except Exception as e:
+        logger.debug(f"Failed to get readiness scores: {e}")
+
+    # --- Body measurement changes ---
+    measurement_changes = {}
+    try:
+        measurements_result = db.client.table("body_measurements").select(
+            "weight_kg, body_fat_percent, measured_at"
+        ).eq("user_id", user_id).order("measured_at", desc=True).limit(4).execute()
+
+        measurements = measurements_result.data or []
+        if len(measurements) >= 2:
+            latest = measurements[0]
+            previous = measurements[1]
+            if latest.get("weight_kg") and previous.get("weight_kg"):
+                measurement_changes["weight_change_kg"] = round(latest["weight_kg"] - previous["weight_kg"], 1)
+            if latest.get("body_fat_percent") and previous.get("body_fat_percent"):
+                measurement_changes["body_fat_change"] = round(latest["body_fat_percent"] - previous["body_fat_percent"], 1)
+    except Exception as e:
+        logger.debug(f"Failed to get measurement changes: {e}")
+
     return {
         "workouts_completed": completed_count,
         "workouts_scheduled": total_scheduled,
@@ -412,7 +474,12 @@ async def _gather_week_stats(db, user_id: str, start_date: date, end_date: date)
         "current_streak": current_streak,
         "streak_status": streak_status,
         "prs_achieved": prs_achieved,
-        "pr_details": pr_details if pr_details else None
+        "pr_details": pr_details if pr_details else None,
+        "nutrition_adherence_pct": nutrition_adherence_pct,
+        "avg_readiness_score": avg_readiness_score,
+        "readiness_trend": readiness_trend,
+        "measurement_changes": measurement_changes,
+        "mood_distribution": mood_distribution,
     }
 
 
@@ -436,14 +503,20 @@ Stats:
 - Estimated calories burned: {stats['calories_burned_estimate']}
 - Current streak: {stats['current_streak']} days
 - PRs achieved: {stats['prs_achieved']}
+- Nutrition adherence: {f"{stats['nutrition_adherence_pct']:.0f}%" if stats.get('nutrition_adherence_pct') else "Not tracked"}
+- Average readiness score: {stats.get('avg_readiness_score') or "Not tracked"}/100
+- Readiness trend: {stats.get('readiness_trend', 'stable')}
+- Body changes: {json.dumps(stats.get('measurement_changes', {})) if stats.get('measurement_changes') else "No measurements"}
+- Mood distribution: {json.dumps(stats.get('mood_distribution', {})) if stats.get('mood_distribution') else "Not tracked"}
 
 Generate a JSON response with:
-1. "summary": A 2-3 sentence personalized summary of their week
+1. "summary": A 2-3 sentence personalized summary of their week covering workouts, nutrition, and recovery
 2. "highlights": An array of 2-3 key highlights/accomplishments
 3. "encouragement": A motivational message (1-2 sentences)
-4. "next_week_tips": An array of 2-3 tips for next week
+4. "next_week_tips": An array of 2-3 actionable tips for next week based on their data
 
 Be warm, encouraging, and specific. Celebrate wins, acknowledge challenges.
+Reference their nutrition adherence and readiness data when available.
 If they missed workouts, be supportive not critical.
 
 Respond ONLY with valid JSON, no markdown."""
@@ -483,4 +556,129 @@ Respond ONLY with valid JSON, no markdown."""
             "Remember to hydrate throughout the day",
             "Get enough sleep for optimal recovery"
         ]
+    }
+
+
+# ============================================
+# Filtered Report Endpoint
+# ============================================
+
+@router.get("/user/{user_id}/report")
+@limiter.limit("10/minute")
+async def get_filtered_report(
+    user_id: str,
+    request: Request,
+    start_date: str,
+    end_date: str,
+    group_by: str = "week",
+    muscle_group: Optional[str] = None,
+    mood_filter: Optional[str] = None,
+    include: str = "all",
+    current_user: dict = Depends(get_current_user),
+):
+    """
+    Get aggregated report data for an arbitrary date range.
+
+    Args:
+        start_date: YYYY-MM-DD
+        end_date: YYYY-MM-DD
+        group_by: "day" | "week" | "month"
+        muscle_group: Filter by specific muscle group
+        mood_filter: Filter days by mood value
+        include: Comma-separated sections: "workouts,nutrition,readiness,measurements,muscles" or "all"
+    """
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
+
+    db = get_supabase_db()
+    include_set = set(include.split(",")) if include != "all" else {"workouts", "nutrition", "readiness", "measurements", "muscles"}
+
+    try:
+        start = date.fromisoformat(start_date)
+        end = date.fromisoformat(end_date)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid date format. Use YYYY-MM-DD.")
+
+    if (end - start).days > 365:
+        raise HTTPException(status_code=400, detail="Maximum date range is 365 days.")
+
+    # Generate date intervals based on group_by
+    intervals = []
+    current = start
+    if group_by == "day":
+        while current <= end:
+            intervals.append((current, current))
+            current += timedelta(days=1)
+    elif group_by == "month":
+        while current <= end:
+            month_end = (current.replace(day=28) + timedelta(days=4)).replace(day=1) - timedelta(days=1)
+            month_end = min(month_end, end)
+            intervals.append((current, month_end))
+            current = month_end + timedelta(days=1)
+    else:  # week
+        while current <= end:
+            week_end = min(current + timedelta(days=6 - current.weekday()), end)
+            intervals.append((current, week_end))
+            current = week_end + timedelta(days=1)
+
+    # Gather data for each interval
+    groups = []
+    for interval_start, interval_end in intervals:
+        group_data = {
+            "period_start": str(interval_start),
+            "period_end": str(interval_end),
+        }
+
+        if "workouts" in include_set:
+            stats = await _gather_week_stats(db, user_id, interval_start, interval_end)
+            group_data["workouts"] = {
+                "completed": stats["workouts_completed"],
+                "scheduled": stats["workouts_scheduled"],
+                "exercises": stats["total_exercises"],
+                "time_minutes": stats["total_time_minutes"],
+                "calories": stats["calories_burned_estimate"],
+                "streak": stats["current_streak"],
+                "prs": stats["prs_achieved"],
+            }
+            # Include enhanced data from _gather_week_stats
+            if "nutrition" in include_set and stats.get("nutrition_adherence_pct") is not None:
+                group_data["nutrition"] = {"adherence_pct": stats["nutrition_adherence_pct"]}
+            if "readiness" in include_set and stats.get("avg_readiness_score") is not None:
+                group_data["readiness"] = {
+                    "avg_score": stats["avg_readiness_score"],
+                    "trend": stats["readiness_trend"],
+                    "mood_distribution": stats.get("mood_distribution", {}),
+                }
+            if "measurements" in include_set and stats.get("measurement_changes"):
+                group_data["measurements"] = stats["measurement_changes"]
+        else:
+            # Gather individual sections without full workout stats
+            if "nutrition" in include_set:
+                try:
+                    from services.adherence_tracking_service import get_adherence_tracking_service
+                    adherence_svc = get_adherence_tracking_service()
+                    weekly_adherence = await adherence_svc.get_weekly_summary(user_id, str(interval_start), str(interval_end))
+                    if weekly_adherence:
+                        group_data["nutrition"] = {"adherence_pct": weekly_adherence.get("avg_calorie_adherence")}
+                except Exception:
+                    pass
+
+        # Apply mood filter
+        if mood_filter and group_data.get("readiness", {}).get("mood_distribution"):
+            mood_dist = group_data["readiness"]["mood_distribution"]
+            if mood_filter not in mood_dist:
+                continue  # Skip this interval if mood not present
+
+        groups.append(group_data)
+
+    return {
+        "user_id": user_id,
+        "start_date": start_date,
+        "end_date": end_date,
+        "group_by": group_by,
+        "filters": {
+            "muscle_group": muscle_group,
+            "mood_filter": mood_filter,
+        },
+        "groups": groups,
     }

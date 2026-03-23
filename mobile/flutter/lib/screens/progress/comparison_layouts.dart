@@ -11,7 +11,8 @@ enum ComparisonLayout {
   polaroid(2, 'Polaroid', '1:1', Icons.photo),
   triptych(3, 'Timeline', '1:1 or 16:9', Icons.view_week),
   fourPanel(4, '4-Panel Grid', '1:1', Icons.grid_view),
-  monthlyGrid(0, 'Monthly Grid', '1:1', Icons.calendar_view_month);
+  monthlyGrid(0, 'Monthly Grid', '1:1', Icons.calendar_view_month),
+  ghostOverlay(2, 'Ghost Overlay', '1:1 or 4:5', Icons.layers_outlined);
 
   final int photoCount; // 0 = variable (3-12)
   final String displayName;
@@ -57,6 +58,7 @@ enum ComparisonLayout {
       case ComparisonLayout.diagonalSplit:
       case ComparisonLayout.polaroid:
       case ComparisonLayout.story:
+      case ComparisonLayout.ghostOverlay:
         return ['Before', 'After'];
       case ComparisonLayout.triptych:
         return ['Start', 'Mid', 'End'];
@@ -76,6 +78,7 @@ const twoPhotoLayouts = [
   ComparisonLayout.story,
   ComparisonLayout.diagonalSplit,
   ComparisonLayout.polaroid,
+  ComparisonLayout.ghostOverlay,
 ];
 
 /// Multi-photo layout group
@@ -347,6 +350,42 @@ class _LayoutPreviewPainter extends CustomPainter {
             );
           }
         }
+        break;
+
+      case ComparisonLayout.ghostOverlay:
+        // Two overlapping rectangles (ghost effect)
+        canvas.drawRRect(
+          RRect.fromRectAndRadius(
+            Rect.fromLTWH(pad, pad, innerW, innerH),
+            const Radius.circular(3),
+          ),
+          strokePaint,
+        );
+        // Semi-transparent inner rectangle offset slightly
+        final ghostPaint = Paint()
+          ..color = color.withOpacity(0.3)
+          ..style = PaintingStyle.fill;
+        canvas.drawRRect(
+          RRect.fromRectAndRadius(
+            Rect.fromLTWH(pad + 4, pad + 4, innerW - 8, innerH - 8),
+            const Radius.circular(3),
+          ),
+          ghostPaint,
+        );
+        // Crosshair lines
+        final crossPaint = Paint()
+          ..color = color.withOpacity(0.5)
+          ..strokeWidth = 0.5;
+        canvas.drawLine(
+          Offset(w / 2, pad),
+          Offset(w / 2, h - pad),
+          crossPaint,
+        );
+        canvas.drawLine(
+          Offset(pad, h / 2),
+          Offset(w - pad, h / 2),
+          crossPaint,
+        );
         break;
     }
   }

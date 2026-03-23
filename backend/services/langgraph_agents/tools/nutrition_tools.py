@@ -101,26 +101,6 @@ async def analyze_food_image(
         health_score = analysis_result.get("health_score", 5)
         ai_feedback = analysis_result.get("feedback", "")
 
-        # Save to database
-        food_log = db.create_food_log(
-            user_id=user_id,
-            meal_type=meal_type,
-            food_items=food_items,
-            total_calories=total_calories,
-            protein_g=protein_g,
-            carbs_g=carbs_g,
-            fat_g=fat_g,
-            fiber_g=fiber_g,
-            health_score=health_score,
-            ai_feedback=ai_feedback
-        )
-
-        food_log_id = food_log.get("id") if food_log else None
-
-        # Get today's nutrition summary
-        today = datetime.now().strftime("%Y-%m-%d")
-        daily_summary = db.get_daily_nutrition_summary(user_id, today)
-
         # Format food items for response
         food_list = ", ".join([
             f"{item.get('name', 'Unknown')} ({item.get('amount', '')})"
@@ -129,7 +109,7 @@ async def analyze_food_image(
 
         # Build response message
         message = (
-            f"**{meal_type.title()} Logged!**\n\n"
+            f"**{meal_type.title()} Analysis**\n\n"
             f"**Food Items:** {food_list}\n\n"
             f"**Nutrition:**\n"
             f"- Calories: {total_calories} kcal\n"
@@ -141,20 +121,10 @@ async def analyze_food_image(
             f"**Coach Feedback:** {ai_feedback}"
         )
 
-        if daily_summary and daily_summary.get("total_calories"):
-            message += (
-                f"\n\n**Today's Total:**\n"
-                f"- Calories: {daily_summary.get('total_calories', 0)} kcal\n"
-                f"- Protein: {daily_summary.get('total_protein_g', 0):.1f}g\n"
-                f"- Carbs: {daily_summary.get('total_carbs_g', 0):.1f}g\n"
-                f"- Fat: {daily_summary.get('total_fat_g', 0):.1f}g"
-            )
-
         return {
             "success": True,
             "action": "analyze_food_image",
             "user_id": user_id,
-            "food_log_id": food_log_id,
             "meal_type": meal_type,
             "food_items": food_items,
             "total_calories": total_calories,
@@ -164,7 +134,6 @@ async def analyze_food_image(
             "fiber_g": fiber_g,
             "health_score": health_score,
             "ai_feedback": ai_feedback,
-            "daily_summary": daily_summary,
             "message": message
         }
 
@@ -275,46 +244,21 @@ async def analyze_multi_food_images(
 
         actual_mode = analysis_result.get("analysis_type", analysis_mode)
 
-        # For plate mode: apply calorie bias and auto-save
+        # For plate mode: apply calorie bias
         if actual_mode == "plate":
             # Apply calorie estimate bias
             bias = await asyncio.wait_for(get_user_calorie_bias(user_id), timeout=10)
             if bias != 0:
                 analysis_result = apply_calorie_bias(analysis_result, bias)
 
-            # Auto-save to food_log
-            food_items = analysis_result.get("food_items", [])
-            if food_items:
-                meal_type = analysis_result.get("meal_type", "snack")
-                total_calories = analysis_result.get("total_calories", 0)
-                protein_g = analysis_result.get("total_protein_g", 0) or analysis_result.get("protein_g", 0)
-                carbs_g = analysis_result.get("total_carbs_g", 0) or analysis_result.get("carbs_g", 0)
-                fat_g = analysis_result.get("total_fat_g", 0) or analysis_result.get("fat_g", 0)
-                fiber_g = analysis_result.get("total_fiber_g", 0) or analysis_result.get("fiber_g", 0)
-                health_score = analysis_result.get("health_score", 5)
-                ai_feedback = analysis_result.get("feedback", "")
-
-                food_log = db.create_food_log(
-                    user_id=user_id,
-                    meal_type=meal_type,
-                    food_items=food_items,
-                    total_calories=total_calories,
-                    protein_g=protein_g,
-                    carbs_g=carbs_g,
-                    fat_g=fat_g,
-                    fiber_g=fiber_g,
-                    health_score=health_score,
-                    ai_feedback=ai_feedback,
-                )
-                analysis_result["food_log_id"] = food_log.get("id") if food_log else None
-
             # Format plate mode message
+            food_items = analysis_result.get("food_items", [])
             food_list = ", ".join([
                 f"{item.get('name', 'Unknown')} ({item.get('amount', '')})"
                 for item in food_items
             ])
             message = (
-                f"**{analysis_result.get('meal_type', 'Meal').title()} Logged!**\n\n"
+                f"**{analysis_result.get('meal_type', 'Meal').title()} Analysis**\n\n"
                 f"**Food Items:** {food_list}\n\n"
                 f"**Nutrition:**\n"
                 f"- Calories: {analysis_result.get('total_calories', 0)} kcal\n"

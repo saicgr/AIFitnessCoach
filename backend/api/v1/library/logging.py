@@ -133,7 +133,7 @@ async def log_exercise_view(
         logger.error(f"Failed to log exercise view: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to log exercise view: {str(e)}"
+            detail="Failed to log exercise view"
         )
 
 
@@ -174,7 +174,7 @@ async def log_program_view(
         logger.error(f"Failed to log program view: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to log program view: {str(e)}"
+            detail="Failed to log program view"
         )
 
 
@@ -214,7 +214,7 @@ async def log_library_search(
         logger.error(f"Failed to log library search: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to log library search: {str(e)}"
+            detail="Failed to log library search"
         )
 
 
@@ -253,7 +253,7 @@ async def log_exercise_filter(
         logger.error(f"Failed to log filter usage: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to log filter usage: {str(e)}"
+            detail="Failed to log filter usage"
         )
 
 
@@ -300,5 +300,5 @@ async def get_library_preferences(
         logger.error(f"Failed to get library preferences: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to get library preferences: {str(e)}"
+            detail="Failed to get library preferences"
         )

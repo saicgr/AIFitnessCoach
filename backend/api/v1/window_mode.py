@@ -15,7 +15,7 @@ ENDPOINTS:
 """
 
 from fastapi import APIRouter, Depends, HTTPException
-from core.auth import get_current_user
+from core.auth import get_current_user, verify_user_ownership
 from core.exceptions import safe_internal_error
 from pydantic import BaseModel, Field, field_validator
 from typing import Optional, Literal
@@ -142,6 +142,7 @@ async def log_window_mode(user_id: str, request: WindowModeLogRequest,
     - Optimizing UI for common window configurations
     - Tracking split screen workout sessions
     """
+    verify_user_ownership(current_user, user_id)
     logger.info(f"Logging window mode for user {user_id}: {request.mode} ({request.width}x{request.height})")
 
     try:
@@ -260,6 +261,7 @@ async def get_window_mode_stats(user_id: str,
     - Total and average split screen session duration
     - Most commonly used mode
     """
+    verify_user_ownership(current_user, user_id)
     logger.info(f"Getting window mode stats for user {user_id}")
 
     try:

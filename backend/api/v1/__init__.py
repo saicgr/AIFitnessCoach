@@ -20,6 +20,7 @@ from api.v1 import goal_social  # Goal sharing and friend features
 from api.v1 import features  # Feature voting system (Robinhood-style)
 from api.v1 import custom_goals  # Custom training goals with AI keywords
 from api.v1 import fasting  # Intermittent fasting tracking and timer
+from api.v1 import sauna  # Sauna session logging
 from api.v1 import progress_photos  # Progress photos with before/after comparisons
 from api.v1 import scores  # Strength scores, readiness scores, personal records
 from api.v1 import workout_history  # Manual workout history import for AI learning
@@ -78,6 +79,8 @@ from api.v1 import beast_mode  # Beast mode custom training preferences
 from api.v1 import wrapped  # Fitness Wrapped monthly recap cards
 from api.v1 import plateau  # Plateau detection (exercise + weight stalling)
 from api.v1 import email_cron  # Lifecycle email cron jobs
+from api.v1 import push_nudge_cron  # Hourly accountability push nudge cron jobs
+from api.v1 import dashboard  # Weekly dashboard summary endpoint
 
 # Create v1 router
 router = APIRouter(prefix="/v1")
@@ -178,6 +181,9 @@ router.include_router(custom_goals.router, prefix="/custom-goals", tags=["Custom
 
 # Intermittent fasting tracking endpoints
 router.include_router(fasting.router, prefix="/fasting", tags=["Fasting"])
+
+# Sauna session logging (duration + calorie estimation)
+router.include_router(sauna.router, prefix="/sauna", tags=["Sauna"])
 
 # Progress photos with before/after comparisons
 router.include_router(progress_photos.router, prefix="/progress-photos", tags=["Progress Photos"])
@@ -353,3 +359,9 @@ router.include_router(plateau.router, prefix="/plateau", tags=["Plateau Detectio
 
 # Lifecycle email cron endpoint (secured by X-Cron-Secret header)
 router.include_router(email_cron.router, prefix="/emails", tags=["Email Cron"])
+
+# Hourly accountability push nudge cron (secured by X-Cron-Secret header)
+router.include_router(push_nudge_cron.router, prefix="/nudges", tags=["Push Nudge Cron"])
+
+# Weekly dashboard summary (workout compliance, nutrition, readiness, measurements, goals)
+router.include_router(dashboard.router, prefix="/dashboard", tags=["Dashboard"])

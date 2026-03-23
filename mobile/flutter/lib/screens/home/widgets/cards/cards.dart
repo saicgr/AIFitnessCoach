@@ -33,3 +33,5 @@ export 'fasting_tile.dart';
 export 'progress_photo_tile.dart';
 export 'weekly_calendar_tile.dart';
 export 'muscle_heatmap_tile.dart';
+export 'compliance_ring_card.dart';
+export 'wellness_checkin_card.dart';

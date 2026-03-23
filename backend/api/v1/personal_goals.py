@@ -33,7 +33,7 @@ from models.weekly_personal_goals import (
     CreateGoalRequest, RecordAttemptRequest, AddVolumeRequest,
     WeeklyPersonalGoal, GoalAttempt, PersonalGoalRecord,
     GoalsResponse, GoalHistoryResponse, PersonalRecordsResponse, GoalSummary,
-    GoalType, GoalStatus,
+    GoalType, GoalStatus, GoalUnit, GoalProgressPreview,
     WorkoutSyncRequest, WorkoutSyncResponse, SyncedGoalUpdate,
 )
 from models.goal_suggestions import (
@@ -70,6 +70,9 @@ async def create_goal(user_id: str, request: CreateGoalRequest,
     Automatically fetches personal_best from existing records.
     """
     logger.info(f"Creating goal: user={user_id}, exercise={request.exercise_name}, type={request.goal_type.value}")
+
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Unauthorized")
 
     try:
         db = get_supabase_db()
@@ -110,6 +113,7 @@ async def create_goal(user_id: str, request: CreateGoalRequest,
             "exercise_name": request.exercise_name,
             "goal_type": request.goal_type.value,
             "target_value": request.target_value,
+            "unit": request.unit.value,
             "week_start": week_start.isoformat(),
             "week_end": week_end.isoformat(),
             "personal_best": personal_best,
@@ -167,6 +171,9 @@ async def get_current_goals(user_id: str,
 ):
     """Get all goals for the current week."""
     logger.info(f"Getting current goals for user: {user_id}")
+
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Unauthorized")
 
     try:
         db = get_supabase_db()
@@ -249,6 +256,9 @@ async def record_attempt(user_id: str, goal_id: str, request: RecordAttemptReque
     """
     logger.info(f"Recording attempt: goal={goal_id}, value={request.attempt_value}")
 
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Unauthorized")
+
     try:
         db = get_supabase_db()
 
@@ -330,6 +340,9 @@ async def add_volume(user_id: str, goal_id: str, request: AddVolumeRequest,
     """
     logger.info(f"Adding volume: goal={goal_id}, volume={request.volume_to_add}")
 
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Unauthorized")
+
     try:
         db = get_supabase_db()
 
@@ -393,6 +406,9 @@ async def complete_goal(user_id: str, goal_id: str,
     """Manually mark a goal as completed."""
     logger.info(f"Completing goal: {goal_id}")
 
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Unauthorized")
+
     try:
         db = get_supabase_db()
 
@@ -443,6 +459,9 @@ async def abandon_goal(user_id: str, goal_id: str,
     """Abandon a goal (mark as abandoned)."""
     logger.info(f"Abandoning goal: {goal_id}")
 
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Unauthorized")
+
     try:
         db = get_supabase_db()
 
@@ -490,6 +509,9 @@ async def get_goal_history(
     """Get historical goals for a specific exercise/goal_type combination."""
     logger.info(f"Getting goal history: user={user_id}, exercise={exercise_name}, type={goal_type.value}")
 
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Unauthorized")
+
     try:
         db = get_supabase_db()
 
@@ -535,6 +557,9 @@ async def get_personal_records(user_id: str,
     """Get all personal records for a user."""
     logger.info(f"Getting personal records for user: {user_id}")
 
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Unauthorized")
+
     try:
         db = get_supabase_db()
 
@@ -563,6 +588,9 @@ async def get_goals_summary(user_id: str,
     """Get a quick summary of current week's goals."""
     logger.info(f"Getting goals summary for user: {user_id}")
 
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Unauthorized")
+
     try:
         db = get_supabase_db()
 
@@ -578,10 +606,21 @@ async def get_goals_summary(user_id: str,
         completed = 0
         prs = 0
         volume = 0
+        previews = []
 
         for goal in result.data:
             if goal["status"] == "active":
                 active += 1
+                if len(previews) < 3:
+                    target = float(goal.get("target_value", 1) or 1)
+                    current = float(goal.get("current_value", 0) or 0)
+                    previews.append({
+                        "exercise_name": goal["exercise_name"],
+                        "current_value": current,
+                        "target_value": target,
+                        "unit": goal.get("unit", "reps"),
+                        "progress_percentage": round(min(100.0, current / max(1.0, target) * 100), 1),
+                    })
             elif goal["status"] == "completed":
                 completed += 1
 
@@ -589,13 +628,14 @@ async def get_goals_summary(user_id: str,
                 prs += 1
 
             if goal["goal_type"] == "weekly_volume":
-                volume += goal["current_value"]
+                volume += float(goal.get("current_value", 0) or 0)
 
         return GoalSummary(
             active_goals=active,
             completed_this_week=completed,
             prs_this_week=prs,
             total_volume_this_week=volume,
+            active_goal_previews=[GoalProgressPreview(**p) for p in previews],
         )
 
     except Exception as e:
@@ -625,6 +665,9 @@ async def sync_workout_with_goals(user_id: str, request: WorkoutSyncRequest,
     """
     logger.info(f"Syncing workout with goals: user={user_id}, workout_log_id={request.workout_log_id}")
     logger.info(f"Exercises in workout: {[e.exercise_name for e in request.exercises]}")
+
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Unauthorized")
 
     try:
         db = get_supabase_db()
@@ -720,6 +763,32 @@ async def sync_workout_with_goals(user_id: str, request: WorkoutSyncRequest,
             total_volume_added += volume_to_add
             logger.info(f"Updated goal for {matching_goal['exercise_name']}: +{volume_to_add} reps (now {new_value}/{target})")
 
+        # Auto-sync kg single_max goals
+        for exercise in request.exercises:
+            if exercise.max_weight_kg and exercise.max_weight_kg > 0:
+                kg_goals_result = db.client.table("weekly_personal_goals").select("*").eq(
+                    "user_id", user_id
+                ).eq("exercise_name", exercise.exercise_name).eq(
+                    "goal_type", "single_max"
+                ).eq("unit", "kg").eq("status", "active").eq(
+                    "week_start", week_start.isoformat()
+                ).execute()
+
+                for kg_goal in (kg_goals_result.data or []):
+                    current = float(kg_goal.get("current_value", 0) or 0)
+                    if exercise.max_weight_kg > current:
+                        kg_updates = {"current_value": exercise.max_weight_kg}
+                        personal_best = kg_goal.get("personal_best")
+                        if personal_best is None or exercise.max_weight_kg > float(personal_best):
+                            kg_updates["is_pr_beaten"] = True
+                        if exercise.max_weight_kg >= float(kg_goal["target_value"]):
+                            kg_updates["status"] = "completed"
+                            kg_updates["completed_at"] = datetime.now(timezone.utc).isoformat()
+                        db.client.table("weekly_personal_goals").update(kg_updates).eq(
+                            "id", kg_goal["id"]
+                        ).execute()
+                        logger.info(f"Updated kg goal for {exercise.exercise_name}: {exercise.max_weight_kg}kg")
+
         # Log the sync activity
         if synced_goals:
             await log_user_activity(
@@ -814,6 +883,9 @@ async def get_goal_suggestions(
     """
     logger.info(f"Getting goal suggestions for user: {user_id}, force_refresh={force_refresh}")
 
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Unauthorized")
+
     try:
         db = get_supabase_db()
         now = datetime.now(timezone.utc)
@@ -855,6 +927,7 @@ async def get_goal_suggestions(
                 "category": SuggestionCategory.BEAT_YOUR_RECORDS.value,
                 "priority_rank": idx,
                 "expires_at": expires_at.isoformat(),
+                "unit": s.get("unit", "reps"),
             })
 
         # 2. Popular with friends suggestions
@@ -872,6 +945,7 @@ async def get_goal_suggestions(
                 "category": SuggestionCategory.POPULAR_WITH_FRIENDS.value,
                 "priority_rank": idx,
                 "expires_at": expires_at.isoformat(),
+                "unit": s.get("unit", "reps"),
             })
 
         # 3. New challenges suggestions
@@ -889,6 +963,7 @@ async def get_goal_suggestions(
                 "category": SuggestionCategory.NEW_CHALLENGES.value,
                 "priority_rank": idx,
                 "expires_at": expires_at.isoformat(),
+                "unit": s.get("unit", "reps"),
             })
 
         # Insert all suggestions
@@ -916,6 +991,9 @@ async def dismiss_suggestion(
 ):
     """Mark a suggestion as dismissed so it won't appear again."""
     logger.info(f"Dismissing suggestion: {suggestion_id} for user: {user_id}")
+
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Unauthorized")
 
     try:
         db = get_supabase_db()
@@ -953,6 +1031,9 @@ async def accept_suggestion(
 ):
     """Create a new goal from a suggestion."""
     logger.info(f"Accepting suggestion: {suggestion_id} for user: {user_id}")
+
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Unauthorized")
 
     try:
         db = get_supabase_db()
@@ -1009,6 +1090,7 @@ async def accept_suggestion(
             "exercise_name": suggestion["exercise_name"],
             "goal_type": suggestion["goal_type"],
             "target_value": target_value,
+            "unit": suggestion.get("unit", "reps"),
             "week_start": week_start.isoformat(),
             "week_end": week_end.isoformat(),
             "personal_best": personal_best,
@@ -1047,6 +1129,9 @@ async def get_suggestions_summary(user_id: str,
 ):
     """Get a quick summary of available suggestions."""
     logger.info(f"Getting suggestions summary for user: {user_id}")
+
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Unauthorized")
 
     try:
         db = get_supabase_db()
@@ -1261,6 +1346,15 @@ async def _generate_new_challenge_suggestions(db, user_id: str, week_start: date
 
         done_exercises = set(g["exercise_name"] for g in past_exercises.data)
 
+        EXERCISE_DEFAULT_UNITS = {
+            "Plank": "seconds",
+            "Wall Sit": "seconds",
+            "Running": "km",
+            "Treadmill Walk": "km",
+            "Cycling": "km",
+            "Jump Rope": "minutes",
+        }
+
         # Suggest exercises they haven't tried
         new_challenges = [
             ("Burpees", "weekly_volume", 50, "Try 50 burpees this week for full-body conditioning!"),
@@ -1282,6 +1376,7 @@ async def _generate_new_challenge_suggestions(db, user_id: str, week_start: date
                     "reasoning": reasoning,
                     "confidence": 0.65,
                     "source_data": {"type": "new_challenge"},
+                    "unit": EXERCISE_DEFAULT_UNITS.get(exercise, "reps"),
                 })
 
         # If all exercises tried, suggest volume challenges
@@ -1296,6 +1391,7 @@ async def _generate_new_challenge_suggestions(db, user_id: str, week_start: date
                     "reasoning": reasoning,
                     "confidence": 0.5,
                     "source_data": {"type": "variety_challenge"},
+                    "unit": EXERCISE_DEFAULT_UNITS.get(exercise, "reps"),
                 })
 
     except Exception as e:
@@ -1409,6 +1505,9 @@ async def sync_workout_with_goals(user_id: str, request: WorkoutSyncRequest,
     """
     logger.info(f"Syncing workout with goals for user: {user_id}")
 
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Unauthorized")
+
     try:
         db = get_supabase_db()
 
@@ -1496,6 +1595,32 @@ async def sync_workout_with_goals(user_id: str, request: WorkoutSyncRequest,
                     f"✅ Updated goal {goal_id}: {goal['exercise_name']} "
                     f"+{exercise_perf.total_reps} reps ({new_value}/{goal['target_value']})"
                 )
+
+        # Auto-sync kg single_max goals
+        for exercise_perf in request.exercises:
+            if exercise_perf.max_weight_kg and exercise_perf.max_weight_kg > 0:
+                kg_goals_result = db.client.table("weekly_personal_goals").select("*").eq(
+                    "user_id", user_id
+                ).eq("exercise_name", exercise_perf.exercise_name).eq(
+                    "goal_type", "single_max"
+                ).eq("unit", "kg").eq("status", "active").eq(
+                    "week_start", week_start.isoformat()
+                ).execute()
+
+                for kg_goal in (kg_goals_result.data or []):
+                    current = float(kg_goal.get("current_value", 0) or 0)
+                    if exercise_perf.max_weight_kg > current:
+                        kg_updates = {"current_value": exercise_perf.max_weight_kg}
+                        personal_best = kg_goal.get("personal_best")
+                        if personal_best is None or exercise_perf.max_weight_kg > float(personal_best):
+                            kg_updates["is_pr_beaten"] = True
+                        if exercise_perf.max_weight_kg >= float(kg_goal["target_value"]):
+                            kg_updates["status"] = "completed"
+                            kg_updates["completed_at"] = datetime.now(timezone.utc).isoformat()
+                        db.client.table("weekly_personal_goals").update(kg_updates).eq(
+                            "id", kg_goal["id"]
+                        ).execute()
+                        logger.info(f"✅ Updated kg goal for {exercise_perf.exercise_name}: {exercise_perf.max_weight_kg}kg")
 
         # Log the sync activity
         if synced_updates:

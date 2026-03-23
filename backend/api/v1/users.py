@@ -24,11 +24,12 @@ import json
 import uuid
 from datetime import datetime
 from fastapi import APIRouter, Depends, BackgroundTasks, HTTPException, UploadFile, File, Request, Form
-from core.auth import get_current_user, get_verified_auth_token
+from core.auth import get_current_user, get_verified_auth_token, verify_user_ownership, verify_resource_ownership, get_admin_user
 from core.exceptions import safe_internal_error
 from fastapi.responses import StreamingResponse
 from typing import Optional, List
-from pydantic import BaseModel
+import re
+from pydantic import BaseModel, Field, EmailStr, field_validator
 import io
 import boto3
 
@@ -62,28 +63,73 @@ class GoogleAuthRequest(BaseModel):
     access_token: str
 
 
+def _validate_password_complexity(v: str) -> str:
+    """Shared password complexity validator for all user-facing endpoints.
+
+    SECURITY: Requires min 8 chars, at least 1 letter and 1 digit.
+    This applies to regular users. Admin passwords have stricter rules in models/admin.py.
+    """
+    if not re.search(r'[a-zA-Z]', v):
+        raise ValueError("Password must contain at least one letter")
+    if not re.search(r'[0-9]', v):
+        raise ValueError("Password must contain at least one number")
+    return v
+
+
 class EmailAuthRequest(BaseModel):
     """Request body for email/password authentication."""
-    email: str
+    email: EmailStr  # SECURITY: Validate email format
     password: str
 
 
 class EmailSignupRequest(BaseModel):
     """Request body for email/password signup."""
-    email: str
-    password: str
-    name: Optional[str] = None
+    email: EmailStr  # SECURITY: Validate email format
+    password: str = Field(..., min_length=8, max_length=128)
+    name: Optional[str] = Field(default=None, max_length=200)
+
+    @field_validator("password")
+    @classmethod
+    def validate_password(cls, v: str) -> str:
+        return _validate_password_complexity(v)
 
 
 class ForgotPasswordRequest(BaseModel):
     """Request body for forgot password."""
-    email: str
+    email: EmailStr  # SECURITY: Validate email format
 
 
 class ResetPasswordRequest(BaseModel):
     """Request body for password reset."""
     access_token: str
-    new_password: str
+    new_password: str = Field(..., min_length=8, max_length=128)
+
+    @field_validator("new_password")
+    @classmethod
+    def validate_new_password(cls, v: str) -> str:
+        """SECURITY: Enforce same password rules on reset path — prevents
+        attacker with stolen reset token from setting a weak password."""
+        return _validate_password_complexity(v)
+
+
+class DestructiveActionRequest(BaseModel):
+    """Request body for destructive actions that require re-authentication.
+
+    SECURITY: Prevents someone with an unlocked phone from permanently
+    deleting an account or wiping all data without knowing the password.
+    """
+    password: str = Field(..., min_length=1, description="Current password for re-authentication")
+
+
+class ChangePasswordRequest(BaseModel):
+    """Request body for in-app password change."""
+    current_password: str = Field(..., min_length=1)
+    new_password: str = Field(..., min_length=8, max_length=128)
+
+    @field_validator("new_password")
+    @classmethod
+    def validate_new_password(cls, v: str) -> str:
+        return _validate_password_complexity(v)
 
 
 class ProgramPreferences(BaseModel):
@@ -345,7 +391,7 @@ async def email_auth(request: Request, body: EmailAuthRequest,
     Uses get_verified_auth_token (not get_current_user) because new email
     sign-in users won't have a row in the `users` table yet.
     """
-    logger.info(f"Email authentication attempt for: {body.email}")
+    logger.info(f"Email authentication attempt for: ...{str(body.email)[-10:]}")
 
     try:
         supabase_manager = get_supabase()
@@ -358,7 +404,7 @@ async def email_auth(request: Request, body: EmailAuthRequest,
         })
 
         if not auth_response or not auth_response.user:
-            logger.warning(f"Invalid email or password for: {body.email}")
+            logger.warning(f"Invalid email or password for: ...{str(body.email)[-10:]}")
             raise HTTPException(status_code=401, detail="Invalid email or password")
 
         supabase_user = auth_response.user
@@ -456,7 +502,7 @@ async def email_signup(request: Request, body: EmailSignupRequest,
     Uses get_verified_auth_token (not get_current_user) because signup users
     will never have a row in the `users` table yet.
     """
-    logger.info(f"Email signup attempt for: {body.email}")
+    logger.info(f"Email signup attempt for: ...{str(body.email)[-10:]}")
 
     try:
         supabase_manager = get_supabase()
@@ -474,8 +520,8 @@ async def email_signup(request: Request, body: EmailSignupRequest,
         })
 
         if not auth_response or not auth_response.user:
-            logger.warning(f"Signup failed for: {body.email}")
-            raise HTTPException(status_code=400, detail="Failed to create account. Email may already be in use.")
+            logger.warning(f"Signup failed for: ...{str(body.email)[-10:]}")
+            raise HTTPException(status_code=400, detail="Signup failed. Please try again.")
 
         supabase_user = auth_response.user
         supabase_user_id = supabase_user.id
@@ -546,7 +592,7 @@ async def email_signup(request: Request, body: EmailSignupRequest,
         full_traceback = traceback.format_exc()
         logger.error(f"Email signup failed: {e}")
         logger.error(f"Full traceback: {full_traceback}")
-        raise HTTPException(status_code=400, detail=f"Signup failed: {str(e)}")
+        raise HTTPException(status_code=400, detail="Signup failed. Please try again.")
 
 
 @router.post("/auth/forgot-password")
@@ -558,7 +604,7 @@ async def forgot_password(request: Request, body: ForgotPasswordRequest):
     No auth required — the user forgot their password and can't authenticate.
     Returns success regardless of whether email exists (security).
     """
-    logger.info(f"Password reset requested for: {body.email}")
+    logger.info(f"Password reset requested for: ...{str(body.email)[-10:]}")
 
     try:
         supabase_manager = get_supabase()
@@ -568,7 +614,7 @@ async def forgot_password(request: Request, body: ForgotPasswordRequest):
         # Note: Supabase will send an email with a reset link
         supabase_client.auth.reset_password_for_email(body.email)
 
-        logger.info(f"Password reset email sent to: {body.email}")
+        logger.info(f"Password reset email sent to: ...{str(body.email)[-10:]}")
 
         # Always return success for security (don't reveal if email exists)
         return {"message": "If an account exists with this email, a password reset link has been sent."}
@@ -608,7 +654,7 @@ async def reset_password(request: Request, body: ResetPasswordRequest,
             "password": body.new_password
         })
 
-        logger.info(f"Password reset successful for user: {user_response.user.email}")
+        logger.info(f"Password reset successful for user: ...{str(user_response.user.email)[-10:]}")
         return {"message": "Password has been reset successfully."}
 
     except HTTPException:
@@ -616,6 +662,56 @@ async def reset_password(request: Request, body: ResetPasswordRequest,
     except Exception as e:
         logger.error(f"Password reset failed: {e}")
         raise HTTPException(status_code=400, detail="Failed to reset password. Token may be expired.")
+
+
+@router.post("/auth/change-password")
+@limiter.limit("5/minute")
+async def change_password(
+    request: Request,
+    body: ChangePasswordRequest,
+    current_user: dict = Depends(get_current_user),
+):
+    """
+    Change password for the currently logged-in user.
+
+    SECURITY: Requires current password for re-authentication before
+    allowing password change. This is the in-app alternative to the
+    email-based forgot-password flow.
+
+    Args:
+        body: Contains current_password and new_password
+        current_user: Authenticated user from JWT
+
+    Returns:
+        Success message
+
+    Raises:
+        HTTPException 401: If current password is wrong
+        HTTPException 422: If new password doesn't meet complexity requirements
+    """
+    try:
+        supabase = get_supabase()
+
+        # Step 1: Verify current password by re-authenticating
+        try:
+            supabase.client.auth.sign_in_with_password({
+                "email": current_user["email"],
+                "password": body.current_password,
+            })
+        except Exception:
+            raise HTTPException(status_code=401, detail="Current password is incorrect")
+
+        # Step 2: Update to new password
+        supabase.client.auth.update_user({"password": body.new_password})
+        logger.info(f"Password changed for user: {current_user['id']}")
+
+        return {"message": "Password changed successfully."}
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Password change failed for user {current_user['id']}: {e}")
+        raise HTTPException(status_code=400, detail="Failed to change password. Please try again.")
 
 
 def merge_extended_fields_into_preferences(
@@ -790,7 +886,7 @@ async def create_user(request: Request, user: UserCreate,
 
 @router.get("/", response_model=List[User])
 async def get_all_users(
-    current_user: dict = Depends(get_current_user),
+    current_user: dict = Depends(get_admin_user),
 ):
     """Get all users."""
     logger.info("Fetching all users")
@@ -846,6 +942,7 @@ async def get_user(user_id: str,
     """Get a user by ID."""
     logger.info(f"Fetching user: id={user_id}")
     try:
+        verify_user_ownership(current_user, user_id)
         db = get_supabase_db()
         row = db.get_user(user_id)
 
@@ -878,6 +975,7 @@ async def get_program_preferences(user_id: str,
     """
     logger.info(f"Fetching program preferences for user: id={user_id}")
     try:
+        verify_user_ownership(current_user, user_id)
         db = get_supabase_db()
 
         # Get user data
@@ -1600,11 +1698,24 @@ async def update_user(user_id: str, user: UserUpdate,
 
 @router.delete("/{user_id}")
 async def delete_user(user_id: str,
+    body: DestructiveActionRequest,
     current_user: dict = Depends(get_current_user),
 ):
-    """Delete a user."""
+    """Delete a user. SECURITY: Requires password re-authentication."""
     logger.info(f"Deleting user: id={user_id}")
     try:
+        verify_user_ownership(current_user, user_id)
+
+        # SECURITY: Re-authenticate before destructive action
+        supabase = get_supabase()
+        try:
+            supabase.client.auth.sign_in_with_password({
+                "email": current_user["email"],
+                "password": body.password,
+            })
+        except Exception:
+            raise HTTPException(status_code=401, detail="Invalid password — re-authentication required")
+
         db = get_supabase_db()
 
         # Check if user exists
@@ -1643,16 +1754,27 @@ async def delete_user(user_id: str,
 
 @router.post("/{user_id}/reset-onboarding")
 async def reset_onboarding(user_id: str,
+    body: DestructiveActionRequest,
     current_user: dict = Depends(get_current_user),
 ):
     """
     Reset onboarding - clears workouts and resets onboarding status.
-
-    This allows the user to go through onboarding again without
-    deleting their account.
+    SECURITY: Requires password re-authentication.
     """
     logger.info(f"Resetting onboarding for user: id={user_id}")
     try:
+        verify_user_ownership(current_user, user_id)
+
+        # SECURITY: Re-authenticate before destructive action
+        supabase = get_supabase()
+        try:
+            supabase.client.auth.sign_in_with_password({
+                "email": current_user["email"],
+                "password": body.password,
+            })
+        except Exception:
+            raise HTTPException(status_code=401, detail="Invalid password — re-authentication required")
+
         db = get_supabase_db()
 
         # Check if user exists
@@ -1713,10 +1835,12 @@ async def reset_onboarding(user_id: str,
 
 @router.delete("/{user_id}/reset")
 async def full_reset(user_id: str,
+    body: DestructiveActionRequest,
     current_user: dict = Depends(get_current_user),
 ):
     """
     Full reset - delete ALL user data and return to fresh state.
+    SECURITY: Requires password re-authentication.
 
     This deletes (in order to respect FK constraints):
     1. performance_logs (via workout_logs)
@@ -1733,6 +1857,18 @@ async def full_reset(user_id: str,
     """
     logger.info(f"Full reset for user: id={user_id}")
     try:
+        verify_user_ownership(current_user, user_id)
+
+        # SECURITY: Re-authenticate before destructive action
+        supabase = get_supabase()
+        try:
+            supabase.client.auth.sign_in_with_password({
+                "email": current_user["email"],
+                "password": body.password,
+            })
+        except Exception:
+            raise HTTPException(status_code=401, detail="Invalid password — re-authentication required")
+
         db = get_supabase_db()
 
         # Check if user exists
@@ -1784,6 +1920,7 @@ async def export_user_data(
         raise HTTPException(status_code=400, detail=f"Unsupported export format: {format}. Use csv, json, xlsx, or parquet.")
 
     try:
+        verify_user_ownership(current_user, user_id)
         db = get_supabase_db()
 
         # Check if user exists
@@ -1885,6 +2022,7 @@ async def export_user_data_text(
     logger.info(f"Starting text export for user: id={user_id}, date_range={start_date} to {end_date}")
 
     try:
+        verify_user_ownership(current_user, user_id)
         db = get_supabase_db()
 
         # Check if user exists
@@ -1923,7 +2061,7 @@ async def export_user_data_text(
         raise
     except ValueError as e:
         logger.error(f"Text export validation error: {e}")
-        raise HTTPException(status_code=404, detail=str(e))
+        raise HTTPException(status_code=404, detail="Export failed")
     except Exception as e:
         elapsed = time.time() - start_time
         logger.error(f"Failed to export user data as text after {elapsed:.2f}s: {e}")
@@ -1947,6 +2085,7 @@ async def import_user_data(user_id: str, file: UploadFile = File(...),
     """
     logger.info(f"Importing data for user: id={user_id}, filename={file.filename}")
     try:
+        verify_user_ownership(current_user, user_id)
         db = get_supabase_db()
 
         # Check if user exists
@@ -1982,7 +2121,7 @@ async def import_user_data(user_id: str, file: UploadFile = File(...),
         raise
     except ValueError as e:
         logger.error(f"Import validation error: {e}")
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail="Import failed")
     except Exception as e:
         logger.error(f"Failed to import user data: {e}")
         raise safe_internal_error(e, "users")
@@ -2019,6 +2158,7 @@ async def get_favorite_exercises(user_id: str,
     """
     logger.info(f"Getting favorite exercises for user: {user_id}")
     try:
+        verify_user_ownership(current_user, user_id)
         db = get_supabase_db()
 
         # Verify user exists
@@ -2062,6 +2202,7 @@ async def add_favorite_exercise(user_id: str, request: FavoriteExerciseRequest,
     """
     logger.info(f"Adding favorite exercise for user {user_id}: {request.exercise_name}")
     try:
+        verify_user_ownership(current_user, user_id)
         db = get_supabase_db()
 
         # Verify user exists
@@ -2122,6 +2263,7 @@ async def remove_favorite_exercise(user_id: str, exercise_name: str,
 
     logger.info(f"Removing favorite exercise for user {user_id}: {decoded_name}")
     try:
+        verify_user_ownership(current_user, user_id)
         db = get_supabase_db()
 
         # Verify user exists
@@ -2184,6 +2326,7 @@ async def get_exercise_queue(user_id: str,
     """
     logger.info(f"Getting exercise queue for user: {user_id}")
     try:
+        verify_user_ownership(current_user, user_id)
         db = get_supabase_db()
 
         # Verify user exists
@@ -2235,6 +2378,7 @@ async def add_to_exercise_queue(user_id: str, request: QueueExerciseRequest,
     """
     logger.info(f"Adding to exercise queue for user {user_id}: {request.exercise_name}")
     try:
+        verify_user_ownership(current_user, user_id)
         db = get_supabase_db()
 
         # Verify user exists
@@ -2309,6 +2453,7 @@ async def remove_from_exercise_queue(user_id: str, exercise_name: str,
 
     logger.info(f"Removing from exercise queue for user {user_id}: {decoded_name}")
     try:
+        verify_user_ownership(current_user, user_id)
         db = get_supabase_db()
 
         # Verify user exists
@@ -2391,6 +2536,7 @@ async def calculate_nutrition_targets(user_id: str, request: NutritionCalculatio
     """
     logger.info(f"Calculating nutrition targets for user: {user_id}")
     try:
+        verify_user_ownership(current_user, user_id)
         db = get_supabase_db()
 
         # Verify user exists
@@ -2531,6 +2677,7 @@ async def get_nutrition_targets(user_id: str,
     """
     logger.info(f"Getting nutrition targets for user: {user_id}")
     try:
+        verify_user_ownership(current_user, user_id)
         db = get_supabase_db()
 
         # Verify user exists
@@ -2608,6 +2755,7 @@ async def sync_fasting_preferences(user_id: str, request: SyncFastingRequest,
     """
     logger.info(f"Syncing fasting preferences for user: {user_id}")
     try:
+        verify_user_ownership(current_user, user_id)
         db = get_supabase_db()
 
         # Verify user exists
@@ -2856,7 +3004,9 @@ async def upload_profile_photo_to_s3(
     """
     # Generate unique key
     timestamp = datetime.utcnow().strftime('%Y%m%d_%H%M%S')
-    ext = file.filename.split('.')[-1] if file.filename else 'jpg'
+    # SECURITY: Derive extension from content type, not user-controlled filename
+    EXT_FROM_CONTENT_TYPE = {'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp', 'image/heic': 'heic', 'video/mp4': 'mp4', 'video/quicktime': 'mov'}
+    ext = EXT_FROM_CONTENT_TYPE.get(file.content_type, 'jpg')
     storage_key = f"profile_photos/{user_id}/{timestamp}_{uuid.uuid4().hex[:8]}.{ext}"
 
     # Upload to S3
@@ -2864,12 +3014,13 @@ async def upload_profile_photo_to_s3(
     contents = await file.read()
 
     settings = get_settings()
+    # SECURITY: No ACL='public-read' — use pre-signed URLs or CloudFront for access.
+    # Public ACL exposes photos to anyone with the URL and bypasses access control.
     s3.put_object(
         Bucket=settings.s3_bucket_name,
         Key=storage_key,
         Body=contents,
         ContentType=file.content_type or 'image/jpeg',
-        ACL='public-read',
     )
 
     # Generate URL
@@ -2913,6 +3064,8 @@ async def upload_profile_photo(
     - Returns the new photo URL
     """
     logger.info(f"📸 [ProfilePhoto] Upload request for user {id}")
+
+    verify_user_ownership(current_user, id)
 
     # Validate file type
     if file.content_type not in ['image/jpeg', 'image/png', 'image/gif', 'image/webp']:
@@ -2985,6 +3138,7 @@ async def delete_profile_photo(id: str,
     - Sets photo_url to null in the database
     """
     logger.info(f"🗑️ [ProfilePhoto] Delete request for user {id}")
+    verify_user_ownership(current_user, id)
 
     try:
         db = get_supabase_db()

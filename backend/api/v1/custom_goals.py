@@ -16,7 +16,7 @@ import json
 
 from core.logger import get_logger
 from core.activity_logger import log_user_activity, log_user_error
-from core.auth import get_current_user
+from core.auth import get_current_user, verify_resource_ownership
 from core.exceptions import safe_internal_error
 from services.custom_goal_service import get_custom_goal_service
 
@@ -230,6 +230,8 @@ async def update_goal(goal_id: str, request: UpdateGoalRequest, current_user: di
 
     try:
         service = get_custom_goal_service()
+        existing_goal = await service.get_goal_by_id(goal_id)
+        verify_resource_ownership(current_user, existing_goal, "Goal")
         goal = await service.update_goal(
             goal_id=goal_id,
             is_active=request.is_active,
@@ -255,6 +257,8 @@ async def delete_goal(goal_id: str, current_user: dict = Depends(get_current_use
     """
     try:
         service = get_custom_goal_service()
+        existing_goal = await service.get_goal_by_id(goal_id)
+        verify_resource_ownership(current_user, existing_goal, "Goal")
         success = await service.delete_goal(goal_id)
 
         if not success:

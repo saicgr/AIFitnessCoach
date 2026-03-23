@@ -42,6 +42,8 @@ class ReadinessCheckIn:
     muscle_soreness: int    # 1-7 (1=none, 7=severe)
     mood: Optional[int] = None           # 1-7 (1=great, 7=terrible)
     energy_level: Optional[int] = None   # 1-7 (1=high, 7=depleted)
+    mood_emoji: Optional[str] = None     # Emoji representing user's mood
+    notes: Optional[str] = None          # Free-text wellness notes
 
 
 @dataclass

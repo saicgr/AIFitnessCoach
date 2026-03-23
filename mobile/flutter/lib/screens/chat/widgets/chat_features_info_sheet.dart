@@ -10,11 +10,21 @@ class ChatFeaturesInfoSheet extends StatelessWidget {
 
   const ChatFeaturesInfoSheet({super.key, required this.onAction});
 
+  static const _highlights = <(IconData, String, String)>[
+    (Icons.camera_alt_outlined, 'Scan Food', 'Take a photo of your plate for instant nutrition estimates'),
+    (Icons.menu_book_outlined, 'Analyze Menu', 'Photo a restaurant menu to see all dishes sorted by your goals'),
+    (Icons.videocam_outlined, 'Check My Form', 'Record exercise video for AI form analysis'),
+    (Icons.chat_bubble_outline, 'Quick Log', 'Type what you ate to log without a photo'),
+    (Icons.info_outline, 'How it works', 'AI analyzes first, you review and confirm before saving'),
+  ];
+
   static const _sections = <String, List<String>>{
     'Form Analysis': ['check_form', 'compare_form'],
     'Nutrition': ['scan_food', 'analyze_menu', 'calorie_check'],
     'Workout': ['quick_workout', 'meal_prep'],
     'Recovery': ['recovery_tips', 'injury_help'],
+    'Stats & Reports': ['view_report', 'my_dashboard', 'my_compliance', 'my_measurements'],
+    'Coach Insights': ['progress_check', 'deload_check', 'adjust_plan'],
     'App Control': ['toggle_dark_mode', 'toggle_sounds', 'toggle_tts'],
     'Navigation': ['go_to_stats', 'go_to_library', 'go_to_schedule'],
     'Tracking': ['log_water', 'set_water_goal'],
@@ -59,7 +69,21 @@ class ChatFeaturesInfoSheet extends StatelessWidget {
                   color: colors.textSecondary,
                 ),
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 16),
+
+              // Key feature highlights
+              ..._highlights.map((h) => Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: _HighlightRow(
+                  icon: h.$1,
+                  title: h.$2,
+                  subtitle: h.$3,
+                  colors: colors,
+                  isDark: isDark,
+                ),
+              )),
+
+              const SizedBox(height: 12),
 
               for (final entry in _sections.entries) ...[
                 _buildSectionLabel(entry.key, colors.textMuted),
@@ -154,6 +178,66 @@ class ChatFeaturesInfoSheet extends StatelessWidget {
         color: textMuted,
         letterSpacing: 1.0,
       ),
+    );
+  }
+}
+
+class _HighlightRow extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final ThemeColors colors;
+  final bool isDark;
+
+  const _HighlightRow({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.colors,
+    required this.isDark,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          width: 32,
+          height: 32,
+          decoration: BoxDecoration(
+            color: isDark
+                ? Colors.white.withValues(alpha: 0.06)
+                : Colors.black.withValues(alpha: 0.04),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Icon(icon, size: 16, color: colors.textSecondary),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: colors.textPrimary,
+                ),
+              ),
+              const SizedBox(height: 1),
+              Text(
+                subtitle,
+                style: TextStyle(
+                  fontSize: 12,
+                  color: colors.textMuted,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }

@@ -205,9 +205,12 @@ async def send_message(
     if chat_request.workout_schedule:
         logger.debug(f"Workout schedule: yesterday={chat_request.workout_schedule.yesterday is not None}, today={chat_request.workout_schedule.today is not None}, tomorrow={chat_request.workout_schedule.tomorrow is not None}, thisWeek={len(chat_request.workout_schedule.thisWeek)}")
 
+    # Per-user daily AI chat budget (free: 10/day, premium: unlimited)
+    from core.premium_gate import check_premium_gate, track_premium_usage
+    await check_premium_gate(chat_request.user_id, "ai_chat")
+
     # Premium gate checks for food scanning and text-to-calories
     # Only check gates when the request actually involves these features
-    from core.premium_gate import check_premium_gate, track_premium_usage
     _chat_gate_feature = None  # Track which gate was checked for post-success usage increment
 
     has_image_media = bool(
@@ -236,6 +239,7 @@ async def send_message(
         logger.info(f"Chat response sent: intent={response.intent}, rag_used={response.rag_context_used}, time={response_time_ms}ms")
 
         # Track premium gate usage after successful processing
+        background_tasks.add_task(track_premium_usage, chat_request.user_id, "ai_chat")
         if _chat_gate_feature:
             background_tasks.add_task(track_premium_usage, chat_request.user_id, _chat_gate_feature)
 
@@ -561,6 +565,10 @@ async def send_message_stream(
     if str(current_user["id"]) != str(chat_request.user_id):
         raise HTTPException(status_code=403, detail="Access denied")
 
+    # Per-user daily AI chat budget (free: 10/day, premium: unlimited)
+    from core.premium_gate import check_premium_gate, track_premium_usage
+    await check_premium_gate(chat_request.user_id, "ai_chat")
+
     from starlette.responses import StreamingResponse
 
     async def _stream_response():
@@ -578,6 +586,9 @@ async def send_message_stream(
                 yield f"data: {json.dumps({'event': 'token', 'text': chunk})}\n\n"
 
             yield f"data: {json.dumps({'event': 'done', 'action_data': response.action_data})}\n\n"
+
+            # Track AI chat usage for daily budget
+            background_tasks.add_task(track_premium_usage, chat_request.user_id, "ai_chat")
 
             # Schedule background tasks for DB persistence
             _stream_coach_persona_id = chat_request.ai_settings.coach_persona_id if chat_request.ai_settings else None

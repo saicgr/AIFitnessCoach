@@ -9,7 +9,7 @@ Two dependency levels:
 - get_verified_auth_token: Light auth - validates JWT only, no DB lookup.
   Use for auth endpoints (google, email, signup) that handle user creation themselves.
 """
-from fastapi import Header, HTTPException, status
+from fastapi import Header, HTTPException, status, Depends
 from typing import Optional
 import logging
 
@@ -189,3 +189,145 @@ async def get_optional_user(
         return await get_current_user(authorization)
     except HTTPException:
         return None
+
+
+# ─── Ownership & Authorization Helpers ───────────────────────────────────────
+# These provide SCALABLE IDOR protection. Use these instead of raw
+# get_current_user when you need to verify the authenticated user
+# matches the resource owner.
+
+
+def verify_user_ownership(current_user: dict, user_id: str) -> None:
+    """Verify the authenticated user matches the given user_id.
+
+    Use this for endpoints that accept user_id as a path or query parameter.
+    Raises 403 if the IDs don't match.
+
+    Args:
+        current_user: The authenticated user dict from get_current_user
+        user_id: The user_id from the path/query parameter
+
+    Raises:
+        HTTPException 403: If current_user["id"] != user_id
+
+    Example:
+        @router.get("/{user_id}/data")
+        async def get_data(user_id: str, current_user: dict = Depends(get_current_user)):
+            verify_user_ownership(current_user, user_id)
+            # Safe: user_id guaranteed == current_user["id"]
+    """
+    if str(current_user["id"]) != str(user_id):
+        logger.warning(
+            f"IDOR blocked: user {current_user['id']} tried to access resource for user {user_id}"
+        )
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Access denied",
+        )
+
+
+def verify_resource_ownership(
+    current_user: dict,
+    resource: Optional[dict],
+    resource_name: str = "Resource",
+) -> None:
+    """Verify a fetched resource belongs to the authenticated user.
+
+    Use this for endpoints that accept entity IDs (workout_id, goal_id, etc.)
+    where you need to fetch the entity first, then check ownership.
+
+    Args:
+        current_user: The authenticated user dict from get_current_user
+        resource: The fetched resource dict (must have a "user_id" field)
+        resource_name: Human-readable name for error messages (e.g., "Workout")
+
+    Raises:
+        HTTPException 404: If resource is None
+        HTTPException 403: If resource.user_id != current_user["id"]
+
+    Example:
+        @router.delete("/{workout_id}")
+        async def delete_workout(workout_id: str, current_user: dict = Depends(get_current_user)):
+            workout = db.get_workout(workout_id)
+            verify_resource_ownership(current_user, workout, "Workout")
+            db.delete_workout(workout_id)
+    """
+    if resource is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"{resource_name} not found",
+        )
+
+    resource_user_id = resource.get("user_id")
+    if resource_user_id is None:
+        # EDGE CASE: Resource doesn't have user_id field — log and deny
+        logger.error(f"Resource {resource_name} missing user_id field for ownership check")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Access denied",
+        )
+
+    if str(resource_user_id) != str(current_user["id"]):
+        logger.warning(
+            f"IDOR blocked: user {current_user['id']} tried to access {resource_name} "
+            f"owned by {resource_user_id}"
+        )
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Access denied",
+        )
+
+
+async def get_admin_user(
+    authorization: Optional[str] = Header(None, alias="Authorization"),
+) -> dict:
+    """Dependency for admin-only endpoints.
+
+    Like get_current_user but also verifies the user has admin role.
+    Use this instead of get_current_user for endpoints that should only
+    be accessible to administrators.
+
+    Args:
+        authorization: The Authorization header containing the Bearer token
+
+    Returns:
+        dict: Admin user info
+
+    Raises:
+        HTTPException 401: If not authenticated
+        HTTPException 403: If authenticated but not admin
+
+    Example:
+        @router.get("/all-users")
+        async def list_all(admin: dict = Depends(get_admin_user)):
+            # Only admins reach here
+    """
+    user = await get_current_user(authorization)
+
+    # Check admin role in user metadata or database
+    user_metadata = user.get("user_metadata", {})
+    if user_metadata.get("role") != "admin":
+        # Also check if the user has admin role in the database
+        try:
+            supabase = get_supabase()
+            result = supabase.client.table("users") \
+                .select("role") \
+                .eq("id", str(user["id"])) \
+                .limit(1) \
+                .execute()
+            db_role = result.data[0].get("role") if result.data else None
+            if db_role != "admin":
+                logger.warning(f"Non-admin user {user['id']} attempted admin endpoint")
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail="Admin access required",
+                )
+        except HTTPException:
+            raise
+        except Exception:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Admin access required",
+            )
+
+    return user

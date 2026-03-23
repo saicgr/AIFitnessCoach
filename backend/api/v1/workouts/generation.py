@@ -344,7 +344,8 @@ def normalize_exercise_numeric_fields(exercises: List[Dict[str, Any]]) -> List[D
 
 
 @router.post("/generate", response_model=Workout)
-async def generate_workout(request: GenerateWorkoutRequest, background_tasks: BackgroundTasks,
+@user_limiter.limit("15/minute")
+async def generate_workout(req: Request, request: GenerateWorkoutRequest, background_tasks: BackgroundTasks,
     current_user: dict = Depends(get_current_user),
 ):
     """Generate a new workout for a user based on their preferences."""
@@ -1610,9 +1611,8 @@ async def generate_workout_streaming(request: Request, body: GenerateWorkoutRequ
                     "user_id": body.user_id,
                 }
 
-                # Add strength_history for cached version
-                if use_cached:
-                    generator_kwargs["strength_history"] = strength_history
+                # Add strength_history for all versions (progressive overload)
+                generator_kwargs["strength_history"] = strength_history
 
                 async for chunk in generator_func(**generator_kwargs):
                     accumulated_chunks.append(chunk)
@@ -3074,7 +3074,8 @@ async def get_mood_calendar(user_id: str, month: int, year: int,
 
 
 @router.post("/swap")
-async def swap_workout_date(request: SwapWorkoutsRequest,
+@limiter.limit("10/minute")
+async def swap_workout_date(req: Request, request: SwapWorkoutsRequest,
     current_user: dict = Depends(get_current_user),
 ):
     """Move a workout to a new date, swapping if another workout exists there."""
@@ -3110,7 +3111,8 @@ async def swap_workout_date(request: SwapWorkoutsRequest,
 
 
 @router.post("/swap-exercise", response_model=Workout)
-async def swap_exercise_in_workout(request: SwapExerciseRequest, background_tasks: BackgroundTasks,
+@limiter.limit("10/minute")
+async def swap_exercise_in_workout(req: Request, request: SwapExerciseRequest, background_tasks: BackgroundTasks,
     current_user: dict = Depends(get_current_user),
 ):
     """
@@ -3281,7 +3283,8 @@ async def swap_exercise_in_workout(request: SwapExerciseRequest, background_task
 
 
 @router.post("/add-exercise", response_model=Workout)
-async def add_exercise_to_workout(request: AddExerciseRequest, background_tasks: BackgroundTasks,
+@limiter.limit("10/minute")
+async def add_exercise_to_workout(req: Request, request: AddExerciseRequest, background_tasks: BackgroundTasks,
     current_user: dict = Depends(get_current_user),
 ):
     """Add a new exercise to an existing workout."""
@@ -3499,7 +3502,8 @@ async def add_exercise_to_workout(request: AddExerciseRequest, background_tasks:
 
 
 @router.post("/extend", response_model=Workout)
-async def extend_workout(request: ExtendWorkoutRequest,
+@limiter.limit("10/minute")
+async def extend_workout(req: Request, request: ExtendWorkoutRequest,
     current_user: dict = Depends(get_current_user),
 ):
     """

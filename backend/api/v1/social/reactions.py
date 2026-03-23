@@ -9,8 +9,10 @@ This module handles reaction operations:
 from typing import Optional
 
 from fastapi import APIRouter, Depends, BackgroundTasks, HTTPException
-from core.auth import get_current_user
+from starlette.requests import Request
+from core.auth import get_current_user, verify_user_ownership
 from core.exceptions import safe_internal_error
+from core.rate_limiter import limiter
 
 from models.social import (
     ActivityReaction, ActivityReactionCreate, ReactionsSummary, ReactionType,
@@ -121,7 +123,9 @@ def _bg_notify_reaction(activity_id: str, user_id: str, reaction_type: str):
 
 
 @router.post("/reactions", response_model=ActivityReaction)
+@limiter.limit("30/minute")
 async def add_reaction(
+    request: Request,
     user_id: str,
     reaction: ActivityReactionCreate,
     background_tasks: BackgroundTasks,
@@ -137,6 +141,7 @@ async def add_reaction(
     Returns:
         Created reaction
     """
+    verify_user_ownership(current_user, user_id)
     supabase = get_supabase_client()
 
     # Check if already reacted (upsert behavior)
@@ -184,7 +189,9 @@ async def add_reaction(
 
 
 @router.delete("/reactions/{activity_id}")
+@limiter.limit("30/minute")
 async def remove_reaction(
+    request: Request,
     user_id: str,
     activity_id: str,
     background_tasks: BackgroundTasks,
@@ -200,6 +207,7 @@ async def remove_reaction(
     Returns:
         Success message
     """
+    verify_user_ownership(current_user, user_id)
     supabase = get_supabase_client()
 
     # Get reaction ID before deleting

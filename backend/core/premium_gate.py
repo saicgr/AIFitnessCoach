@@ -19,6 +19,7 @@ _is_production = os.getenv("RENDER", "false").lower() == "true" or os.getenv("EN
 
 # Feature keys that this module manages
 PREMIUM_FEATURE_KEYS = [
+    "ai_chat",
     "ai_workout_generation",
     "food_scanning",
     "form_video_analysis",
@@ -128,6 +129,7 @@ async def check_premium_gate(user_id: str, feature_key: str) -> Tuple[bool, Opti
 def _get_fallback_gate(feature_key: str) -> dict:
     """Hardcoded fallback limits when the feature_gates table is missing rows."""
     fallbacks = {
+        "ai_chat": {"free_limit": 10, "reset_period": "daily", "minimum_tier": "free", "is_enabled": True},
         "ai_workout_generation": {"free_limit": 2, "reset_period": "monthly", "minimum_tier": "free", "is_enabled": True},
         "food_scanning": {"free_limit": 1, "reset_period": "daily", "minimum_tier": "free", "is_enabled": True},
         "form_video_analysis": {"free_limit": 0, "reset_period": None, "minimum_tier": "premium", "is_enabled": True},

@@ -12,12 +12,13 @@ This module handles basic create, read, update, delete operations for workouts:
 - GET /{id}/completion-summary - Get combined summary data for a completed workout
 - GET /{id}/comparison - Get performance comparison for a completed workout
 """
+import asyncio
 import json
 from datetime import datetime, date, timedelta
 from typing import List, Optional, Dict, Any
 
 from fastapi import APIRouter, Depends, HTTPException, Query, BackgroundTasks
-from core.auth import get_current_user
+from core.auth import get_current_user, verify_user_ownership, verify_resource_ownership
 from core.exceptions import safe_internal_error
 from pydantic import BaseModel
 
@@ -167,6 +168,9 @@ async def create_workout(workout: WorkoutCreate,
 
         exercises = json.loads(workout.exercises_json) if isinstance(workout.exercises_json, str) else workout.exercises_json
 
+        # Override user_id with authenticated user to prevent IDOR
+        workout.user_id = current_user["id"]
+
         workout_data = {
             "user_id": workout.user_id,
             "name": workout.name,
@@ -219,6 +223,7 @@ async def list_workouts(
     If not provided and the user has an active gym profile, filters by that profile.
     If allow_multiple_per_date is True, returns all workouts per day (no dedup).
     """
+    verify_user_ownership(current_user, user_id)
     logger.info(f"Listing workouts for user {user_id}, gym_profile_id={gym_profile_id}, multi_per_date={allow_multiple_per_date}")
     try:
         db = get_supabase_db()
@@ -267,10 +272,7 @@ async def get_workout(workout_id: str,
     try:
         db = get_supabase_db()
         row = db.get_workout(workout_id)
-
-        if not row:
-            logger.warning(f"Workout not found: id={workout_id}")
-            raise HTTPException(status_code=404, detail="Workout not found")
+        verify_resource_ownership(current_user, row, "Workout")
 
         return row_to_workout(row)
 
@@ -291,9 +293,7 @@ async def update_workout(workout_id: str, workout: WorkoutUpdate,
         db = get_supabase_db()
 
         existing = db.get_workout(workout_id)
-        if not existing:
-            logger.warning(f"Workout not found for update: id={workout_id}")
-            raise HTTPException(status_code=404, detail="Workout not found")
+        verify_resource_ownership(current_user, existing, "Workout")
 
         update_data = {}
         if workout.name is not None:
@@ -340,21 +340,17 @@ async def update_workout(workout_id: str, workout: WorkoutUpdate,
 
 
 @router.patch("/{workout_id}/favorite")
-async def toggle_workout_favorite(workout_id: str, user_id: str = Query(...),
+async def toggle_workout_favorite(workout_id: str,
     current_user: dict = Depends(get_current_user),
 ):
     """Toggle the favorite status of a workout."""
+    user_id = current_user["id"]
     logger.info(f"Toggling favorite for workout: id={workout_id}, user={user_id}")
     try:
         db = get_supabase_db()
 
         existing = db.get_workout(workout_id)
-        if not existing:
-            raise HTTPException(status_code=404, detail="Workout not found")
-
-        # Verify ownership
-        if existing.get("user_id") != user_id:
-            raise HTTPException(status_code=403, detail="Not authorized")
+        verify_resource_ownership(current_user, existing, "Workout")
 
         current_favorite = existing.get("is_favorite", False)
         new_favorite = not current_favorite
@@ -383,9 +379,7 @@ async def delete_workout(workout_id: str,
         db = get_supabase_db()
 
         existing = db.get_workout(workout_id)
-        if not existing:
-            logger.warning(f"Workout not found for deletion: id={workout_id}")
-            raise HTTPException(status_code=404, detail="Workout not found")
+        verify_resource_ownership(current_user, existing, "Workout")
 
         # Delete related records first
         db.delete_workout_changes_by_workout(workout_id)
@@ -422,6 +416,7 @@ async def cleanup_old_workouts(
     Returns:
         Summary of cleanup operation
     """
+    verify_user_ownership(current_user, user_id)
     logger.info(f"[Cleanup] Starting cleanup for user {user_id}, keeping {keep_count} workout(s)")
 
     try:
@@ -519,6 +514,7 @@ async def complete_workout(
         if not existing:
             logger.warning(f"Workout not found: id={workout_id}")
             raise HTTPException(status_code=404, detail="Workout not found")
+        verify_resource_ownership(current_user, existing, "Workout")
 
         user_id = existing.get("user_id")
 
@@ -947,6 +943,22 @@ async def complete_workout(
         except Exception as e:
             logger.error(f"Error calculating performance comparison: {e}")
             # Continue even if comparison fails
+
+        # =====================================================================
+        # Background: Accountability Coach Nudges
+        # =====================================================================
+        # 1. Post-workout nutrition nudge (delayed by user preference, default 30 min)
+        # 2. Streak celebration if milestone reached
+        workout_name = existing.get("name", "your workout")
+        background_tasks.add_task(
+            _send_post_workout_nutrition_nudge,
+            user_id=user_id,
+            workout_name=workout_name,
+        )
+        background_tasks.add_task(
+            _send_streak_celebration_if_milestone,
+            user_id=user_id,
+        )
 
         # Build response message
         if detected_prs:
@@ -1599,3 +1611,203 @@ async def populate_performance_logs(
 
     except Exception as e:
         logger.error(f"Background: Failed to populate performance_logs for workout_log {workout_log_id}: {e}")
+
+
+# ─── Accountability Coach: Event-Based Nudges ───────────────────────────────
+
+async def _send_post_workout_nutrition_nudge(user_id: str, workout_name: str):
+    """Wait configured delay, then nudge user to log post-workout meal.
+
+    Runs as a BackgroundTask after workout completion. Waits the user's
+    configured delay (default 30 min), then checks if they've logged a meal.
+    If not, saves a coach message to chat and sends a push notification.
+
+    Args:
+        user_id: The user's UUID
+        workout_name: Name of the completed workout (for message context)
+
+    Notes:
+        - EDGE CASE: If backend restarts during sleep, this nudge is lost.
+          Acceptable — the user already got the workout completion celebration.
+        - EDGE CASE: If user already logged a meal, nudge is skipped.
+        - EDGE CASE: If preference is disabled, returns immediately.
+    """
+    try:
+        from core.supabase_client import get_supabase
+        from services.notification_service import get_notification_service
+
+        supabase = get_supabase()
+
+        # Get user preferences
+        user_result = supabase.client.table("users") \
+            .select("id, name, fcm_token, timezone, notification_preferences") \
+            .eq("id", user_id) \
+            .limit(1) \
+            .execute()
+
+        if not user_result.data:
+            return
+        user = user_result.data[0]
+        prefs = user.get("notification_preferences") or {}
+
+        # EDGE CASE: Check if preference is enabled
+        if not prefs.get("post_workout_meal_reminder", True):
+            return
+
+        # Wait configured delay
+        delay_minutes = prefs.get("post_workout_meal_delay_minutes", 30)
+        await asyncio.sleep(delay_minutes * 60)
+
+        # EDGE CASE: Check if user already logged a meal since workout completion
+        tz_str = user.get("timezone") or "UTC"
+        from zoneinfo import ZoneInfo
+        user_today = datetime.now(ZoneInfo(tz_str) if tz_str != "UTC" else ZoneInfo("UTC")).strftime("%Y-%m-%d")
+
+        try:
+            recent_meal = supabase.client.table("food_logs") \
+                .select("id") \
+                .eq("user_id", user_id) \
+                .gte("logged_at", f"{user_today}T00:00:00") \
+                .order("logged_at", desc=True) \
+                .limit(1) \
+                .execute()
+
+            # If they logged a meal in the last delay_minutes, skip
+            if recent_meal.data:
+                logged_at = recent_meal.data[0].get("logged_at", "")
+                if isinstance(logged_at, str):
+                    logged_time = datetime.fromisoformat(logged_at.replace("Z", "+00:00"))
+                    minutes_ago = (datetime.now(ZoneInfo("UTC")) - logged_time).total_seconds() / 60
+                    if minutes_ago < delay_minutes:
+                        logger.info(f"✅ [Nudge] Post-workout meal already logged for {user_id}, skipping nudge")
+                        return
+        except Exception:
+            pass  # Continue with nudge if check fails
+
+        # Get coach persona
+        ai_map_result = supabase.client.table("ai_settings") \
+            .select("coach_name, coaching_style, communication_tone, use_emojis") \
+            .eq("user_id", user_id) \
+            .limit(1) \
+            .execute()
+        ai_settings = ai_map_result.data[0] if ai_map_result.data else {}
+
+        notif_svc = get_notification_service()
+        coach_name = ai_settings.get("coach_name") or "Your Coach"
+        intensity = prefs.get("accountability_intensity", "balanced")
+
+        # Generate message
+        message = await notif_svc.generate_accountability_message(
+            nudge_type="post_workout_meal",
+            context_dict={"workout_name": workout_name},
+            user_name=user.get("name"),
+            coach_name=coach_name,
+            coaching_style=ai_settings.get("coaching_style", "motivational"),
+            communication_tone=ai_settings.get("communication_tone", "encouraging"),
+            use_emojis=ai_settings.get("use_emojis", True),
+            accountability_intensity=intensity,
+            use_ai=prefs.get("ai_personalized_nudges", True),
+        )
+
+        # Save to chat_messages
+        try:
+            supabase.client.table("chat_messages").insert({
+                "user_id": user_id,
+                "role": "assistant",
+                "content": message,
+                "metadata": {
+                    "nudge_type": "post_workout_meal",
+                    "proactive": True,
+                    "coach_name": coach_name,
+                    "workout_name": workout_name,
+                }
+            }).execute()
+        except Exception as e:
+            logger.warning(f"⚠️ [Nudge] chat_messages insert failed: {e}")
+
+        # Send push notification
+        fcm_token = user.get("fcm_token")
+        if fcm_token:
+            await notif_svc.send_accountability_nudge(
+                fcm_token=fcm_token,
+                nudge_type="post_workout_meal",
+                context_dict={"workout_name": workout_name},
+                user_name=user.get("name"),
+                coach_name=coach_name,
+                coaching_style=ai_settings.get("coaching_style"),
+                communication_tone=ai_settings.get("communication_tone"),
+                use_emojis=ai_settings.get("use_emojis", True),
+                accountability_intensity=intensity,
+                use_ai=False,  # Already generated message
+            )
+            logger.info(f"✅ [Nudge] Post-workout nutrition sent to {user_id}")
+
+    except Exception as e:
+        logger.error(f"❌ [Nudge] Post-workout nutrition nudge failed for {user_id}: {e}")
+
+
+async def _send_streak_celebration_if_milestone(user_id: str):
+    """Check streak and send celebration push if it's a milestone.
+
+    Runs as a BackgroundTask after workout completion. Checks the user's
+    current streak and sends a celebration if it hits a milestone number.
+
+    Args:
+        user_id: The user's UUID
+
+    Notes:
+        - EDGE CASE: If streak data is missing, silently returns.
+        - EDGE CASE: If celebration preference is disabled, returns immediately.
+        - Milestones: 3, 7, 14, 30, 50, 100, 365 days
+    """
+    MILESTONE_DAYS = {3, 7, 14, 30, 50, 100, 365}
+
+    try:
+        from core.supabase_client import get_supabase
+        from services.notification_service import get_notification_service
+
+        supabase = get_supabase()
+
+        # Get user and streak data
+        user_result = supabase.client.table("users") \
+            .select("id, name, fcm_token, notification_preferences") \
+            .eq("id", user_id) \
+            .limit(1) \
+            .execute()
+
+        if not user_result.data:
+            return
+        user = user_result.data[0]
+        prefs = user.get("notification_preferences") or {}
+
+        # EDGE CASE: Check if celebration preference is enabled
+        if not prefs.get("streak_celebration", True):
+            return
+
+        # Get current streak
+        streak_result = supabase.client.table("user_login_streaks") \
+            .select("current_streak") \
+            .eq("user_id", user_id) \
+            .limit(1) \
+            .execute()
+
+        if not streak_result.data:
+            return
+
+        current_streak = streak_result.data[0].get("current_streak", 0)
+        if current_streak not in MILESTONE_DAYS:
+            return
+
+        # Send celebration via existing notification service
+        notif_svc = get_notification_service()
+        fcm_token = user.get("fcm_token")
+        if fcm_token:
+            await notif_svc.send_streak_celebration(
+                fcm_token=fcm_token,
+                streak_days=current_streak,
+                user_name=user.get("name"),
+            )
+            logger.info(f"🎉 [Nudge] Streak celebration ({current_streak} days) sent to {user_id}")
+
+    except Exception as e:
+        logger.error(f"❌ [Nudge] Streak celebration failed for {user_id}: {e}")

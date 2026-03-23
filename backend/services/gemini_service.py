@@ -7023,6 +7023,7 @@ If user has gym equipment - most exercises MUST use that equipment!"""
         scheduled_date: Optional[str] = None,
         user_dob: Optional[str] = None,
         user_id: Optional[str] = None,
+        strength_history: Optional[Dict] = None,
     ):
         """
         Generate a workout plan using streaming for faster perceived response.
@@ -7034,6 +7035,7 @@ If user has gym equipment - most exercises MUST use that equipment!"""
             custom_prompt_override: If provided, use this prompt instead of
                                     building the default workout prompt.
             progression_philosophy: Optional progression philosophy prompt for leverage-based progressions.
+            strength_history: Optional dict of user's exercise history for progressive overload.
 
         Yields:
             str: JSON chunks as they arrive from Gemini
@@ -7113,6 +7115,24 @@ If user has gym equipment - most exercises MUST use that equipment!"""
                 logger.info(f"[Streaming] Including progression philosophy for leverage-based progressions")
                 progression_instruction = progression_philosophy
 
+            # Add strength history for progressive overload
+            strength_history_instruction = ""
+            if strength_history:
+                history_summary = self._format_strength_history(strength_history)
+                if history_summary:
+                    strength_history_instruction = f"""
+
+## PROGRESSIVE OVERLOAD (CRITICAL)
+You MUST reference the user's previous performance data below when setting weights in set_targets.
+For each exercise where history is available, set target_weight_kg that follows progressive overload:
+- If user handled the weight comfortably (low RPE): increase by smallest increment (2.5kg barbell, 2kg dumbbell)
+- If user struggled (high RPE): keep same weight but adjust reps
+- Do NOT ignore previous weights and generate from scratch.
+
+STRENGTH HISTORY:
+{history_summary}"""
+                    logger.info(f"[Streaming] Including strength history for {len(strength_history)} exercises")
+
             # Build duration text - use range if both min and max provided
             if duration_minutes_min and duration_minutes_max and duration_minutes_min != duration_minutes_max:
                 duration_text = f"{duration_minutes_min}-{duration_minutes_max}"
@@ -7179,7 +7199,7 @@ If user has gym equipment (full_gym, barbell, dumbbells, cable_machine, machines
 - Maximum 1-2 bodyweight exercises allowed
 - For beginners with gym: USE machines & dumbbells (Leg Press, Dumbbell Press, Cable Rows) - NOT just push-ups/squats!
 - NEVER generate mostly bodyweight when gym equipment is available!
-{senior_instruction}{holiday_instruction}{avoid_instruction}{progression_instruction}"""
+{senior_instruction}{holiday_instruction}{avoid_instruction}{progression_instruction}{strength_history_instruction}"""
 
             logger.info(f"[Streaming] Starting workout generation for {fitness_level} user")
 
@@ -7492,10 +7512,14 @@ If user has gym equipment (full_gym, barbell, dumbbells, cable_machine, machines
         if staple_exercises and len(staple_exercises) > 0:
             user_context_parts.append(f"⭐ MUST INCLUDE these staple exercises (pre-filtered for this day): {', '.join(staple_exercises)}")
 
-        # Strength history for weight recommendations
+        # Strength history for progressive overload
         if strength_history:
             user_context_parts.append("")
-            user_context_parts.append("## STRENGTH HISTORY (for weight recommendations)")
+            user_context_parts.append("## PROGRESSIVE OVERLOAD — STRENGTH HISTORY (CRITICAL)")
+            user_context_parts.append("You MUST reference this data when setting target_weight_kg in set_targets.")
+            user_context_parts.append("For exercises with history: increase weight by smallest increment (2.5kg barbell, 2kg dumbbell) if user handled it comfortably.")
+            user_context_parts.append("If user struggled (high RPE / low reps): keep same weight, add 1-2 reps.")
+            user_context_parts.append("Do NOT ignore previous weights and generate from scratch.")
             history_summary = self._format_strength_history(strength_history)
             if history_summary:
                 user_context_parts.append(history_summary)

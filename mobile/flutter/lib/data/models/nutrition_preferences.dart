@@ -1719,7 +1719,7 @@ class WeightTrendInfo {
   factory WeightTrendInfo.fromJson(Map<String, dynamic> json) {
     return WeightTrendInfo(
       changeKg: (json['change_kg'] as num?)?.toDouble() ?? 0.0,
-      weeklyRate: (json['weekly_rate'] as num?)?.toDouble() ?? 0.0,
+      weeklyRate: (json['weekly_rate_kg'] as num?)?.toDouble() ?? 0.0,
       direction: json['direction'] as String? ?? 'stable',
       startWeight: (json['start_weight'] as num?)?.toDouble(),
       endWeight: (json['end_weight'] as num?)?.toDouble(),
@@ -2172,11 +2172,10 @@ class RecommendationOptions {
 
   /// Get the recommended option if available
   RecommendationOption? get recommended {
-    if (recommendedOption == null) return options.isNotEmpty ? options.first : null;
-    return options.firstWhere(
-      (o) => o.optionType == recommendedOption,
-      orElse: () => options.first,
-    );
+    if (options.isEmpty) return null;
+    if (recommendedOption == null) return options.first;
+    final match = options.where((o) => o.optionType == recommendedOption);
+    return match.isNotEmpty ? match.first : options.first;
   }
 
   /// Check if aggressive option is available

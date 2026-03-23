@@ -11,7 +11,7 @@ The imported data feeds into the strength history system so the AI
 can generate workouts with appropriate weights from day one.
 """
 from fastapi import APIRouter, Depends, HTTPException, Query
-from core.auth import get_current_user
+from core.auth import get_current_user, verify_user_ownership, verify_resource_ownership
 from core.exceptions import safe_internal_error
 from pydantic import BaseModel, Field, validator
 from typing import List, Optional
@@ -106,6 +106,7 @@ async def import_workout_history(request: SingleImportRequest,
     This allows users to manually enter their workout history
     so the AI can learn their strength levels immediately.
     """
+    verify_user_ownership(current_user, request.user_id)
     logger.info(f"Importing single workout entry for user {request.user_id}: {request.exercise_name}")
 
     try:
@@ -154,6 +155,7 @@ async def bulk_import_workout_history(request: BulkImportRequest,
     Useful for importing from spreadsheets or other fitness apps.
     Maximum 100 entries per request.
     """
+    verify_user_ownership(current_user, request.user_id)
     logger.info(f"Bulk importing {len(request.entries)} entries for user {request.user_id}")
 
     try:
@@ -215,6 +217,7 @@ async def get_user_workout_history(
 
     Returns entries sorted by performed_at date (most recent first).
     """
+    verify_user_ownership(current_user, user_id)
     logger.info(f"Getting workout history for user {user_id}")
 
     try:
@@ -264,6 +267,7 @@ async def get_strength_summary(user_id: str,
 
     This is what the AI uses to determine appropriate weights.
     """
+    verify_user_ownership(current_user, user_id)
     logger.info(f"Getting strength summary for user {user_id}")
 
     try:
@@ -330,6 +334,7 @@ async def delete_workout_history_entry(user_id: str, entry_id: str,
     current_user: dict = Depends(get_current_user),
 ):
     """Delete a specific imported workout history entry."""
+    verify_user_ownership(current_user, user_id)
     logger.info(f"Deleting workout history entry {entry_id} for user {user_id}")
 
     try:
@@ -358,6 +363,7 @@ async def clear_workout_history(user_id: str,
     current_user: dict = Depends(get_current_user),
 ):
     """Clear all imported workout history for a user."""
+    verify_user_ownership(current_user, user_id)
     logger.info(f"Clearing all workout history for user {user_id}")
 
     try:

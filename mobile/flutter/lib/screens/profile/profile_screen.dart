@@ -814,6 +814,40 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               EditableFitnessCard(key: _fitnessCardKey, user: user),
               const SizedBox(height: 12),
 
+              // View Reports button
+              InkWell(
+                onTap: () {
+                  HapticService.selection();
+                  context.push('/summaries');
+                },
+                borderRadius: BorderRadius.circular(12),
+                child: Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  decoration: BoxDecoration(
+                    color: elevated,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: cardBorder),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.summarize_outlined, color: AppColors.purple, size: 20),
+                      const SizedBox(width: 10),
+                      Text(
+                        'View Reports',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: textPrimary,
+                        ),
+                      ),
+                      const Spacer(),
+                      Icon(Icons.chevron_right_rounded, color: textMuted, size: 20),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 8),
               // View Stats button
               InkWell(
                 onTap: () {

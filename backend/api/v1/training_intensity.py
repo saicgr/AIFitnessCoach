@@ -11,7 +11,7 @@ Endpoints for:
 from typing import Dict, List, Optional
 from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
-from core.auth import get_current_user
+from core.auth import get_current_user, verify_user_ownership, verify_resource_ownership
 from core.rate_limiter import limiter
 from core.exceptions import safe_internal_error
 from pydantic import BaseModel, Field
@@ -198,6 +198,7 @@ async def set_user_1rm(body: Set1RMRequest,
     - 'calculated': Estimated from workout performance
     - 'tested': User performed an actual 1RM test
     """
+    verify_user_ownership(current_user, body.user_id)
     try:
         supabase = get_supabase_client()
         service = PercentageTrainingService(supabase)
@@ -256,6 +257,7 @@ async def get_user_1rms(user_id: str,
     current_user: dict = Depends(get_current_user),
 ):
     """Get all stored 1RMs for a user."""
+    verify_user_ownership(current_user, user_id)
     try:
         supabase = get_supabase_client()
         service = PercentageTrainingService(supabase)
@@ -284,6 +286,7 @@ async def get_user_1rm(user_id: str, exercise_name: str,
     current_user: dict = Depends(get_current_user),
 ):
     """Get stored 1RM for a specific exercise."""
+    verify_user_ownership(current_user, user_id)
     try:
         supabase = get_supabase_client()
         service = PercentageTrainingService(supabase)
@@ -312,6 +315,7 @@ async def delete_user_1rm(user_id: str, exercise_name: str,
     current_user: dict = Depends(get_current_user),
 ):
     """Delete a stored 1RM for an exercise."""
+    verify_user_ownership(current_user, user_id)
     try:
         supabase = get_supabase_client()
         service = PercentageTrainingService(supabase)
@@ -350,6 +354,7 @@ async def set_global_intensity(request: SetIntensityRequest,
     - 85-95%: Heavy / Strength
     - 95-100%: Near max
     """
+    verify_user_ownership(current_user, request.user_id)
     try:
         supabase = get_supabase_client()
         service = PercentageTrainingService(supabase)
@@ -396,6 +401,7 @@ async def get_intensity_settings(user_id: str,
     current_user: dict = Depends(get_current_user),
 ):
     """Get user's complete intensity settings including overrides."""
+    verify_user_ownership(current_user, user_id)
     try:
         supabase = get_supabase_client()
         service = PercentageTrainingService(supabase)
@@ -419,6 +425,7 @@ async def set_exercise_intensity_override(request: SetExerciseIntensityRequest,
     current_user: dict = Depends(get_current_user),
 ):
     """Set per-exercise intensity override."""
+    verify_user_ownership(current_user, request.user_id)
     try:
         supabase = get_supabase_client()
         service = PercentageTrainingService(supabase)
@@ -455,6 +462,7 @@ async def delete_exercise_intensity_override(user_id: str, exercise_name: str,
     current_user: dict = Depends(get_current_user),
 ):
     """Remove per-exercise intensity override (reverts to global setting)."""
+    verify_user_ownership(current_user, user_id)
     try:
         supabase = get_supabase_client()
         service = PercentageTrainingService(supabase)
@@ -525,6 +533,7 @@ async def calculate_workout_weights(request: BulkWorkingWeightsRequest,
     Returns working weights for exercises where the user has stored 1RMs.
     Uses per-exercise intensity overrides where set, otherwise global intensity.
     """
+    verify_user_ownership(current_user, request.user_id)
     try:
         supabase = get_supabase_client()
         service = PercentageTrainingService(supabase)
@@ -579,6 +588,7 @@ async def auto_populate_1rms(
     Returns:
         Number of 1RMs calculated and saved
     """
+    verify_user_ownership(current_user, user_id)
     try:
         supabase = get_supabase_client()
         service = PercentageTrainingService(supabase)
@@ -652,6 +662,7 @@ async def create_linked_exercise(request: CreateLinkedExerciseRequest,
     - 'equipment_swap': Same movement with different equipment
     - 'progression': Easier/harder version of exercise
     """
+    verify_user_ownership(current_user, request.user_id)
     try:
         supabase = get_supabase_client()
         service = PercentageTrainingService(supabase)
@@ -720,6 +731,7 @@ async def get_linked_exercises(
     Optionally filter by primary exercise name to get only links
     from a specific benchmark exercise.
     """
+    verify_user_ownership(current_user, user_id)
     try:
         supabase = get_supabase_client()
         service = PercentageTrainingService(supabase)
@@ -760,6 +772,7 @@ async def update_linked_exercise(
     Only the provided fields will be updated. The primary and linked
     exercise names cannot be changed - delete and recreate instead.
     """
+    verify_user_ownership(current_user, request.user_id)
     try:
         supabase = get_supabase_client()
         service = PercentageTrainingService(supabase)
@@ -816,6 +829,7 @@ async def delete_linked_exercise(link_id: str, user_id: str = Query(...),
 
     The linked exercise will no longer derive its 1RM from the primary exercise.
     """
+    verify_user_ownership(current_user, user_id)
     try:
         supabase = get_supabase_client()
         service = PercentageTrainingService(supabase)
@@ -859,6 +873,7 @@ async def get_exercise_linking_suggestions(
     Returns suggestions with equipment type and calculated multiplier
     based on equipment differences.
     """
+    verify_user_ownership(current_user, user_id)
     try:
         supabase = get_supabase_client()
         service = PercentageTrainingService(supabase)

@@ -262,6 +262,9 @@ class _FitWizAppState extends ConsumerState<FitWizApp> {
 
       switch (notificationType) {
         case 'ai_coach':
+        case 'ai_coach_accountability':
+          // Accountability nudges open chat — coach message is already in chat_messages DB.
+          // When chat screen loads, it fetches history and the proactive message appears.
           router.push('/chat');
           break;
         case 'workout_reminder':

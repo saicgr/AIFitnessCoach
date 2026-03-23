@@ -472,13 +472,22 @@ app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 # Add GZip compression for responses >= 500 bytes
 app.add_middleware(GZipMiddleware, minimum_size=500)
 
+# SECURITY: Reject oversized request bodies to prevent OOM on 512MB Render tier
+@app.middleware("http")
+async def limit_request_body_size(request: Request, call_next):
+    content_length = request.headers.get("content-length")
+    if content_length and int(content_length) > 20 * 1024 * 1024:  # 20MB
+        from starlette.responses import JSONResponse
+        return JSONResponse(status_code=413, content={"detail": "Request body too large (max 20MB)"})
+    return await call_next(request)
+
 # Add CORS middleware for Flutter app
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origins,
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+    allow_headers=["Authorization", "Content-Type", "X-User-Timezone", "X-Cron-Secret", "X-Search-Suggestion", "X-Client-Version", "X-Device-Platform"],
     expose_headers=["X-Search-Suggestion"],
 )
 

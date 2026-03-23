@@ -6,10 +6,12 @@ This module handles content reporting:
 - GET / - Get user's own submitted reports
 """
 from fastapi import APIRouter, Depends, HTTPException, Query
+from starlette.requests import Request
 from pydantic import BaseModel, Field
 from typing import Optional
-from core.auth import get_current_user
+from core.auth import get_current_user, verify_user_ownership
 from core.exceptions import safe_internal_error
+from core.rate_limiter import limiter
 from core.logger import get_logger
 
 from .utils import get_supabase_client
@@ -29,7 +31,9 @@ class ReportCreate(BaseModel):
 
 
 @router.post("/")
+@limiter.limit("5/minute")
 async def submit_report(
+    request: Request,
     report: ReportCreate,
     user_id: str = Query(..., description="Current user ID"),
     current_user: dict = Depends(get_current_user),
@@ -44,6 +48,7 @@ async def submit_report(
     Returns:
         Created report record
     """
+    verify_user_ownership(current_user, user_id)
     try:
         supabase = get_supabase_client()
 
@@ -97,6 +102,7 @@ async def get_my_reports(
     Returns:
         List of reports submitted by the user
     """
+    verify_user_ownership(current_user, user_id)
     try:
         supabase = get_supabase_client()
 

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/constants/goal_unit.dart';
 import '../../../data/services/personal_goals_service.dart';
 
 /// Individual suggestion card for the carousel
@@ -102,7 +103,7 @@ class SuggestionCard extends StatelessWidget {
                 ),
                 const SizedBox(width: 4),
                 Text(
-                  '${suggestion.suggestedTarget} reps',
+                  GoalUnitExt.fromString(suggestion.unit).format(suggestion.suggestedTarget),
                   style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
@@ -293,7 +294,7 @@ class ExpandedSuggestionCard extends StatelessWidget {
                         ),
                         const SizedBox(width: 8),
                         Text(
-                          'reps',
+                          GoalUnitExt.fromString(suggestion.unit).label,
                           style: TextStyle(
                             fontSize: 16,
                             color: textSecondary,

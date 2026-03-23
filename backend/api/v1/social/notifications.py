@@ -12,7 +12,7 @@ This module handles social notification operations:
 from typing import List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query
-from core.auth import get_current_user
+from core.auth import get_current_user, verify_user_ownership
 from core.exceptions import safe_internal_error
 
 from models.friend_request import (
@@ -46,6 +46,7 @@ async def get_notifications(
     Returns:
         List of notifications with unread count
     """
+    verify_user_ownership(current_user, user_id)
     supabase = get_supabase_client()
 
     # Build query for notifications
@@ -93,6 +94,7 @@ async def get_unread_count(
     Returns:
         Count of unread notifications
     """
+    verify_user_ownership(current_user, user_id)
     supabase = get_supabase_client()
 
     result = supabase.table("social_notifications").select(
@@ -121,6 +123,7 @@ async def mark_notification_read(
     Raises:
         404: If notification not found or doesn't belong to user
     """
+    verify_user_ownership(current_user, user_id)
     supabase = get_supabase_client()
 
     # Verify notification exists and belongs to user
@@ -153,6 +156,7 @@ async def mark_all_notifications_read(
     Returns:
         Success message with count of updated notifications
     """
+    verify_user_ownership(current_user, user_id)
     supabase = get_supabase_client()
 
     result = supabase.table("social_notifications").update({
@@ -183,6 +187,7 @@ async def delete_notification(
     Raises:
         404: If notification not found or doesn't belong to user
     """
+    verify_user_ownership(current_user, user_id)
     supabase = get_supabase_client()
 
     # Verify notification exists and belongs to user
@@ -213,6 +218,7 @@ async def clear_all_notifications(
     Returns:
         Success message with count of deleted notifications
     """
+    verify_user_ownership(current_user, user_id)
     supabase = get_supabase_client()
 
     result = supabase.table("social_notifications").delete().eq(
@@ -242,6 +248,7 @@ async def get_social_settings(
     Returns:
         Social privacy settings
     """
+    verify_user_ownership(current_user, user_id)
     supabase = get_supabase_client()
 
     result = supabase.table("user_privacy_settings").select("*").eq(
@@ -283,6 +290,7 @@ async def update_social_settings(
     Returns:
         Updated social privacy settings
     """
+    verify_user_ownership(current_user, user_id)
     supabase = get_supabase_client()
 
     # Check if settings exist

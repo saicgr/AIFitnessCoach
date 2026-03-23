@@ -6,7 +6,7 @@ from pydantic import BaseModel, Field
 from typing import List, Optional
 import logging
 
-from core.auth import get_current_user
+from core.auth import get_current_user, verify_user_ownership
 from core.rate_limiter import limiter
 from core.supabase_client import get_supabase
 
@@ -108,7 +108,7 @@ async def bulk_sync(
                 SyncBulkResultItem(
                     entity_id=item.entity_id,
                     status="failed",
-                    error=str(e),
+                    error="Processing failed",
                 )
             )
             failure_count += 1

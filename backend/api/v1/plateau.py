@@ -10,7 +10,8 @@ ENDPOINTS:
 - GET /api/v1/plateau/{user_id}/dashboard - Get plateau detection dashboard
 """
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
+from core.auth import get_current_user, verify_user_ownership, verify_resource_ownership
 from typing import List, Dict, Any, Optional
 from datetime import datetime, timedelta
 from collections import defaultdict
@@ -265,8 +266,9 @@ def _generate_recommendations(
 # =============================================================================
 
 @router.get("/{user_id}/dashboard")
-async def get_plateau_dashboard(user_id: str):
+async def get_plateau_dashboard(user_id: str, current_user: dict = Depends(get_current_user)):
     """Detect exercise and weight plateaus for a user."""
+    verify_user_ownership(current_user, user_id)
     try:
         supabase = get_supabase_client()
 

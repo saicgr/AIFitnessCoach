@@ -163,7 +163,9 @@ async def upload_photo_to_s3(
     """
     # Generate unique key
     timestamp = datetime.utcnow().strftime('%Y%m%d_%H%M%S')
-    ext = file.filename.split('.')[-1] if file.filename else 'jpg'
+    # SECURITY: Derive extension from content type, not user-controlled filename
+    EXT_FROM_CONTENT_TYPE = {'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp', 'image/heic': 'heic', 'video/mp4': 'mp4', 'video/quicktime': 'mov'}
+    ext = EXT_FROM_CONTENT_TYPE.get(file.content_type, 'jpg')
     storage_key = f"progress_photos/{user_id}/{view_type}/{timestamp}_{uuid.uuid4().hex[:8]}.{ext}"
 
     # Upload to S3

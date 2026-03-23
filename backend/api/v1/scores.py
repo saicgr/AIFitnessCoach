@@ -23,7 +23,7 @@ Endpoints:
 from datetime import datetime, date, timedelta
 from typing import Optional, List, Dict, Any
 from fastapi import APIRouter, HTTPException, Query, Depends, BackgroundTasks
-from core.auth import get_current_user
+from core.auth import get_current_user, verify_user_ownership
 from core.exceptions import safe_internal_error
 from pydantic import BaseModel, Field
 
@@ -119,6 +119,8 @@ class ReadinessCheckInRequest(BaseModel):
     energy_level: Optional[int] = Field(None, ge=1, le=7)
     sleep_minutes: Optional[int] = Field(None, ge=0, description="Objective sleep duration in minutes from wearable")
     objective_recovery_score: Optional[int] = Field(None, ge=0, le=100, description="Objective recovery score from wearable (0-100)")
+    mood_emoji: Optional[str] = Field(None, description="Emoji representing user's mood")
+    notes: Optional[str] = Field(None, description="Free-text wellness notes")
 
 
 class ReadinessResponse(BaseModel):
@@ -138,6 +140,8 @@ class ReadinessResponse(BaseModel):
     ai_workout_recommendation: Optional[str] = None
     recommended_intensity: Optional[str] = None
     ai_insight: Optional[str] = None
+    mood_emoji: Optional[str] = None
+    notes: Optional[str] = None
     submitted_at: datetime
     created_at: datetime
 
@@ -344,6 +348,7 @@ async def submit_readiness_checkin(
 
     Uses the Hooper Index methodology to calculate readiness score.
     """
+    verify_user_ownership(current_user, request.user_id)
     db = get_supabase_db()
     readiness_service = ReadinessService()
 
@@ -358,6 +363,8 @@ async def submit_readiness_checkin(
         muscle_soreness=request.muscle_soreness,
         mood=request.mood,
         energy_level=request.energy_level,
+        mood_emoji=request.mood_emoji,
+        notes=request.notes,
     )
 
     # Calculate readiness (with optional objective data blending)
@@ -383,6 +390,8 @@ async def submit_readiness_checkin(
         "ai_workout_recommendation": result.ai_workout_recommendation,
         "recommended_intensity": result.recommended_intensity.value,
         "ai_insight": result.ai_insight,
+        "mood_emoji": request.mood_emoji,
+        "notes": request.notes,
         "submitted_at": datetime.now().isoformat(),
     }
 
@@ -441,6 +450,7 @@ async def get_readiness_for_date(
     current_user: dict = Depends(get_current_user),
 ):
     """Get readiness score for a specific date."""
+    verify_user_ownership(current_user, user_id)
     db = get_supabase_db()
 
     response = db.client.table("readiness_scores").select("*").eq(
@@ -481,6 +491,7 @@ async def get_readiness_history(
     current_user: dict = Depends(get_current_user),
 ):
     """Get readiness history for specified number of days."""
+    verify_user_ownership(current_user, user_id)
     db = get_supabase_db()
     readiness_service = ReadinessService()
 

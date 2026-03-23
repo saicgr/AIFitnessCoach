@@ -153,8 +153,8 @@ class ChatRequest(BaseModel):
     )
     conversation_history: List[Dict[str, Any]] = Field(
         default=[],
-        max_length=100,
-        description="Previous messages in format [{'role': 'user'/'assistant', 'content': '...'}] (max 100 messages)"
+        max_length=50,
+        description="Previous messages in format [{'role': 'user'/'assistant', 'content': '...'}] (max 50 messages)"
     )
 
     @field_validator("conversation_history")

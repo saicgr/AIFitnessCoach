@@ -20,12 +20,16 @@ import '../ai_settings/ai_settings_screen.dart';
 import '../../data/models/subjective_feedback.dart';
 import '../challenges/widgets/challenge_complete_dialog.dart';
 import '../challenges/widgets/challenge_friends_dialog.dart';
+import 'widgets/hydration_dialog.dart';
+import 'widgets/sauna_dialog.dart';
 import 'widgets/share_workout_sheet.dart';
 import 'widgets/trophies_earned_sheet.dart';
 import 'widgets/trophy_celebration_overlay.dart';
 import '../../widgets/heart_rate_chart.dart';
 import '../../core/providers/heart_rate_provider.dart';
 import '../../data/repositories/auth_repository.dart';
+import '../../data/repositories/hydration_repository.dart';
+import '../../data/repositories/sauna_repository.dart';
 import '../../data/services/health_service.dart';
 import '../../core/theme/accent_color_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -137,6 +141,10 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
 
   // Total workout count for milestone detection
   int _totalWorkoutCount = 0;
+
+  // Sauna logging state
+  int? _saunaMinutes;
+  int? _saunaCalories;
 
   // Milestone thresholds
   static const List<int> _milestoneThresholds = [5, 10, 25, 50, 100, 150, 200, 250, 500, 1000];
@@ -391,6 +399,58 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
   }
 
   /// Show Challenge Friends dialog
+  Future<void> _showSaunaDialog() async {
+    final result = await showSaunaDialog(context: context);
+    if (result != null && mounted) {
+      setState(() {
+        _saunaMinutes = result.durationMinutes;
+        _saunaCalories = result.estimatedCalories;
+      });
+      // Fire-and-forget: log to backend
+      try {
+        final apiClient = ref.read(apiClientProvider);
+        final userId = await apiClient.getUserId();
+        if (userId != null) {
+          final repo = ref.read(saunaRepositoryProvider);
+          final log = await repo.logSauna(
+            userId: userId,
+            durationMinutes: result.durationMinutes,
+            workoutId: widget.workout.id,
+          );
+          // Update with server-calculated calories (more accurate)
+          if (mounted && log.estimatedCalories != null) {
+            setState(() => _saunaCalories = log.estimatedCalories);
+          }
+        }
+      } catch (e) {
+        debugPrint('❌ [Sauna] Error logging: $e');
+      }
+    }
+  }
+
+  Future<void> _showWaterDialog() async {
+    final authState = ref.read(authStateProvider);
+    final userId = authState.user?.id;
+    if (userId == null) return;
+
+    final hydrationState = ref.read(hydrationProvider);
+    final totalIntake = hydrationState.todaySummary?.totalMl ?? 0;
+
+    // Import is already at top of file
+    final result = await showHydrationDialog(
+      context: context,
+      totalIntakeMl: totalIntake,
+    );
+    if (result != null && mounted) {
+      ref.read(hydrationProvider.notifier).logHydration(
+        userId: userId,
+        drinkType: result.drinkType.value,
+        amountMl: result.amountMl,
+        workoutId: widget.workout.id,
+      );
+    }
+  }
+
   Future<void> _showChallengeFriendsDialog() async {
     try {
       final apiClient = ref.read(apiClientProvider);
@@ -868,6 +928,7 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
           totalReps: totalReps,
           totalSets: sets as int,
           maxRepsInSet: reps as int,
+          maxWeightKg: ex['weight_kg'] != null ? (ex['weight_kg'] as num).toDouble() : null,
         );
       }).toList();
 
@@ -1635,6 +1696,32 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
                         ),
                       ),
                       TextButton.icon(
+                        onPressed: _saunaMinutes != null ? null : _showSaunaDialog,
+                        icon: Icon(
+                          Icons.hot_tub_rounded,
+                          size: 16,
+                          color: _saunaMinutes != null ? AppColors.textMuted : null,
+                        ),
+                        label: Text(
+                          _saunaMinutes != null ? '${_saunaMinutes}min' : 'Sauna',
+                          style: const TextStyle(fontSize: 13),
+                        ),
+                        style: TextButton.styleFrom(
+                          foregroundColor: const Color(0xFFE65100),
+                        ),
+                      ),
+                      TextButton.icon(
+                        onPressed: _showWaterDialog,
+                        icon: const Icon(Icons.water_drop_rounded, size: 16),
+                        label: const Text(
+                          'Water',
+                          style: TextStyle(fontSize: 13),
+                        ),
+                        style: TextButton.styleFrom(
+                          foregroundColor: AppColors.teal,
+                        ),
+                      ),
+                      TextButton.icon(
                         onPressed: () => setState(() => _showDetailedFeedback = !_showDetailedFeedback),
                         icon: Icon(
                           _showDetailedFeedback ? Icons.expand_less : Icons.rate_review_outlined,
@@ -1650,6 +1737,35 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
                       ),
                     ],
                   ).animate().fadeIn(delay: 600.ms),
+
+                  // Sauna confirmation chip
+                  if (_saunaMinutes != null)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 8),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFE65100).withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: const Color(0xFFE65100).withOpacity(0.3)),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(Icons.hot_tub_rounded, size: 16, color: Color(0xFFE65100)),
+                            const SizedBox(width: 8),
+                            Text(
+                              '$_saunaMinutes min sauna · ~$_saunaCalories cal',
+                              style: const TextStyle(
+                                fontSize: 13,
+                                color: Color(0xFFE65100),
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
 
                   // Detailed feedback section (gated behind toggle)
                   if (_showDetailedFeedback) ...[

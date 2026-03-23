@@ -15,12 +15,13 @@ import hmac
 from datetime import datetime, timedelta, date
 from typing import Optional, List, Dict, Any
 
-from fastapi import APIRouter, Header, HTTPException
+from fastapi import APIRouter, Header, HTTPException, Request
 from fastapi.responses import JSONResponse
 
 from core.supabase_client import get_supabase
 from core.config import get_settings
 from core.logger import get_logger
+from core.rate_limiter import limiter
 from services.email_service import get_email_service
 
 logger = get_logger(__name__)
@@ -33,14 +34,28 @@ BILLING_COOLDOWN_DAYS = 1
 
 # ─── Security ───────────────────────────────────────────────────────────────
 
-def _verify_cron_secret(x_cron_secret: Optional[str] = None):
-    """Raise 401 if the X-Cron-Secret header is missing or wrong."""
-    cron_secret = get_settings().cron_secret
+def _verify_cron_secret(request: Request, x_cron_secret: Optional[str] = None):
+    """Raise 401/403 if the X-Cron-Secret header is missing/wrong or IP is not allowed."""
+    settings = get_settings()
+    cron_secret = settings.cron_secret
     if not cron_secret:
         raise HTTPException(status_code=503, detail="Cron not configured — set CRON_SECRET env var")
+    if len(cron_secret) < 32:
+        logger.warning("⚠️ CRON_SECRET is shorter than 32 characters — consider using a stronger secret")
     if not x_cron_secret or not hmac.compare_digest(x_cron_secret, cron_secret):
         logger.warning("Cron endpoint called with invalid secret")
         raise HTTPException(status_code=401, detail="Invalid cron secret")
+
+    # IP allowlist check
+    allowed_ips_str = settings.cron_allowed_ips
+    if allowed_ips_str:
+        allowed_ips = [ip.strip() for ip in allowed_ips_str.split(",") if ip.strip()]
+        # Prefer X-Forwarded-For (first hop) for proxied environments, fall back to direct client IP
+        forwarded_for = request.headers.get("X-Forwarded-For")
+        client_ip = forwarded_for.split(",")[0].strip() if forwarded_for else (request.client.host if request.client else None)
+        if not client_ip or client_ip not in allowed_ips:
+            logger.warning(f"Cron endpoint called from disallowed IP: {client_ip}")
+            raise HTTPException(status_code=403, detail="IP not allowed")
 
 
 # ─── Deduplication ──────────────────────────────────────────────────────────
@@ -73,14 +88,16 @@ def _log_email_sent(supabase, user_id: str, email_type: str, metadata: Dict = No
 # ─── Main Endpoint ──────────────────────────────────────────────────────────
 
 @router.post("/cron")
+@limiter.limit("5/minute")
 async def run_email_cron(
+    request: Request,
     x_cron_secret: Optional[str] = Header(None, alias="X-Cron-Secret"),
 ):
     """
     Run all scheduled email jobs.
     Called daily at 6 AM UTC by Render Cron Job.
     """
-    _verify_cron_secret(x_cron_secret)
+    _verify_cron_secret(request, x_cron_secret)
 
     supabase = get_supabase()
     email_svc = get_email_service()

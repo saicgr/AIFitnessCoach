@@ -525,20 +525,14 @@ class NutritionPreferencesNotifier extends StateNotifier<NutritionPreferencesSta
       debugPrint('📅 [NutritionPrefsProvider] Recording weekly check-in completion');
       final updatedPreferences = state.preferences!.copyWith(
         lastWeeklyCheckinAt: DateTime.now(),
+        weeklyCheckinDismissCount: 0,
       );
 
       final saved = await _repository.savePreferences(
         userId: userId,
         preferences: updatedPreferences,
       );
-
-      // Reset dismiss counter on successful check-in
-      final withResetDismiss = saved.copyWith(weeklyCheckinDismissCount: 0);
-      final finalSaved = await _repository.savePreferences(
-        userId: userId,
-        preferences: withResetDismiss,
-      );
-      state = state.copyWith(preferences: finalSaved);
+      state = state.copyWith(preferences: saved);
 
       debugPrint('✅ [NutritionPrefsProvider] Weekly check-in recorded, dismiss counter reset');
     } catch (e) {

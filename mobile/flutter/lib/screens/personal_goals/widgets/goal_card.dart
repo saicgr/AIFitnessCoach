@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/constants/goal_unit.dart';
 import '../../../data/services/personal_goals_service.dart';
 import '../../../data/services/goal_social_service.dart';
 import 'friend_avatars_row.dart';
@@ -45,6 +46,7 @@ class GoalCard extends StatelessWidget {
     final isPrBeaten = goal['is_pr_beaten'] ?? false;
     final progressPercentage = goal['progress_percentage'] ?? 0.0;
     final daysRemaining = goal['days_remaining'] ?? 0;
+    final unit = GoalUnitExt.fromString(goal['unit'] as String?);
 
     final isActive = status == PersonalGoalStatus.active;
     final isCompleted = status == PersonalGoalStatus.completed;
@@ -194,7 +196,7 @@ class GoalCard extends StatelessWidget {
                               ),
                             ),
                             TextSpan(
-                              text: ' / $targetValue reps',
+                              text: ' / ${unit.format(targetValue)}',
                               style: TextStyle(
                                 fontSize: 14,
                                 color: textSecondary,
@@ -217,7 +219,7 @@ class GoalCard extends StatelessWidget {
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        '$personalBest reps',
+                        unit.format(personalBest as num),
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w600,

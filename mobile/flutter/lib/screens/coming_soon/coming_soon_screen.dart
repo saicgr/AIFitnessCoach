@@ -196,6 +196,24 @@ class _RoadmapTab extends StatelessWidget {
 
         const SizedBox(height: 16),
 
+        _buildSectionLabel('TRAINER FEATURES', textMuted),
+        _buildFeatureGroup(
+          cardColor: cardColor,
+          borderColor: borderColor,
+          textPrimary: textPrimary,
+          textSecondary: textSecondary,
+          textMuted: textMuted,
+          features: [
+            _Feature(Icons.battery_charging_full, const Color(0xFF22C55E), 'Recovery Score', 'AI-calculated recovery readiness based on training load', eta: 'Q4 2026'),
+            _Feature(Icons.bedtime_outlined, const Color(0xFF6366F1), 'Sleep Trend Analysis', 'Track sleep patterns and their impact on performance', eta: 'Q4 2026'),
+            _Feature(Icons.local_fire_department, const Color(0xFFF97316), 'Check-in Streaks', 'Build consistency with daily check-in streaks', eta: 'Q4 2026'),
+            _Feature(Icons.schedule, const Color(0xFF06B6D4), 'Smart Notification Timing', 'AI-optimized reminder timing based on your habits', eta: 'Q4 2026'),
+            _Feature(Icons.monitor_heart_outlined, const Color(0xFFEF4444), 'Wearable HRV Integration', 'Heart rate variability data from your wearable device', eta: 'Q4 2026'),
+          ],
+        ),
+
+        const SizedBox(height: 16),
+
         _buildSectionLabel('ADVANCED', textMuted),
         _buildFeatureGroup(
           cardColor: cardColor,

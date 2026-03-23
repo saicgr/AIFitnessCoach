@@ -580,7 +580,7 @@ async def get_calendar_heatmap(
             except ValueError as e:
                 raise HTTPException(
                     status_code=400,
-                    detail=f"Invalid date format. Use YYYY-MM-DD. Error: {str(e)}"
+                    detail="Invalid date format. Use YYYY-MM-DD."
                 )
         else:
             # Use weeks parameter (default to 4 weeks for backward compatibility)
@@ -919,7 +919,7 @@ async def get_day_detail(
         }
 
     except ValueError as e:
-        raise HTTPException(status_code=400, detail=f"Invalid date format: {str(e)}")
+        raise HTTPException(status_code=400, detail="Invalid date format. Use YYYY-MM-DD.")
     except Exception as e:
         logger.error(f"Error fetching day detail: {e}")
         raise safe_internal_error(e, "get_day_detail")

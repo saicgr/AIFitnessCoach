@@ -15,8 +15,10 @@ from datetime import datetime, timezone
 from typing import Optional
 
 from fastapi import APIRouter, Depends, BackgroundTasks, HTTPException, Query, UploadFile, File, Form
-from core.auth import get_current_user
+from starlette.requests import Request
+from core.auth import get_current_user, verify_user_ownership
 from core.exceptions import safe_internal_error
+from core.rate_limiter import limiter
 
 from core.config import get_settings
 from models.social import (
@@ -56,7 +58,9 @@ def get_s3_client():
 
 
 @router.post("/images/presign")
+@limiter.limit("10/minute")
 async def get_presigned_upload_url(
+    request: Request,
     user_id: str = Query(..., description="User ID requesting upload"),
     file_extension: str = Query("jpg", description="File extension"),
     content_type: str = Query("image/jpeg", description="Content type"),
@@ -66,6 +70,7 @@ async def get_presigned_upload_url(
     Get a pre-signed URL for direct image/video upload to S3.
     Client uploads directly to S3 -- zero bytes through the API server.
     """
+    verify_user_ownership(current_user, user_id)
     allowed_types = [
         'image/jpeg', 'image/png', 'image/gif', 'image/webp',
         'video/mp4', 'video/quicktime',
@@ -110,7 +115,9 @@ async def get_presigned_upload_url(
 
 
 @router.post("/images/upload")
+@limiter.limit("10/minute")
 async def upload_post_image(
+    request: Request,
     user_id: str = Form(...),
     file: UploadFile = File(...),
     current_user: dict = Depends(get_current_user),
@@ -125,6 +132,7 @@ async def upload_post_image(
     Returns:
         dict with image_url and storage_key
     """
+    verify_user_ownership(current_user, user_id)
     # Validate file type
     allowed_types = ['image/jpeg', 'image/png', 'image/gif', 'image/webp']
     if file.content_type not in allowed_types:
@@ -135,7 +143,9 @@ async def upload_post_image(
 
     # Generate unique storage key
     timestamp = datetime.utcnow().strftime('%Y%m%d_%H%M%S')
-    ext = file.filename.split('.')[-1] if file.filename else 'jpg'
+    # SECURITY: Derive extension from content type, not user-controlled filename
+    EXT_FROM_CONTENT_TYPE = {'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp', 'image/heic': 'heic', 'video/mp4': 'mp4', 'video/quicktime': 'mov'}
+    ext = EXT_FROM_CONTENT_TYPE.get(file.content_type, 'jpg')
     storage_key = f"social_posts/{user_id}/{timestamp}_{uuid.uuid4().hex[:8]}.{ext}"
 
     try:
@@ -235,6 +245,7 @@ async def get_activity_feed(
     Returns:
         Paginated activity feed
     """
+    verify_user_ownership(current_user, user_id)
     try:
         supabase = get_supabase_client()
     except Exception as e:
@@ -497,7 +508,9 @@ def _bg_remove_activity(activity_id: str):
 
 
 @router.post("/feed", response_model=ActivityFeedItem)
+@limiter.limit("10/minute")
 async def create_activity(
+    request: Request,
     user_id: str,
     activity: ActivityFeedItemCreate,
     background_tasks: BackgroundTasks,
@@ -513,6 +526,7 @@ async def create_activity(
     Returns:
         Created activity
     """
+    verify_user_ownership(current_user, user_id)
     supabase = get_supabase_client()
 
     result = supabase.table("activity_feed").insert({
@@ -573,7 +587,9 @@ async def create_activity(
 
 
 @router.delete("/feed/{activity_id}")
+@limiter.limit("10/minute")
 async def delete_activity(
+    request: Request,
     user_id: str,
     activity_id: str,
     background_tasks: BackgroundTasks,
@@ -589,6 +605,7 @@ async def delete_activity(
     Returns:
         Success message
     """
+    verify_user_ownership(current_user, user_id)
     supabase = get_supabase_client()
 
     # Verify ownership
@@ -625,6 +642,7 @@ async def update_activity(
     Returns:
         Updated activity
     """
+    verify_user_ownership(current_user, user_id)
     supabase = get_supabase_client()
 
     # Verify ownership
@@ -668,6 +686,7 @@ async def pin_activity(
         403: If user is not an admin
         404: If activity not found
     """
+    verify_user_ownership(current_user, user_id)
     supabase = get_supabase_client()
     admin_service = get_admin_service()
 
@@ -716,6 +735,7 @@ async def unpin_activity(
         403: If user is not an admin
         404: If activity not found
     """
+    verify_user_ownership(current_user, user_id)
     supabase = get_supabase_client()
     admin_service = get_admin_service()
 

@@ -81,8 +81,9 @@ class GoalSuggestionBase(BaseModel):
     """Base model for goal suggestion."""
     exercise_name: str = Field(..., min_length=1, max_length=255)
     goal_type: GoalType
-    suggested_target: int = Field(..., gt=0, le=10000)
+    suggested_target: float = Field(..., gt=0, le=10000)
     reasoning: str = Field(..., min_length=1)
+    unit: str = "reps"
 
 
 class GoalSuggestionCreate(GoalSuggestionBase):

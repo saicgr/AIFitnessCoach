@@ -45,7 +45,7 @@ from models.habits import (
     BulkHabitLogCreate, BulkHabitLogResponse,
     HabitCalendarData, HabitCalendarResponse,
 )
-from core.auth import get_current_user
+from core.auth import get_current_user, verify_user_ownership
 from core.exceptions import safe_internal_error
 
 router = APIRouter()
@@ -77,6 +77,7 @@ async def get_habits(
     logger.info(f"🔍 Getting habits for user={user_id}, is_active={is_active}, category={category}")
 
     try:
+        verify_user_ownership(current_user, user_id)
         db = get_supabase_db()
 
         query = db.client.table("habits").select("*").eq("user_id", user_id)
@@ -120,6 +121,7 @@ async def get_today_habits(
     logger.info(f"🔍 Getting today's habits for user={user_id}")
 
     try:
+        verify_user_ownership(current_user, user_id)
         db = get_supabase_db()
         user_tz = resolve_timezone(request, db, user_id)
         today = datetime.strptime(get_user_today(user_tz), "%Y-%m-%d").date()
@@ -230,6 +232,7 @@ async def create_habit(
     logger.info(f"🎯 Creating habit: user={user_id}, name={habit.name}, category={habit.category}")
 
     try:
+        verify_user_ownership(current_user, user_id)
         db = get_supabase_db()
 
         # Prepare habit data
@@ -296,6 +299,7 @@ async def update_habit(
     logger.info(f"🔄 Updating habit: user={user_id}, habit_id={habit_id}")
 
     try:
+        verify_user_ownership(current_user, user_id)
         db = get_supabase_db()
 
         # Verify ownership
@@ -375,6 +379,7 @@ async def delete_habit(
     logger.info(f"🗑️ Deleting habit: user={user_id}, habit_id={habit_id}, hard={hard_delete}")
 
     try:
+        verify_user_ownership(current_user, user_id)
         db = get_supabase_db()
 
         # Verify ownership
@@ -460,6 +465,7 @@ async def log_habit(
     logger.info(f"📝 Logging habit: user={user_id}, habit_id={log.habit_id}, date={log.log_date}, completed={log.completed}")
 
     try:
+        verify_user_ownership(current_user, user_id)
         db = get_supabase_db()
 
         # Verify habit ownership
@@ -539,6 +545,7 @@ async def update_habit_log(
     logger.info(f"🔄 Updating habit log: user={user_id}, log_id={log_id}")
 
     try:
+        verify_user_ownership(current_user, user_id)
         db = get_supabase_db()
 
         # Verify ownership
@@ -611,6 +618,7 @@ async def get_habit_logs(
     logger.info(f"🔍 Getting habit logs: user={user_id}, habit_id={habit_id}")
 
     try:
+        verify_user_ownership(current_user, user_id)
         db = get_supabase_db()
 
         # Default date range (timezone-aware)
@@ -664,6 +672,8 @@ async def batch_log_habits(
     """
     logger.info(f"📝 Batch logging {len(request.logs)} habits for user={user_id}")
 
+    verify_user_ownership(current_user, user_id)
+
     created_count = 0
     failed_count = 0
     results = []
@@ -715,6 +725,7 @@ async def get_all_streaks(
     logger.info(f"🔥 Getting all streaks for user={user_id}")
 
     try:
+        verify_user_ownership(current_user, user_id)
         db = get_supabase_db()
 
         result = db.client.table("habit_streaks").select("*").eq(
@@ -748,6 +759,7 @@ async def get_habit_streak(
     logger.info(f"🔥 Getting streak for habit={habit_id}")
 
     try:
+        verify_user_ownership(current_user, user_id)
         db = get_supabase_db()
 
         result = db.client.table("habit_streaks").select("*").eq(
@@ -788,6 +800,7 @@ async def get_habits_summary(
     logger.info(f"📊 Getting habits summary for user={user_id}")
 
     try:
+        verify_user_ownership(current_user, user_id)
         db = get_supabase_db()
         user_tz = resolve_timezone(request, db, user_id)
         today = datetime.strptime(get_user_today(user_tz), "%Y-%m-%d").date()
@@ -857,6 +870,7 @@ async def get_weekly_summary(
     logger.info(f"📊 Getting weekly summary for user={user_id}")
 
     try:
+        verify_user_ownership(current_user, user_id)
         db = get_supabase_db()
         user_tz = resolve_timezone(request, db, user_id)
         user_today = datetime.strptime(get_user_today(user_tz), "%Y-%m-%d").date()
@@ -911,6 +925,7 @@ async def get_habits_calendar(
     logger.info(f"📅 Getting calendar for habit={habit_id}, {start_date} to {end_date}")
 
     try:
+        verify_user_ownership(current_user, user_id)
         db = get_supabase_db()
         user_tz = resolve_timezone(request, db, user_id) if request else "UTC"
         today = datetime.strptime(get_user_today(user_tz), "%Y-%m-%d").date()
@@ -1051,6 +1066,7 @@ async def create_habit_from_template(
     logger.info(f"📋 Creating habit from template: user={user_id}, template={template_id}")
 
     try:
+        verify_user_ownership(current_user, user_id)
         db = get_supabase_db()
 
         # Get template
@@ -1104,6 +1120,7 @@ async def get_ai_suggestions(
     logger.info(f"🤖 Getting AI habit suggestions for user={user_id}")
 
     try:
+        verify_user_ownership(current_user, user_id)
         # Import here to avoid circular imports
         from services.habit_suggestion_service import HabitSuggestionService
 
@@ -1171,6 +1188,7 @@ async def get_habit_insights(
     logger.info(f"🤖 Getting habit insights for user={user_id}")
 
     try:
+        verify_user_ownership(current_user, user_id)
         db = get_supabase_db()
 
         # Get summary data

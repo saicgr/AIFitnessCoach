@@ -9,6 +9,7 @@ import '../../../data/providers/recovery_provider.dart';
 import '../../../data/repositories/auth_repository.dart';
 import '../../../data/repositories/hydration_repository.dart';
 import '../../../data/repositories/nutrition_repository.dart';
+import '../../../data/repositories/sauna_repository.dart';
 import '../../../data/services/haptic_service.dart';
 import '../../../data/services/health_service.dart';
 import '../../nutrition/widgets/calories_burned_sheet.dart';
@@ -329,12 +330,19 @@ class _BurnedPill extends ConsumerWidget {
     final activity = activityState.today;
 
     final bool connected = syncState.isConnected;
-    final int burned = activity?.caloriesBurned.round() ?? 0;
+    final int healthBurned = activity?.caloriesBurned.round() ?? 0;
+
+    // Include sauna calories in burned total
+    final authState = ref.watch(authStateProvider);
+    final userId = authState.user?.id;
+    final saunaAsync = userId != null ? ref.watch(dailySaunaProvider(userId)) : null;
+    final saunaCal = saunaAsync?.valueOrNull?.totalCalories ?? 0;
+    final burned = healthBurned + saunaCal;
 
     return _StatPillContainer(
       onTap: () {
         HapticService.light();
-        if (connected && burned > 0) {
+        if ((connected && healthBurned > 0) || saunaCal > 0) {
           showCaloriesBurnedSheet(context, burned.toDouble());
         } else {
           context.push('/stats');
@@ -344,7 +352,7 @@ class _BurnedPill extends ConsumerWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           Text(
-            connected ? '$burned' : '--',
+            connected || saunaCal > 0 ? '$burned' : '--',
             style: const TextStyle(
               fontSize: 15,
               fontWeight: FontWeight.bold,
@@ -356,7 +364,7 @@ class _BurnedPill extends ConsumerWidget {
           Icon(
             Icons.local_fire_department,
             size: 14,
-            color: connected && burned > 0
+            color: (connected && healthBurned > 0) || saunaCal > 0
                 ? const Color(0xFFFF6B35)
                 : Theme.of(context).colorScheme.onSurfaceVariant,
           ),

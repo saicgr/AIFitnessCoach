@@ -13,7 +13,7 @@ ENDPOINTS:
 """
 from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException, Request
-from core.auth import get_current_user
+from core.auth import get_current_user, verify_user_ownership, verify_resource_ownership
 from core.exceptions import safe_internal_error
 from typing import Optional, List, Any
 from pydantic import BaseModel
@@ -160,6 +160,7 @@ async def get_user_layouts(user_id: str,
     Returns:
         List of user's layouts sorted by creation date
     """
+    verify_user_ownership(current_user, user_id)
     try:
         db = get_supabase_db()
         client = db.client
@@ -193,6 +194,7 @@ async def get_active_layout(user_id: str,
     Returns:
         The user's active layout
     """
+    verify_user_ownership(current_user, user_id)
     try:
         db = get_supabase_db()
         client = db.client
@@ -257,6 +259,7 @@ async def create_layout(user_id: str, layout: CreateLayoutRequest,
     Returns:
         Created layout
     """
+    verify_user_ownership(current_user, user_id)
     try:
         db = get_supabase_db()
         client = db.client
@@ -327,6 +330,7 @@ async def update_layout(
     Returns:
         Updated layout
     """
+    verify_user_ownership(current_user, user_id)
     try:
         db = get_supabase_db()
         client = db.client
@@ -404,6 +408,7 @@ async def delete_layout(layout_id: str, user_id: str,
     Returns:
         Success message
     """
+    verify_user_ownership(current_user, user_id)
     try:
         db = get_supabase_db()
         client = db.client
@@ -476,6 +481,7 @@ async def activate_layout(layout_id: str, user_id: str,
     Returns:
         Activated layout
     """
+    verify_user_ownership(current_user, user_id)
     try:
         db = get_supabase_db()
         client = db.client
@@ -544,6 +550,7 @@ async def create_from_template(
     Returns:
         Created layout
     """
+    verify_user_ownership(current_user, user_id)
     try:
         db = get_supabase_db()
         client = db.client

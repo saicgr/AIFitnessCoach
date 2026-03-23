@@ -14,7 +14,7 @@ ENDPOINTS:
 
 from datetime import datetime, timedelta
 from fastapi import APIRouter, Depends, HTTPException
-from core.auth import get_current_user
+from core.auth import get_current_user, verify_user_ownership, get_admin_user
 from core.exceptions import safe_internal_error
 from pydantic import BaseModel
 from typing import Optional, List
@@ -63,6 +63,7 @@ async def send_test_notification(request: TestNotificationRequest,
     logger.info(f"Sending test notification to user {request.user_id}")
 
     try:
+        verify_user_ownership(current_user, request.user_id)
         db = get_supabase_db()
 
         # Verify user exists
@@ -115,6 +116,7 @@ async def register_fcm_token(request: RegisterTokenRequest,
     logger.info(f"Registering FCM token for user {request.user_id}")
 
     try:
+        verify_user_ownership(current_user, request.user_id)
         db = get_supabase_db()
 
         # Verify user exists
@@ -158,7 +160,7 @@ async def register_fcm_token(request: RegisterTokenRequest,
 
 @router.post("/send")
 async def send_notification(request: SendNotificationRequest,
-    current_user: dict = Depends(get_current_user),
+    current_user: dict = Depends(get_admin_user),
 ):
     """
     Send a custom notification to a user.

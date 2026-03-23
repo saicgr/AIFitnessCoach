@@ -1067,7 +1067,7 @@ async def check_fatigue(
         logger.error(f"Error in fatigue analysis: {e}")
         raise HTTPException(
             status_code=500,
-            detail=f"Error analyzing fatigue: {str(e)}"
+            detail="Error analyzing fatigue"
         )
 
 
@@ -1229,7 +1229,7 @@ async def get_fatigue_history(
         logger.error(f"Error getting fatigue history: {e}")
         raise HTTPException(
             status_code=500,
-            detail=f"Error retrieving fatigue history: {str(e)}"
+            detail="Error retrieving fatigue history"
         )
 
 

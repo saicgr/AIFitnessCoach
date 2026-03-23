@@ -318,6 +318,12 @@ class ChatMessage extends Equatable {
   /// Get the workout name if available
   String? get workoutName => actionData?['workout_name'] as String?;
 
+  /// Check if this message has a single food analysis result (plate scan)
+  bool get hasFoodAnalysis =>
+      actionData != null &&
+      actionData!['action'] == 'food_analysis' &&
+      actionData!['food_items'] != null;
+
   /// Check if this message has a buffet analysis result
   bool get hasBuffetAnalysis =>
       actionData != null &&

@@ -8,9 +8,10 @@ Aggregates anonymized performance logs to provide population-level signals:
 
 Score = popularity * 0.4 + low_rpe * 0.3 + pr_rate * 0.3
 """
-from fastapi import APIRouter, Query, HTTPException
+from fastapi import APIRouter, Query, HTTPException, Depends
 from typing import Optional
 from core.supabase_client import get_supabase
+from core.auth import get_current_user
 from core.logger import get_logger
 
 router = APIRouter()
@@ -107,6 +108,7 @@ async def get_exercise_popularity(
     fitness_level: Optional[str] = Query(None),
     goal: Optional[str] = Query("hypertrophy"),
     user_id: Optional[str] = Query(None, description="Exclude this user's data to prevent self-reinforcing loops"),
+    current_user: dict = Depends(get_current_user),  # SECURITY: Require authentication
 ):
     """
     Get exercise popularity scores for a muscle group.

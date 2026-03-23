@@ -59,7 +59,11 @@ class UserCreate(BaseModel):
 
 
 class NotificationPreferences(BaseModel):
-    """User's notification preferences and schedule times."""
+    """User's notification preferences and schedule times.
+
+    Includes both existing notification settings and accountability coach
+    nudge preferences added in migration 1873.
+    """
     # Toggle settings
     workout_reminders: bool = True
     nutrition_reminders: bool = True
@@ -80,6 +84,23 @@ class NotificationPreferences(BaseModel):
     streak_alert_time: str = Field(default="18:00", max_length=10)
     weekly_summary_day: int = Field(default=0, ge=0, le=6)  # 0=Sunday, 6=Saturday
     weekly_summary_time: str = Field(default="09:00", max_length=10)
+
+    # Accountability Coach Nudge Preferences (added migration 1873)
+    missed_workout_nudge: bool = True  # Evening nudge if workout not completed
+    missed_workout_time: str = Field(default="19:00", max_length=10)
+    post_workout_meal_reminder: bool = True  # Nudge to log meal after workout
+    post_workout_meal_delay_minutes: int = Field(default=30, ge=5, le=120)
+    habit_reminders: bool = True  # Evening habit completion reminder
+    habit_reminder_time: str = Field(default="20:00", max_length=10)
+    weekly_checkin_reminder: bool = True  # Weekly nutrition check-in nudge
+    weekly_checkin_day: int = Field(default=0, ge=0, le=6)  # 0=Sunday
+    weekly_checkin_time: str = Field(default="09:00", max_length=10)
+    streak_celebration: bool = True  # Push on streak milestones
+    milestone_celebration: bool = True  # Push on achievement milestones
+    daily_nudge_limit: int = Field(default=4, ge=1, le=8)  # Max push nudges per day
+    accountability_intensity: str = Field(default="balanced", max_length=20)  # gentle/balanced/tough_love/off
+    ai_personalized_nudges: bool = True  # Use Gemini to personalize nudge messages
+    guilt_notifications: bool = True  # Duolingo-style escalating guilt nudges
 
 
 class UserUpdate(BaseModel):

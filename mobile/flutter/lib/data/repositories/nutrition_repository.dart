@@ -1934,7 +1934,7 @@ class NutritionRepository {
       debugPrint('✅ [Nutrition] Selecting recommendation option: $optionType for $userId');
       await _client.post(
         '/nutrition/recommendations/$userId/select',
-        queryParameters: {'option_type': optionType},
+        data: {'option_type': optionType},
       );
 
       return true;

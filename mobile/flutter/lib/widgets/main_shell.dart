@@ -581,7 +581,6 @@ class _FloatingNavBarWithAI extends ConsumerWidget {
                 ],
               ),
               child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
                   _ExpandableNavItem(
                     icon: Icons.home_outlined,
@@ -593,6 +592,7 @@ class _FloatingNavBarWithAI extends ConsumerWidget {
                     mutedColor: iconMuted,
                     isDark: isDark,
                   ),
+                  const Spacer(),
                   _ExpandableNavItem(
                     key: AppTourKeys.workoutNavKey,
                     icon: Icons.fitness_center_outlined,
@@ -604,6 +604,7 @@ class _FloatingNavBarWithAI extends ConsumerWidget {
                     mutedColor: iconMuted,
                     isDark: isDark,
                   ),
+                  const Spacer(),
                   _ExpandableNavItem(
                     key: AppTourKeys.nutritionNavKey,
                     icon: Icons.restaurant_outlined,
@@ -615,17 +616,7 @@ class _FloatingNavBarWithAI extends ConsumerWidget {
                     mutedColor: iconMuted,
                     isDark: isDark,
                   ),
-                  // TODO: Re-enable social features when user base grows
-                  // _ExpandableNavItem(
-                  //   icon: Icons.public_outlined,
-                  //   selectedIcon: Icons.public,
-                  //   label: 'Social',
-                  //   isSelected: selectedIndex == 3,
-                  //   onTap: () => onItemTapped(3),
-                  //   accentColor: accentColor,
-                  //   mutedColor: iconMuted,
-                  //   isDark: isDark,
-                  // ),
+                  const Spacer(),
                   _ExpandableNavItem(
                     key: AppTourKeys.profileNavKey,
                     icon: Icons.person_outline,

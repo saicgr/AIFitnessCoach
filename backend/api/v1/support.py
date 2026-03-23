@@ -15,7 +15,7 @@ import uuid
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request
 from pydantic import BaseModel, Field
-from core.auth import get_current_user
+from core.auth import get_current_user, verify_user_ownership, verify_resource_ownership
 from core.exceptions import safe_internal_error
 from core.config import get_settings
 from typing import Dict, List, Optional
@@ -201,6 +201,7 @@ async def create_support_ticket(ticket: SupportTicketCreate,
     and adds the initial message to the conversation thread.
     Also logs the ticket creation to user_context_logs for analytics.
     """
+    verify_user_ownership(current_user, ticket.user_id)
     logger.info(f"Creating support ticket for user {ticket.user_id}: {ticket.subject}")
 
     try:
@@ -373,6 +374,7 @@ async def get_user_tickets(
     Returns a list of ticket summaries with optional filtering by status and category.
     Tickets are ordered by updated_at descending (most recent first).
     """
+    verify_user_ownership(current_user, user_id)
     logger.info(f"Getting tickets for user {user_id}")
 
     try:
@@ -412,6 +414,7 @@ async def get_ticket(user_id: str, ticket_id: str,
     Returns the full ticket details including the entire conversation thread.
     Only the ticket owner can access their tickets (enforced by RLS).
     """
+    verify_user_ownership(current_user, user_id)
     logger.info(f"Getting ticket {ticket_id} for user {user_id}")
 
     try:
@@ -462,6 +465,7 @@ async def add_ticket_reply(ticket_id: str, user_id: str, reply: SupportTicketMes
     Automatically updates the ticket's updated_at timestamp and sets status
     to 'waiting_response' if the user is replying.
     """
+    verify_user_ownership(current_user, user_id)
     logger.info(f"Adding reply to ticket {ticket_id} from user {user_id}")
 
     try:
@@ -572,6 +576,7 @@ async def close_ticket(ticket_id: str, user_id: str,
     Sets the ticket status to CLOSED and records the closed_at timestamp.
     Optionally adds a final resolution note to the ticket.
     """
+    verify_user_ownership(current_user, user_id)
     logger.info(f"Closing ticket {ticket_id} for user {user_id}")
 
     try:
@@ -687,6 +692,7 @@ async def get_user_ticket_stats(user_id: str,
 
     Returns counts of tickets by status and average resolution time.
     """
+    verify_user_ownership(current_user, user_id)
     logger.info(f"Getting ticket stats for user {user_id}")
 
     try:

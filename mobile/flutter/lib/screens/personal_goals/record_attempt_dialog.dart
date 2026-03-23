@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/constants/goal_unit.dart';
 
 /// Dialog for recording a single_max attempt or adding volume
 class RecordAttemptDialog extends StatefulWidget {
@@ -8,6 +9,7 @@ class RecordAttemptDialog extends StatefulWidget {
   final bool isMaxAttempt; // true for single_max, false for weekly_volume
   final int currentValue;
   final int? personalBest;
+  final GoalUnit unit;
   final Future<void> Function(int value, String? notes) onSubmit;
 
   const RecordAttemptDialog({
@@ -16,6 +18,7 @@ class RecordAttemptDialog extends StatefulWidget {
     required this.isMaxAttempt,
     required this.currentValue,
     this.personalBest,
+    this.unit = GoalUnit.reps,
     required this.onSubmit,
   });
 
@@ -67,6 +70,9 @@ class _RecordAttemptDialogState extends State<RecordAttemptDialog> {
     }
   }
 
+  String _capitalize(String s) =>
+      s.isEmpty ? s : s[0].toUpperCase() + s.substring(1);
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -106,7 +112,9 @@ class _RecordAttemptDialogState extends State<RecordAttemptDialog> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        widget.isMaxAttempt ? 'Record Attempt' : 'Add Reps',
+                        widget.isMaxAttempt
+                            ? 'Record Attempt'
+                            : 'Add ${_capitalize(widget.unit.fullLabel)}',
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
@@ -186,7 +194,9 @@ class _RecordAttemptDialogState extends State<RecordAttemptDialog> {
 
             // Value input
             Text(
-              widget.isMaxAttempt ? 'Reps Completed' : 'Reps to Add',
+              widget.isMaxAttempt
+                  ? '${_capitalize(widget.unit.fullLabel)} Completed'
+                  : '${_capitalize(widget.unit.fullLabel)} to Add',
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
@@ -196,8 +206,10 @@ class _RecordAttemptDialogState extends State<RecordAttemptDialog> {
             const SizedBox(height: 8),
             TextField(
               controller: _valueController,
-              keyboardType: TextInputType.number,
-              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+              keyboardType: TextInputType.numberWithOptions(decimal: widget.unit.isDecimal),
+              inputFormatters: widget.unit.isDecimal
+                  ? [FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*'))]
+                  : [FilteringTextInputFormatter.digitsOnly],
               autofocus: true,
               style: TextStyle(
                 color: textPrimary,
@@ -298,7 +310,9 @@ class _RecordAttemptDialogState extends State<RecordAttemptDialog> {
                             ),
                           )
                         : Text(
-                            widget.isMaxAttempt ? 'Record' : 'Add',
+                            widget.isMaxAttempt
+                                ? 'Record'
+                                : 'Add ${_capitalize(widget.unit.label)}',
                             style: const TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,

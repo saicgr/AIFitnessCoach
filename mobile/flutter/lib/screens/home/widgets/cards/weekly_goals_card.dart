@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/constants/goal_unit.dart';
 import '../../../../core/theme/theme_colors.dart';
 import '../../../../data/services/api_client.dart';
 import '../../../../data/services/personal_goals_service.dart';
@@ -22,6 +23,7 @@ class WeeklyGoalsCard extends ConsumerStatefulWidget {
 
 class _WeeklyGoalsCardState extends ConsumerState<WeeklyGoalsCard> {
   late PersonalGoalsService _goalsService;
+  String? _userId;
   Map<String, dynamic>? _summary;
   bool _isLoading = true;
 
@@ -34,10 +36,10 @@ class _WeeklyGoalsCardState extends ConsumerState<WeeklyGoalsCard> {
   Future<void> _initService() async {
     final apiClient = ref.read(apiClientProvider);
     _goalsService = PersonalGoalsService(apiClient);
-    final userId = await apiClient.getUserId();
+    _userId = await apiClient.getUserId();
 
-    if (userId != null) {
-      _loadSummary(userId);
+    if (_userId != null) {
+      _loadSummary(_userId!);
     } else {
       if (mounted) {
         setState(() => _isLoading = false);
@@ -107,7 +109,9 @@ class _WeeklyGoalsCardState extends ConsumerState<WeeklyGoalsCard> {
         child: InkWell(
           onTap: () {
             HapticService.light();
-            context.push('/personal-goals');
+            context.push('/personal-goals').then((_) {
+              if (mounted && _userId != null) _loadSummary(_userId!);
+            });
           },
           borderRadius: BorderRadius.circular(16),
           child: Container(
@@ -139,7 +143,12 @@ class _WeeklyGoalsCardState extends ConsumerState<WeeklyGoalsCard> {
     Color textMuted,
   ) {
     final accentColor = ref.colors(context).accent;
+    final previews = List<Map<String, dynamic>>.from(
+      _summary?['active_goal_previews'] as List? ?? [],
+    );
+
     return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         // Goal icon with badge
         Stack(
@@ -192,15 +201,35 @@ class _WeeklyGoalsCardState extends ConsumerState<WeeklyGoalsCard> {
                   color: textPrimary,
                 ),
               ),
-              const SizedBox(height: 4),
-              Text(
-                '$activeGoals active ${activeGoals == 1 ? 'goal' : 'goals'}${prsThisWeek > 0 ? ' • $prsThisWeek new PR${prsThisWeek == 1 ? '' : 's'}!' : ''}',
-                style: TextStyle(
-                  fontSize: 14,
-                  color: prsThisWeek > 0 ? AppColors.orange : textSecondary,
-                  fontWeight: prsThisWeek > 0 ? FontWeight.w500 : FontWeight.normal,
+              const SizedBox(height: 6),
+              if (previews.isEmpty)
+                Text(
+                  '$activeGoals active ${activeGoals == 1 ? 'goal' : 'goals'}${prsThisWeek > 0 ? ' • $prsThisWeek new PR${prsThisWeek == 1 ? '' : 's'}!' : ''}',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: prsThisWeek > 0 ? AppColors.orange : textSecondary,
+                    fontWeight: prsThisWeek > 0 ? FontWeight.w500 : FontWeight.normal,
+                  ),
+                )
+              else
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    for (final preview in previews) ...[
+                      _buildGoalProgressRow(preview, textSecondary, textMuted),
+                      const SizedBox(height: 4),
+                    ],
+                    if (prsThisWeek > 0)
+                      Text(
+                        '🏆 $prsThisWeek new PR!',
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: AppColors.orange,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                  ],
                 ),
-              ),
             ],
           ),
         ),
@@ -208,6 +237,55 @@ class _WeeklyGoalsCardState extends ConsumerState<WeeklyGoalsCard> {
         Icon(
           Icons.chevron_right,
           color: textMuted,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildGoalProgressRow(
+    Map<String, dynamic> preview,
+    Color textColor,
+    Color mutedColor,
+  ) {
+    final unit = GoalUnitExt.fromString(preview['unit'] as String?);
+    final current = (preview['current_value'] as num?)?.toDouble() ?? 0;
+    final target = (preview['target_value'] as num?)?.toDouble() ?? 1;
+    final progress = (preview['progress_percentage'] as num?)?.toDouble() ?? 0;
+    final exerciseName = preview['exercise_name'] as String? ?? '';
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: Text(
+                exerciseName,
+                style: TextStyle(
+                  fontSize: 12,
+                  color: textColor,
+                  fontWeight: FontWeight.w500,
+                ),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            Text(
+              '${unit.format(current)} / ${unit.format(target)}',
+              style: TextStyle(fontSize: 11, color: mutedColor),
+            ),
+          ],
+        ),
+        const SizedBox(height: 3),
+        ClipRRect(
+          borderRadius: BorderRadius.circular(2),
+          child: LinearProgressIndicator(
+            value: (progress / 100).clamp(0.0, 1.0),
+            backgroundColor: mutedColor.withValues(alpha: 0.2),
+            valueColor: AlwaysStoppedAnimation<Color>(
+              progress >= 100 ? AppColors.green : ref.colors(context).accent,
+            ),
+            minHeight: 4,
+          ),
         ),
       ],
     );

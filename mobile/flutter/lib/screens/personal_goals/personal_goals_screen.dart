@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/constants/goal_unit.dart';
 import '../../widgets/app_loading.dart';
 import '../../widgets/app_snackbar.dart';
 import '../../widgets/glass_sheet.dart';
@@ -86,12 +87,13 @@ class _PersonalGoalsScreenState extends ConsumerState<PersonalGoalsScreen> {
       context: context,
       builder: (context) => GlassSheet(
         child: CreateGoalSheet(
-          onSubmit: (exerciseName, goalType, targetValue) async {
+          onSubmit: (exerciseName, goalType, targetValue, unit) async {
             await _goalsService.createGoal(
               userId: _userId!,
               exerciseName: exerciseName,
               goalType: goalType,
               targetValue: targetValue,
+              unit: unit.name,
             );
             _loadData();
           },
@@ -103,6 +105,7 @@ class _PersonalGoalsScreenState extends ConsumerState<PersonalGoalsScreen> {
   void _showRecordAttemptDialog(Map<String, dynamic> goal) {
     final goalType = PersonalGoalType.fromString(goal['goal_type'] ?? 'single_max');
     final isMaxAttempt = goalType == PersonalGoalType.singleMax;
+    final unit = GoalUnitExt.fromString(goal['unit'] as String?);
 
     showDialog(
       context: context,
@@ -111,6 +114,7 @@ class _PersonalGoalsScreenState extends ConsumerState<PersonalGoalsScreen> {
         isMaxAttempt: isMaxAttempt,
         currentValue: goal['current_value'] ?? 0,
         personalBest: goal['personal_best'],
+        unit: unit,
         onSubmit: (value, notes) async {
           if (isMaxAttempt) {
             await _goalsService.recordAttempt(
@@ -250,13 +254,15 @@ class _PersonalGoalsScreenState extends ConsumerState<PersonalGoalsScreen> {
           : _error != null
               ? _buildErrorState()
               : _buildContent(textPrimary, textSecondary),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: _showCreateGoalSheet,
-        backgroundColor: AppColors.cyan,
-        foregroundColor: Colors.white,
-        icon: const Icon(Icons.add),
-        label: const Text('New Goal'),
-      ),
+      floatingActionButton: (_goalsData?['goals'] as List? ?? []).isEmpty
+          ? null
+          : FloatingActionButton.extended(
+              onPressed: _showCreateGoalSheet,
+              backgroundColor: AppColors.cyan,
+              foregroundColor: Colors.white,
+              icon: const Icon(Icons.add),
+              label: const Text('New Goal'),
+            ),
     );
   }
 
