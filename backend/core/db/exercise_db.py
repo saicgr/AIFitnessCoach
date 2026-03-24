@@ -148,8 +148,8 @@ class ExerciseDB(BaseDB):
         query = (
             self.client.table("performance_logs").select(
                 "id, user_id, workout_log_id, exercise_id, exercise_name, "
-                "set_number, reps_completed, weight_kg, volume_kg, "
-                "one_rep_max, recorded_at"
+                "set_number, reps_completed, weight_kg, rpe, rir, "
+                "set_type, recorded_at"
             ).eq("user_id", user_id)
         )
 
