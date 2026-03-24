@@ -34,7 +34,7 @@ class WarmupPhaseScreen extends StatefulWidget {
     required this.onSkipWarmup,
     required this.onWarmupComplete,
     required this.onQuitRequested,
-    this.exercises = defaultWarmupExercises,
+    required this.exercises,
   });
 
   @override

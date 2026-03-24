@@ -63,27 +63,18 @@ class WrappedIntroCard extends StatelessWidget {
                 children: [
                   const Spacer(flex: 2),
 
-                  // "Your [Month] Wrapped" title
+                  // Month + Year
                   Text(
-                    'Your',
-                    style: TextStyle(
-                      color: Colors.white.withValues(alpha: 0.7),
-                      fontSize: 22,
-                      fontWeight: FontWeight.w400,
-                      letterSpacing: 2,
+                    data.monthDisplayName.toUpperCase(),
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 42,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: 6,
+                      height: 1,
                     ),
                   ),
                   const SizedBox(height: 4),
-                  Text(
-                    '${data.monthDisplayName} Wrapped',
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 34,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 1,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
                   Text(
                     data.yearDisplay,
                     style: TextStyle(
@@ -96,25 +87,60 @@ class WrappedIntroCard extends StatelessWidget {
 
                   const Spacer(flex: 2),
 
-                  // Large total workouts number
+                  // "was YOUR month."
                   Text(
-                    NumberFormat('#,###').format(data.totalWorkouts),
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 120,
-                      fontWeight: FontWeight.w900,
-                      height: 1,
-                      letterSpacing: -2,
+                    'was',
+                    style: TextStyle(
+                      color: Colors.white.withValues(alpha: 0.5),
+                      fontSize: 20,
+                      fontWeight: FontWeight.w300,
+                      letterSpacing: 2,
                     ),
                   ),
-                  const SizedBox(height: 12),
-                  Text(
-                    'WORKOUTS COMPLETED',
+                  const SizedBox(height: 4),
+                  const Text(
+                    'YOUR',
                     style: TextStyle(
-                      color: Colors.white.withValues(alpha: 0.6),
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      letterSpacing: 4,
+                      color: Colors.white,
+                      fontSize: 72,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: 8,
+                      height: 1,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'month.',
+                    style: TextStyle(
+                      color: Colors.white.withValues(alpha: 0.5),
+                      fontSize: 20,
+                      fontWeight: FontWeight.w300,
+                      letterSpacing: 2,
+                    ),
+                  ),
+
+                  const Spacer(flex: 2),
+
+                  // Stats teaser row
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 20, vertical: 14),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.06),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: Colors.white.withValues(alpha: 0.1),
+                      ),
+                    ),
+                    child: Text(
+                      '${data.totalWorkouts} workouts · ${NumberFormat('#,###').format(data.totalVolumeLbs.round())} lbs · ${data.totalSets} sets',
+                      style: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.7),
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                        letterSpacing: 0.5,
+                      ),
+                      textAlign: TextAlign.center,
                     ),
                   ),
 

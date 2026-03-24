@@ -8,6 +8,7 @@ import '../../../data/providers/nutrition_preferences_provider.dart';
 import '../../../data/repositories/hydration_repository.dart';
 import '../../../data/repositories/nutrition_preferences_repository.dart';
 import '../../../data/services/health_service.dart';
+import '../../../widgets/glass_sheet.dart';
 import 'calories_burned_sheet.dart';
 
 /// Dedicated card showing nutrition goals with edit/recalculate options
@@ -71,13 +72,11 @@ class NutritionGoalsCard extends ConsumerWidget {
     final caloriesBurned = activityState.today?.caloriesBurned ?? 0;
     final green = isDark ? AppColors.green : AppColorsLight.green;
 
-    // Build bottom info line parts
-    final hasAdjustment = dynamicTargets?.adjustmentReason != null &&
-        dynamicTargets!.adjustmentReason != 'base_targets';
     final hasCaloriesBurned = caloriesBurned > 0;
     final hasGoal = nutritionGoal != null;
 
     return Container(
+      clipBehavior: Clip.hardEdge,
       decoration: BoxDecoration(
         color: elevated,
         borderRadius: BorderRadius.circular(16),
@@ -96,17 +95,16 @@ class NutritionGoalsCard extends ConsumerWidget {
           ),
         ],
       ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(16),
-        child: Container(
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            border: Border(
-              left: BorderSide(color: green, width: 4),
-            ),
-          ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Row(
+        children: [
+          // Green accent bar
+          Container(width: 4, color: green),
+          // Card content
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.all(12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Header row: title + training badge + water + edit/refresh
           Row(
@@ -141,59 +139,53 @@ class NutritionGoalsCard extends ConsumerWidget {
                 ),
               ],
               const Spacer(),
-              // Compact water display + edit + refresh — wrapped in Flexible to prevent overflow
+              // Compact water display + edit + refresh
               Flexible(
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    // Water display
-                    GestureDetector(
-                      onTap: onHydrationTap,
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            Icons.water_drop,
-                            size: 14,
-                            color: hydrationPct >= 0.75
-                                ? electricBlue
-                                : hydrationPct >= 0.25
-                                    ? electricBlue.withValues(alpha: 0.7)
-                                    : textMuted,
-                          ),
-                          const SizedBox(width: 3),
-                          Flexible(
-                            child: Text(
-                              _formatWaterAmount(currentMl, goalMl),
-                              style: TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w600,
-                                color: hydrationPct >= 0.75 ? electricBlue : textSecondary,
-                              ),
-                              overflow: TextOverflow.ellipsis,
-                              maxLines: 1,
+                    // Water display — must be Flexible so it shrinks on narrow screens
+                    Flexible(
+                      child: GestureDetector(
+                        onTap: onHydrationTap,
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.water_drop,
+                              size: 14,
+                              color: hydrationPct >= 0.75
+                                  ? electricBlue
+                                  : hydrationPct >= 0.25
+                                      ? electricBlue.withValues(alpha: 0.7)
+                                      : textMuted,
                             ),
-                          ),
-                        ],
+                            const SizedBox(width: 3),
+                            Flexible(
+                              child: Text(
+                                _formatWaterAmount(currentMl, goalMl),
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w600,
+                                  color: hydrationPct >= 0.75 ? electricBlue : textSecondary,
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                                maxLines: 1,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                     const SizedBox(width: 8),
-                    // Edit button
-                    IconButton(
-                      onPressed: onEdit,
-                      icon: Icon(Icons.edit_outlined, size: 18, color: textMuted),
-                      padding: EdgeInsets.zero,
-                      constraints: const BoxConstraints(),
-                      tooltip: 'Edit Goals',
+                    GestureDetector(
+                      onTap: onEdit,
+                      child: Icon(Icons.edit_outlined, size: 18, color: textMuted),
                     ),
-                    const SizedBox(width: 6),
-                    // Recalculate button
-                    IconButton(
-                      onPressed: onRecalculate,
-                      icon: Icon(Icons.refresh, size: 18, color: textMuted),
-                      padding: EdgeInsets.zero,
-                      constraints: const BoxConstraints(),
-                      tooltip: 'Recalculate',
+                    const SizedBox(width: 8),
+                    GestureDetector(
+                      onTap: onRecalculate,
+                      child: Icon(Icons.refresh, size: 18, color: textMuted),
                     ),
                   ],
                 ),
@@ -291,80 +283,32 @@ class NutritionGoalsCard extends ConsumerWidget {
             ),
           ],
 
-          // Bottom info line: calories burned + adjustment reason
-          if (hasCaloriesBurned || hasAdjustment) ...[
+          // Bottom info line: calories burned
+          if (hasCaloriesBurned) ...[
             const SizedBox(height: 8),
-            Row(
-              children: [
-                if (hasCaloriesBurned)
-                  GestureDetector(
-                    onTap: () => showCaloriesBurnedSheet(context, caloriesBurned),
-                    behavior: HitTestBehavior.opaque,
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(Icons.local_fire_department, size: 14, color: green),
-                        const SizedBox(width: 2),
-                        Text(
-                          '${caloriesBurned.toInt()} burned',
-                          style: TextStyle(fontSize: 11, color: green, fontWeight: FontWeight.w500),
-                        ),
-                        const SizedBox(width: 2),
-                        Icon(Icons.chevron_right, size: 14, color: green),
-                      ],
-                    ),
+            GestureDetector(
+              onTap: () => showCaloriesBurnedSheet(context, caloriesBurned),
+              behavior: HitTestBehavior.opaque,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.local_fire_department, size: 14, color: green),
+                  const SizedBox(width: 2),
+                  Text(
+                    '${caloriesBurned.toInt()} burned',
+                    style: TextStyle(fontSize: 11, color: green, fontWeight: FontWeight.w500),
                   ),
-                if (hasAdjustment) ...[
-                  const Spacer(),
-                  GestureDetector(
-                    onTap: () {
-                      showDialog(
-                        context: context,
-                        barrierColor: Colors.black26,
-                        builder: (ctx) => AlertDialog(
-                          backgroundColor: isDark ? const Color(0xFF1E1E1E) : Colors.white,
-                          surfaceTintColor: Colors.transparent,
-                          title: Text(
-                            'Target Adjustment',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                              color: isDark ? Colors.white : Colors.black87,
-                            ),
-                          ),
-                          content: Text(
-                            _getAdjustmentReasonDisplay(dynamicTargets.adjustmentReason),
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: isDark ? Colors.white70 : Colors.black54,
-                            ),
-                          ),
-                          actions: [
-                            TextButton(
-                              onPressed: () => Navigator.pop(ctx),
-                              child: Text('Got it', style: TextStyle(color: teal)),
-                            ),
-                          ],
-                        ),
-                      );
-                    },
-                    child: Container(
-                      width: 20,
-                      height: 20,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: teal.withValues(alpha: 0.15),
-                      ),
-                      child: Icon(Icons.info_outline, size: 12, color: teal),
-                    ),
-                  ),
+                  const SizedBox(width: 2),
+                  Icon(Icons.chevron_right, size: 14, color: green),
                 ],
-              ],
+              ),
             ),
           ],
         ],
-      ),
-        ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -387,34 +331,33 @@ class NutritionGoalsCard extends ConsumerWidget {
         return '0.25 kg / wk';
       case 'moderate':
         return '0.5 kg / wk';
-      case 'aggressive':
+      case 'fast':
         return '0.75 kg / wk';
+      case 'aggressive':
+        return '1.0 kg / wk';
       default:
         return rateOfChange;
     }
   }
 
   void _showCalculationInfo(BuildContext context, NutritionPreferences prefs, bool isDark) {
-    showModalBottomSheet(
+    showGlassSheet(
       context: context,
-      backgroundColor: isDark ? AppColors.elevated : AppColorsLight.elevated,
-      isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (ctx) => _CalculationInfoSheet(
-        prefs: prefs,
-        isDark: isDark,
-        onEdit: () {
-          Navigator.pop(ctx);
-          onEdit?.call();
-        },
-        onRecalculate: () {
-          Navigator.pop(ctx);
-          onRecalculate?.call();
-        },
-        formatNumber: _formatNumber,
-        getActivityLabel: _getActivityLabel,
+      builder: (ctx) => GlassSheet(
+        child: _CalculationInfoSheet(
+          prefs: prefs,
+          isDark: isDark,
+          onEdit: () {
+            Navigator.pop(ctx);
+            onEdit?.call();
+          },
+          onRecalculate: () {
+            Navigator.pop(ctx);
+            onRecalculate?.call();
+          },
+          formatNumber: _formatNumber,
+          getActivityLabel: _getActivityLabel,
+        ),
       ),
     );
   }
@@ -468,18 +411,6 @@ class NutritionGoalsCard extends ConsumerWidget {
     }
   }
 
-  String _getAdjustmentReasonDisplay(String reason) {
-    switch (reason) {
-      case 'training_day':
-        return 'Your nutrition targets have been adjusted for today\'s workout - extra fuel for performance and recovery.';
-      case 'rest_day':
-        return 'It\'s a rest day, so your calorie target has been slightly reduced to match lower activity.';
-      case 'fasting_day':
-        return 'Fasting day - your targets have been adjusted to align with your fasting protocol.';
-      default:
-        return reason;
-    }
-  }
 }
 
 /// Stateful sheet that shows the full calculation breakdown with expandable BMR details
@@ -519,7 +450,9 @@ class _CalculationInfoSheetState extends ConsumerState<_CalculationInfoSheet> {
 
     final bmr = prefs.calculatedBmr ?? 0;
     final tdee = prefs.calculatedTdee ?? 0;
-    final targetCal = prefs.targetCalories ?? 2000;
+    // Use dynamic target (same source as the Daily Goals card) for consistency
+    final prefsState = ref.watch(nutritionPreferencesProvider);
+    final targetCal = prefsState.currentCalorieTarget;
     final goalAdjustment = targetCal - tdee;
     final goal = prefs.primaryGoalEnum;
     final dietType = prefs.dietTypeEnum;
@@ -537,23 +470,11 @@ class _CalculationInfoSheetState extends ConsumerState<_CalculationInfoSheet> {
     final user = userAsync.valueOrNull;
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
+      padding: const EdgeInsets.fromLTRB(20, 4, 20, 0),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Handle bar
-          Center(
-            child: Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: textMuted.withValues(alpha: 0.3),
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-          ),
-          const SizedBox(height: 16),
           Text(
             'How your targets are calculated',
             style: TextStyle(
@@ -986,6 +907,8 @@ class _MacroProgressRing extends StatelessWidget {
             fontWeight: FontWeight.w500,
             color: color,
           ),
+          overflow: TextOverflow.ellipsis,
+          maxLines: 1,
         ),
         Text(
           '/${target.toInt()}$unit',
@@ -993,6 +916,8 @@ class _MacroProgressRing extends StatelessWidget {
             fontSize: 9,
             color: textMuted.withValues(alpha: 0.7),
           ),
+          overflow: TextOverflow.ellipsis,
+          maxLines: 1,
         ),
       ],
     );

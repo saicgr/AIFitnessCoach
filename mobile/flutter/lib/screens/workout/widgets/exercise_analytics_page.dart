@@ -10,6 +10,7 @@ library;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:share_plus/share_plus.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../data/models/exercise.dart';
@@ -181,7 +182,7 @@ class _ExerciseAnalyticsPageState extends State<ExerciseAnalyticsPage>
             OutlinedButton.icon(
               onPressed: () {
                 HapticFeedback.mediumImpact();
-                // TODO: Implement friend invite
+                Share.share('Join me on FitWiz and let\'s compare our lifts! 💪 https://fitwiz.app');
               },
               icon: const Icon(Icons.person_add_outlined),
               label: const Text('Invite Friends'),

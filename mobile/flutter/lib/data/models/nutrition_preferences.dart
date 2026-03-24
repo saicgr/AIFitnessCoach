@@ -34,8 +34,9 @@ enum NutritionGoal {
 /// Rate of change options
 enum RateOfChange {
   slow('slow', 'Slow & Steady', 0.25, 250),
-  moderate('moderate', 'Moderate (Recommended)', 0.5, 500),
-  aggressive('aggressive', 'Aggressive', 0.75, 750);
+  moderate('moderate', 'Moderate', 0.5, 500),
+  fast('fast', 'Fast', 0.75, 750),
+  aggressive('aggressive', 'Aggressive', 1.0, 1000);
 
   final String value;
   final String displayName;

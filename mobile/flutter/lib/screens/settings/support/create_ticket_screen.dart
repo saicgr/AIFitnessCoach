@@ -397,35 +397,33 @@ class _CreateTicketScreenState extends ConsumerState<CreateTicketScreen> {
               ),
             ),
             const SizedBox(height: 8),
-            Container(
-              decoration: BoxDecoration(
-                color: elevated,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: cardBorder),
-              ),
-              child: DropdownButtonFormField<TicketCategory>(
-                initialValue: _selectedCategory,
-                dropdownColor: elevated,
-                style: TextStyle(color: textPrimary),
-                decoration: const InputDecoration(
-                  contentPadding: EdgeInsets.symmetric(horizontal: 16),
-                  border: InputBorder.none,
-                ),
-                items: TicketCategory.values.map((category) {
-                  return DropdownMenuItem(
-                    value: category,
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: TicketCategory.values.map((category) {
+                final isSelected = _selectedCategory == category;
+                return GestureDetector(
+                  onTap: () => setState(() => _selectedCategory = category),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: isSelected ? AppColors.cyan.withValues(alpha: 0.15) : elevated,
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(
+                        color: isSelected ? AppColors.cyan : cardBorder,
+                      ),
+                    ),
                     child: Text(
                       category.displayName,
-                      style: TextStyle(color: textPrimary),
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                        color: isSelected ? AppColors.cyan : textSecondary,
+                      ),
                     ),
-                  );
-                }).toList(),
-                onChanged: (value) {
-                  if (value != null) {
-                    setState(() => _selectedCategory = value);
-                  }
-                },
-              ),
+                  ),
+                );
+              }).toList(),
             ),
 
             const SizedBox(height: 24),
@@ -518,35 +516,35 @@ class _CreateTicketScreenState extends ConsumerState<CreateTicketScreen> {
               ),
             ),
             const SizedBox(height: 8),
-            Container(
-              decoration: BoxDecoration(
-                color: elevated,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: cardBorder),
-              ),
-              child: DropdownButtonFormField<String>(
-                value: _selectedScreenContext,
-                dropdownColor: elevated,
-                style: TextStyle(color: textPrimary),
-                decoration: InputDecoration(
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 16),
-                  border: InputBorder.none,
-                  hintText: 'Select screen or feature',
-                  hintStyle: TextStyle(color: textSecondary),
-                ),
-                items: _screenContextOptions.map((screen) {
-                  return DropdownMenuItem(
-                    value: screen,
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: _screenContextOptions.map((screen) {
+                final isSelected = _selectedScreenContext == screen;
+                return GestureDetector(
+                  onTap: () => setState(() {
+                    _selectedScreenContext = isSelected ? null : screen;
+                  }),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: isSelected ? AppColors.cyan.withValues(alpha: 0.15) : elevated,
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(
+                        color: isSelected ? AppColors.cyan : cardBorder,
+                      ),
+                    ),
                     child: Text(
                       screen,
-                      style: TextStyle(color: textPrimary),
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                        color: isSelected ? AppColors.cyan : textSecondary,
+                      ),
                     ),
-                  );
-                }).toList(),
-                onChanged: (value) {
-                  setState(() => _selectedScreenContext = value);
-                },
-              ),
+                  ),
+                );
+              }).toList(),
             ),
 
             const SizedBox(height: 24),

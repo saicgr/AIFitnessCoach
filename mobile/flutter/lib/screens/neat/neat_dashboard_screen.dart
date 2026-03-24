@@ -2241,9 +2241,28 @@ class _MovementReminderCard extends StatelessWidget {
     return '$hour:${time.minute.toString().padLeft(2, '0')} $period';
   }
 
-  void _showQuietHoursPicker(BuildContext context) {
-    // TODO: Implement time range picker
+  void _showQuietHoursPicker(BuildContext context) async {
     HapticService.light();
+    final startTime = await showTimePicker(
+      context: context,
+      initialTime: const TimeOfDay(hour: 22, minute: 0),
+      helpText: 'Quiet hours START',
+    );
+    if (startTime == null || !context.mounted) return;
+
+    final endTime = await showTimePicker(
+      context: context,
+      initialTime: const TimeOfDay(hour: 7, minute: 0),
+      helpText: 'Quiet hours END',
+    );
+    if (endTime == null || !context.mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Quiet hours: ${startTime.format(context)} - ${endTime.format(context)}'),
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
   }
 }
 

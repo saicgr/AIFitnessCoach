@@ -4,7 +4,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../widgets/pill_app_bar.dart';
 import '../sections/sections.dart';
 
-/// Sub-page for Sound & Notifications: voice, audio, notifications.
+/// Sub-page for Sound & Notifications: audio + notifications.
 class SoundNotificationsPage extends ConsumerWidget {
   const SoundNotificationsPage({super.key});
 
@@ -13,8 +13,6 @@ class SoundNotificationsPage extends ConsumerWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final backgroundColor =
         isDark ? AppColors.pureBlack : AppColorsLight.pureWhite;
-    final textPrimary =
-        isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
 
     return Scaffold(
       backgroundColor: backgroundColor,
@@ -23,11 +21,11 @@ class SoundNotificationsPage extends ConsumerWidget {
           padding: const EdgeInsets.all(16),
           child: Column(
             children: const [
-              VoiceAnnouncementsSection(),
-              SizedBox(height: 16),
               AudioSettingsSection(),
               SizedBox(height: 16),
               NotificationsSection(),
+              SizedBox(height: 16),
+              TestNotificationsSection(),
               SizedBox(height: 32),
             ],
           ),

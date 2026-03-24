@@ -1042,7 +1042,7 @@ class _DailyTabState extends ConsumerState<_DailyTab> {
                     child: OutlinedButton.icon(
                       onPressed: () {
                         Navigator.pop(context);
-                        Navigator.pushNamed(context, '/nutrition/settings');
+                        context.push('/nutrition-settings');
                       },
                       style: OutlinedButton.styleFrom(
                         foregroundColor: teal,

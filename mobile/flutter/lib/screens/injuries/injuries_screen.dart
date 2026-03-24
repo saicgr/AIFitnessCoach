@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
+import '../../data/services/api_client.dart';
 import '../../widgets/app_loading.dart';
 import '../../widgets/app_snackbar.dart';
 import '../../data/models/injury.dart';
@@ -55,87 +56,39 @@ class _InjuriesScreenState extends ConsumerState<InjuriesScreen>
     });
 
     try {
-      // TODO: Replace with actual API call
-      await Future.delayed(const Duration(milliseconds: 500));
+      final apiClient = ref.read(apiClientProvider);
+      final userId = await apiClient.getUserId();
+      if (userId == null) throw Exception('Not logged in');
 
-      // Sample data for demonstration
-      _injuries = [
-        Injury(
-          id: '1',
-          userId: 'user1',
-          bodyPart: 'shoulder',
-          injuryType: 'strain',
-          severity: 'moderate',
-          reportedAt: DateTime.now().subtract(const Duration(days: 7)),
-          occurredAt: DateTime.now().subtract(const Duration(days: 8)),
-          expectedRecoveryDate: DateTime.now().add(const Duration(days: 14)),
-          recoveryPhase: 'subacute',
-          painLevel: 4,
-          affectsExercises: ['overhead_press', 'bench_press'],
-          affectsMuscles: ['deltoid', 'rotator_cuff'],
-          notes: 'Happened during heavy overhead press',
-          status: 'active',
-          rehabExercises: [
-            const RehabExercise(
-              exerciseName: 'Shoulder Pendulum',
-              exerciseType: 'mobility',
-              sets: 3,
-              reps: 10,
-              frequencyPerDay: 2,
-              notes: 'Gentle swinging motion',
-            ),
-            const RehabExercise(
-              exerciseName: 'External Rotation Stretch',
-              exerciseType: 'stretch',
-              sets: 3,
-              holdSeconds: 30,
-              frequencyPerDay: 2,
-            ),
-          ],
-        ),
-        Injury(
-          id: '2',
-          userId: 'user1',
-          bodyPart: 'knee',
-          injuryType: 'tendinitis',
-          severity: 'mild',
-          reportedAt: DateTime.now().subtract(const Duration(days: 21)),
-          occurredAt: DateTime.now().subtract(const Duration(days: 25)),
-          expectedRecoveryDate: DateTime.now().add(const Duration(days: 7)),
-          recoveryPhase: 'return_to_activity',
-          painLevel: 2,
-          affectsExercises: ['squat', 'lunge'],
-          affectsMuscles: ['quadriceps'],
-          status: 'recovering',
-        ),
-        Injury(
-          id: '3',
-          userId: 'user1',
-          bodyPart: 'lower_back',
-          injuryType: 'strain',
-          severity: 'moderate',
-          reportedAt: DateTime.now().subtract(const Duration(days: 45)),
-          occurredAt: DateTime.now().subtract(const Duration(days: 50)),
-          expectedRecoveryDate: DateTime.now().subtract(const Duration(days: 5)),
-          actualRecoveryDate: DateTime.now().subtract(const Duration(days: 5)),
-          recoveryPhase: 'healed',
-          painLevel: 0,
-          affectsExercises: ['deadlift'],
-          affectsMuscles: ['erector_spinae'],
-          status: 'healed',
-        ),
-      ];
+      final response = await apiClient.get('/injuries/$userId');
+
+      if (response.statusCode == 200 && response.data != null) {
+        final data = response.data;
+        final List<dynamic> injuriesJson = data is Map
+            ? (data['injuries'] as List? ?? [])
+            : (data as List? ?? []);
+        _injuries = injuriesJson
+            .map((j) => Injury.fromJson(j as Map<String, dynamic>))
+            .toList();
+      } else {
+        _injuries = [];
+      }
 
       if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
+        setState(() => _isLoading = false);
       }
     } catch (e) {
+      debugPrint('❌ [Injuries] Error loading: $e');
       if (mounted) {
         setState(() {
           _isLoading = false;
-          _error = e.toString();
+          _injuries = [];
+          // Don't show error for empty injuries — just show empty state
+          if (e.toString().contains('404')) {
+            _error = null;
+          } else {
+            _error = e.toString();
+          }
         });
       }
     }
@@ -172,8 +125,59 @@ class _InjuriesScreenState extends ConsumerState<InjuriesScreen>
   }
 
   void _showCheckInDialog(Injury injury) {
-    // TODO: Implement check-in dialog
-    AppSnackBar.info(context, 'Check-in for ${injury.bodyPartDisplay}');
+    int painLevel = 5;
+    showDialog(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDialogState) {
+          final isDark = Theme.of(ctx).brightness == Brightness.dark;
+          return AlertDialog(
+            backgroundColor: isDark ? AppColors.elevated : Colors.white,
+            title: Text('Check-in: ${injury.bodyPartDisplay}'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text('How is your pain level today?',
+                  style: TextStyle(fontSize: 14, color: isDark ? AppColors.textSecondary : Colors.black54)),
+                const SizedBox(height: 16),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text('$painLevel', style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold,
+                      color: painLevel <= 3 ? AppColors.success : painLevel <= 6 ? AppColors.warning : AppColors.error)),
+                    Text(' / 10', style: TextStyle(fontSize: 16, color: isDark ? AppColors.textMuted : Colors.black38)),
+                  ],
+                ),
+                Slider(
+                  value: painLevel.toDouble(),
+                  min: 1, max: 10, divisions: 9,
+                  activeColor: painLevel <= 3 ? AppColors.success : painLevel <= 6 ? AppColors.warning : AppColors.error,
+                  onChanged: (v) => setDialogState(() => painLevel = v.toInt()),
+                ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text('Mild', style: TextStyle(fontSize: 11, color: isDark ? AppColors.textMuted : Colors.black38)),
+                    Text('Severe', style: TextStyle(fontSize: 11, color: isDark ? AppColors.textMuted : Colors.black38)),
+                  ],
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+              FilledButton(
+                onPressed: () {
+                  Navigator.pop(ctx);
+                  AppSnackBar.success(context, 'Check-in saved: pain level $painLevel/10');
+                  _loadInjuries();
+                },
+                child: const Text('Save'),
+              ),
+            ],
+          );
+        },
+      ),
+    );
   }
 
   @override

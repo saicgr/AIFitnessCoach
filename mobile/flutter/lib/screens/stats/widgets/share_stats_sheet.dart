@@ -357,6 +357,8 @@ class _ShareStatsSheetState extends ConsumerState<ShareStatsSheet> {
         return '⚖️';
       case MilestoneCategory.prs:
         return '🥇';
+      case MilestoneCategory.firstSteps:
+        return '🚀';
     }
   }
 

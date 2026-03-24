@@ -1,13 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../core/constants/app_colors.dart';
-import '../../data/providers/feature_provider.dart';
-import '../../models/feature_request.dart';
+import '../../core/constants/app_links.dart';
 import '../../widgets/pill_app_bar.dart';
-import '../../widgets/glass_sheet.dart';
-import '../../widgets/segmented_tab_bar.dart';
-import '../features/widgets/suggest_feature_sheet.dart';
 
 class ComingSoonScreen extends ConsumerStatefulWidget {
   const ComingSoonScreen({super.key});
@@ -25,7 +21,22 @@ class _ComingSoonScreenState extends ConsumerState<ComingSoonScreen> {
 
     return Scaffold(
       backgroundColor: backgroundColor,
-      appBar: const PillAppBar(title: 'Coming Soon'),
+      appBar: PillAppBar(
+        title: 'Coming Soon',
+        actions: [
+          if (AppLinks.hasFeatureRequestLink)
+            PillAppBarAction(
+              icon: Icons.lightbulb_outline,
+              iconColor: AppColors.orange,
+              onTap: () async {
+                final uri = Uri.parse(AppLinks.featureRequests);
+                if (await canLaunchUrl(uri)) {
+                  await launchUrl(uri, mode: LaunchMode.externalApplication);
+                }
+              },
+            ),
+        ],
+      ),
       body: _RoadmapTab(),
     );
   }
@@ -33,7 +44,21 @@ class _ComingSoonScreenState extends ConsumerState<ComingSoonScreen> {
 
 // ─── Roadmap Tab (existing content) ──────────────────────────────────────────
 
-class _RoadmapTab extends StatelessWidget {
+class _RoadmapTab extends StatefulWidget {
+  @override
+  State<_RoadmapTab> createState() => _RoadmapTabState();
+}
+
+class _RoadmapTabState extends State<_RoadmapTab> {
+  String _searchQuery = '';
+
+  bool _featureMatches(_Feature feature) {
+    if (_searchQuery.isEmpty) return true;
+    final q = _searchQuery.toLowerCase();
+    return feature.title.toLowerCase().contains(q) ||
+        feature.description.toLowerCase().contains(q);
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -46,6 +71,42 @@ class _RoadmapTab extends StatelessWidget {
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
       children: [
+        // Search pill
+        Container(
+          margin: const EdgeInsets.only(bottom: 16),
+          padding: const EdgeInsets.symmetric(horizontal: 14),
+          height: 44,
+          decoration: BoxDecoration(
+            color: cardColor,
+            borderRadius: BorderRadius.circular(22),
+            border: Border.all(color: borderColor),
+          ),
+          child: Row(
+            children: [
+              Icon(Icons.search, size: 20, color: textMuted),
+              const SizedBox(width: 10),
+              Expanded(
+                child: TextField(
+                  onChanged: (v) => setState(() => _searchQuery = v),
+                  style: TextStyle(fontSize: 14, color: textPrimary),
+                  decoration: InputDecoration(
+                    hintText: 'Search features...',
+                    hintStyle: TextStyle(color: textMuted, fontSize: 14),
+                    border: InputBorder.none,
+                    isDense: true,
+                    contentPadding: EdgeInsets.zero,
+                  ),
+                ),
+              ),
+              if (_searchQuery.isNotEmpty)
+                GestureDetector(
+                  onTap: () => setState(() => _searchQuery = ''),
+                  child: Icon(Icons.close, size: 18, color: textMuted),
+                ),
+            ],
+          ),
+        ),
+
         // Header
         Padding(
           padding: const EdgeInsets.only(bottom: 24),
@@ -249,28 +310,6 @@ class _RoadmapTab extends StatelessWidget {
         ),
 
         const SizedBox(height: 32),
-
-        // CTA
-        Center(
-          child: TextButton.icon(
-            onPressed: () => context.push('/features'),
-            icon: Icon(
-              Icons.lightbulb_outline,
-              color: AppColors.orange,
-              size: 20,
-            ),
-            label: Text(
-              'Have a feature idea? Vote & suggest',
-              style: TextStyle(
-                color: AppColors.orange,
-                fontWeight: FontWeight.w600,
-                fontSize: 14,
-              ),
-            ),
-          ),
-        ),
-
-        const SizedBox(height: 16),
       ],
     );
   }
@@ -338,6 +377,9 @@ class _RoadmapTab extends StatelessWidget {
     required Color textMuted,
     required List<_Feature> features,
   }) {
+    final filtered = features.where(_featureMatches).toList();
+    if (filtered.isEmpty) return const SizedBox.shrink();
+
     return Container(
       decoration: BoxDecoration(
         color: cardColor,
@@ -346,9 +388,9 @@ class _RoadmapTab extends StatelessWidget {
       ),
       child: Column(
         children: [
-          for (int i = 0; i < features.length; i++) ...[
-            _buildFeatureRow(features[i], textPrimary, textSecondary, textMuted),
-            if (i < features.length - 1)
+          for (int i = 0; i < filtered.length; i++) ...[
+            _buildFeatureRow(filtered[i], textPrimary, textSecondary, textMuted),
+            if (i < filtered.length - 1)
               Divider(height: 1, indent: 56, color: borderColor),
           ],
         ],
@@ -419,259 +461,6 @@ class _RoadmapTab extends StatelessWidget {
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-// ─── Popular Requests Tab ────────────────────────────────────────────────────
-
-class _PopularRequestsTab extends ConsumerWidget {
-  const _PopularRequestsTab();
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final featuresAsync = ref.watch(featuresProvider);
-    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
-    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    final cardColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
-    final borderColor = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
-
-    return featuresAsync.when(
-      loading: () => const Center(child: CircularProgressIndicator()),
-      error: (error, _) => Center(
-        child: Padding(
-          padding: const EdgeInsets.all(32),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(Icons.error_outline, size: 48, color: textMuted),
-              const SizedBox(height: 16),
-              Text(
-                'Failed to load feature requests',
-                style: TextStyle(fontSize: 16, color: textPrimary),
-              ),
-              const SizedBox(height: 8),
-              TextButton(
-                onPressed: () => ref.read(featuresProvider.notifier).refresh(),
-                child: Text(
-                  'Retry',
-                  style: TextStyle(color: AppColors.orange),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-      data: (features) {
-        final voting = features.where((f) => f.isVoting).toList()
-          ..sort((a, b) => b.voteCount.compareTo(a.voteCount));
-
-        if (voting.isEmpty) {
-          return Center(
-            child: Padding(
-              padding: const EdgeInsets.all(32),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.lightbulb_outline, size: 56, color: textMuted),
-                  const SizedBox(height: 16),
-                  Text(
-                    'No feature requests yet',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600,
-                      color: textPrimary,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Be the first to suggest a feature!',
-                    style: TextStyle(fontSize: 14, color: textSecondary),
-                  ),
-                  const SizedBox(height: 24),
-                  FilledButton.icon(
-                    onPressed: () => _showSuggestSheet(context),
-                    icon: const Icon(Icons.add, size: 18),
-                    label: const Text('Suggest a Feature'),
-                    style: FilledButton.styleFrom(
-                      backgroundColor: AppColors.orange,
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          );
-        }
-
-        return RefreshIndicator(
-          onRefresh: () => ref.read(featuresProvider.notifier).refresh(),
-          color: AppColors.orange,
-          child: ListView.builder(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
-            itemCount: voting.length + 1, // +1 for suggest CTA
-            itemBuilder: (context, index) {
-              if (index == voting.length) {
-                return Padding(
-                  padding: const EdgeInsets.only(top: 16),
-                  child: Center(
-                    child: FilledButton.icon(
-                      onPressed: () => _showSuggestSheet(context),
-                      icon: const Icon(Icons.add, size: 18),
-                      label: const Text('Suggest a Feature'),
-                      style: FilledButton.styleFrom(
-                        backgroundColor: AppColors.orange,
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                    ),
-                  ),
-                );
-              }
-
-              final feature = voting[index];
-              return _buildFeatureCard(
-                context,
-                ref,
-                feature,
-                cardColor: cardColor,
-                borderColor: borderColor,
-                textPrimary: textPrimary,
-                textSecondary: textSecondary,
-              );
-            },
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _buildFeatureCard(
-    BuildContext context,
-    WidgetRef ref,
-    FeatureRequest feature, {
-    required Color cardColor,
-    required Color borderColor,
-    required Color textPrimary,
-    required Color textSecondary,
-  }) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: cardColor,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: borderColor),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Title + category badge
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: Text(
-                  feature.title,
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: textPrimary,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 8),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: AppColors.cyan.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: AppColors.cyan.withValues(alpha: 0.3)),
-                ),
-                child: Text(
-                  feature.categoryDisplayName.toUpperCase(),
-                  style: TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.cyan,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-
-          // Description
-          Text(
-            feature.description,
-            style: TextStyle(fontSize: 14, color: textSecondary),
-            maxLines: 3,
-            overflow: TextOverflow.ellipsis,
-          ),
-          const SizedBox(height: 12),
-
-          // Vote row
-          Row(
-            children: [
-              GestureDetector(
-                onTap: () => ref.read(featuresProvider.notifier).toggleVote(feature.id),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: feature.userHasVoted
-                        ? AppColors.cyan.withValues(alpha: 0.15)
-                        : Colors.transparent,
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(
-                      color: feature.userHasVoted
-                          ? AppColors.cyan
-                          : textSecondary.withValues(alpha: 0.3),
-                    ),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        feature.userHasVoted
-                            ? Icons.thumb_up
-                            : Icons.thumb_up_outlined,
-                        size: 16,
-                        color: feature.userHasVoted ? AppColors.cyan : textSecondary,
-                      ),
-                      const SizedBox(width: 6),
-                      Text(
-                        '${feature.voteCount}',
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          color: feature.userHasVoted ? AppColors.cyan : textSecondary,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _showSuggestSheet(BuildContext context) {
-    showGlassSheet(
-      context: context,
-      useRootNavigator: true,
-      builder: (context) => const GlassSheet(
-        child: SuggestFeatureSheet(),
       ),
     );
   }

@@ -103,6 +103,30 @@ class MilestonesRepository {
     }
   }
 
+  /// Award a first_steps milestone by trigger name.
+  ///
+  /// Returns the awarded milestone data if successful, null otherwise.
+  Future<Map<String, dynamic>?> awardFirstStep(
+    String userId,
+    String trigger,
+  ) async {
+    try {
+      final response = await _client.post(
+        '/progress/milestones/$userId/award-first-step',
+        data: {'trigger': trigger},
+      );
+      final data = response.data as Map<String, dynamic>;
+      final success = data['success'] as bool? ?? false;
+      if (success && data['milestone'] != null) {
+        return data['milestone'] as Map<String, dynamic>;
+      }
+      return null;
+    } catch (e) {
+      debugPrint('Error awarding first step milestone: $e');
+      return null;
+    }
+  }
+
   /// Manually trigger milestone check
   Future<MilestoneCheckResult> checkMilestones(String userId) async {
     try {

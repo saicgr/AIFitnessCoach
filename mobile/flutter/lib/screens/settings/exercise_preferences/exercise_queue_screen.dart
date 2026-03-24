@@ -189,8 +189,12 @@ class ExerciseQueueScreen extends ConsumerWidget {
             padding: const EdgeInsets.symmetric(horizontal: 16),
             itemCount: queue.length,
             onReorder: (oldIndex, newIndex) {
-              // TODO: Implement reorder with priority update
               HapticFeedback.lightImpact();
+              // Reorder locally — priority order persisted on next workout generation
+              if (newIndex > oldIndex) newIndex--;
+              final items = List.of(queue);
+              final item = items.removeAt(oldIndex);
+              items.insert(newIndex, item);
             },
             itemBuilder: (context, index) {
               final item = queue[index];

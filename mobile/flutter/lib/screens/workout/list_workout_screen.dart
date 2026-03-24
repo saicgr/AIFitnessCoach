@@ -10,6 +10,7 @@ import '../../data/models/workout.dart';
 import '../../data/repositories/workout_repository.dart';
 import '../../data/services/api_client.dart';
 import '../../data/providers/xp_provider.dart';
+import 'widgets/exercise_add_sheet.dart';
 import 'widgets/exercise_set_tracker.dart';
 
 /// List-based workout screen similar to Strong app
@@ -455,9 +456,7 @@ class _ListWorkoutScreenState extends ConsumerState<ListWorkoutScreen> {
 
           // History button
           GestureDetector(
-            onTap: () {
-              // TODO: Show workout history
-            },
+            onTap: () => context.push('/workouts'),
             child: Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
@@ -493,9 +492,17 @@ class _ListWorkoutScreenState extends ConsumerState<ListWorkoutScreen> {
 
   Widget _buildAddExerciseButton() {
     return GestureDetector(
-      onTap: () {
-        // TODO: Show exercise picker
+      onTap: () async {
         HapticFeedback.lightImpact();
+        final workoutId = widget.workout.id;
+        if (workoutId == null) return;
+        final currentNames = widget.workout.exercises.map((e) => e.name).toList();
+        await showExerciseAddSheet(
+          context, ref,
+          workoutId: workoutId,
+          workoutType: widget.workout.type ?? 'strength',
+          currentExerciseNames: currentNames,
+        );
       },
       child: Container(
         margin: const EdgeInsets.all(16),

@@ -32,6 +32,7 @@ import 'widgets/edit_tracking_sheet.dart';
 import 'widgets/renewal_reminder_banner.dart';
 import 'widgets/missed_workout_banner.dart';
 import 'widgets/contextual_banner.dart';
+import 'widgets/week1_tip_banner.dart';
 import 'widgets/tile_factory.dart';
 import 'widgets/my_program_summary_card.dart';
 import 'widgets/hero_workout_card.dart';
@@ -58,6 +59,7 @@ import '../../data/repositories/nutrition_repository.dart';
 import '../../data/repositories/hydration_repository.dart';
 import '../../data/providers/billing_reminder_provider.dart';
 import '../../data/providers/scheduling_provider.dart';
+import '../../data/providers/week1_tips_provider.dart';
 import '../../widgets/usage_counter_strip.dart';
 import '../../widgets/app_tour/app_tour_controller.dart';
 
@@ -150,7 +152,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       ]);
       // Trigger nav tour after critical data has loaded so the home screen
       // is populated (workout card, calendar, etc.) before the spotlight appears.
-      // Short delay lets the user see their home screen before the tour starts.
+      // The carouselKey is now always in the widget tree (even during loading),
+      // so the spotlight will find it regardless of todayWorkoutProvider state.
       Future.delayed(const Duration(milliseconds: 800), () {
         if (!mounted) return;
         _triggerNavTour();
@@ -3714,7 +3717,8 @@ class _CategoryPill extends StatelessWidget {
 /// 2. Missed workout
 /// 3. Daily crate (unclaimed)
 /// 4. Double XP event active
-/// 5. Contextual tip (lowest)
+/// 5. Week 1 progressive feature tip (new users only)
+/// 6. Contextual tip (lowest)
 class _PriorityBanner extends ConsumerWidget {
   const _PriorityBanner();
 
@@ -3747,7 +3751,13 @@ class _PriorityBanner extends ConsumerWidget {
       return const DoubleXPBanner();
     }
 
-    // 5. Contextual banner (lowest priority)
+    // 5. Week 1 progressive feature tip (first 7 days after signup)
+    final week1Tip = ref.watch(week1TipProvider);
+    if (week1Tip != null) {
+      return const Week1TipBanner();
+    }
+
+    // 6. Contextual banner (lowest priority)
     return ContextualBanner(isDark: isDark);
   }
 }

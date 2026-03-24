@@ -10,6 +10,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:share_plus/share_plus.dart';
+import 'dart:io';
 
 import '../../../../core/constants/app_colors.dart';
 import '../../../../data/services/pr_detection_service.dart';
@@ -647,14 +650,37 @@ ${DateFormat('MMMM d, yyyy').format(widget.pr.achievedAt)}
   }
 
   Future<void> _shareImage() async {
-    // TODO: Implement image sharing
-    // 1. Capture widget as image using ShareCardCapture
-    // 2. Save to temp file
-    // 3. Share using share_plus package
+    try {
+      final imageBytes = await ShareCardCapture.captureWidget(
+        key: _cardKey,
+        pixelRatio: 3.0,
+      );
+      if (imageBytes == null) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Failed to capture image')),
+          );
+        }
+        return;
+      }
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Sharing PR card...')),
-    );
-    Navigator.pop(context);
+      final tempDir = await getTemporaryDirectory();
+      final file = File('${tempDir.path}/pr_card_${DateTime.now().millisecondsSinceEpoch}.png');
+      await file.writeAsBytes(imageBytes);
+
+      await Share.shareXFiles(
+        [XFile(file.path)],
+        text: 'New PR! 💪',
+      );
+
+      if (mounted) Navigator.pop(context);
+    } catch (e) {
+      debugPrint('Error sharing PR card: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Failed to share')),
+        );
+      }
+    }
   }
 }

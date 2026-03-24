@@ -63,6 +63,7 @@ import 'widgets/quit_workout_dialog.dart';
 import 'widgets/enhanced_notes_sheet.dart';
 import 'widgets/exercise_swap_sheet.dart';
 import 'widgets/exercise_add_sheet.dart';
+import 'widgets/superset_pair_sheet.dart';
 import 'widgets/ai_text_input_bar.dart';
 import 'widgets/parsed_exercises_preview_sheet.dart';
 import 'widgets/ai_input_preview_sheet.dart';
@@ -477,6 +478,7 @@ class _ActiveWorkoutScreenState
             resistanceLevel: (e['resistance_level'] as num?)?.toInt(),
             strokeRateSpm: (e['stroke_rate_spm'] as num?)?.toInt(),
             equipment: e['equipment']?.toString(),
+            isStaple: e['is_staple'] == true,
           )).toList();
         }
 
@@ -2863,30 +2865,38 @@ class _ActiveWorkoutScreenState
     // Route to appropriate phase screen
     switch (_currentPhase) {
       case WorkoutPhase.warmup:
+        // Skip warmup if API didn't return personalized exercises
+        if (_warmupExercises == null || _warmupExercises!.isEmpty) {
+          _handleWarmupComplete();
+          return const SizedBox.shrink();
+        }
         if (isFoldableOpen) {
           return FoldableWarmupLayout(
             windowState: windowState,
             workoutSeconds: _timerController.workoutSeconds,
-            exercises: _warmupExercises ?? defaultWarmupExercises,
+            exercises: _warmupExercises!,
             onSkipWarmup: _handleSkipWarmup,
             onWarmupComplete: _handleWarmupComplete,
             onQuitRequested: _showQuitDialog,
           );
         }
-        // Use personalized warmups from API if available, otherwise defaults
         return WarmupPhaseScreen(
           workoutSeconds: _timerController.workoutSeconds,
-          exercises: _warmupExercises ?? defaultWarmupExercises,
+          exercises: _warmupExercises!,
           onSkipWarmup: _handleSkipWarmup,
           onWarmupComplete: _handleWarmupComplete,
           onQuitRequested: _showQuitDialog,
         );
 
       case WorkoutPhase.stretch:
-        // Use personalized stretches from API if available, otherwise defaults
+        // Skip stretch if API didn't return personalized exercises
+        if (_stretchExercises == null || _stretchExercises!.isEmpty) {
+          _handleStretchComplete();
+          return const SizedBox.shrink();
+        }
         return StretchPhaseScreen(
           workoutSeconds: _timerController.workoutSeconds,
-          exercises: _stretchExercises ?? defaultStretchExercises,
+          exercises: _stretchExercises!,
           onSkipAll: _handleSkipStretch,
           onStretchComplete: _handleStretchComplete,
         );
@@ -6025,15 +6035,7 @@ class _ActiveWorkoutScreenState
           _precomputeSupersetIndices();
         });
       },
-      onSwapExercise: (index) {
-        // TODO: Open exercise swap sheet
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Swap ${_exercises[index].name}'),
-            duration: const Duration(seconds: 2),
-          ),
-        );
-      },
+      onSwapExercise: (index) => _showSwapSheet(index),
       onDeleteExercise: (index) {
         setState(() {
           // Remove exercise and shift data
@@ -6093,9 +6095,7 @@ class _ActiveWorkoutScreenState
           }
         });
       },
-      onAddExercise: () {
-        // TODO: Open exercise add sheet
-      },
+      onAddExercise: () => _showExerciseAddSheet(),
     );
   }
 
@@ -6394,8 +6394,24 @@ class _ActiveWorkoutScreenState
       onRemoveFromWorkout: () {
         _removeExerciseFromWorkout(exerciseIndex);
       },
-      onAddToSuperset: () {
-        // TODO: Implement superset functionality
+      onAddToSuperset: () async {
+        HapticFeedback.lightImpact();
+        final result = await showSupersetPairSheet(
+          context, ref,
+          workoutExercises: _exercises,
+          preselectedExercise: exercise,
+        );
+        if (result != null && mounted) {
+          setState(() {
+            _precomputeSupersetIndices();
+          });
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Superset: ${result.exercise1.name} + ${result.exercise2.name}'),
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
       },
       onRemoveAndDontRecommend: () {
         _removeExerciseFromWorkout(exerciseIndex);

@@ -175,42 +175,6 @@ class NutritionFastingCard extends ConsumerWidget {
             textMuted: textMuted,
           ),
 
-          // Meal Pattern
-          Divider(height: 1, color: cardBorder, indent: 48, endIndent: 16),
-          _buildInfoRow(
-            icon: Icons.access_time_outlined,
-            iconColor: AppColors.cyan,
-            label: 'Meal Pattern',
-            value: _getMealPatternDisplay(prefs?.mealPattern),
-            isDark: isDark,
-            textPrimary: textPrimary,
-            textMuted: textMuted,
-          ),
-
-          // Cooking
-          Divider(height: 1, color: cardBorder, indent: 48, endIndent: 16),
-          _buildInfoRow(
-            icon: Icons.soup_kitchen_outlined,
-            iconColor: AppColors.info,
-            label: 'Cooking',
-            value: '${CookingSkill.fromString(prefs?.cookingSkill ?? 'intermediate').displayName} · ${prefs?.cookingTimeMinutes ?? 30} min',
-            isDark: isDark,
-            textPrimary: textPrimary,
-            textMuted: textMuted,
-          ),
-
-          // Budget
-          Divider(height: 1, color: cardBorder, indent: 48, endIndent: 16),
-          _buildInfoRow(
-            icon: Icons.account_balance_wallet_outlined,
-            iconColor: AppColors.green,
-            label: 'Budget',
-            value: BudgetLevel.fromString(prefs?.budgetLevel ?? 'moderate').displayName,
-            isDark: isDark,
-            textPrimary: textPrimary,
-            textMuted: textMuted,
-          ),
-
           // Allergens (only if set)
           if (prefs?.allergies.isNotEmpty == true) ...[
             Divider(height: 1, color: cardBorder, indent: 48, endIndent: 16),
@@ -345,27 +309,12 @@ class NutritionFastingCard extends ConsumerWidget {
         return '0.25 kg / week';
       case 'moderate':
         return '0.5 kg / week';
-      case 'aggressive':
+      case 'fast':
         return '0.75 kg / week';
+      case 'aggressive':
+        return '1.0 kg / week';
       default:
         return rateOfChange;
-    }
-  }
-
-  String _getMealPatternDisplay(String? pattern) {
-    switch (pattern) {
-      case null:
-      case '3_meals': return '3 Meals';
-      case '3_meals_snacks': return '3 Meals + Snacks';
-      case '2_meals': return '2 Meals';
-      case 'omad': return 'OMAD';
-      case 'if_16_8': return 'IF 16:8';
-      case 'if_18_6': return 'IF 18:6';
-      case 'if_20_4': return 'IF 20:4';
-      case '5_6_small_meals': return '5-6 Small Meals';
-      case 'religious_fasting': return 'Religious Fast';
-      case 'custom': return 'Custom';
-      default: return pattern;
     }
   }
 

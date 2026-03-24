@@ -49,6 +49,7 @@ const _$MilestoneCategoryEnumMap = {
   MilestoneCategory.time: 'time',
   MilestoneCategory.weight: 'weight',
   MilestoneCategory.prs: 'prs',
+  MilestoneCategory.firstSteps: 'first_steps',
 };
 
 const _$MilestoneTierEnumMap = {

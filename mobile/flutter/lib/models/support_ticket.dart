@@ -27,11 +27,11 @@ class SupportTicket {
   factory SupportTicket.fromJson(Map<String, dynamic> json) {
     return SupportTicket(
       id: json['id'] as String,
-      userId: json['user_id'] as String,
-      subject: json['subject'] as String,
-      category: json['category'] as String,
+      userId: json['user_id'] as String? ?? '',
+      subject: json['subject'] as String? ?? '',
+      category: json['category'] as String? ?? 'other',
       priority: json['priority'] as String? ?? 'medium',
-      status: json['status'] as String,
+      status: json['status'] as String? ?? 'open',
       createdAt: DateTime.parse(json['created_at'] as String),
       updatedAt: DateTime.parse(json['updated_at'] as String),
       messages: json['messages'] != null
@@ -199,10 +199,10 @@ class TicketMessage {
     return TicketMessage(
       id: json['id'] as String,
       ticketId: json['ticket_id'] as String,
-      senderId: json['sender_id'] as String,
-      senderType: json['sender_type'] as String,
+      senderId: json['sender_id'] as String? ?? json['sender'] as String? ?? '',
+      senderType: json['sender_type'] as String? ?? json['sender'] as String? ?? 'user',
       senderName: json['sender_name'] as String? ?? 'Unknown',
-      content: json['content'] as String,
+      content: json['content'] as String? ?? json['message'] as String? ?? '',
       attachments: json['attachments'] != null
           ? (json['attachments'] as List).cast<String>()
           : null,

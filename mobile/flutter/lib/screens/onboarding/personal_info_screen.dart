@@ -12,6 +12,7 @@ import '../../core/constants/api_constants.dart';
 import 'pre_auth_quiz_screen.dart';
 import 'widgets/foldable_quiz_scaffold.dart';
 import 'widgets/quiz_body_metrics.dart';
+import 'widgets/quiz_weight_rate.dart';
 
 /// Personal Info Screen - Collects name, DOB, gender, height, weight, goal weight
 /// Shown between sign-in and coach selection
@@ -36,6 +37,7 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen> {
   bool _useMetric = true;
   String? _weightDirection;
   double? _weightChangeAmount;
+  String? _weightChangeRate;
 
   @override
   void initState() {
@@ -56,6 +58,7 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen> {
       _useMetric = quizData.useMetricUnits;
       _weightDirection = quizData.weightDirection;
       _weightChangeAmount = quizData.weightChangeAmount;
+      _weightChangeRate = quizData.weightChangeRate;
     });
   }
 
@@ -199,6 +202,7 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen> {
             useMetric: _useMetric,
             weightDirection: _weightDirection,
             weightChangeAmount: _weightChangeAmount,
+            weightChangeRate: _weightChangeRate,
           );
 
       // Save to backend - this updates the user's profile
@@ -289,33 +293,56 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen> {
                   _buildProgressIndicator(isDark),
                 ],
 
-                // Body metrics form
+                // Body metrics form + rate selector
                 Expanded(
-                  child: QuizBodyMetrics(
-                    name: _name,
-                    dateOfBirth: _dateOfBirth,
-                    gender: _gender,
-                    heightCm: _heightCm,
-                    weightKg: _weightKg,
-                    goalWeightKg: _goalWeightKg,
-                    useMetric: _useMetric,
-                    weightDirection: _weightDirection,
-                    weightChangeAmount: _weightChangeAmount,
-                    onNameChanged: (name) => setState(() {
-                      _name = name.isEmpty ? null : name;
-                      _nameError = name.isEmpty ? null : _validateName(name);
-                    }),
-                    nameError: _nameError,
-                    onDateOfBirthChanged: (dob) => setState(() => _dateOfBirth = dob),
-                    onGenderChanged: (gender) => setState(() => _gender = gender),
-                    onHeightChanged: (height) => setState(() => _heightCm = height),
-                    onWeightChanged: (weight) => setState(() => _weightKg = weight),
-                    onGoalWeightChanged: (goal) => setState(() => _goalWeightKg = goal),
-                    onUnitChanged: (useMetric) => setState(() => _useMetric = useMetric),
-                    onWeightDirectionChanged: (direction) => setState(() => _weightDirection = direction),
-                    onWeightChangeAmountChanged: (amount) => setState(() => _weightChangeAmount = amount),
-                    showHeader: !isFoldable,
-                    compact: isFoldable,
+                  child: Column(
+                    children: [
+                      Expanded(
+                        child: QuizBodyMetrics(
+                          name: _name,
+                          dateOfBirth: _dateOfBirth,
+                          gender: _gender,
+                          heightCm: _heightCm,
+                          weightKg: _weightKg,
+                          goalWeightKg: _goalWeightKg,
+                          useMetric: _useMetric,
+                          weightDirection: _weightDirection,
+                          weightChangeAmount: _weightChangeAmount,
+                          onNameChanged: (name) => setState(() {
+                            _name = name.isEmpty ? null : name;
+                            _nameError = name.isEmpty ? null : _validateName(name);
+                          }),
+                          nameError: _nameError,
+                          onDateOfBirthChanged: (dob) => setState(() => _dateOfBirth = dob),
+                          onGenderChanged: (gender) => setState(() => _gender = gender),
+                          onHeightChanged: (height) => setState(() => _heightCm = height),
+                          onWeightChanged: (weight) => setState(() => _weightKg = weight),
+                          onGoalWeightChanged: (goal) => setState(() => _goalWeightKg = goal),
+                          onUnitChanged: (useMetric) => setState(() => _useMetric = useMetric),
+                          onWeightDirectionChanged: (direction) => setState(() {
+                            _weightDirection = direction;
+                            // Default rate when direction changes
+                            if (direction != 'maintain' && _weightChangeRate == null) {
+                              _weightChangeRate = 'moderate';
+                            }
+                          }),
+                          onWeightChangeAmountChanged: (amount) => setState(() => _weightChangeAmount = amount),
+                          showHeader: !isFoldable,
+                          compact: isFoldable,
+                        ),
+                      ),
+                      // Rate selector — shown only for lose/gain goals
+                      if (_weightDirection != null && _weightDirection != 'maintain')
+                        QuizWeightRate(
+                          weightDirection: _weightDirection,
+                          selectedRate: _weightChangeRate ?? 'moderate',
+                          currentWeight: _weightKg,
+                          goalWeight: _goalWeightKg,
+                          useMetric: _useMetric,
+                          onRateChanged: (rate) => setState(() => _weightChangeRate = rate),
+                          showHeader: false,
+                        ),
+                    ],
                   ),
                 ),
               ],

@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/constants/app_links.dart';
 import '../../core/providers/window_mode_provider.dart';
 import '../../widgets/glass_back_button.dart';
 import '../../widgets/press_and_hold_button.dart';
@@ -245,7 +246,7 @@ class _AiConsentScreenState extends ConsumerState<AiConsentScreen> {
                       ),
                       _buildLink('Full Disclaimer', () {
                         HapticFeedback.selectionClick();
-                        launchUrl(Uri.parse('https://fitwiz.app/health-disclaimer'), mode: LaunchMode.externalApplication);
+                        launchUrl(Uri.parse('${AppLinks.website}/health-disclaimer'), mode: LaunchMode.externalApplication);
                       }, isDark),
                     ],
                   ).animate().fadeIn(delay: 450.ms),

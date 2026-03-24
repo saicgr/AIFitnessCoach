@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
@@ -9,72 +10,188 @@ import '../../data/repositories/chat_repository.dart';
 import '../../screens/ai_settings/ai_settings_screen.dart';
 import '../app_tour/app_tour_controller.dart';
 import '../coach_avatar.dart';
+import '../main_shell.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'floating_chat_provider.dart';
 
-/// Floating AI Coach chat bubble widget
-/// This is a self-contained widget that can be added to any Stack
-/// Uses floatingChatProvider for persistent state across navigation
-class FloatingChatBubble extends ConsumerWidget {
+/// Resolves the currently selected [CoachPersona] from AI settings.
+CoachPersona? _resolveCoach(String? coachPersonaId) {
+  if (coachPersonaId == null || coachPersonaId.isEmpty) return null;
+  try {
+    return CoachPersona.predefinedCoaches.firstWhere((c) => c.id == coachPersonaId);
+  } catch (_) {
+    return null;
+  }
+}
 
+/// Floating AI Coach chat bubble widget with drag-to-dismiss support.
+/// This is a self-contained widget that can be added to any Stack.
+/// Uses floatingChatProvider for persistent state across navigation.
+///
+/// Drag the bubble to the bottom-center dismiss zone (trash icon) to hide it
+/// and disable the floating bubble toggle in settings.
+class FloatingChatBubble extends ConsumerWidget {
   const FloatingChatBubble({super.key});
+
+  /// Height of the dismiss zone at the bottom of the screen.
+  static const _dismissZoneHeight = 80.0;
+
+  /// Whether the bubble's current bottom position is inside the dismiss zone.
+  static bool _isInDismissZone(double bubbleBottom) => bubbleBottom <= 20;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final chatState = ref.watch(floatingChatProvider);
     final notifier = ref.read(floatingChatProvider.notifier);
+    final aiSettings = ref.watch(aiSettingsProvider);
+    final coach = _resolveCoach(aiSettings.coachPersonaId);
     final screenSize = MediaQuery.of(context).size;
     final bottomPadding = MediaQuery.of(context).padding.bottom;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    // Show the bubble as a Positioned widget - tap navigates to full chat screen
-    return Positioned(
-      right: chatState.bubbleRight,
-      bottom: chatState.bubbleBottom + bottomPadding,
-      child: GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onTap: () {
-          debugPrint('FloatingChatBubble: Tapped - navigating to /chat');
-          // Navigate to full chat screen for proper keyboard handling
-          context.push('/chat');
-        },
-        onPanStart: (_) => notifier.setDragging(true),
-        onPanUpdate: (details) {
-          final newRight = (chatState.bubbleRight - details.delta.dx).clamp(16.0, screenSize.width - 72);
-          final newBottom = (chatState.bubbleBottom - details.delta.dy).clamp(100.0, screenSize.height - 200);
-          notifier.updateBubblePosition(newRight, newBottom);
-        },
-        onPanEnd: (_) => notifier.setDragging(false),
-        child: AnimatedScale(
-          scale: chatState.isDragging ? 1.1 : 1.0,
-          duration: const Duration(milliseconds: 150),
-          child: Container(
-            key: AppTourKeys.aiChatKey,
-            width: 56,
-            height: 56,
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [AppColors.purple, AppColors.cyan],
-              ),
-              borderRadius: BorderRadius.circular(28),
-              boxShadow: [
-                BoxShadow(
-                  color: AppColors.cyan.withValues(alpha: chatState.isDragging ? 0.6 : 0.4),
-                  blurRadius: chatState.isDragging ? 20 : 16,
-                  offset: const Offset(0, 4),
-                  spreadRadius: chatState.isDragging ? 2 : 0,
+    return Stack(
+      children: [
+        // ── Dismiss zone (visible only while dragging) ──────────────
+        if (chatState.isDragging)
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: 0,
+            height: _dismissZoneHeight + bottomPadding,
+            child: IgnorePointer(
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.bottomCenter,
+                    end: Alignment.topCenter,
+                    colors: [
+                      (chatState.isOverDismissZone
+                              ? Colors.red
+                              : (isDark ? Colors.white : Colors.black))
+                          .withValues(alpha: chatState.isOverDismissZone ? 0.25 : 0.10),
+                      Colors.transparent,
+                    ],
+                  ),
                 ),
-              ],
+                child: Align(
+                  alignment: Alignment.bottomCenter,
+                  child: Padding(
+                    padding: EdgeInsets.only(bottom: bottomPadding + 16),
+                    child: AnimatedScale(
+                      scale: chatState.isOverDismissZone ? 1.3 : 1.0,
+                      duration: const Duration(milliseconds: 200),
+                      child: Container(
+                        width: 48,
+                        height: 48,
+                        decoration: BoxDecoration(
+                          color: chatState.isOverDismissZone
+                              ? Colors.red
+                              : (isDark
+                                  ? Colors.white.withValues(alpha: 0.15)
+                                  : Colors.black.withValues(alpha: 0.08)),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(
+                          Icons.close_rounded,
+                          color: chatState.isOverDismissZone
+                              ? Colors.white
+                              : (isDark ? Colors.white70 : Colors.black54),
+                          size: 24,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
             ),
-            child: const Icon(
-              Icons.auto_awesome,
-              color: Colors.white,
-              size: 24,
+          ),
+
+        // ── Draggable bubble ────────────────────────────────────────
+        Positioned(
+          right: chatState.bubbleRight,
+          bottom: chatState.bubbleBottom + bottomPadding,
+          child: GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: () {
+              context.push('/chat');
+            },
+            onPanStart: (_) => notifier.setDragging(true),
+            onPanUpdate: (details) {
+              final newRight = (chatState.bubbleRight - details.delta.dx)
+                  .clamp(16.0, screenSize.width - 72);
+              // Allow dragging lower (down to 0) so bubble can reach dismiss zone
+              final newBottom = (chatState.bubbleBottom - details.delta.dy)
+                  .clamp(0.0, screenSize.height - 200);
+              notifier.updateBubblePosition(newRight, newBottom);
+              notifier.setOverDismissZone(_isInDismissZone(newBottom));
+            },
+            onPanEnd: (_) {
+              if (chatState.isOverDismissZone) {
+                // Dismiss: disable the bubble in settings
+                HapticFeedback.heavyImpact();
+                ref.read(edgeHandleEnabledProvider.notifier).setEnabled(false);
+                // Reset position for if re-enabled later
+                notifier.updateBubblePosition(16, 100);
+              } else {
+                // Snap back if dragged too low but not into dismiss zone
+                if (chatState.bubbleBottom < 100) {
+                  notifier.updateBubblePosition(
+                      chatState.bubbleRight, 100);
+                }
+              }
+              notifier.setDragging(false);
+            },
+            child: AnimatedScale(
+              scale: chatState.isDragging
+                  ? (chatState.isOverDismissZone ? 0.7 : 1.1)
+                  : 1.0,
+              duration: const Duration(milliseconds: 150),
+              child: AnimatedOpacity(
+                opacity: chatState.isOverDismissZone ? 0.5 : 1.0,
+                duration: const Duration(milliseconds: 150),
+                child: coach != null
+                    ? CoachAvatar(
+                        key: AppTourKeys.aiChatKey,
+                        coach: coach,
+                        size: 56,
+                        showBorder: true,
+                        borderWidth: 3,
+                        showShadow: true,
+                        enableTapToView: false,
+                      )
+                    : Container(
+                        key: AppTourKeys.aiChatKey,
+                        width: 56,
+                        height: 56,
+                        decoration: BoxDecoration(
+                          gradient: const LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                            colors: [AppColors.purple, AppColors.cyan],
+                          ),
+                          borderRadius: BorderRadius.circular(28),
+                          boxShadow: [
+                            BoxShadow(
+                              color: AppColors.cyan.withValues(
+                                  alpha: chatState.isDragging ? 0.6 : 0.4),
+                              blurRadius: chatState.isDragging ? 20 : 16,
+                              offset: const Offset(0, 4),
+                              spreadRadius: chatState.isDragging ? 2 : 0,
+                            ),
+                          ],
+                        ),
+                        child: const Icon(
+                          Icons.auto_awesome,
+                          color: Colors.white,
+                          size: 24,
+                        ),
+                      ),
+              ),
             ),
           ),
         ),
-      ),
+      ],
     );
   }
 }

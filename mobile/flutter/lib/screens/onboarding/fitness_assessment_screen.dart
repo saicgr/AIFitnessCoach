@@ -138,7 +138,7 @@ class _FitnessAssessmentScreenState
 
     // Navigate directly to paywall features
     if (mounted) {
-      context.go('/paywall-features');
+      context.go('/accuracy-intro');
     }
   }
 
@@ -146,7 +146,7 @@ class _FitnessAssessmentScreenState
     HapticFeedback.mediumImpact();
     // Skip without saving fitness data — defaults will be used
     if (mounted) {
-      context.go('/paywall-features');
+      context.go('/accuracy-intro');
     }
   }
 

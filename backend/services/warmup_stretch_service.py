@@ -432,6 +432,7 @@ class WarmupStretchService:
             injuries=injuries,
             intensity="medium",
             user_id=user_id,
+            avoid_exercises=avoid_exercises,
         )
 
         # Inject user's warmup staple exercises
@@ -461,6 +462,17 @@ class WarmupStretchService:
                         "resistance_level": row.get("user_resistance_level") or row.get("default_resistance_level"),
                         "stroke_rate_spm": row.get("user_stroke_rate_spm") or row.get("stroke_rate_spm"),
                     })
+                # Filter staples against injuries for safety
+                if injuries and warmup_staples:
+                    from services.warmup_stretch_algorithm import INJURY_AVOID_WARMUPS
+                    algorithm = get_warmup_stretch_algorithm()
+                    staple_names = [s["name"] for s in warmup_staples]
+                    safe_names = set(algorithm._filter_by_injuries(staple_names, injuries, INJURY_AVOID_WARMUPS))
+                    removed = [s["name"] for s in warmup_staples if s["name"] not in safe_names]
+                    if removed:
+                        logger.info(f"🩹 Removed {len(removed)} warmup staples due to injuries: {removed}")
+                    warmup_staples = [s for s in warmup_staples if s["name"] in safe_names]
+
                 if warmup_staples:
                     logger.info(f"⭐ Injected {len(warmup_staples)} warmup staples for user {user_id}")
             except Exception as e:
@@ -619,6 +631,17 @@ class WarmupStretchService:
                         "resistance_level": row.get("user_resistance_level") or row.get("default_resistance_level"),
                         "stroke_rate_spm": row.get("user_stroke_rate_spm") or row.get("stroke_rate_spm"),
                     })
+                # Filter stretch staples against injuries for safety
+                if injuries and stretch_staples:
+                    from services.warmup_stretch_algorithm import INJURY_AVOID_STRETCHES
+                    algorithm = get_warmup_stretch_algorithm()
+                    staple_names = [s["name"] for s in stretch_staples]
+                    safe_names = set(algorithm._filter_by_injuries(staple_names, injuries, INJURY_AVOID_STRETCHES))
+                    removed = [s["name"] for s in stretch_staples if s["name"] not in safe_names]
+                    if removed:
+                        logger.info(f"🩹 Removed {len(removed)} stretch staples due to injuries: {removed}")
+                    stretch_staples = [s for s in stretch_staples if s["name"] in safe_names]
+
                 if stretch_staples:
                     logger.info(f"⭐ Injected {len(stretch_staples)} stretch staples for user {user_id}")
             except Exception as e:

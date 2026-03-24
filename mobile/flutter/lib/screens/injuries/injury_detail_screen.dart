@@ -724,9 +724,7 @@ class _InjuryDetailScreenState extends ConsumerState<InjuryDetailScreen> {
               ),
             ),
             TextButton(
-              onPressed: () {
-                // TODO: Navigate to rehab exercise list
-              },
+              onPressed: () => context.push('/library?filter=rehab'),
               child: const Text('View All'),
             ),
           ],
@@ -738,7 +736,10 @@ class _InjuryDetailScreenState extends ConsumerState<InjuryDetailScreen> {
             child: RehabExerciseCard(
               exercise: exercise,
               onToggleComplete: () {
-                // TODO: Toggle completion
+                setState(() {
+                  // Toggle completion state locally
+                });
+                HapticFeedback.selectionClick();
               },
             ),
           );

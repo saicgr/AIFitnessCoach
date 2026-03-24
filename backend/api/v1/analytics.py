@@ -13,6 +13,8 @@ ENDPOINTS:
 - POST /api/v1/analytics/batch - Batch upload analytics events
 - GET  /api/v1/analytics/{user_id}/summary - Get user's analytics summary
 - GET  /api/v1/analytics/{user_id}/screen-time - Get screen time breakdown
+- GET  /api/v1/analytics/{user_id}/feature-adoption - Get user's feature adoption data
+- POST /api/v1/analytics/{user_id}/feature-adoption - Record a feature use (upsert)
 """
 from datetime import datetime, date, timedelta
 from fastapi import APIRouter, Depends, HTTPException
@@ -681,3 +683,142 @@ def _track_daily_event(supabase, user_id: str, event_name: str):
 
     except Exception as e:
         logger.error(f"Failed to track daily event: {e}")
+
+
+# ─────────────────────────────────────────────────────────────────
+# Feature Adoption Tracking
+# ─────────────────────────────────────────────────────────────────
+
+# Valid feature keys for adoption tracking
+VALID_FEATURE_KEYS = {
+    "photo_meal_log",
+    "barcode_scan",
+    "ai_chat_message",
+    "workout_completed",
+    "nutrition_target_set",
+    "streak_3_days",
+    "health_connect_enabled",
+}
+
+
+class FeatureAdoptionRequest(BaseModel):
+    """Request to record a feature use."""
+    feature_key: str
+
+
+class FeatureAdoptionResponse(BaseModel):
+    """Single feature adoption record."""
+    id: str
+    feature_key: str
+    first_used_at: str
+    use_count: int
+    last_used_at: str
+
+
+@router.get("/{user_id}/feature-adoption")
+async def get_feature_adoption(
+    user_id: str,
+    current_user: dict = Depends(get_current_user),
+):
+    """Get all adopted features for a user."""
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
+
+    try:
+        supabase = get_supabase()
+
+        result = supabase.client.table("feature_adoption")\
+            .select("*")\
+            .eq("user_id", user_id)\
+            .order("first_used_at", desc=False)\
+            .execute()
+
+        features = []
+        for row in result.data or []:
+            features.append(FeatureAdoptionResponse(
+                id=row["id"],
+                feature_key=row["feature_key"],
+                first_used_at=row["first_used_at"],
+                use_count=row.get("use_count", 1),
+                last_used_at=row["last_used_at"],
+            ))
+
+        return {"user_id": user_id, "features": features}
+
+    except Exception as e:
+        logger.error(f"Failed to get feature adoption: {e}")
+        raise safe_internal_error(e, "get_feature_adoption")
+
+
+@router.post("/{user_id}/feature-adoption")
+async def record_feature_adoption(
+    user_id: str,
+    request: FeatureAdoptionRequest,
+    current_user: dict = Depends(get_current_user),
+):
+    """
+    Record a feature use (upsert).
+
+    First call creates the record with use_count=1.
+    Subsequent calls increment use_count and update last_used_at.
+    """
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
+
+    if request.feature_key not in VALID_FEATURE_KEYS:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid feature_key '{request.feature_key}'. "
+                   f"Valid keys: {', '.join(sorted(VALID_FEATURE_KEYS))}",
+        )
+
+    try:
+        supabase = get_supabase()
+        now = datetime.utcnow().isoformat()
+
+        # Check if record already exists
+        existing = supabase.client.table("feature_adoption")\
+            .select("id, use_count")\
+            .eq("user_id", user_id)\
+            .eq("feature_key", request.feature_key)\
+            .execute()
+
+        if existing.data:
+            # Increment use_count and update last_used_at
+            row = existing.data[0]
+            new_count = (row.get("use_count") or 1) + 1
+
+            supabase.client.table("feature_adoption")\
+                .update({
+                    "use_count": new_count,
+                    "last_used_at": now,
+                })\
+                .eq("id", row["id"])\
+                .execute()
+
+            return {
+                "tracked": True,
+                "feature_key": request.feature_key,
+                "use_count": new_count,
+                "is_first_use": False,
+            }
+        else:
+            # Insert new record
+            supabase.client.table("feature_adoption").insert({
+                "user_id": user_id,
+                "feature_key": request.feature_key,
+                "first_used_at": now,
+                "use_count": 1,
+                "last_used_at": now,
+            }).execute()
+
+            return {
+                "tracked": True,
+                "feature_key": request.feature_key,
+                "use_count": 1,
+                "is_first_use": True,
+            }
+
+    except Exception as e:
+        logger.error(f"Failed to record feature adoption: {e}")
+        raise safe_internal_error(e, "record_feature_adoption")

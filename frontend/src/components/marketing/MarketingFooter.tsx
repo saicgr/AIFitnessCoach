@@ -26,7 +26,6 @@ export default function MarketingFooter() {
             <ul className="space-y-3">
               <li><Link to="/features" className="text-sm text-slate-400 hover:text-white transition-colors">Features</Link></li>
               <li><Link to="/pricing" className="text-sm text-slate-400 hover:text-white transition-colors">Pricing</Link></li>
-              <li><Link to="/store" className="text-sm text-slate-400 hover:text-white transition-colors">Store</Link></li>
               <li><Link to="/login" className="text-sm text-slate-400 hover:text-white transition-colors">Get Started</Link></li>
             </ul>
           </div>
@@ -35,10 +34,10 @@ export default function MarketingFooter() {
           <div>
             <h4 className="text-sm font-semibold text-white mb-4">Company</h4>
             <ul className="space-y-3">
-              <li><Link to="/" className="text-sm text-slate-400 hover:text-white transition-colors">About</Link></li>
-              <li><Link to="/" className="text-sm text-slate-400 hover:text-white transition-colors">Blog</Link></li>
-              <li><Link to="/" className="text-sm text-slate-400 hover:text-white transition-colors">Careers</Link></li>
-              <li><Link to="/" className="text-sm text-slate-400 hover:text-white transition-colors">Contact</Link></li>
+              <li><Link to="/about" className="text-sm text-slate-400 hover:text-white transition-colors">About</Link></li>
+              <li><Link to="/faq" className="text-sm text-slate-400 hover:text-white transition-colors">FAQ</Link></li>
+              <li><Link to="/contact" className="text-sm text-slate-400 hover:text-white transition-colors">Contact</Link></li>
+              <li><Link to="/changelog" className="text-sm text-slate-400 hover:text-white transition-colors">Changelog</Link></li>
             </ul>
           </div>
 
@@ -48,8 +47,9 @@ export default function MarketingFooter() {
             <ul className="space-y-3">
               <li><Link to="/terms" className="text-sm text-slate-400 hover:text-white transition-colors">Terms of Service</Link></li>
               <li><Link to="/privacy" className="text-sm text-slate-400 hover:text-white transition-colors">Privacy Policy</Link></li>
-              <li><Link to="/refunds" className="text-sm text-slate-400 hover:text-white transition-colors">Refund Policy</Link></li>
               <li><Link to="/health-disclaimer" className="text-sm text-slate-400 hover:text-white transition-colors">Health Disclaimer</Link></li>
+              <li><Link to="/refunds" className="text-sm text-slate-400 hover:text-white transition-colors">Refund Policy</Link></li>
+              <li><Link to="/delete-account" className="text-sm text-slate-400 hover:text-white transition-colors">Delete Account</Link></li>
             </ul>
           </div>
         </div>

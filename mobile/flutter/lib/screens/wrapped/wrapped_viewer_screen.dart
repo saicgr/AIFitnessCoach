@@ -65,6 +65,7 @@ class _WrappedViewerScreenState extends ConsumerState<WrappedViewerScreen> {
 
   void _goToPage(int page) {
     if (page < 0 || page >= _totalCards) return;
+    if (!_pageController.hasClients) return;
     _pageController.animateToPage(
       page,
       duration: const Duration(milliseconds: 300),

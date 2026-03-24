@@ -245,8 +245,9 @@ def row_to_user(row: dict, is_new_user: bool = False, support_friend_added: bool
         equipment_details=row.get("equipment_details"),
         # Weight unit preference (kg or lbs)
         weight_unit=row.get("weight_unit") or "kg",
-        # Profile photo URL
+        # Profile photo URL and bio
         photo_url=row.get("photo_url"),
+        bio=row.get("bio"),
         # Device info fields
         device_model=row.get("device_model"),
         device_platform=row.get("device_platform"),
@@ -2599,6 +2600,7 @@ async def calculate_nutrition_targets(user_id: str, request: NutritionCalculatio
                         "user_id": user_id,
                         "nutrition_goals": nutrition_goals,
                         "nutrition_goal": nutrition_goals[0] if nutrition_goals else "maintain",
+                        "rate_of_change": request.weight_change_rate or "moderate",
                     },
                     on_conflict="user_id",
                 ).execute()

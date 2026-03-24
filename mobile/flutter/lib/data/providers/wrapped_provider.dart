@@ -1,11 +1,17 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/wrapped_data.dart';
+import '../models/wrapped_summary.dart';
 import '../services/wrapped_service.dart';
 
 final wrappedProvider =
     FutureProvider.family<WrappedData, String>((ref, periodKey) async {
   final service = ref.read(wrappedServiceProvider);
   return service.getWrapped(periodKey);
+});
+
+final wrappedSummaryProvider = FutureProvider<WrappedSummary>((ref) async {
+  final service = ref.read(wrappedServiceProvider);
+  return service.getSummary();
 });
 
 final availableWrappedPeriodsProvider =

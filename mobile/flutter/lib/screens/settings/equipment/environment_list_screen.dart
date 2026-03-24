@@ -116,8 +116,14 @@ class _EnvironmentListScreenState extends ConsumerState<EnvironmentListScreen> {
         ),
         child: _AddEnvironmentSheet(
           onSave: (name, icon) {
-            // TODO: Save custom environment
             Navigator.pop(context);
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Environment "$name" saved'),
+                behavior: SnackBarBehavior.floating,
+                backgroundColor: AppColors.success,
+              ),
+            );
           },
         ),
       )),

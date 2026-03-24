@@ -1,0 +1,169 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../core/constants/app_colors.dart';
+import '../repositories/auth_repository.dart';
+import 'feature_adoption_provider.dart';
+
+// ============================================
+// Week 1 Tip Model
+// ============================================
+
+/// A single progressive feature tip shown during the user's first week.
+class Week1Tip {
+  final String featureKey;
+  final String title;
+  final String subtitle;
+  final IconData icon;
+  final String? actionRoute;
+  final Color accentColor;
+
+  const Week1Tip({
+    required this.featureKey,
+    required this.title,
+    required this.subtitle,
+    required this.icon,
+    this.actionRoute,
+    required this.accentColor,
+  });
+}
+
+// ============================================
+// Tip Schedule
+// ============================================
+
+/// Internal schedule entry pairing a day range with tip content.
+class _TipScheduleEntry {
+  final int startDay; // Inclusive
+  final int endDay; // Exclusive (tip shows when startDay <= daysSinceSignup < endDay)
+  final Week1Tip tip;
+
+  const _TipScheduleEntry({
+    required this.startDay,
+    required this.endDay,
+    required this.tip,
+  });
+}
+
+/// Ordered tip schedule. The first tip whose day range matches AND whose
+/// feature has NOT been used yet is shown.
+const List<_TipScheduleEntry> _tipSchedule = [
+  _TipScheduleEntry(
+    startDay: 0,
+    endDay: 2,
+    tip: Week1Tip(
+      featureKey: 'photo_meal_log',
+      title: 'Snap & Track',
+      subtitle: 'Snap a photo of your meal for instant nutrition tracking',
+      icon: Icons.camera_alt_outlined,
+      actionRoute: '/chat',
+      accentColor: AppColors.orange,
+    ),
+  ),
+  _TipScheduleEntry(
+    startDay: 1,
+    endDay: 3,
+    tip: Week1Tip(
+      featureKey: 'barcode_scan',
+      title: 'Barcode Scanner',
+      subtitle: 'Scan any product barcode for precise nutrition data',
+      icon: Icons.qr_code_scanner_outlined,
+      actionRoute: '/nutrition',
+      accentColor: AppColors.cyan,
+    ),
+  ),
+  _TipScheduleEntry(
+    startDay: 2,
+    endDay: 4,
+    tip: Week1Tip(
+      featureKey: 'ai_chat_message',
+      title: 'Ask Your Coach',
+      subtitle: 'Ask your AI coach anything about fitness or nutrition',
+      icon: Icons.chat_outlined,
+      actionRoute: '/chat',
+      accentColor: AppColors.purple,
+    ),
+  ),
+  _TipScheduleEntry(
+    startDay: 3,
+    endDay: 5,
+    tip: Week1Tip(
+      featureKey: 'workout_completed',
+      title: 'Build Your Streak',
+      subtitle: "Complete today's workout to build your streak",
+      icon: Icons.fitness_center_outlined,
+      actionRoute: null, // stays on home screen
+      accentColor: AppColors.success,
+    ),
+  ),
+  _TipScheduleEntry(
+    startDay: 4,
+    endDay: 6,
+    tip: Week1Tip(
+      featureKey: 'nutrition_target_set',
+      title: 'Set Nutrition Targets',
+      subtitle: 'Set your daily nutrition targets for better tracking',
+      icon: Icons.track_changes_outlined,
+      actionRoute: '/nutrition',
+      accentColor: AppColors.orange,
+    ),
+  ),
+  _TipScheduleEntry(
+    startDay: 5,
+    endDay: 7,
+    tip: Week1Tip(
+      featureKey: 'health_connect_enabled',
+      title: 'Connect Health',
+      subtitle: 'Connect Health to auto-track steps and calories',
+      icon: Icons.monitor_heart_outlined,
+      actionRoute: '/settings',
+      accentColor: AppColors.green,
+    ),
+  ),
+];
+
+// ============================================
+// Provider
+// ============================================
+
+/// Provides the current [Week1Tip] to show, or null if none applies.
+///
+/// Logic:
+/// 1. Compute days since signup from user.createdAt.
+/// 2. Walk the schedule in order.
+/// 3. Return the first tip where the day range matches AND the feature has
+///    not yet been used (per [featureAdoptionProvider]).
+/// 4. Return null after day 7 or when all tips are used.
+final week1TipProvider = Provider<Week1Tip?>((ref) {
+  // Read auth state to get createdAt
+  final authState = ref.watch(authStateProvider);
+  final user = authState.user;
+  if (user == null || user.createdAt == null) return null;
+
+  // Parse createdAt and compute days since signup
+  final DateTime createdAt;
+  try {
+    createdAt = DateTime.parse(user.createdAt!);
+  } catch (_) {
+    return null;
+  }
+
+  final now = DateTime.now();
+  final daysSinceSignup = now.difference(createdAt).inDays;
+
+  // Past the first week — no more tips
+  if (daysSinceSignup >= 7) return null;
+
+  // Read feature adoption state
+  final adoptionState = ref.watch(featureAdoptionProvider);
+
+  // Find the first eligible tip
+  for (final entry in _tipSchedule) {
+    if (daysSinceSignup >= entry.startDay &&
+        daysSinceSignup < entry.endDay &&
+        !adoptionState.hasUsedFeature(entry.tip.featureKey)) {
+      return entry.tip;
+    }
+  }
+
+  return null;
+});

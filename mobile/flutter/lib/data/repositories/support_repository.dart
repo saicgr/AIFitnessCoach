@@ -23,13 +23,8 @@ class SupportRepository {
     try {
       debugPrint('🔍 [Support] Fetching tickets for user: $userId');
 
-      final queryParams = <String, dynamic>{};
-      if (userId != null) queryParams['user_id'] = userId;
-
-      final response = await _apiClient.get(
-        '/support/tickets',
-        queryParameters: queryParams,
-      );
+      final path = userId != null ? '/support/tickets/$userId' : '/support/tickets';
+      final response = await _apiClient.get(path);
 
       if (response.statusCode == 200) {
         final List<dynamic> data = response.data as List;

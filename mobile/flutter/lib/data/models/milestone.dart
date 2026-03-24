@@ -27,6 +27,8 @@ enum MilestoneCategory {
   weight,
   @JsonValue('prs')
   prs,
+  @JsonValue('first_steps')
+  firstSteps,
 }
 
 extension MilestoneCategoryExtension on MilestoneCategory {
@@ -46,6 +48,8 @@ extension MilestoneCategoryExtension on MilestoneCategory {
         return 'Weight';
       case MilestoneCategory.prs:
         return 'PRs';
+      case MilestoneCategory.firstSteps:
+        return 'First Steps';
     }
   }
 
@@ -65,6 +69,8 @@ extension MilestoneCategoryExtension on MilestoneCategory {
         return 'monitor_weight';
       case MilestoneCategory.prs:
         return 'military_tech';
+      case MilestoneCategory.firstSteps:
+        return 'rocket_launch';
     }
   }
 }

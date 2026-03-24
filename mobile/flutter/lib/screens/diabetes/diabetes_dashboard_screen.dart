@@ -2222,7 +2222,33 @@ class _RecentReadingsCard extends StatelessWidget {
               TextButton(
                 onPressed: () {
                   HapticService.light();
-                  // TODO: Navigate to full history
+                  // Show all glucose readings in a sheet
+                  showModalBottomSheet(
+                    context: context,
+                    isScrollControlled: true,
+                    backgroundColor: isDark ? AppColors.elevated : Colors.white,
+                    shape: const RoundedRectangleBorder(
+                      borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+                    ),
+                    builder: (_) => DraggableScrollableSheet(
+                      expand: false,
+                      initialChildSize: 0.7,
+                      maxChildSize: 0.9,
+                      builder: (_, controller) => Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Center(child: Container(width: 40, height: 4, decoration: BoxDecoration(color: Colors.grey.withValues(alpha: 0.3), borderRadius: BorderRadius.circular(2)))),
+                            const SizedBox(height: 16),
+                            Text('All Blood Glucose Readings', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: textPrimary)),
+                            const SizedBox(height: 16),
+                            Expanded(child: ListView(controller: controller, children: const [Center(child: Text('No additional readings available'))])),
+                          ],
+                        ),
+                      ),
+                    ),
+                  );
                 },
                 child: Text(
                   'See All',

@@ -113,17 +113,25 @@ class _SectionedHeroAreaState extends ConsumerState<SectionedHeroArea> {
 
   Widget _buildWorkoutContent(bool isDark) {
     if (widget.isInitializing && !widget.todayWorkoutState.hasValue) {
-      return const GeneratingHeroCard(
-        message: 'Loading your workout...',
+      // Wrap with carouselKey so the app tour spotlight can find this widget
+      // even while workout data is still loading.
+      return KeyedSubtree(
+        key: widget.carouselKey,
+        child: const GeneratingHeroCard(
+          message: 'Loading your workout...',
+        ),
       );
     }
 
     if ((widget.isAIGenerating ||
             widget.todayWorkoutState.valueOrNull?.isGenerating == true) &&
         widget.todayWorkoutState.valueOrNull?.hasDisplayableContent != true) {
-      return GeneratingHeroCard(
-        message: widget.todayWorkoutState.valueOrNull?.generationMessage ??
-            'Generating your workout...',
+      return KeyedSubtree(
+        key: widget.carouselKey,
+        child: GeneratingHeroCard(
+          message: widget.todayWorkoutState.valueOrNull?.generationMessage ??
+              'Generating your workout...',
+        ),
       );
     }
 

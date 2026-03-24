@@ -157,6 +157,7 @@ class NotificationsScreen extends ConsumerWidget {
   void _navigateForNotificationType(BuildContext context, String type, {String? challengeId}) {
     switch (type) {
       case 'ai_coach':
+      case 'ai_coach_accountability':
         context.push('/chat');
         break;
       case 'workout_reminder':

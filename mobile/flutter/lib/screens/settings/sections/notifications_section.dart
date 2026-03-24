@@ -1,16 +1,10 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../core/animations/app_animations.dart';
 import '../../../core/constants/app_colors.dart';
-import '../../../data/services/api_client.dart';
 import '../../../data/services/notification_service.dart';
-import '../notification_test_screen.dart';
+import '../../../widgets/glass_sheet.dart';
 import '../widgets/widgets.dart';
 
-/// The notifications section for configuring notification preferences.
-///
-/// Allows users to enable/disable various notification types and set their schedules.
 class NotificationsSection extends StatelessWidget {
   const NotificationsSection({super.key});
 
@@ -35,7 +29,6 @@ class _NotificationsCard extends ConsumerStatefulWidget {
 }
 
 class _NotificationsCardState extends ConsumerState<_NotificationsCard> {
-  bool _isSendingTest = false;
   String? _expandedSection;
 
   @override
@@ -55,217 +48,54 @@ class _NotificationsCardState extends ConsumerState<_NotificationsCard> {
       ),
       child: Column(
         children: [
-          // Smart Timing
-          SettingSwitchTile(
-            icon: Icons.auto_awesome,
-            iconColor: AppColors.cyan,
-            title: 'Smart Timing',
-            subtitle: notifPrefs.smartTimingEnabled
-                ? 'Sends when you\'re most likely to engage'
-                : 'Send at fixed times you set below',
-            value: notifPrefs.smartTimingEnabled,
-            onChanged: (value) {
-              ref.read(notificationPreferencesProvider.notifier).setSmartTimingEnabled(value);
-            },
-          ),
-          if (notifPrefs.smartTimingEnabled)
-            Padding(
-              padding: const EdgeInsets.only(left: 50, right: 16, bottom: 8),
-              child: Align(
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  'Based on your app usage patterns',
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: textMuted,
-                    fontStyle: FontStyle.italic,
+          // ─── AI Coach ─────────────────────
+          InkWell(
+            onTap: () => _showAccountabilitySheet(context, ref, isDark, textMuted, cardBorder),
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(Icons.sports, size: 20, color: AppColors.warning),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'AI Coach',
+                              style: TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w600,
+                                color: isDark ? Colors.white : Colors.black87,
+                              ),
+                            ),
+                            Text(
+                              _intensityLabel(notifPrefs.accountabilityIntensity),
+                              style: TextStyle(fontSize: 12, color: textMuted),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Icon(Icons.chevron_right, color: textMuted, size: 20),
+                    ],
                   ),
-                ),
+                ],
               ),
             ),
-          Divider(height: 1, color: cardBorder, indent: 50),
-
-          // ─── Accountability Coach Section ─────────────────────
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-            child: Row(
-              children: [
-                Icon(Icons.sports, size: 16, color: AppColors.warning),
-                const SizedBox(width: 8),
-                Text(
-                  'ACCOUNTABILITY COACH',
-                  style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.warning,
-                    letterSpacing: 1.2,
-                  ),
-                ),
-              ],
-            ),
           ),
-
-          // Accountability Intensity
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Icon(Icons.tune, size: 20, color: textSecondary),
-                    const SizedBox(width: 12),
-                    Text('Accountability Intensity', style: TextStyle(fontSize: 14, color: isDark ? Colors.white : Colors.black87)),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                Padding(
-                  padding: const EdgeInsets.only(left: 32),
-                  child: SegmentedButton<String>(
-                    segments: const [
-                      ButtonSegment(value: 'gentle', label: Text('Gentle', style: TextStyle(fontSize: 11))),
-                      ButtonSegment(value: 'balanced', label: Text('Balanced', style: TextStyle(fontSize: 11))),
-                      ButtonSegment(value: 'tough_love', label: Text('Tough', style: TextStyle(fontSize: 11))),
-                      ButtonSegment(value: 'off', label: Text('Off', style: TextStyle(fontSize: 11))),
-                    ],
-                    selected: {notifPrefs.accountabilityIntensity},
-                    onSelectionChanged: (values) {
-                      ref.read(notificationPreferencesProvider.notifier).setAccountabilityIntensity(values.first);
-                    },
-                    style: ButtonStyle(
-                      visualDensity: VisualDensity.compact,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          // Daily Notification Limit
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-            child: Row(
-              children: [
-                Icon(Icons.notifications_active, size: 20, color: textSecondary),
-                const SizedBox(width: 12),
-                Text('Daily Limit', style: TextStyle(fontSize: 14, color: isDark ? Colors.white : Colors.black87)),
-                const Spacer(),
-                Text('${notifPrefs.dailyNudgeLimit}', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppColors.cyan)),
-                SizedBox(
-                  width: 140,
-                  child: Slider(
-                    value: notifPrefs.dailyNudgeLimit.toDouble(),
-                    min: 1,
-                    max: 8,
-                    divisions: 7,
-                    onChanged: (value) {
-                      ref.read(notificationPreferencesProvider.notifier).setDailyNudgeLimit(value.toInt());
-                    },
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          // AI Personalized Messages
-          SettingSwitchTile(
-            icon: Icons.auto_awesome,
-            iconColor: AppColors.purple,
-            title: 'AI-Personalized Messages',
-            subtitle: 'Use AI to match your coach\'s personality',
-            value: notifPrefs.aiPersonalizedNudges,
-            onChanged: (value) {
-              ref.read(notificationPreferencesProvider.notifier).setAiPersonalizedNudges(value);
-            },
-          ),
-
-          // Guilt Notifications (Duolingo-style)
-          SettingSwitchTile(
-            icon: Icons.sentiment_dissatisfied,
-            iconColor: AppColors.warning,
-            title: 'Guilt Notifications',
-            subtitle: 'Escalating nudges when you\'re inactive',
-            value: notifPrefs.guiltNotifications,
-            onChanged: (value) {
-              ref.read(notificationPreferencesProvider.notifier).setGuiltNotifications(value);
-            },
-          ),
-
-          // Missed Workout Nudge
-          SettingSwitchTile(
-            icon: Icons.alarm,
-            iconColor: AppColors.error,
-            title: 'Missed Workout Nudge',
-            subtitle: 'Remind if you haven\'t worked out by evening',
-            value: notifPrefs.missedWorkoutNudge,
-            onChanged: (value) {
-              ref.read(notificationPreferencesProvider.notifier).setMissedWorkoutNudge(value);
-            },
-          ),
-
-          // Post-Workout Meal Reminder
-          SettingSwitchTile(
-            icon: Icons.lunch_dining,
-            iconColor: AppColors.success,
-            title: 'Post-Workout Meal Reminder',
-            subtitle: 'Remind to refuel ${notifPrefs.postWorkoutMealDelayMinutes} min after workout',
-            value: notifPrefs.postWorkoutMealReminder,
-            onChanged: (value) {
-              ref.read(notificationPreferencesProvider.notifier).setPostWorkoutMealReminder(value);
-            },
-          ),
-
-          // Habit Reminders
-          SettingSwitchTile(
-            icon: Icons.checklist,
-            iconColor: AppColors.cyan,
-            title: 'Habit Reminders',
-            subtitle: 'Evening reminder to complete daily habits',
-            value: notifPrefs.habitReminders,
-            onChanged: (value) {
-              ref.read(notificationPreferencesProvider.notifier).setHabitReminders(value);
-            },
-          ),
-
-          // Streak Celebrations
-          SettingSwitchTile(
-            icon: Icons.celebration,
-            iconColor: AppColors.warning,
-            title: 'Streak Celebrations',
-            subtitle: 'Celebrate streak milestones',
-            value: notifPrefs.streakCelebration,
-            onChanged: (value) {
-              ref.read(notificationPreferencesProvider.notifier).setStreakCelebration(value);
-            },
-          ),
-
           Divider(height: 1, color: cardBorder, indent: 16),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-            child: Row(
-              children: [
-                Icon(Icons.notifications, size: 16, color: textMuted),
-                const SizedBox(width: 8),
-                Text(
-                  'STANDARD NOTIFICATIONS',
-                  style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w700,
-                    color: textMuted,
-                    letterSpacing: 1.2,
-                  ),
-                ),
-              ],
-            ),
-          ),
 
+          // ─── Reminders ─────────────────────
           // Workout Reminders
           _buildNotificationToggleWithTime(
             sectionKey: 'workout',
             icon: Icons.fitness_center,
             iconColor: AppColors.cyan,
             title: 'Workout Reminders',
-            subtitle: 'Get reminded on workout days',
+            subtitle: 'Remind on workout days',
             value: notifPrefs.workoutReminders,
             onChanged: (value) {
               ref.read(notificationPreferencesProvider.notifier).setWorkoutReminders(value);
@@ -289,8 +119,8 @@ class _NotificationsCardState extends ConsumerState<_NotificationsCard> {
             sectionKey: 'nutrition',
             icon: Icons.restaurant,
             iconColor: AppColors.success,
-            title: 'Nutrition Reminders',
-            subtitle: 'Log your meals',
+            title: 'Meal Reminders',
+            subtitle: 'Breakfast, lunch & dinner',
             value: notifPrefs.nutritionReminders,
             onChanged: (value) {
               ref.read(notificationPreferencesProvider.notifier).setNutritionReminders(value);
@@ -336,8 +166,8 @@ class _NotificationsCardState extends ConsumerState<_NotificationsCard> {
             sectionKey: 'hydration',
             icon: Icons.water_drop,
             iconColor: Colors.blue,
-            title: 'Hydration Reminders',
-            subtitle: 'Stay hydrated',
+            title: 'Water Reminders',
+            subtitle: 'Stay hydrated throughout the day',
             value: notifPrefs.hydrationReminders,
             onChanged: (value) {
               ref.read(notificationPreferencesProvider.notifier).setHydrationReminders(value);
@@ -398,50 +228,13 @@ class _NotificationsCardState extends ConsumerState<_NotificationsCard> {
           ),
           Divider(height: 1, color: cardBorder, indent: 50),
 
-          // AI Coach Messages (no time picker - automatic)
-          SettingSwitchTile(
-            icon: Icons.smart_toy,
-            title: 'AI Coach Messages',
-            subtitle: 'Motivation & tips (automatic)',
-            value: notifPrefs.aiCoachMessages,
-            onChanged: (value) {
-              ref.read(notificationPreferencesProvider.notifier).setAiCoachMessages(value);
-            },
-          ),
-          Divider(height: 1, color: cardBorder, indent: 50),
-
-          // Streak Alerts
-          _buildNotificationToggleWithTime(
-            sectionKey: 'streak',
-            icon: Icons.local_fire_department,
-            iconColor: AppColors.orange,
-            title: 'Streak Alerts',
-            subtitle: 'Keep your workout streak alive',
-            value: notifPrefs.streakAlerts,
-            onChanged: (value) {
-              ref.read(notificationPreferencesProvider.notifier).setStreakAlerts(value);
-            },
-            textSecondary: textSecondary,
-            textMuted: textMuted,
-            isDark: isDark,
-            timeWidget: TimePickerTile(
-              label: 'Alert time',
-              time: notifPrefs.streakAlertTime,
-              onTimeChanged: (time) {
-                ref.read(notificationPreferencesProvider.notifier).setStreakAlertTime(time);
-              },
-              isDark: isDark,
-            ),
-          ),
-          Divider(height: 1, color: cardBorder, indent: 50),
-
           // Weekly Summary
           _buildNotificationToggleWithTime(
             sectionKey: 'weekly',
             icon: Icons.bar_chart,
             iconColor: AppColors.purple,
-            title: 'Weekly Summary',
-            subtitle: 'Your progress report',
+            title: 'Weekly Report',
+            subtitle: 'Your progress summary',
             value: notifPrefs.weeklySummary,
             onChanged: (value) {
               ref.read(notificationPreferencesProvider.notifier).setWeeklySummary(value);
@@ -477,127 +270,102 @@ class _NotificationsCardState extends ConsumerState<_NotificationsCard> {
               ],
             ),
           ),
-          Divider(height: 1, color: cardBorder, indent: 50),
+        ],
+      ),
+    );
+  }
 
-          // Billing Reminders (no time picker - server-side)
-          SettingSwitchTile(
-            icon: Icons.receipt_long,
-            title: 'Billing Reminders',
-            subtitle: 'Subscription renewal alerts',
-            value: notifPrefs.billingReminders,
-            onChanged: (value) {
-              ref.read(notificationPreferencesProvider.notifier).setBillingReminders(value);
-            },
-          ),
-          Divider(height: 1, color: cardBorder, indent: 50),
+  String _intensityLabel(String intensity) {
+    switch (intensity) {
+      case 'gentle': return 'Gentle — light nudges';
+      case 'balanced': return 'Balanced — nudges + meal + habits';
+      case 'tough_love': return 'Tough — escalating nudges';
+      case 'off': return 'Off';
+      default: return intensity;
+    }
+  }
 
-          // Test Notification Button
-          InkWell(
-            onTap: _isSendingTest ? null : _sendTestNotification,
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Row(
-                children: [
-                  Icon(
-                    Icons.science_outlined,
-                    color: AppColors.cyan,
-                    size: 22,
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'Test Notification',
-                          style: TextStyle(
-                            fontSize: 15,
-                          ),
-                        ),
-                        Text(
-                          'Send a test push notification',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: textMuted,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  if (_isSendingTest)
-                    const SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        color: AppColors.cyan,
+  void _showAccountabilitySheet(
+    BuildContext context, WidgetRef ref, bool isDark, Color textMuted, Color cardBorder,
+  ) {
+    showGlassSheet(
+      context: context,
+      builder: (ctx) => GlassSheet(
+        child: StatefulBuilder(
+          builder: (sheetCtx, setSheetState) {
+            // Re-read prefs inside StatefulBuilder for reactivity
+            return Consumer(
+              builder: (_, ref, __) {
+                final prefs = ref.watch(notificationPreferencesProvider);
+                return Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 4, 20, 0),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'AI Coach Settings',
+                        style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
                       ),
-                    )
-                  else
-                    Icon(
-                      Icons.send,
-                      color: AppColors.cyan,
-                      size: 20,
-                    ),
-                ],
-              ),
-            ),
-          ),
-          if (kDebugMode) ...[
-            Divider(height: 1, color: cardBorder, indent: 50),
+                      const SizedBox(height: 16),
 
-            // All Notification Tests Link
-            InkWell(
-              onTap: () {
-                Navigator.push(
-                  context,
-                  AppPageRoute(
-                    builder: (context) => const NotificationTestScreen(),
+                      // Intensity selector
+                      Text('Intensity', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: textMuted)),
+                      const SizedBox(height: 8),
+                      SegmentedButton<String>(
+                        showSelectedIcon: false,
+                        segments: const [
+                          ButtonSegment(value: 'gentle', label: Text('Gentle', style: TextStyle(fontSize: 11))),
+                          ButtonSegment(value: 'balanced', label: Text('Balanced', style: TextStyle(fontSize: 11))),
+                          ButtonSegment(value: 'tough_love', label: Text('Tough', style: TextStyle(fontSize: 11))),
+                          ButtonSegment(value: 'off', label: Text('Off', style: TextStyle(fontSize: 11))),
+                        ],
+                        selected: {prefs.accountabilityIntensity},
+                        onSelectionChanged: (values) {
+                          ref.read(notificationPreferencesProvider.notifier).setAccountabilityIntensity(values.first);
+                        },
+                        style: ButtonStyle(visualDensity: VisualDensity.compact),
+                      ),
+                      const SizedBox(height: 16),
+
+                      // Individual toggles
+                      Divider(height: 1, color: cardBorder),
+                      _sheetToggle('AI-Personalized Messages', 'Match your coach\'s personality', Icons.auto_awesome, AppColors.purple,
+                        prefs.aiPersonalizedNudges, (v) => ref.read(notificationPreferencesProvider.notifier).setAiPersonalizedNudges(v)),
+                      Divider(height: 1, color: cardBorder),
+                      _sheetToggle('Missed Workout Nudge', 'Remind by evening if you skip', Icons.alarm, AppColors.error,
+                        prefs.missedWorkoutNudge, (v) => ref.read(notificationPreferencesProvider.notifier).setMissedWorkoutNudge(v)),
+                      Divider(height: 1, color: cardBorder),
+                      _sheetToggle('Post-Workout Meal', 'Refuel reminder after training', Icons.lunch_dining, AppColors.success,
+                        prefs.postWorkoutMealReminder, (v) => ref.read(notificationPreferencesProvider.notifier).setPostWorkoutMealReminder(v)),
+                      Divider(height: 1, color: cardBorder),
+                      _sheetToggle('Habit Reminders', 'Evening check-in for habits', Icons.checklist, AppColors.cyan,
+                        prefs.habitReminders, (v) => ref.read(notificationPreferencesProvider.notifier).setHabitReminders(v)),
+                      Divider(height: 1, color: cardBorder),
+                      _sheetToggle('Streak Celebrations', 'Celebrate streak milestones', Icons.celebration, AppColors.warning,
+                        prefs.streakCelebration, (v) => ref.read(notificationPreferencesProvider.notifier).setStreakCelebration(v)),
+                      const SizedBox(height: 8),
+                    ],
                   ),
                 );
               },
-              borderRadius: const BorderRadius.vertical(bottom: Radius.circular(16)),
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Row(
-                  children: [
-                    Icon(
-                      Icons.notifications_active,
-                      color: AppColors.purple,
-                      size: 22,
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            'All Notification Tests',
-                            style: TextStyle(
-                              fontSize: 15,
-                            ),
-                          ),
-                          Text(
-                            'Test workout, nutrition, hydration & more',
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: textMuted,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    Icon(
-                      Icons.chevron_right,
-                      color: textMuted,
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ],
+            );
+          },
+        ),
       ),
+    );
+  }
+
+  Widget _sheetToggle(String title, String subtitle, IconData icon, Color iconColor, bool value, ValueChanged<bool> onChanged) {
+    return SwitchListTile(
+      secondary: Icon(icon, color: value ? iconColor : Colors.grey, size: 20),
+      title: Text(title, style: const TextStyle(fontSize: 14)),
+      subtitle: Text(subtitle, style: const TextStyle(fontSize: 11)),
+      value: value,
+      activeThumbColor: AppColors.cyan,
+      dense: true,
+      contentPadding: EdgeInsets.zero,
+      onChanged: onChanged,
     );
   }
 
@@ -631,31 +399,19 @@ class _NotificationsCardState extends ConsumerState<_NotificationsCard> {
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             child: Row(
               children: [
-                Icon(
-                  icon,
-                  color: value ? iconColor : textMuted,
-                  size: 22,
-                ),
+                Icon(icon, color: value ? iconColor : textMuted, size: 22),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        title,
-                        style: const TextStyle(
-                          fontSize: 15,
-                        ),
-                      ),
+                      Text(title, style: const TextStyle(fontSize: 15)),
                       Row(
                         children: [
                           Flexible(
                             child: Text(
                               subtitle,
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: textMuted,
-                              ),
+                              style: TextStyle(fontSize: 12, color: textMuted),
                               overflow: TextOverflow.ellipsis,
                             ),
                           ),
@@ -686,7 +442,6 @@ class _NotificationsCardState extends ConsumerState<_NotificationsCard> {
             ),
           ),
         ),
-        // Expandable time picker section
         AnimatedCrossFade(
           firstChild: const SizedBox.shrink(),
           secondChild: Builder(
@@ -711,47 +466,4 @@ class _NotificationsCardState extends ConsumerState<_NotificationsCard> {
     );
   }
 
-  Future<void> _sendTestNotification() async {
-    setState(() => _isSendingTest = true);
-
-    try {
-      final apiClient = ref.read(apiClientProvider);
-      final userId = await apiClient.getUserId();
-      final notificationService = ref.read(notificationServiceProvider);
-
-      if (userId == null) {
-        throw Exception('User not logged in');
-      }
-
-      // First, make sure the FCM token is registered
-      await notificationService.registerTokenWithBackend(apiClient, userId);
-
-      // Then send test notification
-      final success = await notificationService.sendTestNotification(apiClient, userId);
-
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              success ? 'Test notification sent! Check your notifications.' : 'Failed to send test notification',
-            ),
-            backgroundColor: success ? AppColors.success : AppColors.error,
-          ),
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error: ${e.toString()}'),
-            backgroundColor: AppColors.error,
-          ),
-        );
-      }
-    } finally {
-      if (mounted) {
-        setState(() => _isSendingTest = false);
-      }
-    }
-  }
 }

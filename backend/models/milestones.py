@@ -23,6 +23,7 @@ class MilestoneCategory(str, Enum):
     TIME = "time"
     WEIGHT = "weight"
     PRS = "prs"
+    FIRST_STEPS = "first_steps"
 
 
 class MilestoneTier(str, Enum):

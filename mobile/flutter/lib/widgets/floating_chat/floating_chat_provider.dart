@@ -7,12 +7,14 @@ class FloatingChatState {
   final bool isDragging;
   final double bubbleRight;
   final double bubbleBottom;
+  final bool isOverDismissZone;
 
   const FloatingChatState({
     this.isExpanded = false,
     this.isDragging = false,
     this.bubbleRight = 16,
     this.bubbleBottom = 100,
+    this.isOverDismissZone = false,
   });
 
   FloatingChatState copyWith({
@@ -20,12 +22,14 @@ class FloatingChatState {
     bool? isDragging,
     double? bubbleRight,
     double? bubbleBottom,
+    bool? isOverDismissZone,
   }) {
     return FloatingChatState(
       isExpanded: isExpanded ?? this.isExpanded,
       isDragging: isDragging ?? this.isDragging,
       bubbleRight: bubbleRight ?? this.bubbleRight,
       bubbleBottom: bubbleBottom ?? this.bubbleBottom,
+      isOverDismissZone: isOverDismissZone ?? this.isOverDismissZone,
     );
   }
 }
@@ -46,7 +50,14 @@ class FloatingChatNotifier extends StateNotifier<FloatingChatState> {
   }
 
   void setDragging(bool isDragging) {
-    state = state.copyWith(isDragging: isDragging);
+    state = state.copyWith(
+      isDragging: isDragging,
+      isOverDismissZone: isDragging ? state.isOverDismissZone : false,
+    );
+  }
+
+  void setOverDismissZone(bool isOver) {
+    state = state.copyWith(isOverDismissZone: isOver);
   }
 
   void updateBubblePosition(double right, double bottom) {

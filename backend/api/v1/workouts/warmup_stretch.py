@@ -229,9 +229,23 @@ async def create_workout_warmup_and_stretches(
             if stretch_duration is None:
                 stretch_duration = DEFAULT_STRETCH_DURATION
 
+        # Fetch active injuries so warmup exercises can be filtered for safety
+        injuries = None
+        if user_id:
+            try:
+                injury_rows = db.client.table("injuries").select("body_part").eq(
+                    "user_id", user_id
+                ).eq("status", "active").execute()
+                injuries = [r["body_part"] for r in (injury_rows.data or [])]
+                if injuries:
+                    logger.info(f"🩹 User has active injuries: {injuries}")
+            except Exception as e:
+                logger.warning(f"⚠️ Could not fetch injuries: {e}")
+
         service = get_warmup_stretch_service()
         result = await service.generate_warmup_and_stretches_for_workout(
-            workout_id, exercises, warmup_duration, stretch_duration, user_id=user_id
+            workout_id, exercises, warmup_duration, stretch_duration,
+            injuries=injuries, user_id=user_id
         )
 
         return result

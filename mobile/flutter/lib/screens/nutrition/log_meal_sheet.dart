@@ -22,7 +22,9 @@ import '../../widgets/main_shell.dart';
 import '../../data/providers/nutrition_preferences_provider.dart';
 import '../../data/services/food_search_service.dart' as search;
 import '../../widgets/app_tour/app_tour_controller.dart';
+import 'widgets/accuracy_feedback_snackbar.dart';
 import 'widgets/food_browser_panel.dart';
+import 'widgets/food_report_dialog.dart';
 import 'widgets/inflammation_analysis_widget.dart';
 import 'widgets/portion_amount_input.dart';
 
@@ -270,6 +272,68 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet> {
         service.searchImmediate(query, widget.userId, cachedLogs: cachedLogs);
       }
     }
+  }
+
+  // ─── Input quality hint ────────────────────────────────────────
+
+  Widget _buildInputQualityHint(bool isDark) {
+    final text = _descriptionController.text;
+    final trimmed = text.trim();
+    final isVague = trimmed.isNotEmpty &&
+        trimmed.split(RegExp(r'\s+')).length <= 2 &&
+        !RegExp(r'\d').hasMatch(text);
+
+    return AnimatedSize(
+      duration: const Duration(milliseconds: 250),
+      curve: Curves.easeInOut,
+      alignment: Alignment.topCenter,
+      child: AnimatedOpacity(
+        opacity: isVague ? 1.0 : 0.0,
+        duration: const Duration(milliseconds: 200),
+        child: isVague
+            ? Padding(
+                padding: const EdgeInsets.only(top: 6, bottom: 2),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: isDark
+                        ? Colors.amber.withValues(alpha: 0.12)
+                        : Colors.amber.withValues(alpha: 0.10),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(
+                      color: Colors.amber.withValues(alpha: isDark ? 0.25 : 0.30),
+                      width: 0.5,
+                    ),
+                  ),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.only(top: 1),
+                        child: Icon(
+                          Icons.lightbulb_outline,
+                          size: 16,
+                          color: isDark ? Colors.amber[300] : Colors.amber[700],
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          "Tip: Add brand & portion for better accuracy (e.g., 'Chipotle chicken bowl' or '2 slices Domino\u2019s')",
+                          style: TextStyle(
+                            fontSize: 12,
+                            height: 1.35,
+                            color: isDark ? Colors.amber[200] : Colors.amber[800],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              )
+            : const SizedBox.shrink(),
+      ),
+    );
   }
 
   // ─── Analysis ─────────────────────────────────────────────────
@@ -840,7 +904,7 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet> {
 
     // Close sheet immediately for snappy UX
     Navigator.pop(context);
-    _showSuccessSnackbar(response.totalCalories);
+    _showSuccessSnackbar(response.totalCalories, response: response);
 
     // Wait for backend save to complete, then refresh to show updated data
     if (saveFuture != null) {
@@ -1200,7 +1264,15 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet> {
           if (mounted) {
             debugPrint('✅ [LogMeal] Barcode food logged successfully | calories=${response.totalCalories}');
             Navigator.pop(context);
-            _showSuccessSnackbar(response.totalCalories);
+            _showSuccessSnackbar(
+              response.totalCalories,
+              foodName: product.productName,
+              proteinG: response.proteinG,
+              carbsG: response.carbsG,
+              fatG: response.fatG,
+              foodLogId: response.foodLogId,
+              dataSource: 'barcode',
+            );
             ref.read(nutritionProvider.notifier).loadTodaySummary(widget.userId);
           }
         } else {
@@ -1446,33 +1518,53 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet> {
     );
   }
 
-  void _showSuccessSnackbar(int calories) {
-    // Get scaffold messenger before any async operations
-    final messenger = ScaffoldMessenger.of(context);
-    final bottomPadding = MediaQuery.of(context).padding.bottom;
-    final isDark = widget.isDark;
+  void _showSuccessSnackbar(
+    int calories, {
+    String? foodName,
+    LogFoodResponse? response,
+    double? proteinG,
+    double? carbsG,
+    double? fatG,
+    String? foodLogId,
+    String? dataSource,
+  }) {
+    // Capture context-dependent values before async gap
+    final capturedContext = context;
+    final apiClient = ref.read(apiClientProvider);
+
+    // Derive a display name from food items or fallback
+    final displayName = foodName ??
+        (response?.foodItems.isNotEmpty == true
+            ? response!.foodItems.map((f) => f['name'] ?? 'Food').join(', ')
+            : 'Food');
+
+    // Use individual fields if provided, otherwise fall back to LogFoodResponse
+    final effectiveProtein = proteinG ?? response?.proteinG;
+    final effectiveCarbs = carbsG ?? response?.carbsG;
+    final effectiveFat = fatG ?? response?.fatG;
+    final effectiveFoodLogId = foodLogId ?? response?.foodLogId;
+    final effectiveDataSource = dataSource ?? response?.sourceType;
 
     // Use Future.delayed to show snackbar after sheet animation completes
     // This ensures the nav bar is visible and snackbar appears above it
     Future.delayed(const Duration(milliseconds: 100), () {
-      messenger.showSnackBar(
-        SnackBar(
-          content: Row(
-            children: [
-              const Icon(Icons.check_circle, color: Colors.white, size: 20),
-              const SizedBox(width: 8),
-              Text('Logged $calories kcal'),
-            ],
-          ),
-          backgroundColor: isDark ? AppColors.success : AppColorsLight.success,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-          margin: EdgeInsets.only(
-            left: 16,
-            right: 16,
-            bottom: bottomPadding + 100, // Clear the floating nav bar (42px) + padding (16px) + buffer
-          ),
-        ),
+      showAccuracyFeedbackSnackbar(
+        capturedContext,
+        foodName: displayName,
+        calories: calories,
+        onThumbsDown: () {
+          showFoodReportDialog(
+            capturedContext,
+            apiClient: apiClient,
+            foodName: displayName,
+            originalCalories: calories,
+            originalProtein: effectiveProtein,
+            originalCarbs: effectiveCarbs,
+            originalFat: effectiveFat,
+            foodLogId: effectiveFoodLogId,
+            dataSource: effectiveDataSource,
+          );
+        },
       );
     });
   }
@@ -1751,6 +1843,8 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet> {
                     ],
                   ),
                 ),
+              // Input quality hint — nudge users to be more specific
+              _buildInputQualityHint(isDark),
             ],
           ),
         ),

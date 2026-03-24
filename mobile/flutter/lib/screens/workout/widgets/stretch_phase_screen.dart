@@ -30,7 +30,7 @@ class StretchPhaseScreen extends StatefulWidget {
     required this.workoutSeconds,
     required this.onSkipAll,
     required this.onStretchComplete,
-    this.exercises = defaultStretchExercises,
+    required this.exercises,
   });
 
   @override

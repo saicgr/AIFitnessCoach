@@ -598,6 +598,7 @@ class WarmupStretchAlgorithm:
         injuries: Optional[List[str]] = None,
         intensity: str = "medium",
         user_id: Optional[str] = None,
+        avoid_exercises: Optional[List[str]] = None,
     ) -> Dict[str, List[Dict[str, Any]]]:
         """
         Select warmup exercises based on workout parameters.
@@ -656,6 +657,13 @@ class WarmupStretchAlgorithm:
         if injuries:
             selected = self._filter_by_injuries(selected, injuries, INJURY_AVOID_WARMUPS)
             logger.info(f"⚠️ Filtered warmups for injuries: {injuries}")
+
+        # Deprioritize recently used exercises for variety
+        if avoid_exercises:
+            avoid_set = {ex.lower() for ex in avoid_exercises}
+            fresh = [ex for ex in selected if ex.lower() not in avoid_set]
+            stale = [ex for ex in selected if ex.lower() in avoid_set]
+            selected = fresh + stale  # Fresh first, recently used last
 
         # Apply user preferred/avoided warmups
         if user_prefs:

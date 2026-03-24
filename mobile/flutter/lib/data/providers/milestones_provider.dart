@@ -265,6 +265,31 @@ class MilestonesNotifier extends StateNotifier<MilestonesState> {
     }
   }
 
+  /// Award a first_steps milestone by trigger name.
+  ///
+  /// Called when the user performs a key action for the first time.
+  /// If a new milestone is awarded, reloads milestone data.
+  Future<bool> awardFirstStep(String trigger, {String? userId}) async {
+    final uid = userId ?? _currentUserId;
+    if (uid == null) return false;
+    _currentUserId = uid;
+
+    try {
+      final result = await _repository.awardFirstStep(uid, trigger);
+      if (result != null) {
+        debugPrint(
+            '[MilestonesProvider] Awarded first_steps milestone: ${result['milestone_name']}');
+        // Reload milestones to pick up the new achievement
+        await loadMilestoneProgress(userId: uid);
+        return true;
+      }
+      return false;
+    } catch (e) {
+      debugPrint('[MilestonesProvider] Error awarding first step: $e');
+      return false;
+    }
+  }
+
   /// Load all data (milestones + ROI)
   Future<void> loadAll({String? userId}) async {
     final uid = userId ?? _currentUserId;

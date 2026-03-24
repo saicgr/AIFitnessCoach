@@ -230,6 +230,66 @@ async def record_milestone_share(
         raise safe_internal_error(e, "milestones")
 
 
+@router.post("/milestones/{user_id}/award-first-step")
+async def award_first_step_milestone(
+    user_id: str,
+    request: dict,
+    current_user: dict = Depends(get_current_user),
+):
+    """
+    Award a first_steps milestone by trigger name.
+
+    These are event-driven milestones awarded when the user performs
+    a key action for the first time (e.g., first workout, first photo meal).
+
+    Request body: { "trigger": "first_workout_completed" }
+
+    Valid triggers:
+    - first_workout_completed
+    - first_photo_meal
+    - first_barcode_scan
+    - first_chat_message
+    - week_1_active_5_days
+    """
+    logger.info(f"Awarding first_step milestone for user: {user_id}, trigger: {request.get('trigger')}")
+
+    try:
+        verify_user_ownership(current_user, user_id)
+        trigger = request.get("trigger")
+        if not trigger:
+            raise HTTPException(status_code=400, detail="Missing 'trigger' field")
+
+        result = await milestone_service.award_first_steps_milestone(
+            user_id=user_id,
+            trigger=trigger,
+        )
+
+        if result:
+            await log_user_activity(
+                user_id=user_id,
+                action="milestone_achieved",
+                endpoint=f"/api/v1/progress/milestones/{user_id}/award-first-step",
+                message=f"Achieved first_steps milestone: {result.milestone_name}",
+                metadata={
+                    "milestone_id": result.milestone_id,
+                    "milestone_name": result.milestone_name,
+                    "trigger": trigger,
+                    "points": result.points,
+                },
+                status_code=200,
+            )
+
+        return {
+            "success": result is not None,
+            "milestone": result.model_dump() if result else None,
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error awarding first_step milestone: {e}")
+        raise safe_internal_error(e, "milestones")
+
+
 @router.post("/milestones/{user_id}/check", response_model=MilestoneCheckResult)
 async def check_milestones(user_id: str,
     current_user: dict = Depends(get_current_user),

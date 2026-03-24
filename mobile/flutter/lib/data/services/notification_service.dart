@@ -567,12 +567,16 @@ class NotificationService {
       return;
     }
 
+    debugPrint('🔔 [FCM] Requesting permission and token...');
+
     try {
       // Request FCM permission (required for iOS and Android 13+)
-      await _requestPermission();
+      final permGranted = await _requestPermission();
+      debugPrint('🔔 [FCM] Permission granted: $permGranted');
 
       // Get FCM token after permission is granted
       await _getToken();
+      debugPrint('🔔 [FCM] Token result: ${_fcmToken != null ? "obtained" : "NULL"}');
 
       // Set up Firebase Messaging listeners now that Activity is available
       if (messaging != null) {
@@ -729,16 +733,27 @@ class NotificationService {
       return null;
     }
 
-    try {
-      _fcmToken = await messaging!.getToken();
-      if (_fcmToken != null) {
-        debugPrint('🔔 [FCM] Token: ${_fcmToken!.substring(0, 20)}...');
+    // Retry up to 3 times — emulators can be slow to provision tokens
+    for (int attempt = 0; attempt < 3; attempt++) {
+      try {
+        _fcmToken = await messaging!.getToken();
+        if (_fcmToken != null) {
+          debugPrint('🔔 [FCM] Token obtained (attempt ${attempt + 1}): ${_fcmToken!.substring(0, 20)}...');
+          return _fcmToken;
+        }
+        debugPrint('⚠️ [FCM] getToken() returned null (attempt ${attempt + 1}/3)');
+        if (attempt < 2) {
+          await Future.delayed(const Duration(seconds: 2));
+        }
+      } catch (e) {
+        debugPrint('❌ [FCM] Error getting token (attempt ${attempt + 1}/3): $e');
+        if (attempt < 2) {
+          await Future.delayed(const Duration(seconds: 2));
+        }
       }
-      return _fcmToken;
-    } catch (e) {
-      debugPrint('❌ [FCM] Error getting token: $e');
-      return null;
     }
+    debugPrint('❌ [FCM] Failed to get token after 3 attempts. Push notifications will not work.');
+    return null;
   }
 
   /// Handle foreground messages - show local notification
@@ -1700,6 +1715,22 @@ class NotificationService {
   }
 
   /// Schedule a test notification for a specific number of seconds from now
+  /// Show a test notification immediately with custom content (local, no FCM needed).
+  /// Pass [notificationType] to control navigation when tapped.
+  Future<void> showTestNotificationWithContent({
+    required String title,
+    required String body,
+    String notificationType = 'test',
+  }) async {
+    await _showLocalNotification(
+      title: title,
+      body: body,
+      notificationType: notificationType,
+      storeInInbox: true,
+    );
+    debugPrint('🔔 [Test] Local notification shown: $title (type: $notificationType)');
+  }
+
   Future<void> scheduleTestNotification(int secondsFromNow) async {
     final scheduledDate = tz.TZDateTime.now(tz.local).add(Duration(seconds: secondsFromNow));
 

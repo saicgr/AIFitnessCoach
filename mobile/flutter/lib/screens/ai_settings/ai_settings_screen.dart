@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -277,7 +278,7 @@ class AISettingsNotifier extends StateNotifier<AISettings> {
         data: {
           ...state.toJson(),
           'change_source': 'app',
-          'device_platform': 'android', // TODO: detect platform
+          'device_platform': Platform.isIOS ? 'ios' : 'android',
         },
       );
 

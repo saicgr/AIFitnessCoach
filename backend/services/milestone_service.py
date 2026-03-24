@@ -586,6 +586,88 @@ class MilestoneService:
 
         return messages[0] if messages else ""
 
+    # =========================================================================
+    # First Steps Milestones (Event-Driven)
+    # =========================================================================
+
+    # Maps feature adoption keys → milestone definition names
+    FIRST_STEPS_TRIGGER_MAP: Dict[str, str] = {
+        "first_workout_completed": "First Workout Warrior",
+        "first_photo_meal": "Snap Happy",
+        "first_barcode_scan": "Scanner Pro",
+        "first_chat_message": "Chat Started",
+        "week_1_active_5_days": "Week 1 Champion",
+    }
+
+    async def award_first_steps_milestone(
+        self,
+        user_id: str,
+        trigger: str,
+    ) -> Optional[NewMilestoneAchieved]:
+        """
+        Award a first_steps milestone by trigger name.
+
+        These milestones are event-driven (not threshold-based), so they
+        are awarded when the user performs a specific action for the first time.
+
+        Args:
+            user_id: User ID
+            trigger: Trigger key (e.g., 'first_workout_completed', 'first_photo_meal')
+
+        Returns:
+            NewMilestoneAchieved if a new milestone was awarded, None otherwise
+        """
+        milestone_name = self.FIRST_STEPS_TRIGGER_MAP.get(trigger)
+        if not milestone_name:
+            logger.warning(f"Unknown first_steps trigger: {trigger}")
+            return None
+
+        try:
+            db = get_supabase_db()
+
+            # Look up the milestone definition by name and category
+            result = db.client.table("milestone_definitions").select("*").eq(
+                "name", milestone_name
+            ).eq("category", "first_steps").eq("is_active", True).limit(1).execute()
+
+            if not result.data:
+                logger.warning(f"No milestone definition found for: {milestone_name}")
+                return None
+
+            definition = result.data[0]
+            milestone_def_id = str(definition["id"])
+
+            # Check if already awarded
+            existing = db.client.table("user_milestones").select("id").eq(
+                "user_id", user_id
+            ).eq("milestone_id", milestone_def_id).limit(1).execute()
+
+            if existing.data:
+                logger.debug(f"User {user_id} already has milestone: {milestone_name}")
+                return None
+
+            # Award the milestone
+            db.client.table("user_milestones").insert({
+                "user_id": user_id,
+                "milestone_id": milestone_def_id,
+                "trigger_value": 1.0,
+                "trigger_context": {"trigger": trigger},
+            }).execute()
+
+            logger.info(f"Awarded first_steps milestone '{milestone_name}' to user {user_id}")
+
+            return NewMilestoneAchieved(
+                milestone_id=milestone_def_id,
+                milestone_name=milestone_name,
+                milestone_icon=definition.get("icon"),
+                milestone_tier=definition.get("tier", "bronze"),
+                points=definition.get("points", 0),
+                share_message=definition.get("share_message"),
+            )
+        except Exception as e:
+            logger.error(f"Error awarding first_steps milestone '{trigger}': {e}")
+            return None
+
     def _get_current_value_for_category(
         self,
         roi: ROIMetrics,
@@ -602,6 +684,11 @@ class MilestoneService:
             return roi.total_workout_time_hours
         elif category == "volume":
             return roi.total_weight_lifted_lbs
+        elif category == "first_steps":
+            # First steps milestones are event-driven, not threshold-based.
+            # Progress is either 0 (not achieved) or 1 (achieved).
+            # The actual check happens in award_first_steps_milestone().
+            return 0.0
         else:
             return 0.0
 

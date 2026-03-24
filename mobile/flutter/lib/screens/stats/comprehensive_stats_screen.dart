@@ -4449,6 +4449,8 @@ class _AchievementsPreview extends ConsumerWidget {
         return Icons.monitor_weight;
       case MilestoneCategory.prs:
         return Icons.military_tech;
+      case MilestoneCategory.firstSteps:
+        return Icons.rocket_launch;
     }
   }
 }

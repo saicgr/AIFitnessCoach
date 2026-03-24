@@ -7,11 +7,15 @@ import Landing from './pages/Landing';
 import MarketingLanding from './pages/MarketingLanding';
 import Features from './pages/Features';
 import Pricing from './pages/Pricing';
-import Store from './pages/Store';
 import PrivacyPolicy from './pages/PrivacyPolicy';
 import TermsOfService from './pages/TermsOfService';
 import HealthDisclaimer from './pages/HealthDisclaimer';
 import RefundPolicy from './pages/RefundPolicy';
+import FAQ from './pages/FAQ';
+import About from './pages/About';
+import Contact from './pages/Contact';
+import Changelog from './pages/Changelog';
+import DeleteAccount from './pages/DeleteAccount';
 import Onboarding from './pages/Onboarding';
 import OnboardingSelector from './pages/OnboardingSelector';
 import ConversationalOnboarding from './pages/ConversationalOnboarding';
@@ -78,11 +82,15 @@ function App() {
         <Route path="/" element={<MarketingLanding />} />
         <Route path="/features" element={<Features />} />
         <Route path="/pricing" element={<Pricing />} />
-        <Route path="/store" element={<Store />} />
         <Route path="/privacy" element={<PrivacyPolicy />} />
         <Route path="/terms" element={<TermsOfService />} />
         <Route path="/health-disclaimer" element={<HealthDisclaimer />} />
         <Route path="/refunds" element={<RefundPolicy />} />
+        <Route path="/faq" element={<FAQ />} />
+        <Route path="/about" element={<About />} />
+        <Route path="/contact" element={<Contact />} />
+        <Route path="/changelog" element={<Changelog />} />
+        <Route path="/delete-account" element={<DeleteAccount />} />
         {/* Legacy landing page */}
         <Route path="/app" element={<Landing />} />
         {/* Protected home (dashboard) */}

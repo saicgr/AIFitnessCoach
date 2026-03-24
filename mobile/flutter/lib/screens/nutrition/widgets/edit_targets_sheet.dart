@@ -25,6 +25,7 @@ class _EditTargetsSheetState extends ConsumerState<EditTargetsSheet> {
   bool _isPercentageMode = false;
   bool _isLoadingRecommended = false;
   bool _isSaving = false;
+  String? _selectedRate;
 
   late final TextEditingController _caloriesController;
   late final TextEditingController _proteinController;
@@ -59,6 +60,8 @@ class _EditTargetsSheetState extends ConsumerState<EditTargetsSheet> {
       text: (prefs?.targetFatG ?? 65).toString(),
     );
 
+    _selectedRate = prefs?.rateOfChange;
+
     _caloriesController.addListener(_recalculate);
     _proteinController.addListener(_recalculate);
     _carbsController.addListener(_recalculate);
@@ -75,6 +78,12 @@ class _EditTargetsSheetState extends ConsumerState<EditTargetsSheet> {
     _carbsController.dispose();
     _fatController.dispose();
     super.dispose();
+  }
+
+  bool get _showRateSelector {
+    final prefs = ref.read(nutritionPreferencesProvider).preferences;
+    final goal = prefs?.primaryGoalEnum;
+    return goal == NutritionGoal.loseFat || goal == NutritionGoal.buildMuscle;
   }
 
   void _computeRecommended() {
@@ -233,6 +242,7 @@ class _EditTargetsSheetState extends ConsumerState<EditTargetsSheet> {
         customProteinPercent: customProteinPct,
         customCarbPercent: customCarbPct,
         customFatPercent: customFatPct,
+        rateOfChange: _selectedRate,
       );
 
       if (mounted) {
@@ -397,6 +407,12 @@ class _EditTargetsSheetState extends ConsumerState<EditTargetsSheet> {
           // Goal timeline
           if (timelineWidget != null) ...[
             timelineWidget,
+            const SizedBox(height: 8),
+          ],
+
+          // Rate of change selector (only for lose/gain goals)
+          if (_showRateSelector) ...[
+            _buildRateSelector(isDark, textPrimary, textMuted, teal),
             const SizedBox(height: 8),
           ],
 
@@ -708,6 +724,69 @@ class _EditTargetsSheetState extends ConsumerState<EditTargetsSheet> {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildRateSelector(bool isDark, Color textPrimary, Color textMuted, Color teal) {
+    const rates = [
+      ('slow', '0.25', 'Slow'),
+      ('moderate', '0.5', 'Moderate'),
+      ('fast', '0.75', 'Fast'),
+      ('aggressive', '1.0', 'Aggressive'),
+    ];
+    final selected = _selectedRate ?? 'moderate';
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Weekly Rate (kg/wk)',
+          style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: textMuted),
+        ),
+        const SizedBox(height: 6),
+        Row(
+          children: rates.map((r) {
+            final isSelected = selected == r.$1;
+            return Expanded(
+              child: Padding(
+                padding: EdgeInsets.only(right: r.$1 != 'aggressive' ? 6 : 0),
+                child: GestureDetector(
+                  onTap: () => setState(() => _selectedRate = r.$1),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    decoration: BoxDecoration(
+                      color: isSelected ? teal.withValues(alpha: 0.15) : Colors.transparent,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: isSelected ? teal : textMuted.withValues(alpha: 0.3),
+                      ),
+                    ),
+                    child: Column(
+                      children: [
+                        Text(
+                          r.$2,
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.bold,
+                            color: isSelected ? teal : textPrimary,
+                          ),
+                        ),
+                        Text(
+                          r.$3,
+                          style: TextStyle(
+                            fontSize: 9,
+                            color: isSelected ? teal : textMuted,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            );
+          }).toList(),
+        ),
+      ],
     );
   }
 }

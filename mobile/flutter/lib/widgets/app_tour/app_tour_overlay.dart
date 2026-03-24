@@ -19,7 +19,7 @@ class _AppTourOverlayState extends ConsumerState<AppTourOverlay>
   Rect _previousRect = Rect.zero;
   int _retryCount = 0;
   String? _lastStepId;
-  static const int _maxRetries = 10;
+  static const int _maxRetries = 30;
   late final AnimationController _gradientController;
   late final AnimationController _fadeController;
   late final Animation<double> _fadeAnimation;
@@ -187,7 +187,10 @@ class _AppTourOverlayState extends ConsumerState<AppTourOverlay>
           });
         } else if (_retryCount < _maxRetries) {
           _retryCount++;
-          setState(() {}); // re-check now the frame has settled
+          // Delay before retry — target widget may still be loading data
+          Future.delayed(const Duration(milliseconds: 300), () {
+            if (mounted) setState(() {});
+          });
         }
       }
     });

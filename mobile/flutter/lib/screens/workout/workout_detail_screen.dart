@@ -2413,10 +2413,16 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
     // Try to parse JSON insights
     final insights = _parseInsightsJson(_workoutSummary);
     String? shortPreview;
+    String? previewBody;
 
     if (insights != null) {
       // Use headline from structured JSON
       shortPreview = insights['headline'] as String?;
+      // Extract first section's content as preview body
+      final sections = insights['sections'] as List<dynamic>?;
+      if (sections != null && sections.isNotEmpty) {
+        previewBody = sections.first['content'] as String?;
+      }
     } else if (_workoutSummary != null) {
       // Fallback: strip markdown and take first few words
       final cleanSummary = _stripMarkdown(_workoutSummary!);
@@ -2486,16 +2492,31 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
                           fontStyle: FontStyle.italic,
                         ),
                       )
-                    else if (shortPreview != null)
+                    else if (shortPreview != null) ...[
                       Text(
                         shortPreview,
                         style: TextStyle(
-                          fontSize: 13,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
                           color: isDark ? AppColors.textPrimary : AppColorsLight.textPrimary,
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
+                      if (previewBody != null) ...[
+                        const SizedBox(height: 4),
+                        Text(
+                          previewBody,
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: textSecondary,
+                            height: 1.3,
+                          ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                    ],
                   ],
                 ),
               ),
@@ -2535,6 +2556,7 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
     showGlassSheet(
       context: context,
       builder: (modalContext) => GlassSheet(
+        maxHeightFraction: 0.6,
         child: StatefulBuilder(
         builder: (sheetContext, setModalState) {
           Future<void> regenerateInsights() async {
@@ -2558,125 +2580,113 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
             setModalState(() => isRegenerating = false);
           }
 
-          return DraggableScrollableSheet(
-            initialChildSize: 0.45,
-            minChildSize: 0.25,
-            maxChildSize: 0.75,
-            builder: (context, scrollController) => Container(
-              decoration: BoxDecoration(
-                color: elevatedColor,
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  // Header with headline
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 0, 12, 16),
-                    child: Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(10),
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              colors: [
-                                accentColor.withValues(alpha: 0.3),
-                                accentColor.withValues(alpha: 0.2),
-                              ],
-                            ),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Icon(
-                            Icons.auto_awesome,
-                            color: accentColor,
-                            size: 22,
-                          ),
+          return Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Header with headline
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 0, 12, 16),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            accentColor.withValues(alpha: 0.3),
+                            accentColor.withValues(alpha: 0.2),
+                          ],
                         ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Text(
-                            headline,
-                            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                              fontWeight: FontWeight.bold,
-                              color: textPrimary,
-                            ),
-                          ),
-                        ),
-                        // Regenerate button
-                        IconButton(
-                          onPressed: isRegenerating ? null : regenerateInsights,
-                          tooltip: 'Regenerate insights',
-                          icon: isRegenerating
-                              ? SizedBox(
-                                  width: 20,
-                                  height: 20,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    color: accentColor,
-                                  ),
-                                )
-                              : Icon(Icons.refresh, color: accentColor),
-                        ),
-                        IconButton(
-                          onPressed: () => Navigator.pop(sheetContext),
-                          icon: Icon(Icons.close, color: textMuted),
-                        ),
-                      ],
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Icon(
+                        Icons.auto_awesome,
+                        color: accentColor,
+                        size: 22,
+                      ),
                     ),
-                  ),
-                  // Divider
-                  Divider(
-                    color: cardBorder.withValues(alpha: 0.3),
-                    height: 1,
-                  ),
-                  // Content - structured sections
-                  Expanded(
-                    child: isRegenerating
-                        ? Center(
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                CircularProgressIndicator(color: accentColor),
-                                const SizedBox(height: 16),
-                                Text(
-                                  'Generating new insights...',
-                                  style: TextStyle(color: textMuted),
-                                ),
-                              ],
-                            ),
-                          )
-                        : ListView(
-                            controller: scrollController,
-                            padding: const EdgeInsets.all(20),
-                            children: [
-                              if (sections.isNotEmpty)
-                                ...sections.map((section) {
-                                  final icon = section['icon'] as String? ?? '💡';
-                                  final title = section['title'] as String? ?? 'Tip';
-                                  final content = section['content'] as String? ?? '';
-                                  final colorName = section['color'] as String? ?? 'cyan';
-                                  final color = _getColorFromName(colorName, accentColor);
-
-                                  return _buildInsightSection(icon, title, content, color, textPrimary);
-                                })
-                              else
-                                // Fallback for non-JSON or parse error
-                                Text(
-                                  _stripMarkdown(currentSummary),
-                                  style: TextStyle(
-                                    fontSize: 15,
-                                    color: textPrimary,
-                                    height: 1.6,
-                                  ),
-                                ),
-                              // Extra padding at bottom
-                              SizedBox(height: MediaQuery.of(context).padding.bottom + 16),
-                            ],
-                          ),
-                  ),
-                ],
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        headline,
+                        style: Theme.of(sheetContext).textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: textPrimary,
+                        ),
+                      ),
+                    ),
+                    // Regenerate button
+                    IconButton(
+                      onPressed: isRegenerating ? null : regenerateInsights,
+                      tooltip: 'Regenerate insights',
+                      icon: isRegenerating
+                          ? SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: accentColor,
+                              ),
+                            )
+                          : Icon(Icons.refresh, color: accentColor),
+                    ),
+                    IconButton(
+                      onPressed: () => Navigator.pop(sheetContext),
+                      icon: Icon(Icons.close, color: textMuted),
+                    ),
+                  ],
+                ),
               ),
-            ),
+              // Divider
+              Divider(
+                color: cardBorder.withValues(alpha: 0.3),
+                height: 1,
+              ),
+              // Content - structured sections
+              Flexible(
+                child: isRegenerating
+                    ? Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            CircularProgressIndicator(color: accentColor),
+                            const SizedBox(height: 16),
+                            Text(
+                              'Generating new insights...',
+                              style: TextStyle(color: textMuted),
+                            ),
+                          ],
+                        ),
+                      )
+                    : ListView(
+                        shrinkWrap: true,
+                        padding: const EdgeInsets.all(20),
+                        children: [
+                          if (sections.isNotEmpty)
+                            ...sections.map((section) {
+                              final icon = section['icon'] as String? ?? '💡';
+                              final title = section['title'] as String? ?? 'Tip';
+                              final content = section['content'] as String? ?? '';
+                              final colorName = section['color'] as String? ?? 'cyan';
+                              final color = _getColorFromName(colorName, accentColor);
+
+                              return _buildInsightSection(icon, title, content, color, textPrimary);
+                            })
+                          else
+                            // Fallback for non-JSON or parse error
+                            Text(
+                              _stripMarkdown(currentSummary),
+                              style: TextStyle(
+                                fontSize: 15,
+                                color: textPrimary,
+                                height: 1.6,
+                              ),
+                            ),
+                        ],
+                      ),
+              ),
+            ],
           );
         },
       ),

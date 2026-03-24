@@ -24,6 +24,7 @@ import '../workouts/widgets/exercise_preferences_card.dart';
 import 'widgets/nutrition_fasting_card.dart';
 import 'widgets/widgets.dart';
 import '../../data/providers/synced_workouts_provider.dart';
+import '../../data/models/wrapped_summary.dart';
 import '../../data/providers/wrapped_provider.dart';
 import 'synced_workout_detail_screen.dart';
 /// Main profile screen displaying user information, stats, and settings.
@@ -918,7 +919,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               // MY WRAPPED
               _buildSectionLabel('MY WRAPPED', AppColors.yellow),
               const SizedBox(height: 8),
-              _WrappedPeriodsRow(
+              _WrappedSection(
                 elevated: elevated,
                 cardBorder: cardBorder,
                 textPrimary: textPrimary,
@@ -1301,114 +1302,406 @@ class _CustomEquipmentManagerState extends State<_CustomEquipmentManager> {
 }
 
 /// Horizontal scrollable row of month pills for accessing past Wrapped recaps.
-class _WrappedPeriodsRow extends ConsumerWidget {
+class _WrappedSection extends ConsumerWidget {
   final Color elevated;
   final Color cardBorder;
   final Color textPrimary;
   final Color textMuted;
 
-  const _WrappedPeriodsRow({
+  const _WrappedSection({
     required this.elevated,
     required this.cardBorder,
     required this.textPrimary,
     required this.textMuted,
   });
 
-  static const _monthAbbreviations = [
-    'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
-  ];
+  static const _purpleGradient = LinearGradient(
+    colors: [Color(0xFF2D1B69), Color(0xFF9D4EDD)],
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+  );
+
+  static const _purpleAccent = Color(0xFFA855F7);
+
+  static String _formatVolume(double lbs) {
+    if (lbs >= 1000000) return '${(lbs / 1000000).toStringAsFixed(1)}M lbs';
+    if (lbs >= 1000) return '${(lbs / 1000).toStringAsFixed(0)}K lbs';
+    return '${lbs.toStringAsFixed(0)} lbs';
+  }
+
+  static String _monthName(String period) {
+    final parts = period.split('-');
+    if (parts.length != 2) return period;
+    final month = int.tryParse(parts[1]) ?? 1;
+    const months = [
+      'January', 'February', 'March', 'April', 'May', 'June',
+      'July', 'August', 'September', 'October', 'November', 'December',
+    ];
+    return '${months[(month - 1).clamp(0, 11)]} ${parts[0]}';
+  }
+
+  static String _monthAbbr(String period) {
+    final parts = period.split('-');
+    if (parts.length != 2) return period;
+    final month = int.tryParse(parts[1]) ?? 1;
+    const abbrs = [
+      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+    ];
+    return abbrs[(month - 1).clamp(0, 11)];
+  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final periodsAsync = ref.watch(availableWrappedPeriodsProvider);
+    final summaryAsync = ref.watch(wrappedSummaryProvider);
 
-    return periodsAsync.when(
-      loading: () => Container(
-        height: 56,
-        decoration: BoxDecoration(
-          color: elevated,
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: cardBorder),
-        ),
-        child: Center(
-          child: SizedBox(
-            width: 20,
-            height: 20,
-            child: CircularProgressIndicator(
-              strokeWidth: 2,
-              color: textMuted,
-            ),
+    return summaryAsync.when(
+      loading: () => _buildLoadingState(),
+      error: (_, __) => _buildEmptyState(),
+      data: (summary) => _buildContent(context, summary),
+    );
+  }
+
+  Widget _buildLoadingState() {
+    return Container(
+      height: 120,
+      decoration: BoxDecoration(
+        color: elevated,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: cardBorder),
+      ),
+      child: Center(
+        child: SizedBox(
+          width: 20,
+          height: 20,
+          child: CircularProgressIndicator(
+            strokeWidth: 2,
+            color: textMuted,
           ),
         ),
       ),
-      error: (_, __) => const SizedBox.shrink(),
-      data: (periods) {
-        if (periods.isEmpty) {
-          return Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(16),
+    );
+  }
+
+  Widget _buildEmptyState() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+      decoration: BoxDecoration(
+        color: elevated,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: cardBorder),
+      ),
+      child: Column(
+        children: [
+          // Mystery card icon
+          Container(
+            width: 56,
+            height: 56,
             decoration: BoxDecoration(
-              color: elevated,
+              gradient: _purpleGradient,
               borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: cardBorder),
             ),
-            child: Text(
-              'Complete workouts to unlock your monthly recap',
+            child: const Center(
+              child: Text('?', style: TextStyle(
+                fontSize: 28,
+                fontWeight: FontWeight.w800,
+                color: Colors.white,
+              )),
+            ),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            'Your Monthly Wrapped',
+            style: TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.w700,
+              color: textPrimary,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'Complete at least 3 workouts this month\nto unlock your personalized recap',
+            style: TextStyle(
+              fontSize: 13,
+              color: textMuted,
+              height: 1.4,
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildContent(BuildContext context, WrappedSummary summary) {
+    final hasAvailable = summary.available.isNotEmpty;
+    final hasCurrentMonth = summary.currentMonth != null;
+
+    // State 4: No data at all
+    if (!hasAvailable && !hasCurrentMonth) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildEmptyState(),
+          const SizedBox(height: 12),
+          _buildPersonalityBar(summary.personalitiesCollected),
+        ],
+      );
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // State 1: Hero card for latest wrapped
+        if (hasAvailable)
+          _buildHeroCard(context, summary.available.first),
+
+        // State 2: Past wraps horizontal scroll (if more than 1)
+        if (summary.available.length > 1) ...[
+          const SizedBox(height: 16),
+          _buildPastWraps(context, summary.available.sublist(1)),
+        ],
+
+        // State 3: Current month progress
+        if (hasCurrentMonth) ...[
+          const SizedBox(height: 12),
+          _buildCurrentMonthProgress(summary.currentMonth!),
+        ],
+
+        // Personality collection bar
+        const SizedBox(height: 12),
+        _buildPersonalityBar(summary.personalitiesCollected),
+      ],
+    );
+  }
+
+  Widget _buildHeroCard(BuildContext context, WrappedPeriodInfo latest) {
+    return GestureDetector(
+      onTap: () {
+        HapticService.selection();
+        context.push('/wrapped/${latest.period}');
+      },
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: elevated,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(width: 1.5, color: Colors.transparent),
+          // Purple gradient border effect via foregroundDecoration
+        ),
+        foregroundDecoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(
+            width: 1.5,
+            color: _purpleAccent.withValues(alpha: 0.6),
+          ),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Period name
+            Text(
+              _monthName(latest.period),
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: _purpleAccent,
+                letterSpacing: 0.5,
+              ),
+            ),
+            const SizedBox(height: 8),
+
+            // Personality name in bordered box
+            if (latest.personality != null) ...[
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: _purpleAccent.withValues(alpha: 0.4),
+                  ),
+                  gradient: LinearGradient(
+                    colors: [
+                      _purpleAccent.withValues(alpha: 0.1),
+                      _purpleAccent.withValues(alpha: 0.05),
+                    ],
+                  ),
+                ),
+                child: Text(
+                  latest.personality!.toUpperCase(),
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w800,
+                    color: textPrimary,
+                    letterSpacing: 1.2,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+            ],
+
+            // Key stats
+            Text(
+              '${latest.totalWorkouts} workouts  ·  ${_formatVolume(latest.totalVolumeLbs)}',
               style: TextStyle(
                 fontSize: 13,
                 color: textMuted,
               ),
-              textAlign: TextAlign.center,
             ),
-          );
-        }
+            const SizedBox(height: 16),
 
-        return SizedBox(
-          height: 56,
+            // Action buttons
+            Row(
+              children: [
+                // View Again button
+                Expanded(
+                  child: GestureDetector(
+                    onTap: () {
+                      HapticService.selection();
+                      context.push('/wrapped/${latest.period}');
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 10),
+                      decoration: BoxDecoration(
+                        gradient: _purpleGradient,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: const Center(
+                        child: Text(
+                          'View Again',
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                // Share button
+                Expanded(
+                  child: GestureDetector(
+                    onTap: () {
+                      HapticService.selection();
+                      // Navigate to wrapped for sharing
+                      context.push('/wrapped/${latest.period}');
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 10),
+                      decoration: BoxDecoration(
+                        color: _purpleAccent.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(
+                          color: _purpleAccent.withValues(alpha: 0.3),
+                        ),
+                      ),
+                      child: Center(
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.share_outlined,
+                              size: 15,
+                              color: _purpleAccent,
+                            ),
+                            const SizedBox(width: 6),
+                            Text(
+                              'Share',
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w700,
+                                color: _purpleAccent,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPastWraps(BuildContext context, List<WrappedPeriodInfo> past) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(left: 2, bottom: 8),
+          child: Text(
+            'PAST WRAPS',
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+              color: textMuted,
+              letterSpacing: 1.0,
+            ),
+          ),
+        ),
+        SizedBox(
+          height: 72,
           child: ListView.separated(
             scrollDirection: Axis.horizontal,
-            itemCount: periods.length,
+            itemCount: past.length,
             separatorBuilder: (_, __) => const SizedBox(width: 10),
             itemBuilder: (context, index) {
-              final period = periods[index];
-              final parts = period.split('-');
-              final year = parts.isNotEmpty ? parts[0] : '';
-              final monthIndex =
-                  parts.length > 1 ? (int.tryParse(parts[1]) ?? 1) - 1 : 0;
-              final monthAbbr = _monthAbbreviations[monthIndex.clamp(0, 11)];
-
+              final wrap = past[index];
               return GestureDetector(
                 onTap: () {
                   HapticService.selection();
-                  context.push('/wrapped/$period');
+                  context.push('/wrapped/${wrap.period}');
                 },
                 child: Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+                  width: 100,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 8,
+                  ),
                   decoration: BoxDecoration(
                     color: elevated,
                     borderRadius: BorderRadius.circular(14),
                     border: Border.all(
-                      width: 1.5,
-                      color: const Color(0xFF9D4EDD).withValues(alpha: 0.5),
+                      color: _purpleAccent.withValues(alpha: 0.3),
                     ),
                   ),
                   child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Text(
-                        monthAbbr,
+                        _monthAbbr(wrap.period),
                         style: TextStyle(
-                          fontSize: 15,
+                          fontSize: 14,
                           fontWeight: FontWeight.w700,
                           color: textPrimary,
                         ),
                       ),
+                      if (wrap.personality != null)
+                        Text(
+                          wrap.personality!,
+                          style: TextStyle(
+                            fontSize: 9,
+                            fontWeight: FontWeight.w600,
+                            color: _purpleAccent,
+                            letterSpacing: 0.3,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      const SizedBox(height: 2),
                       Text(
-                        year,
+                        '${wrap.totalWorkouts} workouts',
                         style: TextStyle(
-                          fontSize: 11,
+                          fontSize: 10,
                           color: textMuted,
                         ),
                       ),
@@ -1418,8 +1711,222 @@ class _WrappedPeriodsRow extends ConsumerWidget {
               );
             },
           ),
-        );
-      },
+        ),
+      ],
+    );
+  }
+
+  Widget _buildCurrentMonthProgress(CurrentMonthProgress current) {
+    final monthName = _monthName(current.period).split(' ').first;
+    final workoutsNeeded = 3 - current.workoutsSoFar;
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: elevated,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: cardBorder),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Drop countdown
+          Row(
+            children: [
+              Icon(
+                Icons.calendar_today_rounded,
+                size: 14,
+                color: _purpleAccent,
+              ),
+              const SizedBox(width: 6),
+              Expanded(
+                child: Text(
+                  current.daysUntilDrop > 0
+                      ? '$monthName Wrapped drops in ${current.daysUntilDrop} days'
+                      : '$monthName Wrapped drops soon',
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: textPrimary,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+
+          // Stat chips
+          Row(
+            children: [
+              _buildStatChip(
+                '${current.workoutsSoFar}',
+                'workouts',
+                Icons.fitness_center_rounded,
+              ),
+              const SizedBox(width: 8),
+              _buildStatChip(
+                _formatVolume(current.volumeSoFar),
+                'volume',
+                Icons.trending_up_rounded,
+              ),
+              const SizedBox(width: 8),
+              _buildStatChip(
+                '${current.prsSoFar}',
+                'PRs',
+                Icons.emoji_events_rounded,
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+
+          // Eligibility status
+          if (!current.eligible && workoutsNeeded > 0) ...[
+            // Progress bar toward 3 workouts
+            ClipRRect(
+              borderRadius: BorderRadius.circular(4),
+              child: LinearProgressIndicator(
+                value: (current.workoutsSoFar / 3).clamp(0.0, 1.0),
+                minHeight: 4,
+                backgroundColor: _purpleAccent.withValues(alpha: 0.15),
+                valueColor: const AlwaysStoppedAnimation<Color>(_purpleAccent),
+              ),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              'Complete $workoutsNeeded more workout${workoutsNeeded == 1 ? '' : 's'} to unlock',
+              style: TextStyle(
+                fontSize: 12,
+                color: textMuted,
+              ),
+            ),
+          ] else ...[
+            Row(
+              children: [
+                Container(
+                  width: 6,
+                  height: 6,
+                  decoration: const BoxDecoration(
+                    color: _purpleAccent,
+                    shape: BoxShape.circle,
+                  ),
+                ),
+                const SizedBox(width: 6),
+                Text(
+                  'Your $monthName Wrapped is building...',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                    color: _purpleAccent,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStatChip(String value, String label, IconData icon) {
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+        decoration: BoxDecoration(
+          color: _purpleAccent.withValues(alpha: 0.08),
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Column(
+          children: [
+            Icon(icon, size: 14, color: _purpleAccent),
+            const SizedBox(height: 4),
+            Text(
+              value,
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+                color: textPrimary,
+              ),
+            ),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 10,
+                color: textMuted,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPersonalityBar(int collected) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: elevated,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: cardBorder),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Personalities',
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: textPrimary,
+                ),
+              ),
+              Text(
+                '$collected of 12 collected',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: textMuted,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          // 12 small squares indicating collected personalities
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: List.generate(12, (index) {
+              final isFilled = index < collected;
+              return Container(
+                width: 22,
+                height: 22,
+                decoration: BoxDecoration(
+                  color: isFilled
+                      ? _purpleAccent.withValues(alpha: 0.8)
+                      : _purpleAccent.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(5),
+                  border: isFilled
+                      ? null
+                      : Border.all(
+                          color: _purpleAccent.withValues(alpha: 0.2),
+                        ),
+                ),
+                child: isFilled
+                    ? const Center(
+                        child: Icon(
+                          Icons.check_rounded,
+                          size: 13,
+                          color: Colors.white,
+                        ),
+                      )
+                    : null,
+              );
+            }),
+          ),
+        ],
+      ),
     );
   }
 }

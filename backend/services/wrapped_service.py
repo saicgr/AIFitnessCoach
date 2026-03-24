@@ -23,24 +23,27 @@ _db_executor = ThreadPoolExecutor(max_workers=10)
 logger = get_logger(__name__)
 
 
-async def get_or_generate_wrapped(user_id: str, period_key: str) -> Dict[str, Any]:
+async def get_or_generate_wrapped(user_id: str, period_key: str, auth_id: str = None) -> Dict[str, Any]:
     """
     Return an existing wrapped or generate a new one.
 
     Args:
-        user_id: The authenticated user's UUID.
+        user_id: The backend users.id (for workout_logs queries).
         period_key: Month string, e.g. "2026-02".
+        auth_id: The Supabase auth.users.id (for fitness_wrapped table FK).
 
     Returns:
         Dict with keys: period_key, stats, ai_personality.
     """
     db = get_supabase_db()
+    # fitness_wrapped.user_id references auth.users(id), not public.users(id)
+    wrapped_uid = auth_id or user_id
 
     # 1. Check if already generated
     existing = (
         db.client.table("fitness_wrapped")
         .select("*")
-        .eq("user_id", user_id)
+        .eq("user_id", wrapped_uid)
         .eq("period_type", "monthly")
         .eq("period_key", period_key)
         .execute()
@@ -56,9 +59,9 @@ async def get_or_generate_wrapped(user_id: str, period_key: str) -> Dict[str, An
     # 3. Generate AI personality via Gemini
     ai_personality = await _generate_ai_personality(stats)
 
-    # 4. Store in DB
+    # 4. Store in DB (use wrapped_uid for auth.users FK)
     insert_data = {
-        "user_id": user_id,
+        "user_id": wrapped_uid,
         "period_type": "monthly",
         "period_key": period_key,
         "stats": json.dumps(stats),
@@ -74,7 +77,7 @@ async def get_or_generate_wrapped(user_id: str, period_key: str) -> Dict[str, An
     retry = (
         db.client.table("fitness_wrapped")
         .select("*")
-        .eq("user_id", user_id)
+        .eq("user_id", wrapped_uid)
         .eq("period_type", "monthly")
         .eq("period_key", period_key)
         .execute()
@@ -83,7 +86,7 @@ async def get_or_generate_wrapped(user_id: str, period_key: str) -> Dict[str, An
         return _row_to_response(retry.data[0])
 
     # Return computed data even if DB insert failed
-    logger.error(f"Failed to persist wrapped for user={user_id} period={period_key}")
+    logger.error(f"Failed to persist wrapped for user={wrapped_uid} period={period_key}")
     return {
         "period_key": period_key,
         "stats": stats,
@@ -319,10 +322,14 @@ async def _aggregate_stats(db, user_id: str, period_key: str) -> Dict[str, Any]:
     if shortest_workout == float("inf"):
         shortest_workout = 0
 
-    favorite_exercise = exercise_counter.most_common(1)[0][0] if exercise_counter else None
-    favorite_muscle_group = muscle_counter.most_common(1)[0][0] if muscle_counter else None
-    most_active_day = day_counter.most_common(1)[0][0] if day_counter else None
-    most_active_hour = hour_counter.most_common(1)[0][0] if hour_counter else None
+    def _top(counter):
+        mc = counter.most_common(1)
+        return mc[0][0] if mc else None
+
+    favorite_exercise = _top(exercise_counter)
+    favorite_muscle_group = _top(muscle_counter)
+    most_active_day = _top(day_counter)
+    most_active_hour = _top(hour_counter)
 
     # --- Process personal records ---
     prs = pr_result.data or []
@@ -403,6 +410,146 @@ async def _aggregate_stats(db, user_id: str, period_key: str) -> Dict[str, Any]:
         "social_reactions_received": social_reactions_received,
         "social_posts_count": social_posts_count,
         "xp_earned": xp_earned,
+    }
+
+
+async def get_wrapped_summary(user_id: str, auth_id: str) -> Dict[str, Any]:
+    """
+    Return a summary of all wrapped periods, current month progress,
+    and collected personalities for the summary/overview screen.
+
+    Args:
+        user_id: The backend users.id (for workout_logs / personal_records queries).
+        auth_id: The Supabase auth.users.id (for fitness_wrapped table FK).
+
+    Returns:
+        Dict with keys: available, current_month, personalities_collected.
+    """
+    db = get_supabase_db()
+    loop = asyncio.get_event_loop()
+
+    now = datetime.now()
+    current_period = now.strftime("%Y-%m")
+
+    # Current month boundaries
+    month_start = datetime(now.year, now.month, 1)
+    if now.month == 12:
+        month_end = datetime(now.year + 1, 1, 1)
+    else:
+        month_end = datetime(now.year, now.month + 1, 1)
+
+    month_start_str = month_start.isoformat()
+    month_end_str = month_end.isoformat()
+
+    # --- Phase 1: Run 3 independent queries in parallel ---
+    def _query_all_wrapped():
+        return (
+            db.client.table("fitness_wrapped")
+            .select("period_key, stats, ai_personality")
+            .eq("user_id", auth_id)
+            .eq("period_type", "monthly")
+            .order("period_key", desc=True)
+            .execute()
+        )
+
+    def _query_current_month_logs():
+        return (
+            db.client.table("workout_logs")
+            .select("exercises_json, exercises, total_time_seconds")
+            .eq("user_id", user_id)
+            .not_.is_("completed_at", "null")
+            .gte("completed_at", month_start_str)
+            .lt("completed_at", month_end_str)
+            .execute()
+        )
+
+    def _query_current_month_prs():
+        return (
+            db.client.table("personal_records")
+            .select("id")
+            .eq("user_id", user_id)
+            .gte("achieved_at", month_start_str)
+            .lt("achieved_at", month_end_str)
+            .execute()
+        )
+
+    wrapped_result, logs_result, prs_result = await asyncio.gather(
+        loop.run_in_executor(_db_executor, _query_all_wrapped),
+        loop.run_in_executor(_db_executor, _query_current_month_logs),
+        loop.run_in_executor(_db_executor, _query_current_month_prs),
+    )
+
+    # --- Build "available" list from fitness_wrapped rows ---
+    available = []
+    personality_set = set()
+
+    for row in (wrapped_result.data or []):
+        stats_data = row.get("stats", {})
+        if isinstance(stats_data, str):
+            try:
+                stats_data = json.loads(stats_data)
+            except (json.JSONDecodeError, TypeError):
+                stats_data = {}
+
+        ai_personality = row.get("ai_personality")
+        if isinstance(ai_personality, str):
+            try:
+                ai_personality = json.loads(ai_personality)
+            except (json.JSONDecodeError, TypeError):
+                ai_personality = {}
+
+        personality_name = None
+        if isinstance(ai_personality, dict):
+            personality_name = ai_personality.get("fitness_personality")
+            if personality_name:
+                personality_set.add(personality_name)
+
+        available.append({
+            "period": row.get("period_key"),
+            "viewed": True,
+            "personality": personality_name,
+            "total_workouts": stats_data.get("total_workouts", 0),
+            "total_volume_lbs": stats_data.get("total_volume_lbs", 0),
+        })
+
+    # --- Build "current_month" from workout_logs ---
+    current_logs = logs_result.data or []
+    workouts_so_far = len(current_logs)
+
+    # Calculate volume using same parsing logic as _aggregate_stats
+    volume_so_far = 0
+    for log in current_logs:
+        exercises_json = log.get("exercises_json") or log.get("exercises") or "[]"
+        try:
+            exercises = json.loads(exercises_json) if isinstance(exercises_json, str) else exercises_json
+        except (json.JSONDecodeError, TypeError):
+            exercises = []
+
+        if isinstance(exercises, list):
+            for ex in exercises:
+                sets_data = ex.get("sets") or ex.get("sets_completed") or []
+                if isinstance(sets_data, list):
+                    for s in sets_data:
+                        reps = s.get("reps") or s.get("actual_reps") or 0
+                        weight = s.get("weight") or s.get("actual_weight") or 0
+                        volume_so_far += (int(reps) if reps else 0) * (float(weight) if weight else 0)
+
+    prs_so_far = len(prs_result.data or [])
+    days_until_drop = (month_end - now).days
+
+    current_month = {
+        "period": current_period,
+        "workouts_so_far": workouts_so_far,
+        "volume_so_far": round(volume_so_far, 1),
+        "prs_so_far": prs_so_far,
+        "days_until_drop": days_until_drop,
+        "eligible": workouts_so_far >= 3,
+    }
+
+    return {
+        "available": available,
+        "current_month": current_month,
+        "personalities_collected": len(personality_set),
     }
 
 

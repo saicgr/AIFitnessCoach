@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants/app_colors.dart';
 import '../../data/models/micronutrients.dart';
+import '../../data/repositories/nutrition_repository.dart';
 import '../../widgets/glass_sheet.dart';
 
 /// Nutrient Explorer Tab - MacroFactor/Cronometer inspired
@@ -660,7 +662,7 @@ class _NutrientRow extends StatelessWidget {
 // Nutrient Detail Sheet - Shows detailed info when tapped
 // ─────────────────────────────────────────────────────────────────
 
-class NutrientDetailSheet extends StatefulWidget {
+class NutrientDetailSheet extends ConsumerStatefulWidget {
   final NutrientProgress nutrient;
   final String userId;
   final bool isDark;
@@ -677,10 +679,10 @@ class NutrientDetailSheet extends StatefulWidget {
   });
 
   @override
-  State<NutrientDetailSheet> createState() => _NutrientDetailSheetState();
+  ConsumerState<NutrientDetailSheet> createState() => _NutrientDetailSheetState();
 }
 
-class _NutrientDetailSheetState extends State<NutrientDetailSheet> {
+class _NutrientDetailSheetState extends ConsumerState<NutrientDetailSheet> {
   bool _isPinning = false;
   late bool _isPinned;
 
@@ -696,11 +698,23 @@ class _NutrientDetailSheetState extends State<NutrientDetailSheet> {
     setState(() => _isPinning = true);
 
     try {
-      // TODO: Call repository to update pinned nutrients
-      // For now, just toggle locally
-      setState(() {
-        _isPinned = !_isPinned;
-      });
+      // Toggle locally first for instant UI feedback
+      final newPinned = !_isPinned;
+      setState(() => _isPinned = newPinned);
+
+      // Persist to backend
+      final currentPinned = List<String>.from(widget.currentPinnedNutrients ?? []);
+      if (newPinned) {
+        if (!currentPinned.contains(widget.nutrient.nutrientKey)) {
+          currentPinned.add(widget.nutrient.nutrientKey);
+        }
+      } else {
+        currentPinned.remove(widget.nutrient.nutrientKey);
+      }
+      await ref.read(nutritionRepositoryProvider).updatePinnedNutrients(
+        userId: widget.userId,
+        pinnedNutrients: currentPinned,
+      );
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

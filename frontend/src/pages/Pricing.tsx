@@ -71,10 +71,9 @@ const plans: PricingPlan[] = [
   {
     name: 'Premium',
     description: 'Full AI-powered fitness & nutrition',
-    monthlyPrice: '$5.99',
-    yearlyPrice: '$4.00',
-    yearlyTotal: '$47.99',
-    savings: 'Save 33%',
+    monthlyPrice: '$4.99',
+    yearlyPrice: '$4.99',
+    yearlyTotal: '$59.88',
     features: [
       'Everything in Free, plus:',
       'Unlimited AI chat (5 specialist agents)',

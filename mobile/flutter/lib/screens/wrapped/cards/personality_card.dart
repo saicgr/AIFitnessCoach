@@ -63,59 +63,69 @@ class WrappedPersonalityCard extends StatelessWidget {
                 children: [
                   const Spacer(flex: 2),
 
-                  // Header
+                  // Header - dramatic build-up
                   Text(
-                    'YOU ARE...',
+                    'Your gym personality is...',
                     style: TextStyle(
-                      color: const Color(0xFFF472B6).withValues(alpha: 0.9),
+                      color: Colors.white.withValues(alpha: 0.5),
                       fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: 6,
+                      fontWeight: FontWeight.w400,
+                      letterSpacing: 1,
                     ),
                   ),
 
                   const Spacer(),
 
-                  // Personality title in LARGE text
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 8),
-                    child: FittedBox(
-                      fit: BoxFit.scaleDown,
-                      child: Text(
-                        data.fitnessPersonality,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 48,
-                          fontWeight: FontWeight.w900,
-                          height: 1.1,
-                        ),
-                        textAlign: TextAlign.center,
-                        maxLines: 2,
+                  // Personality title - bordered reveal box
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(
+                        vertical: 24, horizontal: 16),
+                    decoration: BoxDecoration(
+                      border: Border.all(
+                        color: const Color(0xFFEC4899).withValues(alpha: 0.4),
+                        width: 2,
                       ),
+                      borderRadius: BorderRadius.circular(20),
+                      color: const Color(0xFFEC4899).withValues(alpha: 0.06),
+                    ),
+                    child: Column(
+                      children: [
+                        FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Text(
+                            data.fitnessPersonality.toUpperCase(),
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 40,
+                              fontWeight: FontWeight.w900,
+                              height: 1.1,
+                              letterSpacing: 2,
+                            ),
+                            textAlign: TextAlign.center,
+                            maxLines: 2,
+                          ),
+                        ),
+                        if (data.personalityDescription.isNotEmpty) ...[
+                          const SizedBox(height: 14),
+                          Text(
+                            data.personalityDescription,
+                            style: TextStyle(
+                              color: Colors.white.withValues(alpha: 0.6),
+                              fontSize: 15,
+                              fontWeight: FontWeight.w400,
+                              height: 1.5,
+                            ),
+                            textAlign: TextAlign.center,
+                            maxLines: 3,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
+                      ],
                     ),
                   ),
 
-                  const SizedBox(height: 20),
-
-                  // Personality description
-                  if (data.personalityDescription.isNotEmpty)
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
-                      child: Text(
-                        data.personalityDescription,
-                        style: TextStyle(
-                          color: Colors.white.withValues(alpha: 0.6),
-                          fontSize: 16,
-                          fontWeight: FontWeight.w400,
-                          height: 1.5,
-                        ),
-                        textAlign: TextAlign.center,
-                        maxLines: 4,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-
-                  const Spacer(flex: 2),
+                  const Spacer(),
 
                   // Fun fact bubble
                   if (data.funFact.isNotEmpty)
@@ -158,6 +168,24 @@ class WrappedPersonalityCard extends StatelessWidget {
                         ],
                       ),
                     ),
+
+                  // Motivation quote
+                  if (data.motivationQuote.isNotEmpty) ...[
+                    const SizedBox(height: 16),
+                    Text(
+                      '"${data.motivationQuote}"',
+                      style: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.4),
+                        fontSize: 13,
+                        fontWeight: FontWeight.w400,
+                        fontStyle: FontStyle.italic,
+                        height: 1.4,
+                      ),
+                      textAlign: TextAlign.center,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
 
                   const Spacer(flex: 2),
 

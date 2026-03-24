@@ -133,44 +133,54 @@ async def generate_structured_insights_node(state: WorkoutInsightsState) -> Dict
     total_sets = state.get("total_sets", 0)
     exercise_count = state.get("exercise_count", len(exercises))
 
-    # Build exercise detail string with sets/reps context
+    # Build exercise detail string with sets/reps/equipment context
     exercise_details = []
-    for e in exercises[:6]:
+    for e in exercises[:8]:
         name = e.get("name", "")
         sets = e.get("sets", "")
         reps = e.get("reps", "")
+        equipment = e.get("equipment", "")
+        muscle = e.get("primary_muscle") or e.get("muscle_group") or e.get("target") or ""
         if name:
             detail = name
             if sets and reps:
                 detail += f" ({sets}x{reps})"
+            if equipment:
+                detail += f" [{equipment}]"
+            if muscle:
+                detail += f" -> {muscle}"
             exercise_details.append(detail)
-    exercises_str = ", ".join(exercise_details) if exercise_details else "various exercises"
+    exercises_str = "\n".join(f"  - {d}" for d in exercise_details) if exercise_details else "various exercises"
 
     goals_str = ", ".join(user_goals) if user_goals else "general fitness"
 
-    prompt = f"""You are a personal fitness coach writing brief, actionable workout notes for a user about to do this session.
+    prompt = f"""You are an expert strength coach giving pre-workout briefing notes. Be specific to THIS workout — reference exact exercise names, rep ranges, and muscles.
 
 Workout: {workout_name}
-Focus: {workout_focus} | Duration: {duration} min | Difficulty: {difficulty}
-Exercises ({exercise_count} total, {total_sets} sets): {exercises_str}
-User goals: {goals_str} | Fitness level: {fitness_level}
+Focus: {workout_focus} | Duration: {duration} min | Difficulty: {difficulty} | Level: {fitness_level}
+User goals: {goals_str}
+Exercises ({exercise_count} total, {total_sets} sets):
+{exercises_str}
 
-Generate exactly 3 insight sections as JSON. Each section must be specific, actionable, and directly reference the actual exercises or muscles in this workout — not generic advice.
+Generate exactly 3 insight sections as JSON. Each MUST name specific exercises from the list above.
 
-Section ideas (pick the 3 most relevant):
-- Why this workout serves their goal (specific to {goals_str})
-- A technique tip for a key exercise in this session (e.g. depth on squats, grip on deadlifts)
-- What muscles this targets and why that matters now
-- Recovery/nutrition note relevant to this session's intensity
-- A mind-muscle connection cue for the primary lift
+Pick the 3 most useful from:
+1. A form cue for the hardest exercise (name it, describe the specific technique — e.g. "On Barbell Squat, push knees out over toes and brace your core before each rep")
+2. Why this exercise selection serves their {goals_str} goal (connect specific exercises to the goal)
+3. A mind-muscle cue for one exercise (e.g. "On Seated Cable Row, initiate by squeezing shoulder blades before pulling")
+4. Tempo/intensity advice for the rep ranges in this workout (e.g. "Your 8-12 rep range means pick a weight where rep 10 feels like an 8/10 effort")
+5. A superset or rest period tip based on the exercise order
 
 Rules:
-- headline: 3-5 words, punchy motivational
+- headline: 3-5 words, motivational but specific to the workout theme
 - section title: 2-4 words
-- section content: 1-2 sentences, specific and actionable (not generic fluff)
-- icon: one emoji relevant to the section
+- section content: 2 sentences max. MUST reference a specific exercise name from this workout. Be concrete, not generic.
+- icon: one emoji
 - color: one of cyan, purple, orange, green
-- exactly 3 sections"""
+- exactly 3 sections
+
+BAD example (too generic): "These compound movements maximize calorie burn"
+GOOD example: "Lead with Barbell Squats at 4x8-12 while fresh — drive through your heels and keep your chest up to load your quads fully" """
 
     # Initialize google.genai client
     from core.gemini_client import get_genai_client
@@ -287,12 +297,12 @@ Rules:
             if len(headline.split()) > 5:
                 headline = " ".join(headline.split()[:5])
 
-            # Truncate section content if too long (max 10 words)
+            # Truncate section content if too long (max 30 words)
             for section in sections:
                 content = section.get("content", "")
                 words = content.split()
-                if len(words) > 10:
-                    section["content"] = " ".join(words[:10])
+                if len(words) > 30:
+                    section["content"] = " ".join(words[:30])
 
             logger.info(f"[Generate Node] Generated {len(sections)} sections (attempt {attempt})")
 

@@ -138,6 +138,9 @@ import '../screens/kegel/kegel_session_screen.dart';
 import '../screens/habits/habits_screen.dart';
 import '../screens/habits/habit_detail_screen.dart';
 import '../screens/wrapped/wrapped_viewer_screen.dart';
+import '../screens/onboarding/accuracy_intro_screen.dart';
+import '../screens/onboarding/health_connect_screen.dart';
+import '../screens/onboarding/feature_showcase_screen.dart';
 import '../screens/dashboard/coach_dashboard_screen.dart';
 
 /// Listenable for auth, language, and accessibility state changes to trigger router refresh
@@ -379,6 +382,11 @@ String? _handleAuthRedirect(
 
   // Coach selection - auth required (also used for changing coach from settings)
   if (loc == '/coach-selection') {
+    return isLoggedIn ? null : '/stats-welcome';
+  }
+
+  // New onboarding education screens - auth required
+  if (loc == '/accuracy-intro' || loc == '/health-connect-setup' || loc == '/feature-showcase') {
     return isLoggedIn ? null : '/stats-welcome';
   }
 
@@ -882,6 +890,84 @@ final routerProvider = Provider<GoRouter>((ref) {
         pageBuilder: (context, state) => CustomTransitionPage(
           key: state.pageKey,
           child: const FitnessAssessmentScreen(),
+          transitionDuration: const Duration(milliseconds: 400),
+          reverseTransitionDuration: const Duration(milliseconds: 300),
+          transitionsBuilder: (context, animation, secondaryAnimation, child) {
+            return FadeTransition(
+              opacity: animation,
+              child: SlideTransition(
+                position: Tween<Offset>(
+                  begin: const Offset(0.05, 0),
+                  end: Offset.zero,
+                ).animate(CurvedAnimation(
+                  parent: animation,
+                  curve: Curves.easeOutCubic,
+                )),
+                child: child,
+              ),
+            );
+          },
+        ),
+      ),
+
+      // Accuracy Intro - shows vague vs specific food logging comparison
+      GoRoute(
+        path: '/accuracy-intro',
+        pageBuilder: (context, state) => CustomTransitionPage(
+          key: state.pageKey,
+          child: const AccuracyIntroScreen(),
+          transitionDuration: const Duration(milliseconds: 400),
+          reverseTransitionDuration: const Duration(milliseconds: 300),
+          transitionsBuilder: (context, animation, secondaryAnimation, child) {
+            return FadeTransition(
+              opacity: animation,
+              child: SlideTransition(
+                position: Tween<Offset>(
+                  begin: const Offset(0.05, 0),
+                  end: Offset.zero,
+                ).animate(CurvedAnimation(
+                  parent: animation,
+                  curve: Curves.easeOutCubic,
+                )),
+                child: child,
+              ),
+            );
+          },
+        ),
+      ),
+
+      // Health Connect Setup - connect Google Health Connect / Apple HealthKit
+      GoRoute(
+        path: '/health-connect-setup',
+        pageBuilder: (context, state) => CustomTransitionPage(
+          key: state.pageKey,
+          child: const HealthConnectScreen(),
+          transitionDuration: const Duration(milliseconds: 400),
+          reverseTransitionDuration: const Duration(milliseconds: 300),
+          transitionsBuilder: (context, animation, secondaryAnimation, child) {
+            return FadeTransition(
+              opacity: animation,
+              child: SlideTransition(
+                position: Tween<Offset>(
+                  begin: const Offset(0.05, 0),
+                  end: Offset.zero,
+                ).animate(CurvedAnimation(
+                  parent: animation,
+                  curve: Curves.easeOutCubic,
+                )),
+                child: child,
+              ),
+            );
+          },
+        ),
+      ),
+
+      // Feature Showcase - swipeable cards highlighting key features
+      GoRoute(
+        path: '/feature-showcase',
+        pageBuilder: (context, state) => CustomTransitionPage(
+          key: state.pageKey,
+          child: const FeatureShowcaseScreen(),
           transitionDuration: const Duration(milliseconds: 400),
           reverseTransitionDuration: const Duration(milliseconds: 300),
           transitionsBuilder: (context, animation, secondaryAnimation, child) {

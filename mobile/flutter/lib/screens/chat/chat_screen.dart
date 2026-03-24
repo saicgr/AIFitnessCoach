@@ -901,58 +901,63 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
               ),
             ),
             const SizedBox(width: 8),
-            // Search button circle
-            GestureDetector(
-              onTap: () {
-                HapticService.light();
-                final messagesData = ref.read(chatMessagesProvider).valueOrNull ?? [];
-                Navigator.of(context).push(MaterialPageRoute(
-                  builder: (_) => ChatSearchOverlay(
-                    messages: messagesData,
-                    onScrollToMessage: (messageId) {
-                      Navigator.of(context).pop();
-                      _scrollToMessage(messageId);
-                    },
-                  ),
-                ));
-              },
-              child: Container(
-                height: 44,
-                width: 44,
-                decoration: BoxDecoration(
-                  color: topBarColor,
-                  borderRadius: BorderRadius.circular(22),
-                  border: topBarBorder,
-                  boxShadow: [topBarShadow],
-                ),
-                child: Icon(
-                  Icons.search_rounded,
-                  color: isDark ? Colors.white70 : AppColorsLight.textSecondary,
-                  size: 20,
-                ),
+            // Search + More pill
+            Container(
+              height: 44,
+              decoration: BoxDecoration(
+                color: topBarColor,
+                borderRadius: BorderRadius.circular(22),
+                border: topBarBorder,
+                boxShadow: [topBarShadow],
               ),
-            ),
-            const SizedBox(width: 8),
-            // More menu circle
-            GestureDetector(
-              onTap: () {
-                HapticService.light();
-                _showOptionsMenu(context);
-              },
-              child: Container(
-                height: 44,
-                width: 44,
-                decoration: BoxDecoration(
-                  color: topBarColor,
-                  borderRadius: BorderRadius.circular(22),
-                  border: topBarBorder,
-                  boxShadow: [topBarShadow],
-                ),
-                child: Icon(
-                  Icons.more_vert_rounded,
-                  color: isDark ? Colors.white70 : AppColorsLight.textSecondary,
-                  size: 20,
-                ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  GestureDetector(
+                    onTap: () {
+                      HapticService.light();
+                      final messagesData = ref.read(chatMessagesProvider).valueOrNull ?? [];
+                      Navigator.of(context).push(MaterialPageRoute(
+                        builder: (_) => ChatSearchOverlay(
+                          messages: messagesData,
+                          onScrollToMessage: (messageId) {
+                            Navigator.of(context).pop();
+                            _scrollToMessage(messageId);
+                          },
+                        ),
+                      ));
+                    },
+                    behavior: HitTestBehavior.opaque,
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 10),
+                      child: Icon(
+                        Icons.search_rounded,
+                        color: isDark ? Colors.white70 : AppColorsLight.textSecondary,
+                        size: 20,
+                      ),
+                    ),
+                  ),
+                  Container(
+                    width: 1,
+                    height: 20,
+                    color: (isDark ? Colors.white : Colors.black).withValues(alpha: 0.1),
+                  ),
+                  GestureDetector(
+                    onTap: () {
+                      HapticService.light();
+                      _showOptionsMenu(context);
+                    },
+                    behavior: HitTestBehavior.opaque,
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 10),
+                      child: Icon(
+                        Icons.more_vert_rounded,
+                        color: isDark ? Colors.white70 : AppColorsLight.textSecondary,
+                        size: 20,
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
           ],
@@ -1490,20 +1495,6 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
             mainAxisSize: MainAxisSize.min,
             children: [
             ListTile(
-              leading: const Icon(Icons.support_agent, color: AppColors.cyan),
-              title: const Text('Talk to Human Support'),
-              subtitle: const Text(
-                'Connect with a real person',
-                style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
-              ),
-              onTap: () {
-                Navigator.pop(context);
-                HapticService.selection();
-                _showEscalateToHumanDialog();
-              },
-            ),
-            const Divider(height: 1, indent: 16, endIndent: 16),
-            ListTile(
               leading: const Icon(Icons.bug_report_outlined, color: AppColors.orange),
               title: const Text('Report a Problem'),
               subtitle: const Text(
@@ -1513,7 +1504,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
               onTap: () {
                 Navigator.pop(context);
                 HapticService.selection();
-                context.push('/support-tickets');
+                context.push('/support-tickets/create');
               },
             ),
             const Divider(height: 1, indent: 16, endIndent: 16),

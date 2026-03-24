@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/api_constants.dart';
+import '../../core/constants/app_links.dart';
 import '../../core/providers/window_mode_provider.dart';
 import '../../data/models/ai_profile_payload.dart';
 import '../../data/repositories/auth_repository.dart';
@@ -663,14 +664,14 @@ class _SignInScreenState extends ConsumerState<SignInScreen>
             text: 'Terms of Service',
             style: TextStyle(color: linkColor, decoration: TextDecoration.underline, decorationColor: linkColor),
             recognizer: TapGestureRecognizer()
-              ..onTap = () => launchUrl(Uri.parse('https://fitwiz.app/terms'), mode: LaunchMode.externalApplication),
+              ..onTap = () => launchUrl(Uri.parse('${AppLinks.termsOfService}'), mode: LaunchMode.externalApplication),
           ),
           const TextSpan(text: ' and '),
           TextSpan(
             text: 'Privacy Policy',
             style: TextStyle(color: linkColor, decoration: TextDecoration.underline, decorationColor: linkColor),
             recognizer: TapGestureRecognizer()
-              ..onTap = () => launchUrl(Uri.parse('https://fitwiz.app/privacy'), mode: LaunchMode.externalApplication),
+              ..onTap = () => launchUrl(Uri.parse('${AppLinks.privacyPolicy}'), mode: LaunchMode.externalApplication),
           ),
         ],
       ),

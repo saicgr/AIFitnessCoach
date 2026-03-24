@@ -10,6 +10,7 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../core/constants/api_constants.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/constants/app_links.dart';
 import '../../core/theme/theme_colors.dart';
 import '../../core/theme/theme_provider.dart';
 import '../../core/providers/training_preferences_provider.dart';
@@ -581,14 +582,30 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
   // --- Social media icon row ---
   Widget _buildSocialRow(bool isDark) {
-    const socials = [
-      _SocialIcon(FontAwesomeIcons.discord, Color(0xFF5865F2), 'Discord'),
-      _SocialIcon(FontAwesomeIcons.reddit, Color(0xFFFF4500), 'Reddit'),
-      _SocialIcon(FontAwesomeIcons.xTwitter, Color(0xFF14171A), 'X'),
-      _SocialIcon(FontAwesomeIcons.instagram, Color(0xFFE4405F), 'Instagram'),
-      _SocialIcon(FontAwesomeIcons.tiktok, Color(0xFF010101), 'TikTok'),
-      _SocialIcon(FontAwesomeIcons.snapchat, Color(0xFFFFFC00), 'Snapchat'),
+    const allSocials = [
+      _SocialIcon(FontAwesomeIcons.discord, Color(0xFF5865F2), 'discord'),
+      _SocialIcon(FontAwesomeIcons.reddit, Color(0xFFFF4500), 'reddit'),
+      _SocialIcon(FontAwesomeIcons.xTwitter, Color(0xFF14171A), 'twitter'),
+      _SocialIcon(FontAwesomeIcons.instagram, Color(0xFFE4405F), 'instagram'),
+      _SocialIcon(FontAwesomeIcons.tiktok, Color(0xFF010101), 'tiktok'),
     ];
+
+    // Map label keys to AppLinks URLs
+    const urlMap = {
+      'discord': AppLinks.discord,
+      'reddit': AppLinks.reddit,
+      'twitter': AppLinks.twitter,
+      'instagram': AppLinks.instagram,
+      'tiktok': AppLinks.tiktok,
+    };
+
+    // Only show icons that have a URL configured
+    final socials = allSocials.where((s) {
+      final url = urlMap[s.label] ?? '';
+      return url.isNotEmpty;
+    }).toList();
+
+    if (socials.isEmpty) return const SizedBox.shrink();
 
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
@@ -600,7 +617,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           padding: const EdgeInsets.symmetric(horizontal: 8),
           child: GestureDetector(
             onTap: () {
-              // TODO: add social media URLs
+              final url = urlMap[s.label] ?? '';
+              if (url.isNotEmpty) _launchExternalUrl(url);
             },
             child: Container(
               width: 44,
@@ -1226,8 +1244,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             sectionKeys: const ['rate_app'],
             onTap: () => _launchExternalUrl(
               Platform.isIOS
-                  ? 'https://apps.apple.com/app/fitwiz'
-                  : 'https://play.google.com/store/apps/details?id=com.fitwiz.app',
+                  ? (AppLinks.appStore.isNotEmpty ? AppLinks.appStore : 'https://apps.apple.com/app/fitwiz')
+                  : AppLinks.playStore,
             ),
           ),
         ],

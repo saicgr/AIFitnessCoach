@@ -571,7 +571,7 @@ class _HabitDetailScreenState extends ConsumerState<HabitDetailScreen>
           ),
           const Spacer(),
           _GlassmorphicButton(
-            onTap: _isSharing ? () {} : () => _shareHabitProgress(data, isDark),
+            onTap: () { if (!_isSharing) _shareHabitProgress(data, isDark); },
             isDark: isDark,
             child: _isSharing
                 ? SizedBox(

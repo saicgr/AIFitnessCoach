@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/wrapped_data.dart';
+import '../models/wrapped_summary.dart';
 import 'api_client.dart';
 
 final wrappedServiceProvider = Provider<WrappedService>((ref) {
@@ -19,6 +20,17 @@ class WrappedService {
       return WrappedData.fromJson(response.data as Map<String, dynamic>);
     } catch (e) {
       debugPrint('❌ [Wrapped] Error fetching wrapped data: $e');
+      rethrow;
+    }
+  }
+
+  Future<WrappedSummary> getSummary() async {
+    try {
+      final response = await _apiClient.get('/wrapped/summary');
+      debugPrint('✅ [Wrapped] Fetched wrapped summary');
+      return WrappedSummary.fromJson(response.data as Map<String, dynamic>);
+    } catch (e) {
+      debugPrint('❌ [Wrapped] Error fetching wrapped summary: $e');
       rethrow;
     }
   }

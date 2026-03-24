@@ -206,7 +206,7 @@ BEGIN
         MIN(created_at),
         MAX(created_at),
         COUNT(*),
-        COALESCE(SUM(duration_seconds), 0)
+        COALESCE(SUM(total_time_seconds), 0)
     INTO v_first_workout, v_last_workout, v_total_workouts, v_total_time
     FROM workout_logs
     WHERE user_id = p_user_id

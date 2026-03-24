@@ -3,6 +3,9 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../data/models/coach_persona.dart';
+import '../../../screens/ai_settings/ai_settings_screen.dart';
+import '../../../widgets/coach_avatar.dart';
 import '../../../widgets/main_shell.dart';
 import '../../../widgets/pill_app_bar.dart';
 import '../sections/sections.dart';
@@ -30,17 +33,13 @@ class AiCoachPage extends ConsumerWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // ── Coach Voice & Personality navigation tile ──
-              _buildNavigationTile(
+              // ── Selected Coach + Voice & Personality ──
+              _buildCoachCard(
                 context: context,
-                icon: Icons.record_voice_over,
-                title: 'Coach Voice & Personality',
-                subtitle: 'Change AI voice and style',
-                color: AppColors.info,
+                ref: ref,
                 textPrimary: textPrimary,
                 textMuted: textMuted,
                 cardBorder: cardBorder,
-                onTap: () => GoRouter.of(context).push('/ai-settings'),
               ),
 
               const SizedBox(height: 16),
@@ -62,6 +61,88 @@ class AiCoachPage extends ConsumerWidget {
             ],
           ),
         ),
+    );
+  }
+
+  Widget _buildCoachCard({
+    required BuildContext context,
+    required WidgetRef ref,
+    required Color textPrimary,
+    required Color textMuted,
+    required Color cardBorder,
+  }) {
+    final aiSettings = ref.watch(aiSettingsProvider);
+    final coachId = aiSettings.coachPersonaId;
+    CoachPersona? coach;
+    if (coachId != null && coachId.isNotEmpty) {
+      try {
+        coach = CoachPersona.predefinedCoaches.firstWhere((c) => c.id == coachId);
+      } catch (_) {}
+    }
+
+    return InkWell(
+      onTap: () {
+        HapticFeedback.selectionClick();
+        GoRouter.of(context).push('/ai-settings');
+      },
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: cardBorder),
+        ),
+        child: Row(
+          children: [
+            if (coach != null)
+              CoachAvatar(
+                coach: coach,
+                size: 48,
+                showBorder: true,
+                borderWidth: 2,
+                showShadow: false,
+                enableTapToView: false,
+              )
+            else
+              Container(
+                width: 48,
+                height: 48,
+                decoration: BoxDecoration(
+                  color: AppColors.info.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(Icons.record_voice_over, color: AppColors.info, size: 24),
+              ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    coach?.name ?? 'Coach Voice & Personality',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: textPrimary,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    coach != null
+                        ? '${coach.tagline} · Tap to change'
+                        : 'Change AI voice and style',
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: textMuted,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Icon(Icons.chevron_right, color: textMuted, size: 22),
+          ],
+        ),
+      ),
     );
   }
 

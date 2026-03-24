@@ -438,7 +438,7 @@ class _ActivityCardState extends State<ActivityCard> with SingleTickerProviderSt
               onTap: () {
                 Navigator.pop(context);
                 HapticFeedback.lightImpact();
-                Clipboard.setData(const ClipboardData(text: 'https://fitwiz.app/post'));
+                Clipboard.setData(const ClipboardData(text: 'https://fitwiz.us'));
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
                     content: Text('Link copied to clipboard'),

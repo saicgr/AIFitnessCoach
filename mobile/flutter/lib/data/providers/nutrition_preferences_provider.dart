@@ -472,6 +472,7 @@ class NutritionPreferencesNotifier extends StateNotifier<NutritionPreferencesSta
     int? customProteinPercent,
     int? customCarbPercent,
     int? customFatPercent,
+    String? rateOfChange,
   }) async {
     if (state.preferences == null) {
       debugPrint('❌ [NutritionPrefsProvider] Cannot update targets: no preferences loaded');
@@ -491,6 +492,7 @@ class NutritionPreferencesNotifier extends StateNotifier<NutritionPreferencesSta
         customProteinPercent: customProteinPercent ?? state.preferences!.customProteinPercent,
         customCarbPercent: customCarbPercent ?? state.preferences!.customCarbPercent,
         customFatPercent: customFatPercent ?? state.preferences!.customFatPercent,
+        rateOfChange: rateOfChange ?? state.preferences!.rateOfChange,
       );
 
       // Save to backend
