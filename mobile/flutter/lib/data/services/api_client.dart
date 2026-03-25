@@ -217,8 +217,8 @@ class ApiClient with WidgetsBindingObserver {
       _dio.interceptors.add(
         LogInterceptor(
           requestHeader: true,
-          requestBody: true,
-          responseBody: true,
+          requestBody: false,
+          responseBody: false,
           responseHeader: false,
           error: true,
           logPrint: (obj) => debugPrint(obj.toString()),

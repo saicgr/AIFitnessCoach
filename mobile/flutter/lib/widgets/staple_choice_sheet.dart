@@ -17,6 +17,7 @@ typedef StapleChoiceResult = ({
   int? userSets,
   String? userReps,
   int? userRestSeconds,
+  double? userWeightLbs,
   List<int>? targetDays,
 });
 
@@ -102,6 +103,7 @@ class StapleChoiceSheet extends ConsumerStatefulWidget {
 
 class _StapleChoiceSheetState extends ConsumerState<StapleChoiceSheet> {
   String _selectedSection = 'main';
+  bool _addToday = true; // true = today, false = next workout
   String? _selectedProfileId;
   bool _profileIdInitialized = false;
   bool _showSwapList = false;
@@ -110,6 +112,7 @@ class _StapleChoiceSheetState extends ConsumerState<StapleChoiceSheet> {
   final _setsController = TextEditingController(text: '3');
   final _repsController = TextEditingController(text: '10');
   final _restController = TextEditingController(text: '60');
+  final _weightController = TextEditingController();
   bool _showStrengthParams = false;
 
   // Day-of-week targeting (null = all days, empty set = expanded but none selected)
@@ -137,6 +140,7 @@ class _StapleChoiceSheetState extends ConsumerState<StapleChoiceSheet> {
     _setsController.dispose();
     _repsController.dispose();
     _restController.dispose();
+    _weightController.dispose();
     _durationController.dispose();
     _speedController.dispose();
     _inclineController.dispose();
@@ -226,6 +230,7 @@ class _StapleChoiceSheetState extends ConsumerState<StapleChoiceSheet> {
       userSets: _isStrength && _showStrengthParams ? int.tryParse(_setsController.text) : null,
       userReps: _isStrength && _showStrengthParams ? _repsController.text : null,
       userRestSeconds: _isStrength && _showStrengthParams ? int.tryParse(_restController.text) : null,
+      userWeightLbs: _isStrength && _showStrengthParams ? double.tryParse(_weightController.text) : null,
       targetDays: _showDayPicker && _selectedDays.isNotEmpty ? (_selectedDays.toList()..sort()) : null,
     );
   }
@@ -327,54 +332,135 @@ class _StapleChoiceSheetState extends ConsumerState<StapleChoiceSheet> {
             _buildDayPickerSection(textPrimary, textMuted, cardColor, cardBorder),
             const SizedBox(height: 16),
 
-            // Title
+            // When to apply
             Text(
-              'When should this apply?',
+              'When to apply',
               style: TextStyle(
                 fontSize: 17,
                 fontWeight: FontWeight.w600,
                 color: textPrimary,
               ),
             ),
+            const SizedBox(height: 12),
+
+            // Timing toggle: Today vs Next workout
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Container(
+                padding: const EdgeInsets.all(4),
+                decoration: BoxDecoration(
+                  color: cardColor,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Row(
+                  children: [
+                    _buildToggleOption(
+                      icon: Icons.bolt,
+                      label: "Today's workout",
+                      isSelected: _addToday,
+                      color: AppColors.cyan,
+                      textPrimary: textPrimary,
+                      textMuted: textMuted,
+                      onTap: () => setState(() => _addToday = true),
+                    ),
+                    const SizedBox(width: 4),
+                    _buildToggleOption(
+                      icon: Icons.skip_next,
+                      label: 'Next workout',
+                      isSelected: !_addToday,
+                      color: AppColors.cyan,
+                      textPrimary: textPrimary,
+                      textMuted: textMuted,
+                      onTap: () => setState(() => _addToday = false),
+                    ),
+                  ],
+                ),
+              ),
+            ),
             const SizedBox(height: 20),
 
-            // Option 1: Add to today's workout
-            _buildTimingOption(
-              icon: Icons.bolt,
-              iconColor: AppColors.cyan,
-              title: "Add to today's workout",
-              subtitle: null,
-              showSectionChips: true,
-              textPrimary: textPrimary,
-              textMuted: textMuted,
-              cardColor: cardColor,
-              cardBorder: cardBorder,
-              onTap: () {
-                HapticService.light();
-                Navigator.pop(context, _makeResult(addToday: true));
-              },
+            // Add as section
+            Text(
+              'Add as',
+              style: TextStyle(
+                fontSize: 17,
+                fontWeight: FontWeight.w600,
+                color: textPrimary,
+              ),
             ),
             const SizedBox(height: 12),
 
-            // Option 2: Start from next workout
-            _buildTimingOption(
-              icon: Icons.skip_next,
-              iconColor: textMuted,
-              title: 'Start from next workout',
-              subtitle: 'Current workout unchanged',
-              showSectionChips: true,
-              textPrimary: textPrimary,
-              textMuted: textMuted,
-              cardColor: cardColor,
-              cardBorder: cardBorder,
-              onTap: () {
-                HapticService.light();
-                Navigator.pop(context, _makeResult(addToday: false));
-              },
+            // Section chips: Main / Warmup / Stretch
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Row(
+                children: _sections.map((entry) {
+                  final (value, label) = entry;
+                  final isSelected = _selectedSection == value;
+                  return Expanded(
+                    child: Padding(
+                      padding: EdgeInsets.only(right: value != 'stretches' ? 8 : 0),
+                      child: GestureDetector(
+                        onTap: () {
+                          HapticService.light();
+                          setState(() => _selectedSection = value);
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          decoration: BoxDecoration(
+                            color: isSelected ? AppColors.cyan : cardColor,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: isSelected ? AppColors.cyan : cardBorder,
+                            ),
+                          ),
+                          alignment: Alignment.center,
+                          child: Text(
+                            label,
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                              color: isSelected ? Colors.white : textMuted,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  );
+                }).toList(),
+              ),
+            ),
+            const SizedBox(height: 20),
+
+            // Save button
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () {
+                    HapticService.medium();
+                    Navigator.pop(context, _makeResult(addToday: _addToday));
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.cyan,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    elevation: 0,
+                  ),
+                  child: const Text(
+                    'Save',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                  ),
+                ),
+              ),
             ),
             const SizedBox(height: 12),
 
-            // Option 3: Swap with exercise
+            // Swap option (secondary)
             _buildSwapOption(
                 textPrimary, textMuted, cardColor, cardBorder),
             const SizedBox(height: 16),
@@ -586,116 +672,6 @@ class _StapleChoiceSheetState extends ConsumerState<StapleChoiceSheet> {
     );
   }
 
-  Widget _buildTimingOption({
-    required IconData icon,
-    required Color iconColor,
-    required String title,
-    required String? subtitle,
-    required bool showSectionChips,
-    required Color textPrimary,
-    required Color textMuted,
-    required Color cardColor,
-    required Color cardBorder,
-    required VoidCallback onTap,
-  }) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: GestureDetector(
-        onTap: onTap,
-        child: Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: cardColor,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: cardBorder),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Icon(icon, color: iconColor, size: 20),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          title,
-                          style: TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w600,
-                            color: textPrimary,
-                          ),
-                        ),
-                        if (subtitle != null) ...[
-                          const SizedBox(height: 2),
-                          Text(
-                            subtitle,
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: textMuted,
-                            ),
-                          ),
-                        ],
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-              if (showSectionChips) ...[
-                const SizedBox(height: 12),
-                Row(
-                  children: _sections.map((entry) {
-                    final (value, label) = entry;
-                    final isSelected = _selectedSection == value;
-                    return Padding(
-                      padding: const EdgeInsets.only(right: 8),
-                      child: GestureDetector(
-                        onTap: () {
-                          HapticService.light();
-                          setState(() => _selectedSection = value);
-                        },
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 14,
-                            vertical: 6,
-                          ),
-                          decoration: BoxDecoration(
-                            color: isSelected
-                                ? AppColors.cyan
-                                : Colors.transparent,
-                            borderRadius: BorderRadius.circular(20),
-                            border: Border.all(
-                              color: isSelected
-                                  ? AppColors.cyan
-                                  : textMuted.withValues(alpha: 0.3),
-                            ),
-                          ),
-                          child: Text(
-                            label,
-                            style: TextStyle(
-                              fontSize: 13,
-                              fontWeight: isSelected
-                                  ? FontWeight.w600
-                                  : FontWeight.w400,
-                              color: isSelected ? Colors.white : textMuted,
-                            ),
-                          ),
-                        ),
-                      ),
-                    );
-                  }).toList(),
-                ),
-              ],
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
   Widget _buildStrengthSection(
     Color textPrimary,
     Color textMuted,
@@ -743,6 +719,16 @@ class _StapleChoiceSheetState extends ConsumerState<StapleChoiceSheet> {
               ),
               if (_showStrengthParams) ...[
                 const SizedBox(height: 12),
+                if (_isStrength) ...[
+                  _buildCardioField(
+                    label: 'Weight',
+                    controller: _weightController,
+                    suffix: 'lbs',
+                    textPrimary: textPrimary,
+                    textMuted: textMuted,
+                  ),
+                  const SizedBox(height: 8),
+                ],
                 _buildCardioField(
                   label: 'Sets',
                   controller: _setsController,
@@ -952,6 +938,51 @@ class _StapleChoiceSheetState extends ConsumerState<StapleChoiceSheet> {
                   ),
                 ],
               ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildToggleOption({
+    required IconData icon,
+    required String label,
+    required bool isSelected,
+    required Color color,
+    required Color textPrimary,
+    required Color textMuted,
+    required VoidCallback onTap,
+  }) {
+    return Expanded(
+      child: GestureDetector(
+        onTap: () {
+          HapticService.light();
+          onTap();
+        },
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          padding: const EdgeInsets.symmetric(vertical: 12),
+          decoration: BoxDecoration(
+            color: isSelected ? color.withValues(alpha: 0.15) : Colors.transparent,
+            borderRadius: BorderRadius.circular(10),
+            border: isSelected
+                ? Border.all(color: color.withValues(alpha: 0.3))
+                : null,
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, size: 16, color: isSelected ? color : textMuted),
+              const SizedBox(width: 6),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                  color: isSelected ? textPrimary : textMuted,
+                ),
+              ),
             ],
           ),
         ),

@@ -1,10 +1,10 @@
 import 'package:flutter/foundation.dart';
-import '../../data/services/analytics_service.dart' as prod;
+import 'posthog_service.dart';
 
 /// Analytics service for tracking onboarding events and user behavior.
 ///
-/// Forwards all calls to the production [prod.AnalyticsService] instance.
-/// Falls back to debug logging if the production service hasn't been initialized.
+/// Forwards all calls to PostHog via [PosthogService].
+/// Falls back to debug logging if PostHog hasn't been initialized.
 ///
 /// Usage:
 /// ```dart
@@ -17,12 +17,12 @@ import '../../data/services/analytics_service.dart' as prod;
 /// );
 /// ```
 class AnalyticsService {
-  static prod.AnalyticsService? _instance;
+  static PosthogService? _posthog;
 
-  /// Initialize with the production analytics service instance.
+  /// Initialize with the PostHog service instance.
   /// Call this once after the ProviderContainer is created.
-  static void init(prod.AnalyticsService service) {
-    _instance = service;
+  static void init(PosthogService service) {
+    _posthog = service;
   }
 
   // ===== SCREEN TRACKING =====
@@ -32,10 +32,7 @@ class AnalyticsService {
     if (kDebugMode) {
       debugPrint('[Analytics] Screen View: $screenName');
     }
-    _instance?.trackScreenView(
-      screenName: screenName,
-      screenClass: 'Onboarding',
-    );
+    _posthog?.screen(screenName: screenName);
   }
 
   // ===== ONBOARDING EVENTS =====
@@ -54,14 +51,8 @@ class AnalyticsService {
       debugPrint('  Nutrition Opted In: $nutritionOptedIn');
       debugPrint('  Personalization: $personalizationCompleted');
     }
-    _instance?.trackOnboardingStep(
-      stepName: 'completed',
-      stepNumber: totalScreens,
-      completed: true,
-    );
-    _instance?.trackEvent(
+    _posthog?.capture(
       eventName: 'onboarding_completed',
-      category: 'onboarding',
       properties: {
         'total_screens': totalScreens,
         'skipped_screens': skippedScreens,
@@ -76,9 +67,8 @@ class AnalyticsService {
     if (kDebugMode) {
       debugPrint('[Analytics] Nutrition Opt-In: $optedIn');
     }
-    _instance?.trackEvent(
+    _posthog?.capture(
       eventName: 'nutrition_opt_in',
-      category: 'onboarding',
       properties: {'opted_in': optedIn},
     );
   }
@@ -88,10 +78,7 @@ class AnalyticsService {
     if (kDebugMode) {
       debugPrint('[Analytics] Personalization Skipped');
     }
-    _instance?.trackEvent(
-      eventName: 'personalization_skipped',
-      category: 'onboarding',
-    );
+    _posthog?.capture(eventName: 'personalization_skipped');
   }
 
   // ===== WORKOUT GENERATION EVENTS =====
@@ -108,9 +95,8 @@ class AnalyticsService {
       debugPrint('  Duration: $duration min');
       debugPrint('  Equipment: $equipment');
     }
-    _instance?.trackEvent(
+    _posthog?.capture(
       eventName: 'workout_generated',
-      category: 'onboarding',
       properties: {
         'primary_goal': primaryGoal,
         'duration': duration,
@@ -134,9 +120,8 @@ class AnalyticsService {
       debugPrint('  Goals: $goals');
       debugPrint('  Workouts/Week: $workoutsPerWeek');
     }
-    _instance?.trackEvent(
+    _posthog?.capture(
       eventName: 'user_properties_set',
-      category: 'profile',
       properties: {
         'fitness_level': fitnessLevel,
         'goals': goals.join(', '),
@@ -157,15 +142,12 @@ class AnalyticsService {
       debugPrint('  Last Screen: $lastScreen');
       debugPrint('  Screen Index: $screenIndex');
     }
-    _instance?.trackOnboardingStep(
-      stepName: lastScreen,
-      stepNumber: screenIndex,
-      completed: false,
-    );
-    _instance?.trackFunnelEvent(
-      funnelName: 'onboarding',
-      stepName: lastScreen,
-      droppedOff: true,
+    _posthog?.capture(
+      eventName: 'onboarding_drop_off',
+      properties: {
+        'last_screen': lastScreen,
+        'screen_index': screenIndex,
+      },
     );
   }
 
@@ -176,9 +158,8 @@ class AnalyticsService {
     if (kDebugMode) {
       debugPrint('[Analytics] Onboarding Duration: ${durationSeconds}s (${durationSeconds ~/ 60}m ${durationSeconds % 60}s)');
     }
-    _instance?.trackEvent(
+    _posthog?.capture(
       eventName: 'onboarding_duration',
-      category: 'onboarding',
       properties: {
         'duration_seconds': durationSeconds,
         'duration_minutes': (durationSeconds / 60).round(),

@@ -5,6 +5,7 @@ import 'package:health/health.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'api_client.dart';
 import 'activity_service.dart';
+import '../../core/services/posthog_service.dart';
 
 /// Health service provider
 final healthServiceProvider = Provider<HealthService>((ref) {
@@ -165,6 +166,7 @@ final dailyActivityProvider = StateNotifierProvider<DailyActivityNotifier, Daily
     ref.watch(healthSyncProvider),
     ref.watch(activityServiceProvider),
     ref.watch(apiClientProvider),
+    ref.watch(posthogServiceProvider),
   );
 });
 
@@ -174,12 +176,14 @@ class DailyActivityNotifier extends StateNotifier<DailyActivityState> {
   final HealthSyncState _syncState;
   final ActivityService _activityService;
   final ApiClient _apiClient;
+  final PosthogService _posthog;
 
   DailyActivityNotifier(
     this._healthService,
     this._syncState,
     this._activityService,
     this._apiClient,
+    this._posthog,
   ) : super(const DailyActivityState()) {
     // Auto-load if connected
     if (_syncState.isConnected) {
@@ -239,10 +243,25 @@ class DailyActivityNotifier extends StateNotifier<DailyActivityState> {
 
       state = state.copyWith(isLoading: false, today: today);
 
+      _posthog.capture(
+        eventName: 'health_sync_completed',
+        properties: <String, Object>{
+          'steps': today.steps,
+          'calories_burned': today.caloriesBurned,
+          'distance_meters': today.distanceMeters,
+        },
+      );
+
       // Sync to Supabase in the background
       _syncToSupabase(today);
     } catch (e) {
       debugPrint('❌ Error loading daily activity: $e');
+      _posthog.capture(
+        eventName: 'health_sync_failed',
+        properties: <String, Object>{
+          'error': e.toString(),
+        },
+      );
       state = state.copyWith(
         isLoading: false,
         error: e.toString(),

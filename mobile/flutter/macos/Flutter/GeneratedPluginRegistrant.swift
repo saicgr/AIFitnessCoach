@@ -23,6 +23,7 @@ import geolocator_apple
 import google_sign_in_ios
 import mobile_scanner
 import package_info_plus
+import posthog_flutter
 import purchases_flutter
 import reactive_ble_mobile
 import record_macos
@@ -54,6 +55,7 @@ func RegisterGeneratedPlugins(registry: FlutterPluginRegistry) {
   FLTGoogleSignInPlugin.register(with: registry.registrar(forPlugin: "FLTGoogleSignInPlugin"))
   MobileScannerPlugin.register(with: registry.registrar(forPlugin: "MobileScannerPlugin"))
   FPPPackageInfoPlusPlugin.register(with: registry.registrar(forPlugin: "FPPPackageInfoPlusPlugin"))
+  PosthogFlutterPlugin.register(with: registry.registrar(forPlugin: "PosthogFlutterPlugin"))
   PurchasesFlutterPlugin.register(with: registry.registrar(forPlugin: "PurchasesFlutterPlugin"))
   ReactiveBlePlugin.register(with: registry.registrar(forPlugin: "ReactiveBlePlugin"))
   RecordMacOsPlugin.register(with: registry.registrar(forPlugin: "RecordMacOsPlugin"))

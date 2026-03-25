@@ -12,6 +12,7 @@ import '../../../data/repositories/auth_repository.dart';
 import '../../../data/repositories/hydration_repository.dart';
 import '../../../data/services/social_service.dart' show PostVisibility, SocialActivityType;
 import '../../../data/services/social_image_service.dart';
+import '../../../core/services/posthog_service.dart';
 import '../../../widgets/app_snackbar.dart';
 
 /// UI representation for post visibility options
@@ -371,6 +372,15 @@ class _CreatePostSheetState extends ConsumerState<CreatePostSheet> {
             : SocialActivityType.manualPost,
         activityData: activityData,
         visibility: _visibility.serviceValue,
+      );
+
+      ref.read(posthogServiceProvider).capture(
+        eventName: 'social_post_created',
+        properties: <String, Object>{
+          'post_type': _isWorkoutShare ? 'workout_shared' : 'manual_post',
+          'has_image': _selectedImages.isNotEmpty,
+          'has_video': _selectedVideo != null,
+        },
       );
 
       if (mounted) {

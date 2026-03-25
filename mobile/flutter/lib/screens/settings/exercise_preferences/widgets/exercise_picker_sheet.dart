@@ -377,6 +377,17 @@ class _ExercisePickerSheetState extends ConsumerState<_ExercisePickerSheet> {
     );
   }
 
+  void _addCustomExercise(String name) {
+    HapticFeedback.lightImpact();
+    Navigator.pop(
+      context,
+      ExercisePickerResult(
+        exerciseName: name,
+        reason: widget.type == ExercisePickerType.staple ? 'staple' : null,
+      ),
+    );
+  }
+
   void _openDetailSheet(LibraryExerciseItem exercise) {
     final libraryExercise = LibraryExercise(
       id: exercise.id,
@@ -543,27 +554,68 @@ class _ExercisePickerSheetState extends ConsumerState<_ExercisePickerSheet> {
                                 'Try a different search or filter',
                                 style: TextStyle(fontSize: 13, color: textMuted.withValues(alpha: 0.7)),
                               ),
+                              if (_searchController.text.trim().isNotEmpty) ...[
+                                const SizedBox(height: 20),
+                                OutlinedButton.icon(
+                                  onPressed: () => _addCustomExercise(_searchController.text.trim()),
+                                  icon: const Icon(Icons.add, size: 18),
+                                  label: Text('Add "${_searchController.text.trim()}" as custom'),
+                                  style: OutlinedButton.styleFrom(
+                                    foregroundColor: _accentColor,
+                                    side: BorderSide(color: _accentColor.withValues(alpha: 0.5)),
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                  ),
+                                ),
+                              ],
                             ],
                           ),
                         )
-                      : ListView.builder(
-                          padding: const EdgeInsets.symmetric(horizontal: 16),
-                          itemCount: _searchResults.length,
-                          itemBuilder: (context, index) {
-                            final exercise = _searchResults[index];
-                            final isAiMatch = exercise is SmartSearchExerciseItem &&
-                                exercise.isSemanticMatch;
-                            return _ExerciseCard(
-                              exercise: exercise,
-                              accentColor: _accentColor,
-                              actionIcon: _actionIcon,
-                              textPrimary: textPrimary,
-                              textMuted: textMuted,
-                              isAiMatch: isAiMatch,
-                              onDetailTap: () => _openDetailSheet(exercise),
-                              onAddTap: () => _selectExercise(exercise),
-                            );
-                          },
+                      : Column(
+                          children: [
+                            Expanded(
+                              child: ListView.builder(
+                                padding: const EdgeInsets.symmetric(horizontal: 16),
+                                itemCount: _searchResults.length,
+                                itemBuilder: (context, index) {
+                                  final exercise = _searchResults[index];
+                                  final isAiMatch = exercise is SmartSearchExerciseItem &&
+                                      exercise.isSemanticMatch;
+                                  return _ExerciseCard(
+                                    exercise: exercise,
+                                    accentColor: _accentColor,
+                                    actionIcon: _actionIcon,
+                                    textPrimary: textPrimary,
+                                    textMuted: textMuted,
+                                    isAiMatch: isAiMatch,
+                                    onDetailTap: () => _openDetailSheet(exercise),
+                                    onAddTap: () => _selectExercise(exercise),
+                                  );
+                                },
+                              ),
+                            ),
+                            if (_searchController.text.trim().isNotEmpty)
+                              Padding(
+                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                                child: GestureDetector(
+                                  onTap: () => _addCustomExercise(_searchController.text.trim()),
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Icon(Icons.add, size: 16, color: _accentColor),
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        "Can't find your exercise? Add it as custom",
+                                        style: TextStyle(
+                                          fontSize: 13,
+                                          color: _accentColor,
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                          ],
                         ),
         ),
 

@@ -3,6 +3,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/services/posthog_service.dart';
 import '../../../data/models/workout.dart';
 import '../../../data/repositories/workout_repository.dart';
 import '../../../data/providers/today_workout_provider.dart';
@@ -272,6 +273,13 @@ class _RegenerateWorkoutSheetState
   }
 
   Future<void> _regenerate() async {
+    ref.read(posthogServiceProvider).capture(
+      eventName: 'workout_regeneration_started',
+      properties: {
+        'difficulty': _selectedDifficulty,
+      },
+    );
+
     _startElapsedTimer();
     setState(() {
       _isRegenerating = true;

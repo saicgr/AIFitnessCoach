@@ -69,7 +69,7 @@ class _GoalHistorySheetState extends ConsumerState<GoalHistorySheet> {
       );
 
       final historyList = (response['history'] as List?) ?? [];
-      final allTimeBest = response['all_time_best'] as int?;
+      final allTimeBest = (response['all_time_best'] as num?)?.toInt();
 
       if (mounted) {
         setState(() {

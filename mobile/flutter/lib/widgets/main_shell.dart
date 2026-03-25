@@ -22,6 +22,7 @@ import 'app_tour/app_tour_controller.dart';
 import 'app_tour/app_tour_overlay.dart';
 import 'floating_chat/floating_chat_bubble.dart';
 import 'floating_chat/floating_chat_overlay.dart';
+import 'morphing_tab_indicator.dart';
 import 'offline_banner.dart';
 
 /// Provider to control floating nav bar visibility
@@ -581,6 +582,7 @@ class _FloatingNavBarWithAI extends ConsumerWidget {
                 ],
               ),
               child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
                   _ExpandableNavItem(
                     icon: Icons.home_outlined,
@@ -592,7 +594,6 @@ class _FloatingNavBarWithAI extends ConsumerWidget {
                     mutedColor: iconMuted,
                     isDark: isDark,
                   ),
-                  const Spacer(),
                   _ExpandableNavItem(
                     key: AppTourKeys.workoutNavKey,
                     icon: Icons.fitness_center_outlined,
@@ -604,7 +605,6 @@ class _FloatingNavBarWithAI extends ConsumerWidget {
                     mutedColor: iconMuted,
                     isDark: isDark,
                   ),
-                  const Spacer(),
                   _ExpandableNavItem(
                     key: AppTourKeys.nutritionNavKey,
                     icon: Icons.restaurant_outlined,
@@ -616,7 +616,6 @@ class _FloatingNavBarWithAI extends ConsumerWidget {
                     mutedColor: iconMuted,
                     isDark: isDark,
                   ),
-                  const Spacer(),
                   _ExpandableNavItem(
                     key: AppTourKeys.profileNavKey,
                     icon: Icons.person_outline,
@@ -663,12 +662,9 @@ class _ExpandableNavItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Background pill color when selected
-    final selectedBgColor = accentColor.withValues(alpha: isDark ? 0.15 : 0.12);
-
     return GestureDetector(
       onTap: () {
-        HapticFeedback.lightImpact();
+        HapticFeedback.selectionClick();
         onTap();
       },
       behavior: HitTestBehavior.opaque,
@@ -680,16 +676,21 @@ class _ExpandableNavItem extends StatelessWidget {
           vertical: 8,
         ),
         decoration: BoxDecoration(
-          color: isSelected ? selectedBgColor : Colors.transparent,
+          color: isSelected
+              ? accentColor.withValues(alpha: isDark ? 0.15 : 0.12)
+              : Colors.transparent,
           borderRadius: BorderRadius.circular(20),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
-              isSelected ? selectedIcon : icon,
-              color: isSelected ? accentColor : mutedColor,
-              size: 22,
+            BounceOnSelect(
+              isSelected: isSelected,
+              child: Icon(
+                isSelected ? selectedIcon : icon,
+                color: isSelected ? accentColor : mutedColor,
+                size: 22,
+              ),
             ),
             // Animated label that expands when selected
             AnimatedSize(

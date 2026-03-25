@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/services/posthog_service.dart';
 import '../../../data/models/fasting.dart';
 import '../../../data/providers/fasting_provider.dart';
 import '../../../data/providers/guest_mode_provider.dart';
@@ -809,6 +810,10 @@ class _FastingTabState extends ConsumerState<FastingTab>
     HapticService.medium();
 
     try {
+      ref.read(posthogServiceProvider).capture(
+        eventName: 'fast_started',
+        properties: <String, Object>{'protocol': _selectedProtocol.displayName},
+      );
       final durationMinutes = _selectedProtocol.fastingHours * 60;
       await ref.read(fastingProvider.notifier).startFast(
             userId: userId,
@@ -876,6 +881,10 @@ class _FastingTabState extends ConsumerState<FastingTab>
 
     try {
       await ref.read(fastingProvider.notifier).endFast(userId: userId);
+      ref.read(posthogServiceProvider).capture(
+        eventName: 'fast_completed',
+        properties: <String, Object>{},
+      );
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

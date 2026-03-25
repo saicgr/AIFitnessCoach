@@ -359,81 +359,267 @@ class _AvoidedMusclesScreenState extends ConsumerState<AvoidedMusclesScreen> {
   void _showEditSheet(
       BuildContext context, String userId, AvoidedMuscle muscle) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final backgroundColor =
-        isDark ? AppColors.background : AppColorsLight.background;
     final textColor =
         isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final elevatedColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
+
+    String selectedSeverity = muscle.severity;
 
     showGlassSheet(
       context: context,
       useRootNavigator: true,
-      builder: (context) => GlassSheet(
+      builder: (sheetContext) => GlassSheet(
         padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              muscle.displayName,
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: textColor,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-              decoration: BoxDecoration(
-                color: (muscle.severity == 'avoid'
-                        ? AppColors.error
-                        : AppColors.orange)
-                    .withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(6),
-              ),
-              child: Text(
-                muscle.severity == 'avoid' ? 'AVOIDED' : 'REDUCED',
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold,
-                  color: muscle.severity == 'avoid'
-                      ? AppColors.error
-                      : AppColors.orange,
-                ),
-              ),
-            ),
-            if (muscle.reason != null) ...[
-              const SizedBox(height: 12),
-              Text(
-                'Reason: ${muscle.reason}',
-                style: TextStyle(color: textMuted),
-              ),
-            ],
-            const SizedBox(height: 24),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton.icon(
-                onPressed: () {
-                  Navigator.pop(context);
-                  _removeMuscle(userId, muscle);
-                },
-                icon: const Icon(Icons.delete_outline),
-                label: const Text('Remove from Avoid List'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.error,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+        child: StatefulBuilder(
+          builder: (context, setSheetState) {
+            final isAvoid = selectedSeverity == 'avoid';
+            final severityColor = isAvoid ? AppColors.error : AppColors.orange;
+            final hasChanged = selectedSeverity != muscle.severity;
+
+            return Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  muscle.displayName,
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: textColor,
                   ),
                 ),
-              ),
-            ),
-            SizedBox(height: MediaQuery.of(context).padding.bottom + 8),
-          ],
+                if (muscle.reason != null) ...[
+                  const SizedBox(height: 8),
+                  Text(
+                    'Reason: ${muscle.reason}',
+                    style: TextStyle(fontSize: 13, color: textMuted),
+                  ),
+                ],
+                const SizedBox(height: 20),
+                // Severity toggle
+                Text(
+                  'Severity',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: textColor,
+                  ),
+                ),
+                const SizedBox(height: 10),
+                Container(
+                  padding: const EdgeInsets.all(4),
+                  decoration: BoxDecoration(
+                    color: elevatedColor,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: GestureDetector(
+                          onTap: () {
+                            HapticService.light();
+                            setSheetState(() => selectedSeverity = 'avoid');
+                          },
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 200),
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            decoration: BoxDecoration(
+                              color: isAvoid
+                                  ? AppColors.error.withValues(alpha: 0.15)
+                                  : Colors.transparent,
+                              borderRadius: BorderRadius.circular(10),
+                              border: isAvoid
+                                  ? Border.all(
+                                      color: AppColors.error.withValues(alpha: 0.3))
+                                  : null,
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.block,
+                                    size: 16,
+                                    color: isAvoid ? AppColors.error : textMuted),
+                                const SizedBox(width: 6),
+                                Text(
+                                  'Avoid',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight:
+                                        isAvoid ? FontWeight.w600 : FontWeight.w400,
+                                    color: isAvoid ? textColor : textMuted,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 4),
+                      Expanded(
+                        child: GestureDetector(
+                          onTap: () {
+                            HapticService.light();
+                            setSheetState(() => selectedSeverity = 'reduce');
+                          },
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 200),
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            decoration: BoxDecoration(
+                              color: !isAvoid
+                                  ? AppColors.orange.withValues(alpha: 0.15)
+                                  : Colors.transparent,
+                              borderRadius: BorderRadius.circular(10),
+                              border: !isAvoid
+                                  ? Border.all(
+                                      color: AppColors.orange.withValues(alpha: 0.3))
+                                  : null,
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.remove_circle_outline,
+                                    size: 16,
+                                    color: !isAvoid ? AppColors.orange : textMuted),
+                                const SizedBox(width: 6),
+                                Text(
+                                  'Reduce',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight:
+                                        !isAvoid ? FontWeight.w600 : FontWeight.w400,
+                                    color: !isAvoid ? textColor : textMuted,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  isAvoid
+                      ? 'Exercises targeting this muscle will be fully excluded'
+                      : 'Exercises targeting this muscle will be limited',
+                  style: TextStyle(fontSize: 12, color: textMuted),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 24),
+                // Save button (only when severity changed)
+                if (hasChanged)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
+                        onPressed: () {
+                          Navigator.pop(sheetContext);
+                          _updateMuscleSeverity(userId, muscle, selectedSeverity);
+                        },
+                        icon: const Icon(Icons.check, size: 18),
+                        label: const Text('Save Changes'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: severityColor,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                // Remove button
+                SizedBox(
+                  width: double.infinity,
+                  child: hasChanged
+                      ? OutlinedButton.icon(
+                          onPressed: () {
+                            Navigator.pop(sheetContext);
+                            _removeMuscle(userId, muscle);
+                          },
+                          icon: const Icon(Icons.delete_outline, size: 18),
+                          label: const Text('Remove from Avoid List'),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: AppColors.error,
+                            side: BorderSide(color: AppColors.error.withValues(alpha: 0.5)),
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                        )
+                      : ElevatedButton.icon(
+                          onPressed: () {
+                            Navigator.pop(sheetContext);
+                            _removeMuscle(userId, muscle);
+                          },
+                          icon: const Icon(Icons.delete_outline),
+                          label: const Text('Remove from Avoid List'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.error,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                        ),
+                ),
+                SizedBox(height: MediaQuery.of(context).padding.bottom + 8),
+              ],
+            );
+          },
         ),
       ),
     );
+  }
+
+  Future<void> _updateMuscleSeverity(
+      String userId, AvoidedMuscle muscle, String newSeverity) async {
+    if (_isProcessing) return;
+    setState(() => _isProcessing = true);
+    HapticService.medium();
+
+    try {
+      final repo = ref.read(exercisePreferencesRepositoryProvider);
+      await repo.updateAvoidedMuscle(
+        userId,
+        muscle.id,
+        muscleGroup: muscle.muscleGroup,
+        severity: newSeverity,
+        reason: muscle.reason,
+        isTemporary: muscle.isTemporary,
+        endDate: muscle.endDate,
+      );
+      ref.invalidate(avoidedMusclesProvider(userId));
+      ref.invalidate(todayWorkoutProvider);
+      ref.invalidate(workoutsProvider);
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Updated "${muscle.displayName}" to ${newSeverity == 'avoid' ? 'Avoid' : 'Reduce'}',
+            ),
+            backgroundColor: AppColors.success,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error: ${e.toString()}'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isProcessing = false);
+    }
   }
 
   /// Shows a bottom sheet asking the user whether to update the current workout

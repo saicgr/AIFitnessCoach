@@ -58,6 +58,7 @@ class StapleExercisesScreen extends ConsumerWidget {
         userSets: choice.userSets,
         userReps: choice.userReps,
         userRestSeconds: choice.userRestSeconds,
+        userWeightLbs: choice.userWeightLbs,
         targetDays: choice.targetDays,
       );
 
@@ -233,6 +234,10 @@ class StapleExercisesScreen extends ConsumerWidget {
                 textMuted: textMuted,
                 elevated: elevated,
                 showProfileBadge: profileCount >= 2,
+                onEdit: () {
+                  HapticFeedback.lightImpact();
+                  _showEditStapleSheet(context, ref, staple);
+                },
                 onRemove: () async {
                   HapticFeedback.lightImpact();
                   final confirmed = await _showRemoveDialog(
@@ -252,6 +257,596 @@ class StapleExercisesScreen extends ConsumerWidget {
         ),
       ],
     );
+  }
+
+  /// Detect exercise type for showing appropriate fields in edit sheet
+  static _ExerciseType _detectExerciseType(StapleExercise staple) {
+    final name = staple.exerciseName.toLowerCase();
+    final eq = staple.equipment?.toLowerCase() ?? '';
+    final cat = staple.category?.toLowerCase() ?? '';
+
+    // Cardio equipment
+    if (eq.contains('treadmill') || name.contains('treadmill')) {
+      return _ExerciseType.treadmill;
+    }
+    if (eq.contains('bike') || name.contains('bike')) {
+      return _ExerciseType.bike;
+    }
+    if (eq.contains('rower') || name.contains('rower')) {
+      return _ExerciseType.rower;
+    }
+    if (eq.contains('elliptical') || name.contains('elliptical')) {
+      return _ExerciseType.elliptical;
+    }
+    if (cat == 'cardio') return _ExerciseType.cardioGeneric;
+
+    // Timed / isometric exercises
+    if (name.contains('plank') || name.contains('hold') || name.contains('hang') ||
+        name.contains('wall sit') || name.contains('isometric') ||
+        name.contains('static') || cat == 'isometric' || cat == 'stretching') {
+      return _ExerciseType.timed;
+    }
+
+    return _ExerciseType.strength;
+  }
+
+  Future<void> _showEditStapleSheet(
+    BuildContext context,
+    WidgetRef ref,
+    StapleExercise staple,
+  ) async {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textColor = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final elevatedColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
+
+    final exerciseType = _detectExerciseType(staple);
+
+    String selectedSection = staple.section;
+    final setsController = TextEditingController(
+      text: staple.userSets?.toString() ?? '',
+    );
+    final repsController = TextEditingController(
+      text: staple.userReps ?? '',
+    );
+    final restController = TextEditingController(
+      text: staple.userRestSeconds?.toString() ?? '',
+    );
+    // Weight field (backend field: user_weight_lbs)
+    final weightController = TextEditingController(
+      text: staple.userWeightLbs?.toStringAsFixed(
+        staple.userWeightLbs! % 1 == 0 ? 0 : 1,
+      ) ?? '',
+    );
+    // Duration field (for timed/cardio)
+    final durationController = TextEditingController(
+      text: staple.defaultDurationSeconds != null
+          ? (staple.defaultDurationSeconds! / 60).toStringAsFixed(0)
+          : '',
+    );
+    // Speed field (for treadmill)
+    final speedController = TextEditingController(
+      text: staple.defaultSpeedMph?.toStringAsFixed(1) ?? '',
+    );
+    // Incline field (for treadmill)
+    final inclineController = TextEditingController(
+      text: staple.defaultInclinePercent?.toStringAsFixed(0) ?? '',
+    );
+    // RPM field (for bike)
+    final rpmController = TextEditingController(
+      text: staple.defaultRpm?.toString() ?? '',
+    );
+    // Resistance field (for bike/elliptical)
+    final resistanceController = TextEditingController(
+      text: staple.defaultResistanceLevel?.toString() ?? '',
+    );
+    // Stroke rate field (for rower)
+    final strokeRateController = TextEditingController(
+      text: staple.strokeRateSpm?.toString() ?? '',
+    );
+
+    List<int> selectedDays = List<int>.from(staple.targetDays ?? []);
+
+    final dayLabels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+
+    Widget buildField({
+      required TextEditingController controller,
+      required String label,
+      String? suffix,
+      String? hint,
+      TextInputType keyboardType = TextInputType.number,
+    }) {
+      return TextField(
+        controller: controller,
+        keyboardType: keyboardType,
+        style: TextStyle(color: textColor),
+        decoration: InputDecoration(
+          labelText: label,
+          labelStyle: TextStyle(color: textMuted, fontSize: 13),
+          suffixText: suffix,
+          suffixStyle: TextStyle(color: textMuted, fontSize: 12),
+          hintText: hint,
+          hintStyle: TextStyle(
+            color: textMuted.withValues(alpha: 0.5),
+            fontSize: 12,
+          ),
+          filled: true,
+          fillColor: elevatedColor,
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(10),
+            borderSide: BorderSide.none,
+          ),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 12,
+            vertical: 12,
+          ),
+        ),
+      );
+    }
+
+    final result = await showGlassSheet<bool>(
+      context: context,
+      builder: (sheetContext) => GlassSheet(
+        child: StatefulBuilder(
+          builder: (context, setSheetState) => Padding(
+            padding: EdgeInsets.only(
+              bottom: MediaQuery.of(context).viewInsets.bottom,
+            ),
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Edit "${staple.exerciseName}"',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: textColor,
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  // Section selector
+                  Text(
+                    'Section',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: textColor,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: ['main', 'warmup', 'stretches'].map((s) {
+                      final isSelected = selectedSection == s;
+                      final label = s == 'main'
+                          ? 'Main'
+                          : s == 'warmup'
+                              ? 'Warmup'
+                              : 'Stretch';
+                      return Expanded(
+                        child: Padding(
+                          padding: EdgeInsets.only(
+                            right: s != 'stretches' ? 8 : 0,
+                          ),
+                          child: ChoiceChip(
+                            label: Text(label),
+                            selected: isSelected,
+                            onSelected: (_) {
+                              setSheetState(() => selectedSection = s);
+                            },
+                            selectedColor: AppColors.cyan,
+                            labelStyle: TextStyle(
+                              color: isSelected ? Colors.white : textMuted,
+                              fontSize: 13,
+                            ),
+                            backgroundColor: elevatedColor,
+                            side: BorderSide.none,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                          ),
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                  const SizedBox(height: 20),
+
+                  // --- Type-specific fields ---
+                  if (exerciseType == _ExerciseType.strength) ...[
+                    // Strength: Weight + Sets + Reps + Rest
+                    Text(
+                      'Weight / Sets / Reps / Rest',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: textColor,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: buildField(
+                            controller: weightController,
+                            label: 'Weight',
+                            suffix: 'lbs',
+                            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: buildField(
+                            controller: setsController,
+                            label: 'Sets',
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: buildField(
+                            controller: repsController,
+                            label: 'Reps',
+                            hint: 'e.g. 8-12',
+                            keyboardType: TextInputType.text,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: buildField(
+                            controller: restController,
+                            label: 'Rest',
+                            suffix: 'sec',
+                          ),
+                        ),
+                      ],
+                    ),
+                  ] else if (exerciseType == _ExerciseType.timed) ...[
+                    // Timed: Duration + Sets + Rest
+                    Text(
+                      'Duration / Sets / Rest',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: textColor,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: buildField(
+                            controller: durationController,
+                            label: 'Duration',
+                            suffix: 'min',
+                            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: buildField(
+                            controller: setsController,
+                            label: 'Sets',
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: buildField(
+                            controller: restController,
+                            label: 'Rest',
+                            suffix: 'sec',
+                          ),
+                        ),
+                      ],
+                    ),
+                  ] else if (exerciseType == _ExerciseType.treadmill) ...[
+                    // Treadmill: Duration + Speed + Incline
+                    Text(
+                      'Treadmill Settings',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: textColor,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: buildField(
+                            controller: durationController,
+                            label: 'Duration',
+                            suffix: 'min',
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: buildField(
+                            controller: speedController,
+                            label: 'Speed',
+                            suffix: 'mph',
+                            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: buildField(
+                            controller: inclineController,
+                            label: 'Incline',
+                            suffix: '%',
+                          ),
+                        ),
+                      ],
+                    ),
+                  ] else if (exerciseType == _ExerciseType.bike) ...[
+                    // Bike: Duration + RPM + Resistance
+                    Text(
+                      'Bike Settings',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: textColor,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: buildField(
+                            controller: durationController,
+                            label: 'Duration',
+                            suffix: 'min',
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: buildField(
+                            controller: rpmController,
+                            label: 'RPM',
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: buildField(
+                            controller: resistanceController,
+                            label: 'Resistance',
+                          ),
+                        ),
+                      ],
+                    ),
+                  ] else if (exerciseType == _ExerciseType.rower) ...[
+                    // Rower: Duration + Stroke Rate
+                    Text(
+                      'Rower Settings',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: textColor,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: buildField(
+                            controller: durationController,
+                            label: 'Duration',
+                            suffix: 'min',
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: buildField(
+                            controller: strokeRateController,
+                            label: 'Stroke Rate',
+                            suffix: 'spm',
+                          ),
+                        ),
+                      ],
+                    ),
+                  ] else if (exerciseType == _ExerciseType.elliptical) ...[
+                    // Elliptical: Duration + Resistance
+                    Text(
+                      'Elliptical Settings',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: textColor,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: buildField(
+                            controller: durationController,
+                            label: 'Duration',
+                            suffix: 'min',
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: buildField(
+                            controller: resistanceController,
+                            label: 'Resistance',
+                          ),
+                        ),
+                      ],
+                    ),
+                  ] else ...[
+                    // Generic cardio: Duration only
+                    Text(
+                      'Cardio Settings',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: textColor,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    buildField(
+                      controller: durationController,
+                      label: 'Duration',
+                      suffix: 'min',
+                    ),
+                  ],
+
+                  const SizedBox(height: 20),
+                  // Day picker
+                  Text(
+                    'Target Days',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: textColor,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Leave empty for all days',
+                    style: TextStyle(fontSize: 12, color: textMuted),
+                  ),
+                  const SizedBox(height: 8),
+                  Wrap(
+                    spacing: 6,
+                    children: List.generate(7, (i) {
+                      final isSelected = selectedDays.contains(i);
+                      return FilterChip(
+                        label: Text(dayLabels[i]),
+                        selected: isSelected,
+                        onSelected: (_) {
+                          setSheetState(() {
+                            if (isSelected) {
+                              selectedDays.remove(i);
+                            } else {
+                              selectedDays.add(i);
+                            }
+                          });
+                        },
+                        selectedColor: AppColors.cyan,
+                        checkmarkColor: Colors.white,
+                        labelStyle: TextStyle(
+                          color: isSelected ? Colors.white : textMuted,
+                          fontSize: 12,
+                        ),
+                        backgroundColor: elevatedColor,
+                        side: BorderSide.none,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        visualDensity: VisualDensity.compact,
+                      );
+                    }),
+                  ),
+                  const SizedBox(height: 24),
+                  // Save button
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: () => Navigator.pop(sheetContext, true),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.cyan,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: const Text(
+                        'Save Changes',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ),
+                  SizedBox(height: MediaQuery.of(context).padding.bottom + 16),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    if (result == true && context.mounted) {
+      final sets = int.tryParse(setsController.text);
+      final reps = repsController.text.trim().isEmpty ? null : repsController.text.trim();
+      final rest = int.tryParse(restController.text);
+
+      // Build cardio params map from type-specific fields
+      Map<String, double>? cardioParams;
+      if (exerciseType != _ExerciseType.strength) {
+        final params = <String, double>{};
+        final duration = double.tryParse(durationController.text);
+        if (duration != null) params['duration_seconds'] = duration * 60;
+
+        if (exerciseType == _ExerciseType.treadmill) {
+          final speed = double.tryParse(speedController.text);
+          if (speed != null) params['speed_mph'] = speed;
+          final incline = double.tryParse(inclineController.text);
+          if (incline != null) params['incline_percent'] = incline;
+        } else if (exerciseType == _ExerciseType.bike) {
+          final rpm = double.tryParse(rpmController.text);
+          if (rpm != null) params['rpm'] = rpm;
+          final resistance = double.tryParse(resistanceController.text);
+          if (resistance != null) params['resistance_level'] = resistance;
+        } else if (exerciseType == _ExerciseType.rower) {
+          final strokeRate = double.tryParse(strokeRateController.text);
+          if (strokeRate != null) params['stroke_rate_spm'] = strokeRate;
+        } else if (exerciseType == _ExerciseType.elliptical) {
+          final resistance = double.tryParse(resistanceController.text);
+          if (resistance != null) params['resistance_level'] = resistance;
+        }
+
+        if (params.isNotEmpty) cardioParams = params;
+      }
+
+      // Parse weight for strength exercises
+      final weight = exerciseType == _ExerciseType.strength
+          ? double.tryParse(weightController.text)
+          : null;
+
+      final success = await ref.read(staplesProvider.notifier).updateStaple(
+        staple.id,
+        section: selectedSection,
+        userSets: sets,
+        userReps: reps,
+        userRestSeconds: rest,
+        userWeightLbs: weight,
+        targetDays: selectedDays.isEmpty ? null : selectedDays,
+        cardioParams: cardioParams,
+      );
+
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              success
+                  ? 'Updated "${staple.exerciseName}"'
+                  : 'Failed to update exercise',
+            ),
+            backgroundColor: success ? AppColors.success : AppColors.error,
+          ),
+        );
+      }
+    }
+
+    setsController.dispose();
+    repsController.dispose();
+    restController.dispose();
+    weightController.dispose();
+    durationController.dispose();
+    speedController.dispose();
+    inclineController.dispose();
+    rpmController.dispose();
+    resistanceController.dispose();
+    strokeRateController.dispose();
   }
 
   Future<bool?> _showRemoveDialog(
@@ -297,6 +892,7 @@ class _StapleExerciseTile extends ConsumerWidget {
   final Color textMuted;
   final Color elevated;
   final bool showProfileBadge;
+  final VoidCallback onEdit;
   final VoidCallback onRemove;
 
   const _StapleExerciseTile({
@@ -306,6 +902,7 @@ class _StapleExerciseTile extends ConsumerWidget {
     required this.textMuted,
     required this.elevated,
     this.showProfileBadge = false,
+    required this.onEdit,
     required this.onRemove,
   });
 
@@ -569,9 +1166,20 @@ class _StapleExerciseTile extends ConsumerWidget {
               ),
           ],
         ),
-        trailing: IconButton(
-          icon: const Icon(Icons.delete_outline, color: AppColors.error),
-          onPressed: onRemove,
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            IconButton(
+              icon: Icon(Icons.edit_outlined, color: AppColors.cyan),
+              onPressed: onEdit,
+              tooltip: 'Edit',
+            ),
+            IconButton(
+              icon: const Icon(Icons.delete_outline, color: AppColors.error),
+              onPressed: onRemove,
+              tooltip: 'Remove',
+            ),
+          ],
         ),
       ),
     );
@@ -592,5 +1200,16 @@ class _StapleExerciseTile extends ConsumerWidget {
           w.isEmpty ? w : '${w[0].toUpperCase()}${w.substring(1)}').join(' ');
     }
   }
+}
+
+/// Exercise type classification for edit sheet field selection
+enum _ExerciseType {
+  strength,
+  timed,
+  treadmill,
+  bike,
+  rower,
+  elliptical,
+  cardioGeneric,
 }
 

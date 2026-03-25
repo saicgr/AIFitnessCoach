@@ -10,6 +10,7 @@ import '../../data/repositories/auth_repository.dart';
 import '../../data/services/haptic_service.dart';
 import '../../widgets/glass_sheet.dart';
 import '../../widgets/segmented_tab_bar.dart';
+import '../../core/services/posthog_service.dart';
 import 'widgets/milestone_celebration_dialog.dart';
 
 /// Milestones screen showing achieved and upcoming milestones with ROI metrics.
@@ -109,6 +110,13 @@ class _MilestonesScreenState extends ConsumerState<MilestonesScreen>
         milestone: milestone,
         onCelebrated: () async {
           await ref.read(milestonesProvider.notifier).markAsCelebrated([milestone.id]);
+          ref.read(posthogServiceProvider).capture(
+            eventName: 'milestone_celebrated',
+            properties: <String, Object>{
+              'milestone_name': milestone.milestone?.name ?? 'unknown',
+              'milestone_id': milestone.id,
+            },
+          );
           if (mounted) {
             Navigator.of(context).pop();
           }
@@ -117,6 +125,14 @@ class _MilestonesScreenState extends ConsumerState<MilestonesScreen>
           await ref.read(milestonesProvider.notifier).recordShare(
             milestone.id,
             platform,
+          );
+          ref.read(posthogServiceProvider).capture(
+            eventName: 'milestone_shared',
+            properties: <String, Object>{
+              'milestone_name': milestone.milestone?.name ?? 'unknown',
+              'milestone_id': milestone.id,
+              'platform': platform,
+            },
           );
           final shareText = milestone.milestone?.shareMessage ??
               'I just achieved ${milestone.milestone?.name} in FitWiz!';

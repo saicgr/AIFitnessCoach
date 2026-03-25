@@ -22,6 +22,7 @@ dependencies:
   glassmorphism: ^3.0.0
   simple_circular_progress_bar: ^1.0.2
   lottie: ^3.1.0
+  flutter_svg: ^2.0.10+1
 
   # State Management
   flutter_riverpod: ^2.5.1
@@ -81,6 +82,7 @@ dependencies:
   purchases_flutter: ^8.1.0
 
   # Analytics & Device Info
+  posthog_flutter: ^4.0.0
   device_info_plus: ^10.1.0
   package_info_plus: ^8.0.0
 
@@ -189,3 +191,4 @@ flutter:
     - assets/audio/exercise_complete/
     - assets/audio/workout_complete/
     - assets/audio/rest_end/
+    - assets/svg/

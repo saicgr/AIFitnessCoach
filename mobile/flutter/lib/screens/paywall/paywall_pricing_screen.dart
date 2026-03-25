@@ -17,6 +17,7 @@ import '../../core/constants/api_constants.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../../data/services/api_client.dart';
 import '../../data/services/notification_service.dart';
+import '../../core/services/posthog_service.dart';
 import '../../widgets/glass_back_button.dart';
 import '../onboarding/widgets/foldable_quiz_scaffold.dart';
 import '../settings/subscription/subscription_history_screen.dart';
@@ -444,11 +445,23 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
   }
 
   void _skipToFree(BuildContext context, WidgetRef ref) async {
+    ref.read(posthogServiceProvider).capture(
+      eventName: 'paywall_skip_tapped',
+      properties: {'has_shown_discount': _hasShownDiscount},
+    );
     // Show discount popup the first time user tries to leave
     if (!_hasShownDiscount) {
       _hasShownDiscount = true;
+      ref.read(posthogServiceProvider).capture(
+        eventName: 'paywall_discount_shown',
+        properties: {},
+      );
       final accepted = await _showDiscountPopup(context);
       if (accepted == true) {
+        ref.read(posthogServiceProvider).capture(
+          eventName: 'paywall_discount_accepted',
+          properties: {},
+        );
         // User accepted the discount - purchase yearly at discounted price
         final success = await ref.read(subscriptionProvider.notifier).purchase('premium_yearly_discount');
         if (success && context.mounted) {
@@ -458,12 +471,20 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
         return;
       }
       // User declined discount — show 24-hour free trial screen
+      ref.read(posthogServiceProvider).capture(
+        eventName: 'paywall_discount_declined',
+        properties: {},
+      );
       if (context.mounted) {
         final trialAccepted = await Navigator.push<bool>(
           context,
           MaterialPageRoute(builder: (_) => const FreeTrialScreen()),
         );
         if (trialAccepted == true) {
+          ref.read(posthogServiceProvider).capture(
+            eventName: 'paywall_trial_accepted',
+            properties: {},
+          );
           await ref.read(subscriptionProvider.notifier).grant24HourTrial();
           await _markPaywallComplete(ref);
           if (context.mounted) {
@@ -524,6 +545,10 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
   }
 
   Future<void> _handleAction(BuildContext context, WidgetRef ref, bool isSubscribed, SubscriptionTier currentTier) async {
+    ref.read(posthogServiceProvider).capture(
+      eventName: 'paywall_cta_tapped',
+      properties: {'selected_plan': _selectedPlan},
+    );
     // If user is already subscribed, show plan change confirmation dialog
     if (isSubscribed && currentTier != SubscriptionTier.free) {
       final confirmed = await _showPlanChangeConfirmation(context, currentTier);

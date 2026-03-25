@@ -7,6 +7,7 @@ import 'package:purchases_flutter/purchases_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../data/services/api_client.dart';
 import '../constants/api_constants.dart';
+import '../services/posthog_service.dart';
 
 /// Subscription tier enum
 enum SubscriptionTier {
@@ -201,8 +202,11 @@ class SubscriptionNotifier extends StateNotifier<SubscriptionState> {
   String? _userId;
   Timer? _trialExpirationTimer;
   static bool _revenueCatInitialized = false;
+  PosthogService? _posthog;
 
   SubscriptionNotifier([this._apiClient]) : super(const SubscriptionState());
+
+  void setPosthog(PosthogService posthog) { _posthog = posthog; }
 
   @override
   void dispose() {
@@ -226,6 +230,7 @@ class SubscriptionNotifier extends StateNotifier<SubscriptionState> {
           isTrialActive: false,
           trialJustExpired: true,
         );
+        _posthog?.capture(eventName: 'trial_expired', properties: {});
         debugPrint('⏰ 24h trial expired — downgraded to free');
       }
     });
@@ -669,6 +674,9 @@ class SubscriptionNotifier extends StateNotifier<SubscriptionState> {
         _updateStateFromCustomerInfo(customerInfo);
 
         state = state.copyWith(isLoading: false);
+        _posthog?.capture(eventName: 'subscription_purchased', properties: {'product_id': productId});
+        _posthog?.identify(userId: _userId ?? '', userProperties: {'subscription_tier': state.tier.name});
+        _posthog?.group(groupType: 'subscription', groupKey: state.tier.name);
         debugPrint('✅ Purchase successful: $productId');
         return true;
       } else {
@@ -679,10 +687,12 @@ class SubscriptionNotifier extends StateNotifier<SubscriptionState> {
     } on PlatformException catch (e) {
       final errorCode = PurchasesErrorHelper.getErrorCode(e);
       if (errorCode == PurchasesErrorCode.purchaseCancelledError) {
+        _posthog?.capture(eventName: 'subscription_purchase_cancelled', properties: {'product_id': productId});
         debugPrint('ℹ️ Purchase cancelled by user');
         state = state.copyWith(isLoading: false);
         return false;
       }
+      _posthog?.capture(eventName: 'subscription_purchase_failed', properties: {'product_id': productId, 'error_message': e.toString()});
       debugPrint('❌ Purchase failed: $e');
       state = state.copyWith(
         isLoading: false,
@@ -690,6 +700,7 @@ class SubscriptionNotifier extends StateNotifier<SubscriptionState> {
       );
       return false;
     } catch (e) {
+      _posthog?.capture(eventName: 'subscription_purchase_failed', properties: {'product_id': productId, 'error_message': e.toString()});
       debugPrint('❌ Purchase failed: $e');
       state = state.copyWith(
         isLoading: false,
@@ -708,6 +719,9 @@ class SubscriptionNotifier extends StateNotifier<SubscriptionState> {
         final customerInfo = await Purchases.restorePurchases();
         _updateStateFromCustomerInfo(customerInfo);
 
+        _posthog?.capture(eventName: 'subscription_restored', properties: {'success': true});
+        _posthog?.identify(userId: _userId ?? '', userProperties: {'subscription_tier': state.tier.name});
+        _posthog?.group(groupType: 'subscription', groupKey: state.tier.name);
         debugPrint('✅ Purchases restored');
         state = state.copyWith(isLoading: false);
         return customerInfo.entitlements.active.isNotEmpty;
@@ -735,6 +749,7 @@ class SubscriptionNotifier extends StateNotifier<SubscriptionState> {
     await prefs.setString('subscription_tier', 'free');
     await prefs.setBool('paywall_seen', true);
     state = state.copyWith(tier: SubscriptionTier.free);
+    _posthog?.capture(eventName: 'subscription_skipped_to_free', properties: {});
   }
 
   /// Grant a 24-hour free premium trial (used after declining paywall + discount)
@@ -750,6 +765,7 @@ class SubscriptionNotifier extends StateNotifier<SubscriptionState> {
       trialEndDate: trialEnd,
     );
     _scheduleTrialExpiration(trialEnd);
+    _posthog?.capture(eventName: 'trial_started', properties: {});
     debugPrint('✅ 24-hour free trial granted, expires: $trialEnd');
   }
 
@@ -781,7 +797,9 @@ class SubscriptionNotifier extends StateNotifier<SubscriptionState> {
 /// Subscription provider
 final subscriptionProvider = StateNotifierProvider<SubscriptionNotifier, SubscriptionState>((ref) {
   final apiClient = ref.watch(apiClientProvider);
-  return SubscriptionNotifier(apiClient);
+  final notifier = SubscriptionNotifier(apiClient);
+  notifier.setPosthog(ref.read(posthogServiceProvider));
+  return notifier;
 });
 
 /// Product pricing info (fallback when RevenueCat not available)

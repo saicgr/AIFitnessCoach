@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/services/posthog_service.dart';
 import '../../../core/providers/user_provider.dart';
 import '../../../data/models/nutrition_preferences.dart';
 import '../../../data/providers/nutrition_preferences_provider.dart';
@@ -233,6 +234,10 @@ class _EditTargetsSheetState extends ConsumerState<EditTargetsSheet> {
 
     setState(() => _isSaving = true);
     try {
+      ref.read(posthogServiceProvider).capture(
+        eventName: 'nutrition_targets_updated',
+        properties: <String, Object>{'calories': calories},
+      );
       await ref.read(nutritionPreferencesProvider.notifier).updateTargets(
         userId: widget.userId,
         targetCalories: calories,

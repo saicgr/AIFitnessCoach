@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/api_constants.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/providers/training_preferences_provider.dart';
 import '../../../core/providers/variation_provider.dart';
 import '../../../core/utils/time_slot_utils.dart';
 import '../../../data/models/gym_location.dart';
@@ -247,6 +248,12 @@ class _EditGymProfileSheetState extends ConsumerState<EditGymProfileSheet> {
       await ref
           .read(gymProfilesProvider.notifier)
           .updateProfile(widget.profile.id, update);
+
+      // Sync training split to user preferences so it's consistent across screens
+      if (_selectedTrainingSplit != null) {
+        ref.read(trainingPreferencesProvider.notifier)
+           .setTrainingSplit(_selectedTrainingSplit!);
+      }
 
       // Save user-level training preferences (experience, focus areas, variety)
       final user = ref.read(authStateProvider).user;

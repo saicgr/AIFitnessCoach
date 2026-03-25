@@ -94,7 +94,7 @@ class _AccuracyIntroScreenState extends ConsumerState<AccuracyIntroScreen>
                       const SizedBox(height: 20),
                       DidYouKnowChip(
                         text:
-                            'FitWiz uses AI + a database of 6,949 verified foods for accurate tracking',
+                            'FitWiz uses AI + 200,000+ verified foods from 100+ country cuisines, plus barcode databases',
                       ),
                       const SizedBox(height: 24),
                     ],
@@ -151,7 +151,7 @@ class _AccuracyIntroScreenState extends ConsumerState<AccuracyIntroScreen>
         const SizedBox(height: 24),
 
         Text(
-          'Get Accurate Results',
+          'Precise Nutrition Logging',
           style: TextStyle(
             fontSize: 28,
             fontWeight: FontWeight.bold,
@@ -163,7 +163,7 @@ class _AccuracyIntroScreenState extends ConsumerState<AccuracyIntroScreen>
         const SizedBox(height: 8),
 
         Text(
-          'Specificity is the secret to precision',
+          'The more specific you are, the more accurate your tracking',
           style: TextStyle(
             fontSize: 15,
             color: textSecondary,

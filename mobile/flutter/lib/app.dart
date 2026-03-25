@@ -8,6 +8,7 @@ import 'core/theme/theme_provider.dart';
 import 'data/providers/admin_provider.dart';
 import 'data/providers/gym_profile_provider.dart';
 import 'core/accessibility/accessibility_provider.dart';
+import 'core/services/posthog_service.dart';
 import 'data/repositories/auth_repository.dart';
 import 'data/services/api_client.dart';
 import 'data/services/notification_service.dart';
@@ -27,6 +28,7 @@ class FitWizApp extends ConsumerStatefulWidget {
 class _FitWizAppState extends ConsumerState<FitWizApp> {
   bool _syncCallbackSet = false;
   bool _notificationCallbackSet = false;
+  bool _posthogListenerSet = false;
 
   @override
   void initState() {
@@ -73,6 +75,28 @@ class _FitWizAppState extends ConsumerState<FitWizApp> {
       _setupNotificationPreferencesSync();
     } else if (authStatus == AuthStatus.unauthenticated) {
       _syncCallbackSet = false; // Reset when logged out
+    }
+
+    // PostHog user identification on auth state changes
+    if (!_posthogListenerSet) {
+      _posthogListenerSet = true;
+      ref.listen(authStateProvider, (previous, next) {
+        final posthog = ref.read(posthogServiceProvider);
+        if (next.status == AuthStatus.authenticated && next.user != null) {
+          posthog.identify(
+            userId: next.user!.id,
+            userProperties: {
+              'email': next.user!.email ?? '',
+            },
+            userPropertiesSetOnce: {
+              'created_at': next.user!.createdAt ?? '',
+            },
+          );
+        } else if (next.status == AuthStatus.unauthenticated &&
+            previous?.status == AuthStatus.authenticated) {
+          posthog.reset();
+        }
+      });
     }
 
     return MaterialApp.router(
@@ -334,27 +358,33 @@ class _WorkoutMiniPlayerOverlay extends ConsumerWidget {
     final miniPlayerState = ref.watch(workoutMiniPlayerProvider);
 
     return Stack(
+      fit: StackFit.expand,
       children: [
-        // Main content
-        child,
+        // Main content — must be Positioned so hit-testing works
+        // correctly with the Positioned mini player sibling.
+        Positioned.fill(child: child),
 
-        // Workout mini player (when minimized)
+        // Workout mini player (when minimized).
+        // IMPORTANT: Must be a direct Positioned child of this Stack,
+        // otherwise it blocks all touch events on the content underneath.
         if (miniPlayerState.isMinimized)
-          WorkoutMiniPlayer(
-            onTap: () {
-              // Restore workout - go to active workout screen, not detail screen
-              final state = ref.read(workoutMiniPlayerProvider);
-              if (state.workout != null) {
-                ref.read(workoutMiniPlayerProvider.notifier).restore();
-                // Use router from provider since context doesn't have GoRouter
-                // (we're inside MaterialApp.router's builder, not a descendant)
-                final router = ref.read(routerProvider);
-                router.push('/active-workout', extra: state.workout);
-              }
-            },
-            onClose: () {
-              ref.read(workoutMiniPlayerProvider.notifier).close();
-            },
+          Positioned(
+            left: 16,
+            right: 16,
+            bottom: MediaQuery.of(context).padding.bottom + 62,
+            child: WorkoutMiniPlayer(
+              onTap: () {
+                final state = ref.read(workoutMiniPlayerProvider);
+                if (state.workout != null) {
+                  ref.read(workoutMiniPlayerProvider.notifier).restore();
+                  final router = ref.read(routerProvider);
+                  router.push('/active-workout', extra: state.workout);
+                }
+              },
+              onClose: () {
+                ref.read(workoutMiniPlayerProvider.notifier).close();
+              },
+            ),
           ),
       ],
     );

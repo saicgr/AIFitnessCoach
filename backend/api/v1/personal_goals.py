@@ -494,6 +494,43 @@ async def abandon_goal(user_id: str, goal_id: str,
         raise safe_internal_error(e, "personal_goals")
 
 
+@router.delete("/goals/{goal_id}")
+async def delete_goal(user_id: str, goal_id: str,
+    current_user: dict = Depends(get_current_user),
+):
+    """Permanently delete a goal."""
+    logger.info(f"Deleting goal: {goal_id}")
+
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Unauthorized")
+
+    try:
+        db = get_supabase_db()
+
+        goal_result = db.client.table("weekly_personal_goals").select("id").eq(
+            "id", goal_id
+        ).eq("user_id", user_id).execute()
+
+        if not goal_result.data:
+            raise HTTPException(status_code=404, detail="Goal not found")
+
+        # Delete attempts first (foreign key)
+        db.client.table("goal_attempts").delete().eq("goal_id", goal_id).execute()
+
+        # Delete the goal
+        db.client.table("weekly_personal_goals").delete().eq("id", goal_id).execute()
+
+        logger.info(f"✅ Goal deleted: {goal_id}")
+
+        return {"status": "deleted", "goal_id": goal_id}
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to delete goal: {e}")
+        raise safe_internal_error(e, "personal_goals")
+
+
 # ============================================================
 # GET GOAL HISTORY
 # ============================================================
@@ -1243,6 +1280,7 @@ async def _generate_performance_suggestions(db, user_id: str, week_start: date) 
                 ("Pull-ups", "single_max", 10, "Challenge yourself with 10 pull-ups!"),
                 ("Plank", "single_max", 60, "Hold a plank for 60 seconds!"),
             ]
+            timed_exercises = {"Plank", "Wall Sit"}
             for exercise, goal_type, target, reasoning in common_exercises:
                 suggestions.append({
                     "exercise_name": exercise,
@@ -1251,6 +1289,7 @@ async def _generate_performance_suggestions(db, user_id: str, week_start: date) 
                     "reasoning": reasoning,
                     "confidence": 0.6,
                     "source_data": {"type": "default_suggestion"},
+                    "unit": "seconds" if exercise in timed_exercises else "reps",
                 })
 
     except Exception as e:

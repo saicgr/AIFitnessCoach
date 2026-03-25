@@ -2444,6 +2444,65 @@ async def add_to_exercise_queue(user_id: str, request: QueueExerciseRequest,
         raise safe_internal_error(e, "users")
 
 
+class QueueExerciseUpdateRequest(BaseModel):
+    """Request body for updating a queued exercise."""
+    priority: Optional[int] = None
+    target_muscle_group: Optional[str] = None
+
+
+@router.put("/{user_id}/exercise-queue/{exercise_name}")
+async def update_exercise_queue_item(user_id: str, exercise_name: str,
+    request: QueueExerciseUpdateRequest,
+    current_user: dict = Depends(get_current_user),
+):
+    """Update a queued exercise's priority or target muscle group."""
+    from urllib.parse import unquote
+    decoded_name = unquote(exercise_name)
+
+    logger.info(f"Updating exercise queue item for user {user_id}: {decoded_name}")
+    try:
+        verify_user_ownership(current_user, user_id)
+        db = get_supabase_db()
+
+        # Build update data from non-None fields
+        update_data = {}
+        if request.priority is not None:
+            update_data["priority"] = request.priority
+        if request.target_muscle_group is not None:
+            update_data["target_muscle_group"] = request.target_muscle_group
+
+        if not update_data:
+            raise HTTPException(status_code=400, detail="No fields to update")
+
+        result = db.client.table("exercise_queue").update(update_data).eq(
+            "user_id", user_id
+        ).eq("exercise_name", decoded_name).is_("used_at", "null").execute()
+
+        if not result.data:
+            raise HTTPException(status_code=404, detail="Exercise not found in queue")
+
+        row = result.data[0]
+        logger.info(f"Updated queue item: {decoded_name} for user {user_id}")
+
+        return QueuedExercise(
+            id=row["id"],
+            user_id=row["user_id"],
+            exercise_name=row["exercise_name"],
+            exercise_id=row.get("exercise_id"),
+            priority=row.get("priority", 0),
+            target_muscle_group=row.get("target_muscle_group"),
+            added_at=row["added_at"],
+            expires_at=row["expires_at"],
+            used_at=row.get("used_at"),
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to update exercise queue item: {e}")
+        raise safe_internal_error(e, "users")
+
+
 @router.delete("/{user_id}/exercise-queue/{exercise_name}")
 async def remove_from_exercise_queue(user_id: str, exercise_name: str,
     current_user: dict = Depends(get_current_user),

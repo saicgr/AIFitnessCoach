@@ -233,7 +233,7 @@ async def create_workout_warmup_and_stretches(
         injuries = None
         if user_id:
             try:
-                injury_rows = db.client.table("injuries").select("body_part").eq(
+                injury_rows = db.client.table("user_injuries").select("body_part").eq(
                     "user_id", user_id
                 ).eq("status", "active").execute()
                 injuries = [r["body_part"] for r in (injury_rows.data or [])]

@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants/app_colors.dart';
 import '../../data/providers/social_provider.dart';
 import '../../data/repositories/auth_repository.dart';
+import '../../core/services/posthog_service.dart';
 import '../../widgets/pill_app_bar.dart';
 import 'friend_profile_screen.dart';
 import 'widgets/user_search_result_card.dart';
@@ -225,6 +226,12 @@ class _FriendSearchScreenState extends ConsumerState<FriendSearchScreen>
           userId: _userId!,
           toUserId: targetUserId,
         );
+        ref.read(posthogServiceProvider).capture(
+          eventName: 'friend_request_sent',
+          properties: <String, Object>{
+            'target_user_id': targetUserId,
+          },
+        );
         _showSnackBar('Friend request sent!');
       } else {
         // Instant follow - use existing connection API
@@ -232,6 +239,13 @@ class _FriendSearchScreenState extends ConsumerState<FriendSearchScreen>
         await socialService.sendFriendRequest(
           userId: _userId!,
           toUserId: targetUserId,
+        );
+        ref.read(posthogServiceProvider).capture(
+          eventName: 'friend_request_sent',
+          properties: <String, Object>{
+            'target_user_id': targetUserId,
+            'type': 'instant_follow',
+          },
         );
         _showSnackBar('Following!');
       }

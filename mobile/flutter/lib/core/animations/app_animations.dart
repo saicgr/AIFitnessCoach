@@ -137,6 +137,34 @@ class AppAnimations {
       ];
 
   // ==========================================================================
+  // MICROINTERACTION CONSTANTS
+  // ==========================================================================
+
+  /// Shake amplitude in pixels for error wobble
+  static const double shakeAmplitude = 8.0;
+
+  /// Shake oscillation count
+  static const int shakeOscillations = 4;
+
+  /// Shake duration
+  static const Duration shakeDuration = Duration(milliseconds: 400);
+
+  /// Bouncy counter stagger delay between digits
+  static const Duration counterStagger = Duration(milliseconds: 30);
+
+  /// Sparkle burst duration
+  static const Duration sparkleDuration = Duration(milliseconds: 800);
+
+  /// Swipe threshold for gesture completion (70%)
+  static const double swipeThreshold = 0.7;
+
+  /// Tab indicator morph stretch factor
+  static const double morphStretchFactor = 1.4;
+
+  /// Breathing glow cycle duration
+  static const Duration breathingGlowCycle = Duration(milliseconds: 2000);
+
+  // ==========================================================================
   // TYPING INDICATOR (faster cycle for more energy)
   // ==========================================================================
 
@@ -470,6 +498,78 @@ class AppPageRoute<T> extends PageRouteBuilder<T> {
           transitionDuration: const Duration(milliseconds: 300),
           reverseTransitionDuration: AppAnimations.modal,
         );
+}
+
+/// A subtle pulsing glow wrapper for active/live states.
+///
+/// Animates a [BoxShadow] spread and opacity in a breathing pattern,
+/// signaling that something is active (timer running, AI processing, recording).
+class BreathingGlow extends StatefulWidget {
+  final Widget child;
+  final Color glowColor;
+  final double maxSpread;
+  final double minOpacity;
+  final double maxOpacity;
+  final Duration cycleDuration;
+
+  const BreathingGlow({
+    super.key,
+    required this.child,
+    required this.glowColor,
+    this.maxSpread = 12,
+    this.minOpacity = 0.15,
+    this.maxOpacity = 0.5,
+    this.cycleDuration = AppAnimations.breathingGlowCycle,
+  });
+
+  @override
+  State<BreathingGlow> createState() => _BreathingGlowState();
+}
+
+class _BreathingGlowState extends State<BreathingGlow>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: widget.cycleDuration,
+    )..repeat(reverse: true);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _controller,
+      builder: (context, child) {
+        final t = Curves.easeInOut.transform(_controller.value);
+        final opacity = widget.minOpacity + (widget.maxOpacity - widget.minOpacity) * t;
+        final spread = widget.maxSpread * t;
+
+        return Container(
+          decoration: BoxDecoration(
+            boxShadow: [
+              BoxShadow(
+                color: widget.glowColor.withOpacity(opacity),
+                blurRadius: spread * 2,
+                spreadRadius: spread,
+              ),
+            ],
+          ),
+          child: child,
+        );
+      },
+      child: widget.child,
+    );
+  }
 }
 
 /// Reusable shimmer skeleton placeholder widget

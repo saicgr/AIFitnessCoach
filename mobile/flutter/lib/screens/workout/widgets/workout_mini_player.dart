@@ -11,6 +11,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/providers/workout_mini_player_provider.dart';
 import '../../../core/theme/theme_colors.dart';
+import '../../../navigation/app_router.dart';
 
 /// Position options for the mini player
 enum MiniPlayerPosition {
@@ -123,34 +124,23 @@ class _WorkoutMiniPlayerState extends ConsumerState<WorkoutMiniPlayer>
 
     if (!state.isMinimized) return const SizedBox.shrink();
 
-    _safeArea = MediaQuery.of(context).padding;
     final screenSize = MediaQuery.of(context).size;
     final width = screenSize.width - 32; // Full width minus padding
 
-    final basePosition = _getPosition(_currentPosition, screenSize, width);
-    final position = basePosition + _dragOffset;
-
-    return Positioned(
-      left: position.dx,
-      top: position.dy,
-      child: GestureDetector(
-        onPanStart: _onDragStart,
-        onPanUpdate: _onDragUpdate,
-        onPanEnd: _onDragEnd,
-        onTap: () {
-          HapticFeedback.selectionClick();
-          widget.onTap();
+    return GestureDetector(
+      onTap: () {
+        HapticFeedback.selectionClick();
+        widget.onTap();
+      },
+      child: AnimatedBuilder(
+        animation: _scaleAnimation,
+        builder: (context, child) {
+          return Transform.scale(
+            scale: _scaleAnimation.value,
+            child: child,
+          );
         },
-        child: AnimatedBuilder(
-          animation: _scaleAnimation,
-          builder: (context, child) {
-            return Transform.scale(
-              scale: _scaleAnimation.value,
-              child: child,
-            );
-          },
-          child: _buildMiniPlayer(state, width),
-        ),
+        child: _buildMiniPlayer(state, width),
       ),
     );
   }
@@ -407,8 +397,14 @@ class _WorkoutMiniPlayerState extends ConsumerState<WorkoutMiniPlayer>
     final isDark = context.isDarkMode;
     final dialogBg = isDark ? const Color(0xFF2A2A2A) : colors.elevated;
 
+    // The mini player lives inside MaterialApp.router's builder, which is
+    // ABOVE the Navigator. Use the router's navigator context for dialogs.
+    final router = ref.read(routerProvider);
+    final navigatorContext = router.routerDelegate.navigatorKey.currentContext;
+    if (navigatorContext == null) return;
+
     showDialog(
-      context: context,
+      context: navigatorContext,
       builder: (dialogContext) => AlertDialog(
         backgroundColor: dialogBg,
         shape: RoundedRectangleBorder(

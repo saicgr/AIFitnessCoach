@@ -12,7 +12,6 @@ import '../../core/constants/api_constants.dart';
 import 'pre_auth_quiz_screen.dart';
 import 'widgets/foldable_quiz_scaffold.dart';
 import 'widgets/quiz_body_metrics.dart';
-import 'widgets/quiz_weight_rate.dart';
 
 /// Personal Info Screen - Collects name, DOB, gender, height, weight, goal weight
 /// Shown between sign-in and coach selection
@@ -331,17 +330,6 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen> {
                           compact: isFoldable,
                         ),
                       ),
-                      // Rate selector — shown only for lose/gain goals
-                      if (_weightDirection != null && _weightDirection != 'maintain')
-                        QuizWeightRate(
-                          weightDirection: _weightDirection,
-                          selectedRate: _weightChangeRate ?? 'moderate',
-                          currentWeight: _weightKg,
-                          goalWeight: _goalWeightKg,
-                          useMetric: _useMetric,
-                          onRateChanged: (rate) => setState(() => _weightChangeRate = rate),
-                          showHeader: false,
-                        ),
                     ],
                   ),
                 ),

@@ -2,6 +2,8 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../data/models/workout.dart';
+import '../../data/services/workout_notification_service.dart';
+import '../services/posthog_service.dart';
 
 /// State for the workout mini player
 class WorkoutMiniPlayerState {
@@ -99,8 +101,9 @@ class WorkoutMiniPlayerState {
 /// Notifier for workout mini player state
 class WorkoutMiniPlayerNotifier extends StateNotifier<WorkoutMiniPlayerState> {
   Timer? _timer;
+  final PosthogService _posthogService;
 
-  WorkoutMiniPlayerNotifier() : super(const WorkoutMiniPlayerState());
+  WorkoutMiniPlayerNotifier(this._posthogService) : super(const WorkoutMiniPlayerState());
 
   /// Minimize the workout and start background timer
   void minimize({
@@ -117,6 +120,14 @@ class WorkoutMiniPlayerNotifier extends StateNotifier<WorkoutMiniPlayerState> {
   }) {
     debugPrint('🎬 [MiniPlayer] Minimizing workout: ${workout.name}');
     debugPrint('🎬 [MiniPlayer] Timer: $workoutSeconds, Exercise: $currentExerciseIndex/$totalExercises');
+
+    _posthogService.capture(
+      eventName: 'workout_minimized',
+      properties: {
+        'workout_name': workout.name ?? '',
+        'elapsed_seconds': workoutSeconds,
+      },
+    );
 
     state = state.copyWith(
       isMinimized: true,
@@ -141,6 +152,14 @@ class WorkoutMiniPlayerNotifier extends StateNotifier<WorkoutMiniPlayerState> {
   /// Restore the workout (called when mini player is tapped)
   void restore() {
     debugPrint('🎬 [MiniPlayer] Restoring workout');
+
+    _posthogService.capture(
+      eventName: 'workout_restored',
+      properties: {
+        'workout_name': state.workout?.name ?? '',
+      },
+    );
+
     _stopTimer();
     state = state.copyWith(isMinimized: false);
   }
@@ -150,6 +169,9 @@ class WorkoutMiniPlayerNotifier extends StateNotifier<WorkoutMiniPlayerState> {
     debugPrint('🎬 [MiniPlayer] Closing workout');
     _stopTimer();
     state = state.clear();
+    // Cancel the persistent workout notification
+    WorkoutNotificationService.instance.cancel();
+    WorkoutNotificationService.instance.clearCallbacks();
   }
 
   /// Toggle pause state
@@ -213,6 +235,8 @@ class WorkoutMiniPlayerNotifier extends StateNotifier<WorkoutMiniPlayerState> {
   @override
   void dispose() {
     _stopTimer();
+    WorkoutNotificationService.instance.cancel();
+    WorkoutNotificationService.instance.clearCallbacks();
     super.dispose();
   }
 }
@@ -220,7 +244,7 @@ class WorkoutMiniPlayerNotifier extends StateNotifier<WorkoutMiniPlayerState> {
 /// Provider for workout mini player state
 final workoutMiniPlayerProvider =
     StateNotifierProvider<WorkoutMiniPlayerNotifier, WorkoutMiniPlayerState>(
-  (ref) => WorkoutMiniPlayerNotifier(),
+  (ref) => WorkoutMiniPlayerNotifier(ref.read(posthogServiceProvider)),
 );
 
 /// Convenience provider to check if a workout is minimized

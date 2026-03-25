@@ -22,8 +22,8 @@ class GoalHistoryDataPoint {
   factory GoalHistoryDataPoint.fromJson(Map<String, dynamic> json) {
     return GoalHistoryDataPoint(
       weekStart: json['week_start'] as String,
-      currentValue: json['current_value'] as int? ?? 0,
-      targetValue: json['target_value'] as int?,
+      currentValue: (json['current_value'] as num?)?.toInt() ?? 0,
+      targetValue: (json['target_value'] as num?)?.toInt(),
       isPr: json['is_pr_beaten'] as bool? ?? false,
       status: json['status'] as String? ?? 'completed',
     );

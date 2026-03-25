@@ -841,6 +841,7 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
     );
 
     // Clear pending state
+    ScaffoldMessenger.of(context).clearSnackBars();
     setState(() => _pendingSupersetIndex = null);
   }
 
@@ -911,6 +912,7 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
     }
 
     // Clear pending state
+    ScaffoldMessenger.of(context).clearSnackBars();
     setState(() => _pendingSupersetIndex = null);
   }
 
@@ -990,12 +992,14 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
     });
     _scheduleAutoSave();
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Superset created!'),
-        duration: Duration(seconds: 2),
-      ),
-    );
+    ScaffoldMessenger.of(context)
+      ..clearSnackBars()
+      ..showSnackBar(
+        const SnackBar(
+          content: Text('Superset created!'),
+          duration: Duration(seconds: 2),
+        ),
+      );
   }
 
   /// Start pairing from 3-dot menu - stores pending index
@@ -1223,7 +1227,12 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
     int? reorderIndex,
     bool isPendingPair = false,
     void Function(int draggedIndex)? onSupersetDrop,
+    int? supersetPairingIndex,
   }) {
+    // When in superset pairing mode, intercept taps for pairing instead of navigation
+    final bool inPairingMode = supersetPairingIndex != null;
+    final bool isSelf = supersetPairingIndex == index;
+
     return ExpandedExerciseCard(
       key: ValueKey(exercise.id ?? index),
       exercise: exercise,
@@ -1233,10 +1242,17 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
       reorderIndex: reorderIndex,
       isPendingPair: isPendingPair,
       onSupersetDrop: onSupersetDrop,  // Allow drop even if in superset (to add to tri-set/giant set)
-      onTap: () {
-        debugPrint('🎯 [WorkoutDetail] Exercise tapped: ${exercise.name}');
-        context.push('/exercise-detail', extra: exercise);
-      },
+      onTap: inPairingMode
+          ? () {
+              debugPrint('🔗 [WorkoutDetail] PAIRING TAP: index=$index, source=$supersetPairingIndex, isSelf=$isSelf');
+              if (!isSelf) {
+                _createSuperset(supersetPairingIndex, index);
+              }
+            }
+          : () {
+              debugPrint('🎯 [WorkoutDetail] Exercise tapped: ${exercise.name} (pairingMode=$inPairingMode, pendingIdx=$supersetPairingIndex)');
+              context.push('/exercise-detail', extra: exercise);
+            },
       onSwap: () async {
         await _flushPendingAutoSave();
         if (!mounted) return;
@@ -1915,6 +1931,7 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
                           accentColor,
                           reorderIndex: idx,  // Required for DragTarget to be created
                           onSupersetDrop: (draggedIndex) => _createSuperset(draggedIndex, idx),
+                          supersetPairingIndex: _pendingSupersetIndex,
                         ))
                     .toList();
 
@@ -1960,20 +1977,15 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
                   curve: AppAnimations.fastOut,
                   child: FadeInAnimation(
                     curve: AppAnimations.fastOut,
-                    child: GestureDetector(
-                      onTap: _pendingSupersetIndex != null &&
-                              _pendingSupersetIndex != exerciseIndex
-                          ? () => _createSuperset(_pendingSupersetIndex!, exerciseIndex)
-                          : null,
-                      child: _buildExerciseCard(
+                    child: _buildExerciseCard(
                         exercise,
                         exerciseIndex,
                         accentColor,
                         reorderIndex: index,
                         isPendingPair: isPendingPair,
                         onSupersetDrop: (draggedIndex) => _createSuperset(draggedIndex, exerciseIndex),
+                        supersetPairingIndex: _pendingSupersetIndex,
                       ),
-                    ),
                   ),
                 ),
               );

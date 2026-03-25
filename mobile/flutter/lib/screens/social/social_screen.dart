@@ -15,6 +15,7 @@ import 'tabs/messages_tab.dart';
 import '../../widgets/app_loading.dart';
 import '../../widgets/pill_app_bar.dart';
 import '../../widgets/main_shell.dart';
+import '../../core/services/posthog_service.dart';
 import 'friend_search_screen.dart';
 import 'conversation_screen.dart';
 
@@ -96,6 +97,10 @@ class _SocialScreenState extends ConsumerState<SocialScreen>
             tooltip: 'Find Friends',
             onPressed: () {
               HapticFeedback.lightImpact();
+              ref.read(posthogServiceProvider).capture(
+                eventName: 'social_find_friends_tapped',
+                properties: <String, Object>{},
+              );
               Navigator.push(
                 context,
                 AppPageRoute(

@@ -109,6 +109,7 @@ class StaplesNotifier extends StateNotifier<StaplesState> {
     int? userSets,
     String? userReps,
     int? userRestSeconds,
+    double? userWeightLbs,
     List<int>? targetDays,
   }) async {
     try {
@@ -153,6 +154,7 @@ class StaplesNotifier extends StateNotifier<StaplesState> {
         userSets: userSets,
         userReps: userReps,
         userRestSeconds: userRestSeconds,
+        userWeightLbs: userWeightLbs,
         targetDays: targetDays,
       );
 
@@ -209,6 +211,52 @@ class StaplesNotifier extends StateNotifier<StaplesState> {
     } catch (e) {
       debugPrint('❌ Failed to inject exercise into workout: $e');
       // Don't fail the staple addition if injection fails
+    }
+  }
+
+  Future<bool> updateStaple(
+    String stapleId, {
+    String? section,
+    int? userSets,
+    String? userReps,
+    int? userRestSeconds,
+    double? userWeightLbs,
+    List<int>? targetDays,
+    Map<String, double>? cardioParams,
+  }) async {
+    try {
+      final apiClient = _ref.read(apiClientProvider);
+      final userId = await apiClient.getUserId();
+      if (userId == null) return false;
+
+      final repo = _ref.read(exercisePreferencesRepositoryProvider);
+      final updated = await repo.updateStapleExercise(
+        userId,
+        stapleId,
+        section: section,
+        userSets: userSets,
+        userReps: userReps,
+        userRestSeconds: userRestSeconds,
+        userWeightLbs: userWeightLbs,
+        targetDays: targetDays,
+        cardioParams: cardioParams,
+      );
+
+      // Replace the old staple with the updated one in state
+      state = state.copyWith(
+        staples: state.staples.map((s) => s.id == stapleId ? updated : s).toList(),
+      );
+
+      debugPrint('✅ Staple updated: ${updated.exerciseName}');
+
+      // Invalidate providers to refresh UI
+      _ref.invalidate(todayWorkoutProvider);
+      _ref.invalidate(workoutsProvider);
+
+      return true;
+    } catch (e) {
+      debugPrint('Error updating staple: $e');
+      return false;
     }
   }
 

@@ -102,6 +102,45 @@ class _PersonalGoalsScreenState extends ConsumerState<PersonalGoalsScreen> {
     );
   }
 
+  Future<void> _deleteGoal(Map<String, dynamic> goal) async {
+    final goalId = goal['id'] as String?;
+    final exerciseName = goal['exercise_name'] ?? 'this goal';
+    if (goalId == null || _userId == null) return;
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Delete Goal?'),
+        content: Text('Permanently delete "$exerciseName"? This cannot be undone.'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Delete', style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true || !mounted) return;
+
+    try {
+      await _goalsService.deleteGoal(userId: _userId!, goalId: goalId);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('"$exerciseName" deleted')),
+        );
+        _loadData();
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to delete: $e'), backgroundColor: Colors.red),
+        );
+      }
+    }
+  }
+
   void _showRecordAttemptDialog(Map<String, dynamic> goal) {
     final goalType = PersonalGoalType.fromString(goal['goal_type'] ?? 'single_max');
     final isMaxAttempt = goalType == PersonalGoalType.singleMax;
@@ -231,8 +270,8 @@ class _PersonalGoalsScreenState extends ConsumerState<PersonalGoalsScreen> {
       context,
       exerciseName: goal['exercise_name'] ?? 'Exercise',
       goalType: goalType,
-      currentValue: goal['current_value'] as int?,
-      personalBest: goal['personal_best'] as int?,
+      currentValue: (goal['current_value'] as num?)?.toInt(),
+      personalBest: (goal['personal_best'] as num?)?.toInt(),
     );
   }
 
@@ -316,22 +355,13 @@ class _PersonalGoalsScreenState extends ConsumerState<PersonalGoalsScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // AI-powered suggestion carousel
-            if (_userId != null)
-              SuggestionCarousel(
-                userId: _userId!,
-                onSuggestionTap: _showSuggestionDetail,
-                onAccept: _acceptSuggestion,
-                onDismiss: _dismissSuggestion,
-              ),
-
             // Summary stats
             if (goals.isNotEmpty || prsThisWeek > 0) ...[
               _buildSummaryCard(goals.length, prsThisWeek),
               const SizedBox(height: 24),
             ],
 
-            // Current goals section
+            // Current goals section (shown first)
             Row(
               children: [
                 Text(
@@ -369,8 +399,20 @@ class _PersonalGoalsScreenState extends ConsumerState<PersonalGoalsScreen> {
                           ? () => _showLeaderboardSheet(goal)
                           : null,
                       onHistoryTap: () => _showHistorySheet(goal),
+                      onDelete: () => _deleteGoal(goal),
                     ),
                   )),
+
+            const SizedBox(height: 24),
+
+            // AI-powered suggestion carousel (after active goals)
+            if (_userId != null)
+              SuggestionCarousel(
+                userId: _userId!,
+                onSuggestionTap: _showSuggestionDetail,
+                onAccept: _acceptSuggestion,
+                onDismiss: _dismissSuggestion,
+              ),
 
             const SizedBox(height: 24),
 

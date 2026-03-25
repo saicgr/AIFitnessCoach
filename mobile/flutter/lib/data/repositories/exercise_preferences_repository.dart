@@ -70,6 +70,7 @@ class StapleExercise {
   final int? userSets;
   final String? userReps;  // "10" or "8-12" format
   final int? userRestSeconds;
+  final double? userWeightLbs;  // User-specified weight in lbs
   // Day-of-week targeting: [0,2,4] = Mon/Wed/Fri, null = all days
   final List<int>? targetDays;
 
@@ -100,6 +101,7 @@ class StapleExercise {
     this.userSets,
     this.userReps,
     this.userRestSeconds,
+    this.userWeightLbs,
     this.targetDays,
   });
 
@@ -131,6 +133,7 @@ class StapleExercise {
       userSets: (json['user_sets'] as num?)?.toInt(),
       userReps: json['user_reps'] as String?,
       userRestSeconds: (json['user_rest_seconds'] as num?)?.toInt(),
+      userWeightLbs: (json['user_weight_lbs'] as num?)?.toDouble(),
       targetDays: (json['target_days'] as List<dynamic>?)?.map((e) => (e as num).toInt()).toList(),
     );
   }
@@ -823,6 +826,7 @@ class ExercisePreferencesRepository {
     int? userSets,
     String? userReps,
     int? userRestSeconds,
+    double? userWeightLbs,
     List<int>? targetDays,
   }) async {
     debugPrint('🔒 [ExercisePrefs] Adding staple: $exerciseName for user: $userId');
@@ -839,6 +843,7 @@ class ExercisePreferencesRepository {
         if (userSets != null) 'user_sets': userSets,
         if (userReps != null) 'user_reps': userReps,
         if (userRestSeconds != null) 'user_rest_seconds': userRestSeconds,
+        if (userWeightLbs != null) 'user_weight_lbs': userWeightLbs,
         if (targetDays != null) 'target_days': targetDays,
       };
 
@@ -877,6 +882,70 @@ class ExercisePreferencesRepository {
       throw Exception('Failed to add staple exercise');
     } catch (e, stackTrace) {
       debugPrint('❌ [ExercisePrefs] Error adding staple: $e');
+      debugPrint('Stack trace: $stackTrace');
+      rethrow;
+    }
+  }
+
+  /// Update a staple exercise's settings
+  Future<StapleExercise> updateStapleExercise(
+    String userId,
+    String stapleId, {
+    String? section,
+    int? userSets,
+    String? userReps,
+    int? userRestSeconds,
+    double? userWeightLbs,
+    List<int>? targetDays,
+    Map<String, double>? cardioParams,
+  }) async {
+    debugPrint('🔒 [ExercisePrefs] Updating staple: $stapleId for user: $userId');
+
+    try {
+      final data = <String, dynamic>{
+        if (section != null) 'section': section,
+        if (userSets != null) 'user_sets': userSets,
+        if (userReps != null) 'user_reps': userReps,
+        if (userRestSeconds != null) 'user_rest_seconds': userRestSeconds,
+        if (userWeightLbs != null) 'user_weight_lbs': userWeightLbs,
+        if (targetDays != null) 'target_days': targetDays,
+      };
+
+      if (cardioParams != null) {
+        if (cardioParams.containsKey('duration_seconds')) {
+          data['user_duration_seconds'] = cardioParams['duration_seconds']!.toInt();
+        }
+        if (cardioParams.containsKey('speed_mph')) {
+          data['user_speed_mph'] = cardioParams['speed_mph'];
+        }
+        if (cardioParams.containsKey('incline_percent')) {
+          data['user_incline_percent'] = cardioParams['incline_percent'];
+        }
+        if (cardioParams.containsKey('rpm')) {
+          data['user_rpm'] = cardioParams['rpm']!.toInt();
+        }
+        if (cardioParams.containsKey('resistance_level')) {
+          data['user_resistance_level'] = cardioParams['resistance_level']!.toInt();
+        }
+        if (cardioParams.containsKey('stroke_rate_spm')) {
+          data['user_stroke_rate_spm'] = cardioParams['stroke_rate_spm']!.toInt();
+        }
+      }
+
+      final response = await _apiClient.put<Map<String, dynamic>>(
+        '${ApiConstants.apiBaseUrl}/exercise-preferences/staples/$userId/$stapleId',
+        data: data,
+      );
+
+      if (response.data != null) {
+        final staple = StapleExercise.fromJson(response.data!);
+        debugPrint('✅ [ExercisePrefs] Updated staple: ${staple.exerciseName}');
+        return staple;
+      }
+
+      throw Exception('Failed to update staple exercise');
+    } catch (e, stackTrace) {
+      debugPrint('❌ [ExercisePrefs] Error updating staple: $e');
       debugPrint('Stack trace: $stackTrace');
       rethrow;
     }
@@ -1061,6 +1130,42 @@ class ExercisePreferencesRepository {
     }
   }
 
+  /// Update an avoided exercise's settings
+  Future<AvoidedExercise> updateAvoidedExercise(
+    String userId,
+    String avoidedId, {
+    required String exerciseName,
+    String? reason,
+    bool isTemporary = false,
+    DateTime? endDate,
+  }) async {
+    debugPrint('🚫 [ExercisePrefs] Updating avoided exercise: $avoidedId for user: $userId');
+
+    try {
+      final response = await _apiClient.put<Map<String, dynamic>>(
+        '${ApiConstants.apiBaseUrl}/exercise-preferences/avoided-exercises/$userId/$avoidedId',
+        data: {
+          'exercise_name': exerciseName,
+          if (reason != null) 'reason': reason,
+          'is_temporary': isTemporary,
+          if (endDate != null) 'end_date': endDate.toIso8601String().split('T')[0],
+        },
+      );
+
+      if (response.data != null) {
+        final avoided = AvoidedExercise.fromJson(response.data!);
+        debugPrint('✅ [ExercisePrefs] Updated avoided exercise: ${avoided.exerciseName}');
+        return avoided;
+      }
+
+      throw Exception('Failed to update avoided exercise');
+    } catch (e, stackTrace) {
+      debugPrint('❌ [ExercisePrefs] Error updating avoided exercise: $e');
+      debugPrint('Stack trace: $stackTrace');
+      rethrow;
+    }
+  }
+
   /// Remove an exercise from the avoidance list
   Future<void> removeAvoidedExercise(String userId, String avoidedId) async {
     debugPrint('🚫 [ExercisePrefs] Removing avoided exercise: $avoidedId for user: $userId');
@@ -1149,6 +1254,44 @@ class ExercisePreferencesRepository {
       throw Exception('Failed to add avoided muscle');
     } catch (e, stackTrace) {
       debugPrint('❌ [ExercisePrefs] Error adding avoided muscle: $e');
+      debugPrint('Stack trace: $stackTrace');
+      rethrow;
+    }
+  }
+
+  /// Update an avoided muscle entry (e.g. change severity from 'avoid' to 'reduce')
+  Future<AvoidedMuscle> updateAvoidedMuscle(
+    String userId,
+    String muscleId, {
+    required String muscleGroup,
+    required String severity,
+    String? reason,
+    bool isTemporary = false,
+    DateTime? endDate,
+  }) async {
+    debugPrint('🚫 [ExercisePrefs] Updating avoided muscle: $muscleId for user: $userId');
+
+    try {
+      final response = await _apiClient.put<Map<String, dynamic>>(
+        '${ApiConstants.apiBaseUrl}/exercise-preferences/avoided-muscles/$userId/$muscleId',
+        data: {
+          'muscle_group': muscleGroup,
+          'severity': severity,
+          if (reason != null) 'reason': reason,
+          'is_temporary': isTemporary,
+          if (endDate != null) 'end_date': endDate.toIso8601String().split('T')[0],
+        },
+      );
+
+      if (response.data != null) {
+        final avoided = AvoidedMuscle.fromJson(response.data!);
+        debugPrint('✅ [ExercisePrefs] Updated avoided muscle: ${avoided.muscleGroup} → ${avoided.severity}');
+        return avoided;
+      }
+
+      throw Exception('Failed to update avoided muscle');
+    } catch (e, stackTrace) {
+      debugPrint('❌ [ExercisePrefs] Error updating avoided muscle: $e');
       debugPrint('Stack trace: $stackTrace');
       rethrow;
     }

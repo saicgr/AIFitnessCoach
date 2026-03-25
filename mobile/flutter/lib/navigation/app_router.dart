@@ -2,6 +2,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../core/services/posthog_service.dart';
+import 'posthog_route_observer.dart';
 import '../data/models/workout.dart';
 import '../data/models/user.dart' as app_user;
 import '../data/repositories/auth_repository.dart';
@@ -175,20 +177,28 @@ final currentRouteProvider = StateProvider<String>((ref) => '/splash');
 // ---------------------------------------------------------------------------
 
 /// Handle widget deep link redirects (fitwiz:// scheme)
-String? _handleDeepLinkRedirect(GoRouterState state) {
-  if (state.matchedLocation == '/add') {
+String? _handleDeepLinkRedirect(GoRouterState state, {PosthogService? posthog}) {
+  final matched = state.matchedLocation;
+  String? redirect;
+  if (matched == '/add') {
     debugPrint('Router: Widget deep link /add -> /nutrition?tab=2');
-    return '/nutrition?tab=2';
-  }
-  if (state.matchedLocation == '/share') {
+    redirect = '/nutrition?tab=2';
+  } else if (matched == '/share') {
     debugPrint('Router: Widget deep link /share -> /social');
-    return '/social';
-  }
-  if (state.matchedLocation == '/start') {
+    redirect = '/social';
+  } else if (matched == '/start') {
     debugPrint('Router: Widget deep link /start -> /home');
-    return '/home';
+    redirect = '/home';
   }
-  return null;
+  if (redirect != null) {
+    posthog?.capture(
+      eventName: 'deep_link_opened',
+      properties: <String, Object>{
+        'deep_link_path': state.uri.toString(),
+      },
+    );
+  }
+  return redirect;
 }
 
 /// Handle loading/initial auth states - keep user on splash or pre-auth screens
@@ -437,6 +447,8 @@ bool _dailyLoginXpProcessed = false;
 final routerProvider = Provider<GoRouter>((ref) {
   final authNotifier = _AuthStateNotifier(ref);
 
+  final posthog = ref.watch(posthogServiceProvider);
+
   final router = GoRouter(
     initialLocation: '/splash',
     // ANR fix: GoRouter debug logging generates 50+ print() calls during
@@ -444,6 +456,7 @@ final routerProvider = Provider<GoRouter>((ref) {
     // call that blocks the main thread. Only enable in debug builds.
     debugLogDiagnostics: kDebugMode,
     refreshListenable: authNotifier,
+    observers: [PosthogRouteObserver(posthog)],
     redirect: (context, state) {
       final authState = ref.read(authStateProvider);
       final languageState = ref.read(languageProvider);
@@ -455,7 +468,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       }
 
       // 1. Handle widget deep links
-      final deepLink = _handleDeepLinkRedirect(state);
+      final deepLink = _handleDeepLinkRedirect(state, posthog: posthog);
       if (deepLink != null) return deepLink;
 
       // 2. Process daily login XP for authenticated users (fire-and-forget, once per session)

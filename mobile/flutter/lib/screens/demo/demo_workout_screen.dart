@@ -8,7 +8,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/utils/difficulty_utils.dart';
 import '../../data/demo_workouts.dart';
-import '../../data/services/analytics_service.dart';
+import '../../core/services/posthog_service.dart';
 import '../../data/services/api_client.dart';
 import '../../core/constants/api_constants.dart';
 
@@ -108,7 +108,7 @@ class _DemoWorkoutScreenState extends ConsumerState<DemoWorkoutScreen> {
 
   void _trackDemoView() {
     try {
-      final analytics = ref.read(analyticsServiceProvider);
+      final posthog = ref.read(posthogServiceProvider);
       String workoutName;
       if (_personalizedWorkout != null) {
         final workout = _personalizedWorkout!['workout'] as Map<String, dynamic>?;
@@ -116,9 +116,9 @@ class _DemoWorkoutScreenState extends ConsumerState<DemoWorkoutScreen> {
       } else {
         workoutName = _currentWorkout?.name ?? 'unknown';
       }
-      analytics.trackEvent(
+      posthog.capture(
         eventName: 'demo_workout_viewed',
-        category: 'demo',
+
         properties: {
           'workout_type': _personalizedWorkout != null ? 'personalized' : (_currentWorkout?.type ?? 'unknown'),
           'workout_name': workoutName,
@@ -132,7 +132,7 @@ class _DemoWorkoutScreenState extends ConsumerState<DemoWorkoutScreen> {
 
   void _trackConversion(String action) {
     try {
-      final analytics = ref.read(analyticsServiceProvider);
+      final posthog = ref.read(posthogServiceProvider);
       String workoutName;
       if (_personalizedWorkout != null) {
         final workout = _personalizedWorkout!['workout'] as Map<String, dynamic>?;
@@ -140,9 +140,9 @@ class _DemoWorkoutScreenState extends ConsumerState<DemoWorkoutScreen> {
       } else {
         workoutName = _currentWorkout?.name ?? 'unknown';
       }
-      analytics.trackEvent(
+      posthog.capture(
         eventName: 'demo_to_signup_conversion',
-        category: 'conversion',
+
         properties: {
           'workout_type': _personalizedWorkout != null ? 'personalized' : (_currentWorkout?.type ?? 'unknown'),
           'workout_name': workoutName,
@@ -162,10 +162,10 @@ class _DemoWorkoutScreenState extends ConsumerState<DemoWorkoutScreen> {
 
     // Track the "try another" action
     try {
-      final analytics = ref.read(analyticsServiceProvider);
-      analytics.trackEvent(
+      final posthog = ref.read(posthogServiceProvider);
+      posthog.capture(
         eventName: 'demo_try_another_clicked',
-        category: 'demo',
+
         properties: {
           'previous_workout': _personalizedWorkout != null ? 'personalized' : (_currentWorkout?.type ?? 'unknown'),
         },

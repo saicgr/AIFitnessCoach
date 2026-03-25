@@ -643,6 +643,16 @@ def _ensure_no_consecutive_same_focus(focus_map: dict, available_focuses: List[s
     def _are_adjacent(day_a: int, day_b: int) -> bool:
         return abs(day_a - day_b) == 1 or {day_a, day_b} == {0, 6}
 
+    # With only 2 days, just ensure they differ if adjacent; no swap candidates exist
+    if len(sorted_days) == 2:
+        day_a, day_b = sorted_days
+        if _are_adjacent(day_a, day_b) and result[day_a] == result[day_b]:
+            for alt in available_focuses:
+                if alt != result[day_a]:
+                    result[day_b] = alt
+                    break
+        return result
+
     # Multiple passes to resolve cascading swaps
     for _ in range(len(sorted_days)):
         changed = False

@@ -5,6 +5,10 @@ import '../../../core/providers/training_preferences_provider.dart';
 import '../../../data/models/ai_split_preset.dart';
 import '../../../data/repositories/auth_repository.dart';
 import '../../../data/repositories/workout_repository.dart';
+import '../../../data/models/gym_profile.dart';
+import '../../../data/providers/gym_profile_provider.dart';
+import '../../../data/providers/today_workout_provider.dart';
+import '../../../data/providers/workout_provider.dart';
 import '../../../data/services/haptic_service.dart';
 import '../../../widgets/schedule_mismatch_dialog.dart';
 
@@ -402,20 +406,37 @@ class _AISplitPresetDetailSheetState extends ConsumerState<AISplitPresetDetailSh
     );
   }
 
-  /// Save the preset as the active training split
+  /// Sync the training split to the active gym profile
+  void _syncToGymProfile(String splitValue) {
+    final activeProfile = ref.read(activeGymProfileProvider);
+    if (activeProfile != null) {
+      ref.read(gymProfilesProvider.notifier).updateProfile(
+        activeProfile.id,
+        GymProfileUpdate(trainingSplit: splitValue),
+      );
+    }
+  }
+
+  /// Save the preset as the active training split and regenerate workouts
   void _savePresetAsActiveSplit(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    if (!mounted) return;
+    final isDark = Theme.of(this.context).brightness == Brightness.dark;
     final cyan = isDark ? AppColors.cyan : AppColorsLight.cyan;
 
-    // Update training split via provider
+    // Update training split via user preferences AND gym profile
     ref.read(trainingPreferencesProvider.notifier)
        .setTrainingSplit(widget.preset.trainingSplitValue);
+    _syncToGymProfile(widget.preset.trainingSplitValue);
+
+    // Invalidate workout providers to trigger regeneration with new split
+    ref.invalidate(todayWorkoutProvider);
+    ref.invalidate(workoutsProvider);
 
     // Show success snackbar
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
-          'Switched to ${widget.preset.name}. Regenerate workouts to apply.',
+          'Switched to ${widget.preset.name}. Generating new workouts...',
           style: const TextStyle(color: Colors.white),
         ),
         backgroundColor: cyan,
@@ -433,18 +454,24 @@ class _AISplitPresetDetailSheetState extends ConsumerState<AISplitPresetDetailSh
     String compatibleSplit,
     String compatibleSplitName,
   ) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    if (!mounted) return;
+    final isDark = Theme.of(this.context).brightness == Brightness.dark;
     final cyan = isDark ? AppColors.cyan : AppColorsLight.cyan;
 
-    // Update training split via provider
+    // Update training split via user preferences AND gym profile
     ref.read(trainingPreferencesProvider.notifier)
        .setTrainingSplit(compatibleSplit);
+    _syncToGymProfile(compatibleSplit);
+
+    // Invalidate workout providers to trigger regeneration with new split
+    ref.invalidate(todayWorkoutProvider);
+    ref.invalidate(workoutsProvider);
 
     // Show success snackbar
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
-          'Switched to $compatibleSplitName to match your schedule. Regenerate workouts to apply.',
+          'Switched to $compatibleSplitName. Generating new workouts...',
           style: const TextStyle(color: Colors.white),
         ),
         backgroundColor: cyan,
@@ -461,15 +488,17 @@ class _AISplitPresetDetailSheetState extends ConsumerState<AISplitPresetDetailSh
     BuildContext context,
     List<int> newDays,
   ) async {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    if (!mounted) return;
+    final isDark = Theme.of(this.context).brightness == Brightness.dark;
     final cyan = isDark ? AppColors.cyan : AppColorsLight.cyan;
 
     setState(() => _isLoading = true);
 
     try {
-      // Update training split via provider
+      // Update training split via user preferences AND gym profile
       ref.read(trainingPreferencesProvider.notifier)
          .setTrainingSplit(widget.preset.trainingSplitValue);
+      _syncToGymProfile(widget.preset.trainingSplitValue);
 
       // Update workout days via API
       final authState = ref.read(authStateProvider);
@@ -485,12 +514,16 @@ class _AISplitPresetDetailSheetState extends ConsumerState<AISplitPresetDetailSh
         await ref.read(authStateProvider.notifier).refreshUser();
       }
 
+      // Invalidate workout providers to trigger regeneration with new split
+      ref.invalidate(todayWorkoutProvider);
+      ref.invalidate(workoutsProvider);
+
       // Show success snackbar
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              'Switched to ${widget.preset.name} with ${newDays.length}-day schedule. Regenerate workouts to apply.',
+              'Switched to ${widget.preset.name} with ${newDays.length}-day schedule. Generating new workouts...',
               style: const TextStyle(color: Colors.white),
             ),
             backgroundColor: cyan,

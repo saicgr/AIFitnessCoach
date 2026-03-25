@@ -22,6 +22,7 @@ import 'package:go_router/go_router.dart';
 import 'package:video_player/video_player.dart';
 
 import '../../core/constants/app_colors.dart';
+import '../../core/services/posthog_service.dart';
 import '../../core/constants/workout_design.dart';
 import '../../core/theme/accent_color_provider.dart';
 import '../../core/services/weight_suggestion_service.dart';
@@ -92,6 +93,7 @@ import '../../core/services/rest_tip_service.dart';
 import '../../core/services/achievement_prompt_service.dart';
 import '../../core/services/exercise_info_service.dart';
 import '../../core/providers/workout_mini_player_provider.dart';
+import '../../data/services/workout_notification_service.dart';
 import '../../core/providers/favorites_provider.dart';
 import '../../core/providers/ble_heart_rate_provider.dart';
 import '../../data/services/ble_heart_rate_service.dart';
@@ -342,6 +344,17 @@ class _ActiveWorkoutScreenState
       return;
     }
 
+    // Track workout started event
+    ref.read(posthogServiceProvider).capture(
+      eventName: 'workout_started',
+      properties: {
+        'workout_id': widget.workout.id ?? '',
+        'workout_name': widget.workout.name ?? '',
+        'exercise_count': _exercises.length,
+        'challenge_id': widget.challengeId ?? '',
+      },
+    );
+
     // Check if we're restoring from mini player
     final miniPlayerState = ref.read(workoutMiniPlayerProvider);
     final isRestoring = miniPlayerState.workout?.id == widget.workout.id &&
@@ -375,7 +388,10 @@ class _ActiveWorkoutScreenState
 
     // Initialize timer controller
     _timerController = WorkoutTimerController();
-    _timerController.onWorkoutTick = (_) => setState(() {});
+    _timerController.onWorkoutTick = (_) {
+      setState(() {});
+      _updateWorkoutNotification();
+    };
     _timerController.onRestTick = (secondsRemaining) {
       setState(() {});
       // Play countdown sound + voice at 3, 2, 1
@@ -396,6 +412,9 @@ class _ActiveWorkoutScreenState
 
     // Start workout timer (restore time if returning from mini player)
     _timerController.startWorkoutTimer(initialSeconds: isRestoring ? miniPlayerState.workoutSeconds : 0);
+
+    // Initialize and show the persistent workout notification
+    _initWorkoutNotification();
 
     // Announce workout start (only for fresh workouts, not restores)
     if (!isRestoring) {
@@ -557,6 +576,7 @@ class _ActiveWorkoutScreenState
 
   @override
   void dispose() {
+    _cancelWorkoutNotification();
     _timerController.dispose();
     _videoController?.dispose();
     _repsController.dispose();
@@ -593,6 +613,8 @@ class _ActiveWorkoutScreenState
   void _handleStretchComplete() {
     // Stop the workout timer when workout completes
     _timerController.stopWorkoutTimer();
+    // Cancel the persistent notification — workout is done
+    _cancelWorkoutNotification();
     // Start completion process - this will save to backend and navigate
     _finalizeWorkoutCompletion();
   }
@@ -656,6 +678,17 @@ class _ActiveWorkoutScreenState
 
     // Store as pending - we'll finalize after RIR input
     _pendingSetLog = setLog;
+
+    // Track set completed event
+    ref.read(posthogServiceProvider).capture(
+      eventName: 'set_completed',
+      properties: {
+        'exercise_name': exercise.name,
+        'set_number': currentSetNumber,
+        'weight': weight,
+        'reps': reps,
+      },
+    );
 
     // Use HapticService for satisfying set completion feedback
     HapticService.setCompletion();
@@ -909,6 +942,9 @@ class _ActiveWorkoutScreenState
       _isResting = false;
       _showInlineRest = false;
     });
+
+    // Update persistent notification with new exercise
+    _updateWorkoutNotification();
 
     // Update input controllers for new exercise (use setTargets if available)
     final firstSetTarget = nextExercise.getTargetForSet(1);
@@ -1199,6 +1235,15 @@ class _ActiveWorkoutScreenState
   void _startRest(bool betweenExercises) {
     final exercise = _exercises[_currentExerciseIndex];
     final restSeconds = exercise.restSeconds ?? (betweenExercises ? 120 : 90);
+
+    // Track rest started event
+    ref.read(posthogServiceProvider).capture(
+      eventName: 'rest_started',
+      properties: {
+        'rest_duration_seconds': restSeconds,
+        'exercise_index': _currentExerciseIndex,
+      },
+    );
 
     // Get AI settings for personalized message
     final aiSettings = ref.read(aiSettingsProvider);
@@ -1499,6 +1544,12 @@ class _ActiveWorkoutScreenState
 
   /// Handle inline rest skip
   void _handleInlineRestSkip() {
+    ref.read(posthogServiceProvider).capture(
+      eventName: 'rest_skipped',
+      properties: {
+        'exercise_index': _currentExerciseIndex,
+      },
+    );
     _timerController.skipRest();
   }
 
@@ -1644,6 +1695,15 @@ class _ActiveWorkoutScreenState
   }
 
   void _moveToNextExercise() {
+    // Track exercise completed event
+    ref.read(posthogServiceProvider).capture(
+      eventName: 'exercise_completed',
+      properties: {
+        'exercise_name': _exercises[_currentExerciseIndex].name,
+        'exercise_index': _currentExerciseIndex,
+      },
+    );
+
     // Track time for current exercise
     if (_currentExerciseStartTime != null) {
       _exerciseTimeSeconds[_currentExerciseIndex] =
@@ -1675,6 +1735,9 @@ class _ActiveWorkoutScreenState
         _currentExerciseIndex = nextIndex!;
         _viewingExerciseIndex = nextIndex;
       });
+
+      // Update persistent notification with new exercise
+      _updateWorkoutNotification();
 
       // Update input controllers for new exercise (use setTargets if available)
       final firstSetTarget = nextExercise.getTargetForSet(1);
@@ -1723,6 +1786,62 @@ class _ActiveWorkoutScreenState
       _isPaused = !_isPaused;
     });
     _timerController.setPaused(_isPaused);
+    _updateWorkoutNotification();
+  }
+
+  // ---------------------------------------------------------------------------
+  // Persistent workout notification helpers
+  // ---------------------------------------------------------------------------
+
+  /// Wire up callbacks and show the initial notification.
+  Future<void> _initWorkoutNotification() async {
+    final notifService = WorkoutNotificationService.instance;
+    await notifService.initialize();
+
+    // Wire action callbacks
+    notifService.onPauseResumePressed = () {
+      if (mounted) _togglePause();
+    };
+    notifService.onStopPressed = () {
+      if (mounted) {
+        // Close via mini player provider so state is cleaned up consistently
+        ref.read(workoutMiniPlayerProvider.notifier).close();
+        if (mounted) context.pop();
+      }
+    };
+    notifService.onNotificationTapped = () {
+      // App is already open; no special navigation needed since we're on the
+      // active workout screen. Flutter's engine will foreground the app.
+    };
+
+    _updateWorkoutNotification();
+  }
+
+  /// Push the latest workout state to the persistent notification.
+  void _updateWorkoutNotification() {
+    if (_exercises.isEmpty) return;
+
+    final exerciseName = _currentExerciseIndex < _exercises.length
+        ? _exercises[_currentExerciseIndex].name
+        : 'Exercise';
+    final progress =
+        '${_currentExerciseIndex + 1}/${_exercises.length}';
+    final timerText =
+        WorkoutTimerController.formatTime(_timerController.workoutSeconds);
+
+    WorkoutNotificationService.instance.show(
+      workoutName: widget.workout.name ?? 'Workout',
+      currentExerciseName: exerciseName,
+      timerText: timerText,
+      exerciseProgress: progress,
+      isPaused: _isPaused,
+    );
+  }
+
+  /// Cancel the persistent notification and clear callbacks.
+  void _cancelWorkoutNotification() {
+    WorkoutNotificationService.instance.cancel();
+    WorkoutNotificationService.instance.clearCallbacks();
   }
 
   /// Toggle favorite status for current exercise
@@ -2106,6 +2225,29 @@ class _ActiveWorkoutScreenState
   /// Finalize workout: save to backend, get PRs, and navigate to complete screen
   Future<void> _finalizeWorkoutCompletion() async {
     setState(() => _currentPhase = WorkoutPhase.complete);
+
+    // Calculate stats for PostHog event
+    final phTotalSets = _completedSets.values.fold<int>(0, (sum, list) => sum + list.length);
+    int phTotalReps = 0;
+    double phTotalVolumeKg = 0.0;
+    for (final sets in _completedSets.values) {
+      for (final setLog in sets) {
+        phTotalReps += setLog.reps;
+        phTotalVolumeKg += setLog.reps * setLog.weight;
+      }
+    }
+
+    ref.read(posthogServiceProvider).capture(
+      eventName: 'workout_completed',
+      properties: {
+        'workout_id': widget.workout.id ?? '',
+        'workout_name': widget.workout.name ?? '',
+        'duration_seconds': _timerController.workoutSeconds,
+        'total_sets': phTotalSets,
+        'total_reps': phTotalReps,
+        'volume_kg': phTotalVolumeKg,
+      },
+    );
 
     // Variables to pass to workout complete screen
     String? workoutLogId;
@@ -2709,6 +2851,7 @@ class _ActiveWorkoutScreenState
 
     if (result != null && mounted) {
       // User confirmed quit - log the exit and navigate away
+      _cancelWorkoutNotification();
       await _logWorkoutExit(result.reason, result.notes);
       if (mounted) {
         context.pop();
@@ -2751,6 +2894,19 @@ class _ActiveWorkoutScreenState
           exitNotes: notes,
         );
         debugPrint('✅ [Quit] Logged workout exit: $reason');
+
+        ref.read(posthogServiceProvider).capture(
+          eventName: 'workout_abandoned',
+          properties: {
+            'workout_id': widget.workout.id ?? '',
+            'exit_reason': reason,
+            'sets_completed': totalCompletedSets,
+            'exercises_completed': exercisesWithSets,
+            'total_exercises': _exercises.length,
+            'progress_percent': progressPercentage,
+            'duration_seconds': _timerController.workoutSeconds,
+          },
+        );
       }
     } catch (e) {
       debugPrint('❌ [Quit] Failed to log workout exit: $e');

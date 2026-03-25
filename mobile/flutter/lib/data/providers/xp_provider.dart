@@ -8,6 +8,7 @@ import '../models/xp_event.dart';
 import '../repositories/xp_repository.dart';
 import '../services/api_client.dart';
 import '../services/data_cache_service.dart';
+import '../../core/services/posthog_service.dart';
 
 // ============================================
 // XP Earned Animation Event
@@ -426,9 +427,10 @@ XPState? _xpInMemoryCache;
 
 class XPNotifier extends StateNotifier<XPState> {
   final XPRepository _repository;
+  final PosthogService _posthog;
   String? _currentUserId;
 
-  XPNotifier(this._repository)
+  XPNotifier(this._repository, this._posthog)
       : super(_xpInMemoryCache ?? const XPState());
 
   /// Clear in-memory cache (called on logout)
@@ -720,6 +722,13 @@ class XPNotifier extends StateNotifier<XPState> {
               goalType: XPGoalType.dailyLogin,
             ),
           );
+          _posthog.capture(
+            eventName: 'xp_earned',
+            properties: <String, Object>{
+              'xp_amount': result.totalXpAwarded,
+              'goal_type': 'daily_login',
+            },
+          );
           await loadUserXP(userId: _currentUserId, showLoading: false);
         }
 
@@ -877,6 +886,13 @@ class XPNotifier extends StateNotifier<XPState> {
             goalType: XPGoalType.workoutComplete,
           ),
         );
+        _posthog.capture(
+          eventName: 'xp_earned',
+          properties: <String, Object>{
+            'xp_amount': xpAwarded,
+            'goal_type': 'workout_complete',
+          },
+        );
       }
 
       // Increment checkpoint workout count (for weekly/monthly goals)
@@ -915,6 +931,13 @@ class XPNotifier extends StateNotifier<XPState> {
             goalType: XPGoalType.mealLog,
           ),
         );
+        _posthog.capture(
+          eventName: 'xp_earned',
+          properties: <String, Object>{
+            'xp_amount': xpAwarded,
+            'goal_type': 'meal_log',
+          },
+        );
       }
 
       // Check for first-time meal bonus (+50 XP for first of each meal type)
@@ -946,6 +969,13 @@ class XPNotifier extends StateNotifier<XPState> {
             goalType: XPGoalType.weightLog,
           ),
         );
+        _posthog.capture(
+          eventName: 'xp_earned',
+          properties: <String, Object>{
+            'xp_amount': xpAwarded,
+            'goal_type': 'weight_log',
+          },
+        );
       }
 
       // Check for first-time weight log bonus (+50 XP)
@@ -975,6 +1005,13 @@ class XPNotifier extends StateNotifier<XPState> {
             goalType: XPGoalType.proteinGoal,
           ),
         );
+        _posthog.capture(
+          eventName: 'xp_earned',
+          properties: <String, Object>{
+            'xp_amount': xpAwarded,
+            'goal_type': 'protein_goal',
+          },
+        );
       }
 
       // Check for first-time protein goal bonus (+100 XP)
@@ -1003,6 +1040,13 @@ class XPNotifier extends StateNotifier<XPState> {
             xpAmount: xpAwarded,
             goalType: XPGoalType.bodyMeasurements,
           ),
+        );
+        _posthog.capture(
+          eventName: 'xp_earned',
+          properties: <String, Object>{
+            'xp_amount': xpAwarded,
+            'goal_type': 'body_measurements',
+          },
         );
       }
 
@@ -1394,7 +1438,8 @@ final xpRepositoryProvider = Provider<XPRepository>((ref) {
 /// Main XP provider
 final xpProvider = StateNotifierProvider<XPNotifier, XPState>((ref) {
   final repository = ref.watch(xpRepositoryProvider);
-  return XPNotifier(repository);
+  final posthog = ref.watch(posthogServiceProvider);
+  return XPNotifier(repository, posthog);
 });
 
 /// Current user XP (convenience provider)

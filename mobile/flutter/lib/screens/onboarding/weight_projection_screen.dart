@@ -10,6 +10,7 @@ import '../../core/providers/window_mode_provider.dart';
 import '../../widgets/glass_back_button.dart';
 import 'pre_auth_quiz_screen.dart';
 import 'widgets/foldable_quiz_scaffold.dart';
+import 'widgets/quiz_weight_rate.dart';
 
 /// Data point for weight projection chart
 class WeightDataPoint {
@@ -414,7 +415,37 @@ class _WeightProjectionScreenState
                   ).animate().fadeIn(delay: 200.ms).slideY(begin: -0.1);
                 }),
 
-                const SizedBox(height: 24),
+                const SizedBox(height: 16),
+
+                // Rate selection chips
+                Text(
+                  isLosingWeight
+                      ? 'How fast do you want to lose it?'
+                      : 'How fast do you want to gain?',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: textSecondary,
+                  ),
+                ).animate().fadeIn(delay: 250.ms),
+                const SizedBox(height: 8),
+                QuizWeightRateChips(
+                  selectedRate: weightChangeRate ?? 'moderate',
+                  rates: getWeightRateOptions(isLosing: isLosingWeight, useMetric: useMetric),
+                  onRateChanged: (rate) {
+                    final notifier = ref.read(preAuthQuizProvider.notifier);
+                    notifier.setBodyMetrics(
+                      heightCm: quizData.heightCm ?? 170,
+                      weightKg: currentWeight,
+                      goalWeightKg: goalWeight,
+                      useMetric: useMetric,
+                      weightDirection: weightDirection,
+                      weightChangeRate: rate,
+                    );
+                  },
+                ),
+
+                const SizedBox(height: 16),
 
                 // Chart — flexible to fill available space
                 Flexible(

@@ -6,7 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/theme/theme_colors.dart';
-import '../../data/services/analytics_service.dart';
+import '../../core/services/posthog_service.dart';
 
 /// Pre-Auth Pricing Preview Screen
 /// Allows users to see subscription pricing BEFORE creating an account
@@ -48,15 +48,13 @@ class _PricingPreviewScreenState extends ConsumerState<PricingPreviewScreen>
 
   Future<void> _trackPricingPreviewViewed() async {
     try {
-      final analytics = ref.read(analyticsServiceProvider);
-      await analytics.trackEvent(
+      final posthog = ref.read(posthogServiceProvider);
+      await posthog.capture(
         eventName: 'pricing_preview_viewed',
-        category: 'conversion',
         properties: {
           'source': 'pre_auth',
           'entry_point': 'stats_welcome',
         },
-        screenName: 'pricing_preview',
       );
     } catch (e) {
       debugPrint('Failed to track pricing preview viewed: $e');
@@ -66,16 +64,14 @@ class _PricingPreviewScreenState extends ConsumerState<PricingPreviewScreen>
   Future<void> _trackPricingPreviewExit() async {
     if (_screenEnteredAt == null) return;
     try {
-      final analytics = ref.read(analyticsServiceProvider);
+      final posthog = ref.read(posthogServiceProvider);
       final durationMs = DateTime.now().difference(_screenEnteredAt!).inMilliseconds;
-      await analytics.trackEvent(
+      await posthog.capture(
         eventName: 'pricing_preview_exit',
-        category: 'conversion',
         properties: {
           'duration_ms': durationMs,
           'selected_billing_cycle': _selectedBillingCycle,
         },
-        screenName: 'pricing_preview',
       );
     } catch (e) {
       debugPrint('Failed to track pricing preview exit: $e');
@@ -84,10 +80,9 @@ class _PricingPreviewScreenState extends ConsumerState<PricingPreviewScreen>
 
   Future<void> _trackSignUpIntent(String source) async {
     try {
-      final analytics = ref.read(analyticsServiceProvider);
-      await analytics.trackEvent(
+      final posthog = ref.read(posthogServiceProvider);
+      await posthog.capture(
         eventName: 'pricing_preview_signup_intent',
-        category: 'conversion',
         properties: {
           'source': source,
           'selected_billing_cycle': _selectedBillingCycle,
@@ -95,7 +90,6 @@ class _PricingPreviewScreenState extends ConsumerState<PricingPreviewScreen>
               ? DateTime.now().difference(_screenEnteredAt!).inMilliseconds
               : 0,
         },
-        screenName: 'pricing_preview',
       );
     } catch (e) {
       debugPrint('Failed to track signup intent: $e');

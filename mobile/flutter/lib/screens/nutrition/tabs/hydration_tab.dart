@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/services/posthog_service.dart';
 import '../../../data/models/hydration.dart';
 import '../../../data/repositories/hydration_repository.dart';
 import '../../../widgets/glass_sheet.dart';
@@ -314,6 +315,10 @@ class _HydrationTabState extends ConsumerState<HydrationTab> {
           amountMl: amountMl,
         );
     if (success && mounted) {
+      ref.read(posthogServiceProvider).capture(
+        eventName: 'water_quick_logged',
+        properties: <String, Object>{'amount_ml': amountMl},
+      );
       final displayAmount = _selectedUnit.format(amountMl);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -593,6 +598,13 @@ class _HydrationTabState extends ConsumerState<HydrationTab> {
             notes: result['notes'],
           );
       if (success && mounted) {
+        ref.read(posthogServiceProvider).capture(
+          eventName: 'drink_logged',
+          properties: <String, Object>{
+            'drink_type': type.value,
+            'amount_ml': result['amount'] as int,
+          },
+        );
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Added ${result['amount']}ml of ${type.label}'),

@@ -8,6 +8,7 @@ import '../../../data/repositories/workout_repository.dart';
 import '../../../data/repositories/library_repository.dart';
 import '../../../data/repositories/exercise_preferences_repository.dart';
 import '../../../data/services/api_client.dart';
+import '../../../core/services/posthog_service.dart';
 import '../../../widgets/exercise_image.dart';
 import '../../../widgets/glass_sheet.dart';
 import '../../../widgets/segmented_tab_bar.dart';
@@ -367,6 +368,14 @@ class _ExerciseSwapSheetState extends ConsumerState<_ExerciseSwapSheet>
 
     if (mounted) {
       if (updatedWorkout != null) {
+        ref.read(posthogServiceProvider).capture(
+          eventName: 'exercise_swapped',
+          properties: {
+            'from_exercise': widget.exercise.name,
+            'to_exercise': newExerciseName,
+            'swap_source': source,
+          },
+        );
         Navigator.pop(context, updatedWorkout);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(

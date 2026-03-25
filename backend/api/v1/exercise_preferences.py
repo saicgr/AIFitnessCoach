@@ -52,6 +52,7 @@ class StapleExerciseCreate(BaseModel):
     user_sets: Optional[int] = None
     user_reps: Optional[str] = None  # "10" or "8-12" format
     user_rest_seconds: Optional[int] = None
+    user_weight_lbs: Optional[float] = None  # User-specified weight in lbs
     # Day-of-week targeting (optional): [0,2,4] = Mon/Wed/Fri, None = all days
     target_days: Optional[List[int]] = None
 
@@ -324,6 +325,7 @@ async def add_staple_exercise(request: StapleExerciseCreate, current_user: dict 
             "user_sets": request.user_sets,
             "user_reps": request.user_reps,
             "user_rest_seconds": request.user_rest_seconds,
+            "user_weight_lbs": request.user_weight_lbs,
             "target_days": request.target_days,
         }
 
@@ -461,6 +463,148 @@ async def add_staple_exercise(request: StapleExerciseCreate, current_user: dict 
         raise
     except Exception as e:
         logger.error(f"Error adding staple exercise: {e}")
+        raise safe_internal_error(e, "exercise_preferences")
+
+
+class StapleExerciseUpdate(BaseModel):
+    """Request to update a staple exercise."""
+    section: Optional[str] = None
+    user_sets: Optional[int] = None
+    user_reps: Optional[str] = None
+    user_rest_seconds: Optional[int] = None
+    user_weight_lbs: Optional[float] = None
+    target_days: Optional[List[int]] = None
+    user_duration_seconds: Optional[int] = None
+    user_speed_mph: Optional[float] = None
+    user_incline_percent: Optional[float] = None
+    user_rpm: Optional[int] = None
+    user_resistance_level: Optional[int] = None
+    user_stroke_rate_spm: Optional[int] = None
+
+    @field_validator('section')
+    @classmethod
+    def validate_section(cls, v):
+        if v is not None:
+            valid_sections = ('main', 'warmup', 'stretches')
+            if v not in valid_sections:
+                raise ValueError(f"section must be one of {valid_sections}")
+        return v
+
+    @field_validator('target_days')
+    @classmethod
+    def validate_target_days(cls, v):
+        if v is not None:
+            if not all(isinstance(d, int) and 0 <= d <= 6 for d in v):
+                raise ValueError("target_days must contain integers 0-6 (Mon=0, Sun=6)")
+        return v
+
+
+@router.put("/staples/{user_id}/{staple_id}")
+async def update_staple_exercise(user_id: str, staple_id: str, request: StapleExerciseUpdate, current_user: dict = Depends(get_current_user)):
+    """
+    Update a staple exercise's settings (section, sets/reps/rest, target days, cardio params).
+    """
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
+    logger.info(f"Updating staple exercise {staple_id} for user {user_id}")
+
+    try:
+        db = get_supabase_db()
+
+        # Build update data from non-None fields
+        update_data = {}
+        if request.section is not None:
+            update_data["section"] = request.section
+        if request.user_sets is not None:
+            update_data["user_sets"] = request.user_sets
+        if request.user_reps is not None:
+            update_data["user_reps"] = request.user_reps
+        if request.user_rest_seconds is not None:
+            update_data["user_rest_seconds"] = request.user_rest_seconds
+        if request.user_weight_lbs is not None:
+            update_data["user_weight_lbs"] = request.user_weight_lbs
+        if request.target_days is not None:
+            update_data["target_days"] = request.target_days
+        if request.user_duration_seconds is not None:
+            update_data["user_duration_seconds"] = request.user_duration_seconds
+        if request.user_speed_mph is not None:
+            update_data["user_speed_mph"] = request.user_speed_mph
+        if request.user_incline_percent is not None:
+            update_data["user_incline_percent"] = request.user_incline_percent
+        if request.user_rpm is not None:
+            update_data["user_rpm"] = request.user_rpm
+        if request.user_resistance_level is not None:
+            update_data["user_resistance_level"] = request.user_resistance_level
+        if request.user_stroke_rate_spm is not None:
+            update_data["user_stroke_rate_spm"] = request.user_stroke_rate_spm
+
+        if not update_data:
+            raise HTTPException(status_code=400, detail="No fields to update")
+
+        result = db.client.table("staple_exercises").update(update_data).eq(
+            "id", staple_id
+        ).eq("user_id", user_id).execute()
+
+        if not result.data:
+            raise HTTPException(status_code=404, detail="Staple exercise not found")
+
+        row = result.data[0]
+
+        # Fetch library details for the response
+        body_part = None
+        equipment = None
+        gif_url = None
+        if row.get("library_id"):
+            lib_result = db.client.table("exercise_library").select(
+                "body_part, equipment, gif_url"
+            ).eq("id", row["library_id"]).execute()
+            if lib_result.data:
+                lib_row = lib_result.data[0]
+                body_part = lib_row.get("body_part")
+                equipment = lib_row.get("equipment")
+                gif_url = lib_row.get("gif_url")
+
+        # Fetch gym profile info if applicable
+        gym_profile_name = None
+        gym_profile_color = None
+        if row.get("gym_profile_id"):
+            profile_result = db.client.table("gym_profiles").select(
+                "name, color"
+            ).eq("id", row["gym_profile_id"]).execute()
+            if profile_result.data:
+                gym_profile_name = profile_result.data[0].get("name")
+                gym_profile_color = profile_result.data[0].get("color")
+
+        return StapleExerciseResponse(
+            id=row["id"],
+            exercise_name=row["exercise_name"],
+            library_id=row.get("library_id"),
+            muscle_group=row.get("muscle_group"),
+            reason=row.get("reason"),
+            created_at=row["created_at"],
+            body_part=body_part,
+            equipment=equipment,
+            gif_url=gif_url,
+            gym_profile_id=row.get("gym_profile_id"),
+            gym_profile_name=gym_profile_name,
+            gym_profile_color=gym_profile_color,
+            section=row.get("section", "main"),
+            user_sets=row.get("user_sets"),
+            user_reps=row.get("user_reps"),
+            user_rest_seconds=row.get("user_rest_seconds"),
+            target_days=row.get("target_days"),
+            user_duration_seconds=row.get("user_duration_seconds"),
+            user_speed_mph=row.get("user_speed_mph"),
+            user_incline_percent=row.get("user_incline_percent"),
+            user_rpm=row.get("user_rpm"),
+            user_resistance_level=row.get("user_resistance_level"),
+            user_stroke_rate_spm=row.get("user_stroke_rate_spm"),
+        ).model_dump()
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error updating staple exercise: {e}")
         raise safe_internal_error(e, "exercise_preferences")
 
 

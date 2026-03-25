@@ -10,8 +10,12 @@ import '../../data/models/workout_screen_summary.dart';
 import '../../data/providers/today_workout_provider.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../../data/repositories/workout_repository.dart';
+import '../../data/models/gym_profile.dart';
+import '../../data/providers/gym_profile_provider.dart';
 import '../../data/services/haptic_service.dart';
 import '../../widgets/main_shell.dart';
+import '../home/widgets/edit_gym_profile_sheet.dart';
+import '../../widgets/glass_sheet.dart';
 import '../../widgets/pill_swipe_navigation.dart';
 import '../home/widgets/cards/next_workout_card.dart';
 import '../home/widgets/cards/weekly_progress_card.dart';
@@ -180,11 +184,19 @@ class _WorkoutsScreenState extends ConsumerState<WorkoutsScreen>
                   ),
                 ),
                 const SizedBox(width: 8),
-                // Settings button - glassmorphic
+                // Training setup button - glassmorphic
                 _GlassmorphicButton(
                   onTap: () {
                     HapticService.light();
-                    context.push('/settings');
+                    final activeProfile = ref.read(activeGymProfileProvider);
+                    if (activeProfile != null) {
+                      showGlassSheet(
+                        context: context,
+                        builder: (ctx) => EditGymProfileSheet(profile: activeProfile),
+                      );
+                    } else {
+                      context.push('/settings');
+                    }
                   },
                   isDark: isDark,
                   child: Icon(

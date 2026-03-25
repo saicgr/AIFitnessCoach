@@ -76,7 +76,24 @@ class ExerciseQueueScreen extends ConsumerWidget {
                 elevated,
               );
 
-    if (embedded) return body;
+    if (embedded) {
+      return Stack(
+        children: [
+          body,
+          Positioned(
+            right: 16,
+            bottom: 16,
+            child: FloatingActionButton(
+              mini: true,
+              backgroundColor: AppColors.cyan,
+              foregroundColor: Colors.white,
+              onPressed: () => _showAddExercisePicker(context, ref),
+              child: const Icon(Icons.add),
+            ),
+          ),
+        ],
+      );
+    }
 
     return Scaffold(
       backgroundColor: backgroundColor,

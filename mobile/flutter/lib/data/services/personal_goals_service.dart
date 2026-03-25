@@ -239,6 +239,29 @@ class PersonalGoalsService {
     }
   }
 
+  Future<void> deleteGoal({
+    required String userId,
+    required String goalId,
+  }) async {
+    try {
+      debugPrint('🎯 [PersonalGoals] Deleting goal: $goalId');
+
+      final response = await _apiClient.delete(
+        '/personal-goals/goals/$goalId',
+        queryParameters: {'user_id': userId},
+      );
+
+      if (response.statusCode == 200) {
+        debugPrint('✅ [PersonalGoals] Goal deleted');
+      } else {
+        throw Exception('Failed to delete goal: ${response.statusCode}');
+      }
+    } catch (e) {
+      debugPrint('❌ [PersonalGoals] Error deleting goal: $e');
+      rethrow;
+    }
+  }
+
   // ============================================================
   // GET GOAL HISTORY
   // ============================================================
@@ -694,7 +717,7 @@ class GoalSuggestionItem {
       id: json['id'] as String,
       exerciseName: json['exercise_name'] as String,
       goalType: PersonalGoalType.fromString(json['goal_type'] as String),
-      suggestedTarget: json['suggested_target'] as int,
+      suggestedTarget: (json['suggested_target'] as num).toInt(),
       unit: json['unit'] as String? ?? 'reps',
       reasoning: json['reasoning'] as String,
       suggestionType: SuggestionType.fromString(json['suggestion_type'] as String),

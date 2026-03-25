@@ -526,7 +526,7 @@ async def get_smart_weight_by_name(
     # Delegate to the main endpoint with exercise_name
     return await get_smart_weight(
         user_id=user_id,
-        exercise_id="",  # Empty ID, will use name
+        exercise_id=None,  # No ID, will use name
         exercise_name=exercise_name,
         target_reps=target_reps,
         goal=goal,

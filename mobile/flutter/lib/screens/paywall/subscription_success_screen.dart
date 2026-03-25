@@ -33,51 +33,51 @@ class _SubscriptionSuccessScreenState
 
     _fadeController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 1400),
+      duration: const Duration(milliseconds: 700),
     );
 
     _confettiController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 3000),
+      duration: const Duration(milliseconds: 2000),
     );
 
-    // Staggered entrance: image → text → button
+    // Staggered entrance: image → text → button (faster)
     _imageFade = Tween<double>(begin: 0, end: 1).animate(
       CurvedAnimation(
         parent: _fadeController,
-        curve: const Interval(0.0, 0.4, curve: Curves.easeOut),
+        curve: const Interval(0.0, 0.35, curve: Curves.easeOut),
       ),
     );
 
     _textFade = Tween<double>(begin: 0, end: 1).animate(
       CurvedAnimation(
         parent: _fadeController,
-        curve: const Interval(0.3, 0.7, curve: Curves.easeOut),
+        curve: const Interval(0.15, 0.6, curve: Curves.easeOut),
       ),
     );
     _textSlide = Tween<Offset>(
-      begin: const Offset(0, 0.15),
+      begin: const Offset(0, 0.1),
       end: Offset.zero,
     ).animate(
       CurvedAnimation(
         parent: _fadeController,
-        curve: const Interval(0.3, 0.7, curve: Curves.easeOut),
+        curve: const Interval(0.15, 0.6, curve: Curves.easeOut),
       ),
     );
 
     _buttonFade = Tween<double>(begin: 0, end: 1).animate(
       CurvedAnimation(
         parent: _fadeController,
-        curve: const Interval(0.6, 1.0, curve: Curves.easeOut),
+        curve: const Interval(0.4, 0.85, curve: Curves.easeOut),
       ),
     );
     _buttonSlide = Tween<Offset>(
-      begin: const Offset(0, 0.3),
+      begin: const Offset(0, 0.2),
       end: Offset.zero,
     ).animate(
       CurvedAnimation(
         parent: _fadeController,
-        curve: const Interval(0.6, 1.0, curve: Curves.easeOut),
+        curve: const Interval(0.4, 0.85, curve: Curves.easeOut),
       ),
     );
 

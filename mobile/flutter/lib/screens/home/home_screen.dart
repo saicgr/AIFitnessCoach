@@ -9,6 +9,7 @@ import '../../core/animations/app_animations.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/theme/theme_colors.dart';
 import '../../core/providers/window_mode_provider.dart';
+import '../../core/providers/workout_mini_player_provider.dart';
 import '../../data/models/home_layout.dart';
 import '../../data/providers/home_layout_provider.dart';
 import '../../data/providers/local_layout_provider.dart';
@@ -156,6 +157,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       // so the spotlight will find it regardless of todayWorkoutProvider state.
       Future.delayed(const Duration(milliseconds: 800), () {
         if (!mounted) return;
+        // Don't trigger tour when returning from a minimized workout
+        if (ref.read(isWorkoutMinimizedProvider)) return;
         _triggerNavTour();
       });
     });
@@ -294,6 +297,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     await Future.delayed(const Duration(milliseconds: 300));
     if (!mounted) return;
 
+    // Check SharedPreferences directly to avoid race condition with
+    // HealthSyncNotifier's async _loadSyncState() not completing yet
+    final prefs = await SharedPreferences.getInstance();
+    final storedConnected = prefs.getBool('health_connected') ?? false;
+    if (storedConnected) return;
+
+    // Also check provider state in case it was updated this session
     final syncState = ref.read(healthSyncProvider);
     if (syncState.isConnected) return;
 

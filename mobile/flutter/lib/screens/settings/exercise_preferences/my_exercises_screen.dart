@@ -52,7 +52,7 @@ class _MyExercisesScreenState extends ConsumerState<MyExercisesScreen>
 
     return Scaffold(
       backgroundColor: backgroundColor,
-      appBar: const PillAppBar(title: 'Exercise Prefs'),
+      appBar: const PillAppBar(title: 'Exercise Preferences'),
       body: Column(
         children: [
           TabBar(

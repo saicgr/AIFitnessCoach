@@ -42,6 +42,7 @@ import 'widgets/enhanced_empty_state.dart';
 import 'widgets/voice_message_widget.dart';
 import '../../core/models/chat_quick_action.dart';
 import '../../core/providers/usage_tracking_provider.dart';
+import '../../core/services/posthog_service.dart';
 import '../../widgets/upgrade_prompt_sheet.dart';
 
 /// Media send status for progressive loading states
@@ -145,6 +146,10 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     final gateName = isVideo ? 'Form Video Analysis' : 'Food Scans';
 
     if (!usageNotifier.hasAccess(gateKey)) {
+      ref.read(posthogServiceProvider).capture(
+        eventName: 'chat_feature_gated',
+        properties: {'feature_key': gateKey, 'feature_name': gateName},
+      );
       showUpgradePromptSheet(context,
           featureKey: gateKey, featureName: gateName);
       return;
@@ -168,6 +173,10 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
         });
       }
       await ref.read(chatMessagesProvider.notifier).sendMessageWithMedia(message, media);
+      ref.read(posthogServiceProvider).capture(
+        eventName: 'chat_media_sent',
+        properties: {'media_type': isVideo ? 'video' : 'image', 'message_length': message.length},
+      );
       _scrollToBottom();
       ref.read(xpProvider.notifier).checkFirstChatBonus();
 
@@ -208,6 +217,10 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     final gateName = hasVideo ? 'Form Video Analysis' : 'Food Scans';
 
     if (!usageNotifier.hasAccess(gateKey)) {
+      ref.read(posthogServiceProvider).capture(
+        eventName: 'chat_feature_gated',
+        properties: {'feature_key': gateKey, 'feature_name': gateName},
+      );
       showUpgradePromptSheet(context,
           featureKey: gateKey, featureName: gateName);
       return;
@@ -227,6 +240,10 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
         }
       });
       await ref.read(chatMessagesProvider.notifier).sendMessageWithMultiMedia(message, mediaList);
+      ref.read(posthogServiceProvider).capture(
+        eventName: 'chat_multi_media_sent',
+        properties: {'media_count': mediaList.length, 'message_length': message.length},
+      );
       _scrollToBottom();
       ref.read(xpProvider.notifier).checkFirstChatBonus();
 
@@ -430,6 +447,10 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     // Gate check for chat messages
     final usageNotifier = ref.read(usageTrackingProvider.notifier);
     if (!usageNotifier.hasAccess(_kAiChatMessages)) {
+      ref.read(posthogServiceProvider).capture(
+        eventName: 'chat_feature_gated',
+        properties: {'feature_key': _kAiChatMessages, 'feature_name': 'AI Coach Messages'},
+      );
       showUpgradePromptSheet(context,
           featureKey: _kAiChatMessages, featureName: 'AI Coach Messages');
       return;
@@ -441,6 +462,10 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
 
     try {
       await ref.read(chatMessagesProvider.notifier).sendMessage(message);
+      ref.read(posthogServiceProvider).capture(
+        eventName: 'chat_message_sent',
+        properties: {'message_length': message.length},
+      );
       _scrollToBottom();
 
       // Award first-time chat bonus (+50 XP)

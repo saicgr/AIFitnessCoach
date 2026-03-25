@@ -15,6 +15,7 @@ class GoalCard extends StatelessWidget {
   final int friendsCount;
   final VoidCallback? onFriendsTap;
   final VoidCallback? onHistoryTap;
+  final VoidCallback? onDelete;
 
   const GoalCard({
     super.key,
@@ -26,6 +27,7 @@ class GoalCard extends StatelessWidget {
     this.friendsCount = 0,
     this.onFriendsTap,
     this.onHistoryTap,
+    this.onDelete,
   });
 
   @override
@@ -63,6 +65,34 @@ class GoalCard extends StatelessWidget {
 
     return GestureDetector(
       onTap: onTap,
+      onLongPress: onDelete != null ? () {
+        showModalBottomSheet(
+          context: context,
+          backgroundColor: elevated,
+          shape: const RoundedRectangleBorder(
+            borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+          ),
+          builder: (ctx) => SafeArea(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const SizedBox(height: 8),
+                Container(width: 36, height: 4, decoration: BoxDecoration(color: textMuted.withValues(alpha: 0.3), borderRadius: BorderRadius.circular(2))),
+                ListTile(
+                  leading: const Icon(Icons.delete_outline, color: Colors.red),
+                  title: Text('Delete Goal', style: TextStyle(color: textPrimary)),
+                  subtitle: Text('Permanently remove "$exerciseName"', style: TextStyle(color: textMuted, fontSize: 12)),
+                  onTap: () {
+                    Navigator.pop(ctx);
+                    onDelete!();
+                  },
+                ),
+                const SizedBox(height: 8),
+              ],
+            ),
+          ),
+        );
+      } : null,
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
@@ -271,6 +301,19 @@ class GoalCard extends StatelessWidget {
                   ),
                 ],
                 const Spacer(),
+                // Delete button
+                if (onDelete != null)
+                  IconButton(
+                    onPressed: onDelete,
+                    icon: Icon(
+                      Icons.delete_outline,
+                      size: 18,
+                      color: textMuted,
+                    ),
+                    tooltip: 'Delete Goal',
+                    padding: const EdgeInsets.all(8),
+                    constraints: const BoxConstraints(),
+                  ),
                 // History button
                 if (onHistoryTap != null)
                   IconButton(

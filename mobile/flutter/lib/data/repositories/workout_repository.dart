@@ -2323,7 +2323,7 @@ class WorkoutRepository {
         queryParameters: {'user_id': userId},
       );
 
-      if (response.statusCode == 200) {
+      if (response.statusCode == 200 && response.data is Map<String, dynamic>) {
         final data = response.data as Map<String, dynamic>;
         debugPrint('✅ [Workout] Got last performance for $exerciseName: ${data['sets']?.length ?? 0} sets');
         return data;

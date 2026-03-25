@@ -142,6 +142,7 @@ class _AvoidedExercisesScreenState extends ConsumerState<AvoidedExercisesScreen>
                     exercise: exercise,
                     isDark: isDark,
                     onRemove: () => _removeExercise(userId, exercise),
+                    onEdit: () => _showEditAvoidedSheet(context, userId, exercise),
                   );
                 },
               );
@@ -151,7 +152,24 @@ class _AvoidedExercisesScreenState extends ConsumerState<AvoidedExercisesScreen>
       ],
     );
 
-    if (widget.embedded) return body;
+    if (widget.embedded) {
+      return Stack(
+        children: [
+          body,
+          Positioned(
+            right: 16,
+            bottom: 16,
+            child: FloatingActionButton(
+              mini: true,
+              backgroundColor: AppColors.error,
+              foregroundColor: Colors.white,
+              onPressed: () => _showAddExerciseSheet(context, userId),
+              child: const Icon(Icons.add),
+            ),
+          ),
+        ],
+      );
+    }
 
     return Scaffold(
       backgroundColor: backgroundColor,
@@ -436,8 +454,222 @@ class _AvoidedExercisesScreenState extends ConsumerState<AvoidedExercisesScreen>
     }
   }
 
-  /// Shows the choice sheet: "Update current workout" vs "Apply to future only".
-  /// Returns `true` for regenerate now, `false` for future only, `null` if cancelled/discarded.
+  Future<void> _showEditAvoidedSheet(
+    BuildContext context,
+    String userId,
+    AvoidedExercise exercise,
+  ) async {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textColor = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final elevatedColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
+
+    String reason = exercise.reason ?? '';
+    bool isTemporary = exercise.isTemporary;
+    DateTime? endDate = exercise.endDate;
+
+    final result = await showGlassSheet<_AvoidOptions>(
+      context: context,
+      builder: (sheetContext) => GlassSheet(
+        child: StatefulBuilder(
+          builder: (context, setSheetState) => Padding(
+            padding: EdgeInsets.only(
+              bottom: MediaQuery.of(context).viewInsets.bottom,
+            ),
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Edit "${exercise.exerciseName}"',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: textColor,
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  // Reason field
+                  TextFormField(
+                    initialValue: reason,
+                    style: TextStyle(color: textColor),
+                    decoration: InputDecoration(
+                      labelText: 'Reason (optional)',
+                      labelStyle: TextStyle(color: textMuted),
+                      hintText: 'e.g., Knee injury',
+                      hintStyle: TextStyle(color: textMuted.withValues(alpha: 0.5)),
+                      filled: true,
+                      fillColor: elevatedColor,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide.none,
+                      ),
+                    ),
+                    onChanged: (value) => reason = value,
+                  ),
+                  const SizedBox(height: 16),
+                  // Temporary toggle
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: elevatedColor,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Temporary',
+                                style: TextStyle(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w600,
+                                  color: textColor,
+                                ),
+                              ),
+                              Text(
+                                'Set an end date for this restriction',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: textMuted,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Switch(
+                          value: isTemporary,
+                          onChanged: (value) {
+                            setSheetState(() {
+                              isTemporary = value;
+                              if (!value) endDate = null;
+                            });
+                          },
+                          activeThumbColor: AppColors.cyan,
+                        ),
+                      ],
+                    ),
+                  ),
+                  if (isTemporary) ...[
+                    const SizedBox(height: 16),
+                    InkWell(
+                      onTap: () async {
+                        final picked = await showDatePicker(
+                          context: context,
+                          initialDate: endDate ?? DateTime.now().add(const Duration(days: 30)),
+                          firstDate: DateTime.now(),
+                          lastDate: DateTime.now().add(const Duration(days: 365)),
+                        );
+                        if (picked != null) {
+                          setSheetState(() => endDate = picked);
+                        }
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: elevatedColor,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(Icons.calendar_today, color: AppColors.cyan, size: 20),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Text(
+                                endDate != null
+                                    ? 'Until ${endDate!.day}/${endDate!.month}/${endDate!.year}'
+                                    : 'Select end date',
+                                style: TextStyle(
+                                  fontSize: 15,
+                                  color: endDate != null ? textColor : textMuted,
+                                ),
+                              ),
+                            ),
+                            Icon(Icons.chevron_right, color: textMuted),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                  const SizedBox(height: 24),
+                  // Save button
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: () {
+                        Navigator.pop(
+                          sheetContext,
+                          _AvoidOptions(
+                            reason: reason.trim().isEmpty ? null : reason.trim(),
+                            isTemporary: isTemporary,
+                            endDate: endDate,
+                          ),
+                        );
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.cyan,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: const Text(
+                        'Save Changes',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ),
+                  SizedBox(height: MediaQuery.of(context).padding.bottom + 16),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    if (result != null && mounted) {
+      try {
+        final repo = ref.read(exercisePreferencesRepositoryProvider);
+        await repo.updateAvoidedExercise(
+          userId,
+          exercise.id,
+          exerciseName: exercise.exerciseName,
+          reason: result.reason,
+          isTemporary: result.isTemporary,
+          endDate: result.endDate,
+        );
+        ref.invalidate(avoidedExercisesProvider(userId));
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Updated "${exercise.exerciseName}"'),
+              backgroundColor: AppColors.success,
+            ),
+          );
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Error: ${e.toString()}'),
+              backgroundColor: AppColors.error,
+            ),
+          );
+        }
+      }
+    }
+  }
+
   Future<void> _removeExercise(String userId, AvoidedExercise exercise) async {
     HapticService.light();
 
@@ -492,11 +724,13 @@ class _AvoidedExerciseCard extends ConsumerWidget {
   final AvoidedExercise exercise;
   final bool isDark;
   final VoidCallback onRemove;
+  final VoidCallback onEdit;
 
   const _AvoidedExerciseCard({
     required this.exercise,
     required this.isDark,
     required this.onRemove,
+    required this.onEdit,
   });
 
   @override
@@ -572,6 +806,12 @@ class _AvoidedExerciseCard extends ConsumerWidget {
                     ],
                   ],
                 ),
+              ),
+              // Edit button
+              IconButton(
+                icon: Icon(Icons.edit_outlined, color: AppColors.cyan, size: 20),
+                onPressed: onEdit,
+                tooltip: 'Edit',
               ),
               // Remove button
               IconButton(

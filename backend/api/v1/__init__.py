@@ -9,7 +9,7 @@ from api.v1 import hydration
 from api.v1 import feedback, achievements, summaries, insights
 from api.v1 import notifications, ai_settings
 from api.v1 import activity
-from api.v1 import subscriptions, analytics, stats
+from api.v1 import subscriptions, stats
 from api.v1 import saved_workouts, challenges, leaderboard
 from api.v1 import workouts  # Modular workouts package
 from api.v1 import social  # Modular social package
@@ -143,8 +143,6 @@ router.include_router(activity.router, tags=["Activity"])
 # Subscription management and RevenueCat webhooks
 router.include_router(subscriptions.router, prefix="/subscriptions", tags=["Subscriptions"])
 
-# Analytics and screen time tracking
-router.include_router(analytics.router, prefix="/analytics", tags=["Analytics"])
 
 # Comprehensive stats endpoints (aggregates achievements, PRs, measurements, workout stats)
 router.include_router(stats.router, tags=["Stats"])

@@ -291,8 +291,8 @@ async def _aggregate_stats(db, user_id: str, period_key: str) -> Dict[str, Any]:
             except (ValueError, TypeError) as e:
                 logger.debug(f"Failed to parse completed_at: {e}")
 
-        # Parse exercises from exercises_json
-        exercises_json = log.get("exercises_json") or log.get("exercises") or "[]"
+        # Parse exercises
+        exercises_json = log.get("exercises") or "[]"
         try:
             exercises = json.loads(exercises_json) if isinstance(exercises_json, str) else exercises_json
         except (json.JSONDecodeError, TypeError):
@@ -455,7 +455,7 @@ async def get_wrapped_summary(user_id: str, auth_id: str) -> Dict[str, Any]:
     def _query_current_month_logs():
         return (
             db.client.table("workout_logs")
-            .select("exercises_json, exercises, total_time_seconds")
+            .select("exercises, total_time_seconds")
             .eq("user_id", user_id)
             .not_.is_("completed_at", "null")
             .gte("completed_at", month_start_str)
@@ -519,7 +519,7 @@ async def get_wrapped_summary(user_id: str, auth_id: str) -> Dict[str, Any]:
     # Calculate volume using same parsing logic as _aggregate_stats
     volume_so_far = 0
     for log in current_logs:
-        exercises_json = log.get("exercises_json") or log.get("exercises") or "[]"
+        exercises_json = log.get("exercises") or "[]"
         try:
             exercises = json.loads(exercises_json) if isinstance(exercises_json, str) else exercises_json
         except (json.JSONDecodeError, TypeError):

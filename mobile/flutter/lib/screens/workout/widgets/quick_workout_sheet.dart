@@ -16,6 +16,7 @@ import '../../../data/providers/quick_workout_provider.dart';
 import '../../../data/providers/today_workout_provider.dart';
 import '../../../data/repositories/workout_repository.dart';
 import '../../../data/services/api_client.dart';
+import '../../../core/services/posthog_service.dart';
 import '../../../data/services/haptic_service.dart';
 import '../../../models/equipment_item.dart';
 import '../../../models/quick_workout_preset.dart';
@@ -2152,6 +2153,15 @@ class _QuickWorkoutSheetState extends ConsumerState<_QuickWorkoutSheet> {
 
   Future<void> _generateQuickWorkout() async {
     HapticService.medium();
+
+    ref.read(posthogServiceProvider).capture(
+      eventName: 'quick_workout_generated',
+      properties: {
+        'duration': _selectedDuration,
+        'focus': _selectedFocus ?? '',
+        'difficulty': _selectedDifficulty ?? '',
+      },
+    );
 
     // Check for conflict with existing workout on today's date
     final conflictResult = await _checkConflict();

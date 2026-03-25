@@ -79,6 +79,12 @@
 		<string>remote-notification</string>
 		<string>bluetooth-central</string>
 	</array>
+	<key>com.posthog.posthog.API_KEY</key>
+	<string>phc_4bE9QftoDcFxLm7xb46uZ8QeB0i9lCZ8YXgBpqm0mAJ</string>
+	<key>com.posthog.posthog.POSTHOG_HOST</key>
+	<string>https://us.i.posthog.com</string>
+	<key>com.posthog.posthog.TRACK_APPLICATION_LIFECYCLE_EVENTS</key>
+	<false/>
 	<key>CFBundleURLTypes</key>
 	<array>
 		<dict>

@@ -11,6 +11,7 @@ import '../../../data/models/exercise.dart';
 import '../../../data/models/ai_split_preset.dart';
 import '../../../data/repositories/library_repository.dart';
 import '../../../data/services/haptic_service.dart';
+import '../../../core/services/posthog_service.dart';
 import '../providers/library_providers.dart';
 import '../providers/muscle_group_images_provider.dart';
 import '../../../widgets/glass_sheet.dart';
@@ -100,6 +101,14 @@ class _NetflixExercisesTabState extends ConsumerState<NetflixExercisesTab> {
 
   void _showExerciseDetail(LibraryExercise exercise) {
     HapticService.selection();
+    ref.read(posthogServiceProvider).capture(
+      eventName: 'exercise_viewed',
+      properties: <String, Object>{
+        'exercise_name': exercise.name,
+        if (exercise.id != null) 'exercise_id': exercise.id!,
+        if (exercise.targetMuscle != null) 'muscle_group': exercise.targetMuscle!,
+      },
+    );
     showGlassSheet(
       context: context,
       builder: (context) => ExerciseDetailSheet(exercise: exercise),
@@ -498,23 +507,23 @@ class _NetflixExercisesTabState extends ConsumerState<NetflixExercisesTab> {
       controller: _scrollController,
       padding: const EdgeInsets.only(bottom: 16),
       children: [
-        // 1. Muscle group pills (PRIMARY navigation)
+        // 1. Training Splits (top priority — program discovery)
+        _buildGravlSplitsSection(isDark)
+            .animate().fadeIn(),
+
+        // 2. Muscle group pills
         _buildMuscleGroupsSection(
           muscleGroups,
           isDark,
           textMuted,
-        ).animate().fadeIn(),
+        ).animate().fadeIn(delay: const Duration(milliseconds: 100)),
 
-        // 2. Equipment pills
+        // 3. Equipment pills
         _buildEquipmentPillsSection(
           equipmentGroups,
           isDark,
           textMuted,
-        ).animate().fadeIn(delay: const Duration(milliseconds: 100)),
-
-        // 3. Training Splits (discovery, lower priority)
-        _buildGravlSplitsSection(isDark)
-            .animate().fadeIn(delay: const Duration(milliseconds: 200)),
+        ).animate().fadeIn(delay: const Duration(milliseconds: 200)),
 
         // 4. All Exercises (paginated, alphabetical)
         _buildAllExercisesSection(

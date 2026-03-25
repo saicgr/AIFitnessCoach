@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/services/posthog_service.dart';
 import '../../../widgets/app_loading.dart';
 import '../../../widgets/app_snackbar.dart';
 import '../../../core/theme/theme_colors.dart';
@@ -310,6 +311,12 @@ class _ChallengesTabState extends ConsumerState<ChallengesTab>
       await socialService.joinChallenge(
         userId: _userId!,
         challengeId: challengeId,
+      );
+      ref.read(posthogServiceProvider).capture(
+        eventName: 'challenge_joined',
+        properties: <String, Object>{
+          'challenge_id': challengeId,
+        },
       );
       _showSnackBar('Joined challenge!');
       // Refresh both lists

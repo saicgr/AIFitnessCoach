@@ -7,7 +7,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
-import '../../data/services/analytics_service.dart';
+import '../../core/services/posthog_service.dart';
 
 /// Workout phases for demo
 enum DemoWorkoutPhase {
@@ -209,10 +209,10 @@ class _DemoActiveWorkoutScreenState
 
   void _trackWorkoutStarted() {
     try {
-      final analytics = ref.read(analyticsServiceProvider);
-      analytics.trackEvent(
+      final posthog = ref.read(posthogServiceProvider);
+      posthog.capture(
         eventName: 'demo_workout_started',
-        category: 'demo',
+
         properties: {
           'workout_name': widget.workout['name'] ?? 'Sample Workout',
           'exercise_count': widget.exercises.length,
@@ -223,10 +223,10 @@ class _DemoActiveWorkoutScreenState
 
   void _trackWorkoutCompleted() {
     try {
-      final analytics = ref.read(analyticsServiceProvider);
-      analytics.trackEvent(
+      final posthog = ref.read(posthogServiceProvider);
+      posthog.capture(
         eventName: 'demo_workout_completed',
-        category: 'demo',
+
         properties: {
           'workout_name': widget.workout['name'] ?? 'Sample Workout',
           'duration_seconds': _workoutSeconds,

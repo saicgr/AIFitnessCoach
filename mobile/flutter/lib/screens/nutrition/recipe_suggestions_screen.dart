@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/services/posthog_service.dart';
 import '../../data/models/recipe_suggestion.dart';
 import '../../data/providers/recipe_suggestion_provider.dart';
 import '../../data/repositories/auth_repository.dart';
@@ -54,6 +55,13 @@ class _RecipeSuggestionsScreenState extends ConsumerState<RecipeSuggestionsScree
   Future<void> _generateSuggestions() async {
     final user = await ref.read(authRepositoryProvider).getCurrentUser();
     if (user != null) {
+      ref.read(posthogServiceProvider).capture(
+        eventName: 'recipe_generated',
+        properties: <String, Object>{
+          'meal_type': _selectedMealType.value,
+          'has_requirements': _requirementsController.text.isNotEmpty,
+        },
+      );
       ref.read(recipeSuggestionProvider.notifier).generateSuggestions(
         userId: user.id,
         mealType: _selectedMealType.value,

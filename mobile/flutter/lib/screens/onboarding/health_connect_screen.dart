@@ -33,6 +33,18 @@ class _HealthConnectScreenState extends ConsumerState<HealthConnectScreen> {
   bool _isSuccess = false;
   String? _error;
 
+  @override
+  void initState() {
+    super.initState();
+    // Check if already connected from a previous session or earlier in this flow
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final syncState = ref.read(healthSyncProvider);
+      if (syncState.isConnected) {
+        setState(() => _isSuccess = true);
+      }
+    });
+  }
+
   // ---------- actions ----------
 
   Future<void> _handleConnect() async {
@@ -461,7 +473,7 @@ class _HealthConnectScreenState extends ConsumerState<HealthConnectScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // Primary: Connect Now
+            // Primary button: Connect Now or Continue (if already connected)
             SizedBox(
               width: double.infinity,
               height: 52,
@@ -483,8 +495,14 @@ class _HealthConnectScreenState extends ConsumerState<HealthConnectScreen> {
                   ],
                 ),
                 child: FilledButton(
-                  onPressed:
-                      (_isConnecting || _isSuccess) ? null : _handleConnect,
+                  onPressed: _isConnecting
+                      ? null
+                      : _isSuccess
+                          ? () {
+                              HapticFeedback.mediumImpact();
+                              context.go('/feature-showcase');
+                            }
+                          : _handleConnect,
                   style: FilledButton.styleFrom(
                     backgroundColor: Colors.transparent,
                     disabledBackgroundColor: Colors.transparent,
@@ -509,7 +527,7 @@ class _HealthConnectScreenState extends ConsumerState<HealthConnectScreen> {
                                     color: Colors.white, size: 20),
                                 SizedBox(width: 8),
                                 Text(
-                                  'Connected!',
+                                  'Connected — Continue',
                                   style: TextStyle(
                                     fontSize: 16,
                                     fontWeight: FontWeight.w600,
@@ -535,23 +553,24 @@ class _HealthConnectScreenState extends ConsumerState<HealthConnectScreen> {
 
             const SizedBox(height: 8),
 
-            // Secondary: Maybe Later
-            SizedBox(
-              width: double.infinity,
-              height: 44,
-              child: TextButton(
-                onPressed: (_isConnecting || _isSuccess) ? null : _handleSkip,
-                child: Text(
-                  'Maybe Later',
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: textSecondary,
+            // Secondary: Maybe Later (hidden when already connected)
+            if (!_isSuccess)
+              SizedBox(
+                width: double.infinity,
+                height: 44,
+                child: TextButton(
+                  onPressed: _isConnecting ? null : _handleSkip,
+                  child: Text(
+                    'Maybe Later',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: textSecondary,
+                    ),
                   ),
                 ),
-              ),
-            )
-                .animate()
-                .fadeIn(delay: 900.ms),
+              )
+                  .animate()
+                  .fadeIn(delay: 900.ms),
           ],
         ),
       ),

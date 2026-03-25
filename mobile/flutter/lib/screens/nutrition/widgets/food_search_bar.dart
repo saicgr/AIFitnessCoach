@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/services/posthog_service.dart';
 import '../../../data/repositories/nutrition_repository.dart';
 import '../../../data/services/food_search_service.dart';
 
@@ -82,6 +83,12 @@ class _FoodSearchBarState extends ConsumerState<FoodSearchBar> {
     final searchService = ref.read(foodSearchServiceProvider);
     final cachedLogs = ref.read(nutritionProvider).recentLogs;
     searchService.search(query, widget.userId, cachedLogs: cachedLogs);
+    if (query.trim().isNotEmpty) {
+      ref.read(posthogServiceProvider).capture(
+        eventName: 'food_search_performed',
+        properties: <String, Object>{'query_length': query.length},
+      );
+    }
     widget.onSearch?.call(query);
   }
 

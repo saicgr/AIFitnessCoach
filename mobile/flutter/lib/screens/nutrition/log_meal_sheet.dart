@@ -22,6 +22,7 @@ import '../../widgets/main_shell.dart';
 import '../../data/providers/nutrition_preferences_provider.dart';
 import '../../data/services/food_search_service.dart' as search;
 import '../../widgets/app_tour/app_tour_controller.dart';
+import '../../core/services/posthog_service.dart';
 import 'widgets/accuracy_feedback_snackbar.dart';
 import 'widgets/food_browser_panel.dart';
 import 'widgets/food_report_dialog.dart';
@@ -218,6 +219,10 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet> {
         return;
       }
       setState(() => _isListening = true);
+      ref.read(posthogServiceProvider).capture(
+        eventName: 'food_voice_input_used',
+        properties: <String, Object>{},
+      );
       await _speech.listen(
         onResult: (result) {
           if (mounted) {
@@ -411,6 +416,14 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet> {
       debugPrint('🍎 [LogMeal] Streaming complete, response: $response');
       _loadingDelayTimer?.cancel();
       if (mounted && response != null) {
+        final description = _descriptionController.text.trim();
+        ref.read(posthogServiceProvider).capture(
+          eventName: 'food_text_analyzed',
+          properties: <String, Object>{
+            'description_length': description.length,
+            'meal_type': _selectedMealType.name,
+          },
+        );
         setState(() {
           _isAnalyzing = false;
           _showLoadingIndicator = false;
@@ -788,6 +801,11 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet> {
       final picker = ImagePicker();
       final image = await picker.pickImage(source: source, maxWidth: 1024, maxHeight: 1024, imageQuality: 85);
       if (image == null) return;
+
+      ref.read(posthogServiceProvider).capture(
+        eventName: 'food_photo_taken',
+        properties: <String, Object>{'source': source == ImageSource.camera ? 'camera' : 'gallery'},
+      );
 
       setState(() {
         _isLoading = true;
@@ -1249,6 +1267,10 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet> {
       debugPrint('🔍 [LogMeal] Looking up barcode in database...');
       final product = await repository.lookupBarcode(barcode);
       debugPrint('🔍 [LogMeal] Barcode lookup result | productName=${product.productName} | caloriesPer100g=${product.caloriesPer100g}');
+      ref.read(posthogServiceProvider).capture(
+        eventName: 'food_barcode_scanned',
+        properties: <String, Object>{'barcode': barcode},
+      );
 
       if (mounted) {
         final confirmed = await _showProductConfirmation(product);

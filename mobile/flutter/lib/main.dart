@@ -22,7 +22,7 @@ import 'data/local/database_provider.dart';
 // FlutterGemma import removed -- initialization deferred to OnDeviceGemmaService.ensureInitialized()
 // to avoid ANR from heavy native ML runtime setup during app startup.
 import 'core/services/analytics_service.dart';
-import 'data/services/analytics_service.dart' as prod_analytics;
+import 'core/services/posthog_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -56,10 +56,20 @@ void main() async {
       FirebaseCrashlytics.instance.recordFlutterError(details);
     } else {
       FirebaseCrashlytics.instance.recordFlutterFatalError(details);
+      // Also capture in PostHog for product analytics
+      PosthogService().captureError(
+        errorType: 'flutter_fatal',
+        message: message,
+        screenName: details.library,
+      );
     }
   };
   PlatformDispatcher.instance.onError = (error, stack) {
     FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
+    PosthogService().captureError(
+      errorType: 'platform_error',
+      message: error.toString(),
+    );
     return true;
   };
 
@@ -90,8 +100,8 @@ void main() async {
     ],
   );
 
-  // Wire onboarding analytics stub to production Supabase analytics service
-  AnalyticsService.init(container.read(prod_analytics.analyticsServiceProvider));
+  // Wire onboarding analytics stub to PostHog
+  AnalyticsService.init(container.read(posthogServiceProvider));
 
   // --- Launch the app immediately to start rendering UI ---
   runApp(

@@ -197,21 +197,10 @@ class _AppTourOverlayState extends ConsumerState<AppTourOverlay>
 
     // Don't render spotlight or tooltip while the target is off-screen;
     // the post-frame callback above will scroll it into view and rebuild.
+    // Return SizedBox.shrink() instead of an opaque overlay to avoid
+    // blocking all gestures while waiting for the target to appear.
     if (isOffScreen || !isTargetFound) {
-      return Positioned.fill(
-        child: GestureDetector(
-          onTap: () {},
-          behavior: HitTestBehavior.opaque,
-          child: CustomPaint(
-            painter: AppTourSpotlightPainter(
-              spotlightRect: Rect.zero,
-              ringColor: accentColor,
-              cornerRadius: 12.0,
-              spotlightPadding: 10.0,
-            ),
-          ),
-        ),
-      );
+      return const SizedBox.shrink();
     }
 
     const spotlightPadding = 10.0;

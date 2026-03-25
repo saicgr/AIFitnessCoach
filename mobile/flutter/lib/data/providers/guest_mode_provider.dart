@@ -2,7 +2,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../services/analytics_service.dart';
+import '../../core/services/posthog_service.dart';
 
 /// Guest mode session state
 class GuestModeState {
@@ -112,7 +112,7 @@ class GuestModeState {
 
 /// Guest mode notifier for managing guest state
 class GuestModeNotifier extends StateNotifier<GuestModeState> {
-  final AnalyticsService? _analytics;
+  final PosthogService? _analytics;
   Timer? _sessionTimer;
   Timer? _durationUpdateTimer;
 
@@ -202,9 +202,9 @@ class GuestModeNotifier extends StateNotifier<GuestModeState> {
     }
 
     // Track analytics
-    _analytics?.trackEvent(
+    _analytics?.capture(
       eventName: 'guest_mode_started',
-      category: 'onboarding',
+
       properties: {
         'timestamp': now.toIso8601String(),
       },
@@ -253,9 +253,9 @@ class GuestModeNotifier extends StateNotifier<GuestModeState> {
     // Check for expiry
     if (state.isSessionExpired) {
       debugPrint('[GuestMode] Session expired');
-      _analytics?.trackEvent(
+      _analytics?.capture(
         eventName: 'guest_session_expired',
-        category: 'onboarding',
+  
         properties: {
           'features_attempted': state.featuresAttempted,
           'attempted_features': state.attemptedFeatures,
@@ -283,9 +283,9 @@ class GuestModeNotifier extends StateNotifier<GuestModeState> {
       attemptedFeatures: updatedFeatures,
     );
 
-    _analytics?.trackEvent(
+    _analytics?.capture(
       eventName: 'guest_feature_attempted',
-      category: 'onboarding',
+
       properties: {
         'feature': featureName,
         'attempt_count': state.featuresAttempted,
@@ -300,9 +300,9 @@ class GuestModeNotifier extends StateNotifier<GuestModeState> {
 
     // Track conversion analytics
     if (convertedToSignup) {
-      _analytics?.trackEvent(
+      _analytics?.capture(
         eventName: 'guest_to_signup_conversion',
-        category: 'onboarding',
+  
         properties: {
           'session_duration_seconds': state.sessionDuration.inSeconds,
           'features_attempted': state.featuresAttempted,
@@ -338,8 +338,8 @@ class GuestModeNotifier extends StateNotifier<GuestModeState> {
 /// Provider for guest mode state
 final guestModeProvider =
     StateNotifierProvider<GuestModeNotifier, GuestModeState>((ref) {
-  final analytics = ref.watch(analyticsServiceProvider);
-  return GuestModeNotifier(analytics);
+  final posthog = ref.watch(posthogServiceProvider);
+  return GuestModeNotifier(posthog);
 });
 
 /// Quick check if currently in guest mode

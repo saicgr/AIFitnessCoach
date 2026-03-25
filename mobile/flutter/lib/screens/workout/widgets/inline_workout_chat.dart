@@ -13,6 +13,7 @@ import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../../core/constants/app_colors.dart';
+import '../../../core/services/posthog_service.dart';
 import '../../../data/models/exercise.dart';
 import '../../../data/models/chat_message.dart';
 import '../../../data/models/coach_persona.dart';
@@ -123,6 +124,14 @@ class _InlineWorkoutChatState extends ConsumerState<InlineWorkoutChat> {
 
   void _sendMessage(String message) {
     if (message.trim().isEmpty) return;
+
+    ref.read(posthogServiceProvider).capture(
+      eventName: 'workout_chat_message_sent',
+      properties: {
+        'message_length': message.length,
+        'has_media': _selectedMedia.isNotEmpty,
+      },
+    );
 
     final workoutContext = '''
 [ACTIVE WORKOUT CONTEXT]

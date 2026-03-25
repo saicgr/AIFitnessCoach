@@ -24,6 +24,7 @@ import '../../data/services/haptic_service.dart';
 import '../../widgets/app_snackbar.dart';
 import '../../widgets/app_tour/app_tour_controller.dart';
 import 'beast_mode_unlock_dialog.dart';
+import '../../core/services/posthog_service.dart';
 import 'sections/sections.dart';
 import 'widgets/widgets.dart';
 
@@ -692,6 +693,13 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     return InkWell(
       onTap: () {
         HapticFeedback.lightImpact();
+        ref.read(posthogServiceProvider).capture(
+          eventName: 'setting_changed',
+          properties: <String, Object>{
+            'setting_name': row.title,
+            'new_value': row.route,
+          },
+        );
         if (row.onTap != null) {
           row.onTap!();
         } else {
@@ -731,6 +739,13 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 onChanged: (mode) {
                   HapticFeedback.selectionClick();
                   ref.read(themeModeProvider.notifier).setTheme(mode);
+                  ref.read(posthogServiceProvider).capture(
+                    eventName: 'theme_changed',
+                    properties: <String, Object>{
+                      'setting_name': 'theme',
+                      'new_value': mode.name,
+                    },
+                  );
                 },
               )
             else if (row.value != null) ...[
