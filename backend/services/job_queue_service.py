@@ -81,7 +81,20 @@ class JobQueueService:
                 logger.error(f"Failed to create job in DB: {e}")
                 # Fall through to memory storage
 
-        # In-memory fallback
+        # In-memory fallback (capped at 100 jobs)
+        if len(_memory_jobs) >= 100:
+            # Evict completed/failed jobs first, then oldest
+            evict_candidates = [
+                (jid, j) for jid, j in _memory_jobs.items()
+                if j["status"] in ("completed", "failed")
+            ]
+            if not evict_candidates:
+                evict_candidates = sorted(
+                    _memory_jobs.items(), key=lambda x: x[1].get("created_at", "")
+                )
+            for jid, _ in evict_candidates[:20]:
+                del _memory_jobs[jid]
+
         import uuid
         job_id = str(uuid.uuid4())
         _memory_jobs[job_id] = {

@@ -82,25 +82,33 @@ class _ShimmerTextState extends State<ShimmerText>
         // from fully off-screen left (-1.0) to fully off-screen right (2.0).
         final double offset = _controller.value * 3.0 - 1.0;
 
-        return ShaderMask(
-          blendMode: BlendMode.srcIn,
-          shaderCallback: (bounds) {
-            return LinearGradient(
-              begin: Alignment.centerLeft,
-              end: Alignment.centerRight,
-              colors: [
-                widget.shimmerColor.withValues(alpha: 0),
-                widget.shimmerColor.withValues(alpha: 0.3),
-                widget.shimmerColor.withValues(alpha: 0),
-              ],
-              stops: [
-                (offset - 0.3).clamp(0.0, 1.0),
-                offset.clamp(0.0, 1.0),
-                (offset + 0.3).clamp(0.0, 1.0),
-              ],
-            ).createShader(bounds);
-          },
-          child: child,
+        // Stack: base text is always visible, shimmer highlight sweeps on top
+        return Stack(
+          children: [
+            // Base text — always visible
+            child!,
+            // Shimmer highlight overlay
+            ShaderMask(
+              blendMode: BlendMode.srcIn,
+              shaderCallback: (bounds) {
+                return LinearGradient(
+                  begin: Alignment.centerLeft,
+                  end: Alignment.centerRight,
+                  colors: [
+                    widget.shimmerColor.withValues(alpha: 0),
+                    widget.shimmerColor.withValues(alpha: 0.6),
+                    widget.shimmerColor.withValues(alpha: 0),
+                  ],
+                  stops: [
+                    (offset - 0.3).clamp(0.0, 1.0),
+                    offset.clamp(0.0, 1.0),
+                    (offset + 0.3).clamp(0.0, 1.0),
+                  ],
+                ).createShader(bounds);
+              },
+              child: child!,
+            ),
+          ],
         );
       },
       child: widget.child,

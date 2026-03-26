@@ -1,12 +1,13 @@
+import 'dart:async';
 import 'dart:math';
 import 'package:flutter/material.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/constants/app_colors.dart';
 import '../../widgets/intro_animations.dart';
 
-/// Full-screen vertically-snapping PageView with 5 feature pages.
+/// Full-screen horizontally-swiping PageView with 5 feature pages and auto-rotate.
+/// Adapts to the device theme (light/dark).
 class IntroScreen extends StatefulWidget {
   const IntroScreen({super.key});
 
@@ -17,6 +18,9 @@ class IntroScreen extends StatefulWidget {
 class _IntroScreenState extends State<IntroScreen> {
   late final PageController _pageController;
   int _currentPage = 0;
+  Timer? _autoRotateTimer;
+
+  static const _autoRotateInterval = Duration(seconds: 4);
 
   static const List<_PageData> _pages = [
     _PageData(
@@ -28,7 +32,8 @@ class _IntroScreenState extends State<IntroScreen> {
           'AI builds your perfect plan based on your goals, equipment, and schedule.',
       leftImage: 'assets/images/intro_workout.png',
       rightImage: 'assets/images/intro_tracking.png',
-      gradientEnd: Color(0xFF1A0800),
+      darkGradientEnd: Color(0xFF1A0800),
+      lightGradientEnd: Color(0xFFFFF3E8),
       accent: Color(0xFFF97316),
     ),
     _PageData(
@@ -40,7 +45,8 @@ class _IntroScreenState extends State<IntroScreen> {
           'Chat with your coach for form checks, meal advice, and motivation — all personalized.',
       leftImage: 'assets/images/intro_ai_coach.png',
       rightImage: 'assets/images/intro_library.png',
-      gradientEnd: Color(0xFF001018),
+      darkGradientEnd: Color(0xFF001018),
+      lightGradientEnd: Color(0xFFE8F7FC),
       accent: Color(0xFF06B6D4),
     ),
     _PageData(
@@ -53,7 +59,8 @@ class _IntroScreenState extends State<IntroScreen> {
           'Nutrition, hydration, habits, progress — log it all in one tap.',
       leftImage: 'assets/images/intro_nutrition.png',
       rightImage: 'assets/images/intro_progress.png',
-      gradientEnd: Color(0xFF001A0A),
+      darkGradientEnd: Color(0xFF001A0A),
+      lightGradientEnd: Color(0xFFE8FCF0),
       accent: Color(0xFF22C55E),
     ),
     _PageData(
@@ -65,7 +72,8 @@ class _IntroScreenState extends State<IntroScreen> {
           'HD demos for every movement. Search, filter, build your own.',
       leftImage: 'assets/images/intro_library.png',
       rightImage: 'assets/images/intro_tracking.png',
-      gradientEnd: Color(0xFF0F0018),
+      darkGradientEnd: Color(0xFF0F0018),
+      lightGradientEnd: Color(0xFFF3EEFB),
       accent: Color(0xFF8B5CF6),
     ),
     _PageData(
@@ -77,7 +85,8 @@ class _IntroScreenState extends State<IntroScreen> {
           'Adapts to your progress, recovery, and schedule. Your fitness evolves with you.',
       leftImage: 'assets/images/intro_progress.png',
       rightImage: 'assets/images/intro_workout.png',
-      gradientEnd: Color(0xFF181000),
+      darkGradientEnd: Color(0xFF181000),
+      lightGradientEnd: Color(0xFFFDF6E3),
       accent: Color(0xFFF59E0B),
     ),
   ];
@@ -86,18 +95,49 @@ class _IntroScreenState extends State<IntroScreen> {
   void initState() {
     super.initState();
     _pageController = PageController();
+    _startAutoRotate();
   }
 
   @override
   void dispose() {
+    _autoRotateTimer?.cancel();
     _pageController.dispose();
     super.dispose();
+  }
+
+  void _startAutoRotate() {
+    _autoRotateTimer?.cancel();
+    _autoRotateTimer = Timer.periodic(_autoRotateInterval, (_) {
+      if (!mounted) return;
+      final nextPage = (_currentPage + 1) % _pages.length;
+      _pageController.animateToPage(
+        nextPage,
+        duration: const Duration(milliseconds: 500),
+        curve: Curves.easeInOut,
+      );
+    });
+  }
+
+  void _resetAutoRotate() {
+    _startAutoRotate();
   }
 
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
     final pageData = _pages[_currentPage];
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    final gradientEnd = isDark ? pageData.darkGradientEnd : pageData.lightGradientEnd;
+    final bgTop = isDark ? const Color(0xFF0A0A0A) : const Color(0xFFF8F8FA);
+    final textColor = isDark ? Colors.white : const Color(0xFF1A1A2E);
+    final subtitleColor = isDark ? Colors.white70 : const Color(0xFF6B7280);
+    final dotInactiveColor = isDark ? Colors.white.withOpacity(0.3) : Colors.black.withOpacity(0.15);
+    final taglineColor = isDark ? Colors.white.withOpacity(0.5) : Colors.black.withOpacity(0.4);
+    final particleColor = isDark ? Colors.white : Colors.black;
+    final overlayTopColor = isDark ? const Color(0xCC0A0A0A) : const Color(0xCCF8F8FA);
+    final screenshotPlaceholderBg = isDark ? Colors.white.withOpacity(0.05) : Colors.black.withOpacity(0.04);
+    final screenshotPlaceholderIcon = isDark ? Colors.white.withOpacity(0.2) : Colors.black.withOpacity(0.12);
 
     return Scaffold(
       body: Stack(
@@ -109,40 +149,51 @@ class _IntroScreenState extends State<IntroScreen> {
               gradient: LinearGradient(
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
-                colors: [
-                  const Color(0xFF0A0A0A),
-                  pageData.gradientEnd,
-                ],
+                colors: [bgTop, gradientEnd],
               ),
             ),
           ),
 
           // Particle field
-          const Positioned.fill(
+          Positioned.fill(
             child: ParticleField(
               particleCount: 20,
-              color: Colors.white,
+              color: particleColor,
             ),
           ),
 
-          // PageView
-          PageView.builder(
-            controller: _pageController,
-            scrollDirection: Axis.vertical,
-            physics: const BouncingScrollPhysics(
-              parent: PageScrollPhysics(),
+          // PageView — horizontal swiping
+          NotificationListener<ScrollNotification>(
+            onNotification: (notification) {
+              if (notification is ScrollStartNotification &&
+                  notification.dragDetails != null) {
+                _resetAutoRotate();
+              }
+              return false;
+            },
+            child: PageView.builder(
+              controller: _pageController,
+              scrollDirection: Axis.horizontal,
+              physics: const BouncingScrollPhysics(
+                parent: PageScrollPhysics(),
+              ),
+              itemCount: _pages.length,
+              onPageChanged: (index) {
+                setState(() => _currentPage = index);
+              },
+              itemBuilder: (context, index) {
+                return _IntroPage(
+                  data: _pages[index],
+                  screenSize: size,
+                  isActive: index == _currentPage,
+                  isDark: isDark,
+                  textColor: textColor,
+                  subtitleColor: subtitleColor,
+                  screenshotPlaceholderBg: screenshotPlaceholderBg,
+                  screenshotPlaceholderIcon: screenshotPlaceholderIcon,
+                );
+              },
             ),
-            itemCount: _pages.length,
-            onPageChanged: (index) {
-              setState(() => _currentPage = index);
-            },
-            itemBuilder: (context, index) {
-              return _IntroPage(
-                data: _pages[index],
-                screenSize: size,
-                isActive: index == _currentPage,
-              );
-            },
           ),
 
           // Top gradient overlay
@@ -151,15 +202,14 @@ class _IntroScreenState extends State<IntroScreen> {
             left: 0,
             right: 0,
             height: 120,
-            child: Container(
-              decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [
-                    Color(0xCC0A0A0A),
-                    Colors.transparent,
-                  ],
+            child: IgnorePointer(
+              child: Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [overlayTopColor, Colors.transparent],
+                  ),
                 ),
               ),
             ),
@@ -171,15 +221,17 @@ class _IntroScreenState extends State<IntroScreen> {
             left: 0,
             right: 0,
             height: 200,
-            child: Container(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.bottomCenter,
-                  end: Alignment.topCenter,
-                  colors: [
-                    pageData.gradientEnd.withOpacity(0.95),
-                    Colors.transparent,
-                  ],
+            child: IgnorePointer(
+              child: Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.bottomCenter,
+                    end: Alignment.topCenter,
+                    colors: [
+                      gradientEnd.withOpacity(0.95),
+                      Colors.transparent,
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -201,21 +253,23 @@ class _IntroScreenState extends State<IntroScreen> {
                     // Logo
                     Row(
                       children: [
-                        Image.asset(
-                          'assets/images/app_icon.png',
-                          width: 28,
-                          height: 28,
-                          errorBuilder: (_, __, ___) => const Icon(
-                            Icons.fitness_center,
-                            color: Colors.white,
-                            size: 28,
+                        ClipOval(
+                          child: Image.asset(
+                            'assets/images/app_icon.png',
+                            width: 28,
+                            height: 28,
+                            errorBuilder: (_, __, ___) => Icon(
+                              Icons.fitness_center,
+                              color: textColor,
+                              size: 28,
+                            ),
                           ),
                         ),
                         const SizedBox(width: 8),
-                        const Text(
+                        Text(
                           'FitWiz',
                           style: TextStyle(
-                            color: Colors.white,
+                            color: textColor,
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
                           ),
@@ -225,10 +279,10 @@ class _IntroScreenState extends State<IntroScreen> {
                     // Sign In
                     GestureDetector(
                       onTap: () => context.push('/sign-in'),
-                      child: const Text(
+                      child: Text(
                         'Sign In',
                         style: TextStyle(
-                          color: Colors.white,
+                          color: textColor,
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
                         ),
@@ -266,7 +320,7 @@ class _IntroScreenState extends State<IntroScreen> {
                             borderRadius: BorderRadius.circular(4),
                             color: isActive
                                 ? pageData.accent
-                                : Colors.white.withOpacity(0.3),
+                                : dotInactiveColor,
                           ),
                         );
                       }),
@@ -302,7 +356,7 @@ class _IntroScreenState extends State<IntroScreen> {
                     Text(
                       'Your AI-powered fitness journey starts here',
                       style: TextStyle(
-                        color: Colors.white.withOpacity(0.5),
+                        color: taglineColor,
                         fontSize: 13,
                       ),
                     ),
@@ -332,7 +386,8 @@ class _PageData {
   final String subtitle;
   final String leftImage;
   final String rightImage;
-  final Color gradientEnd;
+  final Color darkGradientEnd;
+  final Color lightGradientEnd;
   final Color accent;
 
   const _PageData({
@@ -340,7 +395,8 @@ class _PageData {
     required this.subtitle,
     required this.leftImage,
     required this.rightImage,
-    required this.gradientEnd,
+    required this.darkGradientEnd,
+    required this.lightGradientEnd,
     required this.accent,
   });
 }
@@ -353,11 +409,21 @@ class _IntroPage extends StatefulWidget {
   final _PageData data;
   final Size screenSize;
   final bool isActive;
+  final bool isDark;
+  final Color textColor;
+  final Color subtitleColor;
+  final Color screenshotPlaceholderBg;
+  final Color screenshotPlaceholderIcon;
 
   const _IntroPage({
     required this.data,
     required this.screenSize,
     required this.isActive,
+    required this.isDark,
+    required this.textColor,
+    required this.subtitleColor,
+    required this.screenshotPlaceholderBg,
+    required this.screenshotPlaceholderIcon,
   });
 
   @override
@@ -447,7 +513,7 @@ class _IntroPageState extends State<_IntroPage>
 
           const SizedBox(height: 12),
 
-          // Subtitle (150ms delay via interval shift)
+          // Subtitle
           AnimatedBuilder(
             animation: _animController,
             builder: (context, child) {
@@ -473,8 +539,8 @@ class _IntroPageState extends State<_IntroPage>
             child: Text(
               widget.data.subtitle,
               textAlign: TextAlign.center,
-              style: const TextStyle(
-                color: Colors.white70,
+              style: TextStyle(
+                color: widget.subtitleColor,
                 fontSize: 15,
                 height: 1.4,
               ),
@@ -547,17 +613,17 @@ class _IntroPageState extends State<_IntroPage>
   }
 
   Widget _buildHeadline() {
+    final shimmerColor = widget.isDark ? Colors.white : widget.data.accent.withOpacity(0.3);
+
     return Text.rich(
       TextSpan(
         children: widget.data.headlineParts.map((part) {
           if (part.isAccent) {
-            // We wrap accent text inline; ShimmerText is a widget so we use
-            // WidgetSpan to embed it.
             return WidgetSpan(
               alignment: PlaceholderAlignment.baseline,
               baseline: TextBaseline.alphabetic,
               child: ShimmerText(
-                shimmerColor: widget.data.accent,
+                shimmerColor: shimmerColor,
                 child: Text(
                   part.text,
                   style: TextStyle(
@@ -571,10 +637,10 @@ class _IntroPageState extends State<_IntroPage>
           }
           return TextSpan(
             text: part.text,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 32,
               fontWeight: FontWeight.bold,
-              color: Colors.white,
+              color: widget.textColor,
             ),
           );
         }).toList(),
@@ -595,12 +661,15 @@ class _IntroPageState extends State<_IntroPage>
             width: width,
             height: width * 1.8,
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.05),
+              color: widget.screenshotPlaceholderBg,
               borderRadius: BorderRadius.circular(16),
+              border: widget.isDark
+                  ? null
+                  : Border.all(color: Colors.black.withOpacity(0.06)),
             ),
             child: Icon(
               Icons.image_outlined,
-              color: Colors.white.withOpacity(0.2),
+              color: widget.screenshotPlaceholderIcon,
               size: 48,
             ),
           );

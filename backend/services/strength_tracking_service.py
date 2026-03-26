@@ -20,9 +20,13 @@ logger = get_logger(__name__)
 class StrengthTrackingService:
     """Tracks strength records and detects PRs using Supabase persistence."""
 
+    _MAX_KEYS = 500
+    _MAX_RECORDS_PER_KEY = 10
+
     def __init__(self):
         # In-memory cache for hot-path reads (TTL managed externally)
         self._cache: Dict[str, List[StrengthRecord]] = {}
+        self._access_order: List[str] = []
 
     def record_strength(
         self,
@@ -74,11 +78,22 @@ class StrengthTrackingService:
         except Exception as e:
             logger.warning(f"Failed to persist strength record to Supabase: {e}")
 
-        # Update local cache
+        # Update local cache (bounded)
         key = f"{user_id}:{exercise_id}"
         if key not in self._cache:
             self._cache[key] = []
+            # LRU eviction: remove oldest key if at capacity
+            if len(self._cache) > self._MAX_KEYS:
+                oldest = self._access_order.pop(0)
+                self._cache.pop(oldest, None)
         self._cache[key].append(record)
+        # Cap per-key records to last N
+        if len(self._cache[key]) > self._MAX_RECORDS_PER_KEY:
+            self._cache[key] = self._cache[key][-self._MAX_RECORDS_PER_KEY:]
+        # Update access order
+        if key in self._access_order:
+            self._access_order.remove(key)
+        self._access_order.append(key)
 
         return record, is_pr
 

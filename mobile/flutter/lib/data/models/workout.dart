@@ -199,9 +199,9 @@ class Workout extends Equatable {
     int restCount = 0;
 
     for (final ex in exList) {
-      totalSets += ex.sets;
-      if (ex.restSeconds > 0) {
-        restSum += ex.restSeconds;
+      totalSets += ex.sets ?? 0;
+      if ((ex.restSeconds ?? 0) > 0) {
+        restSum += ex.restSeconds!;
         restCount++;
       }
       if (compoundMuscles.contains((ex.primaryMuscle ?? '').toLowerCase())) {

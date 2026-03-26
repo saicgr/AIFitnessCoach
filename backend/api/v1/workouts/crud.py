@@ -157,7 +157,7 @@ class WorkoutSummaryResponse(BaseModel):
     completed_at: Optional[str] = None
 
 
-@router.post("", response_model=Workout)
+@router.post("/", response_model=Workout)
 async def create_workout(workout: WorkoutCreate,
     current_user: dict = Depends(get_current_user),
 ):
@@ -205,7 +205,7 @@ async def create_workout(workout: WorkoutCreate,
         raise safe_internal_error(e, "crud")
 
 
-@router.get("", response_model=List[Workout])
+@router.get("/", response_model=List[Workout])
 async def list_workouts(
     user_id: str,
     is_completed: Optional[bool] = None,

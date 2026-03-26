@@ -274,11 +274,11 @@ class USDAFoodService:
         """Cache data with timestamp."""
         self._cache[key] = (time.time(), data)
 
-        # Clean old cache entries (keep only last 1000)
-        if len(self._cache) > 1000:
+        # Evict oldest 50% when cache exceeds limit
+        if len(self._cache) > 500:
             sorted_keys = sorted(self._cache.keys(),
                                key=lambda k: self._cache[k][0])
-            for old_key in sorted_keys[:100]:
+            for old_key in sorted_keys[:250]:
                 del self._cache[old_key]
 
     def _parse_float(self, value: Any, default: float = 0.0) -> float:

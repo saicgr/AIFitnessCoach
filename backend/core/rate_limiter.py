@@ -68,7 +68,7 @@ limiter = Limiter(
 # Cache for request bodies (needed because body can only be read once)
 # Bounded to 1000 entries with 60s TTL to prevent unbounded growth
 _request_body_cache: dict = {}
-_REQUEST_CACHE_MAX_SIZE = 1000
+_REQUEST_CACHE_MAX_SIZE = 200
 _REQUEST_CACHE_TTL = 60  # seconds
 
 

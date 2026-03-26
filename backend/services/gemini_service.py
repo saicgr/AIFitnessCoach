@@ -75,10 +75,10 @@ from services.fair_semaphore import FairGeminiSemaphore
 _gemini_semaphore = FairGeminiSemaphore(global_limit=10, per_user_limit=3)
 
 # Module-level caches with purpose-tuned TTLs and sizes
-_summary_cache = RedisCache(prefix="summary", ttl_seconds=3600, max_size=100)   # 1hr for workout summaries
-_intent_cache = RedisCache(prefix="intent", ttl_seconds=600, max_size=200)      # 10min for intent extraction
-_food_text_cache = RedisCache(prefix="food_text", ttl_seconds=1800, max_size=150) # 30min for food text analysis
-_embedding_cache = RedisCache(prefix="embedding", ttl_seconds=3600, max_size=100) # 1hr for embedding vectors (reduced for 512MB)
+_summary_cache = RedisCache(prefix="summary", ttl_seconds=3600, max_size=50)    # 1hr for workout summaries
+_intent_cache = RedisCache(prefix="intent", ttl_seconds=600, max_size=100)      # 10min for intent extraction
+_food_text_cache = RedisCache(prefix="food_text", ttl_seconds=1800, max_size=75) # 30min for food text analysis
+_embedding_cache = RedisCache(prefix="embedding", ttl_seconds=3600, max_size=50) # 1hr for embedding vectors (~6KB each)
 
 # Token usage logger for cost tracking
 _token_logger = logging.getLogger("token_usage")
@@ -104,6 +104,8 @@ class _CostTracker:
     CACHED_INPUT_RATE = 0.025 / 1_000_000
     CACHE_STORAGE_RATE = 1.00 / 1_000_000  # per hour
 
+    _MAX_USERS = 500
+
     def __init__(self):
         self._start_time = time.time()
         # Per-method stats: {method: {calls, input_tokens, output_tokens, cached_tokens, cost_usd}}
@@ -112,6 +114,15 @@ class _CostTracker:
         self._by_user: Dict[str, Dict] = {}
         # Active caches: {cache_name: {tokens, created_at_ts, prefix}}
         self._active_caches: Dict[str, Dict] = {}
+
+    def _evict_users_if_needed(self) -> None:
+        """Evict lowest-cost users when dict exceeds max size."""
+        if len(self._by_user) <= self._MAX_USERS:
+            return
+        sorted_users = sorted(self._by_user.items(), key=lambda x: x[1]["cost_usd"])
+        evict_count = len(self._by_user) - (self._MAX_USERS // 2)
+        for uid, _ in sorted_users[:evict_count]:
+            del self._by_user[uid]
 
     def record(self, method: str, user_id: str, input_tokens: int, output_tokens: int, cached_tokens: int) -> None:
         """Record a single Gemini API call."""
@@ -136,6 +147,9 @@ class _CostTracker:
         u["calls"] += 1
         u["total_tokens"] += input_tokens + output_tokens
         u["cost_usd"] += cost
+
+        # Evict low-cost users if dict is too large
+        self._evict_users_if_needed()
 
     def track_cache(self, cache_name: str, prefix: str, token_count: int) -> None:
         """Track an active Vertex AI cache for storage cost computation."""
