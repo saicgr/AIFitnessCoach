@@ -38,8 +38,8 @@ class SetData(BaseModel):
     reps: int = Field(..., ge=0, description="Number of reps completed")
     weight: float = Field(..., ge=0, description="Weight used in kg")
     rpe: Optional[int] = Field(
-        None, ge=6, le=10,
-        description="Rate of Perceived Exertion (6-10)"
+        None, ge=5, le=10,
+        description="Rate of Perceived Exertion (5-10)"
     )
     rir: Optional[int] = Field(
         None, ge=0, le=5,

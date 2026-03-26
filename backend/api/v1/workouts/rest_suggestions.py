@@ -59,7 +59,7 @@ FATIGUE_MULTIPLIER = {
 
 class RestSuggestionRequest(BaseModel):
     """Request for AI rest time suggestion."""
-    rpe: int = Field(..., ge=6, le=10, description="Rate of Perceived Exertion (6-10)")
+    rpe: int = Field(..., ge=5, le=10, description="Rate of Perceived Exertion (5-10)")
     exercise_type: str = Field(..., description="Type of exercise (e.g., 'strength', 'cardio')")
     exercise_name: Optional[str] = Field(None, description="Name of the current exercise")
     sets_remaining: int = Field(..., ge=0, description="Number of sets remaining")

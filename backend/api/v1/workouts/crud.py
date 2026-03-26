@@ -1358,12 +1358,9 @@ async def get_workout_completion_summary(workout_id: str,
                 f"Keep it encouraging, specific, and under 50 words. No emojis."
             )
 
-            response = await ai_insights_service.gemini.chat(
-                message=summary_prompt,
-                user_id=user_id,
-                context="workout_summary",
+            coach_summary = await ai_insights_service.gemini.chat(
+                user_message=summary_prompt,
             )
-            coach_summary = response.get("response")
         except Exception as e:
             logger.warning(f"Failed to generate AI coach summary: {e}")
             coach_summary = "Great work completing your workout!"
@@ -1859,13 +1856,13 @@ async def _send_post_workout_nutrition_nudge(user_id: str, workout_name: str):
             use_ai=prefs.get("ai_personalized_nudges", True),
         )
 
-        # Save to chat_messages
+        # Save to chat_history (proactive AI message — no user message)
         try:
-            supabase.client.table("chat_messages").insert({
+            supabase.client.table("chat_history").insert({
                 "user_id": user_id,
-                "role": "assistant",
-                "content": message,
-                "metadata": {
+                "user_message": "",
+                "ai_response": message,
+                "context_json": {
                     "nudge_type": "post_workout_meal",
                     "proactive": True,
                     "coach_name": coach_name,
@@ -1873,7 +1870,7 @@ async def _send_post_workout_nutrition_nudge(user_id: str, workout_name: str):
                 }
             }).execute()
         except Exception as e:
-            logger.warning(f"⚠️ [Nudge] chat_messages insert failed: {e}")
+            logger.warning(f"⚠️ [Nudge] chat_history insert failed: {e}")
 
         # Send push notification
         fcm_token = user.get("fcm_token")
