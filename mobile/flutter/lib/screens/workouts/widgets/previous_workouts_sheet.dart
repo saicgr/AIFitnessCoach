@@ -185,7 +185,7 @@ class _PreviousWorkoutsSheet extends ConsumerWidget {
     final dayNum = date != null ? DateFormat('d').format(date) : '?';
 
     // Calculate duration or use stored value
-    final duration = workout.durationMinutes ?? 45;
+    final duration = workout.bestDurationMinutes;
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),

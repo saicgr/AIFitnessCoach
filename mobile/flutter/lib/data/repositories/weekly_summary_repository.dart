@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/weekly_summary.dart';
+import '../models/insights_report.dart';
 import '../services/api_client.dart';
 
 /// Weekly summary repository provider
@@ -77,6 +78,8 @@ class WeeklySummaryNotifier extends StateNotifier<WeeklySummaryState> {
 
   /// Generate a new weekly summary
   Future<WeeklySummary?> generateSummary(String userId, {String? weekStart}) async {
+    // Prevent duplicate concurrent generation requests
+    if (state.isGenerating) return null;
     state = state.copyWith(isGenerating: true, error: null);
     try {
       final summary = await _repository.generateSummary(userId, weekStart: weekStart);
@@ -140,6 +143,54 @@ class WeeklySummaryRepository {
     } catch (e) {
       debugPrint('Error getting latest summary: $e');
       return null;
+    }
+  }
+
+  /// Get insights report for an arbitrary date range
+  Future<InsightsReport> getInsightsReport(
+    String userId, {
+    required String startDate,
+    required String endDate,
+    String groupBy = 'week',
+    String include = 'all',
+  }) async {
+    try {
+      final response = await _client.get(
+        '/summaries/user/$userId/report',
+        queryParameters: {
+          'start_date': startDate,
+          'end_date': endDate,
+          'group_by': groupBy,
+          'include': include,
+        },
+      );
+      return InsightsReport.fromJson(response.data);
+    } catch (e) {
+      debugPrint('Error getting insights report: $e');
+      rethrow;
+    }
+  }
+
+  /// Generate AI insight narrative for an arbitrary date range
+  Future<InsightsAiNarrative> generateInsightNarrative(
+    String userId, {
+    required String startDate,
+    required String endDate,
+    required String periodLabel,
+  }) async {
+    try {
+      final response = await _client.post(
+        '/summaries/user/$userId/generate-insight',
+        queryParameters: {
+          'start_date': startDate,
+          'end_date': endDate,
+          'period_label': periodLabel,
+        },
+      );
+      return InsightsAiNarrative.fromJson(response.data);
+    } catch (e) {
+      debugPrint('Error generating insight narrative: $e');
+      rethrow;
     }
   }
 }

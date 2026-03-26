@@ -193,33 +193,38 @@ class _AvoidedExercisesScreenState extends ConsumerState<AvoidedExercisesScreen>
             .toSet() ??
         {};
 
-    // Step 1: Pick an exercise using the smart search picker
-    final pickerResult = await showExercisePickerSheet(
-      context,
-      ref,
-      type: ExercisePickerType.avoided,
-      excludeExercises: excludeNames,
-    );
+    // Loop allows user to go back from options sheet to re-pick exercise
+    while (true) {
+      // Step 1: Pick an exercise using the smart search picker
+      final pickerResult = await showExercisePickerSheet(
+        context,
+        ref,
+        type: ExercisePickerType.avoided,
+        excludeExercises: excludeNames,
+      );
 
-    if (pickerResult == null || !mounted) return;
+      if (pickerResult == null || !mounted) return;
 
-    // Step 2: Show reason / temporary options sheet
-    final avoidOptions = await _showAvoidOptionsSheet(
-      context,
-      pickerResult.exerciseName,
-    );
+      // Step 2: Show reason / temporary options sheet
+      final avoidOptions = await _showAvoidOptionsSheet(
+        context,
+        pickerResult.exerciseName,
+      );
 
-    if (avoidOptions == null || !mounted) return;
+      if (avoidOptions == null || !mounted) return;
+      if (avoidOptions.goBack) continue; // Go back to picker
 
-    // Step 3: Add the exercise
-    await _addExercise(
-      context,
-      userId,
-      pickerResult.exerciseName,
-      avoidOptions.reason,
-      avoidOptions.isTemporary,
-      avoidOptions.endDate,
-    );
+      // Step 3: Add the exercise
+      await _addExercise(
+        context,
+        userId,
+        pickerResult.exerciseName,
+        avoidOptions.reason,
+        avoidOptions.isTemporary,
+        avoidOptions.endDate,
+      );
+      break; // Done
+    }
   }
 
   /// Shows a sheet for reason / temporary toggle after exercise is picked
@@ -396,7 +401,21 @@ class _AvoidedExercisesScreenState extends ConsumerState<AvoidedExercisesScreen>
                       ),
                     ),
                   ),
-                  SizedBox(height: MediaQuery.of(context).padding.bottom + 16),
+                  // Change exercise button
+                  const SizedBox(height: 8),
+                  Center(
+                    child: TextButton.icon(
+                      onPressed: () {
+                        Navigator.pop(sheetContext, const _AvoidOptions(goBack: true));
+                      },
+                      icon: Icon(Icons.swap_horiz, size: 18, color: textMuted),
+                      label: Text(
+                        'Change Exercise',
+                        style: TextStyle(fontSize: 14, color: textMuted),
+                      ),
+                    ),
+                  ),
+                  SizedBox(height: MediaQuery.of(context).padding.bottom + 8),
                 ],
               ),
             ),
@@ -1144,10 +1163,12 @@ class _AvoidOptions {
   final String? reason;
   final bool isTemporary;
   final DateTime? endDate;
+  final bool goBack;
 
   const _AvoidOptions({
     this.reason,
     this.isTemporary = false,
     this.endDate,
+    this.goBack = false,
   });
 }

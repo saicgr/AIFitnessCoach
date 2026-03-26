@@ -182,7 +182,7 @@ class _ExerciseAnalyticsPageState extends State<ExerciseAnalyticsPage>
             OutlinedButton.icon(
               onPressed: () {
                 HapticFeedback.mediumImpact();
-                Share.share('Join me on FitWiz and let\'s compare our lifts! 💪 https://fitwiz.app');
+                Share.share('Join me on FitWiz and let\'s compare our lifts! 💪 https://fitwiz.us');
               },
               icon: const Icon(Icons.person_add_outlined),
               label: const Text('Invite Friends'),

@@ -346,6 +346,22 @@ class _AccessibilitySettingsCard extends ConsumerWidget {
               ref.read(accessibilityProvider.notifier).toggleReduceAnimations();
             },
           ),
+          Divider(height: 1, color: cardBorder, indent: 50),
+
+          // Show Level-Up Progression toggle
+          SwitchListTile(
+            secondary: Icon(Icons.military_tech, color: textSecondary, size: 22),
+            title: const Text('Level-Up Progression', style: TextStyle(fontSize: 15)),
+            subtitle: Text(
+              'Show animated progression screen on level-up',
+              style: TextStyle(fontSize: 12, color: textMuted),
+            ),
+            value: accessibilitySettings.showLevelUpProgression,
+            activeThumbColor: AppColors.cyan,
+            onChanged: (_) {
+              ref.read(accessibilityProvider.notifier).toggleShowLevelUpProgression();
+            },
+          ),
         ],
       ),
     );

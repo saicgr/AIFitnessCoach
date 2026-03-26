@@ -15,6 +15,9 @@ import '../../../core/services/posthog_service.dart';
 import '../providers/library_providers.dart';
 import '../providers/muscle_group_images_provider.dart';
 import '../../../widgets/glass_sheet.dart';
+import '../../../data/models/custom_exercise.dart';
+import '../../../core/providers/custom_exercises_provider.dart';
+import '../../../screens/custom_exercises/widgets/create_exercise_sheet.dart';
 import '../components/exercise_detail_sheet.dart';
 import '../components/ai_split_preset_detail_sheet.dart';
 /// Exercises tab with search, muscle group pills, equipment pills, and splits
@@ -525,12 +528,142 @@ class _NetflixExercisesTabState extends ConsumerState<NetflixExercisesTab> {
           textMuted,
         ).animate().fadeIn(delay: const Duration(milliseconds: 200)),
 
-        // 4. All Exercises (paginated, alphabetical)
+        // 4. My Custom Exercises
+        _buildCustomExercisesSection(isDark, textMuted)
+            .animate().fadeIn(delay: const Duration(milliseconds: 300)),
+
+        // 5. All Exercises (paginated, alphabetical)
         _buildAllExercisesSection(
           categoryData.allExercisesSorted,
           isDark,
           textMuted,
-        ).animate().fadeIn(delay: const Duration(milliseconds: 300)),
+        ).animate().fadeIn(delay: const Duration(milliseconds: 400)),
+      ],
+    );
+  }
+
+  /// Build "My Custom Exercises" section with create button
+  Widget _buildCustomExercisesSection(bool isDark, Color textMuted) {
+    final customExercisesState = ref.watch(customExercisesProvider);
+    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final cyan = isDark ? AppColors.cyan : AppColorsLight.cyan;
+
+    final exercises = customExercisesState.exercises;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Section header with create button
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 24, 16, 12),
+          child: Row(
+            children: [
+              Icon(Icons.add_circle_outline, size: 18, color: cyan),
+              const SizedBox(width: 8),
+              Text(
+                'My Custom Exercises',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  color: textPrimary,
+                ),
+              ),
+              if (exercises.isNotEmpty) ...[
+                const SizedBox(width: 8),
+                Text(
+                  '${exercises.length}',
+                  style: TextStyle(fontSize: 13, color: textMuted),
+                ),
+              ],
+              const Spacer(),
+              GestureDetector(
+                onTap: () {
+                  HapticService.light();
+                  showGlassSheet(
+                    context: context,
+                    builder: (_) => const CreateExerciseSheet(),
+                  );
+                },
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: cyan.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.add, size: 16, color: cyan),
+                      const SizedBox(width: 4),
+                      Text(
+                        'Create',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: cyan,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+
+        // Custom exercises list or empty state
+        if (exercises.isEmpty)
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: isDark
+                    ? Colors.white.withValues(alpha: 0.04)
+                    : Colors.black.withValues(alpha: 0.03),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(
+                  color: isDark
+                      ? Colors.white.withValues(alpha: 0.08)
+                      : Colors.black.withValues(alpha: 0.06),
+                ),
+              ),
+              child: Column(
+                children: [
+                  Icon(Icons.fitness_center_outlined, size: 32, color: textMuted),
+                  const SizedBox(height: 8),
+                  Text(
+                    'No custom exercises yet',
+                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: textPrimary),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Create your own exercises with photos and AI analysis',
+                    style: TextStyle(fontSize: 12, color: textMuted),
+                    textAlign: TextAlign.center,
+                  ),
+                ],
+              ),
+            ),
+          )
+        else
+          SizedBox(
+            height: 100,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              itemCount: exercises.length,
+              separatorBuilder: (_, __) => const SizedBox(width: 10),
+              itemBuilder: (context, index) {
+                final exercise = exercises[index];
+                return _CustomExerciseChip(
+                  exercise: exercise,
+                  isDark: isDark,
+                );
+              },
+            ),
+          ),
       ],
     );
   }
@@ -1736,6 +1869,82 @@ class _GravlSplitCard extends StatelessWidget {
         return Icons.accessibility_new;
       default:
         return Icons.fitness_center;
+    }
+  }
+}
+
+/// Compact horizontal chip for custom exercises in the library
+class _CustomExerciseChip extends StatelessWidget {
+  final CustomExercise exercise;
+  final bool isDark;
+
+  const _CustomExerciseChip({required this.exercise, required this.isDark});
+
+  @override
+  Widget build(BuildContext context) {
+    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final cardColor = isDark
+        ? Colors.white.withValues(alpha: 0.06)
+        : Colors.black.withValues(alpha: 0.04);
+    final borderColor = isDark
+        ? Colors.white.withValues(alpha: 0.1)
+        : Colors.black.withValues(alpha: 0.07);
+
+    return Container(
+      width: 140,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: cardColor,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: borderColor),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          // Exercise icon based on equipment
+          Icon(
+            _equipmentIcon(exercise.equipment),
+            size: 22,
+            color: isDark ? AppColors.cyan : AppColorsLight.cyan,
+          ),
+          const SizedBox(height: 8),
+          Text(
+            exercise.name,
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: textPrimary,
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+          const SizedBox(height: 2),
+          Text(
+            exercise.primaryMuscle,
+            style: TextStyle(
+              fontSize: 11,
+              color: textMuted,
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ],
+      ),
+    );
+  }
+
+  IconData _equipmentIcon(String equipment) {
+    switch (equipment.toLowerCase()) {
+      case 'barbell': return Icons.fitness_center;
+      case 'dumbbell': return Icons.fitness_center;
+      case 'cable': return Icons.swap_vert;
+      case 'machine': return Icons.precision_manufacturing;
+      case 'bodyweight': return Icons.accessibility_new;
+      case 'kettlebell': return Icons.sports_martial_arts;
+      case 'resistance band': return Icons.all_inclusive;
+      default: return Icons.fitness_center;
     }
   }
 }

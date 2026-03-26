@@ -8,7 +8,6 @@ import '../../../data/repositories/workout_repository.dart';
 import '../../../data/models/gym_profile.dart';
 import '../../../data/providers/gym_profile_provider.dart';
 import '../../../data/providers/today_workout_provider.dart';
-import '../../../data/providers/workout_provider.dart';
 import '../../../data/services/haptic_service.dart';
 import '../../../widgets/schedule_mismatch_dialog.dart';
 

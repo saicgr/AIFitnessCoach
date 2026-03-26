@@ -18,6 +18,7 @@ class AccessibilitySettings {
   final bool highContrast;
   final bool largeButtons;
   final bool reduceAnimations;
+  final bool showLevelUpProgression;
 
   const AccessibilitySettings({
     this.mode = AccessibilityMode.standard,
@@ -25,6 +26,7 @@ class AccessibilitySettings {
     this.highContrast = false,
     this.largeButtons = false,
     this.reduceAnimations = false,
+    this.showLevelUpProgression = true,
   });
 
   /// Get effective font scale based on mode
@@ -58,6 +60,7 @@ class AccessibilitySettings {
     bool? highContrast,
     bool? largeButtons,
     bool? reduceAnimations,
+    bool? showLevelUpProgression,
   }) {
     return AccessibilitySettings(
       mode: mode ?? this.mode,
@@ -65,6 +68,7 @@ class AccessibilitySettings {
       highContrast: highContrast ?? this.highContrast,
       largeButtons: largeButtons ?? this.largeButtons,
       reduceAnimations: reduceAnimations ?? this.reduceAnimations,
+      showLevelUpProgression: showLevelUpProgression ?? this.showLevelUpProgression,
     );
   }
 
@@ -75,6 +79,7 @@ class AccessibilitySettings {
         'high_contrast': highContrast,
         'large_buttons': largeButtons,
         'reduce_animations': reduceAnimations,
+        'show_level_up_progression': showLevelUpProgression,
       };
 
   /// Create from JSON
@@ -88,6 +93,7 @@ class AccessibilitySettings {
       highContrast: json['high_contrast'] as bool? ?? false,
       largeButtons: json['large_buttons'] as bool? ?? false,
       reduceAnimations: json['reduce_animations'] as bool? ?? false,
+      showLevelUpProgression: json['show_level_up_progression'] as bool? ?? true,
     );
   }
 
@@ -238,6 +244,18 @@ class AccessibilityNotifier extends StateNotifier<AccessibilitySettings> {
     state = state.copyWith(reduceAnimations: !state.reduceAnimations);
     await _saveToPrefs();
     await syncToBackend();
+  }
+
+  /// Toggle the level-up progression animation overlay
+  Future<void> toggleShowLevelUpProgression() async {
+    state = state.copyWith(showLevelUpProgression: !state.showLevelUpProgression);
+    await _saveToPrefs();
+  }
+
+  /// Set the level-up progression preference directly
+  Future<void> setShowLevelUpProgression(bool value) async {
+    state = state.copyWith(showLevelUpProgression: value);
+    await _saveToPrefs();
   }
 
   /// Reset to standard mode

@@ -5751,41 +5751,9 @@ class _SavedFoodsFilterSheetState extends State<_SavedFoodsFilterSheet> {
     final teal = widget.isDark ? AppColors.teal : AppColorsLight.teal;
     final surface = widget.isDark ? AppColors.surface : AppColorsLight.surface;
 
-    return DraggableScrollableSheet(
-      initialChildSize: 0.85,
-      minChildSize: 0.5,
-      maxChildSize: 0.95,
-      expand: false,
-      builder: (context, scrollController) => Column(
+    return Column(
         children: [
-          const SizedBox(height: 12),
-          // Header row
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Row(
-              children: [
-                Icon(Icons.bookmark, color: teal, size: 22),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Text(
-                    'Saved Foods',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: textPrimary,
-                    ),
-                  ),
-                ),
-                IconButton(
-                  icon: Icon(Icons.close, color: textMuted, size: 20),
-                  onPressed: () => Navigator.pop(context),
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 8),
           // Search field
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -5882,7 +5850,6 @@ class _SavedFoodsFilterSheetState extends State<_SavedFoodsFilterSheet> {
                         ),
                       )
                     : ListView.builder(
-                        controller: scrollController,
                         padding: const EdgeInsets.symmetric(horizontal: 16),
                         itemCount: _foods.length,
                         itemBuilder: (context, index) {
@@ -5985,7 +5952,6 @@ class _SavedFoodsFilterSheetState extends State<_SavedFoodsFilterSheet> {
           ),
           SizedBox(height: MediaQuery.of(context).padding.bottom + 8),
         ],
-      ),
     );
   }
 

@@ -136,7 +136,7 @@ class GlassSheet extends StatelessWidget {
   }
 }
 
-/// Standard handle bar for glass sheets
+/// Standard handle bar for glass sheets with close button
 class GlassSheetHandle extends StatelessWidget {
   final bool isDark;
 
@@ -146,15 +146,37 @@ class GlassSheetHandle extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.only(top: GlassSheetStyle.handleTopPadding),
-      child: Center(
-        child: Container(
-          width: GlassSheetStyle.handleWidth,
-          height: GlassSheetStyle.handleHeight,
-          decoration: BoxDecoration(
-            color: GlassSheetStyle.handleColor(isDark),
-            borderRadius: BorderRadius.circular(2),
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          // Centered drag handle
+          Container(
+            width: GlassSheetStyle.handleWidth,
+            height: GlassSheetStyle.handleHeight,
+            decoration: BoxDecoration(
+              color: GlassSheetStyle.handleColor(isDark),
+              borderRadius: BorderRadius.circular(2),
+            ),
           ),
-        ),
+          // Close button on the right
+          Positioned(
+            right: 8,
+            child: GestureDetector(
+              onTap: () => Navigator.of(context).pop(),
+              behavior: HitTestBehavior.opaque,
+              child: Padding(
+                padding: const EdgeInsets.all(4),
+                child: Icon(
+                  Icons.close,
+                  size: 20,
+                  color: isDark
+                      ? AppColors.textMuted
+                      : AppColorsLight.textMuted,
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

@@ -1025,7 +1025,7 @@ class _HeroWorkoutCardState extends ConsumerState<HeroWorkoutCard> {
                         child: GestureDetector(
                           onTap: () {
                             HapticService.selection();
-                            context.push('/workout/${workout.id}');
+                            context.push('/workout/${workout.id}', extra: workout);
                           },
                           child: Container(
                             padding: const EdgeInsets.symmetric(vertical: 8),
@@ -1187,7 +1187,7 @@ class _HeroWorkoutCardState extends ConsumerState<HeroWorkoutCard> {
       return GestureDetector(
         onTap: () {
           HapticService.selection();
-          context.push('/workout/${workout.id}');
+          context.push('/workout/${workout.id}', extra: workout);
         },
         child: cardContent,
       );
@@ -1534,7 +1534,7 @@ class CompletedWorkoutHeroCard extends ConsumerWidget {
                     children: [
                       _StatChip(
                         icon: Icons.timer_outlined,
-                        label: '${nextWorkout.durationMinutes ?? 45} min',
+                        label: '${nextWorkout.bestDurationMinutes} min',
                         isDark: isDark,
                       ),
                       const SizedBox(width: 16),

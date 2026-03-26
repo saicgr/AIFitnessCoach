@@ -8,6 +8,7 @@ import '../../../../data/models/exercise.dart';
 import '../../../../data/repositories/library_repository.dart';
 import '../../../../widgets/exercise_image.dart';
 import '../../../../widgets/glass_sheet.dart';
+import '../../../custom_exercises/widgets/create_exercise_sheet.dart';
 import '../../../library/components/exercise_detail_sheet.dart';
 
 /// The type of exercise preference being selected
@@ -893,6 +894,17 @@ class _ExercisePickerSheetState extends ConsumerState<_ExercisePickerSheet> {
     );
   }
 
+  void _openCreateExerciseSheet() {
+    HapticFeedback.lightImpact();
+    showGlassSheet(
+      context: context,
+      useRootNavigator: true,
+      builder: (context) => const GlassSheet(
+        child: CreateExerciseSheet(),
+      ),
+    );
+  }
+
   Widget _buildEmptyState(Color textMuted) {
     return Center(
       child: Column(
@@ -908,6 +920,18 @@ class _ExercisePickerSheetState extends ConsumerState<_ExercisePickerSheet> {
           Text(
             'Type to search or use filters to browse',
             style: TextStyle(fontSize: 13, color: textMuted.withValues(alpha: 0.7)),
+          ),
+          const SizedBox(height: 24),
+          OutlinedButton.icon(
+            onPressed: _openCreateExerciseSheet,
+            icon: const Icon(Icons.add_circle_outline, size: 18),
+            label: const Text('Create Custom Exercise'),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: _accentColor,
+              side: BorderSide(color: _accentColor.withValues(alpha: 0.5)),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+            ),
           ),
         ],
       ),

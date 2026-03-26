@@ -114,10 +114,12 @@ class HealthImportNotifier extends StateNotifier<HealthImportState> {
   }
 
   /// Import a pending workout as a new workout in FitWiz and mark it complete.
+  /// [customName] overrides the auto-generated name if provided.
   Future<void> importAsNewWorkout(
     PendingWorkoutImport pending,
-    String difficulty,
-  ) async {
+    String difficulty, {
+    String? customName,
+  }) async {
     state = state.copyWith(isImporting: true, error: null);
 
     try {
@@ -126,8 +128,10 @@ class HealthImportNotifier extends StateNotifier<HealthImportState> {
         throw Exception('User not authenticated');
       }
 
-      // Build a user-friendly workout name from the activity type.
-      final workoutName = _buildWorkoutName(pending.activityType);
+      // Use custom name or build from activity type.
+      final workoutName = (customName != null && customName.trim().isNotEmpty)
+          ? customName.trim()
+          : _buildWorkoutName(pending.activityType);
 
       // Build generation metadata with available health data.
       final metadata = <String, dynamic>{};

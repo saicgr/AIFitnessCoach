@@ -115,6 +115,53 @@ from services.adaptive_workout_service import (
 router = APIRouter()
 logger = get_logger(__name__)
 
+
+def _estimate_workout_met(exercises: list, workout_type: str = None) -> float:
+    """Estimate MET (Metabolic Equivalent of Task) from exercise composition.
+
+    MET reference for strength training:
+    - 3.5: light effort, general conditioning, long rest
+    - 5.0: moderate effort, compound lifts, moderate rest
+    - 6.0: vigorous effort, supersets/circuits, short rest
+    - 8.0: high intensity intervals
+    """
+    met = 3.5
+    if not exercises:
+        return met
+
+    compound_muscles = {
+        'legs', 'back', 'chest', 'full_body', 'glutes',
+        'quadriceps', 'hamstrings', 'shoulders',
+    }
+    compound_count = sum(
+        1 for ex in exercises
+        if (ex.get('muscle_group', '') or '').lower() in compound_muscles
+    )
+    total_sets = sum(ex.get('sets', 3) for ex in exercises)
+    rest_values = [
+        ex.get('rest_seconds', 60)
+        for ex in exercises if ex.get('rest_seconds')
+    ]
+    avg_rest = sum(rest_values) / len(rest_values) if rest_values else 60
+
+    if len(exercises) >= 6:
+        met += 0.3
+    if compound_count >= 3:
+        met += 0.5
+    if avg_rest < 60:
+        met += 0.5
+    if total_sets >= 20:
+        met += 0.3
+    if workout_type:
+        wt = workout_type.lower()
+        if 'hiit' in wt or 'circuit' in wt:
+            met += 1.5
+        elif 'cardio' in wt:
+            met += 1.0
+
+    return min(met, 8.0)
+
+
 # Semaphore to limit concurrent background generations (prevent overloading Gemini)
 _background_gen_semaphore = asyncio.Semaphore(10)
 
@@ -345,7 +392,7 @@ def normalize_exercise_numeric_fields(exercises: List[Dict[str, Any]]) -> List[D
 
 @router.post("/generate", response_model=Workout)
 @user_limiter.limit("15/minute")
-async def generate_workout(req: Request, request: GenerateWorkoutRequest, background_tasks: BackgroundTasks,
+async def generate_workout(req: Request = None, *, request: GenerateWorkoutRequest, background_tasks: BackgroundTasks,
     current_user: dict = Depends(get_current_user),
 ):
     """Generate a new workout for a user based on their preferences."""
@@ -1230,6 +1277,14 @@ async def generate_workout(req: Request, request: GenerateWorkoutRequest, backgr
                 detail=f"Failed to generate workout: {str(ai_error)}"
             )
 
+        # Compute estimated calories using MET-based formula
+        _user_weight_kg = float(user.get("weight_kg") or user.get("weight") or 70) if user else 70.0
+        _user_weight_kg = max(30.0, min(_user_weight_kg, 250.0))
+        _effective_duration = workout_data.get("estimated_duration_minutes") or request.duration_minutes or 45
+        _met = _estimate_workout_met(exercises, workout_type)
+        _estimated_calories = round(_met * _user_weight_kg * (_effective_duration / 60.0))
+        logger.info(f"[Calories] MET={_met:.1f}, weight={_user_weight_kg}kg, duration={_effective_duration}min -> {_estimated_calories} cal")
+
         workout_db_data = {
             "user_id": request.user_id,
             "gym_profile_id": gym_profile_id,  # Link workout to gym profile
@@ -1240,6 +1295,7 @@ async def generate_workout(req: Request, request: GenerateWorkoutRequest, backgr
             "scheduled_date": request.scheduled_date or datetime.now().isoformat(),
             "exercises_json": exercises,
             "duration_minutes": request.duration_minutes or 45,
+            "estimated_calories": _estimated_calories,
             "generation_method": "ai",
             "generation_source": "gemini_generation",
         }

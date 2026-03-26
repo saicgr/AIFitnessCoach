@@ -43,8 +43,10 @@ import '../../data/providers/today_workout_provider.dart';
 
 class WorkoutDetailScreen extends ConsumerStatefulWidget {
   final String workoutId;
+  /// Optional pre-loaded workout to display immediately while refreshing.
+  final Workout? initialWorkout;
 
-  const WorkoutDetailScreen({super.key, required this.workoutId});
+  const WorkoutDetailScreen({super.key, required this.workoutId, this.initialWorkout});
 
   @override
   ConsumerState<WorkoutDetailScreen> createState() => _WorkoutDetailScreenState();
@@ -120,6 +122,11 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
   @override
   void initState() {
     super.initState();
+    // If we have an initial workout, show it immediately (no loading spinner)
+    if (widget.initialWorkout != null) {
+      _workout = widget.initialWorkout;
+      _isLoading = false;
+    }
     _loadWorkout();
   }
 
@@ -1547,7 +1554,7 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
                 children: [
                   _StatCard(
                     icon: Icons.timer_outlined,
-                    value: '${workout.durationMinutes ?? 45}',
+                    value: '${workout.bestDurationMinutes}',
                     label: 'min',
                     color: accentColor,
                   ),

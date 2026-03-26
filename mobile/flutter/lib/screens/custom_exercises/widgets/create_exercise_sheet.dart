@@ -1,10 +1,14 @@
+import 'dart:convert';
+import 'dart:io';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:image_picker/image_picker.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/providers/custom_exercises_provider.dart';
 import '../../../data/models/custom_exercise.dart';
+import '../../../data/services/api_client.dart';
 import '../../../data/services/haptic_service.dart';
 import '../../../widgets/segmented_tab_bar.dart';
 
@@ -41,6 +45,9 @@ class _CreateExerciseSheetState extends ConsumerState<CreateExerciseSheet>
   int _componentReps = 10;
 
   bool _isSubmitting = false;
+  File? _selectedImage;
+  bool _isAnalyzing = false;
+  final _imagePicker = ImagePicker();
 
   final List<String> _muscleGroups = [
     'chest', 'back', 'shoulders', 'biceps', 'triceps',
@@ -176,6 +183,10 @@ class _CreateExerciseSheetState extends ConsumerState<CreateExerciseSheet>
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Photo section
+            _buildPhotoSection(isDark, cyan),
+            const SizedBox(height: 20),
+
             // Name field
             _buildLabel('Exercise Name', isDark),
             const SizedBox(height: 8),
@@ -477,6 +488,268 @@ class _CreateExerciseSheetState extends ConsumerState<CreateExerciseSheet>
         ],
       ),
     );
+  }
+
+  Widget _buildPhotoSection(bool isDark, Color cyan) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildLabel('Photo (optional)', isDark),
+        const SizedBox(height: 8),
+        GestureDetector(
+          onTap: _selectedImage == null ? () => _showImageSourceSheet() : null,
+          child: Container(
+            width: double.infinity,
+            height: 180,
+            decoration: BoxDecoration(
+              color: isDark ? AppColors.surface : AppColorsLight.surface,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: isDark
+                    ? Colors.white.withValues(alpha: 0.15)
+                    : Colors.black.withValues(alpha: 0.12),
+                width: 1.5,
+                style: BorderStyle.solid,
+              ),
+            ),
+            child: _selectedImage != null
+                ? Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(11),
+                        child: Image.file(
+                          _selectedImage!,
+                          fit: BoxFit.cover,
+                        ),
+                      ),
+                      Positioned(
+                        top: 8,
+                        right: 8,
+                        child: GestureDetector(
+                          onTap: () {
+                            HapticService.light();
+                            setState(() => _selectedImage = null);
+                          },
+                          child: Container(
+                            padding: const EdgeInsets.all(6),
+                            decoration: BoxDecoration(
+                              color: Colors.black.withValues(alpha: 0.6),
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: const Icon(
+                              Icons.close,
+                              color: Colors.white,
+                              size: 18,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  )
+                : CustomPaint(
+                    painter: _DashedBorderPainter(
+                      color: isDark
+                          ? Colors.white.withValues(alpha: 0.2)
+                          : Colors.black.withValues(alpha: 0.15),
+                      borderRadius: 12,
+                    ),
+                    child: Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.camera_alt_outlined,
+                            size: 40,
+                            color: isDark
+                                ? AppColors.textMuted
+                                : AppColorsLight.textMuted,
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            'Add Photo',
+                            style: TextStyle(
+                              color: isDark
+                                  ? AppColors.textMuted
+                                  : AppColorsLight.textMuted,
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+          ),
+        ),
+        if (_selectedImage != null) ...[
+          const SizedBox(height: 12),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              onPressed: _isAnalyzing ? null : _analyzeWithAI,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: cyan.withValues(alpha: 0.15),
+                foregroundColor: cyan,
+                elevation: 0,
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  side: BorderSide(color: cyan.withValues(alpha: 0.3)),
+                ),
+              ),
+              icon: _isAnalyzing
+                  ? SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: cyan,
+                      ),
+                    )
+                  : Icon(Icons.auto_awesome, size: 18, color: cyan),
+              label: Text(
+                _isAnalyzing ? 'Analyzing...' : 'Analyze with AI',
+                style: TextStyle(
+                  fontWeight: FontWeight.w600,
+                  fontSize: 14,
+                  color: cyan,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+
+  void _showImageSourceSheet() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: isDark ? AppColors.elevated : AppColorsLight.pureWhite,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (ctx) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                leading: const Icon(Icons.camera_alt),
+                title: const Text('Take Photo'),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  _pickImage(ImageSource.camera);
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.photo_library),
+                title: const Text('Choose from Gallery'),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  _pickImage(ImageSource.gallery);
+                },
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _pickImage(ImageSource source) async {
+    try {
+      final picked = await _imagePicker.pickImage(
+        source: source,
+        maxWidth: 1024,
+        maxHeight: 1024,
+        imageQuality: 85,
+      );
+      if (picked != null) {
+        setState(() => _selectedImage = File(picked.path));
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to pick image: $e')),
+        );
+      }
+    }
+  }
+
+  Future<void> _analyzeWithAI() async {
+    if (_selectedImage == null) return;
+
+    setState(() => _isAnalyzing = true);
+
+    try {
+      final apiClient = ref.read(apiClientProvider);
+      final userId = await apiClient.getUserId();
+      if (userId == null) {
+        throw Exception('User not authenticated');
+      }
+
+      final bytes = await _selectedImage!.readAsBytes();
+      final base64Image = base64Encode(bytes);
+
+      final response = await apiClient.post(
+        '/custom-exercises/$userId/analyze-photo',
+        data: {'image_base64': base64Image},
+      );
+
+      final data = response.data as Map<String, dynamic>;
+
+      setState(() {
+        if (data['name'] != null) {
+          _nameController.text = data['name'] as String;
+        }
+        if (data['primary_muscle'] != null) {
+          final muscle = (data['primary_muscle'] as String).toLowerCase();
+          if (_muscleGroups.contains(muscle)) {
+            _primaryMuscle = muscle;
+          }
+        }
+        if (data['equipment'] != null) {
+          final equip = (data['equipment'] as String).toLowerCase();
+          if (_equipmentOptions.contains(equip)) {
+            _equipment = equip;
+          }
+        }
+        if (data['is_compound'] != null) {
+          _isCompound = data['is_compound'] as bool;
+        }
+        if (data['instructions'] != null) {
+          _instructionsController.text = data['instructions'] as String;
+        }
+      });
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('AI filled exercise details — review and save'),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to analyze photo: $e'),
+            behavior: SnackBarBehavior.floating,
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isAnalyzing = false);
+      }
+    }
   }
 
   Widget _buildLabel(String text, bool isDark) {
@@ -855,4 +1128,51 @@ class _CreateExerciseSheetState extends ConsumerState<CreateExerciseSheet>
       Navigator.pop(context);
     }
   }
+}
+
+/// Custom painter for a dashed border effect on the photo placeholder.
+class _DashedBorderPainter extends CustomPainter {
+  final Color color;
+  final double borderRadius;
+  final double dashWidth;
+  final double dashGap;
+  final double strokeWidth;
+
+  _DashedBorderPainter({
+    required this.color,
+    this.borderRadius = 12,
+    this.dashWidth = 6,
+    this.dashGap = 4,
+    this.strokeWidth = 1.5,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..strokeWidth = strokeWidth
+      ..style = PaintingStyle.stroke;
+
+    final path = Path()
+      ..addRRect(RRect.fromRectAndRadius(
+        Rect.fromLTWH(0, 0, size.width, size.height),
+        Radius.circular(borderRadius),
+      ));
+
+    final dashPath = Path();
+    for (final metric in path.computeMetrics()) {
+      double distance = 0;
+      while (distance < metric.length) {
+        final end = (distance + dashWidth).clamp(0, metric.length).toDouble();
+        dashPath.addPath(metric.extractPath(distance, end), Offset.zero);
+        distance += dashWidth + dashGap;
+      }
+    }
+
+    canvas.drawPath(dashPath, paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant _DashedBorderPainter oldDelegate) =>
+      color != oldDelegate.color || borderRadius != oldDelegate.borderRadius;
 }

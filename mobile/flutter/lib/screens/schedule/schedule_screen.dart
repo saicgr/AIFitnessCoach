@@ -1453,7 +1453,7 @@ class _AgendaWorkoutCard extends StatelessWidget {
                           Icon(Icons.timer_outlined, size: 14, color: colors.textMuted),
                           const SizedBox(width: 4),
                           Text(
-                            '${workout.durationMinutes ?? 45} min',
+                            '${workout.bestDurationMinutes} min',
                             style: TextStyle(
                               fontSize: 13,
                               color: colors.textMuted,

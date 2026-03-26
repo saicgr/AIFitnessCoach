@@ -488,6 +488,9 @@ class FoodSearchService {
   // Stream controller for real-time search updates
   final _searchController = StreamController<FoodSearchState>.broadcast();
 
+  // Last emitted state — replayed to late subscribers so broadcast events aren't lost
+  FoodSearchState? _lastEmittedState;
+
   // AI review stream + timer
   final _reviewController = StreamController<FoodReview?>.broadcast();
   Timer? _reviewTimer;
@@ -510,8 +513,21 @@ class FoodSearchService {
   })  : _nutritionRepository = nutritionRepository,
         _apiClient = apiClient;
 
-  /// Stream of search states for UI binding
-  Stream<FoodSearchState> get searchStream => _searchController.stream;
+  /// Stream of search states for UI binding.
+  /// Replays the last emitted state to new subscribers so they don't miss
+  /// events emitted before they subscribed (broadcast stream limitation).
+  Stream<FoodSearchState> get searchStream async* {
+    if (_lastEmittedState != null) {
+      yield _lastEmittedState!;
+    }
+    yield* _searchController.stream;
+  }
+
+  /// Emit a search state and cache it for late subscribers.
+  void _emit(FoodSearchState state) {
+    _lastEmittedState = state;
+    _searchController.add(state);
+  }
 
   /// Stream of AI review states
   Stream<FoodReview?> get reviewStream => _reviewController.stream;
@@ -602,7 +618,7 @@ class FoodSearchService {
 
     // Empty query - return to initial state
     if (normalizedQuery.isEmpty) {
-      _searchController.add(const FoodSearchInitial());
+      _emit(const FoodSearchInitial());
       return;
     }
 
@@ -616,7 +632,7 @@ class FoodSearchService {
     final cachedEntry = _cache[cacheKey];
     if (cachedEntry != null && !cachedEntry.isExpired) {
       debugPrint('FoodSearch: Cache hit for "$normalizedQuery"');
-      _searchController.add(FoodSearchResults(
+      _emit(FoodSearchResults(
         query: normalizedQuery,
         saved: cachedEntry.results.saved,
         recent: cachedEntry.results.recent,
@@ -632,17 +648,17 @@ class FoodSearchService {
     if (cachedLogs != null && cachedLogs.isNotEmpty) {
       final instantRecent = _filterRecentFoodsSync(normalizedQuery, cachedLogs);
       if (instantRecent.isNotEmpty) {
-        _searchController.add(FoodSearchResults(
+        _emit(FoodSearchResults(
           query: normalizedQuery,
           recent: instantRecent,
           saved: const [],
           foodDatabase: const [],
         ));
       } else {
-        _searchController.add(FoodSearchLoading(normalizedQuery));
+        _emit(FoodSearchLoading(normalizedQuery));
       }
     } else {
-      _searchController.add(FoodSearchLoading(normalizedQuery));
+      _emit(FoodSearchLoading(normalizedQuery));
     }
 
     // Debounce the backend API call
@@ -662,7 +678,7 @@ class FoodSearchService {
     final cacheKey = _cacheKey(normalizedQuery);
     final cachedEntry = _cache[cacheKey];
     if (cachedEntry != null && !cachedEntry.isExpired) {
-      _searchController.add(FoodSearchResults(
+      _emit(FoodSearchResults(
         query: normalizedQuery,
         saved: cachedEntry.results.saved,
         recent: cachedEntry.results.recent,
@@ -674,7 +690,7 @@ class FoodSearchService {
       return;
     }
 
-    _searchController.add(FoodSearchLoading(normalizedQuery));
+    _emit(FoodSearchLoading(normalizedQuery));
     _performSearch(normalizedQuery, userId, cachedLogs: cachedLogs);
   }
 
@@ -735,10 +751,11 @@ class FoodSearchService {
     final foodDatabaseResults = results[1];
 
     // Split food DB results: saved foods (source='saved'/'saved_item') vs curated DB
+    // Backend serializes source as 'data_type' (Pydantic field name)
     final savedResults = <FoodSearchResult>[];
     final dbResults = <FoodSearchResult>[];
     for (final r in foodDatabaseResults) {
-      final sourceStr = r.originalData?['source'] as String? ?? '';
+      final sourceStr = r.originalData?['data_type'] as String? ?? r.originalData?['source'] as String? ?? '';
       if (sourceStr == 'saved' || sourceStr == 'saved_item') {
         savedResults.add(FoodSearchResult(
           id: r.id,
@@ -773,7 +790,7 @@ class FoodSearchService {
     _addToCache(_cacheKey(query), searchResults);
 
     // Emit results (only emit error if ALL sources returned empty AND we know the DB call threw)
-    _searchController.add(searchResults);
+    _emit(searchResults);
   }
 
   /// Bigram similarity for typo-tolerant matching (e.g. "aaple" → "apple")
@@ -852,7 +869,8 @@ class FoodSearchService {
       final List<dynamic> foods = response.data['foods'] ?? [];
       return foods.map((item) {
         final nutrients = item['nutrients'] as Map<String, dynamic>? ?? {};
-        final sourceStr = item['source'] as String? ?? '';
+        // Backend serializes source as 'data_type' (Pydantic field name)
+        final sourceStr = item['data_type'] as String? ?? item['source'] as String? ?? '';
         final isPersonal = sourceStr == 'saved' || sourceStr == 'saved_item';
         final calsPer100 = (nutrients['calories_per_100g'] as num?)?.toDouble() ?? 0;
         final protPer100 = (nutrients['protein_per_100g'] as num?)?.toDouble();
@@ -1196,7 +1214,7 @@ class FoodSearchService {
 
     _debounceTimer?.cancel();
     _currentQuery = normalizedText;
-    _searchController.add(FoodSearchNLLoading(normalizedText));
+    _emit(FoodSearchNLLoading(normalizedText));
 
     try {
       final response = await _nutritionRepository.analyzeText(normalizedText);
@@ -1205,11 +1223,11 @@ class FoodSearchService {
       if (_currentQuery != normalizedText) return;
 
       final result = FoodAnalysisResult.fromJson(response);
-      _searchController.add(FoodSearchNLResults(query: normalizedText, result: result));
+      _emit(FoodSearchNLResults(query: normalizedText, result: result));
     } catch (e) {
       if (_currentQuery != normalizedText) return;
       debugPrint('FoodSearch: NL analysis error: $e');
-      _searchController.add(FoodSearchNLError('Analysis failed. Please try again.', normalizedText));
+      _emit(FoodSearchNLError('Analysis failed. Please try again.', normalizedText));
     }
   }
 

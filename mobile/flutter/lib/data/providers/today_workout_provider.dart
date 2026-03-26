@@ -83,6 +83,10 @@ class TodayWorkoutNotifier extends StateNotifier<AsyncValue<TodayWorkoutResponse
       // Still fetch fresh data in background silently
       _fetchFromApi(showLoading: false);
     } else {
+      // No in-memory cache — try persistent cache first (shows stale data instantly
+      // instead of a loading spinner, then silently refreshes from API).
+      // This is especially important after cold app start (e.g. opening app in morning)
+      // where the Render backend may take 10-30s to warm up.
       _loadWithCacheFirst();
     }
   }

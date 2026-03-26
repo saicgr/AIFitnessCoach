@@ -19,6 +19,7 @@ import '../screens/coming_soon/coming_soon_screen.dart';
 import '../screens/home/home_screen.dart';
 import '../screens/home/senior_home_screen.dart';
 import '../screens/library/library_screen.dart';
+import '../screens/library/screens/all_splits_screen.dart';
 import '../screens/nutrition/nutrition_screen.dart';
 import '../screens/nutrition/nutrition_settings_screen.dart';
 import '../screens/fasting/fasting_screen_redesigned.dart';
@@ -36,7 +37,9 @@ import '../screens/onboarding/training_split_screen.dart';
 import '../screens/onboarding/weight_projection_screen.dart';
 import '../screens/onboarding/workout_generation_screen.dart';
 import '../screens/profile/profile_screen.dart';
-import '../screens/summaries/weekly_summary_screen.dart';
+import '../screens/summaries/insights_screen.dart';
+import '../screens/summaries/insights_detail_screen.dart';
+import '../data/models/weekly_summary.dart';
 import '../data/services/saved_workouts_service.dart';
 import '../screens/social/social_screen.dart';
 import '../screens/social/shared_workout_detail_screen.dart';
@@ -49,11 +52,11 @@ import '../screens/workout/workout_summary_screen.dart';
 import '../screens/workout/exercise_detail_screen.dart';
 import '../screens/workout/custom_workout_builder_screen.dart';
 import '../screens/schedule/schedule_screen.dart';
+import '../screens/auth/intro_screen.dart';
 import '../screens/settings/settings_screen.dart';
 import '../screens/settings/pages/pages.dart';
 import '../screens/settings/ai_data_usage_screen.dart';
 import '../screens/settings/medical_disclaimer_screen.dart';
-import '../screens/settings/help_screen.dart';
 import '../screens/settings/exercise_preferences/my_exercises_screen.dart';
 import '../screens/settings/workout_history_import_screen.dart';
 import '../screens/settings/training/my_1rms_screen.dart';
@@ -93,9 +96,6 @@ import '../screens/custom_exercises/custom_exercises_screen.dart';
 // Avoided screens now accessed via unified MyExercisesScreen
 // import '../screens/settings/exercise_preferences/avoided_exercises_screen.dart';
 // import '../screens/settings/exercise_preferences/avoided_muscles_screen.dart';
-import '../screens/settings/support/support_tickets_screen.dart';
-import '../screens/settings/support/create_ticket_screen.dart';
-import '../screens/settings/support/ticket_detail_screen.dart';
 import '../screens/settings/subscription/subscription_history_screen.dart';
 import '../screens/settings/subscription/request_refund_screen.dart';
 import '../screens/settings/subscription/subscription_management_screen.dart';
@@ -110,8 +110,6 @@ import '../screens/demo/plan_preview_screen.dart';
 import '../screens/cardio/log_cardio_screen.dart';
 import '../screens/neat/neat_dashboard_screen.dart';
 import '../screens/live_chat/live_chat_screen.dart';
-import '../screens/admin_support/admin_support_list_screen.dart';
-import '../screens/admin_support/admin_chat_screen.dart';
 import '../screens/trophies/trophy_room_screen.dart';
 import '../screens/leaderboard/xp_leaderboard_screen.dart';
 import '../screens/rewards/rewards_screen.dart';
@@ -215,7 +213,7 @@ String? _handleLoadingState(GoRouterState state, AuthState authState, LanguageSt
   // Allow pre-auth screens to stay during loading (don't interrupt sign-in flow)
   const preAuthScreens = {
     '/how-it-works', '/pre-auth-quiz', '/sign-in', '/email-sign-in',
-    '/pricing-preview', '/demo-workout', '/plan-preview', '/stats-welcome',
+    '/pricing-preview', '/demo-workout', '/plan-preview', '/intro',
   };
   if (preAuthScreens.contains(loc)) return null;
 
@@ -232,7 +230,7 @@ String? _handleAuthError(GoRouterState state, AuthState authState) {
   // Allow other pre-auth pages to stay
   const preAuthScreens = {
     '/how-it-works', '/pre-auth-quiz', '/pricing-preview',
-    '/demo-workout', '/plan-preview', '/stats-welcome',
+    '/demo-workout', '/plan-preview', '/intro',
   };
   if (preAuthScreens.contains(loc)) return null;
 
@@ -319,12 +317,12 @@ String? _handleAuthRedirect(
       }
       return homeRoute;
     } else {
-      return '/stats-welcome';
+      return '/intro';
     }
   }
 
   // Stats welcome - allow if not logged in, redirect if logged in
-  if (loc == '/stats-welcome') {
+  if (loc == '/intro') {
     if (isLoggedIn) {
       final user = authState.user;
       if (user != null) {
@@ -367,44 +365,44 @@ String? _handleAuthRedirect(
 
   // Personal info - auth required
   if (loc == '/personal-info') {
-    return isLoggedIn ? null : '/stats-welcome';
+    return isLoggedIn ? null : '/intro';
   }
 
   // Weight projection - auth required
   if (loc == '/weight-projection') {
-    return isLoggedIn ? null : '/stats-welcome';
+    return isLoggedIn ? null : '/intro';
   }
 
   // Training split - auth required
   if (loc == '/training-split') {
-    return isLoggedIn ? null : '/stats-welcome';
+    return isLoggedIn ? null : '/intro';
   }
 
   // AI consent - auth required
   if (loc == '/ai-consent') {
-    return isLoggedIn ? null : '/stats-welcome';
+    return isLoggedIn ? null : '/intro';
   }
 
   // Health disclaimer - auth required
   if (loc == '/health-disclaimer') {
-    return isLoggedIn ? null : '/stats-welcome';
+    return isLoggedIn ? null : '/intro';
   }
 
   // Coach selection - auth required (also used for changing coach from settings)
   if (loc == '/coach-selection') {
-    return isLoggedIn ? null : '/stats-welcome';
+    return isLoggedIn ? null : '/intro';
   }
 
   // New onboarding education screens - auth required
   if (loc == '/accuracy-intro' || loc == '/health-connect-setup' || loc == '/feature-showcase') {
-    return isLoggedIn ? null : '/stats-welcome';
+    return isLoggedIn ? null : '/intro';
   }
 
   // Paywall screens - allow if user hasn't completed paywall yet
   // Subscription success screen - always allow for logged-in users
   // (paywall is already marked complete by the time we navigate here)
   if (loc == '/subscription-success') {
-    return isLoggedIn ? null : '/stats-welcome';
+    return isLoggedIn ? null : '/intro';
   }
 
   const paywallScreens = {'/paywall-features', '/paywall-timeline', '/paywall-pricing'};
@@ -414,7 +412,7 @@ String? _handleAuthRedirect(
       if (user != null && !user.isPaywallComplete) return null;
       return homeRoute;
     }
-    return '/stats-welcome';
+    return '/intro';
   }
 
   // Allow onboarding-related routes
@@ -424,7 +422,7 @@ String? _handleAuthRedirect(
 
   // Not logged in -> redirect to stats-welcome
   if (!isLoggedIn) {
-    return '/stats-welcome';
+    return '/intro';
   }
 
   // Redirect /home <-> /senior-home based on accessibility mode
@@ -504,8 +502,8 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
 
       GoRoute(
-        path: '/stats-welcome',
-        builder: (context, state) => const StatsWelcomeScreen(),
+        path: '/intro',
+        builder: (context, state) => const IntroScreen(),
       ),
 
       // How It Works - explains the 3-step onboarding journey before quiz
@@ -648,14 +646,14 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
 
       // Guest routes removed - guest mode is disabled
-      // /guest-home and /guest-library redirected to /stats-welcome for any stale links
+      // /guest-home and /guest-library redirected to /intro for any stale links
       GoRoute(
         path: '/guest-home',
-        redirect: (context, state) => '/stats-welcome',
+        redirect: (context, state) => '/intro',
       ),
       GoRoute(
         path: '/guest-library',
-        redirect: (context, state) => '/stats-welcome',
+        redirect: (context, state) => '/intro',
       ),
 
       // Pre-Auth Quiz - 5 questions before sign-in
@@ -1169,20 +1167,6 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const LiveChatScreen(),
       ),
 
-      // Admin Support - List of support chats (admin only)
-      GoRoute(
-        path: '/admin-support',
-        builder: (context, state) => const AdminSupportListScreen(),
-      ),
-
-      // Admin Support - Chat detail (admin only)
-      GoRoute(
-        path: '/admin-support/chat/:ticketId',
-        builder: (context, state) {
-          final ticketId = state.pathParameters['ticketId'] ?? '';
-          return AdminChatScreen(ticketId: ticketId);
-        },
-      ),
 
       // === Workout Routes ===
 
@@ -1190,7 +1174,8 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/workout/:id',
         builder: (context, state) {
           final workoutId = state.pathParameters['id'] ?? '';
-          return WorkoutDetailScreen(workoutId: workoutId);
+          final initialWorkout = state.extra is Workout ? state.extra as Workout : null;
+          return WorkoutDetailScreen(workoutId: workoutId, initialWorkout: initialWorkout);
         },
       ),
 
@@ -1526,6 +1511,15 @@ final routerProvider = Provider<GoRouter>((ref) {
         },
       ),
 
+      // All Training Splits - grid view with category filters
+      GoRoute(
+        path: '/library/splits',
+        builder: (context, state) {
+          final category = state.uri.queryParameters['category'];
+          return AllSplitsScreen(initialCategory: category);
+        },
+      ),
+
       // Hydration — redirect to Nutrition screen's Water tab
       GoRoute(
         path: '/hydration',
@@ -1567,10 +1561,17 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const NeatDashboardScreen(),
       ),
 
-      // Weekly Summaries
+      // Insights (formerly Weekly Summaries)
       GoRoute(
         path: '/summaries',
-        builder: (context, state) => const WeeklySummaryScreen(),
+        builder: (context, state) => const InsightsScreen(),
+      ),
+      GoRoute(
+        path: '/insights/detail',
+        builder: (context, state) {
+          final summary = state.extra as WeeklySummary;
+          return InsightsDetailScreen(summary: summary);
+        },
       ),
 
       // Health Metrics Dashboard
@@ -1698,33 +1699,6 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
 
       // Help & Support
-      GoRoute(
-        path: '/help',
-        builder: (context, state) => const HelpScreen(),
-      ),
-
-      // Support Tickets - List all user tickets
-      GoRoute(
-        path: '/support-tickets',
-        builder: (context, state) => const SupportTicketsScreen(),
-      ),
-
-      // Support Tickets - Create new ticket
-      GoRoute(
-        path: '/support-tickets/create',
-        builder: (context, state) => CreateTicketScreen(
-          initialCategory: state.extra as String?,
-        ),
-      ),
-
-      // Support Tickets - View ticket detail
-      GoRoute(
-        path: '/support-tickets/:id',
-        builder: (context, state) {
-          final ticketId = state.pathParameters['id'] ?? '';
-          return TicketDetailScreen(ticketId: ticketId);
-        },
-      ),
 
       // AI Settings
       GoRoute(

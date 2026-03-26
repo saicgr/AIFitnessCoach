@@ -50,6 +50,8 @@ class Workout extends Equatable {
   final int? durationMinutesMax;
   @JsonKey(name: 'estimated_duration_minutes')
   final int? estimatedDurationMinutes;
+  @JsonKey(name: 'estimated_calories')
+  final int? estimatedCaloriesStored;
   @JsonKey(name: 'generation_method')
   final String? generationMethod;
   @JsonKey(name: 'generation_metadata', fromJson: _parseGenerationMetadata)
@@ -84,6 +86,7 @@ class Workout extends Equatable {
     this.durationMinutesMin,
     this.durationMinutesMax,
     this.estimatedDurationMinutes,
+    this.estimatedCaloriesStored,
     this.generationMethod,
     this.generationMetadata,
     this.createdAt,
@@ -167,8 +170,62 @@ class Workout extends Equatable {
   /// Check if workout has a challenge exercise
   bool get hasChallenge => challengeExercise != null;
 
-  /// Calculate estimated calories (6 cal/min)
-  int get estimatedCalories => (durationMinutes ?? 0) * 6;
+  /// Best available duration: AI-estimated > user-requested > 45 default
+  int get bestDurationMinutes =>
+      estimatedDurationMinutes ?? durationMinutes ?? 45;
+
+  /// Calorie estimate: prefer server-computed, fallback to MET-based calculation
+  int get estimatedCalories {
+    if (estimatedCaloriesStored != null && estimatedCaloriesStored! > 0) {
+      return estimatedCaloriesStored!;
+    }
+    final minutes = bestDurationMinutes;
+    if (minutes <= 0) return 0;
+    final met = _estimateMET();
+    return (met * 70.0 * (minutes / 60.0)).round();
+  }
+
+  double _estimateMET() {
+    final exList = exercises;
+    if (exList.isEmpty) return 3.5;
+
+    const compoundMuscles = {
+      'full_body', 'legs', 'back', 'chest', 'glutes',
+      'quadriceps', 'hamstrings', 'shoulders',
+    };
+    int compoundCount = 0;
+    int totalSets = 0;
+    double restSum = 0;
+    int restCount = 0;
+
+    for (final ex in exList) {
+      totalSets += ex.sets;
+      if (ex.restSeconds > 0) {
+        restSum += ex.restSeconds;
+        restCount++;
+      }
+      if (compoundMuscles.contains((ex.primaryMuscle ?? '').toLowerCase())) {
+        compoundCount++;
+      }
+    }
+
+    final avgRest = restCount > 0 ? restSum / restCount : 60.0;
+
+    double met = 3.5;
+    if (exList.length >= 6) met += 0.3;
+    if (compoundCount >= 3) met += 0.5;
+    if (avgRest < 60) met += 0.5;
+    if (totalSets >= 20) met += 0.3;
+
+    final wt = (type ?? '').toLowerCase();
+    if (wt.contains('hiit') || wt.contains('circuit')) {
+      met += 1.5;
+    } else if (wt.contains('cardio')) {
+      met += 1.0;
+    }
+
+    return met.clamp(3.0, 8.0);
+  }
 
   /// Get formatted duration display (e.g., "~38m" if estimated, "45-60m" or "45m" otherwise)
   String get formattedDurationShort {
@@ -283,6 +340,7 @@ class Workout extends Equatable {
         isCompleted,
         exercisesJson,
         durationMinutes,
+        estimatedCaloriesStored,
         generationMetadata,
         completedAt,
         completionMethod,
@@ -301,6 +359,7 @@ class Workout extends Equatable {
     bool? isCompleted,
     dynamic exercisesJson,
     int? durationMinutes,
+    int? estimatedCaloriesStored,
     String? generationMethod,
     Map<String, dynamic>? generationMetadata,
     String? createdAt,
@@ -321,6 +380,7 @@ class Workout extends Equatable {
       isCompleted: isCompleted ?? this.isCompleted,
       exercisesJson: exercisesJson ?? this.exercisesJson,
       durationMinutes: durationMinutes ?? this.durationMinutes,
+      estimatedCaloriesStored: estimatedCaloriesStored ?? this.estimatedCaloriesStored,
       generationMethod: generationMethod ?? this.generationMethod,
       generationMetadata: generationMetadata ?? this.generationMetadata,
       createdAt: createdAt ?? this.createdAt,

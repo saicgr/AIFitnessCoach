@@ -241,7 +241,7 @@ def _fetch_ai_settings_batch(supabase, user_ids: List[str]) -> Dict[str, dict]:
     if not user_ids:
         return {}
     try:
-        result = supabase.client.table("ai_settings") \
+        result = supabase.client.table("user_ai_settings") \
             .select("user_id, coach_name, coaching_style, communication_tone, use_emojis, encouragement_level") \
             .in_("user_id", user_ids[:500]) \
             .execute()
@@ -372,6 +372,7 @@ async def _send_nudge(
     # 6. Send FCM push
     fcm_token = user.get("fcm_token")
     if not fcm_token:
+        logger.debug(f"⏭️ [Nudge] Skipping {user_id} — no FCM token registered")
         return False
 
     context_dict["chat_message_id"] = str(chat_message_id) if chat_message_id else ""

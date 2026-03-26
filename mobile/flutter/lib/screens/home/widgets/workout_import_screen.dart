@@ -48,12 +48,20 @@ class _WorkoutImportContent extends ConsumerStatefulWidget {
 class _WorkoutImportContentState extends ConsumerState<_WorkoutImportContent> {
   int _currentIndex = 0;
   String _selectedDifficulty = 'intermediate';
+  String? _overrideActivityType;
+  final _nameController = TextEditingController();
   bool _hrEnriched = false;
 
   @override
   void initState() {
     super.initState();
     _triggerHREnrichment();
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    super.dispose();
   }
 
   void _triggerHREnrichment() {
@@ -134,9 +142,18 @@ class _WorkoutImportContentState extends ConsumerState<_WorkoutImportContent> {
 
   void _handleImport(PendingWorkoutImport pending) {
     HapticService.medium();
+    // Use overridden activity type if user changed it
+    final importPending = _overrideActivityType != null
+        ? pending.copyWithActivityType(_overrideActivityType!)
+        : pending;
+    final customName = _nameController.text.trim().isNotEmpty
+        ? _nameController.text.trim()
+        : null;
     ref
         .read(healthImportProvider.notifier)
-        .importAsNewWorkout(pending, _selectedDifficulty);
+        .importAsNewWorkout(importPending, _selectedDifficulty, customName: customName);
+    _nameController.clear();
+    _overrideActivityType = null;
   }
 
   void _handleSkip(PendingWorkoutImport pending) {
@@ -219,6 +236,66 @@ class _WorkoutImportContentState extends ConsumerState<_WorkoutImportContent> {
                         textMuted: textMuted,
                         cardBorder: cardBorder,
                         elevated: elevated,
+                      ),
+
+                      const SizedBox(height: 16),
+
+                      // -------- Workout name --------
+                      TextField(
+                        controller: _nameController,
+                        style: TextStyle(
+                          fontSize: 15,
+                          color: textPrimary,
+                          fontWeight: FontWeight.w600,
+                        ),
+                        decoration: InputDecoration(
+                          hintText: _activityLabel(
+                            _overrideActivityType ?? current.activityType,
+                          ),
+                          hintStyle: TextStyle(
+                            fontSize: 15,
+                            color: textMuted,
+                            fontWeight: FontWeight.w400,
+                          ),
+                          prefixIcon: Icon(Icons.edit_outlined, size: 18, color: textMuted),
+                          filled: true,
+                          fillColor: elevated,
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide(color: cardBorder),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide(color: cardBorder),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide(
+                              color: isDark ? AppColors.accent : AppColorsLight.accent,
+                            ),
+                          ),
+                          contentPadding: const EdgeInsets.symmetric(vertical: 12),
+                        ),
+                      ),
+
+                      const SizedBox(height: 16),
+
+                      // -------- Activity type selector --------
+                      Text(
+                        'What type of exercise?',
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                          color: textPrimary,
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      _buildActivityTypeSelector(
+                        current.activityType,
+                        isDark: isDark,
+                        textPrimary: textPrimary,
+                        textMuted: textMuted,
+                        cardBorder: cardBorder,
                       ),
 
                       const SizedBox(height: 20),
@@ -397,45 +474,64 @@ class _WorkoutImportContentState extends ConsumerState<_WorkoutImportContent> {
             ],
           ),
 
+          const SizedBox(height: 6),
+
+          // Date / time
+          Text(
+            _formatDateTime(workout.startTime),
+            style: TextStyle(fontSize: 12, color: textMuted),
+          ),
+
           const SizedBox(height: 14),
 
-          // Date / time row
-          _InfoRow(
-            icon: Icons.calendar_today_rounded,
-            text: _formatDateTime(workout.startTime),
-            textColor: textSecondary,
-          ),
-
-          const SizedBox(height: 8),
-
-          // Duration
-          _InfoRow(
-            icon: Icons.timer_outlined,
-            text: _formatDuration(workout.durationMinutes),
-            textColor: textSecondary,
-          ),
-
-          // Calories
-          if (workout.caloriesBurned != null) ...[
-            const SizedBox(height: 8),
-            _InfoRow(
-              icon: Icons.local_fire_department_outlined,
-              text: '${workout.caloriesBurned!.round()} cal burned',
-              textColor: textSecondary,
+          // Stats row (Distance | Duration | Calories)
+          Container(
+            padding: const EdgeInsets.symmetric(vertical: 14),
+            decoration: BoxDecoration(
+              color: typeColor.withValues(alpha: 0.08),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: typeColor.withValues(alpha: 0.15)),
             ),
-          ],
-
-          // Distance
-          if (workout.distanceMeters != null &&
-              workout.distanceMeters! > 0) ...[
-            const SizedBox(height: 8),
-            _InfoRow(
-              icon: Icons.straighten_rounded,
-              text:
-                  '${(workout.distanceMeters! / 1000).toStringAsFixed(2)} km',
-              textColor: textSecondary,
+            child: IntrinsicHeight(
+              child: Row(
+                children: [
+                  if (workout.distanceMeters != null && workout.distanceMeters! > 0)
+                    Expanded(
+                      child: _StatColumn(
+                        label: 'Distance',
+                        value: workout.distanceMeters! >= 1000
+                            ? '${(workout.distanceMeters! / 1000).toStringAsFixed(1)} km'
+                            : '${workout.distanceMeters!.round()} m',
+                        textPrimary: textPrimary,
+                        textMuted: textMuted,
+                      ),
+                    ),
+                  if (workout.distanceMeters != null && workout.distanceMeters! > 0)
+                    VerticalDivider(width: 1, thickness: 1, color: cardBorder),
+                  Expanded(
+                    child: _StatColumn(
+                      label: 'Duration',
+                      value: _formatDuration(workout.durationMinutes),
+                      textPrimary: textPrimary,
+                      textMuted: textMuted,
+                    ),
+                  ),
+                  if (workout.caloriesBurned != null) ...[
+                    VerticalDivider(width: 1, thickness: 1, color: cardBorder),
+                    Expanded(
+                      child: _StatColumn(
+                        label: 'Calories',
+                        value: '${workout.caloriesBurned!.round()}',
+                        suffix: 'kcal',
+                        textPrimary: textPrimary,
+                        textMuted: textMuted,
+                      ),
+                    ),
+                  ],
+                ],
+              ),
             ),
-          ],
+          ),
 
           // Heart rate summary (lazy-loaded via enrichment)
           if (workout.avgHeartRate != null) ...[
@@ -509,6 +605,78 @@ class _WorkoutImportContentState extends ConsumerState<_WorkoutImportContent> {
           ],
         ),
       ],
+    );
+  }
+
+  // ===================================================================
+  // ACTIVITY TYPE SELECTOR
+  // ===================================================================
+
+  static const _activityTypes = [
+    ('walking', Icons.directions_walk, 'Walking'),
+    ('running', Icons.directions_run, 'Running'),
+    ('cycling', Icons.directions_bike, 'Cycling'),
+    ('strength', Icons.fitness_center, 'Weights'),
+    ('hiit', Icons.local_fire_department, 'HIIT'),
+    ('flexibility', Icons.self_improvement, 'Yoga'),
+    ('swimming', Icons.pool, 'Swimming'),
+    ('cardio', Icons.favorite, 'Other'),
+  ];
+
+  Widget _buildActivityTypeSelector(
+    String detectedType, {
+    required bool isDark,
+    required Color textPrimary,
+    required Color textMuted,
+    required Color cardBorder,
+  }) {
+    final activeType = _overrideActivityType ?? detectedType;
+    final accentColor = AppColors.getWorkoutTypeColor(activeType);
+
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: _activityTypes.map((entry) {
+        final (type, icon, label) = entry;
+        final isSelected = activeType == type;
+        return GestureDetector(
+          onTap: () {
+            HapticService.selection();
+            setState(() => _overrideActivityType = type);
+          },
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 150),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            decoration: BoxDecoration(
+              color: isSelected
+                  ? accentColor.withValues(alpha: 0.15)
+                  : Colors.transparent,
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(
+                color: isSelected
+                    ? accentColor.withValues(alpha: 0.6)
+                    : cardBorder,
+              ),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(icon, size: 16,
+                    color: isSelected ? accentColor : textMuted),
+                const SizedBox(width: 6),
+                Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                    color: isSelected ? accentColor : textMuted,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      }).toList(),
     );
   }
 
@@ -656,6 +824,58 @@ class _WorkoutImportContentState extends ConsumerState<_WorkoutImportContent> {
 // ---------------------------------------------------------------------------
 // Helper widget: icon + text row
 // ---------------------------------------------------------------------------
+
+class _StatColumn extends StatelessWidget {
+  final String label;
+  final String value;
+  final String? suffix;
+  final Color textPrimary;
+  final Color textMuted;
+
+  const _StatColumn({
+    required this.label,
+    required this.value,
+    this.suffix,
+    required this.textPrimary,
+    required this.textMuted,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          label,
+          style: TextStyle(fontSize: 11, color: textMuted, fontWeight: FontWeight.w500),
+        ),
+        const SizedBox(height: 4),
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.baseline,
+          textBaseline: TextBaseline.alphabetic,
+          children: [
+            Text(
+              value,
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.w800,
+                color: textPrimary,
+              ),
+            ),
+            if (suffix != null) ...[
+              const SizedBox(width: 3),
+              Text(
+                suffix!,
+                style: TextStyle(fontSize: 12, color: textMuted),
+              ),
+            ],
+          ],
+        ),
+      ],
+    );
+  }
+}
 
 class _InfoRow extends StatelessWidget {
   final IconData icon;

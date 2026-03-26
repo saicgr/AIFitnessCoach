@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../data/services/notification_service.dart';
-import '../../../widgets/glass_sheet.dart';
 import '../widgets/widgets.dart';
 
 class NotificationsSection extends StatelessWidget {
@@ -48,46 +47,6 @@ class _NotificationsCardState extends ConsumerState<_NotificationsCard> {
       ),
       child: Column(
         children: [
-          // ─── AI Coach ─────────────────────
-          InkWell(
-            onTap: () => _showAccountabilitySheet(context, ref, isDark, textMuted, cardBorder),
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Icon(Icons.sports, size: 20, color: AppColors.warning),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'AI Coach',
-                              style: TextStyle(
-                                fontSize: 15,
-                                fontWeight: FontWeight.w600,
-                                color: isDark ? Colors.white : Colors.black87,
-                              ),
-                            ),
-                            Text(
-                              _intensityLabel(notifPrefs.accountabilityIntensity),
-                              style: TextStyle(fontSize: 12, color: textMuted),
-                            ),
-                          ],
-                        ),
-                      ),
-                      Icon(Icons.chevron_right, color: textMuted, size: 20),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ),
-          Divider(height: 1, color: cardBorder, indent: 16),
-
           // ─── Reminders ─────────────────────
           // Workout Reminders
           _buildNotificationToggleWithTime(
@@ -272,100 +231,6 @@ class _NotificationsCardState extends ConsumerState<_NotificationsCard> {
           ),
         ],
       ),
-    );
-  }
-
-  String _intensityLabel(String intensity) {
-    switch (intensity) {
-      case 'gentle': return 'Gentle — light nudges';
-      case 'balanced': return 'Balanced — nudges + meal + habits';
-      case 'tough_love': return 'Tough — escalating nudges';
-      case 'off': return 'Off';
-      default: return intensity;
-    }
-  }
-
-  void _showAccountabilitySheet(
-    BuildContext context, WidgetRef ref, bool isDark, Color textMuted, Color cardBorder,
-  ) {
-    showGlassSheet(
-      context: context,
-      builder: (ctx) => GlassSheet(
-        child: StatefulBuilder(
-          builder: (sheetCtx, setSheetState) {
-            // Re-read prefs inside StatefulBuilder for reactivity
-            return Consumer(
-              builder: (_, ref, __) {
-                final prefs = ref.watch(notificationPreferencesProvider);
-                return Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 4, 20, 0),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'AI Coach Settings',
-                        style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
-                      ),
-                      const SizedBox(height: 16),
-
-                      // Intensity selector
-                      Text('Intensity', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: textMuted)),
-                      const SizedBox(height: 8),
-                      SegmentedButton<String>(
-                        showSelectedIcon: false,
-                        segments: const [
-                          ButtonSegment(value: 'gentle', label: Text('Gentle', style: TextStyle(fontSize: 11))),
-                          ButtonSegment(value: 'balanced', label: Text('Balanced', style: TextStyle(fontSize: 11))),
-                          ButtonSegment(value: 'tough_love', label: Text('Tough', style: TextStyle(fontSize: 11))),
-                          ButtonSegment(value: 'off', label: Text('Off', style: TextStyle(fontSize: 11))),
-                        ],
-                        selected: {prefs.accountabilityIntensity},
-                        onSelectionChanged: (values) {
-                          ref.read(notificationPreferencesProvider.notifier).setAccountabilityIntensity(values.first);
-                        },
-                        style: ButtonStyle(visualDensity: VisualDensity.compact),
-                      ),
-                      const SizedBox(height: 16),
-
-                      // Individual toggles
-                      Divider(height: 1, color: cardBorder),
-                      _sheetToggle('AI-Personalized Messages', 'Match your coach\'s personality', Icons.auto_awesome, AppColors.purple,
-                        prefs.aiPersonalizedNudges, (v) => ref.read(notificationPreferencesProvider.notifier).setAiPersonalizedNudges(v)),
-                      Divider(height: 1, color: cardBorder),
-                      _sheetToggle('Missed Workout Nudge', 'Remind by evening if you skip', Icons.alarm, AppColors.error,
-                        prefs.missedWorkoutNudge, (v) => ref.read(notificationPreferencesProvider.notifier).setMissedWorkoutNudge(v)),
-                      Divider(height: 1, color: cardBorder),
-                      _sheetToggle('Post-Workout Meal', 'Refuel reminder after training', Icons.lunch_dining, AppColors.success,
-                        prefs.postWorkoutMealReminder, (v) => ref.read(notificationPreferencesProvider.notifier).setPostWorkoutMealReminder(v)),
-                      Divider(height: 1, color: cardBorder),
-                      _sheetToggle('Habit Reminders', 'Evening check-in for habits', Icons.checklist, AppColors.cyan,
-                        prefs.habitReminders, (v) => ref.read(notificationPreferencesProvider.notifier).setHabitReminders(v)),
-                      Divider(height: 1, color: cardBorder),
-                      _sheetToggle('Streak Celebrations', 'Celebrate streak milestones', Icons.celebration, AppColors.warning,
-                        prefs.streakCelebration, (v) => ref.read(notificationPreferencesProvider.notifier).setStreakCelebration(v)),
-                      const SizedBox(height: 8),
-                    ],
-                  ),
-                );
-              },
-            );
-          },
-        ),
-      ),
-    );
-  }
-
-  Widget _sheetToggle(String title, String subtitle, IconData icon, Color iconColor, bool value, ValueChanged<bool> onChanged) {
-    return SwitchListTile(
-      secondary: Icon(icon, color: value ? iconColor : Colors.grey, size: 20),
-      title: Text(title, style: const TextStyle(fontSize: 14)),
-      subtitle: Text(subtitle, style: const TextStyle(fontSize: 11)),
-      value: value,
-      activeThumbColor: AppColors.cyan,
-      dense: true,
-      contentPadding: EdgeInsets.zero,
-      onChanged: onChanged,
     );
   }
 

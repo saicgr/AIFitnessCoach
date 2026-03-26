@@ -241,6 +241,7 @@ class _QuickActionsSheetState extends ConsumerState<_QuickActionsSheet> {
   Widget _buildNormalMode(BuildContext context, bool isDark) {
     final textColor = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final accentColor = isDark ? AppColors.teal : AppColorsLight.teal;
     final pinnedActions = ref.watch(pinnedQuickActionsProvider);
     final isSearching = _searchQuery.isNotEmpty;
 
@@ -338,6 +339,76 @@ class _QuickActionsSheetState extends ConsumerState<_QuickActionsSheet> {
                       ),
                     ),
                   ],
+                ),
+              ),
+
+              const SizedBox(height: 12),
+
+              // Two-row toggle for home screen shortcut bar
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8),
+                child: GestureDetector(
+                  onTap: () {
+                    HapticFeedback.lightImpact();
+                    ref.read(quickActionsExpandedProvider.notifier).toggle();
+                  },
+                  behavior: HitTestBehavior.opaque,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                    decoration: BoxDecoration(
+                      color: isDark
+                          ? Colors.white.withValues(alpha: 0.06)
+                          : Colors.black.withValues(alpha: 0.04),
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(
+                        color: isDark
+                            ? Colors.white.withValues(alpha: 0.08)
+                            : Colors.black.withValues(alpha: 0.05),
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          ref.watch(quickActionsExpandedProvider)
+                              ? Icons.view_column_rounded
+                              : Icons.view_stream_rounded,
+                          size: 18,
+                          color: ref.watch(quickActionsExpandedProvider)
+                              ? accentColor
+                              : textMuted,
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Show two rows',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w500,
+                                  color: textColor,
+                                ),
+                              ),
+                              Text(
+                                'Display extra shortcuts on home',
+                                style: TextStyle(fontSize: 11, color: textMuted),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Switch.adaptive(
+                          value: ref.watch(quickActionsExpandedProvider),
+                          onChanged: (_) {
+                            HapticFeedback.lightImpact();
+                            ref.read(quickActionsExpandedProvider.notifier).toggle();
+                          },
+                          activeColor: accentColor,
+                          materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
               ),
 
@@ -472,39 +543,6 @@ class _QuickActionsSheetState extends ConsumerState<_QuickActionsSheet> {
               child: Text(
                 'Drag to reorder. Top 4 appear in your shortcut bar.',
                 style: TextStyle(fontSize: 13, color: textMuted),
-              ),
-            ),
-            // Two-row toggle
-            Padding(
-              padding: const EdgeInsets.fromLTRB(8, 0, 8, 8),
-              child: Container(
-                decoration: BoxDecoration(
-                  color: isDark
-                      ? Colors.white.withValues(alpha: 0.06)
-                      : Colors.black.withValues(alpha: 0.04),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: SwitchListTile.adaptive(
-                  dense: true,
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 12),
-                  title: Text(
-                    'Show two rows',
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                      color: textColor,
-                    ),
-                  ),
-                  subtitle: Text(
-                    'Display extra shortcuts on home',
-                    style: TextStyle(fontSize: 12, color: textMuted),
-                  ),
-                  value: ref.watch(quickActionsExpandedProvider),
-                  onChanged: (_) {
-                    HapticFeedback.lightImpact();
-                    ref.read(quickActionsExpandedProvider.notifier).toggle();
-                  },
-                ),
               ),
             ),
             // Reorderable list in a constrained height container

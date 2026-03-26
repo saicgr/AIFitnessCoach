@@ -215,25 +215,34 @@ class _FitWizAppState extends ConsumerState<FitWizApp> {
     debugPrint('🔔 [App] Notification preferences sync callback configured');
   }
 
-  /// Register FCM token with backend when user authenticates
+  /// Register FCM token with backend when user authenticates.
+  /// Retries up to 3 times with exponential backoff (2s, 4s, 8s)
+  /// to handle cases where the token isn't ready yet.
   Future<void> _registerFcmToken() async {
-    try {
-      final authState = ref.read(authStateProvider);
-      if (authState.user == null) return;
+    final authState = ref.read(authStateProvider);
+    if (authState.user == null) return;
 
-      final notificationService = ref.read(notificationServiceProvider);
-      final apiClient = ref.read(apiClientProvider);
-      final userId = authState.user!.id;
+    final notificationService = ref.read(notificationServiceProvider);
+    final apiClient = ref.read(apiClientProvider);
+    final userId = authState.user!.id;
 
-      final success = await notificationService.registerTokenWithBackend(apiClient, userId);
-      if (success) {
-        debugPrint('🔔 [App] FCM token registered with backend on login');
-      } else {
-        debugPrint('⚠️ [App] Failed to register FCM token (may not be available yet)');
+    const maxAttempts = 3;
+    for (var attempt = 1; attempt <= maxAttempts; attempt++) {
+      try {
+        final success = await notificationService.registerTokenWithBackend(apiClient, userId);
+        if (success) {
+          debugPrint('🔔 [App] FCM token registered with backend on login (attempt $attempt)');
+          return;
+        }
+        debugPrint('⚠️ [App] FCM token not available yet (attempt $attempt/$maxAttempts)');
+      } catch (e) {
+        debugPrint('❌ [App] Error registering FCM token (attempt $attempt/$maxAttempts): $e');
       }
-    } catch (e) {
-      debugPrint('❌ [App] Error registering FCM token: $e');
+      if (attempt < maxAttempts) {
+        await Future.delayed(Duration(seconds: 1 << attempt)); // 2s, 4s
+      }
     }
+    debugPrint('❌ [App] FCM token registration failed after $maxAttempts attempts');
   }
 
   void _setupNotificationStorageCallback() {
@@ -321,18 +330,7 @@ class _FitWizAppState extends ConsumerState<FitWizApp> {
         case 'live_chat_message':
         case 'live_chat_connected':
         case 'live_chat_ended':
-          // Check if user is admin - route to admin support, otherwise live chat
-          final isAdmin = ref.read(isAdminProvider);
-          if (isAdmin) {
-            router.push('/admin-support');
-          } else {
-            router.push('/live-chat');
-          }
-          break;
-        case 'admin_new_chat':
-        case 'admin_new_message':
-          // Admin-specific notifications - route to admin support
-          router.push('/admin-support');
+          router.push('/live-chat');
           break;
         default:
           // Handle schedule_reminder:$itemId payload format

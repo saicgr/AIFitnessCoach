@@ -948,6 +948,104 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     }
   }
 
+  void _showReplayTutorialsSheet(BuildContext context, WidgetRef ref, bool isDark) {
+    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+
+    const tours = [
+      ('nav_tour', 'Home Navigation', 'Home screen walkthrough', Icons.home_outlined),
+      ('workout_tour', 'Active Workout', 'Workout screen walkthrough', Icons.fitness_center),
+      ('nutrition_tour', 'Nutrition Tracking', 'Nutrition screen walkthrough', Icons.restaurant_outlined),
+      ('schedule_tour', 'Workout Schedule', 'Schedule screen walkthrough', Icons.calendar_today_outlined),
+      ('profile_tour', 'Profile', 'Profile screen walkthrough', Icons.person_outline),
+    ];
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: isDark ? AppColors.pureBlack : AppColorsLight.pureWhite,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(
+                  width: 36, height: 4,
+                  decoration: BoxDecoration(
+                    color: textMuted.withValues(alpha: 0.3),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Text('Replay Tutorials', style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: textPrimary)),
+              const SizedBox(height: 4),
+              Text('Tap a tutorial to replay it next time you visit that screen', style: TextStyle(fontSize: 13, color: textMuted)),
+              const SizedBox(height: 16),
+              ...tours.map((tour) {
+                final (tourId, label, subtitle, icon) = tour;
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 4),
+                  child: ListTile(
+                    dense: true,
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 8),
+                    leading: Icon(icon, color: textMuted, size: 22),
+                    title: Text(label, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: textPrimary)),
+                    subtitle: Text(subtitle, style: TextStyle(fontSize: 12, color: textMuted)),
+                    trailing: TextButton(
+                      onPressed: () async {
+                        final prefs = await SharedPreferences.getInstance();
+                        await prefs.remove('has_seen_$tourId');
+                        ref.read(appTourControllerProvider.notifier).dismiss();
+                        if (ctx.mounted) {
+                          Navigator.pop(ctx);
+                          AppSnackBar.info(context, '$label tutorial will replay on next visit');
+                        }
+                      },
+                      child: Text('Replay', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+                    ),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    tileColor: elevated.withValues(alpha: 0.5),
+                  ),
+                );
+              }),
+              const SizedBox(height: 8),
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton(
+                  onPressed: () async {
+                    final prefs = await SharedPreferences.getInstance();
+                    for (final tour in tours) {
+                      await prefs.remove('has_seen_${tour.$1}');
+                    }
+                    ref.read(appTourControllerProvider.notifier).dismiss();
+                    if (ctx.mounted) {
+                      Navigator.pop(ctx);
+                      AppSnackBar.info(context, 'All tutorials will replay on next visit');
+                    }
+                  },
+                  style: OutlinedButton.styleFrom(
+                    side: BorderSide(color: cardBorder),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                  ),
+                  child: Text('Reset All Tutorials', style: TextStyle(fontSize: 14, color: textPrimary)),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   void _showAboutDialog(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
@@ -1181,12 +1279,12 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         label: 'HELP & SUPPORT',
         rows: [
           _SettingsRow(
-            icon: Icons.confirmation_number_outlined,
+            icon: Icons.email_outlined,
             iconColor: isDark ? AppColors.cyan : AppColorsLight.cyan,
-            title: 'Support',
-            value: 'Tickets & help',
-            route: '/support-tickets',
-            sectionKeys: const ['help_center', 'report_issue'],
+            title: 'Contact Support',
+            value: AppLinks.supportEmail,
+            sectionKeys: const ['help_center', 'report_issue', 'support'],
+            onTap: () => _launchExternalUrl('mailto:${AppLinks.supportEmail}?subject=FitWiz Support Request'),
           ),
           _SettingsRow(
             icon: Icons.lightbulb_outline,
@@ -1200,24 +1298,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             icon: Icons.play_circle_outline_rounded,
             iconColor: isDark ? AppColors.orange : AppColorsLight.orange,
             title: 'Replay Tutorials',
-            value: 'Reset all app tours',
+            value: 'Choose which tour to replay',
             sectionKeys: const ['tutorial', 'help_center'],
-            onTap: () async {
-              final prefs = await SharedPreferences.getInstance();
-              // Reset remaining tour keys (nav_tour + workout_tour)
-              const tourKeys = [
-                'has_seen_nav_tour',
-                'has_seen_workout_tour',
-              ];
-              for (final key in tourKeys) {
-                await prefs.remove(key);
-              }
-              ref.read(appTourControllerProvider.notifier).dismiss();
-              if (context.mounted) {
-                context.go('/home');
-                AppSnackBar.info(context, 'Tutorials have been reset. They will replay on the home and workout screens.');
-              }
-            },
+            onTap: () => _showReplayTutorialsSheet(context, ref, isDark),
           ),
         ],
       ),
@@ -1243,14 +1326,14 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             iconColor: textMuted,
             title: 'Privacy Policy',
             sectionKeys: const ['privacy_policy', 'support'],
-            onTap: () => _launchExternalUrl('https://fitwiz.app/privacy'),
+            onTap: () => _launchExternalUrl(AppLinks.privacyPolicy),
           ),
           _SettingsRow(
             icon: Icons.description_outlined,
             iconColor: textMuted,
             title: 'Terms of Service',
             sectionKeys: const ['terms_of_service', 'support'],
-            onTap: () => _launchExternalUrl('https://fitwiz.app/terms'),
+            onTap: () => _launchExternalUrl(AppLinks.termsOfService),
           ),
           _SettingsRow(
             icon: Icons.star_outline,
@@ -1262,19 +1345,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   ? (AppLinks.appStore.isNotEmpty ? AppLinks.appStore : 'https://apps.apple.com/app/fitwiz')
                   : AppLinks.playStore,
             ),
-          ),
-        ],
-      ),
-      _SettingsSection(
-        label: 'COMMUNITY',
-        rows: [
-          _SettingsRow(
-            icon: Icons.rocket_launch_outlined,
-            iconColor: isDark ? AppColors.orange : AppColorsLight.orange,
-            title: 'Coming Soon',
-            value: 'See what\'s next',
-            route: '/coming-soon',
-            sectionKeys: const ['coming_soon'],
           ),
         ],
       ),
@@ -1462,9 +1532,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   ),
                 ),
                 const SizedBox(width: 12),
-                // Help button circle
+                // Help button circle — opens email support directly
                 GestureDetector(
-                  onTap: () => context.push('/help'),
+                  onTap: () => _launchExternalUrl('mailto:${AppLinks.supportEmail}?subject=FitWiz Help'),
                   child: Container(
                     height: 44,
                     width: 44,

@@ -12,12 +12,18 @@ from fastapi import APIRouter, Depends, HTTPException, Query, UploadFile, File
 from pydantic import BaseModel, Field
 from typing import List, Optional, Dict, Any
 from datetime import datetime
+import base64
+import json
 import logging
 import uuid
 
+from google.genai import types
+
 from core.supabase_db import get_supabase_db
 from core.auth import get_current_user
+from core.config import get_settings
 from core.exceptions import safe_internal_error
+from core.gemini_client import get_genai_client
 from services.custom_exercise_media_service import get_custom_exercise_media_service
 
 logger = logging.getLogger(__name__)
@@ -123,6 +129,21 @@ class ExerciseSearchResult(BaseModel):
     image_url: Optional[str] = None
     is_custom: bool = False
     owner_user_id: Optional[str] = None
+
+
+class AnalyzePhotoRequest(BaseModel):
+    """Request to analyze an exercise/equipment photo with Gemini Vision."""
+    image_base64: str = Field(..., description="Base64 encoded image data (without data:image prefix)")
+
+
+class AnalyzePhotoResponse(BaseModel):
+    """Response from Gemini Vision exercise photo analysis."""
+    name: str = Field(..., description="Name of the exercise or equipment")
+    primary_muscle: str = Field(..., description="Primary muscle group targeted")
+    equipment: str = Field(..., description="Equipment type used")
+    is_compound: bool = Field(..., description="Whether the exercise is a compound movement")
+    instructions: str = Field(..., description="Step-by-step instructions for the exercise")
+    secondary_muscles: List[str] = Field(default_factory=list, description="Secondary muscle groups involved")
 
 
 class PresignedUploadResponse(BaseModel):
@@ -445,6 +466,134 @@ async def list_equipment_with_exercises(current_user: dict = Depends(get_current
 
     except Exception as e:
         logger.error(f"❌ Failed to list equipment: {e}")
+        raise safe_internal_error(e, "custom_exercises")
+
+
+# =============================================================================
+# Photo Analysis Endpoint (Gemini Vision)
+# =============================================================================
+
+VALID_MUSCLE_GROUPS = [
+    "chest", "back", "shoulders", "biceps", "triceps", "forearms",
+    "abs", "core", "quadriceps", "hamstrings", "glutes", "calves", "full body",
+]
+
+VALID_EQUIPMENT = [
+    "bodyweight", "dumbbell", "barbell", "kettlebell", "cable",
+    "machine", "resistance band", "medicine ball", "slam ball", "other",
+]
+
+
+@router.post("/{user_id}/analyze-photo", response_model=AnalyzePhotoResponse)
+async def analyze_exercise_photo(
+    user_id: str,
+    request: AnalyzePhotoRequest,
+    current_user: dict = Depends(get_current_user),
+):
+    """
+    Analyze a photo of an exercise or gym equipment using Gemini Vision.
+
+    Returns structured exercise details including name, target muscles,
+    equipment type, whether it's compound, and instructions.
+    """
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
+
+    prompt = f"""Analyze this image of an exercise or gym equipment. Identify what exercise is being performed
+or what machine/equipment is shown, and return structured JSON with exercise details.
+
+Return ONLY valid JSON with this exact structure:
+{{
+    "name": "exercise name (e.g., 'Lat Pulldown', 'Barbell Bench Press')",
+    "primary_muscle": "one of: {', '.join(VALID_MUSCLE_GROUPS)}",
+    "equipment": "one of: {', '.join(VALID_EQUIPMENT)}",
+    "is_compound": true or false,
+    "instructions": "Clear step-by-step instructions for performing this exercise (2-4 sentences)",
+    "secondary_muscles": ["list", "of", "secondary", "muscles"]
+}}
+
+Rules:
+- primary_muscle MUST be one of the valid muscle groups listed above
+- equipment MUST be one of the valid equipment types listed above
+- secondary_muscles entries MUST each be one of the valid muscle groups listed above
+- is_compound is true if the exercise works multiple joint/muscle groups
+- If you see a machine, identify the most common exercise performed on it
+- If the image is unclear, make your best reasonable guess based on what you can see
+"""
+
+    try:
+        logger.info(f"🔍 Analyzing exercise photo for user {user_id}")
+
+        # Decode base64 image
+        try:
+            image_bytes = base64.b64decode(request.image_base64)
+        except Exception:
+            raise HTTPException(status_code=400, detail="Invalid base64 image data")
+
+        # Create image part for Gemini
+        image_part = types.Part.from_bytes(
+            data=image_bytes,
+            mime_type="image/jpeg",
+        )
+
+        # Call Gemini Vision
+        settings = get_settings()
+        gemini_client = get_genai_client()
+
+        response = await gemini_client.aio.models.generate_content(
+            model=settings.gemini_model,
+            contents=[prompt, image_part],
+            config=types.GenerateContentConfig(
+                response_mime_type="application/json",
+                temperature=0.3,
+                max_output_tokens=1000,
+            ),
+        )
+
+        # Parse the response
+        content = response.text.strip()
+        try:
+            result = json.loads(content)
+        except json.JSONDecodeError as e:
+            logger.error(f"❌ Failed to parse Gemini response as JSON: {e}")
+            logger.error(f"Raw response: {content[:500]}")
+            raise HTTPException(status_code=502, detail="AI returned invalid response format")
+
+        # Validate and normalize primary_muscle
+        primary_muscle = result.get("primary_muscle", "").lower().strip()
+        if primary_muscle not in VALID_MUSCLE_GROUPS:
+            logger.warning(f"⚠️ Invalid primary_muscle '{primary_muscle}', defaulting to 'full body'")
+            primary_muscle = "full body"
+
+        # Validate and normalize equipment
+        equipment = result.get("equipment", "").lower().strip()
+        if equipment not in VALID_EQUIPMENT:
+            logger.warning(f"⚠️ Invalid equipment '{equipment}', defaulting to 'other'")
+            equipment = "other"
+
+        # Validate and normalize secondary_muscles
+        raw_secondary = result.get("secondary_muscles", [])
+        secondary_muscles = [
+            m.lower().strip() for m in raw_secondary
+            if isinstance(m, str) and m.lower().strip() in VALID_MUSCLE_GROUPS
+        ]
+
+        analysis = AnalyzePhotoResponse(
+            name=result.get("name", "Unknown Exercise"),
+            primary_muscle=primary_muscle,
+            equipment=equipment,
+            is_compound=bool(result.get("is_compound", False)),
+            instructions=result.get("instructions", "No instructions available."),
+            secondary_muscles=secondary_muscles,
+        )
+
+        logger.info(f"✅ Exercise photo analyzed: '{analysis.name}' (primary: {analysis.primary_muscle}, equipment: {analysis.equipment})")
+        return analysis
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"❌ Failed to analyze exercise photo: {e}")
         raise safe_internal_error(e, "custom_exercises")
 
 

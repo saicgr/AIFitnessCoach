@@ -199,8 +199,15 @@ class WorkoutRepository {
     }
   }
 
-  /// Get a single workout
+  /// Get a single workout.
+  /// Checks in-memory cache first for instant display, then fetches from API.
   Future<Workout?> getWorkout(String workoutId) async {
+    // Try in-memory cache first for instant display
+    if (_workoutsInMemoryCache != null) {
+      final cached = _workoutsInMemoryCache!.where((w) => w.id == workoutId).firstOrNull;
+      if (cached != null) return cached;
+    }
+
     try {
       final response = await _apiClient.get('${ApiConstants.workouts}/$workoutId');
       if (response.statusCode == 200) {

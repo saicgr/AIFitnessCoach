@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:url_launcher/url_launcher.dart';
 import '../../../core/constants/app_colors.dart';
 import '../widgets/widgets.dart';
 
@@ -46,13 +45,6 @@ class _AIPrivacySectionState extends State<AIPrivacySection> {
       setState(() {
         _aiProcessingEnabled = value;
       });
-    }
-  }
-
-  Future<void> _launchUrl(String url) async {
-    final uri = Uri.parse(url);
-    if (await canLaunchUrl(uri)) {
-      await launchUrl(uri, mode: LaunchMode.externalApplication);
     }
   }
 
@@ -156,34 +148,6 @@ class _AIPrivacySectionState extends State<AIPrivacySection> {
           cardBorder: cardBorder,
         ),
 
-        const SizedBox(height: 10),
-
-        // Privacy Policy & Terms
-        _buildNavigationTile(
-          icon: Icons.privacy_tip_outlined,
-          title: 'Privacy Policy',
-          subtitle: 'How we handle your data',
-          color: textMuted,
-          trailing: Icon(Icons.open_in_new, size: 16, color: textMuted),
-          onTap: () => _launchUrl('https://fitwiz.app/privacy'),
-          textPrimary: textPrimary,
-          textMuted: textMuted,
-          cardBorder: cardBorder,
-        ),
-
-        const SizedBox(height: 10),
-
-        _buildNavigationTile(
-          icon: Icons.description_outlined,
-          title: 'Terms of Service',
-          subtitle: 'Our terms and conditions',
-          color: textMuted,
-          trailing: Icon(Icons.open_in_new, size: 16, color: textMuted),
-          onTap: () => _launchUrl('https://fitwiz.app/terms'),
-          textPrimary: textPrimary,
-          textMuted: textMuted,
-          cardBorder: cardBorder,
-        ),
       ],
     );
   }

@@ -183,6 +183,7 @@ flutter:
   assets:
     - assets/icon/
     - assets/images/
+    - assets/images/intro/
     - assets/images/coaches/
     - assets/lottie/
     - assets/data/

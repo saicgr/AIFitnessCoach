@@ -8,6 +8,7 @@ import '../data/services/haptic_service.dart';
 import 'glass_sheet.dart';
 
 /// Result type from the staple choice sheet
+/// When [goBack] is true, the caller should re-open the exercise picker.
 typedef StapleChoiceResult = ({
   bool addToday,
   String section,
@@ -19,6 +20,7 @@ typedef StapleChoiceResult = ({
   int? userRestSeconds,
   double? userWeightLbs,
   List<int>? targetDays,
+  bool goBack,
 });
 
 /// Shows the staple choice sheet and returns the user's selection.
@@ -220,6 +222,7 @@ class _StapleChoiceSheetState extends ConsumerState<StapleChoiceSheet> {
   StapleChoiceResult _makeResult({
     required bool addToday,
     String? swapExerciseId,
+    bool goBack = false,
   }) {
     return (
       addToday: addToday,
@@ -232,6 +235,7 @@ class _StapleChoiceSheetState extends ConsumerState<StapleChoiceSheet> {
       userRestSeconds: _isStrength && _showStrengthParams ? int.tryParse(_restController.text) : null,
       userWeightLbs: _isStrength && _showStrengthParams ? double.tryParse(_weightController.text) : null,
       targetDays: _showDayPicker && _selectedDays.isNotEmpty ? (_selectedDays.toList()..sort()) : null,
+      goBack: goBack,
     );
   }
 
@@ -465,16 +469,30 @@ class _StapleChoiceSheetState extends ConsumerState<StapleChoiceSheet> {
                 textPrimary, textMuted, cardColor, cardBorder),
             const SizedBox(height: 16),
 
-            // Cancel button
-            TextButton(
-              onPressed: widget.onCancel,
-              child: Text(
-                'Cancel',
-                style: TextStyle(
-                  fontSize: 15,
-                  color: textMuted,
+            // Change exercise / Cancel row
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                TextButton.icon(
+                  onPressed: () {
+                    HapticService.light();
+                    Navigator.pop(context, _makeResult(addToday: false, goBack: true));
+                  },
+                  icon: Icon(Icons.swap_horiz, size: 18, color: textMuted),
+                  label: Text(
+                    'Change Exercise',
+                    style: TextStyle(fontSize: 14, color: textMuted),
+                  ),
                 ),
-              ),
+                const SizedBox(width: 12),
+                TextButton(
+                  onPressed: widget.onCancel,
+                  child: Text(
+                    'Cancel',
+                    style: TextStyle(fontSize: 14, color: textMuted),
+                  ),
+                ),
+              ],
             ),
           ],
         ),

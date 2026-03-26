@@ -3,6 +3,7 @@ import 'dart:io';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../core/constants/app_links.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
@@ -701,14 +702,14 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
   }
 
   Future<void> _openTermsOfService() async {
-    const url = 'https://fitwiz.app/terms';
+    const url = AppLinks.termsOfService;
     if (await canLaunchUrl(Uri.parse(url))) {
       await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
     }
   }
 
   Future<void> _openPrivacyPolicy() async {
-    const url = 'https://fitwiz.app/privacy';
+    const url = AppLinks.privacyPolicy;
     if (await canLaunchUrl(Uri.parse(url))) {
       await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
     }

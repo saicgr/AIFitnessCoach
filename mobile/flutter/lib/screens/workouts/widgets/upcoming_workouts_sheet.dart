@@ -391,7 +391,7 @@ class _UpcomingWorkoutsSheetState extends ConsumerState<_UpcomingWorkoutsSheet> 
         ),
         const SizedBox(height: 3),
         Text(
-          '${workout.durationMinutes ?? 45} min • ${workout.type?.toUpperCase() ?? 'STRENGTH'}',
+          '${workout.bestDurationMinutes} min • ${workout.type?.toUpperCase() ?? 'STRENGTH'}',
           style: TextStyle(
             fontSize: 12,
             color: textSecondary,

@@ -1397,6 +1397,12 @@ class _QuizBodyMetricsState extends State<QuizBodyMetrics> {
     final sliderColor = _getWeightChangeColor(_weightChangeAmount);
     final healthLabel = _getWeightChangeLabel(_weightChangeAmount);
 
+    // Quick-select amounts based on direction
+    final isLose = widget.weightDirection == 'lose';
+    final quickAmounts = _weightInMetric
+        ? (isLose ? [5.0, 10.0, 15.0, 20.0, 25.0] : [5.0, 10.0, 15.0, 20.0, 25.0])
+        : (isLose ? [10.0, 20.0, 30.0, 45.0, 55.0] : [10.0, 20.0, 30.0, 45.0, 55.0]);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -1407,6 +1413,9 @@ class _QuizBodyMetricsState extends State<QuizBodyMetrics> {
             thumbColor: sliderColor,
             overlayColor: sliderColor.withValues(alpha: 0.1),
             trackHeight: 6,
+            tickMarkShape: RoundSliderTickMarkShape(tickMarkRadius: 2),
+            activeTickMarkColor: Colors.white.withValues(alpha: 0.4),
+            inactiveTickMarkColor: sliderColor.withValues(alpha: 0.25),
           ),
           child: Slider(
             value: _weightChangeAmount.clamp(minAmount, maxAmount),
@@ -1439,6 +1448,55 @@ class _QuizBodyMetricsState extends State<QuizBodyMetrics> {
               Text('${maxAmount.round()} $unit', style: TextStyle(fontSize: 11, color: textSecondary)),
             ],
           ),
+        ),
+        const SizedBox(height: 10),
+        // Quick-select chips
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: quickAmounts
+              .where((v) => v <= maxAmount)
+              .map((amount) {
+            final isSelected = _weightChangeAmount.round() == amount.round();
+            final prefix = isLose ? '-' : '+';
+            return Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 3),
+              child: GestureDetector(
+                onTap: () {
+                  HapticFeedback.selectionClick();
+                  setState(() {
+                    _weightChangeAmount = amount;
+                  });
+                  widget.onWeightChangeAmountChanged?.call(_weightChangeAmount);
+                  if (widget.weightDirection != null) {
+                    _updateGoalWeight(widget.weightDirection!);
+                  }
+                },
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 150),
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: isSelected
+                        ? sliderColor.withValues(alpha: 0.2)
+                        : Colors.transparent,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                      color: isSelected
+                          ? sliderColor.withValues(alpha: 0.6)
+                          : cardBorder,
+                    ),
+                  ),
+                  child: Text(
+                    '$prefix${amount.round()}',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                      color: isSelected ? sliderColor : textSecondary,
+                    ),
+                  ),
+                ),
+              ),
+            );
+          }).toList(),
         ),
       ],
     );

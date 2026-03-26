@@ -21,6 +21,7 @@ Workout _$WorkoutFromJson(Map<String, dynamic> json) => Workout(
   durationMinutesMax: (json['duration_minutes_max'] as num?)?.toInt(),
   estimatedDurationMinutes: (json['estimated_duration_minutes'] as num?)
       ?.toInt(),
+  estimatedCaloriesStored: (json['estimated_calories'] as num?)?.toInt(),
   generationMethod: json['generation_method'] as String?,
   generationMetadata: _parseGenerationMetadata(json['generation_metadata']),
   createdAt: json['created_at'] as String?,
@@ -44,6 +45,7 @@ Map<String, dynamic> _$WorkoutToJson(Workout instance) => <String, dynamic>{
   'duration_minutes_min': instance.durationMinutesMin,
   'duration_minutes_max': instance.durationMinutesMax,
   'estimated_duration_minutes': instance.estimatedDurationMinutes,
+  'estimated_calories': instance.estimatedCaloriesStored,
   'generation_method': instance.generationMethod,
   'generation_metadata': instance.generationMetadata,
   'created_at': instance.createdAt,

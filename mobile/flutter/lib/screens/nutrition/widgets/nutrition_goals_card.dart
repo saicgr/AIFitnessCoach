@@ -139,56 +139,44 @@ class NutritionGoalsCard extends ConsumerWidget {
                 ),
               ],
               const Spacer(),
-              // Compact water display + edit + refresh
-              Flexible(
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    // Water display — must be Flexible so it shrinks on narrow screens
-                    Flexible(
-                      child: GestureDetector(
-                        onTap: onHydrationTap,
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              Icons.water_drop,
-                              size: 14,
-                              color: hydrationPct >= 0.75
-                                  ? electricBlue
-                                  : hydrationPct >= 0.25
-                                      ? electricBlue.withValues(alpha: 0.7)
-                                      : textMuted,
-                            ),
-                            const SizedBox(width: 3),
-                            Flexible(
-                              child: Text(
-                                _formatWaterAmount(currentMl, goalMl),
-                                style: TextStyle(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w600,
-                                  color: hydrationPct >= 0.75 ? electricBlue : textSecondary,
-                                ),
-                                overflow: TextOverflow.ellipsis,
-                                maxLines: 1,
-                              ),
-                            ),
-                          ],
+              // Water progress chip
+              GestureDetector(
+                onTap: onHydrationTap,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: (hydrationPct >= 0.75 ? electricBlue : textMuted).withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.water_drop, size: 12,
+                        color: hydrationPct >= 0.75 ? electricBlue
+                             : hydrationPct >= 0.25 ? electricBlue.withValues(alpha: 0.7)
+                             : textMuted),
+                      const SizedBox(width: 3),
+                      Text(
+                        _formatWaterAmount(currentMl, goalMl),
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                          color: hydrationPct >= 0.75 ? electricBlue : textSecondary,
                         ),
                       ),
-                    ),
-                    const SizedBox(width: 8),
-                    GestureDetector(
-                      onTap: onEdit,
-                      child: Icon(Icons.edit_outlined, size: 18, color: textMuted),
-                    ),
-                    const SizedBox(width: 8),
-                    GestureDetector(
-                      onTap: onRecalculate,
-                      child: Icon(Icons.refresh, size: 18, color: textMuted),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
+              ),
+              const SizedBox(width: 8),
+              GestureDetector(
+                onTap: onEdit,
+                child: Icon(Icons.edit_outlined, size: 18, color: textMuted),
+              ),
+              const SizedBox(width: 8),
+              GestureDetector(
+                onTap: onRecalculate,
+                child: Icon(Icons.refresh, size: 18, color: textMuted),
               ),
             ],
           ),
@@ -250,9 +238,15 @@ class NutritionGoalsCard extends ConsumerWidget {
                 prefs.primaryGoalEnum == NutritionGoal.buildMuscle)))) ...[
             const SizedBox(height: 8),
             Wrap(
-              spacing: 12,
+              spacing: 8,
               runSpacing: 4,
               children: [
+                if (hasGoal)
+                  _GoalChip(
+                    icon: null,
+                    label: _getGoalDisplayName(nutritionGoal),
+                    color: teal,
+                  ),
                 if (prefs.goalWeightKg != null)
                   _GoalChip(
                     icon: Icons.my_location_outlined,
@@ -271,12 +265,6 @@ class NutritionGoalsCard extends ConsumerWidget {
                   _GoalChip(
                     icon: Icons.trending_down_outlined,
                     label: _formatWeeklyRate(prefs.rateOfChange!),
-                    color: teal,
-                  ),
-                if (hasGoal)
-                  _GoalChip(
-                    icon: null,
-                    label: _getGoalDisplayName(nutritionGoal),
                     color: teal,
                   ),
               ],

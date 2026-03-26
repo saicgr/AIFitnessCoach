@@ -6610,9 +6610,23 @@ async def get_detailed_tdee(request: Request, user_id: str, days: int = Query(de
         calculation = tdee_service.calculate_tdee_with_confidence(food_logs, weight_logs, days)
 
         if not calculation:
-            raise HTTPException(
-                status_code=400,
-                detail="Insufficient data for TDEE calculation. Need at least 5 food logs and 2 weight entries."
+            return DetailedTDEEResponse(
+                tdee=0,
+                confidence_low=0,
+                confidence_high=0,
+                uncertainty_display="N/A",
+                uncertainty_calories=0,
+                data_quality_score=0.0,
+                weight_change_kg=0.0,
+                avg_daily_intake=0,
+                start_weight_kg=0.0,
+                end_weight_kg=0.0,
+                days_analyzed=days,
+                food_logs_count=len(food_logs),
+                weight_logs_count=len(weight_logs),
+                weight_trend={"status": "insufficient_data", "message": "Need at least 5 food logs and 2 weight entries"},
+                metabolic_adaptation=None,
+                confidence_level="insufficient_data",
             )
 
         # Get weight trend

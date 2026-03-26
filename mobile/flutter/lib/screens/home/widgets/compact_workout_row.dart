@@ -130,7 +130,7 @@ class CompactWorkoutRow extends ConsumerWidget {
                         ),
                         const SizedBox(height: 2),
                         Text(
-                          '${workout.durationMinutes ?? 45}min • ${workout.exerciseCount} exercises',
+                          '${workout.bestDurationMinutes}min • ${workout.exerciseCount} exercises',
                           style: TextStyle(
                             fontSize: 12,
                             color: textSecondary,

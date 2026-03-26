@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
+import '../../core/accessibility/accessibility_provider.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/animations/app_animations.dart';
@@ -1364,7 +1365,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     _processDailyLogin();
   }
 
-  /// Process daily login to award XP bonuses
+  /// Load XP data and initialize goals/streak tracking.
+  /// Daily login XP is already processed by app_router.dart on startup.
   Future<void> _processDailyLogin() async {
     try {
       final authState = ref.read(authStateProvider);
@@ -1373,31 +1375,22 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
 
       final xpNotifier = ref.read(xpProvider.notifier);
 
-      // First load user XP data so we have it available
+      // Load user XP data so we have it available
       await xpNotifier.loadAll(userId: userId);
 
-      // Then process daily login to award XP
-      final result = await xpNotifier.processDailyLogin();
+      // Load active XP events (Double XP, etc.)
+      await xpNotifier.loadActiveEvents();
 
-      if (result != null && mounted) {
-        // Load active XP events (Double XP, etc.)
-        await xpNotifier.loadActiveEvents();
+      // Initialize streak tracking for milestone detection
+      xpNotifier.initializeStreakTracking();
 
-        // Initialize streak tracking for milestone detection
-        xpNotifier.initializeStreakTracking();
+      // Initialize daily goals with login status
+      xpNotifier.initializeDailyGoals();
 
+      final loginStreak = ref.read(xpProvider).loginStreak;
+      if (loginStreak != null && mounted) {
         // Check for streak milestones (7, 30, 100, 365 days)
-        // This triggers celebration UI when user hits a milestone
-        xpNotifier.checkStreakMilestone(result.currentStreak);
-
-        // Initialize daily goals with login status
-        // This sets dailyGoals.loggedIn = true based on loginStreak.hasLoggedInToday
-        xpNotifier.initializeDailyGoals();
-
-        // Show celebration if significant XP was awarded
-        if (result.isSignificant && !result.alreadyClaimed) {
-          _showDailyLoginCelebration(result);
-        }
+        xpNotifier.checkStreakMilestone(loginStreak.currentStreak);
       }
     } catch (e) {
       debugPrint('❌ [Home] Error processing daily login: $e');
@@ -1834,6 +1827,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
         // Level up occurred - show celebration dialog
         WidgetsBinding.instance.addPostFrameCallback((_) {
           if (mounted) {
+            final showProg = ref.read(accessibilityProvider).showLevelUpProgression;
             showLevelUpDialog(
               context,
               next,
@@ -1841,6 +1835,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                 // Clear the level-up event after dialog is dismissed
                 ref.read(xpProvider.notifier).clearLevelUp();
               },
+              showProgression: showProg,
             );
           }
         });

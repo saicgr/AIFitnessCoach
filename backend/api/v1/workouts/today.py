@@ -403,7 +403,7 @@ async def auto_generate_workout(user_id: str, target_date: date, gym_profile_id:
 
         # Use the existing non-streaming generate_workout function
         # It handles all user preferences, gym profiles, AI generation, etc.
-        result = await generate_workout(request, background_tasks=BackgroundTasks())
+        result = await generate_workout(request=request, background_tasks=BackgroundTasks(), current_user={"id": user_id})
         logger.info(f"[BG-GEN] Successfully generated workout for {generation_key}: {result.name if result else 'unknown'}")
         return result
 

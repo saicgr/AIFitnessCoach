@@ -23,8 +23,6 @@ class HealthDevicesPage extends ConsumerWidget {
           padding: EdgeInsets.all(16),
           child: Column(
             children: [
-              NutritionFastingSection(),
-              SizedBox(height: 16),
               HealthSyncSection(),
               SizedBox(height: 16),
               BleHeartRateSection(),

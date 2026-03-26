@@ -13,7 +13,6 @@ import '../data/providers/guest_mode_provider.dart';
 import '../data/providers/guest_usage_limits_provider.dart';
 import '../data/services/deep_link_service.dart';
 import '../data/services/widget_action_service.dart';
-import '../screens/admin_support/admin_support_provider.dart';
 import '../screens/ai_settings/ai_settings_screen.dart';
 import '../screens/nutrition/quick_log_overlay.dart';
 import '../screens/workout/widgets/quick_workout_sheet.dart';
@@ -562,12 +561,13 @@ class _FloatingNavBarWithAI extends ConsumerWidget {
               ),
             ),
           ),
-          // Centered compact pill nav bar
+          // Centered compact pill nav bar — intrinsic width for tight fit
           Positioned(
-            left: 20,
-            right: 20,
+            left: 0,
+            right: 0,
             bottom: bottomPadding + 10,
-            child: Container(
+            child: Center(
+              child: Container(
               height: navBarHeight,
               padding: const EdgeInsets.symmetric(horizontal: 6),
               decoration: BoxDecoration(
@@ -582,8 +582,9 @@ class _FloatingNavBarWithAI extends ConsumerWidget {
                 ],
               ),
               child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                mainAxisSize: MainAxisSize.min,
                 children: [
+                  const SizedBox(width: 4),
                   _ExpandableNavItem(
                     icon: Icons.home_outlined,
                     selectedIcon: Icons.home_rounded,
@@ -594,6 +595,7 @@ class _FloatingNavBarWithAI extends ConsumerWidget {
                     mutedColor: iconMuted,
                     isDark: isDark,
                   ),
+                  const SizedBox(width: 8),
                   _ExpandableNavItem(
                     key: AppTourKeys.workoutNavKey,
                     icon: Icons.fitness_center_outlined,
@@ -605,6 +607,7 @@ class _FloatingNavBarWithAI extends ConsumerWidget {
                     mutedColor: iconMuted,
                     isDark: isDark,
                   ),
+                  const SizedBox(width: 8),
                   _ExpandableNavItem(
                     key: AppTourKeys.nutritionNavKey,
                     icon: Icons.restaurant_outlined,
@@ -616,6 +619,7 @@ class _FloatingNavBarWithAI extends ConsumerWidget {
                     mutedColor: iconMuted,
                     isDark: isDark,
                   ),
+                  const SizedBox(width: 8),
                   _ExpandableNavItem(
                     key: AppTourKeys.profileNavKey,
                     icon: Icons.person_outline,
@@ -627,8 +631,10 @@ class _FloatingNavBarWithAI extends ConsumerWidget {
                     mutedColor: iconMuted,
                     isDark: isDark,
                   ),
+                  const SizedBox(width: 4),
                 ],
               ),
+            ),
             ),
           ),
         ],
@@ -770,80 +776,6 @@ class _ProtrudingPlusButton extends StatelessWidget {
             color: iconColor,
             size: 28,
           ),
-        ),
-      ),
-    );
-  }
-}
-
-/// Admin support button - only visible for admin users
-class _AdminSupportButton extends ConsumerWidget {
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final isAdmin = ref.watch(isAdminProvider);
-    final unreadCount = ref.watch(adminUnreadCountProvider);
-
-    // Don't show for non-admin users
-    if (!isAdmin) return const SizedBox.shrink();
-
-    return Padding(
-      padding: const EdgeInsets.only(right: 8),
-      child: GestureDetector(
-        onTap: () {
-          HapticFeedback.mediumImpact();
-          context.push('/admin-support');
-        },
-        child: Stack(
-          clipBehavior: Clip.none,
-          children: [
-            Container(
-              width: 42,
-              height: 42,
-              decoration: BoxDecoration(
-                color: AppColors.warning,
-                borderRadius: BorderRadius.circular(21),
-                boxShadow: [
-                  BoxShadow(
-                    color: AppColors.warning.withOpacity(0.4),
-                    blurRadius: 10,
-                    offset: const Offset(0, 2),
-                    spreadRadius: 1,
-                  ),
-                ],
-              ),
-              child: const Center(
-                child: Icon(
-                  Icons.support_agent,
-                  color: Colors.white,
-                  size: 18,
-                ),
-              ),
-            ),
-            // Unread badge
-            if (unreadCount > 0)
-              Positioned(
-                top: -4,
-                right: -4,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
-                  decoration: BoxDecoration(
-                    color: AppColors.error,
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: AppColors.pureBlack, width: 2),
-                  ),
-                  constraints: const BoxConstraints(minWidth: 18),
-                  child: Text(
-                    unreadCount > 99 ? '99+' : '$unreadCount',
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 10,
-                      fontWeight: FontWeight.bold,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                ),
-              ),
-          ],
         ),
       ),
     );

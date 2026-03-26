@@ -84,6 +84,24 @@ class PendingWorkoutImport {
     );
   }
 
+  /// Return a copy with a different activity type (user override).
+  PendingWorkoutImport copyWithActivityType(String newType) {
+    return PendingWorkoutImport(
+      uuid: uuid,
+      activityType: newType,
+      startTime: startTime,
+      endTime: endTime,
+      durationMinutes: durationMinutes,
+      caloriesBurned: caloriesBurned,
+      distanceMeters: distanceMeters,
+      totalSteps: totalSteps,
+      sourceName: sourceName,
+      avgHeartRate: avgHeartRate,
+      maxHeartRate: maxHeartRate,
+      minHeartRate: minHeartRate,
+    );
+  }
+
   /// Map Health Connect activity type to FitWiz category.
   static String _mapActivityType(HealthWorkoutActivityType type) {
     switch (type) {

@@ -106,7 +106,9 @@ async def generate_weekly_summary(user_id: str, request: Request, week_start: Op
             "ai_generated_at": datetime.utcnow().isoformat()
         }
 
-        result = db.client.table("weekly_summaries").insert(summary_data).execute()
+        result = db.client.table("weekly_summaries").upsert(
+            summary_data, on_conflict="user_id,week_start"
+        ).execute()
 
         if not result.data:
             raise HTTPException(status_code=500, detail="Failed to create weekly summary")
@@ -363,8 +365,15 @@ async def _gather_week_stats(db, user_id: str, start_date: date, end_date: date)
         except Exception as e:
             logger.debug(f"Failed to parse exercises JSON: {e}")
 
-    # Estimate calories (rough: 5-8 cal/min for strength training)
-    calories_estimate = total_time * 6
+    # Estimate calories: use stored per-workout values when available, MET-based fallback
+    calories_estimate = 0
+    for w in completed:
+        stored_cal = w.get("estimated_calories")
+        if stored_cal and stored_cal > 0:
+            calories_estimate += stored_cal
+        else:
+            dur = w.get("estimated_duration_minutes") or w.get("duration_minutes", 0)
+            calories_estimate += round(3.5 * 70.0 * (dur / 60.0))
 
     # Get streak info
     streak_result = db.client.table("user_streaks").select("*").eq(
@@ -484,16 +493,18 @@ async def _gather_week_stats(db, user_id: str, start_date: date, end_date: date)
 
 
 async def _generate_ai_summary(
-    gemini_service, user_name: str, stats: dict, start_date: date, end_date: date
+    gemini_service, user_name: str, stats: dict, start_date: date, end_date: date,
+    period_label: str = "weekly"
 ) -> dict:
-    """Generate AI-powered summary content."""
+    """Generate AI-powered summary content for any time period."""
 
     # Build context for AI
     completion_rate = (stats["workouts_completed"] / stats["workouts_scheduled"] * 100) if stats["workouts_scheduled"] > 0 else 0
+    period_days = (end_date - start_date).days + 1
 
-    prompt = f"""You are a supportive AI fitness coach generating a weekly summary for {user_name}.
+    prompt = f"""You are a supportive AI fitness coach generating a {period_label} summary for {user_name}.
 
-Week: {start_date.strftime('%B %d')} - {end_date.strftime('%B %d, %Y')}
+Period: {start_date.strftime('%B %d')} - {end_date.strftime('%B %d, %Y')} ({period_days} days)
 
 Stats:
 - Workouts completed: {stats['workouts_completed']} / {stats['workouts_scheduled']} ({completion_rate:.0f}%)
@@ -510,14 +521,15 @@ Stats:
 - Mood distribution: {json.dumps(stats.get('mood_distribution', {})) if stats.get('mood_distribution') else "Not tracked"}
 
 Generate a JSON response with:
-1. "summary": A 2-3 sentence personalized summary of their week covering workouts, nutrition, and recovery
-2. "highlights": An array of 2-3 key highlights/accomplishments
+1. "summary": A 2-3 sentence personalized {period_label} summary covering workouts, nutrition, and recovery
+2. "highlights": An array of 2-3 key highlights/accomplishments for this period
 3. "encouragement": A motivational message (1-2 sentences)
-4. "next_week_tips": An array of 2-3 actionable tips for next week based on their data
+4. "next_period_tips": An array of 2-3 actionable tips for the next period based on their data
 
 Be warm, encouraging, and specific. Celebrate wins, acknowledge challenges.
 Reference their nutrition adherence and readiness data when available.
 If they missed workouts, be supportive not critical.
+Scale your analysis to the {period_label} timeframe — look for trends and patterns, not just individual events.
 
 Respond ONLY with valid JSON, no markdown."""
 
@@ -534,10 +546,10 @@ Respond ONLY with valid JSON, no markdown."""
         if json_match:
             ai_response = json.loads(json_match.group())
             return {
-                "summary": ai_response.get("summary", "Great job this week!"),
+                "summary": ai_response.get("summary", "Great job this period!"),
                 "highlights": ai_response.get("highlights", ["Stayed consistent"]),
                 "encouragement": ai_response.get("encouragement", "Keep up the great work!"),
-                "next_week_tips": ai_response.get("next_week_tips", ["Stay hydrated"])
+                "next_week_tips": ai_response.get("next_period_tips") or ai_response.get("next_week_tips", ["Stay hydrated"])
             }
 
     except Exception as e:
@@ -671,6 +683,33 @@ async def get_filtered_report(
 
         groups.append(group_data)
 
+    # Compute totals across all groups
+    totals = _compute_totals(groups)
+
+    # Compute previous period totals for trend comparison
+    previous_totals = None
+    try:
+        period_duration = (end - start).days
+        prev_end = start - timedelta(days=1)
+        prev_start = prev_end - timedelta(days=period_duration)
+        prev_stats = await _gather_week_stats(db, user_id, prev_start, prev_end)
+        previous_totals = {
+            "workouts_completed": prev_stats["workouts_completed"],
+            "workouts_scheduled": prev_stats["workouts_scheduled"],
+            "total_time_minutes": prev_stats["total_time_minutes"],
+            "total_calories": prev_stats["calories_burned_estimate"],
+            "total_exercises": prev_stats["total_exercises"],
+            "max_streak": prev_stats["current_streak"],
+            "total_prs": prev_stats["prs_achieved"],
+            "avg_nutrition_adherence": prev_stats.get("nutrition_adherence_pct"),
+            "avg_readiness": prev_stats.get("avg_readiness_score"),
+            "mood_distribution": prev_stats.get("mood_distribution"),
+            "weight_change_kg": prev_stats.get("measurement_changes", {}).get("weight_change_kg"),
+            "body_fat_change": prev_stats.get("measurement_changes", {}).get("body_fat_change"),
+        }
+    except Exception as e:
+        logger.debug(f"Failed to compute previous period totals: {e}")
+
     return {
         "user_id": user_id,
         "start_date": start_date,
@@ -681,4 +720,143 @@ async def get_filtered_report(
             "mood_filter": mood_filter,
         },
         "groups": groups,
+        "totals": totals,
+        "previous_totals": previous_totals,
     }
+
+
+def _compute_totals(groups: list) -> dict:
+    """Aggregate totals across all period groups."""
+    totals = {
+        "workouts_completed": 0,
+        "workouts_scheduled": 0,
+        "total_time_minutes": 0,
+        "total_calories": 0,
+        "total_exercises": 0,
+        "max_streak": 0,
+        "total_prs": 0,
+        "avg_nutrition_adherence": None,
+        "avg_readiness": None,
+        "mood_distribution": {},
+        "weight_change_kg": None,
+        "body_fat_change": None,
+    }
+
+    nutrition_values = []
+    readiness_values = []
+
+    for g in groups:
+        if "workouts" in g:
+            w = g["workouts"]
+            totals["workouts_completed"] += w.get("completed", 0)
+            totals["workouts_scheduled"] += w.get("scheduled", 0)
+            totals["total_time_minutes"] += w.get("time_minutes", 0)
+            totals["total_calories"] += w.get("calories", 0)
+            totals["total_exercises"] += w.get("exercises", 0)
+            totals["max_streak"] = max(totals["max_streak"], w.get("streak", 0))
+            totals["total_prs"] += w.get("prs", 0)
+
+        if "nutrition" in g and g["nutrition"].get("adherence_pct") is not None:
+            nutrition_values.append(g["nutrition"]["adherence_pct"])
+
+        if "readiness" in g:
+            r = g["readiness"]
+            if r.get("avg_score") is not None:
+                readiness_values.append(r["avg_score"])
+            if r.get("mood_distribution"):
+                for emoji, count in r["mood_distribution"].items():
+                    totals["mood_distribution"][emoji] = totals["mood_distribution"].get(emoji, 0) + count
+
+        if "measurements" in g:
+            m = g["measurements"]
+            if m.get("weight_change_kg") is not None:
+                totals["weight_change_kg"] = (totals["weight_change_kg"] or 0) + m["weight_change_kg"]
+            if m.get("body_fat_change") is not None:
+                totals["body_fat_change"] = (totals["body_fat_change"] or 0) + m["body_fat_change"]
+
+    if nutrition_values:
+        totals["avg_nutrition_adherence"] = round(sum(nutrition_values) / len(nutrition_values), 1)
+    if readiness_values:
+        totals["avg_readiness"] = round(sum(readiness_values) / len(readiness_values))
+
+    return totals
+
+
+# ============================================
+# On-Demand Insight Generation (any period)
+# ============================================
+
+@router.post("/user/{user_id}/generate-insight")
+@limiter.limit("5/minute")
+async def generate_period_insight(
+    user_id: str,
+    request: Request,
+    start_date: str,
+    end_date: str,
+    period_label: str = "monthly",
+    current_user: dict = Depends(get_current_user),
+):
+    """
+    Generate an AI-powered insight for an arbitrary date range.
+
+    Unlike weekly summaries, these are not persisted — they're generated on-demand.
+    """
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
+
+    try:
+        start = date.fromisoformat(start_date)
+        end = date.fromisoformat(end_date)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid date format. Use YYYY-MM-DD.")
+
+    if (end - start).days > 365:
+        raise HTTPException(status_code=400, detail="Maximum date range is 365 days.")
+
+    try:
+        db = get_supabase_db()
+        gemini_service = GeminiService()
+
+        # Get user info for personalization
+        user = db.get_user(user_id)
+        user_name = user.get("name", "there") if user else "there"
+
+        # Gather stats for the full range
+        stats = await _gather_week_stats(db, user_id, start, end)
+
+        # Generate AI content with the period label
+        ai_content = await _generate_ai_summary(
+            gemini_service, user_name, stats, start, end,
+            period_label=period_label,
+        )
+
+        return {
+            "user_id": user_id,
+            "start_date": start_date,
+            "end_date": end_date,
+            "period_label": period_label,
+            "summary": ai_content["summary"],
+            "highlights": ai_content["highlights"],
+            "encouragement": ai_content["encouragement"],
+            "tips": ai_content.get("next_week_tips", []),
+            "stats": {
+                "workouts_completed": stats["workouts_completed"],
+                "workouts_scheduled": stats["workouts_scheduled"],
+                "total_exercises": stats["total_exercises"],
+                "total_time_minutes": stats["total_time_minutes"],
+                "calories_burned_estimate": stats["calories_burned_estimate"],
+                "current_streak": stats["current_streak"],
+                "prs_achieved": stats["prs_achieved"],
+                "nutrition_adherence_pct": stats.get("nutrition_adherence_pct"),
+                "avg_readiness_score": stats.get("avg_readiness_score"),
+                "readiness_trend": stats.get("readiness_trend"),
+                "measurement_changes": stats.get("measurement_changes"),
+                "mood_distribution": stats.get("mood_distribution"),
+            },
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to generate period insight: {e}")
+        raise safe_internal_error(e, "generate_period_insight")

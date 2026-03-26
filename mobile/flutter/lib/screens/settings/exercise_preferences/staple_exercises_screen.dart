@@ -25,25 +25,29 @@ class StapleExercisesScreen extends ConsumerWidget {
   Future<void> _showAddExercisePicker(BuildContext context, WidgetRef ref) async {
     HapticFeedback.lightImpact();
 
-    final staplesState = ref.read(staplesProvider);
-    final excludeNames = staplesState.staples
-        .map((s) => s.exerciseName.toLowerCase())
-        .toSet();
+    // Loop allows user to go back from choice sheet to re-pick exercise
+    while (true) {
+      final staplesState = ref.read(staplesProvider);
+      final excludeNames = staplesState.staples
+          .map((s) => s.exerciseName.toLowerCase())
+          .toSet();
 
-    final result = await showExercisePickerSheet(
-      context,
-      ref,
-      type: ExercisePickerType.staple,
-      excludeExercises: excludeNames,
-    );
+      final result = await showExercisePickerSheet(
+        context,
+        ref,
+        type: ExercisePickerType.staple,
+        excludeExercises: excludeNames,
+      );
 
-    if (result != null && context.mounted) {
+      if (result == null || !context.mounted) return;
+
       // Show choice sheet before saving
       final choice = await showStapleChoiceSheet(
         context,
         exerciseName: result.exerciseName,
       );
       if (choice == null) return; // Cancelled
+      if (choice.goBack) continue; // Go back to picker
 
       final success = await ref.read(staplesProvider.notifier).addStaple(
         result.exerciseName,
@@ -74,6 +78,7 @@ class StapleExercisesScreen extends ConsumerWidget {
           ),
         );
       }
+      break; // Done — exit the picker loop
     }
   }
 

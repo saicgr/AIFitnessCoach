@@ -5,6 +5,8 @@ import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:url_launcher/url_launcher.dart';
+import '../../core/constants/app_links.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:ui';
@@ -1281,13 +1283,13 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                 leading: const Icon(Icons.bug_report, color: AppColors.orange),
                 title: const Text('Report a Problem'),
                 subtitle: Text(
-                  'Create a support ticket',
+                  'Email our support team',
                   style: TextStyle(fontSize: 12, color: textSecondary),
                 ),
                 onTap: () {
                   Navigator.pop(context);
                   HapticService.selection();
-                  context.push('/support-tickets/create');
+                  launchUrl(Uri.parse('mailto:${AppLinks.supportEmail}?subject=FitWiz Bug Report'), mode: LaunchMode.externalApplication);
                 },
               ),
               ListTile(
@@ -1523,13 +1525,13 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
               leading: const Icon(Icons.bug_report_outlined, color: AppColors.orange),
               title: const Text('Report a Problem'),
               subtitle: const Text(
-                'Submit a support ticket',
+                'Email our support team',
                 style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
               ),
               onTap: () {
                 Navigator.pop(context);
                 HapticService.selection();
-                context.push('/support-tickets/create');
+                launchUrl(Uri.parse('mailto:${AppLinks.supportEmail}?subject=FitWiz Bug Report'), mode: LaunchMode.externalApplication);
               },
             ),
             const Divider(height: 1, indent: 16, endIndent: 16),
