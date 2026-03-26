@@ -12,6 +12,8 @@ class FilterSection extends StatefulWidget {
   final Function(String) onToggle;
   final int initialShowCount;
   final bool initiallyExpanded;
+  /// Optional function to get an icon for each option (e.g., muscle icons for body parts)
+  final IconData Function(String)? optionIconMapper;
 
   const FilterSection({
     super.key,
@@ -23,6 +25,7 @@ class FilterSection extends StatefulWidget {
     required this.onToggle,
     this.initialShowCount = 6,
     this.initiallyExpanded = false,
+    this.optionIconMapper,
   });
 
   @override
@@ -332,6 +335,13 @@ class _FilterSectionState extends State<FilterSection> {
                                     Icon(Icons.check,
                                         size: 16, color: widget.color),
                                     const SizedBox(width: 4),
+                                  ] else if (widget.optionIconMapper != null) ...[
+                                    Icon(
+                                      widget.optionIconMapper!(option.name),
+                                      size: 15,
+                                      color: textSecondary,
+                                    ),
+                                    const SizedBox(width: 5),
                                   ],
                                   Text(
                                     displayName,

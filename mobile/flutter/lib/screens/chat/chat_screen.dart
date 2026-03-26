@@ -311,7 +311,8 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
           widget.initialMessage!.isNotEmpty &&
           !_initialMessageSent) {
         _initialMessageSent = true;
-        Future.delayed(const Duration(milliseconds: 500), () {
+        // Send immediately after the current frame completes
+        WidgetsBinding.instance.addPostFrameCallback((_) {
           if (mounted) {
             _textController.text = widget.initialMessage!;
             _sendMessage();

@@ -130,15 +130,161 @@ class FoodDatabaseLookupService:
     async def _load_overrides(self):
         """Load active overrides from food_nutrition_overrides table into memory.
         Keyed by food_name_normalized + all variant_names for fast lookup.
-        Refreshes every 30 minutes."""
+        Refreshes every 30 minutes.
+
+        NOTE: With 200K+ overrides, loading all into memory uses ~180MB.
+        On 512MB Render instances this causes OOM. We now search overrides
+        via DB queries instead (_search_overrides_db) and only keep a small
+        exact-lookup dict for single-food lookups (get_food_nutrition).
+        """
+        if self._overrides_loaded_at and (time.time() - self._overrides_loaded_at < self._overrides_ttl):
+            return
+
+        # Mark as loaded to prevent repeated attempts on failure
+        self._overrides_loaded_at = time.time()
+        # Clear in-memory structures — we no longer load all overrides
+        self._overrides = {}
+        self._overrides_list = []
+        self._overrides_word_index = {}
+        logger.info("[FoodDB] Override search now uses DB queries (memory-safe mode)")
+
+    async def _search_overrides_db(
+        self,
+        query: str,
+        limit: int = 15,
+        restaurant: Optional[str] = None,
+        food_category: Optional[str] = None,
+        region: Optional[str] = None,
+    ) -> List[Dict]:
+        """Search overrides via database query instead of in-memory scan.
+        Uses two passes: exact/prefix matches first, then substring matches."""
+        try:
+            from core.supabase_client import get_supabase as _get_sb
+            sb = _get_sb()
+
+            def _build_query(pattern: str):
+                q = sb.client.table("food_nutrition_overrides").select("*").eq("is_active", True)
+                q = q.ilike("display_name", pattern)
+                if restaurant:
+                    q = q.ilike("restaurant_name", f"%{restaurant}%")
+                if food_category:
+                    q = q.eq("food_category", food_category)
+                if region:
+                    q = q.eq("region", region.upper())
+                return q
+
+            matches = []
+            seen_names = set()
+
+            if query:
+                query_lower = query.lower().strip()
+
+                # Pass 1: Exact name match (highest priority)
+                exact = sb.client.table("food_nutrition_overrides").select("*").eq(
+                    "is_active", True
+                ).eq("food_name_normalized", query_lower).limit(1).execute()
+                if exact.data:
+                    row = exact.data[0]
+                    name = row["display_name"]
+                    matches.append(self._override_row_to_search_result(row))
+                    seen_names.add(name)
+
+                # Pass 2: Prefix matches (e.g., "Apple ..." but not "Pineapple")
+                if len(matches) < limit:
+                    result = _build_query(f"{query}%").limit(limit).execute()
+                    if result.data:
+                        for row in result.data:
+                            name = row["display_name"]
+                            if name not in seen_names:
+                                matches.append(self._override_row_to_search_result(row))
+                                seen_names.add(name)
+
+                # Pass 3: Substring matches for remaining slots
+                if len(matches) < limit:
+                    remaining = limit - len(matches)
+                    result2 = _build_query(f"% {query}%").limit(remaining).execute()
+                    if result2.data:
+                        for row in result2.data:
+                            name = row["display_name"]
+                            if name not in seen_names:
+                                matches.append(self._override_row_to_search_result(row))
+                                seen_names.add(name)
+                                if len(matches) >= limit:
+                                    break
+
+                # Pass 4: Broad substring if still not enough
+                if len(matches) < limit:
+                    remaining = limit - len(matches)
+                    result3 = _build_query(f"%{query}%").limit(remaining + len(matches)).execute()
+                    if result3.data:
+                        for row in result3.data:
+                            name = row["display_name"]
+                            if name not in seen_names:
+                                matches.append(self._override_row_to_search_result(row))
+                                seen_names.add(name)
+                                if len(matches) >= limit:
+                                    break
+            else:
+                # No query — browse by restaurant/category/region
+                q = sb.client.table("food_nutrition_overrides").select("*").eq("is_active", True)
+                if restaurant:
+                    q = q.ilike("restaurant_name", f"%{restaurant}%")
+                if food_category:
+                    q = q.eq("food_category", food_category)
+                if region:
+                    q = q.eq("region", region.upper())
+                result = q.limit(limit).execute()
+                if result.data:
+                    for row in result.data:
+                        matches.append(self._override_row_to_search_result(row))
+
+            return matches
+        except Exception as e:
+            logger.warning(f"[FoodDB] Override DB search failed: {e}")
+            return []
+
+    def _override_row_to_search_result(self, row: Dict) -> Dict:
+        """Convert a raw DB row from food_nutrition_overrides to search result format."""
+        result = {
+            "name": row["display_name"],
+            "calories_per_100g": float(row.get("calories_per_100g") or 0),
+            "protein_per_100g": float(row.get("protein_per_100g") or 0),
+            "carbs_per_100g": float(row.get("carbs_per_100g") or 0),
+            "fat_per_100g": float(row.get("fat_per_100g") or 0),
+            "fiber_per_100g": float(row.get("fiber_per_100g") or 0),
+            "source": "verified",
+            "brand": row.get("restaurant_name"),
+            "category": row.get("food_category"),
+            "weight_per_unit_g": float(row["default_weight_per_piece_g"]) if row.get("default_weight_per_piece_g") else None,
+            "serving_weight_g": float(row["default_serving_g"]) if row.get("default_serving_g") else None,
+            "default_count": int(row["default_count"]) if row.get("default_count") else 1,
+            "verification_level": "verified",
+        }
+        for key in (
+            "sodium_mg", "cholesterol_mg", "saturated_fat_g", "trans_fat_g",
+            "potassium_mg", "calcium_mg", "iron_mg", "vitamin_a_ug",
+            "vitamin_c_mg", "vitamin_d_iu", "magnesium_mg", "zinc_mg",
+            "phosphorus_mg", "selenium_ug", "omega3_g",
+        ):
+            val = row.get(key)
+            if val is not None:
+                result[key] = float(val)
+        return result
+
+    async def _load_overrides_legacy(self):
+        """Legacy: Load ALL overrides into memory. Only used as fallback.
+        WARNING: Uses ~180MB with 200K+ overrides — avoid on memory-constrained instances."""
         if self._overrides and (time.time() - self._overrides_loaded_at < self._overrides_ttl):
             return
 
         try:
             supabase = get_supabase()
             async with supabase.get_session() as session:
-                result = await session.execute(
-                    text("SELECT * FROM food_nutrition_overrides WHERE is_active = TRUE")
+                result = await asyncio.wait_for(
+                    session.execute(
+                        text("SELECT * FROM food_nutrition_overrides WHERE is_active = TRUE")
+                    ),
+                    timeout=10.0,
                 )
                 rows = [dict(r._mapping) for r in result.fetchall()]
 
@@ -277,17 +423,56 @@ class FoodDatabaseLookupService:
         """Check if a food name has a curated override.
         Uses exact match only (no substring) to avoid false positives
         like 'chicken dosa' matching 'dosa'."""
-        if not food_name or not self._overrides:
+        if not food_name:
             return None
 
         normalized = food_name.lower().strip()
+
+        # Try in-memory cache first
         override = self._overrides.get(normalized)
         if override:
             logger.info(
-                f"[FoodDB] OVERRIDE HIT: '{food_name}' → "
+                f"[FoodDB] OVERRIDE HIT (cache): '{food_name}' → "
                 f"{override['display_name']} ({override['calories_per_100g']} cal/100g)"
             )
-        return override
+            return override
+
+        # Fall back to DB query for exact match
+        try:
+            from core.supabase_client import get_supabase as _get_sb
+            sb = _get_sb()
+            result = sb.client.table("food_nutrition_overrides").select("*").eq(
+                "is_active", True
+            ).eq("food_name_normalized", normalized).limit(1).execute()
+            if result.data:
+                row = result.data[0]
+                override_data = {
+                    "display_name": row["display_name"],
+                    "calories_per_100g": float(row.get("calories_per_100g") or 0),
+                    "protein_per_100g": float(row.get("protein_per_100g") or 0),
+                    "carbs_per_100g": float(row.get("carbs_per_100g") or 0),
+                    "fat_per_100g": float(row.get("fat_per_100g") or 0),
+                    "fiber_per_100g": float(row.get("fiber_per_100g") or 0),
+                    "override_weight_per_piece_g": float(row["default_weight_per_piece_g"]) if row.get("default_weight_per_piece_g") else None,
+                    "override_serving_g": float(row["default_serving_g"]) if row.get("default_serving_g") else None,
+                    "source": row.get("source", "manual"),
+                    "restaurant_name": row.get("restaurant_name"),
+                    "food_category": row.get("food_category"),
+                    "default_count": int(row["default_count"]) if row.get("default_count") else 1,
+                    "variant_names": row.get("variant_names") or [],
+                    "region": row.get("region"),
+                }
+                # Cache for future lookups
+                self._overrides[normalized] = override_data
+                logger.info(
+                    f"[FoodDB] OVERRIDE HIT (db): '{food_name}' → "
+                    f"{override_data['display_name']} ({override_data['calories_per_100g']} cal/100g)"
+                )
+                return override_data
+        except Exception as e:
+            logger.debug(f"[FoodDB] Override DB lookup failed for '{food_name}': {e}")
+
+        return None
 
     def _override_to_nutrition(self, override: Dict) -> Dict:
         """Convert an override dict to the standard nutrition dict format."""
@@ -844,11 +1029,12 @@ class FoodDatabaseLookupService:
             supabase = get_supabase()
             offset = (page - 1) * page_size
 
-            # Step 1: Search overrides (in-memory, <1ms) — ALWAYS returned
+            # Step 1: Search overrides via DB query — ALWAYS returned
             override_results = []
             if page == 1:
-                override_results = self._find_matching_overrides_for_search(
-                    query, restaurant=restaurant, food_category=food_category, region=region,
+                override_results = await self._search_overrides_db(
+                    query, limit=page_size, restaurant=restaurant,
+                    food_category=food_category, region=region,
                 )
 
             # Step 2: Search food_database (quality-filtered by confidence_score >= 0.6)
@@ -974,11 +1160,12 @@ class FoodDatabaseLookupService:
             supabase = get_supabase()
             offset = (page - 1) * page_size
 
-            # Step 1: Search overrides (in-memory, <1ms) — ALWAYS returned
+            # Step 1: Search overrides via DB query — ALWAYS returned
             override_results = []
             if page == 1:
-                override_results = self._find_matching_overrides_for_search(
-                    query, restaurant=restaurant, food_category=food_category, region=region,
+                override_results = await self._search_overrides_db(
+                    query, limit=page_size, restaurant=restaurant,
+                    food_category=food_category, region=region,
                 )
 
             # Step 2: Fetch saved foods (fast LIKE on user's small table, <100ms)
