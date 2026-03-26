@@ -46,6 +46,143 @@ router = APIRouter()
 logger = get_logger(__name__)
 
 
+def _calculate_completion_calories(
+    exercises: list,
+    duration_seconds: int,
+    total_sets: int,
+    total_reps: int,
+    total_volume_kg: float,
+    workout_type: str = None,
+    difficulty: str = None,
+    user_id: str = None,
+    supabase=None,
+) -> int:
+    """Calculate calories burned for a completed workout using all logged data.
+
+    Uses MET-based formula: calories = MET × body_weight_kg × (duration_hours)
+    MET is estimated from actual workout data: exercises, sets, reps, weight,
+    rest periods, supersets, drop sets, difficulty, and workout type.
+    """
+    duration_minutes = duration_seconds / 60.0 if duration_seconds else 45
+    if duration_minutes <= 0:
+        return 0
+
+    # Get user weight
+    user_weight_kg = 70.0
+    if user_id and supabase:
+        try:
+            user_resp = supabase.table("users").select("weight_kg").eq(
+                "id", user_id
+            ).maybe_single().execute()
+            if user_resp.data:
+                user_weight_kg = float(user_resp.data.get("weight_kg") or 70)
+                user_weight_kg = max(30.0, min(user_weight_kg, 250.0))
+        except Exception:
+            pass
+
+    # Estimate MET from actual workout data
+    met = 3.5
+    if not exercises:
+        return round(met * user_weight_kg * (duration_minutes / 60.0))
+
+    compound_muscles = {
+        'legs', 'back', 'chest', 'full_body', 'glutes',
+        'quadriceps', 'hamstrings', 'shoulders',
+    }
+    compound_count = 0
+    superset_groups = set()
+    drop_set_count = 0
+    rest_values = []
+
+    for ex in exercises:
+        muscle = (ex.get('muscle_group', '') or ex.get('primary_muscle', '') or '').lower()
+        if muscle in compound_muscles:
+            compound_count += 1
+        rest_sec = ex.get('rest_seconds')
+        if rest_sec:
+            rest_values.append(rest_sec)
+        sg = ex.get('superset_group')
+        if sg is not None:
+            superset_groups.add(sg)
+        if ex.get('is_drop_set'):
+            drop_set_count += 1
+
+    avg_rest = sum(rest_values) / len(rest_values) if rest_values else 60
+
+    # Exercise count
+    if len(exercises) >= 6:
+        met += 0.3
+    if len(exercises) >= 9:
+        met += 0.2
+
+    # Compound lifts
+    if compound_count >= 3:
+        met += 0.5
+    if compound_count >= 5:
+        met += 0.3
+
+    # Total sets
+    if total_sets >= 15:
+        met += 0.3
+    if total_sets >= 25:
+        met += 0.3
+
+    # Rep volume per exercise
+    avg_reps = total_reps / len(exercises) if exercises else 10
+    if avg_reps >= 12:
+        met += 0.3
+    if avg_reps >= 15:
+        met += 0.2
+
+    # Weight volume
+    if total_volume_kg > 5000:
+        met += 0.3
+    if total_volume_kg > 15000:
+        met += 0.3
+
+    # Rest periods
+    if avg_rest < 60:
+        met += 0.5
+    if avg_rest < 30:
+        met += 0.3
+
+    # Supersets
+    if superset_groups:
+        met += 0.3 + min(len(superset_groups) * 0.1, 0.5)
+
+    # Drop sets
+    if drop_set_count > 0:
+        met += 0.2 + min(drop_set_count * 0.1, 0.4)
+
+    # Workout type
+    if workout_type:
+        wt = workout_type.lower()
+        if 'hiit' in wt or 'circuit' in wt:
+            met += 1.5
+        elif 'cardio' in wt:
+            met += 1.0
+
+    # Difficulty
+    if difficulty:
+        d = difficulty.lower()
+        if d in ('hell', 'extreme', 'insane'):
+            met += 2.0
+        elif d in ('hard', 'advanced', 'challenging'):
+            met += 1.2
+        elif d in ('moderate', 'intermediate'):
+            met += 0.5
+
+    met = min(met, 10.0)
+    calories = round(met * user_weight_kg * (duration_minutes / 60.0))
+    logger.info(
+        f"[Completion Calories] MET={met:.1f}, weight={user_weight_kg}kg, "
+        f"duration={duration_minutes:.0f}min, sets={total_sets}, reps={total_reps}, "
+        f"volume={total_volume_kg:.0f}kg, supersets={len(superset_groups)}, "
+        f"dropsets={drop_set_count} -> {calories} cal"
+    )
+    return calories
+
+
 # Response model for workout completion with PRs
 class PersonalRecordInfo(BaseModel):
     """PR info returned after workout completion."""
@@ -737,6 +874,19 @@ async def complete_workout(
                 workout_log_id = workout_log_response.data[0].get("id")
                 duration_seconds = workout_log_response.data[0].get("total_time_seconds", 0)
 
+            # Calculate actual calories burned using logged data
+            calories_burned = _calculate_completion_calories(
+                exercises=exercises,
+                duration_seconds=duration_seconds,
+                total_sets=total_sets,
+                total_reps=total_reps,
+                total_volume_kg=total_volume,
+                workout_type=workout.type,
+                difficulty=existing.get("difficulty"),
+                user_id=user_id,
+                supabase=supabase,
+            )
+
             # Build current workout stats
             workout_stats = {
                 "workout_name": workout.name,
@@ -745,7 +895,7 @@ async def complete_workout(
                 "total_reps": total_reps,
                 "total_volume_kg": total_volume,
                 "duration_seconds": duration_seconds,
-                "calories": 0,  # Will be calculated from duration
+                "calories": calories_burned,
                 "new_prs_count": len(detected_prs),
                 "completed_at": datetime.now(),
             }

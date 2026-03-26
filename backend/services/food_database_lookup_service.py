@@ -935,7 +935,7 @@ class FoodDatabaseLookupService:
                         """),
                         {"q": query.lower().strip(), "lim": limit, "off": offset},
                     ),
-                    timeout=5.0,
+                    timeout=3.0,
                 )
                 rows = [dict(row._mapping) for row in result.fetchall()]
 
@@ -1037,50 +1037,63 @@ class FoodDatabaseLookupService:
                     food_category=food_category, region=region,
                 )
 
-            # Step 2: Search food_database (quality-filtered by confidence_score >= 0.6)
+            # When a region/country filter is active, only return country-tagged overrides
+            # (food_database table doesn't have region data)
             quality_foods = []
-            if query and len(override_results) < page_size:
-                remaining = page_size - len(override_results)
-                quality_foods = await self._search_quality_foods(query, remaining, offset)
-                quality_foods = self._filter_search_results(query, quality_foods)
-
-            # Step 3: Only hit unfiltered food_database if still not enough
             db_foods = []
-            if query and len(override_results) + len(quality_foods) < page_size:
-                remaining = page_size - len(override_results) - len(quality_foods)
-                try:
-                    async with supabase.get_session() as session:
-                        result = await asyncio.wait_for(
-                            session.execute(
-                                text("SELECT * FROM search_food_database(:q, :lim, :off)"),
-                                {"q": query, "lim": remaining, "off": offset},
-                            ),
-                            timeout=5.0,
-                        )
-                        db_foods = [dict(row._mapping) for row in result.fetchall()]
-                except asyncio.TimeoutError:
-                    logger.warning(f"[FoodDB] RPC timed out for '{query}' — trying OFF fallback")
-                    db_foods = await self._search_off_text(query, page_size)
-                except Exception as rpc_err:
-                    logger.warning(f"[FoodDB] RPC failed for '{query}': {rpc_err}")
 
-            # Word-overlap filter: remove false-positive trigram matches
-            db_foods = self._filter_search_results(query, db_foods)
+            if not region:
+                # Step 2 & 3: Search quality foods AND RPC concurrently
+                if query and len(override_results) < page_size:
+                    remaining = page_size - len(override_results)
 
-            # If nothing found anywhere, try OFF as last resort
-            if not db_foods and not quality_foods and not override_results and query:
-                db_foods = await self._search_off_text(query, page_size)
+                    async def _fetch_quality():
+                        try:
+                            return await self._search_quality_foods(query, remaining, offset)
+                        except Exception:
+                            return []
+
+                    async def _fetch_rpc():
+                        try:
+                            async with supabase.get_session() as session:
+                                result = await asyncio.wait_for(
+                                    session.execute(
+                                        text("SELECT * FROM search_food_database(:q, :lim, :off)"),
+                                        {"q": query, "lim": remaining, "off": offset},
+                                    ),
+                                    timeout=3.0,
+                                )
+                                return [dict(row._mapping) for row in result.fetchall()]
+                        except asyncio.TimeoutError:
+                            logger.warning(f"[FoodDB] RPC timed out for '{query}'")
+                            return []
+                        except Exception as rpc_err:
+                            logger.warning(f"[FoodDB] RPC failed for '{query}': {rpc_err}")
+                            return []
+
+                    # Run both searches concurrently — total wait = max(quality, rpc) not sum
+                    quality_foods, db_foods = await asyncio.gather(
+                        _fetch_quality(), _fetch_rpc()
+                    )
+                    quality_foods = self._filter_search_results(query, quality_foods)
+
+                # Word-overlap filter: remove false-positive trigram matches
                 db_foods = self._filter_search_results(query, db_foods)
 
-            # Post-filter by source/category if specified
-            if source:
-                source_lower = source.lower()
-                quality_foods = [f for f in quality_foods if (f.get("source") or "").lower().startswith(source_lower)]
-                db_foods = [f for f in db_foods if (f.get("source") or "").lower() == source_lower]
-            if category:
-                category_lower = category.lower()
-                quality_foods = [f for f in quality_foods if category_lower in (f.get("category") or "").lower()]
-                db_foods = [f for f in db_foods if category_lower in (f.get("category") or "").lower()]
+                # If nothing found anywhere, try OFF as last resort
+                if not db_foods and not quality_foods and not override_results and query:
+                    db_foods = await self._search_off_text(query, page_size)
+                    db_foods = self._filter_search_results(query, db_foods)
+
+                # Post-filter by source/category if specified
+                if source:
+                    source_lower = source.lower()
+                    quality_foods = [f for f in quality_foods if (f.get("source") or "").lower().startswith(source_lower)]
+                    db_foods = [f for f in db_foods if (f.get("source") or "").lower() == source_lower]
+                if category:
+                    category_lower = category.lower()
+                    quality_foods = [f for f in quality_foods if category_lower in (f.get("category") or "").lower()]
+                    db_foods = [f for f in db_foods if category_lower in (f.get("category") or "").lower()]
 
             # Assemble: Overrides > Quality DB > Unfiltered DB (deduped)
             override_names = {r["name"].lower() for r in override_results}
@@ -1201,42 +1214,45 @@ class FoodDatabaseLookupService:
                 except Exception:
                     pass  # Saved foods are optional, don't block
 
-            # Step 3: Search food_database (quality-filtered by confidence_score >= 0.6)
+            # When region filter is active, skip food_database queries (no region data there)
             quality_foods = []
-            have_enough = len(override_results) + len(saved_foods) >= page_size
-            if query and not have_enough:
-                remaining = page_size - len(override_results) - len(saved_foods)
-                quality_foods = await self._search_quality_foods(query, remaining, offset)
-                quality_foods = self._filter_search_results(query, quality_foods)
-
-            # Step 4: Only hit unfiltered food_database if still not enough
             db_foods = []
-            have_enough = len(override_results) + len(saved_foods) + len(quality_foods) >= page_size
-            if query and not have_enough:
-                remaining = page_size - len(override_results) - len(saved_foods) - len(quality_foods)
-                try:
-                    async with supabase.get_session() as session:
-                        result = await asyncio.wait_for(
-                            session.execute(
-                                text("SELECT * FROM search_food_database(:q, :lim, :off)"),
-                                {"q": query, "lim": remaining, "off": offset},
-                            ),
-                            timeout=5.0,
-                        )
-                        db_foods = [dict(row._mapping) for row in result.fetchall()]
-                except asyncio.TimeoutError:
-                    logger.warning(f"[FoodDB] RPC timed out for '{query}' — trying OFF fallback")
-                    db_foods = await self._search_off_text(query, page_size)
-                except Exception as rpc_err:
-                    logger.warning(f"[FoodDB] RPC failed for '{query}': {rpc_err}")
 
-            # Word-overlap filter: remove false-positive trigram matches
-            db_foods = self._filter_search_results(query, db_foods)
+            if not region:
+                # Step 3: Search food_database (quality-filtered by confidence_score >= 0.6)
+                have_enough = len(override_results) + len(saved_foods) >= page_size
+                if query and not have_enough:
+                    remaining = page_size - len(override_results) - len(saved_foods)
+                    quality_foods = await self._search_quality_foods(query, remaining, offset)
+                    quality_foods = self._filter_search_results(query, quality_foods)
 
-            # If nothing found anywhere, try OFF as last resort
-            if not db_foods and not quality_foods and not override_results and not saved_foods and query:
-                db_foods = await self._search_off_text(query, page_size)
+                # Step 4: Only hit unfiltered food_database if still not enough
+                have_enough = len(override_results) + len(saved_foods) + len(quality_foods) >= page_size
+                if query and not have_enough:
+                    remaining = page_size - len(override_results) - len(saved_foods) - len(quality_foods)
+                    try:
+                        async with supabase.get_session() as session:
+                            result = await asyncio.wait_for(
+                                session.execute(
+                                    text("SELECT * FROM search_food_database(:q, :lim, :off)"),
+                                    {"q": query, "lim": remaining, "off": offset},
+                                ),
+                                timeout=5.0,
+                            )
+                            db_foods = [dict(row._mapping) for row in result.fetchall()]
+                    except asyncio.TimeoutError:
+                        logger.warning(f"[FoodDB] RPC timed out for '{query}' — trying OFF fallback")
+                        db_foods = await self._search_off_text(query, page_size)
+                    except Exception as rpc_err:
+                        logger.warning(f"[FoodDB] RPC failed for '{query}': {rpc_err}")
+
+                # Word-overlap filter: remove false-positive trigram matches
                 db_foods = self._filter_search_results(query, db_foods)
+
+                # If nothing found anywhere, try OFF as last resort
+                if not db_foods and not quality_foods and not override_results and not saved_foods and query:
+                    db_foods = await self._search_off_text(query, page_size)
+                    db_foods = self._filter_search_results(query, db_foods)
 
             # Assemble: Saved > Overrides > Quality DB > Unfiltered DB (deduped)
             override_names = {r["name"].lower() for r in override_results}

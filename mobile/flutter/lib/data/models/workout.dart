@@ -195,11 +195,22 @@ class Workout extends Equatable {
     };
     int compoundCount = 0;
     int totalSets = 0;
+    int totalReps = 0;
+    double totalWeightVolume = 0; // sets × reps × weight
     double restSum = 0;
     int restCount = 0;
+    final supersetGroups = <int>{};
+    int dropSetExercises = 0;
 
     for (final ex in exList) {
-      totalSets += ex.sets ?? 0;
+      final sets = ex.sets ?? 3;
+      final reps = ex.reps ?? 10;
+      final weight = ex.weight ?? 0;
+
+      totalSets += sets;
+      totalReps += sets * reps;
+      totalWeightVolume += sets * reps * weight;
+
       if ((ex.restSeconds ?? 0) > 0) {
         restSum += ex.restSeconds!;
         restCount++;
@@ -207,16 +218,56 @@ class Workout extends Equatable {
       if (compoundMuscles.contains((ex.primaryMuscle ?? '').toLowerCase())) {
         compoundCount++;
       }
+      if (ex.supersetGroup != null) {
+        supersetGroups.add(ex.supersetGroup!);
+      }
+      if (ex.isDropSet == true) {
+        dropSetExercises++;
+      }
     }
 
     final avgRest = restCount > 0 ? restSum / restCount : 60.0;
 
+    // Base MET for weight training
     double met = 3.5;
-    if (exList.length >= 6) met += 0.3;
-    if (compoundCount >= 3) met += 0.5;
-    if (avgRest < 60) met += 0.5;
-    if (totalSets >= 20) met += 0.3;
 
+    // Exercise count: more exercises = higher density
+    if (exList.length >= 6) met += 0.3;
+    if (exList.length >= 9) met += 0.2;
+
+    // Compound lift ratio — more compounds = more muscle mass engaged
+    if (compoundCount >= 3) met += 0.5;
+    if (compoundCount >= 5) met += 0.3;
+
+    // Volume: total sets drive work capacity
+    if (totalSets >= 15) met += 0.3;
+    if (totalSets >= 25) met += 0.3;
+
+    // High rep ranges increase metabolic demand
+    final avgReps = exList.isNotEmpty ? totalReps / exList.length : 10;
+    if (avgReps >= 12) met += 0.3;
+    if (avgReps >= 15) met += 0.2;
+
+    // Weight volume — heavier loads require more energy
+    // Rough threshold: >5000 kg total volume is significant work
+    if (totalWeightVolume > 5000) met += 0.3;
+    if (totalWeightVolume > 15000) met += 0.3;
+
+    // Short rest periods increase intensity (circuit-like effect)
+    if (avgRest < 60) met += 0.5;
+    if (avgRest < 30) met += 0.3;
+
+    // Supersets reduce rest and increase metabolic demand
+    if (supersetGroups.isNotEmpty) {
+      met += 0.3 + (supersetGroups.length * 0.1).clamp(0, 0.5);
+    }
+
+    // Drop sets add extra volume per exercise
+    if (dropSetExercises > 0) {
+      met += 0.2 + (dropSetExercises * 0.1).clamp(0, 0.4);
+    }
+
+    // Workout type boost
     final wt = (type ?? '').toLowerCase();
     if (wt.contains('hiit') || wt.contains('circuit')) {
       met += 1.5;
@@ -224,7 +275,17 @@ class Workout extends Equatable {
       met += 1.0;
     }
 
-    return met.clamp(3.0, 8.0);
+    // Difficulty boost
+    final d = (difficulty ?? '').toLowerCase();
+    if (d == 'hell' || d == 'extreme' || d == 'insane') {
+      met += 2.0;
+    } else if (d == 'hard' || d == 'advanced' || d == 'challenging') {
+      met += 1.2;
+    } else if (d == 'moderate' || d == 'intermediate') {
+      met += 0.5;
+    }
+
+    return met.clamp(3.0, 10.0);
   }
 
   /// Get formatted duration display (e.g., "~38m" if estimated, "45-60m" or "45m" otherwise)

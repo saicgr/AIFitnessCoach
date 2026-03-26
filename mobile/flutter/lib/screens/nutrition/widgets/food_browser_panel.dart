@@ -83,6 +83,16 @@ class _FoodBrowserPanelState extends ConsumerState<FoodBrowserPanel> {
   void initState() {
     super.initState();
     _loadSavedFoods();
+    _loadDefaultCountry();
+  }
+
+  Future<void> _loadDefaultCountry() async {
+    final defaultCountry = await search.FoodSearchService.getDefaultCountry();
+    if (defaultCountry != null && mounted) {
+      setState(() => _selectedCountry = defaultCountry);
+      final service = ref.read(search.foodSearchServiceProvider);
+      service.setCountry(defaultCountry);
+    }
   }
 
   @override
@@ -1315,17 +1325,23 @@ class _CountrySearchPill extends StatelessWidget {
     );
   }
 
-  void _openPicker(BuildContext context) {
+  void _openPicker(BuildContext context) async {
     final isDarkLocal = isDark;
+    final defaultCountry = await search.FoodSearchService.getDefaultCountry();
+    if (!context.mounted) return;
     showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (_) => _CountryPickerSheet(
         selected: selected,
+        defaultCountry: defaultCountry,
         onChanged: (code) {
           onChanged(code);
           Navigator.of(context).pop();
+        },
+        onSetDefault: (code) {
+          search.FoodSearchService.setDefaultCountry(code);
         },
         isDark: isDarkLocal,
       ),
@@ -1335,12 +1351,16 @@ class _CountrySearchPill extends StatelessWidget {
 
 class _CountryPickerSheet extends StatefulWidget {
   final String? selected;
+  final String? defaultCountry;
   final ValueChanged<String?> onChanged;
+  final ValueChanged<String?> onSetDefault;
   final bool isDark;
 
   const _CountryPickerSheet({
     required this.selected,
+    this.defaultCountry,
     required this.onChanged,
+    required this.onSetDefault,
     required this.isDark,
   });
 
@@ -1351,11 +1371,13 @@ class _CountryPickerSheet extends StatefulWidget {
 class _CountryPickerSheetState extends State<_CountryPickerSheet> {
   final _searchCtrl = TextEditingController();
   List<CountryCode> _filtered = kCountryCodes;
+  String? _currentDefault;
 
   @override
   void initState() {
     super.initState();
     _searchCtrl.addListener(_onSearch);
+    _currentDefault = widget.defaultCountry;
   }
 
   @override
@@ -1454,41 +1476,104 @@ class _CountryPickerSheetState extends State<_CountryPickerSheet> {
                     if (i == 0) {
                       // "All Countries" row
                       final isActive = widget.selected == null;
+                      final isDefault = _currentDefault == null;
                       return ListTile(
                         dense: true,
                         contentPadding: const EdgeInsets.symmetric(horizontal: 8),
                         leading: Text('🌐', style: const TextStyle(fontSize: 20)),
-                        title: Text(
-                          'All Countries',
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: isActive ? FontWeight.w700 : FontWeight.w400,
-                            color: isActive ? cyan : textPrimary,
-                          ),
+                        title: Row(
+                          children: [
+                            Text(
+                              'All Countries',
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: isActive ? FontWeight.w700 : FontWeight.w400,
+                                color: isActive ? cyan : textPrimary,
+                              ),
+                            ),
+                            if (isDefault) ...[
+                              const SizedBox(width: 6),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+                                decoration: BoxDecoration(
+                                  color: cyan.withValues(alpha: 0.15),
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                                child: Text('Default', style: TextStyle(fontSize: 9, fontWeight: FontWeight.w600, color: cyan)),
+                              ),
+                            ],
+                          ],
                         ),
-                        trailing: isActive
-                            ? Icon(Icons.check, size: 18, color: cyan)
-                            : null,
+                        trailing: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            if (!isDefault)
+                              GestureDetector(
+                                onTap: () {
+                                  setState(() => _currentDefault = null);
+                                  widget.onSetDefault(null);
+                                },
+                                child: Padding(
+                                  padding: const EdgeInsets.all(4),
+                                  child: Text('Set Default', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: cyan)),
+                                ),
+                              ),
+                            if (isActive) Icon(Icons.check, size: 18, color: cyan),
+                          ],
+                        ),
                         onTap: () => widget.onChanged(null),
                       );
                     }
                     final country = _filtered[i - 1];
                     final isActive = widget.selected == country.code;
+                    final isDefault = _currentDefault == country.code;
                     return ListTile(
                       dense: true,
                       contentPadding: const EdgeInsets.symmetric(horizontal: 8),
                       leading: Text(country.flag, style: const TextStyle(fontSize: 20)),
-                      title: Text(
-                        country.name,
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: isActive ? FontWeight.w700 : FontWeight.w400,
-                          color: isActive ? cyan : textPrimary,
-                        ),
+                      title: Row(
+                        children: [
+                          Flexible(
+                            child: Text(
+                              country.name,
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: isActive ? FontWeight.w700 : FontWeight.w400,
+                                color: isActive ? cyan : textPrimary,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          if (isDefault) ...[
+                            const SizedBox(width: 6),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+                              decoration: BoxDecoration(
+                                color: cyan.withValues(alpha: 0.15),
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: Text('Default', style: TextStyle(fontSize: 9, fontWeight: FontWeight.w600, color: cyan)),
+                            ),
+                          ],
+                        ],
                       ),
-                      trailing: isActive
-                          ? Icon(Icons.check, size: 18, color: cyan)
-                          : null,
+                      trailing: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          if (!isDefault)
+                            GestureDetector(
+                              onTap: () {
+                                setState(() => _currentDefault = country.code);
+                                widget.onSetDefault(country.code);
+                              },
+                              child: Padding(
+                                padding: const EdgeInsets.all(4),
+                                child: Text('Set Default', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: cyan)),
+                              ),
+                            ),
+                          if (isActive) Icon(Icons.check, size: 18, color: cyan),
+                        ],
+                      ),
                       onTap: () => widget.onChanged(country.code),
                     );
                   },
@@ -3899,11 +3984,13 @@ class _SearchResultsPageViewState extends State<_SearchResultsPageView> {
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Text(
-              result.name,
-              style: TextStyle(color: textPrimary, fontSize: 12, fontWeight: FontWeight.w500),
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
+            Flexible(
+              child: Text(
+                result.name,
+                style: TextStyle(color: textPrimary, fontSize: 12, fontWeight: FontWeight.w500),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
             ),
             const SizedBox(height: 4),
             Row(

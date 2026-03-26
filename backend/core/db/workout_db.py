@@ -86,7 +86,9 @@ class WorkoutDB(BaseDB):
         if is_completed is not None:
             query = query.eq("is_completed", is_completed)
         if from_date:
-            query = query.gte("scheduled_date", from_date)
+            # Ensure from_date has a time component for consistent TIMESTAMPTZ comparison
+            effective_from = from_date + "T00:00:00+00:00" if len(from_date) == 10 else from_date
+            query = query.gte("scheduled_date", effective_from)
         if to_date:
             effective_to = to_date + "T23:59:59.999999+00:00" if len(to_date) == 10 else to_date
             query = query.lte("scheduled_date", effective_to)
@@ -279,7 +281,9 @@ class WorkoutDB(BaseDB):
         if is_completed is not None:
             query = query.eq("is_completed", is_completed)
         if from_date:
-            query = query.gte("scheduled_date", from_date)
+            # Ensure from_date has a time component for consistent TIMESTAMPTZ comparison
+            effective_from = from_date + "T00:00:00+00:00" if len(from_date) == 10 else from_date
+            query = query.gte("scheduled_date", effective_from)
         if to_date:
             effective_to = to_date + "T23:59:59.999999+00:00" if len(to_date) == 10 else to_date
             query = query.lte("scheduled_date", effective_to)

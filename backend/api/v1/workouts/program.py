@@ -246,14 +246,17 @@ async def quick_regenerate_workouts(request: QuickRegenerateRequest,
         for w in all_workouts:
             scheduled_date = w.get("scheduled_date")
             is_completed = w.get("is_completed", False)
+            status = w.get("status", "")
 
             if hasattr(scheduled_date, 'isoformat'):
                 scheduled_date = scheduled_date.isoformat()
             elif hasattr(scheduled_date, 'strftime'):
                 scheduled_date = scheduled_date.strftime('%Y-%m-%d')
 
-            if not is_completed and scheduled_date and scheduled_date >= today:
-                workouts_to_delete.append(w)
+            # Delete future incomplete workouts AND any stuck "generating" placeholders
+            if scheduled_date and scheduled_date >= today:
+                if not is_completed or status == "generating":
+                    workouts_to_delete.append(w)
 
         logger.info(f"Found {len(workouts_to_delete)} future incomplete workouts to delete")
 

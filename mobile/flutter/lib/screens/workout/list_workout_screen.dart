@@ -294,7 +294,7 @@ class _ListWorkoutScreenState extends ConsumerState<ListWorkoutScreen> {
       context.go('/workout-complete', extra: {
         'workout': widget.workout,
         'duration': _workoutSeconds,
-        'calories': 0, // List workout screen doesn't track calories
+        'calories': widget.workout.estimatedCalories, // Use MET-based estimate from workout model
         // AI Coach feedback data
         'workoutLogId': workoutLogId,
         'exercisesPerformance': exercisesPerformance,

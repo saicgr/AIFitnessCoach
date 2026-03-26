@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../repositories/nutrition_repository.dart';
 import '../models/nutrition.dart';
 import 'api_client.dart';
@@ -550,6 +551,25 @@ class FoodSearchService {
   /// Set country filter (ISO alpha-2) for food database search
   void setCountry(String? country) {
     _currentCountry = country?.toUpperCase().trim().isEmpty == true ? null : country?.toUpperCase().trim();
+  }
+
+  /// Persistence key for default country filter
+  static const _defaultCountryKey = 'food_search_default_country';
+
+  /// Save a default country filter that auto-applies on every search session
+  static Future<void> setDefaultCountry(String? countryCode) async {
+    final prefs = await SharedPreferences.getInstance();
+    if (countryCode == null || countryCode.trim().isEmpty) {
+      await prefs.remove(_defaultCountryKey);
+    } else {
+      await prefs.setString(_defaultCountryKey, countryCode.toUpperCase().trim());
+    }
+  }
+
+  /// Load the saved default country filter
+  static Future<String?> getDefaultCountry() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(_defaultCountryKey);
   }
 
   /// Fetch dynamic food modifiers for a specific food from backend.

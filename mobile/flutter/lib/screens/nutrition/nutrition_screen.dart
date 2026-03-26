@@ -5719,8 +5719,14 @@ class _SavedFoodsFilterSheetState extends State<_SavedFoodsFilterSheet> {
 
   void _onSearchChanged(String value) {
     _debounceTimer?.cancel();
-    _debounceTimer = Timer(const Duration(milliseconds: 300), () {
-      setState(() => _searchQuery = value);
+    final trimmed = value.trim();
+    // Don't fire API calls for very short queries — wait for meaningful input
+    if (trimmed.length < 3 && trimmed.isNotEmpty) {
+      setState(() => _searchQuery = trimmed);
+      return;
+    }
+    _debounceTimer = Timer(const Duration(milliseconds: 600), () {
+      setState(() => _searchQuery = trimmed);
       _fetchFoods();
     });
   }

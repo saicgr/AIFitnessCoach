@@ -2383,12 +2383,28 @@ class _ActiveWorkoutScreenState
       }
     }
 
+    // Use server-calculated calories from completion response, fallback to local MET estimate
+    int completionCalories = 0;
+    if (completionResponse != null) {
+      // Try performance comparison calories first (most accurate — uses all logged data)
+      completionCalories = completionResponse.performanceComparison
+          ?.workoutComparison.currentCalories ?? 0;
+      // Fallback to workout's stored estimate
+      if (completionCalories <= 0) {
+        completionCalories = completionResponse.workout.estimatedCalories;
+      }
+    }
+    // Final fallback: local MET-based estimate from workout model
+    if (completionCalories <= 0) {
+      completionCalories = widget.workout.estimatedCalories;
+    }
+
     if (mounted) {
-      debugPrint('🏋️ [Complete] Navigating to workout-complete with workoutLogId: $workoutLogId');
+      debugPrint('🏋️ [Complete] Navigating to workout-complete with workoutLogId: $workoutLogId, calories: $completionCalories');
       context.go('/workout-complete', extra: {
         'workout': widget.workout,
         'duration': _timerController.workoutSeconds,
-        'calories': _totalCaloriesBurned,
+        'calories': completionCalories,
         'drinkIntakeMl': _totalDrinkIntakeMl,
         'restIntervals': _restIntervals.length,
         'workoutLogId': workoutLogId,

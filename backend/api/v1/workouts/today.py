@@ -342,7 +342,7 @@ async def auto_generate_workout(user_id: str, target_date: date, gym_profile_id:
         try:
             target_str = target_date.isoformat()
             end_of_day = target_str + "T23:59:59.999999+00:00"
-            gen_query = db.client.table("workouts").select("id").eq(
+            gen_query = db.client.table("workouts").select("id, created_at").eq(
                 "user_id", user_id
             ).gte(
                 "scheduled_date", target_str
@@ -355,8 +355,25 @@ async def auto_generate_workout(user_id: str, target_date: date, gym_profile_id:
                 gen_query = gen_query.eq("gym_profile_id", gym_profile_id)
             generating_check = gen_query.execute()
             if generating_check.data:
-                logger.info(f"[BG-GEN] Workout already being generated for {generation_key} (profile={gym_profile_id}), skipping")
-                return
+                # Check if placeholder is stuck (older than 5 minutes)
+                from datetime import timezone
+                placeholder = generating_check.data[0]
+                created_at_str = placeholder.get("created_at")
+                is_stuck = False
+                if created_at_str:
+                    try:
+                        from dateutil.parser import parse as parse_dt
+                        created_at = parse_dt(created_at_str)
+                        age_seconds = (datetime.now(timezone.utc) - created_at).total_seconds()
+                        if age_seconds > 300:  # 5 minutes
+                            is_stuck = True
+                            logger.warning(f"[BG-GEN] Stuck placeholder {placeholder['id']} is {age_seconds:.0f}s old, deleting it")
+                            db.client.table("workouts").delete().eq("id", placeholder["id"]).execute()
+                    except Exception:
+                        pass
+                if not is_stuck:
+                    logger.info(f"[BG-GEN] Workout already being generated for {generation_key} (profile={gym_profile_id}), skipping")
+                    return
         except Exception as e:
             logger.debug(f"Dedup check failed, proceeding: {e}")
 

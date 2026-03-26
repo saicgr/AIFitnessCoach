@@ -116,14 +116,17 @@ router = APIRouter()
 logger = get_logger(__name__)
 
 
-def _estimate_workout_met(exercises: list, workout_type: str = None) -> float:
+def _estimate_workout_met(exercises: list, workout_type: str = None, difficulty: str = None) -> float:
     """Estimate MET (Metabolic Equivalent of Task) from exercise composition.
 
-    MET reference for strength training:
+    MET reference (ACSM Compendium of Physical Activities):
     - 3.5: light effort, general conditioning, long rest
     - 5.0: moderate effort, compound lifts, moderate rest
     - 6.0: vigorous effort, supersets/circuits, short rest
-    - 8.0: high intensity intervals
+    - 8.0+: high intensity intervals / circuit training
+
+    Factors in: exercise count, compound ratio, sets, reps, weight volume,
+    rest periods, supersets, drop sets, workout type, and difficulty.
     """
     met = 3.5
     if not exercises:
@@ -133,25 +136,86 @@ def _estimate_workout_met(exercises: list, workout_type: str = None) -> float:
         'legs', 'back', 'chest', 'full_body', 'glutes',
         'quadriceps', 'hamstrings', 'shoulders',
     }
-    compound_count = sum(
-        1 for ex in exercises
-        if (ex.get('muscle_group', '') or '').lower() in compound_muscles
-    )
-    total_sets = sum(ex.get('sets', 3) for ex in exercises)
-    rest_values = [
-        ex.get('rest_seconds', 60)
-        for ex in exercises if ex.get('rest_seconds')
-    ]
+    compound_count = 0
+    total_sets = 0
+    total_reps = 0
+    total_weight_volume = 0.0  # sets × reps × weight
+    superset_groups = set()
+    drop_set_exercises = 0
+    rest_values = []
+
+    for ex in exercises:
+        sets = ex.get('sets') or 3
+        reps = ex.get('reps') or 10
+        weight = ex.get('weight') or 0
+
+        total_sets += sets
+        total_reps += sets * reps
+        total_weight_volume += sets * reps * weight
+
+        rest_sec = ex.get('rest_seconds')
+        if rest_sec:
+            rest_values.append(rest_sec)
+
+        muscle = (ex.get('muscle_group', '') or ex.get('primary_muscle', '') or '').lower()
+        if muscle in compound_muscles:
+            compound_count += 1
+
+        sg = ex.get('superset_group')
+        if sg is not None:
+            superset_groups.add(sg)
+
+        if ex.get('is_drop_set'):
+            drop_set_exercises += 1
+
     avg_rest = sum(rest_values) / len(rest_values) if rest_values else 60
 
+    # Exercise count — more exercises = higher density
     if len(exercises) >= 6:
         met += 0.3
+    if len(exercises) >= 9:
+        met += 0.2
+
+    # Compound lift ratio — more compounds = more muscle mass engaged
     if compound_count >= 3:
         met += 0.5
+    if compound_count >= 5:
+        met += 0.3
+
+    # Volume: total sets drive work capacity
+    if total_sets >= 15:
+        met += 0.3
+    if total_sets >= 25:
+        met += 0.3
+
+    # High rep ranges increase metabolic demand
+    avg_reps = total_reps / len(exercises) if exercises else 10
+    if avg_reps >= 12:
+        met += 0.3
+    if avg_reps >= 15:
+        met += 0.2
+
+    # Weight volume — heavier loads require more energy
+    if total_weight_volume > 5000:
+        met += 0.3
+    if total_weight_volume > 15000:
+        met += 0.3
+
+    # Short rest periods increase intensity
     if avg_rest < 60:
         met += 0.5
-    if total_sets >= 20:
+    if avg_rest < 30:
         met += 0.3
+
+    # Supersets reduce rest and increase metabolic demand
+    if superset_groups:
+        met += 0.3 + min(len(superset_groups) * 0.1, 0.5)
+
+    # Drop sets add extra volume per exercise
+    if drop_set_exercises > 0:
+        met += 0.2 + min(drop_set_exercises * 0.1, 0.4)
+
+    # Workout type boost
     if workout_type:
         wt = workout_type.lower()
         if 'hiit' in wt or 'circuit' in wt:
@@ -159,7 +223,17 @@ def _estimate_workout_met(exercises: list, workout_type: str = None) -> float:
         elif 'cardio' in wt:
             met += 1.0
 
-    return min(met, 8.0)
+    # Difficulty boost
+    if difficulty:
+        d = difficulty.lower()
+        if d in ('hell', 'extreme', 'insane'):
+            met += 2.0
+        elif d in ('hard', 'advanced', 'challenging'):
+            met += 1.2
+        elif d in ('moderate', 'intermediate'):
+            met += 0.5
+
+    return min(met, 10.0)
 
 
 # Semaphore to limit concurrent background generations (prevent overloading Gemini)
@@ -1085,7 +1159,7 @@ async def generate_workout(req: Request = None, *, request: GenerateWorkoutReque
                             if any(h in (ex.get("equipment", "") or "").lower() or h in (ex.get("name", "") or "").lower() for h in hints)
                         )
                         if used == 0:
-                            logger.warning(f"⚠️ [Equipment] {eq_key} available but NOT used in any exercise!")
+                            logger.debug(f"[Equipment] {eq_key} available but not used in this workout")
 
             # Auto-substitute filtered exercises with safe alternatives
             if filtered_exercises and exercises:
@@ -1281,7 +1355,7 @@ async def generate_workout(req: Request = None, *, request: GenerateWorkoutReque
         _user_weight_kg = float(user.get("weight_kg") or user.get("weight") or 70) if user else 70.0
         _user_weight_kg = max(30.0, min(_user_weight_kg, 250.0))
         _effective_duration = workout_data.get("estimated_duration_minutes") or request.duration_minutes or 45
-        _met = _estimate_workout_met(exercises, workout_type)
+        _met = _estimate_workout_met(exercises, workout_type, difficulty)
         _estimated_calories = round(_met * _user_weight_kg * (_effective_duration / 60.0))
         logger.info(f"[Calories] MET={_met:.1f}, weight={_user_weight_kg}kg, duration={_effective_duration}min -> {_estimated_calories} cal")
 
@@ -1300,7 +1374,16 @@ async def generate_workout(req: Request = None, *, request: GenerateWorkoutReque
             "generation_source": "gemini_generation",
         }
 
-        created = db.create_workout(workout_db_data)
+        try:
+            created = db.create_workout(workout_db_data)
+        except Exception as insert_err:
+            # Retry without estimated_calories if column doesn't exist yet
+            if 'PGRST204' in str(insert_err) and 'estimated_calories' in str(insert_err):
+                logger.warning("[Calories] estimated_calories column not in schema cache, retrying without it")
+                workout_db_data.pop('estimated_calories', None)
+                created = db.create_workout(workout_db_data)
+            else:
+                raise
         logger.info(f"Workout generated: id={created['id']}, gym_profile_id={gym_profile_id}")
 
         # Delete placeholder now that real workout exists
@@ -1923,6 +2006,13 @@ async def generate_workout_streaming(request: Request, body: GenerateWorkoutRequ
             else:
                 scheduled_date_str = datetime.now().isoformat()
 
+            # Compute estimated calories using MET-based formula
+            _user_weight_kg = float(user.get("weight_kg") or user.get("weight") or 70) if user else 70.0
+            _user_weight_kg = max(30.0, min(_user_weight_kg, 250.0))
+            _effective_duration = estimated_duration or body.duration_minutes or 45
+            _met = _estimate_workout_met(exercises, workout_type, difficulty)
+            _estimated_calories = round(_met * _user_weight_kg * (_effective_duration / 60.0))
+
             # Save to database
             workout_db_data = {
                 "user_id": body.user_id,
@@ -1937,11 +2027,20 @@ async def generate_workout_streaming(request: Request, body: GenerateWorkoutRequ
                 "duration_minutes_min": body.duration_minutes_min,
                 "duration_minutes_max": body.duration_minutes_max,
                 "estimated_duration_minutes": estimated_duration,
+                "estimated_calories": _estimated_calories,
                 "generation_method": "ai",
                 "generation_source": "streaming_generation",
             }
 
-            created = db.create_workout(workout_db_data)
+            try:
+                created = db.create_workout(workout_db_data)
+            except Exception as insert_err:
+                if 'PGRST204' in str(insert_err) and 'estimated_calories' in str(insert_err):
+                    logger.warning("[Streaming] estimated_calories column not in schema cache, retrying without it")
+                    workout_db_data.pop('estimated_calories', None)
+                    created = db.create_workout(workout_db_data)
+                else:
+                    raise
             total_time_ms = (datetime.now() - start_time).total_seconds() * 1000
 
             logger.info(f"✅ Streaming workout complete: {len(exercises)} exercises in {total_time_ms:.0f}ms, gym_profile_id={gym_profile_id}")
