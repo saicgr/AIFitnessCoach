@@ -100,13 +100,20 @@ class _ExercisesTabState extends ConsumerState<ExercisesTab> {
 
     return Column(
       children: [
-        // Search bar with filter button
+        // Filter button row (search is handled by the top-level Library search bar)
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16),
           child: Row(
             children: [
-              const Expanded(child: ExerciseSearchBar()),
-              const SizedBox(width: 12),
+              Text(
+                '${exercisesState.exercises.length} exercises found',
+                style: TextStyle(
+                  fontSize: 13,
+                  color: textMuted,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              const Spacer(),
               FilterButton(
                 activeFilterCount: activeFilters,
                 onTap: () => _showFilterSheet(context),
@@ -259,24 +266,6 @@ class _ExercisesTabState extends ConsumerState<ExercisesTab> {
 
     return Column(
       children: [
-        // Result count header
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          child: Row(
-            children: [
-              Text(
-                showPlus
-                    ? '$displayCount+ ${displayCount == 1 ? 'exercise' : 'exercises'} found'
-                    : '$displayCount ${displayCount == 1 ? 'exercise' : 'exercises'} found',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
-                  color: textMuted,
-                ),
-              ),
-            ],
-          ),
-        ),
         // Exercise list with infinite scroll
         Expanded(
           child: ListView.builder(

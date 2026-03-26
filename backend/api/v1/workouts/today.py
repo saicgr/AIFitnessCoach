@@ -401,9 +401,11 @@ async def auto_generate_workout(user_id: str, target_date: date, gym_profile_id:
             batch_offset=batch_offset,
         )
 
-        # Use the existing non-streaming generate_workout function
-        # It handles all user preferences, gym profiles, AI generation, etc.
-        result = await generate_workout(request=request, background_tasks=BackgroundTasks(), current_user={"id": user_id})
+        # Call the unwrapped function to bypass the @user_limiter.limit decorator,
+        # which requires a starlette.requests.Request object. Background generation
+        # has no HTTP request context and should not be rate-limited.
+        unwrapped = getattr(generate_workout, "__wrapped__", generate_workout)
+        result = await unwrapped(request=request, background_tasks=BackgroundTasks(), current_user={"id": user_id})
         logger.info(f"[BG-GEN] Successfully generated workout for {generation_key}: {result.name if result else 'unknown'}")
         return result
 

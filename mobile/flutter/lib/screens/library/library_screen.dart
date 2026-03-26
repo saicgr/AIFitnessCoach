@@ -5,6 +5,7 @@ import '../../core/constants/app_colors.dart';
 import '../../core/theme/accent_color_provider.dart';
 import '../../data/services/haptic_service.dart';
 import '../../widgets/glass_back_button.dart';
+import 'providers/library_providers.dart';
 import 'tabs/discover_tab.dart';
 import 'tabs/exercises_tab.dart';
 import 'tabs/my_library_tab.dart';
@@ -93,45 +94,57 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
 
                 const SizedBox(height: 8),
 
-                // Search bar
+                // Search bar — updates exerciseSearchProvider and auto-switches to Exercises tab
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: GestureDetector(
-                    onTap: () => _switchToExercises(),
-                    child: Container(
-                      height: 44,
-                      padding: const EdgeInsets.symmetric(horizontal: 14),
-                      decoration: BoxDecoration(
-                        color: elevated,
-                        borderRadius: BorderRadius.circular(22),
-                        border: Border.all(
-                          color: textMuted.withValues(alpha: 0.15),
-                        ),
+                  child: Container(
+                    height: 44,
+                    padding: const EdgeInsets.symmetric(horizontal: 14),
+                    decoration: BoxDecoration(
+                      color: elevated,
+                      borderRadius: BorderRadius.circular(22),
+                      border: Border.all(
+                        color: textMuted.withValues(alpha: 0.15),
                       ),
-                      child: Row(
-                        children: [
-                          Icon(
-                            Icons.search_rounded,
-                            color: textMuted,
-                            size: 20,
-                          ),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: Text(
-                              'Search exercises...',
-                              style: TextStyle(
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.search_rounded,
+                          color: textMuted,
+                          size: 20,
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: TextField(
+                            onChanged: (value) {
+                              ref.read(exerciseSearchProvider.notifier).state = value;
+                              if (value.isNotEmpty && _tabController.index != 1) {
+                                _tabController.animateTo(1);
+                              }
+                            },
+                            style: TextStyle(
+                              color: isDark ? AppColors.textPrimary : AppColorsLight.textPrimary,
+                              fontSize: 14,
+                            ),
+                            decoration: InputDecoration(
+                              hintText: 'Search exercises...',
+                              hintStyle: TextStyle(
                                 color: textMuted,
                                 fontSize: 14,
                               ),
+                              border: InputBorder.none,
+                              isDense: true,
+                              contentPadding: EdgeInsets.zero,
                             ),
                           ),
-                          Icon(
-                            Icons.auto_awesome_rounded,
-                            color: accentColor.withValues(alpha: 0.6),
-                            size: 18,
-                          ),
-                        ],
-                      ),
+                        ),
+                        Icon(
+                          Icons.auto_awesome_rounded,
+                          color: accentColor.withValues(alpha: 0.6),
+                          size: 18,
+                        ),
+                      ],
                     ),
                   ),
                 ),

@@ -81,7 +81,9 @@ class _AiHeroCard extends StatelessWidget {
       child: GestureDetector(
         onTap: () {
           HapticService.light();
-          // AI suggestion logic will be added later
+          context.push('/chat', extra: {
+            'initialMessage': 'What should I train today? Give me a personalized recommendation based on my recent workouts, recovery, and goals.',
+          });
         },
         child: Container(
           height: 100,
@@ -286,8 +288,9 @@ class _ForYouSection extends StatelessWidget {
           child: GestureDetector(
             onTap: () {
               HapticService.light();
-              // Navigate to AI chat for recommendation
-              context.push('/chat');
+              context.push('/chat', extra: {
+                'initialMessage': 'I\'m not sure what to train. Can you suggest a workout split for me based on my goals and what I\'ve been doing recently?',
+              });
             },
             child: Row(
               mainAxisSize: MainAxisSize.min,

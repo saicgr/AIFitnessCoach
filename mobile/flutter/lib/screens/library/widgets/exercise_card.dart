@@ -255,16 +255,16 @@ class ExerciseCard extends ConsumerWidget {
                       ],
                     ),
                     const SizedBox(height: 6),
-                    Row(
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 4,
                       children: [
-                        if (exercise.muscleGroup != null) ...[
+                        if (exercise.muscleGroup != null)
                           InfoBadge(
                             icon: Icons.accessibility_new,
                             text: exercise.muscleGroup!,
                             color: purple,
                           ),
-                          const SizedBox(width: 8),
-                        ],
                         if (exercise.difficulty != null)
                           InfoBadge(
                             icon: Icons.signal_cellular_alt,
@@ -290,152 +290,46 @@ class ExerciseCard extends ConsumerWidget {
               ),
             ),
 
-            // Action buttons row
-            Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // Favorite button
-                GestureDetector(
-                  onTap: () => _toggleFavorite(ref),
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 200),
-                    padding: const EdgeInsets.all(6),
-                    decoration: BoxDecoration(
-                      color: isFavorite
-                          ? AppColors.error.withOpacity(0.15)
-                          : Colors.transparent,
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: AnimatedSwitcher(
-                      duration: const Duration(milliseconds: 150),
-                      transitionBuilder: (child, animation) => ScaleTransition(
-                        scale: Tween<double>(begin: 0.5, end: 1.0).animate(
-                          CurvedAnimation(parent: animation, curve: Curves.easeOutBack),
-                        ),
-                        child: child,
-                      ),
+            // Compact action buttons — only favorite + add + chevron inline
+            // Full actions available in the detail sheet on tap
+            Padding(
+              padding: const EdgeInsets.only(right: 8),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Favorite button
+                  GestureDetector(
+                    onTap: () => _toggleFavorite(ref),
+                    child: Padding(
+                      padding: const EdgeInsets.all(6),
                       child: Icon(
                         isFavorite ? Icons.favorite : Icons.favorite_border,
-                        key: ValueKey(isFavorite),
                         color: isFavorite ? AppColors.error : textMuted,
                         size: 18,
                       ),
                     ),
                   ),
-                ),
-                // Queue button
-                GestureDetector(
-                  onTap: () => _toggleQueue(ref),
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 200),
-                    padding: const EdgeInsets.all(6),
-                    decoration: BoxDecoration(
-                      color: isQueued
-                          ? AppColors.cyan.withOpacity(0.15)
-                          : Colors.transparent,
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: AnimatedSwitcher(
-                      duration: const Duration(milliseconds: 150),
-                      transitionBuilder: (child, animation) => ScaleTransition(
-                        scale: Tween<double>(begin: 0.5, end: 1.0).animate(
-                          CurvedAnimation(parent: animation, curve: Curves.easeOutBack),
-                        ),
-                        child: child,
-                      ),
+                  // Add to workout button
+                  GestureDetector(
+                    onTap: () => _showAddToWorkoutSheet(context, ref),
+                    child: Padding(
+                      padding: const EdgeInsets.all(6),
                       child: Icon(
-                        isQueued ? Icons.playlist_add_check : Icons.playlist_add,
-                        key: ValueKey(isQueued),
-                        color: isQueued ? AppColors.cyan : textMuted,
+                        Icons.add_circle_outline,
+                        color: AppColors.success,
                         size: 18,
                       ),
                     ),
                   ),
-                ),
-                // Avoid button
-                GestureDetector(
-                  onTap: () => _toggleAvoided(ref),
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 200),
-                    padding: const EdgeInsets.all(6),
-                    decoration: BoxDecoration(
-                      color: isAvoided
-                          ? AppColors.orange.withOpacity(0.15)
-                          : Colors.transparent,
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: AnimatedSwitcher(
-                      duration: const Duration(milliseconds: 150),
-                      transitionBuilder: (child, animation) => ScaleTransition(
-                        scale: Tween<double>(begin: 0.5, end: 1.0).animate(
-                          CurvedAnimation(parent: animation, curve: Curves.easeOutBack),
-                        ),
-                        child: child,
-                      ),
-                      child: Icon(
-                        isAvoided ? Icons.block : Icons.block_outlined,
-                        key: ValueKey(isAvoided),
-                        color: isAvoided ? AppColors.orange : textMuted,
-                        size: 18,
-                      ),
-                    ),
+                  // Arrow
+                  Icon(
+                    Icons.chevron_right,
+                    color: textMuted,
+                    size: 20,
                   ),
-                ),
-                // Staple/Pin button
-                GestureDetector(
-                  onTap: () => _toggleStaple(ref),
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 200),
-                    padding: const EdgeInsets.all(6),
-                    decoration: BoxDecoration(
-                      color: isStaple
-                          ? purple.withOpacity(0.15)
-                          : Colors.transparent,
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: AnimatedSwitcher(
-                      duration: const Duration(milliseconds: 150),
-                      transitionBuilder: (child, animation) => ScaleTransition(
-                        scale: Tween<double>(begin: 0.5, end: 1.0).animate(
-                          CurvedAnimation(parent: animation, curve: Curves.easeOutBack),
-                        ),
-                        child: child,
-                      ),
-                      child: Icon(
-                        isStaple ? Icons.push_pin : Icons.push_pin_outlined,
-                        key: ValueKey(isStaple),
-                        color: isStaple ? purple : textMuted,
-                        size: 18,
-                      ),
-                    ),
-                  ),
-                ),
-                // Add to workout button
-                GestureDetector(
-                  onTap: () => _showAddToWorkoutSheet(context, ref),
-                  child: Container(
-                    padding: const EdgeInsets.all(6),
-                    decoration: BoxDecoration(
-                      color: AppColors.success.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Icon(
-                      Icons.add_circle_outline,
-                      color: AppColors.success,
-                      size: 18,
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 6),
-                // Arrow
-                Icon(
-                  Icons.chevron_right,
-                  color: textMuted,
-                  size: 20,
-                ),
-              ],
+                ],
+              ),
             ),
-            const SizedBox(width: 8),
           ],
         ),
       ),

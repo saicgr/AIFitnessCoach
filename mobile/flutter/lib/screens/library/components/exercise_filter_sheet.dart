@@ -299,15 +299,13 @@ class ExerciseFilterSheet extends ConsumerWidget {
               ),
             ),
 
-            // Apply button - extra bottom padding for floating nav bar
+            // Apply button
             Padding(
               padding: EdgeInsets.only(
                 left: 16,
                 right: 16,
-                top: 16,
-                bottom: 16 +
-                    MediaQuery.of(context).padding.bottom +
-                    88, // 88 = nav bar (56) + margins (32)
+                top: 12,
+                bottom: 12 + MediaQuery.of(context).padding.bottom,
               ),
               child: SizedBox(
                 width: double.infinity,
@@ -315,7 +313,7 @@ class ExerciseFilterSheet extends ConsumerWidget {
                   onPressed: () => Navigator.pop(context),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: cyan,
-                    foregroundColor: Colors.black,
+                    foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
