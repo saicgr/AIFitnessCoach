@@ -1574,6 +1574,7 @@ class WorkoutRepository {
   Future<Workout?> addExercise({
     required String workoutId,
     required String exerciseName,
+    String? exerciseId,
     int sets = 3,
     String reps = '8-12',
     int restSeconds = 60,
@@ -1581,12 +1582,13 @@ class WorkoutRepository {
     Map<String, double>? cardioParams,
   }) async {
     try {
-      debugPrint('🔍 [Workout] Adding exercise "$exerciseName" to workout $workoutId');
+      debugPrint('🔍 [Workout] Adding exercise "$exerciseName" (id: $exerciseId) to workout $workoutId');
       final response = await _apiClient.post(
         '${ApiConstants.workouts}/add-exercise',
         data: {
           'workout_id': workoutId,
           'exercise_name': exerciseName,
+          if (exerciseId != null) 'exercise_id': exerciseId,
           'sets': sets,
           'reps': reps,
           'rest_seconds': restSeconds,

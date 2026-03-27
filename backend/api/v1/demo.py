@@ -109,10 +109,12 @@ class TourCompletedRequest(BaseModel):
 
 
 # ============================================================================
-# FALLBACK EXERCISE DATA
+# CURATED EXERCISE DATA (for unauthenticated demo/guest experience)
+# These are real exercises with real sets/reps, used to showcase the app's
+# capabilities before signup. They are NOT personalized user data.
 # ============================================================================
 
-FALLBACK_EXERCISES = {
+CURATED_EXERCISES = {
     "chest": [
         {"name": "Push-ups", "sets": 3, "reps": "10-15", "muscle_group": "Chest"},
         {"name": "Dumbbell Bench Press", "sets": 3, "reps": "8-12", "muscle_group": "Chest"},
@@ -157,7 +159,7 @@ FALLBACK_EXERCISES = {
     ],
 }
 
-WORKOUT_TEMPLATES = {
+CURATED_TEMPLATES = {
     "push_pull_legs": [
         {"name": "Push Day", "focus": ["chest", "shoulders", "triceps"], "type": "strength"},
         {"name": "Pull Day", "focus": ["back", "biceps"], "type": "strength"},
@@ -194,8 +196,8 @@ def _get_exercises_for_muscles(
 
     for muscle in muscles:
         muscle_lower = muscle.lower()
-        if muscle_lower in FALLBACK_EXERCISES:
-            for ex in FALLBACK_EXERCISES[muscle_lower]:
+        if muscle_lower in CURATED_EXERCISES:
+            for ex in CURATED_EXERCISES[muscle_lower]:
                 exercise = ex.copy()
                 exercise["sets"] = max(2, exercise["sets"] + modifier)
                 exercises.append(exercise)
@@ -229,7 +231,7 @@ async def generate_preview_plan(request: Request, body: PreviewPlanRequest):
 
         # Get workout template based on training split
         split = body.training_split or "push_pull_legs"
-        templates = WORKOUT_TEMPLATES.get(split, WORKOUT_TEMPLATES["full_body"])
+        templates = CURATED_TEMPLATES.get(split, CURATED_TEMPLATES["full_body"])
 
         # Generate workout days
         plan_days = []
@@ -291,11 +293,6 @@ async def generate_preview_plan(request: Request, body: PreviewPlanRequest):
                 "total_exercises": sum(len(d["exercises"]) for d in plan_days),
                 "estimated_weekly_duration": sum(d["duration_minutes"] for d in plan_days),
             },
-            "social_proof": {
-                "similar_users": 10847,
-                "avg_results_weeks": 4 if "lose_weight" in body.goals else 6,
-                "success_rate": 87,
-            }
         }
 
     except Exception as e:
@@ -629,8 +626,6 @@ async def get_sample_workouts(
 
     return {
         "workouts": sample_workouts,
-        "total_available": 1722,  # Full library count
-        "message": "Sign up to access 1,700+ personalized workout variations!"
     }
 
 
@@ -1314,15 +1309,15 @@ async def get_preview_workout(
             raise HTTPException(status_code=400, detail="Day must be between 1 and 7")
 
         # Get workout template based on training split
-        templates = WORKOUT_TEMPLATES.get(training_split, WORKOUT_TEMPLATES["full_body"])
+        templates = CURATED_TEMPLATES.get(training_split, CURATED_TEMPLATES["full_body"])
         template = templates[(day - 1) % len(templates)]
 
         # Get more detailed exercises for this day
         exercises = []
         for muscle in template["focus"]:
             muscle_lower = muscle.lower()
-            if muscle_lower in FALLBACK_EXERCISES:
-                for ex in FALLBACK_EXERCISES[muscle_lower]:
+            if muscle_lower in CURATED_EXERCISES:
+                for ex in CURATED_EXERCISES[muscle_lower]:
                     exercise = ex.copy()
                     # Add more detail for preview
                     exercise["id"] = f"preview-{muscle_lower}-{len(exercises)}"

@@ -519,28 +519,6 @@ class TestPreviewPlanQuality:
         assert personalization["total_exercises"] > 0
 
     @pytest.mark.asyncio
-    async def test_preview_includes_social_proof(self, client: AsyncClient):
-        """Test that preview plan includes social proof data."""
-        response = await client.post(
-            "/api/v1/demo/generate-preview-plan",
-            json={
-                "goals": ["build_muscle"],
-                "fitness_level": "intermediate",
-                "equipment": ["dumbbells"],
-                "days_per_week": 3,
-            }
-        )
-
-        assert response.status_code == 200
-        data = response.json()
-
-        social_proof = data["social_proof"]
-        assert "similar_users" in social_proof
-        assert social_proof["similar_users"] > 0
-        assert "success_rate" in social_proof
-        assert social_proof["success_rate"] > 0
-
-    @pytest.mark.asyncio
     async def test_preview_exercises_have_proper_structure(self, client: AsyncClient):
         """Test that preview exercises have full structure."""
         response = await client.post(

@@ -3510,7 +3510,11 @@ async def add_exercise_to_workout(request: Request, payload: AddExerciseRequest,
 
         # Get exercise details from library (shared for all sections)
         exercise_lib = get_exercise_library_service()
-        exercise_data = exercise_lib.search_exercises(payload.exercise_name, limit=1)
+        if payload.exercise_id:
+            ex_by_id = exercise_lib.get_exercise_by_id(payload.exercise_id)
+            exercise_data = [ex_by_id] if ex_by_id else exercise_lib.search_exercises(payload.exercise_name, limit=1)
+        else:
+            exercise_data = exercise_lib.search_exercises(payload.exercise_name, limit=1)
 
         exercise_name = payload.exercise_name
         muscle_group = None

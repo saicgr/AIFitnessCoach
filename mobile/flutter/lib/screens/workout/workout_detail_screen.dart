@@ -1428,8 +1428,6 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
-    debugPrint('🔍 [WorkoutDetail] build() - _isLoading: $_isLoading, _isLoadingSummary: $_isLoadingSummary, _workoutSummary: ${_workoutSummary != null}');
-
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final backgroundColor = isDark ? AppColors.pureBlack : AppColorsLight.pureWhite;
     final elevatedColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
@@ -1437,6 +1435,8 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
     final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
     // Use dynamic accent color from provider
     final accentColor = ref.colors(context).accent;
+    // Use paddingOf to only rebuild on padding changes, not all MediaQuery changes
+    final safePadding = MediaQuery.paddingOf(context);
 
     if (_isLoading) {
       return Scaffold(
@@ -1503,7 +1503,7 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
             slivers: [
               // Spacer for top bar
               SliverToBoxAdapter(
-                child: SizedBox(height: MediaQuery.of(context).padding.top + 60),
+                child: SizedBox(height: safePadding.top + 60),
               ),
 
               // Type badges row - single line horizontal scroll
@@ -2122,7 +2122,7 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
       ),
       // Floating top bar - positioned below status bar
       Positioned(
-        top: MediaQuery.of(context).padding.top + 8,
+        top: safePadding.top + 8,
         left: 16,
         right: 16,
         child: Row(
@@ -3307,7 +3307,7 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
                         ],
                       ),
                     ),
-                    SizedBox(height: MediaQuery.of(context).padding.bottom + 16),
+                    SizedBox(height: safePadding.bottom + 16),
                   ],
                 ),
               ),

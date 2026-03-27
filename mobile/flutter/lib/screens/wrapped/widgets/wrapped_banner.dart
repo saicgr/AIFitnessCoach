@@ -19,11 +19,7 @@ class WrappedBanner extends ConsumerStatefulWidget {
   ConsumerState<WrappedBanner> createState() => _WrappedBannerState();
 }
 
-class _WrappedBannerState extends ConsumerState<WrappedBanner>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _pulseController;
-  late final Animation<double> _pulseAnimation;
-
+class _WrappedBannerState extends ConsumerState<WrappedBanner> {
   /// Tracks per-period dismissal (only allowed after the period has been viewed).
   final Map<String, bool> _dismissedMap = {};
   bool _prefsLoaded = false;
@@ -31,20 +27,7 @@ class _WrappedBannerState extends ConsumerState<WrappedBanner>
   @override
   void initState() {
     super.initState();
-    _pulseController = AnimationController(
-      duration: const Duration(milliseconds: 1500),
-      vsync: this,
-    )..repeat(reverse: true);
-    _pulseAnimation = Tween<double>(begin: 0.95, end: 1.0).animate(
-      CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
-    );
     _loadDismissals();
-  }
-
-  @override
-  void dispose() {
-    _pulseController.dispose();
-    super.dispose();
   }
 
   Future<void> _loadDismissals() async {
@@ -101,14 +84,12 @@ class _WrappedBannerState extends ConsumerState<WrappedBanner>
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-      child: ScaleTransition(
-        scale: _pulseAnimation,
-        child: GestureDetector(
-          onTap: () {
-            HapticService.selection();
-            context.push('/wrapped/${info.period}');
-          },
-          child: Container(
+      child: GestureDetector(
+        onTap: () {
+          HapticService.selection();
+          context.push('/wrapped/${info.period}');
+        },
+        child: Container(
             width: double.infinity,
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
             decoration: BoxDecoration(
@@ -236,7 +217,6 @@ class _WrappedBannerState extends ConsumerState<WrappedBanner>
             ),
           ),
         ),
-      ),
     );
   }
 
@@ -330,7 +310,10 @@ class _WrappedBannerState extends ConsumerState<WrappedBanner>
       error: (_, __) => const SizedBox.shrink(),
       data: (summary) {
         // State A: check for latest available (unviewed first, then any not dismissed)
-        final available = summary.available;
+        // Filter out periods with no meaningful data (e.g. stale rows for new users)
+        final available = summary.available
+            .where((p) => p.totalWorkouts >= 3)
+            .toList();
         if (available.isNotEmpty) {
           // Prefer the first unviewed period; else fall back to first available.
           final unviewed = available.where((p) => !p.viewed).toList();

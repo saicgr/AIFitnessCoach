@@ -690,17 +690,7 @@ IMPORTANT:
             return response.data or []
         except Exception as e:
             logger.error(f"❌ [RecipeSuggestion] Error getting cuisines: {e}")
-            logger.warning("Using hardcoded fallback cuisine list - DB query failed")
-            return [
-                {"code": "indian", "name": "Indian", "region": "South Asia"},
-                {"code": "italian", "name": "Italian", "region": "Europe"},
-                {"code": "mexican", "name": "Mexican", "region": "Americas"},
-                {"code": "chinese", "name": "Chinese", "region": "East Asia"},
-                {"code": "japanese", "name": "Japanese", "region": "East Asia"},
-                {"code": "thai", "name": "Thai", "region": "Southeast Asia"},
-                {"code": "mediterranean", "name": "Mediterranean", "region": "Europe/Middle East"},
-                {"code": "american", "name": "American", "region": "Americas"},
-            ]
+            return []
 
     async def get_body_types_list(self) -> List[Dict[str, Any]]:
         """Get list of body types with descriptions."""
@@ -710,13 +700,7 @@ IMPORTANT:
             return response.data or []
         except Exception as e:
             logger.error(f"❌ [RecipeSuggestion] Error getting body types: {e}")
-            # Return hardcoded fallback
-            return [
-                {"code": "ectomorph", "name": "Ectomorph", "description": "Lean build, fast metabolism"},
-                {"code": "mesomorph", "name": "Mesomorph", "description": "Athletic build, moderate metabolism"},
-                {"code": "endomorph", "name": "Endomorph", "description": "Rounder build, slower metabolism"},
-                {"code": "balanced", "name": "Balanced", "description": "Combination of body types"},
-            ]
+            return []
 
 
 # Singleton instance

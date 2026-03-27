@@ -364,13 +364,14 @@ class _ExerciseAddSheetState extends ConsumerState<_ExerciseAddSheet>
     }
   }
 
-  Future<void> _addExercise(String exerciseName) async {
+  Future<void> _addExercise(String exerciseName, {String? exerciseId}) async {
     setState(() => _isAdding = true);
 
     final repo = ref.read(workoutRepositoryProvider);
     final updatedWorkout = await repo.addExercise(
       workoutId: widget.workoutId,
       exerciseName: exerciseName,
+      exerciseId: exerciseId,
     );
 
     setState(() => _isAdding = false);
@@ -683,7 +684,7 @@ class _ExerciseAddSheetState extends ConsumerState<_ExerciseAddSheet>
           'is_unilateral': ex.isUnilateral,
         },
       ),
-      onAdd: () => _addExercise(ex.name ?? 'Exercise'),
+      onAdd: () => _addExercise(ex.name ?? 'Exercise', exerciseId: ex.id),
       textPrimary: textPrimary,
       textMuted: textMuted,
       actionIcon: Icons.add_circle,

@@ -7,7 +7,6 @@ import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/utils/difficulty_utils.dart';
-import '../../data/demo_workouts.dart';
 import '../../core/services/posthog_service.dart';
 import '../../data/services/api_client.dart';
 import '../../core/constants/api_constants.dart';
@@ -28,9 +27,9 @@ class DemoWorkoutScreen extends ConsumerStatefulWidget {
 }
 
 class _DemoWorkoutScreenState extends ConsumerState<DemoWorkoutScreen> {
-  DemoWorkout? _currentWorkout;
   Map<String, dynamic>? _personalizedWorkout;
   bool _isLoading = true;
+  bool _hasError = false;
   int? _expandedExerciseIndex;
   bool _hasTrackedView = false;
 
@@ -78,49 +77,30 @@ class _DemoWorkoutScreenState extends ConsumerState<DemoWorkoutScreen> {
           _hasTrackedView = true;
         }
       } else {
-        // Fall back to static demo workout
-        _loadStaticWorkout();
+        setState(() {
+          _isLoading = false;
+          _hasError = true;
+        });
       }
     } catch (e) {
       debugPrint('Failed to load personalized workout: $e');
-      // Fall back to static demo workout
-      _loadStaticWorkout();
-    }
-  }
-
-  void _loadStaticWorkout({String? excludeType}) {
-    if (widget.workoutType != null && excludeType == null) {
-      _currentWorkout = DemoWorkouts.getWorkout(widget.workoutType!);
-    } else {
-      _currentWorkout = DemoWorkouts.getRandomWorkout(excludeType: excludeType);
-    }
-    setState(() {
-      _isLoading = false;
-      _personalizedWorkout = null;
-    });
-
-    // Track demo workout view
-    if (!_hasTrackedView) {
-      _trackDemoView();
-      _hasTrackedView = true;
+      setState(() {
+        _isLoading = false;
+        _hasError = true;
+      });
     }
   }
 
   void _trackDemoView() {
     try {
       final posthog = ref.read(posthogServiceProvider);
-      String workoutName;
-      if (_personalizedWorkout != null) {
-        final workout = _personalizedWorkout!['workout'] as Map<String, dynamic>?;
-        workoutName = workout?['name'] as String? ?? 'personalized';
-      } else {
-        workoutName = _currentWorkout?.name ?? 'unknown';
-      }
+      final workout = _personalizedWorkout?['workout'] as Map<String, dynamic>?;
+      final workoutName = workout?['name'] as String? ?? 'unknown';
       posthog.capture(
         eventName: 'demo_workout_viewed',
 
         properties: {
-          'workout_type': _personalizedWorkout != null ? 'personalized' : (_currentWorkout?.type ?? 'unknown'),
+          'workout_type': 'personalized',
           'workout_name': workoutName,
           'is_personalized': _personalizedWorkout != null,
         },
@@ -133,18 +113,13 @@ class _DemoWorkoutScreenState extends ConsumerState<DemoWorkoutScreen> {
   void _trackConversion(String action) {
     try {
       final posthog = ref.read(posthogServiceProvider);
-      String workoutName;
-      if (_personalizedWorkout != null) {
-        final workout = _personalizedWorkout!['workout'] as Map<String, dynamic>?;
-        workoutName = workout?['name'] as String? ?? 'personalized';
-      } else {
-        workoutName = _currentWorkout?.name ?? 'unknown';
-      }
+      final workout = _personalizedWorkout?['workout'] as Map<String, dynamic>?;
+      final workoutName = workout?['name'] as String? ?? 'unknown';
       posthog.capture(
         eventName: 'demo_to_signup_conversion',
 
         properties: {
-          'workout_type': _personalizedWorkout != null ? 'personalized' : (_currentWorkout?.type ?? 'unknown'),
+          'workout_type': 'personalized',
           'workout_name': workoutName,
           'action': action,
         },
@@ -167,7 +142,7 @@ class _DemoWorkoutScreenState extends ConsumerState<DemoWorkoutScreen> {
         eventName: 'demo_try_another_clicked',
 
         properties: {
-          'previous_workout': _personalizedWorkout != null ? 'personalized' : (_currentWorkout?.type ?? 'unknown'),
+          'previous_workout': 'personalized',
         },
       );
     } catch (_) {}
@@ -185,14 +160,14 @@ class _DemoWorkoutScreenState extends ConsumerState<DemoWorkoutScreen> {
   // Helper getters for personalized workout data
   Map<String, dynamic>? get _workout => _personalizedWorkout?['workout'];
   List<dynamic> get _exercises => _workout?['exercises'] as List<dynamic>? ?? [];
-  String get _workoutName => _workout?['name'] ?? _currentWorkout?.name ?? 'Sample Workout';
-  String get _workoutDescription => _workout?['description'] ?? _currentWorkout?.description ?? '';
-  String get _workoutType => _workout?['type'] ?? _currentWorkout?.workoutType ?? 'strength';
-  String get _difficulty => _workout?['difficulty'] ?? _currentWorkout?.difficulty ?? 'intermediate';
-  int get _durationMinutes => _workout?['duration_minutes'] ?? _currentWorkout?.durationMinutes ?? 30;
-  int get _caloriesEstimate => _workout?['calories_estimate'] ?? _currentWorkout?.estimatedCalories ?? 200;
-  List<String> get _targetMuscles => (_workout?['target_muscles'] as List<dynamic>?)?.cast<String>() ?? _currentWorkout?.targetMuscles ?? [];
-  List<String> get _equipment => (_workout?['equipment'] as List<dynamic>?)?.cast<String>() ?? _currentWorkout?.equipment ?? [];
+  String get _workoutName => _workout?['name'] ?? 'Sample Workout';
+  String get _workoutDescription => _workout?['description'] ?? '';
+  String get _workoutType => _workout?['type'] ?? 'strength';
+  String get _difficulty => _workout?['difficulty'] ?? 'intermediate';
+  int get _durationMinutes => _workout?['duration_minutes'] ?? 30;
+  int get _caloriesEstimate => _workout?['calories_estimate'] ?? 200;
+  List<String> get _targetMuscles => (_workout?['target_muscles'] as List<dynamic>?)?.cast<String>() ?? [];
+  List<String> get _equipment => (_workout?['equipment'] as List<dynamic>?)?.cast<String>() ?? [];
 
   @override
   Widget build(BuildContext context) {
@@ -222,8 +197,8 @@ class _DemoWorkoutScreenState extends ConsumerState<DemoWorkoutScreen> {
       );
     }
 
-    // If neither personalized nor static workout is available, show error
-    if (_personalizedWorkout == null && _currentWorkout == null) {
+    // If workout failed to load, show error with retry
+    if (_hasError || _personalizedWorkout == null) {
       return Scaffold(
         backgroundColor: backgroundColor,
         body: Center(
@@ -293,29 +268,17 @@ class _DemoWorkoutScreenState extends ConsumerState<DemoWorkoutScreen> {
                 child: _buildExercisesHeader(isDark),
               ),
 
-              // Exercise List - use personalized exercises if available
-              if (_personalizedWorkout != null)
-                SliverList(
-                  delegate: SliverChildBuilderDelegate(
-                    (context, index) => _buildPersonalizedExerciseCard(
-                      index,
-                      _exercises[index] as Map<String, dynamic>,
-                      isDark,
-                    ),
-                    childCount: _exercises.length,
+              // Exercise List
+              SliverList(
+                delegate: SliverChildBuilderDelegate(
+                  (context, index) => _buildPersonalizedExerciseCard(
+                    index,
+                    _exercises[index] as Map<String, dynamic>,
+                    isDark,
                   ),
-                )
-              else if (_currentWorkout != null)
-                SliverList(
-                  delegate: SliverChildBuilderDelegate(
-                    (context, index) => _buildExerciseCard(
-                      index,
-                      _currentWorkout!.exercises[index],
-                      isDark,
-                    ),
-                    childCount: _currentWorkout!.exercises.length,
-                  ),
+                  childCount: _exercises.length,
                 ),
+              ),
 
               // CTA Section
               SliverToBoxAdapter(
@@ -602,9 +565,7 @@ class _DemoWorkoutScreenState extends ConsumerState<DemoWorkoutScreen> {
 
   Widget _buildStatsRow(bool isDark) {
     final elevatedColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
-    final exerciseCount = _personalizedWorkout != null
-        ? _exercises.length
-        : (_currentWorkout?.exercises.length ?? 0);
+    final exerciseCount = _exercises.length;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -805,9 +766,7 @@ class _DemoWorkoutScreenState extends ConsumerState<DemoWorkoutScreen> {
 
   Widget _buildExercisesHeader(bool isDark) {
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    final exerciseCount = _personalizedWorkout != null
-        ? _exercises.length
-        : (_currentWorkout?.exercises.length ?? 0);
+    final exerciseCount = _exercises.length;
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
@@ -1174,235 +1133,6 @@ class _DemoWorkoutScreenState extends ConsumerState<DemoWorkoutScreen> {
         );
   }
 
-  Widget _buildExerciseCard(int index, DemoExercise exercise, bool isDark) {
-    final elevatedColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
-    final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
-    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
-    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    final glassSurface = isDark ? AppColors.glassSurface : AppColorsLight.glassSurface;
-
-    final isExpanded = _expandedExerciseIndex == index;
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-      child: Container(
-        decoration: BoxDecoration(
-          color: elevatedColor,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: cardBorder.withOpacity(0.3)),
-        ),
-        child: Column(
-          children: [
-            // Exercise header (tappable to expand)
-            GestureDetector(
-              onTap: () {
-                HapticFeedback.selectionClick();
-                setState(() {
-                  _expandedExerciseIndex = isExpanded ? null : index;
-                });
-              },
-              child: Container(
-                padding: const EdgeInsets.all(12),
-                child: Row(
-                  children: [
-                    // Exercise number badge
-                    Container(
-                      width: 36,
-                      height: 36,
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [AppColors.cyan, AppColors.teal],
-                        ),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: Center(
-                        child: Text(
-                          '${index + 1}',
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.black,
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-
-                    // Exercise info
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            exercise.name,
-                            style: TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.bold,
-                              color: textPrimary,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Wrap(
-                            spacing: 8,
-                            runSpacing: 4,
-                            children: [
-                              _buildExerciseChip(
-                                Icons.fitness_center,
-                                exercise.muscleGroup,
-                                AppColors.cyan,
-                              ),
-                              _buildExerciseChip(
-                                Icons.sports_gymnastics,
-                                exercise.equipment,
-                                AppColors.purple,
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-
-                    // Expand/collapse icon
-                    Icon(
-                      isExpanded
-                          ? Icons.keyboard_arrow_up
-                          : Icons.keyboard_arrow_down,
-                      color: textMuted,
-                    ),
-                  ],
-                ),
-              ),
-            ),
-
-            // Sets/reps summary row
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-              decoration: BoxDecoration(
-                color: glassSurface.withOpacity(0.3),
-                border: Border(
-                  top: BorderSide(color: cardBorder.withOpacity(0.3)),
-                ),
-              ),
-              child: Row(
-                children: [
-                  _buildSummaryChip(
-                    Icons.repeat,
-                    '${exercise.sets} sets',
-                    AppColors.cyan,
-                  ),
-                  const SizedBox(width: 12),
-                  _buildSummaryChip(
-                    Icons.fitness_center,
-                    _getRepDisplay(exercise),
-                    AppColors.purple,
-                  ),
-                  const SizedBox(width: 12),
-                  _buildSummaryChip(
-                    Icons.timer_outlined,
-                    _formatRestTime(exercise.restSeconds),
-                    AppColors.orange,
-                  ),
-                  if (exercise.weight != null) ...[
-                    const SizedBox(width: 12),
-                    _buildSummaryChip(
-                      Icons.monitor_weight_outlined,
-                      '${exercise.weight!.toInt()} kg',
-                      AppColors.green,
-                    ),
-                  ],
-                ],
-              ),
-            ),
-
-            // Expanded instructions
-            AnimatedCrossFade(
-              duration: const Duration(milliseconds: 200),
-              crossFadeState:
-                  isExpanded ? CrossFadeState.showFirst : CrossFadeState.showSecond,
-              firstChild: Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: glassSurface.withOpacity(0.5),
-                  borderRadius: const BorderRadius.only(
-                    bottomLeft: Radius.circular(16),
-                    bottomRight: Radius.circular(16),
-                  ),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Icon(
-                          Icons.info_outline,
-                          size: 16,
-                          color: AppColors.cyan,
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          'How to perform',
-                          style: TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w600,
-                            color: AppColors.cyan,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      exercise.instructions,
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: textSecondary,
-                        height: 1.5,
-                      ),
-                    ),
-                    if (exercise.isUnilateral) ...[
-                      const SizedBox(height: 12),
-                      Container(
-                        padding: const EdgeInsets.all(10),
-                        decoration: BoxDecoration(
-                          color: AppColors.orange.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Row(
-                          children: [
-                            Icon(
-                              Icons.sync_alt,
-                              size: 16,
-                              color: AppColors.orange,
-                            ),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: Text(
-                                'This is a unilateral exercise - perform on each side',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: AppColors.orange,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ],
-                ),
-              ),
-              secondChild: const SizedBox.shrink(),
-            ),
-          ],
-        ),
-      ),
-    ).animate().fadeIn(
-          delay: Duration(milliseconds: 400 + (index * 50)),
-          duration: 300.ms,
-        );
-  }
-
   Widget _buildExerciseChip(IconData icon, String text, Color color) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
@@ -1446,17 +1176,6 @@ class _DemoWorkoutScreenState extends ConsumerState<DemoWorkoutScreen> {
     );
   }
 
-  String _getRepDisplay(DemoExercise exercise) {
-    if (exercise.reps != null) {
-      return '${exercise.reps} reps';
-    } else if (exercise.holdSeconds != null) {
-      return '${exercise.holdSeconds}s hold';
-    } else if (exercise.durationSeconds != null) {
-      return '${exercise.durationSeconds}s';
-    }
-    return '8-12 reps';
-  }
-
   String _formatRestTime(int seconds) {
     if (seconds >= 60) {
       final mins = seconds ~/ 60;
@@ -1472,23 +1191,8 @@ class _DemoWorkoutScreenState extends ConsumerState<DemoWorkoutScreen> {
     _trackConversion('start_workout');
 
     // Prepare exercises list for active workout
-    List<Map<String, dynamic>> exercisesList;
-    if (_personalizedWorkout != null) {
-      exercisesList = _exercises.map((e) => e as Map<String, dynamic>).toList();
-    } else if (_currentWorkout != null) {
-      exercisesList = _currentWorkout!.exercises.map((e) => {
-        'name': e.name,
-        'sets': e.sets,
-        'reps': e.reps ?? 12,
-        'rest_seconds': e.restSeconds,
-        'muscle_group': e.muscleGroup,
-        'equipment': e.equipment,
-        'gif_url': e.gifUrl,
-        'notes': e.instructions,
-      }).toList();
-    } else {
-      return;
-    }
+    final exercisesList = _exercises.map((e) => e as Map<String, dynamic>).toList();
+    if (exercisesList.isEmpty) return;
 
     // Navigate to demo active workout
     context.push('/demo-active-workout', extra: {

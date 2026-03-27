@@ -126,27 +126,6 @@ class TestDemoPreviewPlan:
         assert data["personalization"]["fitness_level"] == "beginner"
         assert "total_exercises" in data["personalization"]
 
-    @pytest.mark.asyncio
-    async def test_generate_preview_plan_includes_social_proof(self, client: AsyncClient):
-        """Test that social proof is included."""
-        response = await client.post(
-            "/api/v1/demo/generate-preview-plan",
-            json={
-                "goals": ["lose_weight"],
-                "fitness_level": "intermediate",
-                "equipment": ["bodyweight"],
-                "days_per_week": 4,
-            }
-        )
-
-        assert response.status_code == 200
-        data = response.json()
-
-        assert "social_proof" in data
-        assert "similar_users" in data["social_proof"]
-        assert "success_rate" in data["social_proof"]
-
-
 class TestDemoSession:
     """Tests for demo session management."""
 
@@ -290,16 +269,6 @@ class TestSampleWorkouts:
         assert "workouts" in data
 
     @pytest.mark.asyncio
-    async def test_sample_workouts_include_count(self, client: AsyncClient):
-        """Test that sample workouts include total count."""
-        response = await client.get("/api/v1/demo/sample-workouts")
-
-        assert response.status_code == 200
-        data = response.json()
-        assert "total_available" in data
-        assert data["total_available"] > 1000  # We have 1700+ exercises
-
-
 class TestSessionConversion:
     """Tests for session conversion tracking."""
 

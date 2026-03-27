@@ -245,6 +245,31 @@ class ExerciseLibraryService:
             logger.error(f"Error searching exercises: {e}")
             return []
 
+    def get_exercise_by_id(self, exercise_id: str) -> Optional[Dict[str, Any]]:
+        """Get a single exercise by its library ID (exact primary-key lookup)."""
+        try:
+            result = self.client.table("exercise_library").select("*").eq("id", exercise_id).limit(1).execute()
+            if not result.data:
+                return None
+            ex = result.data[0]
+            raw_name = ex.get('exercise_name', 'Unknown Exercise')
+            from services.exercise_rag_service import _clean_exercise_name_for_display
+            clean_name = _clean_exercise_name_for_display(raw_name)
+            raw_eq = ex.get('equipment', '')
+            if not raw_eq or raw_eq.lower() in ['bodyweight', 'body weight', 'none', '']:
+                equipment = _infer_equipment_from_name(clean_name)
+            else:
+                equipment = raw_eq
+            return {
+                **ex,
+                'name': clean_name,
+                'equipment': equipment,
+                'muscle_group': ex.get('target_muscle', ex.get('body_part', 'unknown')),
+            }
+        except Exception as e:
+            logger.error(f"Error getting exercise by ID {exercise_id}: {e}")
+            return None
+
 
 # Singleton instance
 _exercise_library_service: Optional[ExerciseLibraryService] = None

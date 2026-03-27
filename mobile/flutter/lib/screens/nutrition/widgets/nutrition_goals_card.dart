@@ -268,14 +268,9 @@ class NutritionGoalsCard extends ConsumerWidget {
                     color: teal,
                   ),
               ];
-              final separated = <Widget>[];
-              for (var i = 0; i < chips.length; i++) {
-                if (i > 0) separated.add(Text(' · ', style: TextStyle(fontSize: 11, color: teal.withOpacity(0.5))));
-                separated.add(chips[i]);
-              }
               return Row(
-                mainAxisSize: MainAxisSize.min,
-                children: separated,
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: chips,
               );
             }),
           ],
@@ -848,30 +843,30 @@ class _MacroProgressRing extends StatelessWidget {
     return Column(
       children: [
         SizedBox(
-          width: 44,
-          height: 44,
+          width: 56,
+          height: 56,
           child: Stack(
             alignment: Alignment.center,
             clipBehavior: Clip.none,
             children: [
               // Background ring - tinted with macro color
               SizedBox(
-                width: 44,
-                height: 44,
+                width: 56,
+                height: 56,
                 child: CircularProgressIndicator(
                   value: 1.0,
-                  strokeWidth: 4,
-                  backgroundColor: color.withValues(alpha: 0.15),
-                  color: color.withValues(alpha: 0.15),
+                  strokeWidth: 5,
+                  backgroundColor: color.withValues(alpha: 0.25),
+                  color: color.withValues(alpha: 0.25),
                 ),
               ),
               // Progress ring
               SizedBox(
-                width: 44,
-                height: 44,
+                width: 56,
+                height: 56,
                 child: CircularProgressIndicator(
                   value: percentage,
-                  strokeWidth: 4,
+                  strokeWidth: 5,
                   backgroundColor: Colors.transparent,
                   color: color,
                   strokeCap: StrokeCap.round,
@@ -884,8 +879,8 @@ class _MacroProgressRing extends StatelessWidget {
                   Text(
                     '${current.toInt()}',
                     style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold,
+                      fontSize: 18,
+                      fontWeight: FontWeight.w800,
                       color: textPrimary,
                     ),
                   ),
@@ -893,7 +888,8 @@ class _MacroProgressRing extends StatelessWidget {
                     Text(
                       'kcal',
                       style: TextStyle(
-                        fontSize: 7,
+                        fontSize: 9,
+                        fontWeight: FontWeight.w500,
                         color: textMuted,
                       ),
                     ),
@@ -902,12 +898,12 @@ class _MacroProgressRing extends StatelessWidget {
             ],
           ),
         ),
-        const SizedBox(height: 4),
+        const SizedBox(height: 6),
         Text(
           label,
           style: TextStyle(
-            fontSize: 10,
-            fontWeight: FontWeight.w500,
+            fontSize: 13,
+            fontWeight: FontWeight.w700,
             color: color,
           ),
           overflow: TextOverflow.ellipsis,
@@ -916,8 +912,9 @@ class _MacroProgressRing extends StatelessWidget {
         Text(
           '/${target.toInt()}$unit',
           style: TextStyle(
-            fontSize: 9,
-            color: textMuted.withValues(alpha: 0.7),
+            fontSize: 11,
+            fontWeight: FontWeight.w500,
+            color: textPrimary.withValues(alpha: 0.5),
           ),
           overflow: TextOverflow.ellipsis,
           maxLines: 1,
@@ -941,19 +938,20 @@ class _GoalChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final muted = color.withValues(alpha: 0.55);
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
         if (icon != null) ...[
-          Icon(icon, size: 12, color: color),
+          Icon(icon, size: 11, color: muted),
           const SizedBox(width: 3),
         ],
         Text(
           label,
           style: TextStyle(
-            fontSize: 11,
-            fontWeight: FontWeight.w500,
-            color: color,
+            fontSize: 10.5,
+            fontWeight: FontWeight.w400,
+            color: muted,
           ),
         ),
       ],

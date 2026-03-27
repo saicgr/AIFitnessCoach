@@ -504,11 +504,17 @@ async def get_wrapped_summary(user_id: str, auth_id: str) -> Dict[str, Any]:
             if personality_name:
                 personality_set.add(personality_name)
 
+        total_workouts = stats_data.get("total_workouts", 0)
+        # Only include periods where the user actually completed 3+ workouts
+        # (matches the eligibility threshold in get_available_periods)
+        if total_workouts < 3:
+            continue
+
         available.append({
             "period": row.get("period_key"),
             "viewed": True,
             "personality": personality_name,
-            "total_workouts": stats_data.get("total_workouts", 0),
+            "total_workouts": total_workouts,
             "total_volume_lbs": stats_data.get("total_volume_lbs", 0),
         })
 
