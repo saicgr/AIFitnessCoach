@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/services/posthog_service.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../../data/repositories/onboarding_repository.dart';
 import '../../data/services/api_client.dart';
@@ -231,6 +232,16 @@ class _SeniorOnboardingScreenState
 
         // Mark onboarding as complete in auth state
         await ref.read(authStateProvider.notifier).markOnboardingComplete();
+
+        // Track senior onboarding completion
+        ref.read(posthogServiceProvider).capture(
+          eventName: 'onboarding_senior_completed',
+          properties: {
+            'goal': _selectedGoal ?? 'unknown',
+            'frequency': _selectedFrequency ?? 'unknown',
+            'health_concerns': _selectedHealthConcerns.join(','),
+          },
+        );
 
         // Also save locally so notifications can be scheduled
         final prefs = await SharedPreferences.getInstance();

@@ -620,8 +620,8 @@ async def get_daily_goals_status(
 # First-time bonus types and their XP amounts (matches XP_SYSTEM_GUIDE.md)
 FIRST_TIME_BONUSES = {
     # Account Milestones (Welcome Bonus is handled by daily login's first_login)
-    "first_chat": 50,               # First Chat with AI Coach
-    "first_complete_profile": 100,  # Complete Profile bonus
+    "first_chat": 15,               # First Chat with AI Coach (reduced to prevent level inflation)
+    "first_complete_profile": 0,    # Complete Profile (no XP - happens during onboarding)
     # First Meal Logs
     "first_breakfast": 50,
     "first_lunch": 50,

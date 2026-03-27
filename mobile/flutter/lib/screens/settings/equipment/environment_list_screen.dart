@@ -6,6 +6,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/providers/environment_equipment_provider.dart';
 import 'environment_detail_screen.dart';
 import '../../../widgets/glass_sheet.dart';
+import '../../../core/services/posthog_service.dart';
 import '../../../widgets/pill_app_bar.dart';
 
 /// Screen showing list of workout environments with their equipment.
@@ -17,6 +18,14 @@ class EnvironmentListScreen extends ConsumerStatefulWidget {
 }
 
 class _EnvironmentListScreenState extends ConsumerState<EnvironmentListScreen> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(posthogServiceProvider).capture(eventName: 'equipment_environments_viewed');
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;

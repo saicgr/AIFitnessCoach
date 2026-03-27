@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/services/posthog_service.dart';
 import '../../widgets/pill_app_bar.dart';
 import '../../data/models/injury.dart';
 import '../../data/services/api_client.dart';
@@ -115,6 +116,15 @@ class _ReportInjuryScreenState extends ConsumerState<ReportInjuryScreen> {
 
       // Refresh the injuries list
       ref.read(injuriesListProvider.notifier).loadInjuries();
+
+      ref.read(posthogServiceProvider).capture(
+        eventName: 'injury_reported',
+        properties: {
+          'body_part': _selectedBodyPart!,
+          'severity': _selectedSeverity,
+          if (_selectedInjuryType != null) 'injury_type': _selectedInjuryType!,
+        },
+      );
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

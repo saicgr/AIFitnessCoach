@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:go_router/go_router.dart';
+import '../../../core/services/posthog_service.dart';
 import '../../../data/models/muscle_analytics.dart';
 import '../../../data/models/muscle_status.dart';
 import '../../../data/providers/muscle_analytics_provider.dart';
@@ -29,6 +30,10 @@ class _MuscleDetailScreenState extends ConsumerState<MuscleDetailScreen> {
   void initState() {
     super.initState();
     _screenOpenTime = DateTime.now();
+    ref.read(posthogServiceProvider).capture(
+      eventName: 'muscle_detail_viewed',
+      properties: <String, Object>{'muscle_name': widget.muscleGroup},
+    );
   }
 
   @override

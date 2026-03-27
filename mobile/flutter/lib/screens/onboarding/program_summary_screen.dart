@@ -4,6 +4,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/services/posthog_service.dart';
 import 'pre_auth_quiz_screen.dart';
 
 /// Program summary screen shown after workout generation completes.
@@ -102,7 +103,7 @@ class ProgramSummaryScreen extends ConsumerWidget {
             ),
 
             // Bottom action buttons
-            _buildActionButtons(context, isDark),
+            _buildActionButtons(context, isDark, ref),
           ],
         ),
       ),
@@ -325,7 +326,7 @@ class ProgramSummaryScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildActionButtons(BuildContext context, bool isDark) {
+  Widget _buildActionButtons(BuildContext context, bool isDark, WidgetRef ref) {
     return Container(
       padding: const EdgeInsets.fromLTRB(24, 12, 24, 16),
       decoration: BoxDecoration(
@@ -346,6 +347,10 @@ class ProgramSummaryScreen extends ConsumerWidget {
             child: ElevatedButton(
               onPressed: () {
                 HapticFeedback.mediumImpact();
+                // Track program confirmed
+                ref.read(posthogServiceProvider).capture(
+                  eventName: 'onboarding_program_confirmed',
+                );
                 context.go('/home');
               },
               style: ElevatedButton.styleFrom(

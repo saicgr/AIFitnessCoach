@@ -64,6 +64,7 @@ import '../../data/providers/scheduling_provider.dart';
 import '../../data/providers/week1_tips_provider.dart';
 import '../../widgets/usage_counter_strip.dart';
 import '../../widgets/app_tour/app_tour_controller.dart';
+import '../../core/services/posthog_service.dart';
 
 /// The main home screen displaying workouts, progress, and quick actions
 class HomeScreen extends ConsumerStatefulWidget {
@@ -121,6 +122,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     _carouselPageController = PageController(viewportFraction: 0.88);
     // Register for app lifecycle events
     WidgetsBinding.instance.addObserver(this);
+    ref.read(posthogServiceProvider).capture(
+      eventName: 'home_screen_viewed',
+    );
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       // Reset nav bar labels to expanded when on Home screen
       ref.read(navBarLabelsExpandedProvider.notifier).state = true;
@@ -1821,26 +1825,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
         isDark ? AppColors.pureBlack : AppColorsLight.pureWhite;
     final elevatedColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
 
-    // Listen for level-up events and show celebration dialog
-    ref.listen<LevelUpEvent?>(levelUpEventProvider, (previous, next) {
-      if (next != null && previous == null) {
-        // Level up occurred - show celebration dialog
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (mounted) {
-            final showProg = ref.read(accessibilityProvider).showLevelUpProgression;
-            showLevelUpDialog(
-              context,
-              next,
-              () {
-                // Clear the level-up event after dialog is dismissed
-                ref.read(xpProvider.notifier).clearLevelUp();
-              },
-              showProgression: showProg,
-            );
-          }
-        });
-      }
-    });
+    // Level-up listener moved to MainShell (widgets/main_shell.dart) so it fires from any screen
 
     // Listen for streak milestone events and show celebration dialog
     ref.listen<StreakMilestone?>(streakMilestoneProvider, (previous, next) {

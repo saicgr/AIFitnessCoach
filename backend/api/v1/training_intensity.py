@@ -187,7 +187,7 @@ class ExerciseSuggestionResponse(BaseModel):
 @router.post("/training/1rm", response_model=UserExercise1RMResponse)
 @limiter.limit("5/minute")
 async def set_user_1rm(body: Set1RMRequest,
-    request: Request = None,
+    request: Request,
     current_user: dict = Depends(get_current_user),
 ):
     """

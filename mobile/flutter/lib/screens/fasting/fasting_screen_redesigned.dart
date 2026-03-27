@@ -11,6 +11,7 @@ import '../../data/repositories/auth_repository.dart';
 import '../../data/services/fasting_timer_service.dart';
 import '../../data/services/haptic_service.dart';
 import '../../widgets/glass_sheet.dart';
+import '../../core/services/posthog_service.dart';
 import '../../widgets/segmented_tab_bar.dart';
 import '../../widgets/main_shell.dart';
 import 'widgets/fasting_history_list.dart';
@@ -48,6 +49,7 @@ class _FastingScreenRedesignedState extends ConsumerState<FastingScreenRedesigne
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(posthogServiceProvider).capture(eventName: 'fasting_viewed');
       _initialize();
       // Collapse nav bar labels on this secondary page
       ref.read(navBarLabelsExpandedProvider.notifier).state = false;

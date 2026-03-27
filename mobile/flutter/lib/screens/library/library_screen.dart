@@ -5,6 +5,7 @@ import '../../core/constants/app_colors.dart';
 import '../../core/theme/accent_color_provider.dart';
 import '../../data/services/haptic_service.dart';
 import '../../widgets/glass_back_button.dart';
+import '../../core/services/posthog_service.dart';
 import 'providers/library_providers.dart';
 import 'tabs/discover_tab.dart';
 import 'tabs/exercises_tab.dart';
@@ -39,8 +40,15 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
       vsync: this,
       initialIndex: widget.initialTab ?? 0,
     );
+    ref.read(posthogServiceProvider).capture(
+      eventName: 'library_viewed',
+    );
     _tabController.addListener(() {
       if (!_tabController.indexIsChanging) {
+        ref.read(posthogServiceProvider).capture(
+          eventName: 'library_tab_changed',
+          properties: {'tab_name': _tabLabels[_tabController.index]},
+        );
         setState(() {});
       }
     });
@@ -54,6 +62,16 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
 
   void _switchToExercises([String? muscleFilter]) {
     HapticService.light();
+    if (muscleFilter != null) {
+      const muscles = {'Chest', 'Back', 'Shoulders', 'Arms', 'Legs', 'Core', 'Glutes'};
+      if (muscles.contains(muscleFilter)) {
+        ref.read(selectedMuscleGroupsProvider.notifier).state = {muscleFilter};
+        ref.read(selectedEquipmentsProvider.notifier).state = {};
+      } else {
+        ref.read(selectedEquipmentsProvider.notifier).state = {muscleFilter};
+        ref.read(selectedMuscleGroupsProvider.notifier).state = {};
+      }
+    }
     _tabController.animateTo(1);
   }
 
@@ -120,6 +138,9 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
                             onChanged: (value) {
                               ref.read(exerciseSearchProvider.notifier).state = value;
                               if (value.isNotEmpty && _tabController.index != 1) {
+                                ref.read(posthogServiceProvider).capture(
+                                  eventName: 'library_search_initiated',
+                                );
                                 _tabController.animateTo(1);
                               }
                             },

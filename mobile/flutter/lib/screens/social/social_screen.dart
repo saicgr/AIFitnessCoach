@@ -37,6 +37,9 @@ class _SocialScreenState extends ConsumerState<SocialScreen>
     super.initState();
     _tabController = TabController(length: 4, vsync: this);
     _tabController.addListener(_onTabChanged);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(posthogServiceProvider).capture(eventName: 'social_feed_viewed');
+    });
   }
 
   void _onTabChanged() {

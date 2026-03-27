@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/services/posthog_service.dart';
 import '../../widgets/pill_app_bar.dart';
 
 final progressionPaceProvider = StateNotifierProvider<ProgressionPaceNotifier, ProgressionPaceState>((ref) => ProgressionPaceNotifier());
@@ -39,7 +40,7 @@ class ProgressionPaceScreen extends ConsumerStatefulWidget {
 
 class _ProgressionPaceScreenState extends ConsumerState<ProgressionPaceScreen> {
   @override
-  void initState() { super.initState(); WidgetsBinding.instance.addPostFrameCallback((_) => ref.read(progressionPaceProvider.notifier).loadSettings()); }
+  void initState() { super.initState(); WidgetsBinding.instance.addPostFrameCallback((_) { ref.read(progressionPaceProvider.notifier).loadSettings(); ref.read(posthogServiceProvider).capture(eventName: 'progression_pace_viewed'); }); }
 
   @override
   Widget build(BuildContext context) {

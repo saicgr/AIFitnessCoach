@@ -7,6 +7,7 @@ import '../../data/repositories/workout_repository.dart';
 import '../../widgets/senior/senior_button.dart';
 import '../../widgets/senior/senior_card.dart';
 import '../../widgets/senior/senior_nav.dart';
+import '../../core/services/posthog_service.dart';
 
 /// Simplified home screen for Senior Mode
 /// Features:
@@ -27,6 +28,9 @@ class _SeniorHomeScreenState extends ConsumerState<SeniorHomeScreen> {
   @override
   void initState() {
     super.initState();
+    ref.read(posthogServiceProvider).capture(
+      eventName: 'senior_home_viewed',
+    );
     // Fetch workouts on screen load
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       await ref.read(workoutsProvider.notifier).refresh();

@@ -229,6 +229,10 @@ async def get_fast_exercise_suggestions(body: FastSuggestionRequest, current_use
         equipment = current_ex.get("equipment")
         body_part = current_ex.get("body_part")
 
+        # Non-anatomical body_part values that describe equipment categories, not body regions.
+        # Including these in filters pollutes results (e.g., "Free Weights" matches ALL barbell exercises).
+        NON_ANATOMICAL_BODY_PARTS = {"bodyweight", "free weights", "resistance"}
+
         # Strip parenthetical details from muscle names to avoid breaking
         # PostgREST .or_() parser — e.g. "Chest (Pectoralis Major)" → "Chest"
         def _strip_parens(value: str | None) -> str | None:
@@ -236,9 +240,20 @@ async def get_fast_exercise_suggestions(body: FastSuggestionRequest, current_use
                 return value
             return re.sub(r"\s*\(.*?\)", "", value).strip() or value
 
+        # Extract specific muscles from parentheses BEFORE stripping them.
+        # e.g. "Core (Rectus Abdominis, Obliques)" → ["Rectus Abdominis", "Obliques"]
+        # This lets us also match exercises tagged as "Abdominals (rectus abdominis)".
+        parens_muscles = []
+        if target_muscle_raw:
+            for parens_match in re.findall(r'\(([^)]+)\)', target_muscle_raw):
+                for m in parens_match.split(","):
+                    cleaned = " ".join(m.split()).strip()
+                    if cleaned and len(cleaned) > 2:
+                        parens_muscles.append(cleaned)
+
         target_muscle = _strip_parens(target_muscle_raw)
 
-        logger.info(f"Current exercise: {current_ex['name']}, muscle: {target_muscle} (raw: {target_muscle_raw}), equipment: {equipment}")
+        logger.info(f"Current exercise: {current_ex['name']}, muscle: {target_muscle} (raw: {target_muscle_raw}), parens_muscles: {parens_muscles}, equipment: {equipment}")
 
         # Build query for similar exercises
         # Query by target muscle OR body part for better matches
@@ -255,7 +270,11 @@ async def get_fast_exercise_suggestions(body: FastSuggestionRequest, current_use
         filters = []
         for muscle in target_muscles:
             filters.append(f"target_muscle.ilike.%{muscle}%")
-        if clean_body_part:
+        # Also add filters for specific muscles extracted from parentheses
+        for pm in parens_muscles:
+            filters.append(f"target_muscle.ilike.%{pm}%")
+        # Only include body_part filter if it's an actual anatomical term
+        if clean_body_part and clean_body_part.lower() not in NON_ANATOMICAL_BODY_PARTS:
             filters.append(f"body_part.ilike.%{clean_body_part}%")
 
         if filters:
@@ -297,13 +316,19 @@ async def get_fast_exercise_suggestions(body: FastSuggestionRequest, current_use
                 elif n_matched > 0:
                     score += 2.0 * (n_matched / len(target_muscles))
                     reasons.append(f"Targets {', '.join(matched)}")
-                elif body_part and body_part.lower() in (ex.get("body_part") or "").lower():
-                    score += 1.5
-                    reasons.append(f"Works {body_part}")
+                else:
+                    # Check if parens-extracted muscles match (e.g., "Rectus Abdominis" in "Abdominals (rectus abdominis)")
+                    parens_matched = [pm for pm in parens_muscles if pm.lower() in ex_muscle]
+                    if parens_matched:
+                        score += 1.8
+                        reasons.append(f"Targets {', '.join(parens_matched)}")
+                    elif body_part and body_part.lower() not in NON_ANATOMICAL_BODY_PARTS and body_part.lower() in (ex.get("body_part") or "").lower():
+                        score += 1.5
+                        reasons.append(f"Works {body_part}")
             elif target_muscle and target_muscle.lower() in ex_muscle:
                 score += 2.0
                 reasons.append(f"Targets {target_muscle}")
-            elif body_part and body_part.lower() in (ex.get("body_part") or "").lower():
+            elif body_part and body_part.lower() not in NON_ANATOMICAL_BODY_PARTS and body_part.lower() in (ex.get("body_part") or "").lower():
                 score += 1.5
                 reasons.append(f"Works {body_part}")
 

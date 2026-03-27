@@ -9,6 +9,7 @@ import '../../data/services/api_client.dart';
 import '../../data/services/food_search_service.dart';
 import 'widgets/food_report_dialog.dart';
 import 'widgets/food_search_bar.dart';
+import '../../core/services/posthog_service.dart';
 import 'widgets/portion_amount_input.dart';
 
 /// Smart food history screen with search, frequently eaten, and date-grouped logs.
@@ -41,6 +42,9 @@ class _FoodHistoryScreenState extends ConsumerState<FoodHistoryScreen> {
   void initState() {
     super.initState();
     _loadData();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(posthogServiceProvider).capture(eventName: 'food_history_viewed');
+    });
   }
 
   /// Get fromDate/toDate strings based on selected date range

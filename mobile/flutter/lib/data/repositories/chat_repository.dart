@@ -511,6 +511,7 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
   final SoundPreferencesNotifier Function() _getSoundPrefs;
   final AudioPreferencesNotifier Function() _getAudioPrefs;
   bool _isLoading = false;
+  Future<void>? _loadHistoryFuture;
 
   // Pagination state (#16)
   int _currentOffset = 0;
@@ -616,43 +617,68 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
 
   /// Load chat history with cache-first pattern
   /// If force is false, only loads if there are no messages yet
-  Future<void> loadHistory({bool force = false}) async {
+  /// Concurrent calls are deduplicated — callers await the same in-flight request.
+  Future<void> loadHistory({bool force = false}) {
     // Skip loading if we already have messages and not forcing
     final currentMessages = state.valueOrNull;
     if (!force && currentMessages != null && currentMessages.isNotEmpty) {
       debugPrint('🔍 [Chat] Skipping history load - already have ${currentMessages.length} messages');
-      return;
+      return Future.value();
     }
 
-    final userId = await _apiClient.getUserId();
-    if (userId == null || !mounted) return;
-
-    // 1. Load from cache first and show immediately
-    final cachedMessages = await _loadFromCache(userId);
-    if (!mounted) return;
-    if (cachedMessages.isNotEmpty) {
-      state = AsyncValue.data(cachedMessages);
-      debugPrint('🔍 [Chat] Showing ${cachedMessages.length} cached messages while fetching fresh data');
-    } else {
-      state = const AsyncValue.loading();
+    // Dedup: if a load is already in-flight, piggyback on it
+    if (_loadHistoryFuture != null && !force) {
+      debugPrint('🔍 [Chat] Dedup - reusing in-flight history load');
+      return _loadHistoryFuture!;
     }
 
-    // 2. Fetch fresh data from API in background
+    _loadHistoryFuture = _doLoadHistory(force: force);
+    return _loadHistoryFuture!;
+  }
+
+  Future<void> _doLoadHistory({bool force = false}) async {
     try {
-      final messages = await _repository.getChatHistory(userId);
+      final userId = await _apiClient.getUserId();
+      if (userId == null || !mounted) return;
+
+      // 1. Load from cache first and show immediately
+      final cachedMessages = await _loadFromCache(userId);
       if (!mounted) return;
-      state = AsyncValue.data(messages);
-      _currentOffset = messages.length;
-      // 3. Update cache with fresh data
-      await _saveToCache(userId, messages);
-    } catch (e, st) {
-      if (!mounted) return;
-      // If we have cached data, keep showing it instead of error
       if (cachedMessages.isNotEmpty) {
-        debugPrint('⚠️ [Chat] API fetch failed, keeping cached data: $e');
+        state = AsyncValue.data(cachedMessages);
+        debugPrint('🔍 [Chat] Showing ${cachedMessages.length} cached messages while fetching fresh data');
       } else {
-        state = AsyncValue.error(e, st);
+        state = const AsyncValue.loading();
       }
+
+      // 2. Fetch fresh data from API in background
+      try {
+        final messages = await _repository.getChatHistory(userId);
+        if (!mounted) return;
+
+        // If sendMessage is in-flight, don't replace state — the send
+        // owns state and will produce the authoritative version when done.
+        if (_isLoading) {
+          debugPrint('⚠️ [Chat] Skipping history state replacement — sendMessage in-flight');
+          await _saveToCache(userId, messages);
+          return;
+        }
+
+        state = AsyncValue.data(messages);
+        _currentOffset = messages.length;
+        // 3. Update cache with fresh data
+        await _saveToCache(userId, messages);
+      } catch (e, st) {
+        if (!mounted) return;
+        // If we have cached data, keep showing it instead of error
+        if (cachedMessages.isNotEmpty) {
+          debugPrint('⚠️ [Chat] API fetch failed, keeping cached data: $e');
+        } else {
+          state = AsyncValue.error(e, st);
+        }
+      }
+    } finally {
+      _loadHistoryFuture = null;
     }
   }
 
@@ -692,6 +718,10 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
     // Incrementally append user message to cache
     _saveToCache(userId, messagesWithUser);
 
+    // Set loading flag early to prevent concurrent sends and block
+    // loadHistory from replacing state while a send is in-flight.
+    _isLoading = true;
+
     // --- OFFLINE ROUTING ---
     if (!_isOnline()) {
       if (_offlineCoach.isAvailable) {
@@ -708,6 +738,7 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
           state = AsyncValue.data(withNotification);
         }
         await _sendOfflineMessage(message, userId);
+        _isLoading = false;
         return;
       } else {
         // No model loaded, show error
@@ -717,6 +748,7 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
           createdAt: DateTime.now().toIso8601String(),
         );
         state = AsyncValue.data([...messagesWithUser, errorMessage]);
+        _isLoading = false;
         return;
       }
     }
@@ -726,8 +758,6 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
     if (_pendingOfflineMessages.isNotEmpty && _isOnline()) {
       syncPendingMessages(); // Fire and forget, don't await
     }
-
-    _isLoading = true;
 
     // Check if this looks like a quick workout request
     final messageLower = message.toLowerCase();
@@ -868,11 +898,19 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
       _updateMessageStatus(userMessage, MessageStatus.delivered);
 
       final updatedMessages = state.valueOrNull ?? [];
-      final newMessages = [...updatedMessages, assistantMessage];
-      state = AsyncValue.data(newMessages);
 
-      // Incrementally update cache with new messages (append, don't re-fetch)
-      await _saveToCache(userId, newMessages);
+      // Guard against duplicate assistant messages (e.g., if loadHistory
+      // already injected this response from the server before we got here)
+      final isDuplicate = updatedMessages.any((m) =>
+          m.role == 'assistant' && m.content == cleanedMessage);
+      if (isDuplicate) {
+        debugPrint('⚠️ [Chat] Skipping duplicate assistant message');
+      } else {
+        final newMessages = [...updatedMessages, assistantMessage];
+        state = AsyncValue.data(newMessages);
+        // Incrementally update cache with new messages (append, don't re-fetch)
+        await _saveToCache(userId, newMessages);
+      }
     } catch (e, stackTrace) {
       debugPrint('❌ [Chat] Error sending message: $e');
       debugPrint('❌ [Chat] Stack trace: $stackTrace');

@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -484,7 +485,9 @@ class FoodSearchService {
 
   // Debounce timer
   Timer? _debounceTimer;
-  static const Duration _debounceDuration = Duration(milliseconds: 600);
+
+  // CancelToken for in-flight Dio requests
+  CancelToken? _activeCancelToken;
 
   // Stream controller for real-time search updates
   final _searchController = StreamController<FoodSearchState>.broadcast();
@@ -681,8 +684,22 @@ class FoodSearchService {
       _emit(FoodSearchLoading(normalizedQuery));
     }
 
+    // Adaptive debounce: longer queries = user typing complex phrase
+    Duration debounce = normalizedQuery.length >= 10
+        ? const Duration(milliseconds: 1000)
+        : const Duration(milliseconds: 600);
+
+    // Extra delay after word delimiters (user about to type another food)
+    final lowerQuery = normalizedQuery.toLowerCase();
+    if (lowerQuery.endsWith(' with ') ||
+        lowerQuery.endsWith(' and ') ||
+        lowerQuery.endsWith(', ') ||
+        lowerQuery.endsWith(' & ')) {
+      debounce = const Duration(milliseconds: 1200);
+    }
+
     // Debounce the backend API call
-    _debounceTimer = Timer(_debounceDuration, () {
+    _debounceTimer = Timer(debounce, () {
       _performSearch(normalizedQuery, userId, cachedLogs: cachedLogs);
     });
   }
@@ -752,13 +769,18 @@ class FoodSearchService {
       return;
     }
 
+    // Cancel previous in-flight request
+    _activeCancelToken?.cancel('New search query');
+    _activeCancelToken = CancelToken();
+
     debugPrint('FoodSearch: Searching for "$query"');
     final stopwatch = Stopwatch()..start();
 
+    try {
     // Run 2 fast searches in parallel (no ChromaDB)
     final results = await Future.wait([
       _safeSearch(() => _searchRecentFoods(query, userId, cachedLogs: cachedLogs), 'recent'),
-      _safeSearch(() => _searchFoodDatabase(query, userId), 'foodDb'),
+      _safeSearch(() => _searchFoodDatabase(query, userId, cancelToken: _activeCancelToken), 'foodDb'),
     ]);
 
     // Check if query is still current before emitting results
@@ -811,6 +833,13 @@ class FoodSearchService {
 
     // Emit results (only emit error if ALL sources returned empty AND we know the DB call threw)
     _emit(searchResults);
+    } on DioException catch (e) {
+      if (e.type == DioExceptionType.cancel) {
+        debugPrint('FoodSearch: Request cancelled for "$query"');
+        return; // Silently ignore cancelled requests
+      }
+      rethrow;
+    }
   }
 
   /// Bigram similarity for typo-tolerant matching (e.g. "aaple" → "apple")
@@ -866,7 +895,7 @@ class FoodSearchService {
 
   /// Search the curated food database via backend API (fast pg_trgm RPC).
   Future<List<FoodSearchResult>> _searchFoodDatabase(
-      String query, String userId) async {
+      String query, String userId, {CancelToken? cancelToken}) async {
     try {
       final queryParams = <String, dynamic>{
         'query': query,
@@ -882,6 +911,7 @@ class FoodSearchService {
       final response = await _apiClient.get(
         '/nutrition/food-search',
         queryParameters: queryParams,
+        cancelToken: cancelToken,
       );
 
       // Backend returns USDASearchResponse format: {foods: [...], total_hits, search_time_ms, ...}
@@ -988,6 +1018,7 @@ class FoodSearchService {
   /// Cancel any pending searches
   void cancel() {
     _debounceTimer?.cancel();
+    _activeCancelToken?.cancel('Search cancelled');
     _currentQuery = null;
   }
 
@@ -1320,6 +1351,7 @@ class FoodSearchService {
   /// Dispose of resources
   void dispose() {
     _debounceTimer?.cancel();
+    _activeCancelToken?.cancel('Service disposed');
     _reviewTimer?.cancel();
     _searchController.close();
     _reviewController.close();

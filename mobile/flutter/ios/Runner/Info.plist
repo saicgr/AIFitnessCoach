@@ -57,6 +57,9 @@
 	<array>
 		<string>instagram-stories</string>
 		<string>instagram</string>
+		<string>https</string>
+		<string>http</string>
+		<string>mailto</string>
 	</array>
 	<key>NSPhotoLibraryAddUsageDescription</key>
 	<string>FitWiz needs access to save workout recap images to your photo library.</string>

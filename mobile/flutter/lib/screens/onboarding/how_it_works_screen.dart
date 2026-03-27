@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/providers/window_mode_provider.dart';
+import '../../core/services/posthog_service.dart';
 
 /// How It Works Screen - Explains the onboarding journey before the quiz
 ///
@@ -71,6 +72,12 @@ class _HowItWorksScreenState extends ConsumerState<HowItWorksScreen>
 
   void _continue() {
     HapticFeedback.mediumImpact();
+
+    // Track how it works completion
+    ref.read(posthogServiceProvider).capture(
+      eventName: 'onboarding_how_it_works_completed',
+    );
+
     context.go('/pre-auth-quiz');
   }
 

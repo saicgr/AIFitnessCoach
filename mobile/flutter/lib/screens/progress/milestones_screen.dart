@@ -30,6 +30,7 @@ class _MilestonesScreenState extends ConsumerState<MilestonesScreen>
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
+    ref.read(posthogServiceProvider).capture(eventName: 'milestones_viewed');
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _loadData();
     });

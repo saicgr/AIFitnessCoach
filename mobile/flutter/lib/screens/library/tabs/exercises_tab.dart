@@ -69,6 +69,8 @@ class _ExercisesTabState extends ConsumerState<ExercisesTab> {
     final selectedAvoid = ref.watch(selectedAvoidSetProvider);
     final searchSuggestion = ref.watch(searchSuggestionProvider);
 
+    final performedOnly = ref.watch(performedOnlyProvider);
+
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final cyan = isDark ? AppColors.cyan : AppColorsLight.cyan;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
@@ -114,6 +116,33 @@ class _ExercisesTabState extends ConsumerState<ExercisesTab> {
                 ),
               ),
               const Spacer(),
+              // "Performed" toggle chip
+              Padding(
+                padding: const EdgeInsets.only(right: 8),
+                child: FilterChip(
+                  label: Text(
+                    'Done',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: performedOnly ? cyan : textMuted,
+                      fontWeight: performedOnly ? FontWeight.w600 : FontWeight.normal,
+                    ),
+                  ),
+                  selected: performedOnly,
+                  onSelected: (value) {
+                    ref.read(performedOnlyProvider.notifier).state = value;
+                  },
+                  avatar: Icon(
+                    performedOnly ? Icons.check_circle : Icons.history,
+                    size: 16,
+                    color: performedOnly ? cyan : textMuted,
+                  ),
+                  selectedColor: cyan.withValues(alpha: 0.15),
+                  showCheckmark: false,
+                  visualDensity: VisualDensity.compact,
+                  materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                ),
+              ),
               FilterButton(
                 activeFilterCount: activeFilters,
                 onTap: () => _showFilterSheet(context),
@@ -238,7 +267,21 @@ class _ExercisesTabState extends ConsumerState<ExercisesTab> {
     }
 
     // Show exercises (backend handles both filters AND search now)
-    final filtered = exercisesState.exercises;
+    // Client-side "performed only" filter
+    final performedOnlyActive = ref.watch(performedOnlyProvider);
+    var filtered = exercisesState.exercises;
+    if (performedOnlyActive) {
+      final historyAsync = ref.watch(exerciseHistoryProvider);
+      final performedNames = historyAsync.valueOrNull
+              ?.map((e) => e.exerciseName.toLowerCase())
+              .toSet() ??
+          <String>{};
+      if (performedNames.isNotEmpty) {
+        filtered = filtered
+            .where((e) => performedNames.contains(e.name.toLowerCase()))
+            .toList();
+      }
+    }
 
     if (filtered.isEmpty && !exercisesState.isLoading) {
       return EmptyState.noExercises(

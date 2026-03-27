@@ -238,23 +238,33 @@ class TodayWorkoutNotifier extends StateNotifier<AsyncValue<TodayWorkoutResponse
       // This is the canonical fix — all UI code can trust isGenerating without
       // also needing to check for existing workouts. Fixes the caching bug too
       // (_saveToCache skips when isGenerating=true, losing valid workout data).
+      //
+      // Safety: if the workout is a generation placeholder (name="Generating...",
+      // 0 exercises), do NOT treat it as real content — let isGenerating stay true
+      // so polling continues until the real workout is ready.
       if (response != null && response.hasDisplayableContent && response.isGenerating) {
-        debugPrint('🔄 [TodayWorkout] Normalized: cleared isGenerating (content exists)');
-        response = TodayWorkoutResponse(
-          hasWorkoutToday: response.hasWorkoutToday,
-          todayWorkout: response.todayWorkout,
-          nextWorkout: response.nextWorkout,
-          daysUntilNext: response.daysUntilNext,
-          restDayMessage: response.restDayMessage,
-          completedToday: response.completedToday,
-          completedWorkout: response.completedWorkout,
-          extraTodayWorkouts: response.extraTodayWorkouts,
-          isGenerating: false,
-          generationMessage: null,
-          needsGeneration: response.needsGeneration,
-          nextWorkoutDate: response.nextWorkoutDate,
-          gymProfileId: response.gymProfileId,
-        );
+        final isPlaceholder = response.todayWorkout?.name == 'Generating...' &&
+            (response.todayWorkout?.exerciseCount ?? 0) == 0;
+        if (!isPlaceholder) {
+          debugPrint('🔄 [TodayWorkout] Normalized: cleared isGenerating (real content exists)');
+          response = TodayWorkoutResponse(
+            hasWorkoutToday: response.hasWorkoutToday,
+            todayWorkout: response.todayWorkout,
+            nextWorkout: response.nextWorkout,
+            daysUntilNext: response.daysUntilNext,
+            restDayMessage: response.restDayMessage,
+            completedToday: response.completedToday,
+            completedWorkout: response.completedWorkout,
+            extraTodayWorkouts: response.extraTodayWorkouts,
+            isGenerating: false,
+            generationMessage: null,
+            needsGeneration: response.needsGeneration,
+            nextWorkoutDate: response.nextWorkoutDate,
+            gymProfileId: response.gymProfileId,
+          );
+        } else {
+          debugPrint('⚠️ [TodayWorkout] Placeholder workout detected, keeping isGenerating=true');
+        }
       }
 
       // Handle empty state polling

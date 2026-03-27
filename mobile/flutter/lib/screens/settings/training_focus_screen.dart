@@ -6,6 +6,7 @@ import '../../core/constants/app_colors.dart';
 import '../../core/constants/api_constants.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../../data/services/api_client.dart';
+import '../../core/services/posthog_service.dart';
 import '../../widgets/pill_app_bar.dart';
 
 /// Screen for editing training focus settings:
@@ -33,6 +34,9 @@ class _TrainingFocusScreenState extends ConsumerState<TrainingFocusScreen> {
   void initState() {
     super.initState();
     _loadCurrentSettings();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(posthogServiceProvider).capture(eventName: 'training_focus_viewed');
+    });
   }
 
   void _loadCurrentSettings() {

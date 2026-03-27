@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/services/posthog_service.dart';
 import '../../data/models/consistency.dart';
 import '../../widgets/app_loading.dart';
 import '../../widgets/app_snackbar.dart';
@@ -33,6 +34,7 @@ class _ConsistencyScreenState extends ConsumerState<ConsistencyScreen>
       vsync: this,
       duration: const Duration(milliseconds: 1500),
     )..repeat(reverse: true);
+    ref.read(posthogServiceProvider).capture(eventName: 'consistency_viewed');
     _loadData();
   }
 

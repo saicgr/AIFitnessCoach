@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/services/posthog_service.dart';
 import '../../core/theme/accent_color_provider.dart';
 import '../../data/models/workout.dart';
 import '../../data/models/exercise.dart';
@@ -9,6 +10,10 @@ import '../../data/providers/today_workout_provider.dart';
 import '../../data/repositories/workout_repository.dart';
 import '../../widgets/pill_app_bar.dart';
 import '../../widgets/glass_sheet.dart';
+import 'widgets/expandable_summary_exercise_card.dart';
+import 'widgets/exercise_mini_chart.dart';
+import 'widgets/edit_set_sheet.dart';
+import 'widgets/exercise_add_sheet.dart';
 import 'widgets/share_workout_sheet.dart';
 
 class WorkoutSummaryScreen extends ConsumerStatefulWidget {
@@ -24,11 +29,17 @@ class WorkoutSummaryScreen extends ConsumerStatefulWidget {
 class _WorkoutSummaryScreenState extends ConsumerState<WorkoutSummaryScreen> {
   late Future<WorkoutSummaryResponse?> _summaryFuture;
   bool _isReverting = false;
+  final Set<int> _expandedExercises = {};
 
   @override
   void initState() {
     super.initState();
     _summaryFuture = _fetchSummary();
+
+    ref.read(posthogServiceProvider).capture(
+      eventName: 'workout_summary_viewed',
+      properties: {'workout_id': widget.workoutId},
+    );
   }
 
   Future<WorkoutSummaryResponse?> _fetchSummary() {
@@ -51,6 +62,21 @@ class _WorkoutSummaryScreenState extends ConsumerState<WorkoutSummaryScreen> {
     return Scaffold(
       backgroundColor: isDark ? AppColors.pureBlack : Colors.white,
       appBar: const PillAppBar(title: 'Workout Summary'),
+      floatingActionButton: FutureBuilder<WorkoutSummaryResponse?>(
+        future: _summaryFuture,
+        builder: (context, snapshot) {
+          if (snapshot.data == null || snapshot.data!.isMarkedDone) {
+            return const SizedBox.shrink();
+          }
+          return FloatingActionButton.extended(
+            onPressed: _handleAddExercise,
+            backgroundColor: accentColor,
+            foregroundColor: Colors.white,
+            icon: const Icon(Icons.add, size: 20),
+            label: const Text('Add Exercise'),
+          );
+        },
+      ),
       body: FutureBuilder<WorkoutSummaryResponse?>(
         future: _summaryFuture,
         builder: (context, snapshot) {
@@ -98,13 +124,20 @@ class _WorkoutSummaryScreenState extends ConsumerState<WorkoutSummaryScreen> {
           const SizedBox(height: 8),
           shimmerBox(140, 16, radius: 4),
           const SizedBox(height: 16),
+          // 2x2 grid shimmer
           Row(
             children: [
-              Expanded(child: shimmerBox(double.infinity, 60, radius: 12)),
-              const SizedBox(width: 12),
-              Expanded(child: shimmerBox(double.infinity, 60, radius: 12)),
-              const SizedBox(width: 12),
-              Expanded(child: shimmerBox(double.infinity, 60, radius: 12)),
+              Expanded(child: shimmerBox(double.infinity, 72, radius: 12)),
+              const SizedBox(width: 8),
+              Expanded(child: shimmerBox(double.infinity, 72, radius: 12)),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Expanded(child: shimmerBox(double.infinity, 72, radius: 12)),
+              const SizedBox(width: 8),
+              Expanded(child: shimmerBox(double.infinity, 72, radius: 12)),
             ],
           ),
           const SizedBox(height: 24),
@@ -113,7 +146,7 @@ class _WorkoutSummaryScreenState extends ConsumerState<WorkoutSummaryScreen> {
             const SizedBox(height: 12),
           ],
           const SizedBox(height: 16),
-          shimmerBox(double.infinity, 100, radius: 12),
+          shimmerBox(double.infinity, 120, radius: 12),
         ],
       ),
     );
@@ -175,31 +208,97 @@ class _WorkoutSummaryScreenState extends ConsumerState<WorkoutSummaryScreen> {
     final workout = _parseWorkout(summary.workout);
     final exercises = workout?.exercises ?? [];
     final comparison = summary.performanceComparison;
+    final setLogsByExercise = summary.setLogsByExercise;
 
     return ListView(
-      padding: const EdgeInsets.fromLTRB(16, 0, 16, 32),
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 80),
       children: [
         // Header
         _buildHeader(workout, summary, isDark, accentColor, isTracked: true),
         const SizedBox(height: 16),
 
-        // Stats row
-        _buildStatsRow(workout, comparison, isDark),
-        const SizedBox(height: 24),
+        // Stats grid (2x2)
+        _buildStatsGrid(workout, comparison, isDark, accentColor),
+        const SizedBox(height: 16),
 
-        // Exercises list with comparison
+        // Total weight lifted banner
+        if (comparison?.workoutComparison != null &&
+            comparison!.workoutComparison.currentTotalVolumeKg > 0)
+          _buildVolumeBanner(comparison.workoutComparison, isDark, accentColor),
+
+        const SizedBox(height: 20),
+
+        // Exercises list with expandable cards
         if (exercises.isNotEmpty) ...[
-          _buildSectionTitle('Exercises', isDark),
+          Row(
+            children: [
+              _buildSectionTitle('Exercises', isDark),
+              const Spacer(),
+              if (_expandedExercises.isEmpty)
+                TextButton.icon(
+                  onPressed: () {
+                    setState(() {
+                      for (int i = 0; i < exercises.length; i++) {
+                        _expandedExercises.add(i);
+                      }
+                    });
+                  },
+                  icon: Icon(Icons.unfold_more, size: 16, color: isDark ? AppColors.textMuted : Colors.grey),
+                  label: Text('Expand All', style: TextStyle(fontSize: 12, color: isDark ? AppColors.textMuted : Colors.grey)),
+                )
+              else
+                TextButton.icon(
+                  onPressed: () => setState(() => _expandedExercises.clear()),
+                  icon: Icon(Icons.unfold_less, size: 16, color: isDark ? AppColors.textMuted : Colors.grey),
+                  label: Text('Collapse All', style: TextStyle(fontSize: 12, color: isDark ? AppColors.textMuted : Colors.grey)),
+                ),
+            ],
+          ),
           const SizedBox(height: 8),
           ...exercises.asMap().entries.map((entry) {
+            final index = entry.key;
             final exercise = entry.value;
             final comparisonMatch = comparison?.exerciseComparisons
                 .where((c) =>
                     c.exerciseName.toLowerCase() ==
                     exercise.name.toLowerCase())
                 .firstOrNull;
-            return _buildTrackedExerciseCard(
-                exercise, comparisonMatch, isDark, accentColor);
+            final exerciseSets =
+                setLogsByExercise[exercise.name] ?? [];
+
+            return ExpandableSummaryExerciseCard(
+              exercise: exercise,
+              comparison: comparisonMatch,
+              setLogs: exerciseSets,
+              isDark: isDark,
+              accentColor: accentColor,
+              isExpanded: _expandedExercises.contains(index),
+              onToggle: () {
+                setState(() {
+                  if (_expandedExercises.contains(index)) {
+                    _expandedExercises.remove(index);
+                  } else {
+                    _expandedExercises.add(index);
+                  }
+                });
+              },
+              onEdit: () => _handleEditExercise(index, exercise, exerciseSets, isDark, accentColor),
+              miniChart: exerciseSets.isNotEmpty
+                  ? ExerciseMiniChart(
+                      weights: exerciseSets
+                          .map((s) => s.weightKg)
+                          .where((w) => w > 0)
+                          .toList(),
+                      isDark: isDark,
+                      accentColor: accentColor,
+                      onTap: () {
+                        context.push('/exercise-progress-detail', extra: {
+                          'exercise_name': exercise.name,
+                        });
+                      },
+                    )
+                  : null,
+            );
           }),
           const SizedBox(height: 16),
         ],
@@ -216,10 +315,10 @@ class _WorkoutSummaryScreenState extends ConsumerState<WorkoutSummaryScreen> {
           const SizedBox(height: 16),
         ],
 
-        // Coach summary
+        // Coach summary - try structured first, fallback to raw text
         if (summary.coachSummary != null &&
             summary.coachSummary!.isNotEmpty) ...[
-          _buildCoachSummarySection(summary.coachSummary!, isDark, accentColor),
+          _buildCoachReviewSection(summary, isDark, accentColor),
           const SizedBox(height: 16),
         ],
 
@@ -241,28 +340,19 @@ class _WorkoutSummaryScreenState extends ConsumerState<WorkoutSummaryScreen> {
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 0, 16, 32),
       children: [
-        // Header with marked-done badge
         _buildHeader(workout, summary, isDark, accentColor, isTracked: false),
         const SizedBox(height: 12),
-
-        // Timestamp notice
         if (summary.completedAt != null)
           _buildTimestampNotice(summary.completedAt!, isDark),
         const SizedBox(height: 16),
-
-        // Planned exercises only
         if (exercises.isNotEmpty) ...[
           _buildSectionTitle('Planned Exercises', isDark),
           const SizedBox(height: 8),
           ...exercises.map((e) => _buildPlannedExerciseCard(e, isDark)),
           const SizedBox(height: 16),
         ],
-
-        // Share button
         _buildShareButton(workout, isDark, accentColor),
         const SizedBox(height: 12),
-
-        // Revert button
         _buildRevertButton(isDark),
       ],
     );
@@ -278,7 +368,6 @@ class _WorkoutSummaryScreenState extends ConsumerState<WorkoutSummaryScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Workout name
         Text(
           workout?.name ?? 'Workout',
           style: TextStyle(
@@ -288,7 +377,6 @@ class _WorkoutSummaryScreenState extends ConsumerState<WorkoutSummaryScreen> {
           ),
         ),
         const SizedBox(height: 8),
-        // Date + badge
         Row(
           children: [
             if (workout?.formattedDate != null)
@@ -325,11 +413,11 @@ class _WorkoutSummaryScreenState extends ConsumerState<WorkoutSummaryScreen> {
   }
 
   // ═══════════════════════════════════════════════════════════════════
-  // STATS ROW
+  // STATS GRID (2x2)
   // ═══════════════════════════════════════════════════════════════════
 
-  Widget _buildStatsRow(
-      Workout? workout, PerformanceComparisonInfo? comparison, bool isDark) {
+  Widget _buildStatsGrid(
+      Workout? workout, PerformanceComparisonInfo? comparison, bool isDark, Color accentColor) {
     final wc = comparison?.workoutComparison;
     final duration = wc != null
         ? _formatDuration(wc.currentDurationSeconds)
@@ -338,23 +426,77 @@ class _WorkoutSummaryScreenState extends ConsumerState<WorkoutSummaryScreen> {
     final volume = wc != null
         ? '${wc.currentTotalVolumeKg.toStringAsFixed(0)} kg'
         : '--';
+    final calories = wc != null && wc.currentCalories > 0
+        ? '${wc.currentCalories}'
+        : workout?.estimatedCalories.toString() ?? '--';
 
-    return Row(
+    // Delta values
+    String? durationDelta;
+    bool? durationPositive;
+    if (wc != null && wc.hasPrevious && wc.durationDiffPercent != null) {
+      durationDelta = '${wc.durationDiffPercent! >= 0 ? '+' : ''}${wc.durationDiffPercent!.toStringAsFixed(0)}%';
+      durationPositive = wc.durationDiffPercent! <= 0; // Less time is positive
+    }
+
+    String? volumeDelta;
+    bool? volumePositive;
+    if (wc != null && wc.hasPrevious && wc.volumeDiffPercent != null) {
+      volumeDelta = '${wc.volumeDiffPercent! >= 0 ? '+' : ''}${wc.volumeDiffPercent!.toStringAsFixed(0)}%';
+      volumePositive = wc.volumeDiffPercent! >= 0;
+    }
+
+    return Column(
       children: [
-        Expanded(child: _buildStatTile('Duration', duration, isDark)),
-        const SizedBox(width: 8),
-        Expanded(
-            child:
-                _buildStatTile('Exercises', '$exerciseCount', isDark)),
-        const SizedBox(width: 8),
-        Expanded(child: _buildStatTile('Volume', volume, isDark)),
+        Row(
+          children: [
+            Expanded(
+              child: _buildStatTile(
+                'Duration', duration, isDark,
+                delta: durationDelta,
+                isPositive: durationPositive,
+                icon: Icons.timer_outlined,
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: _buildStatTile(
+                'Exercises', '$exerciseCount', isDark,
+                icon: Icons.fitness_center,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        Row(
+          children: [
+            Expanded(
+              child: _buildStatTile(
+                'Volume', volume, isDark,
+                delta: volumeDelta,
+                isPositive: volumePositive,
+                icon: Icons.monitor_weight_outlined,
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: _buildStatTile(
+                'Calories', calories, isDark,
+                icon: Icons.local_fire_department_outlined,
+              ),
+            ),
+          ],
+        ),
       ],
     );
   }
 
-  Widget _buildStatTile(String label, String value, bool isDark) {
+  Widget _buildStatTile(String label, String value, bool isDark, {
+    String? delta,
+    bool? isPositive,
+    IconData? icon,
+  }) {
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+      padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 12),
       decoration: BoxDecoration(
         color: isDark
             ? Colors.white.withValues(alpha: 0.06)
@@ -367,149 +509,107 @@ class _WorkoutSummaryScreenState extends ConsumerState<WorkoutSummaryScreen> {
         ),
       ),
       child: Column(
-        children: [
-          Text(
-            value,
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-              color: isDark ? AppColors.textPrimary : Colors.black87,
-            ),
-          ),
-          const SizedBox(height: 2),
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 11,
-              color: isDark ? AppColors.textMuted : Colors.grey.shade500,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // ═══════════════════════════════════════════════════════════════════
-  // SECTION TITLE
-  // ═══════════════════════════════════════════════════════════════════
-
-  Widget _buildSectionTitle(String title, bool isDark) {
-    return Text(
-      title,
-      style: TextStyle(
-        fontSize: 16,
-        fontWeight: FontWeight.w700,
-        color: isDark ? AppColors.textPrimary : Colors.black87,
-      ),
-    );
-  }
-
-  // ═══════════════════════════════════════════════════════════════════
-  // TRACKED EXERCISE CARD (with comparison)
-  // ═══════════════════════════════════════════════════════════════════
-
-  Widget _buildTrackedExerciseCard(WorkoutExercise exercise,
-      ExerciseComparisonInfo? comparison, bool isDark, Color accentColor) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 8),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: isDark
-            ? Colors.white.withValues(alpha: 0.04)
-            : Colors.grey.shade50,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: isDark
-              ? Colors.white.withValues(alpha: 0.06)
-              : Colors.grey.shade200,
-        ),
-      ),
-      child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Exercise name + comparison badge
+          Row(
+            children: [
+              if (icon != null) ...[
+                Icon(icon, size: 14, color: isDark ? AppColors.textMuted : Colors.grey.shade500),
+                const SizedBox(width: 4),
+              ],
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 11,
+                  color: isDark ? AppColors.textMuted : Colors.grey.shade500,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
           Row(
             children: [
               Expanded(
                 child: Text(
-                  exercise.name,
+                  value,
                   style: TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
                     color: isDark ? AppColors.textPrimary : Colors.black87,
                   ),
                 ),
               ),
-              if (comparison != null && comparison.hasPrevious)
-                _buildComparisonBadge(comparison, isDark, accentColor),
+              if (delta != null)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: (isPositive == true ? AppColors.success : AppColors.error)
+                        .withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Text(
+                    delta,
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w600,
+                      color: isPositive == true ? AppColors.success : AppColors.error,
+                    ),
+                  ),
+                ),
             ],
           ),
-          const SizedBox(height: 6),
-          // Sets x reps @ weight
-          Text(
-            _exerciseSetDisplay(exercise),
-            style: TextStyle(
-              fontSize: 13,
-              color: isDark ? AppColors.textSecondary : Colors.grey.shade600,
-            ),
-          ),
-          // Comparison detail
-          if (comparison != null && comparison.hasPrevious) ...[
-            const SizedBox(height: 6),
-            Text(
-              _comparisonDetailText(comparison),
-              style: TextStyle(
-                fontSize: 12,
-                color: isDark ? AppColors.textMuted : Colors.grey.shade500,
-              ),
-            ),
-          ],
         ],
       ),
     );
   }
 
-  Widget _buildComparisonBadge(
-      ExerciseComparisonInfo comparison, bool isDark, Color accentColor) {
-    Color badgeColor;
-    IconData icon;
-    String label;
+  // ═══════════════════════════════════════════════════════════════════
+  // TOTAL VOLUME BANNER
+  // ═══════════════════════════════════════════════════════════════════
 
-    if (comparison.isImproved) {
-      badgeColor = AppColors.success;
-      icon = Icons.trending_up;
-      label = comparison.formattedPercentDiff.isNotEmpty
-          ? comparison.formattedPercentDiff
-          : 'Improved';
-    } else if (comparison.isDeclined) {
-      badgeColor = AppColors.error;
-      icon = Icons.trending_down;
-      label = comparison.formattedPercentDiff.isNotEmpty
-          ? comparison.formattedPercentDiff
-          : 'Declined';
-    } else {
-      badgeColor = isDark ? AppColors.textMuted : Colors.grey.shade500;
-      icon = Icons.trending_flat;
-      label = 'Same';
-    }
+  Widget _buildVolumeBanner(WorkoutComparisonInfo wc, bool isDark, Color accentColor) {
+    final volume = wc.currentTotalVolumeKg;
+    final comparison = _getVolumeComparison(volume);
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: badgeColor.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(8),
+        gradient: LinearGradient(
+          colors: [
+            accentColor.withValues(alpha: 0.15),
+            accentColor.withValues(alpha: 0.05),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: accentColor.withValues(alpha: 0.2),
+        ),
       ),
       child: Row(
-        mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 14, color: badgeColor),
-          const SizedBox(width: 3),
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.w600,
-              color: badgeColor,
+          Icon(Icons.fitness_center, size: 24, color: accentColor),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Total: ${volume.toStringAsFixed(0)} kg lifted',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: isDark ? AppColors.textPrimary : Colors.black87,
+                  ),
+                ),
+                if (comparison.isNotEmpty)
+                  Text(
+                    comparison,
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: isDark ? AppColors.textSecondary : Colors.grey.shade600,
+                    ),
+                  ),
+              ],
             ),
           ),
         ],
@@ -517,22 +617,14 @@ class _WorkoutSummaryScreenState extends ConsumerState<WorkoutSummaryScreen> {
     );
   }
 
-  String _comparisonDetailText(ExerciseComparisonInfo comparison) {
-    final parts = <String>[];
-    if (comparison.weightDiffKg != null && comparison.weightDiffKg != 0) {
-      parts.add(
-          'Weight: ${comparison.previousMaxWeightKg?.toStringAsFixed(1) ?? "?"} -> ${comparison.currentMaxWeightKg?.toStringAsFixed(1) ?? "?"} kg');
-    }
-    if (comparison.volumeDiffKg != null && comparison.volumeDiffKg != 0) {
-      final sign = comparison.volumeDiffKg! >= 0 ? '+' : '';
-      parts.add(
-          'Volume: $sign${comparison.volumeDiffKg!.toStringAsFixed(0)} kg');
-    }
-    if (comparison.repsDiff != null && comparison.repsDiff != 0) {
-      final sign = comparison.repsDiff! >= 0 ? '+' : '';
-      parts.add('Reps: $sign${comparison.repsDiff}');
-    }
-    return parts.isEmpty ? 'No change from last session' : parts.join(' | ');
+  String _getVolumeComparison(double volumeKg) {
+    if (volumeKg >= 20000) return 'That\'s like lifting a truck axle!';
+    if (volumeKg >= 10000) return 'Equivalent to a grand piano!';
+    if (volumeKg >= 5000) return 'That\'s like lifting a small car!';
+    if (volumeKg >= 2000) return 'More than a motorcycle!';
+    if (volumeKg >= 1000) return 'That\'s a concert grand!';
+    if (volumeKg >= 500) return 'More than a washing machine!';
+    return '';
   }
 
   // ═══════════════════════════════════════════════════════════════════
@@ -640,7 +732,6 @@ class _WorkoutSummaryScreenState extends ConsumerState<WorkoutSummaryScreen> {
             ],
           ),
           const SizedBox(height: 12),
-          // Volume and duration changes
           if (wc.hasPrevious) ...[
             Row(
               children: [
@@ -664,23 +755,29 @@ class _WorkoutSummaryScreenState extends ConsumerState<WorkoutSummaryScreen> {
               ],
             ),
             const SizedBox(height: 12),
-            // Exercise breakdown
-            Row(
+            Wrap(
+              spacing: 6,
+              runSpacing: 6,
               children: [
-                _buildCountChip(
-                    '${comparison.improvedCount} improved',
-                    AppColors.success,
-                    isDark),
-                const SizedBox(width: 6),
-                _buildCountChip(
-                    '${comparison.maintainedCount} same',
-                    isDark ? AppColors.textMuted : Colors.grey,
-                    isDark),
-                const SizedBox(width: 6),
+                if (comparison.improvedCount > 0)
+                  _buildCountChip(
+                      '${comparison.improvedCount} improved',
+                      AppColors.success,
+                      isDark),
+                if (comparison.maintainedCount > 0)
+                  _buildCountChip(
+                      '${comparison.maintainedCount} same',
+                      isDark ? AppColors.textMuted : Colors.grey,
+                      isDark),
                 if (comparison.declinedCount > 0)
                   _buildCountChip(
                       '${comparison.declinedCount} declined',
                       AppColors.error,
+                      isDark),
+                if (comparison.firstTimeCount > 0)
+                  _buildCountChip(
+                      '${comparison.firstTimeCount} new',
+                      AppColors.info,
                       isDark),
               ],
             ),
@@ -835,6 +932,17 @@ class _WorkoutSummaryScreenState extends ConsumerState<WorkoutSummaryScreen> {
               color: isDark ? AppColors.textSecondary : Colors.grey.shade600,
             ),
           ),
+          if (pr.improvementPercent != null && pr.improvementPercent! > 0) ...[
+            const SizedBox(height: 2),
+            Text(
+              '+${pr.improvementPercent!.toStringAsFixed(1)}% improvement',
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w500,
+                color: AppColors.success,
+              ),
+            ),
+          ],
           if (pr.celebrationMessage != null &&
               pr.celebrationMessage!.isNotEmpty) ...[
             const SizedBox(height: 4),
@@ -853,11 +961,180 @@ class _WorkoutSummaryScreenState extends ConsumerState<WorkoutSummaryScreen> {
   }
 
   // ═══════════════════════════════════════════════════════════════════
-  // COACH SUMMARY SECTION
+  // COACH REVIEW SECTION (Rich structured + fallback)
   // ═══════════════════════════════════════════════════════════════════
 
-  Widget _buildCoachSummarySection(
-      String summary, bool isDark, Color accentColor) {
+  Widget _buildCoachReviewSection(
+      WorkoutSummaryResponse summary, bool isDark, Color accentColor) {
+    final structured = summary.parsedCoachReview;
+
+    if (structured != null) {
+      return _buildStructuredCoachReview(structured, isDark, accentColor);
+    }
+
+    // Fallback to raw text
+    return _buildRawCoachReview(summary.coachSummary!, isDark, accentColor);
+  }
+
+  Widget _buildStructuredCoachReview(
+      CoachReview review, bool isDark, Color accentColor) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: isDark
+            ? Colors.white.withValues(alpha: 0.04)
+            : Colors.grey.shade50,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: isDark
+              ? Colors.white.withValues(alpha: 0.08)
+              : Colors.grey.shade200,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header with rating
+          Row(
+            children: [
+              Icon(Icons.smart_toy_outlined,
+                  size: 18,
+                  color: isDark ? AppColors.textSecondary : Colors.grey.shade600),
+              const SizedBox(width: 6),
+              _buildSectionTitle('AI Coach Review', isDark),
+              const Spacer(),
+              // Rating badge
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: _ratingColor(review.overallRating).withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.star, size: 14,
+                        color: _ratingColor(review.overallRating)),
+                    const SizedBox(width: 3),
+                    Text(
+                      '${review.overallRating}/10',
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.bold,
+                        color: _ratingColor(review.overallRating),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+
+          // Highlights
+          if (review.highlights.isNotEmpty) ...[
+            Row(
+              children: [
+                Icon(Icons.thumb_up_outlined, size: 14, color: AppColors.success),
+                const SizedBox(width: 6),
+                Text(
+                  'Highlights',
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.success,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 6),
+            ...review.highlights.map((h) => Padding(
+              padding: const EdgeInsets.only(bottom: 4, left: 4),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('  \u2022  ', style: TextStyle(color: isDark ? AppColors.textSecondary : Colors.grey.shade600)),
+                  Expanded(
+                    child: Text(
+                      h,
+                      style: TextStyle(
+                        fontSize: 13,
+                        height: 1.4,
+                        color: isDark ? AppColors.textSecondary : Colors.grey.shade700,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            )),
+            const SizedBox(height: 10),
+          ],
+
+          // Areas to improve
+          if (review.areasToImprove.isNotEmpty) ...[
+            Row(
+              children: [
+                Icon(Icons.flag_outlined, size: 14, color: AppColors.warning),
+                const SizedBox(width: 6),
+                Text(
+                  'Areas to Watch',
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.warning,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 6),
+            ...review.areasToImprove.map((a) => Padding(
+              padding: const EdgeInsets.only(bottom: 4, left: 4),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('  \u2022  ', style: TextStyle(color: isDark ? AppColors.textSecondary : Colors.grey.shade600)),
+                  Expanded(
+                    child: Text(
+                      a,
+                      style: TextStyle(
+                        fontSize: 13,
+                        height: 1.4,
+                        color: isDark ? AppColors.textSecondary : Colors.grey.shade700,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            )),
+            const SizedBox(height: 10),
+          ],
+
+          // Overall summary
+          if (review.summary.isNotEmpty) ...[
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: isDark
+                    ? Colors.white.withValues(alpha: 0.03)
+                    : Colors.grey.shade100,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Text(
+                review.summary,
+                style: TextStyle(
+                  fontSize: 13,
+                  height: 1.5,
+                  color: isDark ? AppColors.textSecondary : Colors.grey.shade700,
+                ),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildRawCoachReview(String summary, bool isDark, Color accentColor) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -896,6 +1173,12 @@ class _WorkoutSummaryScreenState extends ConsumerState<WorkoutSummaryScreen> {
         ],
       ),
     );
+  }
+
+  Color _ratingColor(int rating) {
+    if (rating >= 8) return AppColors.success;
+    if (rating >= 6) return AppColors.warning;
+    return AppColors.error;
   }
 
   // ═══════════════════════════════════════════════════════════════════
@@ -1008,6 +1291,10 @@ class _WorkoutSummaryScreenState extends ConsumerState<WorkoutSummaryScreen> {
     );
   }
 
+  // ═══════════════════════════════════════════════════════════════════
+  // ACTIONS
+  // ═══════════════════════════════════════════════════════════════════
+
   Future<void> _handleRevert() async {
     setState(() => _isReverting = true);
     try {
@@ -1030,6 +1317,64 @@ class _WorkoutSummaryScreenState extends ConsumerState<WorkoutSummaryScreen> {
       }
     } finally {
       if (mounted) setState(() => _isReverting = false);
+    }
+  }
+
+  void _handleEditExercise(
+    int exerciseIndex,
+    WorkoutExercise exercise,
+    List<SetLogInfo> currentSets,
+    bool isDark,
+    Color accentColor,
+  ) {
+    EditSetSheet.show(
+      context,
+      exerciseName: exercise.name,
+      initialSets: currentSets,
+      isDark: isDark,
+      accentColor: accentColor,
+      onSave: (updatedSets) async {
+        try {
+          final repo = ref.read(workoutRepositoryProvider);
+          await repo.updateExerciseSets(
+            widget.workoutId,
+            exerciseIndex,
+            updatedSets,
+          );
+          _retry();
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Sets updated successfully')),
+            );
+          }
+        } catch (e) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('Failed to save: $e')),
+            );
+          }
+        }
+      },
+    );
+  }
+
+  void _handleAddExercise() async {
+    // Get current workout data for context
+    final summaryData = await _summaryFuture;
+    final workout = summaryData != null ? _parseWorkout(summaryData.workout) : null;
+    final exercises = workout?.exercises ?? [];
+
+    if (!mounted) return;
+
+    final result = await showExerciseAddSheet(
+      context,
+      ref,
+      workoutId: widget.workoutId,
+      workoutType: workout?.type ?? 'strength',
+      currentExerciseNames: exercises.map((e) => e.name).toList(),
+    );
+    if (result != null) {
+      _retry();
     }
   }
 
@@ -1057,6 +1402,17 @@ class _WorkoutSummaryScreenState extends ConsumerState<WorkoutSummaryScreen> {
       parts.add('${exercise.durationSeconds}s');
     }
     return parts.isEmpty ? 'N/A' : parts.join(' x ');
+  }
+
+  Widget _buildSectionTitle(String title, bool isDark) {
+    return Text(
+      title,
+      style: TextStyle(
+        fontSize: 16,
+        fontWeight: FontWeight.bold,
+        color: isDark ? AppColors.textPrimary : Colors.black87,
+      ),
+    );
   }
 
   String _formatDuration(int seconds) {

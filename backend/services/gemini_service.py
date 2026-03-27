@@ -5864,6 +5864,7 @@ IMPORTANT RULES:
         primary_goal: Optional[str] = None,
         muscle_focus_points: Optional[Dict[str, int]] = None,
         training_split: Optional[str] = None,
+        workout_days: Optional[List[int]] = None,
         # Fitness Assessment fields - for smarter workout personalization
         pushup_capacity: Optional[str] = None,
         pullup_capacity: Optional[str] = None,
@@ -6489,7 +6490,14 @@ REQUIREMENTS:
                 'arms': '🎯 ARMS FOCUS: At least 70% of exercises must target biceps and triceps. Include curls, extensions, dips, hammer curls.',
                 'core': '🎯 CORE FOCUS: At least 70% of exercises must target abs and obliques. Include planks, crunches, leg raises, russian twists.',
                 'glutes': '🎯 GLUTE FOCUS: At least 70% of exercises must target glutes. Include hip thrusts, glute bridges, lunges, deadlifts.',
-                'full_body': '🎯 FULL BODY: Include at least one exercise for each major muscle group: chest, back, shoulders, legs, core.',
+                'full_body': '🎯 FULL BODY — MANDATORY MUSCLE GROUP COVERAGE:\n'
+                    '  You MUST include exercises from ALL of these groups:\n'
+                    '  1. LEGS/GLUTES (squats, lunges, leg press, deadlifts, hip thrusts) — at least 1 exercise\n'
+                    '  2. BACK/PULL (rows, pull-ups, lat pulldowns) — at least 1 exercise\n'
+                    '  3. CHEST/PUSH (bench press, push-ups, flyes) — at least 1 exercise\n'
+                    '  4. SHOULDERS or CORE (overhead press, lateral raises, planks, crunches) — at least 1 exercise\n'
+                    '  A full_body workout that is missing ANY of legs, back, or chest is INVALID.\n'
+                    '  Distribute exercises across upper and lower body — do NOT load all exercises into one muscle group.',
                 'full_body_push': '🎯 FULL BODY with PUSH EMPHASIS: Include exercises for all major muscle groups, but prioritize chest, shoulders, and triceps (at least 50% pushing movements).',
                 'full_body_pull': '🎯 FULL BODY with PULL EMPHASIS: Include exercises for all major muscle groups, but prioritize back and biceps (at least 50% pulling movements).',
                 'full_body_legs': '🎯 FULL BODY with LEG EMPHASIS: Include exercises for all major muscle groups, but prioritize legs and glutes (at least 50% lower body movements).',
@@ -6513,7 +6521,7 @@ REQUIREMENTS:
         # Build training split context with scientific rationale
         training_split_instruction = ""
         if training_split:
-            split_context = get_split_context(training_split)
+            split_context = get_split_context(training_split, workout_days=workout_days)
             training_split_instruction = f"""
 
 📊 TRAINING SPLIT CONTEXT (Research-Backed):
@@ -7038,6 +7046,8 @@ If user has gym equipment - most exercises MUST use that equipment!"""
         user_dob: Optional[str] = None,
         user_id: Optional[str] = None,
         strength_history: Optional[Dict] = None,
+        training_split: Optional[str] = None,
+        workout_days: Optional[List[int]] = None,
     ):
         """
         Generate a workout plan using streaming for faster perceived response.
@@ -7050,6 +7060,8 @@ If user has gym equipment - most exercises MUST use that equipment!"""
                                     building the default workout prompt.
             progression_philosophy: Optional progression philosophy prompt for leverage-based progressions.
             strength_history: Optional dict of user's exercise history for progressive overload.
+            training_split: Optional training split identifier for split-aware generation.
+            workout_days: Optional user's workout day indices for schedule mapping.
 
         Yields:
             str: JSON chunks as they arrive from Gemini
@@ -7163,11 +7175,22 @@ STRENGTH HISTORY:
             )
             logger.info(f"🎨 [Streaming] Coach naming context: style={coach_style}, tone={coach_tone}, date={naming_date}")
 
+            # Build training split context for streaming
+            training_split_instruction = ""
+            if training_split:
+                split_context = get_split_context(training_split, workout_days=workout_days)
+                training_split_instruction = f"""
+
+📊 TRAINING SPLIT CONTEXT (Research-Backed):
+{split_context}
+
+Use this split information to guide exercise selection and workout structure."""
+
             prompt = f"""Generate a {duration_text}-minute workout for:
 - Fitness Level: {fitness_level}
 - Goals: {safe_join_list(goals, 'General fitness')}
 - Equipment: {safe_join_list(equipment, 'Bodyweight only')}
-- Focus: {safe_join_list(focus_areas, 'Full body')}{age_activity_context}{preference_constraints}
+- Focus: {safe_join_list(focus_areas, 'Full body')}{age_activity_context}{training_split_instruction}{preference_constraints}
 
 Return ONLY valid JSON (no markdown):
 {{
@@ -7295,6 +7318,8 @@ If user has gym equipment (full_gym, barbell, dumbbells, cable_machine, machines
         strength_history: Optional[Dict] = None,
         user_dob: Optional[str] = None,
         user_id: Optional[str] = None,
+        training_split: Optional[str] = None,
+        workout_days: Optional[List[int]] = None,
     ):
         """
         FAST workout generation using Gemini context caching.
@@ -7346,6 +7371,8 @@ If user has gym equipment (full_gym, barbell, dumbbells, cable_machine, machines
                 coach_tone=coach_tone,
                 scheduled_date=scheduled_date,
                 user_dob=user_dob,
+                training_split=training_split,
+                workout_days=workout_days,
             ):
                 yield chunk
             return
@@ -7374,6 +7401,8 @@ If user has gym equipment (full_gym, barbell, dumbbells, cable_machine, machines
             scheduled_date=scheduled_date,
             strength_history=strength_history,
             user_dob=user_dob,
+            training_split=training_split,
+            workout_days=workout_days,
         )
 
         try:
@@ -7473,6 +7502,8 @@ If user has gym equipment (full_gym, barbell, dumbbells, cable_machine, machines
         scheduled_date: Optional[str],
         strength_history: Optional[Dict],
         user_dob: Optional[str] = None,
+        training_split: Optional[str] = None,
+        workout_days: Optional[List[int]] = None,
     ) -> str:
         """
         Build the user-specific prompt for cached generation.
@@ -7507,6 +7538,14 @@ If user has gym equipment (full_gym, barbell, dumbbells, cable_machine, machines
             user_context_parts.append(f"- Age: {age}")
         if activity_level:
             user_context_parts.append(f"- Activity Level: {activity_level}")
+
+        # Training split context
+        if training_split:
+            split_context = get_split_context(training_split, workout_days=workout_days)
+            user_context_parts.append("")
+            user_context_parts.append("## TRAINING SPLIT CONTEXT (Research-Backed)")
+            user_context_parts.append(split_context)
+            user_context_parts.append("Use this split information to guide exercise selection and workout structure.")
 
         # User preferences section
         user_context_parts.append("")
@@ -8558,6 +8597,9 @@ Remember: You're a supportive coach, not a robot. Be human, be helpful, be motiv
         calories_consumed_today: Optional[int] = None,
         calories_remaining: Optional[int] = None,
         health_score: Optional[int] = None,
+        coach_name: Optional[str] = None,
+        coaching_style: Optional[str] = None,
+        communication_tone: Optional[str] = None,
     ) -> dict:
         """
         Generate an AI-powered food review based on user goals and nutrition targets.
@@ -8601,21 +8643,66 @@ Remember: You're a supportive coach, not a robot. Be human, be helpful, be motiv
             target = (calories_consumed_today or 0) + (calories_remaining or 0)
             calorie_budget_section = f"\nUser has consumed {calories_consumed_today} calories today out of a {target} calorie target ({calories_remaining} remaining). If this meal would put them significantly over budget, mention it tactfully. If they have plenty of room, note that this fits within their plan.\n"
 
+        # Coach persona section
+        coach_section = ""
+        if coach_name or coaching_style or communication_tone:
+            effective_coach = coach_name or "Coach"
+            style_map = {
+                "motivational": "Be encouraging, celebrate wins, use positive reinforcement.",
+                "professional": "Be efficient, factual, and straightforward.",
+                "friendly": "Be warm, conversational, and supportive like a good friend.",
+                "tough-love": "Be direct and challenging. Don't sugarcoat things.",
+                "drill-sergeant": "Be intense and demanding. Use ALL CAPS for emphasis. Accept NO excuses.",
+                "zen-master": "Be calm, peaceful, and philosophical. Use metaphors about balance.",
+                "hype-beast": "BE ABSOLUTELY HYPED! Use exclamation marks! Everything is INCREDIBLE!",
+                "scientist": "Be analytical and data-driven. Focus on the science and cite specifics.",
+                "comedian": "Use humor and fitness puns. Make it fun but still give solid advice.",
+                "old-school": "Channel classic bodybuilding vibes. Talk about gains and the pump.",
+                "college-coach": "Be an intense coach! Question their commitment, demand excellence.",
+            }
+            tone_map = {
+                "casual": "Use casual, conversational language.",
+                "encouraging": "Be supportive and positive.",
+                "formal": "Use professional, polished language.",
+                "gen-z": "Use Gen Z slang like 'no cap', 'fr fr', 'slay', 'bussin'.",
+                "sarcastic": "Be witty and sarcastic with dry humor.",
+                "roast-mode": "Roast them lovingly! Mock excuses, use playful insults.",
+                "pirate": "Talk like a pirate! Use nautical terms.",
+                "british": "Be posh and British. Use 'brilliant', 'proper', 'smashing'.",
+                "surfer": "Keep it chill, bro! Use surfer vibes - 'gnarly', 'stoked', 'rad'.",
+                "anime": "Channel anime protagonist energy! Dramatic declarations!",
+            }
+            style_desc = style_map.get(coaching_style or "", "Be encouraging and supportive.")
+            tone_desc = tone_map.get(communication_tone or "", "Be supportive and positive.")
+            coach_section = f"\nYou are {effective_coach}, a fitness nutrition coach.\nCoaching style: {style_desc}\nCommunication tone: {tone_desc}\nWrite ALL tips, encouragements, warnings, and suggestions in this persona's voice and tone.\n"
+
         # Score-stratified tip guidance
         score_guidance = ""
         effective_score = health_score
         if effective_score is not None:
             if effective_score <= 3:
-                score_guidance = "\nSCORE CONTEXT: This is a POOR nutritional choice (score {}/10). Be direct but empathetic. Focus on healthier alternatives and specific health risks. Do NOT spin this positively or suggest it's okay as a treat. Be honest about the nutritional impact.\n".format(effective_score)
+                score_guidance = """
+SCORE CONTEXT: This is a POOR nutritional choice (score {}/10).
+- Do NOT include generic positive encouragements like 'quick option', 'convenient', 'tasty', or 'good portion size'
+- Encouragements MUST be limited to genuinely redeeming nutritional facts (e.g., 'provides 24g protein'). If there are NONE, return an EMPTY encouragements array []
+- Warnings MUST include specific health concerns: excess sodium, trans fats, seed oils, refined carbs, calorie density
+- recommended_swap MUST be a specific healthier alternative, not just 'eat less of it'
+- Be direct and honest about the nutritional impact. Do NOT sugarcoat or soften the message.
+""".format(effective_score)
             elif effective_score <= 5:
-                score_guidance = "\nSCORE CONTEXT: This is a BELOW-AVERAGE choice (score {}/10). Acknowledge what it provides but emphasize better alternatives and portion control.\n".format(effective_score)
+                score_guidance = """
+SCORE CONTEXT: This is a BELOW-AVERAGE choice (score {}/10).
+- Encouragements must reference specific macro/micro nutritional benefits ONLY — not convenience, taste, or availability
+- Do NOT praise fast food, processed food, or fried food for being 'a quick option' or 'fitting in a busy schedule'
+- Emphasize better alternatives and portion control
+""".format(effective_score)
             elif effective_score <= 7:
                 score_guidance = "\nSCORE CONTEXT: This is a DECENT choice (score {}/10). Highlight the nutritional benefits and suggest small improvements.\n".format(effective_score)
             else:
                 score_guidance = "\nSCORE CONTEXT: This is an EXCELLENT choice (score {}/10). Reinforce the positive behavior and explain specific health benefits.\n".format(effective_score)
 
         prompt = f'''Given user goals of [{goals_str}] and daily targets of [{targets_str}], review this food: "{food_name}" with macros: {macros_str}.
-{mood_section}{meal_type_section}{calorie_budget_section}{score_guidance}
+{coach_section}{mood_section}{meal_type_section}{calorie_budget_section}{score_guidance}
 IMPORTANT SEED OIL AWARENESS:
 - If this food is commonly fried, packaged, or fast food, check if it is likely cooked in or contains seed oils (canola oil, soybean oil, sunflower oil, corn oil, cottonseed oil, vegetable oil).
 - Seed oils are high in inflammatory omega-6 fatty acids and should be flagged as a warning.
@@ -8636,6 +8723,14 @@ Rules:
 - encouragements and warnings should each have 1-3 items
 - Be specific to the user's goals
 - Keep each string concise (under 80 chars)
+- NEVER encourage fast food, deep-fried items, or heavily processed food for convenience or taste
+- NEVER say 'okay as an occasional treat' or 'fine in moderation' for foods scoring <= 3
+- If food is from a fast food chain (McDonald's, KFC, Burger King, Taco Bell, Wendy's, etc.), warnings MUST mention: high sodium, seed oils, additives, low nutrient density
+- If food is high-calorie (>500 kcal) and low-protein (<20g), warn about poor calorie-to-protein ratio
+- For sugary drinks, candy, desserts, pastries: do NOT encourage — focus on sugar content, insulin impact, and healthier swaps
+- For fried foods: always warn about seed oils and inflammatory omega-6
+- ai_suggestion must be specific and actionable — NOT generic like 'pair with a salad' or 'balance it out later'
+- If health_score <= 3, recommended_swap is REQUIRED (non-empty string)
 '''
 
         try:

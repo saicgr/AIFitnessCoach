@@ -7,6 +7,7 @@ import '../../data/repositories/achievements_repository.dart';
 import '../../data/services/api_client.dart';
 import '../../widgets/lottie_animations.dart';
 import '../../widgets/pill_app_bar.dart';
+import '../../core/services/posthog_service.dart';
 import '../../widgets/segmented_tab_bar.dart';
 
 class AchievementsScreen extends ConsumerStatefulWidget {
@@ -25,6 +26,9 @@ class _AchievementsScreenState extends ConsumerState<AchievementsScreen>
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
     _loadData();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(posthogServiceProvider).capture(eventName: 'achievements_viewed');
+    });
   }
 
   @override

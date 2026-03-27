@@ -36,15 +36,25 @@ class AISplitPreset {
   /// Get the training split value for API requests
   String get trainingSplitValue {
     switch (id) {
+      // Classic splits
       case 'full_body':
       case 'full_body_minimal':
+      case 'quick_gains':
+      case 'home_warrior':
+      case 'deload_recover':
+      case 'senior_strength':
+      case 'comeback_program':
         return 'full_body';
       case 'upper_lower':
       case 'upper_lower_full':
+      case 'strength_builder':
+      case 'hybrid_athlete':
         return 'upper_lower';
       case 'ppl_3day':
       case 'ppl_6day':
         return 'push_pull_legs';
+      case 'hell_week':
+        return 'full_body';
       case 'pplul':
         return 'pplul';
       case 'phul':
@@ -53,6 +63,16 @@ class AISplitPreset {
         return 'arnold_split';
       case 'bro_split':
         return 'body_part';
+      // Specialty splits
+      case 'lower_focused':
+        return 'lower_focused';
+      case 'chest_back_focus':
+        return 'chest_back_focus';
+      // AI-powered splits
+      case 'ai_adaptive':
+      case 'mood_based':
+      case 'weak_point_destroyer':
+        return 'ai_adaptive';
       default:
         return 'full_body';
     }

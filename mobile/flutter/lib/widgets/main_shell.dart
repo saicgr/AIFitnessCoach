@@ -21,8 +21,12 @@ import 'app_tour/app_tour_controller.dart';
 import 'app_tour/app_tour_overlay.dart';
 import 'floating_chat/floating_chat_bubble.dart';
 import 'floating_chat/floating_chat_overlay.dart';
+import 'level_up_dialog.dart';
 import 'morphing_tab_indicator.dart';
 import 'offline_banner.dart';
+import '../data/providers/xp_provider.dart' show xpProvider, levelUpEventProvider;
+import '../data/models/user_xp.dart';
+import '../core/accessibility/accessibility_provider.dart';
 
 /// Provider to control floating nav bar visibility
 final floatingNavBarVisibleProvider = StateProvider<bool>((ref) => true);
@@ -202,6 +206,25 @@ class MainShell extends ConsumerWidget {
         }
       },
     );
+
+    // Listen for level-up events from ANY screen (moved from home_screen.dart)
+    ref.listen<LevelUpEvent?>(levelUpEventProvider, (previous, next) {
+      if (next != null && previous == null) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (context.mounted) {
+            final showProg = ref.read(accessibilityProvider).showLevelUpProgression;
+            showLevelUpDialog(
+              context,
+              next,
+              () {
+                ref.read(xpProvider.notifier).clearLevelUp();
+              },
+              showProgression: showProg,
+            );
+          }
+        });
+      }
+    });
 
     // Use ValueKey to avoid GlobalKey conflicts when theme changes
     return Material(

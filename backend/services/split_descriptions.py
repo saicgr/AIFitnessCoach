@@ -146,12 +146,42 @@ SPLIT_DESCRIPTIONS = {
 }
 
 
-def get_split_context(training_split: str) -> str:
+DAY_NAMES = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+
+
+def _remap_schedule(schedule_str: str, workout_days: list) -> str:
+    """
+    Remap a split's hardcoded schedule to the user's actual workout days.
+
+    E.g., "Mon: Push, Wed: Pull, Fri: Legs" + user days [1,3,5] →
+          "Tue: Push, Thu: Pull, Sat: Legs"
+    """
+    parts = [p.strip() for p in schedule_str.split(',')]
+    workout_types = []
+    for p in parts:
+        if ':' in p:
+            workout_types.append(p.split(':', 1)[1].strip())
+
+    if not workout_types or not workout_days:
+        return schedule_str
+
+    sorted_days = sorted(workout_days)
+    mapped = []
+    for i, day_idx in enumerate(sorted_days):
+        workout_type = workout_types[i % len(workout_types)]
+        mapped.append(f"{DAY_NAMES[day_idx]}: {workout_type}")
+
+    return ', '.join(mapped)
+
+
+def get_split_context(training_split: str, workout_days: list = None) -> str:
     """
     Get rich context for a training split to include in AI prompts.
 
     Args:
         training_split: The split identifier (e.g., 'pplul', 'arnold_split')
+        workout_days: User's actual workout day indices (0=Mon, 6=Sun).
+                      If provided, the schedule is remapped to these days.
 
     Returns:
         Formatted string with split details for AI context
@@ -159,9 +189,13 @@ def get_split_context(training_split: str) -> str:
     split_info = SPLIT_DESCRIPTIONS.get(training_split, {})
 
     if split_info:
+        schedule = split_info['schedule']
+        if workout_days:
+            schedule = _remap_schedule(schedule, workout_days)
+
         lines = [
             f"Training Split: {split_info['name']}",
-            f"  Schedule: {split_info['schedule']}",
+            f"  Schedule: {schedule}",
             f"  Days per week: {split_info['days_per_week'] if split_info['days_per_week'] > 0 else 'Flexible'}",
             f"  Hypertrophy Score: {split_info['hypertrophy_score']}/10",
             f"  Rationale: {split_info['rationale']}",

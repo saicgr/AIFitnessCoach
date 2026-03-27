@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/services/posthog_service.dart';
 import '../../core/theme/accent_color_provider.dart';
 import '../../data/models/workout.dart';
 import '../../data/repositories/workout_repository.dart';
@@ -71,6 +72,13 @@ class _WorkoutGenerationScreenState extends ConsumerState<WorkoutGenerationScree
       vsync: this,
       duration: const Duration(seconds: 2),
     )..repeat();
+
+    // Track generation started
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(posthogServiceProvider).capture(
+        eventName: 'onboarding_workout_generation_started',
+      );
+    });
 
     // Start generation after a brief delay for UI to settle
     Future.delayed(const Duration(milliseconds: 500), _startGeneration);
@@ -176,6 +184,10 @@ class _WorkoutGenerationScreenState extends ConsumerState<WorkoutGenerationScree
         },
         onDone: () {
           debugPrint('✅ [WorkoutGeneration] Complete!');
+          // Track generation completed
+          ref.read(posthogServiceProvider).capture(
+            eventName: 'onboarding_workout_generation_completed',
+          );
           if (mounted) {
             setState(() {
               _isGenerating = false;

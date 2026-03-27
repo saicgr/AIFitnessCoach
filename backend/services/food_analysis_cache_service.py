@@ -1765,6 +1765,9 @@ class FoodAnalysisCacheService:
         meal_type: Optional[str] = None,
         mood_before: Optional[str] = None,
         user_id: Optional[str] = None,
+        coach_name: Optional[str] = None,
+        coaching_style: Optional[str] = None,
+        communication_tone: Optional[str] = None,
     ) -> Dict[str, Any]:
         """
         Generate contextual coach tips for food items using full user context.
@@ -1851,6 +1854,24 @@ class FoodAnalysisCacheService:
                     if targets_row:
                         nutrition_targets = dict(targets_row._mapping)
 
+                    # Get coach persona from AI settings (if not already passed)
+                    if not coach_name:
+                        try:
+                            coach_result = await session.execute(
+                                text(
+                                    "SELECT coach_name, coaching_style, communication_tone "
+                                    "FROM user_ai_settings WHERE user_id = :uid LIMIT 1"
+                                ),
+                                {"uid": user_id},
+                            )
+                            coach_row = coach_result.fetchone()
+                            if coach_row:
+                                coach_name = coach_row._mapping.get("coach_name")
+                                coaching_style = coach_row._mapping.get("coaching_style")
+                                communication_tone = coach_row._mapping.get("communication_tone")
+                        except Exception as e:
+                            logger.warning(f"[EnrichTips] Failed to fetch coach persona: {e}")
+
                 # Get daily nutrition summary for calorie budget
                 try:
                     from datetime import date as date_type
@@ -1881,6 +1902,9 @@ class FoodAnalysisCacheService:
                 calories_consumed_today=calories_consumed_today,
                 calories_remaining=calories_remaining,
                 health_score=health_score,
+                coach_name=coach_name,
+                coaching_style=coaching_style,
+                communication_tone=communication_tone,
             )
             if review:
                 # Use the Gemini-returned health_score if we didn't have one from items
@@ -2926,7 +2950,7 @@ class FoodAnalysisCacheService:
             total_fiber = 0.0
 
             for item in items:
-                analysis = self._resolve_single_parsed_item(item, lookup_service)
+                analysis = await self._resolve_single_parsed_item(item, lookup_service)
 
                 if not analysis:
                     # Any miss means Gemini handles the full description
@@ -3205,13 +3229,15 @@ class FoodAnalysisCacheService:
             logger.warning(f"Modified override lookup failed: {e}")
             return None
 
-    def _resolve_single_parsed_item(
+    async def _resolve_single_parsed_item(
         self, item: ParsedFoodItem, lookup_service
     ) -> Optional[Dict[str, Any]]:
         """
         Resolve a single ParsedFoodItem to a nutrition analysis using overrides + common foods.
 
         Applies countability heuristic for bare numbers and weight-based scaling.
+        Uses DB-backed fuzzy matching (cooking stems, word reordering, variant search)
+        to catch near-misses like "avocado mash" → "mashed avocado".
 
         Args:
             item: ParsedFoodItem from _split_food_description
@@ -3221,15 +3247,8 @@ class FoodAnalysisCacheService:
             Analysis dict or None if not found
         """
         food_name = item.food_name
-        override = lookup_service._check_override(food_name)
-
-        # Fuzzy fallback: try word-index search if exact miss
-        if not override:
-            fuzzy_matches = lookup_service._find_matching_overrides_for_search(food_name)
-            if fuzzy_matches and len(fuzzy_matches) == 1:
-                # Only use fuzzy if there's exactly one match (unambiguous)
-                match_name = fuzzy_matches[0].get("name", "")
-                override = lookup_service._check_override(match_name)
+        # Fuzzy DB lookup: exact → variant array → stemmed/reordered → trigram
+        override = await lookup_service._check_override_fuzzy_db(food_name)
 
         if override:
             # Weight-based scaling

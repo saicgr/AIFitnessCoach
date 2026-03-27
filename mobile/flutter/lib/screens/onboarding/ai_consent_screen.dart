@@ -7,6 +7,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_links.dart';
+import '../../core/services/posthog_service.dart';
 import '../../core/providers/window_mode_provider.dart';
 import '../../widgets/glass_back_button.dart';
 import '../../widgets/press_and_hold_button.dart';
@@ -61,6 +62,12 @@ class _AiConsentScreenState extends ConsumerState<AiConsentScreen> {
       await ref.read(aiConsentProvider.notifier).accept();
       await ref.read(healthDisclaimerProvider.notifier).accept();
       debugPrint('User accepted privacy & health disclaimer');
+
+      // Track AI consent acceptance
+      ref.read(posthogServiceProvider).capture(
+        eventName: 'onboarding_ai_consent_decision',
+        properties: {'accepted': true},
+      );
 
       if (mounted) {
         context.go('/coach-selection');

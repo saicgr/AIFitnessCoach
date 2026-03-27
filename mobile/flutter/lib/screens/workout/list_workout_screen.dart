@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/services/posthog_service.dart';
 import '../../widgets/app_dialog.dart';
 import '../../data/models/workout.dart';
 import '../../data/repositories/workout_repository.dart';
@@ -46,6 +47,16 @@ class _ListWorkoutScreenState extends ConsumerState<ListWorkoutScreen> {
     _initializeExerciseSets();
     _startWorkoutTimer();
     _fetchPreviousSessionData();
+
+    // Track workout list viewed
+    ref.read(posthogServiceProvider).capture(
+      eventName: 'workout_list_viewed',
+      properties: {
+        'workout_id': widget.workout.id ?? '',
+        'workout_name': widget.workout.name ?? '',
+        'exercise_count': widget.workout.exercises.length,
+      },
+    );
   }
 
   void _initializeExerciseSets() {

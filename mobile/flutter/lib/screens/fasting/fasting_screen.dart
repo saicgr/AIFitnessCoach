@@ -11,6 +11,7 @@ import '../../data/services/fasting_timer_service.dart';
 import '../../data/services/haptic_service.dart';
 import '../../widgets/glass_sheet.dart';
 import '../../widgets/segmented_tab_bar.dart';
+import '../../core/services/posthog_service.dart';
 import '../../widgets/main_shell.dart';
 import '../../widgets/pill_swipe_navigation.dart';
 import 'widgets/fasting_timer_widget.dart';
@@ -51,7 +52,10 @@ class _FastingScreenState extends ConsumerState<FastingScreen>
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
-    WidgetsBinding.instance.addPostFrameCallback((_) => _initialize());
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _initialize();
+      ref.read(posthogServiceProvider).capture(eventName: 'fasting_viewed');
+    });
   }
 
   @override

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/theme/theme_colors.dart';
 import '../../core/providers/window_mode_provider.dart';
+import '../../core/services/posthog_service.dart';
 import '../onboarding/widgets/foldable_quiz_scaffold.dart';
 
 /// Paywall Screen 1: Feature Highlights
@@ -12,6 +13,13 @@ class PaywallFeaturesScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // Track paywall features screen view (fire-and-forget, runs once per build)
+    Future.microtask(() {
+      ref.read(posthogServiceProvider).capture(
+        eventName: 'paywall_features_viewed',
+      );
+    });
+
     final colors = ref.colors(context);
     final windowState = ref.watch(windowModeProvider);
     final isFoldable = FoldableQuizScaffold.shouldUseFoldableLayout(windowState);

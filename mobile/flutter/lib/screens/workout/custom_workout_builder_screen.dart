@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/services/posthog_service.dart';
 import '../../data/repositories/workout_repository.dart';
 import '../../data/repositories/library_repository.dart';
 import '../../data/services/api_client.dart';
@@ -186,6 +187,18 @@ class _CustomWorkoutBuilderScreenState
       setState(() => _isCreating = false);
 
       if (workout != null) {
+        // Track custom workout created
+        ref.read(posthogServiceProvider).capture(
+          eventName: 'custom_workout_created',
+          properties: {
+            'workout_name': _nameController.text.trim(),
+            'workout_type': _workoutType,
+            'difficulty': _difficulty,
+            'exercise_count': _selectedExercises.length,
+            'estimated_duration_minutes': _estimateDuration(),
+          },
+        );
+
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(

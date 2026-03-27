@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/providers/favorites_provider.dart';
 import '../../../data/repositories/exercise_preferences_repository.dart';
+import '../../../core/services/posthog_service.dart';
 import '../../../widgets/pill_app_bar.dart';
 import 'widgets/exercise_picker_sheet.dart';
 
@@ -52,6 +53,7 @@ class FavoriteExercisesScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    ref.read(posthogServiceProvider).capture(eventName: 'favorite_exercises_viewed');
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final backgroundColor = isDark ? AppColors.pureBlack : AppColorsLight.pureWhite;
     final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;

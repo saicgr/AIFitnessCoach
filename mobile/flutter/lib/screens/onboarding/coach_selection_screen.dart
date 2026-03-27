@@ -19,6 +19,7 @@ import '../../data/providers/fasting_provider.dart';
 import '../../data/services/notification_service.dart';
 import '../settings/sections/nutrition_fasting_section.dart';
 import '../ai_settings/ai_settings_screen.dart';
+import '../../core/services/posthog_service.dart';
 import 'pre_auth_quiz_screen.dart';
 import 'widgets/coach_profile_card.dart';
 import 'widgets/foldable_quiz_scaffold.dart';
@@ -526,6 +527,17 @@ class _CoachSelectionScreenState extends ConsumerState<CoachSelectionScreen> {
     // Skip conversational onboarding - mark onboarding as complete
     ref.read(authStateProvider.notifier).markCoachSelected();
     ref.read(authStateProvider.notifier).markOnboardingComplete();
+
+    // Track coach selection
+    ref.read(posthogServiceProvider).capture(
+      eventName: 'onboarding_coach_selected',
+      properties: {
+        'coach_name': _isCustomMode
+            ? 'custom'
+            : (_selectedCoach?.name ?? 'unknown'),
+        'is_custom': _isCustomMode,
+      },
+    );
 
     // Navigate to fitness assessment screen (correct flow: Coach -> Fitness Assessment -> Paywall -> Workout Gen -> Home)
     if (mounted) {

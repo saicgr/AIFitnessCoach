@@ -23,6 +23,8 @@ import '../../data/providers/beast_mode_provider.dart';
 import '../../data/services/haptic_service.dart';
 import '../../widgets/app_snackbar.dart';
 import '../../widgets/app_tour/app_tour_controller.dart';
+import '../../widgets/level_up_dialog.dart';
+import '../../data/models/user_xp.dart';
 import 'beast_mode_unlock_dialog.dart';
 import '../../core/services/posthog_service.dart';
 import 'sections/sections.dart';
@@ -339,6 +341,14 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   // Beast Mode easter egg
   int _versionTapCount = 0;
   DateTime? _lastVersionTap;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(posthogServiceProvider).capture(eventName: 'settings_viewed');
+    });
+  }
 
   @override
   void dispose() {
@@ -942,9 +952,17 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   }
 
   void _launchExternalUrl(String url) async {
-    final uri = Uri.parse(url);
-    if (await canLaunchUrl(uri)) {
-      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    try {
+      await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Could not open $url'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
     }
   }
 
@@ -989,33 +1007,39 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               const SizedBox(height: 4),
               Text('Tap a tutorial to replay it next time you visit that screen', style: TextStyle(fontSize: 13, color: textMuted)),
               const SizedBox(height: 16),
-              ...tours.map((tour) {
-                final (tourId, label, subtitle, icon) = tour;
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: 4),
-                  child: ListTile(
-                    dense: true,
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 8),
-                    leading: Icon(icon, color: textMuted, size: 22),
-                    title: Text(label, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: textPrimary)),
-                    subtitle: Text(subtitle, style: TextStyle(fontSize: 12, color: textMuted)),
-                    trailing: TextButton(
-                      onPressed: () async {
-                        final prefs = await SharedPreferences.getInstance();
-                        await prefs.remove('has_seen_$tourId');
-                        ref.read(appTourControllerProvider.notifier).dismiss();
-                        if (ctx.mounted) {
-                          Navigator.pop(ctx);
-                          AppSnackBar.info(context, '$label tutorial will replay on next visit');
-                        }
-                      },
-                      child: Text('Replay', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
-                    ),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                    tileColor: elevated.withValues(alpha: 0.5),
-                  ),
-                );
-              }),
+              Flexible(
+                child: ListView(
+                  shrinkWrap: true,
+                  padding: EdgeInsets.zero,
+                  children: tours.map((tour) {
+                    final (tourId, label, subtitle, icon) = tour;
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 4),
+                      child: ListTile(
+                        dense: true,
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 8),
+                        leading: Icon(icon, color: textMuted, size: 22),
+                        title: Text(label, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: textPrimary)),
+                        subtitle: Text(subtitle, style: TextStyle(fontSize: 12, color: textMuted)),
+                        trailing: TextButton(
+                          onPressed: () async {
+                            final prefs = await SharedPreferences.getInstance();
+                            await prefs.remove('has_seen_$tourId');
+                            ref.read(appTourControllerProvider.notifier).dismiss();
+                            if (ctx.mounted) {
+                              Navigator.pop(ctx);
+                              AppSnackBar.info(context, '$label tutorial will replay on next visit');
+                            }
+                          },
+                          child: Text('Replay', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+                        ),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        tileColor: elevated.withValues(alpha: 0.5),
+                      ),
+                    );
+                  }).toList(),
+                ),
+              ),
               const SizedBox(height: 8),
               SizedBox(
                 width: double.infinity,
@@ -1383,6 +1407,85 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                       ),
                       const SizedBox(height: 24),
                     ],
+                  ],
+
+                  // ── Debug: Test Level-Up Dialog ──
+                  if (true) ...[
+                    _buildSectionLabel('Developer', textMuted),
+                    const SizedBox(height: 8),
+                    Container(
+                      decoration: BoxDecoration(
+                        color: elevated,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: cardBorder),
+                      ),
+                      child: Column(
+                        children: [
+                          ListTile(
+                            leading: Icon(Icons.military_tech_rounded, color: Colors.amber),
+                            title: Text('Test Level-Up (Level 2→3)', style: TextStyle(color: textPrimary, fontSize: 14)),
+                            subtitle: Text('Single level, with crate reward', style: TextStyle(color: textMuted, fontSize: 12)),
+                            trailing: Icon(Icons.play_arrow_rounded, color: Colors.green),
+                            onTap: () {
+                              showLevelUpDialog(
+                                context,
+                                const LevelUpEvent(
+                                  newLevel: 3,
+                                  oldLevel: 2,
+                                  totalXp: 95,
+                                  xpEarned: 40,
+                                ),
+                                () {},
+                                showProgression: false,
+                              );
+                            },
+                          ),
+                          Divider(height: 1, color: cardBorder),
+                          ListTile(
+                            leading: Icon(Icons.stars_rounded, color: Colors.purple),
+                            title: Text('Test Level-Up (Level 10→11)', style: TextStyle(color: textPrimary, fontSize: 14)),
+                            subtitle: Text('Title change: Beginner → Novice', style: TextStyle(color: textMuted, fontSize: 12)),
+                            trailing: Icon(Icons.play_arrow_rounded, color: Colors.green),
+                            onTap: () {
+                              showLevelUpDialog(
+                                context,
+                                const LevelUpEvent(
+                                  newLevel: 11,
+                                  oldLevel: 10,
+                                  newTitle: 'Novice',
+                                  oldTitle: 'Beginner',
+                                  totalXp: 960,
+                                  xpEarned: 180,
+                                ),
+                                () {},
+                                showProgression: false,
+                              );
+                            },
+                          ),
+                          Divider(height: 1, color: cardBorder),
+                          ListTile(
+                            leading: Icon(Icons.rocket_launch_rounded, color: Colors.orange),
+                            title: Text('Test Multi-Level (1→5)', style: TextStyle(color: textPrimary, fontSize: 14)),
+                            subtitle: Text('With cascade overlay + dialog', style: TextStyle(color: textMuted, fontSize: 12)),
+                            trailing: Icon(Icons.play_arrow_rounded, color: Colors.green),
+                            onTap: () {
+                              showLevelUpDialog(
+                                context,
+                                const LevelUpEvent(
+                                  newLevel: 5,
+                                  oldLevel: 1,
+                                  totalXp: 210,
+                                  xpEarned: 210,
+                                ),
+                                () {},
+                                showProgression: true,
+                              );
+                            },
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 24),
                   ],
 
                   // Beast Mode row (only visible when unlocked)

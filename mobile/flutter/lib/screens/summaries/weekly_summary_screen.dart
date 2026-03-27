@@ -6,6 +6,7 @@ import '../../data/models/weekly_summary.dart';
 import '../../data/repositories/weekly_summary_repository.dart';
 import '../../data/services/api_client.dart';
 import '../../widgets/glass_sheet.dart';
+import '../../core/services/posthog_service.dart';
 import '../../widgets/pill_app_bar.dart';
 
 class WeeklySummaryScreen extends ConsumerStatefulWidget {
@@ -23,6 +24,9 @@ class _WeeklySummaryScreenState extends ConsumerState<WeeklySummaryScreen> {
   void initState() {
     super.initState();
     _loadData();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(posthogServiceProvider).capture(eventName: 'weekly_summary_viewed');
+    });
   }
 
   Future<void> _loadData() async {

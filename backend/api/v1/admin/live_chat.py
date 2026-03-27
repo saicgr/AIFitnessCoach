@@ -234,22 +234,22 @@ async def _send_push_notification_to_user(
 
 @router.post("/login", response_model=AdminLoginResponse)
 @limiter.limit("5/minute")
-async def admin_login(req: Request, request: AdminLoginRequest):
+async def admin_login(request: Request, payload: AdminLoginRequest):
     """
     Admin login endpoint.
 
     Authenticates the admin via Supabase and verifies they have an admin role.
     Returns session tokens and admin profile.
     """
-    logger.info(f"Admin login attempt for: {request.email}")
+    logger.info(f"Admin login attempt for: {payload.email}")
 
     try:
         supabase = get_supabase().client
 
         # Authenticate with Supabase
         auth_response = supabase.auth.sign_in_with_password({
-            "email": request.email,
-            "password": request.password,
+            "email": payload.email,
+            "password": payload.password,
         })
 
         if not auth_response or not auth_response.user:
@@ -271,7 +271,7 @@ async def admin_login(req: Request, request: AdminLoginRequest):
 
         # Verify admin role
         if role not in ["admin", "super_admin", "support"]:
-            logger.warning(f"Non-admin login attempt: {request.email}, role: {role}")
+            logger.warning(f"Non-admin login attempt: {payload.email}, role: {role}")
             raise HTTPException(
                 status_code=403,
                 detail="Access denied. Admin, super_admin, or support role required."
@@ -289,12 +289,12 @@ async def admin_login(req: Request, request: AdminLoginRequest):
             user_id=user_id,
             action="admin_login",
             endpoint="/api/v1/admin/login",
-            message=f"Admin logged in: {request.email}",
+            message=f"Admin logged in: {payload.email}",
             metadata={"role": role},
             status_code=200
         )
 
-        logger.info(f"Admin login successful: {request.email}, role: {role}")
+        logger.info(f"Admin login successful: {payload.email}, role: {role}")
 
         return AdminLoginResponse(
             success=True,
@@ -302,7 +302,7 @@ async def admin_login(req: Request, request: AdminLoginRequest):
             refresh_token=session.refresh_token,
             admin_id=user_id,
             admin_name=user_data.get("name", user_data.get("display_name", "Admin")),
-            admin_email=user_data.get("email", request.email),
+            admin_email=user_data.get("email", payload.email),
             role=AdminRole(role) if role in [r.value for r in AdminRole] else AdminRole.SUPPORT,
             expires_at=datetime.utcnow() + timedelta(hours=24),
         )

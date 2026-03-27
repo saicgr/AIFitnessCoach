@@ -22,6 +22,9 @@ import '../../widgets/main_shell.dart';
 import '../../data/providers/nutrition_preferences_provider.dart';
 import '../../data/services/food_search_service.dart' as search;
 import '../../widgets/app_tour/app_tour_controller.dart';
+import '../../widgets/coach_avatar.dart';
+import '../../data/models/coach_persona.dart';
+import '../ai_settings/ai_settings_screen.dart';
 import '../../core/services/posthog_service.dart';
 import 'widgets/accuracy_feedback_snackbar.dart';
 import 'widgets/food_browser_panel.dart';
@@ -31,7 +34,7 @@ import 'widgets/portion_amount_input.dart';
 
 /// Shows the log meal bottom sheet from anywhere in the app
 /// [initialMealType] - Optional meal type to pre-select (e.g., 'breakfast', 'lunch', 'dinner', 'snack')
-Future<void> showLogMealSheet(BuildContext context, WidgetRef ref, {String? initialMealType}) async {
+Future<void> showLogMealSheet(BuildContext context, WidgetRef ref, {String? initialMealType, bool autoOpenCamera = false, bool autoOpenBarcode = false}) async {
   debugPrint('showLogMealSheet: Starting with initialMealType=$initialMealType');
   final isDark = Theme.of(context).brightness == Brightness.dark;
 
@@ -72,6 +75,8 @@ Future<void> showLogMealSheet(BuildContext context, WidgetRef ref, {String? init
       userId: userId!,
       isDark: isDark,
       initialMealType: mealType,
+      autoOpenCamera: autoOpenCamera,
+      autoOpenBarcode: autoOpenBarcode,
     ),
   );
 
@@ -85,12 +90,16 @@ class LogMealSheet extends ConsumerStatefulWidget {
   final String userId;
   final bool isDark;
   final MealType? initialMealType;
+  final bool autoOpenCamera;
+  final bool autoOpenBarcode;
 
   const LogMealSheet({
     super.key,
     required this.userId,
     required this.isDark,
     this.initialMealType,
+    this.autoOpenCamera = false,
+    this.autoOpenBarcode = false,
   });
 
   @override
@@ -120,6 +129,7 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet> {
 
   // Merged from _DescribeTab
   LogFoodResponse? _analyzedResponse;
+  LogFoodResponse? _previousResponse; // Stored when user goes back to input to allow returning to results
   bool _isAnalyzing = false;
   bool _isSaved = false;
   bool _hasLoggedThisSession = false;
@@ -156,7 +166,17 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet> {
     _textFieldFocusNode.addListener(_onFocusChange);
     _descriptionController.addListener(_onDescriptionChanged);
 
-    debugPrint('🍽️ [LogMeal] Sheet initialized | userId=${widget.userId} | initialMealType=${widget.initialMealType?.value ?? "auto"} | selectedMealType=${_selectedMealType.value}');
+    debugPrint('🍽️ [LogMeal] Sheet initialized | userId=${widget.userId} | initialMealType=${widget.initialMealType?.value ?? "auto"} | selectedMealType=${_selectedMealType.value} | autoOpenCamera=${widget.autoOpenCamera}');
+
+    if (widget.autoOpenCamera) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _pickImage(ImageSource.camera);
+      });
+    } else if (widget.autoOpenBarcode) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _openBarcodeScanner();
+      });
+    }
   }
 
   MealType _getDefaultMealType() {
@@ -368,6 +388,7 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet> {
       _progressMessage = 'Starting analysis...';
       _progressDetail = null;
       _analysisElapsedMs = null;
+      _previousResponse = null;
     });
     // Only show loading indicator if analysis takes > 500ms (avoids flash for cache hits)
     _loadingDelayTimer?.cancel();
@@ -453,9 +474,19 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet> {
 
   void _handleEdit() {
     setState(() {
+      _previousResponse = _analyzedResponse;
       _analyzedResponse = null;
       _analysisElapsedMs = null;
     });
+  }
+
+  void _handleBackToResults() {
+    if (_previousResponse != null) {
+      setState(() {
+        _analyzedResponse = _previousResponse;
+        _previousResponse = null;
+      });
+    }
   }
 
   void _handleFoodItemWeightChange(int index, FoodItemRanking updatedItem) {
@@ -1817,6 +1848,24 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet> {
 
     return Column(
       children: [
+        // Back to results button (only when returning from results view)
+        if (_previousResponse != null)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 4, 16, 0),
+            child: GestureDetector(
+              onTap: _handleBackToResults,
+              child: Row(
+                children: [
+                  Icon(Icons.arrow_back_ios, size: 14, color: textMuted),
+                  const SizedBox(width: 4),
+                  Text(
+                    'Back to results',
+                    style: TextStyle(fontSize: 13, color: textMuted, fontWeight: FontWeight.w500),
+                  ),
+                ],
+              ),
+            ),
+          ),
         // Text input (compact)
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
@@ -2131,8 +2180,53 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet> {
                         ],
                       ),
                     ),
+                    const SizedBox(width: 12),
+                    // Flag / report inaccuracy
+                    GestureDetector(
+                      onTap: () {
+                        final items = response.foodItemsRanked;
+                        final mainFood = items.isNotEmpty ? items.first.name : description;
+                        showFoodReportDialog(
+                          context,
+                          apiClient: ref.read(apiClientProvider),
+                          foodName: mainFood,
+                          originalCalories: response.totalCalories,
+                          originalProtein: response.proteinG,
+                          originalCarbs: response.carbsG,
+                          originalFat: response.fatG,
+                          dataSource: 'ai_analysis',
+                        );
+                      },
+                      child: Icon(Icons.flag_outlined, size: 18, color: textMuted),
+                    ),
                   ],
                 ),
+                // Search query display — tap to go back to input
+                if (description.isNotEmpty)
+                  GestureDetector(
+                    onTap: _handleEdit,
+                    child: Padding(
+                      padding: const EdgeInsets.only(top: 4),
+                      child: Row(
+                        children: [
+                          Flexible(
+                            child: Text(
+                              '"$description"',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: textMuted,
+                                fontStyle: FontStyle.italic,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          const SizedBox(width: 4),
+                          Icon(Icons.edit_outlined, size: 12, color: textMuted),
+                        ],
+                      ),
+                    ),
+                  ),
                 const SizedBox(height: 12),
 
                 // Compact macros row
@@ -2162,13 +2256,18 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet> {
 
                 // AI Coach Tip — collapsed by default
                 if (response.aiSuggestion != null || (response.encouragements != null && response.encouragements!.isNotEmpty) || (response.warnings != null && response.warnings!.isNotEmpty))
-                  _CollapsibleAISuggestion(
-                    suggestion: response.aiSuggestion,
-                    encouragements: response.encouragements,
-                    warnings: response.warnings,
-                    recommendedSwap: response.recommendedSwap,
-                    isDark: isDark,
-                  ),
+                  Builder(builder: (_) {
+                    final aiSettings = ref.read(aiSettingsProvider);
+                    final coach = CoachPersona.findById(aiSettings.coachPersonaId) ?? CoachPersona.defaultCoach;
+                    return _CollapsibleAISuggestion(
+                      suggestion: response.aiSuggestion,
+                      encouragements: response.encouragements,
+                      warnings: response.warnings,
+                      recommendedSwap: response.recommendedSwap,
+                      isDark: isDark,
+                      coach: coach,
+                    );
+                  }),
 
                 const SizedBox(height: 12),
 
@@ -3466,28 +3565,13 @@ class _FoodItemRankingCardState extends State<_FoodItemRankingCard> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            widget.item.name,
-                            style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w500,
-                              color: textPrimary,
-                            ),
-                          ),
-                        ),
-                        if (widget.onRemoved != null)
-                          GestureDetector(
-                            onTap: widget.onRemoved,
-                            behavior: HitTestBehavior.opaque,
-                            child: Padding(
-                              padding: const EdgeInsets.all(4),
-                              child: Icon(Icons.close, size: 16, color: widget.isDark ? AppColors.error : AppColorsLight.error),
-                            ),
-                          ),
-                      ],
+                    Text(
+                      widget.item.name,
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                        color: textPrimary,
+                      ),
                     ),
                     // Weight/Count editing row (if scalable)
                     if (canScale)
@@ -3829,6 +3913,18 @@ class _FoodItemRankingCardState extends State<_FoodItemRankingCard> {
                   ),
                 ],
               ),
+              // Remove button
+              if (widget.onRemoved != null) ...[
+                const SizedBox(width: 4),
+                GestureDetector(
+                  onTap: widget.onRemoved,
+                  behavior: HitTestBehavior.opaque,
+                  child: Padding(
+                    padding: const EdgeInsets.all(4),
+                    child: Icon(Icons.close, size: 16, color: widget.isDark ? AppColors.error : AppColorsLight.error),
+                  ),
+                ),
+              ],
             ],
           ),
         ],
@@ -3847,6 +3943,7 @@ class _CollapsibleAISuggestion extends StatefulWidget {
   final List<String>? warnings;
   final String? recommendedSwap;
   final bool isDark;
+  final CoachPersona? coach;
 
   const _CollapsibleAISuggestion({
     this.suggestion,
@@ -3854,6 +3951,7 @@ class _CollapsibleAISuggestion extends StatefulWidget {
     this.warnings,
     this.recommendedSwap,
     required this.isDark,
+    this.coach,
   });
 
   @override
@@ -3891,10 +3989,21 @@ class _CollapsibleAISuggestionState extends State<_CollapsibleAISuggestion> {
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
               child: Row(
                 children: [
-                  Icon(Icons.psychology, size: 18, color: teal),
-                  const SizedBox(width: 8),
+                  if (widget.coach != null) ...[
+                    CoachAvatar(
+                      coach: widget.coach!,
+                      size: 22,
+                      showBorder: false,
+                      showShadow: false,
+                      enableTapToView: false,
+                    ),
+                    const SizedBox(width: 8),
+                  ] else ...[
+                    Icon(Icons.psychology, size: 18, color: teal),
+                    const SizedBox(width: 8),
+                  ],
                   Text(
-                    'Coach Tip',
+                    widget.coach != null ? "${widget.coach!.name}'s Tip" : 'Coach Tip',
                     style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: textPrimary),
                   ),
                   const Spacer(),

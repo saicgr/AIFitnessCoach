@@ -145,7 +145,8 @@ async def get_exercise_history(
 
         # Fallback: Query performance_logs directly (still efficient with index)
         result = db.client.table("performance_logs").select(
-            "workout_log_id, recorded_at, weight_kg, reps_completed, rpe, rir"
+            "workout_log_id, recorded_at, weight_kg, reps_completed, rpe, rir, "
+            "target_weight_kg, target_reps, progression_model"
         ).eq(
             "user_id", user_id
         ).ilike(
@@ -174,6 +175,9 @@ async def get_exercise_history(
                     "sets": len(sets),
                     "rpe": best_set.get("rpe"),
                     "rir": best_set.get("rir"),
+                    "target_weight_kg": best_set.get("target_weight_kg"),
+                    "target_reps": best_set.get("target_reps"),
+                    "progression_model": best_set.get("progression_model"),
                 })
 
                 if len(history) >= limit:
@@ -432,15 +436,21 @@ async def generate_ai_suggestion(
     tone = tone_instructions.get(request.communication_tone, tone_instructions["encouraging"])
     length = length_guidance.get(request.response_length, length_guidance["balanced"])
 
-    # Build history context
+    # Build history context with target vs actual comparison
     history_context = ""
     if history:
         history_lines = []
         for h in history[:5]:
-            history_lines.append(
-                f"- {h['date'][:10]}: {h['weight_kg']}kg x {h['reps']} reps"
-                + (f", RPE {h['rpe']}" if h.get('rpe') else "")
-            )
+            line = f"- {h['date'][:10]}: {h['weight_kg']}kg x {h['reps']} reps"
+            if h.get('rpe'):
+                line += f", RPE {h['rpe']}"
+            if h.get('rir') is not None:
+                line += f", RIR {h['rir']}"
+            if h.get('target_weight_kg'):
+                line += f" (target: {h['target_weight_kg']}kg x {h.get('target_reps', '?')})"
+            if h.get('progression_model'):
+                line += f" [{h['progression_model']}]"
+            history_lines.append(line)
         history_context = "\n".join(history_lines)
     else:
         history_context = "No previous history for this exercise."
@@ -486,6 +496,12 @@ USER PROFILE:
 EXERCISE HISTORY (Recent Sessions):
 {history_context}
 
+Note: History shows actual weight/reps vs planned targets (if available).
+Progression models used: pyramidUp (weight increases per set), straightSets (same weight),
+reversePyramid (heaviest first), dropSets (weight decreases, AMRAP), topSetBackOff,
+restPause (15s micro-rests), myoReps (activation + mini-sets).
+Use the user's preferred progression model when suggesting weights for upcoming sets.
+
 EQUIPMENT CONSTRAINTS:
 - Minimum weight increment: {equipment_increment}kg
 - Available increments must be in multiples of {equipment_increment}kg
@@ -507,7 +523,14 @@ IMPORTANT:
 - Account for fatigue (later sets may need lower weight)
 - If they're building up (earlier sets), consider progressive overload
 - Weight suggestions must align with equipment increments
-- Stay in character with your coaching persona throughout"""
+- Stay in character with your coaching persona throughout
+
+CRITICAL RULES FOR SET-TO-SET SUGGESTIONS:
+- DEFAULT to MAINTAINING the same weight (straight sets) unless clear evidence of failure
+- RIR >= 2 with >= 80% rep completion = MAINTAIN weight — do NOT suggest decrease
+- Only suggest decrease if RIR is 0 or rep completion < 70%
+- Never suggest more than 1 equipment increment change between consecutive sets
+- If the user chose a weight significantly higher than the planned target, RESPECT their choice"""
 
     try:
         response = await gemini.chat(
@@ -562,7 +585,7 @@ IMPORTANT:
 @router.post("/weight-suggestion", response_model=WeightSuggestionResponse)
 @limiter.limit("5/minute")
 async def get_weight_suggestion(body: WeightSuggestionRequest,
-    request: Request = None,
+    request: Request,
     current_user: dict = Depends(get_current_user),
 ):
     """

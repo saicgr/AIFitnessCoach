@@ -4,6 +4,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/services/posthog_service.dart';
 import '../../widgets/glass_back_button.dart';
 import 'widgets/did_you_know_chip.dart';
 
@@ -42,6 +43,12 @@ class _AccuracyIntroScreenState extends ConsumerState<AccuracyIntroScreen>
 
   void _continue() {
     HapticFeedback.mediumImpact();
+
+    // Track accuracy intro completion
+    ref.read(posthogServiceProvider).capture(
+      eventName: 'onboarding_accuracy_intro_completed',
+    );
+
     context.go('/health-connect-setup');
   }
 
@@ -79,24 +86,23 @@ class _AccuracyIntroScreenState extends ConsumerState<AccuracyIntroScreen>
                 ),
               ),
 
-              // Scrollable content
+              // Content (non-scrollable, fits in available space)
               Expanded(
-                child: SingleChildScrollView(
+                child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 24),
                   child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const SizedBox(height: 16),
                       _buildHeader(textPrimary, textSecondary, isDark),
-                      const SizedBox(height: 36),
+                      const SizedBox(height: 24),
                       _buildComparisonSection(isDark, textPrimary, textSecondary),
-                      const SizedBox(height: 32),
-                      _buildInsightText(textSecondary, isDark),
                       const SizedBox(height: 20),
+                      _buildInsightText(textSecondary, isDark),
+                      const SizedBox(height: 12),
                       DidYouKnowChip(
                         text:
                             'FitWiz uses AI + 200,000+ verified foods from 100+ country cuisines, plus barcode databases',
                       ),
-                      const SizedBox(height: 24),
                     ],
                   ),
                 ),

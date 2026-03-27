@@ -237,27 +237,27 @@ class NutritionGoalsCard extends ConsumerWidget {
                (prefs.primaryGoalEnum == NutritionGoal.loseFat ||
                 prefs.primaryGoalEnum == NutritionGoal.buildMuscle)))) ...[
             const SizedBox(height: 8),
-            Wrap(
-              spacing: 8,
-              runSpacing: 4,
-              children: [
+            Builder(builder: (_) {
+              final chips = <Widget>[
                 if (hasGoal)
                   _GoalChip(
                     icon: null,
                     label: _getGoalDisplayName(nutritionGoal),
                     color: teal,
                   ),
-                if (prefs.goalWeightKg != null)
+                if (prefs!.goalWeightKg != null)
                   _GoalChip(
                     icon: Icons.my_location_outlined,
-                    label: '${prefs.goalWeightKg!.toStringAsFixed(1)} kg goal',
+                    label: '${_formatWeight(prefs.goalWeightKg!)}kg',
                     color: teal,
                   ),
                 if (prefs.goalDate != null)
-                  _GoalChip(
-                    icon: Icons.calendar_today_outlined,
-                    label: _formatGoalDate(prefs.goalDate!, prefs.weeksToGoal),
-                    color: teal,
+                  Flexible(
+                    child: _GoalChip(
+                      icon: Icons.calendar_today_outlined,
+                      label: _formatGoalDate(prefs.goalDate!, prefs.weeksToGoal),
+                      color: teal,
+                    ),
                   ),
                 if (prefs.rateOfChange != null &&
                     (prefs.primaryGoalEnum == NutritionGoal.loseFat ||
@@ -267,8 +267,17 @@ class NutritionGoalsCard extends ConsumerWidget {
                     label: _formatWeeklyRate(prefs.rateOfChange!),
                     color: teal,
                   ),
-              ],
-            ),
+              ];
+              final separated = <Widget>[];
+              for (var i = 0; i < chips.length; i++) {
+                if (i > 0) separated.add(Text(' · ', style: TextStyle(fontSize: 11, color: teal.withOpacity(0.5))));
+                separated.add(chips[i]);
+              }
+              return Row(
+                mainAxisSize: MainAxisSize.min,
+                children: separated,
+              );
+            }),
           ],
 
           // Bottom info line: calories burned
@@ -308,21 +317,27 @@ class NutritionGoalsCard extends ConsumerWidget {
 
   String _formatGoalDate(DateTime date, int? weeksToGoal) {
     final monthName = _monthNames[date.month];
-    final base = '$monthName ${date.year}';
-    if (weeksToGoal != null && weeksToGoal > 0) return '$base · $weeksToGoal wks';
+    final base = "$monthName '${date.year % 100}";
+    if (weeksToGoal != null && weeksToGoal > 0) return '$base · ${weeksToGoal}wk';
     return base;
+  }
+
+  String _formatWeight(double weight) {
+    return weight == weight.roundToDouble() && weight % 1 == 0
+        ? weight.toInt().toString()
+        : weight.toStringAsFixed(1);
   }
 
   String _formatWeeklyRate(String rateOfChange) {
     switch (rateOfChange) {
       case 'slow':
-        return '0.25 kg / wk';
+        return '0.25kg/wk';
       case 'moderate':
-        return '0.5 kg / wk';
+        return '0.5kg/wk';
       case 'fast':
-        return '0.75 kg / wk';
+        return '0.75kg/wk';
       case 'aggressive':
-        return '1.0 kg / wk';
+        return '1kg/wk';
       default:
         return rateOfChange;
     }

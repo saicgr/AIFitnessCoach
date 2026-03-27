@@ -11,6 +11,7 @@ import '../../data/providers/trophy_filter_provider.dart';
 import '../../data/providers/xp_provider.dart';
 import '../../data/services/haptic_service.dart';
 import '../../widgets/glass_back_button.dart';
+import '../../core/services/posthog_service.dart';
 import '../../widgets/glass_sheet.dart';
 import 'widgets/trophy_filter_sheet.dart';
 
@@ -73,6 +74,7 @@ class _TrophyRoomScreenState extends ConsumerState<TrophyRoomScreen> {
     // Defer provider modification until after build
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _loadData();
+      ref.read(posthogServiceProvider).capture(eventName: 'trophy_room_viewed');
     });
   }
 

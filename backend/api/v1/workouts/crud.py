@@ -284,6 +284,18 @@ class WorkoutCompletionResponse(BaseModel):
     message: str = "Workout completed successfully"
 
 
+class SetLogInfo(BaseModel):
+    """Per-set log data for workout summary display."""
+    exercise_name: str
+    exercise_index: int = 0
+    set_number: int
+    reps_completed: int
+    weight_kg: float
+    rpe: Optional[float] = None
+    rir: Optional[int] = None
+    set_type: str = "working"
+
+
 class WorkoutSummaryResponse(BaseModel):
     """Response for the workout summary screen."""
     workout: dict
@@ -292,6 +304,7 @@ class WorkoutSummaryResponse(BaseModel):
     coach_summary: Optional[str] = None
     completion_method: Optional[str] = None
     completed_at: Optional[str] = None
+    set_logs: List[SetLogInfo] = []
 
 
 @router.post("/", response_model=Workout)
@@ -1263,6 +1276,27 @@ async def get_workout_completion_summary(workout_id: str,
             workout_log_id = workout_log_response.data[0].get("id")
             duration_seconds = workout_log_response.data[0].get("total_time_seconds", 0)
 
+        # 1b. Get per-set log data
+        set_logs = []
+        if workout_log_id:
+            try:
+                perf_logs_response = supabase.table("performance_logs").select(
+                    "exercise_name, set_number, reps_completed, weight_kg, rpe, rir, set_type"
+                ).eq("workout_log_id", workout_log_id).order("exercise_name").order("set_number").execute()
+
+                for idx, pl in enumerate(perf_logs_response.data or []):
+                    set_logs.append(SetLogInfo(
+                        exercise_name=pl.get("exercise_name", ""),
+                        set_number=pl.get("set_number", 0),
+                        reps_completed=pl.get("reps_completed", 0),
+                        weight_kg=float(pl.get("weight_kg", 0)),
+                        rpe=float(pl.get("rpe")) if pl.get("rpe") is not None else None,
+                        rir=pl.get("rir"),
+                        set_type=pl.get("set_type", "working"),
+                    ))
+            except Exception as e:
+                logger.warning(f"Failed to fetch performance logs for summary: {e}")
+
         # 2. Get personal records for this workout
         prs_response = supabase.table("personal_records").select("*").eq(
             "workout_id", workout_id
@@ -1300,15 +1334,56 @@ async def get_workout_completion_summary(workout_id: str,
 
                 exercise_comparisons = []
                 for ep in (ep_response.data or []):
+                    exercise_name = ep.get("exercise_name", "")
+
+                    # Get previous performances for this exercise
+                    try:
+                        prev_response = supabase.table("exercise_performance_summary").select(
+                            "*"
+                        ).eq("user_id", user_id).eq(
+                            "exercise_name", exercise_name
+                        ).neq("workout_log_id", workout_log_id).order(
+                            "performed_at", desc=True
+                        ).limit(1).execute()
+
+                        previous_performances = prev_response.data or []
+                    except Exception:
+                        previous_performances = []
+
+                    # Use comparison service to compute full comparison
+                    comparison = comparison_service.compute_exercise_comparison(
+                        exercise_name=exercise_name,
+                        current_performance=ep,
+                        previous_performances=previous_performances,
+                    )
+
                     exercise_comparisons.append(ExerciseComparisonInfo(
-                        exercise_name=ep.get("exercise_name", ""),
-                        exercise_id=ep.get("exercise_id"),
-                        current_sets=ep.get("total_sets", 0),
-                        current_reps=ep.get("total_reps", 0),
-                        current_volume_kg=ep.get("total_volume_kg", 0.0),
-                        current_max_weight_kg=ep.get("max_weight_kg"),
-                        current_1rm_kg=ep.get("estimated_1rm_kg"),
-                        status=ep.get("status", "first_time"),
+                        exercise_name=comparison.exercise_name,
+                        exercise_id=comparison.exercise_id,
+                        current_sets=comparison.current_sets,
+                        current_reps=comparison.current_reps,
+                        current_volume_kg=comparison.current_volume_kg,
+                        current_max_weight_kg=comparison.current_max_weight_kg,
+                        current_1rm_kg=comparison.current_1rm_kg,
+                        current_time_seconds=comparison.current_time_seconds,
+                        previous_sets=comparison.previous_sets,
+                        previous_reps=comparison.previous_reps,
+                        previous_volume_kg=comparison.previous_volume_kg,
+                        previous_max_weight_kg=comparison.previous_max_weight_kg,
+                        previous_1rm_kg=comparison.previous_1rm_kg,
+                        previous_time_seconds=comparison.previous_time_seconds,
+                        previous_date=comparison.previous_date,
+                        volume_diff_kg=comparison.volume_diff_kg,
+                        volume_diff_percent=comparison.volume_diff_percent,
+                        weight_diff_kg=comparison.weight_diff_kg,
+                        weight_diff_percent=comparison.weight_diff_percent,
+                        rm_diff_kg=comparison.rm_diff_kg,
+                        rm_diff_percent=comparison.rm_diff_percent,
+                        time_diff_seconds=comparison.time_diff_seconds,
+                        time_diff_percent=comparison.time_diff_percent,
+                        reps_diff=comparison.reps_diff,
+                        sets_diff=comparison.sets_diff,
+                        status=comparison.status,
                     ))
 
                 improved_count = sum(1 for e in exercise_comparisons if e.status == 'improved')
@@ -1317,19 +1392,48 @@ async def get_workout_completion_summary(workout_id: str,
                 first_time_count = sum(1 for e in exercise_comparisons if e.status == 'first_time')
 
                 wp_data = wp_response.data if wp_response and wp_response.data else {}
-                workout_comparison = WorkoutComparisonInfo(
-                    current_duration_seconds=wp_data.get("duration_seconds", duration_seconds),
-                    current_total_volume_kg=wp_data.get("total_volume_kg", 0.0),
-                    current_total_sets=wp_data.get("total_sets", 0),
-                    current_total_reps=wp_data.get("total_reps", 0),
-                    current_exercises=wp_data.get("exercises_count", 0),
-                    current_calories=wp_data.get("calories_burned", 0),
-                    has_previous=wp_data.get("has_previous", False),
-                    overall_status=wp_data.get("overall_status", "first_time"),
+
+                # Get previous workout performance for comparison
+                prev_wp_response = None
+                try:
+                    prev_wp_response = supabase.table("workout_performance_summary").select(
+                        "*"
+                    ).eq("user_id", user_id).neq(
+                        "workout_log_id", workout_log_id
+                    ).order("performed_at", desc=True).limit(1).execute()
+                except Exception:
+                    pass
+
+                prev_wp_data = prev_wp_response.data[0] if prev_wp_response and prev_wp_response.data else None
+
+                workout_comparison_result = comparison_service.compute_workout_comparison(
+                    current_stats=wp_data,
+                    previous_stats=prev_wp_data,
+                )
+
+                # Convert to our response model
+                workout_comparison_info = WorkoutComparisonInfo(
+                    current_duration_seconds=workout_comparison_result.current_duration_seconds,
+                    current_total_volume_kg=workout_comparison_result.current_total_volume_kg,
+                    current_total_sets=workout_comparison_result.current_total_sets,
+                    current_total_reps=workout_comparison_result.current_total_reps,
+                    current_exercises=workout_comparison_result.current_exercises,
+                    current_calories=workout_comparison_result.current_calories,
+                    has_previous=workout_comparison_result.has_previous,
+                    previous_duration_seconds=workout_comparison_result.previous_duration_seconds,
+                    previous_total_volume_kg=workout_comparison_result.previous_total_volume_kg,
+                    previous_total_sets=workout_comparison_result.previous_total_sets,
+                    previous_total_reps=workout_comparison_result.previous_total_reps,
+                    previous_performed_at=workout_comparison_result.previous_performed_at,
+                    duration_diff_seconds=workout_comparison_result.duration_diff_seconds,
+                    duration_diff_percent=workout_comparison_result.duration_diff_percent,
+                    volume_diff_kg=workout_comparison_result.volume_diff_kg,
+                    volume_diff_percent=workout_comparison_result.volume_diff_percent,
+                    overall_status=workout_comparison_result.overall_status,
                 )
 
                 performance_comparison = PerformanceComparisonInfo(
-                    workout_comparison=workout_comparison,
+                    workout_comparison=workout_comparison_info,
                     exercise_comparisons=exercise_comparisons,
                     improved_count=improved_count,
                     maintained_count=maintained_count,
@@ -1341,21 +1445,56 @@ async def get_workout_completion_summary(workout_id: str,
 
         # 4. Generate AI coach summary
         coach_summary = None
+        # Ensure exercise_comparisons is available even if comparison block failed
+        if 'exercise_comparisons' not in locals():
+            exercise_comparisons = []
         try:
             exercises = existing.get("exercises") or existing.get("exercises_json") or []
             if isinstance(exercises, str):
                 exercises = json.loads(exercises)
 
-            exercise_names = [ex.get("name", "") for ex in exercises if ex.get("name")]
-            pr_names = [pr.exercise_name for pr in personal_records]
+            # Build rich context for coach review
+            exercise_details = []
+            for ec in exercise_comparisons:
+                detail = f"- {ec.exercise_name}: {ec.current_sets}x{ec.current_reps} @ {ec.current_max_weight_kg or 0:.1f}kg"
+                if ec.status == 'improved' and ec.volume_diff_percent:
+                    detail += f" (IMPROVED: volume +{ec.volume_diff_percent:.1f}%)"
+                elif ec.status == 'declined' and ec.volume_diff_percent:
+                    detail += f" (DECLINED: volume {ec.volume_diff_percent:.1f}%)"
+                elif ec.status == 'first_time':
+                    detail += " (first time)"
+                exercise_details.append(detail)
+
+            wc = workout_comparison_info if 'workout_comparison_info' in locals() else None
+            total_vol = wc.current_total_volume_kg if wc else 0
+            calories = wc.current_calories if wc else 0
+            vol_change = f"{wc.volume_diff_percent:+.1f}%" if wc and wc.volume_diff_percent else "N/A"
+
+            pr_details = [
+                f"- {pr.exercise_name}: {pr.weight_kg:.1f}kg x {pr.reps} reps (1RM: {pr.estimated_1rm_kg:.1f}kg, +{pr.improvement_percent:.1f}%)"
+                for pr in personal_records if pr.improvement_percent
+            ] or ["None"]
 
             summary_prompt = (
-                f"You are a supportive fitness coach. Write a brief 2-3 sentence summary of this completed workout.\n\n"
+                f"You are an expert fitness coach analyzing a completed workout. "
+                f"Respond ONLY with valid JSON (no markdown, no code fences).\n\n"
                 f"Workout: {existing.get('name')} ({existing.get('type')})\n"
                 f"Duration: {duration_seconds // 60} minutes\n"
-                f"Exercises: {', '.join(exercise_names[:8])}\n"
-                f"Personal Records: {', '.join(pr_names) if pr_names else 'None'}\n\n"
-                f"Keep it encouraging, specific, and under 50 words. No emojis."
+                f"Total Volume: {total_vol:.0f} kg (change: {vol_change})\n"
+                f"Calories: {calories}\n\n"
+                f"Exercises:\n" + "\n".join(exercise_details) + "\n\n"
+                f"Personal Records:\n" + "\n".join(pr_details) + "\n\n"
+                f"Respond with this JSON structure:\n"
+                f'{{"highlights": ["specific positive callout 1", "specific positive callout 2"], '
+                f'"areas_to_improve": ["specific improvement suggestion"], '
+                f'"overall_rating": 8, '
+                f'"summary": "2-3 sentence encouraging overall summary"}}\n\n'
+                f"Rules:\n"
+                f"- highlights: 2-3 bullet points mentioning specific exercises and numbers\n"
+                f"- areas_to_improve: 0-2 items, only if exercises declined. Empty array if all improved\n"
+                f"- overall_rating: 1-10 based on effort and progression\n"
+                f"- summary: Personalized, encouraging, mention specific achievements. Under 60 words.\n"
+                f"- No emojis anywhere"
             )
 
             coach_summary = await ai_insights_service.gemini.chat(
@@ -1372,12 +1511,141 @@ async def get_workout_completion_summary(workout_id: str,
             coach_summary=coach_summary,
             completion_method=completion_method,
             completed_at=str(completed_at) if completed_at else None,
+            set_logs=set_logs,
         )
 
     except HTTPException:
         raise
     except Exception as e:
         logger.error(f"Failed to get workout summary: {e}")
+        raise safe_internal_error(e, "crud")
+
+
+class UpdateExerciseSetsRequest(BaseModel):
+    """Request to update exercise sets after workout completion."""
+    exercise_index: int
+    sets: List[Dict[str, Any]]  # [{ set_number, reps, weight_kg, rpe? }]
+
+
+@router.patch("/{workout_id}/exercise-sets")
+async def update_exercise_sets(
+    workout_id: str,
+    request: UpdateExerciseSetsRequest,
+    current_user: dict = Depends(get_current_user),
+):
+    """Update exercise sets for a completed workout (post-completion editing)."""
+    logger.info(f"Updating exercise sets: workout={workout_id}, exercise_index={request.exercise_index}")
+    try:
+        db = get_supabase_db()
+        supabase = get_db().client
+
+        existing = db.get_workout(workout_id)
+        if not existing:
+            raise HTTPException(status_code=404, detail="Workout not found")
+        verify_resource_ownership(current_user, existing, "Workout")
+
+        # Parse exercises
+        exercises = existing.get("exercises") or existing.get("exercises_json") or []
+        if isinstance(exercises, str):
+            exercises = json.loads(exercises)
+
+        if request.exercise_index < 0 or request.exercise_index >= len(exercises):
+            raise HTTPException(status_code=400, detail="Invalid exercise index")
+
+        exercise = exercises[request.exercise_index]
+        exercise_name = exercise.get("name", "")
+
+        # Update sets in exercises_json
+        new_sets = []
+        for s in request.sets:
+            new_sets.append({
+                "set_number": s.get("set_number", 1),
+                "reps": s.get("reps", 0),
+                "reps_completed": s.get("reps", 0),
+                "weight_kg": s.get("weight_kg", 0),
+                "rpe": s.get("rpe"),
+                "completed": True,
+                "set_type": s.get("set_type", "working"),
+            })
+
+        exercises[request.exercise_index]["sets"] = new_sets
+        exercises[request.exercise_index]["sets_count"] = len(new_sets)
+
+        # Update workout in database
+        update_data = {
+            "exercises": exercises,
+            "last_modified_at": datetime.now().isoformat(),
+            "last_modified_method": "post_completion_edit",
+        }
+        db.update_workout(workout_id, update_data)
+
+        # Update performance_logs if workout_log exists
+        workout_log_response = supabase.table("workout_logs").select(
+            "id"
+        ).eq("workout_id", workout_id).order("completed_at", desc=True).limit(1).execute()
+
+        if workout_log_response.data:
+            wl_id = workout_log_response.data[0].get("id")
+
+            # Delete existing performance_logs for this exercise
+            supabase.table("performance_logs").delete().eq(
+                "workout_log_id", wl_id
+            ).eq("exercise_name", exercise_name).execute()
+
+            # Insert updated logs
+            user_id = existing.get("user_id")
+            for s in request.sets:
+                perf_record = {
+                    "workout_log_id": wl_id,
+                    "user_id": user_id,
+                    "exercise_id": exercise.get("id") or exercise.get("exercise_id"),
+                    "exercise_name": exercise_name,
+                    "set_number": s.get("set_number", 1),
+                    "reps_completed": s.get("reps", 0),
+                    "weight_kg": s.get("weight_kg", 0),
+                    "rpe": s.get("rpe"),
+                    "is_completed": True,
+                    "set_type": s.get("set_type", "working"),
+                    "recorded_at": datetime.now().isoformat(),
+                }
+                supabase.table("performance_logs").insert(perf_record).execute()
+
+            # Update exercise_performance_summary
+            total_reps = sum(s.get("reps", 0) for s in request.sets)
+            weights = [s.get("weight_kg", 0) for s in request.sets if s.get("weight_kg", 0) > 0]
+            max_weight = max(weights) if weights else 0
+            total_volume = sum(s.get("reps", 0) * s.get("weight_kg", 0) for s in request.sets)
+
+            supabase.table("exercise_performance_summary").update({
+                "total_sets": len(request.sets),
+                "total_reps": total_reps,
+                "total_volume_kg": total_volume,
+                "max_weight_kg": max_weight,
+            }).eq("workout_log_id", wl_id).eq("exercise_name", exercise_name).execute()
+
+            # Update workout_performance_summary totals
+            all_ep = supabase.table("exercise_performance_summary").select(
+                "total_sets, total_reps, total_volume_kg"
+            ).eq("workout_log_id", wl_id).execute()
+
+            if all_ep.data:
+                total_sets_all = sum(e.get("total_sets", 0) for e in all_ep.data)
+                total_reps_all = sum(e.get("total_reps", 0) for e in all_ep.data)
+                total_vol_all = sum(e.get("total_volume_kg", 0) for e in all_ep.data)
+
+                supabase.table("workout_performance_summary").update({
+                    "total_sets": total_sets_all,
+                    "total_reps": total_reps_all,
+                    "total_volume_kg": total_vol_all,
+                }).eq("workout_log_id", wl_id).execute()
+
+        logger.info(f"Updated exercise sets for workout {workout_id}, exercise {request.exercise_index}")
+        return {"success": True, "message": "Exercise sets updated"}
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to update exercise sets: {e}")
         raise safe_internal_error(e, "crud")
 
 

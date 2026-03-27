@@ -16,6 +16,7 @@ import '../../data/repositories/measurements_repository.dart';
 import '../../data/services/api_client.dart';
 import '../../data/services/haptic_service.dart';
 import '../../widgets/glass_back_button.dart';
+import '../../core/services/posthog_service.dart';
 import '../../widgets/glass_sheet.dart';
 import '../settings/dialogs/export_dialog.dart';
 
@@ -79,6 +80,9 @@ class _MeasurementsScreenState extends ConsumerState<MeasurementsScreen> {
   void initState() {
     super.initState();
     _loadMeasurements();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(posthogServiceProvider).capture(eventName: 'measurements_viewed');
+    });
   }
 
   Future<void> _loadMeasurements() async {

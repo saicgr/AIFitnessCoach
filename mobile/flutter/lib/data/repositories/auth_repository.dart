@@ -675,7 +675,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
 
     try {
       final userId = state.user!.id;
-      await _repository._apiClient.patch(
+      await _repository._apiClient.put(
         '${ApiConstants.users}/$userId',
         data: updates,
       );

@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:speech_to_text/speech_to_text.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/providers/custom_exercises_provider.dart';
+import '../../../data/models/custom_exercise.dart';
 import '../../../data/models/workout.dart';
 import '../../../data/models/exercise.dart';
 import '../../../data/repositories/workout_repository.dart';
@@ -94,6 +96,7 @@ class _ExerciseSwapSheetState extends ConsumerState<_ExerciseSwapSheet>
     super.initState();
     _tabController = TabController(length: 4, vsync: this);
     _tabController.addListener(_onTabChanged);
+    ref.read(customExercisesProvider.notifier).initialize();
     _loadAvoidedExercises();
     _loadSimilarExercises();
     _loadRecentExercises();
@@ -304,9 +307,17 @@ class _ExerciseSwapSheetState extends ConsumerState<_ExerciseSwapSheet>
       final libraryRepo = ref.read(libraryRepositoryProvider);
       final exercises = await libraryRepo.searchExercises(query: query);
 
+      // Also search custom exercises
+      final customState = ref.read(customExercisesProvider);
+      final queryLower = query.toLowerCase();
+      final customMatches = customState.exercises
+          .where((ce) => ce.name.toLowerCase().contains(queryLower))
+          .map((ce) => ce.toLibraryItem())
+          .toList();
+
       if (mounted) {
         setState(() {
-          _libraryExercises = exercises;
+          _libraryExercises = [...customMatches, ...exercises];
           _isLoadingLibrary = false;
         });
       }
@@ -356,7 +367,7 @@ class _ExerciseSwapSheetState extends ConsumerState<_ExerciseSwapSheet>
     setState(() => _isSwapping = true);
 
     final repo = ref.read(workoutRepositoryProvider);
-    final updatedWorkout = await repo.swapExercise(
+    final (updatedWorkout, errorMessage) = await repo.swapExercise(
       workoutId: widget.workoutId,
       oldExerciseName: widget.exercise.name,
       newExerciseName: newExerciseName,
@@ -385,8 +396,8 @@ class _ExerciseSwapSheetState extends ConsumerState<_ExerciseSwapSheet>
         );
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Failed to swap exercise'),
+          SnackBar(
+            content: Text(errorMessage ?? 'Failed to swap exercise'),
             backgroundColor: AppColors.error,
           ),
         );
@@ -1322,22 +1333,27 @@ class _ExerciseSwapSheetState extends ConsumerState<_ExerciseSwapSheet>
                       itemCount: _libraryExercises.length,
                       itemBuilder: (context, index) {
                         final exercise = _libraryExercises[index];
+                        final isCustom = exercise.id.startsWith('custom_');
                         return _ExerciseOptionCard(
                           name: exercise.name,
                           imageUrl: exercise.imageUrl,
                           subtitle:
                               exercise.targetMuscle ?? exercise.bodyPart ?? '',
-                          badge: exercise.equipment ?? 'Bodyweight',
-                          badgeColor: AppColors.purple,
+                          badge: isCustom
+                              ? 'CUSTOM'
+                              : (exercise.equipment ?? 'Bodyweight'),
+                          badgeColor: isCustom
+                              ? AppColors.orange
+                              : AppColors.purple,
                           onTap: () => _showExercisePreviewAndSwap(
                             name: exercise.name,
                             targetMuscle: exercise.targetMuscle,
                             equipment: exercise.equipment,
                             instructions: exercise.instructions,
-                            source: 'library_search',
+                            source: isCustom ? 'custom_exercise' : 'library_search',
                           ),
                           onSwap: () => _swapExercise(exercise.name,
-                              source: 'library_search'),
+                              source: isCustom ? 'custom_exercise' : 'library_search'),
                           textPrimary: textPrimary,
                           textMuted: textMuted,
                         );

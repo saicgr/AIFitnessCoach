@@ -4,6 +4,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../data/models/exercise.dart';
 import '../../../data/services/api_client.dart';
 import '../../../widgets/pill_app_bar.dart';
+import '../../../core/services/posthog_service.dart';
 import '../widgets/exercise_card.dart';
 
 /// Screen showing all exercises for a specific category
@@ -33,6 +34,10 @@ class _CategoryExercisesScreenState
   @override
   void initState() {
     super.initState();
+    ref.read(posthogServiceProvider).capture(
+      eventName: 'category_exercises_viewed',
+      properties: {'category_name': widget.categoryName},
+    );
     _exercises = List.from(widget.initialExercises);
     _scrollController.addListener(_onScroll);
 

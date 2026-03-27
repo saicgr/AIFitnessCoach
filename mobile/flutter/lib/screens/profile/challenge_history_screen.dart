@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/services/posthog_service.dart';
 import '../../data/services/challenges_service.dart';
 import '../../data/services/api_client.dart';
 import '../../widgets/pill_app_bar.dart';
@@ -36,6 +37,7 @@ class _ChallengeHistoryScreenState extends ConsumerState<ChallengeHistoryScreen>
     super.initState();
     _tabController = TabController(length: 5, vsync: this);
     _challengesService = ChallengesService(ref.read(apiClientProvider));
+    ref.read(posthogServiceProvider).capture(eventName: 'challenge_history_viewed');
     _loadData();
   }
 

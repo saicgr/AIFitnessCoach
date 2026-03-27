@@ -9,6 +9,7 @@ import '../../data/models/weekly_summary.dart';
 import '../../data/providers/insights_provider.dart';
 import '../../data/repositories/weekly_summary_repository.dart';
 import '../../data/services/api_client.dart';
+import '../../core/services/posthog_service.dart';
 import '../../widgets/pill_app_bar.dart';
 
 // ---------------------------------------------------------------------------
@@ -30,6 +31,9 @@ class _InsightsScreenState extends ConsumerState<InsightsScreen> {
   void initState() {
     super.initState();
     _loadInitialData();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(posthogServiceProvider).capture(eventName: 'insights_viewed');
+    });
   }
 
   Future<void> _loadInitialData() async {

@@ -6,7 +6,9 @@ import '../../../../core/theme/theme_colors.dart';
 import '../../../../core/utils/difficulty_utils.dart';
 import '../../../../data/models/workout.dart';
 import '../../../../data/repositories/workout_repository.dart';
+import '../../../../data/services/api_client.dart';
 import '../../../../data/services/haptic_service.dart';
+import '../../../../data/services/image_url_cache.dart';
 import '../components/stat_badge.dart';
 import '../../../../widgets/app_dialog.dart';
 import '../regenerate_workout_sheet.dart';
@@ -37,6 +39,22 @@ class NextWorkoutCard extends ConsumerStatefulWidget {
 
 class _NextWorkoutCardState extends ConsumerState<NextWorkoutCard> {
   bool _isSkipping = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _preFetchExerciseImages();
+  }
+
+  void _preFetchExerciseImages() {
+    final exercises = widget.workout.exercises;
+    if (exercises.isEmpty) return;
+    final names = exercises.map((e) => e.name).where((n) => n.isNotEmpty).toList();
+    if (names.isEmpty) return;
+    // Batch pre-fetch all exercise image URLs in one API call
+    final apiClient = ref.read(apiClientProvider);
+    ImageUrlCache.batchPreFetch(names, apiClient);
+  }
 
   bool _isQuickWorkout(Workout w) {
     final method = w.generationMethod?.toLowerCase() ?? '';

@@ -18,6 +18,7 @@ class CoachReviewTemplate extends StatelessWidget {
   final double? performanceRating; // 0.0 - 1.0
   final DateTime completedAt;
   final bool showWatermark;
+  final String weightUnit;
 
   const CoachReviewTemplate({
     super.key,
@@ -33,6 +34,7 @@ class CoachReviewTemplate extends StatelessWidget {
     this.performanceRating,
     required this.completedAt,
     this.showWatermark = true,
+    this.weightUnit = 'kg',
   });
 
   String get _formattedDuration {
@@ -202,10 +204,11 @@ class CoachReviewTemplate extends StatelessWidget {
   Widget _buildCoachHeader() {
     final coachName = coach?.name ?? 'AI Coach';
     final coachEmoji = coach?.emoji ?? '🤖';
+    final coachImage = coach?.imagePath;
 
     return Row(
       children: [
-        // Coach avatar
+        // Coach avatar - use photo if available, fallback to emoji
         Container(
           width: 48,
           height: 48,
@@ -222,11 +225,20 @@ class CoachReviewTemplate extends StatelessWidget {
               ),
             ],
           ),
-          child: Center(
-            child: Text(
-              coachEmoji,
-              style: const TextStyle(fontSize: 24),
-            ),
+          child: ClipOval(
+            child: coachImage != null
+                ? Image.asset(
+                    coachImage,
+                    width: 48,
+                    height: 48,
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) => Center(
+                      child: Text(coachEmoji, style: const TextStyle(fontSize: 24)),
+                    ),
+                  )
+                : Center(
+                    child: Text(coachEmoji, style: const TextStyle(fontSize: 24)),
+                  ),
           ),
         ),
 
@@ -308,7 +320,7 @@ class CoachReviewTemplate extends StatelessWidget {
           _buildStatItem(Icons.fitness_center, '$exercisesCount ex'),
           if (totalVolumeKg != null) ...[
             _buildDivider(),
-            _buildStatItem(Icons.scale_outlined, '${totalVolumeKg!.toStringAsFixed(0)}kg'),
+            _buildStatItem(Icons.scale_outlined, '${totalVolumeKg!.toStringAsFixed(0)}$weightUnit'),
           ],
         ],
       ),

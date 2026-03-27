@@ -14,6 +14,8 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:ui';
 
+import 'package:dio/dio.dart';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
@@ -92,6 +94,9 @@ import 'widgets/pr_inline_celebration.dart';
 import '../../core/services/rest_tip_service.dart';
 import '../../core/services/achievement_prompt_service.dart';
 import '../../core/services/exercise_info_service.dart';
+import '../../core/models/set_progression.dart';
+import '../../core/providers/exercise_progression_provider.dart';
+import '../../core/providers/weight_increments_provider.dart';
 import '../../core/providers/workout_mini_player_provider.dart';
 import '../../data/services/workout_notification_service.dart';
 import '../../core/providers/favorites_provider.dart';
@@ -180,6 +185,9 @@ class _ActiveWorkoutScreenState
   bool _isDoneButtonPressed = false;
   int? _justCompletedSetIndex;
   final Map<String, double> _exerciseMaxWeights = {};
+
+  // Per-exercise progression pattern (persisted across sessions)
+  final Map<int, SetProgressionPattern> _exerciseProgressionPattern = {};
 
   // RPE/RIR and weight suggestion state
   int? _lastSetRpe;
@@ -407,6 +415,9 @@ class _ActiveWorkoutScreenState
     _prDetectionService.startNewWorkout();
     _preloadPRHistory();
 
+    // Preload per-exercise progression patterns from SharedPreferences
+    _preloadProgressionPatterns();
+
     // Load coach persona for AI Coach button
     _loadCoachPersona();
 
@@ -592,6 +603,13 @@ class _ActiveWorkoutScreenState
   void _handleWarmupComplete() {
     HapticFeedback.heavyImpact();
 
+    ref.read(posthogServiceProvider).capture(
+      eventName: 'warmup_completed',
+      properties: {
+        'workout_id': widget.workout.id ?? '',
+      },
+    );
+
     setState(() {
       _currentPhase = WorkoutPhase.active;
     });
@@ -599,6 +617,12 @@ class _ActiveWorkoutScreenState
   }
 
   void _handleSkipWarmup() {
+    ref.read(posthogServiceProvider).capture(
+      eventName: 'warmup_skipped',
+      properties: {
+        'workout_id': widget.workout.id ?? '',
+      },
+    );
     _handleWarmupComplete();
   }
 
@@ -611,6 +635,13 @@ class _ActiveWorkoutScreenState
   }
 
   void _handleStretchComplete() {
+    ref.read(posthogServiceProvider).capture(
+      eventName: 'stretch_completed',
+      properties: {
+        'workout_id': widget.workout.id ?? '',
+      },
+    );
+
     // Stop the workout timer when workout completes
     _timerController.stopWorkoutTimer();
     // Cancel the persistent notification — workout is done
@@ -620,6 +651,12 @@ class _ActiveWorkoutScreenState
   }
 
   void _handleSkipStretch() {
+    ref.read(posthogServiceProvider).capture(
+      eventName: 'stretch_skipped',
+      properties: {
+        'workout_id': widget.workout.id ?? '',
+      },
+    );
     _handleStretchComplete();
   }
 
@@ -757,6 +794,14 @@ class _ActiveWorkoutScreenState
       // Auto-adjust weight if user underperformed (fewer reps than target)
       _autoAdjustWeightIfNeeded(finalSetLog, currentExercise);
 
+      // Update weight/reps for next set based on progression pattern
+      _updateControlsForNextSet(currentExercise, completedCount);
+
+      // Get progression pattern to determine rest behavior
+      final pattern = _exerciseProgressionPattern[_currentExerciseIndex]
+          ?? SetProgressionPattern.pyramidUp;
+      final patternRest = pattern.restDuration;
+
       // Check if exercise is in a superset
       final groupId = currentExercise.supersetGroup;
       if (groupId != null && currentExercise.isInSuperset) {
@@ -778,6 +823,10 @@ class _ActiveWorkoutScreenState
           _fetchRestSuggestion();
           _checkFatigue();
         }
+      } else if (patternRest != null && patternRest.inSeconds <= 15) {
+        // Short rest patterns (drop sets 10s, rest-pause 15s, myo-reps 5s)
+        _startRest(false, overrideDuration: patternRest);
+        // Skip AI suggestion for micro-rest patterns
       } else {
         // Not in a superset - normal flow
         _startRest(false);
@@ -794,45 +843,154 @@ class _ActiveWorkoutScreenState
     // Don't reset RPE/RIR - keep for context but allow changes
   }
 
-  /// Auto-adjust weight for next set when user underperforms
+  /// Update weight/reps controllers for the next set based on the active
+  /// progression pattern's calculated targets.
   ///
-  /// MacroFactor-style: if user completes fewer reps than target,
-  /// automatically reduce weight to ensure they can hit targets.
+  /// For pyramid/RPT/drop sets, each set has a specific weight and rep target.
+  /// This method pre-fills the input fields with those values.
+  void _updateControlsForNextSet(WorkoutExercise exercise, int completedCount) {
+    final pattern = _exerciseProgressionPattern[_currentExerciseIndex]
+        ?? SetProgressionPattern.pyramidUp;
+
+    // Get increment for this exercise's equipment
+    final incrementState = ref.read(weightIncrementsProvider);
+    final increment = incrementState.getIncrement(exercise.equipment);
+
+    // Determine working weight (use exercise's planned weight)
+    final workingWeight = exercise.weight?.toDouble() ??
+        (double.tryParse(_weightController.text) ?? 0);
+    if (workingWeight <= 0) return;
+
+    final baseReps = exercise.reps ?? 10;
+    final totalSets = _totalSetsPerExercise[_currentExerciseIndex] ?? 3;
+
+    final targets = pattern.generateTargets(
+      workingWeight: workingWeight,
+      totalSets: totalSets,
+      baseReps: baseReps,
+      increment: increment,
+    );
+
+    // Get the next set's target (completedCount is 0-indexed count of done sets)
+    final nextSetIndex = completedCount; // Already 1 past last completed
+    if (nextSetIndex >= targets.length) return;
+
+    final nextTarget = targets[nextSetIndex];
+
+    // Only update if the auto-adjust didn't already change the weight
+    // (auto-adjust only fires on poor performance, so if it fired, its value takes priority)
+    final currentControllerWeight = double.tryParse(_weightController.text) ?? 0;
+    final previousSetWeight = _completedSets[_currentExerciseIndex]?.last.weight ?? 0;
+
+    // If auto-adjust changed the weight (different from what user lifted), don't override
+    if ((currentControllerWeight - previousSetWeight).abs() > 0.01) {
+      // Auto-adjust already modified the weight — respect that
+      // But still update reps if the pattern specifies different reps
+      if (!nextTarget.isAmrap) {
+        _repsController.text = nextTarget.reps.toString();
+        _repsRightController.text = nextTarget.reps.toString();
+      }
+      return;
+    }
+
+    // Update weight from pattern target
+    final displayWeight = _useKg
+        ? nextTarget.weight
+        : nextTarget.weight * 2.20462;
+    _weightController.text = displayWeight.toStringAsFixed(1);
+
+    // Update reps
+    if (nextTarget.isAmrap) {
+      _repsController.text = '';
+      _repsRightController.text = '';
+    } else {
+      _repsController.text = nextTarget.reps.toString();
+      _repsRightController.text = nextTarget.reps.toString();
+    }
+  }
+
+  /// Auto-adjust weight for next set based on RIR-first logic.
+  ///
+  /// Uses RIR (Reps in Reserve) as the PRIMARY signal for weight adjustment,
+  /// falling back to rep ratio only when no intensity data is available.
+  /// Uses discrete increment steps (not percentages) to avoid compounding losses.
+  ///
+  /// Decision tree:
+  /// - RIR >= 2 OR repRatio >= 0.9 → NO adjustment (good performance)
+  /// - RIR == 1 AND repRatio >= 0.7 → NO adjustment (maintain)
+  /// - RIR == 0 OR repRatio < 0.7   → Drop 1 equipment increment
+  /// - repRatio < 0.5 AND RIR == 0  → Drop 2 equipment increments
+  /// - No RIR data → Only adjust if repRatio < 0.7
+  ///
+  /// Skips adjustment entirely for drop sets, rest-pause, and myo-reps
+  /// (those patterns manage their own weight progression).
   void _autoAdjustWeightIfNeeded(SetLog setLog, WorkoutExercise exercise) {
-    final targetReps = setLog.targetReps > 0 ? setLog.targetReps : (exercise.reps ?? 10);
-    final actualReps = setLog.reps;
     final currentWeight = setLog.weight;
 
     // Skip bodyweight exercises
     if (currentWeight <= 0) return;
 
-    // Only adjust if significantly underperformed
+    // Skip for progression patterns that manage their own weights
+    final pattern = _exerciseProgressionPattern[_currentExerciseIndex]
+        ?? SetProgressionPattern.pyramidUp;
+    if (pattern == SetProgressionPattern.dropSets ||
+        pattern == SetProgressionPattern.restPause ||
+        pattern == SetProgressionPattern.myoReps) {
+      return;
+    }
+
+    final targetReps = setLog.targetReps > 0 ? setLog.targetReps : (exercise.reps ?? 10);
+    final actualReps = setLog.reps;
+
+    // Hit all reps — no adjustment needed
     if (actualReps >= targetReps) return;
 
     final repRatio = actualReps / targetReps;
 
-    // Determine weight reduction based on how much they underperformed
-    double reduction;
-    String message;
-    if (repRatio < 0.5) {
-      reduction = 0.20; // 20% drop - very hard
-      message = 'Weight too heavy';
-    } else if (repRatio < 0.7) {
-      reduction = 0.15; // 15% drop - hard
-      message = 'Adjusting weight';
-    } else if (repRatio < 0.9) {
-      reduction = 0.10; // 10% drop - slightly hard
-      message = 'Small adjustment';
-    } else {
-      return; // Close enough (90%+ reps), no adjustment
+    // Get effective RIR (prefer setLog.rir, fall back to deriving from RPE)
+    int? effectiveRir = setLog.rir;
+    if (effectiveRir == null && setLog.rpe != null) {
+      effectiveRir = (10 - setLog.rpe!).clamp(0, 5);
     }
 
-    // Calculate new weight rounded to equipment increment
+    // Get equipment increment in user's unit
     final equipmentIncrement = WeightIncrements.getIncrement(exercise.equipment);
-    final newWeight = (currentWeight * (1 - reduction) / equipmentIncrement).round() * equipmentIncrement;
 
-    // Ensure we don't go below minimum increment
-    final adjustedWeight = newWeight.clamp(equipmentIncrement, 999.0);
+    // RIR-first decision tree
+    int incrementsToDrop = 0;
+    String? message;
+
+    if (effectiveRir != null) {
+      // Have intensity data — use RIR as primary signal
+      if (effectiveRir >= 2 || repRatio >= 0.9) {
+        // Good performance: had reps in reserve or nearly hit target
+        return;
+      } else if (effectiveRir == 1 && repRatio >= 0.7) {
+        // Marginal: working hard but acceptable
+        return;
+      } else if (repRatio < 0.5 && effectiveRir == 0) {
+        // Severe failure: couldn't do half the reps AND hit failure
+        incrementsToDrop = 2;
+        message = 'Weight too heavy';
+      } else if (effectiveRir == 0 || repRatio < 0.7) {
+        // Poor: hit failure or missed many reps
+        incrementsToDrop = 1;
+        message = 'Adjusting weight';
+      }
+    } else {
+      // No intensity data — conservative fallback using rep ratio only
+      if (repRatio >= 0.7) {
+        return; // Good enough without intensity data
+      }
+      incrementsToDrop = 1;
+      message = 'Adjusting weight';
+    }
+
+    if (incrementsToDrop == 0) return;
+
+    // Drop by exact increments (not percentages) to avoid compounding
+    final adjustedWeight = (currentWeight - (equipmentIncrement * incrementsToDrop))
+        .clamp(equipmentIncrement, 999.0);
 
     // Skip if no real change
     if ((adjustedWeight - currentWeight).abs() < 0.01) return;
@@ -840,16 +998,19 @@ class _ActiveWorkoutScreenState
     // Update weight controller for next set
     _weightController.text = adjustedWeight.toStringAsFixed(1);
 
-    // Show feedback to user
-    if (mounted) {
+    // Show feedback with correct unit
+    if (mounted && message != null) {
+      final unit = _useKg ? 'kg' : 'lb';
+      final displayCurrent = _useKg ? currentWeight : currentWeight * 2.20462;
+      final displayAdjusted = _useKg ? adjustedWeight : adjustedWeight * 2.20462;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            '$message: ${currentWeight.toStringAsFixed(1)} → ${adjustedWeight.toStringAsFixed(1)} kg',
+            '$message: ${displayCurrent.toStringAsFixed(1)} → ${displayAdjusted.toStringAsFixed(1)} $unit',
           ),
           duration: const Duration(seconds: 3),
           behavior: SnackBarBehavior.floating,
-          backgroundColor: WorkoutDesign.rir2, // Yellow for adjustment
+          backgroundColor: WorkoutDesign.rir2,
         ),
       );
     }
@@ -1191,6 +1352,12 @@ class _ActiveWorkoutScreenState
       } else {
         setState(() => _isLoadingRestSuggestion = false);
       }
+    } on DioException catch (e) {
+      debugPrint('❌ [Rest] DioException: ${e.message}');
+      debugPrint('❌ [Rest] Response: ${e.response?.statusCode} ${e.response?.data}');
+      if (mounted) {
+        setState(() => _isLoadingRestSuggestion = false);
+      }
     } catch (e) {
       debugPrint('❌ [Rest] Error fetching suggestion: $e');
       if (mounted) {
@@ -1232,9 +1399,11 @@ class _ActiveWorkoutScreenState
     setState(() => _restSuggestion = null);
   }
 
-  void _startRest(bool betweenExercises) {
+  void _startRest(bool betweenExercises, {Duration? overrideDuration}) {
     final exercise = _exercises[_currentExerciseIndex];
-    final restSeconds = exercise.restSeconds ?? (betweenExercises ? 120 : 90);
+    final restSeconds = overrideDuration?.inSeconds
+        ?? exercise.restSeconds
+        ?? (betweenExercises ? 120 : 90);
 
     // Track rest started event
     ref.read(posthogServiceProvider).capture(
@@ -1778,6 +1947,13 @@ class _ActiveWorkoutScreenState
   }
 
   void _skipExercise() {
+    ref.read(posthogServiceProvider).capture(
+      eventName: 'workout_exercise_skipped',
+      properties: {
+        'exercise_name': _exercises[_currentExerciseIndex].name,
+        'exercise_index': _currentExerciseIndex,
+      },
+    );
     _moveToNextExercise();
   }
 
@@ -2045,6 +2221,26 @@ class _ActiveWorkoutScreenState
     }
   }
 
+  /// Preload per-exercise progression patterns from SharedPreferences.
+  Future<void> _preloadProgressionPatterns() async {
+    try {
+      final exerciseNames = _exercises.map((e) => e.name).toList();
+      await ref.read(exerciseProgressionProvider.notifier)
+          .preloadPatterns(exerciseNames);
+
+      // Populate the in-memory map from the provider
+      final providerState = ref.read(exerciseProgressionProvider);
+      for (int i = 0; i < _exercises.length; i++) {
+        final key = _exercises[i].name.toLowerCase().trim().replaceAll(RegExp(r'\s+'), '_');
+        if (providerState.containsKey(key)) {
+          _exerciseProgressionPattern[i] = providerState[key]!;
+        }
+      }
+    } catch (e) {
+      debugPrint('❌ [Progression] Error preloading patterns: $e');
+    }
+  }
+
   /// Load coach persona from AI settings
   void _loadCoachPersona() {
     // Coach persona is loaded for AI settings context;
@@ -2258,6 +2454,7 @@ class _ActiveWorkoutScreenState
     double avgRestSeconds = 0.0;
     List<PersonalRecordInfo>? personalRecords;
     PerformanceComparisonInfo? performanceComparison;
+    WorkoutCompletionResponse? completionResponse;
 
     try {
       final workoutRepo = ref.read(workoutRepositoryProvider);
@@ -2344,7 +2541,7 @@ class _ActiveWorkoutScreenState
         await _logSupersetUsage(userId);
 
         // 7. Mark workout as complete and get PRs
-        final completionResponse = await workoutRepo.completeWorkout(widget.workout.id!);
+        completionResponse = await workoutRepo.completeWorkout(widget.workout.id!);
         debugPrint('✅ Workout marked as complete');
 
         // Award XP for completing workout
@@ -2430,7 +2627,10 @@ class _ActiveWorkoutScreenState
       final exercise = _exercises[i];
       final sets = _completedSets[i] ?? [];
 
+      final pattern = _exerciseProgressionPattern[i] ?? SetProgressionPattern.pyramidUp;
+
       for (int j = 0; j < sets.length; j++) {
+        final setTarget = exercise.getTargetForSet(j + 1);
         allSets.add({
           'exercise_index': i,
           'exercise_id': exercise.exerciseId ?? exercise.libraryId,
@@ -2441,6 +2641,9 @@ class _ActiveWorkoutScreenState
           'completed_at': sets[j].completedAt.toIso8601String(),
           if (sets[j].rpe != null) 'rpe': sets[j].rpe,
           if (sets[j].rir != null) 'rir': sets[j].rir,
+          'target_weight_kg': setTarget?.targetWeightKg ?? exercise.weight,
+          'target_reps': setTarget?.targetReps ?? exercise.reps,
+          'progression_model': pattern.storageKey,
           // Include superset info if exercise is in a superset
           if (exercise.supersetGroup != null) 'superset_group': exercise.supersetGroup,
           if (exercise.supersetOrder != null) 'superset_order': exercise.supersetOrder,
@@ -2476,10 +2679,29 @@ class _ActiveWorkoutScreenState
       }
     }
 
+    // Build per-exercise progression model map
+    final progressionModels = <String, String>{};
+    for (int i = 0; i < _exercises.length; i++) {
+      final pattern = _exerciseProgressionPattern[i] ?? SetProgressionPattern.pyramidUp;
+      progressionModels[_exercises[i].name] = pattern.storageKey;
+    }
+
+    // Get increment settings
+    final incrementState = ref.read(weightIncrementsProvider);
+
     return {
       'exercise_order': exerciseOrder,
       'rest_intervals': _restIntervals,
       'drink_intake_ml': _totalDrinkIntakeMl,
+      'progression_models': progressionModels,
+      'increment_settings': {
+        'dumbbell': incrementState.dumbbell,
+        'barbell': incrementState.barbell,
+        'machine': incrementState.machine,
+        'kettlebell': incrementState.kettlebell,
+        'cable': incrementState.cable,
+        'unit': incrementState.unit,
+      },
       if (supersetGroups.isNotEmpty) 'supersets': supersetGroups.entries.map((e) => {
         'group_id': e.key,
         'exercises': e.value,
@@ -2494,9 +2716,12 @@ class _ActiveWorkoutScreenState
     for (int i = 0; i < _exercises.length; i++) {
       final exercise = _exercises[i];
       final sets = _completedSets[i] ?? [];
+      final pattern = _exerciseProgressionPattern[i] ?? SetProgressionPattern.pyramidUp;
 
+      // Get target data from set targets if available
       for (int j = 0; j < sets.length; j++) {
         final setLog = sets[j];
+        final setTarget = exercise.getTargetForSet(j + 1);
         try {
           await workoutRepo.logSetPerformance(
             workoutLogId: workoutLogId,
@@ -2510,6 +2735,9 @@ class _ActiveWorkoutScreenState
             rir: setLog.rir,
             notes: setLog.notes,
             aiInputSource: setLog.aiInputSource,
+            targetWeightKg: setTarget?.targetWeightKg ?? exercise.weight?.toDouble(),
+            targetReps: setTarget?.targetReps ?? exercise.reps,
+            progressionModel: pattern.storageKey,
           );
         } catch (e) {
           debugPrint('⚠️ Failed to log set performance: $e');
@@ -4553,12 +4781,24 @@ class _ActiveWorkoutScreenState
   /// Note is moved to bottom bar area
   /// History and Increments are now in the More menu
   List<ActionChipData> _buildActionChipsForCurrentExercise() {
+    // Get current progression pattern for this exercise
+    final pattern = _exerciseProgressionPattern[_viewingExerciseIndex]
+        ?? SetProgressionPattern.pyramidUp;
+
+    // Get increment display string in user's unit
+    final exercise = _exercises[_viewingExerciseIndex];
+    final incrementState = ref.read(weightIncrementsProvider);
+    final incrementValue = incrementState.getIncrement(exercise.equipment);
+    final incrementUnit = incrementState.unit;
+    final incrementLabel = '±${incrementValue % 1 == 0 ? incrementValue.toInt() : incrementValue} $incrementUnit';
+
     return [
-      WorkoutActionChips.video,
+      WorkoutActionChips.progression(label: pattern.chipLabel, icon: pattern.icon),
       WorkoutActionChips.superset,
-      WorkoutActionChips.info,
       WorkoutActionChips.swap,
+      WorkoutActionChips.skip,
       WorkoutActionChips.leftRight(isActive: _isLeftRightMode),
+      WorkoutActionChips.incrementDisplay(label: incrementLabel),
       WorkoutActionChips.more,
     ];
   }
@@ -4603,11 +4843,20 @@ class _ActiveWorkoutScreenState
         // Show exercise history
         _showHistorySheet(currentExercise);
         break;
+      case 'skip':
+        _skipExercise();
+        break;
       case 'lr':
         setState(() => _isLeftRightMode = !_isLeftRightMode);
         break;
       case 'increments':
         _showWeightIncrementsSheet();
+        break;
+      case 'increments_display':
+        _showWeightIncrementsSheet();
+        break;
+      case 'progression':
+        _showProgressionSheet();
         break;
       case 'reorder':
         _showWorkoutPlanDrawer();
@@ -4715,6 +4964,103 @@ class _ActiveWorkoutScreenState
   /// Show weight increments sheet
   void _showWeightIncrementsSheet() {
     showWeightIncrementsSheet(context);
+  }
+
+  /// Show progression model selector bottom sheet.
+  void _showProgressionSheet() {
+    final exercise = _exercises[_viewingExerciseIndex];
+    final currentPattern = _exerciseProgressionPattern[_viewingExerciseIndex]
+        ?? SetProgressionPattern.pyramidUp;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    // Get working weight and increment for preview strings
+    final incrementState = ref.read(weightIncrementsProvider);
+    final increment = incrementState.getIncrement(exercise.equipment);
+    final unit = incrementState.unit;
+    final workingWeight = exercise.weight?.toDouble() ??
+        (double.tryParse(_weightController.text) ?? 50);
+    final baseReps = exercise.reps ?? 10;
+    final totalSets = _totalSetsPerExercise[_viewingExerciseIndex] ?? 3;
+
+    showModalBottomSheet<SetProgressionPattern>(
+      context: context,
+      backgroundColor: isDark ? WorkoutDesign.surface : Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      isScrollControlled: true,
+      builder: (ctx) => DraggableScrollableSheet(
+        expand: false,
+        initialChildSize: 0.7,
+        minChildSize: 0.4,
+        maxChildSize: 0.9,
+        builder: (ctx, scrollController) => _ProgressionSelectorSheet(
+          currentPattern: currentPattern,
+          workingWeight: workingWeight,
+          totalSets: totalSets,
+          baseReps: baseReps,
+          increment: increment,
+          unit: unit,
+          isDark: isDark,
+          scrollController: scrollController,
+          onSelect: (pattern) {
+            Navigator.of(ctx).pop(pattern);
+          },
+        ),
+      ),
+    ).then((selected) {
+      if (selected != null && selected != currentPattern) {
+        _applyProgressionPattern(selected);
+      }
+    });
+  }
+
+  /// Apply a newly selected progression pattern to the current exercise.
+  void _applyProgressionPattern(SetProgressionPattern pattern) {
+    final exercise = _exercises[_viewingExerciseIndex];
+    final exerciseIndex = _viewingExerciseIndex;
+
+    // Save to state
+    setState(() {
+      _exerciseProgressionPattern[exerciseIndex] = pattern;
+    });
+
+    // Persist to SharedPreferences
+    ref.read(exerciseProgressionProvider.notifier)
+        .setPattern(exercise.name, pattern);
+
+    // Recalculate targets for uncompleted sets
+    final incrementState = ref.read(weightIncrementsProvider);
+    final increment = incrementState.getIncrement(exercise.equipment);
+    final workingWeight = exercise.weight?.toDouble() ??
+        (double.tryParse(_weightController.text) ?? 50);
+    final baseReps = exercise.reps ?? 10;
+    final totalSets = _totalSetsPerExercise[exerciseIndex] ?? 3;
+
+    final targets = pattern.generateTargets(
+      workingWeight: workingWeight,
+      totalSets: totalSets,
+      baseReps: baseReps,
+      increment: increment,
+    );
+
+    // Update current set's weight/reps controller if not yet completed
+    final completedCount = _completedSets[exerciseIndex]?.length ?? 0;
+    if (completedCount < targets.length) {
+      final currentTarget = targets[completedCount];
+      if (_useKg) {
+        _weightController.text = currentTarget.weight.toStringAsFixed(1);
+      } else {
+        _weightController.text = (currentTarget.weight * 2.20462).toStringAsFixed(1);
+      }
+      if (currentTarget.isAmrap) {
+        _repsController.text = '';
+      } else {
+        _repsController.text = currentTarget.reps.toString();
+      }
+    }
+
+    HapticFeedback.mediumImpact();
   }
 
   /// Show exercise details sheet (muscles, description, etc.)
@@ -7521,5 +7867,296 @@ class _ExerciseDetailsSheetContentState
       'Focus on controlled movements throughout',
       'Breathe consistently - exhale on exertion',
     ];
+  }
+}
+
+/// Bottom sheet for selecting a set progression pattern.
+class _ProgressionSelectorSheet extends StatefulWidget {
+  final SetProgressionPattern currentPattern;
+  final double workingWeight;
+  final int totalSets;
+  final int baseReps;
+  final double increment;
+  final String unit;
+  final bool isDark;
+  final ScrollController scrollController;
+  final ValueChanged<SetProgressionPattern> onSelect;
+
+  const _ProgressionSelectorSheet({
+    required this.currentPattern,
+    required this.workingWeight,
+    required this.totalSets,
+    required this.baseReps,
+    required this.increment,
+    required this.unit,
+    required this.isDark,
+    required this.scrollController,
+    required this.onSelect,
+  });
+
+  @override
+  State<_ProgressionSelectorSheet> createState() => _ProgressionSelectorSheetState();
+}
+
+class _ProgressionSelectorSheetState extends State<_ProgressionSelectorSheet> {
+  /// Tracks which patterns have their info expanded.
+  final Set<SetProgressionPattern> _expandedInfo = {};
+
+  @override
+  Widget build(BuildContext context) {
+    final textPrimary = widget.isDark ? Colors.white : Colors.grey.shade900;
+    final textSecondary = widget.isDark ? Colors.grey.shade400 : Colors.grey.shade600;
+    final cardBg = widget.isDark ? const Color(0xFF1E1E1E) : Colors.grey.shade50;
+    final selectedBorder = widget.isDark ? Colors.white : Colors.black;
+    final dividerColor = widget.isDark ? Colors.grey.shade800 : Colors.grey.shade300;
+
+    // Standard patterns (non-advanced)
+    final standardPatterns = SetProgressionPattern.values
+        .where((p) => !p.isAdvanced)
+        .toList();
+    final advancedPatterns = SetProgressionPattern.values
+        .where((p) => p.isAdvanced)
+        .toList();
+
+    return SafeArea(
+      child: ListView(
+        controller: widget.scrollController,
+        padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
+        children: [
+          // Handle
+          Center(
+            child: Container(
+              width: 40,
+              height: 4,
+              margin: const EdgeInsets.only(bottom: 16),
+              decoration: BoxDecoration(
+                color: Colors.grey.shade600,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+          ),
+
+          // Title
+          Text(
+            'Set Progression',
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: textPrimary,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'Choose how weight changes across sets',
+            style: TextStyle(fontSize: 14, color: textSecondary),
+          ),
+          const SizedBox(height: 20),
+
+          // Standard patterns
+          ...standardPatterns.map((p) => _buildPatternTile(
+                p, textPrimary, textSecondary, cardBg, selectedBorder, dividerColor)),
+
+          // Advanced section
+          const SizedBox(height: 12),
+          Padding(
+            padding: const EdgeInsets.only(left: 4, bottom: 8),
+            child: Text(
+              'ADVANCED',
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: textSecondary,
+                letterSpacing: 1.2,
+              ),
+            ),
+          ),
+          ...advancedPatterns.map((p) => _buildPatternTile(
+                p, textPrimary, textSecondary, cardBg, selectedBorder, dividerColor)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPatternTile(
+    SetProgressionPattern pattern,
+    Color textPrimary,
+    Color textSecondary,
+    Color cardBg,
+    Color selectedBorder,
+    Color dividerColor,
+  ) {
+    final isSelected = pattern == widget.currentPattern;
+    final isExpanded = _expandedInfo.contains(pattern);
+    final preview = pattern.previewString(
+      workingWeight: widget.workingWeight,
+      totalSets: widget.totalSets,
+      baseReps: widget.baseReps,
+      increment: widget.increment,
+      unit: widget.unit,
+    );
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: GestureDetector(
+        onTap: () => widget.onSelect(pattern),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: cardBg,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(
+              color: isSelected ? selectedBorder : dividerColor,
+              width: isSelected ? 2 : 1,
+            ),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  // Radio indicator
+                  Container(
+                    width: 20,
+                    height: 20,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: isSelected ? selectedBorder : textSecondary,
+                        width: 2,
+                      ),
+                    ),
+                    child: isSelected
+                        ? Center(
+                            child: Container(
+                              width: 10,
+                              height: 10,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: selectedBorder,
+                              ),
+                            ),
+                          )
+                        : null,
+                  ),
+                  const SizedBox(width: 12),
+                  // Icon
+                  Icon(pattern.icon, size: 20, color: textPrimary),
+                  const SizedBox(width: 8),
+                  // Name
+                  Expanded(
+                    child: Text(
+                      pattern.displayName,
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: textPrimary,
+                      ),
+                    ),
+                  ),
+                  // Goal tags
+                  ...pattern.goalTags.map((tag) => Container(
+                        margin: const EdgeInsets.only(left: 4),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: tag == 'Strength'
+                              ? Colors.orange.withValues(alpha: 0.15)
+                              : Colors.blue.withValues(alpha: 0.15),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text(
+                          tag,
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w600,
+                            color: tag == 'Strength'
+                                ? Colors.orange.shade400
+                                : Colors.blue.shade400,
+                          ),
+                        ),
+                      )),
+                  const SizedBox(width: 4),
+                  // Info button
+                  GestureDetector(
+                    onTap: () {
+                      setState(() {
+                        if (isExpanded) {
+                          _expandedInfo.remove(pattern);
+                        } else {
+                          _expandedInfo.add(pattern);
+                        }
+                      });
+                    },
+                    child: Icon(
+                      isExpanded ? Icons.info : Icons.info_outline,
+                      size: 20,
+                      color: textSecondary,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 6),
+              // Description
+              Padding(
+                padding: const EdgeInsets.only(left: 32),
+                child: Text(
+                  pattern.description,
+                  style: TextStyle(fontSize: 13, color: textSecondary),
+                ),
+              ),
+              // Preview string
+              Padding(
+                padding: const EdgeInsets.only(left: 32, top: 4),
+                child: Text(
+                  preview,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: textSecondary.withValues(alpha: 0.8),
+                    fontFamily: 'monospace',
+                  ),
+                ),
+              ),
+              // Rest hint
+              Padding(
+                padding: const EdgeInsets.only(left: 32, top: 2),
+                child: Row(
+                  children: [
+                    Icon(Icons.timer_outlined, size: 12, color: textSecondary),
+                    const SizedBox(width: 4),
+                    Text(
+                      pattern.restDisplayHint,
+                      style: TextStyle(fontSize: 11, color: textSecondary),
+                    ),
+                  ],
+                ),
+              ),
+              // Expandable info panel
+              if (isExpanded) ...[
+                const SizedBox(height: 10),
+                Container(
+                  margin: const EdgeInsets.only(left: 32),
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: widget.isDark
+                        ? Colors.grey.shade900
+                        : Colors.grey.shade100,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Text(
+                    pattern.infoExplanation,
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: textPrimary.withValues(alpha: 0.85),
+                      height: 1.5,
+                    ),
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }

@@ -8,6 +8,7 @@ import '../../data/models/custom_goal.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../../data/services/api_client.dart';
 import '../../widgets/app_dialog.dart';
+import '../../core/services/posthog_service.dart';
 import '../../widgets/pill_app_bar.dart';
 import '../../widgets/glass_sheet.dart';
 
@@ -46,6 +47,9 @@ class _CustomGoalsScreenState extends ConsumerState<CustomGoalsScreen> {
   void initState() {
     super.initState();
     _loadGoals();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(posthogServiceProvider).capture(eventName: 'custom_goals_viewed');
+    });
   }
 
   @override

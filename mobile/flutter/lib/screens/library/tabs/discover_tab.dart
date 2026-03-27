@@ -31,6 +31,11 @@ class DiscoverTab extends ConsumerWidget {
       children: [
         _AiHeroCard(isDark: isDark),
         const SizedBox(height: 20),
+        _BrowseSection(
+          isDark: isDark,
+          onMuscleSelected: onSwitchToExercises,
+        ),
+        const SizedBox(height: 20),
         _ForYouSection(presets: forYouPresets, isDark: isDark),
         const SizedBox(height: 20),
         _SplitCategorySection(
@@ -49,11 +54,6 @@ class DiscoverTab extends ConsumerWidget {
           title: 'Specialty',
           category: 'specialty',
           isDark: isDark,
-        ),
-        const SizedBox(height: 20),
-        _BrowseSection(
-          isDark: isDark,
-          onMuscleSelected: onSwitchToExercises,
         ),
       ],
     );

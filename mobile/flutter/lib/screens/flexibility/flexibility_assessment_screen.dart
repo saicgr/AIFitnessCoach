@@ -9,6 +9,7 @@ import 'widgets/record_assessment_sheet.dart';
 import 'flexibility_test_detail_screen.dart';
 import 'flexibility_history_screen.dart';
 import '../../widgets/glass_sheet.dart';
+import '../../core/services/posthog_service.dart';
 import '../../widgets/pill_app_bar.dart';
 import '../../widgets/segmented_tab_bar.dart';
 
@@ -39,6 +40,7 @@ class _FlexibilityAssessmentScreenState extends ConsumerState<FlexibilityAssessm
       final notifier = ref.read(flexibilityProvider.notifier);
       notifier.setUserId(widget.userId);
       notifier.refresh(userId: widget.userId);
+      ref.read(posthogServiceProvider).capture(eventName: 'flexibility_assessment_viewed');
     });
   }
 

@@ -8,7 +8,7 @@ import 'feature_adoption_provider.dart';
 // Week 1 Tip Model
 // ============================================
 
-/// A single progressive feature tip shown during the user's first week.
+/// A single progressive feature tip shown during the user's first two weeks.
 class Week1Tip {
   final String featureKey;
   final String title;
@@ -45,8 +45,9 @@ class _TipScheduleEntry {
 }
 
 /// Ordered tip schedule. The first tip whose day range matches AND whose
-/// feature has NOT been used yet is shown.
+/// feature has NOT been used yet is shown. Covers days 0–14.
 const List<_TipScheduleEntry> _tipSchedule = [
+  // ── Week 1: Core habits ──────────────────────────────────
   _TipScheduleEntry(
     startDay: 0,
     endDay: 2,
@@ -55,7 +56,7 @@ const List<_TipScheduleEntry> _tipSchedule = [
       title: 'Snap & Track',
       subtitle: 'Snap a photo of your meal for instant nutrition tracking',
       icon: Icons.camera_alt_outlined,
-      actionRoute: '/chat',
+      actionRoute: '/nutrition?camera=true',
       accentColor: AppColors.orange,
     ),
   ),
@@ -67,7 +68,7 @@ const List<_TipScheduleEntry> _tipSchedule = [
       title: 'Barcode Scanner',
       subtitle: 'Scan any product barcode for precise nutrition data',
       icon: Icons.qr_code_scanner_outlined,
-      actionRoute: '/nutrition',
+      actionRoute: '/nutrition?barcode=true',
       accentColor: AppColors.cyan,
     ),
   ),
@@ -91,7 +92,7 @@ const List<_TipScheduleEntry> _tipSchedule = [
       title: 'Build Your Streak',
       subtitle: "Complete today's workout to build your streak",
       icon: Icons.fitness_center_outlined,
-      actionRoute: null, // stays on home screen
+      actionRoute: '/consistency',
       accentColor: AppColors.success,
     ),
   ),
@@ -103,7 +104,7 @@ const List<_TipScheduleEntry> _tipSchedule = [
       title: 'Set Nutrition Targets',
       subtitle: 'Set your daily nutrition targets for better tracking',
       icon: Icons.track_changes_outlined,
-      actionRoute: '/nutrition',
+      actionRoute: '/nutrition-settings',
       accentColor: AppColors.orange,
     ),
   ),
@@ -115,8 +116,81 @@ const List<_TipScheduleEntry> _tipSchedule = [
       title: 'Connect Health',
       subtitle: 'Connect Health to auto-track steps and calories',
       icon: Icons.monitor_heart_outlined,
-      actionRoute: '/settings',
+      actionRoute: '/settings/health-devices',
       accentColor: AppColors.green,
+    ),
+  ),
+  // ── Week 2: Discovery & engagement ───────────────────────
+  _TipScheduleEntry(
+    startDay: 7,
+    endDay: 9,
+    tip: Week1Tip(
+      featureKey: 'water_logged',
+      title: 'Log Your Water',
+      subtitle: 'Stay hydrated — track your daily water intake',
+      icon: Icons.water_drop_outlined,
+      actionRoute: '/nutrition?tab=2',
+      accentColor: AppColors.cyan,
+    ),
+  ),
+  _TipScheduleEntry(
+    startDay: 8,
+    endDay: 10,
+    tip: Week1Tip(
+      featureKey: 'weight_logged',
+      title: 'Track Your Weight',
+      subtitle: 'Log your weight to see trends over time',
+      icon: Icons.monitor_weight_outlined,
+      actionRoute: '/measurements/weight',
+      accentColor: AppColors.orange,
+    ),
+  ),
+  _TipScheduleEntry(
+    startDay: 9,
+    endDay: 11,
+    tip: Week1Tip(
+      featureKey: 'progress_photo_taken',
+      title: 'Progress Photo',
+      subtitle: 'Take a photo to compare your transformation later',
+      icon: Icons.photo_camera_front_outlined,
+      actionRoute: '/stats?openPhoto=true',
+      accentColor: AppColors.purple,
+    ),
+  ),
+  _TipScheduleEntry(
+    startDay: 10,
+    endDay: 12,
+    tip: Week1Tip(
+      featureKey: 'stats_viewed',
+      title: 'View Your Stats',
+      subtitle: 'Explore your workout analytics and muscle breakdown',
+      icon: Icons.bar_chart_outlined,
+      actionRoute: '/stats',
+      accentColor: AppColors.success,
+    ),
+  ),
+  _TipScheduleEntry(
+    startDay: 11,
+    endDay: 13,
+    tip: Week1Tip(
+      featureKey: 'achievements_viewed',
+      title: 'Check Achievements',
+      subtitle: 'See what badges and trophies you\'ve unlocked',
+      icon: Icons.emoji_events_outlined,
+      actionRoute: '/achievements',
+      accentColor: AppColors.orange,
+    ),
+  ),
+  _TipScheduleEntry(
+    startDay: 12,
+    endDay: 14,
+    tip: Week1Tip(
+      featureKey: 'weekly_summary_viewed',
+      title: 'Weekly Summary',
+      subtitle: 'Review your week — workouts, nutrition, and insights',
+      icon: Icons.summarize_outlined,
+      actionRoute: '/summaries',
+      accentColor: AppColors.cyan,
     ),
   ),
 ];
@@ -132,7 +206,7 @@ const List<_TipScheduleEntry> _tipSchedule = [
 /// 2. Walk the schedule in order.
 /// 3. Return the first tip where the day range matches AND the feature has
 ///    not yet been used (per [featureAdoptionProvider]).
-/// 4. Return null after day 7 or when all tips are used.
+/// 4. Return null after day 14 or when all tips are used.
 final week1TipProvider = Provider<Week1Tip?>((ref) {
   // Read auth state to get createdAt
   final authState = ref.watch(authStateProvider);
@@ -150,8 +224,8 @@ final week1TipProvider = Provider<Week1Tip?>((ref) {
   final now = DateTime.now();
   final daysSinceSignup = now.difference(createdAt).inDays;
 
-  // Past the first week — no more tips
-  if (daysSinceSignup >= 7) return null;
+  // Past two weeks — no more tips
+  if (daysSinceSignup >= 14) return null;
 
   // Read feature adoption state
   final adoptionState = ref.watch(featureAdoptionProvider);

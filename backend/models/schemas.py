@@ -118,7 +118,7 @@ from models.gym_profile import (
 
 # Workout models - kept here as they are the most complex and heavily used
 from pydantic import BaseModel, Field, field_validator
-from typing import Optional, List
+from typing import Optional, List, Dict, Any
 from datetime import datetime
 
 
@@ -369,6 +369,7 @@ class WorkoutLogCreate(BaseModel):
     user_id: str = Field(..., max_length=100)
     sets_json: str = Field(..., max_length=100000)
     total_time_seconds: int = Field(..., ge=0, le=86400)  # max 24 hours
+    metadata: Optional[Dict[str, Any]] = Field(default=None, description="Additional metadata: progression patterns, increment settings, etc.")
 
 
 class WorkoutLog(WorkoutLogCreate):
@@ -396,6 +397,9 @@ class PerformanceLogCreate(BaseModel):
     failed_at_rep: Optional[int] = Field(default=None, ge=0)
     notes: Optional[str] = Field(default=None, max_length=500)
     ai_input_source: Optional[str] = Field(default=None, max_length=200, description="Original AI input text that created this set (e.g., '135*8', '+10')")
+    target_weight_kg: Optional[float] = Field(default=None, ge=0, le=1000, description="Planned target weight for this set")
+    target_reps: Optional[int] = Field(default=None, ge=0, le=1000, description="Planned target reps (0 = AMRAP)")
+    progression_model: Optional[str] = Field(default=None, max_length=50, description="Progression pattern: pyramidUp, straightSets, reversePyramid, dropSets, etc.")
 
 
 class PerformanceLog(PerformanceLogCreate):

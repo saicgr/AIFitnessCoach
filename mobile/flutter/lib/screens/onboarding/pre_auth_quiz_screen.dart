@@ -8,6 +8,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import '../../core/constants/app_colors.dart';
 import '../../widgets/glass_sheet.dart';
 import '../../core/services/analytics_service.dart';
+import '../../core/services/posthog_service.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../../data/repositories/onboarding_repository.dart';
 import '../../data/services/api_client.dart';
@@ -2667,6 +2668,16 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
         skippedScreens: skippedScreens,
         nutritionOptedIn: _nutritionEnabled ?? false,
         personalizationCompleted: !_skipPersonalization,
+      );
+
+      // Track quiz completion
+      ref.read(posthogServiceProvider).capture(
+        eventName: 'onboarding_quiz_completed',
+        properties: {
+          'total_screens': _totalQuestions,
+          'skipped_screens': skippedScreens,
+          'personalization_completed': !_skipPersonalization,
+        },
       );
 
       // Navigate to sign-in screen (user must create account before coach selection)

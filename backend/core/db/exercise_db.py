@@ -227,7 +227,7 @@ class ExerciseDB(BaseDB):
         query = (
             self.client.table("strength_records").select(
                 "id, user_id, exercise_id, exercise_name, weight_kg, reps, "
-                "one_rep_max, is_pr, achieved_at"
+                "estimated_1rm, is_pr, achieved_at"
             ).eq("user_id", user_id)
         )
 

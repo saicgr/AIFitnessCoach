@@ -12,6 +12,7 @@ import '../../widgets/app_loading.dart';
 import '../../widgets/pill_app_bar.dart';
 
 import '../../core/constants/app_colors.dart';
+import '../../core/services/posthog_service.dart';
 import '../../data/models/subjective_feedback.dart';
 import '../../data/providers/subjective_feedback_provider.dart';
 
@@ -29,6 +30,7 @@ class _FeelResultsScreenState extends ConsumerState<FeelResultsScreen> {
   @override
   void initState() {
     super.initState();
+    ref.read(posthogServiceProvider).capture(eventName: 'feel_results_viewed');
     _loadData();
   }
 

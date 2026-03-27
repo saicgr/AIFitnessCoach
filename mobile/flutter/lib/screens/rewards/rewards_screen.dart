@@ -5,6 +5,7 @@ import '../../data/providers/xp_provider.dart';
 import '../../widgets/app_snackbar.dart';
 import '../../data/services/api_client.dart';
 import '../../widgets/pill_app_bar.dart';
+import '../../core/services/posthog_service.dart';
 import '../../widgets/segmented_tab_bar.dart';
 
 /// Screen displaying available and claimed rewards
@@ -28,6 +29,9 @@ class _RewardsScreenState extends ConsumerState<RewardsScreen>
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
     _loadRewards();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(posthogServiceProvider).capture(eventName: 'rewards_viewed');
+    });
   }
 
   @override

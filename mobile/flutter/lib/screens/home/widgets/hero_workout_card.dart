@@ -17,6 +17,7 @@ import '../../../widgets/main_shell.dart';
 import 'regenerate_workout_sheet.dart';
 import '../../social/widgets/create_post_sheet.dart';
 import '../../workout/widgets/exercise_add_sheet.dart';
+import '../../../core/services/posthog_service.dart';
 
 /// Hero workout card - Gravl-inspired design with background image
 /// Features a large background image with gradient overlay and prominent START button
@@ -45,35 +46,27 @@ class _HeroWorkoutCardState extends ConsumerState<HeroWorkoutCard> {
   @override
   void initState() {
     super.initState();
-    _loadBackgroundImage();
-  }
-
-  Future<void> _loadBackgroundImage() async {
-    // Try to get image from first exercise
+    // Check cache synchronously to avoid loading flash
     final exercises = widget.workout.exercises;
     if (exercises.isEmpty) {
-      setState(() => _isLoadingImage = false);
-      return;
-    }
-
-    final exerciseName = exercises.first.name;
-    if (exerciseName.isEmpty || exerciseName == 'Exercise') {
-      setState(() => _isLoadingImage = false);
-      return;
-    }
-
-    // Check cache first
-    final cachedUrl = ImageUrlCache.get(exerciseName);
-    if (cachedUrl != null) {
-      if (mounted) {
-        setState(() {
+      _isLoadingImage = false;
+    } else {
+      final exerciseName = exercises.first.name;
+      if (exerciseName.isEmpty || exerciseName == 'Exercise') {
+        _isLoadingImage = false;
+      } else {
+        final cachedUrl = ImageUrlCache.get(exerciseName);
+        if (cachedUrl != null) {
           _backgroundImageUrl = cachedUrl;
           _isLoadingImage = false;
-        });
+        } else {
+          _fetchBackgroundImage(exerciseName);
+        }
       }
-      return;
     }
+  }
 
+  Future<void> _fetchBackgroundImage(String exerciseName) async {
     try {
       final apiClient = ref.read(apiClientProvider);
       final response = await apiClient.get(
@@ -988,6 +981,14 @@ class _HeroWorkoutCardState extends ConsumerState<HeroWorkoutCard> {
                         }
                         debugPrint(
                           '✅ [HeroWorkoutCard] Navigating to active-workout with ${workout.exercises.length} exercises',
+                        );
+                        ref.read(posthogServiceProvider).capture(
+                          eventName: 'hero_workout_started',
+                          properties: {
+                            'workout_name': workout.name ?? '',
+                            'workout_id': workout.id ?? '',
+                            'exercise_count': workout.exercises.length,
+                          },
                         );
                         context.push('/active-workout', extra: workout);
                       },

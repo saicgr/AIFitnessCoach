@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/providers/window_mode_provider.dart';
+import '../../core/services/posthog_service.dart';
 import '../../widgets/press_and_hold_button.dart';
 import 'widgets/foldable_quiz_scaffold.dart';
 
@@ -50,6 +51,11 @@ class _HealthDisclaimerScreenState
   void _onConfirmed() async {
     await ref.read(healthDisclaimerProvider.notifier).accept();
     debugPrint('Health disclaimer accepted');
+
+    // Track health disclaimer acceptance
+    ref.read(posthogServiceProvider).capture(
+      eventName: 'onboarding_health_disclaimer_accepted',
+    );
 
     if (mounted) {
       context.go('/coach-selection');

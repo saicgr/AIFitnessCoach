@@ -319,6 +319,29 @@ class WorkoutActionChips {
     icon: Icons.swap_vert,
   );
 
+  static const skip = ActionChipData(
+    id: 'skip',
+    label: 'Skip',
+    icon: Icons.skip_next,
+  );
+
+  /// Progression model chip — shows current pattern, tap opens selector sheet.
+  /// Label is set dynamically (e.g., "Pyramid", "Drop Sets").
+  static ActionChipData progression({required String label, required IconData icon}) =>
+      ActionChipData(
+        id: 'progression',
+        label: label,
+        icon: icon,
+      );
+
+  /// Increment display chip — shows current increment (e.g., "±10 lb").
+  /// Tap opens the WeightIncrementsSheet.
+  static ActionChipData incrementDisplay({required String label}) => ActionChipData(
+        id: 'increments_display',
+        label: label,
+        icon: Icons.tune,
+      );
+
   /// 3-dot "More" menu for History, Increments, etc.
   static const more = ActionChipData(
     id: 'more',

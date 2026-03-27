@@ -22,9 +22,11 @@ import '../../../core/providers/week_start_provider.dart';
 import '../../../core/providers/weight_increments_provider.dart';
 import '../../../data/providers/xp_provider.dart';
 import '../../../widgets/weight_increments_sheet.dart';
-import '../../../widgets/schedule_mismatch_dialog.dart';
+import '../../../data/models/ai_split_preset.dart';
 import '../../../data/repositories/auth_repository.dart';
 import '../../../data/repositories/workout_repository.dart';
+import '../../library/components/ai_split_preset_detail_sheet.dart';
+import '../../library/widgets/compact_split_card.dart';
 import '../../../core/providers/user_provider.dart';
 import '../equipment/environment_list_screen.dart';
 import '../offline/downloaded_videos_screen.dart';
@@ -225,335 +227,111 @@ class SettingsCard extends ConsumerWidget {
   }
 
   // Split info with required days for schedule mismatch validation
-  static const _splitInfo = {
-    'full_body': (name: 'Full Body', days: 3, desc: '3 days • All muscle groups each workout', icon: Icons.accessibility_new),
-    'full_body_minimal': (name: 'Full Body (2-Day)', days: 2, desc: '2 days • For busy schedules', icon: Icons.accessibility_new),
-    'upper_lower': (name: 'Upper/Lower', days: 4, desc: '4 days • Alternating upper and lower body', icon: Icons.swap_vert),
-    'push_pull_legs': (name: 'Push/Pull/Legs', days: 3, desc: '3 days • Classic PPL split', icon: Icons.fitness_center),
-    'ppl_6day': (name: 'PPL (6-Day)', days: 6, desc: '6 days • Maximum hypertrophy', icon: Icons.fitness_center),
-    'body_part': (name: 'Bro Split', days: 5, desc: '5 days • One muscle group per day', icon: Icons.person),
-    'phul': (name: 'PHUL', days: 4, desc: '4 days • Power Hypertrophy Upper Lower', icon: Icons.bolt),
-    'pplul': (name: 'PPLUL', days: 5, desc: '5 days • Push/Pull/Legs + Upper/Lower hybrid', icon: Icons.auto_graph),
-    'arnold_split': (name: 'Arnold Split', days: 6, desc: '6 days • Chest/Back, Shoulders/Arms, Legs', icon: Icons.military_tech),
-    'hyrox': (name: 'HYROX', days: 4, desc: '4 days • Hybrid running + functional', icon: Icons.directions_run),
-    'ai_adaptive': (name: 'AI Adaptive', days: 0, desc: 'AI adjusts based on your recovery', icon: Icons.auto_awesome),
-    'dont_know': (name: 'Let AI Decide', days: 0, desc: 'Auto-select based on your schedule', icon: Icons.auto_awesome),
-  };
-
   void _showTrainingSplitSelector(BuildContext context, WidgetRef ref) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final trainingPrefs = ref.read(trainingPreferencesProvider);
-    final currentSplit = trainingPrefs.trainingSplit;
-    final authState = ref.read(authStateProvider);
-    final currentWorkoutDays = authState.user?.workoutDays ?? [];
+    final textPrimary = isDark ? Colors.white : AppColorsLight.textPrimary;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
 
-    // Splits to show in the selector
-    final splits = [
-      'full_body',
-      'upper_lower',
-      'push_pull_legs',
-      'pplul',
-      'phul',
-      'arnold_split',
-      'body_part',
-      'hyrox',
-      'dont_know',
+    final categories = [
+      ('Classic Splits', aiSplitPresets.where((p) => p.category == 'classic').toList()),
+      ('AI-Powered', aiSplitPresets.where((p) => p.category == 'ai_powered').toList()),
+      ('Specialty', aiSplitPresets.where((p) => p.category == 'specialty').toList()),
     ];
 
     showGlassSheet(
       context: context,
       useRootNavigator: true,
-      initialChildSize: 0.7,
+      initialChildSize: 0.75,
       minChildSize: 0.5,
-      maxChildSize: 0.9,
+      maxChildSize: 0.95,
       builder: (context) => DraggableScrollableSheet(
-        initialChildSize: 0.7,
+        initialChildSize: 0.75,
         minChildSize: 0.5,
-        maxChildSize: 0.9,
+        maxChildSize: 0.95,
         expand: false,
         builder: (context, scrollController) => GlassSheet(
           showHandle: false,
           child: SafeArea(
-          child: Column(
-            children: [
-              const SizedBox(height: 8),
-              Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
-                  borderRadius: BorderRadius.circular(2),
+            child: Column(
+              children: [
+                const SizedBox(height: 8),
+                Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: textMuted,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
                 ),
-              ),
-              const SizedBox(height: 16),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Text(
+                const SizedBox(height: 16),
+                Text(
                   'Training Split',
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.w600,
-                    color: isDark ? Colors.white : AppColorsLight.textPrimary,
+                    color: textPrimary,
                   ),
                 ),
-              ),
-              const SizedBox(height: 8),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Text(
+                const SizedBox(height: 4),
+                Text(
                   'Choose how to structure your weekly workouts',
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
-                  ),
+                  style: TextStyle(fontSize: 14, color: textMuted),
                   textAlign: TextAlign.center,
                 ),
-              ),
-              const SizedBox(height: 16),
-              Expanded(
-                child: ListView.builder(
-                  controller: scrollController,
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  itemCount: splits.length,
-                  itemBuilder: (context, index) {
-                    final splitKey = splits[index];
-                    final splitData = _splitInfo[splitKey];
-                    if (splitData == null) return const SizedBox.shrink();
-
-                    final isSelected = splitKey == currentSplit;
-                    return Padding(
-                      padding: const EdgeInsets.only(bottom: 8),
-                      child: Material(
-                        color: isSelected
-                            ? (isDark ? AppColors.cyan.withOpacity(0.15) : AppColorsLight.cyan.withOpacity(0.15))
-                            : (isDark ? AppColors.elevated : AppColorsLight.elevated),
-                        borderRadius: BorderRadius.circular(12),
-                        child: InkWell(
-                          onTap: () => _handleSplitSelection(
-                            context,
-                            ref,
-                            splitKey,
-                            splitData.name,
-                            splitData.days,
-                            currentWorkoutDays,
-                          ),
-                          borderRadius: BorderRadius.circular(12),
-                          child: Padding(
-                            padding: const EdgeInsets.all(16),
-                            child: Row(
-                              children: [
-                                Container(
-                                  width: 44,
-                                  height: 44,
-                                  decoration: BoxDecoration(
-                                    color: isSelected
-                                        ? (isDark ? AppColors.cyan : AppColorsLight.cyan)
-                                        : (isDark ? AppColors.elevated : AppColorsLight.elevated),
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                  child: Icon(
-                                    splitData.icon,
-                                    color: isSelected
-                                        ? Colors.white
-                                        : (isDark ? AppColors.textSecondary : AppColorsLight.textSecondary),
-                                    size: 22,
-                                  ),
-                                ),
-                                const SizedBox(width: 16),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        splitData.name,
-                                        style: TextStyle(
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.w600,
-                                          color: isDark ? Colors.white : AppColorsLight.textPrimary,
-                                        ),
-                                      ),
-                                      const SizedBox(height: 2),
-                                      Text(
-                                        splitData.desc,
-                                        style: TextStyle(
-                                          fontSize: 13,
-                                          color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                if (isSelected)
-                                  Icon(
-                                    Icons.check_circle,
-                                    color: isDark ? AppColors.cyan : AppColorsLight.cyan,
-                                    size: 24,
-                                  ),
-                              ],
+                const SizedBox(height: 16),
+                Expanded(
+                  child: ListView(
+                    controller: scrollController,
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    children: [
+                      for (final (title, presets) in categories) ...[
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 10, top: 4),
+                          child: Text(
+                            title,
+                            style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w700,
+                              color: textPrimary,
                             ),
                           ),
                         ),
-                      ),
-                    );
-                  },
+                        SizedBox(
+                          height: 110,
+                          child: ListView.separated(
+                            scrollDirection: Axis.horizontal,
+                            itemCount: presets.length,
+                            separatorBuilder: (_, __) => const SizedBox(width: 10),
+                            itemBuilder: (context, index) {
+                              final preset = presets[index];
+                              return SizedBox(
+                                width: 160,
+                                child: CompactSplitCard(
+                                  preset: preset,
+                                  onTap: () {
+                                    Navigator.pop(context); // Close split selector
+                                    showGlassSheet(
+                                      context: context,
+                                      useRootNavigator: true,
+                                      builder: (ctx) => AISplitPresetDetailSheet(preset: preset),
+                                    );
+                                  },
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                      ],
+                    ],
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
-        ),
       ),
     );
-  }
-
-  /// Handle split selection with schedule mismatch validation
-  void _handleSplitSelection(
-    BuildContext context,
-    WidgetRef ref,
-    String splitKey,
-    String splitName,
-    int requiredDays,
-    List<int> currentWorkoutDays,
-  ) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
-    // If split is flexible (AI modes) or days match, just save directly
-    if (requiredDays == 0 || currentWorkoutDays.length == requiredDays) {
-      _saveSplitAndClose(context, ref, splitKey, splitName, isDark);
-      return;
-    }
-
-    // Schedule mismatch - show choice dialog
-    Navigator.pop(context); // Close the split selector
-    _showScheduleMismatchDialog(
-      context,
-      ref,
-      splitKey,
-      splitName,
-      requiredDays,
-      currentWorkoutDays,
-    );
-  }
-
-  /// Show dialog when workout days don't match split requirements
-  void _showScheduleMismatchDialog(
-    BuildContext context,
-    WidgetRef ref,
-    String splitKey,
-    String splitName,
-    int requiredDays,
-    List<int> currentWorkoutDays,
-  ) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final currentDayNames = ScheduleMismatchHelper.formatDayNames(currentWorkoutDays);
-    final newDays = ScheduleMismatchHelper.getDefaultDaysForCount(requiredDays);
-    final newDayNames = ScheduleMismatchHelper.formatDayNames(newDays);
-    final compatibleSplit = ScheduleMismatchHelper.getCompatibleSplitForDays(currentWorkoutDays.length);
-    final compatibleSplitName = _splitInfo[compatibleSplit]?.name ?? 'Full Body';
-
-    showDialog(
-      context: context,
-      builder: (dialogContext) => ScheduleMismatchDialog(
-        splitName: splitName,
-        requiredDays: requiredDays,
-        currentDayCount: currentWorkoutDays.length,
-        currentDayNames: currentDayNames,
-        newDays: newDays,
-        newDayNames: newDayNames,
-        compatibleSplitName: compatibleSplitName,
-        onKeepDays: () {
-          Navigator.pop(dialogContext);
-          // Save the compatible split for current days
-          _saveSplitDirectly(context, ref, compatibleSplit, compatibleSplitName, isDark);
-        },
-        onUpdateDays: () async {
-          Navigator.pop(dialogContext);
-          // Save the selected split AND update workout days
-          await _saveSplitAndUpdateDays(context, ref, splitKey, splitName, newDays, isDark);
-        },
-      ),
-    );
-  }
-
-  /// Save split without closing bottom sheet (already closed)
-  void _saveSplitDirectly(
-    BuildContext context,
-    WidgetRef ref,
-    String splitKey,
-    String splitName,
-    bool isDark,
-  ) {
-    HapticFeedback.selectionClick();
-    ref.read(trainingPreferencesProvider.notifier).setTrainingSplit(splitKey);
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Training split updated to $splitName. Regenerate workouts to apply.'),
-        backgroundColor: isDark ? AppColors.cyan : AppColorsLight.cyan,
-        duration: const Duration(seconds: 3),
-      ),
-    );
-  }
-
-  /// Save split and close the bottom sheet
-  void _saveSplitAndClose(
-    BuildContext context,
-    WidgetRef ref,
-    String splitKey,
-    String splitName,
-    bool isDark,
-  ) {
-    Navigator.pop(context);
-    _saveSplitDirectly(context, ref, splitKey, splitName, isDark);
-  }
-
-  /// Save split and update workout days
-  Future<void> _saveSplitAndUpdateDays(
-    BuildContext context,
-    WidgetRef ref,
-    String splitKey,
-    String splitName,
-    List<int> newDays,
-    bool isDark,
-  ) async {
-    HapticFeedback.selectionClick();
-
-    try {
-      // Update the training split
-      ref.read(trainingPreferencesProvider.notifier).setTrainingSplit(splitKey);
-
-      // Update workout days via API
-      final authState = ref.read(authStateProvider);
-      final userId = authState.user?.id;
-      if (userId != null) {
-        final repo = ref.read(workoutRepositoryProvider);
-        final dayNamesList = newDays.map((idx) {
-          const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-          return days[idx];
-        }).toList();
-
-        await repo.quickDayChange(userId, dayNamesList);
-        await ref.read(authStateProvider.notifier).refreshUser();
-      }
-
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Updated to $splitName with ${newDays.length}-day schedule. Regenerate workouts to apply.'),
-            backgroundColor: isDark ? AppColors.cyan : AppColorsLight.cyan,
-            duration: const Duration(seconds: 3),
-          ),
-        );
-      }
-    } catch (e) {
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to update: ${e.toString()}'),
-            backgroundColor: AppColors.error,
-          ),
-        );
-      }
-    }
   }
 
   void _showEquipmentSelector(BuildContext context, WidgetRef ref) {

@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../core/accessibility/accessibility_provider.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/providers/window_mode_provider.dart';
+import '../../core/services/posthog_service.dart';
 import '../../widgets/senior/senior_button.dart';
 import 'widgets/foldable_quiz_scaffold.dart';
 
@@ -41,6 +42,14 @@ class _ModeSelectionScreenState extends ConsumerState<ModeSelectionScreen> {
     try {
       // Save accessibility mode
       await ref.read(accessibilityProvider.notifier).setMode(mode);
+
+      // Track mode selection
+      ref.read(posthogServiceProvider).capture(
+        eventName: 'onboarding_mode_selected',
+        properties: {
+          'mode': mode == AccessibilityMode.senior ? 'senior' : 'normal',
+        },
+      );
 
       if (mounted) {
         if (mode == AccessibilityMode.senior) {

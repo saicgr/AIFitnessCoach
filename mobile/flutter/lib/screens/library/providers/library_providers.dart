@@ -39,6 +39,9 @@ final selectedSuitableForSetProvider = StateProvider<Set<String>>((ref) => {});
 /// Selected "avoid if" conditions filter
 final selectedAvoidSetProvider = StateProvider<Set<String>>((ref) => {});
 
+/// Filter to show only exercises the user has performed
+final performedOnlyProvider = StateProvider<bool>((ref) => false);
+
 /// Exercise search query
 final exerciseSearchProvider = StateProvider<String>((ref) => '');
 
@@ -321,6 +324,7 @@ int getActiveFilterCount(WidgetRef ref) {
   count += ref.read(selectedGoalsProvider).length;
   count += ref.read(selectedSuitableForSetProvider).length;
   count += ref.read(selectedAvoidSetProvider).length;
+  if (ref.read(performedOnlyProvider)) count += 1;
   return count;
 }
 
@@ -332,6 +336,7 @@ void clearAllFilters(WidgetRef ref) {
   ref.read(selectedGoalsProvider.notifier).state = {};
   ref.read(selectedSuitableForSetProvider.notifier).state = {};
   ref.read(selectedAvoidSetProvider.notifier).state = {};
+  ref.read(performedOnlyProvider.notifier).state = false;
 }
 
 /// Clear exercise search and all filters
@@ -360,8 +365,10 @@ class CategoryExercisesData {
   });
 }
 
-/// Fetches exercises grouped by body part for Netflix-style carousel
-/// H5: Uses in-memory cache (valid for 24 hours) to avoid re-fetching 500 exercises
+/// Fetches exercises grouped by body part for Netflix-style carousel.
+/// Uses the /exercises/grouped endpoint (20 per group) instead of fetching all 1600+.
+/// "See All" screens lazy-load the full category via paginated API calls.
+/// H5: Uses in-memory cache (valid for 24 hours) to avoid re-fetching.
 final categoryExercisesProvider =
     FutureProvider<CategoryExercisesData>((ref) async {
   // H5: Check in-memory cache first
@@ -378,9 +385,9 @@ final categoryExercisesProvider =
   final all = <String, List<LibraryExercise>>{};
 
   try {
-    // Fetch all exercises from API for accurate counts and All Exercises section
+    // Fetch exercises grouped by body part (20 per group) — much lighter than limit=5000
     final response = await apiClient.get(
-      '${ApiConstants.library}/exercises?limit=5000&offset=0',
+      '${ApiConstants.library}/exercises/grouped?limit_per_group=20',
     );
 
     if (response.statusCode != 200) {
@@ -391,24 +398,32 @@ final categoryExercisesProvider =
     }
 
     final data = response.data as List;
-    final allExercises = data
-        .map((e) => LibraryExercise.fromJson(e as Map<String, dynamic>))
-        .toList();
-
-    if (allExercises.isEmpty) {
+    if (data.isEmpty) {
       return CategoryExercisesData(preview: preview, all: all);
     }
 
-    // Popular = first exercises
-    all['Popular'] = allExercises.take(50).toList();
-    preview['Popular'] = allExercises.take(20).toList();
-
-    // Group by body part
+    // Parse grouped response: [{body_part, count, exercises}, ...]
     final Map<String, List<LibraryExercise>> byBodyPart = {};
-    for (final exercise in allExercises) {
-      final bodyPart = exercise.bodyPart ?? 'Other';
-      byBodyPart.putIfAbsent(bodyPart, () => []);
-      byBodyPart[bodyPart]!.add(exercise);
+    for (final group in data) {
+      final bodyPart = group['body_part'] as String;
+      final exercises = (group['exercises'] as List)
+          .map((e) => LibraryExercise.fromJson(e as Map<String, dynamic>))
+          .toList();
+      byBodyPart[bodyPart] = exercises;
+    }
+
+    // Popular = first 20 from the largest groups
+    final popularExercises = <LibraryExercise>[];
+    for (final group in data) {
+      final exercises = (group['exercises'] as List)
+          .map((e) => LibraryExercise.fromJson(e as Map<String, dynamic>))
+          .toList();
+      popularExercises.addAll(exercises);
+      if (popularExercises.length >= 20) break;
+    }
+    if (popularExercises.isNotEmpty) {
+      all['Popular'] = popularExercises;
+      preview['Popular'] = popularExercises.take(20).toList();
     }
 
     // Combine arm muscles into "Arms"
@@ -432,36 +447,34 @@ final categoryExercisesProvider =
     }
 
     // Direct mappings for other categories
-    if (byBodyPart['Chest']?.isNotEmpty == true) {
-      all['Chest'] = byBodyPart['Chest']!;
-      preview['Chest'] = byBodyPart['Chest']!.take(20).toList();
-    }
-    if (byBodyPart['Back']?.isNotEmpty == true) {
-      all['Back'] = byBodyPart['Back']!;
-      preview['Back'] = byBodyPart['Back']!.take(20).toList();
-    }
-    if (byBodyPart['Shoulders']?.isNotEmpty == true) {
-      all['Shoulders'] = byBodyPart['Shoulders']!;
-      preview['Shoulders'] = byBodyPart['Shoulders']!.take(20).toList();
-    }
-    if (byBodyPart['Core']?.isNotEmpty == true) {
-      all['Core'] = byBodyPart['Core']!;
-      preview['Core'] = byBodyPart['Core']!.take(20).toList();
+    for (final category in ['Chest', 'Back', 'Shoulders', 'Core']) {
+      if (byBodyPart[category]?.isNotEmpty == true) {
+        all[category] = byBodyPart[category]!;
+        preview[category] = byBodyPart[category]!.take(20).toList();
+      }
     }
 
-    // Sort all exercises alphabetically for "All Exercises" section
-    final sortedAll = List<LibraryExercise>.from(allExercises)
-      ..sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
+    // Build allExercisesSorted from the grouped preview data (deduplicated, sorted A-Z)
+    final seenIds = <String>{};
+    final allFlat = <LibraryExercise>[];
+    for (final exercises in all.values) {
+      for (final exercise in exercises) {
+        if (exercise.id != null && seenIds.add(exercise.id!)) {
+          allFlat.add(exercise);
+        }
+      }
+    }
+    allFlat.sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
 
     // H5: Store result in cache
     final result = CategoryExercisesData(
       preview: preview,
       all: all,
-      allExercisesSorted: sortedAll,
+      allExercisesSorted: allFlat,
     );
     _categoryExercisesCache = result;
     _categoryCacheTime = DateTime.now();
-    debugPrint('✅ [CategoryExercises] Cached ${all.length} categories, ${sortedAll.length} total exercises');
+    debugPrint('✅ [CategoryExercises] Cached ${all.length} categories, ${allFlat.length} exercises (grouped endpoint)');
 
     return result;
   } catch (e) {

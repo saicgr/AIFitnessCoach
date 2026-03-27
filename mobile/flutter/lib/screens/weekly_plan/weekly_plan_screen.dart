@@ -7,6 +7,7 @@ import 'widgets/day_card.dart';
 import 'widgets/plan_header.dart';
 import 'widgets/generate_plan_sheet.dart';
 import 'daily_plan_detail_sheet.dart';
+import '../../core/services/posthog_service.dart';
 import '../../widgets/pill_app_bar.dart';
 
 /// Weekly plan screen showing the holistic plan calendar view
@@ -24,6 +25,9 @@ class _WeeklyPlanScreenState extends ConsumerState<WeeklyPlanScreen> {
     // Load current plan on init
     Future.microtask(() {
       ref.read(weeklyPlanProvider.notifier).loadCurrentPlan();
+    });
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(posthogServiceProvider).capture(eventName: 'weekly_plan_viewed');
     });
   }
 

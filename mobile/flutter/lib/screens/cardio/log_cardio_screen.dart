@@ -6,6 +6,7 @@ import '../../core/constants/app_colors.dart';
 import '../../data/models/cardio_session.dart';
 import '../../data/providers/cardio_session_provider.dart';
 import '../../data/services/api_client.dart';
+import '../../core/services/posthog_service.dart';
 import '../../widgets/pill_app_bar.dart';
 
 class LogCardioScreen extends ConsumerStatefulWidget {
@@ -43,6 +44,9 @@ class _LogCardioScreenState extends ConsumerState<LogCardioScreen> {
   void initState() {
     super.initState();
     _loadUserId();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(posthogServiceProvider).capture(eventName: 'cardio_log_viewed');
+    });
   }
 
   Future<void> _loadUserId() async {

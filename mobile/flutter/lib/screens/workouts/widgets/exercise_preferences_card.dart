@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/theme/theme_colors.dart';
 import '../../../core/providers/avoided_provider.dart';
+import '../../../core/providers/custom_exercises_provider.dart';
 import '../../../core/providers/favorites_provider.dart';
 import '../../../core/providers/staples_provider.dart';
 import '../../../core/providers/exercise_queue_provider.dart';
@@ -37,6 +38,7 @@ class _ExercisePreferencesCardState
     // Ensure avoided exercises are loaded (lazy initialization)
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(avoidedProvider.notifier).ensureInitialized();
+      ref.read(customExercisesProvider.notifier).initialize();
     });
   }
 
@@ -59,6 +61,8 @@ class _ExercisePreferencesCardState
     final warmupState = ref.watch(warmupDurationProvider);
     final weightIncrementsState = ref.watch(weightIncrementsProvider);
 
+    final customExercisesState = ref.watch(customExercisesProvider);
+    final customCount = customExercisesState.exercises.length;
     final favoriteCount = favoritesState.favorites.length;
     final stapleCount = staplesState.staples.length;
     final queueCount = queueState.activeQueue.length;
@@ -197,6 +201,17 @@ class _ExercisePreferencesCardState
                   ),
                 ),
                 // Preference items
+                _buildPreferenceItem(
+                  context,
+                  icon: Icons.fitness_center,
+                  title: 'Custom Exercises',
+                  subtitle: 'Your personal exercise library',
+                  trailing: '$customCount exercises',
+                  onTap: () => context.push('/settings/my-exercises?tab=3'),
+                  isDark: isDark,
+                  textPrimary: textPrimary,
+                  textMuted: textMuted,
+                ),
                 _buildPreferenceItem(
                   context,
                   icon: Icons.favorite,

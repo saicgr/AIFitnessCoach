@@ -5,6 +5,7 @@ import '../../../data/repositories/workout_repository.dart';
 import '../../../data/repositories/auth_repository.dart';
 import '../../../widgets/app_dialog.dart';
 import '../../../widgets/pill_app_bar.dart';
+import '../../../core/services/posthog_service.dart';
 import 'components/sheet_theme_colors.dart';
 
 class ProgramHistoryScreen extends ConsumerStatefulWidget {
@@ -23,6 +24,9 @@ class _ProgramHistoryScreenState extends ConsumerState<ProgramHistoryScreen> {
   @override
   void initState() {
     super.initState();
+    ref.read(posthogServiceProvider).capture(
+      eventName: 'program_history_viewed',
+    );
     _loadProgramHistory();
   }
 

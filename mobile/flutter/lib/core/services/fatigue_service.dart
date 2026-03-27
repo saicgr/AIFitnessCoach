@@ -80,6 +80,7 @@ class FatigueService {
       return null;
     } on DioException catch (e) {
       debugPrint('❌ [FatigueService] DioException: ${e.message}');
+      debugPrint('❌ [FatigueService] Response: ${e.response?.statusCode} ${e.response?.data}');
       return null;
     } catch (e) {
       debugPrint('❌ [FatigueService] Error checking fatigue: $e');

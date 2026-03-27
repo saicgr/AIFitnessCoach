@@ -242,7 +242,7 @@ Return ONLY the reasoning text, nothing else."""
 @router.post("/rest-suggestion", response_model=RestSuggestionResponse)
 @limiter.limit("5/minute")
 async def get_rest_suggestion(body: RestSuggestionRequest,
-    request: Request = None,
+    request: Request,
     current_user: dict = Depends(get_current_user),
 ):
     """

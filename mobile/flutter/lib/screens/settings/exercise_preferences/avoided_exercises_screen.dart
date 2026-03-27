@@ -9,6 +9,7 @@ import '../../../data/repositories/exercise_preferences_repository.dart';
 import '../../../data/repositories/workout_repository.dart';
 import '../../../data/services/haptic_service.dart';
 import '../../../widgets/glass_sheet.dart';
+import '../../../core/services/posthog_service.dart';
 import '../../../widgets/pill_app_bar.dart';
 import 'widgets/exercise_picker_sheet.dart';
 
@@ -31,8 +32,14 @@ class AvoidedExercisesScreen extends ConsumerStatefulWidget {
 class _AvoidedExercisesScreenState extends ConsumerState<AvoidedExercisesScreen> {
   bool _isAdding = false;
 
+  bool _hasTrackedView = false;
+
   @override
   Widget build(BuildContext context) {
+    if (!_hasTrackedView) {
+      _hasTrackedView = true;
+      ref.read(posthogServiceProvider).capture(eventName: 'avoided_exercises_viewed');
+    }
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final backgroundColor = isDark ? AppColors.pureBlack : AppColorsLight.pureWhite;
     final elevatedColor = isDark ? AppColors.elevated : AppColorsLight.elevated;

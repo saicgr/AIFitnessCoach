@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/providers/custom_exercises_provider.dart';
+import '../../../../data/models/custom_exercise.dart';
 import '../../../../data/models/exercise.dart';
 import '../../../../data/repositories/library_repository.dart';
 import '../../../../widgets/exercise_image.dart';
@@ -103,6 +105,8 @@ class _ExercisePickerSheetState extends ConsumerState<_ExercisePickerSheet> {
   void initState() {
     super.initState();
     _loadFilterOptions();
+    // Ensure custom exercises are loaded for search merging
+    ref.read(customExercisesProvider.notifier).initialize();
   }
 
   @override
@@ -253,9 +257,12 @@ class _ExercisePickerSheetState extends ConsumerState<_ExercisePickerSheet> {
               .any((name) => name.toLowerCase() == e.name.toLowerCase());
         }).toList();
 
+        // Merge custom exercises into results
+        final customMatches = _getMatchingCustomExercises(query);
+
         if (mounted) {
           setState(() {
-            _searchResults = filtered;
+            _searchResults = [...customMatches, ...filtered];
             _isSearching = false;
             _searchCorrection = smartResponse.correction;
             _searchTimeMs = smartResponse.searchTimeMs;
@@ -283,9 +290,12 @@ class _ExercisePickerSheetState extends ConsumerState<_ExercisePickerSheet> {
               .any((name) => name.toLowerCase() == e.name.toLowerCase());
         }).toList();
 
+        // Merge custom exercises into results
+        final customMatches = _getMatchingCustomExercises(hasQuery ? query : null);
+
         if (mounted) {
           setState(() {
-            _searchResults = filtered;
+            _searchResults = [...customMatches, ...filtered];
             _isSearching = false;
             _searchCorrection = null;
             _searchTimeMs = null;
@@ -304,6 +314,41 @@ class _ExercisePickerSheetState extends ConsumerState<_ExercisePickerSheet> {
         });
       }
     }
+  }
+
+  /// Get custom exercises matching the current search query and filters
+  List<LibraryExerciseItem> _getMatchingCustomExercises(String? query) {
+    final customState = ref.read(customExercisesProvider);
+    if (customState.exercises.isEmpty) return [];
+
+    final queryLower = query?.toLowerCase() ?? '';
+
+    return customState.exercises.where((ce) {
+      // Filter by search query
+      if (queryLower.isNotEmpty && !ce.name.toLowerCase().contains(queryLower)) {
+        return false;
+      }
+      // Filter by body part
+      if (_selectedBodyParts.isNotEmpty) {
+        if (!_selectedBodyParts.any((bp) =>
+            bp.toLowerCase() == ce.primaryMuscle.toLowerCase())) {
+          return false;
+        }
+      }
+      // Filter by equipment
+      if (_selectedEquipment.isNotEmpty) {
+        if (!_selectedEquipment.any((eq) =>
+            eq.toLowerCase() == ce.equipment.toLowerCase())) {
+          return false;
+        }
+      }
+      // Filter out already added exercises
+      if (widget.excludeExercises
+          .any((name) => name.toLowerCase() == ce.name.toLowerCase())) {
+        return false;
+      }
+      return true;
+    }).map((ce) => ce.toLibraryItem()).toList();
   }
 
   void _toggleFilter(Set<String> filterSet, String value) {
@@ -380,13 +425,24 @@ class _ExercisePickerSheetState extends ConsumerState<_ExercisePickerSheet> {
 
   void _addCustomExercise(String name) {
     HapticFeedback.lightImpact();
-    Navigator.pop(
-      context,
-      ExercisePickerResult(
-        exerciseName: name,
-        reason: widget.type == ExercisePickerType.staple ? 'staple' : null,
-      ),
-    );
+    showGlassSheet(
+      context: context,
+      builder: (context) => CreateExerciseSheet(initialName: name),
+    ).then((created) {
+      // If exercise was created, select it
+      if (created != null && created is CustomExercise && mounted) {
+        Navigator.pop(
+          this.context,
+          ExercisePickerResult(
+            exerciseName: created.name,
+            exerciseId: 'custom_${created.id}',
+            muscleGroup: created.primaryMuscle,
+            targetMuscleGroup: created.primaryMuscle,
+            reason: widget.type == ExercisePickerType.staple ? 'staple' : null,
+          ),
+        );
+      }
+    });
   }
 
   void _openDetailSheet(LibraryExerciseItem exercise) {
@@ -581,6 +637,7 @@ class _ExercisePickerSheetState extends ConsumerState<_ExercisePickerSheet> {
                                   final exercise = _searchResults[index];
                                   final isAiMatch = exercise is SmartSearchExerciseItem &&
                                       exercise.isSemanticMatch;
+                                  final isCustom = exercise.id.startsWith('custom_');
                                   return _ExerciseCard(
                                     exercise: exercise,
                                     accentColor: _accentColor,
@@ -588,7 +645,9 @@ class _ExercisePickerSheetState extends ConsumerState<_ExercisePickerSheet> {
                                     textPrimary: textPrimary,
                                     textMuted: textMuted,
                                     isAiMatch: isAiMatch,
-                                    onDetailTap: () => _openDetailSheet(exercise),
+                                    onDetailTap: isCustom
+                                        ? () => _selectExercise(exercise)
+                                        : () => _openDetailSheet(exercise),
                                     onAddTap: () => _selectExercise(exercise),
                                   );
                                 },
@@ -1029,7 +1088,25 @@ class _ExerciseCard extends StatelessWidget {
                               overflow: TextOverflow.ellipsis,
                             ),
                           ),
-                          if (isAiMatch) ...[
+                          if (exercise.id.startsWith('custom_')) ...[
+                            const SizedBox(width: 6),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: AppColors.orange.withValues(alpha: 0.15),
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: Text(
+                                'CUSTOM',
+                                style: TextStyle(
+                                  fontSize: 9,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppColors.orange,
+                                  letterSpacing: 0.5,
+                                ),
+                              ),
+                            ),
+                          ] else if (isAiMatch) ...[
                             const SizedBox(width: 6),
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),

@@ -9,6 +9,7 @@ import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/constants/api_constants.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/services/posthog_service.dart';
 import '../../core/theme/theme_colors.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../../data/repositories/onboarding_repository.dart';
@@ -51,6 +52,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   @override
   void initState() {
     super.initState();
+    ref.read(posthogServiceProvider).capture(eventName: 'profile_viewed');
     if (widget.scrollTo == 'preferences') {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         final keyContext = _preferencesKey.currentContext;
@@ -1445,7 +1447,7 @@ class _WrappedSection extends ConsumerWidget {
         children: [
           _buildEmptyState(),
           const SizedBox(height: 12),
-          _buildPersonalityBar(summary.personalitiesCollected),
+          _buildPersonalityBar(context, summary.personalitiesCollected),
         ],
       );
     }
@@ -1471,7 +1473,7 @@ class _WrappedSection extends ConsumerWidget {
 
         // Personality collection bar
         const SizedBox(height: 12),
-        _buildPersonalityBar(summary.personalitiesCollected),
+        _buildPersonalityBar(context, summary.personalitiesCollected),
       ],
     );
   }
@@ -1861,7 +1863,53 @@ class _WrappedSection extends ConsumerWidget {
     );
   }
 
-  Widget _buildPersonalityBar(int collected) {
+  void _showPersonalityInfo(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final bg = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: isDark ? AppColors.pureBlack : AppColorsLight.pureWhite,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 36, height: 4,
+                decoration: BoxDecoration(
+                  color: textMuted.withValues(alpha: 0.3),
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              const SizedBox(height: 20),
+              Icon(Icons.psychology_outlined, size: 40, color: _purpleAccent),
+              const SizedBox(height: 12),
+              Text(
+                'Fitness Personalities',
+                style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: textPrimary),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                'Each month, when you complete your Monthly Wrapped, our AI analyzes your workout patterns and assigns you a unique fitness personality.\n\n'
+                'There are 12 slots — one for each month of the year. Stay consistent to collect them all!',
+                style: TextStyle(fontSize: 14, color: textMuted, height: 1.5),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPersonalityBar(BuildContext context, int collected) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -1876,13 +1924,26 @@ class _WrappedSection extends ConsumerWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                'Personalities',
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                  color: textPrimary,
-                ),
+              Row(
+                children: [
+                  Text(
+                    'Personalities',
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: textPrimary,
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  GestureDetector(
+                    onTap: () => _showPersonalityInfo(context),
+                    child: Icon(
+                      Icons.info_outline_rounded,
+                      size: 15,
+                      color: textMuted,
+                    ),
+                  ),
+                ],
               ),
               Text(
                 '$collected of 12 collected',

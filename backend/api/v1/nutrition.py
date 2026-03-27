@@ -1573,7 +1573,7 @@ async def log_food_from_image(
 
 @router.post("/log-text", response_model=LogFoodResponse)
 @limiter.limit("10/minute")
-async def log_food_from_text(body: LogTextRequest, background_tasks: BackgroundTasks, request: Request = None, current_user: dict = Depends(get_current_user)):
+async def log_food_from_text(body: LogTextRequest, background_tasks: BackgroundTasks, request: Request, current_user: dict = Depends(get_current_user)):
     """
     Log food from a text description using Gemini with goal-based analysis.
 
@@ -1801,7 +1801,7 @@ async def log_food_from_text(body: LogTextRequest, background_tasks: BackgroundT
 
 @router.post("/log-direct", response_model=LogFoodResponse)
 @limiter.limit("10/minute")
-async def log_food_direct(body: LogDirectRequest, request: Request = None, current_user: dict = Depends(get_current_user)):
+async def log_food_direct(body: LogDirectRequest, request: Request, current_user: dict = Depends(get_current_user)):
     """
     Log pre-analyzed food directly without AI processing.
 

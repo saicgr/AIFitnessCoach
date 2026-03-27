@@ -12,6 +12,7 @@ import '../../data/providers/xp_provider.dart';
 import '../../widgets/app_dialog.dart';
 import '../../widgets/pill_app_bar.dart';
 import '../../widgets/glass_sheet.dart';
+import '../../core/services/posthog_service.dart';
 import '../../widgets/segmented_tab_bar.dart';
 import 'recipe_builder_sheet.dart';
 
@@ -297,6 +298,9 @@ class _FoodLibraryScreenState extends ConsumerState<FoodLibraryScreen>
     _tabController = TabController(length: 3, vsync: this);
     _searchFocusNode.addListener(_onSearchFocusChange);
     _loadUserId();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(posthogServiceProvider).capture(eventName: 'food_library_viewed');
+    });
   }
 
   @override

@@ -9,6 +9,7 @@ import '../../core/providers/window_mode_provider.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../../data/services/api_client.dart';
 import '../../core/constants/api_constants.dart';
+import '../../core/services/posthog_service.dart';
 import 'pre_auth_quiz_screen.dart';
 import 'widgets/foldable_quiz_scaffold.dart';
 import 'widgets/quiz_body_metrics.dart';
@@ -225,6 +226,15 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen> {
         // Refresh user data to update isPersonalInfoComplete
         await ref.read(authStateProvider.notifier).refreshUser();
       }
+
+      // Track personal info completion
+      ref.read(posthogServiceProvider).capture(
+        eventName: 'onboarding_personal_info_completed',
+        properties: {
+          'has_weight_goal': _weightDirection != 'maintain',
+          'gender': _gender ?? 'unknown',
+        },
+      );
 
       // Navigate to weight projection screen
       if (mounted) {

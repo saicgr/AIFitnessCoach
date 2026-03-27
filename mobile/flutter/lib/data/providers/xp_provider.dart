@@ -1364,7 +1364,20 @@ class XPNotifier extends StateNotifier<XPState> {
       final result = await _repository.claimDailyCrate(crateType);
 
       if (result.success) {
-        // Reload daily crates state
+        // Optimistically mark as claimed so banner hides immediately,
+        // even if the subsequent server refresh fails
+        final currentCrates = state.dailyCrates;
+        if (currentCrates != null) {
+          state = state.copyWith(
+            dailyCrates: currentCrates.copyWith(
+              claimed: true,
+              selectedCrate: crateType,
+              claimedAt: DateTime.now(),
+            ),
+          );
+        }
+
+        // Reload daily crates state from server
         await loadDailyCrates();
 
         // Reload consumables in case we got items

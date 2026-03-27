@@ -311,7 +311,9 @@ def get_starting_weight(
     # Determine if this is a compound or isolation exercise
     compound_indicators = [
         "squat", "deadlift", "bench", "press", "row", "pull-up", "chin-up",
-        "lunge", "hip thrust", "clean", "snatch", "dip"
+        "lunge", "hip thrust", "clean", "snatch", "dip",
+        "pulldown", "pull down", "lat pull", "cable row", "seated row",
+        "leg curl", "leg extension", "chest fly", "face pull",
     ]
     is_compound = any(indicator in name_lower for indicator in compound_indicators)
 
@@ -362,7 +364,7 @@ def get_starting_weight(
     base_weights = {
         "beginner": {
             "compound": 10.0,   # Light weight to focus on form
-            "isolation": 5.0,   # Very light for isolation
+            "isolation": 7.5,   # Reasonable starting weight for isolation
         },
         "intermediate": {
             "compound": 20.0,   # Moderate weight
@@ -381,12 +383,30 @@ def get_starting_weight(
     if "kettlebell" in eq_lower:
         base_weight = base_weight * 0.6
 
-    # Machines often allow heavier starting weights
-    if "machine" in eq_lower:
-        base_weight = base_weight * 1.2
+    # Machines and cables often allow heavier starting weights
+    if "machine" in eq_lower or "cable" in eq_lower:
+        base_weight = base_weight * 1.5
 
     # Ensure we don't go below equipment baseline
     final_weight = max(base_weight, baseline)
+
+    # Apply exercise-specific minimum weight floors
+    exercise_min_weights = {
+        "lat pulldown": 15.0,
+        "pull down": 15.0,
+        "pulldown": 15.0,
+        "cable row": 15.0,
+        "seated row": 15.0,
+        "leg press": 40.0,
+        "leg curl": 10.0,
+        "leg extension": 10.0,
+        "chest press": 10.0,
+        "shoulder press": 10.0,
+    }
+    for key, min_w in exercise_min_weights.items():
+        if key in name_lower:
+            final_weight = max(final_weight, min_w)
+            break
 
     # Snap to valid weight for the equipment
     return snap_to_available_weights(final_weight, equipment_type)

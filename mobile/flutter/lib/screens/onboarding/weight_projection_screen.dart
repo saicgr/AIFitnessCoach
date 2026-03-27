@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/providers/window_mode_provider.dart';
+import '../../core/services/posthog_service.dart';
 import '../../widgets/glass_back_button.dart';
 import 'pre_auth_quiz_screen.dart';
 import 'widgets/foldable_quiz_scaffold.dart';
@@ -486,6 +487,17 @@ class _WeightProjectionScreenState
                 GestureDetector(
                   onTap: () {
                     HapticFeedback.mediumImpact();
+
+                    // Track weight goal set
+                    ref.read(posthogServiceProvider).capture(
+                      eventName: 'onboarding_weight_goal_set',
+                      properties: {
+                        'goal_weight_kg': goalWeight,
+                        'current_weight_kg': currentWeight,
+                        'direction': isLosingWeight ? 'lose' : 'gain',
+                      },
+                    );
+
                     context.go('/training-split');
                   },
                   child: Container(
@@ -967,6 +979,17 @@ class _WeightProjectionScreenState
                 GestureDetector(
                   onTap: () {
                     HapticFeedback.mediumImpact();
+
+                    // Track weight goal set (maintain)
+                    ref.read(posthogServiceProvider).capture(
+                      eventName: 'onboarding_weight_goal_set',
+                      properties: {
+                        'goal_weight_kg': currentWeight,
+                        'current_weight_kg': currentWeight,
+                        'direction': 'maintain',
+                      },
+                    );
+
                     context.go('/training-split');
                   },
                   child: Container(

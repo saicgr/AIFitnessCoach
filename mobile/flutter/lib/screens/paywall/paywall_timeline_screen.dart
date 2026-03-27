@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../../core/theme/theme_colors.dart';
 import '../../core/providers/window_mode_provider.dart';
+import '../../core/services/posthog_service.dart';
 import '../../widgets/glass_back_button.dart';
 import '../onboarding/widgets/foldable_quiz_scaffold.dart';
 
@@ -14,6 +15,13 @@ class PaywallTimelineScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // Track paywall timeline screen view
+    Future.microtask(() {
+      ref.read(posthogServiceProvider).capture(
+        eventName: 'paywall_timeline_viewed',
+      );
+    });
+
     final colors = ref.colors(context);
     final windowState = ref.watch(windowModeProvider);
     final isFoldable = FoldableQuizScaffold.shouldUseFoldableLayout(windowState);

@@ -7,6 +7,7 @@ import '../../data/models/home_layout.dart';
 import '../../data/providers/local_layout_provider.dart';
 import '../../data/services/haptic_service.dart';
 import '../../widgets/glass_sheet.dart';
+import '../../core/services/posthog_service.dart';
 import '../../widgets/pill_app_bar.dart';
 import '../../widgets/segmented_tab_bar.dart';
 import 'widgets/preview_tile_mock.dart';
@@ -29,6 +30,9 @@ class _LayoutEditorScreenState extends ConsumerState<LayoutEditorScreen>
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
     _checkUserDefault();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(posthogServiceProvider).capture(eventName: 'layout_editor_viewed');
+    });
   }
 
   @override

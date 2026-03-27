@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/services/posthog_service.dart';
 import '../../data/services/health_service.dart';
 import '../../data/services/haptic_service.dart';
 import '../../widgets/glass_back_button.dart';
@@ -64,6 +65,13 @@ class _HealthConnectScreenState extends ConsumerState<HealthConnectScreen> {
           _isSuccess = true;
         });
         HapticService.success();
+
+        // Track health connect decision
+        ref.read(posthogServiceProvider).capture(
+          eventName: 'onboarding_health_connect_decision',
+          properties: {'connected': true},
+        );
+
         // Brief pause so the user can see the success state before navigating.
         await Future.delayed(const Duration(milliseconds: 800));
         if (mounted) context.go('/feature-showcase');
@@ -84,6 +92,13 @@ class _HealthConnectScreenState extends ConsumerState<HealthConnectScreen> {
 
   Future<void> _handleSkip() async {
     HapticService.light();
+
+    // Track health connect skipped
+    ref.read(posthogServiceProvider).capture(
+      eventName: 'onboarding_health_connect_decision',
+      properties: {'connected': false},
+    );
+
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(kHealthConnectSkippedOnboardingKey, true);
     if (mounted) context.go('/feature-showcase');

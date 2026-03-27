@@ -524,33 +524,28 @@ class WeightSuggestionService {
 
     final rirDiff = loggedRir - targetRir;
 
-    // Determine percentage adjustment based on RIR difference
-    double adjustment;
+    // Use discrete increment steps instead of percentages to avoid
+    // compounding losses from percentage + rounding.
+    double newWeight;
     if (rirDiff <= -2) {
-      // Much harder than expected (e.g., target RIR 2, actual RIR 0)
-      adjustment = -0.15; // 15% drop
+      // Much harder than expected → drop 1 increment
+      newWeight = currentWeight - incrementKg;
     } else if (rirDiff == -1) {
-      // Slightly harder than expected
-      adjustment = -0.075; // 7.5% drop
+      // Slightly harder → maintain (borderline)
+      newWeight = currentWeight;
     } else if (rirDiff == 0) {
-      // Perfect! Weight was right on target
-      adjustment = 0;
+      // Perfect
+      newWeight = currentWeight;
     } else if (rirDiff == 1) {
-      // Slightly easier than expected
-      adjustment = 0.05; // 5% increase
+      // Slightly easier → add 1 increment
+      newWeight = currentWeight + incrementKg;
     } else {
-      // Much easier than expected (rirDiff >= 2)
-      adjustment = 0.10; // 10% increase
+      // Much easier (rirDiff >= 2) → add 2 increments
+      newWeight = currentWeight + (incrementKg * 2);
     }
 
-    // Calculate new weight
-    final newWeight = currentWeight * (1 + adjustment);
-
-    // Round to nearest equipment increment
-    final roundedWeight = (newWeight / incrementKg).round() * incrementKg;
-
     // Ensure we don't go below the minimum increment
-    return roundedWeight.clamp(incrementKg, 999.0);
+    return newWeight.clamp(incrementKg, 999.0);
   }
 
   /// Get adjustment info for UI display

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/theme/theme_colors.dart';
+import '../../core/services/posthog_service.dart';
 
 /// "24 hours, on me" free trial screen shown after user declines
 /// both the paywall and the discount popup.
@@ -9,6 +10,13 @@ class FreeTrialScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // Track free trial screen view
+    Future.microtask(() {
+      ref.read(posthogServiceProvider).capture(
+        eventName: 'paywall_free_trial_viewed',
+      );
+    });
+
     final colors = ref.colors(context);
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final bgColor = isDark ? colors.background : const Color(0xFFFBF5EF);
@@ -93,7 +101,12 @@ class FreeTrialScreen extends ConsumerWidget {
                   width: double.infinity,
                   height: 56,
                   child: ElevatedButton(
-                    onPressed: () => Navigator.pop(context, true),
+                    onPressed: () {
+                      ref.read(posthogServiceProvider).capture(
+                        eventName: 'paywall_free_trial_started',
+                      );
+                      Navigator.pop(context, true);
+                    },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: colors.accent,
                       foregroundColor: colors.accentContrast,

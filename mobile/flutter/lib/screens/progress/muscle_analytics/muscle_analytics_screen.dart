@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../../core/services/posthog_service.dart';
 import '../../../data/models/muscle_analytics.dart';
 import '../../../widgets/app_loading.dart';
 import '../../../data/providers/muscle_analytics_provider.dart';
@@ -30,6 +31,7 @@ class _MuscleAnalyticsScreenState extends ConsumerState<MuscleAnalyticsScreen>
     _tabController = TabController(length: 3, vsync: this);
     _tabController.addListener(_onTabChanged);
     _screenOpenTime = DateTime.now();
+    ref.read(posthogServiceProvider).capture(eventName: 'muscle_analytics_viewed');
   }
 
   @override

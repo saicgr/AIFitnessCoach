@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/providers/subscription_provider.dart';
+import '../../../core/services/posthog_service.dart';
 import '../../../data/repositories/subscription_repository.dart';
 import '../../../data/services/api_client.dart';
 import '../../../widgets/pill_app_bar.dart';
@@ -31,6 +32,12 @@ class _RequestRefundScreenState extends ConsumerState<RequestRefundScreen> {
   @override
   void initState() {
     super.initState();
+    // Track refund screen view
+    Future.microtask(() {
+      ref.read(posthogServiceProvider).capture(
+        eventName: 'refund_screen_viewed',
+      );
+    });
     _loadSubscriptionDetails();
   }
 
@@ -99,6 +106,16 @@ class _RequestRefundScreenState extends ConsumerState<RequestRefundScreen> {
         userId: userId,
         reason: _selectedReason!,
         comments: _commentsController.text.isNotEmpty ? _commentsController.text : null,
+      );
+
+      // Track successful refund request
+      ref.read(posthogServiceProvider).capture(
+        eventName: 'refund_requested',
+        properties: {
+          'reason': _selectedReason!.name,
+          'plan_name': _planName,
+          'has_comments': _commentsController.text.isNotEmpty,
+        },
       );
 
       if (mounted) {

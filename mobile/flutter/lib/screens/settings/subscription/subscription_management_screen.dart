@@ -11,6 +11,7 @@ import '../../../data/repositories/subscription_repository.dart';
 import '../../../data/services/api_client.dart';
 import 'cancel_confirmation_sheet.dart';
 import 'pause_subscription_sheet.dart';
+import '../../../core/services/posthog_service.dart';
 import '../../../widgets/glass_sheet.dart';
 import '../../../widgets/pill_app_bar.dart';
 
@@ -36,6 +37,12 @@ class _SubscriptionManagementScreenState
   @override
   void initState() {
     super.initState();
+    // Track subscription management screen view
+    Future.microtask(() {
+      ref.read(posthogServiceProvider).capture(
+        eventName: 'subscription_management_viewed',
+      );
+    });
     _loadSubscriptionDetails();
   }
 

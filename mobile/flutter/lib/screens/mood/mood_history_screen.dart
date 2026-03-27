@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../../core/constants/app_colors.dart';
 import '../../widgets/app_loading.dart';
+import '../../core/services/posthog_service.dart';
 import '../../widgets/pill_app_bar.dart';
 import '../../data/providers/mood_history_provider.dart';
 import 'widgets/mood_analytics_card.dart';
@@ -29,6 +30,7 @@ class _MoodHistoryScreenState extends ConsumerState<MoodHistoryScreen> {
     _scrollController.addListener(_onScroll);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(moodHistoryProvider.notifier).initialize();
+      ref.read(posthogServiceProvider).capture(eventName: 'mood_history_viewed');
     });
   }
 

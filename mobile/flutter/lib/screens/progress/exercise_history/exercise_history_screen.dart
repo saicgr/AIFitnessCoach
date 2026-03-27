@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import '../../../core/services/posthog_service.dart';
 import '../../../data/models/exercise_history.dart';
 import '../../../data/models/scores.dart';
 import '../../../data/providers/exercise_history_provider.dart';
@@ -30,6 +31,7 @@ class _ExerciseHistoryScreenState extends ConsumerState<ExerciseHistoryScreen>
     super.initState();
     _screenOpenTime = DateTime.now();
     _tabController = TabController(length: 2, vsync: this);
+    ref.read(posthogServiceProvider).capture(eventName: 'exercise_history_viewed');
   }
 
   @override

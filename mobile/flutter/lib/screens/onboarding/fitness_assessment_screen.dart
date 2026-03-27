@@ -7,6 +7,7 @@ import '../../core/constants/app_colors.dart';
 import '../../core/providers/window_mode_provider.dart';
 import '../../core/theme/accent_color_provider.dart';
 import '../../widgets/glass_back_button.dart';
+import '../../core/services/posthog_service.dart';
 import 'pre_auth_quiz_screen.dart';
 import 'widgets/foldable_quiz_scaffold.dart';
 
@@ -135,6 +136,14 @@ class _FitnessAssessmentScreenState
     // Calculate and save fitness level
     final calculatedLevel = _calculateFitnessLevel();
     await quizNotifier.setFitnessLevel(calculatedLevel);
+
+    // Track fitness assessment completion
+    ref.read(posthogServiceProvider).capture(
+      eventName: 'onboarding_fitness_assessment_completed',
+      properties: {
+        'fitness_level': calculatedLevel,
+      },
+    );
 
     // Navigate directly to paywall features
     if (mounted) {

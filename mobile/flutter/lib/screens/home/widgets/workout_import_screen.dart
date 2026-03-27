@@ -11,6 +11,7 @@ import '../../../data/services/haptic_service.dart';
 import '../../../data/services/health_import_service.dart';
 import '../../../widgets/glass_sheet.dart';
 import '../../../widgets/sheet_header.dart';
+import '../../../core/services/posthog_service.dart';
 
 // ---------------------------------------------------------------------------
 // Public API: call this to show the import sheet from home_screen.dart
@@ -55,6 +56,9 @@ class _WorkoutImportContentState extends ConsumerState<_WorkoutImportContent> {
   @override
   void initState() {
     super.initState();
+    ref.read(posthogServiceProvider).capture(
+      eventName: 'workout_import_initiated',
+    );
     _triggerHREnrichment();
   }
 
@@ -142,6 +146,13 @@ class _WorkoutImportContentState extends ConsumerState<_WorkoutImportContent> {
 
   void _handleImport(PendingWorkoutImport pending) {
     HapticService.medium();
+    ref.read(posthogServiceProvider).capture(
+      eventName: 'workout_import_completed',
+      properties: {
+        'activity_type': pending.activityType,
+        'duration_minutes': pending.durationMinutes,
+      },
+    );
     // Use overridden activity type if user changed it
     final importPending = _overrideActivityType != null
         ? pending.copyWithActivityType(_overrideActivityType!)

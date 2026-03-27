@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../../core/services/posthog_service.dart';
 import '../../../data/models/progress_charts.dart';
 import '../../../widgets/app_loading.dart';
 import '../../../data/providers/progress_charts_provider.dart';
@@ -33,6 +34,7 @@ class _ProgressChartsScreenState extends ConsumerState<ProgressChartsScreen>
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
+    ref.read(posthogServiceProvider).capture(eventName: 'progress_charts_viewed');
     _loadData();
   }
 

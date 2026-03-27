@@ -17,6 +17,7 @@ class ProgressTemplate extends StatelessWidget {
   final int? prsThisMonth;
   final DateTime completedAt;
   final bool showWatermark;
+  final String weightUnit;
 
   const ProgressTemplate({
     super.key,
@@ -32,6 +33,7 @@ class ProgressTemplate extends StatelessWidget {
     this.prsThisMonth,
     required this.completedAt,
     this.showWatermark = true,
+    this.weightUnit = 'kg',
   });
 
   String get _formattedDuration {
@@ -59,13 +61,13 @@ class ProgressTemplate extends StatelessWidget {
 
   String get _formattedTotalVolume {
     if (totalVolumeLifted == null) return '--';
-    if (totalVolumeLifted! >= 1000000) {
-      return '${(totalVolumeLifted! / 1000000).toStringAsFixed(1)}M kg';
+    final vol = totalVolumeLifted!.round();
+    if (vol >= 1000) {
+      final formatted = vol.toString().replaceAllMapped(
+          RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]},');
+      return '$formatted$weightUnit';
     }
-    if (totalVolumeLifted! >= 1000) {
-      return '${(totalVolumeLifted! / 1000).toStringAsFixed(1)}t';
-    }
-    return '${totalVolumeLifted!.toStringAsFixed(0)} kg';
+    return '$vol$weightUnit';
   }
 
   @override

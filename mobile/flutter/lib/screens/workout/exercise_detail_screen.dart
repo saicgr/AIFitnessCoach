@@ -6,13 +6,16 @@ import 'package:go_router/go_router.dart';
 import 'package:video_player/video_player.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/services/posthog_service.dart';
 import '../../core/theme/theme_colors.dart';
 import '../../core/providers/favorites_provider.dart';
 import '../../core/providers/staples_provider.dart';
 import '../../core/providers/exercise_queue_provider.dart';
 import '../../core/providers/avoided_provider.dart';
 import '../../widgets/glass_back_button.dart';
+import '../../widgets/exercise_stats_widgets.dart';
 import '../../data/models/exercise.dart';
+import '../../data/providers/exercise_history_provider.dart';
 import '../../data/services/api_client.dart';
 
 /// Full-screen exercise detail with autoplay video
@@ -54,7 +57,8 @@ class _CueItem {
   const _CueItem({required this.icon, required this.label, required this.text});
 }
 
-class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen> {
+class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen>
+    with SingleTickerProviderStateMixin {
   VideoPlayerController? _videoController;
   String? _imageUrl;
   String? _videoUrl;
@@ -71,13 +75,31 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen> {
   List<PreviousSetData> _previousSets = [];
   bool _isLoadingPrevious = true;
 
+  // Tab controller for Info/Stats/History floating pill bar
+  late TabController _tabController;
+  int _selectedTab = 0;
+
   @override
   void initState() {
     super.initState();
+    _tabController = TabController(length: 3, vsync: this);
+    _tabController.addListener(() {
+      if (_tabController.indexIsChanging) return;
+      setState(() => _selectedTab = _tabController.index);
+    });
     _loadMediaAndAutoplay();
     _loadPreviousPerformance();
     // Avoided provider is lazy — ensure it's loaded so isAvoided() works
     ref.read(avoidedProvider.notifier).ensureInitialized();
+
+    // Track exercise detail viewed
+    ref.read(posthogServiceProvider).capture(
+      eventName: 'exercise_detail_viewed',
+      properties: {
+        'exercise_name': widget.exercise.name,
+        'muscle_group': widget.exercise.muscleGroup ?? '',
+      },
+    );
   }
 
   Future<void> _loadPreviousPerformance() async {
@@ -120,6 +142,7 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen> {
 
   @override
   void dispose() {
+    _tabController.dispose();
     _restTimer?.cancel();
     _videoController?.dispose();
     super.dispose();
@@ -333,37 +356,48 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen> {
                   _buildActionRow(exercise, elevated, cardBorder, textMuted, accentColor),
                   const SizedBox(height: 24),
 
-                  // Instructions
-                  if (exercise.instructions != null &&
-                      exercise.instructions!.isNotEmpty)
-                    _buildInstructionsSection(exercise.instructions!, elevated, textSecondary),
+                  // Tab content - switches based on floating pill bar selection
+                  if (_selectedTab == 0) ...[
+                    // INFO TAB
+                    // Instructions
+                    if (exercise.instructions != null &&
+                        exercise.instructions!.isNotEmpty)
+                      _buildInstructionsSection(exercise.instructions!, elevated, textSecondary),
 
-                  // Rest Timer Card
-                  _buildRestTimerCard(restSeconds, elevated, textMuted, textPrimary),
-                  const SizedBox(height: 24),
+                    // Rest Timer Card
+                    _buildRestTimerCard(restSeconds, elevated, textMuted, textPrimary),
+                    const SizedBox(height: 24),
 
-                  // Set table header
-                  Text(
-                    'SETS',
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: textMuted,
-                      letterSpacing: 1.5,
+                    // Set table header
+                    Text(
+                      'SETS',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: textMuted,
+                        letterSpacing: 1.5,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 12),
+                    const SizedBox(height: 12),
 
-                  // Set table
-                  _buildSetTable(warmupSets, totalSets, repRange, exercise.weight, elevated, glassSurface, cardBorder, textPrimary, textMuted, textSecondary),
-                  const SizedBox(height: 24),
+                    // Set table
+                    _buildSetTable(warmupSets, totalSets, repRange, exercise.weight, elevated, glassSurface, cardBorder, textPrimary, textMuted, textSecondary),
+                    const SizedBox(height: 24),
 
-                  // Coaching cues (form, breathing, setup, tempo)
-                  _buildCoachingCuesSection(exercise, elevated, cardBorder, textPrimary, textSecondary, textMuted, accentColor),
+                    // Coaching cues (form, breathing, setup, tempo)
+                    _buildCoachingCuesSection(exercise, elevated, cardBorder, textPrimary, textSecondary, textMuted, accentColor),
 
-                  // Exercise info (difficulty, secondary muscles, substitution, notes)
-                  _buildExerciseInfoSection(exercise, elevated, cardBorder, textPrimary, textSecondary, textMuted, accentColor),
+                    // Exercise info (difficulty, secondary muscles, substitution, notes)
+                    _buildExerciseInfoSection(exercise, elevated, cardBorder, textPrimary, textSecondary, textMuted, accentColor),
+                  ] else if (_selectedTab == 1) ...[
+                    // STATS TAB
+                    _buildStatsTabContent(textMuted),
+                  ] else ...[
+                    // HISTORY TAB
+                    _buildHistoryTabContent(textMuted),
+                  ],
 
+                  // Bottom padding for floating pill bar
                   const SizedBox(height: 100),
                 ],
               ),
@@ -379,8 +413,244 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen> {
           onTap: () => context.pop(),
         ),
       ),
+      // Floating pill bar at bottom
+      Positioned(
+        left: 0,
+        right: 0,
+        bottom: MediaQuery.of(context).padding.bottom + 12,
+        child: _buildFloatingPillBar(accentColor, isDark),
+      ),
         ],
       ),
+    );
+  }
+
+  Widget _buildFloatingPillBar(Color accentColor, bool isDark) {
+    final pillBarColor = isDark
+        ? Colors.grey.shade900.withValues(alpha: 0.92)
+        : Colors.grey.shade100.withValues(alpha: 0.95);
+    final iconMuted = isDark ? Colors.grey.shade500 : Colors.grey.shade400;
+
+    return Center(
+      child: Container(
+        height: 48,
+        padding: const EdgeInsets.symmetric(horizontal: 6),
+        decoration: BoxDecoration(
+          color: pillBarColor,
+          borderRadius: BorderRadius.circular(24),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: isDark ? 0.25 : 0.06),
+              blurRadius: 10,
+              offset: const Offset(0, 3),
+            ),
+          ],
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _buildPillItem(Icons.info_outline, Icons.info_rounded, 'Info', 0, accentColor, iconMuted, isDark),
+            const SizedBox(width: 4),
+            _buildPillItem(Icons.bar_chart_outlined, Icons.bar_chart_rounded, 'Stats', 1, accentColor, iconMuted, isDark),
+            const SizedBox(width: 4),
+            _buildPillItem(Icons.history_outlined, Icons.history_rounded, 'History', 2, accentColor, iconMuted, isDark),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPillItem(IconData icon, IconData selectedIcon, String label, int index, Color accentColor, Color mutedColor, bool isDark) {
+    final isSelected = _selectedTab == index;
+    return GestureDetector(
+      onTap: () {
+        HapticFeedback.selectionClick();
+        _tabController.animateTo(index);
+      },
+      behavior: HitTestBehavior.opaque,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 250),
+        curve: Curves.easeOutCubic,
+        padding: EdgeInsets.symmetric(
+          horizontal: isSelected ? 14 : 10,
+          vertical: 8,
+        ),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? accentColor.withValues(alpha: isDark ? 0.15 : 0.12)
+              : Colors.transparent,
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              isSelected ? selectedIcon : icon,
+              color: isSelected ? accentColor : mutedColor,
+              size: 20,
+            ),
+            AnimatedSize(
+              duration: const Duration(milliseconds: 250),
+              curve: Curves.easeOutCubic,
+              child: isSelected
+                  ? Padding(
+                      padding: const EdgeInsets.only(left: 6),
+                      child: Text(
+                        label,
+                        style: TextStyle(
+                          color: accentColor,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    )
+                  : const SizedBox.shrink(),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStatsTabContent(Color textMuted) {
+    final exerciseName = widget.exercise.name;
+    final historyAsync = ref.watch(exerciseHistoryProvider(exerciseName));
+    final prsAsync = ref.watch(exercisePRsProvider(exerciseName));
+    final timeRange = ref.watch(exerciseHistoryTimeRangeProvider);
+    final chartType = ref.watch(exerciseChartTypeProvider);
+
+    return historyAsync.when(
+      loading: () => const Padding(
+        padding: EdgeInsets.symmetric(vertical: 48),
+        child: Center(child: CircularProgressIndicator()),
+      ),
+      error: (error, _) => Padding(
+        padding: const EdgeInsets.symmetric(vertical: 48),
+        child: Center(child: Text('Error loading stats: $error')),
+      ),
+      data: (history) {
+        if (!history.hasData) {
+          return Padding(
+            padding: const EdgeInsets.symmetric(vertical: 48),
+            child: Center(
+              child: Column(
+                children: [
+                  Icon(Icons.timeline_outlined, size: 48, color: textMuted),
+                  const SizedBox(height: 12),
+                  Text(
+                    'No stats for this exercise yet',
+                    style: TextStyle(color: textMuted, fontSize: 14),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Complete a workout to start tracking',
+                    style: TextStyle(color: textMuted.withValues(alpha: 0.6), fontSize: 12),
+                  ),
+                ],
+              ),
+            ),
+          );
+        }
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            ExerciseTimeRangeSelector(
+              selected: timeRange,
+              onChanged: (value) {
+                ref.read(exerciseHistoryTimeRangeProvider.notifier).state = value;
+              },
+            ),
+            const SizedBox(height: 16),
+
+            if (history.summary != null)
+              ExerciseSummaryCard(summary: history.summary!),
+            const SizedBox(height: 16),
+
+            ExerciseChartTypeSelector(
+              selected: chartType,
+              onChanged: (value) {
+                ref.read(exerciseChartTypeProvider.notifier).state = value;
+              },
+            ),
+            const SizedBox(height: 12),
+
+            ExerciseProgressionChart(
+              history: history,
+              chartType: chartType,
+            ),
+            const SizedBox(height: 24),
+
+            prsAsync.when(
+              loading: () => const SizedBox.shrink(),
+              error: (_, __) => const SizedBox.shrink(),
+              data: (prs) {
+                if (prs.isEmpty) return const SizedBox.shrink();
+                return ExercisePersonalRecordsSection(records: prs);
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildHistoryTabContent(Color textMuted) {
+    final exerciseName = widget.exercise.name;
+    final historyAsync = ref.watch(exerciseHistoryProvider(exerciseName));
+
+    return historyAsync.when(
+      loading: () => const Padding(
+        padding: EdgeInsets.symmetric(vertical: 48),
+        child: Center(child: CircularProgressIndicator()),
+      ),
+      error: (error, _) => Padding(
+        padding: const EdgeInsets.symmetric(vertical: 48),
+        child: Center(child: Text('Error loading history: $error')),
+      ),
+      data: (history) {
+        final sessions = history.sortedSessionsNewestFirst;
+
+        if (sessions.isEmpty) {
+          return Padding(
+            padding: const EdgeInsets.symmetric(vertical: 48),
+            child: Center(
+              child: Column(
+                children: [
+                  Icon(Icons.history_outlined, size: 48, color: textMuted),
+                  const SizedBox(height: 12),
+                  Text(
+                    'No history for this exercise yet',
+                    style: TextStyle(color: textMuted, fontSize: 14),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Your sessions will appear here',
+                    style: TextStyle(color: textMuted.withValues(alpha: 0.6), fontSize: 12),
+                  ),
+                ],
+              ),
+            ),
+          );
+        }
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              '${sessions.length} SESSION${sessions.length == 1 ? '' : 'S'}',
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: textMuted,
+                letterSpacing: 1.5,
+              ),
+            ),
+            const SizedBox(height: 12),
+            ...sessions.map((session) => ExerciseSessionCard(session: session)),
+          ],
+        );
+      },
     );
   }
 
@@ -995,6 +1265,7 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen> {
             child: Row(
               children: [
                 SizedBox(width: 36, child: Text('Set', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: textMuted, letterSpacing: 0.3))),
+                const SizedBox(width: 12),
                 Expanded(
                   flex: 2,
                   child: Text('Previous', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: textMuted, letterSpacing: 0.3)),
@@ -1098,6 +1369,8 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen> {
               ),
             ),
           ),
+
+          const SizedBox(width: 12),
 
           // Previous column - weight × reps + RIR
           Expanded(

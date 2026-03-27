@@ -1,15 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/services/posthog_service.dart';
 import '../../widgets/pill_app_bar.dart';
 
 /// Screen explaining how AI uses user data, what it sees and doesn't see,
 /// and how data is protected.
-class AIDataUsageScreen extends StatelessWidget {
+class AIDataUsageScreen extends ConsumerWidget {
   const AIDataUsageScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    ref.read(posthogServiceProvider).capture(eventName: 'ai_data_usage_viewed');
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final backgroundColor = isDark ? AppColors.pureBlack : AppColorsLight.pureWhite;
     final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;

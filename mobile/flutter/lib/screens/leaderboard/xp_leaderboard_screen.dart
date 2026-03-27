@@ -9,6 +9,7 @@ import '../../data/repositories/auth_repository.dart';
 import '../../data/repositories/xp_repository.dart';
 import '../../data/services/api_client.dart';
 import '../../data/services/haptic_service.dart';
+import '../../core/services/posthog_service.dart';
 import '../../widgets/pill_app_bar.dart';
 
 /// XP Leaderboard screen showing top users by level and XP
@@ -30,6 +31,7 @@ class _XPLeaderboardScreenState extends ConsumerState<XPLeaderboardScreen> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _loadData();
+      ref.read(posthogServiceProvider).capture(eventName: 'leaderboard_viewed');
     });
   }
 

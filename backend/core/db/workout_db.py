@@ -83,6 +83,11 @@ class WorkoutDB(BaseDB):
         # Only show current workouts (filter out superseded versions from SCD2)
         query = query.eq("is_current", True)
 
+        # Exclude generation placeholders (status='generating') — these are temporary
+        # rows inserted during workout generation to prevent duplicates.
+        # Normal workouts have status=NULL, so we must allow NULLs through.
+        query = query.or_("status.is.null,status.neq.generating")
+
         if is_completed is not None:
             query = query.eq("is_completed", is_completed)
         if from_date:
@@ -273,6 +278,9 @@ class WorkoutDB(BaseDB):
             .eq("user_id", user_id)
             .eq("is_current", True)
         )
+
+        # Exclude generation placeholders (status='generating')
+        query = query.or_("status.is.null,status.neq.generating")
 
         # Filter by gym profile if specified — also include workouts with no profile
         if gym_profile_id:

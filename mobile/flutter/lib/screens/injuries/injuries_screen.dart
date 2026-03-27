@@ -7,6 +7,7 @@ import '../../widgets/app_loading.dart';
 import '../../widgets/app_snackbar.dart';
 import '../../data/models/injury.dart';
 import '../../widgets/pill_app_bar.dart';
+import '../../core/services/posthog_service.dart';
 import '../../widgets/segmented_tab_bar.dart';
 import 'widgets/injury_card.dart';
 
@@ -41,6 +42,9 @@ class _InjuriesScreenState extends ConsumerState<InjuriesScreen>
       }
     });
     _loadInjuries();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(posthogServiceProvider).capture(eventName: 'injuries_viewed');
+    });
   }
 
   @override

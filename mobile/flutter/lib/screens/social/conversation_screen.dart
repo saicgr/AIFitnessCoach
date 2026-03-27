@@ -11,6 +11,7 @@ import '../../data/providers/e2ee_provider.dart';
 import '../../data/providers/social_provider.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../../widgets/app_loading.dart';
+import '../../core/services/posthog_service.dart';
 import '../../widgets/pill_app_bar.dart';
 import '../../widgets/main_shell.dart';
 import 'friend_profile_screen.dart';
@@ -50,6 +51,10 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(posthogServiceProvider).capture(
+        eventName: 'social_conversation_opened',
+        properties: {'is_group': widget.isGroup},
+      );
       ref.read(floatingNavBarVisibleProvider.notifier).state = false;
       final authState = ref.read(authStateProvider);
       final userId = authState.user?.id;

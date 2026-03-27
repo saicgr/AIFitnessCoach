@@ -45,6 +45,7 @@ import '../../data/repositories/auth_repository.dart';
 import '../../data/repositories/measurements_repository.dart';
 import 'widgets/date_range_filter_sheet.dart';
 import 'widgets/export_stats_sheet.dart';
+import '../../core/services/posthog_service.dart';
 import 'widgets/share_stats_sheet.dart';
 
 /// Comprehensive Stats Screen
@@ -85,6 +86,9 @@ class _ComprehensiveStatsScreenState extends ConsumerState<ComprehensiveStatsScr
       _tabController.index = widget.initialTab!;
     }
     _loadData();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(posthogServiceProvider).capture(eventName: 'comprehensive_stats_viewed');
+    });
   }
 
   Future<void> _loadData() async {

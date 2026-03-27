@@ -100,6 +100,9 @@ class FoodDatabaseLookupService:
         self._overrides_word_index: Dict[str, set] = {}
         self._overrides_loaded_at: float = 0
         self._overrides_ttl = 1800  # 30 minutes
+        # Circuit breaker for OpenFoodFacts API
+        self._off_failures: int = 0
+        self._off_circuit_open_until: float = 0.0
 
     # ── Cache helpers ──────────────────────────────────────────────
 
@@ -156,75 +159,11 @@ class FoodDatabaseLookupService:
         food_category: Optional[str] = None,
         region: Optional[str] = None,
     ) -> List[Dict]:
-        """Search overrides via database query instead of in-memory scan.
-        Uses two passes: exact/prefix matches first, then substring matches."""
+        """Search overrides via a single ranked SQL query instead of 4 sequential passes."""
         try:
-            from core.supabase_client import get_supabase as _get_sb
-            sb = _get_sb()
+            sb = get_supabase()
 
-            def _build_query(pattern: str):
-                q = sb.client.table("food_nutrition_overrides").select("*").eq("is_active", True)
-                q = q.ilike("display_name", pattern)
-                if restaurant:
-                    q = q.ilike("restaurant_name", f"%{restaurant}%")
-                if food_category:
-                    q = q.eq("food_category", food_category)
-                if region:
-                    q = q.eq("region", region.upper())
-                return q
-
-            matches = []
-            seen_names = set()
-
-            if query:
-                query_lower = query.lower().strip()
-
-                # Pass 1: Exact name match (highest priority)
-                exact = sb.client.table("food_nutrition_overrides").select("*").eq(
-                    "is_active", True
-                ).eq("food_name_normalized", query_lower).limit(1).execute()
-                if exact.data:
-                    row = exact.data[0]
-                    name = row["display_name"]
-                    matches.append(self._override_row_to_search_result(row))
-                    seen_names.add(name)
-
-                # Pass 2: Prefix matches (e.g., "Apple ..." but not "Pineapple")
-                if len(matches) < limit:
-                    result = _build_query(f"{query}%").limit(limit).execute()
-                    if result.data:
-                        for row in result.data:
-                            name = row["display_name"]
-                            if name not in seen_names:
-                                matches.append(self._override_row_to_search_result(row))
-                                seen_names.add(name)
-
-                # Pass 3: Substring matches for remaining slots
-                if len(matches) < limit:
-                    remaining = limit - len(matches)
-                    result2 = _build_query(f"% {query}%").limit(remaining).execute()
-                    if result2.data:
-                        for row in result2.data:
-                            name = row["display_name"]
-                            if name not in seen_names:
-                                matches.append(self._override_row_to_search_result(row))
-                                seen_names.add(name)
-                                if len(matches) >= limit:
-                                    break
-
-                # Pass 4: Broad substring if still not enough
-                if len(matches) < limit:
-                    remaining = limit - len(matches)
-                    result3 = _build_query(f"%{query}%").limit(remaining + len(matches)).execute()
-                    if result3.data:
-                        for row in result3.data:
-                            name = row["display_name"]
-                            if name not in seen_names:
-                                matches.append(self._override_row_to_search_result(row))
-                                seen_names.add(name)
-                                if len(matches) >= limit:
-                                    break
-            else:
+            if not query:
                 # No query — browse by restaurant/category/region
                 q = sb.client.table("food_nutrition_overrides").select("*").eq("is_active", True)
                 if restaurant:
@@ -234,11 +173,65 @@ class FoodDatabaseLookupService:
                 if region:
                     q = q.eq("region", region.upper())
                 result = q.limit(limit).execute()
-                if result.data:
-                    for row in result.data:
-                        matches.append(self._override_row_to_search_result(row))
+                return [self._override_row_to_search_result(row) for row in (result.data or [])]
 
-            return matches
+            q = query.lower().strip()
+
+            # Build optional filter clauses for raw SQL
+            filters = []
+            params = {
+                "q": q,
+                "lim": limit,
+                "q_prefix": q + "%",
+                "q_word": "% " + q + "%",
+                "q_broad": "%" + q + "%",
+            }
+
+            if restaurant:
+                filters.append("AND restaurant_name ILIKE :restaurant")
+                params["restaurant"] = f"%{restaurant}%"
+            if food_category:
+                filters.append("AND food_category = :food_category")
+                params["food_category"] = food_category.lower()
+            if region:
+                filters.append("AND region = :region")
+                params["region"] = region.upper()
+
+            filter_clause = " ".join(filters)
+
+            async with sb.get_session() as session:
+                result = await asyncio.wait_for(
+                    session.execute(text(f"""
+                        SELECT *, CASE
+                            WHEN food_name_normalized = :q THEN 0
+                            WHEN :q = ANY(variant_names) THEN 1
+                            WHEN display_name ILIKE :q_prefix THEN 1
+                            WHEN display_name ILIKE :q_word THEN 2
+                            WHEN display_name ILIKE :q_broad THEN 3
+                            WHEN EXISTS (SELECT 1 FROM unnest(variant_names) v WHERE v ILIKE :q_broad) THEN 2
+                            ELSE 4
+                        END AS match_rank
+                        FROM food_nutrition_overrides
+                        WHERE is_active = TRUE
+                        AND (
+                            food_name_normalized = :q
+                            OR display_name ILIKE :q_broad
+                            OR :q = ANY(variant_names)
+                            OR EXISTS (SELECT 1 FROM unnest(variant_names) v WHERE v ILIKE :q_broad)
+                        )
+                        {filter_clause}
+                        ORDER BY match_rank, display_name
+                        LIMIT :lim
+                    """), params),
+                    timeout=3.0,
+                )
+                rows = [dict(row._mapping) for row in result.fetchall()]
+
+            return [self._override_row_to_search_result(row) for row in rows]
+
+        except asyncio.TimeoutError:
+            logger.warning(f"[FoodDB] Override search timed out for '{query}'")
+            return []
         except Exception as e:
             logger.warning(f"[FoodDB] Override DB search failed: {e}")
             return []
@@ -473,6 +466,235 @@ class FoodDatabaseLookupService:
             logger.debug(f"[FoodDB] Override DB lookup failed for '{food_name}': {e}")
 
         return None
+
+    # ── Cooking-method stem map (bidirectional) ────────────────────────
+    _COOKING_STEMS: Dict[str, str] = {
+        'mash': 'mashed', 'mashed': 'mash',
+        'fry': 'fried', 'fried': 'fry',
+        'grill': 'grilled', 'grilled': 'grill',
+        'bake': 'baked', 'baked': 'bake',
+        'roast': 'roasted', 'roasted': 'roast',
+        'steam': 'steamed', 'steamed': 'steam',
+        'boil': 'boiled', 'boiled': 'boil',
+        'poach': 'poached', 'poached': 'poach',
+        'smoke': 'smoked', 'smoked': 'smoke',
+        'scramble': 'scrambled', 'scrambled': 'scramble',
+        'saute': 'sauteed', 'sauteed': 'saute',
+        'blanch': 'blanched', 'blanched': 'blanch',
+        'braise': 'braised', 'braised': 'braise',
+        'toast': 'toasted', 'toasted': 'toast',
+        'chop': 'chopped', 'chopped': 'chop',
+        'dice': 'diced', 'diced': 'dice',
+        'slice': 'sliced', 'sliced': 'slice',
+        'blend': 'blended', 'blended': 'blend',
+        'puree': 'pureed', 'pureed': 'puree',
+        'crush': 'crushed', 'crushed': 'crush',
+        'shred': 'shredded', 'shredded': 'shred',
+        'whip': 'whipped', 'whipped': 'whip',
+        'pickle': 'pickled', 'pickled': 'pickle',
+        'ferment': 'fermented', 'fermented': 'ferment',
+        'dry': 'dried', 'dried': 'dry',
+        'marinate': 'marinated', 'marinated': 'marinate',
+        'stir-fry': 'stir-fried', 'stir-fried': 'stir-fry',
+        'freeze': 'frozen', 'frozen': 'freeze',
+    }
+
+    @staticmethod
+    def _stem_simple_static(word: str) -> str:
+        """Basic plural stripping: bananas→banana, berries→berry, etc."""
+        if len(word) <= 3:
+            return word
+        if word.endswith("ies") and len(word) > 4:
+            return word[:-3] + "y"
+        if word.endswith("oes") and len(word) > 4:
+            return word[:-2]
+        if word.endswith("ches") or word.endswith("shes") or word.endswith("xes"):
+            return word[:-2]
+        if word.endswith("s") and not word.endswith("ss"):
+            return word[:-1]
+        return word
+
+    def _generate_fuzzy_candidates(self, query: str) -> List[str]:
+        """
+        Generate candidate strings by applying cooking-method stemming,
+        plural stemming, and word reordering.
+
+        Rules:
+        - Reorder only for 2-word queries (avoids chocolate milk ↔ milk chocolate)
+        - For 3-word: stem + original order + move-first-to-end
+        - Max ~16 candidates per query
+        """
+        words = query.lower().strip().split()
+        if not words or len(words) > 4:
+            return []
+
+        # Build variants for each word
+        from itertools import product as iter_product
+        word_variants = []
+        for w in words:
+            variants = {w}
+            # Cooking stem
+            if w in self._COOKING_STEMS:
+                variants.add(self._COOKING_STEMS[w])
+            # Plural stem
+            stemmed = self._stem_simple_static(w)
+            if stemmed != w:
+                variants.add(stemmed)
+                # Also cooking-stem the plural-stemmed form
+                if stemmed in self._COOKING_STEMS:
+                    variants.add(self._COOKING_STEMS[stemmed])
+            word_variants.append(list(variants))
+
+        candidates = set()
+        for combo in iter_product(*word_variants):
+            # Original word order
+            candidates.add(' '.join(combo))
+            # Reversed order — only for 2-word queries
+            if len(combo) == 2:
+                candidates.add(' '.join(reversed(combo)))
+            # For 3-word: move first word to end
+            elif len(combo) == 3:
+                candidates.add(f"{combo[1]} {combo[2]} {combo[0]}")
+                candidates.add(f"{combo[2]} {combo[0]} {combo[1]}")
+
+        # Remove the original query (already tried in exact match)
+        candidates.discard(query.lower().strip())
+        return list(candidates)[:20]  # Safety cap
+
+    async def _check_override_fuzzy_db(self, food_name: str) -> Optional[Dict]:
+        """
+        Extended override lookup with DB-backed fuzzy matching.
+
+        Tries progressively fuzzier steps:
+        1. Exact match on food_name_normalized (existing _check_override)
+        2. Exact match in variant_names array (DB query, GIN index)
+        3. Stemmed + reordered candidates vs variant_names (DB overlaps)
+        4. Trigram similarity on food_name_normalized (threshold 0.4, 4+ chars)
+        """
+        # Step 1: Exact match (existing, fast)
+        result = self._check_override(food_name)
+        if result:
+            return result
+
+        normalized = food_name.lower().strip()
+        if not normalized:
+            return None
+
+        try:
+            sb = get_supabase()
+
+            # Step 2: Check variant_names array for exact match
+            resp = sb.client.table("food_nutrition_overrides").select("*").eq(
+                "is_active", True
+            ).contains("variant_names", [normalized]).limit(1).execute()
+
+            if resp.data:
+                row = resp.data[0]
+                override_data = self._row_to_override_dict(row)
+                # Cache for future exact lookups
+                self._overrides[normalized] = override_data
+                logger.info(
+                    f"[FoodDB] OVERRIDE HIT (variant): '{food_name}' → "
+                    f"{override_data['display_name']} ({override_data['calories_per_100g']} cal/100g)"
+                )
+                return override_data
+
+            # Step 3: Stemmed + reordered candidates vs variant_names
+            candidates = self._generate_fuzzy_candidates(normalized)
+            if candidates:
+                resp = sb.client.table("food_nutrition_overrides").select("*").eq(
+                    "is_active", True
+                ).overlaps("variant_names", candidates).limit(3).execute()
+
+                if resp.data:
+                    # Pick the best match: prefer the one with highest word overlap
+                    best = self._pick_best_fuzzy_match(resp.data, normalized)
+                    override_data = self._row_to_override_dict(best)
+                    matched_candidate = next(
+                        (c for c in candidates if c in [v.lower() for v in (best.get("variant_names") or [])]),
+                        "fuzzy"
+                    )
+                    self._overrides[normalized] = override_data
+                    logger.info(
+                        f"[FoodDB] OVERRIDE HIT (fuzzy): '{food_name}' → "
+                        f"{override_data['display_name']} via '{matched_candidate}' "
+                        f"({override_data['calories_per_100g']} cal/100g)"
+                    )
+                    return override_data
+
+            # Step 4: Trigram similarity on food_name_normalized (4+ chars only)
+            if len(normalized) >= 4:
+                try:
+                    async with sb.get_session() as session:
+                        result_row = await asyncio.wait_for(
+                            session.execute(text("""
+                                SELECT *, similarity(food_name_normalized, :q) AS sim
+                                FROM food_nutrition_overrides
+                                WHERE is_active = TRUE
+                                AND similarity(food_name_normalized, :q) > 0.4
+                                ORDER BY sim DESC
+                                LIMIT 1
+                            """), {"q": normalized}),
+                            timeout=2.0,
+                        )
+                        row = result_row.fetchone()
+                        if row:
+                            row_dict = dict(row._mapping)
+                            override_data = self._row_to_override_dict(row_dict)
+                            self._overrides[normalized] = override_data
+                            logger.info(
+                                f"[FoodDB] OVERRIDE HIT (trigram {row_dict.get('sim', 0):.2f}): "
+                                f"'{food_name}' → {override_data['display_name']}"
+                            )
+                            return override_data
+                except Exception as e:
+                    logger.debug(f"[FoodDB] Trigram search failed for '{food_name}': {e}")
+
+        except Exception as e:
+            logger.debug(f"[FoodDB] Fuzzy override lookup failed for '{food_name}': {e}")
+
+        return None
+
+    def _row_to_override_dict(self, row: Dict) -> Dict:
+        """Convert a food_nutrition_overrides DB row to override data dict."""
+        return {
+            "display_name": row["display_name"],
+            "calories_per_100g": float(row.get("calories_per_100g") or 0),
+            "protein_per_100g": float(row.get("protein_per_100g") or 0),
+            "carbs_per_100g": float(row.get("carbs_per_100g") or 0),
+            "fat_per_100g": float(row.get("fat_per_100g") or 0),
+            "fiber_per_100g": float(row.get("fiber_per_100g") or 0),
+            "override_weight_per_piece_g": float(row["default_weight_per_piece_g"]) if row.get("default_weight_per_piece_g") else None,
+            "override_serving_g": float(row["default_serving_g"]) if row.get("default_serving_g") else None,
+            "source": row.get("source", "manual"),
+            "restaurant_name": row.get("restaurant_name"),
+            "food_category": row.get("food_category"),
+            "default_count": int(row["default_count"]) if row.get("default_count") else 1,
+            "variant_names": row.get("variant_names") or [],
+            "region": row.get("region"),
+        }
+
+    def _pick_best_fuzzy_match(self, rows: List[Dict], query: str) -> Dict:
+        """Pick the best match from multiple fuzzy results based on word overlap."""
+        if len(rows) == 1:
+            return rows[0]
+
+        query_words = set(query.lower().split())
+        best_row = rows[0]
+        best_score = 0
+
+        for row in rows:
+            name_words = set((row.get("display_name") or "").lower().split())
+            variant_words = set()
+            for v in (row.get("variant_names") or []):
+                variant_words.update(v.lower().split())
+            all_words = name_words | variant_words
+            overlap = len(query_words & all_words)
+            if overlap > best_score:
+                best_score = overlap
+                best_row = row
+
+        return best_row
 
     def _override_to_nutrition(self, override: Dict) -> Dict:
         """Convert an override dict to the standard nutrition dict format."""
@@ -822,9 +1044,13 @@ class FoodDatabaseLookupService:
 
     async def _search_off_text(self, query: str, limit: int = 20) -> List[Dict]:
         """OpenFoodFacts text-search fallback for typos / zero-result RPC queries."""
+        # Circuit breaker: skip if too many recent failures
+        if time.time() < self._off_circuit_open_until:
+            logger.info("[FoodDB] OFF circuit breaker open, skipping")
+            return []
         try:
             async with httpx.AsyncClient(
-                timeout=httpx.Timeout(4.0, connect=2.0),
+                timeout=httpx.Timeout(2.0, connect=2.0),
                 headers={"User-Agent": OFF_USER_AGENT},
             ) as client:
                 resp = await client.get(
@@ -866,8 +1092,14 @@ class FoodDatabaseLookupService:
                     "similarity_score": 0.5,
                 })
             logger.info(f"[FoodDB] OFF fallback returned {len(results)} results for '{query}'")
+            if results:
+                self._off_failures = 0
             return results
         except Exception as e:
+            self._off_failures += 1
+            if self._off_failures >= 3:
+                self._off_circuit_open_until = time.time() + 300  # 5 min cooldown
+                logger.warning(f"[FoodDB] OFF circuit breaker OPENED after {self._off_failures} failures")
             logger.warning(f"[FoodDB] OFF fallback failed for '{query}': {e}")
             return []
 
@@ -935,7 +1167,7 @@ class FoodDatabaseLookupService:
                         """),
                         {"q": query.lower().strip(), "lim": limit, "off": offset},
                     ),
-                    timeout=3.0,
+                    timeout=1.5,
                 )
                 rows = [dict(row._mapping) for row in result.fetchall()]
 
@@ -1061,7 +1293,7 @@ class FoodDatabaseLookupService:
                                         text("SELECT * FROM search_food_database(:q, :lim, :off)"),
                                         {"q": query, "lim": remaining, "off": offset},
                                     ),
-                                    timeout=3.0,
+                                    timeout=2.0,
                                 )
                                 return [dict(row._mapping) for row in result.fetchall()]
                         except asyncio.TimeoutError:
@@ -1237,7 +1469,7 @@ class FoodDatabaseLookupService:
                                     text("SELECT * FROM search_food_database(:q, :lim, :off)"),
                                     {"q": query, "lim": remaining, "off": offset},
                                 ),
-                                timeout=5.0,
+                                timeout=2.5,
                             )
                             db_foods = [dict(row._mapping) for row in result.fetchall()]
                     except asyncio.TimeoutError:

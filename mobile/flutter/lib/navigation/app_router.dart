@@ -1091,10 +1091,14 @@ final routerProvider = Provider<GoRouter>((ref) {
               // Support deep link: fitwiz://nutrition?tab=2 (0=Daily, 1=Nutrients, 2=Water, 3=Fast)
               final tabParam = state.uri.queryParameters['tab'];
               final initialTab = tabParam != null ? int.tryParse(tabParam) ?? 0 : 0;
+              // Support deep link: fitwiz://nutrition?camera=true (auto-open camera for meal photo)
+              final autoOpenCamera = state.uri.queryParameters['camera'] == 'true';
+              // Support deep link: fitwiz://nutrition?barcode=true (auto-open barcode scanner)
+              final autoOpenBarcode = state.uri.queryParameters['barcode'] == 'true';
               return NoTransitionPage(
                 // Key on query params so GoRouter rebuilds when ?tab= changes
                 key: state.pageKey,
-                child: NutritionScreen(initialMeal: initialMeal, initialTab: initialTab),
+                child: NutritionScreen(initialMeal: initialMeal, initialTab: initialTab, autoOpenCamera: autoOpenCamera, autoOpenBarcode: autoOpenBarcode),
               );
             },
           ),

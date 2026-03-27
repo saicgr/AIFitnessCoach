@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/services/posthog_service.dart';
 import '../../data/services/haptic_service.dart';
 import '../../widgets/pill_app_bar.dart';
 
@@ -151,6 +152,7 @@ class HomescreenCustomizationScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    ref.read(posthogServiceProvider).capture(eventName: 'homescreen_customization_viewed');
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final backgroundColor = isDark ? AppColors.background : AppColorsLight.background;
     final textColor = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;

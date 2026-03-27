@@ -14,7 +14,10 @@ import '../../../widgets/segmented_tab_bar.dart';
 
 /// Bottom sheet for creating a new custom exercise
 class CreateExerciseSheet extends ConsumerStatefulWidget {
-  const CreateExerciseSheet({super.key});
+  /// Optional initial name to pre-fill the exercise name field
+  final String? initialName;
+
+  const CreateExerciseSheet({super.key, this.initialName});
 
   @override
   ConsumerState<CreateExerciseSheet> createState() => _CreateExerciseSheetState();
@@ -65,6 +68,9 @@ class _CreateExerciseSheetState extends ConsumerState<CreateExerciseSheet>
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
+    if (widget.initialName != null) {
+      _nameController.text = widget.initialName!;
+    }
   }
 
   @override

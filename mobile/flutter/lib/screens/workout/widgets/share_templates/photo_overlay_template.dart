@@ -15,6 +15,7 @@ class PhotoOverlayTemplate extends StatelessWidget {
   final String? userPhotoUrl;
   final DateTime completedAt;
   final bool showWatermark;
+  final String weightUnit;
 
   const PhotoOverlayTemplate({
     super.key,
@@ -27,6 +28,7 @@ class PhotoOverlayTemplate extends StatelessWidget {
     this.userPhotoUrl,
     required this.completedAt,
     this.showWatermark = true,
+    this.weightUnit = 'kg',
   });
 
   String get _formattedDuration {
@@ -41,10 +43,13 @@ class PhotoOverlayTemplate extends StatelessWidget {
 
   String get _formattedVolume {
     if (totalVolumeKg == null) return '--';
-    if (totalVolumeKg! >= 1000) {
-      return '${(totalVolumeKg! / 1000).toStringAsFixed(1)}t';
+    final vol = totalVolumeKg!.round();
+    if (vol >= 1000) {
+      final formatted = vol.toString().replaceAllMapped(
+          RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]},');
+      return '$formatted$weightUnit';
     }
-    return '${totalVolumeKg!.toStringAsFixed(0)}kg';
+    return '$vol$weightUnit';
   }
 
   @override

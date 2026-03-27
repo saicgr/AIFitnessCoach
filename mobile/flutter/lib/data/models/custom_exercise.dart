@@ -1,5 +1,6 @@
 import 'package:equatable/equatable.dart';
 import 'package:json_annotation/json_annotation.dart';
+import '../repositories/library_repository.dart';
 
 part 'custom_exercise.g.dart';
 
@@ -468,4 +469,19 @@ class ExerciseSearchResult extends Equatable {
 
   @override
   List<Object?> get props => [id, name];
+}
+
+/// Extension to convert CustomExercise to LibraryExerciseItem for use in
+/// exercise picker, swap sheet, and add sheet search results.
+extension CustomExerciseToLibraryItem on CustomExercise {
+  LibraryExerciseItem toLibraryItem() {
+    return LibraryExerciseItem(
+      id: 'custom_$id',
+      name: name,
+      bodyPart: primaryMuscle,
+      equipment: equipment,
+      targetMuscle: primaryMuscle,
+      videoUrl: customVideoUrl,
+    );
+  }
 }

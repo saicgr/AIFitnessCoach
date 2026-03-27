@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
 import '../../data/services/api_client.dart';
 import '../../data/services/challenges_service.dart';
+import '../../core/services/posthog_service.dart';
 import '../../widgets/pill_app_bar.dart';
 
 /// Full-screen side-by-side comparison of challenge results.
@@ -31,6 +32,9 @@ class _ChallengeCompareScreenState
   void initState() {
     super.initState();
     _loadChallenge();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(posthogServiceProvider).capture(eventName: 'challenge_compare_viewed');
+    });
   }
 
   Future<void> _loadChallenge() async {

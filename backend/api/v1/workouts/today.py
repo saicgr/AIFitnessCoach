@@ -544,12 +544,35 @@ async def get_today_workout(
         if not today_rows:
             logger.debug(f"[TODAY DEBUG] No workout found for today ({today_str}), profile={active_profile_id}")
 
+        # Check if a generation placeholder exists for today (list_workouts now
+        # excludes status='generating' rows, so we need a separate check to
+        # signal the frontend to poll until the real workout is ready).
+        generating_for_today = False
+        try:
+            gen_check = db.client.table("workouts").select("id").eq(
+                "user_id", user_id
+            ).gte(
+                "scheduled_date", today_str
+            ).lte(
+                "scheduled_date", today_str + "T23:59:59.999999+00:00"
+            ).eq("status", "generating")
+            if active_profile_id:
+                gen_check = gen_check.or_(
+                    f"gym_profile_id.eq.{active_profile_id},gym_profile_id.is.null"
+                )
+            gen_result = gen_check.execute()
+            generating_for_today = bool(gen_result.data)
+            if generating_for_today:
+                logger.debug(f"[TODAY DEBUG] Generation placeholder found for today ({today_str})")
+        except Exception as e:
+            logger.debug(f"[TODAY DEBUG] Generation placeholder check failed: {e}")
+
         today_workout: Optional[TodayWorkoutSummary] = None
         extra_today_workouts: List[TodayWorkoutSummary] = []
         next_workout: Optional[TodayWorkoutSummary] = None
         has_workout_today = False
-        is_generating = False
-        generation_message: Optional[str] = None
+        is_generating = generating_for_today
+        generation_message: Optional[str] = "Generating your workout..." if generating_for_today else None
         days_until_next: Optional[int] = None
 
         if today_rows:

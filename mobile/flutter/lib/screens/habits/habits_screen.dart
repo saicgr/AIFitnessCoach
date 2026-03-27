@@ -11,6 +11,7 @@ import '../../data/repositories/habit_repository.dart';
 import '../../data/providers/xp_provider.dart';
 import '../../data/services/haptic_service.dart';
 import '../../widgets/glass_back_button.dart';
+import '../../core/services/posthog_service.dart';
 import '../../widgets/glass_sheet.dart';
 import '../home/widgets/habit_card.dart';
 
@@ -446,6 +447,7 @@ class HabitsScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    ref.read(posthogServiceProvider).capture(eventName: 'habits_viewed');
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final backgroundColor = isDark ? AppColors.pureBlack : AppColorsLight.pureWhite;
     final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;

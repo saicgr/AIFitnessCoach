@@ -255,7 +255,9 @@ class _HeroWorkoutCarouselState extends ConsumerState<HeroWorkoutCarousel> {
                 }
               }
             } else {
-              carouselItems.add(CarouselItem.placeholder(date));
+              // Check if generation is actively in progress for this date
+              final isGeneratingForDate = todayWorkoutResponse?.isGenerating == true;
+              carouselItems.add(CarouselItem.placeholder(date, isAutoGenerating: isGeneratingForDate));
             }
           }
 
@@ -316,7 +318,7 @@ class _HeroWorkoutCarouselState extends ConsumerState<HeroWorkoutCarousel> {
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: item.isWorkout
                   ? HeroWorkoutCard(workout: item.workout!, inCarousel: true)
-                  : _buildPendingCard(item.placeholderDate!, isDark, accentColor),
+                  : _buildPendingCard(item.placeholderDate!, isDark, accentColor, isAutoGenerating: item.isAutoGenerating),
             ),
           );
         }
@@ -348,7 +350,7 @@ class _HeroWorkoutCarouselState extends ConsumerState<HeroWorkoutCarousel> {
                   duration: const Duration(milliseconds: 200),
                   child: item.isWorkout
                       ? HeroWorkoutCard(workout: item.workout!, inCarousel: true)
-                      : _buildPendingCard(item.placeholderDate!, isDark, accentColor),
+                      : _buildPendingCard(item.placeholderDate!, isDark, accentColor, isAutoGenerating: item.isAutoGenerating),
                 ),
               );
             },
@@ -360,7 +362,7 @@ class _HeroWorkoutCarouselState extends ConsumerState<HeroWorkoutCarousel> {
   }
 
   /// Minimal card for workout days that don't have a generated workout yet.
-  Widget _buildPendingCard(DateTime date, bool isDark, Color accentColor) {
+  Widget _buildPendingCard(DateTime date, bool isDark, Color accentColor, {bool isAutoGenerating = false}) {
     const dayNames = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
     final dayName = dayNames[date.weekday - 1];
     final now = DateTime.now();
@@ -395,27 +397,36 @@ class _HeroWorkoutCarouselState extends ConsumerState<HeroWorkoutCarousel> {
               ),
             ),
             const SizedBox(height: 8),
-            Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                SizedBox(
-                  width: 14,
-                  height: 14,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    color: accentColor.withValues(alpha: 0.5),
+            if (isAutoGenerating)
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  SizedBox(
+                    width: 14,
+                    height: 14,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: accentColor.withValues(alpha: 0.5),
+                    ),
                   ),
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  'Generating workout...',
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: isDark ? Colors.white54 : Colors.black45,
+                  const SizedBox(width: 8),
+                  Text(
+                    'Generating workout...',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: isDark ? Colors.white54 : Colors.black45,
+                    ),
                   ),
+                ],
+              )
+            else
+              Text(
+                'No workout yet',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: isDark ? Colors.white54 : Colors.black45,
                 ),
-              ],
-            ),
+              ),
           ],
         ),
       ),

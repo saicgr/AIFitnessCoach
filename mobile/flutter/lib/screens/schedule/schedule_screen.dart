@@ -14,6 +14,7 @@ import '../../data/models/workout.dart';
 import '../../data/providers/schedule_provider.dart';
 import '../../data/repositories/schedule_repository.dart';
 import '../../data/repositories/workout_repository.dart';
+import '../../core/services/posthog_service.dart';
 import '../../widgets/glass_sheet.dart';
 import '../profile/synced_workout_detail_screen.dart';
 import 'widgets/add_schedule_item_sheet.dart';
@@ -56,6 +57,9 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(posthogServiceProvider).capture(eventName: 'schedule_viewed');
+    });
   }
 
   @override

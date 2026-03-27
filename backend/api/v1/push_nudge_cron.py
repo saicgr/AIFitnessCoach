@@ -336,14 +336,14 @@ async def _send_nudge(
         use_ai=use_ai,
     )
 
-    # 5. Save to chat_messages (AI-initiated, proactive)
+    # 5. Save to chat_history (AI-initiated, proactive)
     chat_message_id = None
     try:
-        chat_msg = supabase.client.table("chat_messages").insert({
+        chat_msg = supabase.client.table("chat_history").insert({
             "user_id": user_id,
-            "role": "assistant",
-            "content": message,
-            "metadata": {
+            "user_message": "",
+            "ai_response": message,
+            "context_json": {
                 "nudge_type": nudge_type,
                 "proactive": True,
                 "coach_name": coach_name,
@@ -355,7 +355,7 @@ async def _send_nudge(
             chat_message_id = chat_msg.data[0].get("id")
     except Exception as e:
         # EDGE CASE: Chat save failed — still send push, just no chat history
-        logger.warning(f"⚠️ [Nudge] chat_messages insert failed for {user_id}: {e}")
+        logger.warning(f"⚠️ [Nudge] chat_history insert failed for {user_id}: {e}")
 
     # Update dedup record with chat_message_id if available
     if chat_message_id:

@@ -831,6 +831,91 @@ class WorkoutCompletionResponse {
   bool get hasDeclines => performanceComparison?.hasDeclines ?? false;
 }
 
+/// Per-set log data returned from workout summary API
+class SetLogInfo {
+  final String exerciseName;
+  final int exerciseIndex;
+  final int setNumber;
+  final int repsCompleted;
+  final double weightKg;
+  final double? rpe;
+  final int? rir;
+  final String setType;
+
+  const SetLogInfo({
+    required this.exerciseName,
+    this.exerciseIndex = 0,
+    required this.setNumber,
+    required this.repsCompleted,
+    required this.weightKg,
+    this.rpe,
+    this.rir,
+    this.setType = 'working',
+  });
+
+  factory SetLogInfo.fromJson(Map<String, dynamic> json) {
+    return SetLogInfo(
+      exerciseName: json['exercise_name'] as String? ?? '',
+      exerciseIndex: json['exercise_index'] as int? ?? 0,
+      setNumber: json['set_number'] as int? ?? 0,
+      repsCompleted: json['reps_completed'] as int? ?? 0,
+      weightKg: (json['weight_kg'] as num?)?.toDouble() ?? 0.0,
+      rpe: (json['rpe'] as num?)?.toDouble(),
+      rir: json['rir'] as int?,
+      setType: json['set_type'] as String? ?? 'working',
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+    'exercise_name': exerciseName,
+    'exercise_index': exerciseIndex,
+    'set_number': setNumber,
+    'reps_completed': repsCompleted,
+    'weight_kg': weightKg,
+    'rpe': rpe,
+    'rir': rir,
+    'set_type': setType,
+  };
+}
+
+/// Structured AI coach review parsed from JSON response
+class CoachReview {
+  final List<String> highlights;
+  final List<String> areasToImprove;
+  final int overallRating;
+  final String summary;
+
+  const CoachReview({
+    required this.highlights,
+    required this.areasToImprove,
+    required this.overallRating,
+    required this.summary,
+  });
+
+  /// Parse from JSON string. Returns null if parsing fails.
+  static CoachReview? tryParse(String? jsonStr) {
+    if (jsonStr == null || jsonStr.isEmpty) return null;
+    try {
+      String cleaned = jsonStr.trim();
+      if (cleaned.startsWith('```')) {
+        cleaned = cleaned.replaceAll(RegExp(r'^```\w*\n?'), '').replaceAll(RegExp(r'\n?```$'), '').trim();
+      }
+      if (!cleaned.startsWith('{')) return null;
+
+      final json = jsonDecode(cleaned) as Map<String, dynamic>;
+
+      return CoachReview(
+        highlights: (json['highlights'] as List<dynamic>?)?.map((e) => e.toString()).toList() ?? [],
+        areasToImprove: (json['areas_to_improve'] as List<dynamic>?)?.map((e) => e.toString()).toList() ?? [],
+        overallRating: (json['overall_rating'] as num?)?.toInt() ?? 7,
+        summary: json['summary'] as String? ?? '',
+      );
+    } catch (_) {
+      return null;
+    }
+  }
+}
+
 /// Response from workout summary API (for completed workouts)
 class WorkoutSummaryResponse {
   final Map<String, dynamic> workout;
@@ -839,6 +924,7 @@ class WorkoutSummaryResponse {
   final String? coachSummary;
   final String? completionMethod;
   final String? completedAt;
+  final List<SetLogInfo> setLogs;
 
   const WorkoutSummaryResponse({
     required this.workout,
@@ -847,12 +933,14 @@ class WorkoutSummaryResponse {
     this.coachSummary,
     this.completionMethod,
     this.completedAt,
+    this.setLogs = const [],
   });
 
   factory WorkoutSummaryResponse.fromJson(Map<String, dynamic> json) {
     final workoutData = json['workout'] as Map<String, dynamic>? ?? {};
     final prsData = json['personal_records'] as List<dynamic>? ?? [];
     final comparisonData = json['performance_comparison'] as Map<String, dynamic>?;
+    final setLogsData = json['set_logs'] as List<dynamic>? ?? [];
 
     return WorkoutSummaryResponse(
       workout: workoutData,
@@ -865,8 +953,23 @@ class WorkoutSummaryResponse {
       coachSummary: json['coach_summary'] as String?,
       completionMethod: json['completion_method'] as String?,
       completedAt: json['completed_at'] as String?,
+      setLogs: setLogsData
+          .map((sl) => SetLogInfo.fromJson(sl as Map<String, dynamic>))
+          .toList(),
     );
   }
+
+  /// Group set logs by exercise name for display
+  Map<String, List<SetLogInfo>> get setLogsByExercise {
+    final Map<String, List<SetLogInfo>> grouped = {};
+    for (final log in setLogs) {
+      grouped.putIfAbsent(log.exerciseName, () => []).add(log);
+    }
+    return grouped;
+  }
+
+  /// Parse structured coach review, falls back to null
+  CoachReview? get parsedCoachReview => CoachReview.tryParse(coachSummary);
 
   /// Check if any PRs were achieved
   bool get hasPRs => personalRecords.isNotEmpty;

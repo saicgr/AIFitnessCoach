@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:confetti/confetti.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/services/posthog_service.dart';
 import '../../core/providers/sound_preferences_provider.dart';
 import '../../widgets/lottie_animations.dart';
 import '../../data/models/workout.dart';
@@ -22,6 +23,7 @@ import '../challenges/widgets/challenge_complete_dialog.dart';
 import '../challenges/widgets/challenge_friends_dialog.dart';
 import 'widgets/hydration_dialog.dart';
 import 'widgets/sauna_dialog.dart';
+import 'widgets/ai_coach_report_card.dart';
 import 'widgets/share_workout_sheet.dart';
 import 'widgets/trophies_earned_sheet.dart';
 import 'widgets/trophy_celebration_overlay.dart';
@@ -154,6 +156,18 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
     super.initState();
     debugPrint('🏁 [Complete] Workout complete screen loaded: ${widget.workout.id}');
     _confettiController = ConfettiController(duration: const Duration(seconds: 3));
+
+    // Track workout complete screen viewed
+    ref.read(posthogServiceProvider).capture(
+      eventName: 'workout_complete_screen_viewed',
+      properties: {
+        'workout_id': widget.workout.id ?? '',
+        'calories': widget.calories,
+        'duration_seconds': widget.duration,
+        'total_sets': widget.totalSets ?? 0,
+        'has_prs': widget.personalRecords?.isNotEmpty == true,
+      },
+    );
 
     // Play workout completion sound
     Future.microtask(() {
@@ -1542,70 +1556,18 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
 
                   const SizedBox(height: 12),
 
-                  // AI Feedback (tappable to expand)
-                  GestureDetector(
-                    onTap: _isLoadingSummary ? null : () {
-                      setState(() => _isAiReviewExpanded = !_isAiReviewExpanded);
-                    },
-                    child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 200),
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [
-                            AppColors.orange.withOpacity(0.08),
-                            AppColors.purple.withOpacity(0.05),
-                          ],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                        ),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: AppColors.orange.withOpacity(0.3)),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Icon(
-                                Icons.auto_awesome,
-                                size: 18,
-                                color: AppColors.orange,
-                              ),
-                              const SizedBox(width: 10),
-                              Expanded(
-                                child: _isLoadingSummary
-                                    ? const SizedBox(
-                                        height: 40,
-                                        child: Center(
-                                          child: LottieLoading(size: 24, color: AppColors.orange),
-                                        ),
-                                      )
-                                    : Text(
-                                        _aiSummary ?? 'Great workout! Keep up the momentum.',
-                                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                          height: 1.4,
-                                        ),
-                                        maxLines: _isAiReviewExpanded ? null : 3,
-                                        overflow: _isAiReviewExpanded ? null : TextOverflow.ellipsis,
-                                      ),
-                              ),
-                              if (!_isLoadingSummary && (_aiSummary?.length ?? 0) > 100)
-                                Padding(
-                                  padding: const EdgeInsets.only(left: 4),
-                                  child: Icon(
-                                    _isAiReviewExpanded ? Icons.expand_less : Icons.expand_more,
-                                    size: 18,
-                                    color: AppColors.textMuted,
-                                  ),
-                                ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
+                  // AI Coach Report Card (muscles worked, stats, AI insight)
+                  AiCoachReportCard(
+                    exercises: widget.workout.exercises,
+                    aiSummary: _aiSummary,
+                    isLoadingSummary: _isLoadingSummary,
+                    isExpanded: _isAiReviewExpanded,
+                    onToggleExpand: () => setState(() => _isAiReviewExpanded = !_isAiReviewExpanded),
+                    totalSets: widget.totalSets ?? 0,
+                    totalVolumeKg: widget.totalVolumeKg ?? 0,
+                    durationSeconds: widget.duration,
+                    newPRs: _newPRs,
+                    performanceComparison: widget.performanceComparison,
                   ).animate().fadeIn(delay: 300.ms),
 
                   const SizedBox(height: 16),
@@ -1684,17 +1646,18 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
                           foregroundColor: AppColors.purple,
                         ),
                       ),
-                      TextButton.icon(
-                        onPressed: _showChallengeFriendsDialog,
-                        icon: const Icon(Icons.emoji_events, size: 16),
-                        label: const Text(
-                          'Challenge',
-                          style: TextStyle(fontSize: 13),
-                        ),
-                        style: TextButton.styleFrom(
-                          foregroundColor: AppColors.orange,
-                        ),
-                      ),
+                      // Challenge button commented out - not yet functional
+                      // TextButton.icon(
+                      //   onPressed: _showChallengeFriendsDialog,
+                      //   icon: const Icon(Icons.emoji_events, size: 16),
+                      //   label: const Text(
+                      //     'Challenge',
+                      //     style: TextStyle(fontSize: 13),
+                      //   ),
+                      //   style: TextButton.styleFrom(
+                      //     foregroundColor: AppColors.orange,
+                      //   ),
+                      // ),
                       TextButton.icon(
                         onPressed: _saunaMinutes != null ? null : _showSaunaDialog,
                         icon: Icon(
@@ -1721,6 +1684,18 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
                           foregroundColor: AppColors.teal,
                         ),
                       ),
+                      if (widget.workout.id != null)
+                        TextButton.icon(
+                          onPressed: () => context.push('/workout-summary/${widget.workout.id}'),
+                          icon: const Icon(Icons.summarize_outlined, size: 16),
+                          label: const Text(
+                            'Summary',
+                            style: TextStyle(fontSize: 13),
+                          ),
+                          style: TextButton.styleFrom(
+                            foregroundColor: AppColors.orange,
+                          ),
+                        ),
                       TextButton.icon(
                         onPressed: () => setState(() => _showDetailedFeedback = !_showDetailedFeedback),
                         icon: Icon(
@@ -2183,7 +2158,8 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
     final newAchievements = (_achievements?['new_achievements'] as List<dynamic>?)?.length ?? 0;
     final totalTrophies = _newPRs.length + newAchievements;
     final streak = _achievements?['streak_days'] as int? ?? 0;
-    final totalWorkouts = _achievements?['total_workouts'] as int? ?? 1;
+    // Ensure at least 1 since the user just completed a workout
+    final totalWorkouts = (_achievements?['total_workouts'] as int? ?? 0).clamp(1, 999999);
     final hasAchievements = totalTrophies > 0;
 
     Widget trophiesCard = GestureDetector(
@@ -2192,7 +2168,7 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
         newPRs: _newPRs,
         achievements: _achievements,
         totalWorkouts: totalWorkouts,
-        currentStreak: streak > 0 ? streak : null,
+        currentStreak: streak > 0 ? streak : 1, // At least 1 day
       ),
       child: Container(
         padding: const EdgeInsets.all(14),

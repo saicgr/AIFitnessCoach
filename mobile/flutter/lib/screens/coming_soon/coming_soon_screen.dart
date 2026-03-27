@@ -29,10 +29,9 @@ class _ComingSoonScreenState extends ConsumerState<ComingSoonScreen> {
               icon: Icons.lightbulb_outline,
               iconColor: AppColors.orange,
               onTap: () async {
-                final uri = Uri.parse(AppLinks.featureRequests);
-                if (await canLaunchUrl(uri)) {
-                  await launchUrl(uri, mode: LaunchMode.externalApplication);
-                }
+                try {
+                  await launchUrl(Uri.parse(AppLinks.featureRequests), mode: LaunchMode.externalApplication);
+                } catch (_) {}
               },
             ),
         ],

@@ -303,21 +303,20 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
       }
     });
     // Load chat history on screen load
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(chatMessagesProvider.notifier).loadHistory();
-
-      // If initial message provided, send it automatically after history loads
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
       if (widget.initialMessage != null &&
           widget.initialMessage!.isNotEmpty &&
           !_initialMessageSent) {
         _initialMessageSent = true;
-        // Send immediately after the current frame completes
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (mounted) {
-            _textController.text = widget.initialMessage!;
-            _sendMessage();
-          }
-        });
+        // Await history so state is settled before sending — prevents race
+        // condition where loadHistory's server fetch overwrites sendMessage state
+        await ref.read(chatMessagesProvider.notifier).loadHistory();
+        if (mounted) {
+          _textController.text = widget.initialMessage!;
+          _sendMessage();
+        }
+      } else {
+        ref.read(chatMessagesProvider.notifier).loadHistory();
       }
     });
   }

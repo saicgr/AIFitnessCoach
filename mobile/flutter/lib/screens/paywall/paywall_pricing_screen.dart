@@ -42,6 +42,17 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
   String _selectedBillingCycle = 'yearly'; // 'yearly' or 'monthly'
   bool _hasShownDiscount = false;
 
+  @override
+  void initState() {
+    super.initState();
+    // Track paywall pricing screen view
+    Future.microtask(() {
+      ref.read(posthogServiceProvider).capture(
+        eventName: 'paywall_pricing_viewed',
+      );
+    });
+  }
+
   /// Get dynamic price string from RevenueCat offerings, with fallback
   String _getDynamicPrice({
     required Offerings? offerings,
@@ -202,20 +213,32 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
                         label: 'Yearly',
                         sublabel: 'Best value',
                         isSelected: _selectedBillingCycle == 'yearly',
-                        onTap: () => setState(() {
-                          _selectedBillingCycle = 'yearly';
-                          _selectedPlan = 'premium_yearly';
-                        }),
+                        onTap: () {
+                          setState(() {
+                            _selectedBillingCycle = 'yearly';
+                            _selectedPlan = 'premium_yearly';
+                          });
+                          ref.read(posthogServiceProvider).capture(
+                            eventName: 'paywall_plan_selected',
+                            properties: {'plan_name': 'premium_yearly', 'billing_cycle': 'yearly'},
+                          );
+                        },
                         colors: colors,
                       ),
                       _BillingTab(
                         label: 'Monthly',
                         sublabel: 'Flexible',
                         isSelected: _selectedBillingCycle == 'monthly',
-                        onTap: () => setState(() {
-                          _selectedBillingCycle = 'monthly';
-                          _selectedPlan = 'premium_monthly';
-                        }),
+                        onTap: () {
+                          setState(() {
+                            _selectedBillingCycle = 'monthly';
+                            _selectedPlan = 'premium_monthly';
+                          });
+                          ref.read(posthogServiceProvider).capture(
+                            eventName: 'paywall_plan_selected',
+                            properties: {'plan_name': 'premium_monthly', 'billing_cycle': 'monthly'},
+                          );
+                        },
                         colors: colors,
                       ),
                     ],
@@ -556,6 +579,11 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
       if (confirmed != true) return;
     }
 
+    ref.read(posthogServiceProvider).capture(
+      eventName: 'paywall_purchase_initiated',
+      properties: {'selected_plan': _selectedPlan},
+    );
+
     final success = await ref.read(subscriptionProvider.notifier).purchase(_selectedPlan);
     if (success && context.mounted) {
       if (isSubscribed) {
@@ -696,23 +724,21 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
       ? 'https://apps.apple.com/account/subscriptions'
       : 'https://play.google.com/store/account/subscriptions';
 
-    if (await canLaunchUrl(Uri.parse(url))) {
+    try {
       await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
-    }
+    } catch (_) {}
   }
 
   Future<void> _openTermsOfService() async {
-    const url = AppLinks.termsOfService;
-    if (await canLaunchUrl(Uri.parse(url))) {
-      await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
-    }
+    try {
+      await launchUrl(Uri.parse(AppLinks.termsOfService), mode: LaunchMode.externalApplication);
+    } catch (_) {}
   }
 
   Future<void> _openPrivacyPolicy() async {
-    const url = AppLinks.privacyPolicy;
-    if (await canLaunchUrl(Uri.parse(url))) {
-      await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
-    }
+    try {
+      await launchUrl(Uri.parse(AppLinks.privacyPolicy), mode: LaunchMode.externalApplication);
+    } catch (_) {}
   }
 
   Widget _buildPricingLeftPane(ThemeColors colors, bool isSubscribed) {

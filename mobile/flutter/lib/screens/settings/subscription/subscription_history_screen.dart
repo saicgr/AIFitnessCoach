@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/services/posthog_service.dart';
 import '../../../data/repositories/subscription_repository.dart';
 import '../../../data/services/api_client.dart';
 import '../../../widgets/pill_app_bar.dart';
@@ -23,6 +24,12 @@ class _SubscriptionHistoryScreenState extends ConsumerState<SubscriptionHistoryS
   @override
   void initState() {
     super.initState();
+    // Track subscription history screen view
+    Future.microtask(() {
+      ref.read(posthogServiceProvider).capture(
+        eventName: 'subscription_history_viewed',
+      );
+    });
     _loadHistory();
   }
 

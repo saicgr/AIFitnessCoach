@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/services/posthog_service.dart';
 import '../../../data/models/ai_split_preset.dart';
 import '../../../data/services/haptic_service.dart';
 import '../../../widgets/glass_sheet.dart';
@@ -10,17 +12,17 @@ import '../widgets/compact_split_card.dart';
 
 /// Full-screen route showing all training split presets in a 2-column grid
 /// with category filter chips.
-class AllSplitsScreen extends StatefulWidget {
+class AllSplitsScreen extends ConsumerStatefulWidget {
   /// Optional category for deep-linking (e.g. 'classic', 'ai_powered', 'specialty').
   final String? initialCategory;
 
   const AllSplitsScreen({super.key, this.initialCategory});
 
   @override
-  State<AllSplitsScreen> createState() => _AllSplitsScreenState();
+  ConsumerState<AllSplitsScreen> createState() => _AllSplitsScreenState();
 }
 
-class _AllSplitsScreenState extends State<AllSplitsScreen> {
+class _AllSplitsScreenState extends ConsumerState<AllSplitsScreen> {
   late String _selectedCategory;
 
   static const _categories = <String, String>{
@@ -34,6 +36,9 @@ class _AllSplitsScreenState extends State<AllSplitsScreen> {
   void initState() {
     super.initState();
     _selectedCategory = widget.initialCategory ?? 'all';
+    ref.read(posthogServiceProvider).capture(
+      eventName: 'splits_library_viewed',
+    );
   }
 
   List<AISplitPreset> get _filteredPresets {
@@ -43,6 +48,10 @@ class _AllSplitsScreenState extends State<AllSplitsScreen> {
 
   void _onPresetTap(AISplitPreset preset) {
     HapticService.light();
+    ref.read(posthogServiceProvider).capture(
+      eventName: 'split_selected',
+      properties: {'split_name': preset.name},
+    );
     showGlassSheet(
       context: context,
       builder: (_) => AISplitPresetDetailSheet(preset: preset),

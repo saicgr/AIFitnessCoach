@@ -135,6 +135,9 @@ async def create_performance_log(log: PerformanceLogCreate,
             "failed_at_rep": log.failed_at_rep,
             "notes": log.notes,
             "ai_input_source": log.ai_input_source,
+            "target_weight_kg": log.target_weight_kg,
+            "target_reps": log.target_reps,
+            "progression_model": log.progression_model,
         }
 
         created = db.create_performance_log(log_data)
@@ -273,6 +276,10 @@ async def create_workout_log(log: WorkoutLogCreate,
             "sets_json": sets_data,  # Pass as dict, not string
             "total_time_seconds": log.total_time_seconds,
         }
+
+        # Include metadata if provided (progression patterns, increments, etc.)
+        if log.metadata:
+            log_data["metadata"] = log.metadata
 
         logger.info(f"Creating workout log: workout_id={log.workout_id}, user_id={log.user_id}")
         created = db.create_workout_log(log_data)

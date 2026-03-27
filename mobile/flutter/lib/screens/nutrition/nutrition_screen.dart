@@ -33,6 +33,7 @@ import 'widgets/nutrition_goals_card.dart';
 import 'tabs/hydration_tab.dart';
 // COMING SOON: Fasting tab — uncomment when fasting feature launches
 // import 'tabs/fasting_tab.dart';
+import '../../core/services/posthog_service.dart';
 import '../../data/repositories/hydration_repository.dart';
 
 class NutritionScreen extends ConsumerStatefulWidget {
@@ -43,7 +44,13 @@ class NutritionScreen extends ConsumerStatefulWidget {
   /// COMING SOON: Fasting will be index 3 when re-enabled.
   final int initialTab;
 
-  const NutritionScreen({super.key, this.initialMeal, this.initialTab = 0});
+  /// When true, auto-opens the log meal sheet and launches the camera.
+  final bool autoOpenCamera;
+
+  /// When true, auto-opens the log meal sheet and launches the barcode scanner.
+  final bool autoOpenBarcode;
+
+  const NutritionScreen({super.key, this.initialMeal, this.initialTab = 0, this.autoOpenCamera = false, this.autoOpenBarcode = false});
 
   @override
   ConsumerState<NutritionScreen> createState() => _NutritionScreenState();
@@ -69,15 +76,18 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
     // COMING SOON: Change back to length: 4 when fasting tab is re-enabled
     _tabController = TabController(length: 3, vsync: this, initialIndex: widget.initialTab);
     _loadData();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(posthogServiceProvider).capture(eventName: 'nutrition_screen_viewed');
+    });
     // Collapse nav bar labels on this secondary page
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(navBarLabelsExpandedProvider.notifier).state = false;
       // Listen for preferences to become available, then check for weekly check-in
       _setupWeeklyCheckinListener();
-      // Auto-open log meal sheet if deep-linked with a meal type
-      if (widget.initialMeal != null) {
+      // Auto-open log meal sheet if deep-linked with a meal type, camera, or barcode flag
+      if (widget.initialMeal != null || widget.autoOpenCamera || widget.autoOpenBarcode) {
         final isDark = Theme.of(context).brightness == Brightness.dark;
-        _showLogMealSheet(isDark, mealType: widget.initialMeal);
+        _showLogMealSheet(isDark, mealType: widget.initialMeal, autoOpenCamera: widget.autoOpenCamera, autoOpenBarcode: widget.autoOpenBarcode);
       }
       // Tour is triggered after data loads in _loadData(), not here
     });
@@ -482,8 +492,8 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
     );
   }
 
-  Future<void> _showLogMealSheet(bool isDark, {String? mealType}) async {
-    await showLogMealSheet(context, ref, initialMealType: mealType);
+  Future<void> _showLogMealSheet(bool isDark, {String? mealType, bool autoOpenCamera = false, bool autoOpenBarcode = false}) async {
+    await showLogMealSheet(context, ref, initialMealType: mealType, autoOpenCamera: autoOpenCamera, autoOpenBarcode: autoOpenBarcode);
     _loadData();
   }
 

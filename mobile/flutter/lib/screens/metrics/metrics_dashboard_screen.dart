@@ -3,6 +3,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fl_chart/fl_chart.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/services/posthog_service.dart';
 import '../../data/repositories/metrics_repository.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../../widgets/glass_sheet.dart';
@@ -39,6 +40,7 @@ class _MetricsDashboardScreenState
   @override
   void initState() {
     super.initState();
+    ref.read(posthogServiceProvider).capture(eventName: 'metrics_dashboard_viewed');
     _loadMetrics();
   }
 

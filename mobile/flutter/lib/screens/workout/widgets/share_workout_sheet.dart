@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../../core/constants/app_colors.dart';
+import '../../../core/providers/user_provider.dart';
 import '../../../data/models/coach_persona.dart';
 import '../../../data/providers/workout_gallery_provider.dart';
 import '../../../data/services/api_client.dart';
@@ -752,6 +753,12 @@ class _ShareWorkoutSheetState extends ConsumerState<ShareWorkoutSheet> {
 
   Widget _buildTemplateCarousel() {
     final now = DateTime.now();
+    final useKg = ref.watch(useKgProvider);
+    final weightUnit = useKg ? 'kg' : 'lbs';
+    // Convert volume to user's preferred unit
+    final displayVolume = widget.totalVolumeKg != null && !useKg
+        ? widget.totalVolumeKg! * 2.20462
+        : widget.totalVolumeKg;
 
     return PageView(
       controller: _pageController,
@@ -774,12 +781,13 @@ class _ShareWorkoutSheetState extends ConsumerState<ShareWorkoutSheet> {
                       workoutName: widget.workoutName,
                       durationSeconds: widget.durationSeconds,
                       calories: widget.calories,
-                      totalVolumeKg: widget.totalVolumeKg,
+                      totalVolumeKg: displayVolume,
                       totalSets: widget.totalSets,
                       totalReps: widget.totalReps,
                       exercisesCount: widget.exercisesCount,
                       completedAt: now,
                       showWatermark: _showWatermark,
+                      weightUnit: weightUnit,
                     ),
                   ),
                 ),
@@ -841,7 +849,7 @@ class _ShareWorkoutSheetState extends ConsumerState<ShareWorkoutSheet> {
                           workoutName: widget.workoutName,
                           durationSeconds: widget.durationSeconds,
                           calories: widget.calories,
-                          totalVolumeKg: widget.totalVolumeKg,
+                          totalVolumeKg: displayVolume,
                           exercisesCount: widget.exercisesCount,
                           totalSets: widget.totalSets,
                           totalReps: widget.totalReps,
@@ -849,6 +857,7 @@ class _ShareWorkoutSheetState extends ConsumerState<ShareWorkoutSheet> {
                           performanceRating: _calculatePerformanceRating(),
                           completedAt: now,
                           showWatermark: _showWatermark,
+                          weightUnit: weightUnit,
                         ),
                       ),
                     );
@@ -878,12 +887,19 @@ class _ShareWorkoutSheetState extends ConsumerState<ShareWorkoutSheet> {
                       workoutName: widget.workoutName,
                       durationSeconds: widget.durationSeconds,
                       exercisesCount: widget.exercisesCount,
-                      totalWorkouts: widget.totalWorkouts,
-                      currentStreak: widget.currentStreak,
-                      sessionVolume: widget.totalVolumeKg,
+                      totalWorkouts: (widget.totalWorkouts ?? 0) > 0
+                          ? widget.totalWorkouts
+                          : 1, // At least 1 since they just finished
+                      currentStreak: (widget.currentStreak ?? 0) > 0
+                          ? widget.currentStreak
+                          : 1, // At least 1 day
+                      weeklyWorkouts: 1, // At least this session
+                      totalVolumeLifted: displayVolume,
+                      sessionVolume: displayVolume,
                       prsThisMonth: widget.newPRs?.length ?? 0,
                       completedAt: now,
                       showWatermark: _showWatermark,
+                      weightUnit: weightUnit,
                     ),
                   ),
                 ),
@@ -911,11 +927,12 @@ class _ShareWorkoutSheetState extends ConsumerState<ShareWorkoutSheet> {
                       workoutName: widget.workoutName,
                       durationSeconds: widget.durationSeconds,
                       calories: widget.calories,
-                      totalVolumeKg: widget.totalVolumeKg,
+                      totalVolumeKg: displayVolume,
                       exercisesCount: widget.exercisesCount,
                       userPhotoBytes: _userPhotoBytes,
                       completedAt: now,
                       showWatermark: _showWatermark,
+                      weightUnit: weightUnit,
                     ),
                   ),
                 ),

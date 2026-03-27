@@ -35,31 +35,23 @@ class _ExerciseImageThumbnailState
   @override
   void initState() {
     super.initState();
-    _loadImageUrl();
-  }
-
-  Future<void> _loadImageUrl() async {
+    // Check in-memory cache synchronously to avoid loading spinner flash
     final exerciseName = widget.exercise.name;
     if (exerciseName.isEmpty || exerciseName == 'Exercise') {
-      setState(() {
-        _isLoading = false;
-        _hasError = true;
-      });
+      _isLoading = false;
+      _hasError = true;
       return;
     }
-
-    // Check persistent cache first (survives app restarts)
     final cachedUrl = ImageUrlCache.get(exerciseName);
     if (cachedUrl != null) {
-      if (mounted) {
-        setState(() {
-          _imageUrl = cachedUrl;
-          _isLoading = false;
-        });
-      }
-      return;
+      _imageUrl = cachedUrl;
+      _isLoading = false;
+    } else {
+      _fetchImageUrl(exerciseName);
     }
+  }
 
+  Future<void> _fetchImageUrl(String exerciseName) async {
     try {
       final apiClient = ref.read(apiClientProvider);
       final response = await apiClient.get(
@@ -69,7 +61,6 @@ class _ExerciseImageThumbnailState
       if (response.statusCode == 200 && response.data != null) {
         final url = response.data['url'] as String?;
         if (url != null && mounted) {
-          // Store in persistent cache
           await ImageUrlCache.set(exerciseName, url);
           setState(() {
             _imageUrl = url;

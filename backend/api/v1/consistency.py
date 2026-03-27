@@ -592,7 +592,7 @@ async def get_calendar_heatmap(
         try:
             await user_context_service.log_event(
                 user_id=user_id,
-                event_type=EventType.FEATURE_USAGE,
+                event_type=EventType.FEATURE_INTERACTION,
                 event_data={
                     "endpoint": "/api/v1/consistency/calendar",
                     "message": f"Fetched calendar heatmap from {start_date} to {end_date}",

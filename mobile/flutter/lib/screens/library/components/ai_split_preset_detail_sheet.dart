@@ -427,6 +427,9 @@ class _AISplitPresetDetailSheetState extends ConsumerState<AISplitPresetDetailSh
        .setTrainingSplit(widget.preset.trainingSplitValue);
     _syncToGymProfile(widget.preset.trainingSplitValue);
 
+    // Reset generation state so new split triggers fresh workout generation
+    TodayWorkoutNotifier.resetGenerationState();
+
     // Invalidate workout providers to trigger regeneration with new split
     ref.invalidate(todayWorkoutProvider);
     ref.invalidate(workoutsProvider);
@@ -461,6 +464,9 @@ class _AISplitPresetDetailSheetState extends ConsumerState<AISplitPresetDetailSh
     ref.read(trainingPreferencesProvider.notifier)
        .setTrainingSplit(compatibleSplit);
     _syncToGymProfile(compatibleSplit);
+
+    // Reset generation state so new split triggers fresh workout generation
+    TodayWorkoutNotifier.resetGenerationState();
 
     // Invalidate workout providers to trigger regeneration with new split
     ref.invalidate(todayWorkoutProvider);
@@ -512,6 +518,9 @@ class _AISplitPresetDetailSheetState extends ConsumerState<AISplitPresetDetailSh
         await repo.quickDayChange(userId, dayNamesList);
         await ref.read(authStateProvider.notifier).refreshUser();
       }
+
+      // Reset generation state so new split triggers fresh workout generation
+      TodayWorkoutNotifier.resetGenerationState();
 
       // Invalidate workout providers to trigger regeneration with new split
       ref.invalidate(todayWorkoutProvider);

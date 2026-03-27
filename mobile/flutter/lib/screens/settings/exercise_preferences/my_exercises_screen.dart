@@ -6,6 +6,7 @@ import '../../../core/providers/custom_exercises_provider.dart';
 import '../../../data/models/custom_exercise.dart';
 import '../../../data/services/haptic_service.dart';
 import '../../../widgets/glass_sheet.dart';
+import '../../../core/services/posthog_service.dart';
 import '../../../widgets/pill_app_bar.dart';
 import '../../custom_exercises/widgets/create_exercise_sheet.dart';
 import '../../custom_exercises/widgets/custom_exercise_card.dart';
@@ -39,6 +40,9 @@ class _MyExercisesScreenState extends ConsumerState<MyExercisesScreen>
       vsync: this,
       initialIndex: widget.initialTab.clamp(0, 3),
     );
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(posthogServiceProvider).capture(eventName: 'my_exercises_viewed');
+    });
   }
 
   @override

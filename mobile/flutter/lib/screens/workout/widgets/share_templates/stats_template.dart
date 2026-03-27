@@ -14,6 +14,7 @@ class StatsTemplate extends StatelessWidget {
   final int exercisesCount;
   final DateTime completedAt;
   final bool showWatermark;
+  final String weightUnit;
 
   const StatsTemplate({
     super.key,
@@ -26,6 +27,7 @@ class StatsTemplate extends StatelessWidget {
     required this.exercisesCount,
     required this.completedAt,
     this.showWatermark = true,
+    this.weightUnit = 'kg',
   });
 
   String get _formattedDuration {
@@ -43,10 +45,14 @@ class StatsTemplate extends StatelessWidget {
 
   String get _formattedVolume {
     if (totalVolumeKg == null) return '--';
-    if (totalVolumeKg! >= 1000) {
-      return '${(totalVolumeKg! / 1000).toStringAsFixed(1)}t';
+    final vol = totalVolumeKg!.round();
+    if (vol >= 1000) {
+      // Format with comma separator (e.g., 2,536kg)
+      final formatted = vol.toString().replaceAllMapped(
+          RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]},');
+      return '$formatted$weightUnit';
     }
-    return '${totalVolumeKg!.toStringAsFixed(0)} kg';
+    return '$vol$weightUnit';
   }
 
   String get _formattedDate {

@@ -124,7 +124,7 @@ class UpdatePreferencesRequest(BaseModel):
 
 @router.post("/{user_id}/suggest", response_model=SuggestRecipesResponse)
 @limiter.limit("5/minute")
-async def suggest_recipes(req: Request, user_id: str, request: SuggestRecipesRequest,
+async def suggest_recipes(request: Request, user_id: str, body: SuggestRecipesRequest,
     current_user: dict = Depends(get_current_user),
 ):
     """
@@ -138,12 +138,12 @@ async def suggest_recipes(req: Request, user_id: str, request: SuggestRecipesReq
     Returns 1-5 AI-generated recipes tailored to the user.
     """
     verify_user_ownership(current_user, user_id)
-    logger.info(f"🍳 [API] Recipe suggestion request for user {user_id}: {request.meal_type}, count={request.count}")
+    logger.info(f"🍳 [API] Recipe suggestion request for user {user_id}: {body.meal_type}, count={body.count}")
 
     try:
         # Parse meal type
         try:
-            meal_type = MealType(request.meal_type.lower())
+            meal_type = MealType(body.meal_type.lower())
         except ValueError:
             meal_type = MealType.ANY
 
@@ -151,8 +151,8 @@ async def suggest_recipes(req: Request, user_id: str, request: SuggestRecipesReq
         suggestions = await recipe_suggestion_service.suggest_recipes(
             user_id=user_id,
             meal_type=meal_type,
-            count=request.count,
-            additional_requirements=request.additional_requirements,
+            count=body.count,
+            additional_requirements=body.additional_requirements,
         )
 
         # Convert to response format
@@ -202,10 +202,10 @@ async def suggest_recipes(req: Request, user_id: str, request: SuggestRecipesReq
                 event_data={
                     "feature": "recipe_suggestion",
                     "action": "requested",
-                    "meal_type": request.meal_type,
-                    "count_requested": request.count,
+                    "meal_type": body.meal_type,
+                    "count_requested": body.count,
                     "count_generated": len(recipes),
-                    "additional_requirements": request.additional_requirements,
+                    "additional_requirements": body.additional_requirements,
                 },
             )
         except Exception as ctx_err:

@@ -471,9 +471,9 @@ def row_to_workout(row: dict, enrich_videos: bool = True) -> Workout:
     return Workout(
         id=str(row.get("id")),  # Ensure string for UUID
         user_id=str(row.get("user_id")),
-        name=row.get("name"),
-        type=row.get("type"),
-        difficulty=row.get("difficulty"),
+        name=row.get("name") or "Workout",
+        type=row.get("type") or "strength",
+        difficulty=row.get("difficulty") or "intermediate",
         description=row.get("description"),
         scheduled_date=row.get("scheduled_date"),
         is_completed=row.get("is_completed", False),
@@ -4632,13 +4632,52 @@ async def validate_and_filter_focus_mismatches(
 
     focus_lower = (focus_area or "").lower().strip()
 
-    # If full body or no focus, all exercises are valid
-    if not focus_lower or focus_lower in ['full_body', 'fullbody', 'full body']:
+    # If no focus specified, all exercises are valid
+    if not focus_lower:
         return {
             "valid_exercises": exercises,
             "mismatched_exercises": [],
             "mismatch_count": 0,
             "warnings": []
+        }
+
+    # For full_body workouts: validate muscle group coverage instead of filtering
+    if focus_lower in ['full_body', 'fullbody', 'full body']:
+        # Define required muscle group categories for a full_body workout
+        coverage_groups = {
+            "legs": {"legs", "quads", "quadriceps", "hamstrings", "glutes", "calves", "hip", "thighs", "lower body"},
+            "back": {"back", "lats", "traps", "rhomboids", "rear delt", "middle back", "lower back", "upper back"},
+            "chest_push": {"chest", "pectorals", "pecs", "shoulders", "deltoids", "triceps", "front delt"},
+        }
+
+        # Check which groups are covered by the exercises
+        covered = {group: False for group in coverage_groups}
+        for ex in exercises:
+            muscle = (ex.get("muscle_group") or "").lower()
+            ex_name = (ex.get("name") or "").lower()
+            combined = f"{muscle} {ex_name}"
+            for group, keywords in coverage_groups.items():
+                if any(kw in combined for kw in keywords):
+                    covered[group] = True
+
+        missing_groups = [g for g, is_covered in covered.items() if not is_covered]
+
+        if missing_groups:
+            friendly = {"legs": "Legs/Glutes", "back": "Back/Pull", "chest_push": "Chest/Shoulders/Push"}
+            missing_names = [friendly.get(g, g) for g in missing_groups]
+            warning_msg = (
+                f"⚠️ [{workout_name}] Full-body workout is MISSING exercises for: {', '.join(missing_names)}. "
+                f"Exercises only cover: {', '.join(g for g, c in covered.items() if c) or 'unknown'}"
+            )
+            logger.warning(f"🚨 [Full Body Validation] {warning_msg}")
+            warnings.append(warning_msg)
+
+        return {
+            "valid_exercises": exercises,
+            "mismatched_exercises": [],
+            "mismatch_count": 0,
+            "warnings": warnings,
+            "missing_muscle_groups": missing_groups,
         }
 
     for ex in exercises:

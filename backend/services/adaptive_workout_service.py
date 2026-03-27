@@ -626,7 +626,7 @@ class AdaptiveWorkoutService:
         try:
             # Query performance_logs for this user
             query = self.supabase.table("performance_logs").select(
-                "exercise_name, weight_kg, reps_completed, set_type, rpe, logged_at"
+                "exercise_name, weight_kg, reps_completed, set_type, rpe, recorded_at"
             ).eq("user_id", user_id)
 
             if exercise_name:
@@ -634,7 +634,7 @@ class AdaptiveWorkoutService:
 
             # Get last 90 days of data for progression analysis
             ninety_days_ago = (datetime.now() - timedelta(days=90)).isoformat()
-            query = query.gte("logged_at", ninety_days_ago).order("logged_at", desc=True)
+            query = query.gte("recorded_at", ninety_days_ago).order("recorded_at", desc=True)
 
             response = query.execute()
             logs = response.data if response.data else []
@@ -691,7 +691,7 @@ class AdaptiveWorkoutService:
         progression = self._calculate_progression(logs)
 
         # Most recent date
-        last_workout_date = logs[0].get("logged_at") if logs else None
+        last_workout_date = logs[0].get("recorded_at") if logs else None
 
         return {
             "total_sets": total_sets,
@@ -722,7 +722,7 @@ class AdaptiveWorkoutService:
         previous_logs = []
 
         for log in logs:
-            logged_at = log.get("logged_at", "")
+            logged_at = log.get("recorded_at", "")
             if logged_at:
                 try:
                     log_date = datetime.fromisoformat(logged_at.replace("Z", "+00:00"))

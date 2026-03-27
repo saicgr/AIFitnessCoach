@@ -5,6 +5,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/providers/training_intensity_provider.dart';
 import '../../../data/models/training_intensity.dart';
 import '../../../widgets/glass_sheet.dart';
+import '../../../core/services/posthog_service.dart';
 import '../../../widgets/pill_app_bar.dart';
 
 // Import linked exercises types
@@ -20,6 +21,14 @@ class My1RMsScreen extends ConsumerStatefulWidget {
 
 class _My1RMsScreenState extends ConsumerState<My1RMsScreen> {
   bool _isAutoPopulating = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(posthogServiceProvider).capture(eventName: 'my_1rms_viewed');
+    });
+  }
 
   @override
   Widget build(BuildContext context) {

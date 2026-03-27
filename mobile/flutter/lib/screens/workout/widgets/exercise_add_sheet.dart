@@ -5,6 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/providers/custom_exercises_provider.dart';
+import '../../../core/providers/staples_provider.dart';
 import '../../../core/providers/user_provider.dart';
 import '../../../data/local/database.dart';
 import '../../../data/local/database_provider.dart';
@@ -126,8 +128,9 @@ class _ExerciseAddSheetState extends ConsumerState<_ExerciseAddSheet>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 2, vsync: this);
+    _tabController = TabController(length: 3, vsync: this);
     _tabController.addListener(_onTabChanged);
+    ref.read(customExercisesProvider.notifier).initialize();
     _loadLibraryExercises();
   }
 
@@ -139,7 +142,7 @@ class _ExerciseAddSheetState extends ConsumerState<_ExerciseAddSheet>
   }
 
   void _onTabChanged() {
-    if (_tabController.index == 1 && !_aiSuggestionsLoaded) {
+    if (_tabController.index == 2 && !_aiSuggestionsLoaded) {
       _loadSuggestions();
     }
   }
@@ -438,13 +441,14 @@ class _ExerciseAddSheetState extends ConsumerState<_ExerciseAddSheet>
           ),
         ),
 
-        // Tabs — Library first, AI Suggestions second
+        // Tabs — Library first, Mine second, AI Suggestions third
         SegmentedTabBar(
           controller: _tabController,
           showIcons: false,
           tabs: const [
             SegmentedTabItem(label: 'Library'),
-            SegmentedTabItem(label: 'AI Suggestions'),
+            SegmentedTabItem(label: 'Mine'),
+            SegmentedTabItem(label: 'AI Picks'),
           ],
         ),
 
@@ -454,6 +458,7 @@ class _ExerciseAddSheetState extends ConsumerState<_ExerciseAddSheet>
             controller: _tabController,
             children: [
               _buildLibraryTab(isDark, textPrimary, textMuted),
+              _buildMyExercisesTab(isDark, textPrimary, textMuted),
               _buildSuggestionsTab(textMuted, textPrimary),
             ],
           ),
@@ -757,6 +762,304 @@ class _ExerciseAddSheetState extends ConsumerState<_ExerciseAddSheet>
         ),
       ),
     );
+  }
+
+  // ─── My Exercises Tab ────────────────────────────────────────────
+
+  String _mySearchQuery = '';
+
+  Widget _buildMyExercisesTab(bool isDark, Color textPrimary, Color textMuted) {
+    final cardBackground =
+        isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final customState = ref.watch(customExercisesProvider);
+    final favoritesState = ref.watch(favoritesProvider);
+    final staplesState = ref.watch(staplesProvider);
+
+    final queryLower = _mySearchQuery.toLowerCase();
+    final currentNames = widget.currentExerciseNames
+        .map((n) => n.toLowerCase())
+        .toSet();
+
+    // Filter custom exercises
+    final customExercises = customState.exercises.where((ce) {
+      if (currentNames.contains(ce.name.toLowerCase())) return false;
+      if (queryLower.isNotEmpty &&
+          !ce.name.toLowerCase().contains(queryLower)) return false;
+      return true;
+    }).toList();
+
+    // Filter favorites
+    final favorites = favoritesState.favorites.where((f) {
+      if (currentNames.contains(f.exerciseName.toLowerCase())) return false;
+      if (queryLower.isNotEmpty &&
+          !f.exerciseName.toLowerCase().contains(queryLower)) return false;
+      return true;
+    }).toList();
+
+    // Filter staples
+    final staples = staplesState.staples.where((s) {
+      if (currentNames.contains(s.exerciseName.toLowerCase())) return false;
+      if (queryLower.isNotEmpty &&
+          !s.exerciseName.toLowerCase().contains(queryLower)) return false;
+      return true;
+    }).toList();
+
+    final isEmpty =
+        customExercises.isEmpty && favorites.isEmpty && staples.isEmpty;
+
+    return Column(
+      children: [
+        // Search bar
+        Padding(
+          padding: const EdgeInsets.all(16),
+          child: TextField(
+            decoration: InputDecoration(
+              hintText: 'Search my exercises...',
+              hintStyle: TextStyle(color: textMuted),
+              prefixIcon: Icon(Icons.search, color: textMuted),
+              filled: true,
+              fillColor: cardBackground,
+              contentPadding: const EdgeInsets.symmetric(vertical: 10),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide.none,
+              ),
+            ),
+            onChanged: (value) {
+              setState(() => _mySearchQuery = value);
+            },
+          ),
+        ),
+
+        Expanded(
+          child: isEmpty
+              ? Center(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.fitness_center,
+                          size: 48,
+                          color: textMuted.withValues(alpha: 0.5)),
+                      const SizedBox(height: 16),
+                      Text(
+                        'No custom exercises, favorites,\nor staples yet',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(fontSize: 15, color: textMuted),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Create custom exercises or mark favorites\nin Library → Mine',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                            fontSize: 13,
+                            color: textMuted.withValues(alpha: 0.7)),
+                      ),
+                    ],
+                  ),
+                )
+              : ListView(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  children: [
+                    // Custom Exercises section
+                    if (customExercises.isNotEmpty) ...[
+                      _buildMineSectionHeader(
+                        'Custom Exercises',
+                        Icons.fitness_center,
+                        AppColors.orange,
+                        customExercises.length,
+                        textPrimary,
+                        textMuted,
+                      ),
+                      const SizedBox(height: 8),
+                      ...customExercises.map((ce) => _buildMyExerciseCard(
+                            name: ce.name,
+                            subtitle:
+                                '${_capitalize(ce.primaryMuscle)} · ${_capitalize(ce.equipment)}',
+                            badge: 'CUSTOM',
+                            badgeColor: AppColors.orange,
+                            textPrimary: textPrimary,
+                            textMuted: textMuted,
+                            isDark: isDark,
+                          )),
+                      const SizedBox(height: 16),
+                    ],
+
+                    // Favorites section
+                    if (favorites.isNotEmpty) ...[
+                      _buildMineSectionHeader(
+                        'Favorites',
+                        Icons.favorite,
+                        AppColors.coral,
+                        favorites.length,
+                        textPrimary,
+                        textMuted,
+                      ),
+                      const SizedBox(height: 8),
+                      ...favorites.map((f) => _buildMyExerciseCard(
+                            name: f.exerciseName,
+                            subtitle: '',
+                            badge: 'FAV',
+                            badgeColor: AppColors.coral,
+                            textPrimary: textPrimary,
+                            textMuted: textMuted,
+                            isDark: isDark,
+                          )),
+                      const SizedBox(height: 16),
+                    ],
+
+                    // Staples section
+                    if (staples.isNotEmpty) ...[
+                      _buildMineSectionHeader(
+                        'Staples',
+                        Icons.push_pin,
+                        AppColors.purple,
+                        staples.length,
+                        textPrimary,
+                        textMuted,
+                      ),
+                      const SizedBox(height: 8),
+                      ...staples.map((s) => _buildMyExerciseCard(
+                            name: s.exerciseName,
+                            subtitle: s.muscleGroup ?? '',
+                            badge: 'STAPLE',
+                            badgeColor: AppColors.purple,
+                            textPrimary: textPrimary,
+                            textMuted: textMuted,
+                            isDark: isDark,
+                          )),
+                      const SizedBox(height: 16),
+                    ],
+                  ],
+                ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildMineSectionHeader(
+    String title,
+    IconData icon,
+    Color color,
+    int count,
+    Color textPrimary,
+    Color textMuted,
+  ) {
+    return Row(
+      children: [
+        Icon(icon, size: 16, color: color),
+        const SizedBox(width: 8),
+        Text(
+          title,
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            color: textPrimary,
+          ),
+        ),
+        const SizedBox(width: 6),
+        Text(
+          '($count)',
+          style: TextStyle(fontSize: 13, color: textMuted),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildMyExerciseCard({
+    required String name,
+    required String subtitle,
+    required String badge,
+    required Color badgeColor,
+    required Color textPrimary,
+    required Color textMuted,
+    required bool isDark,
+  }) {
+    final cardBackground =
+        isDark ? AppColors.elevated : AppColorsLight.elevated;
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      child: Material(
+        color: cardBackground,
+        borderRadius: BorderRadius.circular(12),
+        child: InkWell(
+          onTap: _isAdding ? null : () => _addExercise(name),
+          borderRadius: BorderRadius.circular(12),
+          child: Padding(
+            padding: const EdgeInsets.all(12),
+            child: Row(
+              children: [
+                ExerciseImage(
+                  exerciseName: name,
+                  width: 44,
+                  height: 44,
+                  borderRadius: 8,
+                  backgroundColor: badgeColor.withValues(alpha: 0.1),
+                  iconColor: badgeColor,
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Flexible(
+                            child: Text(
+                              name,
+                              style: TextStyle(
+                                fontWeight: FontWeight.w600,
+                                color: textPrimary,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 5, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: badgeColor.withValues(alpha: 0.15),
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: Text(
+                              badge,
+                              style: TextStyle(
+                                fontSize: 9,
+                                fontWeight: FontWeight.bold,
+                                color: badgeColor,
+                                letterSpacing: 0.5,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      if (subtitle.isNotEmpty) ...[
+                        const SizedBox(height: 3),
+                        Text(
+                          subtitle,
+                          style: TextStyle(fontSize: 12, color: textMuted),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+                Icon(Icons.add_circle_outline,
+                    color: AppColors.success, size: 24),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  String _capitalize(String text) {
+    if (text.isEmpty) return text;
+    return text[0].toUpperCase() + text.substring(1);
   }
 
   // ─── AI Suggestions Tab ───────────────────────────────────────────

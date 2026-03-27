@@ -4,6 +4,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/services/posthog_service.dart';
 import '../../widgets/glass_back_button.dart';
 
 /// Feature Showcase onboarding screen.
@@ -113,6 +114,10 @@ class FeatureShowcaseScreen extends ConsumerWidget {
                 GestureDetector(
                   onTap: () {
                     HapticFeedback.mediumImpact();
+                    // Track feature showcase completion
+                    ref.read(posthogServiceProvider).capture(
+                      eventName: 'onboarding_feature_showcase_completed',
+                    );
                     context.go('/paywall-features');
                   },
                   child: Container(

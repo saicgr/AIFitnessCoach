@@ -469,6 +469,17 @@ app.state.limiter = limiter
 # Add rate limit exceeded exception handler
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
+# Log validation errors with full details (helps diagnose 422s)
+from fastapi.exceptions import RequestValidationError
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    logger.warning(
+        f"Validation error on {request.method} {request.url.path}: "
+        f"{json.dumps(exc.errors(), default=str)}"
+    )
+    return JSONResponse(status_code=422, content={"detail": exc.errors()})
+
 # Add GZip compression for responses >= 500 bytes
 app.add_middleware(GZipMiddleware, minimum_size=500)
 

@@ -1526,7 +1526,9 @@ class WorkoutRepository {
   }
 
   /// Swap an exercise in a workout
-  Future<Workout?> swapExercise({
+  /// Swap an exercise in a workout. Returns (Workout?, errorMessage?).
+  /// errorMessage is non-null only on failure, with a user-friendly description.
+  Future<(Workout?, String?)> swapExercise({
     required String workoutId,
     required String oldExerciseName,
     required String newExerciseName,
@@ -1549,12 +1551,22 @@ class WorkoutRepository {
         },
       );
       if (response.statusCode == 200) {
-        return Workout.fromJson(response.data as Map<String, dynamic>);
+        return (Workout.fromJson(response.data as Map<String, dynamic>), null);
       }
-      return null;
-    } catch (e) {
-      debugPrint('❌ [Workout] Error swapping exercise: $e');
-      return null;
+      debugPrint('❌ [Workout] Swap failed with status ${response.statusCode}: ${response.data}');
+      return (null, 'Server error (${response.statusCode}). Please try again.');
+    } on DioException catch (e, stackTrace) {
+      debugPrint('❌ [Workout] Error swapping exercise: $e\n$stackTrace');
+      if (e.response?.statusCode == 429) {
+        return (null, 'Too many swaps. Please wait a moment and try again.');
+      }
+      if (e.type == DioExceptionType.connectionTimeout || e.type == DioExceptionType.receiveTimeout) {
+        return (null, 'Request timed out. Please try again.');
+      }
+      return (null, 'Failed to swap exercise. Please try again.');
+    } catch (e, stackTrace) {
+      debugPrint('❌ [Workout] Error swapping exercise: $e\n$stackTrace');
+      return (null, 'Failed to swap exercise. Please try again.');
     }
   }
 
@@ -1984,7 +1996,10 @@ class WorkoutRepository {
     double? rpe,
     int? rir,
     String? notes,
-    String? aiInputSource, // Original AI text input that created this set (e.g., "135*8", "+10")
+    String? aiInputSource,
+    double? targetWeightKg,
+    int? targetReps,
+    String? progressionModel,
   }) async {
     try {
       debugPrint('🔍 [Workout] Logging set $setNumber ($setType) for $exerciseName');
@@ -2004,6 +2019,9 @@ class WorkoutRepository {
           if (rir != null) 'rir': rir,
           if (notes != null && notes.isNotEmpty) 'notes': notes,
           if (aiInputSource != null && aiInputSource.isNotEmpty) 'ai_input_source': aiInputSource,
+          if (targetWeightKg != null) 'target_weight_kg': targetWeightKg,
+          if (targetReps != null) 'target_reps': targetReps,
+          if (progressionModel != null) 'progression_model': progressionModel,
         },
       );
       if (response.statusCode == 200) {
@@ -3194,6 +3212,32 @@ class WorkoutRepository {
       return null;
     } catch (e) {
       debugPrint('❌ [Workout] Error fetching completion summary: $e');
+      rethrow;
+    }
+  }
+
+  /// Update exercise sets for a completed workout (post-completion editing)
+  Future<bool> updateExerciseSets(
+    String workoutId,
+    int exerciseIndex,
+    List<Map<String, dynamic>> sets,
+  ) async {
+    try {
+      debugPrint('✏️ [Workout] Updating exercise sets: workout=$workoutId, exercise=$exerciseIndex');
+      final response = await _apiClient.patch(
+        '${ApiConstants.workouts}/$workoutId/exercise-sets',
+        data: {
+          'exercise_index': exerciseIndex,
+          'sets': sets,
+        },
+      );
+      if (response.statusCode == 200) {
+        debugPrint('✅ [Workout] Exercise sets updated successfully');
+        return true;
+      }
+      return false;
+    } catch (e) {
+      debugPrint('❌ [Workout] Error updating exercise sets: $e');
       rethrow;
     }
   }

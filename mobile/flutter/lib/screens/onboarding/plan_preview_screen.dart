@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/services/posthog_service.dart';
 import '../../widgets/glass_back_button.dart';
 import '../../widgets/glass_sheet.dart';
 import '../../core/providers/window_mode_provider.dart';
@@ -161,6 +162,10 @@ class PlanPreviewScreen extends ConsumerWidget {
                     child: ElevatedButton(
                       onPressed: () {
                         HapticFeedback.mediumImpact();
+                        // Track plan previewed
+                        ref.read(posthogServiceProvider).capture(
+                          eventName: 'onboarding_plan_previewed',
+                        );
                         onStartNow();
                       },
                       style: ElevatedButton.styleFrom(

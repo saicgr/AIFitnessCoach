@@ -103,7 +103,7 @@ class LibraryPreferencesResponse(BaseModel):
 )
 async def log_exercise_view(
     request: ExerciseViewRequest,
-    user_id: str = Depends(get_current_user),
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Log when a user views an exercise detail in the library.
@@ -115,7 +115,7 @@ async def log_exercise_view(
     """
     try:
         event_id = await user_context_service.log_exercise_viewed(
-            user_id=user_id,
+            user_id=current_user["id"],
             exercise_id=request.exercise_id,
             exercise_name=request.exercise_name,
             source=request.source,
@@ -145,7 +145,7 @@ async def log_exercise_view(
 )
 async def log_program_view(
     request: ProgramViewRequest,
-    user_id: str = Depends(get_current_user),
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Log when a user views a program detail in the library.
@@ -157,7 +157,7 @@ async def log_program_view(
     """
     try:
         event_id = await user_context_service.log_program_viewed(
-            user_id=user_id,
+            user_id=current_user["id"],
             program_id=request.program_id,
             program_name=request.program_name,
             category=request.category,
@@ -186,7 +186,7 @@ async def log_program_view(
 )
 async def log_library_search(
     request: SearchRequest,
-    user_id: str = Depends(get_current_user),
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Log when a user searches in the library.
@@ -198,7 +198,7 @@ async def log_library_search(
     """
     try:
         event_id = await user_context_service.log_library_search(
-            user_id=user_id,
+            user_id=current_user["id"],
             search_query=request.search_query,
             search_type=request.search_type,
             filters_used=request.filters_used,
@@ -226,7 +226,7 @@ async def log_library_search(
 )
 async def log_exercise_filter(
     request: FilterRequest,
-    user_id: str = Depends(get_current_user),
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Log when a user applies a filter in the library.
@@ -238,7 +238,7 @@ async def log_exercise_filter(
     """
     try:
         event_id = await user_context_service.log_exercise_filter_used(
-            user_id=user_id,
+            user_id=current_user["id"],
             filter_type=request.filter_type,
             filter_values=request.filter_values,
             result_count=request.result_count,

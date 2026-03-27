@@ -10,6 +10,7 @@ import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/animations/app_animations.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/services/posthog_service.dart';
 import '../../core/theme/theme_colors.dart';
 import '../../core/providers/user_provider.dart';
 import '../../core/providers/warmup_duration_provider.dart';
@@ -201,6 +202,16 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
         _isFavorite = workout.isFavorite ?? false;
         _isLoading = false;
       });
+
+      // Track workout detail viewed
+      ref.read(posthogServiceProvider).capture(
+        eventName: 'workout_detail_viewed',
+        properties: {
+          'workout_id': widget.workoutId,
+          'workout_name': workout.name ?? '',
+        },
+      );
+
       // Load workout summary, training split, and generation params
       // Warmup/stretches are lazy-loaded when user expands those sections
       _loadWorkoutSummary();
