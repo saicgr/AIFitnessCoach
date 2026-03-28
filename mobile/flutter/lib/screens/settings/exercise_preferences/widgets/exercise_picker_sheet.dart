@@ -5,7 +5,11 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/providers/custom_exercises_provider.dart';
+import '../../../../data/local/database.dart';
+import '../../../../data/local/database_provider.dart';
 import '../../../../data/models/custom_exercise.dart';
+import '../../../../data/services/api_client.dart';
+import '../../../../data/services/image_url_cache.dart';
 import '../../../../data/models/exercise.dart';
 import '../../../../data/repositories/library_repository.dart';
 import '../../../../widgets/exercise_image.dart';
@@ -206,10 +210,76 @@ class _ExercisePickerSheetState extends ConsumerState<_ExercisePickerSheet> {
       return;
     }
 
+    // Instant local search from Drift database (no network needed)
+    if (query.length >= 2) {
+      _performLocalSearch(query);
+    }
+
+    // Debounced remote search for better ranking + spell correction
     setState(() => _isSearching = true);
     _debounceTimer = Timer(const Duration(milliseconds: 400), () {
       _performSearch();
     });
+  }
+
+  Future<void> _performLocalSearch(String query) async {
+    try {
+      final db = ref.read(appDatabaseProvider);
+      final localResults = await db.exerciseLibraryDao.searchExercises(
+        query,
+        bodyPart: _selectedBodyParts.isNotEmpty ? _selectedBodyParts.first : null,
+        equipment: _selectedEquipment.isNotEmpty ? _selectedEquipment.first : null,
+      );
+
+      if (!mounted || _searchQuery != query) return;
+
+      // Convert CachedExercise to LibraryExerciseItem and apply relevance sort
+      final items = localResults.map((e) => LibraryExerciseItem(
+        id: e.id,
+        name: e.name,
+        bodyPart: e.bodyPart,
+        equipment: e.equipment,
+        targetMuscle: e.targetMuscle,
+        videoUrl: e.videoUrl,
+        imageUrl: e.imageS3Path,
+      )).toList();
+
+      // Sort by relevance: exact > prefix > word-boundary > substring
+      final queryLower = query.toLowerCase();
+      items.sort((a, b) {
+        int scoreOf(LibraryExerciseItem item) {
+          final name = item.name.toLowerCase();
+          if (name == queryLower) return 0;
+          if (name.startsWith(queryLower)) return 1;
+          if (RegExp(r'\b' + RegExp.escape(queryLower) + r'\b').hasMatch(name)) return 2;
+          return 3;
+        }
+        final cmp = scoreOf(a).compareTo(scoreOf(b));
+        if (cmp != 0) return cmp;
+        return a.name.length.compareTo(b.name.length);
+      });
+
+      // Filter out excluded exercises
+      final filtered = items.where((e) =>
+        !widget.excludeExercises.any((name) => name.toLowerCase() == e.name.toLowerCase())
+      ).take(20).toList();
+
+      // Merge custom exercises
+      final customMatches = _getMatchingCustomExercises(query);
+
+      setState(() {
+        _searchResults = [...customMatches, ...filtered];
+      });
+
+      // Pre-fetch image URLs in batch for faster thumbnail loading
+      final names = filtered.map((e) => e.name).toList();
+      if (names.isNotEmpty) {
+        final apiClient = ref.read(apiClientProvider);
+        ImageUrlCache.batchPreFetch(names, apiClient);
+      }
+    } catch (e) {
+      debugPrint('Local search error: $e');
+    }
   }
 
   Future<void> _performSearch() async {
@@ -1050,21 +1120,22 @@ class _ExerciseCard extends StatelessWidget {
                         backgroundColor: glassSurface,
                         iconColor: textMuted,
                       ),
-                      Positioned.fill(
-                        child: Container(
-                          decoration: BoxDecoration(
-                            color: Colors.black.withValues(alpha: 0.3),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: const Center(
-                            child: Icon(
-                              Icons.play_circle_outline,
-                              color: Colors.white,
-                              size: 24,
+                      if (exercise.videoUrl != null && exercise.videoUrl!.isNotEmpty)
+                        Positioned.fill(
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: Colors.black.withValues(alpha: 0.3),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: const Center(
+                              child: Icon(
+                                Icons.play_circle_outline,
+                                color: Colors.white,
+                                size: 24,
+                              ),
                             ),
                           ),
                         ),
-                      ),
                     ],
                   ),
                 ),

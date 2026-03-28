@@ -268,6 +268,22 @@ class WeightSuggestionService {
         debugPrint('✅ [SmartWeight] Got suggestion: ${suggestion.suggestedWeight}kg '
             '(confidence: ${(suggestion.confidence * 100).toStringAsFixed(0)}%)');
 
+        // If suggestion is 0 (no history), fall back to equipment-based default
+        if (suggestion.suggestedWeight <= 0) {
+          final defaultKg = _getEquipmentDefault(equipment, exerciseName);
+          if (defaultKg > 0) {
+            return SmartWeightSuggestion(
+              suggestedWeight: defaultKg,
+              confidence: 0.3,
+              reasoning: 'Equipment-based starting weight (no history)',
+              targetIntensity: suggestion.targetIntensity,
+              trainingGoal: suggestion.trainingGoal,
+              equipmentIncrement: suggestion.equipmentIncrement,
+              performanceModifier: 1.0,
+            );
+          }
+        }
+
         return suggestion;
       }
 
@@ -280,6 +296,24 @@ class WeightSuggestionService {
       debugPrint('❌ [SmartWeight] Error: $e');
       return null;
     }
+  }
+
+  /// Equipment-based default weight (kg) when no history exists.
+  static double _getEquipmentDefault(String? equipment, String? exerciseName) {
+    final eq = (equipment ?? '').toLowerCase();
+    final name = (exerciseName ?? '').toLowerCase();
+    if (eq.contains('barbell') || name.contains('barbell') || name.contains('bench press') || name.contains('deadlift')) {
+      return name.contains('curl') || name.contains('extension') ? 15.0 : 25.0;
+    } else if (eq.contains('dumbbell') || name.contains('dumbbell')) {
+      return name.contains('lateral') || name.contains('fly') || name.contains('raise') ? 5.0 : 10.0;
+    } else if (eq.contains('cable') || name.contains('cable')) {
+      return 15.0;
+    } else if (eq.contains('machine') || name.contains('machine')) {
+      return 25.0;
+    } else if (eq.contains('kettlebell') || name.contains('kettlebell')) {
+      return 10.0;
+    }
+    return 0.0;
   }
 
   /// Get AI-powered weight suggestion from the backend

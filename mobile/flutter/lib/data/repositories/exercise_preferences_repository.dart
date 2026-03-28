@@ -164,7 +164,7 @@ class StapleExercise {
       parts.add('$mins min');
     }
     if (defaultSpeedMph != null) parts.add('${defaultSpeedMph!.toStringAsFixed(1)} mph');
-    if (defaultInclinePercent != null) parts.add('${defaultInclinePercent!.toStringAsFixed(0)}% incline');
+    if (defaultInclinePercent != null) parts.add('Incline ${defaultInclinePercent!.toStringAsFixed(0)}');
     if (defaultRpm != null) parts.add('$defaultRpm RPM');
     if (defaultResistanceLevel != null) parts.add('Resistance $defaultResistanceLevel');
     if (strokeRateSpm != null) parts.add('$strokeRateSpm spm');

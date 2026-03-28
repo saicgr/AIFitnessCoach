@@ -7,9 +7,11 @@ This module handles warmup and cool-down stretch operations:
 - POST /{workout_id}/warmup - Create warmup exercises
 - POST /{workout_id}/stretches - Create cool-down stretches
 - POST /{workout_id}/warmup-and-stretches - Create both
+- POST /{workout_id}/warmup-logs - Save warmup interval logs
 """
+import json
 from typing import Optional
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Body, Depends, HTTPException
 from core.auth import get_current_user
 from core.exceptions import safe_internal_error
 
@@ -255,3 +257,46 @@ async def create_workout_warmup_and_stretches(
     except Exception as e:
         logger.error(f"Failed to create warmup and stretches: {e}")
         raise safe_internal_error(e, "warmup_stretch")
+
+
+@router.post("/{workout_id}/warmup-logs")
+async def save_warmup_logs(
+    workout_id: str,
+    body: dict = Body(...),
+    current_user: dict = Depends(get_current_user),
+):
+    """Save warmup interval logs for a workout.
+
+    Body format:
+    {
+        "intervals": {
+            "Treadmill Power Walk": [
+                {"start_seconds": 0, "end_seconds": 180, "speed_mph": 3.0, "incline": 1},
+                {"start_seconds": 180, "end_seconds": 600, "speed_mph": 3.3, "incline": 3}
+            ]
+        }
+    }
+    """
+    try:
+        db = get_supabase_db()
+        user_id = current_user.get("sub") or current_user.get("user_id")
+        intervals = body.get("intervals", {})
+
+        if not intervals:
+            return {"status": "ok", "message": "No intervals to save"}
+
+        # Upsert into warmup_exercise_logs table
+        for exercise_name, logs in intervals.items():
+            db.client.table("warmup_exercise_logs").insert({
+                "workout_id": workout_id,
+                "user_id": user_id,
+                "exercise_name": exercise_name,
+                "intervals_json": json.dumps(logs),
+            }).execute()
+
+        logger.info(f"✅ Saved warmup logs for workout {workout_id}: {len(intervals)} exercises")
+        return {"status": "ok", "exercises_logged": len(intervals)}
+
+    except Exception as e:
+        logger.error(f"Failed to save warmup logs: {e}")
+        raise safe_internal_error(e, "warmup_logs")

@@ -17,9 +17,12 @@
 /// - Rest End: beep, chime, gong, none
 library;
 
+import 'dart:io';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 /// Service for playing workout sound effects.
 class SoundService {
@@ -46,6 +49,76 @@ class SoundService {
   String exerciseCompletionSoundType = 'chime';
   double soundEffectsVolume = 0.8;
 
+  // Custom sound file paths (category -> absolute file path)
+  final Map<String, String> _customSoundPaths = {};
+
+  /// Get custom sound path for a category
+  String? getCustomSoundPath(String category) => _customSoundPaths[category];
+
+  /// Set a custom sound for a category by copying the file to app storage
+  Future<String?> setCustomSound(String category, String sourceFilePath) async {
+    try {
+      final appDir = await getApplicationDocumentsDirectory();
+      final soundsDir = Directory('${appDir.path}/custom_sounds');
+      if (!await soundsDir.exists()) {
+        await soundsDir.create(recursive: true);
+      }
+
+      final ext = sourceFilePath.split('.').last.toLowerCase();
+      final destPath = '${soundsDir.path}/${category}_custom.$ext';
+      await File(sourceFilePath).copy(destPath);
+
+      _customSoundPaths[category] = destPath;
+
+      // Persist
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('custom_sound_$category', destPath);
+
+      debugPrint('✅ [SoundService] Custom sound set for $category: $destPath');
+      return destPath;
+    } catch (e) {
+      debugPrint('❌ [SoundService] Failed to set custom sound: $e');
+      return null;
+    }
+  }
+
+  /// Remove custom sound for a category
+  Future<void> removeCustomSound(String category) async {
+    final path = _customSoundPaths.remove(category);
+    if (path != null) {
+      try {
+        final file = File(path);
+        if (await file.exists()) await file.delete();
+      } catch (_) {}
+    }
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('custom_sound_$category');
+    debugPrint('🗑️ [SoundService] Custom sound removed for $category');
+  }
+
+  /// Load persisted custom sound paths
+  Future<void> _loadCustomSoundPaths() async {
+    final prefs = await SharedPreferences.getInstance();
+    for (final category in ['countdown', 'rest_end', 'exercise_complete', 'workout_complete']) {
+      final path = prefs.getString('custom_sound_$category');
+      if (path != null && await File(path).exists()) {
+        _customSoundPaths[category] = path;
+      }
+    }
+  }
+
+  /// Play a sound - custom (DeviceFileSource) or asset (AssetSource)
+  Future<void> _playSound(AudioPlayer? player, String category, String soundType) async {
+    if (soundType == 'custom' && _customSoundPaths.containsKey(category)) {
+      await player?.setVolume(soundEffectsVolume);
+      await player?.play(DeviceFileSource(_customSoundPaths[category]!));
+    } else {
+      final assetPath = 'audio/$category/$soundType.mp3';
+      await player?.setVolume(soundEffectsVolume);
+      await player?.play(AssetSource(assetPath));
+    }
+  }
+
   /// Initialize the sound service
   Future<void> initialize() async {
     if (_isInitialized) return;
@@ -57,14 +130,13 @@ class SoundService {
       _workoutCompletePlayer = AudioPlayer();
       _restEndPlayer = AudioPlayer();
 
-      // Set audio context for mixing with other apps
+      // Set audio context to mix with other apps (don't pause background music)
       await AudioPlayer.global.setAudioContext(
         AudioContext(
           iOS: AudioContextIOS(
-            category: AVAudioSessionCategory.playback,
+            category: AVAudioSessionCategory.ambient,
             options: {
               AVAudioSessionOptions.mixWithOthers,
-              AVAudioSessionOptions.duckOthers,
             },
           ),
           android: AudioContextAndroid(
@@ -73,10 +145,12 @@ class SoundService {
             stayAwake: false,
             contentType: AndroidContentType.sonification,
             usageType: AndroidUsageType.assistanceSonification,
-            audioFocus: AndroidAudioFocus.gainTransientMayDuck,
+            audioFocus: AndroidAudioFocus.none,
           ),
         ),
       );
+
+      await _loadCustomSoundPaths();
 
       _isInitialized = true;
       debugPrint('✅ [SoundService] Initialized with audio playback');
@@ -127,15 +201,13 @@ class SoundService {
 
     // Audio playback
     try {
-      String assetPath;
       if (countdownSoundType == 'voice') {
-        assetPath = 'audio/countdown/voice_$count.mp3';
+        final assetPath = 'audio/countdown/voice_$count.mp3';
+        await _countdownPlayer?.setVolume(soundEffectsVolume);
+        await _countdownPlayer?.play(AssetSource(assetPath));
       } else {
-        assetPath = 'audio/countdown/$countdownSoundType.mp3';
+        await _playSound(_countdownPlayer, 'countdown', countdownSoundType);
       }
-
-      await _countdownPlayer?.setVolume(soundEffectsVolume);
-      await _countdownPlayer?.play(AssetSource(assetPath));
       debugPrint('🔊 [SoundService] Countdown: $count ($countdownSoundType)');
     } catch (e) {
       debugPrint('⚠️ [SoundService] Countdown sound error: $e');
@@ -154,10 +226,7 @@ class SoundService {
 
     // Audio playback
     try {
-      final assetPath =
-          'audio/exercise_complete/$exerciseCompletionSoundType.mp3';
-      await _exerciseCompletePlayer?.setVolume(soundEffectsVolume);
-      await _exerciseCompletePlayer?.play(AssetSource(assetPath));
+      await _playSound(_exerciseCompletePlayer, 'exercise_complete', exerciseCompletionSoundType);
       debugPrint(
           '🔊 [SoundService] Exercise complete ($exerciseCompletionSoundType)');
     } catch (e) {
@@ -174,9 +243,7 @@ class SoundService {
 
     // Audio playback
     try {
-      final assetPath = 'audio/workout_complete/$completionSoundType.mp3';
-      await _workoutCompletePlayer?.setVolume(soundEffectsVolume);
-      await _workoutCompletePlayer?.play(AssetSource(assetPath));
+      await _playSound(_workoutCompletePlayer, 'workout_complete', completionSoundType);
       debugPrint('🔊 [SoundService] Workout complete ($completionSoundType)');
     } catch (e) {
       debugPrint('⚠️ [SoundService] Workout completion sound error: $e');
@@ -192,9 +259,7 @@ class SoundService {
 
     // Audio playback
     try {
-      final assetPath = 'audio/rest_end/$restTimerSoundType.mp3';
-      await _restEndPlayer?.setVolume(soundEffectsVolume);
-      await _restEndPlayer?.play(AssetSource(assetPath));
+      await _playSound(_restEndPlayer, 'rest_end', restTimerSoundType);
       debugPrint('🔊 [SoundService] Rest timer end ($restTimerSoundType)');
     } catch (e) {
       debugPrint('⚠️ [SoundService] Rest timer sound error: $e');
@@ -211,34 +276,26 @@ class SoundService {
     if (soundType == 'none') return;
 
     try {
-      String assetPath;
       AudioPlayer? player;
-
       switch (category) {
         case 'countdown':
-          assetPath = soundType == 'voice'
-              ? 'audio/countdown/voice_3.mp3'
-              : 'audio/countdown/$soundType.mp3';
           player = _countdownPlayer;
-          break;
         case 'exercise_complete':
-          assetPath = 'audio/exercise_complete/$soundType.mp3';
           player = _exerciseCompletePlayer;
-          break;
         case 'workout_complete':
-          assetPath = 'audio/workout_complete/$soundType.mp3';
           player = _workoutCompletePlayer;
-          break;
         case 'rest_end':
-          assetPath = 'audio/rest_end/$soundType.mp3';
           player = _restEndPlayer;
-          break;
         default:
           return;
       }
 
-      await player?.setVolume(soundEffectsVolume);
-      await player?.play(AssetSource(assetPath));
+      if (soundType == 'voice' && category == 'countdown') {
+        await player?.setVolume(soundEffectsVolume);
+        await player?.play(AssetSource('audio/countdown/voice_3.mp3'));
+      } else {
+        await _playSound(player, category, soundType);
+      }
       HapticFeedback.selectionClick();
       debugPrint('🔊 [SoundService] Preview: $category/$soundType');
     } catch (e) {

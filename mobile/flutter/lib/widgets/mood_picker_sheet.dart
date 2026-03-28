@@ -373,7 +373,7 @@ class _MoodPickerSheetState extends ConsumerState<MoodPickerSheet> {
 
         // Navigate to workout
         if (mounted) {
-          context.push('/workout/${workout.id}');
+          context.push('/workout/${workout.id}', extra: workout);
         }
       }
     } catch (e) {

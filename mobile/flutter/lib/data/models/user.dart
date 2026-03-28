@@ -48,7 +48,9 @@ class User extends Equatable {
   @JsonKey(name: 'support_friend_added')
   final bool? supportFriendAdded; // True when FitWiz Support was auto-added as friend
   @JsonKey(name: 'weight_unit')
-  final String? weightUnit; // 'kg' or 'lbs' - user's preferred weight unit
+  final String? weightUnit; // 'kg' or 'lbs' - user's preferred body weight unit
+  @JsonKey(name: 'workout_weight_unit')
+  final String? workoutWeightUnit; // 'kg' or 'lbs' - user's preferred workout weight unit (separate from body weight)
   @JsonKey(name: 'primary_goal')
   final String? primaryGoal; // 'muscle_hypertrophy', 'muscle_strength', or 'strength_hypertrophy'
   @JsonKey(name: 'muscle_focus_points')
@@ -84,6 +86,7 @@ class User extends Equatable {
     this.isNewUser,
     this.supportFriendAdded,
     this.weightUnit,
+    this.workoutWeightUnit,
     this.primaryGoal,
     this.muscleFocusPoints,
     this.photoUrl,
@@ -198,11 +201,26 @@ class User extends Equatable {
     return 'kg';
   }
 
-  /// Check if user prefers metric (kg) units
+  /// Check if user prefers metric (kg) for body weight
   bool get usesMetricWeight => preferredWeightUnit == 'kg';
 
-  /// Check if user prefers imperial (lbs) units
+  /// Check if user prefers imperial (lbs) for body weight
   bool get usesImperialWeight => preferredWeightUnit == 'lbs';
+
+  /// Get workout weight unit preference (separate from body weight unit).
+  /// Falls back to body weight unit if not explicitly set.
+  String get preferredWorkoutWeightUnit {
+    if (workoutWeightUnit != null && workoutWeightUnit!.isNotEmpty) {
+      return workoutWeightUnit!;
+    }
+    return preferredWeightUnit; // Fall back to body weight unit
+  }
+
+  /// Check if user prefers metric (kg) for workouts
+  bool get usesMetricWorkoutWeight => preferredWorkoutWeightUnit == 'kg';
+
+  /// Check if user prefers imperial (lbs) for workouts
+  bool get usesImperialWorkoutWeight => preferredWorkoutWeightUnit == 'lbs';
 
   /// Get fitness goal (first goal from goals list, formatted for display)
   String? get fitnessGoal {

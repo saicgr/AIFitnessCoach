@@ -82,7 +82,7 @@ class _ExpandedExerciseCardState extends ConsumerState<ExpandedExerciseCard> {
   /// Toggle between kg and lbs units locally
   void _toggleUnit() {
     setState(() {
-      final bool currentUseKg = _useKgOverride ?? ref.read(useKgProvider);
+      final bool currentUseKg = _useKgOverride ?? ref.read(useKgForWorkoutProvider);
       _useKgOverride = !currentUseKg;
     });
   }
@@ -305,7 +305,7 @@ class _ExpandedExerciseCardState extends ConsumerState<ExpandedExerciseCard> {
     final restSeconds = exercise.restSeconds ?? 90;
 
     // Get user's weight unit preference (kg or lbs), with local override
-    final bool useKg = _useKgOverride ?? ref.watch(useKgProvider);
+    final bool useKg = _useKgOverride ?? ref.watch(useKgForWorkoutProvider);
 
     // Theme-aware colors
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -732,7 +732,7 @@ class _ExpandedExerciseCardState extends ConsumerState<ExpandedExerciseCard> {
 
   /// Build kg/lb toggle button
   Widget _buildUnitToggle(Color accentColor) {
-    final bool useKg = _useKgOverride ?? ref.read(useKgProvider);
+    final bool useKg = _useKgOverride ?? ref.read(useKgForWorkoutProvider);
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final displayAccent = isDark ? accentColor : _darkenColor(accentColor);
 
@@ -1324,7 +1324,7 @@ class _ExpandedExerciseCardState extends ConsumerState<ExpandedExerciseCard> {
 
   Widget _buildTableHeader(Color glassSurface, Color textMuted, Color accentColor) {
     final isBarbell = _isBarbellExercise();
-    final bool useKg = _useKgOverride ?? ref.read(useKgProvider);
+    final bool useKg = _useKgOverride ?? ref.read(useKgForWorkoutProvider);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,

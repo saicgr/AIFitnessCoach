@@ -213,6 +213,7 @@ class _RoadmapTabState extends State<_RoadmapTab> {
           textMuted: textMuted,
           features: [
             _Feature(Icons.smart_toy_outlined, AppColors.purple, 'Custom AI Coach', 'Personalize your coach\'s personality & style', eta: 'Q3 2026'),
+            _Feature(Icons.record_voice_over_outlined, AppColors.cyan, 'AI Coach Workout Audio', 'Real-time voice encouragement, form cues, exercise transitions & PR celebrations during workouts', eta: 'Q3 2026'),
             _Feature(Icons.memory_outlined, AppColors.teal, 'On-Device AI', 'AI coaching without internet', eta: 'Q3 2026'),
           ],
         ),

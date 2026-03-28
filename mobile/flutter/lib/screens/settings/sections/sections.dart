@@ -28,3 +28,4 @@ export 'superset_settings_section.dart';
 export 'kegel_settings_section.dart';
 export 'wear_os_section.dart';
 export 'offline_mode_section.dart';
+export 'sound_settings_section.dart';

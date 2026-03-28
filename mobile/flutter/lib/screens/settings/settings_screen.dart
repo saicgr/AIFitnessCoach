@@ -1227,6 +1227,14 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             sectionKeys: const ['custom_content'],
           ),
           _SettingsRow(
+            icon: Icons.trending_up,
+            iconColor: isDark ? AppColors.cyan : AppColorsLight.cyan,
+            title: 'Training Methods',
+            value: 'Set progression & research',
+            route: '/settings/training-methods',
+            sectionKeys: const ['training'],
+          ),
+          _SettingsRow(
             icon: Icons.fitness_center,
             iconColor: isDark ? AppColors.success : AppColorsLight.success,
             title: 'Equipment',

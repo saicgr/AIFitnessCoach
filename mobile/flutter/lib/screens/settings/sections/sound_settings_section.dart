@@ -10,10 +10,12 @@
 /// - Workout Complete: chime, bell, success, fanfare, none (NO APPLAUSE!)
 library;
 
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/providers/sound_preferences_provider.dart';
+import '../../../data/services/sound_service.dart';
 import '../widgets/setting_tile.dart';
 import '../widgets/section_header.dart';
 
@@ -23,11 +25,12 @@ const List<String> countdownSoundTypes = [
   'chime',
   'voice',
   'tick',
-  'none'
+  'custom',
+  'none',
 ];
 
 /// Available rest timer sound types
-const List<String> restTimerSoundTypes = ['beep', 'chime', 'gong', 'none'];
+const List<String> restTimerSoundTypes = ['beep', 'chime', 'gong', 'custom', 'none'];
 
 /// Available exercise completion sound types
 const List<String> exerciseCompletionSoundTypes = [
@@ -36,7 +39,8 @@ const List<String> exerciseCompletionSoundTypes = [
   'ding',
   'pop',
   'whoosh',
-  'none'
+  'custom',
+  'none',
 ];
 
 /// Available workout completion sound types (NO APPLAUSE)
@@ -45,7 +49,8 @@ const List<String> workoutCompletionSoundTypes = [
   'bell',
   'success',
   'fanfare',
-  'none'
+  'custom',
+  'none',
 ];
 
 class SoundSettingsSection extends ConsumerWidget {
@@ -89,6 +94,7 @@ class SoundSettingsSection extends ConsumerWidget {
                   context: context,
                   value: prefs.countdownSoundType,
                   options: countdownSoundTypes,
+                  category: 'countdown',
                   onChanged: (type) => notifier.setCountdownType(type),
                   onPreview: (type) => notifier.playPreview('countdown', type),
                   isDark: isDark,
@@ -112,6 +118,7 @@ class SoundSettingsSection extends ConsumerWidget {
                   context: context,
                   value: prefs.restTimerSoundType,
                   options: restTimerSoundTypes,
+                  category: 'rest_end',
                   onChanged: (type) => notifier.setRestTimerType(type),
                   onPreview: (type) => notifier.playPreview('rest_end', type),
                   isDark: isDark,
@@ -136,6 +143,7 @@ class SoundSettingsSection extends ConsumerWidget {
                   context: context,
                   value: prefs.exerciseCompletionSoundType,
                   options: exerciseCompletionSoundTypes,
+                  category: 'exercise_complete',
                   onChanged: (type) => notifier.setExerciseCompletionType(type),
                   onPreview: (type) =>
                       notifier.playPreview('exercise_complete', type),
@@ -161,6 +169,7 @@ class SoundSettingsSection extends ConsumerWidget {
                   context: context,
                   value: prefs.workoutCompletionSoundType,
                   options: workoutCompletionSoundTypes,
+                  category: 'workout_complete',
                   onChanged: (type) => notifier.setWorkoutCompletionType(type),
                   onPreview: (type) =>
                       notifier.playPreview('workout_complete', type),
@@ -198,6 +207,7 @@ class SoundSettingsSection extends ConsumerWidget {
     required BuildContext context,
     required String value,
     required List<String> options,
+    required String category,
     required void Function(String) onChanged,
     required void Function(String) onPreview,
     required bool isDark,
@@ -210,6 +220,9 @@ class SoundSettingsSection extends ConsumerWidget {
     final textSecondary =
         isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
 
+    final soundService = SoundService();
+    final hasCustom = soundService.getCustomSoundPath(category) != null;
+
     return Padding(
       padding: EdgeInsets.only(left: leftPadding, right: 16, bottom: 12),
       child: Wrap(
@@ -217,30 +230,93 @@ class SoundSettingsSection extends ConsumerWidget {
         runSpacing: 8,
         children: options.map((option) {
           final isSelected = option == value;
+          final isCustom = option == 'custom';
+
           return GestureDetector(
-            onLongPress: option != 'none' ? () => onPreview(option) : null,
+            onLongPress: () {
+              if (option == 'none') return;
+              if (isCustom && !hasCustom) return;
+              onPreview(option);
+            },
             child: ChoiceChip(
+              avatar: isCustom
+                  ? Icon(
+                      hasCustom ? Icons.music_note : Icons.upload_file,
+                      size: 16,
+                      color: isSelected ? Colors.white : textSecondary,
+                    )
+                  : null,
               label: Text(
-                _formatSoundTypeName(option),
+                isCustom
+                    ? (hasCustom ? 'Custom' : 'Upload')
+                    : _formatSoundTypeName(option),
                 style: TextStyle(
                   color: isSelected ? Colors.white : textSecondary,
                   fontSize: 13,
                 ),
               ),
               selected: isSelected,
-              onSelected: (_) {
-                onChanged(option);
-                // Play preview on selection
-                if (option != 'none') {
-                  onPreview(option);
+              onSelected: (_) async {
+                if (isCustom) {
+                  // Pick an audio file
+                  final result = await FilePicker.platform.pickFiles(
+                    type: FileType.custom,
+                    allowedExtensions: ['mp3', 'wav', 'm4a', 'aac', 'ogg'],
+                  );
+                  if (result != null && result.files.single.path != null) {
+                    final file = result.files.single;
+                    final fileSizeKb = (file.size / 1024).round();
+
+                    // Max 2MB - these are short sound effects, not music
+                    if (file.size > 2 * 1024 * 1024) {
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(
+                              'File too large (${(file.size / (1024 * 1024)).toStringAsFixed(1)}MB). Max 2MB for sound effects.',
+                            ),
+                            backgroundColor: AppColors.error,
+                          ),
+                        );
+                      }
+                      return;
+                    }
+
+                    final path = await soundService.setCustomSound(
+                      category,
+                      file.path!,
+                    );
+                    if (path != null && context.mounted) {
+                      onChanged('custom');
+                      onPreview('custom');
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('Custom sound set (${fileSizeKb}KB)'),
+                          backgroundColor: AppColors.success,
+                          duration: const Duration(seconds: 2),
+                        ),
+                      );
+                    }
+                  } else if (hasCustom) {
+                    // Already has a custom file, just select it
+                    onChanged('custom');
+                    onPreview('custom');
+                  }
+                } else {
+                  onChanged(option);
+                  if (option != 'none') {
+                    onPreview(option);
+                  }
                 }
               },
-              selectedColor: AppColors.cyan,
+              selectedColor: isCustom ? AppColors.orange : AppColors.cyan,
               backgroundColor: surface,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(20),
                 side: BorderSide(
-                  color: isSelected ? AppColors.cyan : cardBorder,
+                  color: isSelected
+                      ? (isCustom ? AppColors.orange : AppColors.cyan)
+                      : cardBorder,
                 ),
               ),
             ),

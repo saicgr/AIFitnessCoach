@@ -92,6 +92,28 @@ enum WorkoutPhase {
   complete,
 }
 
+/// A single logged interval during a warmup cardio exercise
+class WarmupInterval {
+  final int startSeconds;
+  int endSeconds;
+  final double? speedMph;
+  final double? incline;
+
+  WarmupInterval({
+    required this.startSeconds,
+    this.endSeconds = 0,
+    this.speedMph,
+    this.incline,
+  });
+
+  Map<String, dynamic> toJson() => {
+    'start_seconds': startSeconds,
+    'end_seconds': endSeconds,
+    'speed_mph': speedMph,
+    'incline': incline,
+  };
+}
+
 /// Standard warmup exercises data
 class WarmupExerciseData {
   final String name;
@@ -130,7 +152,7 @@ class WarmupExerciseData {
   String get cardioParamsDisplay {
     final parts = <String>[];
     if (speedMph != null) parts.add('${speedMph!.toStringAsFixed(1)} mph');
-    if (inclinePercent != null) parts.add('${inclinePercent!.toStringAsFixed(0)}% incline');
+    if (inclinePercent != null) parts.add('Incline ${inclinePercent!.toStringAsFixed(0)}');
     if (rpm != null) parts.add('$rpm RPM');
     if (resistanceLevel != null) parts.add('Resistance $resistanceLevel');
     if (strokeRateSpm != null) parts.add('$strokeRateSpm spm');
@@ -174,7 +196,7 @@ class StretchExerciseData {
   String get cardioParamsDisplay {
     final parts = <String>[];
     if (speedMph != null) parts.add('${speedMph!.toStringAsFixed(1)} mph');
-    if (inclinePercent != null) parts.add('${inclinePercent!.toStringAsFixed(0)}% incline');
+    if (inclinePercent != null) parts.add('Incline ${inclinePercent!.toStringAsFixed(0)}');
     if (rpm != null) parts.add('$rpm RPM');
     if (resistanceLevel != null) parts.add('Resistance $resistanceLevel');
     if (strokeRateSpm != null) parts.add('$strokeRateSpm spm');

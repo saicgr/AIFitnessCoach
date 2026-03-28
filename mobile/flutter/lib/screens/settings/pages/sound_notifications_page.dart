@@ -20,16 +20,19 @@ class SoundNotificationsPage extends ConsumerWidget {
       body: SingleChildScrollView(
           padding: const EdgeInsets.all(16),
           child: Column(
-            children: const [
-              AudioSettingsSection(),
-              SizedBox(height: 16),
-              NotificationsSection(),
-              SizedBox(height: 16),
-              TestNotificationsSection(),
-              SizedBox(height: 32),
+            children: [
+              const SoundSettingsSection(),
+              const SizedBox(height: 16),
+              const AudioSettingsSection(),
+              const SizedBox(height: 16),
+              const NotificationsSection(),
+              const SizedBox(height: 16),
+              const TestNotificationsSection(),
+              const SizedBox(height: 32),
             ],
           ),
         ),
     );
   }
+
 }

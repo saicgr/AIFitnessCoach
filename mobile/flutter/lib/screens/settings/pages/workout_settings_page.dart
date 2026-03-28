@@ -1,16 +1,27 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/providers/auth_provider.dart';
+import '../../../core/providers/user_provider.dart';
+import '../../../core/providers/weight_increments_provider.dart';
+import '../../../widgets/glass_sheet.dart';
 import '../../../widgets/pill_app_bar.dart';
+import '../../../widgets/weight_increments_sheet.dart';
 import '../widgets/widgets.dart';
 
 /// Sub-page for Workout Settings + Exercise Preferences.
-class WorkoutSettingsPage extends ConsumerWidget {
+class WorkoutSettingsPage extends ConsumerStatefulWidget {
   const WorkoutSettingsPage({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<WorkoutSettingsPage> createState() => _WorkoutSettingsPageState();
+}
+
+class _WorkoutSettingsPageState extends ConsumerState<WorkoutSettingsPage> {
+  @override
+  Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final backgroundColor =
         isDark ? AppColors.pureBlack : AppColorsLight.pureWhite;
@@ -91,6 +102,20 @@ class WorkoutSettingsPage extends ConsumerWidget {
                     isProgressChartsScreen: true,
                     iconColor: isDark ? AppColors.green : AppColorsLight.green,
                   ),
+                  SettingItemData(
+                    icon: Icons.swap_horiz,
+                    title: 'Workout Weight Unit',
+                    subtitle: ref.watch(workoutWeightUnitProvider) == 'kg' ? 'Kilograms (kg)' : 'Pounds (lbs)',
+                    onTap: () => _showWorkoutWeightUnitSelector(context, ref),
+                    iconColor: isDark ? AppColors.orange : AppColorsLight.orange,
+                  ),
+                  SettingItemData(
+                    icon: Icons.tune,
+                    title: 'Weight Increments',
+                    subtitle: 'Step size: ${ref.watch(weightIncrementsProvider).unit.toUpperCase()} · Tap to customize',
+                    onTap: () => showWeightIncrementsSheet(context),
+                    iconColor: isDark ? AppColors.textSecondary : AppColorsLight.textSecondary,
+                  ),
                 ],
               ),
 
@@ -119,6 +144,20 @@ class WorkoutSettingsPage extends ConsumerWidget {
                     isWorkoutHistoryImport: true,
                     iconColor: isDark ? AppColors.textSecondary : AppColorsLight.textSecondary,
                   ),
+                  SettingItemData(
+                    icon: Icons.swap_horiz,
+                    title: 'Workout Weight Unit',
+                    subtitle: ref.watch(workoutWeightUnitProvider) == 'kg' ? 'Kilograms (kg)' : 'Pounds (lbs)',
+                    onTap: () => _showWorkoutWeightUnitSelector(context, ref),
+                    iconColor: isDark ? AppColors.orange : AppColorsLight.orange,
+                  ),
+                  SettingItemData(
+                    icon: Icons.tune,
+                    title: 'Weight Increments',
+                    subtitle: 'Step size: ${ref.watch(weightIncrementsProvider).unit.toUpperCase()} · Tap to customize',
+                    onTap: () => showWeightIncrementsSheet(context),
+                    iconColor: isDark ? AppColors.textSecondary : AppColorsLight.textSecondary,
+                  ),
                 ],
               ),
 
@@ -126,6 +165,89 @@ class WorkoutSettingsPage extends ConsumerWidget {
             ],
           ),
         ),
+    );
+  }
+
+  void _showWorkoutWeightUnitSelector(BuildContext context, WidgetRef ref) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final currentUnit = ref.read(workoutWeightUnitProvider);
+    final accent = isDark ? AppColors.orange : AppColorsLight.orange;
+    final textPrimary = isDark ? Colors.white : AppColorsLight.textPrimary;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+
+    showGlassSheet(
+      context: context,
+      useRootNavigator: true,
+      builder: (context) => GlassSheet(
+        child: SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Text(
+                  'Workout Weight Unit',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: textPrimary),
+                ),
+              ),
+              const SizedBox(height: 4),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Text(
+                  'Unit for logging exercise weights during workouts',
+                  style: TextStyle(fontSize: 13, color: textMuted),
+                ),
+              ),
+              const SizedBox(height: 16),
+              ...[
+                {'unit': 'kg', 'label': 'Kilograms (kg)', 'desc': 'Metric system'},
+                {'unit': 'lbs', 'label': 'Pounds (lbs)', 'desc': 'Imperial system'},
+              ].map((opt) {
+                final isSelected = currentUnit == opt['unit'];
+                return ListTile(
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+                  leading: Icon(
+                    Icons.fitness_center,
+                    color: isSelected ? accent : textMuted,
+                  ),
+                  title: Text(
+                    opt['label']!,
+                    style: TextStyle(
+                      fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                      color: textPrimary,
+                    ),
+                  ),
+                  subtitle: Text(opt['desc']!, style: TextStyle(fontSize: 12, color: textMuted)),
+                  trailing: isSelected ? Icon(Icons.check_circle, color: accent) : null,
+                  selected: isSelected,
+                  selectedTileColor: accent.withValues(alpha: 0.08),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  onTap: () async {
+                    HapticFeedback.selectionClick();
+                    Navigator.pop(context);
+                    try {
+                      await ref.read(authStateProvider.notifier).updateUserProfile({
+                        'workout_weight_unit': opt['unit'],
+                      });
+                      if (mounted) {
+                        ScaffoldMessenger.of(this.context).showSnackBar(
+                          SnackBar(
+                            content: Text('Workout weight unit → ${opt['label']}'),
+                            backgroundColor: AppColors.cyan,
+                            duration: const Duration(seconds: 2),
+                          ),
+                        );
+                      }
+                    } catch (_) {}
+                  },
+                );
+              }),
+              const SizedBox(height: 16),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

@@ -63,6 +63,7 @@ class StaplesState {
 
 /// Provider for managing staple exercises
 final staplesProvider = StateNotifierProvider<StaplesNotifier, StaplesState>((ref) {
+  ref.keepAlive();
   return StaplesNotifier(ref);
 });
 

@@ -25,15 +25,27 @@ final currentUserIdProvider = Provider<String?>((ref) {
 });
 
 /// Provider for user's weight unit preference ('kg' or 'lbs')
-/// Defaults to 'kg' if user is not loaded yet
-/// L1: Uses .select() to only rebuild when weight unit changes
+/// Body weight unit provider — for weighing yourself, BMI, body measurements.
+/// Defaults to 'kg' if user is not loaded yet.
 final weightUnitProvider = Provider<String>((ref) {
   return ref.watch(authStateProvider.select((s) => s.user?.preferredWeightUnit)) ?? 'kg';
 });
 
-/// Provider for whether user prefers metric (kg) units
-/// Convenience provider for easy use in widgets
+/// Body weight: whether user prefers metric (kg) for body measurements.
 final useKgProvider = Provider<bool>((ref) {
   final unit = ref.watch(weightUnitProvider);
+  return unit == 'kg';
+});
+
+/// Workout weight unit provider — for exercise weights, sets, lifting.
+/// Separate from body weight unit (user may weigh in kg but lift in lbs).
+/// Falls back to body weight unit if not explicitly set.
+final workoutWeightUnitProvider = Provider<String>((ref) {
+  return ref.watch(authStateProvider.select((s) => s.user?.preferredWorkoutWeightUnit)) ?? 'lbs';
+});
+
+/// Workout weight: whether user prefers metric (kg) for lifting.
+final useKgForWorkoutProvider = Provider<bool>((ref) {
+  final unit = ref.watch(workoutWeightUnitProvider);
   return unit == 'kg';
 });

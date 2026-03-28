@@ -492,9 +492,12 @@ class NumberInputField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final bgColor = isDark ? AppColors.elevated : Colors.white;
+
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.elevated,
+        color: bgColor,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: color.withOpacity(0.3)),
       ),

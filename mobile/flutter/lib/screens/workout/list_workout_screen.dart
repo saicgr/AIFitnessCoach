@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/providers/user_provider.dart';
 import '../../core/services/posthog_service.dart';
 import '../../widgets/app_dialog.dart';
 import '../../data/models/workout.dart';
@@ -29,8 +30,8 @@ class _ListWorkoutScreenState extends ConsumerState<ListWorkoutScreen> {
   Timer? _workoutTimer;
   int _workoutSeconds = 0;
 
-  // Unit preference
-  bool _useKg = true;
+  // Unit preference (initialized from workout weight unit provider)
+  late bool _useKg;
 
   // Sets data for all exercises
   late Map<int, List<SetData>> _exerciseSets;
@@ -44,6 +45,7 @@ class _ListWorkoutScreenState extends ConsumerState<ListWorkoutScreen> {
   @override
   void initState() {
     super.initState();
+    _useKg = ref.read(useKgForWorkoutProvider);
     _initializeExerciseSets();
     _startWorkoutTimer();
     _fetchPreviousSessionData();

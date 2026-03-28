@@ -2076,7 +2076,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                             curve: AppAnimations.fastOut,
                             child: UpcomingWorkoutCard(
                               workout: workout,
-                              onTap: () => context.push('/workout/${workout.id}'),
+                              onTap: () => context.push('/workout/${workout.id}', extra: workout),
                             ),
                           ),
                         ),
@@ -2586,7 +2586,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
           final workout = workoutSummary.toWorkout();
           return NextWorkoutCard(
             workout: workout,
-            onStart: () => context.push('/workout/${workout.id}'),
+            onStart: () => context.push('/workout/${workout.id}', extra: workout),
           );
         }
 
@@ -2639,7 +2639,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
         if (todayWorkout != null) {
           return NextWorkoutCard(
             workout: todayWorkout,
-            onStart: () => context.push('/workout/${todayWorkout.id}'),
+            onStart: () => context.push('/workout/${todayWorkout.id}', extra: todayWorkout),
           );
         }
 
@@ -2659,7 +2659,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
         if (nextWorkout != null) {
           return NextWorkoutCard(
             workout: nextWorkout,
-            onStart: () => context.push('/workout/${nextWorkout.id}'),
+            onStart: () => context.push('/workout/${nextWorkout.id}', extra: nextWorkout),
           );
         }
 
@@ -3369,7 +3369,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                     curve: AppAnimations.fastOut,
                     child: UpcomingWorkoutCard(
                       workout: workout,
-                      onTap: () => context.push('/workout/${workout.id}'),
+                      onTap: () => context.push('/workout/${workout.id}', extra: workout),
                     ),
                   ),
                 ),
@@ -3413,7 +3413,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
           : nextWorkout != null
               ? NextWorkoutCard(
                   workout: nextWorkout,
-                  onStart: () => context.push('/workout/${nextWorkout.id}'),
+                  onStart: () => context.push('/workout/${nextWorkout.id}', extra: nextWorkout),
                 )
               : (_isCheckingWorkouts || _isStreamingGeneration)
                   ? const GeneratingWorkoutsCard(

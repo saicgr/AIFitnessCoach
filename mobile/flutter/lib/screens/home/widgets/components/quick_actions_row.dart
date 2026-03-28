@@ -48,7 +48,7 @@ Widget buildQuickActionWidget(String actionId, bool isDark, BuildContext context
           HapticService.light();
           final workout = await showQuickWorkoutSheet(context, ref);
           if (workout != null && context.mounted) {
-            context.push('/workout/${workout.id}');
+            context.push('/workout/${workout.id}', extra: workout);
           }
         },
         isDark: isDark,

@@ -12,6 +12,7 @@ Examples:
 import asyncio
 import hashlib
 import json
+import re
 import time
 from typing import Any, Dict, List, Optional
 
@@ -336,6 +337,23 @@ async def smart_search_exercises(
             exercise_dict["relevance_score"] = round(1.0 / (1 + rank * 0.05), 4)
             exercise_dict["match_sources"] = ["fuzzy"]
             merged.append(exercise_dict)
+
+    # --- Tier 3: Boost exact/prefix matches ---
+    # RRF doesn't know about string proximity; exact and prefix matches
+    # should always appear before substring-only matches.
+    search_lower = q.lower().strip()
+
+    def _name_boost_key(item: dict) -> tuple:
+        name_lower = (item.get("name") or "").lower()
+        if name_lower == search_lower:
+            return (0, len(name_lower), name_lower)
+        if name_lower.startswith(search_lower):
+            return (1, len(name_lower), name_lower)
+        if re.search(r'\b' + re.escape(search_lower) + r'\b', name_lower):
+            return (2, len(name_lower), name_lower)
+        return (3, 0, name_lower)
+
+    merged.sort(key=_name_boost_key)
 
     # Spelling correction from top fuzzy results
     correction = None

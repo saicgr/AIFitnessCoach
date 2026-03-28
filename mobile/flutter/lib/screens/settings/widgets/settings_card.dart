@@ -558,7 +558,11 @@ class SettingsCard extends ConsumerWidget {
 
   void _showWeightUnitSelector(BuildContext context, WidgetRef ref) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final currentUnit = ref.read(weightUnitProvider);
+    final bodyUnit = ref.read(weightUnitProvider);
+    final workoutUnit = ref.read(workoutWeightUnitProvider);
+    final textPrimary = isDark ? Colors.white : AppColorsLight.textPrimary;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final accent = isDark ? AppColors.orange : AppColorsLight.orange;
 
     showGlassSheet(
       context: context,
@@ -567,15 +571,39 @@ class SettingsCard extends ConsumerWidget {
         child: SafeArea(
         child: Column(
           mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Text(
-                'Weight Unit',
+                'Weight Units',
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w600,
-                  color: isDark ? Colors.white : AppColorsLight.textPrimary,
+                  color: textPrimary,
+                ),
+              ),
+            ),
+            const SizedBox(height: 4),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Text(
+                'Body weight and workout weight can use different units',
+                style: TextStyle(fontSize: 13, color: textMuted),
+              ),
+            ),
+            const SizedBox(height: 20),
+
+            // Body Weight Unit
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Text(
+                'BODY WEIGHT',
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                  color: textMuted,
+                  letterSpacing: 1,
                 ),
               ),
             ),
@@ -583,39 +611,94 @@ class SettingsCard extends ConsumerWidget {
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Text(
-                'Choose your preferred unit for displaying weights',
+                'For weighing yourself, BMI, body measurements',
+                style: TextStyle(fontSize: 12, color: textMuted),
+              ),
+            ),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                const SizedBox(width: 16),
+                _UnitChip(
+                  label: 'kg',
+                  isSelected: bodyUnit == 'kg',
+                  accent: accent,
+                  isDark: isDark,
+                  onTap: () async {
+                    HapticFeedback.selectionClick();
+                    Navigator.pop(context);
+                    await _updateWeightUnit(context, ref, 'kg');
+                  },
+                ),
+                const SizedBox(width: 10),
+                _UnitChip(
+                  label: 'lbs',
+                  isSelected: bodyUnit == 'lbs',
+                  accent: accent,
+                  isDark: isDark,
+                  onTap: () async {
+                    HapticFeedback.selectionClick();
+                    Navigator.pop(context);
+                    await _updateWeightUnit(context, ref, 'lbs');
+                  },
+                ),
+                const SizedBox(width: 16),
+              ],
+            ),
+            const SizedBox(height: 24),
+
+            // Workout Weight Unit
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Text(
+                'WORKOUT WEIGHT',
                 style: TextStyle(
-                  fontSize: 14,
-                  color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                  color: textMuted,
+                  letterSpacing: 1,
                 ),
               ),
             ),
-            const SizedBox(height: 16),
-            _WeightUnitOptionTile(
-              unit: 'kg',
-              displayName: 'Kilograms (kg)',
-              description: 'Metric system • Used in most countries',
-              icon: Icons.straighten,
-              isSelected: currentUnit == 'kg',
-              onTap: () async {
-                HapticFeedback.selectionClick();
-                Navigator.pop(context);
-                await _updateWeightUnit(context, ref, 'kg');
-              },
+            const SizedBox(height: 8),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Text(
+                'For logging lifts, sets, exercise weights',
+                style: TextStyle(fontSize: 12, color: textMuted),
+              ),
             ),
-            _WeightUnitOptionTile(
-              unit: 'lbs',
-              displayName: 'Pounds (lbs)',
-              description: 'Imperial system • Used in USA & UK',
-              icon: Icons.fitness_center,
-              isSelected: currentUnit == 'lbs',
-              onTap: () async {
-                HapticFeedback.selectionClick();
-                Navigator.pop(context);
-                await _updateWeightUnit(context, ref, 'lbs');
-              },
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                const SizedBox(width: 16),
+                _UnitChip(
+                  label: 'kg',
+                  isSelected: workoutUnit == 'kg',
+                  accent: accent,
+                  isDark: isDark,
+                  onTap: () async {
+                    HapticFeedback.selectionClick();
+                    Navigator.pop(context);
+                    await _updateWorkoutWeightUnit(context, ref, 'kg');
+                  },
+                ),
+                const SizedBox(width: 10),
+                _UnitChip(
+                  label: 'lbs',
+                  isSelected: workoutUnit == 'lbs',
+                  accent: accent,
+                  isDark: isDark,
+                  onTap: () async {
+                    HapticFeedback.selectionClick();
+                    Navigator.pop(context);
+                    await _updateWorkoutWeightUnit(context, ref, 'lbs');
+                  },
+                ),
+                const SizedBox(width: 16),
+              ],
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 20),
           ],
         ),
       ),
@@ -625,12 +708,11 @@ class SettingsCard extends ConsumerWidget {
 
   Future<void> _updateWeightUnit(BuildContext context, WidgetRef ref, String unit) async {
     try {
-      // Update user profile via API
       await ref.read(authStateProvider.notifier).updateUserProfile({'weight_unit': unit});
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Weight unit changed to ${unit == 'kg' ? 'kilograms' : 'pounds'}'),
+            content: Text('Body weight unit → ${unit == 'kg' ? 'kilograms' : 'pounds'}'),
             backgroundColor: AppColors.cyan,
             duration: const Duration(seconds: 2),
           ),
@@ -639,10 +721,28 @@ class SettingsCard extends ConsumerWidget {
     } catch (e) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: const Text('Failed to update'), backgroundColor: AppColors.error),
+        );
+      }
+    }
+  }
+
+  Future<void> _updateWorkoutWeightUnit(BuildContext context, WidgetRef ref, String unit) async {
+    try {
+      await ref.read(authStateProvider.notifier).updateUserProfile({'workout_weight_unit': unit});
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: const Text('Failed to update weight unit'),
-            backgroundColor: AppColors.error,
+            content: Text('Workout weight unit → ${unit == 'kg' ? 'kilograms' : 'pounds'}'),
+            backgroundColor: AppColors.cyan,
+            duration: const Duration(seconds: 2),
           ),
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: const Text('Failed to update'), backgroundColor: AppColors.error),
         );
       }
     }
@@ -1162,14 +1262,15 @@ class SettingsCard extends ConsumerWidget {
             );
             onTap = () => _navigateToProgressCharts(context);
           } else if (item.isWeightUnitSelector) {
-            final weightUnit = ref.watch(weightUnitProvider);
+            final bodyUnit = ref.watch(weightUnitProvider);
+            final workoutUnit = ref.watch(workoutWeightUnitProvider);
             trailing = Row(
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  weightUnit == 'kg' ? 'Kilograms' : 'Pounds',
+                  'Body ${bodyUnit.toUpperCase()} · Workout ${workoutUnit.toUpperCase()}',
                   style: TextStyle(
-                    fontSize: 14,
+                    fontSize: 12,
                     color: textMuted,
                   ),
                 ),
@@ -2356,84 +2457,49 @@ class _WorkoutDaysSelectorSheetState
 }
 
 /// A tile for weight unit selection in the bottom sheet.
-class _WeightUnitOptionTile extends StatelessWidget {
-  final String unit;
-  final String displayName;
-  final String description;
-  final IconData icon;
+class _UnitChip extends StatelessWidget {
+  final String label;
   final bool isSelected;
+  final Color accent;
+  final bool isDark;
   final VoidCallback onTap;
 
-  const _WeightUnitOptionTile({
-    required this.unit,
-    required this.displayName,
-    required this.description,
-    required this.icon,
+  const _UnitChip({
+    required this.label,
     required this.isSelected,
+    required this.accent,
+    required this.isDark,
     required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
-
-    return InkWell(
+    return GestureDetector(
       onTap: onTap,
       child: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
         decoration: BoxDecoration(
           color: isSelected
-              ? (isDark ? AppColors.cyan.withValues(alpha: 0.15) : AppColorsLight.cyan.withValues(alpha: 0.1))
-              : Colors.transparent,
-          borderRadius: BorderRadius.circular(12),
+              ? accent.withValues(alpha: 0.15)
+              : (isDark ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.04)),
+          borderRadius: BorderRadius.circular(10),
           border: Border.all(
-            color: isSelected ? AppColors.cyan : cardBorder,
-            width: isSelected ? 2 : 1,
+            color: isSelected ? accent : (isDark ? Colors.white12 : Colors.black12),
+            width: isSelected ? 1.5 : 1,
           ),
         ),
-        child: Row(
-          children: [
-            Icon(
-              icon,
-              color: isSelected ? AppColors.cyan : textMuted,
-              size: 28,
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    displayName,
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-                      color: isDark ? Colors.white : AppColorsLight.textPrimary,
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    description,
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: textMuted,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            if (isSelected)
-              Icon(
-                Icons.check_circle,
-                color: AppColors.cyan,
-                size: 24,
-              ),
-          ],
+        child: Text(
+          label.toUpperCase(),
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+            color: isSelected
+                ? accent
+                : (isDark ? Colors.white54 : Colors.black45),
+          ),
         ),
       ),
     );
   }
 }
+

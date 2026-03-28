@@ -172,7 +172,7 @@ class _QuickActionsSheetState extends ConsumerState<_QuickActionsSheet> {
           if (!mounted) return;
           Navigator.pop(context);
           if (workout != null && context.mounted) {
-            context.push('/workout/${workout.id}');
+            context.push('/workout/${workout.id}', extra: workout);
           }
           return;
         case 'fasting':

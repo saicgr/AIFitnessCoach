@@ -87,11 +87,12 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
   // Sauna post-workout logging
   SaunaLog? _saunaLog;
   bool _isLoadingSauna = false;
+  bool _secondaryLoadsStarted = false;
 
   /// Toggle between kg and lbs units locally
   void _toggleUnit() {
     setState(() {
-      final bool currentUseKg = _useKgOverride ?? ref.read(useKgProvider);
+      final bool currentUseKg = _useKgOverride ?? ref.read(useKgForWorkoutProvider);
       _useKgOverride = !currentUseKg;
     });
   }
@@ -126,9 +127,27 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
     // If we have an initial workout, show it immediately (no loading spinner)
     if (widget.initialWorkout != null) {
       _workout = widget.initialWorkout;
+      _isFavorite = widget.initialWorkout!.isFavorite ?? false;
       _isLoading = false;
+      // Fire secondary loads immediately since workout data is already available
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _startSecondaryLoads();
+      });
     }
     _loadWorkout();
+  }
+
+  /// Start loading secondary data (summary, training split, generation params).
+  /// Guarded by _secondaryLoadsStarted to prevent duplicate calls.
+  void _startSecondaryLoads() {
+    if (_secondaryLoadsStarted || _workout == null) return;
+    _secondaryLoadsStarted = true;
+    _loadWorkoutSummary();
+    _loadTrainingSplit();
+    _loadGenerationParams();
+    if (_workout!.isCompleted == true) {
+      _loadSaunaLog();
+    }
   }
 
   @override
@@ -183,7 +202,8 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
     }
 
     setState(() {
-      _isLoading = true;
+      // Only show loading spinner if we don't already have workout data
+      if (_workout == null) _isLoading = true;
       _error = null;
     });
 
@@ -212,15 +232,8 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
         },
       );
 
-      // Load workout summary, training split, and generation params
-      // Warmup/stretches are lazy-loaded when user expands those sections
-      _loadWorkoutSummary();
-      _loadTrainingSplit();
-      _loadGenerationParams();
-      // Load sauna log for completed workouts
-      if (workout.isCompleted == true) {
-        _loadSaunaLog();
-      }
+      // Start secondary loads if not already started (e.g. from initialWorkout path)
+      _startSecondaryLoads();
     } catch (e) {
       debugPrint('❌ [WorkoutDetail] Failed to load workout ${widget.workoutId}: $e');
       setState(() {
@@ -1859,7 +1872,7 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
                           ),
                           const SizedBox(width: 4),
                           Text(
-                            (_useKgOverride ?? ref.watch(useKgProvider)) ? 'kg' : 'lbs',
+                            (_useKgOverride ?? ref.watch(useKgForWorkoutProvider)) ? 'kg' : 'lbs',
                             style: TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.w600,
@@ -3307,7 +3320,7 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
                         ],
                       ),
                     ),
-                    SizedBox(height: safePadding.bottom + 16),
+                    SizedBox(height: MediaQuery.paddingOf(context).bottom + 16),
                   ],
                 ),
               ),
@@ -3536,7 +3549,7 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
         final durationSec = (e['duration_seconds'] as num?)?.toInt() ?? 30;
         final parts = <String>[_formatDuration(durationSec)];
         if (e['speed_mph'] != null) parts.add('${(e['speed_mph'] as num).toStringAsFixed(1)} mph');
-        if (e['incline_percent'] != null) parts.add('${(e['incline_percent'] as num).toStringAsFixed(0)}% incline');
+        if (e['incline_percent'] != null) parts.add('Incline ${(e['incline_percent'] as num).toStringAsFixed(0)}');
         if (e['rpm'] != null) parts.add('${e['rpm']} RPM');
         if (e['resistance_level'] != null) parts.add('Resistance ${e['resistance_level']}');
         if (e['stroke_rate_spm'] != null) parts.add('${e['stroke_rate_spm']} spm');
@@ -3560,7 +3573,7 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
         final durationSec = (e['duration_seconds'] as num?)?.toInt() ?? 30;
         final parts = <String>[_formatDuration(durationSec)];
         if (e['speed_mph'] != null) parts.add('${(e['speed_mph'] as num).toStringAsFixed(1)} mph');
-        if (e['incline_percent'] != null) parts.add('${(e['incline_percent'] as num).toStringAsFixed(0)}% incline');
+        if (e['incline_percent'] != null) parts.add('Incline ${(e['incline_percent'] as num).toStringAsFixed(0)}');
         if (e['rpm'] != null) parts.add('${e['rpm']} RPM');
         if (e['resistance_level'] != null) parts.add('Resistance ${e['resistance_level']}');
         if (e['stroke_rate_spm'] != null) parts.add('${e['stroke_rate_spm']} spm');

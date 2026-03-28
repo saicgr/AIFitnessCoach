@@ -103,52 +103,38 @@ class WeightIncrementsSheet extends ConsumerWidget {
                       ],
                     ),
                   ),
+                    // Inline kg/lbs toggle
+                    GestureDetector(
+                      onTap: () {
+                        HapticFeedback.selectionClick();
+                        ref.read(weightIncrementsProvider.notifier)
+                            .setUnit(isKg ? 'lbs' : 'kg');
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: accentColor.withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: accentColor.withValues(alpha: 0.3)),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.swap_horiz, size: 14, color: accentColor),
+                            const SizedBox(width: 4),
+                            Text(
+                              isKg ? 'kg' : 'lbs',
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w700,
+                                color: accentColor,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
                 ],
-              ),
-              const SizedBox(height: 20),
-
-              // Unit toggle (kg/lbs)
-              Container(
-                padding: const EdgeInsets.all(4),
-                decoration: BoxDecoration(
-                  color: cardBackground,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: cardBorder),
-                ),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: _buildUnitToggleButton(
-                        context,
-                        ref,
-                        'kg',
-                        isKg,
-                        () {
-                          HapticFeedback.selectionClick();
-                          ref.read(weightIncrementsProvider.notifier).setUnit('kg');
-                        },
-                        textPrimary,
-                        textMuted,
-                        accentColor,
-                      ),
-                    ),
-                    Expanded(
-                      child: _buildUnitToggleButton(
-                        context,
-                        ref,
-                        'lbs',
-                        !isKg,
-                        () {
-                          HapticFeedback.selectionClick();
-                          ref.read(weightIncrementsProvider.notifier).setUnit('lbs');
-                        },
-                        textPrimary,
-                        textMuted,
-                        accentColor,
-                      ),
-                    ),
-                  ],
-                ),
               ),
               const SizedBox(height: 24),
 
@@ -286,38 +272,6 @@ class WeightIncrementsSheet extends ConsumerWidget {
             ],
           ),
         ),
-    );
-  }
-
-  Widget _buildUnitToggleButton(
-    BuildContext context,
-    WidgetRef ref,
-    String unit,
-    bool isSelected,
-    VoidCallback onTap,
-    Color textPrimary,
-    Color textMuted,
-    Color accentColor,
-  ) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 12),
-        decoration: BoxDecoration(
-          color: isSelected ? accentColor : Colors.transparent,
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: Center(
-          child: Text(
-            unit.toUpperCase(),
-            style: TextStyle(
-              color: isSelected ? Colors.white : textMuted,
-              fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-              fontSize: 14,
-            ),
-          ),
-        ),
-      ),
     );
   }
 

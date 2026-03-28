@@ -295,7 +295,7 @@ class _UpcomingWorkoutsSheetState extends ConsumerState<_UpcomingWorkoutsSheet> 
             if (existingWorkout != null) {
               // Close sheet and navigate to workout detail
               Navigator.of(context).pop();
-              context.push('/workout/${existingWorkout.id}');
+              context.push('/workout/${existingWorkout.id}', extra: existingWorkout);
             } else if (!isGenerating) {
               // Generate workout for this date
               _generateWorkoutForDate(dateStr);

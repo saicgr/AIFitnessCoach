@@ -6647,10 +6647,10 @@ Return a valid JSON object with this exact structure:
       "drop_set_percentage": null,
       "notes": "Form tips or modifications",
       "set_targets": [
-        {{"set_number": 1, "set_type": "warmup", "target_reps": 12, "target_weight_kg": 5, "target_rpe": 5, "target_rir": null}},
-        {{"set_number": 2, "set_type": "working", "target_reps": 10, "target_weight_kg": 10, "target_rpe": 7, "target_rir": 3}},
-        {{"set_number": 3, "set_type": "working", "target_reps": 10, "target_weight_kg": 10, "target_rpe": 8, "target_rir": 2}},
-        {{"set_number": 4, "set_type": "failure", "target_reps": 8, "target_weight_kg": 10, "target_rpe": 10, "target_rir": 0}}
+        {{"set_number": 1, "set_type": "warmup", "target_reps": 12, "target_weight_kg": 15, "target_rpe": 5, "target_rir": null}},
+        {{"set_number": 2, "set_type": "working", "target_reps": 10, "target_weight_kg": 25, "target_rpe": 7, "target_rir": 3}},
+        {{"set_number": 3, "set_type": "working", "target_reps": 10, "target_weight_kg": 25, "target_rpe": 8, "target_rir": 2}},
+        {{"set_number": 4, "set_type": "failure", "target_reps": 8, "target_weight_kg": 25, "target_rpe": 10, "target_rir": 0}}
       ]
     }}
   ],
@@ -7577,7 +7577,11 @@ If user has gym equipment (full_gym, barbell, dumbbells, cable_machine, machines
             if history_summary:
                 user_context_parts.append(history_summary)
             else:
-                user_context_parts.append("No history - use beginner-appropriate weights")
+                user_context_parts.append("No history - use beginner-appropriate weights based on equipment type:
+  Barbell compound (bench/squat/deadlift): 20-40 kg | Barbell isolation: 15-20 kg
+  Dumbbell compound: 8-12 kg per hand | Dumbbell isolation: 4-8 kg per hand
+  Cable: 10-20 kg | Machine: 20-40 kg | Kettlebell: 8-12 kg
+  Adjust for user's fitness level and gender. NEVER use 10 kg for all exercises.")
         else:
             user_context_parts.append("")
             user_context_parts.append("## STRENGTH HISTORY")

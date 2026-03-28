@@ -753,7 +753,7 @@ class _ShareWorkoutSheetState extends ConsumerState<ShareWorkoutSheet> {
 
   Widget _buildTemplateCarousel() {
     final now = DateTime.now();
-    final useKg = ref.watch(useKgProvider);
+    final useKg = ref.watch(useKgForWorkoutProvider);
     final weightUnit = useKg ? 'kg' : 'lbs';
     // Convert volume to user's preferred unit
     final displayVolume = widget.totalVolumeKg != null && !useKg

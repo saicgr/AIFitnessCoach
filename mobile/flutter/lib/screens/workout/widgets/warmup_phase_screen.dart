@@ -1,6 +1,7 @@
 /// Warmup phase screen widget
 ///
 /// Displays the warmup exercises before the main workout begins.
+/// Supports interval logging for cardio exercises (treadmill, bike, etc.)
 library;
 
 import 'package:flutter/material.dart';
@@ -28,6 +29,9 @@ class WarmupPhaseScreen extends StatefulWidget {
   /// Warmup exercises to display
   final List<WarmupExerciseData> exercises;
 
+  /// Callback with logged interval data per exercise (exerciseName -> intervals)
+  final void Function(Map<String, List<WarmupInterval>> logs)? onIntervalsLogged;
+
   const WarmupPhaseScreen({
     super.key,
     required this.workoutSeconds,
@@ -35,6 +39,7 @@ class WarmupPhaseScreen extends StatefulWidget {
     required this.onWarmupComplete,
     required this.onQuitRequested,
     required this.exercises,
+    this.onIntervalsLogged,
   });
 
   @override
@@ -45,12 +50,25 @@ class _WarmupPhaseScreenState extends State<WarmupPhaseScreen> {
   int _currentExerciseIndex = 0;
   late PhaseTimerController _timerController;
 
+  // Interval logging state
+  final Map<String, List<WarmupInterval>> _allIntervalLogs = {};
+  List<WarmupInterval> _currentIntervals = [];
+  final _speedController = TextEditingController();
+  final _inclineController = TextEditingController();
+  int _exerciseElapsedSeconds = 0;
+
   @override
   void initState() {
     super.initState();
     _timerController = PhaseTimerController();
-    _timerController.onTick = (_) => setState(() {});
+    _timerController.onTick = (_) {
+      _exerciseElapsedSeconds++;
+      setState(() {});
+    };
     _timerController.onComplete = _handleTimerComplete;
+
+    // Initialize cardio fields from first exercise
+    _initCardioFields(widget.exercises[0]);
 
     // Auto-start timer after a short delay
     Future.delayed(const Duration(milliseconds: 500), () {
@@ -63,7 +81,25 @@ class _WarmupPhaseScreenState extends State<WarmupPhaseScreen> {
   @override
   void dispose() {
     _timerController.dispose();
+    _speedController.dispose();
+    _inclineController.dispose();
     super.dispose();
+  }
+
+  void _initCardioFields(WarmupExerciseData exercise) {
+    _speedController.text = exercise.speedMph?.toStringAsFixed(1) ?? '';
+    _inclineController.text = exercise.inclinePercent?.toStringAsFixed(0) ?? '';
+    _currentIntervals = [];
+    _exerciseElapsedSeconds = 0;
+
+    // Auto-create first interval for cardio exercises
+    if (exercise.isCardioEquipment && (exercise.speedMph != null || exercise.inclinePercent != null)) {
+      _currentIntervals.add(WarmupInterval(
+        startSeconds: 0,
+        speedMph: exercise.speedMph,
+        incline: exercise.inclinePercent,
+      ));
+    }
   }
 
   void _startCurrentExerciseTimer() {
@@ -73,17 +109,50 @@ class _WarmupPhaseScreenState extends State<WarmupPhaseScreen> {
   }
 
   void _handleTimerComplete() {
+    _finalizeCurrentExerciseIntervals();
     _nextExercise();
+  }
+
+  void _finalizeCurrentExerciseIntervals() {
+    final exercise = widget.exercises[_currentExerciseIndex];
+    if (_currentIntervals.isNotEmpty) {
+      // Close the last open interval
+      _currentIntervals.last.endSeconds = _exerciseElapsedSeconds;
+      _allIntervalLogs[exercise.name] = List.from(_currentIntervals);
+    }
+  }
+
+  void _logIntervalChange() {
+    if (_currentIntervals.isEmpty) return;
+
+    final speed = double.tryParse(_speedController.text);
+    final incline = double.tryParse(_inclineController.text);
+
+    HapticFeedback.lightImpact();
+
+    setState(() {
+      // Close the current interval
+      _currentIntervals.last.endSeconds = _exerciseElapsedSeconds;
+
+      // Start a new interval with same values (user can edit before next +)
+      _currentIntervals.add(WarmupInterval(
+        startSeconds: _exerciseElapsedSeconds,
+        speedMph: speed,
+        incline: incline,
+      ));
+    });
   }
 
   void _nextExercise() {
     _timerController.stop();
     HapticFeedback.mediumImpact();
+    _finalizeCurrentExerciseIntervals();
 
     if (_currentExerciseIndex < widget.exercises.length - 1) {
       setState(() {
         _currentExerciseIndex++;
       });
+      _initCardioFields(widget.exercises[_currentExerciseIndex]);
       // Auto-start timer for next exercise
       Future.delayed(const Duration(milliseconds: 300), () {
         if (mounted) {
@@ -91,8 +160,11 @@ class _WarmupPhaseScreenState extends State<WarmupPhaseScreen> {
         }
       });
     } else {
-      // Warmup complete
+      // Warmup complete — emit logged intervals
       HapticFeedback.heavyImpact();
+      if (_allIntervalLogs.isNotEmpty) {
+        widget.onIntervalsLogged?.call(_allIntervalLogs);
+      }
       widget.onWarmupComplete();
     }
   }
@@ -106,6 +178,12 @@ class _WarmupPhaseScreenState extends State<WarmupPhaseScreen> {
       _startCurrentExerciseTimer();
     }
     setState(() {});
+  }
+
+  String _formatInterval(int seconds) {
+    final m = seconds ~/ 60;
+    final s = seconds % 60;
+    return '$m:${s.toString().padLeft(2, '0')}';
   }
 
   @override
@@ -156,16 +234,37 @@ class _WarmupPhaseScreenState extends State<WarmupPhaseScreen> {
                 // Progress bar
                 _buildProgressBar(warmupProgress, elevatedColor),
 
-                const Spacer(),
+                const SizedBox(height: 16),
 
-                // Current warmup exercise
+                // Current warmup exercise (fixed, not scrollable)
                 _buildCurrentExercise(
                   currentExercise,
                   textPrimary: textPrimary,
                   textSecondary: textSecondary,
                 ),
 
-                const Spacer(),
+                // Cardio speed/incline input fields (fixed)
+                if (currentExercise.isCardioEquipment &&
+                    (currentExercise.speedMph != null || currentExercise.inclinePercent != null))
+                  _buildCardioInputRow(
+                    textPrimary: textPrimary,
+                    textSecondary: textSecondary,
+                    elevatedColor: elevatedColor,
+                  ),
+
+                // Intervals list (scrollable, takes remaining space)
+                if (currentExercise.isCardioEquipment &&
+                    (currentExercise.speedMph != null || currentExercise.inclinePercent != null) &&
+                    _currentIntervals.length > 1)
+                  Expanded(
+                    child: _buildIntervalsList(
+                      textPrimary: textPrimary,
+                      textSecondary: textSecondary,
+                      elevatedColor: elevatedColor,
+                    ),
+                  )
+                else
+                  const Spacer(),
 
                 // Upcoming warmup exercises
                 if (_currentExerciseIndex < widget.exercises.length - 1)
@@ -173,6 +272,8 @@ class _WarmupPhaseScreenState extends State<WarmupPhaseScreen> {
                     textSecondary: textSecondary,
                     elevatedColor: elevatedColor,
                   ),
+
+                const SizedBox(height: 8),
 
                 // Action buttons
                 _buildActionButtons(),
@@ -197,30 +298,42 @@ class _WarmupPhaseScreenState extends State<WarmupPhaseScreen> {
           icon: Icon(Icons.arrow_back, color: textPrimary),
           onPressed: widget.onQuitRequested,
         ),
-        // Workout timer
+
+        // Total workout timer
         Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           decoration: BoxDecoration(
             color: elevatedColor,
             borderRadius: BorderRadius.circular(20),
           ),
           child: Row(
+            mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(Icons.timer, size: 16, color: AppColors.cyan),
-              const SizedBox(width: 6),
+              const Icon(Icons.timer_outlined,
+                  size: 16, color: AppColors.orange),
+              const SizedBox(width: 4),
               Text(
                 WorkoutTimerController.formatTime(widget.workoutSeconds),
                 style: TextStyle(
-                  color: textPrimary,
+                  fontSize: 14,
                   fontWeight: FontWeight.w600,
+                  color: textPrimary,
                 ),
               ),
             ],
           ),
         ),
+
         // Skip warmup button
         TextButton(
-          onPressed: widget.onSkipWarmup,
+          onPressed: () {
+            // Emit whatever we've logged so far
+            _finalizeCurrentExerciseIntervals();
+            if (_allIntervalLogs.isNotEmpty) {
+              widget.onIntervalsLogged?.call(_allIntervalLogs);
+            }
+            widget.onSkipWarmup();
+          },
           child: const Text(
             'Skip Warmup',
             style: TextStyle(
@@ -236,36 +349,38 @@ class _WarmupPhaseScreenState extends State<WarmupPhaseScreen> {
   Widget _buildHeader({required Color textSecondary}) {
     return Row(
       children: [
+        // Warmup icon
         Container(
-          padding: const EdgeInsets.all(12),
+          padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: AppColors.orange.withOpacity(0.2),
-            borderRadius: BorderRadius.circular(16),
+            color: AppColors.orange.withOpacity(0.15),
+            borderRadius: BorderRadius.circular(12),
           ),
           child: const Icon(
-            Icons.whatshot,
+            Icons.local_fire_department,
             color: AppColors.orange,
-            size: 28,
+            size: 24,
           ),
         ),
-        const SizedBox(width: 16),
+        const SizedBox(width: 12),
+
+        // Title and count
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text(
               'WARM UP',
               style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
+                fontSize: 14,
+                fontWeight: FontWeight.w700,
                 color: AppColors.orange,
-                letterSpacing: 1.5,
+                letterSpacing: 1,
               ),
             ),
-            const SizedBox(height: 4),
             Text(
               '${_currentExerciseIndex + 1} of ${widget.exercises.length}',
               style: TextStyle(
-                fontSize: 14,
+                fontSize: 13,
                 color: textSecondary,
               ),
             ),
@@ -275,14 +390,14 @@ class _WarmupPhaseScreenState extends State<WarmupPhaseScreen> {
     );
   }
 
-  Widget _buildProgressBar(double progress, Color backgroundColor) {
+  Widget _buildProgressBar(double progress, Color elevatedColor) {
     return ClipRRect(
       borderRadius: BorderRadius.circular(4),
       child: LinearProgressIndicator(
         value: progress,
-        backgroundColor: backgroundColor,
-        valueColor: const AlwaysStoppedAnimation<Color>(AppColors.orange),
-        minHeight: 6,
+        backgroundColor: elevatedColor,
+        color: AppColors.orange,
+        minHeight: 4,
       ),
     );
   }
@@ -294,6 +409,7 @@ class _WarmupPhaseScreenState extends State<WarmupPhaseScreen> {
   }) {
     return Center(
       child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
           // Exercise icon
           Container(
@@ -352,8 +468,8 @@ class _WarmupPhaseScreenState extends State<WarmupPhaseScreen> {
               ),
             ),
 
-          // Cardio params display
-          if (exercise.isCardioEquipment) ...[
+          // Cardio params display (non-cardio exercises only - cardio gets the editable fields below)
+          if (exercise.isCardioEquipment && exercise.speedMph == null && exercise.inclinePercent == null) ...[
             const SizedBox(height: 16),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
@@ -377,6 +493,190 @@ class _WarmupPhaseScreenState extends State<WarmupPhaseScreen> {
     );
   }
 
+  /// Speed/incline input row with + button (fixed, not scrollable)
+  Widget _buildCardioInputRow({
+    required Color textPrimary,
+    required Color textSecondary,
+    required Color elevatedColor,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 12),
+      child: Row(
+        children: [
+          if (_speedController.text.isNotEmpty || widget.exercises[_currentExerciseIndex].speedMph != null)
+            Expanded(
+              child: _buildCardioInput(
+                label: 'Speed',
+                suffix: 'mph',
+                controller: _speedController,
+                textPrimary: textPrimary,
+                textSecondary: textSecondary,
+                elevatedColor: elevatedColor,
+              ),
+            ),
+          if (_speedController.text.isNotEmpty && _inclineController.text.isNotEmpty)
+            const SizedBox(width: 12),
+          if (_inclineController.text.isNotEmpty || widget.exercises[_currentExerciseIndex].inclinePercent != null)
+            Expanded(
+              child: _buildCardioInput(
+                label: 'Incline',
+                suffix: '',
+                controller: _inclineController,
+                textPrimary: textPrimary,
+                textSecondary: textSecondary,
+                elevatedColor: elevatedColor,
+              ),
+            ),
+          const SizedBox(width: 12),
+          GestureDetector(
+            onTap: _logIntervalChange,
+            child: Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: AppColors.orange.withOpacity(0.15),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: AppColors.orange.withOpacity(0.4)),
+              ),
+              child: const Icon(Icons.add, color: AppColors.orange, size: 22),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Scrollable intervals list (takes remaining vertical space)
+  Widget _buildIntervalsList({
+    required Color textPrimary,
+    required Color textSecondary,
+    required Color elevatedColor,
+  }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.only(top: 8),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: elevatedColor,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: cardBorder),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Text(
+                'INTERVALS',
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  color: textSecondary,
+                  letterSpacing: 1,
+                ),
+              ),
+              const Spacer(),
+              Text(
+                '${_currentIntervals.length}',
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  color: textSecondary,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Expanded(
+            child: Scrollbar(
+              thumbVisibility: true,
+              child: ListView.builder(
+                itemCount: _currentIntervals.length,
+                itemBuilder: (context, reverseIndex) {
+                // Show newest first
+                final i = _currentIntervals.length - 1 - reverseIndex;
+                final interval = _currentIntervals[i];
+                final isActive = i == _currentIntervals.length - 1;
+                final endLabel = isActive ? 'now' : _formatInterval(interval.endSeconds);
+                final parts = <String>[];
+                if (interval.speedMph != null) parts.add('${interval.speedMph!.toStringAsFixed(1)} mph');
+                if (interval.incline != null) parts.add('Inc ${interval.incline!.toStringAsFixed(0)}');
+
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 4),
+                  child: Row(
+                    children: [
+                      SizedBox(
+                        width: 80,
+                        child: Text(
+                          '${_formatInterval(interval.startSeconds)} - $endLabel',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: textSecondary,
+                            fontFamily: 'monospace',
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        parts.join('  /  '),
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w500,
+                          color: isActive ? AppColors.orange : textPrimary,
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCardioInput({
+    required String label,
+    required String suffix,
+    required TextEditingController controller,
+    required Color textPrimary,
+    required Color textSecondary,
+    required Color elevatedColor,
+  }) {
+    return TextField(
+      controller: controller,
+      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+      style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: textPrimary),
+      decoration: InputDecoration(
+        labelText: label,
+        labelStyle: TextStyle(fontSize: 13, color: textSecondary),
+        suffixText: suffix.isNotEmpty ? suffix : null,
+        suffixStyle: TextStyle(fontSize: 13, color: textSecondary),
+        isDense: true,
+        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        filled: true,
+        fillColor: elevatedColor,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: textSecondary.withOpacity(0.3)),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: textSecondary.withOpacity(0.3)),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: AppColors.orange),
+        ),
+      ),
+    );
+  }
+
   Widget _buildUpcomingExercises({
     required Color textSecondary,
     required Color elevatedColor,
@@ -387,15 +687,15 @@ class _WarmupPhaseScreenState extends State<WarmupPhaseScreen> {
         Text(
           'UP NEXT',
           style: TextStyle(
-            fontSize: 12,
+            fontSize: 10,
             fontWeight: FontWeight.w600,
             color: textSecondary,
             letterSpacing: 1,
           ),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 4),
         SizedBox(
-          height: 50,
+          height: 32,
           child: ListView.builder(
             scrollDirection: Axis.horizontal,
             itemCount: widget.exercises.length - _currentExerciseIndex - 1,
@@ -403,21 +703,21 @@ class _WarmupPhaseScreenState extends State<WarmupPhaseScreen> {
               final exercise =
                   widget.exercises[_currentExerciseIndex + 1 + index];
               return Container(
-                margin: const EdgeInsets.only(right: 8),
+                margin: const EdgeInsets.only(right: 6),
                 padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
                   color: elevatedColor,
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(8),
                 ),
                 child: Row(
                   children: [
                     Icon(
                       exercise.icon,
-                      size: 20,
+                      size: 14,
                       color: textSecondary,
                     ),
-                    const SizedBox(width: 8),
+                    const SizedBox(width: 4),
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       mainAxisAlignment: MainAxisAlignment.center,
@@ -426,7 +726,7 @@ class _WarmupPhaseScreenState extends State<WarmupPhaseScreen> {
                           exercise.name,
                           style: TextStyle(
                             color: textSecondary,
-                            fontSize: 14,
+                            fontSize: 11,
                           ),
                         ),
                         if (exercise.isCardioEquipment)
@@ -434,7 +734,7 @@ class _WarmupPhaseScreenState extends State<WarmupPhaseScreen> {
                             exercise.cardioParamsDisplay,
                             style: TextStyle(
                               color: textSecondary.withOpacity(0.7),
-                              fontSize: 11,
+                              fontSize: 9,
                             ),
                           ),
                       ],
@@ -445,7 +745,7 @@ class _WarmupPhaseScreenState extends State<WarmupPhaseScreen> {
             },
           ),
         ),
-        const SizedBox(height: 24),
+        const SizedBox(height: 12),
       ],
     );
   }

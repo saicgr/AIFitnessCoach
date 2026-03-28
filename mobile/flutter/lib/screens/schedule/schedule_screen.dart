@@ -543,7 +543,7 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
                         builder: (_) => SyncedWorkoutDetailScreen(workout: entry.value),
                       ));
                     } else {
-                      context.push('/workout/${entry.value.id}');
+                      context.push('/workout/${entry.value.id}', extra: entry.value);
                     }
                   },
                 );

@@ -196,7 +196,7 @@ class _PreviousWorkoutsSheet extends ConsumerWidget {
           onTap: () {
             HapticService.light();
             Navigator.of(context).pop();
-            context.push('/workout/${workout.id}');
+            context.push('/workout/${workout.id}', extra: workout);
           },
           borderRadius: BorderRadius.circular(12),
           child: Padding(

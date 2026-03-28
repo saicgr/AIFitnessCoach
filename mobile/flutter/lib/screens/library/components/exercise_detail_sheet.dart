@@ -18,6 +18,7 @@ import '../../../data/services/context_logging_service.dart';
 import '../../../data/services/haptic_service.dart';
 import '../../../data/services/video_cache_service.dart';
 import '../../../widgets/log_1rm_sheet.dart';
+import '../../../widgets/staple_choice_sheet.dart';
 import '../../../data/providers/today_workout_provider.dart';
 import '../../../data/repositories/workout_repository.dart';
 import '../widgets/info_badge.dart';
@@ -1297,25 +1298,44 @@ class _ExerciseActionButtonsState extends ConsumerState<_ExerciseActionButtons> 
 
   Future<void> _handleStaple(String section) async {
     if (_isProcessing) return;
+
+    // Show choice sheet to collect params (sets, reps, weight, cardio, target days)
+    final choice = await showStapleChoiceSheet(
+      context,
+      exerciseName: widget.exerciseName,
+      equipmentValue: widget.equipmentValue,
+      category: widget.category,
+      initialSection: section,
+    );
+    if (choice == null || !mounted) return;
+
     setState(() => _isProcessing = true);
     try {
       final success = await ref.read(staplesProvider.notifier).addStaple(
         widget.exerciseName,
         muscleGroup: widget.muscleGroup,
-        section: section,
-        addToCurrentWorkout: _currentWorkout,
+        section: choice.section,
+        addToCurrentWorkout: choice.addToday,
+        gymProfileId: choice.gymProfileId,
+        swapExerciseId: choice.swapExerciseId,
+        cardioParams: choice.cardioParams,
+        userSets: choice.userSets,
+        userReps: choice.userReps,
+        userRestSeconds: choice.userRestSeconds,
+        userWeightLbs: choice.userWeightLbs,
+        targetDays: choice.targetDays,
       );
       if (mounted) {
         setState(() { _showStaplePills = false; _isProcessing = false; });
         if (success) {
-          final timing = _currentWorkout ? 'current workout' : 'upcoming workouts';
+          final timing = choice.addToday ? 'current workout' : 'upcoming workouts';
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Row(
                 children: [
                   const Icon(Icons.push_pin, color: Colors.white, size: 18),
                   const SizedBox(width: 8),
-                  Expanded(child: Text('Stapled "${widget.exerciseName}" to $section ($timing)')),
+                  Expanded(child: Text('Stapled "${widget.exerciseName}" to ${choice.section} ($timing)')),
                 ],
               ),
               backgroundColor: AppColors.success,

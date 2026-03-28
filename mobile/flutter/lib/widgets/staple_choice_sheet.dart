@@ -7,8 +7,8 @@ import '../data/providers/today_workout_provider.dart';
 import '../data/services/haptic_service.dart';
 import 'glass_sheet.dart';
 
-/// Result type from the staple choice sheet
-/// When [goBack] is true, the caller should re-open the exercise picker.
+/// Result type from the staple choice sheet.
+/// [goBack] is reserved for future use (currently always false).
 typedef StapleChoiceResult = ({
   bool addToday,
   String section,
@@ -29,6 +29,7 @@ Future<StapleChoiceResult?> showStapleChoiceSheet(
   required String exerciseName,
   String? equipmentValue,
   String? category,
+  String? initialSection,
 }) async {
   return showGlassSheet<StapleChoiceResult>(
     context: context,
@@ -39,6 +40,7 @@ Future<StapleChoiceResult?> showStapleChoiceSheet(
         exerciseName: exerciseName,
         equipmentValue: equipmentValue,
         category: category,
+        initialSection: initialSection,
         onCancel: () async {
           final isDark = Theme.of(sheetContext).brightness == Brightness.dark;
           final discard = await showDialog<bool>(
@@ -89,6 +91,7 @@ class StapleChoiceSheet extends ConsumerStatefulWidget {
   final String exerciseName;
   final String? equipmentValue;
   final String? category;
+  final String? initialSection;
   final VoidCallback onCancel;
 
   const StapleChoiceSheet({
@@ -96,6 +99,7 @@ class StapleChoiceSheet extends ConsumerStatefulWidget {
     required this.exerciseName,
     this.equipmentValue,
     this.category,
+    this.initialSection,
     required this.onCancel,
   });
 
@@ -103,8 +107,10 @@ class StapleChoiceSheet extends ConsumerStatefulWidget {
   ConsumerState<StapleChoiceSheet> createState() => _StapleChoiceSheetState();
 }
 
+enum _DayTargetMode { workoutDays, everyDay, custom }
+
 class _StapleChoiceSheetState extends ConsumerState<StapleChoiceSheet> {
-  String _selectedSection = 'main';
+  late String _selectedSection = widget.initialSection ?? 'main';
   bool _addToday = true; // true = today, false = next workout
   String? _selectedProfileId;
   bool _profileIdInitialized = false;
@@ -115,10 +121,10 @@ class _StapleChoiceSheetState extends ConsumerState<StapleChoiceSheet> {
   final _repsController = TextEditingController(text: '10');
   final _restController = TextEditingController(text: '60');
   final _weightController = TextEditingController();
-  bool _showStrengthParams = false;
+  bool _showStrengthParams = true;
 
-  // Day-of-week targeting (null = all days, empty set = expanded but none selected)
-  bool _showDayPicker = false;
+  // Day-of-week targeting
+  _DayTargetMode _dayTargetMode = _DayTargetMode.workoutDays;
   final Set<int> _selectedDays = {}; // 0=Mon, 6=Sun
 
   static const _dayLabels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
@@ -234,7 +240,11 @@ class _StapleChoiceSheetState extends ConsumerState<StapleChoiceSheet> {
       userReps: _isStrength && _showStrengthParams ? _repsController.text : null,
       userRestSeconds: _isStrength && _showStrengthParams ? int.tryParse(_restController.text) : null,
       userWeightLbs: _isStrength && _showStrengthParams ? double.tryParse(_weightController.text) : null,
-      targetDays: _showDayPicker && _selectedDays.isNotEmpty ? (_selectedDays.toList()..sort()) : null,
+      targetDays: _dayTargetMode == _DayTargetMode.everyDay
+          ? [0, 1, 2, 3, 4, 5, 6]
+          : _dayTargetMode == _DayTargetMode.custom && _selectedDays.isNotEmpty
+              ? (_selectedDays.toList()..sort())
+              : null,
       goBack: goBack,
     );
   }
@@ -274,7 +284,46 @@ class _StapleChoiceSheetState extends ConsumerState<StapleChoiceSheet> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const SizedBox(height: 20),
+            const SizedBox(height: 8),
+
+            // Header with exercise name and close button
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      widget.exerciseName,
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w700,
+                        color: textPrimary,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  GestureDetector(
+                    onTap: widget.onCancel,
+                    child: Container(
+                      width: 32,
+                      height: 32,
+                      decoration: BoxDecoration(
+                        color: textMuted.withValues(alpha: 0.12),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        Icons.close,
+                        size: 18,
+                        color: textMuted,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
 
             // Gym profile picker (only show if 2+ profiles)
             if (profiles.length >= 2) ...[
@@ -434,7 +483,12 @@ class _StapleChoiceSheetState extends ConsumerState<StapleChoiceSheet> {
                 }).toList(),
               ),
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 16),
+
+            // Swap option (alternative to Save)
+            _buildSwapOption(
+                textPrimary, textMuted, cardColor, cardBorder),
+            const SizedBox(height: 16),
 
             // Save button
             Padding(
@@ -461,38 +515,6 @@ class _StapleChoiceSheetState extends ConsumerState<StapleChoiceSheet> {
                   ),
                 ),
               ),
-            ),
-            const SizedBox(height: 12),
-
-            // Swap option (secondary)
-            _buildSwapOption(
-                textPrimary, textMuted, cardColor, cardBorder),
-            const SizedBox(height: 16),
-
-            // Change exercise / Cancel row
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                TextButton.icon(
-                  onPressed: () {
-                    HapticService.light();
-                    Navigator.pop(context, _makeResult(addToday: false, goBack: true));
-                  },
-                  icon: Icon(Icons.swap_horiz, size: 18, color: textMuted),
-                  label: Text(
-                    'Change Exercise',
-                    style: TextStyle(fontSize: 14, color: textMuted),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                TextButton(
-                  onPressed: widget.onCancel,
-                  child: Text(
-                    'Cancel',
-                    style: TextStyle(fontSize: 14, color: textMuted),
-                  ),
-                ),
-              ],
             ),
           ],
         ),
@@ -592,7 +614,7 @@ class _StapleChoiceSheetState extends ConsumerState<StapleChoiceSheet> {
               _buildCardioField(
                 label: 'Incline',
                 controller: _inclineController,
-                suffix: '%',
+                suffix: '',
                 textPrimary: textPrimary,
                 textMuted: textMuted,
               ),
@@ -785,178 +807,189 @@ class _StapleChoiceSheetState extends ConsumerState<StapleChoiceSheet> {
     Color cardColor,
     Color cardBorder,
   ) {
-    // Get user's scheduled workout days (0=Mon, 6=Sun)
     final userAsync = ref.watch(currentUserProvider);
     final workoutDays = userAsync.valueOrNull?.workoutDays ?? [];
-    final workoutDaySet = workoutDays.toSet();
+
+    String subtitle;
+    switch (_dayTargetMode) {
+      case _DayTargetMode.workoutDays:
+        subtitle = workoutDays.isNotEmpty
+            ? workoutDays.map((d) => _dayLabels[d]).join(', ')
+            : 'Your scheduled workout days';
+      case _DayTargetMode.everyDay:
+        subtitle = 'Sun - Sat';
+      case _DayTargetMode.custom:
+        subtitle = _selectedDays.isNotEmpty
+            ? (_selectedDays.toList()..sort()).map((d) => _dayLabels[d]).join(', ')
+            : 'Select days below';
+    }
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Target Days',
+            style: TextStyle(
+              fontSize: 17,
+              fontWeight: FontWeight.w600,
+              color: textPrimary,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            subtitle,
+            style: TextStyle(fontSize: 12, color: textMuted),
+          ),
+          const SizedBox(height: 12),
+          // 3-option segmented control
+          Container(
+            padding: const EdgeInsets.all(4),
+            decoration: BoxDecoration(
+              color: cardColor,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Row(
+              children: [
+                _buildDayModeOption(
+                  label: 'Workout Days',
+                  mode: _DayTargetMode.workoutDays,
+                  textPrimary: textPrimary,
+                  textMuted: textMuted,
+                ),
+                const SizedBox(width: 4),
+                _buildDayModeOption(
+                  label: 'Every Day',
+                  mode: _DayTargetMode.everyDay,
+                  textPrimary: textPrimary,
+                  textMuted: textMuted,
+                ),
+                const SizedBox(width: 4),
+                _buildDayModeOption(
+                  label: 'Custom',
+                  mode: _DayTargetMode.custom,
+                  textPrimary: textPrimary,
+                  textMuted: textMuted,
+                ),
+              ],
+            ),
+          ),
+          // Custom day picker (only visible when Custom is selected)
+          if (_dayTargetMode == _DayTargetMode.custom) ...[
+            const SizedBox(height: 12),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: List.generate(7, (i) {
+                final isSelected = _selectedDays.contains(i);
+                final isWorkoutDay = workoutDays.contains(i);
+                return GestureDetector(
+                  onTap: () {
+                    HapticService.light();
+                    setState(() {
+                      if (isSelected) {
+                        _selectedDays.remove(i);
+                      } else {
+                        _selectedDays.add(i);
+                      }
+                    });
+                  },
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        width: 40,
+                        height: 40,
+                        decoration: BoxDecoration(
+                          color: isSelected
+                              ? AppColors.cyan
+                              : Colors.transparent,
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: isSelected
+                                ? AppColors.cyan
+                                : isWorkoutDay
+                                    ? AppColors.cyan.withValues(alpha: 0.4)
+                                    : textMuted.withValues(alpha: 0.3),
+                            width: isWorkoutDay && !isSelected ? 1.5 : 1.0,
+                          ),
+                        ),
+                        alignment: Alignment.center,
+                        child: Text(
+                          _dayLabels[i].substring(0, 1),
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: isSelected
+                                ? FontWeight.w700
+                                : FontWeight.w400,
+                            color: isSelected ? Colors.white : textMuted,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Container(
+                        width: 4,
+                        height: 4,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: isWorkoutDay
+                              ? AppColors.cyan.withValues(alpha: 0.6)
+                              : Colors.transparent,
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              }),
+            ),
+            if (workoutDays.isNotEmpty) ...[
+              const SizedBox(height: 6),
+              Text(
+                'Dots = your workout days',
+                style: TextStyle(
+                  fontSize: 11,
+                  color: textMuted.withValues(alpha: 0.6),
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDayModeOption({
+    required String label,
+    required _DayTargetMode mode,
+    required Color textPrimary,
+    required Color textMuted,
+  }) {
+    final isSelected = _dayTargetMode == mode;
+    return Expanded(
       child: GestureDetector(
         onTap: () {
           HapticService.light();
-          setState(() => _showDayPicker = !_showDayPicker);
+          setState(() => _dayTargetMode = mode);
         },
-        child: Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(16),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          padding: const EdgeInsets.symmetric(vertical: 10),
           decoration: BoxDecoration(
-            color: cardColor,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: cardBorder),
+            color: isSelected ? AppColors.cyan.withValues(alpha: 0.15) : Colors.transparent,
+            borderRadius: BorderRadius.circular(10),
+            border: isSelected
+                ? Border.all(color: AppColors.cyan.withValues(alpha: 0.3))
+                : null,
           ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Icon(Icons.calendar_today, color: AppColors.cyan, size: 18),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Specific days (optional)',
-                          style: TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w600,
-                            color: textPrimary,
-                          ),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          _showDayPicker && _selectedDays.isNotEmpty
-                              ? _selectedDays.toList()
-                                  .map((d) => _dayLabels[d])
-                                  .join(', ')
-                              : 'Every workout day',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: textMuted,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Icon(
-                    _showDayPicker ? Icons.expand_less : Icons.expand_more,
-                    color: textMuted,
-                    size: 20,
-                  ),
-                ],
-              ),
-              if (_showDayPicker) ...[
-                const SizedBox(height: 12),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: List.generate(7, (i) {
-                    final isSelected = _selectedDays.contains(i);
-                    final isWorkoutDay = workoutDaySet.contains(i);
-                    return GestureDetector(
-                      onTap: () {
-                        HapticService.light();
-                        setState(() {
-                          if (isSelected) {
-                            _selectedDays.remove(i);
-                          } else {
-                            _selectedDays.add(i);
-                          }
-                        });
-                      },
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Container(
-                            width: 40,
-                            height: 40,
-                            decoration: BoxDecoration(
-                              color: isSelected
-                                  ? AppColors.cyan
-                                  : Colors.transparent,
-                              shape: BoxShape.circle,
-                              border: Border.all(
-                                color: isSelected
-                                    ? AppColors.cyan
-                                    : isWorkoutDay
-                                        ? AppColors.cyan.withValues(alpha: 0.4)
-                                        : textMuted.withValues(alpha: 0.3),
-                                width: isWorkoutDay && !isSelected ? 1.5 : 1.0,
-                              ),
-                            ),
-                            alignment: Alignment.center,
-                            child: Text(
-                              _dayLabels[i].substring(0, 1),
-                              style: TextStyle(
-                                fontSize: 13,
-                                fontWeight: isSelected
-                                    ? FontWeight.w700
-                                    : FontWeight.w400,
-                                color: isSelected ? Colors.white : textMuted,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          // Workout day indicator dot
-                          Container(
-                            width: 4,
-                            height: 4,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: isWorkoutDay
-                                  ? AppColors.cyan.withValues(alpha: 0.6)
-                                  : Colors.transparent,
-                            ),
-                          ),
-                        ],
-                      ),
-                    );
-                  }),
-                ),
-                if (workoutDaySet.isNotEmpty) ...[
-                  const SizedBox(height: 6),
-                  Text(
-                    'Dots = your workout days',
-                    style: TextStyle(
-                      fontSize: 11,
-                      color: textMuted.withValues(alpha: 0.6),
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                ],
-                if (_selectedDays.isNotEmpty) ...[
-                  const SizedBox(height: 6),
-                  // Show info if user selected a non-workout day
-                  if (_selectedDays.any((d) => !workoutDaySet.contains(d))) ...[
-                    Text(
-                      'Rest-day selections will create a light staple workout',
-                      style: TextStyle(
-                        fontSize: 11,
-                        color: AppColors.orange.withValues(alpha: 0.8),
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 4),
-                  ],
-                  GestureDetector(
-                    onTap: () {
-                      HapticService.light();
-                      setState(() => _selectedDays.clear());
-                    },
-                    child: Align(
-                      alignment: Alignment.centerRight,
-                      child: Text(
-                        'Clear (all days)',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: AppColors.cyan,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ],
-            ],
+          alignment: Alignment.center,
+          child: Text(
+            label,
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+              color: isSelected ? textPrimary : textMuted,
+            ),
           ),
         ),
       ),

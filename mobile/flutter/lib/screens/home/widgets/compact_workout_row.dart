@@ -64,7 +64,7 @@ class CompactWorkoutRow extends ConsumerWidget {
           child: InkWell(
             onTap: () {
               HapticService.light();
-              context.push('/workout/${workout.id}');
+              context.push('/workout/${workout.id}', extra: workout);
             },
             borderRadius: BorderRadius.circular(12),
             child: Padding(

@@ -152,7 +152,7 @@ class _SeniorHomeScreenState extends ConsumerState<SeniorHomeScreen> {
                   exerciseCount: nextWorkout.exercises.length,
                   durationMinutes: nextWorkout.durationMinutes ?? 30,
                   onStart: () {
-                    context.push('/workout/${nextWorkout.id}');
+                    context.push('/workout/${nextWorkout.id}', extra: nextWorkout);
                   },
                 ),
               ] else ...[

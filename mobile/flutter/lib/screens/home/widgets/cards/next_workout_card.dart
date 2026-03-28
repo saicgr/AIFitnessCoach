@@ -227,7 +227,7 @@ class _NextWorkoutCardState extends ConsumerState<NextWorkoutCard> {
                         child: GestureDetector(
                           onTap: () {
                             HapticService.selection();
-                            context.push('/workout/${workout.id}');
+                            context.push('/workout/${workout.id}', extra: workout);
                           },
                           child: Wrap(
                             spacing: 8,
@@ -363,7 +363,7 @@ class _NextWorkoutCardState extends ConsumerState<NextWorkoutCard> {
                   GestureDetector(
                     onTap: () {
                       HapticService.selection();
-                      context.push('/workout/${workout.id}');
+                      context.push('/workout/${workout.id}', extra: workout);
                     },
                     child: Text(
                       workout.name ?? 'Workout',
@@ -378,7 +378,7 @@ class _NextWorkoutCardState extends ConsumerState<NextWorkoutCard> {
                   GestureDetector(
                     onTap: () {
                       HapticService.selection();
-                      context.push('/workout/${workout.id}');
+                      context.push('/workout/${workout.id}', extra: workout);
                     },
                     child: Row(
                       children: [
@@ -473,7 +473,7 @@ class _NextWorkoutCardState extends ConsumerState<NextWorkoutCard> {
               GestureDetector(
                 onTap: () {
                   HapticService.selection();
-                  context.push('/workout/${workout.id}');
+                  context.push('/workout/${workout.id}', extra: workout);
                 },
                 child: Container(
                   height: 60,

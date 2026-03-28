@@ -58,6 +58,7 @@ import '../screens/settings/pages/pages.dart';
 import '../screens/settings/ai_data_usage_screen.dart';
 import '../screens/settings/medical_disclaimer_screen.dart';
 import '../screens/settings/exercise_preferences/my_exercises_screen.dart';
+import '../screens/settings/training_methods_screen.dart';
 import '../screens/settings/workout_history_import_screen.dart';
 import '../screens/settings/training/my_1rms_screen.dart';
 import '../screens/settings/layout_editor_screen.dart';
@@ -1666,6 +1667,12 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/settings/exercise-queue',
         redirect: (context, state) => '/settings/my-exercises?tab=2',
+      ),
+
+      // Training Methods (Set Progression reference)
+      GoRoute(
+        path: '/settings/training-methods',
+        builder: (context, state) => const TrainingMethodsScreen(),
       ),
 
       // Workout History Import (Settings sub-screen) - stays separate

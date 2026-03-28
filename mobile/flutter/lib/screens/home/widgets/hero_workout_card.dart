@@ -389,7 +389,7 @@ class _HeroWorkoutCardState extends ConsumerState<HeroWorkoutCard> {
                 ),
                 onTap: () {
                   Navigator.pop(sheetContext);
-                  context.push('/workout/${widget.workout.id}');
+                  context.push('/workout/${widget.workout.id}', extra: widget.workout);
                 },
               ),
               // Add Exercises
@@ -1198,7 +1198,7 @@ class _HeroWorkoutCardState extends ConsumerState<HeroWorkoutCard> {
     return GestureDetector(
       onTap: () {
         HapticService.selection();
-        context.push('/workout/${workout.id}');
+        context.push('/workout/${workout.id}', extra: workout);
       },
       child: Padding(
         padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),

@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/providers/staples_provider.dart';
+import '../../../core/providers/user_provider.dart';
 import '../../../data/models/exercise.dart';
 import '../../../data/providers/gym_profile_provider.dart';
 import '../../../data/repositories/exercise_preferences_repository.dart';
@@ -352,7 +353,19 @@ class StapleExercisesScreen extends ConsumerWidget {
 
     List<int> selectedDays = List<int>.from(staple.targetDays ?? []);
 
+    // Determine initial day target mode from existing data
+    // null/empty = workout days, all 7 = every day, otherwise = custom
+    String dayTargetMode;
+    if (selectedDays.isEmpty) {
+      dayTargetMode = 'workoutDays';
+    } else if (selectedDays.length == 7) {
+      dayTargetMode = 'everyDay';
+    } else {
+      dayTargetMode = 'custom';
+    }
+
     final dayLabels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    final userWorkoutDays = ref.read(currentUserProvider).valueOrNull?.workoutDays ?? [];
 
     Widget buildField({
       required TextEditingController controller,
@@ -582,7 +595,6 @@ class StapleExercisesScreen extends ConsumerWidget {
                           child: buildField(
                             controller: inclineController,
                             label: 'Incline',
-                            suffix: '%',
                           ),
                         ),
                       ],
@@ -711,42 +723,118 @@ class StapleExercisesScreen extends ConsumerWidget {
                     ),
                   ),
                   const SizedBox(height: 4),
-                  Text(
-                    'Leave empty for all days',
-                    style: TextStyle(fontSize: 12, color: textMuted),
-                  ),
+                  Builder(builder: (_) {
+                    String subtitle;
+                    switch (dayTargetMode) {
+                      case 'workoutDays':
+                        subtitle = userWorkoutDays.isNotEmpty
+                            ? userWorkoutDays.map((d) => dayLabels[d]).join(', ')
+                            : 'Your scheduled workout days';
+                      case 'everyDay':
+                        subtitle = 'Sun - Sat';
+                      default:
+                        subtitle = selectedDays.isNotEmpty
+                            ? (selectedDays.toList()..sort()).map((d) => dayLabels[d]).join(', ')
+                            : 'Select days below';
+                    }
+                    return Text(subtitle, style: TextStyle(fontSize: 12, color: textMuted));
+                  }),
                   const SizedBox(height: 8),
-                  Wrap(
-                    spacing: 6,
-                    children: List.generate(7, (i) {
-                      final isSelected = selectedDays.contains(i);
-                      return FilterChip(
-                        label: Text(dayLabels[i]),
-                        selected: isSelected,
-                        onSelected: (_) {
-                          setSheetState(() {
-                            if (isSelected) {
-                              selectedDays.remove(i);
-                            } else {
-                              selectedDays.add(i);
-                            }
-                          });
-                        },
-                        selectedColor: AppColors.cyan,
-                        checkmarkColor: Colors.white,
-                        labelStyle: TextStyle(
-                          color: isSelected ? Colors.white : textMuted,
-                          fontSize: 12,
-                        ),
-                        backgroundColor: elevatedColor,
-                        side: BorderSide.none,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        visualDensity: VisualDensity.compact,
-                      );
-                    }),
+                  // 3-option segmented control
+                  Container(
+                    padding: const EdgeInsets.all(4),
+                    decoration: BoxDecoration(
+                      color: elevatedColor,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Row(
+                      children: [
+                        for (final entry in [
+                          ('workoutDays', 'Workout Days'),
+                          ('everyDay', 'Every Day'),
+                          ('custom', 'Custom'),
+                        ])
+                          Expanded(
+                            child: GestureDetector(
+                              onTap: () {
+                                HapticService.light();
+                                setSheetState(() => dayTargetMode = entry.$1);
+                              },
+                              child: AnimatedContainer(
+                                duration: const Duration(milliseconds: 200),
+                                padding: const EdgeInsets.symmetric(vertical: 10),
+                                decoration: BoxDecoration(
+                                  color: dayTargetMode == entry.$1
+                                      ? AppColors.cyan.withValues(alpha: 0.15)
+                                      : Colors.transparent,
+                                  borderRadius: BorderRadius.circular(10),
+                                  border: dayTargetMode == entry.$1
+                                      ? Border.all(color: AppColors.cyan.withValues(alpha: 0.3))
+                                      : null,
+                                ),
+                                alignment: Alignment.center,
+                                child: Text(
+                                  entry.$2,
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: dayTargetMode == entry.$1 ? FontWeight.w600 : FontWeight.w400,
+                                    color: dayTargetMode == entry.$1 ? textColor : textMuted,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
                   ),
+                  // Custom day picker (only when Custom is selected)
+                  if (dayTargetMode == 'custom') ...[
+                    const SizedBox(height: 8),
+                    Wrap(
+                      spacing: 6,
+                      children: List.generate(7, (i) {
+                        final isSelected = selectedDays.contains(i);
+                        final isWorkoutDay = userWorkoutDays.contains(i);
+                        return FilterChip(
+                          label: Text(dayLabels[i]),
+                          selected: isSelected,
+                          onSelected: (_) {
+                            setSheetState(() {
+                              if (isSelected) {
+                                selectedDays.remove(i);
+                              } else {
+                                selectedDays.add(i);
+                              }
+                            });
+                          },
+                          selectedColor: AppColors.cyan,
+                          checkmarkColor: Colors.white,
+                          labelStyle: TextStyle(
+                            color: isSelected ? Colors.white : textMuted,
+                            fontSize: 12,
+                          ),
+                          backgroundColor: elevatedColor,
+                          side: BorderSide(
+                            color: isWorkoutDay && !isSelected
+                                ? AppColors.cyan.withValues(alpha: 0.4)
+                                : Colors.transparent,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          visualDensity: VisualDensity.compact,
+                        );
+                      }),
+                    ),
+                    if (userWorkoutDays.isNotEmpty)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 4),
+                        child: Text(
+                          'Highlighted = your workout days',
+                          style: TextStyle(fontSize: 11, color: textMuted.withValues(alpha: 0.6)),
+                        ),
+                      ),
+                  ],
                   const SizedBox(height: 24),
                   // Save button
                   SizedBox(
@@ -824,7 +912,11 @@ class StapleExercisesScreen extends ConsumerWidget {
         userReps: reps,
         userRestSeconds: rest,
         userWeightLbs: weight,
-        targetDays: selectedDays.isEmpty ? null : selectedDays,
+        targetDays: dayTargetMode == 'everyDay'
+            ? [0, 1, 2, 3, 4, 5, 6]
+            : dayTargetMode == 'custom' && selectedDays.isNotEmpty
+                ? selectedDays
+                : null,
         cardioParams: cardioParams,
       );
 

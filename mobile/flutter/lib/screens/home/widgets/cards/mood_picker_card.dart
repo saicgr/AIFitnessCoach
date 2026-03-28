@@ -54,7 +54,7 @@ class _MoodPickerCardState extends ConsumerState<MoodPickerCard>
         // Workout generated successfully - navigate to it
         _pulseController.stop();
         final workout = next.generatedWorkout!;
-        context.push('/workout/${workout.id}');
+        context.push('/workout/${workout.id}', extra: workout);
         // Clear the generated workout from state after navigation
         Future.delayed(const Duration(milliseconds: 500), () {
           ref.read(moodWorkoutProvider.notifier).clearGeneratedWorkout();
