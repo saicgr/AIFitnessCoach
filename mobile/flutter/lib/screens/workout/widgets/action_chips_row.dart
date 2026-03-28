@@ -283,11 +283,7 @@ class WorkoutActionChips {
     icon: Icons.repeat,
   );
 
-  static const equipment = ActionChipData(
-    id: 'equipment',
-    label: 'Equipment',
-    icon: Icons.fitness_center,
-  );
+  // Removed static const equipment — replaced by parameterized version below
 
   static const timer = ActionChipData(
     id: 'timer',
@@ -340,6 +336,13 @@ class WorkoutActionChips {
         id: 'increments_display',
         label: label,
         icon: Icons.tune,
+      );
+
+  /// Equipment profile chip — shows current gym profile name.
+  static ActionChipData equipment({required String label}) => ActionChipData(
+        id: 'equipment',
+        label: label,
+        icon: Icons.fitness_center,
       );
 
   /// 3-dot "More" menu for History, Increments, etc.

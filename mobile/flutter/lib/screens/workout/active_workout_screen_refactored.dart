@@ -35,6 +35,8 @@ import '../../data/models/exercise.dart';
 import '../../data/repositories/workout_repository.dart';
 import '../../data/services/api_client.dart';
 import '../../data/rest_messages.dart';
+import '../../models/equipment_item.dart';
+import 'widgets/edit_workout_equipment_sheet.dart';
 import '../../widgets/glass_sheet.dart';
 import '../../widgets/log_1rm_sheet.dart';
 import '../../widgets/weight_increments_sheet.dart';
@@ -147,6 +149,11 @@ class _ActiveWorkoutScreenState
   bool _showInstructions = false;
   /// Whether to hide the AI Coach FAB for this session (user long-pressed to hide)
   bool _hideAICoachForSession = false;
+
+  /// Coach tip bubble state
+  bool _showCoachTip = false;
+  String? _coachTipMessage;
+  bool _coachTipSent = false; // Only send once per workout
 
   // Video state
   VideoPlayerController? _videoController;
@@ -651,6 +658,7 @@ class _ActiveWorkoutScreenState
       _currentPhase = WorkoutPhase.active;
     });
     _fetchMediaForExercise(_exercises[0]);
+    _showCoachTipIfNeeded();
   }
 
   void _handleSkipWarmup() {
@@ -951,35 +959,64 @@ class _ActiveWorkoutScreenState
     final incrementState = ref.read(weightIncrementsProvider);
     final increment = incrementState.getIncrement(exercise.equipment);
 
-    // Use stored working weight (derived when pattern was applied).
-    // Fall back to deriving from the last completed set if not stored.
-    final double workingWeight;
-    if (_exerciseWorkingWeight.containsKey(_currentExerciseIndex)) {
-      workingWeight = _exerciseWorkingWeight[_currentExerciseIndex]!;
-    } else {
-      final lastLog = _completedSets[_currentExerciseIndex]?.lastOrNull;
-      final rawWeight = lastLog?.weight ?? exercise.weight?.toDouble() ?? 0;
-      if (rawWeight <= 0) return;
-      final snapped = increment > 0
-          ? (rawWeight / increment).round() * increment
-          : rawWeight;
-      final derived = pattern.deriveWorkingWeight(
-        enteredWeight: snapped,
-        totalSets: _totalSetsPerExercise[_currentExerciseIndex] ?? 3,
-        increment: increment,
-      );
-      _exerciseWorkingWeight[_currentExerciseIndex] = derived;
-      workingWeight = derived;
+    final totalSets = _totalSetsPerExercise[_currentExerciseIndex] ?? 3;
+
+    // ALWAYS re-derive working weight from the LAST COMPLETED SET.
+    // The user may have manually changed the weight after selecting a pattern.
+    final completedLogs = _completedSets[_currentExerciseIndex];
+
+    // Find the last NON-WARMUP completed set for baseReps/weight derivation
+    SetLog? lastWorkingLog;
+    if (completedLogs != null) {
+      for (int i = completedLogs.length - 1; i >= 0; i--) {
+        // Check if this was a warmup set
+        final setTargets = exercise.setTargets;
+        final isWarmup = setTargets != null && i < setTargets.length &&
+            setTargets[i].setType.toLowerCase() == 'warmup';
+        if (!isWarmup) {
+          lastWorkingLog = completedLogs[i];
+          break;
+        }
+      }
     }
 
-    final baseReps = exercise.reps ?? 10;
-    final totalSets = _totalSetsPerExercise[_currentExerciseIndex] ?? 3;
+    // Derive working weight from actual performance, accounting for set position.
+    // Each pattern has position-specific offsets (e.g., Pyramid Up: set 1 is
+    // lightest, set N is heaviest). We reverse the offset for the completed set's
+    // position to recover the true working weight (peak weight).
+    final actualWeight = lastWorkingLog?.weight ?? exercise.weight?.toDouble() ?? 0;
+    if (actualWeight <= 0) return; // Guard: bodyweight or no data
+
+    final snapped = increment > 0
+        ? (actualWeight / increment).round() * increment
+        : actualWeight;
+
+    // Determine which set was just completed (0-indexed)
+    final completedIndex = (completedLogs?.length ?? 1) - 1;
+
+    final workingWeight = pattern.deriveWorkingWeight(
+      enteredWeight: snapped,
+      totalSets: totalSets,
+      increment: increment,
+      completedSetIndex: completedIndex,
+    );
+    _exerciseWorkingWeight[_currentExerciseIndex] = workingWeight;
+
+    // Derive base reps from completed reps, reversing the position-specific
+    // rep offset. E.g., Pyramid Up set 1 has baseReps + 4, so we subtract 4.
+    final userGoal = ref.read(authStateProvider).user?.primaryGoal;
+    final goalDefault = TrainingGoalRepRange.forGoal(userGoal).defaultReps;
+    final rawBaseReps = (lastWorkingLog?.reps ?? exercise.reps ?? goalDefault).clamp(1, 30);
+    final baseReps = SetProgressionPatternX.reverseRepOffset(
+      pattern, rawBaseReps, completedIndex, totalSets,
+    );
 
     var targets = pattern.generateTargets(
       workingWeight: workingWeight,
       totalSets: totalSets,
       baseReps: baseReps,
       increment: increment,
+      trainingGoal: userGoal,
     );
 
     // Adaptive progression: adjust remaining targets based on actual performance
@@ -1460,14 +1497,26 @@ class _ActiveWorkoutScreenState
       final apiClient = ref.read(apiClientProvider);
       final currentWeight = double.tryParse(_weightController.text) ?? 0;
 
-      // Build set data for fatigue check
-      final setsData = completedSets.map((s) => FatigueSetData(
-        reps: s.reps,
-        weight: s.weight,
-        rpe: s.rpe,
-        rir: s.rir,
-        targetReps: exercise.reps,
-      )).toList();
+      // Get progression pattern and per-set targets for pattern-aware fatigue
+      final pattern = _exerciseProgressionPattern[_currentExerciseIndex]
+          ?? SetProgressionPattern.pyramidUp;
+      final setTargets = exercise.setTargets;
+
+      // Build set data with per-set progression targets
+      final setsData = <FatigueSetData>[];
+      for (int i = 0; i < completedSets.length; i++) {
+        final s = completedSets[i];
+        final target = (setTargets != null && i < setTargets.length) ? setTargets[i] : null;
+        setsData.add(FatigueSetData(
+          reps: s.reps,
+          weight: s.weight,
+          rpe: s.rpe,
+          rir: s.rir,
+          targetReps: target?.targetReps ?? exercise.reps,
+          targetWeight: target?.targetWeightKg,
+          targetRir: target?.targetRir,
+        ));
+      }
 
       final exerciseType = FatigueService.getExerciseType(
         exercise.muscleGroup,
@@ -1480,6 +1529,7 @@ class _ActiveWorkoutScreenState
         currentWeight: currentWeight,
         exerciseType: exerciseType,
         targetReps: exercise.reps,
+        progressionPattern: pattern.name,
       );
 
       if (!mounted) return;
@@ -5044,19 +5094,27 @@ class _ActiveWorkoutScreenState
         isCompleted: isCompleted,
         isActive: isActive,
         // TARGET weight: use history → AI (if reliable) → equipment default
+        // targetWeight is in kg internally — display layer converts to user's unit
         targetWeight: (() {
+          // If a progression pattern wrote this setTarget, trust it directly
+          final hasProgression = _exerciseProgressionPattern.containsKey(exerciseIndex);
+          if (hasProgression && setTarget?.targetWeightKg != null && setTarget!.targetWeightKg! > 0) {
+            return setTarget!.targetWeightKg!;
+          }
+          // Otherwise: historical → previous session → equipment default
           final aiWt = setTarget?.targetWeightKg ?? exercise.weight?.toDouble();
           if (aiWt != null && !isGenericWeight(aiWt, exercise.weightSource)) {
-            return aiWt; // Historical/reliable weight
+            return aiWt;
           }
-          if (prevWeight != null && prevWeight > 0) return prevWeight; // Previous session
-          // Equipment-based default (in kg for internal storage)
-          final defaultKg = getDefaultWeight(exercise.equipment,
+          if (prevWeight != null && prevWeight > 0) return prevWeight;
+          final userProfile = ref.read(authStateProvider).user;
+          final defaultDisplay = getDefaultWeight(exercise.equipment,
             exerciseName: exercise.name,
-            fitnessLevel: ref.read(authStateProvider).user?.fitnessLevel,
-            gender: ref.read(authStateProvider).user?.gender,
-            useKg: true);
-          return defaultKg > 0 ? defaultKg : aiWt;
+            fitnessLevel: userProfile?.fitnessLevel,
+            gender: userProfile?.gender,
+            useKg: _useKg);
+          if (defaultDisplay <= 0) return aiWt;
+          return _useKg ? defaultDisplay : defaultDisplay * 0.453592;
         })(),
         targetReps: setTarget?.targetReps != null ? setTarget!.targetReps.toString() : '${exercise.reps ?? 8}-${(exercise.reps ?? 8) + 2}',
         targetRir: calculatedRir,
@@ -5106,12 +5164,17 @@ class _ActiveWorkoutScreenState
     final incrementUnit = incrementState.unit;
     final incrementLabel = '±${incrementValue % 1 == 0 ? incrementValue.toInt() : incrementValue} $incrementUnit';
 
+    // Equipment profile name for chip
+    final activeProfile = ref.read(activeGymProfileProvider);
+    final equipmentLabel = activeProfile?.name ?? 'Equipment';
+
     return [
       WorkoutActionChips.progression(label: pattern.chipLabel, icon: pattern.icon),
       WorkoutActionChips.superset,
       WorkoutActionChips.swap,
       WorkoutActionChips.skip,
       WorkoutActionChips.leftRight(isActive: _isLeftRightMode),
+      WorkoutActionChips.equipment(label: equipmentLabel),
       WorkoutActionChips.incrementDisplay(label: incrementLabel),
       WorkoutActionChips.more,
     ];
@@ -5168,6 +5231,9 @@ class _ActiveWorkoutScreenState
         break;
       case 'increments_display':
         _showWeightIncrementsSheet();
+        break;
+      case 'equipment':
+        _showEquipmentProfileSheet();
         break;
       case 'progression':
         _showProgressionSheet();
@@ -5283,6 +5349,51 @@ class _ActiveWorkoutScreenState
   /// Show weight increments sheet
   void _showWeightIncrementsSheet() {
     showWeightIncrementsSheet(context);
+  }
+
+  /// Show equipment profile sheet — lets user view/edit their gym equipment
+  void _showEquipmentProfileSheet() {
+    final activeProfile = ref.read(activeGymProfileProvider);
+    if (activeProfile == null) return;
+
+    // Get current equipment details from profile
+    final currentEquipmentDetails = (activeProfile.equipmentDetails ?? [])
+        .map((detail) {
+          if (detail is Map<String, dynamic>) {
+            return EquipmentItem.fromJson(detail);
+          }
+          return null;
+        })
+        .whereType<EquipmentItem>()
+        .toList();
+
+    showGlassSheet(
+      context: context,
+      builder: (context) => GlassSheet(
+        child: EditWorkoutEquipmentSheet(
+          currentEquipment: activeProfile.equipment,
+          equipmentDetails: currentEquipmentDetails,
+          onApply: (selectedEquipment) async {
+            Navigator.pop(context);
+            // Save to gym profile via API
+            try {
+              final apiClient = ref.read(apiClientProvider);
+              await apiClient.put(
+                '/gym-profiles/${activeProfile.id}',
+                data: {'equipment': selectedEquipment},
+              );
+              ref.read(gymProfilesProvider.notifier).refresh();
+              if (mounted) {
+                setState(() {}); // Rebuild to reflect new equipment
+              }
+              debugPrint('✅ [Equipment] Updated gym profile');
+            } catch (e) {
+              debugPrint('⚠️ [Equipment] Failed to save: $e');
+            }
+          },
+        ),
+      ),
+    );
   }
 
   /// Show bar type selector bottom sheet
@@ -5486,11 +5597,13 @@ class _ActiveWorkoutScreenState
     );
     _exerciseWorkingWeight[exerciseIndex] = workingWeight;
 
+    final userGoalApply = ref.read(authStateProvider).user?.primaryGoal;
     final targets = pattern.generateTargets(
       workingWeight: workingWeight,
       totalSets: totalSets,
       baseReps: baseReps,
       increment: increment,
+      trainingGoal: userGoalApply,
     );
 
     // Update setTargets for ALL uncompleted sets so the display reflects the pattern
@@ -6127,8 +6240,11 @@ class _ActiveWorkoutScreenState
     setState(() {
       final currentVal = double.tryParse(_weightController.text) ?? 0;
       final exercise = _exercises[_viewingExerciseIndex];
+      // Convert and get the equivalent weight in the target unit.
+      // Use getDefaultWeight in the target unit to get the proper gym weight,
+      // since raw conversion (× 2.2 or × 0.45) produces non-standard values.
       if (_useKg) {
-        // kg → lbs: convert then snap to real lb increments
+        // kg → lbs
         final lbsVal = currentVal * 2.20462;
         final snapped = snapToRealIncrement(lbsVal, exercise.equipment,
             exerciseName: exercise.name, useKg: false);
@@ -6136,10 +6252,19 @@ class _ActiveWorkoutScreenState
             ? snapped.toInt().toString()
             : snapped.toStringAsFixed(1);
       } else {
-        // lbs → kg: convert then snap to real kg increments
+        // lbs → kg: round UP to nearest kg increment (maintain training stimulus)
         final kgVal = currentVal * 0.453592;
-        final snapped = snapToRealIncrement(kgVal, exercise.equipment,
-            exerciseName: exercise.name, useKg: true);
+        final eq = (exercise.equipment ?? '').toLowerCase();
+        final name = exercise.name.toLowerCase();
+        double step;
+        if (eq.contains('barbell') || name.contains('barbell') || name.contains('bench press') || name.contains('deadlift')) {
+          step = 2.5; // barbell: 2.5 kg steps (1.25 kg plate per side)
+        } else if (eq.contains('cable') || name.contains('cable') || eq.contains('machine') || name.contains('machine')) {
+          step = 5.0;
+        } else {
+          step = 2.5; // dumbbells: 2.5 kg steps (commercial gym standard)
+        }
+        final snapped = (kgVal / step).ceil() * step;
         _weightController.text = snapped % 1 == 0
             ? snapped.toInt().toString()
             : snapped.toStringAsFixed(1);
@@ -6156,12 +6281,16 @@ class _ActiveWorkoutScreenState
   }
 
   /// Save workout weight unit preference to backend (non-blocking).
-  /// This is separate from body weight unit.
+  /// Uses direct API call to avoid refreshing auth state (which would navigate away from workout).
   Future<void> _saveWeightUnitPreference(String unit) async {
     try {
-      await ref.read(authStateProvider.notifier).updateUserProfile({
-        'workout_weight_unit': unit,
-      });
+      final apiClient = ref.read(apiClientProvider);
+      final userId = await apiClient.getUserId();
+      if (userId == null) return;
+      await apiClient.put(
+        '/users/$userId',
+        data: {'workout_weight_unit': unit},
+      );
       debugPrint('✅ [WorkoutWeightUnit] Saved preference: $unit');
     } catch (e) {
       debugPrint('⚠️ [WorkoutWeightUnit] Failed to save preference: $e');
@@ -6601,26 +6730,142 @@ class _ActiveWorkoutScreenState
     );
   }
 
+  /// Show coach tip bubble — fires once when workout exercises start
+  void _showCoachTipIfNeeded() {
+    if (_coachTipSent || !mounted) return;
+    _coachTipSent = true;
+
+    final userGoal = ref.read(authStateProvider).user?.primaryGoal;
+    final pattern = _exerciseProgressionPattern[_currentExerciseIndex]
+        ?? SetProgressionPattern.pyramidUp;
+    final goalRange = TrainingGoalRepRange.forGoal(userGoal);
+
+    String tip;
+    switch (userGoal) {
+      case 'muscle_strength':
+        tip = 'Strength day — heavy weight, ${goalRange.minReps}-${goalRange.maxReps} reps. Rest 3-5 min between sets.';
+        break;
+      case 'muscle_hypertrophy':
+        tip = 'Hypertrophy — ${goalRange.minReps}-${goalRange.maxReps} reps, controlled tempo. Rest 60-90s.';
+        break;
+      case 'strength_hypertrophy':
+        tip = 'Strength + size — ${goalRange.minReps}-${goalRange.maxReps} reps, moderate-heavy. Rest 2-3 min.';
+        break;
+      default:
+        tip = 'Target ${goalRange.minReps}-${goalRange.maxReps} reps per set. Adjust weight to match.';
+    }
+
+    // Add pattern-specific advice
+    if (pattern.goalTags.first != _goalTagForUserGoal(userGoal)) {
+      tip += '\n💡 ${pattern.displayName} is best for ${pattern.goalTags.join("/")}';
+    }
+
+    setState(() {
+      _coachTipMessage = tip;
+      _showCoachTip = true;
+    });
+
+    // Auto-dismiss after 8 seconds
+    Future.delayed(const Duration(seconds: 8), () {
+      if (mounted) {
+        setState(() => _showCoachTip = false);
+      }
+    });
+  }
+
+  String _goalTagForUserGoal(String? goal) {
+    switch (goal) {
+      case 'muscle_strength': return 'Strength';
+      case 'muscle_hypertrophy': return 'Hypertrophy';
+      case 'strength_hypertrophy': return 'Strength';
+      default: return 'Hypertrophy';
+    }
+  }
+
   /// Build floating AI Coach FAB - always visible above bottom bar
   /// Long press to hide for this session
   Widget _buildFloatingAICoachButton(WorkoutExercise currentExercise) {
     // Use ref.watch to reactively update when coach changes
     final aiSettings = ref.watch(aiSettingsProvider);
     final coach = aiSettings.getCurrentCoach();
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return GestureDetector(
       onLongPress: () {
         HapticFeedback.heavyImpact();
         _showHideCoachDialog();
       },
-      child: CoachAvatar(
-        coach: coach,
-        size: 56,
-        showBorder: true,
-        borderWidth: 3,
-        showShadow: true,
-        enableTapToView: false,
-        onTap: () => _showAICoachSheet(currentExercise),
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          CoachAvatar(
+            coach: coach,
+            size: 56,
+            showBorder: true,
+            borderWidth: 3,
+            showShadow: true,
+            enableTapToView: false,
+            onTap: () {
+              setState(() => _showCoachTip = false);
+              _showAICoachSheet(currentExercise);
+            },
+          ),
+          // Notification badge
+          if (_showCoachTip)
+            Positioned(
+              top: -2,
+              right: -2,
+              child: Container(
+                width: 20,
+                height: 20,
+                decoration: BoxDecoration(
+                  color: Colors.red,
+                  shape: BoxShape.circle,
+                  border: Border.all(color: isDark ? AppColors.pureBlack : Colors.white, width: 2),
+                ),
+                child: const Center(
+                  child: Text('1', style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
+                ),
+              ),
+            ),
+          // Coach tip bubble (Messenger-style, positioned above avatar)
+          if (_showCoachTip && _coachTipMessage != null)
+            Positioned(
+              bottom: 64, // Above the 56px avatar + 8px gap
+              right: 0,
+              child: GestureDetector(
+                onTap: () => setState(() => _showCoachTip = false),
+                child: Container(
+                  constraints: const BoxConstraints(maxWidth: 220),
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: isDark ? AppColors.elevated : Colors.white,
+                    borderRadius: const BorderRadius.only(
+                      topLeft: Radius.circular(14),
+                      topRight: Radius.circular(14),
+                      bottomLeft: Radius.circular(14),
+                      bottomRight: Radius.circular(4),
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.12),
+                        blurRadius: 10,
+                        offset: const Offset(0, 3),
+                      ),
+                    ],
+                  ),
+                  child: Text(
+                    _coachTipMessage!,
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: isDark ? Colors.white : Colors.black87,
+                      height: 1.4,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+        ],
       ),
     );
   }

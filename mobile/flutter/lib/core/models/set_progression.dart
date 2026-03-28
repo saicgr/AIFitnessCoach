@@ -1,5 +1,35 @@
 import 'package:flutter/material.dart';
 
+/// Rep range boundaries based on the user's primary training goal.
+///
+/// Sources: NSCA, ACSM, Schoenfeld et al. (2017)
+class TrainingGoalRepRange {
+  final int minReps;
+  final int maxReps;
+  const TrainingGoalRepRange(this.minReps, this.maxReps);
+
+  /// Default rep target for this goal (midpoint of range).
+  int get defaultReps => ((minReps + maxReps) / 2).round();
+
+  /// Clamp a rep count to this goal's range.
+  int clampReps(int reps) => reps.clamp(minReps, maxReps);
+
+  static TrainingGoalRepRange forGoal(String? primaryGoal) {
+    switch (primaryGoal) {
+      case 'muscle_strength':
+        return const TrainingGoalRepRange(1, 5);
+      case 'muscle_hypertrophy':
+        return const TrainingGoalRepRange(6, 12);
+      case 'strength_hypertrophy':
+        return const TrainingGoalRepRange(4, 8);
+      case 'endurance':
+        return const TrainingGoalRepRange(15, 30);
+      default:
+        return const TrainingGoalRepRange(6, 15); // General fitness
+    }
+  }
+}
+
 /// Set progression patterns for active workouts.
 ///
 /// Determines how weight and reps change across sets within an exercise.
@@ -14,6 +44,7 @@ enum SetProgressionPattern {
   topSetBackOff,
   restPause,
   myoReps,
+  endurance,
 }
 
 extension SetProgressionPatternX on SetProgressionPattern {
@@ -33,6 +64,8 @@ extension SetProgressionPatternX on SetProgressionPattern {
         return 'Rest-Pause';
       case SetProgressionPattern.myoReps:
         return 'Myo-Reps';
+      case SetProgressionPattern.endurance:
+        return 'Endurance';
     }
   }
 
@@ -53,6 +86,8 @@ extension SetProgressionPatternX on SetProgressionPattern {
         return 'Rest-Pause';
       case SetProgressionPattern.myoReps:
         return 'Myo-Reps';
+      case SetProgressionPattern.endurance:
+        return 'Endurance';
     }
   }
 
@@ -72,6 +107,8 @@ extension SetProgressionPatternX on SetProgressionPattern {
         return 'Same weight, 15s micro-rests';
       case SetProgressionPattern.myoReps:
         return 'Activation set + mini-sets';
+      case SetProgressionPattern.endurance:
+        return 'Same weight, high reps';
     }
   }
 
@@ -132,6 +169,14 @@ extension SetProgressionPatternX on SetProgressionPattern {
             '• Mini-sets: 5 reps each, 5s rest\n'
             '• Stop when you lose a rep\n\n'
             'One sequence replaces 3-4 straight sets. Ultra time-efficient.';
+      case SetProgressionPattern.endurance:
+        return 'Maintain the same weight across all sets while targeting high reps (15-30). '
+            'Focus on muscular endurance and time under tension.\n\n'
+            'Best for: Endurance\n'
+            '• All sets at same weight\n'
+            '• High reps (15-30)\n'
+            '• Short rest (30-60s)\n\n'
+            'Builds work capacity and muscular endurance. Great for conditioning.';
     }
   }
 
@@ -159,6 +204,9 @@ extension SetProgressionPatternX on SetProgressionPattern {
       case SetProgressionPattern.myoReps:
         return 'Borge Fagerli (creator, 2010) — Activation set of 12-20 reps followed by '
             'mini-sets of 3-5 reps with 10-15s rest. One sequence replaces 3-4 straight sets.';
+      case SetProgressionPattern.endurance:
+        return 'ACSM Guidelines — 15-25+ reps at 40-65% 1RM for muscular endurance. '
+            'Short rest periods (30-60s) maximize metabolic stress and work capacity.';
     }
   }
 
@@ -187,6 +235,10 @@ extension SetProgressionPatternX on SetProgressionPattern {
         return 'Use for isolation exercises and accessories. '
             'Ideal when you want high-quality volume in minimal time. '
             'Not for compound lifts (fatigue impairs form).';
+      case SetProgressionPattern.endurance:
+        return 'Use for conditioning phases, endurance goals, or finishers. '
+            'Great for isolation exercises at the end of a workout. '
+            'Keep rest short (30-60s) to maximize metabolic stress.';
     }
   }
 
@@ -220,6 +272,9 @@ extension SetProgressionPatternX on SetProgressionPattern {
             '  12-20 reps: ideal, no change\n'
             '  > 25 reps: increase weight 15%\n'
             '  Mini-set < 3 reps: reduce 10%';
+      case SetProgressionPattern.endurance:
+        return 'Same weight all sets. If you hit 30+ reps, increase weight next session. '
+            'If you cannot reach 15 reps, reduce weight.';
     }
   }
 
@@ -239,6 +294,8 @@ extension SetProgressionPatternX on SetProgressionPattern {
         return Icons.pause_circle_outline;
       case SetProgressionPattern.myoReps:
         return Icons.bolt;
+      case SetProgressionPattern.endurance:
+        return Icons.timer_outlined;
     }
   }
 
@@ -258,6 +315,8 @@ extension SetProgressionPatternX on SetProgressionPattern {
         return ['Hypertrophy'];
       case SetProgressionPattern.myoReps:
         return ['Hypertrophy'];
+      case SetProgressionPattern.endurance:
+        return ['Endurance'];
     }
   }
 
@@ -290,6 +349,8 @@ extension SetProgressionPatternX on SetProgressionPattern {
         return '120-180s rest';
       case SetProgressionPattern.topSetBackOff:
         return '120s / 60s rest';
+      case SetProgressionPattern.endurance:
+        return '30-60s rest';
       default:
         return '60-120s rest';
     }
@@ -342,25 +403,59 @@ extension SetProgressionPatternX on SetProgressionPattern {
     );
   }
 
-  /// Convert the user's entered weight (set 1 weight) into the working weight
-  /// that [generateTargets] expects (peak/heaviest weight).
+  /// Convert a completed set's weight into the working weight (peak/heaviest)
+  /// that [generateTargets] expects.
   ///
-  /// Most patterns treat set 1 as the heaviest, so the entered weight IS the
-  /// working weight. Exceptions:
-  /// - Pyramid Up: set 1 is lightest → peak = entered + (sets-1) × increment
-  /// - Myo-Reps: entered = activation weight → working = entered / 0.8
+  /// [completedSetIndex] is the 0-based position of the set that was completed.
+  /// Each pattern reverses its position-specific weight offset:
+  /// - Pyramid Up: set i weight = peak - (totalSets-1-i)×inc → reverse to get peak
+  /// - Myo-Reps: activation/mini-set weight → working = weight / 0.8
+  /// - Others: set 1 IS the heaviest (or same weight), so no offset needed
   double deriveWorkingWeight({
     required double enteredWeight,
     required int totalSets,
     required double increment,
+    int completedSetIndex = 0,
   }) {
     switch (this) {
       case SetProgressionPattern.pyramidUp:
-        return _snap(enteredWeight + (totalSets - 1) * increment, increment);
+        // Set i weight = peak - (totalSets-1-i)*inc
+        // → peak = enteredWeight + (totalSets-1-completedSetIndex)*inc
+        final stepsFromTop = totalSets - 1 - completedSetIndex;
+        return _snap(enteredWeight + stepsFromTop * increment, increment);
       case SetProgressionPattern.myoReps:
         return _snap(enteredWeight / 0.8, increment);
       default:
         return enteredWeight;
+    }
+  }
+
+  /// Reverse the pattern-specific rep offset for a completed set at [setIndex]
+  /// to recover the base rep target (peak-set reps for pyramid, etc.)
+  static int reverseRepOffset(SetProgressionPattern pattern, int actualReps, int setIndex, int totalSets) {
+    switch (pattern) {
+      case SetProgressionPattern.pyramidUp:
+        // Set i reps = baseReps + (totalSets-1-i)*2
+        final stepsFromTop = totalSets - 1 - setIndex;
+        return (actualReps - stepsFromTop * 2).clamp(1, 30);
+      case SetProgressionPattern.reversePyramid:
+        // repOffsets = [-4, -2, 0, 2, 4]
+        const offsets = [-4, -2, 0, 2, 4];
+        final offset = setIndex < offsets.length ? offsets[setIndex] : offsets.last;
+        return (actualReps - offset).clamp(1, 30);
+      case SetProgressionPattern.topSetBackOff:
+        // Set 0: baseReps - 4, Sets 1+: baseReps - 2
+        final offset = setIndex == 0 ? -4 : -2;
+        return (actualReps - offset).clamp(1, 30);
+      case SetProgressionPattern.endurance:
+        // Set i reps = baseReps + i*2
+        return (actualReps - setIndex * 2).clamp(1, 30);
+      case SetProgressionPattern.myoReps:
+        // Set 0 (activation): baseReps + 5, Mini-sets: fixed at 5
+        if (setIndex == 0) return (actualReps - 5).clamp(1, 30);
+        return actualReps;
+      default:
+        return actualReps; // Straight Sets, Rest-Pause: no offset
     }
   }
 
@@ -377,23 +472,126 @@ extension SetProgressionPatternX on SetProgressionPattern {
     required int totalSets,
     required int baseReps,
     required double increment,
+    List<double>? ownedWeights,
+    String? trainingGoal,
   }) {
+    // 1. Generate raw targets using pattern-specific logic
+    List<ProgressionSetTarget> raw;
     switch (this) {
       case SetProgressionPattern.pyramidUp:
-        return _generatePyramidUp(workingWeight, totalSets, baseReps, increment);
+        raw = _generatePyramidUp(workingWeight, totalSets, baseReps, increment);
       case SetProgressionPattern.straightSets:
-        return _generateStraight(workingWeight, totalSets, baseReps);
+        raw = _generateStraight(workingWeight, totalSets, baseReps);
       case SetProgressionPattern.reversePyramid:
-        return _generateReversePyramid(workingWeight, totalSets, baseReps, increment);
+        raw = _generateReversePyramid(workingWeight, totalSets, baseReps, increment);
       case SetProgressionPattern.dropSets:
-        return _generateDropSets(workingWeight, totalSets, increment);
+        raw = _generateDropSets(workingWeight, totalSets, increment);
       case SetProgressionPattern.topSetBackOff:
-        return _generateTopSetBackOff(workingWeight, totalSets, baseReps, increment);
+        raw = _generateTopSetBackOff(workingWeight, totalSets, baseReps, increment);
       case SetProgressionPattern.restPause:
-        return _generateRestPause(workingWeight, totalSets);
+        raw = _generateRestPause(workingWeight, totalSets);
       case SetProgressionPattern.myoReps:
-        return _generateMyoReps(workingWeight, totalSets, baseReps, increment);
+        raw = _generateMyoReps(workingWeight, totalSets, baseReps, increment);
+      case SetProgressionPattern.endurance:
+        raw = _generateEndurance(workingWeight, totalSets, baseReps);
     }
+
+    // 2. If no inventory, clamp reps to goal range and return
+    if (ownedWeights == null || ownedWeights.isEmpty) {
+      if (trainingGoal != null) {
+        final goalRange = TrainingGoalRepRange.forGoal(trainingGoal);
+        return raw.map((t) {
+          if (t.isAmrap) return t;
+          final clamped = goalRange.clampReps(t.reps);
+          if (clamped == t.reps) return t;
+          return ProgressionSetTarget(
+            setNumber: t.setNumber, weight: t.weight, reps: clamped, isAmrap: false,
+          );
+        }).toList();
+      }
+      return raw;
+    }
+
+    // 3. Snap to owned weights + adjust reps to maintain volume
+    final sorted = [...ownedWeights]..sort();
+    final isDropPattern = this == SetProgressionPattern.dropSets;
+
+    final snapped = <ProgressionSetTarget>[];
+    for (int i = 0; i < raw.length; i++) {
+      final target = raw[i];
+
+      if (target.isAmrap) {
+        // AMRAP: snap weight, no rep adjustment
+        double snappedWeight;
+        if (isDropPattern && i > 0) {
+          // Drop sets: always go to next LOWER owned weight
+          final prevWeight = snapped[i - 1].weight;
+          final lower = sorted.where((w) => w < prevWeight - 0.01).toList();
+          snappedWeight = lower.isNotEmpty ? lower.last : sorted.first;
+        } else {
+          snappedWeight = _findClosestInList(target.weight, sorted);
+        }
+        snapped.add(ProgressionSetTarget(
+          setNumber: target.setNumber,
+          weight: snappedWeight,
+          reps: target.reps,
+          isAmrap: true,
+        ));
+        continue;
+      }
+
+      final snappedWeight = _findClosestInList(target.weight, sorted);
+      if ((snappedWeight - target.weight).abs() < 0.01) {
+        snapped.add(target); // Already on an owned weight
+        continue;
+      }
+
+      // Adjust reps proportionally: volume = weight × reps stays ~constant
+      final volume = target.weight * target.reps;
+      final adjustedReps = snappedWeight > 0
+          ? (volume / snappedWeight).round().clamp(1, 30)
+          : target.reps;
+
+      snapped.add(ProgressionSetTarget(
+        setNumber: target.setNumber,
+        weight: snappedWeight,
+        reps: adjustedReps,
+        isAmrap: false,
+      ));
+    }
+
+    // 4. Clamp reps to goal range if training goal is specified
+    if (trainingGoal != null) {
+      final goalRange = TrainingGoalRepRange.forGoal(trainingGoal);
+      return snapped.map((t) {
+        if (t.isAmrap) return t;
+        final clamped = goalRange.clampReps(t.reps);
+        if (clamped == t.reps) return t;
+        return ProgressionSetTarget(
+          setNumber: t.setNumber,
+          weight: t.weight,
+          reps: clamped,
+          isAmrap: false,
+        );
+      }).toList();
+    }
+
+    return snapped;
+  }
+
+  /// Find closest value in a sorted list.
+  static double _findClosestInList(double target, List<double> sorted) {
+    if (sorted.isEmpty) return target;
+    double closest = sorted.first;
+    double minDiff = (target - closest).abs();
+    for (final w in sorted) {
+      final diff = (target - w).abs();
+      if (diff < minDiff) {
+        minDiff = diff;
+        closest = w;
+      }
+    }
+    return closest;
   }
 
   /// Pyramid Up: weight increases, reps decrease each set.
@@ -520,6 +718,23 @@ extension SetProgressionPatternX on SetProgressionPattern {
         setNumber: i + 1,
         weight: myoWeight,
         reps: 5, // Mini-sets of 5
+        isAmrap: false,
+      ));
+    }
+    return targets;
+  }
+
+  /// Endurance: Same weight, high reps (15-30), each set increases reps by 2-3.
+  List<ProgressionSetTarget> _generateEndurance(
+    double w, int sets, int reps,
+  ) {
+    final baseReps = reps < 15 ? 15 : reps; // Minimum 15 for endurance
+    final targets = <ProgressionSetTarget>[];
+    for (int i = 0; i < sets; i++) {
+      targets.add(ProgressionSetTarget(
+        setNumber: i + 1,
+        weight: w,
+        reps: (baseReps + i * 2).clamp(15, 30), // +2 reps per set, capped at 30
         isAmrap: false,
       ));
     }

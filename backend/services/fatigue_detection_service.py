@@ -1019,11 +1019,25 @@ class FatigueAlert:
         }
 
 
+## Progression pattern properties for fatigue detection context
+_PATTERN_PROPERTIES: Dict[str, Dict[str, bool]] = {
+    "pyramidUp": {"expects_rep_decline": True, "expects_weight_increase": True, "failure_based": False},
+    "reversePyramid": {"expects_rep_decline": False, "expects_weight_decrease": True, "failure_based": False},
+    "straightSets": {"expects_rep_decline": False, "expects_weight_decrease": False, "failure_based": False},
+    "dropSets": {"expects_rep_decline": False, "expects_weight_decrease": True, "failure_based": True},
+    "restPause": {"expects_rep_decline": False, "expects_weight_decrease": False, "failure_based": True},
+    "topSetBackOff": {"expects_rep_decline": False, "expects_weight_decrease": True, "failure_based": False},
+    "myoReps": {"expects_rep_decline": False, "expects_weight_decrease": False, "failure_based": True},
+    "endurance": {"expects_rep_decline": False, "expects_weight_decrease": False, "failure_based": False},
+}
+
+
 def detect_fatigue(
     session_sets: List[Dict[str, Any]],
     current_weight: float,
     exercise_type: str = "compound",
     target_reps: Optional[int] = None,
+    progression_pattern: Optional[str] = None,
 ) -> FatigueAlert:
     """
     Standalone function to detect fatigue from session set data.
@@ -1032,43 +1046,39 @@ def detect_fatigue(
     and determines if the user is showing signs of fatigue that warrant
     intervention (weight reduction or exercise modification).
 
+    Pattern-aware: when a progression_pattern is provided, expected behaviors
+    (e.g., rep decline in Pyramid Up, failure in Drop Sets) are not flagged.
+
     Triggers for fatigue detection:
-    1. Rep decline >= 20% from target or first set
+    1. Rep decline >= 20% from per-set target (pattern-aware)
     2. RPE increase of 2+ between consecutive sets
-    3. Failed set (0 reps or user marks as failed)
-    4. Weight already reduced mid-exercise
-    5. Multiple high-RPE sets (RPE >= 9)
+    3. Failed set (skipped for failure-based patterns)
+    4. Weight reduced mid-exercise (skipped for patterns expecting weight changes)
+    5. RIR deviation from expected (primary signal when RIR data available)
+    6. RIR trend decline across sets
 
     Args:
         session_sets: List of completed sets with structure:
             [
                 {
-                    "reps": int,           # Reps completed
-                    "weight": float,       # Weight used in kg
-                    "rpe": Optional[int],  # Rate of Perceived Exertion (6-10)
-                    "rir": Optional[int],  # Reps in Reserve (0-5)
-                    "is_failure": bool,    # Whether set was to failure
-                    "target_reps": int,    # Target reps for this set
+                    "reps": int,                    # Reps completed
+                    "weight": float,                # Weight used in kg
+                    "rpe": Optional[int],           # Rate of Perceived Exertion (6-10)
+                    "rir": Optional[int],           # Reps in Reserve (0-5)
+                    "is_failure": bool,             # Whether set was to failure
+                    "target_reps": Optional[int],   # Per-set target reps from progression
+                    "target_weight": Optional[float],# Per-set target weight from progression
+                    "target_rir": Optional[int],    # Per-set expected RIR
                 },
                 ...
             ]
         current_weight: The current weight being used in kg
         exercise_type: Type of exercise ('compound', 'isolation', 'bodyweight')
-        target_reps: Optional target reps (overrides per-set target if provided)
+        target_reps: Optional global target reps (fallback if per-set not provided)
+        progression_pattern: Active pattern name (e.g., 'pyramidUp', 'straightSets')
 
     Returns:
         FatigueAlert with detection result and recommendations
-
-    Example:
-        >>> sets = [
-        ...     {"reps": 10, "weight": 100, "rpe": 7, "target_reps": 10},
-        ...     {"reps": 8, "weight": 100, "rpe": 8, "target_reps": 10},
-        ...     {"reps": 6, "weight": 100, "rpe": 10, "target_reps": 10},  # Fatigue!
-        ... ]
-        >>> alert = detect_fatigue(sets, current_weight=100)
-        >>> print(alert.fatigue_detected)  # True
-        >>> print(alert.severity)  # "high"
-        >>> print(alert.suggested_weight_reduction)  # 15
     """
     # Early return if no sets or only one set
     if not session_sets:
@@ -1099,44 +1109,78 @@ def detect_fatigue(
     confidence_factors: List[float] = []
     reasoning_parts: List[str] = []
 
+    # Get pattern properties (empty dict if unknown/not provided)
+    pattern_props = _PATTERN_PROPERTIES.get(progression_pattern or "", {})
+
     # Get reference values
     first_set = session_sets[0]
     last_set = session_sets[-1]
     first_reps = first_set.get("reps", 0)
     last_reps = last_set.get("reps", 0)
 
-    # Use target reps from parameter or from first set
-    effective_target = target_reps or first_set.get("target_reps", first_reps)
+    # --------------------------------------------------------------------------
+    # Trigger 0 (PRIMARY): RIR deviation from expected
+    # --------------------------------------------------------------------------
+    for i, s in enumerate(session_sets):
+        actual_rir = s.get("rir")
+        expected_rir = s.get("target_rir")
+        if actual_rir is not None and expected_rir is not None:
+            rir_deviation = expected_rir - actual_rir  # positive = harder than expected
+            if rir_deviation >= 2:
+                indicators.append("rir_deviation")
+                fatigue_scores.append(0.70 + min(rir_deviation * 0.05, 0.25))
+                confidence_factors.append(0.90)
+                reasoning_parts.append(
+                    f"Set {i+1}: RIR {actual_rir} vs expected RIR {expected_rir} "
+                    f"({rir_deviation} fewer reps in reserve than planned)"
+                )
+                break  # One deviation is enough
+
+    # RIR trend decline across sets
+    rir_values = [s.get("rir") for s in session_sets if s.get("rir") is not None]
+    if len(rir_values) >= 2 and "rir_deviation" not in indicators:
+        rir_decline = rir_values[0] - rir_values[-1]
+        if rir_decline >= 3:
+            indicators.append("rir_trend_decline")
+            fatigue_scores.append(0.65)
+            confidence_factors.append(0.85)
+            reasoning_parts.append(
+                f"RIR dropped from {rir_values[0]} to {rir_values[-1]} across sets"
+            )
 
     # --------------------------------------------------------------------------
-    # Trigger 1: Rep decline >= 20% from target or first set
+    # Trigger 1: Rep decline from per-set target (pattern-aware)
     # --------------------------------------------------------------------------
-    if effective_target > 0 and last_reps > 0:
-        # Compare to target
-        target_decline = (effective_target - last_reps) / effective_target
-        # Compare to first set
-        first_decline = (first_reps - last_reps) / first_reps if first_reps > 0 else 0
+    # Use per-set target_reps (from progression model) instead of first-set reps.
+    # For patterns that expect rep decline (Pyramid Up), only flag if actual reps
+    # fall below the per-set target — not compared to set 1.
+    per_set_target = last_set.get("target_reps") or target_reps or first_set.get("target_reps", first_reps)
 
-        # Use the more significant decline
-        decline_pct = max(target_decline, first_decline)
+    if per_set_target > 0 and last_reps > 0:
+        # Compare to THIS set's target (not first set or global target)
+        decline_from_target = (per_set_target - last_reps) / per_set_target
+
+        # For patterns expecting rep decline, ONLY compare to per-set target
+        if pattern_props.get("expects_rep_decline"):
+            decline_pct = max(decline_from_target, 0)
+        else:
+            # Also compare to first set for patterns with constant reps
+            first_decline = (first_reps - last_reps) / first_reps if first_reps > 0 else 0
+            decline_pct = max(decline_from_target, first_decline)
 
         if decline_pct >= 0.30:
-            # Severe rep decline (30%+)
             indicators.append("severe_rep_decline")
             fatigue_scores.append(0.85)
             confidence_factors.append(0.95)
             reasoning_parts.append(
-                f"Significant rep decline ({round(decline_pct * 100)}%) from "
-                f"{'target' if target_decline > first_decline else 'first set'}"
+                f"Reps {round(decline_pct * 100)}% below target for this set"
             )
         elif decline_pct >= 0.20:
-            # Moderate rep decline (20%+)
             indicators.append("rep_decline")
             fatigue_scores.append(0.65)
             confidence_factors.append(0.90)
             reasoning_parts.append(
-                f"Rep count dropped {round(decline_pct * 100)}% from "
-                f"{'target' if target_decline > first_decline else 'first set'}"
+                f"Reps {round(decline_pct * 100)}% below target for this set"
             )
 
     # --------------------------------------------------------------------------
@@ -1170,66 +1214,76 @@ def detect_fatigue(
                 )
 
     # --------------------------------------------------------------------------
-    # Trigger 3: Failed set (0 reps or user marks as failed)
+    # Trigger 3: Failed set (skipped for failure-based patterns)
     # --------------------------------------------------------------------------
-    failed_sets = [
-        i for i, s in enumerate(session_sets)
-        if s.get("reps", 1) == 0 or s.get("is_failure", False)
-    ]
+    if not pattern_props.get("failure_based"):
+        failed_sets = [
+            i for i, s in enumerate(session_sets)
+            if s.get("reps", 1) == 0 or s.get("is_failure", False)
+        ]
 
-    if failed_sets:
-        indicators.append("failed_set")
-        # Weight failure more heavily if it's the most recent set
-        if len(session_sets) - 1 in failed_sets:
-            fatigue_scores.append(0.90)
-            confidence_factors.append(0.95)
-            reasoning_parts.append("Most recent set resulted in failure")
-        else:
-            fatigue_scores.append(0.70)
-            confidence_factors.append(0.90)
-            reasoning_parts.append(
-                f"Set {failed_sets[0] + 1} resulted in failure"
-            )
-
-    # --------------------------------------------------------------------------
-    # Trigger 4: Weight already reduced mid-exercise
-    # --------------------------------------------------------------------------
-    weights = [s.get("weight", 0) for s in session_sets]
-    if len(weights) >= 2:
-        # Check if weight was reduced at any point
-        weight_reductions = []
-        for i in range(1, len(weights)):
-            if weights[i] < weights[i-1]:
-                reduction_pct = (weights[i-1] - weights[i]) / weights[i-1]
-                weight_reductions.append(reduction_pct)
-
-        if weight_reductions:
-            total_reduction = sum(weight_reductions)
-            indicators.append("weight_reduced")
-            fatigue_scores.append(0.60 + min(total_reduction * 2, 0.3))
-            confidence_factors.append(0.95)
-            reasoning_parts.append(
-                f"Weight was already reduced by {round(total_reduction * 100)}% "
-                f"during this exercise"
-            )
+        if failed_sets:
+            indicators.append("failed_set")
+            if len(session_sets) - 1 in failed_sets:
+                fatigue_scores.append(0.90)
+                confidence_factors.append(0.95)
+                reasoning_parts.append("Most recent set resulted in failure")
+            else:
+                fatigue_scores.append(0.70)
+                confidence_factors.append(0.90)
+                reasoning_parts.append(
+                    f"Set {failed_sets[0] + 1} resulted in failure"
+                )
 
     # --------------------------------------------------------------------------
-    # Trigger 5: Convert RIR to RPE for analysis
+    # Trigger 4: Weight reduced mid-exercise (skipped for patterns expecting it)
     # --------------------------------------------------------------------------
-    for s in session_sets:
-        rir = s.get("rir")
-        if rir is not None and s.get("rpe") is None:
-            # RIR 0 = RPE 10, RIR 1 = RPE 9, etc.
-            implied_rpe = 10 - rir
-            if implied_rpe >= 9:
-                if "sustained_high_rpe" not in indicators and "rpe_spike" not in indicators:
-                    indicators.append("high_effort_rir")
-                    fatigue_scores.append(0.65)
-                    confidence_factors.append(0.75)
-                    reasoning_parts.append(
-                        f"Set completed with only {rir} rep(s) in reserve"
-                    )
-                    break
+    expects_weight_change = (
+        pattern_props.get("expects_weight_decrease") or
+        pattern_props.get("expects_weight_increase")
+    )
+    if not expects_weight_change:
+        weights = [s.get("weight", 0) for s in session_sets]
+        if len(weights) >= 2:
+            weight_reductions = []
+            for i in range(1, len(weights)):
+                if weights[i] < weights[i-1]:
+                    reduction_pct = (weights[i-1] - weights[i]) / weights[i-1]
+                    weight_reductions.append(reduction_pct)
+
+            if weight_reductions:
+                total_reduction = sum(weight_reductions)
+                indicators.append("weight_reduced")
+                fatigue_scores.append(0.60 + min(total_reduction * 2, 0.3))
+                confidence_factors.append(0.95)
+                reasoning_parts.append(
+                    f"Weight was already reduced by {round(total_reduction * 100)}% "
+                    f"during this exercise"
+                )
+
+    # --------------------------------------------------------------------------
+    # Trigger 5: Convert RIR to RPE for analysis (fallback when no target_rir)
+    # --------------------------------------------------------------------------
+    if "rir_deviation" not in indicators and "rir_trend_decline" not in indicators:
+        for s in session_sets:
+            rir = s.get("rir")
+            if rir is not None and s.get("rpe") is None:
+                # Only flag if RIR is lower than expected (or no expectation and very low)
+                expected_rir = s.get("target_rir")
+                if expected_rir is not None:
+                    # Skip — already handled by Trigger 0
+                    continue
+                # No target RIR — use absolute threshold
+                implied_rpe = 10 - rir
+                if implied_rpe >= 9:
+                    if "sustained_high_rpe" not in indicators and "rpe_spike" not in indicators:
+                        indicators.append("high_effort_rir")
+                        fatigue_scores.append(0.65)
+                        confidence_factors.append(0.75)
+                        reasoning_parts.append(
+                            f"Set completed with only {rir} rep(s) in reserve"
+                        )
+                        break
 
     # --------------------------------------------------------------------------
     # Calculate overall fatigue level and severity
@@ -1301,6 +1355,17 @@ def detect_fatigue(
 
     # Round to nearest 2.5kg for practical gym weights
     suggested_weight = round(suggested_weight / 2.5) * 2.5
+
+    # Clamp to pattern direction: don't suggest going backwards in patterns
+    # that expect weight increases (e.g., Pyramid Up)
+    if pattern_props.get("expects_weight_increase") and fatigue_detected:
+        last_weight = session_sets[-1].get("weight", current_weight)
+        # Use the progression target for the next set if available
+        next_target_weight = session_sets[-1].get("target_weight")
+        if next_target_weight and next_target_weight > 0:
+            suggested_weight = max(suggested_weight, next_target_weight)
+        else:
+            suggested_weight = max(suggested_weight, last_weight)
 
     # Build reasoning message
     if reasoning_parts:

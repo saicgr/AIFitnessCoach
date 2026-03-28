@@ -58,6 +58,73 @@ void main() {
       );
       expect(peak, 50.0);
     });
+
+    test('Pyramid Up: deriving from set 2 (completedSetIndex=1)', () {
+      // Set 2 weight = peak - 1*inc. If set 2 = 22.5, peak = 22.5 + 1*2.5 = 25
+      final peak = SetProgressionPattern.pyramidUp.deriveWorkingWeight(
+        enteredWeight: 22.5, totalSets: 3, increment: 2.5, completedSetIndex: 1,
+      );
+      expect(peak, 25.0);
+    });
+
+    test('Pyramid Up: deriving from set 3 (completedSetIndex=2, peak set)', () {
+      // Set 3 IS the peak. stepsFromTop = 0, so peak = entered weight
+      final peak = SetProgressionPattern.pyramidUp.deriveWorkingWeight(
+        enteredWeight: 25, totalSets: 3, increment: 2.5, completedSetIndex: 2,
+      );
+      expect(peak, 25.0);
+    });
+  });
+
+  group('reverseRepOffset', () {
+    test('Pyramid Up: set 0 (3 sets) → subtract 4', () {
+      final base = SetProgressionPatternX.reverseRepOffset(
+        SetProgressionPattern.pyramidUp, 15, 0, 3,
+      );
+      expect(base, 11); // 15 - (3-1-0)*2 = 15 - 4
+    });
+
+    test('Pyramid Up: set 1 (3 sets) → subtract 2', () {
+      final base = SetProgressionPatternX.reverseRepOffset(
+        SetProgressionPattern.pyramidUp, 13, 1, 3,
+      );
+      expect(base, 11); // 13 - (3-1-1)*2 = 13 - 2
+    });
+
+    test('Pyramid Up: set 2 (3 sets, peak) → no offset', () {
+      final base = SetProgressionPatternX.reverseRepOffset(
+        SetProgressionPattern.pyramidUp, 11, 2, 3,
+      );
+      expect(base, 11); // 11 - 0
+    });
+
+    test('Reverse Pyramid: set 0 → subtract -4 (add 4)', () {
+      final base = SetProgressionPatternX.reverseRepOffset(
+        SetProgressionPattern.reversePyramid, 8, 0, 3,
+      );
+      expect(base, 12); // 8 - (-4) = 12
+    });
+
+    test('Top Set + Back-Off: set 0 → subtract -4 (add 4)', () {
+      final base = SetProgressionPatternX.reverseRepOffset(
+        SetProgressionPattern.topSetBackOff, 6, 0, 3,
+      );
+      expect(base, 10); // 6 - (-4) = 10
+    });
+
+    test('Endurance: set 2 → subtract 4', () {
+      final base = SetProgressionPatternX.reverseRepOffset(
+        SetProgressionPattern.endurance, 19, 2, 3,
+      );
+      expect(base, 15); // 19 - 2*2 = 15
+    });
+
+    test('Straight Sets: no offset at any position', () {
+      final base = SetProgressionPatternX.reverseRepOffset(
+        SetProgressionPattern.straightSets, 15, 1, 3,
+      );
+      expect(base, 15);
+    });
   });
 
   group('generateTargets - set 1 matches entered weight', () {

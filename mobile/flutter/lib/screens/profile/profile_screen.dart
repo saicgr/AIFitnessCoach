@@ -1317,14 +1317,6 @@ class _WrappedSection extends ConsumerWidget {
     required this.textMuted,
   });
 
-  static const _purpleGradient = LinearGradient(
-    colors: [Color(0xFF2D1B69), Color(0xFF9D4EDD)],
-    begin: Alignment.topLeft,
-    end: Alignment.bottomRight,
-  );
-
-  static const _purpleAccent = Color(0xFFA855F7);
-
   static String _formatVolume(double lbs) {
     if (lbs >= 1000000) return '${(lbs / 1000000).toStringAsFixed(1)}M lbs';
     if (lbs >= 1000) return '${(lbs / 1000).toStringAsFixed(0)}K lbs';
@@ -1342,31 +1334,22 @@ class _WrappedSection extends ConsumerWidget {
     return '${months[(month - 1).clamp(0, 11)]} ${parts[0]}';
   }
 
-  static String _monthAbbr(String period) {
-    final parts = period.split('-');
-    if (parts.length != 2) return period;
-    final month = int.tryParse(parts[1]) ?? 1;
-    const abbrs = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
-    ];
-    return abbrs[(month - 1).clamp(0, 11)];
-  }
-
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final summaryAsync = ref.watch(wrappedSummaryProvider);
+    final accent = ref.colors(context).accent;
+    final accentGradient = ref.colors(context).accentGradient;
 
     return summaryAsync.when(
       loading: () => _buildLoadingState(),
-      error: (_, __) => _buildEmptyState(),
-      data: (summary) => _buildContent(context, summary),
+      error: (_, __) => _buildEmptyTeaser(context, accent, accentGradient),
+      data: (summary) => _buildTeaser(context, summary, accent, accentGradient),
     );
   }
 
   Widget _buildLoadingState() {
     return Container(
-      height: 120,
+      height: 72,
       decoration: BoxDecoration(
         color: elevated,
         borderRadius: BorderRadius.circular(14),
@@ -1374,619 +1357,171 @@ class _WrappedSection extends ConsumerWidget {
       ),
       child: Center(
         child: SizedBox(
-          width: 20,
-          height: 20,
-          child: CircularProgressIndicator(
-            strokeWidth: 2,
-            color: textMuted,
-          ),
+          width: 18,
+          height: 18,
+          child: CircularProgressIndicator(strokeWidth: 2, color: textMuted),
         ),
       ),
     );
   }
 
-  Widget _buildEmptyState() {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
-      decoration: BoxDecoration(
-        color: elevated,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: cardBorder),
-      ),
-      child: Column(
-        children: [
-          // Mystery card icon
-          Container(
-            width: 56,
-            height: 56,
-            decoration: BoxDecoration(
-              gradient: _purpleGradient,
-              borderRadius: BorderRadius.circular(14),
-            ),
-            child: const Center(
-              child: Text('?', style: TextStyle(
-                fontSize: 28,
-                fontWeight: FontWeight.w800,
-                color: Colors.white,
-              )),
-            ),
-          ),
-          const SizedBox(height: 12),
-          Text(
-            'Your Monthly Wrapped',
-            style: TextStyle(
-              fontSize: 15,
-              fontWeight: FontWeight.w700,
-              color: textPrimary,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            'Complete at least 3 workouts this month\nto unlock your personalized recap',
-            style: TextStyle(
-              fontSize: 13,
-              color: textMuted,
-              height: 1.4,
-            ),
-            textAlign: TextAlign.center,
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildContent(BuildContext context, WrappedSummary summary) {
+  /// Compact teaser shown on profile — tapping navigates to MyWrappedScreen
+  Widget _buildTeaser(BuildContext context, WrappedSummary summary, Color accent, LinearGradient accentGradient) {
     final hasAvailable = summary.available.isNotEmpty;
-    final hasCurrentMonth = summary.currentMonth != null;
 
-    // State 4: No data at all
-    if (!hasAvailable && !hasCurrentMonth) {
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildEmptyState(),
-          const SizedBox(height: 12),
-          _buildPersonalityBar(context, summary.personalitiesCollected),
-        ],
-      );
+    if (!hasAvailable) {
+      return _buildEmptyTeaser(context, accent, accentGradient);
     }
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // State 1: Hero card for latest wrapped
-        if (hasAvailable)
-          _buildHeroCard(context, summary.available.first),
+    final latest = summary.available.first;
 
-        // State 2: Past wraps horizontal scroll (if more than 1)
-        if (summary.available.length > 1) ...[
-          const SizedBox(height: 16),
-          _buildPastWraps(context, summary.available.sublist(1)),
-        ],
-
-        // State 3: Current month progress
-        if (hasCurrentMonth) ...[
-          const SizedBox(height: 12),
-          _buildCurrentMonthProgress(summary.currentMonth!),
-        ],
-
-        // Personality collection bar
-        const SizedBox(height: 12),
-        _buildPersonalityBar(context, summary.personalitiesCollected),
-      ],
-    );
-  }
-
-  Widget _buildHeroCard(BuildContext context, WrappedPeriodInfo latest) {
     return GestureDetector(
       onTap: () {
         HapticService.selection();
-        context.push('/wrapped/${latest.period}');
+        context.push('/my-wrapped');
       },
       child: Container(
         width: double.infinity,
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
           color: elevated,
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(width: 1.5, color: Colors.transparent),
-          // Purple gradient border effect via foregroundDecoration
-        ),
-        foregroundDecoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(14),
           border: Border.all(
             width: 1.5,
-            color: _purpleAccent.withValues(alpha: 0.6),
+            color: accent.withValues(alpha: 0.5),
           ),
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        child: Row(
           children: [
-            // Period name
-            Text(
-              _monthName(latest.period),
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-                color: _purpleAccent,
-                letterSpacing: 0.5,
+            // Personality gradient badge
+            Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                gradient: accentGradient,
+                borderRadius: BorderRadius.circular(11),
               ),
-            ),
-            const SizedBox(height: 8),
-
-            // Personality name in bordered box
-            if (latest.personality != null) ...[
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(
-                    color: _purpleAccent.withValues(alpha: 0.4),
-                  ),
-                  gradient: LinearGradient(
-                    colors: [
-                      _purpleAccent.withValues(alpha: 0.1),
-                      _purpleAccent.withValues(alpha: 0.05),
-                    ],
-                  ),
-                ),
+              child: Center(
                 child: Text(
-                  latest.personality!.toUpperCase(),
-                  style: TextStyle(
-                    fontSize: 16,
+                  latest.personality != null
+                      ? latest.personality!.substring(0, 1).toUpperCase()
+                      : '?',
+                  style: const TextStyle(
+                    fontSize: 20,
                     fontWeight: FontWeight.w800,
-                    color: textPrimary,
-                    letterSpacing: 1.2,
+                    color: Colors.white,
                   ),
                 ),
               ),
-              const SizedBox(height: 12),
-            ],
-
-            // Key stats
-            Text(
-              '${latest.totalWorkouts} workouts  ·  ${_formatVolume(latest.totalVolumeLbs)}',
-              style: TextStyle(
-                fontSize: 13,
-                color: textMuted,
-              ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(width: 12),
 
-            // Action buttons
-            Row(
-              children: [
-                // View Again button
-                Expanded(
-                  child: GestureDetector(
-                    onTap: () {
-                      HapticService.selection();
-                      context.push('/wrapped/${latest.period}');
-                    },
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(vertical: 10),
-                      decoration: BoxDecoration(
-                        gradient: _purpleGradient,
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: const Center(
-                        child: Text(
-                          'View Again',
-                          style: TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w700,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 10),
-                // Share button
-                Expanded(
-                  child: GestureDetector(
-                    onTap: () {
-                      HapticService.selection();
-                      // Navigate to wrapped for sharing
-                      context.push('/wrapped/${latest.period}');
-                    },
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(vertical: 10),
-                      decoration: BoxDecoration(
-                        color: _purpleAccent.withValues(alpha: 0.12),
-                        borderRadius: BorderRadius.circular(10),
-                        border: Border.all(
-                          color: _purpleAccent.withValues(alpha: 0.3),
-                        ),
-                      ),
-                      child: Center(
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              Icons.share_outlined,
-                              size: 15,
-                              color: _purpleAccent,
-                            ),
-                            const SizedBox(width: 6),
-                            Text(
-                              'Share',
-                              style: TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w700,
-                                color: _purpleAccent,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildPastWraps(BuildContext context, List<WrappedPeriodInfo> past) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.only(left: 2, bottom: 8),
-          child: Text(
-            'PAST WRAPS',
-            style: TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.w700,
-              color: textMuted,
-              letterSpacing: 1.0,
-            ),
-          ),
-        ),
-        SizedBox(
-          height: 72,
-          child: ListView.separated(
-            scrollDirection: Axis.horizontal,
-            itemCount: past.length,
-            separatorBuilder: (_, __) => const SizedBox(width: 10),
-            itemBuilder: (context, index) {
-              final wrap = past[index];
-              return GestureDetector(
-                onTap: () {
-                  HapticService.selection();
-                  context.push('/wrapped/${wrap.period}');
-                },
-                child: Container(
-                  width: 100,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 8,
-                  ),
-                  decoration: BoxDecoration(
-                    color: elevated,
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(
-                      color: _purpleAccent.withValues(alpha: 0.3),
-                    ),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        _monthAbbr(wrap.period),
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w700,
-                          color: textPrimary,
-                        ),
-                      ),
-                      if (wrap.personality != null)
-                        Text(
-                          wrap.personality!,
-                          style: TextStyle(
-                            fontSize: 9,
-                            fontWeight: FontWeight.w600,
-                            color: _purpleAccent,
-                            letterSpacing: 0.3,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      const SizedBox(height: 2),
-                      Text(
-                        '${wrap.totalWorkouts} workouts',
-                        style: TextStyle(
-                          fontSize: 10,
-                          color: textMuted,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              );
-            },
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildCurrentMonthProgress(CurrentMonthProgress current) {
-    final monthName = _monthName(current.period).split(' ').first;
-    final workoutsNeeded = 3 - current.workoutsSoFar;
-
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: elevated,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: cardBorder),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Drop countdown
-          Row(
-            children: [
-              Icon(
-                Icons.calendar_today_rounded,
-                size: 14,
-                color: _purpleAccent,
-              ),
-              const SizedBox(width: 6),
-              Expanded(
-                child: Text(
-                  current.daysUntilDrop > 0
-                      ? '$monthName Wrapped drops in ${current.daysUntilDrop} days'
-                      : '$monthName Wrapped drops soon',
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: textPrimary,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-
-          // Stat chips
-          Row(
-            children: [
-              _buildStatChip(
-                '${current.workoutsSoFar}',
-                'workouts',
-                Icons.fitness_center_rounded,
-              ),
-              const SizedBox(width: 8),
-              _buildStatChip(
-                _formatVolume(current.volumeSoFar),
-                'volume',
-                Icons.trending_up_rounded,
-              ),
-              const SizedBox(width: 8),
-              _buildStatChip(
-                '${current.prsSoFar}',
-                'PRs',
-                Icons.emoji_events_rounded,
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-
-          // Eligibility status
-          if (!current.eligible && workoutsNeeded > 0) ...[
-            // Progress bar toward 3 workouts
-            ClipRRect(
-              borderRadius: BorderRadius.circular(4),
-              child: LinearProgressIndicator(
-                value: (current.workoutsSoFar / 3).clamp(0.0, 1.0),
-                minHeight: 4,
-                backgroundColor: _purpleAccent.withValues(alpha: 0.15),
-                valueColor: const AlwaysStoppedAnimation<Color>(_purpleAccent),
-              ),
-            ),
-            const SizedBox(height: 6),
-            Text(
-              'Complete $workoutsNeeded more workout${workoutsNeeded == 1 ? '' : 's'} to unlock',
-              style: TextStyle(
-                fontSize: 12,
-                color: textMuted,
-              ),
-            ),
-          ] else ...[
-            Row(
-              children: [
-                Container(
-                  width: 6,
-                  height: 6,
-                  decoration: const BoxDecoration(
-                    color: _purpleAccent,
-                    shape: BoxShape.circle,
-                  ),
-                ),
-                const SizedBox(width: 6),
-                Text(
-                  'Your $monthName Wrapped is building...',
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w500,
-                    color: _purpleAccent,
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ],
-      ),
-    );
-  }
-
-  Widget _buildStatChip(String value, String label, IconData icon) {
-    return Expanded(
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-        decoration: BoxDecoration(
-          color: _purpleAccent.withValues(alpha: 0.08),
-          borderRadius: BorderRadius.circular(10),
-        ),
-        child: Column(
-          children: [
-            Icon(icon, size: 14, color: _purpleAccent),
-            const SizedBox(height: 4),
-            Text(
-              value,
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w700,
-                color: textPrimary,
-              ),
-            ),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 10,
-                color: textMuted,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  void _showPersonalityInfo(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final bg = isDark ? AppColors.elevated : AppColorsLight.elevated;
-    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: isDark ? AppColors.pureBlack : AppColorsLight.pureWhite,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (ctx) => SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 36, height: 4,
-                decoration: BoxDecoration(
-                  color: textMuted.withValues(alpha: 0.3),
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-              const SizedBox(height: 20),
-              Icon(Icons.psychology_outlined, size: 40, color: _purpleAccent),
-              const SizedBox(height: 12),
-              Text(
-                'Fitness Personalities',
-                style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: textPrimary),
-              ),
-              const SizedBox(height: 12),
-              Text(
-                'Each month, when you complete your Monthly Wrapped, our AI analyzes your workout patterns and assigns you a unique fitness personality.\n\n'
-                'There are 12 slots — one for each month of the year. Stay consistent to collect them all!',
-                style: TextStyle(fontSize: 14, color: textMuted, height: 1.5),
-                textAlign: TextAlign.center,
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildPersonalityBar(BuildContext context, int collected) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      decoration: BoxDecoration(
-        color: elevated,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: cardBorder),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Row(
+            // Text content
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Personalities',
+                    _monthName(latest.period),
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
-                      color: textPrimary,
+                      color: accent,
+                      letterSpacing: 0.3,
                     ),
                   ),
-                  const SizedBox(width: 4),
-                  GestureDetector(
-                    onTap: () => _showPersonalityInfo(context),
-                    child: Icon(
-                      Icons.info_outline_rounded,
-                      size: 15,
-                      color: textMuted,
+                  const SizedBox(height: 2),
+                  if (latest.personality != null)
+                    Text(
+                      latest.personality!,
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                        color: textPrimary,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
+                  Text(
+                    '${latest.totalWorkouts} workouts  ·  ${_formatVolume(latest.totalVolumeLbs)}',
+                    style: TextStyle(fontSize: 12, color: textMuted),
                   ),
                 ],
               ),
-              Text(
-                '$collected of 12 collected',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: textMuted,
-                ),
+            ),
+
+            // Chevron
+            Icon(
+              Icons.chevron_right_rounded,
+              size: 22,
+              color: textMuted,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Empty state teaser — still tappable to see the My Wrapped screen
+  Widget _buildEmptyTeaser(BuildContext context, Color accent, LinearGradient accentGradient) {
+    return GestureDetector(
+      onTap: () {
+        HapticService.selection();
+        context.push('/my-wrapped');
+      },
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: elevated,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: cardBorder),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                gradient: accentGradient,
+                borderRadius: BorderRadius.circular(11),
               ),
-            ],
-          ),
-          const SizedBox(height: 10),
-          // 12 small squares indicating collected personalities
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: List.generate(12, (index) {
-              final isFilled = index < collected;
-              return Container(
-                width: 22,
-                height: 22,
-                decoration: BoxDecoration(
-                  color: isFilled
-                      ? _purpleAccent.withValues(alpha: 0.8)
-                      : _purpleAccent.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(5),
-                  border: isFilled
-                      ? null
-                      : Border.all(
-                          color: _purpleAccent.withValues(alpha: 0.2),
-                        ),
-                ),
-                child: isFilled
-                    ? const Center(
-                        child: Icon(
-                          Icons.check_rounded,
-                          size: 13,
-                          color: Colors.white,
-                        ),
-                      )
-                    : null,
-              );
-            }),
-          ),
-        ],
+              child: const Center(
+                child: Text('?', style: TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.w800,
+                  color: Colors.white,
+                )),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Monthly Wrapped',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                      color: textPrimary,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    'Complete 3 workouts to unlock',
+                    style: TextStyle(fontSize: 12, color: textMuted),
+                  ),
+                ],
+              ),
+            ),
+            Icon(
+              Icons.chevron_right_rounded,
+              size: 22,
+              color: textMuted,
+            ),
+          ],
+        ),
       ),
     );
   }

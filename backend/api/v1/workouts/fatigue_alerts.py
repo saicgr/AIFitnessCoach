@@ -51,7 +51,15 @@ class SetData(BaseModel):
     )
     target_reps: Optional[int] = Field(
         None, ge=0,
-        description="Target reps for this set"
+        description="Target reps for this set (from progression model)"
+    )
+    target_weight: Optional[float] = Field(
+        None, ge=0,
+        description="Expected weight for this set from progression model"
+    )
+    target_rir: Optional[int] = Field(
+        None, ge=0, le=5,
+        description="Expected RIR for this set"
     )
 
 
@@ -73,6 +81,11 @@ class FatigueCheckRequest(BaseModel):
     target_reps: Optional[int] = Field(
         None, ge=0,
         description="Target reps per set (overrides per-set targets)"
+    )
+    progression_pattern: Optional[str] = Field(
+        None,
+        description="Active progression pattern: pyramidUp, straightSets, reversePyramid, "
+                    "dropSets, topSetBackOff, restPause, myoReps, endurance"
     )
 
     class Config:
@@ -277,6 +290,8 @@ async def check_fatigue(request: FatigueCheckRequest) -> FatigueCheckResponse:
                 "rir": s.rir,
                 "is_failure": s.is_failure,
                 "target_reps": s.target_reps,
+                "target_weight": s.target_weight,
+                "target_rir": s.target_rir,
             }
             for s in request.sets_data
         ]
@@ -287,6 +302,7 @@ async def check_fatigue(request: FatigueCheckRequest) -> FatigueCheckResponse:
             current_weight=request.current_weight,
             exercise_type=request.exercise_type,
             target_reps=request.target_reps,
+            progression_pattern=request.progression_pattern,
         )
 
         logger.info(

@@ -18,6 +18,8 @@ class FatigueSetData {
   final int? rir;
   final bool isFailure;
   final int? targetReps;
+  final double? targetWeight;
+  final int? targetRir;
 
   const FatigueSetData({
     required this.reps,
@@ -26,6 +28,8 @@ class FatigueSetData {
     this.rir,
     this.isFailure = false,
     this.targetReps,
+    this.targetWeight,
+    this.targetRir,
   });
 
   Map<String, dynamic> toJson() {
@@ -36,6 +40,8 @@ class FatigueSetData {
       'rir': rir,
       'is_failure': isFailure,
       'target_reps': targetReps,
+      'target_weight': targetWeight,
+      'target_rir': targetRir,
     };
   }
 }
@@ -52,9 +58,11 @@ class FatigueService {
     required double currentWeight,
     String exerciseType = 'compound',
     int? targetReps,
+    String? progressionPattern,
   }) async {
     try {
-      debugPrint('🔍 [FatigueService] Checking fatigue with ${setsData.length} sets');
+      debugPrint('🔍 [FatigueService] Checking fatigue with ${setsData.length} sets'
+          '${progressionPattern != null ? ' (pattern: $progressionPattern)' : ''}');
 
       final response = await dio.post(
         '/workouts/fatigue-check',
@@ -63,6 +71,7 @@ class FatigueService {
           'current_weight': currentWeight,
           'exercise_type': exerciseType,
           'target_reps': targetReps,
+          'progression_pattern': progressionPattern,
         },
       );
 

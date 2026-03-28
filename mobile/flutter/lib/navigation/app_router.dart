@@ -139,6 +139,7 @@ import '../screens/kegel/kegel_session_screen.dart';
 import '../screens/habits/habits_screen.dart';
 import '../screens/habits/habit_detail_screen.dart';
 import '../screens/wrapped/wrapped_viewer_screen.dart';
+import '../screens/wrapped/my_wrapped_screen.dart';
 import '../screens/onboarding/accuracy_intro_screen.dart';
 import '../screens/onboarding/health_connect_screen.dart';
 import '../screens/onboarding/feature_showcase_screen.dart';
@@ -2076,6 +2077,25 @@ final routerProvider = Provider<GoRouter>((ref) {
             );
           },
         ),
+      ),
+      // My Wrapped - All wraps, personalities, current month progress
+      GoRoute(
+        path: '/my-wrapped',
+        pageBuilder: (context, state) {
+          return CustomTransitionPage(
+            key: state.pageKey,
+            child: const MyWrappedScreen(),
+            transitionsBuilder: (context, animation, secondaryAnimation, child) {
+              return SlideTransition(
+                position: Tween<Offset>(
+                  begin: const Offset(1, 0),
+                  end: Offset.zero,
+                ).animate(CurvedAnimation(parent: animation, curve: Curves.easeOutCubic)),
+                child: child,
+              );
+            },
+          );
+        },
       ),
       // Fitness Wrapped - Monthly recap story viewer
       GoRoute(
