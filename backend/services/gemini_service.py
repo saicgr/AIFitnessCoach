@@ -7577,11 +7577,13 @@ If user has gym equipment (full_gym, barbell, dumbbells, cable_machine, machines
             if history_summary:
                 user_context_parts.append(history_summary)
             else:
-                user_context_parts.append("No history - use beginner-appropriate weights based on equipment type:
-  Barbell compound (bench/squat/deadlift): 20-40 kg | Barbell isolation: 15-20 kg
-  Dumbbell compound: 8-12 kg per hand | Dumbbell isolation: 4-8 kg per hand
-  Cable: 10-20 kg | Machine: 20-40 kg | Kettlebell: 8-12 kg
-  Adjust for user's fitness level and gender. NEVER use 10 kg for all exercises.")
+                user_context_parts.append(
+                    "No history - use beginner-appropriate weights based on equipment type: "
+                    "Barbell compound (bench/squat/deadlift): 20-40 kg | Barbell isolation: 15-20 kg | "
+                    "Dumbbell compound: 8-12 kg per hand | Dumbbell isolation: 4-8 kg per hand | "
+                    "Cable: 10-20 kg | Machine: 20-40 kg | Kettlebell: 8-12 kg | "
+                    "Adjust for user's fitness level and gender. NEVER use 10 kg for all exercises."
+                )
         else:
             user_context_parts.append("")
             user_context_parts.append("## STRENGTH HISTORY")
