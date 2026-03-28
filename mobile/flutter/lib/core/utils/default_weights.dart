@@ -297,10 +297,9 @@ double snapToRealIncrement(double weight, String? equipment, {String? exerciseNa
   return (weight / step).round() * step;
 }
 
-/// Returns true if the exercise weight looks like a generic AI default.
+/// Returns true if the exercise weight is NOT from actual user workout history.
+/// Only 'historical' weights are reliable — everything else (null, 'generic',
+/// 'gemini', any AI source) should be replaced with equipment-based defaults.
 bool isGenericWeight(double? weight, String? weightSource) {
-  if (weightSource == 'historical') return false;
-  if (weightSource == 'generic') return true; // Explicitly marked as AI estimate
-  if (weight == null || weight <= 0) return true;
-  return false;
+  return weightSource != 'historical';
 }

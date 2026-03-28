@@ -120,11 +120,7 @@ def fix_workout_weights(workout_id: str, exercises_json: str, dry_run: bool = Tr
         weight = ex.get('weight')
         weight_source = ex.get('weight_source')
 
-        # Skip if weight is from history or already reasonable
-        if weight_source == 'historical':
-            continue
-
-        # Skip if weight is from history
+        # Only skip exercises with weights from actual user history
         if weight_source == 'historical':
             continue
 

@@ -5043,7 +5043,21 @@ class _ActiveWorkoutScreenState
         isWarmup: setTarget?.isWarmup ?? false,
         isCompleted: isCompleted,
         isActive: isActive,
-        targetWeight: setTarget?.targetWeightKg ?? prevWeight ?? exercise.weight?.toDouble(),
+        // TARGET weight: use history → AI (if reliable) → equipment default
+        targetWeight: (() {
+          final aiWt = setTarget?.targetWeightKg ?? exercise.weight?.toDouble();
+          if (aiWt != null && !isGenericWeight(aiWt, exercise.weightSource)) {
+            return aiWt; // Historical/reliable weight
+          }
+          if (prevWeight != null && prevWeight > 0) return prevWeight; // Previous session
+          // Equipment-based default (in kg for internal storage)
+          final defaultKg = getDefaultWeight(exercise.equipment,
+            exerciseName: exercise.name,
+            fitnessLevel: ref.read(authStateProvider).user?.fitnessLevel,
+            gender: ref.read(authStateProvider).user?.gender,
+            useKg: true);
+          return defaultKg > 0 ? defaultKg : aiWt;
+        })(),
         targetReps: setTarget?.targetReps != null ? setTarget!.targetReps.toString() : '${exercise.reps ?? 8}-${(exercise.reps ?? 8) + 2}',
         targetRir: calculatedRir,
         actualWeight: actualWeight,

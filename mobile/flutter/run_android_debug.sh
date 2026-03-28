@@ -117,8 +117,10 @@ else
     fi
 fi
 
-# Skip flutter clean to avoid killing other running Flutter instances
-# Use --no-build-cache flag or run 'flutter clean' manually if needed
+# Clean build cache to ensure latest code is compiled
+echo -e "${YELLOW}Cleaning build cache...${NC}"
+$FLUTTER_PATH clean
+
 echo -e "${YELLOW}Getting dependencies...${NC}"
 $FLUTTER_PATH pub get
 

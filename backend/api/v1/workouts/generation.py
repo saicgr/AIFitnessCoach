@@ -945,6 +945,7 @@ async def generate_workout(request: Request, *, body: GenerateWorkoutRequest, ba
                     training_experience=training_experience,
                     user_dob=user.get("date_of_birth") if user else None,
                     user_id=body.user_id,
+                    workout_weight_unit=user.get("workout_weight_unit") or user.get("weight_unit") or "lbs",
                 )
 
             # Ensure workout_data is a dict (guard against Gemini returning a string)
@@ -1772,8 +1773,9 @@ async def generate_workout_streaming(request: Request, body: GenerateWorkoutRequ
                     "workout_days": workout_days if workout_days else None,
                 }
 
-                # Add strength_history for all versions (progressive overload)
+                # Add strength_history and weight unit for progressive overload
                 generator_kwargs["strength_history"] = strength_history
+                generator_kwargs["workout_weight_unit"] = user.get("workout_weight_unit") or user.get("weight_unit") or "lbs" if user else "lbs"
 
                 async for chunk in generator_func(**generator_kwargs):
                     accumulated_chunks.append(chunk)
@@ -4099,6 +4101,7 @@ async def generate_onboarding_workout_streaming(request: Request, body: Onboardi
                     "scheduled_date": scheduled_date,
                     "user_dob": onboarding_dob,
                     "user_id": body.user_id,
+                    "workout_weight_unit": onboarding_user.get("workout_weight_unit") or onboarding_user.get("weight_unit") or "lbs" if onboarding_user else "lbs",
                 }
 
                 if use_cached:

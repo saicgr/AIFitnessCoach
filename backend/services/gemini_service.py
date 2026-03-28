@@ -5874,6 +5874,7 @@ IMPORTANT RULES:
         training_experience: Optional[str] = None,
         user_dob: Optional[str] = None,
         user_id: Optional[str] = None,
+        workout_weight_unit: Optional[str] = None,
     ) -> Dict:
         """
         Generate a personalized workout plan using AI.
@@ -7048,6 +7049,7 @@ If user has gym equipment - most exercises MUST use that equipment!"""
         strength_history: Optional[Dict] = None,
         training_split: Optional[str] = None,
         workout_days: Optional[List[int]] = None,
+        workout_weight_unit: Optional[str] = None,
     ):
         """
         Generate a workout plan using streaming for faster perceived response.
@@ -7144,7 +7146,7 @@ If user has gym equipment - most exercises MUST use that equipment!"""
             # Add strength history for progressive overload
             strength_history_instruction = ""
             if strength_history:
-                history_summary = self._format_strength_history(strength_history)
+                history_summary = self._format_strength_history(strength_history, workout_weight_unit=workout_weight_unit or 'kg')
                 if history_summary:
                     strength_history_instruction = f"""
 
@@ -7320,6 +7322,7 @@ If user has gym equipment (full_gym, barbell, dumbbells, cable_machine, machines
         user_id: Optional[str] = None,
         training_split: Optional[str] = None,
         workout_days: Optional[List[int]] = None,
+        workout_weight_unit: Optional[str] = None,
     ):
         """
         FAST workout generation using Gemini context caching.
@@ -7373,6 +7376,7 @@ If user has gym equipment (full_gym, barbell, dumbbells, cable_machine, machines
                 user_dob=user_dob,
                 training_split=training_split,
                 workout_days=workout_days,
+                workout_weight_unit=workout_weight_unit,
             ):
                 yield chunk
             return
@@ -7403,6 +7407,7 @@ If user has gym equipment (full_gym, barbell, dumbbells, cable_machine, machines
             user_dob=user_dob,
             training_split=training_split,
             workout_days=workout_days,
+            workout_weight_unit=workout_weight_unit,
         )
 
         try:
@@ -7504,6 +7509,7 @@ If user has gym equipment (full_gym, barbell, dumbbells, cable_machine, machines
         user_dob: Optional[str] = None,
         training_split: Optional[str] = None,
         workout_days: Optional[List[int]] = None,
+        workout_weight_unit: Optional[str] = None,
     ) -> str:
         """
         Build the user-specific prompt for cached generation.
@@ -7573,21 +7579,45 @@ If user has gym equipment (full_gym, barbell, dumbbells, cable_machine, machines
             user_context_parts.append("For exercises with history: increase weight by smallest increment (2.5kg barbell, 2kg dumbbell) if user handled it comfortably.")
             user_context_parts.append("If user struggled (high RPE / low reps): keep same weight, add 1-2 reps.")
             user_context_parts.append("Do NOT ignore previous weights and generate from scratch.")
-            history_summary = self._format_strength_history(strength_history)
+            history_summary = self._format_strength_history(strength_history, workout_weight_unit=workout_weight_unit or 'kg')
             if history_summary:
                 user_context_parts.append(history_summary)
             else:
-                user_context_parts.append(
-                    "No history - use beginner-appropriate weights based on equipment type: "
-                    "Barbell compound (bench/squat/deadlift): 20-40 kg | Barbell isolation: 15-20 kg | "
-                    "Dumbbell compound: 8-12 kg per hand | Dumbbell isolation: 4-8 kg per hand | "
-                    "Cable: 10-20 kg | Machine: 20-40 kg | Kettlebell: 8-12 kg | "
-                    "Adjust for user's fitness level and gender. NEVER use 10 kg for all exercises."
-                )
+                unit = workout_weight_unit or 'kg'
+                if unit == 'lbs':
+                    user_context_parts.append(
+                        "No history. User works out in POUNDS (lbs). "
+                        "Generate target_weight_kg values that convert to REAL lb gym weights.\n"
+                        "REAL lb weights: Dumbbells: 5,10,15,20,25,30,35,40,45,50 lb (5 lb steps). "
+                        "Barbell: 45(bar),55,65,75,85,95,115,135,155,185,225 lb (bar + plate pairs). "
+                        "Cable/Machine: 10,20,30,40,50,60,70,80 lb (10 lb steps). "
+                        "Kettlebell: 10,15,20,25,30,35 lb.\n"
+                        "Beginner defaults: Barbell compound: 65 lb (≈30 kg) | Barbell isolation: 45 lb (≈20 kg) | "
+                        "Dumbbell compound: 20-25 lb (≈10 kg) | Dumbbell isolation: 10-15 lb (≈5-7 kg) | "
+                        "Cable: 20-30 lb (≈10-15 kg) | Machine: 40-60 lb (≈20-30 kg) | "
+                        "NEVER use 10 kg for all exercises. Each exercise must have an appropriate weight."
+                    )
+                else:
+                    user_context_parts.append(
+                        "No history. User works out in KG. "
+                        "Generate target_weight_kg values using REAL kg gym weights.\n"
+                        "REAL kg weights: Dumbbells: 2,4,6,8,10,12,14,16,18,20 kg (2 kg steps). "
+                        "Barbell: 20(bar),22,24,26,28,30,40,50,60 kg (bar + plate pairs in 2 kg steps). "
+                        "Cable/Machine: 5,10,15,20,25,30,35,40 kg (5 kg steps). "
+                        "Kettlebell: 4,8,12,16,20,24 kg (competition standard).\n"
+                        "Beginner defaults: Barbell compound: 30-40 kg | Barbell isolation: 20 kg | "
+                        "Dumbbell compound: 8-12 kg | Dumbbell isolation: 4-6 kg | "
+                        "Cable: 10-15 kg | Machine: 20-30 kg | "
+                        "NEVER use 10 kg for all exercises. Each exercise must have an appropriate weight."
+                    )
         else:
             user_context_parts.append("")
             user_context_parts.append("## STRENGTH HISTORY")
-            user_context_parts.append("No history available - use beginner-appropriate weights")
+            unit = workout_weight_unit or 'kg'
+            user_context_parts.append(
+                f"No history available. User prefers {unit.upper()}. "
+                "Use equipment-appropriate beginner weights. NEVER use 10 kg for all exercises."
+            )
 
         # Progression philosophy if provided
         if progression_philosophy and progression_philosophy.strip():
@@ -7624,20 +7654,27 @@ If user has gym equipment (full_gym, barbell, dumbbells, cable_machine, machines
 
         return "\n".join(user_context_parts)
 
-    def _format_strength_history(self, strength_history: Dict) -> str:
-        """Format strength history for the prompt."""
+    def _format_strength_history(self, strength_history: Dict, workout_weight_unit: str = "kg") -> str:
+        """Format strength history for the prompt in the user's preferred unit."""
         if not strength_history:
             return ""
 
+        use_lbs = workout_weight_unit.lower() == "lbs"
+        unit = "lbs" if use_lbs else "kg"
         lines = []
         for exercise_name, data in list(strength_history.items())[:10]:  # Limit to 10 exercises
             if isinstance(data, dict):
-                weight = data.get("weight_kg") or data.get("max_weight")
+                weight_kg = data.get("weight_kg") or data.get("max_weight")
                 reps = data.get("reps") or data.get("max_reps")
-                if weight:
-                    lines.append(f"- {exercise_name}: {weight}kg × {reps or '?'} reps")
+                if weight_kg:
+                    display_weight = round(weight_kg * 2.20462) if use_lbs else weight_kg
+                    lines.append(f"- {exercise_name}: {display_weight}{unit} × {reps or '?'} reps")
             elif isinstance(data, (int, float)):
-                lines.append(f"- {exercise_name}: {data}kg")
+                display_weight = round(data * 2.20462) if use_lbs else data
+                lines.append(f"- {exercise_name}: {display_weight}{unit}")
+
+        if lines:
+            lines.insert(0, f"(Weights shown in {unit} — generate target_weight_kg in kg that converts cleanly to {unit})")
 
         return "\n".join(lines) if lines else ""
 
