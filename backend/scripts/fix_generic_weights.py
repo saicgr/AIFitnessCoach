@@ -124,8 +124,8 @@ def fix_workout_weights(workout_id: str, exercises_json: str, dry_run: bool = Tr
         if weight_source == 'historical':
             continue
 
-        # Check if weight looks generic (≤10 kg for all equipment types)
-        if weight is not None and weight > 10:
+        # Skip if weight is from history
+        if weight_source == 'historical':
             continue
 
         default_weight = get_default_weight_kg(equipment, name)
@@ -134,25 +134,44 @@ def fix_workout_weights(workout_id: str, exercises_json: str, dry_run: bool = Tr
 
         current_weight = weight or 0
 
-        if default_weight > current_weight:
-            changes.append({
-                'exercise': name,
-                'equipment': equipment,
-                'old_weight': current_weight,
-                'new_weight': default_weight,
-            })
+        # Fix exercise weight if it's below the equipment default
+        needs_fix = current_weight < default_weight
 
-            if not dry_run:
+        # Check set_targets — fix if ANY working set has a different weight than default
+        # This catches cases where the AI set 10 or 20 kg but the real default is 30 kg
+        set_targets = ex.get('set_targets', [])
+        has_bad_targets = any(
+            abs((st.get('target_weight_kg') or 0) - default_weight) > 0.1
+            for st in set_targets
+            if st.get('set_type') != 'warmup' and (st.get('target_weight_kg') or 0) <= 20
+        )
+
+        if not needs_fix and not has_bad_targets:
+            continue
+
+        changes.append({
+            'exercise': name,
+            'equipment': equipment,
+            'old_weight': current_weight,
+            'new_weight': default_weight,
+        })
+        modified = True
+
+        if not dry_run:
+            if needs_fix:
                 ex['weight'] = default_weight
-                ex['weight_source'] = 'generic'  # Mark as still generic but corrected
+                ex['weight_source'] = 'generic'
 
-                # Also fix set_targets
-                for st in ex.get('set_targets', []):
-                    target_wt = st.get('target_weight_kg', 0)
-                    if target_wt is not None and target_wt <= 10:
-                        st['target_weight_kg'] = default_weight
-
-            modified = True
+            # Fix ALL set_targets that are below equipment default
+            for st in set_targets:
+                target_wt = st.get('target_weight_kg') or 0
+                set_type = st.get('set_type', 'working')
+                if set_type == 'warmup':
+                    # Warmup at 50% of default
+                    if target_wt < default_weight * 0.5:
+                        st['target_weight_kg'] = snap_barbell_kg(default_weight * 0.5) if 'barbell' in (equipment or '').lower() or 'barbell' in name.lower() else round(default_weight * 0.5)
+                elif target_wt < default_weight:
+                    st['target_weight_kg'] = default_weight
 
     return modified, changes
 
@@ -195,11 +214,36 @@ def run_migration(dry_run: bool = True):
                     )
 
                 if not dry_run:
-                    exercises = json.loads(exercises_json) if isinstance(exercises_json, str) else exercises_json
-                    # Re-run to get the modified exercises
-                    _, _ = fix_workout_weights(workout_id, exercises_json, dry_run=False)
+                    # Parse, modify in-place, then save
+                    exercises = json.loads(exercises_json) if isinstance(exercises_json, str) else list(exercises_json)
+                    fix_workout_weights(workout_id, json.dumps(exercises), dry_run=False)
+                    # Re-parse to get modified version (fix_workout_weights modifies the parsed list)
+                    exercises2 = json.loads(exercises_json) if isinstance(exercises_json, str) else exercises_json
+                    # Actually we need to re-run on the same data
+                    parsed = json.loads(exercises_json) if isinstance(exercises_json, str) else exercises_json
+                    for ex in parsed:
+                        name_val = ex.get('name', '')
+                        equipment_val = ex.get('equipment', '')
+                        ws = ex.get('weight_source')
+                        if ws == 'historical':
+                            continue
+                        dw = get_default_weight_kg(equipment_val, name_val)
+                        if dw <= 0:
+                            continue
+                        cur_w = ex.get('weight') or 0
+                        if cur_w < dw:
+                            ex['weight'] = dw
+                            ex['weight_source'] = 'generic'
+                        for st in ex.get('set_targets', []):
+                            tw = st.get('target_weight_kg') or 0
+                            stype = st.get('set_type', 'working')
+                            if stype == 'warmup':
+                                if tw < dw * 0.5:
+                                    st['target_weight_kg'] = round(dw * 0.5)
+                            elif tw < dw:
+                                st['target_weight_kg'] = dw
                     db.client.table('workouts').update({
-                        'exercises_json': json.dumps(exercises),
+                        'exercises_json': json.dumps(parsed),
                     }).eq('id', workout_id).execute()
 
         offset += page_size
