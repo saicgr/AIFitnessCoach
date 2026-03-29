@@ -955,9 +955,8 @@ class _ActiveWorkoutScreenState
     final pattern = _exerciseProgressionPattern[_currentExerciseIndex]
         ?? SetProgressionPattern.pyramidUp;
 
-    // Get increment for this exercise's equipment
+    // Get increment state for this exercise's equipment
     final incrementState = ref.read(weightIncrementsProvider);
-    final increment = incrementState.getIncrement(exercise.equipment);
 
     final totalSets = _totalSetsPerExercise[_currentExerciseIndex] ?? 3;
 
@@ -984,11 +983,28 @@ class _ActiveWorkoutScreenState
     // Each pattern has position-specific offsets (e.g., Pyramid Up: set 1 is
     // lightest, set N is heaviest). We reverse the offset for the completed set's
     // position to recover the true working weight (peak weight).
-    final actualWeight = lastWorkingLog?.weight ?? exercise.weight?.toDouble() ?? 0;
+    //
+    // IMPORTANT: Work in the user's DISPLAY unit (lbs or kg) to avoid kg↔lbs
+    // rounding issues. SetLog stores in kg, so convert to display unit first.
+    final actualWeightKg = lastWorkingLog?.weight ?? exercise.weight?.toDouble() ?? 0;
+    final actualWeight = _useKg ? actualWeightKg : actualWeightKg * 2.20462;
     if (actualWeight <= 0) return; // Guard: bodyweight or no data
 
-    final snapped = increment > 0
-        ? (actualWeight / increment).round() * increment
+    // Use user's configured increment, converted to display unit if needed.
+    // The increment provider stores values in its own unit (kg or lbs).
+    final incrementRaw = incrementState.getIncrement(exercise.equipment);
+    final incrementUnit = incrementState.unit;
+    final double effectiveIncrement;
+    if (_useKg && incrementUnit == 'lbs') {
+      effectiveIncrement = incrementRaw * 0.453592;
+    } else if (!_useKg && incrementUnit == 'kg') {
+      effectiveIncrement = incrementRaw * 2.20462;
+    } else {
+      effectiveIncrement = incrementRaw; // Units match
+    }
+
+    final snapped = effectiveIncrement > 0
+        ? (actualWeight / effectiveIncrement).round() * effectiveIncrement
         : actualWeight;
 
     // Determine which set was just completed (0-indexed)
@@ -997,7 +1013,7 @@ class _ActiveWorkoutScreenState
     final workingWeight = pattern.deriveWorkingWeight(
       enteredWeight: snapped,
       totalSets: totalSets,
-      increment: increment,
+      increment: effectiveIncrement,
       completedSetIndex: completedIndex,
     );
     _exerciseWorkingWeight[_currentExerciseIndex] = workingWeight;
@@ -1015,7 +1031,7 @@ class _ActiveWorkoutScreenState
       workingWeight: workingWeight,
       totalSets: totalSets,
       baseReps: baseReps,
-      increment: increment,
+      increment: effectiveIncrement,
       trainingGoal: userGoal,
     );
 
@@ -1026,8 +1042,9 @@ class _ActiveWorkoutScreenState
     final originalNextWeight = nextIdx < targets.length ? targets[nextIdx].weight : null;
 
     if (completedSetLogs != null && completedSetLogs.isNotEmpty) {
+      // Convert completed weights to display units (SetLog stores in kg)
       final completedData = completedSetLogs.map((log) => CompletedSetData(
-        weight: log.weight,
+        weight: _useKg ? log.weight : log.weight * 2.20462,
         reps: log.reps,
         rir: log.rir,
       )).toList();
@@ -1036,7 +1053,7 @@ class _ActiveWorkoutScreenState
         pattern: pattern,
         originalTargets: targets,
         completedSets: completedData,
-        increment: increment,
+        increment: effectiveIncrement,
         totalSets: totalSets,
       );
 
@@ -1073,7 +1090,9 @@ class _ActiveWorkoutScreenState
     // Only update if the auto-adjust didn't already change the weight
     // (auto-adjust only fires on poor performance, so if it fired, its value takes priority)
     final currentControllerWeight = double.tryParse(_weightController.text) ?? 0;
-    final previousSetWeight = _completedSets[_currentExerciseIndex]?.last.weight ?? 0;
+    final previousSetWeightKg = _completedSets[_currentExerciseIndex]?.last.weight ?? 0;
+    // Convert stored weight (always kg) to display unit for comparison
+    final previousSetWeight = _useKg ? previousSetWeightKg : previousSetWeightKg * 2.20462;
 
     // If auto-adjust changed the weight (different from what user lifted), don't override
     if ((currentControllerWeight - previousSetWeight).abs() > 0.01) {
@@ -1086,10 +1105,11 @@ class _ActiveWorkoutScreenState
       return;
     }
 
-    // Update weight from pattern target
-    final displayWeight = _useKg
-        ? nextTarget.weight
-        : nextTarget.weight * 2.20462;
+    // Targets are already in display units (progression math runs in display unit).
+    // Snap to user's configured increment for clean display values.
+    final displayWeight = effectiveIncrement > 0
+        ? (nextTarget.weight / effectiveIncrement).round() * effectiveIncrement
+        : nextTarget.weight;
     _weightController.text = displayWeight.toStringAsFixed(1);
 
     // Update reps

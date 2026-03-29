@@ -241,32 +241,83 @@ class WeightIncrementsSheet extends ConsumerWidget {
               ),
               const SizedBox(height: 24),
 
-              // Reset button
-              Center(
-                child: TextButton.icon(
-                  onPressed: () {
-                    HapticFeedback.mediumImpact();
-                    ref.read(weightIncrementsProvider.notifier).resetToDefaults();
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Reset to default increments'),
-                        duration: Duration(seconds: 2),
-                      ),
-                    );
-                  },
-                  icon: Icon(
-                    Icons.refresh,
-                    color: textMuted,
-                    size: 18,
-                  ),
-                  label: Text(
-                    'Reset to Defaults',
-                    style: TextStyle(
+              // Reset button with info
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  TextButton.icon(
+                    onPressed: () {
+                      HapticFeedback.mediumImpact();
+                      ref.read(weightIncrementsProvider.notifier).resetToDefaults();
+                      final defaults = WeightIncrementsState.defaultsForUnit(state.unit);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(
+                            'Reset to ${isKg ? "kg" : "lbs"} defaults: '
+                            'Dumbbell ${_formatIncrement(defaults.dumbbell)}, '
+                            'Barbell ${_formatIncrement(defaults.barbell)}, '
+                            'Machine ${_formatIncrement(defaults.machine)}',
+                          ),
+                          duration: const Duration(seconds: 3),
+                        ),
+                      );
+                    },
+                    icon: Icon(
+                      Icons.refresh,
                       color: textMuted,
-                      fontSize: 14,
+                      size: 18,
+                    ),
+                    label: Text(
+                      'Use Defaults',
+                      style: TextStyle(
+                        color: textMuted,
+                        fontSize: 14,
+                      ),
                     ),
                   ),
-                ),
+                  GestureDetector(
+                    onTap: () {
+                      final defaults = WeightIncrementsState.defaultsForUnit(state.unit);
+                      showDialog(
+                        context: context,
+                        builder: (ctx) => AlertDialog(
+                          title: Text('Default Increments (${isKg ? "kg" : "lbs"})'),
+                          content: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                'Based on standard commercial gym equipment:',
+                                style: TextStyle(fontSize: 13),
+                              ),
+                              const SizedBox(height: 12),
+                              _buildDefaultRow('Dumbbells', defaults.dumbbell, state.unit),
+                              _buildDefaultRow('Barbell', defaults.barbell, state.unit),
+                              _buildDefaultRow('Machine', defaults.machine, state.unit),
+                              _buildDefaultRow('Kettlebell', defaults.kettlebell, state.unit),
+                              _buildDefaultRow('Cable', defaults.cable, state.unit),
+                              const SizedBox(height: 12),
+                              Text(
+                                'Sources: Rogue, Life Fitness, Eleiko',
+                                style: TextStyle(fontSize: 11, color: Colors.grey[600]),
+                              ),
+                            ],
+                          ),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.pop(ctx),
+                              child: const Text('Got it'),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                    child: Padding(
+                      padding: const EdgeInsets.all(4),
+                      child: Icon(Icons.info_outline, size: 18, color: textMuted),
+                    ),
+                  ),
+                ],
               ),
               const SizedBox(height: 8),
             ],
@@ -368,6 +419,22 @@ class WeightIncrementsSheet extends ConsumerWidget {
                 ),
               );
             }).toList(),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDefaultRow(String label, double value, String unit) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 3),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(label, style: const TextStyle(fontSize: 14)),
+          Text(
+            '${_formatIncrement(value)} $unit',
+            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
           ),
         ],
       ),

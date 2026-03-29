@@ -29,6 +29,29 @@ class WeightIncrementsState {
   /// Default values for weight increments.
   static const defaults = WeightIncrementsState();
 
+  /// Unit-aware defaults based on real gym equipment standards.
+  /// Sources: Rogue, Life Fitness, commercial gym standards.
+  static WeightIncrementsState defaultsForUnit(String unit) {
+    if (unit == 'lbs') {
+      return const WeightIncrementsState(
+        dumbbell: 5.0,   // US dumbbells: 5 lb steps (5, 10, 15, 20...)
+        barbell: 5.0,    // US barbell: 2.5 lb plate per side = 5 lb total
+        machine: 10.0,   // Cable stack: 10 lb pin steps
+        kettlebell: 5.0, // US kettlebells: 5 lb steps (10, 15, 20, 25...)
+        cable: 10.0,     // Cable stack: 10 lb pin steps
+        unit: 'lbs',
+      );
+    }
+    return const WeightIncrementsState(
+      dumbbell: 2.5,    // Metric dumbbells: 2.5 kg steps (2.5, 5, 7.5...)
+      barbell: 2.5,     // Metric barbell: 1.25 kg plate per side = 2.5 kg total
+      machine: 5.0,     // Cable stack: 5 kg pin steps
+      kettlebell: 4.0,  // Competition kettlebells: 4 kg steps (8, 12, 16, 20...)
+      cable: 5.0,       // Cable stack: 5 kg pin steps
+      unit: 'kg',
+    );
+  }
+
   /// Get the increment value for a given equipment type.
   double getIncrement(String? equipmentType) {
     if (equipmentType == null) return dumbbell;
@@ -260,9 +283,9 @@ class WeightIncrementsNotifier extends StateNotifier<WeightIncrementsState> {
     await _syncToBackend({'unit': unit});
   }
 
-  /// Reset all preferences to defaults.
+  /// Reset all preferences to unit-aware defaults.
   Future<void> resetToDefaults() async {
-    state = const WeightIncrementsState();
+    state = WeightIncrementsState.defaultsForUnit(state.unit);
     await _saveToLocalStorage();
 
     // Delete from backend (resets to defaults)
