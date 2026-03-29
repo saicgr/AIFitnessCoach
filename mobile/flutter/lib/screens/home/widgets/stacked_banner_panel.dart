@@ -1,0 +1,606 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import '../../../core/constants/app_colors.dart';
+import '../../../data/providers/billing_reminder_provider.dart';
+import '../../../data/providers/scheduling_provider.dart';
+import '../../../data/providers/scores_provider.dart';
+import '../../../data/providers/week1_tips_provider.dart';
+import '../../../data/providers/weekly_plan_provider.dart';
+import '../../../data/providers/wrapped_provider.dart';
+import '../../../data/providers/xp_provider.dart'
+    show activeDoubleXPEventProvider, showDailyCrateBannerProvider, dailyCratesProvider;
+import '../../../data/models/weekly_plan.dart';
+import '../../../data/repositories/auth_repository.dart';
+import '../../../data/repositories/scheduling_repository.dart' show MissedWorkout;
+import '../../../data/services/haptic_service.dart';
+import '../../workout/widgets/reschedule_sheet.dart';
+import 'banner_card_data.dart';
+import 'compact_banner_card.dart';
+import 'stacked_banner_controller.dart';
+
+/// A phone notification-panel style stacked banner system.
+///
+/// Collects ALL active banners (not just the highest priority), renders them
+/// as uniform 84px cards stacked with peek edges, and supports per-card
+/// swipe-to-dismiss revealing the next card underneath.
+class StackedBannerPanel extends ConsumerStatefulWidget {
+  const StackedBannerPanel({super.key});
+
+  @override
+  ConsumerState<StackedBannerPanel> createState() => _StackedBannerPanelState();
+}
+
+class _StackedBannerPanelState extends ConsumerState<StackedBannerPanel>
+    with SingleTickerProviderStateMixin {
+  static const double _cardHeight = CompactBannerCard.cardHeight;
+  static const double _peekOffset = 8.0;
+  static const int _maxVisiblePeeks = 2;
+
+  late AnimationController _dismissController;
+  Animation<double>? _dismissAnimation;
+  double _dragOffset = 0;
+  bool _isDragging = false;
+  bool _isAnimatingDismiss = false;
+
+  // Contextual banner dismiss state (loaded from SharedPreferences)
+  Set<String> _contextualDismissedKeys = {};
+  bool _contextualPrefsLoaded = false;
+
+  // Wrapped banner dismiss state
+  Map<String, bool> _wrappedDismissedMap = {};
+
+  @override
+  void initState() {
+    super.initState();
+    _dismissController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 250),
+    );
+    _dismissController.addListener(_onDismissAnimationTick);
+    _loadDismissState();
+  }
+
+  @override
+  void dispose() {
+    _dismissController.removeListener(_onDismissAnimationTick);
+    _dismissController.dispose();
+    super.dispose();
+  }
+
+  void _onDismissAnimationTick() {
+    if (_dismissAnimation != null && mounted) {
+      setState(() {
+        _dragOffset = _dismissAnimation!.value;
+      });
+    }
+  }
+
+  Future<void> _loadDismissState() async {
+    final prefs = await SharedPreferences.getInstance();
+    final today = DateTime.now();
+    final todayKey = '${today.year}-${today.month}-${today.day}';
+    final monday = today.subtract(Duration(days: today.weekday - 1));
+    final weekKey = '${monday.year}-${monday.month}-${monday.day}';
+
+    final contextualKeys = <String>{};
+
+    final fastingDismissed = prefs.getString('contextual_banner_fasting_dismissed');
+    if (fastingDismissed != null) contextualKeys.add(fastingDismissed);
+
+    final weeklyDismissed = prefs.getString('contextual_banner_weekly_dismissed');
+    if (weeklyDismissed == weekKey) contextualKeys.add('weekly_$weekKey');
+
+    final prDismissed = prefs.getString('contextual_banner_pr_dismissed');
+    if (prDismissed == todayKey) contextualKeys.add('pr_$todayKey');
+
+    final wrappedMap = <String, bool>{};
+    for (final key in prefs.getKeys()) {
+      if (key.startsWith('wrapped_dismissed_')) {
+        final period = key.replaceFirst('wrapped_dismissed_', '');
+        wrappedMap[period] = prefs.getBool(key) ?? false;
+      }
+    }
+
+    if (mounted) {
+      setState(() {
+        _contextualDismissedKeys = contextualKeys;
+        _contextualPrefsLoaded = true;
+        _wrappedDismissedMap = wrappedMap;
+      });
+    }
+  }
+
+  /// Collect all active banners from their providers.
+  List<BannerCardData> _collectBanners() {
+    final banners = <BannerCardData>[];
+    final dismissedIds = ref.watch(stackedBannerControllerProvider);
+
+    // 1. Renewal reminder
+    final renewalState = ref.watch(upcomingRenewalProvider);
+    final renewal = renewalState.valueOrNull;
+    if (renewal != null && renewal.showBanner) {
+      final days = renewal.daysUntilRenewal ?? 0;
+      final urgencyColor = days <= 1
+          ? Colors.red
+          : days <= 3
+              ? AppColors.orange
+              : AppColors.cyan;
+      banners.add(BannerCardData(
+        type: BannerType.renewal,
+        id: 'renewal',
+        icon: Icons.credit_card_rounded,
+        title: 'Subscription Renewing',
+        subtitle: '${renewal.tier ?? "Plan"} renews in $days days for ${renewal.formattedAmount}',
+        accentColor: urgencyColor,
+        actionLabel: 'Manage',
+        onAction: () {
+          HapticService.light();
+          context.push('/settings/subscription');
+        },
+      ));
+    }
+
+    // 2. Missed workouts
+    final missedAsync = ref.watch(missedWorkoutsProvider);
+    final missedWorkouts = missedAsync.valueOrNull ?? [];
+    for (final workout in missedWorkouts) {
+      banners.add(BannerCardData(
+        type: BannerType.missedWorkout,
+        id: 'missed_${workout.id}',
+        icon: Icons.schedule_rounded,
+        title: 'Missed: ${_formatWorkoutType(workout.type)}',
+        subtitle: '${workout.missedDescription} · ${workout.durationMinutes}min · ${workout.exercisesCount} exercises',
+        accentColor: AppColors.orange,
+        actionLabel: 'Do Today',
+        onAction: () => _handleDoToday(workout),
+        onTap: () => _handleDoToday(workout),
+        payload: workout,
+      ));
+    }
+
+    // 3. Daily crate
+    final showCrate = ref.watch(showDailyCrateBannerProvider);
+    if (showCrate) {
+      final cratesState = ref.watch(dailyCratesProvider);
+      final availableCount = cratesState?.availableCount ?? 0;
+      banners.add(BannerCardData(
+        type: BannerType.dailyCrate,
+        id: 'daily_crate',
+        emoji: '🎁',
+        title: 'Daily Crates Available!',
+        subtitle: availableCount > 1
+            ? '$availableCount crates ready to open'
+            : 'Tap to pick your reward',
+        accentColor: const Color(0xFFFFB300),
+        actionLabel: 'Open',
+        onTap: () {
+          HapticService.medium();
+          // Navigate to crate opening - the existing DailyCrateBanner taps
+          // open a sheet; we reuse that pattern by pushing to the XP/crates route
+          context.push('/xp/crates');
+        },
+      ));
+    }
+
+    // 4. Double XP event
+    final doubleXPEvent = ref.watch(activeDoubleXPEventProvider);
+    if (doubleXPEvent != null) {
+      final remaining = doubleXPEvent.endAt.difference(DateTime.now());
+      final hours = remaining.inHours;
+      final minutes = remaining.inMinutes % 60;
+      final timeStr = hours > 0 ? '${hours}h ${minutes}m left' : '${minutes}m left';
+      banners.add(BannerCardData(
+        type: BannerType.doubleXP,
+        id: 'double_xp_${doubleXPEvent.id}',
+        icon: Icons.bolt_rounded,
+        title: '${doubleXPEvent.xpMultiplier.toInt()}x XP Active',
+        subtitle: '${doubleXPEvent.eventName} · $timeStr',
+        accentColor: AppColors.orange,
+        onTap: () {
+          HapticService.light();
+          context.push('/xp');
+        },
+      ));
+    }
+
+    // 5. Week 1 tip
+    final week1Tip = ref.watch(week1TipProvider);
+    if (week1Tip != null) {
+      banners.add(BannerCardData(
+        type: BannerType.week1Tip,
+        id: 'week1_${week1Tip.featureKey}',
+        icon: week1Tip.icon,
+        title: week1Tip.title,
+        subtitle: week1Tip.subtitle,
+        accentColor: week1Tip.accentColor,
+        actionLabel: 'Try It',
+        onTap: () {
+          HapticService.light();
+          if (week1Tip.actionRoute != null) {
+            context.push(week1Tip.actionRoute!);
+          }
+        },
+      ));
+    }
+
+    // 6. Contextual banners
+    if (_contextualPrefsLoaded) {
+      final contextualBanner = _determineContextualBanner();
+      if (contextualBanner != null) {
+        banners.add(contextualBanner);
+      }
+    }
+
+    // 7. Wrapped banner
+    final wrappedAsync = ref.watch(wrappedSummaryProvider);
+    final wrappedSummary = wrappedAsync.valueOrNull;
+    if (wrappedSummary != null) {
+      for (final info in wrappedSummary.available) {
+        if (!info.viewed) {
+          // State A: unviewed wrapped - always show (not dismissible until viewed)
+          final month = info.monthDisplayName.toUpperCase();
+          final volumeStr = _formatVolume(info.totalVolumeLbs);
+          banners.add(BannerCardData(
+            type: BannerType.wrapped,
+            id: 'wrapped_${info.period}',
+            emoji: '✨',
+            title: 'Your $month Wrapped Is Here',
+            subtitle: '${info.totalWorkouts} workouts · $volumeStr lifted',
+            accentColor: const Color(0xFF9D4EDD),
+            actionLabel: 'View',
+            onTap: () {
+              HapticService.medium();
+              context.push('/wrapped/${info.period}');
+            },
+          ));
+        } else if (!(_wrappedDismissedMap[info.period] ?? false)) {
+          // State B: viewed but not dismissed
+          final month = info.monthDisplayName;
+          banners.add(BannerCardData(
+            type: BannerType.wrapped,
+            id: 'wrapped_${info.period}',
+            emoji: '✨',
+            title: '$month Wrapped',
+            subtitle: 'Tap to revisit your gym personality',
+            accentColor: const Color(0xFF7B2FF7),
+            actionLabel: 'View',
+            onTap: () {
+              HapticService.light();
+              context.push('/wrapped/${info.period}');
+            },
+          ));
+        }
+      }
+    }
+
+    // Filter out session-dismissed banners
+    banners.removeWhere((b) => dismissedIds.contains(b.id));
+
+    return banners;
+  }
+
+  BannerCardData? _determineContextualBanner() {
+    final today = DateTime.now();
+    final todayKey = '${today.year}-${today.month}-${today.day}';
+    final monday = today.subtract(Duration(days: today.weekday - 1));
+    final weekKey = '${monday.year}-${monday.month}-${monday.day}';
+
+    // Weekly goal progress (Thu-Sun)
+    if (today.weekday >= 4) {
+      final weeklyDismissKey = 'weekly_$weekKey';
+      if (!_contextualDismissedKeys.contains(weeklyDismissKey)) {
+        final weeklyPlanState = ref.watch(weeklyPlanProvider);
+        final plan = weeklyPlanState.currentPlan;
+        if (plan != null) {
+          int completedCount = 0;
+          int plannedCount = 0;
+          for (final entry in plan.dailyEntries) {
+            if (entry.dayType == DayType.training) {
+              plannedCount++;
+              if (entry.workoutCompleted) completedCount++;
+            }
+          }
+          final remaining = plannedCount - completedCount;
+          if (remaining > 0 && remaining <= 3) {
+            final workoutWord = remaining == 1 ? 'workout' : 'workouts';
+            return BannerCardData(
+              type: BannerType.contextual,
+              id: 'contextual_weekly_$weekKey',
+              icon: Icons.flag_outlined,
+              title: 'Keep it up!',
+              subtitle: "You're $remaining $workoutWord away from your weekly goal",
+              accentColor: AppColors.cyan,
+              actionLabel: 'View',
+              onTap: () {
+                HapticService.light();
+                context.push('/workouts');
+              },
+            );
+          }
+        }
+      }
+    }
+
+    // Recent PR celebration
+    final prDismissKey = 'pr_$todayKey';
+    if (!_contextualDismissedKeys.contains(prDismissKey)) {
+      final prStats = ref.watch(prStatsProvider);
+      if (prStats != null && prStats.recentPrs.isNotEmpty) {
+        final now = DateTime.now();
+        final yesterday = now.subtract(const Duration(days: 1));
+        for (final pr in prStats.recentPrs) {
+          try {
+            final prDate = DateTime.parse(pr.achievedAt);
+            final prDateOnly = DateTime(prDate.year, prDate.month, prDate.day);
+            final todayOnly = DateTime(now.year, now.month, now.day);
+            final yesterdayOnly = DateTime(yesterday.year, yesterday.month, yesterday.day);
+            if (prDateOnly == todayOnly || prDateOnly == yesterdayOnly) {
+              final weightLbs = (pr.weightKg * 2.205).round();
+              return BannerCardData(
+                type: BannerType.contextual,
+                id: 'contextual_pr_$todayKey',
+                icon: Icons.emoji_events_outlined,
+                title: 'New PR!',
+                subtitle: '${pr.exerciseName}: $weightLbs lbs',
+                accentColor: AppColors.success,
+                actionLabel: 'View',
+                onTap: () {
+                  HapticService.light();
+                  context.push('/stats');
+                },
+              );
+            }
+          } catch (_) {}
+        }
+      }
+    }
+
+    return null;
+  }
+
+  Future<void> _handleDoToday(MissedWorkout workout) async {
+    HapticService.medium();
+    final result = await showRescheduleSheet(context, ref, workout: workout);
+    if (result == true && mounted) {
+      ref.read(stackedBannerControllerProvider.notifier).dismiss('missed_${workout.id}');
+    }
+  }
+
+  Future<void> _handleSwipeDismiss(BannerCardData banner) async {
+    HapticService.light();
+    ref.read(stackedBannerControllerProvider.notifier).dismiss(banner.id);
+
+    // Also persist dismissal for banner types that need it
+    if (banner.type == BannerType.renewal) {
+      final authState = ref.read(authStateProvider);
+      final userId = authState.user?.id;
+      if (userId != null) {
+        ref.read(dismissRenewalBannerProvider(userId));
+        ref.invalidate(upcomingRenewalProvider);
+      }
+    } else if (banner.type == BannerType.wrapped) {
+      final period = banner.id.replaceFirst('wrapped_', '');
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool('wrapped_dismissed_$period', true);
+      if (mounted) {
+        setState(() => _wrappedDismissedMap[period] = true);
+      }
+    } else if (banner.type == BannerType.contextual) {
+      final prefs = await SharedPreferences.getInstance();
+      final today = DateTime.now();
+      if (banner.id.contains('weekly_')) {
+        final monday = today.subtract(Duration(days: today.weekday - 1));
+        final weekKey = '${monday.year}-${monday.month}-${monday.day}';
+        await prefs.setString('contextual_banner_weekly_dismissed', weekKey);
+      } else if (banner.id.contains('pr_')) {
+        final todayKey = '${today.year}-${today.month}-${today.day}';
+        await prefs.setString('contextual_banner_pr_dismissed', todayKey);
+      }
+    } else if (banner.type == BannerType.week1Tip) {
+      final prefs = await SharedPreferences.getInstance();
+      final today = DateTime.now();
+      final todayKey = '${today.year}-${today.month}-${today.day}';
+      await prefs.setString('week1_tip_dismissed_$todayKey', banner.id);
+    } else if (banner.type == BannerType.missedWorkout) {
+      // Swiping a missed workout just hides it for the session.
+      // The user can still act on it from the workout schedule.
+    }
+  }
+
+  static String _formatWorkoutType(String type) {
+    const typeLabels = {
+      'push': 'Push',
+      'pull': 'Pull',
+      'legs': 'Legs',
+      'full_body': 'Full Body',
+      'upper': 'Upper Body',
+      'upper_body': 'Upper Body',
+      'lower': 'Lower Body',
+      'lower_body': 'Lower Body',
+      'core': 'Core',
+      'strength': 'Strength',
+      'recovery': 'Recovery',
+      'cardio': 'Cardio',
+      'mobility': 'Mobility',
+    };
+    if (type.isEmpty) return 'Workout';
+    return typeLabels[type.toLowerCase()] ??
+        type.split('_').map((w) => w.isNotEmpty
+            ? '${w[0].toUpperCase()}${w.substring(1)}'
+            : w).join(' ');
+  }
+
+  static String _formatVolume(double lbs) {
+    if (lbs >= 1000000) return '${(lbs / 1000000).toStringAsFixed(1)}M lbs';
+    if (lbs >= 1000) return '${(lbs / 1000).toStringAsFixed(0)}K lbs';
+    return '${lbs.toStringAsFixed(0)} lbs';
+  }
+
+  void _onHorizontalDragUpdate(DragUpdateDetails details) {
+    if (_isAnimatingDismiss) return;
+    setState(() {
+      _isDragging = true;
+      _dragOffset += details.delta.dx;
+    });
+  }
+
+  void _onHorizontalDragEnd(DragEndDetails details, BannerCardData topBanner) {
+    if (_isAnimatingDismiss) return;
+    final velocity = details.primaryVelocity ?? 0;
+    final screenWidth = MediaQuery.of(context).size.width;
+
+    if (_dragOffset.abs() > 100 || velocity.abs() > 800) {
+      // Dismiss: animate off screen
+      final targetOffset = _dragOffset > 0 ? screenWidth : -screenWidth;
+      _isAnimatingDismiss = true;
+
+      _dismissAnimation = Tween<double>(
+        begin: _dragOffset,
+        end: targetOffset,
+      ).animate(CurvedAnimation(
+        parent: _dismissController,
+        curve: Curves.easeOut,
+      ));
+
+      _dismissController.reset();
+      _dismissController.forward().then((_) {
+        if (mounted) {
+          _dismissAnimation = null;
+          _isAnimatingDismiss = false;
+          setState(() {
+            _dragOffset = 0;
+            _isDragging = false;
+          });
+          _handleSwipeDismiss(topBanner);
+        }
+      });
+    } else {
+      // Spring back
+      _dismissAnimation = Tween<double>(
+        begin: _dragOffset,
+        end: 0,
+      ).animate(CurvedAnimation(
+        parent: _dismissController,
+        curve: Curves.easeOut,
+      ));
+
+      _dismissController.reset();
+      _dismissController.forward().then((_) {
+        if (mounted) {
+          _dismissAnimation = null;
+          setState(() {
+            _isDragging = false;
+            _dragOffset = 0;
+          });
+        }
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final banners = _collectBanners();
+
+    if (banners.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    final visibleCount = banners.length.clamp(1, _maxVisiblePeeks + 1);
+    final totalHeight = _cardHeight + (_peekOffset * (visibleCount - 1));
+
+    return AnimatedSize(
+      duration: const Duration(milliseconds: 200),
+      curve: Curves.easeOut,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+        child: SizedBox(
+          height: totalHeight,
+          child: Stack(
+            clipBehavior: Clip.none,
+            children: [
+              // Render cards from back to front (bottom of stack first)
+              for (int i = (visibleCount - 1).clamp(0, banners.length - 1); i >= 0; i--)
+                _buildStackedCard(banners, i, visibleCount),
+
+              // Card count indicator
+              if (banners.length > 1)
+                Positioned(
+                  right: 8,
+                  bottom: 0,
+                  child: _buildCountBadge(banners.length),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStackedCard(List<BannerCardData> banners, int index, int visibleCount) {
+    final isTop = index == 0;
+    final depthIndex = index; // 0 = top, 1 = second, 2 = third
+    final yOffset = depthIndex * _peekOffset;
+    final scale = 1.0 - (depthIndex * 0.03);
+    final opacity = depthIndex == 0 ? 1.0 : (depthIndex == 1 ? 0.7 : 0.4);
+
+    Widget card = Transform.scale(
+      scaleX: scale,
+      alignment: Alignment.topCenter,
+      child: Opacity(
+        opacity: opacity,
+        child: CompactBannerCard(data: banners[index]),
+      ),
+    );
+
+    if (isTop) {
+      // Top card: apply drag offset and gesture detection
+      card = GestureDetector(
+        onHorizontalDragUpdate: _onHorizontalDragUpdate,
+        onHorizontalDragEnd: (details) => _onHorizontalDragEnd(details, banners[0]),
+        child: Transform.translate(
+          offset: Offset(_dragOffset, 0),
+          child: Opacity(
+            opacity: _isDragging
+                ? (1.0 - (_dragOffset.abs() / MediaQuery.of(context).size.width).clamp(0.0, 0.6))
+                : 1.0,
+            child: CompactBannerCard(data: banners[index]),
+          ),
+        ),
+      );
+    }
+
+    return AnimatedPositioned(
+      duration: const Duration(milliseconds: 200),
+      curve: Curves.easeOut,
+      top: yOffset,
+      left: 0,
+      right: 0,
+      child: card,
+    );
+  }
+
+  Widget _buildCountBadge(int count) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.glassSurface : AppColorsLight.glassSurface,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: isDark ? AppColors.cardBorder : AppColorsLight.cardBorder,
+          width: 0.5,
+        ),
+      ),
+      child: Text(
+        '$count',
+        style: TextStyle(
+          fontSize: 10,
+          fontWeight: FontWeight.w600,
+          color: isDark ? AppColors.textSecondary : AppColorsLight.textSecondary,
+        ),
+      ),
+    );
+  }
+}

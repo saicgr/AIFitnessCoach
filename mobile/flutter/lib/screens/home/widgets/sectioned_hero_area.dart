@@ -13,7 +13,6 @@ import 'hero_nutrition_card.dart';
 // import 'hero_fasting_card.dart';
 import 'week_calendar_strip.dart';
 import 'swipeable_hero_section.dart' show HomeFocus, homeFocusProvider;
-import '../../wrapped/widgets/wrapped_banner.dart';
 
 /// Sectioned hero area with tab pills (Workouts | Nutrition | Fasting).
 /// Calendar strip only shows for the Workouts tab.
@@ -66,7 +65,6 @@ class _SectionedHeroAreaState extends ConsumerState<SectionedHeroArea> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const WrappedBanner(),
         // Tab pills
         _HeroTabPills(
           currentFocus: currentFocus,

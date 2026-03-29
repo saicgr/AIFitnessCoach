@@ -31,10 +31,7 @@ import 'widgets/components/components.dart';
 import 'widgets/cards/cards.dart';
 import 'widgets/daily_activity_card.dart';
 import 'widgets/edit_tracking_sheet.dart';
-import 'widgets/renewal_reminder_banner.dart';
-import 'widgets/missed_workout_banner.dart';
-import 'widgets/contextual_banner.dart';
-import 'widgets/week1_tip_banner.dart';
+import 'widgets/stacked_banner_panel.dart';
 import 'widgets/tile_factory.dart';
 import 'widgets/my_program_summary_card.dart';
 import 'widgets/hero_workout_card.dart';
@@ -46,22 +43,17 @@ import 'widgets/body_metrics_section.dart';
 import 'widgets/achievements_section.dart';
 import '../../data/providers/consistency_provider.dart';
 import '../../data/providers/xp_provider.dart' as xp_provider;
-import '../../data/providers/xp_provider.dart' show xpProvider, xpCurrentStreakProvider, levelUpEventProvider, streakMilestoneProvider, xpEarnedEventProvider, XPEarnedAnimationEvent, activeDoubleXPEventProvider, showDailyCrateBannerProvider;
+import '../../data/providers/xp_provider.dart' show xpProvider, xpCurrentStreakProvider, streakMilestoneProvider, xpEarnedEventProvider, XPEarnedAnimationEvent;
 import '../../data/models/user_xp.dart';
-import '../../widgets/double_xp_banner.dart';
 import '../../widgets/level_up_dialog.dart';
 import '../../widgets/streak_milestone_dialog.dart';
 import '../../widgets/xp_earned_animation.dart';
 import '../../data/models/level_reward.dart';
-import 'widgets/daily_crate_banner.dart';
 import 'widgets/minimal_header.dart';
 import '../../widgets/health_connect_sheet.dart';
 import '../../data/providers/health_import_provider.dart';
 import '../../data/repositories/nutrition_repository.dart';
 import '../../data/repositories/hydration_repository.dart';
-import '../../data/providers/billing_reminder_provider.dart';
-import '../../data/providers/scheduling_provider.dart';
-import '../../data/providers/week1_tips_provider.dart';
 import '../../widgets/usage_counter_strip.dart';
 import '../../widgets/app_tour/app_tour_controller.dart';
 import '../../core/services/posthog_service.dart';
@@ -1894,9 +1886,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                 child: MinimalHeader(),
               ),
 
-              // Priority banner: show only the highest-priority applicable banner
+              // Stacked notification-panel banners (all active, swipeable)
               const SliverToBoxAdapter(
-                child: _PriorityBanner(),
+                child: StackedBannerPanel(),
               ),
 
               // Dynamic tiles from local layout
@@ -3700,54 +3692,3 @@ class _CategoryPill extends StatelessWidget {
   }
 }
 
-/// Shows only the highest-priority banner that is currently applicable.
-///
-/// Priority (highest first):
-/// 1. Renewal reminder (subscription renewing soon)
-/// 2. Missed workout
-/// 3. Daily crate (unclaimed)
-/// 4. Double XP event active
-/// 5. Week 1 progressive feature tip (new users only)
-/// 6. Contextual tip (lowest)
-class _PriorityBanner extends ConsumerWidget {
-  const _PriorityBanner();
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
-    // 1. Renewal reminder (highest priority)
-    final renewalState = ref.watch(upcomingRenewalProvider);
-    final showRenewal = renewalState.whenOrNull(data: (r) => r.showBanner) ?? false;
-    if (showRenewal) {
-      return const RenewalReminderBanner();
-    }
-
-    // 2. Missed workout
-    final hasMissed = ref.watch(hasMissedWorkoutsProvider);
-    if (hasMissed) {
-      return const MissedWorkoutBanner();
-    }
-
-    // 3. Daily crate
-    final showCrate = ref.watch(showDailyCrateBannerProvider);
-    if (showCrate) {
-      return const DailyCrateBanner();
-    }
-
-    // 4. Double XP event
-    final doubleXP = ref.watch(activeDoubleXPEventProvider);
-    if (doubleXP != null) {
-      return const DoubleXPBanner();
-    }
-
-    // 5. Week 1 progressive feature tip (first 7 days after signup)
-    final week1Tip = ref.watch(week1TipProvider);
-    if (week1Tip != null) {
-      return const Week1TipBanner();
-    }
-
-    // 6. Contextual banner (lowest priority)
-    return ContextualBanner(isDark: isDark);
-  }
-}

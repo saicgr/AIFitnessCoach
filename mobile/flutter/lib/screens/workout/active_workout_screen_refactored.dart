@@ -946,6 +946,128 @@ class _ActiveWorkoutScreenState
     // Don't reset RPE/RIR - keep for context but allow changes
   }
 
+  /// Initialize weight/reps controllers for a given exercise index.
+  ///
+  /// Used when switching exercises (tap, next exercise, superset advance).
+  /// Handles: warmup weight reduction, bodyweight exercises, priority chain
+  /// (previous session → AI target → equipment default).
+  void _initControllersForExercise(int exerciseIndex) {
+    if (exerciseIndex < 0 || exerciseIndex >= _exercises.length) return;
+
+    final exercise = _exercises[exerciseIndex];
+    final completedLogs = _completedSets[exerciseIndex];
+
+    // If exercise has completed sets, use the last completed set's data
+    if (completedLogs != null && completedLogs.isNotEmpty) {
+      final lastLog = completedLogs.last;
+      final displayWeight = _useKg ? lastLog.weight : lastLog.weight * 2.20462;
+      _weightController.text = displayWeight.toStringAsFixed(1);
+      _repsController.text = lastLog.reps.toString();
+      _repsRightController.text = lastLog.reps.toString();
+      return;
+    }
+
+    // Determine target for the first uncompleted set
+    final completedCount = completedLogs?.length ?? 0;
+    final setTarget = exercise.getTargetForSet(completedCount + 1);
+
+    // Set reps from target
+    _repsController.text = (setTarget?.targetReps ?? exercise.reps ?? 10).toString();
+    _repsRightController.text = _repsController.text;
+
+    // Check if this is a warmup set
+    final isWarmup = setTarget != null &&
+        setTarget.setType.toLowerCase() == 'warmup';
+
+    // Weight priority: previous session → AI target → equipment default
+    final prevSets = _previousSets[exerciseIndex];
+    final prevWeightKg = (prevSets != null && prevSets.isNotEmpty)
+        ? (prevSets.last['weight'] as num?)?.toDouble() ?? 0.0
+        : 0.0;
+
+    double displayWeight;
+    if (prevWeightKg > 0) {
+      displayWeight = _useKg ? prevWeightKg : prevWeightKg * 2.20462;
+    } else {
+      final aiWt = (setTarget?.targetWeightKg ?? exercise.weight ?? 0).toDouble();
+      if (!isGenericWeight(aiWt, exercise.weightSource)) {
+        displayWeight = _useKg ? aiWt : aiWt * 2.20462;
+      } else {
+        displayWeight = getDefaultWeight(exercise.equipment,
+            exerciseName: exercise.name,
+            fitnessLevel: ref.read(authStateProvider).user?.fitnessLevel,
+            gender: ref.read(authStateProvider).user?.gender,
+            useKg: _useKg);
+      }
+    }
+
+    // Get owned weights from gym profile for this equipment type
+    final ownedWeights = _getOwnedWeightsForEquipment(exercise.equipment);
+
+    // Warmup: reduce to ~50% and snap to owned weights or standard increments
+    if (isWarmup && displayWeight > 0) {
+      final rawWarmup = displayWeight * 0.5;
+      if (ownedWeights != null && ownedWeights.isNotEmpty) {
+        // Snap to nearest owned weight
+        displayWeight = snapToOwnedWeight(rawWarmup, ownedWeights,
+            equipment: exercise.equipment, exerciseName: exercise.name, useKg: _useKg);
+      } else {
+        // No inventory — snap to standard equipment increments
+        final range = getWeightRange(exercise.equipment, exerciseName: exercise.name);
+        final warmupStep = _useKg ? range.stepKg : range.stepLbs;
+        final minWeight = _useKg ? range.minKg : range.minLbs;
+        if (warmupStep > 0) {
+          displayWeight = ((rawWarmup / warmupStep).round() * warmupStep)
+              .clamp(minWeight, displayWeight);
+        } else {
+          displayWeight = rawWarmup;
+        }
+      }
+    } else if (ownedWeights != null && ownedWeights.isNotEmpty && displayWeight > 0) {
+      // Non-warmup: also snap to owned weights if available
+      displayWeight = snapToOwnedWeight(displayWeight, ownedWeights,
+          equipment: exercise.equipment, exerciseName: exercise.name, useKg: _useKg);
+    }
+
+    // Set weight controller (empty for bodyweight/zero)
+    if (displayWeight <= 0) {
+      _weightController.text = '';
+    } else {
+      _weightController.text = displayWeight.toStringAsFixed(
+          displayWeight % 1 == 0 ? 0 : 1);
+    }
+  }
+
+  /// Get the user's owned weights for an equipment type from their gym profile.
+  /// Returns null if no gym profile or no inventory for this equipment.
+  List<double>? _getOwnedWeightsForEquipment(String? equipment) {
+    final profile = ref.read(activeGymProfileProvider);
+    if (profile == null || profile.equipmentDetails == null) return null;
+
+    final eq = (equipment ?? '').toLowerCase();
+    // Map exercise equipment to gym profile equipment names
+    String profileKey;
+    if (eq.contains('dumbbell')) {
+      profileKey = 'dumbbells';
+    } else if (eq.contains('kettlebell')) {
+      profileKey = 'kettlebells';
+    } else if (eq.contains('barbell') || eq.contains('ez') || eq.contains('trap')) {
+      return null; // Barbells use plate math, not fixed weights
+    } else {
+      return null; // Machines/cables use pin stacks, not owned weights
+    }
+
+    for (final detail in profile.equipmentDetails!) {
+      final name = (detail['name'] as String? ?? '').toLowerCase();
+      if (name == profileKey) {
+        final item = EquipmentItem.fromJson(detail);
+        final weights = item.availableWeights;
+        if (weights.isNotEmpty) return weights;
+      }
+    }
+    return null;
+  }
+
   /// Update weight/reps controllers for the next set based on the active
   /// progression pattern's calculated targets.
   ///
@@ -1341,33 +1463,8 @@ class _ActiveWorkoutScreenState
     // Update persistent notification with new exercise
     _updateWorkoutNotification();
 
-    // Update input controllers for new exercise (use setTargets if available)
-    final firstSetTarget = nextExercise.getTargetForSet(1);
-    _repsController.text = (firstSetTarget?.targetReps ?? nextExercise.reps ?? 10).toString();
-    _repsRightController.text = (firstSetTarget?.targetReps ?? nextExercise.reps ?? 10).toString(); // Sync L/R
-    // Weight: check previous session first, then AI target, then bar minimum
-    // Weight: previous session → reliable AI → equipment default
-    final prevSetsSuperset = _previousSets[nextIndex];
-    final prevWtSuperset = (prevSetsSuperset != null && prevSetsSuperset.isNotEmpty)
-        ? (prevSetsSuperset.last['weight'] as num?)?.toDouble() ?? 0.0
-        : 0.0;
-    double displayWtSuperset;
-    if (prevWtSuperset > 0) {
-      displayWtSuperset = _useKg ? prevWtSuperset : prevWtSuperset * 2.20462;
-    } else {
-      final aiWt = (firstSetTarget?.targetWeightKg ?? nextExercise.weight ?? 0).toDouble();
-      if (!isGenericWeight(aiWt, nextExercise.weightSource)) {
-        displayWtSuperset = _useKg ? aiWt : aiWt * 2.20462;
-      } else {
-        displayWtSuperset = getDefaultWeight(nextExercise.equipment,
-            exerciseName: nextExercise.name,
-            fitnessLevel: ref.read(authStateProvider).user?.fitnessLevel,
-            gender: ref.read(authStateProvider).user?.gender,
-            useKg: _useKg);
-      }
-    }
-    _weightController.text = displayWtSuperset > 0
-        ? displayWtSuperset.toStringAsFixed(displayWtSuperset % 1 == 0 ? 0 : 1) : '';
+    // Initialize weight/reps controllers for the new exercise
+    _initControllersForExercise(nextIndex);
 
     // Fetch smart weight suggestion based on history (background, non-blocking)
     _fetchSmartWeightForExercise(nextExercise);
@@ -1507,11 +1604,26 @@ class _ActiveWorkoutScreenState
 
   /// Check for fatigue after completing a set
   Future<void> _checkFatigue() async {
+    // Check if fatigue alerts are enabled
+    if (!ref.read(fatigueAlertsEnabledProvider)) return;
+
     final exercise = _exercises[_currentExerciseIndex];
     final completedSets = _completedSets[_currentExerciseIndex] ?? [];
 
     // Need at least 2 sets to detect fatigue
     if (completedSets.length < 2) return;
+
+    // Skip fatigue check if only warmup sets have been completed.
+    // Warmups are preparation — not performance indicators.
+    final setTargetsForCheck = exercise.setTargets;
+    if (setTargetsForCheck != null) {
+      final workingSetsCompleted = completedSets.asMap().entries.where((e) {
+        final idx = e.key;
+        if (idx >= setTargetsForCheck.length) return true; // no target = working set
+        return setTargetsForCheck[idx].setType.toLowerCase() != 'warmup';
+      }).length;
+      if (workingSetsCompleted < 2) return; // Not enough working sets for fatigue check
+    }
 
     try {
       final apiClient = ref.read(apiClientProvider);
@@ -1522,11 +1634,13 @@ class _ActiveWorkoutScreenState
           ?? SetProgressionPattern.pyramidUp;
       final setTargets = exercise.setTargets;
 
-      // Build set data with per-set progression targets
+      // Build set data with per-set progression targets (exclude warmup sets)
       final setsData = <FatigueSetData>[];
       for (int i = 0; i < completedSets.length; i++) {
         final s = completedSets[i];
         final target = (setTargets != null && i < setTargets.length) ? setTargets[i] : null;
+        // Skip warmup sets — they're preparation, not performance data
+        if (target != null && target.setType.toLowerCase() == 'warmup') continue;
         setsData.add(FatigueSetData(
           reps: s.reps,
           weight: s.weight,
@@ -1537,6 +1651,8 @@ class _ActiveWorkoutScreenState
           targetRir: target?.targetRir,
         ));
       }
+      // Need at least 2 working sets for meaningful fatigue check
+      if (setsData.length < 2) return;
 
       final exerciseType = FatigueService.getExerciseType(
         exercise.muscleGroup,
@@ -2177,33 +2293,8 @@ class _ActiveWorkoutScreenState
       // Update persistent notification with new exercise
       _updateWorkoutNotification();
 
-      // Update input controllers for new exercise (use setTargets if available)
-      final firstSetTarget = nextExercise.getTargetForSet(1);
-      _repsController.text = (firstSetTarget?.targetReps ?? nextExercise.reps ?? 10).toString();
-      _repsRightController.text = (firstSetTarget?.targetReps ?? nextExercise.reps ?? 10).toString(); // Sync L/R
-      // Weight: check previous session first, then AI target, then bar minimum
-      // Weight: previous session → reliable AI → equipment default
-      final prevSetsForNext = _previousSets[nextIndex];
-      final prevWeightKg = (prevSetsForNext != null && prevSetsForNext.isNotEmpty)
-          ? (prevSetsForNext.last['weight'] as num?)?.toDouble() ?? 0.0
-          : 0.0;
-      double displayNextWeight;
-      if (prevWeightKg > 0) {
-        displayNextWeight = _useKg ? prevWeightKg : prevWeightKg * 2.20462;
-      } else {
-        final aiWt = (firstSetTarget?.targetWeightKg ?? nextExercise.weight ?? 0).toDouble();
-        if (!isGenericWeight(aiWt, nextExercise.weightSource)) {
-          displayNextWeight = _useKg ? aiWt : aiWt * 2.20462;
-        } else {
-          displayNextWeight = getDefaultWeight(nextExercise.equipment,
-              exerciseName: nextExercise.name,
-              fitnessLevel: ref.read(authStateProvider).user?.fitnessLevel,
-              gender: ref.read(authStateProvider).user?.gender,
-              useKg: _useKg);
-        }
-      }
-      _weightController.text = displayNextWeight > 0
-          ? displayNextWeight.toStringAsFixed(displayNextWeight % 1 == 0 ? 0 : 1) : '';
+      // Initialize weight/reps controllers for the new exercise
+      _initControllersForExercise(nextIndex);
 
       // Fetch smart weight suggestion based on history (background, non-blocking)
       _fetchSmartWeightForExercise(nextExercise);
@@ -3714,6 +3805,7 @@ class _ActiveWorkoutScreenState
           _viewingExerciseIndex = index;
           _currentExerciseIndex = index;
         });
+        _initControllersForExercise(index);
       },
       onAddExercise: _showExerciseAddSheet,
       onQuitRequested: _showQuitDialog,
@@ -3995,8 +4087,9 @@ class _ActiveWorkoutScreenState
                   onExerciseTap: (index) {
                     setState(() {
                       _viewingExerciseIndex = index;
-                      _currentExerciseIndex = index; // Allow working on any exercise
+                      _currentExerciseIndex = index;
                     });
+                    _initControllersForExercise(index);
                   },
                   // New action button callbacks
                   currentCompletedSets:
@@ -4396,8 +4489,9 @@ class _ActiveWorkoutScreenState
                             HapticFeedback.selectionClick();
                             setState(() {
                               _viewingExerciseIndex = index;
-                              _currentExerciseIndex = index; // Allow working on any exercise
+                              _currentExerciseIndex = index;
                             });
+                            _initControllersForExercise(index);
                           },
                           onExerciseLongPress: (index) => _showExerciseOptionsSheet(index),
                           onAddTap: () => _showExerciseAddSheet(),
@@ -4792,7 +4886,7 @@ class _ActiveWorkoutScreenState
             _viewingExerciseIndex = index;
             _currentExerciseIndex = index;
           });
-          // Fetch media for the new exercise
+          _initControllersForExercise(index);
           _fetchMediaForExercise(_exercises[index]);
         },
         onAddTap: () => _showExerciseAddSheet(),
@@ -5512,9 +5606,26 @@ class _ActiveWorkoutScreenState
                         ? AppColors.cyan.withValues(alpha: 0.1)
                         : AppColorsLight.cyan.withValues(alpha: 0.08),
                     onTap: () {
+                      // Calculate weight adjustment: old bar → new bar
+                      final oldBarType = _exerciseBarType[_viewingExerciseIndex]
+                          ?? exercise.equipment ?? 'barbell';
+                      final oldBarWeight = getBarWeight(oldBarType, useKg: _useKg);
+                      final newBarWeight = getBarWeight(key, useKg: _useKg);
+                      final weightDiff = newBarWeight - oldBarWeight;
+
                       setState(() {
                         _exerciseBarType[_viewingExerciseIndex] = key;
                       });
+
+                      // Adjust weight controller for the bar weight difference
+                      final currentWeight = double.tryParse(_weightController.text) ?? 0;
+                      if (currentWeight > 0 && weightDiff != 0) {
+                        final adjusted = (currentWeight + weightDiff)
+                            .clamp(newBarWeight, 9999.0);
+                        _weightController.text = adjusted.toStringAsFixed(
+                            adjusted % 1 == 0 ? 0 : 1);
+                      }
+
                       // Persist to SharedPreferences
                       ref.read(exerciseBarTypeProvider.notifier)
                           .setBarType(exercise.name, key);

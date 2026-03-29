@@ -116,6 +116,24 @@ class _WorkoutSettingsPageState extends ConsumerState<WorkoutSettingsPage> {
                     onTap: () => showWeightIncrementsSheet(context),
                     iconColor: isDark ? AppColors.textSecondary : AppColorsLight.textSecondary,
                   ),
+                  SettingItemData(
+                    icon: Icons.monitor_heart_outlined,
+                    title: 'Fatigue Detection',
+                    subtitle: ref.watch(fatigueAlertsEnabledProvider)
+                        ? 'ON — Alerts when performance drops'
+                        : 'OFF — No fatigue alerts',
+                    onTap: () {
+                      ref.read(fatigueAlertsEnabledProvider.notifier).toggle();
+                    },
+                    trailing: Switch.adaptive(
+                      value: ref.watch(fatigueAlertsEnabledProvider),
+                      onChanged: (val) {
+                        ref.read(fatigueAlertsEnabledProvider.notifier).setEnabled(val);
+                      },
+                      activeTrackColor: isDark ? AppColors.coral : AppColorsLight.coral,
+                    ),
+                    iconColor: isDark ? AppColors.coral : AppColorsLight.coral,
+                  ),
                 ],
               ),
 

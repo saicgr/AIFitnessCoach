@@ -12,16 +12,20 @@ class WeightIncrementsState {
   final double kettlebell;
   final double cable;
   final String unit; // 'kg' or 'lbs'
+  /// Whether barbell increment is specified per-side (true) or total (false).
+  /// When true, the stored value is per-side and getIncrement returns total (×2).
+  final bool barbellPerSide;
   final bool isLoading;
   final String? error;
 
   const WeightIncrementsState({
     this.dumbbell = 2.5,
-    this.barbell = 2.5,
+    this.barbell = 5.0,
     this.machine = 5.0,
     this.kettlebell = 4.0,
     this.cable = 2.5,
     this.unit = 'kg',
+    this.barbellPerSide = false,
     this.isLoading = false,
     this.error,
   });
@@ -53,16 +57,20 @@ class WeightIncrementsState {
   }
 
   /// Get the increment value for a given equipment type.
+  /// For barbell: if barbellPerSide is true, returns barbell×2 (total).
   double getIncrement(String? equipmentType) {
     if (equipmentType == null) return dumbbell;
     final eq = equipmentType.toLowerCase();
     if (eq.contains('dumbbell')) return dumbbell;
-    if (eq.contains('barbell')) return barbell;
+    if (eq.contains('barbell')) return barbellPerSide ? barbell * 2 : barbell;
     if (eq.contains('machine')) return machine;
     if (eq.contains('kettlebell')) return kettlebell;
     if (eq.contains('cable')) return cable;
     return dumbbell; // Default to dumbbell increment
   }
+
+  /// Get the raw barbell increment value (not doubled for per-side).
+  double get barbellRaw => barbell;
 
   /// Get increment in kg (converts if stored in lbs).
   double getIncrementKg(String? equipmentType) {
@@ -80,6 +88,7 @@ class WeightIncrementsState {
     double? kettlebell,
     double? cable,
     String? unit,
+    bool? barbellPerSide,
     bool? isLoading,
     String? error,
   }) {
@@ -90,6 +99,7 @@ class WeightIncrementsState {
       kettlebell: kettlebell ?? this.kettlebell,
       cable: cable ?? this.cable,
       unit: unit ?? this.unit,
+      barbellPerSide: barbellPerSide ?? this.barbellPerSide,
       isLoading: isLoading ?? this.isLoading,
       error: error,
     );
@@ -102,16 +112,18 @@ class WeightIncrementsState {
         'kettlebell': kettlebell,
         'cable': cable,
         'unit': unit,
+        'barbell_per_side': barbellPerSide,
       };
 
   factory WeightIncrementsState.fromJson(Map<String, dynamic> json) {
     return WeightIncrementsState(
       dumbbell: (json['dumbbell'] as num?)?.toDouble() ?? 2.5,
-      barbell: (json['barbell'] as num?)?.toDouble() ?? 2.5,
+      barbell: (json['barbell'] as num?)?.toDouble() ?? 5.0,
       machine: (json['machine'] as num?)?.toDouble() ?? 5.0,
       kettlebell: (json['kettlebell'] as num?)?.toDouble() ?? 4.0,
       cable: (json['cable'] as num?)?.toDouble() ?? 2.5,
       unit: json['unit'] as String? ?? 'kg',
+      barbellPerSide: json['barbell_per_side'] as bool? ?? false,
     );
   }
 }
@@ -134,6 +146,7 @@ class WeightIncrementsNotifier extends StateNotifier<WeightIncrementsState> {
   static const String _kettlebellKey = 'weight_increment_kettlebell';
   static const String _cableKey = 'weight_increment_cable';
   static const String _unitKey = 'weight_increment_unit';
+  static const String _barbellPerSideKey = 'weight_increment_barbell_per_side';
 
   WeightIncrementsNotifier(this._ref)
       : super(const WeightIncrementsState()) {
@@ -162,11 +175,12 @@ class WeightIncrementsNotifier extends StateNotifier<WeightIncrementsState> {
     final prefs = await SharedPreferences.getInstance();
     state = WeightIncrementsState(
       dumbbell: prefs.getDouble(_dumbbellKey) ?? 2.5,
-      barbell: prefs.getDouble(_barbellKey) ?? 2.5,
+      barbell: prefs.getDouble(_barbellKey) ?? 5.0,
       machine: prefs.getDouble(_machineKey) ?? 5.0,
       kettlebell: prefs.getDouble(_kettlebellKey) ?? 4.0,
       cable: prefs.getDouble(_cableKey) ?? 2.5,
       unit: prefs.getString(_unitKey) ?? 'kg',
+      barbellPerSide: prefs.getBool(_barbellPerSideKey) ?? false,
       isLoading: false,
     );
   }
@@ -188,11 +202,12 @@ class WeightIncrementsNotifier extends StateNotifier<WeightIncrementsState> {
 
         state = state.copyWith(
           dumbbell: (data['dumbbell'] as num?)?.toDouble() ?? 2.5,
-          barbell: (data['barbell'] as num?)?.toDouble() ?? 2.5,
+          barbell: (data['barbell'] as num?)?.toDouble() ?? 5.0,
           machine: (data['machine'] as num?)?.toDouble() ?? 5.0,
           kettlebell: (data['kettlebell'] as num?)?.toDouble() ?? 4.0,
           cable: (data['cable'] as num?)?.toDouble() ?? 2.5,
           unit: data['unit'] as String? ?? 'kg',
+          barbellPerSide: data['barbell_per_side'] as bool? ?? false,
           isLoading: false,
         );
 
@@ -217,6 +232,7 @@ class WeightIncrementsNotifier extends StateNotifier<WeightIncrementsState> {
     await prefs.setDouble(_kettlebellKey, state.kettlebell);
     await prefs.setDouble(_cableKey, state.cable);
     await prefs.setString(_unitKey, state.unit);
+    await prefs.setBool(_barbellPerSideKey, state.barbellPerSide);
   }
 
   /// Sync current state to backend.
@@ -268,6 +284,14 @@ class WeightIncrementsNotifier extends StateNotifier<WeightIncrementsState> {
 
     await _saveToLocalStorage();
     await _syncToBackend({equipment: clamped});
+  }
+
+  /// Toggle barbell per-side mode.
+  Future<void> setBarbellPerSide(bool perSide) async {
+    if (perSide == state.barbellPerSide) return;
+    state = state.copyWith(barbellPerSide: perSide);
+    await _saveToLocalStorage();
+    await _syncToBackend({'barbell_per_side': perSide});
   }
 
   /// Set the unit preference (kg or lbs).

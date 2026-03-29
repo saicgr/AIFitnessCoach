@@ -302,7 +302,7 @@ extension SetProgressionPatternX on SetProgressionPattern {
   List<String> get goalTags {
     switch (this) {
       case SetProgressionPattern.pyramidUp:
-        return ['Strength'];
+        return ['Strength', 'Hypertrophy'];
       case SetProgressionPattern.straightSets:
         return ['Hypertrophy'];
       case SetProgressionPattern.reversePyramid:
@@ -435,9 +435,16 @@ extension SetProgressionPatternX on SetProgressionPattern {
   static int reverseRepOffset(SetProgressionPattern pattern, int actualReps, int setIndex, int totalSets) {
     switch (pattern) {
       case SetProgressionPattern.pyramidUp:
-        // Set i reps = baseReps + (totalSets-1-i)*2
+        // Dynamic step: ±1 for strength (≤5 baseReps), ±2 for hypertrophy (6+)
         final stepsFromTop = totalSets - 1 - setIndex;
-        return (actualReps - stepsFromTop * 2).clamp(1, 30);
+        // Try standard step (2) first
+        var baseReps = actualReps - stepsFromTop * 2;
+        // If result is in strength range, re-derive with smaller step (1)
+        if (baseReps <= 5) {
+          baseReps = actualReps - stepsFromTop * 1;
+        }
+        // Floor to 6: minimum effective rep range for non-failure training
+        return baseReps.clamp(6, 30);
       case SetProgressionPattern.reversePyramid:
         // repOffsets = [-4, -2, 0, 2, 4]
         const offsets = [-4, -2, 0, 2, 4];
@@ -595,25 +602,29 @@ extension SetProgressionPatternX on SetProgressionPattern {
   }
 
   /// Pyramid Up: weight increases, reps decrease each set.
-  /// Set 1: W-2I × R+2, Set 2: W-I × R, Set 3: W × R-2
+  /// Dynamic rep step: ±1 for strength (≤5 baseReps), ±2 for hypertrophy (6+).
+  /// Minimum 6 reps per set (non-failure training safety floor).
   List<ProgressionSetTarget> _generatePyramidUp(
     double w, int sets, int reps, double inc,
   ) {
+    final step = _pyramidRepStep(reps);
     final targets = <ProgressionSetTarget>[];
     for (int i = 0; i < sets; i++) {
       final stepsFromTop = sets - 1 - i;
       final weight = _snap(w - (stepsFromTop * inc), inc);
-      // Reps decrease by 2 per step toward the top
-      final setReps = reps + (stepsFromTop * 2);
+      final setReps = reps + (stepsFromTop * step);
       targets.add(ProgressionSetTarget(
         setNumber: i + 1,
         weight: weight.clamp(inc, 9999),
-        reps: setReps.clamp(1, 30),
+        reps: setReps.clamp(6, 30), // Min 6 for non-failure
         isAmrap: false,
       ));
     }
     return targets;
   }
+
+  /// Rep delta per pyramid step. Smaller steps for strength rep ranges.
+  static int _pyramidRepStep(int baseReps) => baseReps <= 5 ? 1 : 2;
 
   /// Straight Sets: same weight and reps every set.
   List<ProgressionSetTarget> _generateStraight(
@@ -917,7 +928,9 @@ List<ProgressionSetTarget> _adaptWeightRepPattern(
       original.weight + incrementAdjust * increment, increment,
     ).clamp(increment, 9999.0);
     // Inverse: weight up → reps down, weight down → reps up
-    final newReps = (original.reps - incrementAdjust).clamp(1, 30);
+    // Min 6 reps for non-AMRAP (safety floor for non-failure training)
+    final minReps = original.isAmrap ? 0 : 6;
+    final newReps = (original.reps - incrementAdjust).clamp(minReps, 30);
 
     adjusted[i] = ProgressionSetTarget(
       setNumber: original.setNumber,

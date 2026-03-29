@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../../data/models/user.dart' as app_user;
 
@@ -49,3 +50,36 @@ final useKgForWorkoutProvider = Provider<bool>((ref) {
   final unit = ref.watch(workoutWeightUnitProvider);
   return unit == 'kg';
 });
+
+/// Whether fatigue detection alerts are enabled during workouts.
+/// Persisted to SharedPreferences. Defaults to true.
+final fatigueAlertsEnabledProvider =
+    StateNotifierProvider<FatigueAlertsNotifier, bool>((ref) {
+  return FatigueAlertsNotifier();
+});
+
+class FatigueAlertsNotifier extends StateNotifier<bool> {
+  static const _key = 'fatigue_alerts_enabled';
+
+  FatigueAlertsNotifier() : super(true) {
+    _load();
+  }
+
+  Future<void> _load() async {
+    final prefs = await SharedPreferences.getInstance();
+    state = prefs.getBool(_key) ?? true;
+  }
+
+  Future<void> toggle() async {
+    state = !state;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_key, state);
+  }
+
+  Future<void> setEnabled(bool enabled) async {
+    if (state == enabled) return;
+    state = enabled;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_key, state);
+  }
+}
