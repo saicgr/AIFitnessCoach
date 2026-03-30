@@ -117,8 +117,10 @@ class DestructiveActionRequest(BaseModel):
 
     SECURITY: Prevents someone with an unlocked phone from permanently
     deleting an account or wiping all data without knowing the password.
+    For OAuth users (Google sign-in), password is not required since they
+    don't have one — the JWT auth is sufficient.
     """
-    password: str = Field(..., min_length=1, description="Current password for re-authentication")
+    password: Optional[str] = Field(None, min_length=1, description="Current password for re-authentication (required for email users, optional for OAuth users)")
 
 
 class ChangePasswordRequest(BaseModel):
@@ -1861,14 +1863,20 @@ async def full_reset(user_id: str,
         verify_user_ownership(current_user, user_id)
 
         # SECURITY: Re-authenticate before destructive action
-        supabase = get_supabase()
-        try:
-            supabase.client.auth.sign_in_with_password({
-                "email": current_user["email"],
-                "password": body.password,
-            })
-        except Exception:
-            raise HTTPException(status_code=401, detail="Invalid password — re-authentication required")
+        # For OAuth users (Google), password is not available — JWT auth is sufficient
+        auth_provider = current_user.get("app_metadata", {}).get("provider", "email")
+        if auth_provider == "email":
+            if not body.password:
+                raise HTTPException(status_code=400, detail="Password required for email accounts")
+            supabase = get_supabase()
+            try:
+                supabase.client.auth.sign_in_with_password({
+                    "email": current_user["email"],
+                    "password": body.password,
+                })
+            except Exception:
+                raise HTTPException(status_code=401, detail="Invalid password — re-authentication required")
+        # For OAuth providers (google, apple, etc.), JWT auth via get_current_user() is sufficient
 
         db = get_supabase_db()
 

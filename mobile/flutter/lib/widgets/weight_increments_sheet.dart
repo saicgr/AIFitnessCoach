@@ -11,13 +11,13 @@ Future<void> showWeightIncrementsSheet(BuildContext context) async {
     context: context,
     useRootNavigator: true,
     enableDrag: true,
-    initialChildSize: 0.85,
+    initialChildSize: 0.75,
     minChildSize: 0.4,
-    maxChildSize: 0.95,
+    maxChildSize: 0.85,
     builder: (context) => DraggableScrollableSheet(
-      initialChildSize: 0.85,
+      initialChildSize: 0.75,
       minChildSize: 0.4,
-      maxChildSize: 0.95,
+      maxChildSize: 0.85,
       expand: false,
       builder: (context, scrollController) => GlassSheet(
         showHandle: false,
@@ -70,9 +70,8 @@ class _WeightIncrementsSheetState extends ConsumerState<WeightIncrementsSheet> {
     final isKg = state.unit == 'kg';
 
     return SafeArea(
-      child: SingleChildScrollView(
-        controller: widget.scrollController,
-        padding: const EdgeInsets.all(20),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -81,28 +80,28 @@ class _WeightIncrementsSheetState extends ConsumerState<WeightIncrementsSheet> {
             Row(
               children: [
                 Container(
-                  padding: const EdgeInsets.all(10),
+                  padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
                     color: accentColor.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(10),
                   ),
-                  child: Icon(Icons.tune, color: accentColor, size: 24),
+                  child: Icon(Icons.tune, color: accentColor, size: 20),
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: 10),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
                         'Weight Increments',
-                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
                           fontWeight: FontWeight.bold,
                           color: textPrimary,
                         ),
                       ),
                       Text(
                         'Customize +/- step size per equipment',
-                        style: TextStyle(color: textSecondary, fontSize: 13),
+                        style: TextStyle(color: textSecondary, fontSize: 12),
                       ),
                     ],
                   ),
@@ -115,7 +114,7 @@ class _WeightIncrementsSheetState extends ConsumerState<WeightIncrementsSheet> {
                         .setUnit(isKg ? 'lbs' : 'kg');
                   },
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
                     decoration: BoxDecoration(
                       color: accentColor.withValues(alpha: 0.12),
                       borderRadius: BorderRadius.circular(8),
@@ -140,7 +139,7 @@ class _WeightIncrementsSheetState extends ConsumerState<WeightIncrementsSheet> {
                 ),
               ],
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 12),
 
             // Equipment sliders
             _buildSliderRow(
@@ -148,30 +147,30 @@ class _WeightIncrementsSheetState extends ConsumerState<WeightIncrementsSheet> {
               state.dumbbell, state.unit, isDark, cardBackground, textPrimary,
               textSecondary, textMuted, cardBorder, accentColor,
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 6),
             _buildBarbellRow(
               context, ref, state, isDark, cardBackground, textPrimary,
               textSecondary, textMuted, cardBorder, accentColor,
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 6),
             _buildSliderRow(
               context, ref, 'Machine', Icons.precision_manufacturing, 'machine',
               state.machine, state.unit, isDark, cardBackground, textPrimary,
               textSecondary, textMuted, cardBorder, accentColor,
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 6),
             _buildSliderRow(
               context, ref, 'Kettlebell', Icons.sports_handball, 'kettlebell',
               state.kettlebell, state.unit, isDark, cardBackground, textPrimary,
               textSecondary, textMuted, cardBorder, accentColor,
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 6),
             _buildSliderRow(
               context, ref, 'Cable', Icons.cable, 'cable',
               state.cable, state.unit, isDark, cardBackground, textPrimary,
               textSecondary, textMuted, cardBorder, accentColor,
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 10),
 
             // Use Defaults + Info
             Row(
@@ -188,8 +187,8 @@ class _WeightIncrementsSheetState extends ConsumerState<WeightIncrementsSheet> {
                       ),
                     );
                   },
-                  icon: Icon(Icons.refresh, color: textMuted, size: 18),
-                  label: Text('Use Defaults', style: TextStyle(color: textMuted, fontSize: 14)),
+                  icon: Icon(Icons.refresh, color: textMuted, size: 16),
+                  label: Text('Use Defaults', style: TextStyle(color: textMuted, fontSize: 13)),
                 ),
                 GestureDetector(
                   onTap: () {
@@ -219,12 +218,11 @@ class _WeightIncrementsSheetState extends ConsumerState<WeightIncrementsSheet> {
                   },
                   child: Padding(
                     padding: const EdgeInsets.all(4),
-                    child: Icon(Icons.info_outline, size: 18, color: textMuted),
+                    child: Icon(Icons.info_outline, size: 16, color: textMuted),
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 8),
           ],
         ),
       ),
@@ -239,7 +237,7 @@ class _WeightIncrementsSheetState extends ConsumerState<WeightIncrementsSheet> {
     Color cardBorder, Color accent,
   ) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
         color: cardBg,
         borderRadius: BorderRadius.circular(12),
@@ -249,16 +247,16 @@ class _WeightIncrementsSheetState extends ConsumerState<WeightIncrementsSheet> {
         children: [
           Row(
             children: [
-              Icon(icon, size: 18, color: textSecondary),
-              const SizedBox(width: 8),
-              Text(label, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: textPrimary)),
+              Icon(icon, size: 16, color: textSecondary),
+              const SizedBox(width: 6),
+              Text(label, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: textPrimary)),
               const Spacer(),
               _valueBadge(currentValue, unit, accent),
-              const SizedBox(width: 8),
+              const SizedBox(width: 6),
               _customInputButton(context, ref, equipment, currentValue, unit, accent, textMuted),
             ],
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 2),
           _incrementSlider(equipment, currentValue, accent, textMuted, ref),
         ],
       ),
@@ -276,7 +274,7 @@ class _WeightIncrementsSheetState extends ConsumerState<WeightIncrementsSheet> {
     final totalValue = perSide ? displayValue * 2 : displayValue;
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
         color: cardBg,
         borderRadius: BorderRadius.circular(12),
@@ -286,18 +284,18 @@ class _WeightIncrementsSheetState extends ConsumerState<WeightIncrementsSheet> {
         children: [
           Row(
             children: [
-              Icon(Icons.sports_martial_arts, size: 18, color: textSecondary),
-              const SizedBox(width: 8),
-              Text('Barbell', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: textPrimary)),
+              Icon(Icons.sports_martial_arts, size: 16, color: textSecondary),
+              const SizedBox(width: 6),
+              Text('Barbell', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: textPrimary)),
               const Spacer(),
               _valueBadge(displayValue, perSide ? '${state.unit}/side' : state.unit, accent),
-              const SizedBox(width: 8),
+              const SizedBox(width: 6),
               _customInputButton(context, ref, 'barbell', displayValue, state.unit, accent, textMuted),
             ],
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 2),
           _incrementSlider('barbell', displayValue, accent, textMuted, ref),
-          const SizedBox(height: 8),
+          const SizedBox(height: 2),
           // Per-side toggle
           Row(
             children: [
@@ -305,7 +303,7 @@ class _WeightIncrementsSheetState extends ConsumerState<WeightIncrementsSheet> {
                 perSide
                     ? '${_fmt(displayValue)} ${state.unit}/side = ${_fmt(totalValue)} ${state.unit} total'
                     : '${_fmt(displayValue)} ${state.unit} total',
-                style: TextStyle(fontSize: 12, color: textMuted),
+                style: TextStyle(fontSize: 11, color: textMuted),
               ),
               const Spacer(),
               GestureDetector(
@@ -351,24 +349,29 @@ class _WeightIncrementsSheetState extends ConsumerState<WeightIncrementsSheet> {
         inactiveTrackColor: accent.withValues(alpha: 0.15),
         thumbColor: accent,
         overlayColor: accent.withValues(alpha: 0.1),
-        trackHeight: 3,
-        thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 8),
-        tickMarkShape: const RoundSliderTickMarkShape(tickMarkRadius: 2),
+        overlayShape: const RoundSliderOverlayShape(overlayRadius: 14),
+        trackHeight: 2.5,
+        thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 7),
+        tickMarkShape: const RoundSliderTickMarkShape(tickMarkRadius: 1.5),
         activeTickMarkColor: accent.withValues(alpha: 0.5),
         inactiveTickMarkColor: tickColor.withValues(alpha: 0.2),
       ),
       child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Slider(
-            value: snapIdx.toDouble(),
-            min: 0,
-            max: (_snapPoints.length - 1).toDouble(),
-            divisions: _snapPoints.length - 1,
-            onChanged: (val) {
-              final newValue = _snapPoints[val.round()];
-              HapticFeedback.selectionClick();
-              ref.read(weightIncrementsProvider.notifier).setIncrement(equipment, newValue);
-            },
+          SizedBox(
+            height: 28,
+            child: Slider(
+              value: snapIdx.toDouble(),
+              min: 0,
+              max: (_snapPoints.length - 1).toDouble(),
+              divisions: _snapPoints.length - 1,
+              onChanged: (val) {
+                final newValue = _snapPoints[val.round()];
+                HapticFeedback.selectionClick();
+                ref.read(weightIncrementsProvider.notifier).setIncrement(equipment, newValue);
+              },
+            ),
           ),
           // Tick labels
           Padding(
@@ -381,8 +384,8 @@ class _WeightIncrementsSheetState extends ConsumerState<WeightIncrementsSheet> {
                   _fmt(v),
                   style: TextStyle(
                     fontSize: 9,
-                    fontWeight: isSelected ? FontWeight.bold : FontWeight.w400,
-                    color: isSelected ? accent : tickColor.withValues(alpha: 0.5),
+                    fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
+                    color: isSelected ? accent : tickColor.withValues(alpha: 0.7),
                   ),
                 );
               }).toList(),

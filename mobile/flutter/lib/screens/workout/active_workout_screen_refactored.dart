@@ -240,6 +240,10 @@ class _ActiveWorkoutScreenState
   // L/R mode for unilateral exercises
   bool _isLeftRightMode = false;
 
+  // Drag-to-action state (Delete/Swap zones at top of screen)
+  bool _isDragActive = false;
+  int? _draggedExerciseIndex;
+
   // Superset round tracking
   // Maps superset group ID -> set of exercise indices that have completed a set in this round
   // Reset when all exercises in the superset complete their set for the round
@@ -455,6 +459,10 @@ class _ActiveWorkoutScreenState
 
     // Preload per-exercise progression patterns from SharedPreferences
     _preloadProgressionPatterns();
+
+    // Apply progression targets for the first exercise immediately
+    // (don't wait for async preload — use default pattern)
+    _initControllersForExercise(_currentExerciseIndex);
 
     // Load coach persona for AI Coach button
     _loadCoachPersona();
@@ -989,8 +997,21 @@ class _ActiveWorkoutScreenState
     if (prevWeightKg > 0) {
       displayWeight = _useKg ? prevWeightKg : prevWeightKg * 2.20462;
     } else {
-      final aiWt = (setTarget?.targetWeightKg ?? exercise.weight ?? 0).toDouble();
-      if (!isGenericWeight(aiWt, exercise.weightSource)) {
+      // For warmup sets, use the first WORKING set's target weight (not warmup's own)
+      double aiWt;
+      if (isWarmup) {
+        final workingTarget = exercise.setTargets?.cast<SetTarget?>().firstWhere(
+          (t) => t != null && t.setType.toLowerCase() != 'warmup' && (t.targetWeightKg ?? 0) > 0,
+          orElse: () => null,
+        );
+        aiWt = (workingTarget?.targetWeightKg ?? exercise.weight ?? 0).toDouble();
+      } else {
+        aiWt = (setTarget?.targetWeightKg ?? exercise.weight ?? 0).toDouble();
+      }
+      if (aiWt > 0 && !isGenericWeight(aiWt, exercise.weightSource)) {
+        displayWeight = _useKg ? aiWt : aiWt * 2.20462;
+      } else if (aiWt > 0) {
+        // Even if generic, use it if it's the only weight we have
         displayWeight = _useKg ? aiWt : aiWt * 2.20462;
       } else {
         displayWeight = getDefaultWeight(exercise.equipment,
@@ -1017,8 +1038,9 @@ class _ActiveWorkoutScreenState
         final warmupStep = _useKg ? range.stepKg : range.stepLbs;
         final minWeight = _useKg ? range.minKg : range.minLbs;
         if (warmupStep > 0) {
+          final warmupUpperBound = displayWeight > minWeight ? displayWeight : minWeight;
           displayWeight = ((rawWarmup / warmupStep).round() * warmupStep)
-              .clamp(minWeight, displayWeight);
+              .clamp(minWeight, warmupUpperBound);
         } else {
           displayWeight = rawWarmup;
         }
@@ -1036,6 +1058,11 @@ class _ActiveWorkoutScreenState
       _weightController.text = displayWeight.toStringAsFixed(
           displayWeight % 1 == 0 ? 0 : 1);
     }
+
+    // Apply progression pattern to update TARGET column (saved or default)
+    final activePattern = _exerciseProgressionPattern[exerciseIndex]
+        ?? SetProgressionPattern.pyramidUp;
+    _applyProgressionTargets(exerciseIndex, activePattern);
   }
 
   /// Get the user's owned weights for an equipment type from their gym profile.
@@ -1101,14 +1128,19 @@ class _ActiveWorkoutScreenState
       }
     }
 
+    // If only warmup sets completed (no working sets), delegate to
+    // _initControllersForExercise which uses the pre-calculated working set targets.
+    // Don't run progression adaptation with warmup data — it produces wrong results.
+    if (lastWorkingLog == null) {
+      debugPrint('📊 [NextSet] No working sets completed yet — delegating to _initControllersForExercise');
+      _initControllersForExercise(_currentExerciseIndex);
+      return;
+    }
+
     // Derive working weight from actual performance, accounting for set position.
-    // Each pattern has position-specific offsets (e.g., Pyramid Up: set 1 is
-    // lightest, set N is heaviest). We reverse the offset for the completed set's
-    // position to recover the true working weight (peak weight).
-    //
     // IMPORTANT: Work in the user's DISPLAY unit (lbs or kg) to avoid kg↔lbs
     // rounding issues. SetLog stores in kg, so convert to display unit first.
-    final actualWeightKg = lastWorkingLog?.weight ?? exercise.weight?.toDouble() ?? 0;
+    final actualWeightKg = lastWorkingLog.weight;
     final actualWeight = _useKg ? actualWeightKg : actualWeightKg * 2.20462;
     if (actualWeight <= 0) return; // Guard: bodyweight or no data
 
@@ -1164,12 +1196,22 @@ class _ActiveWorkoutScreenState
     final originalNextWeight = nextIdx < targets.length ? targets[nextIdx].weight : null;
 
     if (completedSetLogs != null && completedSetLogs.isNotEmpty) {
-      // Convert completed weights to display units (SetLog stores in kg)
-      final completedData = completedSetLogs.map((log) => CompletedSetData(
-        weight: _useKg ? log.weight : log.weight * 2.20462,
-        reps: log.reps,
-        rir: log.rir,
-      )).toList();
+      // Convert completed weights to display units, filtering out warmup sets
+      final setTargetsRef = exercise.setTargets;
+      final completedData = <CompletedSetData>[];
+      for (int i = 0; i < completedSetLogs.length; i++) {
+        final log = completedSetLogs[i];
+        // Skip warmup sets from adaptation — warmup performance is not a signal
+        if (setTargetsRef != null && i < setTargetsRef.length &&
+            setTargetsRef[i].setType.toLowerCase() == 'warmup') {
+          continue;
+        }
+        completedData.add(CompletedSetData(
+          weight: _useKg ? log.weight : log.weight * 2.20462,
+          reps: log.reps,
+          rir: log.rir,
+        ));
+      }
 
       targets = adaptTargets(
         pattern: pattern,
@@ -1281,10 +1323,25 @@ class _ActiveWorkoutScreenState
   /// Skips adjustment entirely for drop sets, rest-pause, and myo-reps
   /// (those patterns manage their own weight progression).
   void _autoAdjustWeightIfNeeded(SetLog setLog, WorkoutExercise exercise) {
-    final currentWeight = setLog.weight;
+    final currentWeightKg = setLog.weight; // Always in KG
 
     // Skip bodyweight exercises
-    if (currentWeight <= 0) return;
+    if (currentWeightKg <= 0) {
+      debugPrint('🔧 [AutoAdjust] SKIP — bodyweight (weight=$currentWeightKg)');
+      return;
+    }
+
+    // Skip warmup sets
+    final completedCount = _completedSets[_currentExerciseIndex]?.length ?? 0;
+    final setTargetsList = exercise.setTargets;
+    if (setTargetsList != null && completedCount > 0) {
+      final justCompletedIdx = completedCount - 1;
+      if (justCompletedIdx < setTargetsList.length &&
+          setTargetsList[justCompletedIdx].setType.toLowerCase() == 'warmup') {
+        debugPrint('🔧 [AutoAdjust] SKIP — warmup set');
+        return;
+      }
+    }
 
     // Skip for progression patterns that manage their own weights
     final pattern = _exerciseProgressionPattern[_currentExerciseIndex]
@@ -1292,6 +1349,7 @@ class _ActiveWorkoutScreenState
     if (pattern == SetProgressionPattern.dropSets ||
         pattern == SetProgressionPattern.restPause ||
         pattern == SetProgressionPattern.myoReps) {
+      debugPrint('🔧 [AutoAdjust] SKIP — pattern $pattern manages own weights');
       return;
     }
 
@@ -1299,7 +1357,10 @@ class _ActiveWorkoutScreenState
     final actualReps = setLog.reps;
 
     // Hit all reps — no adjustment needed
-    if (actualReps >= targetReps) return;
+    if (actualReps >= targetReps) {
+      debugPrint('🔧 [AutoAdjust] SKIP — hit target ($actualReps >= $targetReps)');
+      return;
+    }
 
     final repRatio = actualReps / targetReps;
 
@@ -1309,8 +1370,13 @@ class _ActiveWorkoutScreenState
       effectiveRir = (10 - setLog.rpe!).clamp(0, 5);
     }
 
-    // Get equipment increment in user's unit
-    final equipmentIncrement = WeightIncrements.getIncrement(exercise.equipment);
+    // Get equipment increment in KG (since currentWeight is in KG)
+    final incState = ref.read(weightIncrementsProvider);
+    final equipmentIncrementKg = incState.getIncrementKg(exercise.equipment);
+
+    debugPrint('🔧 [AutoAdjust] weightKg=$currentWeightKg, reps=$actualReps/$targetReps, '
+        'repRatio=${repRatio.toStringAsFixed(2)}, RIR=$effectiveRir, '
+        'incKg=$equipmentIncrementKg, pattern=$pattern');
 
     // RIR-first decision tree
     int incrementsToDrop = 0;
@@ -1320,9 +1386,11 @@ class _ActiveWorkoutScreenState
       // Have intensity data — use RIR as primary signal
       if (effectiveRir >= 2 || repRatio >= 0.9) {
         // Good performance: had reps in reserve or nearly hit target
+        debugPrint('🔧 [AutoAdjust] SKIP — good perf (RIR=$effectiveRir, ratio=${repRatio.toStringAsFixed(2)})');
         return;
       } else if (effectiveRir == 1 && repRatio >= 0.7) {
         // Marginal: working hard but acceptable
+        debugPrint('🔧 [AutoAdjust] SKIP — marginal OK (RIR=1, ratio=${repRatio.toStringAsFixed(2)})');
         return;
       } else if (repRatio < 0.5 && effectiveRir == 0) {
         // Severe failure: couldn't do half the reps AND hit failure
@@ -1336,6 +1404,7 @@ class _ActiveWorkoutScreenState
     } else {
       // No intensity data — conservative fallback using rep ratio only
       if (repRatio >= 0.7) {
+        debugPrint('🔧 [AutoAdjust] SKIP — no RIR, ratio OK (${repRatio.toStringAsFixed(2)})');
         return; // Good enough without intensity data
       }
       incrementsToDrop = 1;
@@ -1344,25 +1413,52 @@ class _ActiveWorkoutScreenState
 
     if (incrementsToDrop == 0) return;
 
+    // Minimum weight for barbell = bar weight in KG; otherwise = one increment
+    final minWeightKg = isBarbell(exercise.equipment, exerciseName: exercise.name)
+        ? getBarWeight(exercise.equipment, useKg: true)
+        : equipmentIncrementKg;
+
     // Drop by exact increments (not percentages) to avoid compounding
-    final adjustedWeight = (currentWeight - (equipmentIncrement * incrementsToDrop))
-        .clamp(equipmentIncrement, 999.0);
+    final adjustedWeightKg = (currentWeightKg - (equipmentIncrementKg * incrementsToDrop))
+        .clamp(minWeightKg, 999.0);
 
     // Skip if no real change
-    if ((adjustedWeight - currentWeight).abs() < 0.01) return;
+    if ((adjustedWeightKg - currentWeightKg).abs() < 0.01) {
+      debugPrint('🔧 [AutoAdjust] SKIP — no real change after clamp');
+      return;
+    }
+
+    // Convert to display unit before setting controller
+    final displayAdjusted = _useKg ? adjustedWeightKg : adjustedWeightKg * 2.20462;
+    final inc = incState.getIncrement(exercise.equipment);
+    // Convert increment to display unit for snapping
+    final incrementUnit = incState.unit;
+    double displayInc = inc;
+    if (_useKg && incrementUnit == 'lbs') {
+      displayInc = inc * 0.453592;
+    } else if (!_useKg && incrementUnit == 'kg') {
+      displayInc = inc * 2.20462;
+    }
+
+    final snappedDisplay = displayInc > 0
+        ? (displayAdjusted / displayInc).round() * displayInc
+        : displayAdjusted;
+
+    debugPrint('🔧 [AutoAdjust] DROP $incrementsToDrop inc(s): '
+        '${currentWeightKg.toStringAsFixed(1)}kg → ${adjustedWeightKg.toStringAsFixed(1)}kg, '
+        'display=${snappedDisplay.toStringAsFixed(1)} ${_useKg ? "kg" : "lb"}');
 
     // Update weight controller for next set
-    _weightController.text = adjustedWeight.toStringAsFixed(1);
+    _weightController.text = snappedDisplay.toStringAsFixed(snappedDisplay % 1 == 0 ? 0 : 1);
 
     // Show feedback with correct unit
     if (mounted && message != null) {
       final unit = _useKg ? 'kg' : 'lb';
-      final displayCurrent = _useKg ? currentWeight : currentWeight * 2.20462;
-      final displayAdjusted = _useKg ? adjustedWeight : adjustedWeight * 2.20462;
+      final displayCurrent = _useKg ? currentWeightKg : currentWeightKg * 2.20462;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            '$message: ${displayCurrent.toStringAsFixed(1)} → ${displayAdjusted.toStringAsFixed(1)} $unit',
+            '$message: ${displayCurrent.toStringAsFixed(1)} → ${snappedDisplay.toStringAsFixed(1)} $unit',
           ),
           duration: const Duration(seconds: 3),
           behavior: SnackBarBehavior.floating,
@@ -2667,6 +2763,18 @@ class _ActiveWorkoutScreenState
           _exerciseBarType[i] = barTypeState[key]!;
         }
       }
+
+      // Auto-apply patterns to update TARGET column immediately for ALL exercises
+      debugPrint('📋 [Preload] Applying targets for ${_exercises.length} exercises...');
+      for (int i = 0; i < _exercises.length; i++) {
+        try {
+          final pattern = _exerciseProgressionPattern[i] ?? SetProgressionPattern.pyramidUp;
+          debugPrint('📋 [Preload] ex $i: "${_exercises[i].name}" → ${pattern.displayName}');
+          _applyProgressionTargets(i, pattern);
+        } catch (e) {
+          debugPrint('❌ [Preload] Failed for ex $i "${_exercises[i].name}": $e');
+        }
+      }
     } catch (e) {
       debugPrint('❌ [Progression] Error preloading patterns: $e');
     }
@@ -3525,9 +3633,9 @@ class _ActiveWorkoutScreenState
     );
 
     if (result != null && mounted) {
-      // User confirmed quit - log the exit and navigate away
+      // User confirmed quit - navigate away immediately, log in background
       _cancelWorkoutNotification();
-      await _logWorkoutExit(result.reason, result.notes);
+      _logWorkoutExit(result.reason, result.notes); // Fire-and-forget
       if (mounted) {
         context.pop();
         // Show guidance if user quit due to pain/injury
@@ -4262,13 +4370,6 @@ class _ActiveWorkoutScreenState
                                           maxLines: 2,
                                           overflow: TextOverflow.ellipsis,
                                         ),
-                                        const SizedBox(height: 4),
-                                        Text(
-                                          'Set ${(_completedSets[_viewingExerciseIndex]?.length ?? 0) + 1} of ${_totalSetsPerExercise[_viewingExerciseIndex] ?? 3}',
-                                          style: WorkoutDesign.subtitleStyle.copyWith(
-                                            color: isDark ? WorkoutDesign.textSecondary : Colors.grey.shade600,
-                                          ),
-                                        ),
                                       ],
                                     ),
                                   ),
@@ -4346,7 +4447,57 @@ class _ActiveWorkoutScreenState
                         ),
                         ),
 
-                        const SizedBox(height: 12),
+                        // Set counter row with skip on the right
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
+                          child: Row(
+                            children: [
+                              Text(
+                                'Set ${(_completedSets[_viewingExerciseIndex]?.length ?? 0) + 1} of ${_totalSetsPerExercise[_viewingExerciseIndex] ?? 3}',
+                                style: WorkoutDesign.subtitleStyle.copyWith(
+                                  color: isDark ? WorkoutDesign.textSecondary : Colors.grey.shade600,
+                                ),
+                              ),
+                              const Spacer(),
+                              GestureDetector(
+                                onTap: () {
+                                  HapticFeedback.lightImpact();
+                                  _skipExercise();
+                                },
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.orange.withValues(alpha: 0.12),
+                                    borderRadius: BorderRadius.circular(8),
+                                    border: Border.all(
+                                      color: AppColors.orange.withValues(alpha: 0.4),
+                                      width: 1,
+                                    ),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(
+                                        Icons.skip_next_rounded,
+                                        size: 16,
+                                        color: AppColors.orange,
+                                      ),
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        'Skip',
+                                        style: TextStyle(
+                                          fontSize: 13,
+                                          fontWeight: FontWeight.w700,
+                                          color: AppColors.orange,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
 
                         // Action chips row (Superset, Warm Up, etc.) - Video moved to bottom, Info moved to title
                         Container(
@@ -4498,6 +4649,12 @@ class _ActiveWorkoutScreenState
                           showAddButton: true,
                           onReorder: _onExercisesReordered,
                           onCreateSuperset: _onSupersetFromDrag,
+                          onDragActiveChanged: (isDragging, index) {
+                            setState(() {
+                              _isDragActive = isDragging;
+                              _draggedExerciseIndex = index;
+                            });
+                          },
                         ),
                       ),
                     );
@@ -4505,6 +4662,10 @@ class _ActiveWorkoutScreenState
                 ),
               ],
             ),
+
+            // Drag-to-action zones (Delete + Swap) — appear when dragging a thumbnail
+            if (_isDragActive)
+              _buildDragActionZones(isDark),
 
             // Rest overlay (shows on top) - only for rest between exercises
             // Between-sets rest is handled by inline rest row
@@ -5278,17 +5439,10 @@ class _ActiveWorkoutScreenState
     final incrementUnit = incrementState.unit;
     final incrementLabel = '±${incrementValue % 1 == 0 ? incrementValue.toInt() : incrementValue} $incrementUnit';
 
-    // Equipment profile name for chip
-    final activeProfile = ref.read(activeGymProfileProvider);
-    final equipmentLabel = activeProfile?.name ?? 'Equipment';
-
     return [
       WorkoutActionChips.progression(label: pattern.chipLabel, icon: pattern.icon),
       WorkoutActionChips.superset,
-      WorkoutActionChips.swap,
-      WorkoutActionChips.skip,
       WorkoutActionChips.leftRight(isActive: _isLeftRightMode),
-      WorkoutActionChips.equipment(label: equipmentLabel),
       WorkoutActionChips.incrementDisplay(label: incrementLabel),
       WorkoutActionChips.more,
     ];
@@ -5381,6 +5535,46 @@ class _ActiveWorkoutScreenState
       ),
       items: [
         PopupMenuItem<String>(
+          value: 'swap',
+          child: Row(
+            children: [
+              Icon(
+                Icons.swap_horiz,
+                size: 20,
+                color: isDark ? WorkoutDesign.textSecondary : Colors.grey.shade700,
+              ),
+              const SizedBox(width: 12),
+              Text(
+                'Swap Exercise',
+                style: TextStyle(
+                  color: isDark ? WorkoutDesign.textPrimary : Colors.grey.shade900,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
+        ),
+        PopupMenuItem<String>(
+          value: 'equipment',
+          child: Row(
+            children: [
+              Icon(
+                Icons.fitness_center,
+                size: 20,
+                color: isDark ? WorkoutDesign.textSecondary : Colors.grey.shade700,
+              ),
+              const SizedBox(width: 12),
+              Text(
+                'My Gym',
+                style: TextStyle(
+                  color: isDark ? WorkoutDesign.textPrimary : Colors.grey.shade900,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
+        ),
+        PopupMenuItem<String>(
           value: 'history',
           child: Row(
             children: [
@@ -5450,7 +5644,11 @@ class _ActiveWorkoutScreenState
         ),
       ],
     ).then((value) {
-      if (value == 'history') {
+      if (value == 'swap') {
+        _showSwapSheet(_viewingExerciseIndex);
+      } else if (value == 'equipment') {
+        _showEquipmentProfileSheet();
+      } else if (value == 'history') {
         _showHistorySheet(exercise);
       } else if (value == 'bar_type') {
         _showBarTypeSelector(exercise);
@@ -5458,6 +5656,123 @@ class _ActiveWorkoutScreenState
         _showQuitDialog();
       }
     });
+  }
+
+  /// Build the drag-to-action overlay zones (Delete + Swap).
+  /// Shown at the top of the screen when the user long-press-drags a thumbnail.
+  Widget _buildDragActionZones(bool isDark) {
+    return Positioned(
+      top: 0,
+      left: 0,
+      right: 0,
+      child: ClipRect(
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+          child: Container(
+            color: Colors.transparent,
+            padding: EdgeInsets.only(
+              top: MediaQuery.of(context).padding.top + 8,
+              left: 16,
+              right: 16,
+              bottom: 16,
+            ),
+            child: Row(
+              children: [
+                // Delete zone
+                Expanded(
+                  child: _DragActionZone(
+                    icon: Icons.delete_outline_rounded,
+                    label: 'Delete',
+                    color: Colors.red,
+                    isDark: isDark,
+                    onAccept: (draggedIndex) {
+                      setState(() {
+                        _isDragActive = false;
+                        _draggedExerciseIndex = null;
+                      });
+                      _confirmDeleteExercise(draggedIndex);
+                    },
+                  ),
+                ),
+                const SizedBox(width: 12),
+                // Swap zone
+                Expanded(
+                  child: _DragActionZone(
+                    icon: Icons.swap_horiz_rounded,
+                    label: 'Swap',
+                    color: AppColors.orange,
+                    isDark: isDark,
+                    onAccept: (draggedIndex) {
+                      setState(() {
+                        _isDragActive = false;
+                        _draggedExerciseIndex = null;
+                      });
+                      if (draggedIndex < _exercises.length) {
+                        _showSwapSheet(draggedIndex);
+                      }
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Confirm and delete an exercise from the workout
+  void _confirmDeleteExercise(int index) {
+    if (index >= _exercises.length) return;
+    final exercise = _exercises[index];
+
+    // If last exercise, show end workout dialog instead
+    if (_exercises.length <= 1) {
+      _showQuitDialog();
+      return;
+    }
+
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Remove Exercise'),
+        content: Text('Remove "${exercise.name}" from this workout?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () {
+              Navigator.pop(ctx);
+              HapticFeedback.heavyImpact();
+              setState(() {
+                _exercises.removeAt(index);
+                // Adjust current index if needed
+                if (_viewingExerciseIndex >= _exercises.length) {
+                  _viewingExerciseIndex = _exercises.length - 1;
+                }
+                if (_currentExerciseIndex >= _exercises.length) {
+                  _currentExerciseIndex = _exercises.length - 1;
+                }
+                _initControllersForExercise(_viewingExerciseIndex);
+              });
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('${exercise.name} removed'),
+                  behavior: SnackBarBehavior.floating,
+                  duration: const Duration(seconds: 2),
+                ),
+              );
+            },
+            style: FilledButton.styleFrom(
+              backgroundColor: Colors.red,
+            ),
+            child: const Text('Remove'),
+          ),
+        ],
+      ),
+    );
   }
 
   /// Show weight increments sheet
@@ -5693,7 +6008,6 @@ class _ActiveWorkoutScreenState
 
   /// Apply a newly selected progression pattern to the current exercise.
   void _applyProgressionPattern(SetProgressionPattern pattern) {
-    final exercise = _exercises[_viewingExerciseIndex];
     final exerciseIndex = _viewingExerciseIndex;
 
     // Save to state
@@ -5703,44 +6017,110 @@ class _ActiveWorkoutScreenState
 
     // Persist to SharedPreferences
     ref.read(exerciseProgressionProvider.notifier)
-        .setPattern(exercise.name, pattern);
+        .setPattern(_exercises[exerciseIndex].name, pattern);
 
-    // Recalculate targets for uncompleted sets
+    // Recalculate and apply targets
+    _applyProgressionTargets(exerciseIndex, pattern);
+
+    HapticFeedback.mediumImpact();
+  }
+
+  /// Recalculate and apply progression targets for an exercise.
+  /// Works in DISPLAY units to avoid kg↔lbs rounding issues.
+  /// Handles warmup sets with 50% weight and 6-12 rep clamping.
+  void _applyProgressionTargets(int exerciseIndex, SetProgressionPattern pattern) {
+    final exercise = _exercises[exerciseIndex];
+    debugPrint('🎯 [ApplyTargets] ENTER: ex=$exerciseIndex "${exercise.name}", pattern=${pattern.displayName}, '
+        'exercise.weight=${exercise.weight}, equipment=${exercise.equipment}, setTargets=${exercise.setTargets?.length ?? 0}');
+
+    // Skip explicitly bodyweight exercises — no weight targets to generate
+    final eq = (exercise.equipment ?? '').toLowerCase();
+    if (eq.contains('bodyweight') || eq.contains('body weight')) {
+      debugPrint('🎯 [ApplyTargets] SKIP — bodyweight exercise (equipment=$eq)');
+      return;
+    }
+
+    // Get display-unit increment (same approach as _updateControlsForNextSet)
     final incrementState = ref.read(weightIncrementsProvider);
-    final increment = incrementState.getIncrement(exercise.equipment);
-    // Use controller weight (what the user actually entered) converted to kg.
-    // Snap to nearest real increment so targets align with actual plates.
-    final controllerWeight = double.tryParse(_weightController.text) ?? 0;
-    final rawWeight = controllerWeight > 0
-        ? (_useKg ? controllerWeight : controllerWeight * 0.453592)
-        : (exercise.weight?.toDouble() ?? 50);
-    final enteredWeight = increment > 0
-        ? (rawWeight / increment).round() * increment
-        : rawWeight;
+    final incrementRaw = incrementState.getIncrement(exercise.equipment);
+    final incrementUnit = incrementState.unit;
+    final double effectiveIncrement;
+    if (_useKg && incrementUnit == 'lbs') {
+      effectiveIncrement = incrementRaw * 0.453592;
+    } else if (!_useKg && incrementUnit == 'kg') {
+      effectiveIncrement = incrementRaw * 2.20462;
+    } else {
+      effectiveIncrement = incrementRaw;
+    }
+
+    // Get weight in display unit — robust fallback chain.
+    // IMPORTANT: Only read from the controller if this IS the current exercise.
+    // The controller is shared — it always shows the CURRENT exercise's weight,
+    // not this exercise's weight if called from the preload loop.
+    final controllerWeight = exerciseIndex == _currentExerciseIndex
+        ? (double.tryParse(_weightController.text) ?? 0)
+        : 0.0;
+    double displayWeight;
+    if (controllerWeight > 0) {
+      displayWeight = controllerWeight;
+      debugPrint('⚙️ [ApplyTargets] ex=$exerciseIndex weight from controller: $displayWeight');
+    } else {
+      // Try exercise weight first (stored in KG)
+      final aiWeight = exercise.weight?.toDouble() ?? 0;
+      if (aiWeight > 0) {
+        displayWeight = _useKg ? aiWeight : aiWeight * 2.20462;
+        debugPrint('⚙️ [ApplyTargets] ex=$exerciseIndex weight from exercise.weight: $aiWeight kg → display=$displayWeight');
+      } else {
+        // Try first working set target
+        final workingTarget = exercise.setTargets?.cast<SetTarget?>().firstWhere(
+          (t) => t != null && t.setType.toLowerCase() != 'warmup' && (t.targetWeightKg ?? 0) > 0,
+          orElse: () => exercise.setTargets?.isNotEmpty == true ? exercise.setTargets!.first : null,
+        );
+        final targetWt = workingTarget?.targetWeightKg ?? 0;
+        if (targetWt > 0) {
+          displayWeight = _useKg ? targetWt : targetWt * 2.20462;
+          debugPrint('⚙️ [ApplyTargets] ex=$exerciseIndex weight from setTarget: $targetWt → display=$displayWeight');
+        } else {
+          displayWeight = getDefaultWeight(exercise.equipment,
+              exerciseName: exercise.name,
+              fitnessLevel: ref.read(authStateProvider).user?.fitnessLevel,
+              gender: ref.read(authStateProvider).user?.gender,
+              useKg: _useKg);
+          debugPrint('⚙️ [ApplyTargets] ex=$exerciseIndex weight from getDefaultWeight: $displayWeight');
+        }
+      }
+    }
+
+    if (displayWeight <= 0) {
+      debugPrint('⚙️ [ApplyTargets] ex=$exerciseIndex SKIP — bodyweight (displayWeight=0)');
+      return; // Bodyweight — no targets to generate
+    }
+
+    final enteredWeight = effectiveIncrement > 0
+        ? (displayWeight / effectiveIncrement).round() * effectiveIncrement
+        : displayWeight;
+
     final baseReps = exercise.reps ?? 10;
     final totalSets = _totalSetsPerExercise[exerciseIndex] ?? 3;
-    // Derive peak working weight from entered weight (set 1 weight).
-    // e.g., Pyramid Up: peak = entered + (sets-1) × increment.
+
     final workingWeight = pattern.deriveWorkingWeight(
       enteredWeight: enteredWeight,
       totalSets: totalSets,
-      increment: increment,
+      increment: effectiveIncrement,
     );
     _exerciseWorkingWeight[exerciseIndex] = workingWeight;
 
-    final userGoalApply = ref.read(authStateProvider).user?.primaryGoal;
+    final userGoal = ref.read(authStateProvider).user?.primaryGoal;
     final targets = pattern.generateTargets(
       workingWeight: workingWeight,
       totalSets: totalSets,
       baseReps: baseReps,
-      increment: increment,
-      trainingGoal: userGoalApply,
+      increment: effectiveIncrement,
+      trainingGoal: userGoal,
     );
 
-    // Update setTargets for ALL uncompleted sets so the display reflects the pattern
+    // Update setTargets for ALL uncompleted sets
     final currentSetTargets = List<SetTarget>.from(exercise.setTargets ?? []);
-
-    // Ensure enough SetTarget entries exist
     while (currentSetTargets.length < totalSets) {
       currentSetTargets.add(SetTarget(
         setNumber: currentSetTargets.length + 1,
@@ -5753,11 +6133,34 @@ class _ActiveWorkoutScreenState
 
     for (int i = completedCount; i < targets.length && i < currentSetTargets.length; i++) {
       final pt = targets[i];
+      final isWarmupSet = currentSetTargets[i].setType.toLowerCase() == 'warmup';
+
+      double targetWeight;
+      int targetReps;
+
+      if (isWarmupSet) {
+        // Warmup: 50% of lightest working set weight, snapped to equipment step
+        targetWeight = targets.first.weight * 0.5;
+        final range = getWeightRange(exercise.equipment, exerciseName: exercise.name);
+        final warmupStep = _useKg ? range.stepKg : range.stepLbs;
+        final minWeight = _useKg ? range.minKg : range.minLbs;
+        if (warmupStep > 0) {
+          final upperBound = targets.first.weight > minWeight ? targets.first.weight : minWeight;
+          targetWeight = ((targetWeight / warmupStep).round() * warmupStep)
+              .clamp(minWeight, upperBound);
+        }
+        // Warmup reps: clamp to 6-12 (sweet spot)
+        targetReps = (pt.reps > 0 ? pt.reps : baseReps).clamp(6, 12);
+      } else {
+        targetWeight = pt.weight;
+        targetReps = pt.isAmrap ? 0 : pt.reps;
+      }
+
       currentSetTargets[i] = SetTarget(
         setNumber: i + 1,
-        setType: pt.isAmrap ? 'amrap' : currentSetTargets[i].setType,
-        targetReps: pt.isAmrap ? 0 : pt.reps,
-        targetWeightKg: pt.weight,
+        setType: isWarmupSet ? 'warmup' : (pt.isAmrap ? 'amrap' : currentSetTargets[i].setType),
+        targetReps: targetReps,
+        targetWeightKg: targetWeight, // In display unit (display code uses as-is)
         targetRir: currentSetTargets[i].targetRir,
       );
     }
@@ -5768,20 +6171,26 @@ class _ActiveWorkoutScreenState
 
     // Update current set's weight/reps controller if not yet completed
     if (completedCount < targets.length) {
-      final currentTarget = targets[completedCount];
-      if (_useKg) {
-        _weightController.text = currentTarget.weight.toStringAsFixed(1);
-      } else {
-        _weightController.text = (currentTarget.weight * 2.20462).toStringAsFixed(1);
-      }
-      if (currentTarget.isAmrap) {
-        _repsController.text = '';
-      } else {
-        _repsController.text = currentTarget.reps.toString();
-      }
-    }
+      final isWarmup = currentSetTargets.length > completedCount &&
+          currentSetTargets[completedCount].setType.toLowerCase() == 'warmup';
 
-    HapticFeedback.mediumImpact();
+      final double weight;
+      final int reps;
+      if (isWarmup) {
+        final warmupTarget = currentSetTargets[completedCount];
+        weight = warmupTarget.targetWeightKg ?? 0;
+        reps = warmupTarget.targetReps;
+      } else {
+        final pt = targets[completedCount];
+        weight = pt.weight;
+        reps = pt.reps;
+      }
+
+      _weightController.text = weight > 0
+          ? weight.toStringAsFixed(weight % 1 == 0 ? 0 : 1) : '';
+      _repsController.text = reps > 0 ? reps.toString() : '';
+      _repsRightController.text = _repsController.text;
+    }
   }
 
   /// Show exercise details sheet (muscles, description, etc.)
@@ -9096,6 +9505,104 @@ class _ProgressionSelectorSheetState extends State<_ProgressionSelectorSheet> {
           ),
         ),
       ),
+    );
+  }
+}
+
+/// A drag target zone that appears at the top of the screen during thumbnail drag.
+/// Accepts [int] data (exercise index) from [LongPressDraggable].
+class _DragActionZone extends StatefulWidget {
+  final IconData icon;
+  final String label;
+  final Color color;
+  final bool isDark;
+  final void Function(int exerciseIndex) onAccept;
+
+  const _DragActionZone({
+    required this.icon,
+    required this.label,
+    required this.color,
+    required this.isDark,
+    required this.onAccept,
+  });
+
+  @override
+  State<_DragActionZone> createState() => _DragActionZoneState();
+}
+
+class _DragActionZoneState extends State<_DragActionZone> {
+  bool _isHovering = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return DragTarget<int>(
+      onWillAcceptWithDetails: (details) {
+        if (!_isHovering) {
+          setState(() => _isHovering = true);
+          HapticFeedback.selectionClick();
+        }
+        return true;
+      },
+      onLeave: (_) {
+        setState(() => _isHovering = false);
+      },
+      onAcceptWithDetails: (details) {
+        setState(() => _isHovering = false);
+        HapticFeedback.heavyImpact();
+        widget.onAccept(details.data);
+      },
+      builder: (context, candidateData, rejectedData) {
+        final isActive = _isHovering && candidateData.isNotEmpty;
+
+        return AnimatedContainer(
+          duration: const Duration(milliseconds: 150),
+          height: 56,
+          decoration: BoxDecoration(
+            color: isActive
+                ? widget.color.withValues(alpha: 0.35)
+                : widget.color.withValues(alpha: 0.15),
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(
+              color: isActive
+                  ? widget.color
+                  : widget.color.withValues(alpha: 0.5),
+              width: isActive ? 2.5 : 1.5,
+            ),
+            boxShadow: isActive
+                ? [
+                    BoxShadow(
+                      color: widget.color.withValues(alpha: 0.4),
+                      blurRadius: 20,
+                      spreadRadius: 2,
+                    ),
+                  ]
+                : [],
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              AnimatedScale(
+                scale: isActive ? 1.3 : 1.0,
+                duration: const Duration(milliseconds: 150),
+                child: Icon(
+                  widget.icon,
+                  size: 22,
+                  color: isActive ? Colors.white : widget.color,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                widget.label,
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w700,
+                  color: isActive ? Colors.white : widget.color,
+                ),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 }

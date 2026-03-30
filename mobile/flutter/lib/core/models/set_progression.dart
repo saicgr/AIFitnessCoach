@@ -417,22 +417,26 @@ extension SetProgressionPatternX on SetProgressionPattern {
     required double increment,
     int completedSetIndex = 0,
   }) {
+    double result;
     switch (this) {
       case SetProgressionPattern.pyramidUp:
         // Set i weight = peak - (totalSets-1-i)*inc
         // → peak = enteredWeight + (totalSets-1-completedSetIndex)*inc
         final stepsFromTop = totalSets - 1 - completedSetIndex;
-        return _snap(enteredWeight + stepsFromTop * increment, increment);
+        result = _snap(enteredWeight + stepsFromTop * increment, increment);
       case SetProgressionPattern.myoReps:
-        return _snap(enteredWeight / 0.8, increment);
+        result = _snap(enteredWeight / 0.8, increment);
       default:
-        return enteredWeight;
+        result = enteredWeight;
     }
+    debugPrint('⚙️ [Progression] deriveWorkingWeight: pattern=$this, entered=$enteredWeight, sets=$totalSets, inc=$increment, completedIdx=$completedSetIndex → working=$result');
+    return result;
   }
 
   /// Reverse the pattern-specific rep offset for a completed set at [setIndex]
   /// to recover the base rep target (peak-set reps for pyramid, etc.)
   static int reverseRepOffset(SetProgressionPattern pattern, int actualReps, int setIndex, int totalSets) {
+    int result;
     switch (pattern) {
       case SetProgressionPattern.pyramidUp:
         // Dynamic step: ±1 for strength (≤5 baseReps), ±2 for hypertrophy (6+)
@@ -444,26 +448,31 @@ extension SetProgressionPatternX on SetProgressionPattern {
           baseReps = actualReps - stepsFromTop * 1;
         }
         // Floor to 6: minimum effective rep range for non-failure training
-        return baseReps.clamp(6, 30);
+        result = baseReps.clamp(6, 30);
       case SetProgressionPattern.reversePyramid:
         // repOffsets = [-4, -2, 0, 2, 4]
         const offsets = [-4, -2, 0, 2, 4];
         final offset = setIndex < offsets.length ? offsets[setIndex] : offsets.last;
-        return (actualReps - offset).clamp(1, 30);
+        result = (actualReps - offset).clamp(1, 30);
       case SetProgressionPattern.topSetBackOff:
         // Set 0: baseReps - 4, Sets 1+: baseReps - 2
         final offset = setIndex == 0 ? -4 : -2;
-        return (actualReps - offset).clamp(1, 30);
+        result = (actualReps - offset).clamp(1, 30);
       case SetProgressionPattern.endurance:
         // Set i reps = baseReps + i*2
-        return (actualReps - setIndex * 2).clamp(1, 30);
+        result = (actualReps - setIndex * 2).clamp(1, 30);
       case SetProgressionPattern.myoReps:
         // Set 0 (activation): baseReps + 5, Mini-sets: fixed at 5
-        if (setIndex == 0) return (actualReps - 5).clamp(1, 30);
-        return actualReps;
+        if (setIndex == 0) {
+          result = (actualReps - 5).clamp(1, 30);
+        } else {
+          result = actualReps;
+        }
       default:
-        return actualReps; // Straight Sets, Rest-Pause: no offset
+        result = actualReps; // Straight Sets, Rest-Pause: no offset
     }
+    debugPrint('⚙️ [Progression] reverseRepOffset: pattern=$pattern, actualReps=$actualReps, setIdx=$setIndex, totalSets=$totalSets → baseReps=$result');
+    return result;
   }
 
   /// Generate per-set targets for this progression pattern.
@@ -607,6 +616,7 @@ extension SetProgressionPatternX on SetProgressionPattern {
   List<ProgressionSetTarget> _generatePyramidUp(
     double w, int sets, int reps, double inc,
   ) {
+    debugPrint('⚙️ [Progression] pyramidUp: working=$w, sets=$sets, baseReps=$reps, inc=$inc, step=${_pyramidRepStep(reps)}');
     final step = _pyramidRepStep(reps);
     final targets = <ProgressionSetTarget>[];
     for (int i = 0; i < sets; i++) {
@@ -915,6 +925,8 @@ List<ProgressionSetTarget> _adaptWeightRepPattern(
       }
     }
   }
+
+  debugPrint('⚙️ [Adapt] repRatio=${repRatio.toStringAsFixed(2)}, RIR=$rir → incrementAdjust=$incrementAdjust');
 
   if (incrementAdjust == 0) return originalTargets;
 

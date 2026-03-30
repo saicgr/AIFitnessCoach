@@ -2,8 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:dio/dio.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/constants/api_constants.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../data/local/database_provider.dart';
 import '../../../data/repositories/auth_repository.dart';
 import '../../../data/repositories/onboarding_repository.dart';
 import '../../../data/services/api_client.dart';
@@ -124,6 +127,12 @@ class DangerZoneSection extends ConsumerWidget {
   void _showDeleteAccountDialog(BuildContext context, WidgetRef ref) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
+    // Check if user signed in via Google (no password)
+    final supabaseUser = Supabase.instance.client.auth.currentUser;
+    final authProvider = supabaseUser?.appMetadata['provider'] as String? ?? 'email';
+    final isOAuthUser = authProvider != 'email';
+    final passwordController = TextEditingController();
+
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -200,11 +209,28 @@ class DangerZoneSection extends ConsumerWidget {
                 color: isDark ? AppColors.textSecondary : AppColorsLight.textSecondary,
               ),
             ),
+            // Password prompt for email users only
+            if (!isOAuthUser) ...[
+              const SizedBox(height: 16),
+              TextField(
+                controller: passwordController,
+                obscureText: true,
+                decoration: InputDecoration(
+                  labelText: 'Enter your password to confirm',
+                  labelStyle: TextStyle(fontSize: 13, color: isDark ? AppColors.textSecondary : AppColorsLight.textSecondary),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                ),
+              ),
+            ],
           ],
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: () {
+              passwordController.dispose();
+              Navigator.pop(context);
+            },
             child: Text(
               'Cancel',
               style: TextStyle(
@@ -214,8 +240,17 @@ class DangerZoneSection extends ConsumerWidget {
           ),
           TextButton(
             onPressed: () async {
+              // For email users, require password
+              if (!isOAuthUser && passwordController.text.isEmpty) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Please enter your password')),
+                );
+                return;
+              }
+              final password = isOAuthUser ? null : passwordController.text;
+              passwordController.dispose();
               Navigator.pop(context);
-              await _deleteAccount(context, ref);
+              await _deleteAccount(context, ref, password: password);
             },
             child: const Text(
               'Delete Account',
@@ -282,7 +317,7 @@ class DangerZoneSection extends ConsumerWidget {
     }
   }
 
-  Future<void> _deleteAccount(BuildContext context, WidgetRef ref) async {
+  Future<void> _deleteAccount(BuildContext context, WidgetRef ref, {String? password}) async {
     // Store navigator and scaffold messenger before async operations
     final navigator = Navigator.of(context);
     final scaffoldMessenger = ScaffoldMessenger.of(context);
@@ -309,9 +344,14 @@ class DangerZoneSection extends ConsumerWidget {
 
       debugPrint('[Settings] Deleting account for user: $userId');
 
-      // Call backend to fully delete user account
-      final response = await apiClient.delete(
+      // Call backend to fully delete user account (with password for email users)
+      final body = <String, dynamic>{};
+      if (password != null) {
+        body['password'] = password;
+      }
+      final response = await apiClient.dio.delete(
         '${ApiConstants.users}/$userId/reset',
+        data: body,
       );
 
       debugPrint('[Settings] Delete response: ${response.statusCode}');
@@ -325,7 +365,16 @@ class DangerZoneSection extends ConsumerWidget {
         // Clear all local storage (SharedPreferences)
         final prefs = await SharedPreferences.getInstance();
         await prefs.clear();
-        debugPrint('[Settings] Local storage cleared');
+        debugPrint('[Settings] SharedPreferences cleared');
+
+        // Clear local Drift database
+        try {
+          final db = ref.read(appDatabaseProvider);
+          await db.clearAllUserData();
+          debugPrint('[Settings] Drift database cleared');
+        } catch (e) {
+          debugPrint('[Settings] Drift clear failed (non-critical): $e');
+        }
 
         // Reset onboarding state (clear in-memory conversation)
         ref.read(onboardingStateProvider.notifier).reset();
@@ -349,10 +398,14 @@ class DangerZoneSection extends ConsumerWidget {
         // Dialog may already be closed
       }
 
-      // Show error
+      // Show error — extract message from DioException if available
+      String errorMsg = e.toString();
+      if (e is DioException && e.response?.data is Map) {
+        errorMsg = (e.response?.data as Map)['detail'] ?? errorMsg;
+      }
       scaffoldMessenger.showSnackBar(
         SnackBar(
-          content: Text('Error: ${e.toString()}'),
+          content: Text('Error: $errorMsg'),
           backgroundColor: AppColors.error,
         ),
       );

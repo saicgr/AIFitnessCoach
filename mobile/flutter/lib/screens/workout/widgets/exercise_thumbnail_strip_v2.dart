@@ -48,6 +48,10 @@ class ExerciseThumbnailStripV2 extends StatefulWidget {
   /// Callback when user long-presses an exercise
   final void Function(int index)? onExerciseLongPress;
 
+  /// Callback when drag state changes (true = drag started, false = drag ended).
+  /// Used by parent to show/hide drop zones (Delete, Swap) at the top of screen.
+  final void Function(bool isDragging, int? draggedIndex)? onDragActiveChanged;
+
   const ExerciseThumbnailStripV2({
     super.key,
     required this.exercises,
@@ -59,6 +63,7 @@ class ExerciseThumbnailStripV2 extends StatefulWidget {
     this.onReorder,
     this.onCreateSuperset,
     this.onExerciseLongPress,
+    this.onDragActiveChanged,
   });
 
   @override
@@ -177,9 +182,11 @@ class _ExerciseThumbnailStripV2State extends State<ExerciseThumbnailStripV2> {
             },
             onDragStarted: () {
               setState(() => _draggingIndex = i);
+              widget.onDragActiveChanged?.call(true, i);
             },
             onDragEnded: () {
               setState(() => _draggingIndex = null);
+              widget.onDragActiveChanged?.call(false, null);
             },
             onCreateSuperset: widget.onCreateSuperset != null
                 ? (draggedIndex) {
@@ -232,9 +239,11 @@ class _ExerciseThumbnailStripV2State extends State<ExerciseThumbnailStripV2> {
                 },
                 onDragStarted: () {
                   setState(() => _draggingIndex = i);
+                  widget.onDragActiveChanged?.call(true, i);
                 },
                 onDragEnded: () {
                   setState(() => _draggingIndex = null);
+                  widget.onDragActiveChanged?.call(false, null);
                 },
                 onCreateSuperset: widget.onCreateSuperset != null
                     ? (draggedIndex) {

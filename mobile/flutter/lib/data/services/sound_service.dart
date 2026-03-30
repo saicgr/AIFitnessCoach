@@ -135,9 +135,7 @@ class SoundService {
         AudioContext(
           iOS: AudioContextIOS(
             category: AVAudioSessionCategory.ambient,
-            options: {
-              AVAudioSessionOptions.mixWithOthers,
-            },
+            options: {},
           ),
           android: AudioContextAndroid(
             isSpeakerphoneOn: false,
