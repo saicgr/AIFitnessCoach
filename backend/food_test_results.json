@@ -1,0 +1,1999 @@
+{
+  "timestamp": "2026-03-30T22:56:15Z",
+  "total": 221,
+  "passed": 183,
+  "failed": 2,
+  "errors": 36,
+  "pass_rate": "82.8%",
+  "results": [
+    {
+      "id": "B1",
+      "description": "3 scrambled eggs with toast and orange juice",
+      "status": "PASS",
+      "total_cal": 720,
+      "items": 1,
+      "reason": "",
+      "elapsed_ms": 6236
+    },
+    {
+      "id": "B2",
+      "description": "oatmeal with banana, blueberries and honey",
+      "status": "PASS",
+      "total_cal": 675,
+      "items": 1,
+      "reason": "",
+      "elapsed_ms": 3301
+    },
+    {
+      "id": "B3",
+      "description": "greek yogurt parfait with granola and strawberries",
+      "status": "PASS",
+      "total_cal": 538,
+      "items": 1,
+      "reason": "",
+      "elapsed_ms": 3685
+    },
+    {
+      "id": "B4",
+      "description": "2 slices of avocado toast with a fried egg on top",
+      "status": "PASS",
+      "total_cal": 737,
+      "items": 1,
+      "reason": "",
+      "elapsed_ms": 3216
+    },
+    {
+      "id": "B5",
+      "description": "protein shake with almond milk, peanut butter and banana",
+      "status": "PASS",
+      "total_cal": 373,
+      "items": 3,
+      "reason": "",
+      "elapsed_ms": 7168
+    },
+    {
+      "id": "B6",
+      "description": "pancakes with maple syrup and bacon",
+      "status": "PASS",
+      "total_cal": 568,
+      "items": 1,
+      "reason": "",
+      "elapsed_ms": 2855
+    },
+    {
+      "id": "B7",
+      "description": "smoothie bowl with acai, mixed berries and coconut flakes",
+      "status": "PASS",
+      "total_cal": 974,
+      "items": 3,
+      "reason": "",
+      "elapsed_ms": 6215
+    },
+    {
+      "id": "B8",
+      "description": "bagel with cream cheese and smoked salmon",
+      "status": "PASS",
+      "total_cal": 513,
+      "items": 1,
+      "reason": "",
+      "elapsed_ms": 2941
+    },
+    {
+      "id": "B9",
+      "description": "french toast with powdered sugar and a side of fruit",
+      "status": "ERROR",
+      "total_cal": 0,
+      "items": 0,
+      "reason": "TIMEOUT",
+      "elapsed_ms": 45003
+    },
+    {
+      "id": "B10",
+      "description": "overnight oats with chia seeds, almonds and maple syrup",
+      "status": "PASS",
+      "total_cal": 4753,
+      "items": 3,
+      "reason": "",
+      "elapsed_ms": 6977
+    },
+    {
+      "id": "B11",
+      "description": "egg white omelette with spinach, mushrooms and feta",
+      "status": "PASS",
+      "total_cal": 911,
+      "items": 1,
+      "reason": "",
+      "elapsed_ms": 3006
+    },
+    {
+      "id": "B12",
+      "description": "bowl of cheerios with whole milk and a banana",
+      "status": "PASS",
+      "total_cal": 400,
+      "items": 3,
+      "reason": "",
+      "elapsed_ms": 21293
+    },
+    {
+      "id": "B13",
+      "description": "breakfast burrito with eggs, cheese, beans and salsa",
+      "status": "PASS",
+      "total_cal": 493,
+      "items": 1,
+      "reason": "",
+      "elapsed_ms": 3212
+    },
+    {
+      "id": "B14",
+      "description": "2 waffles with butter and blueberry syrup",
+      "status": "PASS",
+      "total_cal": 664,
+      "items": 1,
+      "reason": "",
+      "elapsed_ms": 2784
+    },
+    {
+      "id": "B15",
+      "description": "cottage cheese with pineapple chunks and walnuts",
+      "status": "PASS",
+      "total_cal": 551,
+      "items": 2,
+      "reason": "",
+      "elapsed_ms": 6094
+    },
+    {
+      "id": "B16",
+      "description": "masala dosa with coconut chutney and sambar",
+      "status": "PASS",
+      "total_cal": 288,
+      "items": 1,
+      "reason": "",
+      "elapsed_ms": 2960
+    },
+    {
+      "id": "B17",
+      "description": "shakshuka with 2 pita breads",
+      "status": "PASS",
+      "total_cal": 600,
+      "items": 2,
+      "reason": "",
+      "elapsed_ms": 6971
+    },
+    {
+      "id": "B18",
+      "description": "croissant with ham and swiss cheese",
+      "status": "PASS",
+      "total_cal": 452,
+      "items": 1,
+      "reason": "",
+      "elapsed_ms": 3583
+    },
+    {
+      "id": "B19",
+      "description": "acai bowl with granola, banana and peanut butter drizzle",
+      "status": "PASS",
+      "total_cal": 908,
+      "items": 3,
+      "reason": "",
+      "elapsed_ms": 7556
+    },
+    {
+      "id": "B20",
+      "description": "4 idlis with coconut chutney",
+      "status": "PASS",
+      "total_cal": 95,
+      "items": 1,
+      "reason": "",
+      "elapsed_ms": 2696
+    },
+    {
+      "id": "L21",
+      "description": "grilled chicken caesar salad with croutons",
+      "status": "PASS",
+      "total_cal": 345,
+      "items": 1,
+      "reason": "",
+      "elapsed_ms": 2865
+    },
+    {
+      "id": "L22",
+      "description": "turkey and avocado sandwich on whole wheat",
+      "status": "PASS",
+      "total_cal": 350,
+      "items": 1,
+      "reason": "",
+      "elapsed_ms": 7047
+    },
+    {
+      "id": "L23",
+      "description": "chipotle bowl with brown rice, chicken, black beans, guac and cheese",
+      "status": "PASS",
+      "total_cal": 1148,
+      "items": 5,
+      "reason": "",
+      "elapsed_ms": 6829
+    },
+    {
+      "id": "L24",
+      "description": "sushi roll combo - 2 california rolls and 1 spicy tuna roll",
+      "status": "PASS",
+      "total_cal": 310,
+      "items": 1,
+      "reason": "",
+      "elapsed_ms": 3102
+    },
+    {
+      "id": "L25",
+      "description": "chicken tikka masala with basmati rice and garlic naan",
+      "status": "PASS",
+      "total_cal": 551,
+      "items": 2,
+      "reason": "",
+      "elapsed_ms": 6282
+    },
+    {
+      "id": "L26",
+      "description": "pho with beef, bean sprouts and sriracha",
+      "status": "PASS",
+      "total_cal": 560,
+      "items": 3,
+      "reason": "",
+      "elapsed_ms": 5635
+    },
+    {
+      "id": "L27",
+      "description": "mediterranean wrap with hummus, falafel and tabbouleh",
+      "status": "PASS",
+      "total_cal": 722,
+      "items": 3,
+      "reason": "",
+      "elapsed_ms": 6039
+    },
+    {
+      "id": "L28",
+      "description": "grilled salmon with quinoa, boiled broccoli and a side of greek salad",
+      "status": "PASS",
+      "total_cal": 623,
+      "items": 3,
+      "reason": "",
+      "elapsed_ms": 9216
+    },
+    {
+      "id": "L29",
+      "description": "pad thai with shrimp and a thai iced tea",
+      "status": "PASS",
+      "total_cal": 658,
+      "items": 1,
+      "reason": "",
+      "elapsed_ms": 2969
+    },
+    {
+      "id": "L30",
+      "description": "burger with fries and a coke",
+      "status": "PASS",
+      "total_cal": 540,
+      "items": 2,
+      "reason": "",
+      "elapsed_ms": 5326
+    },
+    {
+      "id": "L31",
+      "description": "chicken quesadilla with sour cream and guacamole",
+      "status": "PASS",
+      "total_cal": 442,
+      "items": 1,
+      "reason": "",
+      "elapsed_ms": 2997
+    },
+    {
+      "id": "L32",
+      "description": "poke bowl with tuna, edamame, avocado and rice",
+      "status": "PASS",
+      "total_cal": 1143,
+      "items": 4,
+      "reason": "",
+      "elapsed_ms": 5669
+    },
+    {
+      "id": "L33",
+      "description": "subway footlong turkey sub with chips and water",
+      "status": "PASS",
+      "total_cal": 541,
+      "items": 1,
+      "reason": "",
+      "elapsed_ms": 3054
+    },
+    {
+      "id": "L34",
+      "description": "butter chicken with jeera rice and raita",
+      "status": "PASS",
+      "total_cal": 480,
+      "items": 1,
+      "reason": "",
+      "elapsed_ms": 2846
+    },
+    {
+      "id": "L35",
+      "description": "bibimbap with beef and a fried egg",
+      "status": "PASS",
+      "total_cal": 613,
+      "items": 2,
+      "reason": "",
+      "elapsed_ms": 5377
+    },
+    {
+      "id": "L36",
+      "description": "cobb salad with grilled chicken and ranch dressing",
+      "status": "PASS",
+      "total_cal": 362,
+      "items": 1,
+      "reason": "",
+      "elapsed_ms": 2870
+    },
+    {
+      "id": "L37",
+      "description": "fish tacos with mango salsa and black beans",
+      "status": "PASS",
+      "total_cal": 147,
+      "items": 1,
+      "reason": "",
+      "elapsed_ms": 2846
+    },
+    {
+      "id": "L38",
+      "description": "paneer tikka wrap with mint chutney",
+      "status": "PASS",
+      "total_cal": 1665,
+      "items": 1,
+      "reason": "",
+      "elapsed_ms": 6697
+    },
+    {
+      "id": "L39",
+      "description": "ramen with pork belly, soft boiled egg and corn",
+      "status": "PASS",
+      "total_cal": 658,
+      "items": 3,
+      "reason": "",
+      "elapsed_ms": 5980
+    },
+    {
+      "id": "L40",
+      "description": "caprese sandwich with fresh mozzarella, tomato and basil",
+      "status": "ERROR",
+      "total_cal": 0,
+      "items": 0,
+      "reason": "TIMEOUT",
+      "elapsed_ms": 45003
+    },
+    {
+      "id": "L41",
+      "description": "dal tadka with 3 rotis and pickle",
+      "status": "PASS",
+      "total_cal": 1527,
+      "items": 3,
+      "reason": "",
+      "elapsed_ms": 5718
+    },
+    {
+      "id": "L42",
+      "description": "chicken shawarma plate with hummus, rice and salad",
+      "status": "PASS",
+      "total_cal": 682,
+      "items": 1,
+      "reason": "",
+      "elapsed_ms": 3099
+    },
+    {
+      "id": "L43",
+      "description": "tom yum soup with jasmine rice",
+      "status": "PASS",
+      "total_cal": 252,
+      "items": 1,
+      "reason": "",
+      "elapsed_ms": 2967
+    },
+    {
+      "id": "L44",
+      "description": "black bean burger with sweet potato fries",
+      "status": "PASS",
+      "total_cal": 262,
+      "items": 1,
+      "reason": "",
+      "elapsed_ms": 2941
+    },
+    {
+      "id": "L45",
+      "description": "biryani with raita and mirchi ka salan",
+      "status": "PASS",
+      "total_cal": 738,
+      "items": 2,
+      "reason": "",
+      "elapsed_ms": 5533
+    },
+    {
+      "id": "D46",
+      "description": "8oz ribeye steak with mashed potatoes and asparagus",
+      "status": "PASS",
+      "total_cal": 362,
+      "items": 3,
+      "reason": "",
+      "elapsed_ms": 28314
+    },
+    {
+      "id": "D47",
+      "description": "baked salmon with roasted vegetables and brown rice",
+      "status": "PASS",
+      "total_cal": 336,
+      "items": 2,
+      "reason": "",
+      "elapsed_ms": 6507
+    },
+    {
+      "id": "D48",
+      "description": "chicken alfredo pasta with garlic bread",
+      "status": "PASS",
+      "total_cal": 525,
+      "items": 1,
+      "reason": "",
+      "elapsed_ms": 2802
+    },
+    {
+      "id": "D49",
+      "description": "lamb chops with mint sauce, roasted potatoes and green beans",
+      "status": "FAIL",
+      "total_cal": 543,
+      "items": 3,
+      "reason": "Low-cal items: Mint Sauce Irish Lamb=8kcal/30.0g",
+      "elapsed_ms": 6895
+    },
+    {
+      "id": "D50",
+      "description": "shrimp stir fry with vegetables and white rice",
+      "status": "PASS",
+      "total_cal": 312,
+      "items": 1,
+      "reason": "",
+      "elapsed_ms": 3118
+    },
+    {
+      "id": "D51",
+      "description": "margherita pizza - 3 slices",
+      "status": "PASS",
+      "total_cal": 216,
+      "items": 1,
+      "reason": "",
+      "elapsed_ms": 2802
+    },
+    {
+      "id": "D52",
+      "description": "grilled chicken breast with sweet potato and steamed broccoli",
+      "status": "PASS",
+      "total_cal": 253,
+      "items": 2,
+      "reason": "",
+      "elapsed_ms": 6423
+    },
+    {
+      "id": "D53",
+      "description": "beef tacos with cheese, lettuce, tomato and sour cream",
+      "status": "PASS",
+      "total_cal": 916,
+      "items": 4,
+      "reason": "",
+      "elapsed_ms": 7751
+    },
+    {
+      "id": "D54",
+      "description": "spaghetti bolognese with parmesan cheese",
+      "status": "PASS",
+      "total_cal": 511,
+      "items": 1,
+      "reason": "",
+      "elapsed_ms": 5859
+    },
+    {
+      "id": "D55",
+      "description": "teriyaki chicken with fried rice and miso soup",
+      "status": "PASS",
+      "total_cal": 660,
+      "items": 1,
+      "reason": "",
+      "elapsed_ms": 3274
+    },
+    {
+      "id": "D56",
+      "description": "fish and chips with tartar sauce and coleslaw",
+      "status": "PASS",
+      "total_cal": 449,
+      "items": 3,
+      "reason": "",
+      "elapsed_ms": 5993
+    },
+    {
+      "id": "D57",
+      "description": "chicken parmesan with spaghetti",
+      "status": "PASS",
+      "total_cal": 589,
+      "items": 1,
+      "reason": "",
+      "elapsed_ms": 2891
+    },
+    {
+      "id": "D58",
+      "description": "pork tenderloin with apple sauce and roasted brussels sprouts",
+      "status": "PASS",
+      "total_cal": 937,
+      "items": 2,
+      "reason": "",
+      "elapsed_ms": 6015
+    },
+    {
+      "id": "D59",
+      "description": "vegetable curry with coconut rice",
+      "status": "PASS",
+      "total_cal": 980,
+      "items": 1,
+      "reason": "",
+      "elapsed_ms": 2770
+    },
+    {
+      "id": "D60",
+      "description": "grilled tuna steak with quinoa salad",
+      "status": "PASS",
+      "total_cal": 313,
+      "items": 1,
+      "reason": "",
+      "elapsed_ms": 3041
+    },
+    {
+      "id": "D61",
+      "description": "BBQ ribs with cornbread and mac and cheese",
+      "status": "PASS",
+      "total_cal": 250,
+      "items": 1,
+      "reason": "",
+      "elapsed_ms": 2844
+    },
+    {
+      "id": "D62",
+      "description": "stuffed bell peppers with ground turkey and cheese",
+      "status": "PASS",
+      "total_cal": 218,
+      "items": 1,
+      "reason": "",
+      "elapsed_ms": 2942
+    },
+    {
+      "id": "D63",
+      "description": "lobster tail with butter, corn on the cob and baked potato",
+      "status": "PASS",
+      "total_cal": 270,
+      "items": 1,
+      "reason": "",
+      "elapsed_ms": 3098
+    },
+    {
+      "id": "D64",
+      "description": "eggplant parmesan with side salad",
+      "status": "PASS",
+      "total_cal": 108,
+      "items": 1,
+      "reason": "",
+      "elapsed_ms": 3003
+    },
+    {
+      "id": "D65",
+      "description": "chole bhature with onion salad",
+      "status": "ERROR",
+      "total_cal": 0,
+      "items": 0,
+      "reason": "TIMEOUT",
+      "elapsed_ms": 45004
+    },
+    {
+      "id": "D66",
+      "description": "thai green curry with chicken and jasmine rice",
+      "status": "PASS",
+      "total_cal": 614,
+      "items": 2,
+      "reason": "",
+      "elapsed_ms": 6630
+    },
+    {
+      "id": "D67",
+      "description": "meatloaf with gravy, mashed potatoes and peas",
+      "status": "PASS",
+      "total_cal": 130,
+      "items": 1,
+      "reason": "",
+      "elapsed_ms": 2942
+    },
+    {
+      "id": "D68",
+      "description": "2 slices of pepperoni pizza with a side of buffalo wings",
+      "status": "PASS",
+      "total_cal": 200,
+      "items": 1,
+      "reason": "",
+      "elapsed_ms": 4367
+    },
+    {
+      "id": "D69",
+      "description": "palak paneer with 2 butter naans",
+      "status": "PASS",
+      "total_cal": 897,
+      "items": 2,
+      "reason": "",
+      "elapsed_ms": 4609
+    },
+    {
+      "id": "D70",
+      "description": "salmon teriyaki bowl with edamame and seaweed salad",
+      "status": "PASS",
+      "total_cal": 685,
+      "items": 2,
+      "reason": "",
+      "elapsed_ms": 5759
+    },
+    {
+      "id": "S71",
+      "description": "apple with 2 tablespoons peanut butter",
+      "status": "PASS",
+      "total_cal": 173,
+      "items": 1,
+      "reason": "",
+      "elapsed_ms": 3143
+    },
+    {
+      "id": "S72",
+      "description": "handful of mixed nuts and dried cranberries",
+      "status": "PASS",
+      "total_cal": 123,
+      "items": 1,
+      "reason": "",
+      "elapsed_ms": 2816
+    },
+    {
+      "id": "S73",
+      "description": "protein bar and a black coffee",
+      "status": "PASS",
+      "total_cal": 233,
+      "items": 2,
+      "reason": "",
+      "elapsed_ms": 6915
+    },
+    {
+      "id": "S74",
+      "description": "hummus with carrot sticks and pita chips",
+      "status": "PASS",
+      "total_cal": 123,
+      "items": 1,
+      "reason": "",
+      "elapsed_ms": 3802
+    },
+    {
+      "id": "S75",
+      "description": "string cheese and a handful of almonds",
+      "status": "PASS",
+      "total_cal": 4423,
+      "items": 2,
+      "reason": "",
+      "elapsed_ms": 5019
+    },
+    {
+      "id": "S76",
+      "description": "rice cakes with almond butter and banana slices",
+      "status": "PASS",
+      "total_cal": 301,
+      "items": 2,
+      "reason": "",
+      "elapsed_ms": 6108
+    },
+    {
+      "id": "S77",
+      "description": "trail mix with dark chocolate chips",
+      "status": "PASS",
+      "total_cal": 167,
+      "items": 1,
+      "reason": "",
+      "elapsed_ms": 2922
+    },
+    {
+      "id": "S78",
+      "description": "greek yogurt with a drizzle of honey",
+      "status": "PASS",
+      "total_cal": 260,
+      "items": 1,
+      "reason": "",
+      "elapsed_ms": 2948
+    },
+    {
+      "id": "S79",
+      "description": "beef jerky and an orange",
+      "status": "PASS",
+      "total_cal": 115,
+      "items": 1,
+      "reason": "",
+      "elapsed_ms": 2740
+    },
+    {
+      "id": "S80",
+      "description": "cottage cheese with cucumber and everything bagel seasoning",
+      "status": "FAIL",
+      "total_cal": 6,
+      "items": 1,
+      "reason": "Total cal too low: 6",
+      "elapsed_ms": 3590
+    },
+    {
+      "id": "S81",
+      "description": "2 hard boiled eggs with salt and pepper",
+      "status": "PASS",
+      "total_cal": 318,
+      "items": 2,
+      "reason": "",
+      "elapsed_ms": 5884
+    },
+    {
+      "id": "S82",
+      "description": "celery sticks with peanut butter and raisins",
+      "status": "PASS",
+      "total_cal": 477,
+      "items": 2,
+      "reason": "",
+      "elapsed_ms": 5784
+    },
+    {
+      "id": "S83",
+      "description": "a banana and a scoop of whey protein in water",
+      "status": "PASS",
+      "total_cal": 350,
+      "items": 1,
+      "reason": "",
+      "elapsed_ms": 2833
+    },
+    {
+      "id": "S84",
+      "description": "edamame with sea salt",
+      "status": "ERROR",
+      "total_cal": 0,
+      "items": 0,
+      "reason": "TIMEOUT",
+      "elapsed_ms": 45002
+    },
+    {
+      "id": "S85",
+      "description": "dark chocolate square and a handful of cashews",
+      "status": "PASS",
+      "total_cal": 328,
+      "items": 2,
+      "reason": "",
+      "elapsed_ms": 6851
+    },
+    {
+      "id": "C86",
+      "description": "thanksgiving plate - turkey breast, stuffing, cranberry sauce, mashed potatoes, gravy, green bean casserole and a dinner roll",
+      "status": "PASS",
+      "total_cal": 1174,
+      "items": 7,
+      "reason": "",
+      "elapsed_ms": 9093
+    },
+    {
+      "id": "C87",
+      "description": "indian thali - dal, paneer, aloo gobi, rice, 2 rotis, raita and papad",
+      "status": "PASS",
+      "total_cal": 2384,
+      "items": 7,
+      "reason": "",
+      "elapsed_ms": 6386
+    },
+    {
+      "id": "C88",
+      "description": "sushi dinner - miso soup, edamame, 8 pieces of nigiri and a dragon roll",
+      "status": "ERROR",
+      "total_cal": 0,
+      "items": 0,
+      "reason": "TIMEOUT",
+      "elapsed_ms": 45003
+    },
+    {
+      "id": "C89",
+      "description": "korean BBQ - bulgogi, kimchi, japchae, steamed rice and 2 banchan sides",
+      "status": "ERROR",
+      "total_cal": 0,
+      "items": 0,
+      "reason": "TIMEOUT",
+      "elapsed_ms": 45003
+    },
+    {
+      "id": "C90",
+      "description": "mexican feast - chips and guac, 2 carnitas tacos, rice and beans and a horchata",
+      "status": "ERROR",
+      "total_cal": 0,
+      "items": 0,
+      "reason": "TIMEOUT",
+      "elapsed_ms": 45003
+    },
+    {
+      "id": "C91",
+      "description": "chinese takeout - kung pao chicken, fried rice, 2 spring rolls and wonton soup",
+      "status": "PASS",
+      "total_cal": 1099,
+      "items": 4,
+      "reason": "",
+      "elapsed_ms": 9652
+    },
+    {
+      "id": "C92",
+      "description": "brunch - eggs benedict, hash browns, fruit cup and a mimosa",
+      "status": "PASS",
+      "total_cal": 2898,
+      "items": 4,
+      "reason": "",
+      "elapsed_ms": 6361
+    },
+    {
+      "id": "C93",
+      "description": "post workout - 2 scoops whey protein with milk, a banana and a bagel with cream cheese",
+      "status": "ERROR",
+      "total_cal": 0,
+      "items": 0,
+      "reason": "TIMEOUT",
+      "elapsed_ms": 45003
+    },
+    {
+      "id": "C94",
+      "description": "mediterranean spread - grilled chicken, tabbouleh, baba ganoush, pita bread and baklava",
+      "status": "PASS",
+      "total_cal": 1266,
+      "items": 5,
+      "reason": "",
+      "elapsed_ms": 7164
+    },
+    {
+      "id": "C95",
+      "description": "south indian meals - sambar rice, rasam, poriyal, curd rice, appalam and pickle",
+      "status": "PASS",
+      "total_cal": 870,
+      "items": 6,
+      "reason": "",
+      "elapsed_ms": 7430
+    },
+    {
+      "id": "C96",
+      "description": "burger meal - double cheeseburger, large fries, large coke and an apple pie",
+      "status": "PASS",
+      "total_cal": 1473,
+      "items": 4,
+      "reason": "",
+      "elapsed_ms": 7676
+    },
+    {
+      "id": "C97",
+      "description": "date night - bruschetta appetizer, 8oz filet mignon, caesar salad, garlic mashed potatoes and tiramisu",
+      "status": "ERROR",
+      "total_cal": 0,
+      "items": 0,
+      "reason": "TIMEOUT",
+      "elapsed_ms": 45002
+    },
+    {
+      "id": "C98",
+      "description": "game day - 8 buffalo wings, nachos with cheese and jalapenos, 2 beers",
+      "status": "PASS",
+      "total_cal": 1392,
+      "items": 4,
+      "reason": "",
+      "elapsed_ms": 9525
+    },
+    {
+      "id": "C99",
+      "description": "healthy bowl - grilled chicken, brown rice, black beans, corn, avocado, pico de gallo and lime crema",
+      "status": "PASS",
+      "total_cal": 1206,
+      "items": 7,
+      "reason": "",
+      "elapsed_ms": 8247
+    },
+    {
+      "id": "C100",
+      "description": "cheat day - large pepperoni pizza (4 slices), garlic knots, 2 cans of coke and a brownie sundae",
+      "status": "PASS",
+      "total_cal": 827,
+      "items": 4,
+      "reason": "",
+      "elapsed_ms": 9113
+    },
+    {
+      "id": "E121",
+      "description": "chicken rice broccoli",
+      "status": "PASS",
+      "total_cal": 666,
+      "items": 1,
+      "reason": "",
+      "elapsed_ms": 2762
+    },
+    {
+      "id": "E122",
+      "description": "eggs toast coffee",
+      "status": "ERROR",
+      "total_cal": 0,
+      "items": 0,
+      "reason": "TIMEOUT",
+      "elapsed_ms": 45003
+    },
+    {
+      "id": "E123",
+      "description": "protein shake banana",
+      "status": "PASS",
+      "total_cal": 122,
+      "items": 1,
+      "reason": "",
+      "elapsed_ms": 3335
+    },
+    {
+      "id": "E124",
+      "description": "rice dal roti",
+      "status": "ERROR",
+      "total_cal": 0,
+      "items": 0,
+      "reason": "TIMEOUT",
+      "elapsed_ms": 45002
+    },
+    {
+      "id": "E125",
+      "description": "salad chicken",
+      "status": "PASS",
+      "total_cal": 210,
+      "items": 1,
+      "reason": "",
+      "elapsed_ms": 2671
+    },
+    {
+      "id": "E126",
+      "description": "pasta",
+      "status": "PASS",
+      "total_cal": 262,
+      "items": 1,
+      "reason": "",
+      "elapsed_ms": 1985
+    },
+    {
+      "id": "E127",
+      "description": "sandwich",
+      "status": "PASS",
+      "total_cal": 357,
+      "items": 1,
+      "reason": "",
+      "elapsed_ms": 1537
+    },
+    {
+      "id": "E128",
+      "description": "pizza 2 slices",
+      "status": "PASS",
+      "total_cal": 280,
+      "items": 1,
+      "reason": "",
+      "elapsed_ms": 5770
+    },
+    {
+      "id": "E129",
+      "description": "oats milk",
+      "status": "PASS",
+      "total_cal": 120,
+      "items": 1,
+      "reason": "",
+      "elapsed_ms": 2059
+    },
+    {
+      "id": "E130",
+      "description": "steak potatoes",
+      "status": "PASS",
+      "total_cal": 250,
+      "items": 1,
+      "reason": "",
+      "elapsed_ms": 2736
+    },
+    {
+      "id": "E131",
+      "description": "noodles and egg",
+      "status": "PASS",
+      "total_cal": 221,
+      "items": 1,
+      "reason": "",
+      "elapsed_ms": 2748
+    },
+    {
+      "id": "E132",
+      "description": "pb&j",
+      "status": "PASS",
+      "total_cal": 411,
+      "items": 3,
+      "reason": "",
+      "elapsed_ms": 13237
+    },
+    {
+      "id": "E133",
+      "description": "yogurt",
+      "status": "PASS",
+      "total_cal": 196,
+      "items": 1,
+      "reason": "",
+      "elapsed_ms": 1798
+    },
+    {
+      "id": "E134",
+      "description": "apple",
+      "status": "PASS",
+      "total_cal": 95,
+      "items": 1,
+      "reason": "",
+      "elapsed_ms": 1765
+    },
+    {
+      "id": "E135",
+      "description": "just a shake",
+      "status": "ERROR",
+      "total_cal": 0,
+      "items": 0,
+      "reason": "TIMEOUT",
+      "elapsed_ms": 45003
+    },
+    {
+      "id": "E136",
+      "description": "2 eggs 3 toast butter",
+      "status": "PASS",
+      "total_cal": 256,
+      "items": 1,
+      "reason": "",
+      "elapsed_ms": 6394
+    },
+    {
+      "id": "E137",
+      "description": "rice dal sabzi roti x2",
+      "status": "ERROR",
+      "total_cal": 0,
+      "items": 0,
+      "reason": "TIMEOUT",
+      "elapsed_ms": 45003
+    },
+    {
+      "id": "E138",
+      "description": "3 chapati with chole",
+      "status": "PASS",
+      "total_cal": 1071,
+      "items": 1,
+      "reason": "",
+      "elapsed_ms": 9269
+    },
+    {
+      "id": "E139",
+      "description": "1 scoop whey + milk",
+      "status": "PASS",
+      "total_cal": 152,
+      "items": 1,
+      "reason": "",
+      "elapsed_ms": 3991
+    },
+    {
+      "id": "E140",
+      "description": "6 inch sub turkey",
+      "status": "PASS",
+      "total_cal": 271,
+      "items": 1,
+      "reason": "",
+      "elapsed_ms": 2926
+    },
+    {
+      "id": "E141",
+      "description": "5 momos",
+      "status": "PASS",
+      "total_cal": 864,
+      "items": 1,
+      "reason": "",
+      "elapsed_ms": 2558
+    },
+    {
+      "id": "E142",
+      "description": "2x protein bar",
+      "status": "PASS",
+      "total_cal": 200,
+      "items": 1,
+      "reason": "",
+      "elapsed_ms": 2721
+    },
+    {
+      "id": "E143",
+      "description": "chicken 200g rice 1 cup",
+      "status": "PASS",
+      "total_cal": 508,
+      "items": 1,
+      "reason": "",
+      "elapsed_ms": 2571
+    },
+    {
+      "id": "E144",
+      "description": "4 egg whites 1 whole egg",
+      "status": "PASS",
+      "total_cal": 78,
+      "items": 1,
+      "reason": "",
+      "elapsed_ms": 2737
+    },
+    {
+      "id": "E145",
+      "description": "bowl of cereal",
+      "status": "PASS",
+      "total_cal": 270,
+      "items": 1,
+      "reason": "",
+      "elapsed_ms": 1741
+    },
+    {
+      "id": "T11",
+      "description": "chiken brest with rise",
+      "status": "ERROR",
+      "total_cal": 0,
+      "items": 0,
+      "reason": "TIMEOUT",
+      "elapsed_ms": 45002
+    },
+    {
+      "id": "T12",
+      "description": "scrambeld egs and toest",
+      "status": "ERROR",
+      "total_cal": 0,
+      "items": 0,
+      "reason": "TIMEOUT",
+      "elapsed_ms": 45003
+    },
+    {
+      "id": "T13",
+      "description": "avacado on sourdogh",
+      "status": "PASS",
+      "total_cal": 396,
+      "items": 1,
+      "reason": "",
+      "elapsed_ms": 6871
+    },
+    {
+      "id": "T14",
+      "description": "spagetti bolognaise",
+      "status": "PASS",
+      "total_cal": 795,
+      "items": 1,
+      "reason": "",
+      "elapsed_ms": 2765
+    },
+    {
+      "id": "T15",
+      "description": "ceaser salad with cruttons",
+      "status": "PASS",
+      "total_cal": 325,
+      "items": 1,
+      "reason": "",
+      "elapsed_ms": 18015
+    },
+    {
+      "id": "T16",
+      "description": "brocoli and chese soup",
+      "status": "PASS",
+      "total_cal": 384,
+      "items": 1,
+      "reason": "",
+      "elapsed_ms": 6044
+    },
+    {
+      "id": "T17",
+      "description": "yoghurt with granolla",
+      "status": "PASS",
+      "total_cal": 525,
+      "items": 1,
+      "reason": "",
+      "elapsed_ms": 2763
+    },
+    {
+      "id": "T18",
+      "description": "penaut butter sandwitch",
+      "status": "PASS",
+      "total_cal": 447,
+      "items": 1,
+      "reason": "",
+      "elapsed_ms": 3176
+    },
+    {
+      "id": "T19",
+      "description": "berrys and cream",
+      "status": "PASS",
+      "total_cal": 435,
+      "items": 2,
+      "reason": "",
+      "elapsed_ms": 5072
+    },
+    {
+      "id": "T20",
+      "description": "teriaki salmon bowel",
+      "status": "PASS",
+      "total_cal": 289,
+      "items": 1,
+      "reason": "",
+      "elapsed_ms": 2911
+    },
+    {
+      "id": "SL21",
+      "description": "a zinger burger from kfc with a large pepsi",
+      "status": "PASS",
+      "total_cal": 1266,
+      "items": 2,
+      "reason": "",
+      "elapsed_ms": 6295
+    },
+    {
+      "id": "SL22",
+      "description": "maccas double quarter pounder meal with a sprite",
+      "status": "PASS",
+      "total_cal": 878,
+      "items": 2,
+      "reason": "",
+      "elapsed_ms": 5757
+    },
+    {
+      "id": "SL23",
+      "description": "two za slices and a mountain dew",
+      "status": "PASS",
+      "total_cal": 170,
+      "items": 1,
+      "reason": "",
+      "elapsed_ms": 2984
+    },
+    {
+      "id": "SL24",
+      "description": "meal prepped chicken and rice x5 containers",
+      "status": "ERROR",
+      "total_cal": 0,
+      "items": 0,
+      "reason": "TIMEOUT",
+      "elapsed_ms": 45003
+    },
+    {
+      "id": "SL25",
+      "description": "dirty bulk - 4 scoops mass gainer with whole milk",
+      "status": "ERROR",
+      "total_cal": 0,
+      "items": 0,
+      "reason": "TIMEOUT",
+      "elapsed_ms": 45002
+    },
+    {
+      "id": "SL26",
+      "description": "anabolic french toast 4 slices",
+      "status": "PASS",
+      "total_cal": 642,
+      "items": 1,
+      "reason": "",
+      "elapsed_ms": 8623
+    },
+    {
+      "id": "Q31",
+      "description": "200g chicken breast with 1 cup brown rice and 150g broccoli",
+      "status": "PASS",
+      "total_cal": 605,
+      "items": 3,
+      "reason": "",
+      "elapsed_ms": 5095
+    },
+    {
+      "id": "Q32",
+      "description": "6oz sirloin steak medium rare",
+      "status": "PASS",
+      "total_cal": 175,
+      "items": 1,
+      "reason": "",
+      "elapsed_ms": 2634
+    },
+    {
+      "id": "Q33",
+      "description": "half a pound of ground turkey with pasta",
+      "status": "PASS",
+      "total_cal": 95,
+      "items": 1,
+      "reason": "",
+      "elapsed_ms": 4324
+    },
+    {
+      "id": "Q34",
+      "description": "2.5 scoops of whey in 16oz whole milk",
+      "status": "PASS",
+      "total_cal": 372,
+      "items": 1,
+      "reason": "",
+      "elapsed_ms": 3917
+    },
+    {
+      "id": "Q35",
+      "description": "about a fistful of almonds",
+      "status": "PASS",
+      "total_cal": 4350,
+      "items": 1,
+      "reason": "",
+      "elapsed_ms": 3970
+    },
+    {
+      "id": "Q36",
+      "description": "a palm-sized piece of salmon",
+      "status": "ERROR",
+      "total_cal": 0,
+      "items": 0,
+      "reason": "TIMEOUT",
+      "elapsed_ms": 45002
+    },
+    {
+      "id": "Q37",
+      "description": "3/4 cup of oats with 1 tbsp honey",
+      "status": "PASS",
+      "total_cal": 178,
+      "items": 2,
+      "reason": "",
+      "elapsed_ms": 5845
+    },
+    {
+      "id": "Q38",
+      "description": "12 piece chicken nuggets",
+      "status": "PASS",
+      "total_cal": 340,
+      "items": 1,
+      "reason": "",
+      "elapsed_ms": 2936
+    },
+    {
+      "id": "Q39",
+      "description": "a whole rotisserie chicken",
+      "status": "PASS",
+      "total_cal": 2244,
+      "items": 1,
+      "reason": "",
+      "elapsed_ms": 2661
+    },
+    {
+      "id": "Q40",
+      "description": "1 liter of orange juice throughout the day",
+      "status": "PASS",
+      "total_cal": 450,
+      "items": 1,
+      "reason": "",
+      "elapsed_ms": 4406
+    },
+    {
+      "id": "R41",
+      "description": "arepas with shredded beef and black beans",
+      "status": "PASS",
+      "total_cal": 370,
+      "items": 2,
+      "reason": "",
+      "elapsed_ms": 5322
+    },
+    {
+      "id": "R42",
+      "description": "injera with doro wot and misir wot",
+      "status": "PASS",
+      "total_cal": 775,
+      "items": 2,
+      "reason": "",
+      "elapsed_ms": 5509
+    },
+    {
+      "id": "R43",
+      "description": "jollof rice with fried plantain and grilled chicken",
+      "status": "PASS",
+      "total_cal": 980,
+      "items": 1,
+      "reason": "",
+      "elapsed_ms": 2886
+    },
+    {
+      "id": "R44",
+      "description": "pupusas de queso with curtido and salsa roja",
+      "status": "ERROR",
+      "total_cal": 0,
+      "items": 0,
+      "reason": "TIMEOUT",
+      "elapsed_ms": 45002
+    },
+    {
+      "id": "R45",
+      "description": "poutine with extra cheese curds",
+      "status": "PASS",
+      "total_cal": 1050,
+      "items": 1,
+      "reason": "",
+      "elapsed_ms": 22446
+    },
+    {
+      "id": "R46",
+      "description": "pierogi with sour cream and caramelized onions",
+      "status": "PASS",
+      "total_cal": 567,
+      "items": 3,
+      "reason": "",
+      "elapsed_ms": 27709
+    },
+    {
+      "id": "R47",
+      "description": "banh mi with pork belly and pickled daikon",
+      "status": "PASS",
+      "total_cal": 908,
+      "items": 2,
+      "reason": "",
+      "elapsed_ms": 6528
+    },
+    {
+      "id": "R48",
+      "description": "nasi goreng with a fried egg and prawn crackers",
+      "status": "PASS",
+      "total_cal": 946,
+      "items": 3,
+      "reason": "",
+      "elapsed_ms": 4913
+    },
+    {
+      "id": "R49",
+      "description": "tagine with lamb, apricots and couscous",
+      "status": "PASS",
+      "total_cal": 825,
+      "items": 1,
+      "reason": "",
+      "elapsed_ms": 2891
+    },
+    {
+      "id": "R50",
+      "description": "ceviche with tostadas and aguachile",
+      "status": "PASS",
+      "total_cal": 342,
+      "items": 2,
+      "reason": "",
+      "elapsed_ms": 6324
+    },
+    {
+      "id": "R51",
+      "description": "fufu and egusi soup with goat meat",
+      "status": "PASS",
+      "total_cal": 945,
+      "items": 1,
+      "reason": "",
+      "elapsed_ms": 3071
+    },
+    {
+      "id": "R52",
+      "description": "khachapuri with extra egg and butter",
+      "status": "PASS",
+      "total_cal": 106,
+      "items": 1,
+      "reason": "",
+      "elapsed_ms": 3025
+    },
+    {
+      "id": "R53",
+      "description": "mole negro with chicken and corn tortillas",
+      "status": "PASS",
+      "total_cal": 468,
+      "items": 1,
+      "reason": "",
+      "elapsed_ms": 3079
+    },
+    {
+      "id": "R54",
+      "description": "borscht with smetana and black bread",
+      "status": "PASS",
+      "total_cal": 537,
+      "items": 2,
+      "reason": "",
+      "elapsed_ms": 5991
+    },
+    {
+      "id": "I56",
+      "description": "pesarattu with ginger chutney and upma",
+      "status": "PASS",
+      "total_cal": 445,
+      "items": 1,
+      "reason": "",
+      "elapsed_ms": 2855
+    },
+    {
+      "id": "I57",
+      "description": "vada pav with green chutney and fried chillies",
+      "status": "PASS",
+      "total_cal": 369,
+      "items": 2,
+      "reason": "",
+      "elapsed_ms": 6759
+    },
+    {
+      "id": "I58",
+      "description": "2 plates of pani puri",
+      "status": "PASS",
+      "total_cal": 180,
+      "items": 1,
+      "reason": "",
+      "elapsed_ms": 2714
+    },
+    {
+      "id": "I59",
+      "description": "mysore masala dosa with filter coffee",
+      "status": "PASS",
+      "total_cal": 368,
+      "items": 1,
+      "reason": "",
+      "elapsed_ms": 2775
+    },
+    {
+      "id": "I60",
+      "description": "hyderabadi dum biryani with mirchi ka salan and raita",
+      "status": "PASS",
+      "total_cal": 675,
+      "items": 2,
+      "reason": "",
+      "elapsed_ms": 6059
+    },
+    {
+      "id": "I61",
+      "description": "fish curry kerala style with appam",
+      "status": "PASS",
+      "total_cal": 384,
+      "items": 1,
+      "reason": "",
+      "elapsed_ms": 2990
+    },
+    {
+      "id": "I62",
+      "description": "rajma chawal with onion salad and pickle",
+      "status": "PASS",
+      "total_cal": 524,
+      "items": 2,
+      "reason": "",
+      "elapsed_ms": 5483
+    },
+    {
+      "id": "I63",
+      "description": "pav bhaji with extra butter",
+      "status": "PASS",
+      "total_cal": 1055,
+      "items": 1,
+      "reason": "",
+      "elapsed_ms": 5445
+    },
+    {
+      "id": "I64",
+      "description": "chicken 65 with parotta",
+      "status": "ERROR",
+      "total_cal": 0,
+      "items": 0,
+      "reason": "TIMEOUT",
+      "elapsed_ms": 45003
+    },
+    {
+      "id": "I65",
+      "description": "thepla with aam ras and chhachh",
+      "status": "ERROR",
+      "total_cal": 0,
+      "items": 0,
+      "reason": "TIMEOUT",
+      "elapsed_ms": 45002
+    },
+    {
+      "id": "BR66",
+      "description": "grande caramel frappuccino from starbucks with whipped cream",
+      "status": "PASS",
+      "total_cal": 370,
+      "items": 1,
+      "reason": "",
+      "elapsed_ms": 3854
+    },
+    {
+      "id": "BR67",
+      "description": "chipotle burrito bowl double chicken no rice extra guac",
+      "status": "PASS",
+      "total_cal": 660,
+      "items": 1,
+      "reason": "",
+      "elapsed_ms": 3142
+    },
+    {
+      "id": "BR68",
+      "description": "chick-fil-a spicy deluxe sandwich with waffle fries and lemonade",
+      "status": "PASS",
+      "total_cal": 569,
+      "items": 1,
+      "reason": "",
+      "elapsed_ms": 3226
+    },
+    {
+      "id": "BR69",
+      "description": "dominos medium pepperoni pizza thin crust",
+      "status": "PASS",
+      "total_cal": 315,
+      "items": 1,
+      "reason": "",
+      "elapsed_ms": 2812
+    },
+    {
+      "id": "BR70",
+      "description": "sweetgreen harvest bowl",
+      "status": "PASS",
+      "total_cal": 695,
+      "items": 1,
+      "reason": "",
+      "elapsed_ms": 2027
+    },
+    {
+      "id": "BR71",
+      "description": "shake shack double shackburger with cheese fries",
+      "status": "PASS",
+      "total_cal": 759,
+      "items": 1,
+      "reason": "",
+      "elapsed_ms": 2958
+    },
+    {
+      "id": "BR72",
+      "description": "panera bread broccoli cheddar soup in a bread bowl",
+      "status": "PASS",
+      "total_cal": 297,
+      "items": 1,
+      "reason": "",
+      "elapsed_ms": 3036
+    },
+    {
+      "id": "BR73",
+      "description": "wingstop 10 piece lemon pepper with ranch and fries",
+      "status": "PASS",
+      "total_cal": 7800,
+      "items": 1,
+      "reason": "",
+      "elapsed_ms": 3139
+    },
+    {
+      "id": "BR74",
+      "description": "in-n-out double double animal style with fries and a neapolitan shake",
+      "status": "PASS",
+      "total_cal": 770,
+      "items": 1,
+      "reason": "",
+      "elapsed_ms": 3223
+    },
+    {
+      "id": "BR75",
+      "description": "trader joes orange chicken with frozen fried rice",
+      "status": "PASS",
+      "total_cal": 810,
+      "items": 1,
+      "reason": "",
+      "elapsed_ms": 3023
+    },
+    {
+      "id": "MX76",
+      "description": "handful of chips then some leftover pasta then a cookie",
+      "status": "PASS",
+      "total_cal": 448,
+      "items": 3,
+      "reason": "",
+      "elapsed_ms": 18928
+    },
+    {
+      "id": "MX77",
+      "description": "picked at the charcuterie board - some cheese, crackers, grapes and prosciutto",
+      "status": "PASS",
+      "total_cal": 4677,
+      "items": 4,
+      "reason": "",
+      "elapsed_ms": 6815
+    },
+    {
+      "id": "MX78",
+      "description": "tasted while cooking - few spoonfuls of sauce, piece of bread, some cheese",
+      "status": "PASS",
+      "total_cal": 550,
+      "items": 3,
+      "reason": "",
+      "elapsed_ms": 18957
+    },
+    {
+      "id": "MX79",
+      "description": "kids leftovers - half a pb&j, some goldfish crackers, apple slices",
+      "status": "PASS",
+      "total_cal": 7991,
+      "items": 3,
+      "reason": "",
+      "elapsed_ms": 20454
+    },
+    {
+      "id": "MX80",
+      "description": "work potluck - samosa, spring roll, slice of cake, some fruit",
+      "status": "ERROR",
+      "total_cal": 0,
+      "items": 0,
+      "reason": "TIMEOUT",
+      "elapsed_ms": 45003
+    },
+    {
+      "id": "SP81",
+      "description": "5g creatine monohydrate with 2 scoops optimum nutrition gold standard whey in water",
+      "status": "PASS",
+      "total_cal": 240,
+      "items": 2,
+      "reason": "",
+      "elapsed_ms": 10471
+    },
+    {
+      "id": "SP82",
+      "description": "BCAA drink during workout plus a banana and granola bar after",
+      "status": "ERROR",
+      "total_cal": 0,
+      "items": 0,
+      "reason": "TIMEOUT",
+      "elapsed_ms": 45003
+    },
+    {
+      "id": "SP83",
+      "description": "meal replacement bar - quest hero chocolate and a black coffee",
+      "status": "ERROR",
+      "total_cal": 0,
+      "items": 0,
+      "reason": "TIMEOUT",
+      "elapsed_ms": 45003
+    },
+    {
+      "id": "SP84",
+      "description": "fairlife protein shake chocolate and a kind bar",
+      "status": "PASS",
+      "total_cal": 231,
+      "items": 1,
+      "reason": "",
+      "elapsed_ms": 4098
+    },
+    {
+      "id": "DR86",
+      "description": "2 glasses of red wine with dinner",
+      "status": "PASS",
+      "total_cal": 252,
+      "items": 1,
+      "reason": "",
+      "elapsed_ms": 3834
+    },
+    {
+      "id": "DR87",
+      "description": "3 IPAs and a shot of whiskey at the bar",
+      "status": "ERROR",
+      "total_cal": 0,
+      "items": 0,
+      "reason": "TIMEOUT",
+      "elapsed_ms": 45003
+    },
+    {
+      "id": "DR88",
+      "description": "boba tea taro flavor large with tapioca pearls",
+      "status": "PASS",
+      "total_cal": 428,
+      "items": 1,
+      "reason": "",
+      "elapsed_ms": 9429
+    },
+    {
+      "id": "DR89",
+      "description": "green smoothie - kale spinach banana mango ginger",
+      "status": "ERROR",
+      "total_cal": 0,
+      "items": 0,
+      "reason": "TIMEOUT",
+      "elapsed_ms": 45003
+    },
+    {
+      "id": "DR90",
+      "description": "mango lassi and a masala chai",
+      "status": "PASS",
+      "total_cal": 68,
+      "items": 1,
+      "reason": "",
+      "elapsed_ms": 3532
+    },
+    {
+      "id": "DT91",
+      "description": "gluten free pasta with marinara and nutritional yeast",
+      "status": "PASS",
+      "total_cal": 58,
+      "items": 1,
+      "reason": "",
+      "elapsed_ms": 7401
+    },
+    {
+      "id": "DT92",
+      "description": "keto plate - bacon cheese burger no bun with side salad",
+      "status": "PASS",
+      "total_cal": 640,
+      "items": 1,
+      "reason": "",
+      "elapsed_ms": 7760
+    },
+    {
+      "id": "DT93",
+      "description": "vegan buddha bowl - tofu, sweet potato, kale, tahini dressing, brown rice",
+      "status": "PASS",
+      "total_cal": 878,
+      "items": 5,
+      "reason": "",
+      "elapsed_ms": 7515
+    },
+    {
+      "id": "DT94",
+      "description": "whole30 compliant - grilled chicken, roasted sweet potato, sauteed spinach in ghee",
+      "status": "PASS",
+      "total_cal": 515,
+      "items": 3,
+      "reason": "",
+      "elapsed_ms": 7570
+    },
+    {
+      "id": "DT95",
+      "description": "carnivore diet - 1lb ground beef and 4 eggs fried in butter",
+      "status": "ERROR",
+      "total_cal": 0,
+      "items": 0,
+      "reason": "TIMEOUT",
+      "elapsed_ms": 45004
+    },
+    {
+      "id": "ML101",
+      "description": "2 plate momos with red chutney",
+      "status": "PASS",
+      "total_cal": 794,
+      "items": 1,
+      "reason": "",
+      "elapsed_ms": 9970
+    },
+    {
+      "id": "ML102",
+      "description": "tonkotsu ramen with chashu and ajitama",
+      "status": "ERROR",
+      "total_cal": 0,
+      "items": 0,
+      "reason": "TIMEOUT",
+      "elapsed_ms": 45001
+    },
+    {
+      "id": "ML103",
+      "description": "shawarma with toum and pickled turnips",
+      "status": "PASS",
+      "total_cal": 874,
+      "items": 2,
+      "reason": "",
+      "elapsed_ms": 9656
+    },
+    {
+      "id": "ML104",
+      "description": "xiao long bao 8 pieces with black vinegar",
+      "status": "ERROR",
+      "total_cal": 0,
+      "items": 0,
+      "reason": "TIMEOUT",
+      "elapsed_ms": 45003
+    },
+    {
+      "id": "ML105",
+      "description": "golgappa 2 plates with meetha pani",
+      "status": "PASS",
+      "total_cal": 580,
+      "items": 1,
+      "reason": "",
+      "elapsed_ms": 12283
+    },
+    {
+      "id": "ML106",
+      "description": "kathi roll double egg double chicken",
+      "status": "PASS",
+      "total_cal": 200,
+      "items": 1,
+      "reason": "",
+      "elapsed_ms": 2919
+    },
+    {
+      "id": "ML107",
+      "description": "peri peri chicken from nandos half chicken with spicy rice",
+      "status": "PASS",
+      "total_cal": 577,
+      "items": 1,
+      "reason": "",
+      "elapsed_ms": 2856
+    },
+    {
+      "id": "TP111",
+      "description": "fish - not fish and chips just grilled fish",
+      "status": "PASS",
+      "total_cal": 800,
+      "items": 1,
+      "reason": "",
+      "elapsed_ms": 2970
+    },
+    {
+      "id": "TP112",
+      "description": "chicken sandwich but i took off the top bun",
+      "status": "PASS",
+      "total_cal": 612,
+      "items": 1,
+      "reason": "",
+      "elapsed_ms": 3087
+    },
+    {
+      "id": "TP113",
+      "description": "salad but with a lot of ranch like probably 4 tablespoons",
+      "status": "ERROR",
+      "total_cal": 0,
+      "items": 0,
+      "reason": "TIMEOUT",
+      "elapsed_ms": 45002
+    },
+    {
+      "id": "TP114",
+      "description": "oatmeal but i used heavy cream instead of milk",
+      "status": "ERROR",
+      "total_cal": 0,
+      "items": 0,
+      "reason": "TIMEOUT",
+      "elapsed_ms": 45002
+    },
+    {
+      "id": "TP115",
+      "description": "burrito but i only ate the insides and left the tortilla",
+      "status": "ERROR",
+      "total_cal": 0,
+      "items": 0,
+      "reason": "TIMEOUT",
+      "elapsed_ms": 45002
+    },
+    {
+      "id": "TP116",
+      "description": "had 2 bites of my girlfriend's dessert - it was a chocolate lava cake",
+      "status": "ERROR",
+      "total_cal": 0,
+      "items": 0,
+      "reason": "TIMEOUT",
+      "elapsed_ms": 45003
+    },
+    {
+      "id": "FS216",
+      "description": "lean bulk meal 3 of 6",
+      "status": "ERROR",
+      "total_cal": 0,
+      "items": 0,
+      "reason": "TIMEOUT",
+      "elapsed_ms": 45003
+    },
+    {
+      "id": "FS217",
+      "description": "high protein low carb - tuna salad no croutons no dressing",
+      "status": "PASS",
+      "total_cal": 55,
+      "items": 1,
+      "reason": "",
+      "elapsed_ms": 8270
+    },
+    {
+      "id": "FS218",
+      "description": "cutting meal - tilapia asparagus rice cakes",
+      "status": "ERROR",
+      "total_cal": 0,
+      "items": 0,
+      "reason": "TIMEOUT",
+      "elapsed_ms": 45003
+    },
+    {
+      "id": "FS219",
+      "description": "maintenance calories - steak rice veggies",
+      "status": "ERROR",
+      "total_cal": 0,
+      "items": 0,
+      "reason": "TIMEOUT",
+      "elapsed_ms": 45003
+    }
+  ]
+}

@@ -2273,8 +2273,10 @@ class FoodAnalysisCacheService:
             lookup_service = get_food_db_lookup_service()
             await lookup_service._load_overrides()
 
-            # First try fuzzy match on full description (handles "chicken 65", cooking variants, etc.)
-            override = await lookup_service._check_override_fuzzy_db(description)
+            # First try exact match on full description (handles "chicken 65", etc.)
+            # Use exact-only here — fuzzy on multi-food descriptions can match
+            # a minor ingredient (e.g., "everything bagel seasoning" from a full meal)
+            override = lookup_service._check_override(description)
             food_key = description  # Track which key matched for default modifiers
             if override:
                 result = self._override_to_analysis(override)
@@ -2286,6 +2288,7 @@ class FoodAnalysisCacheService:
             if not parsed:
                 return None
 
+            # Fuzzy match on the parsed food name (safe — single food, not full description)
             override = await lookup_service._check_override_fuzzy_db(parsed.food_name)
             food_key = parsed.food_name
             if not override:
