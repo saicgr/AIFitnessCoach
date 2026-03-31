@@ -25,6 +25,7 @@ elif [ "$RUN_CRITICAL_ONLY" = "true" ]; then
 
     # Run only critical tests for faster deployment
     python -m pytest \
+        tests/test_food_database_lookup.py \
         tests/test_scores_api.py \
         tests/test_onboarding.py \
         tests/test_health_api.py \

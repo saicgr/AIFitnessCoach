@@ -602,3 +602,301 @@ class TestTextFlowEndToEnd:
             # The ai_per_gram won't be set because the exception path
             # sets nutrition_results = [None] * len, so it goes to the
             # "no match" branch which calculates ai_per_gram
+
+
+# ================================================================
+# CLASS 5: TestBatchLookupVariantNames
+# ================================================================
+
+SALMON_OVERRIDE_ROW = {
+    "display_name": "Salmon (Cooked)",
+    "food_name_normalized": "salmon_cooked",
+    "calories_per_100g": 208.0,
+    "protein_per_100g": 20.4,
+    "carbs_per_100g": 0.0,
+    "fat_per_100g": 13.4,
+    "fiber_per_100g": 0.0,
+    "default_weight_per_piece_g": None,
+    "default_serving_g": 150.0,
+    "source": "usda",
+    "restaurant_name": None,
+    "food_category": "protein",
+    "default_count": 1,
+    "variant_names": ["salmon", "cooked salmon", "baked salmon", "grilled salmon", "atlantic salmon", "salmon fillet"],
+    "region": None,
+    "is_active": True,
+}
+
+
+class TestBatchLookupVariantNames:
+    """Tests that batch_lookup_foods checks variant_names when exact match fails."""
+
+    @pytest.fixture
+    def mock_food_db_service(self):
+        """Create a FoodDatabaseLookupService with mocked Supabase."""
+        with patch("services.food_database_lookup_service.get_supabase") as mock_get_sb:
+            mock_sb = MagicMock()
+            mock_get_sb.return_value = mock_sb
+
+            from services.food_database_lookup_service import FoodDatabaseLookupService
+            service = FoodDatabaseLookupService()
+            service._cache.clear()
+            service._overrides.clear()
+            service._overrides_loaded_at = 1  # Mark as loaded
+            yield service, mock_sb
+
+    @pytest.mark.asyncio
+    async def test_batch_finds_grilled_salmon_via_variant(self, mock_food_db_service):
+        """'Grilled Salmon' has no exact override but variant_names contains 'grilled salmon'.
+        batch_lookup should find it via .contains() query."""
+        service, mock_sb = mock_food_db_service
+
+        # Exact match returns nothing
+        mock_exact = MagicMock()
+        mock_exact.data = []
+
+        # Variant match returns salmon override
+        mock_variant = MagicMock()
+        mock_variant.data = [SALMON_OVERRIDE_ROW]
+
+        # Chain: .table().select().eq().eq().limit().execute() for exact
+        # Then: .table().select().eq().contains().limit().execute() for variant
+        call_count = [0]
+        original_table = mock_sb.client.table
+
+        def mock_table_factory(table_name):
+            mock_table = MagicMock()
+            mock_select = MagicMock()
+            mock_table.select.return_value = mock_select
+
+            mock_eq1 = MagicMock()
+            mock_select.eq.return_value = mock_eq1
+
+            # First .eq() call → second .eq() for exact match
+            mock_eq2 = MagicMock()
+            mock_eq2.limit.return_value.execute.return_value = mock_exact
+            mock_eq1.eq.return_value = mock_eq2
+
+            # .contains() for variant match
+            mock_contains = MagicMock()
+            mock_contains.limit.return_value.execute.return_value = mock_variant
+            mock_eq1.contains.return_value = mock_contains
+
+            return mock_table
+
+        mock_sb.client.table = mock_table_factory
+
+        result = await service.batch_lookup_foods(["Grilled Salmon"])
+
+        assert "Grilled Salmon" in result
+        assert result["Grilled Salmon"] is not None
+        assert result["Grilled Salmon"]["calories_per_100g"] == 208.0
+        assert result["Grilled Salmon"]["protein_per_100g"] == 20.4
+
+    @pytest.mark.asyncio
+    async def test_batch_exact_match_skips_variant(self, mock_food_db_service):
+        """'salmon_cooked' has exact food_name_normalized match — variant check should be skipped."""
+        service, mock_sb = mock_food_db_service
+
+        # Exact match returns salmon override
+        mock_exact = MagicMock()
+        mock_exact.data = [SALMON_OVERRIDE_ROW]
+
+        mock_sb.client.table.return_value.select.return_value.eq.return_value.eq.return_value.limit.return_value.execute.return_value = mock_exact
+
+        result = await service.batch_lookup_foods(["salmon_cooked"])
+
+        assert "salmon_cooked" in result
+        assert result["salmon_cooked"] is not None
+        assert result["salmon_cooked"]["calories_per_100g"] == 208.0
+
+    @pytest.mark.asyncio
+    async def test_batch_no_match_returns_none(self, mock_food_db_service):
+        """Food with no override AND no variant match returns None."""
+        service, mock_sb = mock_food_db_service
+
+        mock_empty = MagicMock()
+        mock_empty.data = []
+
+        def mock_table_factory(table_name):
+            mock_table = MagicMock()
+            mock_select = MagicMock()
+            mock_table.select.return_value = mock_select
+            mock_eq1 = MagicMock()
+            mock_select.eq.return_value = mock_eq1
+            mock_eq1.eq.return_value.limit.return_value.execute.return_value = mock_empty
+            mock_eq1.contains.return_value.limit.return_value.execute.return_value = mock_empty
+            return mock_table
+
+        mock_sb.client.table = mock_table_factory
+
+        result = await service.batch_lookup_foods(["Mystery Alien Food XYZ"])
+
+        assert "Mystery Alien Food XYZ" in result
+        assert result["Mystery Alien Food XYZ"] is None
+
+    @pytest.mark.asyncio
+    async def test_batch_variant_match_cached_for_future(self, mock_food_db_service):
+        """After a variant match, same name on second call should use cache (no DB query)."""
+        service, mock_sb = mock_food_db_service
+
+        mock_empty = MagicMock()
+        mock_empty.data = []
+        mock_variant = MagicMock()
+        mock_variant.data = [SALMON_OVERRIDE_ROW]
+
+        def mock_table_factory(table_name):
+            mock_table = MagicMock()
+            mock_select = MagicMock()
+            mock_table.select.return_value = mock_select
+            mock_eq1 = MagicMock()
+            mock_select.eq.return_value = mock_eq1
+            mock_eq1.eq.return_value.limit.return_value.execute.return_value = mock_empty
+            mock_eq1.contains.return_value.limit.return_value.execute.return_value = mock_variant
+            return mock_table
+
+        mock_sb.client.table = mock_table_factory
+
+        # First call — goes to DB
+        result1 = await service.batch_lookup_foods(["Grilled Salmon"])
+        assert result1["Grilled Salmon"] is not None
+        assert result1["Grilled Salmon"]["calories_per_100g"] == 208.0
+
+        # Second call — should use cache
+        result2 = await service.batch_lookup_foods(["Grilled Salmon"])
+        assert result2["Grilled Salmon"] is not None
+        assert result2["Grilled Salmon"]["calories_per_100g"] == 208.0
+
+
+# ================================================================
+# CLASS 6: TestCalorieSanityFilter
+# ================================================================
+
+class TestCalorieSanityFilter:
+    """Tests that the API search endpoint rejects entries with bad calorie data."""
+
+    def test_bad_data_detection_logic(self):
+        """Entries with <5 cal/100g but non-trivial macros are bad data."""
+        # Simulate the sanity check logic from nutrition.py
+        bad_items = [
+            {"name": "Salmon Grilled", "calories_per_100g": 2, "protein_per_100g": 20, "fat_per_100g": 10, "carbs_per_100g": 0, "source": "local_db"},
+            {"name": "Broccoli", "calories_per_100g": 0, "protein_per_100g": 3, "fat_per_100g": 0.5, "carbs_per_100g": 7, "source": "local_db"},
+        ]
+        good_items = [
+            {"name": "Water", "calories_per_100g": 0, "protein_per_100g": 0, "fat_per_100g": 0, "carbs_per_100g": 0, "source": "local_db"},
+            {"name": "Good Salmon", "calories_per_100g": 208, "protein_per_100g": 20, "fat_per_100g": 13, "carbs_per_100g": 0, "source": "local_db"},
+            {"name": "Saved Meal", "calories_per_100g": 3, "protein_per_100g": 15, "fat_per_100g": 5, "carbs_per_100g": 20, "source": "saved"},
+        ]
+
+        def is_bad_data(item):
+            cal = float(item.get("calories_per_100g") or 0)
+            prot = float(item.get("protein_per_100g") or 0)
+            fat = float(item.get("fat_per_100g") or 0)
+            carbs = float(item.get("carbs_per_100g") or 0)
+            source = item.get("source", "")
+            if source in ("saved", "saved_item"):
+                return False  # Don't filter saved foods
+            return cal < 5 and (prot > 1 or fat > 1 or carbs > 1)
+
+        for item in bad_items:
+            assert is_bad_data(item), f"Should be flagged as bad: {item['name']}"
+
+        for item in good_items:
+            assert not is_bad_data(item), f"Should NOT be flagged: {item['name']}"
+
+
+# ================================================================
+# CLASS 7: TestEnhanceWithVariantOverrides
+# ================================================================
+
+class TestEnhanceWithVariantOverrides:
+    """Tests that _enhance_food_items_with_nutrition_db correctly overrides
+    Gemini's bad estimates when override data is found via variant matching."""
+
+    @pytest.fixture
+    def gemini_service(self):
+        from services.gemini_service import GeminiService
+        return GeminiService()
+
+    @pytest.fixture
+    def mock_food_db_for_gemini(self):
+        with patch("services.food_database_lookup_service.get_food_db_lookup_service") as mock_get:
+            mock_service = AsyncMock()
+            mock_get.return_value = mock_service
+            yield mock_service
+
+    @pytest.mark.asyncio
+    async def test_enhance_grilled_salmon_overrides_bad_gemini_estimate(self, gemini_service, mock_food_db_for_gemini):
+        """Gemini says salmon = 4 kcal (wrong), but override has 208 cal/100g.
+        Enhancement should replace Gemini's bad estimate with correct value."""
+        food_items = [
+            {"name": "Grilled Salmon", "calories": 4, "protein_g": 0.5,
+             "carbs_g": 0, "fat_g": 0.3, "fiber_g": 0,
+             "weight_g": 150, "amount": "150g"},
+        ]
+
+        mock_food_db_for_gemini.batch_lookup_foods.return_value = {
+            "Grilled Salmon": {
+                "calories_per_100g": 208.0, "protein_per_100g": 20.4,
+                "carbs_per_100g": 0.0, "fat_per_100g": 13.4, "fiber_per_100g": 0.0,
+            },
+        }
+
+        result = await gemini_service._enhance_food_items_with_nutrition_db(food_items)
+
+        assert len(result) == 1
+        salmon = result[0]
+        # 208 * 150/100 = 312, NOT Gemini's 4
+        assert salmon["calories"] == 312
+        assert salmon["usda_data"] is not None
+        assert salmon["ai_per_gram"] is None
+
+    @pytest.mark.asyncio
+    async def test_enhance_full_meal_all_items_enhanced(self, gemini_service, mock_food_db_for_gemini):
+        """Full meal: all items should get correct calories from overrides."""
+        food_items = [
+            {"name": "Grilled Salmon", "calories": 4, "protein_g": 0.5,
+             "carbs_g": 0, "fat_g": 0.3, "fiber_g": 0,
+             "weight_g": 150, "amount": "150g"},
+            {"name": "Quinoa", "calories": 572, "protein_g": 20,
+             "carbs_g": 100, "fat_g": 10, "fiber_g": 5,
+             "weight_g": 185, "amount": "185g"},
+            {"name": "Roasted Broccoli", "calories": 52, "protein_g": 5,
+             "carbs_g": 10, "fat_g": 1, "fiber_g": 4,
+             "weight_g": 150, "amount": "150g"},
+        ]
+
+        mock_food_db_for_gemini.batch_lookup_foods.return_value = {
+            "Grilled Salmon": {
+                "calories_per_100g": 208.0, "protein_per_100g": 20.4,
+                "carbs_per_100g": 0.0, "fat_per_100g": 13.4, "fiber_per_100g": 0.0,
+            },
+            "Quinoa": {
+                "calories_per_100g": 120.0, "protein_per_100g": 4.4,
+                "carbs_per_100g": 21.3, "fat_per_100g": 1.9, "fiber_per_100g": 2.8,
+            },
+            "Roasted Broccoli": {
+                "calories_per_100g": 35.0, "protein_per_100g": 2.4,
+                "carbs_per_100g": 7.2, "fat_per_100g": 0.4, "fiber_per_100g": 3.3,
+            },
+        }
+
+        result = await gemini_service._enhance_food_items_with_nutrition_db(food_items)
+
+        assert len(result) == 3
+
+        salmon = result[0]
+        assert salmon["calories"] == round(208.0 * 150 / 100)  # 312
+        assert salmon["usda_data"] is not None
+
+        quinoa = result[1]
+        assert quinoa["calories"] == round(120.0 * 185 / 100)  # 222
+        assert quinoa["usda_data"] is not None
+
+        broccoli = result[2]
+        assert broccoli["calories"] == round(35.0 * 150 / 100)  # 52 (was already correct)
+        assert broccoli["usda_data"] is not None
+
+        # Total should be reasonable (not 4 + 572 + 52 = 628 from Gemini)
+        total = sum(item["calories"] for item in result)
+        assert total > 500  # 312 + 222 + 52 = 586

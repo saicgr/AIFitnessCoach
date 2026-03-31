@@ -279,7 +279,7 @@ async def save_warmup_logs(
     """
     try:
         db = get_supabase_db()
-        user_id = current_user.get("sub") or current_user.get("user_id")
+        user_id = current_user.get("id")
         intervals = body.get("intervals", {})
 
         if not intervals:

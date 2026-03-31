@@ -1,10 +1,9 @@
 """
 Food Database Lookup Service.
 
-Two-tier search architecture:
-  1. food_nutrition_overrides — hand-curated premium (8K+ items, in-memory)
-  2. food_database — quality-filtered by confidence_score (528K raw, DB trigram search)
-  3. OpenFoodFacts API — live fallback
+Search architecture:
+  1. food_nutrition_overrides — hand-curated premium (200K+ items, DB-queried)
+  2. If no match → caller uses AI text analysis (Gemini)
 
 Provides single and batch food lookups with in-memory TTL caching.
 """
@@ -14,65 +13,11 @@ import re
 import time
 from typing import Optional, Dict, List
 
-import httpx
 from sqlalchemy import text
 
 from core.logger import get_logger
 from core.supabase_client import get_supabase
-from services.food_database_service import OFF_USER_AGENT
-
 logger = get_logger(__name__)
-
-# Restaurant/fast food brands - our DB doesn't have their exact menu items
-RESTAURANT_BRANDS = [
-    'taco bell', 'mcdonalds', "mcdonald's", 'burger king', 'wendys', "wendy's",
-    'chick-fil-a', 'chickfila', 'subway', 'chipotle', 'five guys', 'in-n-out',
-    'popeyes', 'kfc', 'pizza hut', 'dominos', "domino's", 'papa johns',
-    'starbucks', 'dunkin', 'panda express', 'chilis', "chili's", 'applebees',
-    "applebee's", 'olive garden', 'red lobster', 'outback', 'ihop', "denny's",
-    'sonic', 'arby', "arby's", 'jack in the box', 'carl', "carl's jr",
-    'hardee', "hardee's", 'del taco', 'qdoba', 'panera', 'noodles',
-    'wingstop', 'buffalo wild wings', 'hooters', 'zaxbys', "zaxby's",
-    "freddy's", 'freddys',
-    'kirkland', 'kirkland signature',
-    # Smoothie chains
-    'smoothie king', 'tropical smoothie', 'tropical smoothie cafe',
-    'jamba', 'jamba juice',
-    # Weight loss brands
-    'walden farms', 'g hughes', 'smart ones', 'slimfast', 'slim fast',
-    'atkins', 'miracle noodle', 'yasso', 'skinny pop', 'skinnypop',
-    # Hormonal/metabolism/superfood brands
-    'force of nature', 'epic', 'epic provisions',
-    'kettle & fire', 'kettle and fire',
-    'navitas', 'navitas organics',
-    "bob's red mill", 'bobs red mill',
-    'bulletproof', 'four sigmatic',
-    "that's it", 'thats it',
-    'bare', 'bare snacks', 'bragg',
-    # Coffee chains
-    "dunkin'", 'dunkin donuts',
-    "peet's", 'peets', "peet's coffee",
-    # Alcohol brands
-    'white claw', 'truly', 'michelob',
-    # Grocery brands
-    'barilla', 'tyson', 'perdue', 'progresso', 'hillshire farm',
-    # Salad chains
-    'chopt', 'just salad', 'salad and go', 'tender greens',
-    # Trending chains
-    "dave's hot chicken", 'daves hot chicken',
-    "buc-ee's", 'bucees', 'slim chickens',
-    # Bowl / coffee chains
-    'playa bowls', "scooter's coffee", 'scooters coffee',
-    "carl's jr", 'carls jr',
-    # Grocery store brands
-    '365 by whole foods', '365 whole foods',
-    'h-e-b', 'heb', 'publix', 'wegmans',
-    # Meal kits
-    'hellofresh', 'hello fresh', 'blue apron',
-    "member's mark", 'members mark',
-    # Fitness snack brands
-    'one bar', 'fitcrunch', 'fit crunch',
-]
 
 
 class FoodDatabaseLookupService:
@@ -81,8 +26,6 @@ class FoodDatabaseLookupService:
 
     Features:
     - Food nutrition overrides (curated corrections, highest priority)
-    - food_database filtered by confidence_score >= 0.6
-    - Full-text search with trigram similarity
     - Single and batch food lookups returning per-100g nutrition data
     - Match quality filtering (restaurant brand skip + word overlap)
     - In-memory TTL cache (1 hour, max 1000 entries)
@@ -100,9 +43,6 @@ class FoodDatabaseLookupService:
         self._overrides_word_index: Dict[str, set] = {}
         self._overrides_loaded_at: float = 0
         self._overrides_ttl = 1800  # 30 minutes
-        # Circuit breaker for OpenFoodFacts API
-        self._off_failures: int = 0
-        self._off_circuit_open_until: float = 0.0
 
     # ── Cache helpers ──────────────────────────────────────────────
 
@@ -159,7 +99,7 @@ class FoodDatabaseLookupService:
         food_category: Optional[str] = None,
         region: Optional[str] = None,
     ) -> List[Dict]:
-        """Search overrides via a single ranked SQL query instead of 4 sequential passes."""
+        """Search overrides using trigram similarity (uses GIN index) with exact-match boost."""
         try:
             sb = get_supabase()
 
@@ -182,9 +122,6 @@ class FoodDatabaseLookupService:
             params = {
                 "q": q,
                 "lim": limit,
-                "q_prefix": q + "%",
-                "q_word": "% " + q + "%",
-                "q_broad": "%" + q + "%",
             }
 
             if restaurant:
@@ -200,27 +137,27 @@ class FoodDatabaseLookupService:
             filter_clause = " ".join(filters)
 
             async with sb.get_session() as session:
+                # Lower threshold for broader matching; GIN trigram index handles speed
+                await session.execute(text("SET pg_trgm.similarity_threshold = 0.15"))
                 result = await asyncio.wait_for(
                     session.execute(text(f"""
-                        SELECT *, CASE
-                            WHEN food_name_normalized = :q THEN 0
-                            WHEN :q = ANY(variant_names) THEN 1
-                            WHEN display_name ILIKE :q_prefix THEN 1
-                            WHEN display_name ILIKE :q_word THEN 2
-                            WHEN display_name ILIKE :q_broad THEN 3
-                            WHEN EXISTS (SELECT 1 FROM unnest(variant_names) v WHERE v ILIKE :q_broad) THEN 2
-                            ELSE 4
-                        END AS match_rank
+                        SELECT *,
+                            similarity(food_name_normalized, :q) AS sim_score,
+                            CASE
+                                WHEN food_name_normalized = :q THEN 0
+                                WHEN :q = ANY(variant_names) THEN 1
+                                ELSE 2
+                            END AS match_rank
                         FROM food_nutrition_overrides
                         WHERE is_active = TRUE
                         AND (
                             food_name_normalized = :q
-                            OR display_name ILIKE :q_broad
                             OR :q = ANY(variant_names)
-                            OR EXISTS (SELECT 1 FROM unnest(variant_names) v WHERE v ILIKE :q_broad)
+                            OR food_name_normalized % :q
+                            OR display_name % :q
                         )
                         {filter_clause}
-                        ORDER BY match_rank, display_name
+                        ORDER BY match_rank, sim_score DESC
                         LIMIT :lim
                     """), params),
                     timeout=3.0,
@@ -1013,192 +950,6 @@ class FoodDatabaseLookupService:
         parts = [p for p in parts if any(len(w) >= 3 and w.isalpha() for w in p.split())]
         return parts if len(parts) > 1 else [q]
 
-    def _filter_search_results(self, query: str, db_foods: List[Dict]) -> List[Dict]:
-        """Post-query word-overlap filter to remove false-positive trigram matches.
-
-        - similarity >= 0.5: always keep (strong match)
-        - similarity < 0.5 + single-word query: keep if any result word startswith query word
-        - similarity < 0.5 + multi-word query: keep if at least one query word appears in result name
-        """
-        if not query or not db_foods:
-            return db_foods
-        query_words = set(query.lower().split())
-        filtered = []
-        for food in db_foods:
-            sim = food.get("similarity_score", 0) or 0
-            if sim >= 0.5:
-                filtered.append(food)
-                continue
-            name_lower = food.get("name", "").lower()
-            name_words = set(name_lower.split())
-            if len(query_words) == 1:
-                qw = next(iter(query_words))
-                if any(nw.startswith(qw) for nw in name_words):
-                    filtered.append(food)
-            else:
-                if query_words & name_words:
-                    filtered.append(food)
-        return filtered
-
-    # ── OpenFoodFacts text-search fallback ─────────────────────────
-
-    async def _search_off_text(self, query: str, limit: int = 20) -> List[Dict]:
-        """OpenFoodFacts text-search fallback for typos / zero-result RPC queries."""
-        # Circuit breaker: skip if too many recent failures
-        if time.time() < self._off_circuit_open_until:
-            logger.info("[FoodDB] OFF circuit breaker open, skipping")
-            return []
-        try:
-            async with httpx.AsyncClient(
-                timeout=httpx.Timeout(2.0, connect=2.0),
-                headers={"User-Agent": OFF_USER_AGENT},
-            ) as client:
-                resp = await client.get(
-                    "https://world.openfoodfacts.org/cgi/search.pl",
-                    params={
-                        "search_terms": query,
-                        "search_simple": 1,
-                        "action": "process",
-                        "json": 1,
-                        "page_size": limit,
-                        "fields": "product_name,nutriments,serving_quantity,brands",
-                    },
-                )
-                resp.raise_for_status()
-                data = resp.json()
-
-            results: List[Dict] = []
-            for p in data.get("products", []):
-                name = p.get("product_name")
-                if not name:
-                    continue
-                n = p.get("nutriments", {})
-                brand = p.get("brands", "")
-                display_name = f"{name} ({brand})" if brand else name
-                results.append({
-                    "id": None,
-                    "name": display_name,
-                    "source": "openfoodfacts",
-                    "brand": brand,
-                    "category": None,
-                    "calories_per_100g": n.get("energy-kcal_100g", 0) or 0,
-                    "protein_per_100g": n.get("proteins_100g", 0) or 0,
-                    "fat_per_100g": n.get("fat_100g", 0) or 0,
-                    "carbs_per_100g": n.get("carbohydrates_100g", 0) or 0,
-                    "fiber_per_100g": n.get("fiber_100g", 0) or 0,
-                    "sugar_per_100g": n.get("sugars_100g", 0) or 0,
-                    "serving_description": f"{p.get('serving_quantity', '')}g" if p.get("serving_quantity") else None,
-                    "serving_weight_g": p.get("serving_quantity"),
-                    "similarity_score": 0.5,
-                })
-            logger.info(f"[FoodDB] OFF fallback returned {len(results)} results for '{query}'")
-            if results:
-                self._off_failures = 0
-            return results
-        except Exception as e:
-            self._off_failures += 1
-            if self._off_failures >= 3:
-                self._off_circuit_open_until = time.time() + 300  # 5 min cooldown
-                logger.warning(f"[FoodDB] OFF circuit breaker OPENED after {self._off_failures} failures")
-            logger.warning(f"[FoodDB] OFF fallback failed for '{query}': {e}")
-            return []
-
-    # ── Match quality ──────────────────────────────────────────────
-
-    @staticmethod
-    def _is_good_match(query: str, result_name: str) -> bool:
-        """
-        Check if a database result is a good match for the query.
-        Avoids using wrong products (e.g., "Cinnabon Pudding" for "Cinnabon Delights").
-
-        Ported from gemini_service.py _is_good_usda_match.
-        """
-        query_lower = query.lower().strip()
-        desc_lower = result_name.lower().strip()
-
-        # If query mentions a restaurant brand, DB probably doesn't have the right item
-        for brand in RESTAURANT_BRANDS:
-            if brand in query_lower:
-                logger.info(
-                    f"[FoodDB] Skipping match - '{query}' is a restaurant item"
-                )
-                return False
-
-        # Check word overlap: split query into significant words (3+ chars)
-        query_words = [w for w in query_lower.split() if len(w) >= 3]
-        if not query_words:
-            return False
-
-        matches = sum(1 for word in query_words if word in desc_lower)
-        match_ratio = matches / len(query_words)
-
-        # Require at least 50% of words to match
-        if match_ratio < 0.5:
-            logger.info(
-                f"[FoodDB] Poor match - query='{query}' vs result='{result_name}' "
-                f"(match_ratio={match_ratio:.0%})"
-            )
-            return False
-
-        return True
-
-    # ── Quality-filtered food_database search (tier 2) ─────────────
-
-    async def _search_quality_foods(
-        self, query: str, limit: int = 20, offset: int = 0
-    ) -> List[Dict]:
-        """Search food_database filtered by confidence_score >= 0.6.
-        Returns high-quality results ordered by confidence_score * similarity."""
-        try:
-            supabase = get_supabase()
-            async with supabase.get_session() as session:
-                result = await asyncio.wait_for(
-                    session.execute(
-                        text("""
-                            SELECT *,
-                                   similarity(name_normalized, :q) AS similarity_score
-                            FROM food_database
-                            WHERE is_primary = TRUE
-                              AND confidence_score >= 0.6
-                              AND name_normalized % :q
-                            ORDER BY confidence_score DESC,
-                                     similarity(name_normalized, :q) DESC
-                            LIMIT :lim OFFSET :off
-                        """),
-                        {"q": query.lower().strip(), "lim": limit, "off": offset},
-                    ),
-                    timeout=1.5,
-                )
-                rows = [dict(row._mapping) for row in result.fetchall()]
-
-            foods: List[Dict] = []
-            for row in rows:
-                foods.append({
-                    "id": row.get("id"),
-                    "name": row.get("name", ""),
-                    "source": row.get("source", ""),
-                    "brand": row.get("brand"),
-                    "category": row.get("category"),
-                    "calories_per_100g": row.get("calories_per_100g", 0),
-                    "protein_per_100g": row.get("protein_per_100g", 0),
-                    "fat_per_100g": row.get("fat_per_100g", 0),
-                    "carbs_per_100g": row.get("carbs_per_100g", 0),
-                    "fiber_per_100g": row.get("fiber_per_100g"),
-                    "sugar_per_100g": row.get("sugar_per_100g"),
-                    "serving_weight_g": row.get("serving_weight_g"),
-                    "similarity_score": row.get("similarity_score", 0),
-                    "confidence_score": row.get("confidence_score"),
-                    "verification_level": row.get("verification_level"),
-                })
-            logger.info(f"[FoodDB] Quality foods returned {len(foods)} results for '{query}'")
-            return foods
-        except asyncio.TimeoutError:
-            logger.warning(f"[FoodDB] Quality foods search timed out for '{query}'")
-            return []
-        except Exception as e:
-            logger.warning(f"[FoodDB] Quality foods search failed for '{query}': {e}")
-            return []
-
     # ── Public API ─────────────────────────────────────────────────
 
     async def search_foods(
@@ -1269,70 +1020,7 @@ class FoodDatabaseLookupService:
                     food_category=food_category, region=region,
                 )
 
-            # When a region/country filter is active, only return country-tagged overrides
-            # (food_database table doesn't have region data)
-            quality_foods = []
-            db_foods = []
-
-            if not region:
-                # Step 2 & 3: Search quality foods AND RPC concurrently
-                if query and len(override_results) < page_size:
-                    remaining = page_size - len(override_results)
-
-                    async def _fetch_quality():
-                        try:
-                            return await self._search_quality_foods(query, remaining, offset)
-                        except Exception:
-                            return []
-
-                    async def _fetch_rpc():
-                        try:
-                            async with supabase.get_session() as session:
-                                result = await asyncio.wait_for(
-                                    session.execute(
-                                        text("SELECT * FROM search_food_database(:q, :lim, :off)"),
-                                        {"q": query, "lim": remaining, "off": offset},
-                                    ),
-                                    timeout=2.0,
-                                )
-                                return [dict(row._mapping) for row in result.fetchall()]
-                        except asyncio.TimeoutError:
-                            logger.warning(f"[FoodDB] RPC timed out for '{query}'")
-                            return []
-                        except Exception as rpc_err:
-                            logger.warning(f"[FoodDB] RPC failed for '{query}': {rpc_err}")
-                            return []
-
-                    # Run both searches concurrently — total wait = max(quality, rpc) not sum
-                    quality_foods, db_foods = await asyncio.gather(
-                        _fetch_quality(), _fetch_rpc()
-                    )
-                    quality_foods = self._filter_search_results(query, quality_foods)
-
-                # Word-overlap filter: remove false-positive trigram matches
-                db_foods = self._filter_search_results(query, db_foods)
-
-                # If nothing found anywhere, try OFF as last resort
-                if not db_foods and not quality_foods and not override_results and query:
-                    db_foods = await self._search_off_text(query, page_size)
-                    db_foods = self._filter_search_results(query, db_foods)
-
-                # Post-filter by source/category if specified
-                if source:
-                    source_lower = source.lower()
-                    quality_foods = [f for f in quality_foods if (f.get("source") or "").lower().startswith(source_lower)]
-                    db_foods = [f for f in db_foods if (f.get("source") or "").lower() == source_lower]
-                if category:
-                    category_lower = category.lower()
-                    quality_foods = [f for f in quality_foods if category_lower in (f.get("category") or "").lower()]
-                    db_foods = [f for f in db_foods if category_lower in (f.get("category") or "").lower()]
-
-            # Assemble: Overrides > Quality DB > Unfiltered DB (deduped)
-            override_names = {r["name"].lower() for r in override_results}
-            quality_foods = [f for f in quality_foods if f.get("name", "").lower() not in override_names]
-            higher_names = override_names | {f.get("name", "").lower() for f in quality_foods}
-            db_foods = [f for f in db_foods if f.get("name", "").lower() not in higher_names]
-            foods = override_results + quality_foods + db_foods
+            foods = override_results
 
             logger.info(f"[FoodDB] Found {len(foods)} results for '{query}'")
             self._set_cached(cache_key, foods)
@@ -1353,8 +1041,8 @@ class FoodDatabaseLookupService:
         region: Optional[str] = None,
     ) -> List[Dict]:
         """
-        Search food database unified with user's saved foods.
-        Priority: Saved Foods > Overrides > Curated DB.
+        Search with user's saved foods and overrides.
+        Priority: Saved Foods > Overrides.
         Falls back to regular search_foods if user_id is empty.
         """
         query = query.strip()
@@ -1403,19 +1091,19 @@ class FoodDatabaseLookupService:
 
         try:
             supabase = get_supabase()
-            offset = (page - 1) * page_size
 
-            # Step 1: Search overrides via DB query — ALWAYS returned
-            override_results = []
-            if page == 1:
-                override_results = await self._search_overrides_db(
+            # Run overrides + saved foods in parallel
+            async def _fetch_overrides():
+                if page != 1:
+                    return []
+                return await self._search_overrides_db(
                     query, limit=page_size, restaurant=restaurant,
                     food_category=food_category, region=region,
                 )
 
-            # Step 2: Fetch saved foods (fast LIKE on user's small table, <100ms)
-            saved_foods = []
-            if query and user_id:
+            async def _fetch_saved():
+                if not query or not user_id:
+                    return []
                 try:
                     async with supabase.get_session() as session:
                         result = await asyncio.wait_for(
@@ -1433,7 +1121,8 @@ class FoodDatabaseLookupService:
                                         0.0::REAL AS sugar_per_100g,
                                         'per serving'::TEXT AS serving_description,
                                         NULL::REAL AS serving_weight_g,
-                                        0.85::REAL AS similarity_score
+                                        0.85::REAL AS similarity_score,
+                                        ABS(sfe.calories)::INTEGER AS total_calories
                                     FROM saved_foods_exploded sfe
                                     WHERE sfe.user_id = CAST(:uid AS uuid)
                                       AND LOWER(sfe.name) LIKE LOWER('%' || :q || '%')
@@ -1442,63 +1131,19 @@ class FoodDatabaseLookupService:
                             ),
                             timeout=3.0,
                         )
-                        saved_foods = [dict(row._mapping) for row in result.fetchall()]
+                        return [dict(row._mapping) for row in result.fetchall()]
                 except Exception:
-                    pass  # Saved foods are optional, don't block
+                    return []
 
-            # When region filter is active, skip food_database queries (no region data there)
-            quality_foods = []
-            db_foods = []
+            override_results, saved_foods = await asyncio.gather(
+                _fetch_overrides(), _fetch_saved()
+            )
 
-            if not region:
-                # Step 3: Search food_database (quality-filtered by confidence_score >= 0.6)
-                have_enough = len(override_results) + len(saved_foods) >= page_size
-                if query and not have_enough:
-                    remaining = page_size - len(override_results) - len(saved_foods)
-                    quality_foods = await self._search_quality_foods(query, remaining, offset)
-                    quality_foods = self._filter_search_results(query, quality_foods)
-
-                # Step 4: Only hit unfiltered food_database if still not enough
-                have_enough = len(override_results) + len(saved_foods) + len(quality_foods) >= page_size
-                if query and not have_enough:
-                    remaining = page_size - len(override_results) - len(saved_foods) - len(quality_foods)
-                    try:
-                        async with supabase.get_session() as session:
-                            result = await asyncio.wait_for(
-                                session.execute(
-                                    text("SELECT * FROM search_food_database(:q, :lim, :off)"),
-                                    {"q": query, "lim": remaining, "off": offset},
-                                ),
-                                timeout=2.5,
-                            )
-                            db_foods = [dict(row._mapping) for row in result.fetchall()]
-                    except asyncio.TimeoutError:
-                        logger.warning(f"[FoodDB] RPC timed out for '{query}' — trying OFF fallback")
-                        db_foods = await self._search_off_text(query, page_size)
-                    except Exception as rpc_err:
-                        logger.warning(f"[FoodDB] RPC failed for '{query}': {rpc_err}")
-
-                # Word-overlap filter: remove false-positive trigram matches
-                db_foods = self._filter_search_results(query, db_foods)
-
-                # If nothing found anywhere, try OFF as last resort
-                if not db_foods and not quality_foods and not override_results and not saved_foods and query:
-                    db_foods = await self._search_off_text(query, page_size)
-                    db_foods = self._filter_search_results(query, db_foods)
-
-            # Assemble: Saved > Overrides > Quality DB > Unfiltered DB (deduped)
-            override_names = {r["name"].lower() for r in override_results}
+            # Dedup overrides against saved food names
             saved_names = {f.get("name", "").lower() for f in saved_foods}
-            # Remove overrides that duplicate saved food names
             override_results = [r for r in override_results if r["name"].lower() not in saved_names]
-            # Dedup quality foods against higher-priority tiers
-            higher_names = override_names | saved_names
-            quality_foods = [f for f in quality_foods if f.get("name", "").lower() not in higher_names]
-            # Dedup unfiltered DB against all higher tiers
-            all_preferred_names = higher_names | {f.get("name", "").lower() for f in quality_foods}
-            db_foods = [f for f in db_foods if f.get("name", "").lower() not in all_preferred_names]
 
-            foods = saved_foods + override_results + quality_foods + db_foods
+            foods = saved_foods + override_results
 
             logger.info(f"[FoodDB] Unified search found {len(foods)} results for '{query}'")
             self._set_cached(cache_key, foods)
@@ -1515,7 +1160,7 @@ class FoodDatabaseLookupService:
     async def lookup_single_food(self, food_name: str) -> Optional[Dict]:
         """
         Look up a single food and return per-100g nutrition data.
-        Checks overrides → quality food_database → unfiltered food_database.
+        Checks overrides only. Returns None if no match found (caller uses AI).
 
         Returns dict with keys: calories_per_100g, protein_per_100g,
         carbs_per_100g, fat_per_100g, fiber_per_100g
@@ -1529,79 +1174,18 @@ class FoodDatabaseLookupService:
         cache_key = f"lookup:{food_name.lower()}"
         cached = self._get_cached(cache_key)
         if cached is not None:
-            # cached could be the dict OR the sentinel False (meaning "no match")
             return cached if cached is not False else None
 
-        # Check overrides first
         await self._load_overrides()
-        override = self._check_override(food_name)
+        override = await self._check_override_fuzzy_db(food_name)
         if override:
             nutrition = self._override_to_nutrition(override)
             self._set_cached(cache_key, nutrition)
             return nutrition
 
-        try:
-            supabase = get_supabase()
-
-            # Check quality-filtered food_database first (confidence_score >= 0.6)
-            quality = await self._search_quality_foods(food_name, limit=1)
-            if quality:
-                v = quality[0]
-                v_name = v.get("name", "")
-                v_sim = float(v.get("similarity_score") or 0)
-                if v_sim >= 0.3 or self._is_good_match(food_name, v_name):
-                    nutrition = {
-                        "calories_per_100g": float(v.get("calories_per_100g") or 0),
-                        "protein_per_100g": float(v.get("protein_per_100g") or 0),
-                        "carbs_per_100g": float(v.get("carbs_per_100g") or 0),
-                        "fat_per_100g": float(v.get("fat_per_100g") or 0),
-                        "fiber_per_100g": float(v.get("fiber_per_100g") or 0),
-                    }
-                    if v.get("serving_weight_g"):
-                        nutrition["override_serving_g"] = float(v["serving_weight_g"])
-                    self._set_cached(cache_key, nutrition)
-                    return nutrition
-
-            # Fall back to unfiltered food_database
-            async with supabase.get_session() as session:
-                result = await session.execute(
-                    text("SELECT * FROM search_food_database(:q, 1, 0)"),
-                    {"q": food_name},
-                )
-                foods = [dict(row._mapping) for row in result.fetchall()]
-
-            if not foods:
-                logger.info(f"[FoodDB] No results for '{food_name}'")
-                self._set_cached(cache_key, False)
-                return None
-
-            top = foods[0]
-            result_name = top.get("name", "")
-            sim_score = float(top.get("similarity_score") or 0)
-
-            # Trust high similarity scores (variant match via DB trigram)
-            if sim_score < 0.3 and not self._is_good_match(food_name, result_name):
-                self._set_cached(cache_key, False)
-                return None
-
-            nutrition = {
-                "calories_per_100g": float(top.get("calories_per_100g") or 0),
-                "protein_per_100g": float(top.get("protein_per_100g") or 0),
-                "carbs_per_100g": float(top.get("carbs_per_100g") or 0),
-                "fat_per_100g": float(top.get("fat_per_100g") or 0),
-                "fiber_per_100g": float(top.get("fiber_per_100g") or 0),
-            }
-
-            logger.info(
-                f"[FoodDB] Found '{result_name}' for '{food_name}' "
-                f"({nutrition['calories_per_100g']} cal/100g)"
-            )
-            self._set_cached(cache_key, nutrition)
-            return nutrition
-
-        except Exception as e:
-            logger.warning(f"[FoodDB] Lookup failed for '{food_name}': {e}")
-            return None
+        logger.info(f"[FoodDB] No override match for '{food_name}'")
+        self._set_cached(cache_key, False)
+        return None
 
     async def batch_lookup_foods(
         self, food_names: List[str]
@@ -1623,7 +1207,7 @@ class FoodDatabaseLookupService:
         results: Dict[str, Optional[Dict]] = {}
         uncached_names: List[str] = []
 
-        # Check cache and overrides first for each name
+        # Check cache and overrides first for each name (exact match)
         for name in food_names:
             name = name.strip()
             if not name:
@@ -1633,7 +1217,7 @@ class FoodDatabaseLookupService:
             if cached is not None:
                 results[name] = cached if cached is not False else None
             else:
-                # Check override before sending to DB
+                # Check override (exact match on food_name_normalized)
                 override = self._check_override(name)
                 if override:
                     nutrition = self._override_to_nutrition(override)
@@ -1645,66 +1229,42 @@ class FoodDatabaseLookupService:
         if not uncached_names:
             return results
 
-        logger.info(f"[FoodDB] Batch lookup for {len(uncached_names)} foods (after {len(results)} override/cache hits)")
-
+        # Step 2: Check variant_names for foods that missed exact match
+        still_unmatched: List[str] = []
         try:
-            supabase = get_supabase()
-            async with supabase.get_session() as session:
-                rpc_result = await session.execute(
-                    text("SELECT * FROM batch_lookup_foods(CAST(:names AS text[]))"),
-                    {"names": uncached_names},
-                )
-                rows = [dict(r._mapping) for r in rpc_result.fetchall()]
-
-            # Build a lookup from input_name -> row
-            row_map: Dict[str, Dict] = {}
-            for row in rows:
-                input_name = row.get("input_name", "")
-                if input_name:
-                    row_map[input_name.strip()] = row
-
-            # Process each uncached name
+            from core.supabase_client import get_supabase as _get_sb
+            sb = _get_sb()
             for name in uncached_names:
-                cache_key = f"lookup:{name.lower()}"
-                row = row_map.get(name)
-
-                if not row or not row.get("matched_name"):
-                    # No result from DB
-                    results[name] = None
-                    self._set_cached(cache_key, False)
-                    continue
-
-                result_name = row.get("matched_name", "")
-                sim_score = float(row.get("similarity_score") or 0)
-
-                # Trust high similarity scores (variant match via DB trigram)
-                if sim_score < 0.3 and not self._is_good_match(name, result_name):
-                    results[name] = None
-                    self._set_cached(cache_key, False)
-                    continue
-
-                nutrition = {
-                    "calories_per_100g": float(row.get("calories_per_100g") or 0),
-                    "protein_per_100g": float(row.get("protein_per_100g") or 0),
-                    "carbs_per_100g": float(row.get("carbs_per_100g") or 0),
-                    "fat_per_100g": float(row.get("fat_per_100g") or 0),
-                    "fiber_per_100g": float(row.get("fiber_per_100g") or 0),
-                }
-                results[name] = nutrition
-                self._set_cached(cache_key, nutrition)
-
-                logger.info(
-                    f"[FoodDB] Batch hit: '{result_name}' for '{name}' "
-                    f"({nutrition['calories_per_100g']} cal/100g)"
-                )
-
+                normalized = name.lower().strip()
+                resp = sb.client.table("food_nutrition_overrides").select("*").eq(
+                    "is_active", True
+                ).contains("variant_names", [normalized]).limit(1).execute()
+                if resp.data:
+                    row = resp.data[0]
+                    override_data = self._row_to_override_dict(row)
+                    nutrition = self._override_to_nutrition(override_data)
+                    results[name] = nutrition
+                    self._set_cached(f"lookup:{normalized}", nutrition)
+                    # Cache for future exact lookups too
+                    self._overrides[normalized] = override_data
+                    logger.info(
+                        f"[FoodDB] OVERRIDE HIT (batch-variant): '{name}' → "
+                        f"{override_data['display_name']} ({override_data['calories_per_100g']} cal/100g)"
+                    )
+                else:
+                    still_unmatched.append(name)
         except Exception as e:
-            logger.error(f"[FoodDB] Batch lookup failed: {e}")
-            # Mark all uncached as None so we don't retry immediately
-            for name in uncached_names:
-                if name not in results:
-                    results[name] = None
+            logger.warning(f"[FoodDB] Batch variant lookup failed: {e}")
+            still_unmatched = uncached_names
 
+        # No override match for remaining names — mark as None (caller uses AI)
+        for name in still_unmatched:
+            cache_key = f"lookup:{name.lower()}"
+            results[name] = None
+            self._set_cached(cache_key, False)
+
+        override_hits = len(food_names) - len(still_unmatched)
+        logger.info(f"[FoodDB] Batch: {override_hits} override hits (exact+variant), {len(still_unmatched)} misses")
         return results
 
 

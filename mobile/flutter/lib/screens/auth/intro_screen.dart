@@ -1,13 +1,12 @@
 import 'dart:async';
-import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/constants/app_colors.dart';
-import '../../widgets/intro_animations.dart';
 
-/// Full-screen horizontally-swiping PageView with 5 feature pages and auto-rotate.
-/// Adapts to the device theme (light/dark).
+/// Full-screen horizontally-swiping intro with 5 feature pages.
+/// Each page: bold caption at top, single centered screenshot, colored background.
+/// Matches Play Store screenshot style (Flo-inspired).
 class IntroScreen extends StatefulWidget {
   const IntroScreen({super.key});
 
@@ -24,70 +23,59 @@ class _IntroScreenState extends State<IntroScreen> {
 
   static const List<_PageData> _pages = [
     _PageData(
-      headlineParts: [
-        _TextPart('Your Workouts, '),
-        _TextPart('Supercharged', isAccent: true),
-      ],
-      subtitle:
-          'AI builds your perfect plan based on your goals, equipment, and schedule.',
-      leftImage: 'assets/images/intro_workout.png',
-      rightImage: 'assets/images/intro_tracking.png',
-      darkGradientEnd: Color(0xFF1A0800),
-      lightGradientEnd: Color(0xFFFFF3E8),
-      accent: Color(0xFFF97316),
-    ),
-    _PageData(
-      headlineParts: [
-        _TextPart('AI', isAccent: true),
-        _TextPart(' Coach That Knows You'),
-      ],
-      subtitle:
-          'Chat with your coach for form checks, meal advice, and motivation — all personalized.',
-      leftImage: 'assets/images/intro_ai_coach.png',
-      rightImage: 'assets/images/intro_library.png',
-      darkGradientEnd: Color(0xFF001018),
-      lightGradientEnd: Color(0xFFE8F7FC),
+      headline: 'Your AI Coach.',
+      headlineAccent: 'Ask Anything.',
+      subtitle: 'Chat with your coach for form checks, meal advice, and motivation.',
+      image: 'assets/images/intro_ai_coach.png',
+      bgColor: Color(0xFF2D2D2D),
+      bgColorLight: Color(0xFF3A3A3A),
       accent: Color(0xFF06B6D4),
+      textOnBg: Colors.white,
+      subtitleOnBg: Colors.white70,
     ),
     _PageData(
-      headlineParts: [
-        _TextPart('Track '),
-        _TextPart('Everything', isAccent: true),
-        _TextPart(', Effortlessly'),
-      ],
-      subtitle:
-          'Nutrition, hydration, habits, progress — log it all in one tap.',
-      leftImage: 'assets/images/intro_nutrition.png',
-      rightImage: 'assets/images/intro_progress.png',
-      darkGradientEnd: Color(0xFF001A0A),
-      lightGradientEnd: Color(0xFFE8FCF0),
-      accent: Color(0xFF22C55E),
+      headline: 'Type Any Meal.',
+      headlineAccent: 'Instant Nutrition.',
+      subtitle: 'Describe what you ate — AI breaks it down into calories and macros.',
+      image: 'assets/images/intro_nutrition.png',
+      bgColor: Color(0xFFF97316),
+      bgColorLight: Color(0xFFFF8C3A),
+      accent: Colors.white,
+      textOnBg: Colors.white,
+      subtitleOnBg: Colors.white70,
     ),
     _PageData(
-      headlineParts: [
-        _TextPart('1,700+', isAccent: true),
-        _TextPart(' Exercises with Video'),
-      ],
-      subtitle:
-          'HD demos for every movement. Search, filter, build your own.',
-      leftImage: 'assets/images/intro_library.png',
-      rightImage: 'assets/images/intro_tracking.png',
-      darkGradientEnd: Color(0xFF0F0018),
-      lightGradientEnd: Color(0xFFF3EEFB),
-      accent: Color(0xFF8B5CF6),
+      headline: 'Every Exercise.',
+      headlineAccent: 'Chosen For You.',
+      subtitle: 'AI builds your perfect plan — and tells you why it picked each one.',
+      image: 'assets/images/intro_workout.png',
+      bgColor: Color(0xFF6B7280),
+      bgColorLight: Color(0xFF8B95A5),
+      accent: Colors.white,
+      textOnBg: Colors.white,
+      subtitleOnBg: Colors.white70,
     ),
     _PageData(
-      headlineParts: [
-        _TextPart('Smarter Every '),
-        _TextPart('Week', isAccent: true),
-      ],
-      subtitle:
-          'Adapts to your progress, recovery, and schedule. Your fitness evolves with you.',
-      leftImage: 'assets/images/intro_progress.png',
-      rightImage: 'assets/images/intro_workout.png',
-      darkGradientEnd: Color(0xFF181000),
-      lightGradientEnd: Color(0xFFFDF6E3),
-      accent: Color(0xFFF59E0B),
+      headline: 'Track Every Rep.',
+      headlineAccent: 'See Every Gain.',
+      subtitle: 'Heatmaps, streaks, PRs — watch your progress stack up.',
+      image: 'assets/images/intro_progress.png',
+      bgColor: Color(0xFF166534),
+      bgColorLight: Color(0xFF22863A),
+      accent: Color(0xFF4ADE80),
+      textOnBg: Colors.white,
+      subtitleOnBg: Colors.white70,
+    ),
+    _PageData(
+      headline: 'It Learns',
+      headlineAccent: 'What You Love.',
+      subtitle: 'Your staples, your schedule, your way. Fitness that\'s truly yours.',
+      image: 'assets/images/intro_library.png',
+      bgColor: Color(0xFFB45309),
+      bgColorLight: Color(0xFFD97706),
+      accent: Color(0xFFFDE68A),
+      textOnBg: Colors.white,
+      subtitleOnBg: Colors.white70,
     ),
   ];
 
@@ -124,248 +112,171 @@ class _IntroScreenState extends State<IntroScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final size = MediaQuery.of(context).size;
     final pageData = _pages[_currentPage];
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
-    final gradientEnd = isDark ? pageData.darkGradientEnd : pageData.lightGradientEnd;
-    final bgTop = isDark ? const Color(0xFF0A0A0A) : const Color(0xFFF8F8FA);
-    final textColor = isDark ? Colors.white : const Color(0xFF1A1A2E);
-    final subtitleColor = isDark ? Colors.white70 : const Color(0xFF6B7280);
-    final dotInactiveColor = isDark ? Colors.white.withOpacity(0.3) : Colors.black.withOpacity(0.15);
-    final taglineColor = isDark ? Colors.white.withOpacity(0.5) : Colors.black.withOpacity(0.4);
-    final particleColor = isDark ? Colors.white : Colors.black;
-    final overlayTopColor = isDark ? const Color(0xCC0A0A0A) : const Color(0xCCF8F8FA);
-    final screenshotPlaceholderBg = isDark ? Colors.white.withOpacity(0.05) : Colors.black.withOpacity(0.04);
-    final screenshotPlaceholderIcon = isDark ? Colors.white.withOpacity(0.2) : Colors.black.withOpacity(0.12);
 
     return Scaffold(
-      body: Stack(
-        children: [
-          // Background gradient
-          AnimatedContainer(
-            duration: const Duration(milliseconds: 400),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [bgTop, gradientEnd],
-              ),
-            ),
+      body: AnimatedContainer(
+        duration: const Duration(milliseconds: 400),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [pageData.bgColor, pageData.bgColorLight],
           ),
-
-          // Particle field
-          Positioned.fill(
-            child: ParticleField(
-              particleCount: 20,
-              color: particleColor,
-            ),
-          ),
-
-          // PageView — horizontal swiping
-          NotificationListener<ScrollNotification>(
-            onNotification: (notification) {
-              if (notification is ScrollStartNotification &&
-                  notification.dragDetails != null) {
-                _resetAutoRotate();
-              }
-              return false;
-            },
-            child: PageView.builder(
-              controller: _pageController,
-              scrollDirection: Axis.horizontal,
-              physics: const BouncingScrollPhysics(
-                parent: PageScrollPhysics(),
-              ),
-              itemCount: _pages.length,
-              onPageChanged: (index) {
-                setState(() => _currentPage = index);
+        ),
+        child: Stack(
+          children: [
+            // PageView
+            NotificationListener<ScrollNotification>(
+              onNotification: (notification) {
+                if (notification is ScrollStartNotification &&
+                    notification.dragDetails != null) {
+                  _resetAutoRotate();
+                }
+                return false;
               },
-              itemBuilder: (context, index) {
-                return _IntroPage(
-                  data: _pages[index],
-                  screenSize: size,
-                  isActive: index == _currentPage,
-                  isDark: isDark,
-                  textColor: textColor,
-                  subtitleColor: subtitleColor,
-                  screenshotPlaceholderBg: screenshotPlaceholderBg,
-                  screenshotPlaceholderIcon: screenshotPlaceholderIcon,
-                );
-              },
-            ),
-          ),
-
-          // Top gradient overlay
-          Positioned(
-            top: 0,
-            left: 0,
-            right: 0,
-            height: 120,
-            child: IgnorePointer(
-              child: Container(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [overlayTopColor, Colors.transparent],
-                  ),
-                ),
+              child: PageView.builder(
+                controller: _pageController,
+                itemCount: _pages.length,
+                onPageChanged: (index) {
+                  setState(() => _currentPage = index);
+                },
+                itemBuilder: (context, index) {
+                  return _IntroPage(
+                    data: _pages[index],
+                    isActive: index == _currentPage,
+                  );
+                },
               ),
             ),
-          ),
 
-          // Bottom gradient overlay
-          Positioned(
-            bottom: 0,
-            left: 0,
-            right: 0,
-            height: 200,
-            child: IgnorePointer(
-              child: Container(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.bottomCenter,
-                    end: Alignment.topCenter,
-                    colors: [
-                      gradientEnd.withOpacity(0.95),
-                      Colors.transparent,
+            // Header
+            Positioned(
+              top: 0,
+              left: 0,
+              right: 0,
+              child: SafeArea(
+                bottom: false,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Row(
+                        children: [
+                          ClipOval(
+                            child: Image.asset(
+                              'assets/images/app_icon.png',
+                              width: 28,
+                              height: 28,
+                              errorBuilder: (_, __, ___) => const Icon(
+                                Icons.fitness_center,
+                                color: Colors.white,
+                                size: 28,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          const Text(
+                            'FitWiz',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                      GestureDetector(
+                        onTap: () => context.push('/sign-in'),
+                        child: const Text(
+                          'Sign In',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
                     ],
                   ),
                 ),
               ),
             ),
-          ),
 
-          // Header
-          Positioned(
-            top: 0,
-            left: 0,
-            right: 0,
-            child: SafeArea(
-              bottom: false,
-              child: Padding(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    // Logo
-                    Row(
-                      children: [
-                        ClipOval(
-                          child: Image.asset(
-                            'assets/images/app_icon.png',
-                            width: 28,
-                            height: 28,
-                            errorBuilder: (_, __, ___) => Icon(
-                              Icons.fitness_center,
-                              color: textColor,
-                              size: 28,
+            // Bottom: dots + button + tagline
+            Positioned(
+              bottom: 0,
+              left: 0,
+              right: 0,
+              child: SafeArea(
+                top: false,
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(24, 0, 24, 16),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // Page indicator dots
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: List.generate(_pages.length, (index) {
+                          final isActive = index == _currentPage;
+                          return AnimatedContainer(
+                            duration: const Duration(milliseconds: 200),
+                            margin: const EdgeInsets.symmetric(horizontal: 4),
+                            width: isActive ? 24 : 8,
+                            height: 8,
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(4),
+                              color: isActive
+                                  ? Colors.white
+                                  : Colors.white.withValues(alpha: 0.3),
+                            ),
+                          );
+                        }),
+                      ),
+                      const SizedBox(height: 24),
+
+                      // Get Started button
+                      SizedBox(
+                        width: double.infinity,
+                        height: 56,
+                        child: ElevatedButton(
+                          onPressed: () => context.push('/pre-auth-quiz'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.orange,
+                            foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(28),
+                            ),
+                            elevation: 0,
+                          ),
+                          child: const Text(
+                            'Get Started',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
                             ),
                           ),
                         ),
-                        const SizedBox(width: 8),
-                        Text(
-                          'FitWiz',
-                          style: TextStyle(
-                            color: textColor,
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
-                    ),
-                    // Sign In
-                    GestureDetector(
-                      onTap: () => context.push('/sign-in'),
-                      child: Text(
-                        'Sign In',
+                      ),
+                      const SizedBox(height: 12),
+
+                      // Tagline
+                      Text(
+                        'Your AI-powered fitness journey starts here',
                         style: TextStyle(
-                          color: textColor,
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
+                          color: Colors.white.withValues(alpha: 0.5),
+                          fontSize: 13,
                         ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
             ),
-          ),
-
-          // Bottom: page dots + button + tagline
-          Positioned(
-            bottom: 0,
-            left: 0,
-            right: 0,
-            child: SafeArea(
-              top: false,
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(24, 0, 24, 16),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    // Page indicator dots
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: List.generate(_pages.length, (index) {
-                        final isActive = index == _currentPage;
-                        return AnimatedContainer(
-                          duration: const Duration(milliseconds: 200),
-                          margin: const EdgeInsets.symmetric(horizontal: 4),
-                          width: isActive ? 24 : 8,
-                          height: 8,
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(4),
-                            color: isActive
-                                ? pageData.accent
-                                : dotInactiveColor,
-                          ),
-                        );
-                      }),
-                    ),
-                    const SizedBox(height: 24),
-
-                    // Get Started button
-                    SizedBox(
-                      width: double.infinity,
-                      height: 56,
-                      child: ElevatedButton(
-                        onPressed: () => context.push('/pre-auth-quiz'),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.orange,
-                          foregroundColor: Colors.white,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(28),
-                          ),
-                          elevation: 0,
-                        ),
-                        child: const Text(
-                          'Get Started',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-
-                    // Tagline
-                    Text(
-                      'Your AI-powered fitness journey starts here',
-                      style: TextStyle(
-                        color: taglineColor,
-                        fontSize: 13,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -375,55 +286,41 @@ class _IntroScreenState extends State<IntroScreen> {
 // Page Data
 // ─────────────────────────────────────────────────────────────────────────────
 
-class _TextPart {
-  final String text;
-  final bool isAccent;
-  const _TextPart(this.text, {this.isAccent = false});
-}
-
 class _PageData {
-  final List<_TextPart> headlineParts;
+  final String headline;
+  final String headlineAccent;
   final String subtitle;
-  final String leftImage;
-  final String rightImage;
-  final Color darkGradientEnd;
-  final Color lightGradientEnd;
+  final String image;
+  final Color bgColor;
+  final Color bgColorLight;
   final Color accent;
+  final Color textOnBg;
+  final Color subtitleOnBg;
 
   const _PageData({
-    required this.headlineParts,
+    required this.headline,
+    required this.headlineAccent,
     required this.subtitle,
-    required this.leftImage,
-    required this.rightImage,
-    required this.darkGradientEnd,
-    required this.lightGradientEnd,
+    required this.image,
+    required this.bgColor,
+    required this.bgColorLight,
     required this.accent,
+    required this.textOnBg,
+    required this.subtitleOnBg,
   });
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Intro Page
+// Intro Page — single centered screenshot, bold caption at top
 // ─────────────────────────────────────────────────────────────────────────────
 
 class _IntroPage extends StatefulWidget {
   final _PageData data;
-  final Size screenSize;
   final bool isActive;
-  final bool isDark;
-  final Color textColor;
-  final Color subtitleColor;
-  final Color screenshotPlaceholderBg;
-  final Color screenshotPlaceholderIcon;
 
   const _IntroPage({
     required this.data,
-    required this.screenSize,
     required this.isActive,
-    required this.isDark,
-    required this.textColor,
-    required this.subtitleColor,
-    required this.screenshotPlaceholderBg,
-    required this.screenshotPlaceholderIcon,
   });
 
   @override
@@ -435,14 +332,13 @@ class _IntroPageState extends State<_IntroPage>
   late final AnimationController _animController;
   late final Animation<double> _fadeIn;
   late final Animation<Offset> _slideUp;
-  late final Animation<double> _scaleFade;
 
   @override
   void initState() {
     super.initState();
     _animController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 700),
+      duration: const Duration(milliseconds: 600),
     );
 
     _fadeIn = CurvedAnimation(
@@ -457,11 +353,6 @@ class _IntroPageState extends State<_IntroPage>
       parent: _animController,
       curve: const Interval(0.0, 0.7, curve: Curves.easeOut),
     ));
-
-    _scaleFade = CurvedAnimation(
-      parent: _animController,
-      curve: const Interval(0.2, 0.85, curve: Curves.easeOut),
-    );
 
     if (widget.isActive) {
       _animController.forward();
@@ -485,16 +376,13 @@ class _IntroPageState extends State<_IntroPage>
 
   @override
   Widget build(BuildContext context) {
-    final width = widget.screenSize.width;
-    final leftWidth = width * 0.52;
-    final rightWidth = width * 0.48;
+    final screenHeight = MediaQuery.of(context).size.height;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24),
       child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const SizedBox(height: 80),
+          SizedBox(height: screenHeight * 0.12),
 
           // Headline
           AnimatedBuilder(
@@ -508,172 +396,133 @@ class _IntroPageState extends State<_IntroPage>
                 ),
               );
             },
-            child: _buildHeadline(),
+            child: Column(
+              children: [
+                Text(
+                  widget.data.headline,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 34,
+                    fontWeight: FontWeight.w900,
+                    color: widget.data.textOnBg,
+                    height: 1.1,
+                  ),
+                ),
+                Text(
+                  widget.data.headlineAccent,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 34,
+                    fontWeight: FontWeight.w900,
+                    color: widget.data.accent,
+                    height: 1.1,
+                  ),
+                ),
+              ],
+            ),
           ),
 
-          const SizedBox(height: 12),
+          const SizedBox(height: 8),
 
           // Subtitle
           AnimatedBuilder(
             animation: _animController,
             builder: (context, child) {
-              final delayedFade = CurvedAnimation(
-                parent: _animController,
-                curve: const Interval(0.2, 0.85, curve: Curves.easeOut),
-              );
-              final delayedSlide = Tween<Offset>(
-                begin: const Offset(0, 20),
-                end: Offset.zero,
-              ).animate(CurvedAnimation(
-                parent: _animController,
-                curve: const Interval(0.2, 0.85, curve: Curves.easeOut),
-              ));
               return Opacity(
-                opacity: delayedFade.value,
-                child: Transform.translate(
-                  offset: delayedSlide.value,
-                  child: child,
-                ),
+                opacity: _fadeIn.value,
+                child: child,
               );
             },
             child: Text(
               widget.data.subtitle,
               textAlign: TextAlign.center,
               style: TextStyle(
-                color: widget.subtitleColor,
+                color: widget.data.subtitleOnBg,
                 fontSize: 15,
                 height: 1.4,
               ),
             ),
           ),
 
-          const SizedBox(height: 40),
+          const SizedBox(height: 32),
 
-          // Screenshots
-          AnimatedBuilder(
-            animation: _animController,
-            builder: (context, child) {
-              return Opacity(
-                opacity: _scaleFade.value,
-                child: Transform.scale(
-                  scale: 0.9 + (_scaleFade.value * 0.1),
-                  child: child,
+          // Single centered screenshot
+          Expanded(
+            child: AnimatedBuilder(
+              animation: _animController,
+              builder: (context, child) {
+                final scaleFade = CurvedAnimation(
+                  parent: _animController,
+                  curve: const Interval(0.2, 0.85, curve: Curves.easeOut),
+                );
+                return Opacity(
+                  opacity: scaleFade.value,
+                  child: Transform.scale(
+                    scale: 0.92 + (scaleFade.value * 0.08),
+                    child: child,
+                  ),
+                );
+              },
+              child: Center(
+                child: Container(
+                  constraints: const BoxConstraints(maxWidth: 280),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(24),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.3),
+                        blurRadius: 30,
+                        offset: const Offset(0, 15),
+                      ),
+                    ],
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(24),
+                    child: Image.asset(
+                      widget.data.image,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) {
+                        // Placeholder when screenshot assets don't exist yet
+                        return Container(
+                          width: 280,
+                          height: 500,
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.08),
+                            borderRadius: BorderRadius.circular(24),
+                            border: Border.all(
+                              color: Colors.white.withValues(alpha: 0.15),
+                            ),
+                          ),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.phone_android,
+                                color: Colors.white.withValues(alpha: 0.3),
+                                size: 48,
+                              ),
+                              const SizedBox(height: 12),
+                              Text(
+                                'Screenshot',
+                                style: TextStyle(
+                                  color: Colors.white.withValues(alpha: 0.3),
+                                  fontSize: 14,
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                    ),
+                  ),
                 ),
-              );
-            },
-            child: SizedBox(
-              height: widget.screenSize.height * 0.42,
-              child: Stack(
-                alignment: Alignment.center,
-                children: [
-                  // Left image (larger, tilted left)
-                  Positioned(
-                    left: 0,
-                    child: BreathingGlow(
-                      color: widget.data.accent,
-                      child: ParallaxContainer(
-                        scrollOffset: 0.0,
-                        child: Transform.rotate(
-                          angle: -3 * pi / 180,
-                          child: _buildScreenshot(
-                            widget.data.leftImage,
-                            leftWidth,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                  // Right image (smaller, tilted right, overlapping)
-                  Positioned(
-                    right: 0,
-                    top: 40,
-                    child: BreathingGlow(
-                      color: widget.data.accent,
-                      child: ParallaxContainer(
-                        scrollOffset: 0.0,
-                        child: Transform.rotate(
-                          angle: 2 * pi / 180,
-                          child: _buildScreenshot(
-                            widget.data.rightImage,
-                            rightWidth,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
               ),
             ),
           ),
 
-          const SizedBox(height: 80),
+          // Space for bottom controls
+          const SizedBox(height: 120),
         ],
-      ),
-    );
-  }
-
-  Widget _buildHeadline() {
-    final shimmerColor = widget.isDark ? Colors.white : widget.data.accent.withOpacity(0.3);
-
-    return Text.rich(
-      TextSpan(
-        children: widget.data.headlineParts.map((part) {
-          if (part.isAccent) {
-            return WidgetSpan(
-              alignment: PlaceholderAlignment.baseline,
-              baseline: TextBaseline.alphabetic,
-              child: ShimmerText(
-                shimmerColor: shimmerColor,
-                child: Text(
-                  part.text,
-                  style: TextStyle(
-                    fontSize: 32,
-                    fontWeight: FontWeight.bold,
-                    color: widget.data.accent,
-                  ),
-                ),
-              ),
-            );
-          }
-          return TextSpan(
-            text: part.text,
-            style: TextStyle(
-              fontSize: 32,
-              fontWeight: FontWeight.bold,
-              color: widget.textColor,
-            ),
-          );
-        }).toList(),
-      ),
-      textAlign: TextAlign.center,
-    );
-  }
-
-  Widget _buildScreenshot(String assetPath, double width) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(16),
-      child: Image.asset(
-        assetPath,
-        width: width,
-        fit: BoxFit.cover,
-        errorBuilder: (_, __, ___) {
-          return Container(
-            width: width,
-            height: width * 1.8,
-            decoration: BoxDecoration(
-              color: widget.screenshotPlaceholderBg,
-              borderRadius: BorderRadius.circular(16),
-              border: widget.isDark
-                  ? null
-                  : Border.all(color: Colors.black.withOpacity(0.06)),
-            ),
-            child: Icon(
-              Icons.image_outlined,
-              color: widget.screenshotPlaceholderIcon,
-              size: 48,
-            ),
-          );
-        },
       ),
     );
   }

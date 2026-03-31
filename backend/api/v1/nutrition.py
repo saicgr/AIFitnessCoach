@@ -990,6 +990,7 @@ class USDAFoodResponse(BaseModel):
     serving_weight_g: Optional[float] = None
     matched_query: Optional[str] = None  # Which sub-query this result matched (for multi-food queries)
     verification_level: Optional[str] = None  # 'curated', 'lab_verified', 'manufacturer_verified', 'community_verified'
+    total_calories: Optional[int] = None  # Total calories for saved foods (per-serving, not per-100g)
 
 
 class USDASearchResponse(BaseModel):
@@ -1090,6 +1091,16 @@ async def search_foods(
         # Convert local DB results to USDAFoodResponse format for compatibility
         foods = []
         for item in results:
+            # Sanity check: skip entries with near-zero calories but non-trivial macros (bad data)
+            _cal = float(item.get("calories_per_100g") or 0)
+            _prot = float(item.get("protein_per_100g") or 0)
+            _fat = float(item.get("fat_per_100g") or 0)
+            _carbs = float(item.get("carbs_per_100g") or 0)
+            _source = item.get("source", "")
+            if _source not in ("saved", "saved_item") and _cal < 5 and (_prot > 1 or _fat > 1 or _carbs > 1):
+                logger.warning(f"[FoodSearch] Skipping bad data: '{item.get('name')}' has {_cal} cal/100g with macros P={_prot} F={_fat} C={_carbs}")
+                continue
+
             nutrients = {
                 "calories_per_100g": item.get("calories_per_100g", 0),
                 "protein_per_100g": item.get("protein_per_100g", 0),
@@ -1129,6 +1140,11 @@ async def search_foods(
             else:
                 v_level = item.get("verification_level")
 
+            # For saved foods, pass total_calories directly (not per-100g)
+            total_cal = None
+            if _source in ("saved", "saved_item"):
+                total_cal = int(item.get("total_calories") or item.get("calories_per_100g") or 0)
+
             foods.append(USDAFoodResponse(
                 fdc_id=fdc_id,
                 description=item.get("name", "Unknown"),
@@ -1146,6 +1162,7 @@ async def search_foods(
                 serving_weight_g=item.get("serving_weight_g"),
                 matched_query=item.get("matched_query"),
                 verification_level=v_level,
+                total_calories=total_cal,
             ))
 
         total_hits = len(foods)

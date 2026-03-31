@@ -2273,8 +2273,8 @@ class FoodAnalysisCacheService:
             lookup_service = get_food_db_lookup_service()
             await lookup_service._load_overrides()
 
-            # First try exact match on full description (handles "chicken 65", etc.)
-            override = lookup_service._check_override(description)
+            # First try fuzzy match on full description (handles "chicken 65", cooking variants, etc.)
+            override = await lookup_service._check_override_fuzzy_db(description)
             food_key = description  # Track which key matched for default modifiers
             if override:
                 result = self._override_to_analysis(override)
@@ -2286,7 +2286,7 @@ class FoodAnalysisCacheService:
             if not parsed:
                 return None
 
-            override = lookup_service._check_override(parsed.food_name)
+            override = await lookup_service._check_override_fuzzy_db(parsed.food_name)
             food_key = parsed.food_name
             if not override:
                 return None
@@ -3064,16 +3064,16 @@ class FoodAnalysisCacheService:
             parsed = self._parse_single_item(base_food)
             food_name = parsed.food_name if parsed else base_food
 
-            override = lookup_service._check_override(food_name)
+            override = await lookup_service._check_override_fuzzy_db(food_name)
 
-            # Fuzzy fallback
+            # Fuzzy fallback via search
             if not override:
                 fuzzy_matches = lookup_service._find_matching_overrides_for_search(food_name)
                 if fuzzy_matches:
                     # Use the best match (highest similarity)
                     best = fuzzy_matches[0]
                     best_name = best.get("name", "")
-                    override = lookup_service._check_override(best_name)
+                    override = await lookup_service._check_override_fuzzy_db(best_name)
 
             if not override:
                 return None

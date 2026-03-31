@@ -2148,7 +2148,9 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet> {
                   children: [
                     Icon(Icons.auto_awesome, color: isDark ? AppColors.textSecondary : AppColorsLight.textSecondary, size: 20),
                     const SizedBox(width: 8),
-                    Text('Estimated Nutrition', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: textPrimary)),
+                    Flexible(
+                      child: Text('Estimated Nutrition', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: textPrimary), overflow: TextOverflow.ellipsis),
+                    ),
                     if (response.overallMealScore != null) ...[
                       const SizedBox(width: 8),
                       _CompactGoalScore(score: response.overallMealScore!, isDark: isDark),
