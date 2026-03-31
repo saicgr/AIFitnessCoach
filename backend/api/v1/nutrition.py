@@ -48,7 +48,7 @@ from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, U
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field, validator
 
-from core.timezone_utils import resolve_timezone, local_date_to_utc_range, get_user_today, get_user_now_iso
+from core.timezone_utils import resolve_timezone, local_date_to_utc_range, get_user_today, get_user_now_iso, target_date_to_utc_iso
 
 from core.rate_limiter import limiter
 from core.auth import get_current_user, verify_user_ownership, verify_resource_ownership
@@ -584,10 +584,54 @@ async def update_food_log(log_id: str, body: UpdateFoodLogRequest, current_user:
         raise safe_internal_error(e, "nutrition")
 
 
+class UpdateMoodRequest(BaseModel):
+    """Update mood/wellness data on a food log after logging."""
+    mood_before: Optional[str] = None
+    mood_after: Optional[str] = None
+    energy_level: Optional[int] = None  # 1-5
+
+
+@router.patch("/food-logs/{log_id}/mood")
+async def update_food_log_mood(log_id: str, body: UpdateMoodRequest, current_user: dict = Depends(get_current_user)):
+    """Update mood/wellness tracking on an existing food log (post-logging review)."""
+    user_id = current_user.get("id") or current_user.get("sub")
+    logger.info(f"Updating mood for food log {log_id}: before={body.mood_before}, after={body.mood_after}, energy={body.energy_level}")
+
+    try:
+        supabase = get_supabase()
+        update_data = {}
+        if body.mood_before is not None:
+            update_data["mood_before"] = body.mood_before
+        if body.mood_after is not None:
+            update_data["mood_after"] = body.mood_after
+        if body.energy_level is not None:
+            update_data["energy_level"] = max(1, min(5, body.energy_level))
+
+        if not update_data:
+            return {"status": "no_changes", "id": log_id}
+
+        result = supabase.client.table("food_logs").update(update_data).eq(
+            "id", log_id
+        ).eq(
+            "user_id", user_id
+        ).execute()
+
+        if not result.data:
+            raise HTTPException(status_code=404, detail="Food log not found or not owned by user")
+
+        return {"status": "updated", "id": log_id, **update_data}
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to update food log mood: {e}")
+        raise safe_internal_error(e, "nutrition")
+
+
 @router.post("/food-logs/{log_id}/copy")
-async def copy_food_log(log_id: str, http_request: Request, meal_type: str = Query(..., description="Target meal type"), current_user: dict = Depends(get_current_user)):
-    """Copy an existing food log to a different meal type (or the same)."""
-    logger.info(f"Copying food log {log_id} to {meal_type}")
+async def copy_food_log(log_id: str, http_request: Request, meal_type: str = Query(..., description="Target meal type"), target_date: Optional[str] = Query(None, description="Target date YYYY-MM-DD; defaults to now"), current_user: dict = Depends(get_current_user)):
+    """Copy an existing food log to a different meal type (or the same). Optionally specify a target date."""
+    logger.info(f"Copying food log {log_id} to {meal_type}, target_date={target_date}")
 
     try:
         db = get_supabase_db()
@@ -599,7 +643,10 @@ async def copy_food_log(log_id: str, http_request: Request, meal_type: str = Que
 
         # Resolve timezone for logged_at timestamp
         user_tz = resolve_timezone(http_request, db, source["user_id"])
-        user_tz_logged_at = get_user_now_iso(user_tz)
+        if target_date:
+            user_tz_logged_at = target_date_to_utc_iso(target_date, user_tz)
+        else:
+            user_tz_logged_at = get_user_now_iso(user_tz)
 
         # Create a new food log with the same data but different meal type
         created_log = db.create_food_log(
@@ -2281,6 +2328,47 @@ async def analyze_food_from_text_streaming(request: Request, body: LogTextReques
             return f"event: error\ndata: {json.dumps(data)}\n\n"
 
         try:
+            # Step 0: Check for contextual meal reference (leftovers, same thing, my usual, etc.)
+            from services.contextual_meal_service import detect_and_resolve as detect_contextual
+            from core.db.nutrition_db import NutritionDB
+
+            contextual_db = NutritionDB()
+            contextual_result = await detect_contextual(
+                description=body.description,
+                user_id=body.user_id,
+                current_meal_type=body.meal_type,
+                nutrition_db=contextual_db,
+            )
+
+            if contextual_result is not None:
+                if contextual_result.found:
+                    # Resolved from history — return items directly, skip Gemini
+                    logger.info(f"[ANALYZE-STREAM] Contextual match: {contextual_result.source_label}")
+                    yield send_progress(1, 1, "Found in your history!", contextual_result.source_label)
+
+                    response_data = {
+                        "success": True,
+                        "is_analysis_only": True,
+                        "food_items": contextual_result.items,
+                        "total_calories": contextual_result.total_calories,
+                        "protein_g": contextual_result.protein_g,
+                        "carbs_g": contextual_result.carbs_g,
+                        "fat_g": contextual_result.fat_g,
+                        "fiber_g": contextual_result.fiber_g,
+                        "source_type": "history",
+                        "source_label": contextual_result.source_label,
+                        "total_time_ms": elapsed_ms(),
+                        "cache_hit": True,
+                        "cache_source": "meal_history",
+                    }
+                    yield f"event: done\ndata: {json.dumps(response_data)}\n\n"
+                    return
+                else:
+                    # Reference detected but no matching history — return error with helpful message
+                    logger.info(f"[ANALYZE-STREAM] Contextual reference not found: {contextual_result.message}")
+                    yield send_error(contextual_result.message or "No matching meals found.")
+                    return
+
             # Step 1: Analyze food (parallel user profile + cache check)
             yield send_progress(1, 3, "Analyzing your food...", "Loading profile & checking cache")
 
@@ -3387,12 +3475,13 @@ async def relog_saved_food(
     request: RelogSavedFoodRequest,
     http_request: Request = None,
     user_id: str = Query(...),
+    target_date: Optional[str] = Query(None, description="Target date YYYY-MM-DD; defaults to now"),
     current_user: dict = Depends(get_current_user),
 ):
     """
-    Re-log a saved food to today's meal diary.
+    Re-log a saved food to a meal diary. Optionally specify a target date.
     """
-    logger.info(f"Re-logging saved food {saved_food_id} for user {user_id}")
+    logger.info(f"Re-logging saved food {saved_food_id} for user {user_id}, target_date={target_date}")
 
     try:
         db = get_supabase_db()
@@ -3415,7 +3504,10 @@ async def relog_saved_food(
         user_tz_logged_at = None
         if http_request:
             user_tz = resolve_timezone(http_request, db, user_id)
-            user_tz_logged_at = get_user_now_iso(user_tz)
+            if target_date:
+                user_tz_logged_at = target_date_to_utc_iso(target_date, user_tz)
+            else:
+                user_tz_logged_at = get_user_now_iso(user_tz)
 
         # Create food log from saved food
         created_log = db.create_food_log(
@@ -7131,7 +7223,7 @@ async def select_recommendation(user_id: str, request: SelectRecommendationReque
 
     try:
         # Get available options
-        options_response = await get_recommendation_options(user_id)
+        options_response = await get_recommendation_options(user_id, current_user=current_user)
 
         # Find selected option
         selected = None

@@ -493,7 +493,7 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
   }
 
   Future<void> _showLogMealSheet(bool isDark, {String? mealType, bool autoOpenCamera = false, bool autoOpenBarcode = false}) async {
-    await showLogMealSheet(context, ref, initialMealType: mealType, autoOpenCamera: autoOpenCamera, autoOpenBarcode: autoOpenBarcode);
+    await showLogMealSheet(context, ref, initialMealType: mealType, autoOpenCamera: autoOpenCamera, autoOpenBarcode: autoOpenBarcode, selectedDate: _selectedDate);
     _loadData();
   }
 

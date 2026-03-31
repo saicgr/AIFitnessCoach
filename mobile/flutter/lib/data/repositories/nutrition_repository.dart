@@ -365,15 +365,19 @@ class NutritionRepository {
     }
   }
 
-  /// Copy a food log to a different meal type
+  /// Copy a food log to a different meal type, optionally on a specific date
   Future<Map<String, dynamic>> copyFoodLog({
     required String logId,
     required String mealType,
+    String? date,
   }) async {
     try {
       final response = await _client.post(
         '/nutrition/food-logs/$logId/copy',
-        queryParameters: {'meal_type': mealType},
+        queryParameters: {
+          'meal_type': mealType,
+          if (date != null) 'target_date': date,
+        },
       );
       return response.data as Map<String, dynamic>;
     } catch (e) {
@@ -1483,16 +1487,20 @@ class NutritionRepository {
     }
   }
 
-  /// Re-log a saved food
+  /// Re-log a saved food, optionally on a specific date
   Future<LogFoodResponse> relogSavedFood({
     required String userId,
     required String savedFoodId,
     required String mealType,
+    String? date,
   }) async {
     try {
       final response = await _client.post(
         '/nutrition/saved-foods/$savedFoodId/log',
-        queryParameters: {'user_id': userId},
+        queryParameters: {
+          'user_id': userId,
+          if (date != null) 'target_date': date,
+        },
         data: {'meal_type': mealType},
       );
       return LogFoodResponse.fromJson(response.data);

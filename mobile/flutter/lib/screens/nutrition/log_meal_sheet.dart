@@ -31,10 +31,11 @@ import 'widgets/food_browser_panel.dart';
 import 'widgets/food_report_dialog.dart';
 import 'widgets/inflammation_analysis_widget.dart';
 import 'widgets/portion_amount_input.dart';
+import 'widgets/post_meal_review_sheet.dart';
 
 /// Shows the log meal bottom sheet from anywhere in the app
 /// [initialMealType] - Optional meal type to pre-select (e.g., 'breakfast', 'lunch', 'dinner', 'snack')
-Future<void> showLogMealSheet(BuildContext context, WidgetRef ref, {String? initialMealType, bool autoOpenCamera = false, bool autoOpenBarcode = false}) async {
+Future<void> showLogMealSheet(BuildContext context, WidgetRef ref, {String? initialMealType, bool autoOpenCamera = false, bool autoOpenBarcode = false, DateTime? selectedDate}) async {
   debugPrint('showLogMealSheet: Starting with initialMealType=$initialMealType');
   final isDark = Theme.of(context).brightness == Brightness.dark;
 
@@ -77,6 +78,7 @@ Future<void> showLogMealSheet(BuildContext context, WidgetRef ref, {String? init
       initialMealType: mealType,
       autoOpenCamera: autoOpenCamera,
       autoOpenBarcode: autoOpenBarcode,
+      selectedDate: selectedDate,
     ),
   );
 
@@ -92,6 +94,7 @@ class LogMealSheet extends ConsumerStatefulWidget {
   final MealType? initialMealType;
   final bool autoOpenCamera;
   final bool autoOpenBarcode;
+  final DateTime? selectedDate;
 
   const LogMealSheet({
     super.key,
@@ -100,6 +103,7 @@ class LogMealSheet extends ConsumerStatefulWidget {
     this.initialMealType,
     this.autoOpenCamera = false,
     this.autoOpenBarcode = false,
+    this.selectedDate,
   });
 
   @override
@@ -289,13 +293,8 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet> {
     final query = _descriptionController.text.trim();
     if (query.length >= 3) {
       final service = ref.read(search.foodSearchServiceProvider);
-      // When user explicitly submits, check if it looks like NL food logging
-      if (search.FoodSearchService.isNaturalLanguageInput(query)) {
-        service.analyzeNaturalLanguage(query);
-      } else {
-        final cachedLogs = ref.read(nutritionProvider).recentLogs;
-        service.searchImmediate(query, widget.userId, cachedLogs: cachedLogs);
-      }
+      final cachedLogs = ref.read(nutritionProvider).recentLogs;
+      service.searchImmediate(query, widget.userId, cachedLogs: cachedLogs);
     }
   }
 
@@ -641,17 +640,21 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet> {
     // Optimistic: mark XP and close sheet immediately
     ref.read(xpProvider.notifier).markMealLogged();
 
-    // Start the save (don't await here - let _logAnalyzedFood close the sheet first)
+    // Start the save — capture the food_log_id for post-meal review
+    String? savedLogId;
     final saveFuture = repository.logFoodDirect(
       userId: userId,
       mealType: mealType,
       analyzedFood: response,
       sourceType: sourceType,
-    ).catchError((e) {
+    ).then((savedResponse) {
+      savedLogId = savedResponse.foodLogId;
+      return savedResponse;
+    }).catchError((e) {
       debugPrint('❌ [LogMeal] Background save failed: $e');
     });
 
-    _logAnalyzedFood(response, saveFuture);
+    _logAnalyzedFood(response, saveFuture, () => savedLogId);
   }
 
   Future<void> _handleSaveAsFavorite() async {
@@ -923,7 +926,7 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet> {
 
 
   /// Log an already analyzed food response
-  void _logAnalyzedFood(LogFoodResponse response, [Future<void>? saveFuture]) async {
+  void _logAnalyzedFood(LogFoodResponse response, [Future<void>? saveFuture, String? Function()? getSavedLogId]) async {
     debugPrint('✅ [LogMeal] _logAnalyzedFood called | calories=${response.totalCalories} | protein=${response.proteinG}g | foodItems=${response.foodItems.length}');
 
     // Check if there's an active fast that should be ended
@@ -950,16 +953,37 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet> {
     // Capture refs before popping (widget unmounts after pop)
     final nutritionNotifier = ref.read(nutritionProvider.notifier);
     final userId = widget.userId;
+    final isDark = widget.isDark;
+    final foodNames = response.foodItems.map((f) => (f['name'] as String?) ?? 'Food').toList();
+    final totalCalories = response.totalCalories;
+    // foodLogId from analysis response is null (not saved yet)
+    // getSavedLogId() will have the real ID after save completes
+
+    // Get the navigator's overlay context which survives the pop
+    final overlay = Navigator.of(context).overlay;
 
     // Close sheet immediately for snappy UX
     Navigator.pop(context);
-    _showSuccessSnackbar(response.totalCalories, response: response);
 
     // Wait for backend save to complete, then refresh to show updated data
     if (saveFuture != null) {
       await saveFuture;
     }
     nutritionNotifier.loadTodaySummary(userId, forceRefresh: true);
+
+    // Show post-log review sheet after a brief delay
+    await Future.delayed(const Duration(milliseconds: 400));
+    final reviewContext = overlay?.context;
+    if (reviewContext != null && reviewContext.mounted) {
+      showPostMealReviewSheet(
+        reviewContext,
+        foodNames: foodNames,
+        totalCalories: totalCalories,
+        isDark: isDark,
+        userId: userId,
+        foodLogId: getSavedLogId?.call(),
+      );
+    }
   }
 
   /// Show dialog to ask user if they want to end their fast
@@ -1633,7 +1657,9 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet> {
 
     final sheetHeight = keyboardVisible
         ? screenHeight - keyboardHeight - MediaQuery.of(context).padding.top - 20
-        : screenHeight * 0.85;
+        : _analyzedResponse != null
+            ? screenHeight * 0.92
+            : screenHeight * 0.85;
 
     return PopScope(
       canPop: _analyzedResponse == null || _hasLoggedThisSession,
@@ -1659,7 +1685,9 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet> {
             curve: Curves.easeOut,
             height: sheetHeight,
             decoration: BoxDecoration(
-              color: GlassSheetStyle.backgroundColor(isDark),
+              color: _analyzedResponse != null
+                  ? (isDark ? Colors.black.withValues(alpha: 0.85) : Colors.white.withValues(alpha: 0.95))
+                  : GlassSheetStyle.backgroundColor(isDark),
               borderRadius: const BorderRadius.vertical(top: Radius.circular(GlassSheetStyle.borderRadius)),
               border: Border(
                 top: BorderSide(color: GlassSheetStyle.borderColor(isDark), width: 0.5),
@@ -1935,6 +1963,7 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet> {
                   // Refresh nutrition data
                   ref.read(nutritionProvider.notifier).loadTodaySummary(widget.userId);
                 },
+                selectedDate: widget.selectedDate,
               ),
             ),
           ),
@@ -2143,35 +2172,67 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet> {
                     ),
                   ),
 
-                // Estimated Nutrition header row
+                // Source label banner (for contextual meal references)
+                if (response.sourceLabel != null)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: (isDark ? AppColors.teal : AppColorsLight.teal).withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(
+                          color: (isDark ? AppColors.teal : AppColorsLight.teal).withValues(alpha: 0.2),
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(Icons.history, size: 16, color: isDark ? AppColors.teal : AppColorsLight.teal),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              response.sourceLabel!,
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w500,
+                                color: isDark ? AppColors.teal : AppColorsLight.teal,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+
+                // Estimated Nutrition header — two rows
                 Row(
                   children: [
                     Icon(Icons.auto_awesome, color: isDark ? AppColors.textSecondary : AppColorsLight.textSecondary, size: 20),
                     const SizedBox(width: 8),
-                    Flexible(
-                      child: Text('Estimated Nutrition', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: textPrimary), overflow: TextOverflow.ellipsis),
-                    ),
+                    Text('Estimated Nutrition', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: textPrimary)),
                     if (response.overallMealScore != null) ...[
                       const SizedBox(width: 8),
                       _CompactGoalScore(score: response.overallMealScore!, isDark: isDark),
                     ],
                     if (_analysisElapsedMs != null) ...[
-                      const SizedBox(width: 8),
+                      const SizedBox(width: 6),
                       Text('(${(_analysisElapsedMs! / 1000).toStringAsFixed(1)}s)', style: TextStyle(fontSize: 12, color: textMuted)),
                     ],
-                    const Spacer(),
+                  ],
+                ),
+                const SizedBox(height: 6),
+                // Action buttons row
+                Row(
+                  children: [
                     // Star button
                     GestureDetector(
                       behavior: HitTestBehavior.opaque,
                       onTap: _isSaved || _isSaving ? null : _handleSaveAsFavorite,
-                      child: Container(
-                        padding: const EdgeInsets.all(8),
-                        child: _isSaving
-                            ? SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: isDark ? AppColors.textSecondary : AppColorsLight.textSecondary))
-                            : Icon(_isSaved ? Icons.star : Icons.star_border, size: 24, color: _isSaved ? AppColors.yellow : textMuted),
-                      ),
+                      child: _isSaving
+                          ? SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: isDark ? AppColors.textSecondary : AppColorsLight.textSecondary))
+                          : Icon(_isSaved ? Icons.star : Icons.star_border, size: 22, color: _isSaved ? AppColors.yellow : textMuted),
                     ),
-                    const SizedBox(width: 12),
+                    const SizedBox(width: 16),
                     GestureDetector(
                       onTap: _handleEdit,
                       child: Row(
@@ -2182,7 +2243,7 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet> {
                         ],
                       ),
                     ),
-                    const SizedBox(width: 12),
+                    const SizedBox(width: 16),
                     // Flag / report inaccuracy
                     GestureDetector(
                       onTap: () {
@@ -2199,7 +2260,13 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet> {
                           dataSource: 'ai_analysis',
                         );
                       },
-                      child: Icon(Icons.flag_outlined, size: 18, color: textMuted),
+                      child: Row(
+                        children: [
+                          Icon(Icons.flag_outlined, size: 14, color: textMuted),
+                          const SizedBox(width: 4),
+                          Text('Report', style: TextStyle(fontSize: 12, color: textMuted)),
+                        ],
+                      ),
                     ),
                   ],
                 ),
@@ -2215,11 +2282,11 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet> {
                             child: Text(
                               '"$description"',
                               style: TextStyle(
-                                fontSize: 12,
-                                color: textMuted,
+                                fontSize: 15,
+                                color: textPrimary,
                                 fontStyle: FontStyle.italic,
                               ),
-                              maxLines: 1,
+                              maxLines: 3,
                               overflow: TextOverflow.ellipsis,
                             ),
                           ),
@@ -2256,7 +2323,7 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet> {
                   ),
                 if (response.foodItems.isNotEmpty) const SizedBox(height: 12),
 
-                // AI Coach Tip — collapsed by default
+                // AI Coach Tip
                 if (response.aiSuggestion != null || (response.encouragements != null && response.encouragements!.isNotEmpty) || (response.warnings != null && response.warnings!.isNotEmpty))
                   Builder(builder: (_) {
                     final aiSettings = ref.read(aiSettingsProvider);
@@ -2271,51 +2338,10 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet> {
                     );
                   }),
 
-                const SizedBox(height: 12),
-
-                // "More details" toggle — mood tracking + micronutrients only
-                GestureDetector(
-                  onTap: () => setState(() => _showMealDetails = !_showMealDetails),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        _showMealDetails ? Icons.expand_less : Icons.expand_more,
-                        size: 18,
-                        color: textSecondary,
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        _showMealDetails ? 'Less details' : 'More details',
-                        style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w500,
-                          color: textSecondary,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-
-                if (_showMealDetails) ...[
+                // Micronutrients
+                if (_hasMicronutrients(response)) ...[
                   const SizedBox(height: 12),
-
-                  // Mood tracking
-                  _MoodTrackingSection(
-                    moodBefore: _moodBefore,
-                    moodAfter: _moodAfter,
-                    energyLevel: _energyLevel,
-                    onMoodBeforeChanged: (mood) => setState(() => _moodBefore = mood),
-                    onMoodAfterChanged: (mood) => setState(() => _moodAfter = mood),
-                    onEnergyLevelChanged: (level) => setState(() => _energyLevel = level),
-                    isDark: isDark,
-                  ),
-                  const SizedBox(height: 12),
-
-                  // Micronutrients
-                  if (_hasMicronutrients(response))
-                    _MicronutrientsSection(response: response, isDark: isDark),
-                  if (_hasMicronutrients(response)) const SizedBox(height: 12),
+                  _MicronutrientsSection(response: response, isDark: isDark),
                 ],
 
                 const SizedBox(height: 8),
@@ -3033,52 +3059,22 @@ class _CompactGoalScore extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scoreColor = _getScoreColor();
-    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
 
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Container(
-          width: 48,
-          height: 48,
-          decoration: BoxDecoration(
-            color: scoreColor.withValues(alpha: 0.15),
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: scoreColor, width: 2),
-          ),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(
-                '$score',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: scoreColor,
-                  height: 1,
-                ),
-              ),
-              Text(
-                '/10',
-                style: TextStyle(
-                  fontSize: 10,
-                  color: scoreColor.withValues(alpha: 0.7),
-                  height: 1.2,
-                ),
-              ),
-            ],
-          ),
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: scoreColor.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: scoreColor.withValues(alpha: 0.4), width: 1.5),
+      ),
+      child: Text(
+        '$score/10',
+        style: TextStyle(
+          fontSize: 14,
+          fontWeight: FontWeight.bold,
+          color: scoreColor,
         ),
-        const SizedBox(height: 4),
-        Text(
-          'Goal Score',
-          style: TextStyle(
-            fontSize: 9,
-            fontWeight: FontWeight.w500,
-            color: textMuted,
-          ),
-        ),
-      ],
+      ),
     );
   }
 }

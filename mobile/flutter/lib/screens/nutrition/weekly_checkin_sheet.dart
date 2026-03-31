@@ -189,6 +189,88 @@ class _WeeklyCheckinSheetState extends ConsumerState<WeeklyCheckinSheet> {
     }
   }
 
+  Future<void> _showDisableConfirmation(Color textPrimary, Color textMuted, Color teal) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) {
+        final isDark = Theme.of(ctx).brightness == Brightness.dark;
+        final bgColor = isDark ? const Color(0xFF1E1E1E) : Colors.white;
+        return AlertDialog(
+          backgroundColor: bgColor,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: Text(
+            'Disable Weekly Check-In?',
+            style: TextStyle(color: textPrimary, fontSize: 18, fontWeight: FontWeight.w700),
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'You\'ll miss out on:',
+                style: TextStyle(color: textMuted, fontSize: 14, fontWeight: FontWeight.w600),
+              ),
+              const SizedBox(height: 12),
+              _buildAdvantageRow(Icons.trending_up_rounded, 'Auto-adjusted calorie targets based on your real progress', textPrimary),
+              const SizedBox(height: 10),
+              _buildAdvantageRow(Icons.analytics_rounded, 'Weekly adherence & sustainability scores', textPrimary),
+              const SizedBox(height: 10),
+              _buildAdvantageRow(Icons.lightbulb_rounded, 'Personalized tips to stay on track', textPrimary),
+              const SizedBox(height: 10),
+              _buildAdvantageRow(Icons.speed_rounded, 'TDEE recalculation from actual weight trends', textPrimary),
+              const SizedBox(height: 16),
+              Text(
+                'You can re-enable this anytime in Nutrition Settings.',
+                style: TextStyle(color: textMuted.withValues(alpha: 0.7), fontSize: 12),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: Text('Keep It', style: TextStyle(color: teal, fontWeight: FontWeight.w600)),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              child: Text('Disable', style: TextStyle(color: Colors.red.shade400)),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirmed == true && mounted) {
+      try {
+        final prefsState = ref.read(nutritionPreferencesProvider);
+        if (prefsState.preferences != null) {
+          await ref.read(nutritionPreferencesProvider.notifier).savePreferences(
+            userId: widget.userId,
+            preferences: prefsState.preferences!.copyWith(weeklyCheckinEnabled: false),
+          );
+        }
+      } catch (e) {
+        debugPrint('⚠️ [WeeklyCheckin] Failed to disable: $e');
+      }
+      if (mounted) Navigator.pop(context, false);
+    }
+  }
+
+  Widget _buildAdvantageRow(IconData icon, String text, Color textColor) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(icon, size: 18, color: AppColors.orange),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Text(
+            text,
+            style: TextStyle(color: textColor, fontSize: 13, height: 1.3),
+          ),
+        ),
+      ],
+    );
+  }
+
   Future<void> _acceptRecommendation() async {
     if (_recommendation == null) return;
 
@@ -830,6 +912,16 @@ class _WeeklyCheckinSheetState extends ConsumerState<WeeklyCheckinSheet> {
                     child: Text(
                       'Skip this week',
                       style: TextStyle(color: textMuted, fontSize: 14),
+                    ),
+                  ),
+                  TextButton(
+                    onPressed: () => _showDisableConfirmation(textPrimary, textMuted, teal),
+                    child: Text(
+                      'Don\'t show this again',
+                      style: TextStyle(
+                        color: textMuted.withValues(alpha: 0.6),
+                        fontSize: 13,
+                      ),
                     ),
                   ),
                 ],

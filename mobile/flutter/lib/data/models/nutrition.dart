@@ -644,6 +644,10 @@ class LogFoodResponse {
   @JsonKey(name: 'iron_mg')
   final double? ironMg;
 
+  // Contextual meal reference source label (e.g., "From dinner · Mar 30")
+  @JsonKey(name: 'source_label')
+  final String? sourceLabel;
+
   const LogFoodResponse({
     required this.success,
     this.foodLogId,  // Optional for analyze-only responses
@@ -674,6 +678,7 @@ class LogFoodResponse {
     this.vitaminDIu,
     this.calciumMg,
     this.ironMg,
+    this.sourceLabel,
   });
 
   factory LogFoodResponse.fromJson(Map<String, dynamic> json) =>

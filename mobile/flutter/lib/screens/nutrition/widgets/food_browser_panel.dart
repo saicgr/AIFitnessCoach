@@ -36,6 +36,7 @@ class FoodBrowserPanel extends ConsumerStatefulWidget {
   final FoodBrowserFilter filter;
   final ValueChanged<FoodBrowserFilter> onFilterChanged;
   final VoidCallback onFoodLogged;
+  final DateTime? selectedDate;
 
   const FoodBrowserPanel({
     super.key,
@@ -46,6 +47,7 @@ class FoodBrowserPanel extends ConsumerStatefulWidget {
     required this.filter,
     required this.onFilterChanged,
     required this.onFoodLogged,
+    this.selectedDate,
   });
 
   @override
@@ -53,6 +55,15 @@ class FoodBrowserPanel extends ConsumerStatefulWidget {
 }
 
 class _FoodBrowserPanelState extends ConsumerState<FoodBrowserPanel> {
+  /// Returns YYYY-MM-DD string if a non-today date is selected, null otherwise
+  String? get _targetDateString {
+    final d = widget.selectedDate;
+    if (d == null) return null;
+    final now = DateTime.now();
+    if (d.year == now.year && d.month == now.month && d.day == now.day) return null;
+    return '${d.year.toString().padLeft(4, '0')}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
+  }
+
   // Saved foods data
   List<SavedFood> _savedFoods = [];
   bool _savedFoodsLoading = true;
@@ -77,6 +88,10 @@ class _FoodBrowserPanelState extends ConsumerState<FoodBrowserPanel> {
   int _currentSearchPage = 0;
   _SearchDisplayMode _displayMode = _SearchDisplayMode.pages;
   String? _expandedSearchKey; // key of expanded search card (only one at a time)
+
+  // Multi-select state for search results
+  final Set<String> _selectedSearchKeys = {};
+  final Map<String, search.FoodSearchResult> _selectedSearchResults = {};
 
 
   @override
@@ -191,6 +206,7 @@ class _FoodBrowserPanelState extends ConsumerState<FoodBrowserPanel> {
         userId: widget.userId,
         savedFoodId: food.id,
         mealType: widget.mealType.value,
+        date: _targetDateString,
       );
       ref.read(xpProvider.notifier).markMealLogged();
       if (!mounted) return;
@@ -213,7 +229,7 @@ class _FoodBrowserPanelState extends ConsumerState<FoodBrowserPanel> {
     setState(() => _logStates[key] = _LogState.loading);
     try {
       final repo = ref.read(nutritionRepositoryProvider);
-      await repo.copyFoodLog(logId: log.id, mealType: widget.mealType.value);
+      await repo.copyFoodLog(logId: log.id, mealType: widget.mealType.value, date: _targetDateString);
       ref.read(xpProvider.notifier).markMealLogged();
       if (!mounted) return;
       setState(() => _logStates[key] = _LogState.done);
@@ -228,6 +244,19 @@ class _FoodBrowserPanelState extends ConsumerState<FoodBrowserPanel> {
         SnackBar(content: Text('Failed to log: $e'), behavior: SnackBarBehavior.floating),
       );
     }
+  }
+
+  void _logSelectedItems() {
+    for (final entry in _selectedSearchResults.entries) {
+      final key = entry.key;
+      final result = entry.value;
+      final weightG = (result.servingWeightG ?? result.weightPerUnitG ?? 100.0).round();
+      _logFood('${result.name}, ${weightG}g', key);
+    }
+    setState(() {
+      _selectedSearchKeys.clear();
+      _selectedSearchResults.clear();
+    });
   }
 
   @override
@@ -702,6 +731,16 @@ class _FoodBrowserPanelState extends ConsumerState<FoodBrowserPanel> {
                           ),
                           apiClient: ref.read(apiClientProvider),
                           searchService: ref.read(search.foodSearchServiceProvider),
+                          isSelected: _selectedSearchKeys.contains(key),
+                          onToggleSelect: () => setState(() {
+                            if (_selectedSearchKeys.contains(key)) {
+                              _selectedSearchKeys.remove(key);
+                              _selectedSearchResults.remove(key);
+                            } else {
+                              _selectedSearchKeys.add(key);
+                              _selectedSearchResults[key] = result;
+                            }
+                          }),
                         );
                       }),
                       const SizedBox(height: 12),
@@ -727,6 +766,16 @@ class _FoodBrowserPanelState extends ConsumerState<FoodBrowserPanel> {
                   onLogFood: (desc, key) => _logFood(desc, key),
                   apiClient: ref.read(apiClientProvider),
                   searchService: ref.read(search.foodSearchServiceProvider),
+                  selectedKeys: _selectedSearchKeys,
+                  onToggleSelect: (key, result) => setState(() {
+                    if (_selectedSearchKeys.contains(key)) {
+                      _selectedSearchKeys.remove(key);
+                      _selectedSearchResults.remove(key);
+                    } else {
+                      _selectedSearchKeys.add(key);
+                      _selectedSearchResults[key] = result;
+                    }
+                  }),
                 ),
               ),
               // Display mode toggle (only for multi-group)
@@ -735,6 +784,28 @@ class _FoodBrowserPanelState extends ConsumerState<FoodBrowserPanel> {
                   mode: _displayMode,
                   onChanged: (mode) => setState(() => _displayMode = mode),
                   isDark: widget.isDark,
+                ),
+              // "Log Selected" button when items are selected
+              if (_selectedSearchKeys.isNotEmpty)
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(4, 8, 4, 4),
+                  child: SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      onPressed: _logSelectedItems,
+                      icon: const Icon(Icons.playlist_add_check, size: 18),
+                      label: Text(
+                        'Log Selected (${_selectedSearchKeys.length} items)',
+                        style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFFF97316),
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
+                    ),
+                  ),
                 ),
             ],
           );
@@ -3241,6 +3312,8 @@ class _ExpandableSearchCard extends StatefulWidget {
   final List<_GoalTag> goalTags;
   final ApiClient? apiClient;
   final search.FoodSearchService searchService;
+  final bool isSelected;
+  final VoidCallback? onToggleSelect;
 
   const _ExpandableSearchCard({
     super.key,
@@ -3255,6 +3328,8 @@ class _ExpandableSearchCard extends StatefulWidget {
     this.goalTags = const [],
     this.apiClient,
     required this.searchService,
+    this.isSelected = false,
+    this.onToggleSelect,
   });
 
   @override
@@ -3492,13 +3567,15 @@ class _ExpandableSearchCardState extends State<_ExpandableSearchCard> {
                   ),
                 ],
                 const SizedBox(width: 4),
-                // Add button (collapsed mode quick-add)
+                // Select button (collapsed mode — toggles selection)
                 if (!widget.isExpanded)
                   GestureDetector(
-                    onTap: widget.logState == null ? () => widget.onLog(_description) : null,
+                    onTap: widget.onToggleSelect ?? (widget.logState == null ? () => widget.onLog(_description) : null),
                     child: SizedBox(
                       width: 28, height: 28,
-                      child: _buildAddIcon(teal),
+                      child: widget.onToggleSelect != null
+                          ? _buildSelectIcon(teal)
+                          : _buildAddIcon(teal),
                     ),
                   ),
                 AnimatedRotation(
@@ -3784,6 +3861,19 @@ class _ExpandableSearchCardState extends State<_ExpandableSearchCard> {
     }
     return Icon(Icons.add_circle, color: teal, size: 24);
   }
+
+  Widget _buildSelectIcon(Color teal) {
+    if (widget.logState == _LogState.loading) {
+      return Center(child: SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: teal)));
+    }
+    if (widget.logState == _LogState.done) {
+      return Icon(Icons.check_circle, color: Colors.green, size: 24);
+    }
+    if (widget.isSelected) {
+      return Icon(Icons.check_circle, color: Colors.green, size: 24);
+    }
+    return Icon(Icons.add_circle_outline, color: teal, size: 24);
+  }
 }
 
 // ─── Search Results PageView ──────────────────────────────────────
@@ -3802,6 +3892,8 @@ class _SearchResultsPageView extends StatefulWidget {
   final void Function(String desc, String key) onLogFood;
   final ApiClient apiClient;
   final search.FoodSearchService searchService;
+  final Set<String> selectedKeys;
+  final void Function(String key, search.FoodSearchResult result) onToggleSelect;
 
   const _SearchResultsPageView({
     required this.groups,
@@ -3817,6 +3909,8 @@ class _SearchResultsPageView extends StatefulWidget {
     required this.onLogFood,
     required this.apiClient,
     required this.searchService,
+    required this.selectedKeys,
+    required this.onToggleSelect,
   });
 
   @override
@@ -3853,14 +3947,11 @@ class _SearchResultsPageViewState extends State<_SearchResultsPageView> {
   Widget build(BuildContext context) {
     if (widget.groups.isEmpty) return const SizedBox.shrink();
 
-    switch (widget.displayMode) {
-      case _SearchDisplayMode.pages:
-        return _buildPageView();
-      case _SearchDisplayMode.list:
-        return _buildListView();
-      case _SearchDisplayMode.carousel:
-        return _buildCarouselView();
-    }
+    return switch (widget.displayMode) {
+      _SearchDisplayMode.pages => _buildPageView(),
+      _SearchDisplayMode.list => _buildListView(),
+      _SearchDisplayMode.carousel => _buildCarouselView(),
+    };
   }
 
   Widget _buildPageView() {
@@ -3956,9 +4047,48 @@ class _SearchResultsPageViewState extends State<_SearchResultsPageView> {
               },
             ),
           ),
+          // Inline expanded card below carousel row
+          ..._buildCarouselExpandedCard(widget.groups[g].results),
         ],
       ],
     );
+  }
+
+  /// If any card in this group is expanded, show its full editor below the carousel row.
+  List<Widget> _buildCarouselExpandedCard(List<search.FoodSearchResult> results) {
+    if (widget.expandedSearchKey == null) return [];
+    for (final result in results) {
+      final key = 'search_db_${result.id}_${result.name.hashCode}';
+      if (widget.expandedSearchKey == key) {
+        return [
+          const SizedBox(height: 6),
+          _ExpandableSearchCard(
+            key: ValueKey('carousel_expanded_$key'),
+            result: result,
+            logState: widget.logStates[key],
+            isExpanded: true,
+            onTap: () => widget.onExpandCard(key),
+            onLog: (desc) => widget.onLogFood(desc, key),
+            isWeightEditable: true,
+            baseWeightG: result.servingWeightG ?? result.weightPerUnitG ?? 100.0,
+            isDark: widget.isDark,
+            goalTags: _buildGoalTags(
+              goals: widget.userGoals,
+              calories: result.calories,
+              protein: result.protein ?? 0,
+              carbs: result.carbs ?? 0,
+              fat: result.fat ?? 0,
+              isDark: widget.isDark,
+            ),
+            apiClient: widget.apiClient,
+            searchService: widget.searchService,
+            isSelected: widget.selectedKeys.contains(key),
+            onToggleSelect: () => widget.onToggleSelect(key, result),
+          ),
+        ];
+      }
+    }
+    return [];
   }
 
   Widget _buildCarouselCard(search.FoodSearchResult result) {
@@ -3968,6 +4098,7 @@ class _SearchResultsPageViewState extends State<_SearchResultsPageView> {
     final teal = widget.isDark ? AppColors.teal : AppColorsLight.teal;
     final cardBorder = widget.isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
     final key = 'search_db_${result.id}_${result.name.hashCode}';
+    final isSelected = widget.selectedKeys.contains(key);
 
     return GestureDetector(
       onTap: () => widget.onExpandCard(key),
@@ -3978,7 +4109,10 @@ class _SearchResultsPageViewState extends State<_SearchResultsPageView> {
         decoration: BoxDecoration(
           color: elevated,
           borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: cardBorder),
+          border: Border.all(
+            color: isSelected ? Colors.green.withValues(alpha: 0.5) : cardBorder,
+            width: isSelected ? 1.5 : 1.0,
+          ),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -3998,13 +4132,15 @@ class _SearchResultsPageViewState extends State<_SearchResultsPageView> {
                 Text('${result.calories}', style: TextStyle(color: teal, fontSize: 12, fontWeight: FontWeight.w600)),
                 Text(' kcal', style: TextStyle(color: textMuted, fontSize: 10)),
                 const Spacer(),
+                Icon(Icons.keyboard_arrow_down, size: 16, color: textMuted.withValues(alpha: 0.5)),
+                const SizedBox(width: 4),
                 GestureDetector(
                   onTap: widget.logStates[key] == null
-                      ? () => widget.onLogFood('${result.name}, ${(result.servingWeightG ?? result.weightPerUnitG ?? 100.0).round()}g', key)
+                      ? () => widget.onToggleSelect(key, result)
                       : null,
                   child: SizedBox(
                     width: 22, height: 22,
-                    child: _buildSmallAddIcon(teal, widget.logStates[key]),
+                    child: _buildSmallSelectIcon(teal, widget.logStates[key], isSelected),
                   ),
                 ),
               ],
@@ -4015,14 +4151,17 @@ class _SearchResultsPageViewState extends State<_SearchResultsPageView> {
     );
   }
 
-  Widget _buildSmallAddIcon(Color teal, _LogState? logState) {
+  Widget _buildSmallSelectIcon(Color teal, _LogState? logState, bool isSelected) {
     if (logState == _LogState.loading) {
       return Center(child: SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 1.5, color: teal)));
     }
     if (logState == _LogState.done) {
       return Icon(Icons.check_circle, color: Colors.green, size: 20);
     }
-    return Icon(Icons.add_circle, color: teal, size: 20);
+    if (isSelected) {
+      return Icon(Icons.check_circle, color: Colors.green, size: 20);
+    }
+    return Icon(Icons.add_circle_outline, color: teal, size: 20);
   }
 
   Widget _buildResultCard(search.FoodSearchResult result) {
@@ -4048,6 +4187,8 @@ class _SearchResultsPageViewState extends State<_SearchResultsPageView> {
       ),
       apiClient: widget.apiClient,
       searchService: widget.searchService,
+      isSelected: widget.selectedKeys.contains(key),
+      onToggleSelect: () => widget.onToggleSelect(key, result),
     );
   }
 }

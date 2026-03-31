@@ -457,6 +457,7 @@ app = FastAPI(
     - Authentication endpoints: 5 requests/minute
     """,
     version="1.0.0",
+    redirect_slashes=False,
     lifespan=lifespan,
     docs_url="/docs" if settings.debug else None,
     redoc_url="/redoc" if settings.debug else None,

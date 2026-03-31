@@ -104,7 +104,17 @@ async def process_daily_login(
         ).execute()
 
         if result.data:
-            return DailyLoginResponse(**result.data)
+            data = result.data
+            # Normalize field names: SQL migration 1884 uses different names than Pydantic model
+            if "daily_bonus" in data and "daily_xp" not in data:
+                data["daily_xp"] = data.pop("daily_bonus")
+            if "streak_bonus" in data and "streak_milestone_xp" not in data:
+                data["streak_milestone_xp"] = data.pop("streak_bonus")
+            if "max_streak" in data and "longest_streak" not in data:
+                data["longest_streak"] = data.pop("max_streak")
+            if "multiplier" not in data:
+                data["multiplier"] = 1.0
+            return DailyLoginResponse(**data)
         else:
             raise HTTPException(status_code=500, detail="Failed to process daily login")
 
@@ -126,6 +136,15 @@ async def process_daily_login(
                 if details.startswith("b'") and details.endswith("'"):
                     json_str = details[2:-1]  # Remove b' and trailing '
                     data = json.loads(json_str)
+                    # Normalize field names here too
+                    if "daily_bonus" in data and "daily_xp" not in data:
+                        data["daily_xp"] = data.pop("daily_bonus")
+                    if "streak_bonus" in data and "streak_milestone_xp" not in data:
+                        data["streak_milestone_xp"] = data.pop("streak_bonus")
+                    if "max_streak" in data and "longest_streak" not in data:
+                        data["longest_streak"] = data.pop("max_streak")
+                    if "multiplier" not in data:
+                        data["multiplier"] = 1.0
                     logger.info(f"[XP] daily-login extracted data from RPC response")
                     return DailyLoginResponse(**data)
             except Exception as parse_error:

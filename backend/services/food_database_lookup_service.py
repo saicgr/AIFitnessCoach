@@ -155,6 +155,8 @@ class FoodDatabaseLookupService:
                             OR :q = ANY(variant_names)
                             OR food_name_normalized % :q
                             OR display_name % :q
+                            OR food_name_normalized ILIKE '%' || :q || '%'
+                            OR :q ILIKE '%' || food_name_normalized || '%'
                         )
                         {filter_clause}
                         ORDER BY match_rank, sim_score DESC
@@ -869,6 +871,43 @@ class FoodDatabaseLookupService:
     _SLASH_DELIMITERS_RE = re.compile(r'\s+/\s+')  # " / " with spaces
     _BARE_SLASH_RE = re.compile(r'(?<![0-9])/(?![0-9])')  # "/" not in fractions like "1/2"
 
+    # Weight/quantity patterns: "8oz", "200g", "1 cup", "2 slices", "1 lb"
+    _WEIGHT_PATTERN = re.compile(
+        r'(\d+(?:\.\d+)?)\s*'
+        r'(oz|ounce|ounces|g|grams?|kg|kilograms?|lbs?|pounds?|cups?|tbsp|tsp|tablespoons?|teaspoons?|ml|liters?|litres?|pieces?|pcs?|slices?|servings?)',
+        re.IGNORECASE
+    )
+    _WEIGHT_PREFIX_STRIP = re.compile(
+        r'^\d+(?:\.\d+)?\s*'
+        r'(?:oz|ounce|ounces|g|grams?|kg|kilograms?|lbs?|pounds?|cups?|tbsp|tsp|tablespoons?|teaspoons?|ml|liters?|litres?|pieces?|pcs?|slices?|servings?)\s*',
+        re.IGNORECASE
+    )
+
+    # Conversion factors to grams
+    _UNIT_TO_GRAMS = {
+        'oz': 28.35, 'ounce': 28.35, 'ounces': 28.35,
+        'g': 1.0, 'gram': 1.0, 'grams': 1.0,
+        'kg': 1000.0, 'kilogram': 1000.0, 'kilograms': 1000.0,
+        'lb': 453.6, 'lbs': 453.6, 'pound': 453.6, 'pounds': 453.6,
+    }
+
+    def _extract_weight_from_query(self, query: str) -> Optional[float]:
+        """Extract weight in grams from query like '8oz filet mignon' → 226.8g."""
+        match = self._WEIGHT_PATTERN.search(query)
+        if not match:
+            return None
+        amount = float(match.group(1))
+        unit = match.group(2).lower()
+        factor = self._UNIT_TO_GRAMS.get(unit)
+        if factor:
+            return round(amount * factor, 1)
+        return None  # Units like cups, slices not convertible to grams
+
+    def _strip_weight_prefix(self, query: str) -> str:
+        """Strip leading weight from query: '8oz filet mignon' → 'filet mignon'."""
+        stripped = self._WEIGHT_PREFIX_STRIP.sub('', query).strip()
+        return stripped if stripped else query
+
     def _split_multi_query(self, query: str) -> List[str]:
         """Split multi-food queries into individual search terms.
 
@@ -992,8 +1031,11 @@ class FoodDatabaseLookupService:
             per_part_limit = max(5, page_size // len(query_parts))
 
             for part in query_parts:
+                extracted_weight_g = self._extract_weight_from_query(part)
+                clean_part = self._strip_weight_prefix(part) if extracted_weight_g else part
+
                 part_results = await self.search_foods(
-                    query=part, page_size=per_part_limit, page=1,
+                    query=clean_part, page_size=per_part_limit, page=1,
                     category=category, source=source,
                     restaurant=restaurant, food_category=food_category,
                     region=region,
@@ -1002,6 +1044,9 @@ class FoodDatabaseLookupService:
                     name_lower = r.get("name", "").lower()
                     if name_lower not in seen_names:
                         r["matched_query"] = part
+                        if extracted_weight_g:
+                            r["serving_weight_g"] = extracted_weight_g
+                            r["user_specified_weight"] = True
                         all_results.append(r)
                         seen_names.add(name_lower)
 
@@ -1074,8 +1119,13 @@ class FoodDatabaseLookupService:
             per_part_limit = max(5, page_size // len(query_parts))
 
             for part in query_parts:
+                # Extract weight/quantity from the query part (e.g., "8oz filet mignon" → 227g)
+                extracted_weight_g = self._extract_weight_from_query(part)
+                # Strip the weight prefix for better search matching
+                clean_part = self._strip_weight_prefix(part) if extracted_weight_g else part
+
                 part_results = await self.search_foods_unified(
-                    query=part, user_id=user_id,
+                    query=clean_part, user_id=user_id,
                     page_size=per_part_limit, page=1,
                     restaurant=restaurant, food_category=food_category, region=region,
                 )
@@ -1083,6 +1133,10 @@ class FoodDatabaseLookupService:
                     name_lower = r.get("name", "").lower()
                     if name_lower not in seen_names:
                         r["matched_query"] = part
+                        # Override serving weight if user specified a weight (e.g., "8oz")
+                        if extracted_weight_g:
+                            r["serving_weight_g"] = extracted_weight_g
+                            r["user_specified_weight"] = True
                         all_results.append(r)
                         seen_names.add(name_lower)
 

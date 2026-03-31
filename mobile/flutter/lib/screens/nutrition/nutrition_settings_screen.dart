@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/animations/app_animations.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/api_constants.dart';
@@ -26,10 +27,12 @@ class NutritionSettingsScreen extends ConsumerStatefulWidget {
 class _NutritionSettingsScreenState
     extends ConsumerState<NutritionSettingsScreen> {
   bool _isLoading = false;
+  bool _hidePostMealReview = false;
 
   @override
   void initState() {
     super.initState();
+    _loadPostMealReviewPref();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final userId = ref.read(authStateProvider).user?.id;
       if (userId == null) return;
@@ -38,6 +41,13 @@ class _NutritionSettingsScreenState
         ref.read(nutritionPreferencesProvider.notifier).initialize(userId);
       }
     });
+  }
+
+  Future<void> _loadPostMealReviewPref() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (mounted) {
+      setState(() => _hidePostMealReview = prefs.getBool('hide_post_meal_review') ?? false);
+    }
   }
 
   @override
@@ -106,6 +116,23 @@ class _NutritionSettingsScreenState
                         onChanged: (value) =>
                             _updatePreference(userId, preferences, showWeeklyInsteadOfDaily: value),
                         icon: Icons.calendar_view_week_rounded,
+                        iconColor: textPrimary,
+                        textPrimary: textPrimary,
+                        textMuted: textMuted,
+                      ),
+                      _buildDivider(isDark),
+                      _buildSwitchTile(
+                        context,
+                        title: 'Post-Meal Check-in',
+                        subtitle:
+                            'Ask how you feel after logging a meal (mood, energy)',
+                        value: !_hidePostMealReview,
+                        onChanged: (value) async {
+                          final prefs = await SharedPreferences.getInstance();
+                          await prefs.setBool('hide_post_meal_review', !value);
+                          setState(() => _hidePostMealReview = !value);
+                        },
+                        icon: Icons.mood_rounded,
                         iconColor: textPrimary,
                         textPrimary: textPrimary,
                         textMuted: textMuted,

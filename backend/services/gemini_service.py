@@ -8754,18 +8754,19 @@ IMPORTANT SEED OIL AWARENESS:
 
 Return ONLY valid JSON (no markdown) with this exact structure:
 {{
-  "encouragements": ["list of positive aspects of this food for the user goals"],
-  "warnings": ["list of concerns including seed oil warnings if applicable"],
-  "ai_suggestion": "a brief actionable suggestion for how to include this food in the diet",
-  "recommended_swap": "a healthier alternative if applicable, or empty string if the food is already a great choice",
+  "encouragements": ["list of positive aspects — mention EACH food item by name"],
+  "warnings": ["list of concerns — mention EACH food item by name if applicable"],
+  "ai_suggestion": "a detailed, actionable suggestion covering the overall meal composition and how to improve it",
+  "recommended_swap": "specific healthier alternatives for the weakest items, or empty string if the meal is already great",
   "health_score": 7
 }}
 
 Rules:
 - health_score is an integer from 1 to 10 (1=very unhealthy for goals, 10=perfect for goals)
-- encouragements and warnings should each have 1-3 items
+- CRITICAL: Review ALL food items individually — do NOT focus on just one item. Each encouragement/warning should name the specific food it's about.
+- For multi-item meals: provide 1 encouragement/warning per food item that deserves one (up to 5 each). A 5-item meal should have more feedback than a 1-item snack.
 - Be specific to the user's goals
-- Keep each string concise (under 80 chars)
+- Keep each string concise (under 100 chars)
 - NEVER encourage fast food, deep-fried items, or heavily processed food for convenience or taste
 - NEVER say 'okay as an occasional treat' or 'fine in moderation' for foods scoring <= 3
 - If food is from a fast food chain (McDonald's, KFC, Burger King, Taco Bell, Wendy's, etc.), warnings MUST mention: high sodium, seed oils, additives, low nutrient density
@@ -8783,7 +8784,7 @@ Rules:
                     contents=[types.Content(role="user", parts=[types.Part.from_text(text=prompt)])],
                     config=types.GenerateContentConfig(
                         system_instruction="You are a nutrition expert AI. Return only valid JSON.",
-                        max_output_tokens=200,
+                        max_output_tokens=500,
                         temperature=0.1,
                     ),
                 ),

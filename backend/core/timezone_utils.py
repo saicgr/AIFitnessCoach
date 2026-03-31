@@ -46,6 +46,17 @@ def get_user_now_iso(timezone_str: str) -> str:
     return datetime.now(ZoneInfo("UTC")).isoformat()
 
 
+def target_date_to_utc_iso(date_str: str, timezone_str: str) -> str:
+    """
+    Convert a 'YYYY-MM-DD' local date to a UTC ISO timestamp at noon local time.
+    Used when the user explicitly picks a date for logging (e.g., logging food to yesterday).
+    Noon avoids edge cases where midnight could cross UTC day boundaries.
+    """
+    tz = _safe_zone(timezone_str)
+    y, m, d = int(date_str[:4]), int(date_str[5:7]), int(date_str[8:10])
+    return datetime(y, m, d, 12, 0, 0, tzinfo=tz).astimezone(ZoneInfo("UTC")).isoformat()
+
+
 def resolve_timezone(request, db=None, user_id: Optional[str] = None) -> str:
     """
     Determine the user's IANA timezone.

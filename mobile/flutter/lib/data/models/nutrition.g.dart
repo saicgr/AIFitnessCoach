@@ -318,6 +318,7 @@ LogFoodResponse _$LogFoodResponseFromJson(Map<String, dynamic> json) =>
       vitaminDIu: (json['vitamin_d_iu'] as num?)?.toDouble(),
       calciumMg: (json['calcium_mg'] as num?)?.toDouble(),
       ironMg: (json['iron_mg'] as num?)?.toDouble(),
+      sourceLabel: json['source_label'] as String?,
     );
 
 Map<String, dynamic> _$LogFoodResponseToJson(LogFoodResponse instance) =>
@@ -351,6 +352,7 @@ Map<String, dynamic> _$LogFoodResponseToJson(LogFoodResponse instance) =>
       'vitamin_d_iu': instance.vitaminDIu,
       'calcium_mg': instance.calciumMg,
       'iron_mg': instance.ironMg,
+      'source_label': instance.sourceLabel,
     };
 
 SavedFoodItem _$SavedFoodItemFromJson(Map<String, dynamic> json) =>

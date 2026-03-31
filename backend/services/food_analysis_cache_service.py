@@ -1787,9 +1787,7 @@ class FoodAnalysisCacheService:
         """
         # Compute aggregate food name and macros from items
         food_names = [item.get("name", "food") for item in food_items]
-        food_name = ", ".join(food_names[:3])
-        if len(food_names) > 3:
-            food_name += f" (+{len(food_names) - 3} more)"
+        food_name = ", ".join(food_names)
 
         total_cal = sum(item.get("calories", 0) for item in food_items)
         total_protein = sum(float(item.get("protein_g", 0)) for item in food_items)
