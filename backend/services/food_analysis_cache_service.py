@@ -2735,12 +2735,105 @@ class FoodAnalysisCacheService:
                 items.append(parsed)
         return items
 
+    # Keywords that signal a composite meal (bowl, burrito, etc.) with its ingredients.
+    # These are meal TYPES, not containers — "burrito bowl with X" is composite,
+    # but "bowl of ice cream" is not (it's a container).
+    _COMPOSITE_MEAL_KEYWORDS = frozenset([
+        # Mexican / Tex-Mex
+        'bowl', 'burrito', 'taco', 'quesadilla', 'nachos', 'fajitas', 'enchilada',
+        # Sandwiches & wraps
+        'wrap', 'sandwich', 'sub', 'pita', 'gyro', 'shawarma', 'banh mi',
+        # Asian
+        'ramen', 'pho', 'bibimbap', 'stir fry', 'stir-fry', 'pad thai',
+        'sushi roll', 'bento', 'dosa',
+        # Indian
+        'thali', 'curry bowl',
+        # Western
+        'pizza', 'pasta', 'omelette', 'omelet', 'crepe',
+        # Bowls (specific named types)
+        'poke', 'grain bowl', 'acai bowl', 'buddha bowl', 'power bowl',
+        'smoothie bowl', 'burrito bowl', 'rice bowl',
+        # Drinks / desserts that are composed
+        'shake', 'smoothie', 'parfait', 'sundae',
+        # Platters / combos
+        'platter', 'plate', 'combo',
+        # Modifiers that signal composed items
+        'loaded', 'stuffed',
+        # Soups & noodles
+        'soup', 'noodles', 'noodle soup',
+    ])
+
+    # "bowl of X", "plate of X" = container, NOT composite meal
+    _CONTAINER_OF_RE = re.compile(
+        r'\b(bowl|plate|cup|glass|mug|pot|jar|bag|box|can|bottle|carton)\s+of\s+',
+        re.IGNORECASE,
+    )
+
+    def _is_composite_meal(self, text: str) -> bool:
+        """Detect if text describes a single composite meal with its ingredients.
+
+        Returns True when the text contains a meal keyword (bowl, burrito, etc.)
+        early in the sentence followed by ingredient indicators (commas, "with",
+        "topped with", "add", etc.). This prevents the splitter from breaking a
+        composite meal like "Chipotle bowl with chicken, rice, beans" into 4 parts.
+
+        Returns False for "container of X" patterns like "bowl of ice cream" or
+        "plate of cookies" where the keyword is just a vessel.
+        """
+        text_lower = text.lower().strip()
+
+        # "bowl of ice cream", "plate of cookies" = container, not composite
+        if self._CONTAINER_OF_RE.search(text_lower):
+            return False
+
+        # Must contain a composite keyword
+        keyword_pos = None
+        for kw in self._COMPOSITE_MEAL_KEYWORDS:
+            pos = text_lower.find(kw)
+            if pos != -1 and (keyword_pos is None or pos < keyword_pos):
+                keyword_pos = pos
+
+        if keyword_pos is None:
+            return False
+
+        # Keyword should be in the first half of the text (before ingredients)
+        if keyword_pos > len(text_lower) * 0.5:
+            return False
+
+        # If "with" is followed by a quantity, these are separate items, not composite
+        # e.g., "5 dosas with 200ml lassi" → 2 separate items
+        with_match = re.search(r'\s+with\s+(.+)', text_lower)
+        if with_match and self._RIGHT_SIDE_QTY_RE.match(with_match.group(1)):
+            return False
+
+        # Check for ingredient indicators after the keyword
+        after_keyword = text_lower[keyword_pos:]
+        has_ingredients = any(marker in after_keyword for marker in [
+            ' with ', ', ', ' topped ', ' add ', '(', ' over ', ' on ',
+            ' in ', ' plus ', ' and ', ' extra ', ' no ', ' double ',
+        ])
+        # Also treat as composite if keyword is followed by 3+ words
+        # (e.g., "chicken burrito bowl rice beans cheese")
+        words_after = after_keyword.split()
+        if len(words_after) >= 3:
+            has_ingredients = True
+
+        return has_ingredients
+
     def _split_text_into_parts(self, text: str) -> List[str]:
         """Split text into individual food strings using newlines, commas, and conjunctions."""
+        # Check for composite meal BEFORE splitting — send whole description to Gemini
+        if self._is_composite_meal(text):
+            return [text]
+
         # Step 1: Split on newlines
         lines = [l.strip() for l in text.split('\n') if l.strip()]
         parts: List[str] = []
         for line in lines:
+            # Check each line for composite meals too
+            if self._is_composite_meal(line):
+                parts.append(line)
+                continue
             # Step 2: Split on commas
             comma_parts = [p.strip() for p in line.split(',') if p.strip()]
             for cp in comma_parts:
@@ -2768,19 +2861,27 @@ class FoodAnalysisCacheService:
             return [text]
 
         # ── Smart "with" splitting ──
-        # Split on " with " ONLY when the right side starts with a quantity/unit.
-        # "5 dosas with 200ml lassi" → split (right side: "200ml lassi")
-        # "dosa with chutney"        → keep  (right side: "chutney", no qty)
-        # "coffee with milk"         → keep  (right side: "milk", no qty)
+        # Split on " with " when:
+        #   1. The right side starts with a quantity/unit ("5 dosas with 200ml lassi")
+        #   2. The right side contains " and " suggesting multiple separate dishes
+        #      ("pulihora rice with ground nut pachadi and chicken fry" → 3 items)
+        #      BUT only when the text is NOT a composite meal (already checked above)
+        # Keep together when it's a simple compound name:
+        #   "dosa with chutney"  → keep  (no qty, no "and")
+        #   "coffee with milk"   → keep  (no qty, no "and")
         with_parts = re.split(r'\s+with\s+', text, flags=re.IGNORECASE)
         if len(with_parts) > 1:
             smart_merged: List[str] = [with_parts[0]]
             for wp in with_parts[1:]:
+                # Split if right side has a quantity
                 if self._RIGHT_SIDE_QTY_RE.match(wp):
-                    # Right side has a quantity → treat as separate item
+                    smart_merged.append(wp)
+                # Split if right side contains " and " (multiple dishes listed)
+                # e.g., "ground nut pachadi and chicken fry" → split on "with"
+                elif re.search(r'\s+and\s+', wp, re.IGNORECASE):
                     smart_merged.append(wp)
                 else:
-                    # Right side has no quantity → rejoin with " with "
+                    # Simple compound name → rejoin with " with "
                     smart_merged[-1] = f"{smart_merged[-1]} with {wp}"
             # If we actually split, recurse on each part for " and " splitting
             if len(smart_merged) > 1:

@@ -16,7 +16,7 @@ ENDPOINTS:
 - GET  /api/v1/scheduling/history - Get scheduling action history
 """
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from core.auth import get_current_user
 from core.exceptions import safe_internal_error
 from typing import List, Optional
@@ -488,6 +488,7 @@ async def skip_workout(request: SkipRequest,
 
 @router.get("/suggestions", response_model=SchedulingSuggestionsResponse)
 async def get_scheduling_suggestions(
+    request: Request,
     workout_id: str = Query(..., description="ID of the missed workout"),
     user_id: str = Query(..., description="User ID"),
     current_user: dict = Depends(get_current_user),
@@ -520,7 +521,9 @@ async def get_scheduling_suggestions(
         suggestions = []
 
         # Get upcoming workouts for this user (next 7 days)
-        today = date.today()
+        from core.timezone_utils import resolve_timezone, get_user_today
+        user_tz = resolve_timezone(request, db, user_id)
+        today = date.fromisoformat(get_user_today(user_tz))
         week_ahead = today + timedelta(days=7)
 
         upcoming_response = db.client.table("workouts").select(

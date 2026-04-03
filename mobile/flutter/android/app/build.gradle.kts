@@ -61,13 +61,11 @@ android {
         }
     }
 
-    // Split APKs by CPU architecture for smaller downloads
+    // ABI splits disabled — app bundles handle per-ABI splitting automatically.
+    // Only enable for direct APK installs (not Play Store uploads).
     splits {
         abi {
-            isEnable = true
-            reset()
-            include("armeabi-v7a", "arm64-v8a")
-            isUniversalApk = true  // Also generate universal APK for testing
+            isEnable = false
         }
     }
 }

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../../../core/theme/accent_color_provider.dart';
 import '../../../core/providers/user_provider.dart';
 import '../../../core/providers/week_start_provider.dart';
@@ -436,8 +437,7 @@ class _HeroWorkoutCarouselState extends ConsumerState<HeroWorkoutCarousel> {
   Widget _buildNoWorkoutDaysState(bool isDark, Color accentColor) {
     return GestureDetector(
       onTap: () {
-        // Refresh user data in case workout days were set but cache is stale
-        ref.read(authStateProvider.notifier).refreshUser();
+        context.push('/settings/workout-settings');
       },
       child: Container(
         height: 200,
@@ -455,7 +455,14 @@ class _HeroWorkoutCarouselState extends ConsumerState<HeroWorkoutCarousel> {
               const SizedBox(height: 16),
               Text('Set your workout days', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: isDark ? Colors.white : Colors.black87)),
               const SizedBox(height: 8),
-              Text('Tap to refresh or go to Settings', style: TextStyle(fontSize: 14, color: isDark ? Colors.white60 : Colors.black45)),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text('Tap to set up in Settings', style: TextStyle(fontSize: 14, color: isDark ? Colors.white60 : Colors.black45)),
+                  const SizedBox(width: 4),
+                  Icon(Icons.arrow_forward_ios, size: 14, color: accentColor),
+                ],
+              ),
             ],
           ),
         ),

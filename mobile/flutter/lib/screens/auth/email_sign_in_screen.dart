@@ -73,10 +73,22 @@ class _EmailSignInScreenState extends ConsumerState<EmailSignInScreen> {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(errorMsg),
+              content: const Row(
+                children: [
+                  Icon(Icons.mark_email_read, color: Colors.white, size: 20),
+                  SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      'Account created! Please check your email and confirm to sign in.',
+                      style: TextStyle(fontWeight: FontWeight.w500),
+                    ),
+                  ),
+                ],
+              ),
               behavior: SnackBarBehavior.floating,
               backgroundColor: AppColors.success,
-              duration: const Duration(seconds: 5),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              duration: const Duration(seconds: 6),
             ),
           );
         }
@@ -264,23 +276,6 @@ class _EmailSignInScreenState extends ConsumerState<EmailSignInScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        // Name field (sign up only)
-                        if (_isSignUp) ...[
-                          TextFormField(
-                            controller: _nameController,
-                            textCapitalization: TextCapitalization.words,
-                            decoration: InputDecoration(
-                              labelText: 'Name (optional)',
-                              hintText: 'Enter your name',
-                              prefixIcon: const Icon(Icons.person_outline),
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 16),
-                        ],
-
                         // Email field
                         TextFormField(
                           controller: _emailController,

@@ -39,6 +39,7 @@ from services.user_context_service import user_context_service
 from services.warmup_stretch_service import get_warmup_stretch_service
 from services.feedback_analysis_service import get_user_difficulty_adjustment
 from core.rate_limiter import limiter, user_limiter
+from core.timezone_utils import resolve_timezone, get_user_today, target_date_to_utc_iso
 
 from .utils import (
     row_to_workout,
@@ -1381,7 +1382,10 @@ async def generate_workout(request: Request, *, body: GenerateWorkoutRequest, ba
             "type": workout_type,
             "difficulty": difficulty,
             "description": workout_description,
-            "scheduled_date": body.scheduled_date or datetime.now().isoformat(),
+            "scheduled_date": target_date_to_utc_iso(
+                body.scheduled_date or get_user_today(resolve_timezone(request, db, body.user_id)),
+                resolve_timezone(request, db, body.user_id),
+            ),
             "exercises_json": exercises,
             "duration_minutes": body.duration_minutes or 45,
             "estimated_calories": _estimated_calories,
@@ -1474,7 +1478,8 @@ async def generate_workout_streaming(request: Request, body: GenerateWorkoutRequ
 
     # Idempotency check: If a workout is already being generated for this user/date, return early
     db = get_supabase_db()
-    scheduled_date = body.scheduled_date or datetime.now().strftime("%Y-%m-%d")
+    _user_tz = resolve_timezone(request, db, body.user_id)
+    scheduled_date = body.scheduled_date or get_user_today(_user_tz)
 
     # Resolve gym_profile_id early for dedup checks
     stream_gym_profile_id = body.gym_profile_id or None
@@ -2028,18 +2033,18 @@ async def generate_workout_streaming(request: Request, body: GenerateWorkoutRequ
                     yield f"event: error\ndata: {json.dumps({'error': 'Failed to parse workout data', 'raw_length': len(accumulated_text)})}\n\n"
                 return
 
-            # Determine scheduled date - use provided date or default to today
+            # Determine scheduled date - use provided date or default to today in user's timezone
+            _stream_tz = resolve_timezone(request, db, body.user_id)
             if body.scheduled_date:
-                # Parse and validate the provided date
                 try:
-                    scheduled_dt = datetime.strptime(body.scheduled_date, "%Y-%m-%d")
-                    scheduled_date_str = scheduled_dt.isoformat()
-                    logger.info(f"📅 [Streaming] Using provided scheduled_date: {body.scheduled_date}")
+                    datetime.strptime(body.scheduled_date, "%Y-%m-%d")  # validate format
+                    scheduled_date_str = target_date_to_utc_iso(body.scheduled_date, _stream_tz)
+                    logger.info(f"📅 [Streaming] Using provided scheduled_date: {body.scheduled_date} (tz={_stream_tz})")
                 except ValueError:
                     logger.warning(f"⚠️ Invalid scheduled_date format: {body.scheduled_date}, using today")
-                    scheduled_date_str = datetime.now().isoformat()
+                    scheduled_date_str = target_date_to_utc_iso(get_user_today(_stream_tz), _stream_tz)
             else:
-                scheduled_date_str = datetime.now().isoformat()
+                scheduled_date_str = target_date_to_utc_iso(get_user_today(_stream_tz), _stream_tz)
 
             # Compute estimated calories using MET-based formula
             _user_weight_kg = float(user.get("weight_kg") or user.get("weight") or 70) if user else 70.0
@@ -2393,7 +2398,10 @@ async def generate_mood_workout_streaming(request: Request, body: MoodWorkoutReq
                 "type": workout_type,
                 "difficulty": difficulty,
                 "description": workout_description,
-                "scheduled_date": params.get("scheduled_date") or datetime.now().isoformat(),
+                "scheduled_date": target_date_to_utc_iso(
+                    params.get("scheduled_date") or get_user_today(resolve_timezone(request, db, body.user_id)),
+                    resolve_timezone(request, db, body.user_id),
+                ),
                 "exercises_json": exercises,
                 "duration_minutes": params["duration_minutes"],
                 "generation_method": "ai",
@@ -3974,7 +3982,8 @@ async def generate_onboarding_workout_streaming(request: Request, body: Onboardi
                 f"level={body.fitness_level}, goals={body.goals}, equipment={len(body.equipment)} items")
 
     db = get_supabase_db()
-    scheduled_date = body.scheduled_date or datetime.now().strftime("%Y-%m-%d")
+    _onboard_tz = resolve_timezone(request, db, body.user_id)
+    scheduled_date = body.scheduled_date or get_user_today(_onboard_tz)
 
     # Idempotency: check for existing generating or completed workout
     try:
@@ -4200,15 +4209,15 @@ async def generate_onboarding_workout_streaming(request: Request, body: Onboardi
                     yield f"event: error\ndata: {json.dumps({'error': 'Failed to parse workout data'})}\n\n"
                 return
 
-            # Determine scheduled date
+            # Determine scheduled date in user's timezone
             if body.scheduled_date:
                 try:
-                    scheduled_dt = datetime.strptime(body.scheduled_date, "%Y-%m-%d")
-                    scheduled_date_str = scheduled_dt.isoformat()
+                    datetime.strptime(body.scheduled_date, "%Y-%m-%d")  # validate
+                    scheduled_date_str = target_date_to_utc_iso(body.scheduled_date, _onboard_tz)
                 except ValueError:
-                    scheduled_date_str = datetime.now().isoformat()
+                    scheduled_date_str = target_date_to_utc_iso(get_user_today(_onboard_tz), _onboard_tz)
             else:
-                scheduled_date_str = datetime.now().isoformat()
+                scheduled_date_str = target_date_to_utc_iso(get_user_today(_onboard_tz), _onboard_tz)
 
             # Save to database
             workout_db_data = {

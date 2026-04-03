@@ -4839,6 +4839,67 @@ SPELLING CORRECTION - Detect and correct misspelled food names:
 - If no misspellings detected, set "corrected_query" to null
 - The "name" field in food_items should always use the CORRECT spelling
 
+COMPOSITE MEAL RULE - CRITICAL:
+When user describes a NAMED composite meal (bowl, burrito, wrap, plate, combo, sandwich, sub, taco, pizza, ramen, poke bowl, shake, smoothie, thali, bento, bibimbap) with its toppings/ingredients, return it as ONE food item with combined nutrition. The ingredients may be listed using various patterns — all should be treated the same.
+
+COMBINE into 1 item — all these patterns mean ONE composite meal:
+- "with": "Chipotle bowl with chicken, rice, beans, salsa, cheese, guac" → 1 item: "Chipotle Chicken Bowl" (~750 cal)
+- "and" (no "with"): "Chipotle bowl chicken and rice and beans" → 1 item
+- Comma-only: "Chipotle bowl, chicken, rice, beans, guac" → 1 item
+- No separator: "chicken burrito bowl rice beans cheese" → 1 item
+- "on": "burger on brioche bun with lettuce" → 1 item: "Burger on Brioche"
+- "over": "grilled chicken over rice with veggies" → 1 item: "Grilled Chicken Rice Bowl"
+- "in": "soup in bread bowl with crackers" → 1 item: "Bread Bowl Soup"
+- "topped with": "acai bowl topped with granola, banana, and honey" → 1 item: "Acai Bowl"
+- "add": "Chipotle bowl add chicken add guac" → 1 item
+- Parenthetical: "Chipotle bowl (chicken, rice, beans, cheese, guac)" → 1 item
+- "extra"/"no": "Chipotle bowl with chicken, extra cheese, no beans" → 1 item (adjust nutrition for extras/removals)
+- Size modifiers: "large Chipotle bowl with double chicken" → 1 item (larger portion)
+- Cultural composites: "thali with dal, rice, roti, sabzi" → 1 item; "bento box with salmon, rice, edamame" → 1 item; "bibimbap with beef, egg, veggies" → 1 item
+- "Thanksgiving plate with turkey, mashed potatoes, stuffing, gravy" → 1 item
+- "Subway turkey sub with lettuce, tomato, mayo" → 1 item
+- "Poke bowl with tuna, rice, edamame, seaweed" → 1 item
+
+KEEP SEPARATE — these signal a separate dish alongside the composite:
+- "and a [different dish]": "Chipotle bowl with chicken and a cookie" → 2 items: bowl + cookie
+- "and [ice cream/dessert/drink]": "Chipotle bowl with chicken and ice cream" → 2 items (ice cream is not a bowl ingredient)
+- "plus": "burrito bowl plus chips and salsa" → 2 items: bowl + chips & salsa
+- "side of": "Chipotle bowl with a side of chips" → 2 items
+- "also"/"also got": "Chipotle bowl also got a drink" → 2 items
+- Multi-person: "Chipotle bowl for me, chicken tacos for my wife" → 2 items
+
+NO COMPOSITE KEYWORD — list each item separately:
+- "chicken, rice, and beans" → 3 items (no bowl/burrito/plate keyword)
+- "steak and lobster" → 2 items (separate dishes)
+- "bruschetta appetizer, filet mignon, caesar salad, tiramisu" → 4 items (multi-course)
+
+ABSURD/IMPOSSIBLE COMBOS — use culinary common sense:
+- "ice cream topped with garlic chicken" → 2 items: "Ice Cream" + "Garlic Chicken" (garlic chicken is NOT an ice cream topping — these are separate foods described oddly)
+- "coffee with steak" → 2 items (clearly separate)
+- "pizza with chocolate sauce" → 1 item IF dessert pizza is plausible; otherwise 2 items
+- "waffle topped with chicken and syrup" → 1 item (chicken & waffles is a real dish)
+- If the topping/ingredient would NEVER appear on that base food in any cuisine, treat as separate items.
+
+"CONTAINER OF X" — NOT a composite meal:
+- "bowl of ice cream" → 1 item: "Ice Cream" (bowl is a container, not a meal type)
+- "plate of cookies" → 1 item: "Cookies"
+- "cup of soup" → 1 item: "Soup"
+- "glass of milk" → 1 item: "Milk"
+- When "[container] of [food]" is used, the container is just a vessel — do NOT apply composite meal rules.
+
+AMBIGUOUS — use best judgment:
+- "rice with curry" → 1 item: "Rice with Curry" (commonly served together as one meal)
+- "eggs with toast and bacon" → 3 items (typically separate breakfast items)
+
+NEVER double-count: do NOT list a composite meal AND also its ingredients as separate items.
+
+INGREDIENT NAMING - CRITICAL:
+- Use GENERIC names unless user specifies a brand: "black beans" → "Black Beans" (NOT "Taco Bell Black Beans")
+- "guac"/"guacamole" → "Guacamole" (NOT "Avocado" — different food, different nutrition)
+- "corn salsa" → "Corn Salsa" (NOT "Corn Salad")
+- "cheese" on a bowl → "Shredded Cheese" or "Mexican Blend Cheese"
+- Only use brand names if user explicitly says the brand
+
 IMPORTANT - ALWAYS identify foods:
 - For ANY food description, ALWAYS return valid food items with estimated nutrition
 - If you don't recognize the exact item (e.g., "Cinnamon Delights from Taco Bell"), estimate based on similar foods (e.g., fried dough with cinnamon sugar)

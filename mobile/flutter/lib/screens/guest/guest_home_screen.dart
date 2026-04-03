@@ -913,7 +913,7 @@ class _GuestHomeScreenState extends ConsumerState<GuestHomeScreen> {
                 HapticService.light();
                 await ref.read(guestModeProvider.notifier).exitGuestMode();
                 if (mounted) {
-                  context.go('/stats-welcome');
+                  context.go('/intro');
                 }
               },
               borderRadius: BorderRadius.circular(12),

@@ -24,7 +24,7 @@ from pydantic import BaseModel
 
 from core.supabase_db import get_supabase_db
 from core.logger import get_logger
-from core.timezone_utils import resolve_timezone, get_user_today
+from core.timezone_utils import resolve_timezone, get_user_today, local_date_to_utc_range
 from services.user_context_service import user_context_service
 
 from .utils import parse_json_field, get_workout_focus, resolve_training_split, infer_workout_type_from_focus
@@ -516,10 +516,13 @@ async def get_today_workout(
         logger.debug(f"[TODAY DEBUG] server_date={today_str}, selected_days={selected_days}, "
                      f"is_workout_day={is_today_workout_day}")
 
-        # Compute date range strings before parallel queries
+        # Compute UTC date ranges for timezone-aware queries
+        today_utc_start, today_utc_end = local_date_to_utc_range(today_str, user_tz)
         user_today_date = datetime.strptime(today_str, "%Y-%m-%d").date()
         tomorrow_str = (user_today_date + timedelta(days=1)).isoformat()
         future_end = (user_today_date + timedelta(days=30)).isoformat()
+        tomorrow_utc_start, _ = local_date_to_utc_range(tomorrow_str, user_tz)
+        _, future_utc_end = local_date_to_utc_range(future_end, user_tz)
 
         # Run 3 independent DB queries in parallel using thread pool
         # (db.list_workouts is synchronous, so we use run_in_executor)
@@ -528,16 +531,16 @@ async def get_today_workout(
         loop = asyncio.get_event_loop()
         today_rows, future_rows, completed_today_rows = await asyncio.gather(
             loop.run_in_executor(_db_executor, lambda: db.list_workouts(
-                user_id=user_id, from_date=today_str, to_date=today_str,
+                user_id=user_id, from_date=today_utc_start, to_date=today_utc_end,
                 is_completed=False, limit=5, gym_profile_id=active_profile_id,
                 allow_multiple_per_date=True,
             )),
             loop.run_in_executor(_db_executor, lambda: db.list_workouts(
-                user_id=user_id, from_date=tomorrow_str, to_date=future_end,
+                user_id=user_id, from_date=tomorrow_utc_start, to_date=future_utc_end,
                 is_completed=False, limit=1, order_asc=True, gym_profile_id=active_profile_id,
             )),
             loop.run_in_executor(_db_executor, lambda: db.list_workouts(
-                user_id=user_id, from_date=today_str, to_date=today_str,
+                user_id=user_id, from_date=today_utc_start, to_date=today_utc_end,
                 is_completed=True, limit=1, gym_profile_id=active_profile_id,
             )),
         )
@@ -550,12 +553,13 @@ async def get_today_workout(
         # signal the frontend to poll until the real workout is ready).
         generating_for_today = False
         try:
+            _gen_start, _gen_end = local_date_to_utc_range(today_str, user_tz)
             gen_check = db.client.table("workouts").select("id").eq(
                 "user_id", user_id
             ).gte(
-                "scheduled_date", today_str
+                "scheduled_date", _gen_start
             ).lte(
-                "scheduled_date", today_str + "T23:59:59.999999+00:00"
+                "scheduled_date", _gen_end
             ).eq("status", "generating")
             if active_profile_id:
                 gen_check = gen_check.or_(

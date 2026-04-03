@@ -637,7 +637,7 @@ class _SignInScreenState extends ConsumerState<SignInScreen>
         TextButton(
           onPressed: _isLoading ? null : () => context.push('/email-sign-in'),
           child: Text(
-            'Sign in with Email',
+            'Continue with Email',
             style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w500,

@@ -30,6 +30,7 @@ import threading
 from core.supabase_db import get_supabase_db
 from core.logger import get_logger, set_log_context
 from core.rate_limiter import limiter
+from core.timezone_utils import resolve_timezone, get_user_today, target_date_to_utc_iso
 from models.gemini_schemas import WorkoutSuggestionsResponse
 from core.activity_logger import log_user_activity, log_user_error
 from models.schemas import (
@@ -684,7 +685,10 @@ async def generate_workout(request: Request, body: GenerateWorkoutRequest, backg
             "name": workout_name,
             "type": workout_type,
             "difficulty": difficulty,
-            "scheduled_date": datetime.now().isoformat(),
+            "scheduled_date": target_date_to_utc_iso(
+                body.scheduled_date or get_user_today(resolve_timezone(request, db, body.user_id)),
+                resolve_timezone(request, db, body.user_id),
+            ),
             "exercises_json": exercises,
             "duration_minutes": body.duration_minutes or 45,
             "generation_method": "ai",
@@ -818,12 +822,15 @@ async def generate_workout_streaming(request: Request, body: GenerateWorkoutRequ
                 return
 
             # Save to database
+            user_tz = resolve_timezone(request, db, body.user_id)
             workout_db_data = {
                 "user_id": body.user_id,
                 "name": workout_data.get("name", "Generated Workout"),
                 "type": workout_data.get("type", body.workout_type or "strength"),
                 "difficulty": workout_data.get("difficulty", "medium"),
-                "scheduled_date": datetime.now().isoformat(),
+                "scheduled_date": target_date_to_utc_iso(
+                    body.scheduled_date or get_user_today(user_tz), user_tz,
+                ),
                 "exercises_json": workout_data.get("exercises", []),
                 "duration_minutes": body.duration_minutes or 45,
                 "generation_method": "ai",

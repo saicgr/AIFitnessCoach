@@ -741,7 +741,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         }
         ref.read(onboardingStateProvider.notifier).reset();
         await ref.read(authStateProvider.notifier).signOut();
-        router.go('/stats-welcome');
+        router.go('/intro');
       } else {
         throw Exception('Failed to delete account: ${response.statusCode}');
       }

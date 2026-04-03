@@ -138,7 +138,7 @@ class FoodDatabaseLookupService:
 
             async with sb.get_session() as session:
                 # Lower threshold for broader matching; GIN trigram index handles speed
-                await session.execute(text("SET pg_trgm.similarity_threshold = 0.15"))
+                await session.execute(text("SET pg_trgm.similarity_threshold = 0.3"))
                 result = await asyncio.wait_for(
                     session.execute(text(f"""
                         SELECT *,
@@ -500,6 +500,49 @@ class FoodDatabaseLookupService:
         candidates.discard(query.lower().strip())
         return list(candidates)[:20]  # Safety cap
 
+    # Cache for AI validation results to avoid repeated Gemini calls
+    _ai_validation_cache: Dict[str, bool] = {}
+
+    async def _ai_validate_match(self, query: str, matched_name: str) -> bool:
+        """Quick Gemini validation: is the matched food a reasonable result for the query?
+
+        Uses a fast, low-token Gemini call to validate fuzzy matches that have
+        low similarity scores. Returns False on timeout/error (safe default).
+        """
+        cache_key = f"{query.lower()}|{matched_name.lower()}"
+        if cache_key in self._ai_validation_cache:
+            return self._ai_validation_cache[cache_key]
+
+        try:
+            from google import genai
+            from google.genai import types
+            client = genai.Client()
+
+            prompt = (
+                f"Is '{matched_name}' a reasonable food database match for someone "
+                f"searching '{query}'? Answer ONLY 'YES' or 'NO'."
+            )
+            response = await asyncio.wait_for(
+                client.aio.models.generate_content(
+                    model="gemini-2.0-flash",
+                    contents=prompt,
+                    config=types.GenerateContentConfig(
+                        temperature=0,
+                        max_output_tokens=3,
+                    ),
+                ),
+                timeout=2.0,
+            )
+            answer = (response.text or "").strip().upper()
+            is_valid = answer.startswith("YES")
+            self._ai_validation_cache[cache_key] = is_valid
+            return is_valid
+        except Exception as e:
+            logger.debug(f"[FoodDB] AI validation failed for '{query}' vs '{matched_name}': {e}")
+            # On error, reject the match (safe default)
+            self._ai_validation_cache[cache_key] = False
+            return False
+
     async def _check_override_fuzzy_db(self, food_name: str) -> Optional[Dict]:
         """
         Extended override lookup with DB-backed fuzzy matching.
@@ -579,13 +622,43 @@ class FoodDatabaseLookupService:
                         row = result_row.fetchone()
                         if row:
                             row_dict = dict(row._mapping)
-                            override_data = self._row_to_override_dict(row_dict)
-                            self._overrides[normalized] = override_data
-                            logger.info(
-                                f"[FoodDB] OVERRIDE HIT (trigram {row_dict.get('sim', 0):.2f}): "
-                                f"'{food_name}' → {override_data['display_name']}"
-                            )
-                            return override_data
+                            sim_score = float(row_dict.get('sim', 0))
+                            matched_name = row_dict.get('display_name', '')
+
+                            # Word-overlap pre-filter: reject if zero shared words (3+ chars)
+                            query_words = {w for w in normalized.split() if len(w) >= 3}
+                            match_words = {w for w in matched_name.lower().split() if len(w) >= 3}
+                            has_word_overlap = bool(query_words & match_words)
+
+                            if not has_word_overlap and sim_score < 0.6:
+                                logger.info(
+                                    f"[FoodDB] Rejected fuzzy match (no word overlap): "
+                                    f"'{food_name}' ≠ '{matched_name}' (sim={sim_score:.2f})"
+                                )
+                            elif sim_score < 0.6:
+                                # Low confidence match — AI validation
+                                is_valid = await self._ai_validate_match(normalized, matched_name)
+                                if not is_valid:
+                                    logger.info(
+                                        f"[FoodDB] AI rejected fuzzy match: "
+                                        f"'{food_name}' ≠ '{matched_name}' (sim={sim_score:.2f})"
+                                    )
+                                else:
+                                    override_data = self._row_to_override_dict(row_dict)
+                                    self._overrides[normalized] = override_data
+                                    logger.info(
+                                        f"[FoodDB] OVERRIDE HIT (trigram {sim_score:.2f}, AI validated): "
+                                        f"'{food_name}' → {matched_name}"
+                                    )
+                                    return override_data
+                            else:
+                                override_data = self._row_to_override_dict(row_dict)
+                                self._overrides[normalized] = override_data
+                                logger.info(
+                                    f"[FoodDB] OVERRIDE HIT (trigram {sim_score:.2f}): "
+                                    f"'{food_name}' → {matched_name}"
+                                )
+                                return override_data
                 except Exception as e:
                     logger.debug(f"[FoodDB] Trigram search failed for '{food_name}': {e}")
 

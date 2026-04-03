@@ -1052,7 +1052,7 @@ class _StatsWelcomeScreenState extends ConsumerState<StatsWelcomeScreen>
         TextButton(
           onPressed: _isSigningIn ? null : () => context.push('/email-sign-in'),
           child: Text(
-            'Sign in with Email',
+            'Continue with Email',
             style: TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.w500,

@@ -3072,7 +3072,7 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
               onBack: _previousQuestion,
               onBackToWelcome: () {
                 HapticFeedback.lightImpact();
-                context.go('/stats-welcome');
+                context.go('/intro');
               },
             ),
             content: Column(

@@ -384,8 +384,8 @@ class DangerZoneSection extends ConsumerWidget {
         await ref.read(authStateProvider.notifier).signOut();
         debugPrint('[Settings] Signed out, navigating to stats welcome...');
 
-        // Navigate to stats welcome (primary entry point for new users)
-        router.go('/stats-welcome');
+        // Navigate to intro (primary entry point for new users)
+        router.go('/intro');
       } else {
         throw Exception('Failed to delete account: ${response.statusCode}');
       }

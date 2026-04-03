@@ -60,7 +60,7 @@ class LogoutSection extends ConsumerWidget {
             onPressed: () {
               Navigator.pop(context);
               ref.read(authStateProvider.notifier).signOut();
-              context.go('/stats-welcome');
+              context.go('/intro');
             },
             child: const Text(
               'Sign Out',

@@ -10,13 +10,14 @@ If fewer days than requested exist, the client knows to trigger generation when 
 from datetime import date, datetime, timedelta
 from typing import List, Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from core.auth import get_current_user
 from core.exceptions import safe_internal_error
 from pydantic import BaseModel
 
 from core.supabase_db import get_supabase_db
 from core.logger import get_logger
+from core.timezone_utils import resolve_timezone, get_user_today
 
 from .utils import parse_json_field
 
@@ -52,6 +53,7 @@ class BatchUpcomingResponse(BaseModel):
 
 @router.get("/upcoming", response_model=BatchUpcomingResponse)
 async def get_upcoming_workouts(
+    request: Request,
     user_id: str = Query(..., description="User ID"),
     days: int = Query(default=14, ge=1, le=30, description="Number of days to look ahead (max 30)"),
     gym_profile_id: Optional[str] = Query(default=None, description="Filter by gym profile ID"),
@@ -72,10 +74,11 @@ async def get_upcoming_workouts(
     try:
         db = get_supabase_db()
 
-        # Calculate date range
-        today_date = date.today()
+        # Calculate date range in user's timezone
+        user_tz = resolve_timezone(request, db, user_id)
+        today_str = get_user_today(user_tz)
+        today_date = date.fromisoformat(today_str)
         end_date = today_date + timedelta(days=days)
-        today_str = today_date.isoformat()
         end_str = end_date.isoformat()
 
         # If no gym_profile_id provided, try to get the active one
