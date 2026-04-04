@@ -443,7 +443,6 @@ class MilestoneService:
             db = get_supabase_db()
 
             if recalculate:
-                # Force recalculation
                 db.client.rpc("calculate_user_roi_metrics", {"p_user_id": user_id}).execute()
 
             result = db.client.table("user_roi_metrics").select("*").eq(
