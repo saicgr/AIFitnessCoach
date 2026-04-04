@@ -6,8 +6,52 @@ This module contains all exercise-related constants used across services.
 from typing import Dict, List, Tuple
 
 # Exercise categorization for progression
-COMPOUND_LOWER = ["squat", "deadlift", "leg press", "romanian deadlift", "hip thrust"]
-COMPOUND_UPPER = ["bench press", "overhead press", "row", "pull-up", "chin-up", "dip"]
+# Verified against 2,078 exercises in exercise_library_lookup.json
+# Uses specific press variants to avoid false-positives (pressdown, Tate press, Svend press)
+COMPOUND_LOWER = [
+    # Squat variants (155 exercises)
+    "squat", "pistol",
+    # Deadlift variants (40 exercises)
+    "deadlift", "rack pull",
+    # Hip hinge (44 exercises)
+    "hip thrust", "glute bridge", "good morning",
+    # Lunge variants (81 exercises)
+    "lunge", "split squat", "step-up", "step up",
+    # Machine compounds
+    "leg press", "hack squat",
+    # Olympic lifts (hip-driven compound movements)
+    "clean", "snatch", "jerk", "thruster",
+]
+COMPOUND_UPPER = [
+    # Bench/chest press variants (specific to avoid matching "pressdown")
+    "bench press", "chest press", "floor press", "spoto press",
+    "incline press", "decline press", "hammer press", "squeeze press",
+    "close grip press", "neutral grip press",
+    # Catch word-order variants: "Press Flat", "Press Incline", "Press Decline"
+    "press flat", "press incline", "press decline",
+    # Shoulder press variants (including plural "shoulders press" found in library)
+    "overhead press", "shoulder press", "shoulders press", "military press",
+    "push press", "arnold press", "z press", "strict press",
+    "seesaw press", "behind neck press",
+    # Generic single-arm/alternate press (compound movements, not isolation)
+    "one arm press", "alternate press", "single arm press",
+    "palms in press", "palms back press", "palms-back press",
+    "side press",
+    # Machine/smith/cable press variants
+    "smith machine press", "machine press", "landmine press",
+    "cable resistance band press", "bench seated press", "press under",
+    # Row variants (100+ exercises)
+    "row",
+    # Pull variants
+    "pull-up", "pull up", "pullup", "chin-up", "chin up", "chinup",
+    "pulldown", "pull-down", "pull down", "muscle-up", "muscle up",
+    # Push variants
+    "push-up", "push up", "pushup",
+    # Dip variants (19 exercises)
+    "dip",
+    # Other compound upper
+    "farmer",
+]
 
 # =====================================================
 # EQUIPMENT-AWARE WEIGHT INCREMENTS (Industry Standard)
@@ -125,7 +169,9 @@ def get_exercise_type(exercise_name: str) -> str:
         if compound in name_lower:
             return "compound_upper"
 
-    bodyweight = ["push-up", "pull-up", "dip", "plank", "crunch"]
+    bodyweight = ["plank", "crunch", "sit-up", "situp", "burpee",
+                  "bear crawl", "box jump", "jumping jack", "mountain climber",
+                  "flutter kick", "leg raise", "dead bug", "bird dog"]
     for indicator in bodyweight:
         if indicator in name_lower:
             return "bodyweight"

@@ -490,6 +490,7 @@ extension SetProgressionPatternX on SetProgressionPattern {
     required double increment,
     List<double>? ownedWeights,
     String? trainingGoal,
+    int? maxReps,
   }) {
     // 1. Generate raw targets using pattern-specific logic
     List<ProgressionSetTarget> raw;
@@ -510,6 +511,18 @@ extension SetProgressionPatternX on SetProgressionPattern {
         raw = _generateMyoReps(workingWeight, totalSets, baseReps, increment);
       case SetProgressionPattern.endurance:
         raw = _generateEndurance(workingWeight, totalSets, baseReps);
+    }
+
+    // 1b. Apply exercise-type ceiling (compound=12, isolation=15, bodyweight=20)
+    if (maxReps != null) {
+      final ceiling = maxReps;
+      raw = raw.map((t) {
+        if (t.isAmrap || t.reps <= ceiling) return t;
+        return ProgressionSetTarget(
+          setNumber: t.setNumber, weight: t.weight,
+          reps: ceiling, isAmrap: false,
+        );
+      }).toList();
     }
 
     // 2. If no inventory, clamp reps to goal range and return
@@ -775,12 +788,16 @@ extension SetProgressionPatternX on SetProgressionPattern {
     int baseReps = 10,
     required double increment,
     required String unit,
+    String? trainingGoal,
+    int? maxReps,
   }) {
     final targets = generateTargets(
       workingWeight: workingWeight,
       totalSets: totalSets,
       baseReps: baseReps,
       increment: increment,
+      trainingGoal: trainingGoal,
+      maxReps: maxReps,
     );
     return targets.map((t) {
       final w = t.weight % 1 == 0 ? t.weight.toInt().toString() : t.weight.toStringAsFixed(1);

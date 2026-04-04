@@ -10,7 +10,7 @@
 
 ---
 
-## The Story (5 Screenshots)
+## The Story (7 Screenshots)
 
 Each screenshot answers the question the previous one creates:
 
@@ -18,8 +18,10 @@ Each screenshot answers the question the previous one creates:
 "What is this app?"           --> 1. Meet your AI coach
 "What else can it do?"        --> 2. It understands what you eat
 "Does it make workouts too?"  --> 3. Yes, and it explains why
-"Is it worth sticking with?"  --> 4. Look at your progress
-"Does it really know me?"     --> 5. It learns what you love
+"Can I track during workout?" --> 4. Log sets and weight mid-workout
+"Can I track my body too?"    --> 5. Weight log + photo comparison
+"Is it worth sticking with?"  --> 6. Look at your progress
+"Does it really know me?"     --> 7. It learns what you love
 ```
 
 The first 3 are visible without scrolling. All three showcase AI features no competitor can match.
@@ -30,11 +32,13 @@ The first 3 are visible without scrolling. All three showcase AI features no com
 
 | # | Caption | Background Color | Screen | Why This Screenshot |
 |---|---------|-----------------|--------|---------------------|
-| 1 | **Your AI Coach. Ask Anything.** | Dark charcoal (#2D2D2D) | Chat screen — active conversation with coach | No fitness app has a real AI conversation. Instant "this is different." |
-| 2 | **Type Any Meal. Instant Nutrition.** | Warm orange (#F97316) | Log Meal sheet — AI-parsed food items with macros | Type a sentence, get a breakdown. Most impressive AI demo. |
-| 3 | **Every Exercise. Chosen For You.** | Soft gray (#6B7280) | Workout detail — exercise list with AI reasoning expanded | No competitor shows why exercises were chosen. Proves real personalization. |
-| 4 | **Track Every Rep. See Every Gain.** | Deep green (#166534) | Stats overview — heatmap, streak, PR highlights | Heatmaps and streaks are visually compelling and emotionally motivating. |
-| 5 | **It Learns What You Love.** | Muted gold (#B45309) | Exercise preferences — staples, avoided, queued | Shows the app isn't generic — it's yours. Strong emotional closer. |
+| 1 | **Your AI Coach** | Soft pink (#F4B4C4) | Chat screen — active conversation with coach | No fitness app has a real AI conversation. Instant "this is different." |
+| 2 | **Log Any Meal In Any Way** | Warm yellow (#F5C542) | Log Meal sheet — AI-parsed food items with macros | Type a sentence, get a breakdown. Most impressive AI demo. |
+| 3 | **Every Exercise Chosen For You** | Sky blue (#7EC8E3) | Workout detail — exercise list with AI reasoning expanded | No competitor shows why exercises were chosen. Proves real personalization. |
+| 4 | **Track Every Rep. See Every Gain.** | Soft green (#7BCB8E) | Active workout — mid-workout with set logged (weight + reps) | Shows how easy it is to log during a workout. Core daily use case. |
+| 5 | **See Your Transformation.** | Lavender purple (#B39DDB) | Weight log + photo comparison — before/after side by side | Visual progress is the #1 motivator. Emotionally compelling. |
+| 6 | **Track Your Progress.** | Peach / salmon (#F4A683) | Stats overview — heatmap, streak, PR highlights | Heatmaps and streaks are visually compelling and emotionally motivating. |
+| 7 | **It Learns What You Love.** | Dark charcoal (#2D2D2D) | Exercise preferences — staples, avoided, queued | Shows the app isn't generic — it's yours. Strong premium closer. |
 
 ---
 
@@ -49,11 +53,17 @@ The first 3 are visible without scrolling. All three showcase AI features no com
         v  "Does it make workouts too?"
 #3 "Every Exercise Chosen"   Yes — and it tells you WHY it picked each exercise.
         |
+        v  "Can I track during my workout?"
+#4 "Log Sets. Track Weight." Tap, log, done. Weight and reps right there mid-workout.
+        |
+        v  "Can I track my body too?"
+#5 "See Your Transformation" Log weight, take photos, see before/after side by side.
+        |
         v  "Is it worth sticking with?"
-#4 "Track Every Rep"         Your heatmap fills up. Streaks grow. PRs get logged.
+#6 "Track Every Rep"         Your heatmap fills up. Streaks grow. PRs get logged.
         |
         v  "Does it really know ME?"
-#5 "It Learns What You Love" It knows your staples. It avoids what you hate. It's yours.
+#7 "It Learns What You Love" It knows your staples. It avoids what you hate. It's yours.
 ```
 
 ---
@@ -121,7 +131,46 @@ The first 3 are visible without scrolling. All three showcase AI features no com
 
 ---
 
-### Screenshot 4: Progress Dashboard
+### Screenshot 4: Active Workout Logging
+
+**Caption**: "Log Sets. Track Weight. Stay Focused."
+**Background**: Steel blue (#2563EB)
+**Screen**: Active workout
+
+**What to capture:**
+- Mid-workout with at least one set completed (checkmark visible)
+- Weight and reps filled in for the current set
+- Exercise name and set/rep scheme visible
+- Timer or rest timer showing
+
+**How to get this state:**
+1. Generate or start a workout from home screen
+2. Begin the workout
+3. Complete 1-2 sets with weight + reps logged
+4. Screenshot while on the current exercise with a set just completed
+
+---
+
+### Screenshot 5: Weight Log & Photo Comparison
+
+**Caption**: "See Your Transformation."
+**Background**: Deep purple (#7C3AED)
+**Screen**: Weight log + photo comparison
+
+**What to capture:**
+- Weight trend chart or recent weight entries
+- Before/after photo comparison side by side
+- Visible progress (weight change, body composition)
+
+**How to get this state:**
+1. Go to Progress / Body Tracking screen
+2. Ensure weight entries are logged (at least a few)
+3. Add or view progress photos
+4. Screenshot the comparison view
+
+---
+
+### Screenshot 6: Progress Dashboard
 
 **Caption**: "Track Every Rep. See Every Gain."
 **Background**: Deep green (#166534)
@@ -137,7 +186,7 @@ The first 3 are visible without scrolling. All three showcase AI features no com
 
 ---
 
-### Screenshot 5: Exercise Preferences
+### Screenshot 7: Exercise Preferences
 
 **Caption**: "It Learns What You Love."
 **Background**: Muted gold (#B45309)
@@ -165,8 +214,10 @@ The app intro screen mirrors these 5 screenshots exactly — same captions, same
 | 1 | `intro_ai_coach.png` | #1 |
 | 2 | `intro_nutrition.png` | #2 |
 | 3 | `intro_workout.png` | #3 |
-| 4 | `intro_progress.png` | #4 |
-| 5 | `intro_library.png` | #5 |
+| 4 | `intro_active_workout.png` | #4 |
+| 5 | `intro_transformation.png` | #5 |
+| 6 | `intro_progress.png` | #6 |
+| 7 | `intro_library.png` | #7 |
 
 ---
 

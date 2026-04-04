@@ -20,6 +20,7 @@ from services.gemini_service import GeminiService
 from services.rag_service import WorkoutRAGService
 from services.exercise_rag.filters import filter_by_equipment
 from services.exercise_rag.utils import infer_equipment_from_name
+from core.exercise_data import get_exercise_type, get_rep_limits
 
 logger = get_logger(__name__)
 
@@ -2768,6 +2769,16 @@ def validate_and_cap_exercise_parameters(
         validated_ex["reps"] = capped_reps
         validated_ex["rest_seconds"] = capped_rest
 
+        # Cap per-set target_reps using exercise-type ceiling
+        if "set_targets" in validated_ex and validated_ex["set_targets"]:
+            ex_type = get_exercise_type(exercise_name)
+            _, type_max_reps = get_rep_limits(ex_type)
+            per_set_ceiling = min(capped_reps, type_max_reps)
+            for st in validated_ex["set_targets"]:
+                if isinstance(st, dict) and "target_reps" in st:
+                    if isinstance(st["target_reps"], int) and st["target_reps"] > per_set_ceiling:
+                        st["target_reps"] = per_set_ceiling
+
         # Log when significant capping occurs
         if original_reps > capped_reps + 5 or original_sets > capped_sets + 1:
             logger.warning(
@@ -4076,6 +4087,16 @@ def enforce_set_rep_limits(
 
             enforced_ex["sets"] = new_sets
             enforced_ex["reps"] = new_reps
+
+        # Cap per-set target_reps using exercise-type ceiling
+        if "set_targets" in enforced_ex and enforced_ex["set_targets"]:
+            ex_type = get_exercise_type(enforced_ex.get("name", ""))
+            _, type_max_reps = get_rep_limits(ex_type)
+            per_set_ceiling = min(max_reps, type_max_reps)
+            for st in enforced_ex["set_targets"]:
+                if isinstance(st, dict) and "target_reps" in st:
+                    if isinstance(st["target_reps"], int) and st["target_reps"] > per_set_ceiling:
+                        st["target_reps"] = per_set_ceiling
 
         enforced_exercises.append(enforced_ex)
 

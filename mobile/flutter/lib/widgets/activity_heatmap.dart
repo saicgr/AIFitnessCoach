@@ -59,9 +59,12 @@ class _ActivityHeatmapState extends ConsumerState<ActivityHeatmap> {
         }
 
         final userId = userSnapshot.data!;
-        final heatmapAsync = ref.watch(
-          activityHeatmapProvider((userId: userId, weeks: timeRange.weeks)),
-        );
+        // For YTD, use exact Jan 1 start date instead of weeks
+        final now = DateTime.now();
+        final heatmapParams = timeRange == HeatmapTimeRange.ytd
+            ? (userId: userId, weeks: 0, startDate: '${now.year}-01-01', endDate: now.toIso8601String().split('T')[0])
+            : (userId: userId, weeks: timeRange.weeks, startDate: null as String?, endDate: null as String?);
+        final heatmapAsync = ref.watch(activityHeatmapProvider(heatmapParams));
 
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -72,7 +75,15 @@ class _ActivityHeatmapState extends ConsumerState<ActivityHeatmap> {
 
             // Heatmap grid
             heatmapAsync.when(
-              data: (data) => _buildHeatmapGrid(context, data),
+              data: (data) {
+                // Scroll to most recent after grid builds
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  if (_scrollController.hasClients) {
+                    _scrollController.jumpTo(_scrollController.position.maxScrollExtent);
+                  }
+                });
+                return _buildHeatmapGrid(context, data);
+              },
               loading: () => const _HeatmapLoading(),
               error: (e, _) => _HeatmapError(error: e.toString()),
             ),
@@ -140,7 +151,7 @@ class _ActivityHeatmapState extends ConsumerState<ActivityHeatmap> {
                 final timeRange = ref.read(heatmapTimeRangeProvider);
                 apiClient.getUserId().then((uid) {
                   if (uid != null) {
-                    ref.invalidate(activityHeatmapProvider((userId: uid, weeks: timeRange.weeks)));
+                    ref.invalidate(activityHeatmapProvider((userId: uid, weeks: timeRange.weeks, startDate: null, endDate: null)));
                   }
                 });
               },
@@ -159,32 +170,83 @@ class _ActivityHeatmapState extends ConsumerState<ActivityHeatmap> {
           ],
         ),
         const SizedBox(height: 8),
-        // Time range selector chips - full width row so all options are visible
-        Row(
-          children: HeatmapTimeRange.values.map((range) {
-            final isSelected = range == timeRange;
-            return Padding(
-              padding: const EdgeInsets.only(right: 6),
-              child: _TimeRangeChip(
-                label: range.label,
-                isSelected: isSelected,
-                accentColor: accentColor,
-                onTap: () {
-                  ref.read(heatmapTimeRangeProvider.notifier).state = range;
-                  // Scroll to end when range changes
-                  WidgetsBinding.instance.addPostFrameCallback((_) {
-                    if (_scrollController.hasClients) {
-                      _scrollController
-                          .jumpTo(_scrollController.position.maxScrollExtent);
-                    }
-                  });
-                },
+        // Time range selector chips — wrap to avoid overflow
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(
+            children: [
+              ...HeatmapTimeRange.values.map((range) {
+                final isSelected = range == timeRange;
+                return Padding(
+                  padding: const EdgeInsets.only(right: 6),
+                  child: _TimeRangeChip(
+                    label: range.label,
+                    isSelected: isSelected,
+                    accentColor: accentColor,
+                    onTap: () {
+                      ref.read(heatmapTimeRangeProvider.notifier).state = range;
+                      WidgetsBinding.instance.addPostFrameCallback((_) {
+                        if (_scrollController.hasClients) {
+                          _scrollController.jumpTo(_scrollController.position.maxScrollExtent);
+                        }
+                      });
+                    },
+                  ),
+                );
+              }),
+              // Custom date range — simple from/to picker
+              GestureDetector(
+                onTap: () => _showSimpleDateRangePicker(context, ref, apiClient, isDark),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                      color: isDark ? AppColors.cardBorder : AppColorsLight.cardBorder,
+                    ),
+                  ),
+                  child: Icon(Icons.date_range, size: 14, color: AppColors.textMuted),
+                ),
               ),
-            );
-          }).toList(),
+            ],
+          ),
         ),
       ],
     );
+  }
+
+  Future<void> _showSimpleDateRangePicker(
+    BuildContext context, WidgetRef ref, dynamic apiClient, bool isDark,
+  ) async {
+    final now = DateTime.now();
+
+    // Pick "From" date
+    final fromDate = await showDatePicker(
+      context: context,
+      initialDate: now.subtract(const Duration(days: 90)),
+      firstDate: DateTime(now.year - 2),
+      lastDate: now,
+      helpText: 'Select start date',
+    );
+    if (fromDate == null || !context.mounted) return;
+
+    // Pick "To" date
+    final toDate = await showDatePicker(
+      context: context,
+      initialDate: now,
+      firstDate: fromDate,
+      lastDate: now,
+      helpText: 'Select end date',
+    );
+    if (toDate == null) return;
+
+    final weeks = (toDate.difference(fromDate).inDays / 7).ceil();
+    if (weeks < 1) return;
+
+    final uid = await apiClient.getUserId();
+    if (uid != null) {
+      ref.invalidate(activityHeatmapProvider((userId: uid, weeks: weeks, startDate: null, endDate: null)));
+    }
   }
 
   Widget _buildHeatmapGrid(
@@ -210,10 +272,9 @@ class _ActivityHeatmapState extends ConsumerState<ActivityHeatmap> {
       builder: (context, constraints) {
         final availableWidth = constraints.maxWidth;
         final gridWidth = availableWidth - dayLabelWidth;
-        // Calculate cell size to fill width, capped at 14px
-        final dynamicCellSize = gridWidth / totalWeeks;
-        final cellSize = dynamicCellSize > 14.0 ? dynamicCellSize : 14.0;
-        // If cells exceed available width, enable scrolling
+        // Fill available width, but cap cell size between 10-20px
+        final fitCellSize = gridWidth / totalWeeks;
+        final cellSize = fitCellSize.clamp(10.0, 20.0);
         final needsScroll = cellSize * totalWeeks > gridWidth;
 
         Widget buildGrid() {
@@ -223,7 +284,9 @@ class _ActivityHeatmapState extends ConsumerState<ActivityHeatmap> {
               // Month labels row
               Padding(
                 padding: EdgeInsets.only(left: dayLabelWidth),
-                child: Row(
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
                   children: monthLabels.map((label) {
                     final width = label.weekSpan * cellSize;
                     return SizedBox(
@@ -240,6 +303,7 @@ class _ActivityHeatmapState extends ConsumerState<ActivityHeatmap> {
                     );
                   }).toList(),
                 ),
+              ),
               ),
               const SizedBox(height: 4),
 
@@ -310,33 +374,27 @@ class _ActivityHeatmapState extends ConsumerState<ActivityHeatmap> {
   }
 
   Widget _buildLegend(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final mutedStyle = Theme.of(context).textTheme.bodySmall?.copyWith(
+      color: AppColors.textMuted, fontSize: 10,
+    );
     return Row(
       mainAxisAlignment: MainAxisAlignment.end,
       children: [
-        Text(
-          'Less',
-          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: AppColors.textMuted,
-                fontSize: 10,
-              ),
-        ),
-        const SizedBox(width: 4),
-        // Rest/None
-        _LegendCell(color: Colors.white.withOpacity(0.05)),
-        // Light activity
-        _LegendCell(color: AppColors.success.withOpacity(0.3)),
-        // Medium activity
-        _LegendCell(color: AppColors.success.withOpacity(0.6)),
-        // High activity
+        // Missed indicator
+        _LegendCell(color: AppColors.coral.withOpacity(0.6)),
+        const SizedBox(width: 2),
+        Text('Missed', style: mutedStyle),
+        const SizedBox(width: 12),
+        // Completed indicator
         const _LegendCell(color: AppColors.success),
-        const SizedBox(width: 4),
-        Text(
-          'More',
-          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: AppColors.textMuted,
-                fontSize: 10,
-              ),
-        ),
+        const SizedBox(width: 2),
+        Text('Done', style: mutedStyle),
+        const SizedBox(width: 12),
+        // Rest indicator
+        _LegendCell(color: isDark ? Colors.white.withOpacity(0.05) : Colors.grey.withOpacity(0.1)),
+        const SizedBox(width: 2),
+        Text('Rest', style: mutedStyle),
       ],
     );
   }
@@ -441,11 +499,13 @@ class _HeatmapCell extends StatelessWidget {
         height: size,
         margin: const EdgeInsets.all(1),
         decoration: BoxDecoration(
-          color: _getColor(),
+          color: _getColor(Theme.of(context).brightness == Brightness.dark),
           borderRadius: BorderRadius.circular(2),
           border: isHighlighted
               ? Border.all(color: AppColors.cyan, width: 1.5)
-              : null,
+              : (status == CalendarStatus.rest || status == CalendarStatus.future)
+                  ? Border.all(color: Colors.grey.withOpacity(0.15), width: 0.5)
+                  : null,
           boxShadow: isHighlighted
               ? [
                   BoxShadow(
@@ -460,16 +520,16 @@ class _HeatmapCell extends StatelessWidget {
     );
   }
 
-  Color _getColor() {
+  Color _getColor(bool isDark) {
     switch (status) {
       case CalendarStatus.completed:
         return AppColors.success;
       case CalendarStatus.missed:
         return AppColors.coral.withOpacity(0.6);
       case CalendarStatus.future:
-        return Colors.white.withOpacity(0.02);
+        return isDark ? Colors.white.withOpacity(0.03) : Colors.grey.withOpacity(0.06);
       case CalendarStatus.rest:
-        return Colors.white.withOpacity(0.05);
+        return isDark ? Colors.white.withOpacity(0.05) : Colors.grey.withOpacity(0.08);
     }
   }
 }
@@ -508,10 +568,11 @@ class _HeatmapLoading extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       height: 120,
       decoration: BoxDecoration(
-        color: AppColors.elevated,
+        color: isDark ? AppColors.elevated : AppColorsLight.elevated,
         borderRadius: BorderRadius.circular(12),
       ),
       child: const Center(

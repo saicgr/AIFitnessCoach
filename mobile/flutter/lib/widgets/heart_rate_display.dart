@@ -469,7 +469,7 @@ class _AnimatedHeartIconState extends State<_AnimatedHeartIcon>
         return Transform.scale(
           scale: widget.isAnimating ? _scaleAnimation.value : 1.0,
           child: Icon(
-            Icons.favorite,
+            Icons.monitor_heart,
             size: widget.size,
             color: widget.color,
           ),

@@ -18,6 +18,7 @@ class ScoresState {
   final ReadinessHistory? readinessHistory;
   final AllStrengthScores? strengthScores;
   final PRStats? prStats;
+  final DotsScore? dotsScore;
   final StrengthDetail? selectedMuscleDetail;
   final NutritionScoreData? nutritionScore;
   final FitnessScoreBreakdown? fitnessScore;
@@ -33,6 +34,7 @@ class ScoresState {
     this.readinessHistory,
     this.strengthScores,
     this.prStats,
+    this.dotsScore,
     this.selectedMuscleDetail,
     this.nutritionScore,
     this.fitnessScore,
@@ -49,6 +51,7 @@ class ScoresState {
     ReadinessHistory? readinessHistory,
     AllStrengthScores? strengthScores,
     PRStats? prStats,
+    DotsScore? dotsScore,
     StrengthDetail? selectedMuscleDetail,
     NutritionScoreData? nutritionScore,
     FitnessScoreBreakdown? fitnessScore,
@@ -68,6 +71,7 @@ class ScoresState {
       readinessHistory: readinessHistory ?? this.readinessHistory,
       strengthScores: strengthScores ?? this.strengthScores,
       prStats: prStats ?? this.prStats,
+      dotsScore: dotsScore ?? this.dotsScore,
       selectedMuscleDetail: clearMuscleDetail
           ? null
           : (selectedMuscleDetail ?? this.selectedMuscleDetail),
@@ -329,6 +333,25 @@ class ScoresNotifier extends StateNotifier<ScoresState> {
     } catch (e) {
       debugPrint('❌ [ScoresProvider] Error loading PRs: $e');
       state = state.copyWith(error: 'Failed to load PRs: $e');
+    }
+  }
+
+  // ============================================
+  // DOTS / Wilks Score Methods
+  // ============================================
+
+  /// Load DOTS and Wilks scores
+  Future<void> loadDotsScore({String? userId}) async {
+    final uid = userId ?? _currentUserId;
+    if (uid == null) return;
+    _currentUserId = uid;
+
+    try {
+      final score = await _repository.getDotsScore(userId: uid);
+      state = state.copyWith(dotsScore: score);
+      debugPrint('✅ [ScoresProvider] Loaded DOTS score: ${score.dotsScore}');
+    } catch (e) {
+      debugPrint('❌ [ScoresProvider] Error loading DOTS score: $e');
     }
   }
 

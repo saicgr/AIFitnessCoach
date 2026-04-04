@@ -162,10 +162,6 @@ class _InlineRestRowState extends State<InlineRestRow>
           // Note input (expandable)
           if (_showNoteInput) _buildNoteInput(isDark, textPrimary, textMuted),
 
-          // AI Tip (if any)
-          if (widget.aiTip != null || widget.isLoadingAiTip)
-            _buildAiTip(isDark, textSecondary, textMuted),
-
           const SizedBox(height: 12),
         ],
       ),
@@ -240,7 +236,7 @@ class _InlineRestRowState extends State<InlineRestRow>
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
               decoration: BoxDecoration(
-                color: AppColors.electricBlue.withValues(alpha: 0.15),
+                color: (isDark ? AppColors.orange : AppColorsLight.orange).withValues(alpha: 0.15),
                 borderRadius: BorderRadius.circular(20),
               ),
               child: Row(
@@ -251,14 +247,14 @@ class _InlineRestRowState extends State<InlineRestRow>
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
-                      color: AppColors.electricBlue,
+                      color: isDark ? AppColors.orange : AppColorsLight.orange,
                     ),
                   ),
                   const SizedBox(width: 4),
                   Icon(
                     Icons.arrow_forward_rounded,
                     size: 16,
-                    color: AppColors.electricBlue,
+                    color: isDark ? AppColors.orange : AppColorsLight.orange,
                   ),
                 ],
               ),

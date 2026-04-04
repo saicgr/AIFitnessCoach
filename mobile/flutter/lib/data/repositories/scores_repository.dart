@@ -204,6 +204,26 @@ class ScoresRepository {
   }
 
   // ============================================
+  // DOTS / Wilks Score
+  // ============================================
+
+  /// Get DOTS and Wilks scores for the user
+  Future<DotsScore> getDotsScore({required String userId}) async {
+    try {
+      debugPrint('🏋️ [Scores] Getting DOTS score for $userId');
+      final response = await _client.get(
+        '/scores/dots',
+        queryParameters: {'user_id': userId},
+      );
+      debugPrint('✅ [Scores] Got DOTS score');
+      return DotsScore.fromJson(response.data);
+    } catch (e) {
+      debugPrint('❌ [Scores] Error getting DOTS score: $e');
+      rethrow;
+    }
+  }
+
+  // ============================================
   // Nutrition Score Endpoints
   // ============================================
 

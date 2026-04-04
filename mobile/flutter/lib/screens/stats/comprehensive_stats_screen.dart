@@ -119,9 +119,11 @@ class _ComprehensiveStatsScreenState extends ConsumerState<ComprehensiveStatsScr
     _loadedTabs.add(tabIndex);
 
     switch (tabIndex) {
-      case 0: // Overview — scores + milestones
+      case 0: // Overview — scores + milestones + calendar stats
         ref.read(scoresProvider.notifier).loadScoresOverview(userId: _userId!);
         ref.read(milestonesProvider.notifier).loadMilestoneProgress(userId: _userId!);
+        // Load calendar data for stats (Total/Week/Time)
+        ref.read(consistencyProvider.notifier).loadCalendar(userId: _userId!, weeks: 52);
         break;
       case 1: // Photos
         ref.read(progressPhotosNotifierProvider(_userId!).notifier).loadAll();
@@ -241,12 +243,6 @@ class _ComprehensiveStatsScreenState extends ConsumerState<ComprehensiveStatsScr
       appBar: PillAppBar(
         title: 'Stats & Scores',
         actions: [
-          // Compare Photos (only on Photos tab)
-          PillAppBarAction(
-            icon: Icons.compare_arrows_rounded,
-            visible: _userId != null && _currentTabIndex == 1,
-            onTap: () => _showComparisonPicker(),
-          ),
           // Time Range Selector (hide on Photos tab)
           PillAppBarAction(
             icon: Icons.calendar_month_outlined,
@@ -315,25 +311,63 @@ class _OverviewTabState extends ConsumerState<_OverviewTab> {
 
   @override
   Widget build(BuildContext context) {
-    final workoutsNotifier = ref.read(workoutsProvider.notifier);
-    final completedCount = workoutsNotifier.completedCount;
-    final weeklyProgress = workoutsNotifier.weeklyProgress;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final searchQuery = ref.watch(exerciseSearchQueryProvider);
     final consistencyState = ref.watch(consistencyProvider);
     final currentStreak = consistencyState.currentStreak;
     final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
 
+    // Stats from heatmap data (this endpoint always works)
+    final timeRange = ref.watch(heatmapTimeRangeProvider);
+    final apiClient = ref.read(apiClientProvider);
+    int completedCount = 0;
+    int thisWeekCompleted = 0;
+    int thisWeekTotal = 0;
+    String totalDurationStr = '0m';
+
+    // Read heatmap data synchronously via FutureBuilder in the widget tree
+    // For now, compute from the consistency calendar data
+    final calData = consistencyState.calendarData;
+    if (calData != null) {
+      completedCount = calData.totalCompleted;
+      // Weekly: count completed/total this week from calendar data
+      final now = DateTime.now();
+      final weekStart = now.subtract(Duration(days: now.weekday - 1));
+      for (final day in calData.data) {
+        final dayDate = DateTime.tryParse(day.date);
+        if (dayDate != null && !dayDate.isBefore(weekStart) && !dayDate.isAfter(now)) {
+          if (day.status == 'completed') thisWeekCompleted++;
+          if (day.status == 'completed' || day.status == 'missed') thisWeekTotal++;
+        }
+      }
+      // Estimate total duration: ~45 min per completed workout
+      final totalMin = completedCount * 45;
+      totalDurationStr = totalMin >= 60 ? '${(totalMin / 60).toStringAsFixed(1)}h' : '${totalMin}m';
+    }
+
     // Update highlighted dates when search query changes
     _updateHighlightedDates(searchQuery);
 
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Activity Heatmap Card
-          Container(
+    return RefreshIndicator(
+      onRefresh: () async {
+        final uid = await ref.read(apiClientProvider).getUserId();
+        if (uid == null) return;
+
+        // Refresh all data
+        final timeRange = ref.read(heatmapTimeRangeProvider);
+        ref.invalidate(activityHeatmapProvider((userId: uid, weeks: timeRange.weeks, startDate: null, endDate: null)));
+        await ref.read(consistencyProvider.notifier).loadCalendar(userId: uid, weeks: 52);
+        ref.read(milestonesProvider.notifier).loadMilestoneProgress(userId: uid);
+        ref.read(scoresProvider.notifier).loadScoresOverview(userId: uid);
+      },
+      child: SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Activity Heatmap Card
+            Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
               color: elevated,
@@ -416,7 +450,7 @@ class _OverviewTabState extends ConsumerState<_OverviewTab> {
                 _StatDivider(),
                 _CompactStat(
                   icon: Icons.local_fire_department,
-                  value: '${weeklyProgress.$1}/${weeklyProgress.$2}',
+                  value: '$thisWeekCompleted/$thisWeekTotal',
                   label: 'Week',
                   color: AppColors.orange,
                 ),
@@ -430,7 +464,7 @@ class _OverviewTabState extends ConsumerState<_OverviewTab> {
                 _StatDivider(),
                 _CompactStat(
                   icon: Icons.timer_outlined,
-                  value: workoutsNotifier.totalDurationFormatted,
+                  value: totalDurationStr,
                   label: 'Time',
                   color: AppColors.purple,
                 ),
@@ -464,11 +498,36 @@ class _OverviewTabState extends ConsumerState<_OverviewTab> {
             label: 'Weekly Summaries',
             onTap: () => context.push('/summaries'),
           ),
+          const SizedBox(height: 8),
+          _QuickActionButton(
+            icon: Icons.fitness_center,
+            label: 'My 1RMs',
+            onTap: () => context.push('/settings/my-1rms'),
+          ),
+          const SizedBox(height: 8),
+          _QuickActionButton(
+            icon: Icons.emoji_events,
+            label: 'Personal Records',
+            onTap: () => context.push('/stats/personal-records'),
+          ),
+          const SizedBox(height: 8),
+          _QuickActionButton(
+            icon: Icons.history,
+            label: 'Exercise History',
+            onTap: () => context.push('/stats/exercise-history'),
+          ),
+          const SizedBox(height: 8),
+          _QuickActionButton(
+            icon: Icons.pie_chart_outline,
+            label: 'Muscle Analytics',
+            onTap: () => context.push('/stats/muscle-analytics'),
+          ),
 
           // Bottom padding for floating nav bar
           const SizedBox(height: 80),
         ],
       ),
+    ),
     );
   }
 
@@ -570,11 +629,6 @@ class _PhotosTabState extends ConsumerState<_PhotosTab>
               .loadAll(),
           child: CustomScrollView(
             slivers: [
-              // Stats Card
-              SliverToBoxAdapter(
-                child: _buildPhotoStatsCard(state),
-              ),
-
               // View Type Filter
               SliverToBoxAdapter(
                 child: _buildViewTypeFilter(),
@@ -588,7 +642,7 @@ class _PhotosTabState extends ConsumerState<_PhotosTab>
 
               // Sort & Grid Controls
               SliverToBoxAdapter(
-                child: _buildGridControls(),
+                child: _buildGridControls(state.stats?.totalPhotos ?? 0),
               ),
 
               // Saved Comparisons section
@@ -662,65 +716,6 @@ class _PhotosTabState extends ConsumerState<_PhotosTab>
     );
   }
 
-  Widget _buildPhotoStatsCard(ProgressPhotosState state) {
-    final stats = state.stats;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final accent = ref.watch(accentColorProvider);
-    final accentColor = accent.getColor(isDark);
-    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-
-    final totalPhotos = stats?.totalPhotos ?? 0;
-    final viewsCaptured = stats?.viewTypesCaptured ?? 0;
-    final viewsTotal = PhotoViewType.values.length;
-    final tracking = stats?.formattedTrackingDuration ?? '-';
-
-    return Container(
-      margin: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-      decoration: BoxDecoration(
-        color: accentColor.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: accentColor.withValues(alpha: 0.2)),
-      ),
-      child: Row(
-        children: [
-          Text(
-            '$totalPhotos',
-            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: textPrimary),
-          ),
-          Text(
-            ' photos',
-            style: TextStyle(fontSize: 13, color: textMuted),
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8),
-            child: Text('·', style: TextStyle(fontSize: 14, color: textMuted)),
-          ),
-          Text(
-            '$viewsCaptured/$viewsTotal',
-            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: textPrimary),
-          ),
-          Text(
-            ' views',
-            style: TextStyle(fontSize: 13, color: textMuted),
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8),
-            child: Text('·', style: TextStyle(fontSize: 14, color: textMuted)),
-          ),
-          Flexible(
-            child: Text(
-              '$tracking tracking',
-              style: TextStyle(fontSize: 13, color: textMuted),
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget _buildViewTypeFilter() {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final accent = ref.watch(accentColorProvider);
@@ -740,10 +735,12 @@ class _PhotosTabState extends ConsumerState<_PhotosTab>
           },
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 200),
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+            height: 36,
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            alignment: Alignment.center,
             decoration: BoxDecoration(
               color: selected ? accentColor : elevated,
-              borderRadius: BorderRadius.circular(20),
+              borderRadius: BorderRadius.circular(18),
               border: selected ? null : Border.all(color: cardBorder),
             ),
             child: Text(
@@ -760,7 +757,7 @@ class _PhotosTabState extends ConsumerState<_PhotosTab>
     }
 
     return SizedBox(
-      height: 50,
+      height: 48,
       child: ListView(
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -778,7 +775,7 @@ class _PhotosTabState extends ConsumerState<_PhotosTab>
     );
   }
 
-  Widget _buildGridControls() {
+  Widget _buildGridControls(int totalPhotos) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final accent = ref.watch(accentColorProvider);
     final accentColor = accent.getColor(isDark);
@@ -790,26 +787,22 @@ class _PhotosTabState extends ConsumerState<_PhotosTab>
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       child: Row(
         children: [
-          // Sort toggle
+          // Photo count
+          Text(
+            '$totalPhotos photo${totalPhotos == 1 ? '' : 's'}',
+            style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: textSecondary),
+          ),
+          const SizedBox(width: 8),
+          // Sort toggle (icon only)
           InkWell(
             borderRadius: BorderRadius.circular(8),
             onTap: () => setState(() => _sortNewestFirst = !_sortNewestFirst),
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    _sortNewestFirst ? Icons.arrow_downward : Icons.arrow_upward,
-                    size: 16,
-                    color: textSecondary,
-                  ),
-                  const SizedBox(width: 4),
-                  Text(
-                    _sortNewestFirst ? 'Newest' : 'Oldest',
-                    style: TextStyle(fontSize: 13, color: textSecondary),
-                  ),
-                ],
+              padding: const EdgeInsets.all(6),
+              child: Icon(
+                _sortNewestFirst ? Icons.arrow_downward_rounded : Icons.arrow_upward_rounded,
+                size: 18,
+                color: textSecondary,
               ),
             ),
           ),
@@ -836,6 +829,40 @@ class _PhotosTabState extends ConsumerState<_PhotosTab>
               ),
             ),
           )),
+          const SizedBox(width: 12),
+          // Compare button
+          GestureDetector(
+            onTap: () {
+              HapticService.light();
+              if (widget.userId != null) {
+                Navigator.push(
+                  context,
+                  AppPageRoute(
+                    builder: (_) => ComparisonView(userId: widget.userId!),
+                  ),
+                );
+              }
+            },
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+              decoration: BoxDecoration(
+                color: accentColor.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: accentColor.withValues(alpha: 0.3)),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.compare_arrows_rounded, size: 14, color: accentColor),
+                  const SizedBox(width: 4),
+                  Text(
+                    'Compare',
+                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: accentColor),
+                  ),
+                ],
+              ),
+            ),
+          ),
         ],
       ),
     );
@@ -4397,11 +4424,18 @@ class _AchievementsPreview extends ConsumerWidget {
     final achieved = milestonesState.achieved;
     final upcoming = milestonesState.upcoming;
 
-    // Build display list: up to 4 items, achieved first then upcoming
+    // Build display list: up to 4 UNIQUE items by name, achieved first then upcoming
     final displayItems = <MilestoneProgress>[];
-    displayItems.addAll(achieved.take(4));
+    final seenNames = <String>{};
+    for (final mp in achieved) {
+      if (seenNames.add(mp.milestone.name)) displayItems.add(mp);
+      if (displayItems.length >= 4) break;
+    }
     if (displayItems.length < 4) {
-      displayItems.addAll(upcoming.take(4 - displayItems.length));
+      for (final mp in upcoming) {
+        if (seenNames.add(mp.milestone.name)) displayItems.add(mp);
+        if (displayItems.length >= 4) break;
+      }
     }
 
     if (displayItems.isEmpty) {
@@ -4443,34 +4477,39 @@ class _AchievementsPreview extends ConsumerWidget {
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: displayItems.map((mp) {
           return _BadgeIcon(
-            iconData: _categoryIcon(mp.milestone.category),
+            iconData: _milestoneIcon(mp.milestone.icon),
             label: mp.milestone.name,
             unlocked: mp.isAchieved,
             color: Color(mp.milestone.tier.colorValue),
+            tier: mp.milestone.tier,
           );
         }).toList(),
       ),
     );
   }
 
-  static IconData _categoryIcon(MilestoneCategory category) {
-    switch (category) {
-      case MilestoneCategory.workouts:
-        return Icons.fitness_center;
-      case MilestoneCategory.streak:
-        return Icons.local_fire_department;
-      case MilestoneCategory.strength:
-        return Icons.emoji_events;
-      case MilestoneCategory.volume:
-        return Icons.speed;
-      case MilestoneCategory.time:
-        return Icons.schedule;
-      case MilestoneCategory.weight:
-        return Icons.monitor_weight;
-      case MilestoneCategory.prs:
-        return Icons.military_tech;
-      case MilestoneCategory.firstSteps:
-        return Icons.rocket_launch;
+  static IconData _milestoneIcon(String? iconName) {
+    switch (iconName) {
+      case 'fire': return Icons.local_fire_department;
+      case 'flame': return Icons.whatshot;
+      case 'crown': return Icons.workspace_premium;
+      case 'trophy': return Icons.emoji_events;
+      case 'diamond': return Icons.diamond;
+      case 'star': return Icons.star;
+      case 'medal': return Icons.military_tech;
+      case 'target': return Icons.gps_fixed;
+      case 'muscle': return Icons.fitness_center;
+      case 'dumbbell': return Icons.fitness_center;
+      case 'clock': return Icons.timer;
+      case 'hourglass': return Icons.hourglass_bottom;
+      case 'scale': return Icons.monitor_weight;
+      case 'calendar': return Icons.calendar_month;
+      case 'chat_bubble': return Icons.chat_bubble;
+      case 'camera_alt': return Icons.camera_alt;
+      case 'qr_code_scanner': return Icons.qr_code_scanner;
+      case 'fitness_center': return Icons.fitness_center;
+      case 'emoji_events': return Icons.emoji_events;
+      default: return Icons.emoji_events;
     }
   }
 }
@@ -4480,25 +4519,50 @@ class _BadgeIcon extends StatelessWidget {
   final String label;
   final bool unlocked;
   final Color color;
+  final MilestoneTier tier;
 
   const _BadgeIcon({
     required this.iconData,
     required this.label,
     required this.unlocked,
     required this.color,
+    required this.tier,
   });
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return SizedBox(
       width: 72,
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
-            iconData,
-            size: 32,
-            color: unlocked ? color : Colors.grey.withOpacity(0.3),
+          // Badge container with glow effect for unlocked
+          Container(
+            width: 48,
+            height: 48,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: unlocked
+                  ? color.withValues(alpha: 0.15)
+                  : (isDark ? Colors.white.withValues(alpha: 0.05) : Colors.grey.withValues(alpha: 0.08)),
+              border: Border.all(
+                color: unlocked ? color.withValues(alpha: 0.5) : Colors.grey.withValues(alpha: 0.15),
+                width: unlocked ? 2 : 1,
+              ),
+              boxShadow: unlocked ? [
+                BoxShadow(
+                  color: color.withValues(alpha: 0.25),
+                  blurRadius: 8,
+                  spreadRadius: 1,
+                ),
+              ] : null,
+            ),
+            child: Icon(
+              iconData,
+              size: 24,
+              color: unlocked ? color : Colors.grey.withValues(alpha: 0.3),
+            ),
           ),
           const SizedBox(height: 4),
           Text(

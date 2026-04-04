@@ -644,6 +644,54 @@ class PRStats {
 }
 
 // ============================================================================
+// DOTS / Wilks Score Model
+// ============================================================================
+
+@JsonSerializable()
+class DotsLiftDetail {
+  @JsonKey(name: 'exercise_name')
+  final String exerciseName;
+  @JsonKey(name: 'estimated_1rm_kg')
+  final double estimated1rmKg;
+
+  const DotsLiftDetail({
+    required this.exerciseName,
+    required this.estimated1rmKg,
+  });
+
+  factory DotsLiftDetail.fromJson(Map<String, dynamic> json) =>
+      _$DotsLiftDetailFromJson(json);
+  Map<String, dynamic> toJson() => _$DotsLiftDetailToJson(this);
+}
+
+@JsonSerializable()
+class DotsScore {
+  @JsonKey(name: 'dots_score')
+  final double dotsScore;
+  @JsonKey(name: 'wilks_score')
+  final double wilksScore;
+  @JsonKey(name: 'total_kg')
+  final double totalKg;
+  @JsonKey(name: 'bodyweight_kg')
+  final double bodyweightKg;
+  final String gender;
+  final List<DotsLiftDetail> lifts;
+
+  const DotsScore({
+    required this.dotsScore,
+    required this.wilksScore,
+    required this.totalKg,
+    required this.bodyweightKg,
+    required this.gender,
+    this.lifts = const [],
+  });
+
+  factory DotsScore.fromJson(Map<String, dynamic> json) =>
+      _$DotsScoreFromJson(json);
+  Map<String, dynamic> toJson() => _$DotsScoreToJson(this);
+}
+
+// ============================================================================
 // Overview/Dashboard Model
 // ============================================================================
 

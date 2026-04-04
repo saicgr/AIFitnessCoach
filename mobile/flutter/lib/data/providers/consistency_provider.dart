@@ -362,7 +362,7 @@ final consistencyDataProvider = FutureProvider<ConsistencyInsights?>((ref) async
 // ============================================
 
 /// Parameter for activity heatmap provider
-typedef HeatmapParams = ({String userId, int weeks});
+typedef HeatmapParams = ({String userId, int weeks, String? startDate, String? endDate});
 
 /// Activity heatmap data with configurable time range
 /// Note: Removed autoDispose to prevent refetching on navigation
@@ -371,7 +371,9 @@ final activityHeatmapProvider = FutureProvider
   final repository = ref.watch(consistencyRepositoryProvider);
   return repository.getCalendarHeatmap(
     userId: params.userId,
-    weeks: params.weeks,
+    weeks: params.startDate != null ? null : params.weeks,
+    startDateStr: params.startDate,
+    endDateStr: params.endDate,
   );
 });
 
@@ -436,11 +438,21 @@ enum HeatmapTimeRange {
   oneMonth(4, '1M'),
   threeMonths(13, '3M'),
   sixMonths(26, '6M'),
+  ytd(0, 'YTD'),  // 0 = dynamic, calculated from Jan 1
   oneYear(52, '1Y');
 
-  final int weeks;
+  final int _rawWeeks;
   final String label;
-  const HeatmapTimeRange(this.weeks, this.label);
+  const HeatmapTimeRange(this._rawWeeks, this.label);
+
+  int get weeks {
+    if (this == HeatmapTimeRange.ytd) {
+      final now = DateTime.now();
+      final jan1 = DateTime(now.year, 1, 1);
+      return (now.difference(jan1).inDays / 7).ceil();
+    }
+    return _rawWeeks;
+  }
 }
 
 /// Selected time range for heatmap (preset options)

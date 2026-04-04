@@ -906,6 +906,111 @@ async def get_exercise_pr_history(
 
 
 # ============================================================================
+# DOTS / Wilks Score Endpoints
+# ============================================================================
+
+
+class DotsLiftDetail(BaseModel):
+    exercise_name: str
+    estimated_1rm_kg: float
+
+
+class DotsScoreResponse(BaseModel):
+    dots_score: float
+    wilks_score: float
+    total_kg: float
+    bodyweight_kg: float
+    gender: str
+    lifts: List[DotsLiftDetail]
+
+
+@router.get("/dots", response_model=DotsScoreResponse, tags=["DOTS/Wilks"])
+async def get_dots_score(
+    user_id: str = Query(...),
+    current_user: dict = Depends(get_current_user),
+):
+    """
+    Calculate DOTS and Wilks scores from user's best squat, bench, and deadlift 1RMs.
+
+    Fetches the user's stored 1RMs for the three powerlifting movements,
+    sums them into a total, and applies the DOTS and Wilks formulas.
+    """
+    db = get_supabase_db()
+
+    # Get user body info
+    user_response = db.client.table("users").select(
+        "weight_kg, gender, preferences"
+    ).eq("id", user_id).single().execute()
+
+    if not user_response.data:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    bodyweight_kg, gender = get_user_body_info(user_response.data)
+
+    # Get stored 1RMs for the big three lifts
+    one_rm_response = db.client.table("user_exercise_1rm").select(
+        "exercise_name, estimated_1rm_kg"
+    ).eq("user_id", user_id).execute()
+
+    stored_1rms = {
+        row["exercise_name"].lower().replace(" ", "_"): float(row["estimated_1rm_kg"])
+        for row in (one_rm_response.data or [])
+        if row.get("estimated_1rm_kg")
+    }
+
+    # Match big three lifts (with common name variants)
+    squat_names = ["squat", "back_squat", "barbell_squat", "barbell_back_squat"]
+    bench_names = ["bench_press", "barbell_bench_press", "flat_bench_press", "flat_barbell_bench_press"]
+    deadlift_names = ["deadlift", "conventional_deadlift", "barbell_deadlift"]
+
+    def find_best(names):
+        best = 0.0
+        best_name = names[0]
+        for name in names:
+            val = stored_1rms.get(name, 0.0)
+            if val > best:
+                best = val
+                best_name = name
+        return best_name, best
+
+    squat_name, squat_1rm = find_best(squat_names)
+    bench_name, bench_1rm = find_best(bench_names)
+    deadlift_name, deadlift_1rm = find_best(deadlift_names)
+
+    total_kg = squat_1rm + bench_1rm + deadlift_1rm
+
+    lifts = []
+    if squat_1rm > 0:
+        lifts.append(DotsLiftDetail(exercise_name=squat_name, estimated_1rm_kg=squat_1rm))
+    if bench_1rm > 0:
+        lifts.append(DotsLiftDetail(exercise_name=bench_name, estimated_1rm_kg=bench_1rm))
+    if deadlift_1rm > 0:
+        lifts.append(DotsLiftDetail(exercise_name=deadlift_name, estimated_1rm_kg=deadlift_1rm))
+
+    if total_kg <= 0:
+        return DotsScoreResponse(
+            dots_score=0.0,
+            wilks_score=0.0,
+            total_kg=0.0,
+            bodyweight_kg=bodyweight_kg,
+            gender=gender,
+            lifts=[],
+        )
+
+    calc = StrengthCalculatorService()
+    scores = calc.calculate_dots_score(bodyweight_kg, total_kg, gender)
+
+    return DotsScoreResponse(
+        dots_score=scores["dots_score"],
+        wilks_score=scores["wilks_score"],
+        total_kg=round(total_kg, 2),
+        bodyweight_kg=bodyweight_kg,
+        gender=gender,
+        lifts=lifts,
+    )
+
+
+# ============================================================================
 # Nutrition Score Endpoints
 # ============================================================================
 

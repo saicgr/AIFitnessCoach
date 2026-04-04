@@ -82,6 +82,7 @@ import '../screens/progress/milestones_screen.dart';
 import '../screens/progress/charts/progress_charts_screen.dart';
 import '../screens/progress/consistency_screen.dart';
 import '../screens/progress/exercise_history/exercise_history_screen.dart';
+import '../screens/stats/personal_records_screen.dart';
 import '../screens/progress/exercise_history/exercise_progress_detail_screen.dart';
 import '../screens/progress/muscle_analytics/muscle_analytics_screen.dart';
 import '../screens/progress/muscle_analytics/muscle_detail_screen.dart';
@@ -1408,6 +1409,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/stats/milestones',
         builder: (context, state) => const MilestonesScreen(),
+      ),
+      GoRoute(
+        path: '/stats/personal-records',
+        builder: (context, state) => const PersonalRecordsScreen(),
       ),
       GoRoute(
         path: '/stats/exercise-history',

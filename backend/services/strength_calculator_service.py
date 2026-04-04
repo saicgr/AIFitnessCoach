@@ -889,6 +889,70 @@ class StrengthCalculatorService:
 
         return round(estimated_1rm * percent, 1)
 
+    # -------------------------------------------------------------------------
+    # DOTS / Wilks Score
+    # -------------------------------------------------------------------------
+
+    @staticmethod
+    def calculate_dots_score(
+        bodyweight_kg: float,
+        total_kg: float,
+        gender: str = "male",
+    ) -> Dict[str, float]:
+        """
+        Calculate DOTS and Wilks scores for powerlifting total.
+
+        DOTS (Dynamic Objective Team Scoring) is the modern IPF replacement
+        for Wilks, using a quintic polynomial denominator.
+
+        Args:
+            bodyweight_kg: User's body weight in kg
+            total_kg: Sum of best squat + bench + deadlift 1RMs in kg
+            gender: "male" or "female"
+
+        Returns:
+            Dict with dots_score, wilks_score
+        """
+        bw = max(bodyweight_kg, 40.0)  # floor to avoid division issues
+
+        # ── DOTS coefficients (IPF, effective 2020) ──
+        if gender == "female":
+            a = -1.1057e-07
+            b = 1.1258e-04
+            c = -4.7585e-02
+            d = 1.3206e+01
+            e = -5.7294e+02
+        else:
+            a = -1.0930e-07
+            b = 1.1497e-04
+            c = -5.0317e-02
+            d = 1.3814e+01
+            e = -5.8650e+02
+
+        denominator = a * bw**4 + b * bw**3 + c * bw**2 + d * bw + e
+        dots = round(total_kg * (500.0 / denominator), 2) if denominator != 0 else 0.0
+
+        # ── Wilks coefficients (2020 revision) ──
+        if gender == "female":
+            wa = -2.16195e-06
+            wb = 1.30567e-03
+            wc = -2.28420e-01
+            wd = -7.01863e+00
+            we = 1.29192e+03
+            wf = -8.67270e+04
+        else:
+            wa = -2.16195e-06
+            wb = 1.61400e-03
+            wc = -3.30725e-01
+            wd = 2.48867e+01
+            we = 3.54016e+02
+            wf = -5.72299e+04
+
+        w_denom = wf + we * bw + wd * bw**2 + wc * bw**3 + wb * bw**4 + wa * bw**5
+        wilks = round(total_kg * (600.0 / w_denom), 2) if w_denom != 0 else 0.0
+
+        return {"dots_score": dots, "wilks_score": wilks}
+
 
 # Singleton instance
 strength_calculator_service = StrengthCalculatorService()

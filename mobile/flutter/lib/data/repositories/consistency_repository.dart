@@ -73,6 +73,8 @@ class ConsistencyRepository {
     int? weeks,
     DateTime? startDate,
     DateTime? endDate,
+    String? startDateStr,
+    String? endDateStr,
   }) async {
     try {
       debugPrint('🔍 [Consistency] Getting calendar heatmap for $userId');
@@ -81,11 +83,14 @@ class ConsistencyRepository {
         'user_id': userId,
       };
 
-      // Use custom date range if provided, otherwise use weeks
-      if (startDate != null && endDate != null) {
-        queryParams['start_date'] = startDate.toIso8601String().split('T')[0];
-        queryParams['end_date'] = endDate.toIso8601String().split('T')[0];
-        debugPrint('🔍 [Consistency] Using custom date range: ${queryParams['start_date']} to ${queryParams['end_date']}');
+      // Use string dates first (from provider), then DateTime, then weeks
+      final sDate = startDateStr ?? (startDate != null ? startDate.toIso8601String().split('T')[0] : null);
+      final eDate = endDateStr ?? (endDate != null ? endDate.toIso8601String().split('T')[0] : null);
+
+      if (sDate != null && eDate != null) {
+        queryParams['start_date'] = sDate;
+        queryParams['end_date'] = eDate;
+        debugPrint('🔍 [Consistency] Using custom date range: $sDate to $eDate');
       } else {
         queryParams['weeks'] = weeks ?? 4;
         debugPrint('🔍 [Consistency] Using weeks: ${queryParams['weeks']}');

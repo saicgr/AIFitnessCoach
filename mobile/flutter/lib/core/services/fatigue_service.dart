@@ -221,18 +221,35 @@ class FatigueService {
     final muscleLower = muscleGroup?.toLowerCase() ?? '';
 
     // Compound exercises (multi-joint)
+    // Synced with backend COMPOUND_LOWER + COMPOUND_UPPER in exercise_data.py
+    // Uses specific press variants to avoid false-positives (pressdown, Tate press)
     final compoundKeywords = [
-      'squat',
-      'deadlift',
-      'bench press',
-      'overhead press',
+      // Lower body compounds
+      'squat', 'pistol', 'deadlift', 'rack pull',
+      'hip thrust', 'glute bridge', 'good morning',
+      'lunge', 'split squat', 'step-up', 'step up',
+      'leg press', 'hack squat',
+      'clean', 'snatch', 'jerk', 'thruster',
+      // Upper body press variants (specific to avoid matching "pressdown")
+      'bench press', 'chest press', 'floor press', 'spoto press',
+      'incline press', 'decline press', 'hammer press', 'squeeze press',
+      'close grip press', 'neutral grip press',
+      'press flat', 'press incline', 'press decline',
+      'overhead press', 'shoulder press', 'shoulders press', 'military press',
+      'push press', 'arnold press', 'z press', 'strict press',
+      'seesaw press', 'behind neck press',
+      'one arm press', 'alternate press', 'single arm press',
+      'palms in press', 'palms back press', 'palms-back press',
+      'side press',
+      'smith machine press', 'machine press', 'landmine press',
+      'cable resistance band press', 'bench seated press', 'press under',
+      // Row, pull, push variants
       'row',
-      'pull-up',
-      'chin-up',
-      'lunge',
+      'pull-up', 'pull up', 'pullup', 'chin-up', 'chin up', 'chinup',
+      'pulldown', 'pull-down', 'pull down', 'muscle-up', 'muscle up',
+      'push-up', 'push up', 'pushup',
       'dip',
-      'clean',
-      'snatch',
+      'farmer',
     ];
 
     for (final keyword in compoundKeywords) {
@@ -241,17 +258,12 @@ class FatigueService {
       }
     }
 
-    // Bodyweight exercises
+    // Bodyweight/conditioning exercises
     final bodyweightKeywords = [
-      'push-up',
-      'pushup',
-      'plank',
-      'crunch',
-      'sit-up',
-      'situp',
-      'mountain climber',
-      'burpee',
-      'jumping jack',
+      'plank', 'crunch', 'sit-up', 'situp',
+      'burpee', 'bear crawl', 'box jump',
+      'jumping jack', 'mountain climber',
+      'flutter kick', 'leg raise', 'dead bug', 'bird dog',
     ];
 
     for (final keyword in bodyweightKeywords) {

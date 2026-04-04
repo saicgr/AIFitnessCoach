@@ -263,6 +263,40 @@ Map<String, dynamic> _$PRStatsToJson(PRStats instance) => <String, dynamic>{
   'recent_prs': instance.recentPrs,
 };
 
+DotsLiftDetail _$DotsLiftDetailFromJson(Map<String, dynamic> json) =>
+    DotsLiftDetail(
+      exerciseName: json['exercise_name'] as String,
+      estimated1rmKg: (json['estimated_1rm_kg'] as num).toDouble(),
+    );
+
+Map<String, dynamic> _$DotsLiftDetailToJson(DotsLiftDetail instance) =>
+    <String, dynamic>{
+      'exercise_name': instance.exerciseName,
+      'estimated_1rm_kg': instance.estimated1rmKg,
+    };
+
+DotsScore _$DotsScoreFromJson(Map<String, dynamic> json) => DotsScore(
+  dotsScore: (json['dots_score'] as num).toDouble(),
+  wilksScore: (json['wilks_score'] as num).toDouble(),
+  totalKg: (json['total_kg'] as num).toDouble(),
+  bodyweightKg: (json['bodyweight_kg'] as num).toDouble(),
+  gender: json['gender'] as String,
+  lifts:
+      (json['lifts'] as List<dynamic>?)
+          ?.map((e) => DotsLiftDetail.fromJson(e as Map<String, dynamic>))
+          .toList() ??
+      const [],
+);
+
+Map<String, dynamic> _$DotsScoreToJson(DotsScore instance) => <String, dynamic>{
+  'dots_score': instance.dotsScore,
+  'wilks_score': instance.wilksScore,
+  'total_kg': instance.totalKg,
+  'bodyweight_kg': instance.bodyweightKg,
+  'gender': instance.gender,
+  'lifts': instance.lifts,
+};
+
 ScoresOverview _$ScoresOverviewFromJson(
   Map<String, dynamic> json,
 ) => ScoresOverview(

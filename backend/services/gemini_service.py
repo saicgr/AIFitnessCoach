@@ -902,9 +902,11 @@ For a 3-set exercise at 20kg working weight:
 ## SAFETY RULES
 - Never exceed safe limits for fitness level
 - MINIMUM 3 working sets per exercise for ALL fitness levels (never generate 1 or 2 working sets)
-- Beginners: 3 sets per exercise, max 20 reps
-- Intermediate: 3-5 sets per exercise, max 15 reps
-- Advanced: 4-6 sets per exercise, max 12 reps
+- Beginners: 3 sets per exercise, 10-15 reps (isolation up to 15, compounds max 12)
+- Intermediate: 3-5 sets per exercise, 8-12 reps (isolation up to 15, compounds max 12)
+- Advanced: 4-6 sets per exercise, 6-10 reps (compounds max 12, isolation max 15)
+- NEVER generate more than 12 reps for compound exercises (squat, deadlift, press, row, pull-up, lunge, dip, pulldown)
+- NEVER generate more than 15 reps for isolation exercises (curl, extension, raise, fly)
 - Always include adequate rest (60-180s based on intensity)
 - Reduce intensity for seniors (60+)
 
@@ -6766,6 +6768,13 @@ SET TYPE GUIDELINES:
 - Drop sets: Each drop reduces weight by 20-25% with same reps
 - Failure/AMRAP sets: RPE 10, RIR 0
 
+PER-SET REP CEILINGS BY EXERCISE TYPE (MANDATORY - NEVER EXCEED):
+- Compound exercises (squat, deadlift, bench press, overhead press, row, pull-up, lunge, dip, pulldown): MAX 12 reps per set
+- Isolation exercises (curl, extension, raise, fly, kickback, pullover): MAX 15 reps per set
+- Bodyweight conditioning (plank, crunch, burpee, mountain climber): MAX 20 reps per set
+- These ceilings apply to EVERY set in set_targets including the first set of pyramid patterns
+- Example: For a 3-set pyramid on bench press, use 12/10/8 reps (NOT 16/14/12)
+
 EXAMPLE for a 4-set exercise with 2 drop sets:
 "set_targets": [
   {{"set_number": 1, "set_type": "warmup", "target_reps": 12, "target_weight_kg": 20, "target_rpe": 5, "target_rir": null}},
@@ -7296,6 +7305,11 @@ Calculate "estimated_duration_minutes" = SUM of (sets × (reps × 3s + rest)) / 
 MUST be ≤ duration_minutes_max if provided. Adjust exercises/sets to fit time constraint!
 
 CRITICAL: Every exercise MUST include "set_targets" array with set_number, set_type (warmup/working/drop/failure/amrap), target_reps, target_weight_kg, and target_rpe for each set.
+
+PER-SET REP CEILINGS (MANDATORY):
+- Compound exercises (squat, deadlift, press, row, pull-up, lunge, dip, pulldown): MAX 12 target_reps per set
+- Isolation exercises (curl, extension, raise, fly): MAX 15 target_reps per set
+- This applies to EVERY set in set_targets including pyramid first sets
 
 Include exactly {exercise_count} exercises for {fitness_level} level using only: {safe_join_list(equipment, 'bodyweight')}
 

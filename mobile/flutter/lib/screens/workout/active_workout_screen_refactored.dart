@@ -1181,12 +1181,22 @@ class _ActiveWorkoutScreenState
       pattern, rawBaseReps, completedIndex, totalSets,
     );
 
+    // Exercise-type rep ceiling, pattern-aware (endurance allows higher)
+    final _exType = FatigueService.getExerciseType(exercise.muscleGroup, exercise.name);
+    final int _maxReps;
+    if (pattern == SetProgressionPattern.endurance) {
+      _maxReps = _exType == 'compound' ? 15 : _exType == 'bodyweight' ? 30 : 25;
+    } else {
+      _maxReps = _exType == 'compound' ? 12 : _exType == 'bodyweight' ? 20 : 15;
+    }
+
     var targets = pattern.generateTargets(
       workingWeight: workingWeight,
       totalSets: totalSets,
       baseReps: baseReps,
       increment: effectiveIncrement,
       trainingGoal: userGoal,
+      maxReps: _maxReps,
     );
 
     // Adaptive progression: adjust remaining targets based on actual performance
@@ -5985,19 +5995,25 @@ class _ActiveWorkoutScreenState
         initialChildSize: 0.7,
         minChildSize: 0.4,
         maxChildSize: 0.9,
-        builder: (ctx, scrollController) => _ProgressionSelectorSheet(
-          currentPattern: currentPattern,
-          workingWeight: workingWeight,
-          totalSets: totalSets,
-          baseReps: baseReps,
-          increment: increment,
-          unit: unit,
-          isDark: isDark,
-          scrollController: scrollController,
-          onSelect: (pattern) {
-            Navigator.of(ctx).pop(pattern);
-          },
-        ),
+        builder: (ctx, scrollController) {
+          final exTypePreview = FatigueService.getExerciseType(exercise.muscleGroup, exercise.name);
+          final userGoalPreview = ref.read(authStateProvider).user?.primaryGoal;
+          return _ProgressionSelectorSheet(
+            currentPattern: currentPattern,
+            workingWeight: workingWeight,
+            totalSets: totalSets,
+            baseReps: baseReps,
+            increment: increment,
+            unit: unit,
+            isDark: isDark,
+            scrollController: scrollController,
+            trainingGoal: userGoalPreview,
+            exerciseType: exTypePreview,
+            onSelect: (pattern) {
+              Navigator.of(ctx).pop(pattern);
+            },
+          );
+        },
       ),
     ).then((selected) {
       if (selected != null && selected != currentPattern) {
@@ -6111,12 +6127,22 @@ class _ActiveWorkoutScreenState
     _exerciseWorkingWeight[exerciseIndex] = workingWeight;
 
     final userGoal = ref.read(authStateProvider).user?.primaryGoal;
+    // Exercise-type rep ceiling, pattern-aware (endurance allows higher)
+    final exTypeForCap = FatigueService.getExerciseType(exercise.muscleGroup, exercise.name);
+    final int maxRepsForCap;
+    if (pattern == SetProgressionPattern.endurance) {
+      maxRepsForCap = exTypeForCap == 'compound' ? 15 : exTypeForCap == 'bodyweight' ? 30 : 25;
+    } else {
+      maxRepsForCap = exTypeForCap == 'compound' ? 12 : exTypeForCap == 'bodyweight' ? 20 : 15;
+    }
+
     final targets = pattern.generateTargets(
       workingWeight: workingWeight,
       totalSets: totalSets,
       baseReps: baseReps,
       increment: effectiveIncrement,
       trainingGoal: userGoal,
+      maxReps: maxRepsForCap,
     );
 
     // Update setTargets for ALL uncompleted sets
@@ -9166,6 +9192,8 @@ class _ProgressionSelectorSheet extends StatefulWidget {
   final bool isDark;
   final ScrollController scrollController;
   final ValueChanged<SetProgressionPattern> onSelect;
+  final String? trainingGoal;
+  final String exerciseType; // 'compound', 'isolation', or 'bodyweight'
 
   const _ProgressionSelectorSheet({
     required this.currentPattern,
@@ -9177,6 +9205,8 @@ class _ProgressionSelectorSheet extends StatefulWidget {
     required this.isDark,
     required this.scrollController,
     required this.onSelect,
+    this.trainingGoal,
+    this.exerciseType = 'isolation',
   });
 
   @override
@@ -9272,12 +9302,21 @@ class _ProgressionSelectorSheetState extends State<_ProgressionSelectorSheet> {
   ) {
     final isSelected = pattern == widget.currentPattern;
     final isExpanded = _expandedInfo.contains(pattern);
+    // Compute pattern-aware maxReps (endurance allows higher)
+    final int patternMaxReps;
+    if (pattern == SetProgressionPattern.endurance) {
+      patternMaxReps = widget.exerciseType == 'compound' ? 15 : widget.exerciseType == 'bodyweight' ? 30 : 25;
+    } else {
+      patternMaxReps = widget.exerciseType == 'compound' ? 12 : widget.exerciseType == 'bodyweight' ? 20 : 15;
+    }
     final preview = pattern.previewString(
       workingWeight: widget.workingWeight,
       totalSets: widget.totalSets,
       baseReps: widget.baseReps,
       increment: widget.increment,
       unit: widget.unit,
+      trainingGoal: widget.trainingGoal,
+      maxReps: patternMaxReps,
     );
 
     return Padding(
