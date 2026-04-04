@@ -605,13 +605,13 @@ async def get_calendar_heatmap(
         except Exception as log_error:
             logger.warning(f"Failed to log calendar access: {log_error}")
 
-        # Get all scheduled workouts in range
+        # Get all scheduled workouts in range (use end-of-day for inclusive upper bound)
         workouts_response = db.client.table("workouts").select(
             "id, name, scheduled_date, is_completed, generation_method"
         ).eq("user_id", user_id).gte(
             "scheduled_date", start_date.isoformat()
         ).lte(
-            "scheduled_date", end_date.isoformat()
+            "scheduled_date", end_date.isoformat() + "T23:59:59+00:00"
         ).execute()
 
         # Build a map of date -> workout info

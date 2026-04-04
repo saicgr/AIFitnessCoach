@@ -566,9 +566,15 @@ class FoodDatabaseLookupService:
             sb = get_supabase()
 
             # Step 2: Check variant_names array for exact match
+            # Prefer generic entries (region IS NULL) for accuracy
             resp = sb.client.table("food_nutrition_overrides").select("*").eq(
                 "is_active", True
-            ).contains("variant_names", [normalized]).limit(1).execute()
+            ).is_("region", "null").contains("variant_names", [normalized]).limit(1).execute()
+
+            if not resp.data:
+                resp = sb.client.table("food_nutrition_overrides").select("*").eq(
+                    "is_active", True
+                ).contains("variant_names", [normalized]).limit(1).execute()
 
             if resp.data:
                 row = resp.data[0]
@@ -1357,15 +1363,24 @@ class FoodDatabaseLookupService:
             return results
 
         # Step 2: Check variant_names for foods that missed exact match
+        # Prefer generic entries (region IS NULL) over regional variants for accuracy
         still_unmatched: List[str] = []
         try:
             from core.supabase_client import get_supabase as _get_sb
             sb = _get_sb()
             for name in uncached_names:
                 normalized = name.lower().strip()
+                # Try generic entries first (region IS NULL) — most accurate for common foods
                 resp = sb.client.table("food_nutrition_overrides").select("*").eq(
                     "is_active", True
-                ).contains("variant_names", [normalized]).limit(1).execute()
+                ).is_("region", "null").contains("variant_names", [normalized]).limit(1).execute()
+
+                if not resp.data:
+                    # Fall back to any regional entry
+                    resp = sb.client.table("food_nutrition_overrides").select("*").eq(
+                        "is_active", True
+                    ).contains("variant_names", [normalized]).limit(1).execute()
+
                 if resp.data:
                     row = resp.data[0]
                     override_data = self._row_to_override_dict(row)
@@ -1384,6 +1399,27 @@ class FoodDatabaseLookupService:
             logger.warning(f"[FoodDB] Batch variant lookup failed: {e}")
             still_unmatched = uncached_names
 
+        # Step 3: Fuzzy matching for remaining misses
+        if still_unmatched:
+            final_unmatched = []
+            for name in still_unmatched:
+                try:
+                    fuzzy_result = await self._check_override_fuzzy_db(name)
+                    if fuzzy_result:
+                        nutrition = self._override_to_nutrition(fuzzy_result)
+                        results[name] = nutrition
+                        self._set_cached(f"lookup:{name.lower()}", nutrition)
+                        logger.info(
+                            f"[FoodDB] OVERRIDE HIT (batch-fuzzy): '{name}' → "
+                            f"{fuzzy_result['display_name']} ({fuzzy_result['calories_per_100g']} cal/100g)"
+                        )
+                    else:
+                        final_unmatched.append(name)
+                except Exception as e:
+                    logger.debug(f"[FoodDB] Fuzzy lookup failed for '{name}': {e}")
+                    final_unmatched.append(name)
+            still_unmatched = final_unmatched
+
         # No override match for remaining names — mark as None (caller uses AI)
         for name in still_unmatched:
             cache_key = f"lookup:{name.lower()}"
@@ -1391,7 +1427,7 @@ class FoodDatabaseLookupService:
             self._set_cached(cache_key, False)
 
         override_hits = len(food_names) - len(still_unmatched)
-        logger.info(f"[FoodDB] Batch: {override_hits} override hits (exact+variant), {len(still_unmatched)} misses")
+        logger.info(f"[FoodDB] Batch: {override_hits} override hits (exact+variant+fuzzy), {len(still_unmatched)} misses")
         return results
 
 

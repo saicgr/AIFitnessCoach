@@ -214,9 +214,10 @@ class FoodAnalysisResponse(BaseModel):
     # Feedback fields
     feedback: Optional[str] = Field(default=None, description="Nutritional feedback")
     overall_meal_score: Optional[int] = Field(default=None, description="Overall score 1-10")
-    encouragements: Optional[List[str]] = Field(default=None, description="Positive aspects")
-    suggestions: Optional[List[str]] = Field(default=None, description="Improvement suggestions")
-    ai_suggestion: Optional[str] = Field(default=None, description="AI recommendation")
+    encouragements: Optional[List[str]] = Field(default=None, description="Positive aspects of the meal")
+    warnings: Optional[List[str]] = Field(default=None, description="Nutritional concerns - high sodium, low fiber, excess calories, etc. Always include for scores 1-7")
+    ai_suggestion: Optional[str] = Field(default=None, description="Actionable tip starting with 'Next time:'")
+    recommended_swap: Optional[str] = Field(default=None, description="Concrete healthier swap with benefit, e.g. 'Swap white rice for brown rice: +3g fiber'")
 
 
 # =============================================================================

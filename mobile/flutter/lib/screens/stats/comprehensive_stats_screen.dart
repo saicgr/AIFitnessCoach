@@ -80,6 +80,7 @@ class _ComprehensiveStatsScreenState extends ConsumerState<ComprehensiveStatsScr
     _tabController.addListener(() {
       if (!_tabController.indexIsChanging) {
         setState(() => _currentTabIndex = _tabController.index);
+        _loadTabData(_tabController.index);
       }
     });
     if (widget.initialTab != null && widget.initialTab! >= 0 && widget.initialTab! < 6) {
@@ -91,29 +92,44 @@ class _ComprehensiveStatsScreenState extends ConsumerState<ComprehensiveStatsScr
     });
   }
 
+  final Set<int> _loadedTabs = {};
+
   Future<void> _loadData() async {
     final userId = await ref.read(apiClientProvider).getUserId();
     if (userId != null && mounted) {
       setState(() {
         _userId = userId;
       });
-      // Load photos data
-      ref.read(progressPhotosNotifierProvider(userId).notifier).loadAll();
-      // Load milestones data
-      ref.read(milestonesProvider.notifier).loadMilestoneProgress(userId: userId);
-      // Load scores overview (consistency, readiness, etc.)
-      ref.read(scoresProvider.notifier).loadScoresOverview(userId: userId);
-      // Load personal records
-      ref.read(scoresProvider.notifier).loadPersonalRecords(userId: userId);
+      // Only load overview tab data on init — other tabs load lazily
+      _loadTabData(0);
 
       // If openPhotoSheet is requested, switch to Photos tab
       if (widget.openPhotoSheet) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
           if (mounted) {
-            _tabController.animateTo(1); // Switch to Photos tab (index 1)
+            _tabController.animateTo(1);
           }
         });
       }
+    }
+  }
+
+  void _loadTabData(int tabIndex) {
+    if (_userId == null || _loadedTabs.contains(tabIndex)) return;
+    _loadedTabs.add(tabIndex);
+
+    switch (tabIndex) {
+      case 0: // Overview — scores + milestones
+        ref.read(scoresProvider.notifier).loadScoresOverview(userId: _userId!);
+        ref.read(milestonesProvider.notifier).loadMilestoneProgress(userId: _userId!);
+        break;
+      case 1: // Photos
+        ref.read(progressPhotosNotifierProvider(_userId!).notifier).loadAll();
+        break;
+      case 2: // Score
+        ref.read(scoresProvider.notifier).loadPersonalRecords(userId: _userId!);
+        break;
+      // Tabs 3-5 (Measurements, Nutrition, Mood) load their own data via providers
     }
   }
 

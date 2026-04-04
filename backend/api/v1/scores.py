@@ -1401,18 +1401,66 @@ async def get_scores_overview(
     db = get_supabase_db()
     strength_service = StrengthCalculatorService()
 
-    # Get today's readiness
+    # ── Run all 6 DB queries in PARALLEL using thread pool ──
+    import asyncio
+    from concurrent.futures import ThreadPoolExecutor
+    _scores_pool = ThreadPoolExecutor(max_workers=6)
+    loop = asyncio.get_event_loop()
+
     today = date.today().isoformat()
-    try:
-        readiness_response = db.client.table("readiness_scores").select("*").eq(
-            "user_id", user_id
-        ).eq(
-            "score_date", today
-        ).maybe_single().execute()
-    except Exception as e:
-        # Handle 406 or other errors gracefully
-        logger.warning(f"Failed to fetch readiness score: {e}")
-        readiness_response = None
+    thirty_days_ago = (date.today() - timedelta(days=30)).isoformat()
+    seven_days_ago = (date.today() - timedelta(days=7)).isoformat()
+
+    def _q_readiness():
+        try:
+            return db.client.table("readiness_scores").select("*").eq("user_id", user_id).eq("score_date", today).maybe_single().execute()
+        except: return None
+
+    def _q_strength():
+        try:
+            return db.client.table("latest_strength_scores").select("muscle_group, strength_score").eq("user_id", user_id).execute()
+        except: return None
+
+    def _q_prs():
+        try:
+            return db.client.table("personal_records").select("*").eq("user_id", user_id).order("achieved_at", desc=True).limit(5).execute()
+        except: return None
+
+    def _q_pr_count():
+        try:
+            return db.client.table("personal_records").select("id", count="exact").eq("user_id", user_id).gte("achieved_at", thirty_days_ago).execute()
+        except: return None
+
+    def _q_readiness_avg():
+        try:
+            return db.client.table("readiness_scores").select("readiness_score").eq("user_id", user_id).gte("score_date", seven_days_ago).execute()
+        except: return None
+
+    def _q_nutrition():
+        try:
+            ns = NutritionCalculatorService()
+            ws, _ = ns.get_current_week_range()
+            return db.client.table("nutrition_scores").select("nutrition_score, nutrition_level").eq("user_id", user_id).eq("week_start", ws.isoformat()).maybe_single().execute()
+        except: return None
+
+    def _q_fitness():
+        try:
+            return db.client.table("fitness_scores").select("overall_fitness_score, fitness_level, consistency_score").eq("user_id", user_id).order("calculated_at", desc=True).limit(1).maybe_single().execute()
+        except: return None
+
+    (readiness_response, strength_response, pr_response,
+     pr_count_response, readiness_avg_response,
+     nutrition_response, fitness_response) = await asyncio.gather(
+        loop.run_in_executor(_scores_pool, _q_readiness),
+        loop.run_in_executor(_scores_pool, _q_strength),
+        loop.run_in_executor(_scores_pool, _q_prs),
+        loop.run_in_executor(_scores_pool, _q_pr_count),
+        loop.run_in_executor(_scores_pool, _q_readiness_avg),
+        loop.run_in_executor(_scores_pool, _q_nutrition),
+        loop.run_in_executor(_scores_pool, _q_fitness),
+    )
+
+    # ── Process results ──
 
     today_readiness = None
     has_checked_in = False
@@ -1440,20 +1488,15 @@ async def get_scores_overview(
             created_at=datetime.fromisoformat(r["created_at"]),
         )
 
-    # Get strength scores summary
+    # Process strength scores (already fetched in parallel)
     muscle_scores_summary = {}
     overall_score = 0
     overall_level = StrengthLevel.BEGINNER
     try:
-        strength_response = db.client.table("latest_strength_scores").select(
-            "muscle_group, strength_score"
-        ).eq("user_id", user_id).execute()
-
         muscle_scores_summary = {
             r["muscle_group"]: r["strength_score"] or 0
-            for r in (strength_response.data or [])
+            for r in (strength_response.data or []) if strength_response
         }
-
         if muscle_scores_summary:
             score_objects = {
                 k: type('obj', (object,), {'strength_score': v})()
@@ -1461,19 +1504,13 @@ async def get_scores_overview(
             }
             overall_score, overall_level = strength_service.calculate_overall_strength_score(score_objects)
     except Exception as e:
-        logger.warning(f"Failed to fetch strength scores: {e}")
+        logger.warning(f"Failed to process strength scores: {e}")
 
-    # Get recent PRs
+    # Process recent PRs (already fetched in parallel)
     recent_prs = []
     pr_count = 0
     try:
-        pr_response = db.client.table("personal_records").select("*").eq(
-            "user_id", user_id
-        ).order(
-            "achieved_at", desc=True
-        ).limit(5).execute()
-
-        for pr in (pr_response.data or []):
+        for pr in (pr_response.data or []) if pr_response else []:
             try:
                 recent_prs.append(PersonalRecordResponse(
                     id=pr["id"],
@@ -1499,32 +1536,15 @@ async def get_scores_overview(
             except Exception as e:
                 logger.warning(f"Failed to parse PR {pr.get('id')}: {e}")
 
-        # Count PRs in last 30 days
-        thirty_days_ago = (date.today() - timedelta(days=30)).isoformat()
-        pr_count_response = db.client.table("personal_records").select(
-            "id", count="exact"
-        ).eq(
-            "user_id", user_id
-        ).gte(
-            "achieved_at", thirty_days_ago
-        ).execute()
-        pr_count = pr_count_response.count or 0
+        # Count PRs in last 30 days (already fetched in parallel)
+        pr_count = pr_count_response.count or 0 if pr_count_response else 0
     except Exception as e:
         logger.warning(f"Failed to fetch personal records: {e}")
 
-    # Get 7-day readiness average
+    # Process 7-day readiness average (already fetched in parallel)
     readiness_average = None
     try:
-        seven_days_ago = (date.today() - timedelta(days=7)).isoformat()
-        readiness_avg_response = db.client.table("readiness_scores").select(
-            "readiness_score"
-        ).eq(
-            "user_id", user_id
-        ).gte(
-            "score_date", seven_days_ago
-        ).execute()
-
-        readiness_scores = [r["readiness_score"] for r in (readiness_avg_response.data or [])]
+        readiness_scores = [r["readiness_score"] for r in (readiness_avg_response.data or [])] if readiness_avg_response else []
         readiness_average = (
             sum(readiness_scores) / len(readiness_scores)
             if readiness_scores else None
@@ -1532,38 +1552,20 @@ async def get_scores_overview(
     except Exception as e:
         logger.warning(f"Failed to fetch readiness average: {e}")
 
-    # Get current week nutrition score
+    # Process nutrition score (already fetched in parallel)
     nutrition_score = None
     nutrition_level = None
     try:
-        nutrition_service = NutritionCalculatorService()
-        week_start, week_end = nutrition_service.get_current_week_range()
-        nutrition_response = db.client.table("nutrition_scores").select(
-            "nutrition_score, nutrition_level"
-        ).eq(
-            "user_id", user_id
-        ).eq(
-            "week_start", week_start.isoformat()
-        ).maybe_single().execute()
-
         nutrition_score = nutrition_response.data.get("nutrition_score") if nutrition_response and nutrition_response.data else None
         nutrition_level = nutrition_response.data.get("nutrition_level") if nutrition_response and nutrition_response.data else None
     except Exception as e:
         logger.warning(f"Failed to fetch nutrition score: {e}")
 
-    # Get latest fitness score
+    # Process fitness score (already fetched in parallel)
     overall_fitness_score = None
     fitness_level = None
     consistency_score = None
     try:
-        fitness_response = db.client.table("fitness_scores").select(
-            "overall_fitness_score, fitness_level, consistency_score"
-        ).eq(
-            "user_id", user_id
-        ).order(
-            "calculated_at", desc=True
-        ).limit(1).maybe_single().execute()
-
         overall_fitness_score = fitness_response.data.get("overall_fitness_score") if fitness_response and fitness_response.data else None
         fitness_level = fitness_response.data.get("fitness_level") if fitness_response and fitness_response.data else None
         consistency_score = fitness_response.data.get("consistency_score") if fitness_response and fitness_response.data else None

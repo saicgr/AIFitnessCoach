@@ -91,6 +91,7 @@ class _ActivityHeatmapState extends ConsumerState<ActivityHeatmap> {
     final timeRange = ref.watch(heatmapTimeRangeProvider);
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final accentEnum = ref.watch(accentColorProvider);
+    final apiClient = ref.read(apiClientProvider);
     final accentColor = accentEnum.getColor(isDark);
 
     return Column(
@@ -132,6 +133,29 @@ class _ActivityHeatmapState extends ConsumerState<ActivityHeatmap> {
                   ),
                 ),
               ),
+            const Spacer(),
+            // Refresh button
+            GestureDetector(
+              onTap: () {
+                final timeRange = ref.read(heatmapTimeRangeProvider);
+                apiClient.getUserId().then((uid) {
+                  if (uid != null) {
+                    ref.invalidate(activityHeatmapProvider((userId: uid, weeks: timeRange.weeks)));
+                  }
+                });
+              },
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                decoration: BoxDecoration(
+                  color: isDark ? AppColors.elevated : AppColorsLight.elevated,
+                  borderRadius: BorderRadius.circular(6),
+                  border: Border.all(
+                    color: isDark ? AppColors.cardBorder : AppColorsLight.cardBorder,
+                  ),
+                ),
+                child: Icon(Icons.refresh, size: 14, color: AppColors.textMuted),
+              ),
+            ),
           ],
         ),
         const SizedBox(height: 8),
