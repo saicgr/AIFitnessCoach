@@ -357,7 +357,7 @@ async def create_workout(workout: WorkoutCreate,
 
 @router.get("/", response_model=List[Workout])
 async def list_workouts(
-    user_id: str,
+    user_id: str = Query(..., description="User ID"),
     is_completed: Optional[bool] = None,
     from_date: Optional[datetime] = None,
     to_date: Optional[datetime] = None,
