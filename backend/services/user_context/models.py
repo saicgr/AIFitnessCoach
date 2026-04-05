@@ -546,6 +546,3 @@ class HormonalHealthContext:
             modifications.append(f"Add {self.kegel_current_level or 'beginner'}-level kegel exercises to cooldown")
 
         return " | ".join(modifications) if modifications else ""
-
-
-@dataclass

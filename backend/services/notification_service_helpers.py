@@ -1,8 +1,9 @@
-"""Helper functions extracted from notification_service."""
+"""Helper functions extracted from notification_service.
 Push Notification Service using Firebase Admin SDK
 Sends push notifications to users via Firebase Cloud Messaging (FCM)
 
 
+"""
 class NotificationService:
     """Service for sending push notifications via FCM"""
 

@@ -1,4 +1,4 @@
-"""Secondary endpoints for scores.  Sub-router included by main module."""
+"""Secondary endpoints for scores.  Sub-router included by main module.
 Scores API Endpoints
 ====================
 Handles strength scores, readiness scores, personal records, nutrition scores,
@@ -18,6 +18,7 @@ Endpoints:
 - GET /fitness - Get overall fitness score
 - POST /fitness/calculate - Calculate overall fitness score
 - GET /overview - Combined dashboard data
+"""
 
 from .scores_models import (
     ReadinessCheckInRequest,

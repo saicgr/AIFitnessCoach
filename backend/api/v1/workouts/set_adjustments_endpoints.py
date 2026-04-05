@@ -1,4 +1,4 @@
-"""Secondary endpoints for set_adjustments.  Sub-router included by main module."""
+"""Secondary endpoints for set_adjustments.  Sub-router included by main module.
 Set Adjustment API endpoints.
 
 This module handles set adjustment operations during active workouts:
@@ -16,6 +16,7 @@ Fatigue Detection endpoints:
 
 These endpoints track how users modify their workouts in real-time,
 which is valuable data for improving AI workout personalization.
+"""
 
 from .set_adjustments_models import (
     SetPerformanceInput,

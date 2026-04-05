@@ -1,4 +1,4 @@
-"""Helper functions extracted from fatigue_detection_service."""
+"""Helper functions extracted from fatigue_detection_service.
 Fatigue Detection Service
 =========================
 Analyzes workout performance in real-time to detect user fatigue
@@ -27,6 +27,7 @@ Usage:
         set_data=[SetPerformance(reps=10, weight_kg=80, rpe=7), ...]
     )
     recommendation = service.get_set_recommendation(analysis)
+"""
 
 
 async def log_fatigue_detection_event(

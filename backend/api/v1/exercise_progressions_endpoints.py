@@ -1,4 +1,4 @@
-"""Secondary endpoints for exercise_progressions.  Sub-router included by main module."""
+"""Secondary endpoints for exercise_progressions.  Sub-router included by main module.
 Exercise Progressions API - Leverage-based exercise progressions for adaptive difficulty.
 
 This module provides endpoints to:
@@ -14,6 +14,7 @@ Example chains:
 - Push-up: Wall -> Incline -> Knee -> Standard -> Diamond -> Archer -> One-arm
 - Row: Inverted Row (high) -> Inverted Row (low) -> Pull-up -> Weighted Pull-up
 - Squat: Assisted -> Bodyweight -> Split -> Bulgarian -> Pistol
+"""
 
 from .exercise_progressions_models import (
     ProgressionVariant,

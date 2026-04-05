@@ -9,25 +9,7 @@ from .personal_goals_endpoints_part2 import (  # noqa: F401
     _extract_friends_preview,
     sync_workout_with_goals,
 )
-API endpoints for Weekly Personal Goals.
 
-Enables users to set and track personal weekly fitness challenges:
-- single_max: Max reps in one set (e.g., "How many push-ups can I do?")
-- weekly_volume: Total reps over the week (e.g., "500 push-ups this week")
-
-Endpoints:
-- POST /goals - Create a new weekly goal
-- GET /goals/current - Get current week's goals
-- GET /goals/history - Get historical goals for an exercise
-- POST /goals/{id}/attempt - Record a single_max attempt
-- POST /goals/{id}/volume - Add volume to weekly_volume goal
-- POST /goals/{id}/complete - Mark goal as completed
-- POST /goals/{id}/abandon - Abandon a goal
-- GET /records - Get all personal records
-- GET /summary - Get quick summary of current goals
-- GET /goals/suggestions - Get AI-generated goal suggestions
-- POST /goals/suggestions/{id}/dismiss - Dismiss a suggestion
-- POST /goals/suggestions/{id}/accept - Create goal from suggestion
 router = APIRouter()
 
 @router.get("/records", response_model=PersonalRecordsResponse)
@@ -601,6 +583,3 @@ async def accept_suggestion(
     except Exception as e:
         logger.error(f"Failed to accept suggestion: {e}")
         raise safe_internal_error(e, "personal_goals")
-
-
-@router.get("/goals/suggestions/summary", response_model=GoalSuggestionsSummary)

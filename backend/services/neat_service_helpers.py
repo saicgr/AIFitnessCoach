@@ -1,4 +1,4 @@
-"""Helper functions extracted from neat_service."""
+"""Helper functions extracted from neat_service.
 NEAT (Non-Exercise Activity Thermogenesis) Service
 
 Comprehensive service for tracking and optimizing daily activity levels
@@ -23,6 +23,7 @@ Research-backed approach:
 - Progressive goal increases: 500-1000 steps/week for behavior change
 
 
+"""
 class NEATService:
     """
     Comprehensive NEAT (Non-Exercise Activity Thermogenesis) Service.

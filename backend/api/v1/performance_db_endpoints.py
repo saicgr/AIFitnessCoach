@@ -1,4 +1,4 @@
-"""Secondary endpoints for performance_db.  Sub-router included by main module."""
+"""Secondary endpoints for performance_db.  Sub-router included by main module.
 Performance logging API endpoints with Supabase.
 
 ENDPOINTS:
@@ -16,6 +16,7 @@ ENDPOINTS:
 - POST /api/v1/performance-db/rest-intervals - Log rest interval
 - GET  /api/v1/performance-db/rest-intervals - List rest intervals
 - GET  /api/v1/performance-db/rest-intervals/stats/{workout_log_id} - Get rest stats
+"""
 
 from .performance_db_models import (
     ExerciseLastPerformance,

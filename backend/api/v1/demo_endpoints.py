@@ -1,4 +1,4 @@
-"""Secondary endpoints for demo.  Sub-router included by main module."""
+"""Secondary endpoints for demo.  Sub-router included by main module.
 Demo and Trial API endpoints.
 
 These endpoints allow users to preview the app before signing up,
@@ -8,6 +8,7 @@ This addresses the common complaint:
 "One of those apps where you answer a bunch of questions to get a 'tailored plan',
 but then hit a paywall to even see how the app works, let alone what your plan
 might look like."
+"""
 
 from .demo_models import (
     PreviewPlanRequest,

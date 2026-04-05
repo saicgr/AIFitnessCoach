@@ -1,4 +1,4 @@
-"""Helper functions extracted from food_database_lookup_service."""
+"""Helper functions extracted from food_database_lookup_service.
 Food Database Lookup Service.
 
 Search architecture:
@@ -8,6 +8,7 @@ Search architecture:
 Provides single and batch food lookups with in-memory TTL caching.
 
 
+"""
 class FoodDatabaseLookupService:
     """
     Service for looking up foods in Supabase with two-tier search.

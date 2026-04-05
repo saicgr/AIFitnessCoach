@@ -1,4 +1,4 @@
-"""Helper functions extracted from rag_service."""
+"""Helper functions extracted from rag_service.
 RAG (Retrieval Augmented Generation) Service.
 
 This service stores Q&A pairs and retrieves similar past conversations
@@ -10,6 +10,7 @@ Performance: In-memory caching layer for embedding generation and
 ChromaDB queries to avoid redundant network calls (500ms-2s each).
 
 
+"""
 class NutritionRAGService:
     """
     RAG service for nutrition and food log history.

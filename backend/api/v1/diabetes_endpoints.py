@@ -1,9 +1,10 @@
-"""Secondary endpoints for diabetes.  Sub-router included by main module."""
+"""Secondary endpoints for diabetes.  Sub-router included by main module.
 Diabetes Tracking API endpoints.
 
 Comprehensive diabetes management for Type 1, Type 2, and other diabetes types.
 Includes blood glucose logging, insulin tracking, A1C management, carbohydrate
 counting, and Health Connect integration.
+"""
 
 from .diabetes_models import (
     CreateDiabetesProfileRequest,

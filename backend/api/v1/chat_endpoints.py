@@ -1,30 +1,21 @@
-"""Secondary endpoints for chat.  Sub-router included by main module."""
-Chat API endpoints.
+"""Secondary endpoints for chat. Sub-router included by main module."""
 
-ENDPOINTS:
-- POST   /api/v1/chat/send - Send a message to the AI coach
-- POST   /api/v1/chat/send-stream - Send a message with SSE streaming response
-- DELETE  /api/v1/chat/messages/{message_id} - Delete a single chat message
-- PATCH   /api/v1/chat/messages/{message_id}/pin - Toggle pin on a message
-- POST   /api/v1/chat/search - Search chat history by keyword
-- POST   /api/v1/chat/media/presign - Get presigned S3 URL for media upload
-- POST   /api/v1/chat/media/presign-batch - Get batch presigned S3 URLs
-- GET    /api/v1/chat/history/{user_id} - Get chat history for a user
-- DELETE  /api/v1/chat/history/{user_id} - Clear all chat history for a user
-- GET    /api/v1/chat/rag/stats - Get RAG system statistics
-- POST   /api/v1/chat/rag/search - Search similar past conversations
+import asyncio
+import uuid
+from typing import Dict, List, Optional
 
-RATE LIMITS:
-- /send + /send-stream: 10 requests/minute SHARED (AI-intensive)
-- /messages/{id}: 10 requests/minute
-- /messages/{id}/pin: 10 requests/minute
-- /search: 10 requests/minute
-- /media/presign: 3 requests/minute
-- /media/presign-batch: 3 requests/minute
-- /extract-intent: 10 requests/minute (AI-intensive)
-- /rag/search: 20 requests/minute
-- /history GET: 30 requests/minute
-- /history DELETE: 3 requests/minute
+from fastapi import APIRouter, HTTPException, Depends, Request, UploadFile, File, Form
+from pydantic import BaseModel, Field
+
+from core.auth import get_current_user
+from core.exceptions import safe_internal_error
+from core.config import get_settings
+from core.logger import get_logger, set_log_context
+from core.rate_limiter import limiter
+from services.gemini_service import get_gemini_service as get_gemini_service_dep, GeminiService
+from services.rag_service import get_rag_service, RAGService
+
+logger = get_logger(__name__)
 
 from .chat_models import (
     ChatHistoryItem,

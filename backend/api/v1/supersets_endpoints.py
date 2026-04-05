@@ -1,4 +1,4 @@
-"""Secondary endpoints for supersets.  Sub-router included by main module."""
+"""Secondary endpoints for supersets.  Sub-router included by main module.
 Supersets API - Superset preferences, manual pairing, and AI-suggested superset pairs.
 
 This module allows users to:
@@ -19,6 +19,7 @@ Benefits:
 - Increased metabolic demand
 - Enhanced muscle pump
 - Greater workout density
+"""
 
 from .supersets_models import (
     SupersetPreferences,

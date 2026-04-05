@@ -1,4 +1,4 @@
-"""Secondary endpoints for nutrition_preferences.  Sub-router included by main module."""
+"""Secondary endpoints for nutrition_preferences.  Sub-router included by main module.
 Nutrition Preferences API - Quick logging, meal templates, and food search.
 
 This module provides endpoints for:
@@ -28,6 +28,7 @@ Meal Templates:
 
 Food Search:
 - GET  /api/v1/nutrition/search - Fast food search with caching
+"""
 
 from .nutrition_preferences_models import (
     NutritionPreferences,

@@ -1,4 +1,4 @@
-"""Secondary endpoints for gym_profiles.  Sub-router included by main module."""
+"""Secondary endpoints for gym_profiles.  Sub-router included by main module.
 Gym Profiles API endpoints.
 
 Multi-gym profile system allowing users to create different gym/location setups
@@ -16,6 +16,7 @@ ENDPOINTS:
 - GET  /api/v1/gym-profiles/active - Get user's currently active profile
 router = APIRouter()
 
+"""
 @router.put("/{profile_id}", response_model=GymProfile)
 async def update_gym_profile(
     profile_id: str, update: GymProfileUpdate,

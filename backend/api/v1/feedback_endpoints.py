@@ -1,10 +1,11 @@
-"""Secondary endpoints for feedback.  Sub-router included by main module."""
+"""Secondary endpoints for feedback.  Sub-router included by main module.
 Workout and Exercise Feedback API endpoints.
 
 Allows users to rate workouts (1-5 stars) with optional comments
 for both overall workout and individual exercises.
 
 Also includes AI Coach feedback using RAG for personalized workout analysis.
+"""
 
 from .feedback_models import (
     SetDetail,

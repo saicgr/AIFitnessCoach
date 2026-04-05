@@ -1,4 +1,4 @@
-"""Secondary endpoints for cardio.  Sub-router included by main module."""
+"""Secondary endpoints for cardio.  Sub-router included by main module.
 Cardio API Endpoints
 ====================
 Handles heart rate zones, cardio metrics, cardio sessions, and endurance training features.
@@ -16,6 +16,7 @@ Cardio Sessions:
 - PUT /cardio/sessions/{session_id} - Update a session
 - DELETE /cardio/sessions/{session_id} - Delete a session
 - GET /cardio/sessions/{user_id}/stats - Get aggregate cardio statistics
+"""
 
 from .cardio_models import (
     HRZoneResponse,

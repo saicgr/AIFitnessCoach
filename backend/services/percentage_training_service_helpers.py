@@ -1,4 +1,4 @@
-"""Helper functions extracted from percentage_training_service."""
+"""Helper functions extracted from percentage_training_service.
 Percentage Training Service - Train at a percentage of your 1RM.
 
 Allows users to:
@@ -9,6 +9,7 @@ Allows users to:
 - Auto-populate 1RMs from workout history
 
 
+"""
 class PercentageTrainingService:
     """
     Service for percentage-based 1RM training.

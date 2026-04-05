@@ -1,7 +1,8 @@
-"""Helper functions extracted from prompts."""
+"""Helper functions extracted from prompts.
 Gemini Service Prompts - Cache content builders for form analysis and nutrition.
 
 
+"""
 class PromptsMixin:
     """Mixin providing prompt builder methods for GeminiService."""
 

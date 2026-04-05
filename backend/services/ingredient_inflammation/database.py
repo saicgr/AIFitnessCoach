@@ -23,6 +23,3 @@ from .database_helpers import (  # noqa: F401
 
 from typing import Dict, List, Optional, Tuple
 from dataclasses import dataclass
-
-
-@dataclass(frozen=True)

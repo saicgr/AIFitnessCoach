@@ -1,4 +1,4 @@
-"""Helper functions extracted from database."""
+"""Helper functions extracted from database.
 Curated ingredient inflammation database (~400 entries).
 
 Each entry maps an ingredient name to its inflammation score (1-10),
@@ -14,6 +14,7 @@ Score convention:
 This module also builds an alias index at import time for O(1) lookups.
 
 
+"""
 class IngredientRecord:
     score: int           # 1 (anti-inflammatory) to 10 (highly inflammatory)
     category: str        # matches IngredientCategory enum values

@@ -1,4 +1,4 @@
-"""Secondary endpoints for generation.  Sub-router included by main module."""
+"""Secondary endpoints for generation.  Sub-router included by main module.
 Workout generation API endpoints (orchestrator).
 
 This module combines all generation-related endpoints via sub-routers:
@@ -13,6 +13,7 @@ Large endpoint groups are split into focused sub-modules:
 - generation_helpers.py: Shared helper functions (MET estimation, normalization)
 router = APIRouter()
 
+"""
 @router.post("/generate", response_model=Workout)
 @user_limiter.limit("15/minute")
 async def generate_workout(request: Request, *, body: GenerateWorkoutRequest, background_tasks: BackgroundTasks,

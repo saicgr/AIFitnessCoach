@@ -1,4 +1,4 @@
-"""Secondary endpoints for notifications.  Sub-router included by main module."""
+"""Secondary endpoints for notifications.  Sub-router included by main module.
 Push Notification API endpoints.
 
 ENDPOINTS:
@@ -10,6 +10,7 @@ ENDPOINTS:
 - POST /api/v1/notifications/scheduler/send-billing-reminders - Send due billing reminders
 - POST /api/v1/notifications/track-interaction - Track notification open/interaction
 - POST /api/v1/notifications/scheduler/recalculate-optimal-times - Recalculate optimal send times
+"""
 
 from .notifications_models import (
     TestNotificationRequest,

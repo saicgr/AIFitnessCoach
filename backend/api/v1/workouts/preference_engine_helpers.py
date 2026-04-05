@@ -1,4 +1,4 @@
-"""Helper functions extracted from preference_engine."""
+"""Helper functions extracted from preference_engine.
 Rule-Based Exercise Preference Engine.
 
 Handles instant exercise swaps/injections/removals when users change exercise preferences
@@ -8,6 +8,7 @@ applied directly to existing workout exercises_json.
 Core principle: Parse JSON → find target → replace with library match → update row.
 
 
+"""
 def _inject_into_section(
     db,
     workout_id: str,

@@ -1,4 +1,4 @@
-"""Secondary endpoints for consistency.  Sub-router included by main module."""
+"""Secondary endpoints for consistency.  Sub-router included by main module.
 Consistency Insights API Endpoints
 ===================================
 Provides insights into workout consistency, streaks, and patterns
@@ -11,6 +11,7 @@ Endpoints:
 - POST /consistency/streak-recovery - Initiate streak recovery
 router = APIRouter()
 
+"""
 @router.get("/search-exercise", tags=["Consistency"])
 async def search_exercise_history(
     request: Request,

@@ -1,9 +1,10 @@
-"""Helper functions extracted from assessment."""
+"""Helper functions extracted from assessment.
 Flexibility Assessment Service.
 
 Handles flexibility testing, evaluation, progress tracking, and personalized recommendations.
 
 
+"""
 def _get_age_group(age: int) -> str:
     """Get the age group string for norm lookup."""
     if age < 30:

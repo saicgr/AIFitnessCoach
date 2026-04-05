@@ -1,4 +1,4 @@
-"""Secondary endpoints for exercises.  Sub-router included by main module."""
+"""Secondary endpoints for exercises.  Sub-router included by main module.
 Exercise API endpoints with Supabase.
 
 ENDPOINTS:
@@ -14,6 +14,7 @@ CUSTOM EXERCISE ENDPOINTS:
 - GET  /api/v1/exercises/custom/{user_id} - Get user's custom exercises
 - POST /api/v1/exercises/custom/{user_id} - Create a custom exercise for user
 - DELETE /api/v1/exercises/custom/{user_id}/{exercise_id} - Delete user's custom exercise
+"""
 
 from .exercises_models import (
     CustomExerciseCreate,

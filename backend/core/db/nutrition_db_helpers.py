@@ -1,4 +1,4 @@
-"""Helper functions extracted from nutrition_db."""
+"""Helper functions extracted from nutrition_db.
 Nutrition database operations.
 
 Handles all nutrition-related CRUD operations including:
@@ -8,6 +8,7 @@ Handles all nutrition-related CRUD operations including:
 - Food analysis caching (for faster AI responses)
 
 
+"""
 class NutritionDB(BaseDB):
     """
     Database operations for nutrition tracking.

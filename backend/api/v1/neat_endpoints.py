@@ -1,4 +1,4 @@
-"""Secondary endpoints for neat.  Sub-router included by main module."""
+"""Secondary endpoints for neat.  Sub-router included by main module.
 NEAT (Non-Exercise Activity Thermogenesis) Improvement System API Endpoints.
 
 NEAT refers to the energy expended for everything we do that is not sleeping,
@@ -16,6 +16,7 @@ Endpoints:
 - Scheduler: Cron job endpoints for background processing
 router = APIRouter()
 
+"""
 @router.get("/streaks/{user_id}/summary", response_model=StreakSummary, tags=["NEAT Streaks"])
 async def get_streak_summary(user_id: str,
     current_user: dict = Depends(get_current_user),

@@ -1,10 +1,11 @@
-"""Helper functions extracted from models."""
+"""Helper functions extracted from models.
 User Context Models
 ===================
 Data models for user context tracking, including event types,
 behavioral patterns, and health-related context structures.
 
 
+"""
 class CardioPatterns:
     """Analyzed cardio activity patterns for AI recommendations."""
     # Recent activity (last 7 days)

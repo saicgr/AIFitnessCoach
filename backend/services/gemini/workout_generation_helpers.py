@@ -1,7 +1,8 @@
-"""Helper functions extracted from workout_generation."""
+"""Helper functions extracted from workout_generation.
 Gemini Service Workout Generation - Core workout plan generation.
 
 
+"""
 class WorkoutGenerationMixin:
     """Mixin providing core workout generation methods for GeminiService."""
 

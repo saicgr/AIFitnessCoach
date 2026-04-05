@@ -1,4 +1,4 @@
-"""Secondary endpoints for live_chat.  Sub-router included by main module."""
+"""Secondary endpoints for live_chat.  Sub-router included by main module.
 Live Chat API endpoints.
 
 Allows users to:
@@ -12,6 +12,7 @@ Allows users to:
 This provides a real-time human support option when AI chat is insufficient.
 router = APIRouter()
 
+"""
 @router.post("/{ticket_id}/typing", response_model=LiveChatTypingResponse)
 async def update_typing_indicator(ticket_id: str, request: LiveChatTypingRequest,
     current_user: dict = Depends(get_current_user),

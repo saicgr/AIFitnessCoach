@@ -1,4 +1,4 @@
-"""Helper functions extracted from adaptive_workout_service."""
+"""Helper functions extracted from adaptive_workout_service.
 Adaptive Workout Service - Calculates workout parameters based on user history.
 
 This service analyzes user's recent workout performance to determine optimal:
@@ -15,6 +15,7 @@ Key factors considered:
 - Age-based intensity caps for safety
 
 
+"""
 class AdaptiveWorkoutService:
     """Calculates adaptive workout parameters based on performance history."""
 

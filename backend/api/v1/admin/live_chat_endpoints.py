@@ -1,4 +1,4 @@
-"""Secondary endpoints for live_chat.  Sub-router included by main module."""
+"""Secondary endpoints for live_chat.  Sub-router included by main module.
 Admin Live Chat API endpoints.
 
 Provides admin-specific functionality for:
@@ -11,6 +11,7 @@ Provides admin-specific functionality for:
 - Support ticket and report management
 router = APIRouter()
 
+"""
 @router.post("/live-chats/{ticket_id}/close", response_model=CloseChatResponse)
 async def close_chat(
     ticket_id: str,

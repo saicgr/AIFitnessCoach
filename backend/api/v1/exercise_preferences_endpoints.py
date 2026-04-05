@@ -1,4 +1,4 @@
-"""Secondary endpoints for exercise_preferences.  Sub-router included by main module."""
+"""Secondary endpoints for exercise_preferences.  Sub-router included by main module.
 Exercise Preferences API - Staple exercises, variation control, and avoidance lists.
 
 This module allows users to:
@@ -12,6 +12,7 @@ Staple exercises are core lifts (like Squat, Bench Press, Deadlift) that users
 want to keep in every workout regardless of the weekly variation setting.
 
 Avoided exercises/muscles are excluded from AI-generated workouts entirely.
+"""
 
 from .exercise_preferences_models import (
     StapleExerciseCreate,

@@ -1,4 +1,4 @@
-"""Secondary endpoints for fasting_impact.  Sub-router included by main module."""
+"""Secondary endpoints for fasting_impact.  Sub-router included by main module.
 Fasting Impact Analysis API endpoints.
 
 ENDPOINTS:
@@ -17,6 +17,7 @@ Insights:
 
 Calendar:
 - GET  /api/v1/fasting-impact/calendar/{user_id} - Get calendar view data with fasting/workout/goal info
+"""
 
 from .fasting_impact_models import (
     LogWeightWithFastingRequest,

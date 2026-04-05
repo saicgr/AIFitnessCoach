@@ -1,4 +1,4 @@
-"""Helper functions extracted from modifiers."""
+"""Helper functions extracted from modifiers.
 Food modifier data, metadata, and classification.
 
 Contains the comprehensive _FOOD_MODIFIERS dict (nutritional deltas for food
@@ -6,6 +6,7 @@ customizations), _MODIFIER_METADATA (weight/type info), modifier group mappings,
 and helper functions for classification and default modifier building.
 
 
+"""
 class ModifierType(str, Enum):
     ADDON = "addon"
     REMOVAL = "removal"

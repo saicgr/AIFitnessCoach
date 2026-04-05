@@ -1,4 +1,4 @@
-"""Secondary endpoints for fasting.  Sub-router included by main module."""
+"""Secondary endpoints for fasting.  Sub-router included by main module.
 Fasting Tracking API endpoints.
 
 ENDPOINTS:
@@ -28,6 +28,7 @@ Fasting Scores:
 - GET  /api/v1/fasting/score/history/{user_id} - Get historical scores
 - GET  /api/v1/fasting/score/{user_id}/current - Get current/latest score
 - GET  /api/v1/fasting/score/trend/{user_id} - Get score trend vs last week
+"""
 
 from .fasting_models import (
     StartFastRequest,

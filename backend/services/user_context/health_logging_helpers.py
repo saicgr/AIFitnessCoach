@@ -1,10 +1,11 @@
-"""Helper functions extracted from health_logging."""
+"""Helper functions extracted from health_logging.
 Health Logging Mixin
 ====================
 Injury tracking, strain prevention, senior fitness, progression pace,
 diabetes tracking, and hormonal health event logging and analytics.
 
 
+"""
 class HealthLoggingMixin:
     """Mixin for health-related event logging and analytics."""
 

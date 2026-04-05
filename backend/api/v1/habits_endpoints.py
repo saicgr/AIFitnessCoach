@@ -1,4 +1,4 @@
-"""Secondary endpoints for habits.  Sub-router included by main module."""
+"""Secondary endpoints for habits.  Sub-router included by main module.
 API endpoints for Habit Tracking System.
 
 Enables users to create, track, and manage daily habits:
@@ -27,6 +27,7 @@ Endpoints:
 - GET /{user_id}/insights - Get AI-generated insights
 router = APIRouter()
 
+"""
 @router.post("/{user_id}/batch-log", response_model=BulkHabitLogResponse)
 async def batch_log_habits(
     user_id: str, request: BulkHabitLogCreate,

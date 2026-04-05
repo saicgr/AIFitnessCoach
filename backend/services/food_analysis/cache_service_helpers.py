@@ -1,4 +1,4 @@
-"""Helper functions extracted from cache_service."""
+"""Helper functions extracted from cache_service.
 Food Analysis Caching Service.
 
 Wraps Gemini food analysis with intelligent caching to dramatically
@@ -20,6 +20,7 @@ Expected Performance:
 - Cache miss (first time): 30-60 seconds
 
 
+"""
 class FoodAnalysisCacheService:
     """
     Caching layer for food analysis to speed up repeated queries.

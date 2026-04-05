@@ -1,5 +1,6 @@
-"""Secondary endpoints for xp.  Sub-router included by main module."""
+"""Secondary endpoints for xp.  Sub-router included by main module.
 XP Events API - Daily Login, Streaks, Double XP Events
+"""
 
 from .xp_models import (
     DailyLoginResponse,
