@@ -7,6 +7,7 @@ Provides endpoints for:
 - Progress summary statistics
 - User context logging for analytics
 """
+from core.db import get_supabase_db
 
 import asyncio
 from concurrent.futures import ThreadPoolExecutor

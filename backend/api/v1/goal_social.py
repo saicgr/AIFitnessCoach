@@ -16,6 +16,7 @@ Endpoints:
 - GET /goals/invites/pending-count - Count of pending invites
 - DELETE /goals/invites/{id} - Cancel sent invite
 """
+from core.db import get_supabase_db
 
 from fastapi import APIRouter, HTTPException, Query, Depends
 from datetime import datetime, date, timedelta, timezone

@@ -1,4 +1,12 @@
 """Secondary endpoints for personal_goals.  Sub-router included by main module."""
+from typing import Optional
+from datetime import datetime, timedelta, date
+from fastapi import APIRouter, Depends, HTTPException, Query
+import logging
+logger = logging.getLogger(__name__)
+from core.auth import get_current_user
+from core.db import get_supabase_db
+from core.exceptions import safe_internal_error
 
 from .personal_goals_endpoints_part2 import (  # noqa: F401
     get_suggestions_summary,

@@ -1,4 +1,8 @@
 """Second part of notification_service_helpers.py (auto-split for size)."""
+from typing import Any, Dict, List, Optional
+from datetime import datetime
+import logging
+logger = logging.getLogger(__name__)
 
 
 class NotificationServicePart2:

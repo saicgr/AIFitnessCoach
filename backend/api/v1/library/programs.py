@@ -7,6 +7,7 @@ This module handles program library operations:
 - GET /programs/{program_id} - Get a single program
 - GET /programs/categories - Get all program categories
 """
+from core.db import get_supabase_db
 from typing import List, Dict, Any, Optional
 
 from fastapi import APIRouter, HTTPException, Query

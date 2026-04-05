@@ -7,6 +7,7 @@ ENDPOINTS:
 - GET  /api/v1/sauna/logs/{user_id} - Get sauna logs
 - DELETE /api/v1/sauna/log/{log_id} - Delete a sauna log
 """
+from core.db import get_supabase_db
 from fastapi import APIRouter, HTTPException, Query, Request, Depends
 from typing import List, Optional
 from datetime import datetime, date, timedelta

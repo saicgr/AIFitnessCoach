@@ -9,6 +9,7 @@ This module handles warmup and cool-down stretch operations:
 - POST /{workout_id}/warmup-and-stretches - Create both
 - POST /{workout_id}/warmup-logs - Save warmup interval logs
 """
+from core.db import get_supabase_db
 import json
 from typing import Optional
 from fastapi import APIRouter, Body, Depends, HTTPException

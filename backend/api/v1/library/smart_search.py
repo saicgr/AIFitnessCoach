@@ -9,6 +9,7 @@ Examples:
 - "something for bad knees" -> low-impact exercises
 - "threadmill" -> Treadmill exercises (with spelling correction)
 """
+from core.db import get_supabase_db
 import asyncio
 import hashlib
 import json

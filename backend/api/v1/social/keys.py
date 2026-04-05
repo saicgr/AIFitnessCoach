@@ -5,6 +5,7 @@ Allows users to:
 - Upload their X25519 public key
 - Fetch another user's active public key
 """
+from core.db import get_supabase_db
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from core.auth import get_current_user, verify_user_ownership

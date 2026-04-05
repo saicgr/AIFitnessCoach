@@ -4,6 +4,7 @@ Daily Activity API Router.
 Provides endpoints for storing and retrieving daily activity data
 from Health Connect (Android) / Apple Health (iOS).
 """
+from core.db import get_supabase_db
 from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel, Field
 from typing import Optional, List

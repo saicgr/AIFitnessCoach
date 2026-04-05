@@ -10,6 +10,7 @@ Allows users to:
 This addresses the user complaint "Generic reply that didn't address my concern"
 by providing a structured ticket system with proper tracking and response handling.
 """
+from core.db import get_supabase_db
 
 import uuid
 

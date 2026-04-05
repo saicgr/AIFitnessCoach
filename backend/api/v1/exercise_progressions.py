@@ -15,6 +15,7 @@ Example chains:
 - Row: Inverted Row (high) -> Inverted Row (low) -> Pull-up -> Weighted Pull-up
 - Squat: Assisted -> Bodyweight -> Split -> Bulgarian -> Pistol
 """
+from core.db import get_supabase_db
 
 from .exercise_progressions_models import *  # noqa: F401, F403
 from .exercise_progressions_endpoints import router as _endpoints_router

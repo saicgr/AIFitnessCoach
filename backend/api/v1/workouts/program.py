@@ -5,6 +5,7 @@ This module handles workout program customization:
 - POST /update-program - Update program preferences and delete future workouts
 - POST /quick-regenerate - Regenerate workouts with current settings (no wizard)
 """
+from core.db import get_supabase_db
 import json
 from datetime import date, datetime
 from typing import Optional

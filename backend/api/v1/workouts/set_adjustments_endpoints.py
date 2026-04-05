@@ -17,6 +17,15 @@ Fatigue Detection endpoints:
 These endpoints track how users modify their workouts in real-time,
 which is valuable data for improving AI workout personalization.
 """
+from typing import List, Optional
+from datetime import datetime, timedelta
+from fastapi import APIRouter, Depends, HTTPException, Query
+from pydantic import BaseModel, Field
+import logging
+logger = logging.getLogger(__name__)
+from core.auth import get_current_user
+from core.db import get_supabase_db
+from core.exceptions import safe_internal_error
 
 from .set_adjustments_models import (
     SetPerformanceInput,

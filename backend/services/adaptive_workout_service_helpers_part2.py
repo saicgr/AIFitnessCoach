@@ -1,4 +1,7 @@
 """Second part of adaptive_workout_service_helpers.py (auto-split for size)."""
+from typing import Any, Dict, List
+import logging
+logger = logging.getLogger(__name__)
 
 
 class AdaptiveWorkoutServicePart2:

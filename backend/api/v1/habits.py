@@ -26,6 +26,7 @@ Endpoints:
 - POST /{user_id}/suggestions - Get AI habit suggestions
 - GET /{user_id}/insights - Get AI-generated insights
 """
+from core.db import get_supabase_db
 from .habits_endpoints import router as _endpoints_router
 
 

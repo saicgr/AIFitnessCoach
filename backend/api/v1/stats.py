@@ -9,6 +9,7 @@ Provides endpoints for:
 - Nutrition statistics
 - Progress graphs data
 """
+from core.db import get_supabase_db
 
 from fastapi import APIRouter, HTTPException, Depends, Request
 from core.auth import get_current_user

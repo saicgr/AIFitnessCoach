@@ -7,6 +7,7 @@ Includes:
 - Daily tips (AI-powered coaching tips)
 - Habit suggestions (personalized habit recommendations)
 """
+from core.db import get_supabase_db
 
 import logging
 import json

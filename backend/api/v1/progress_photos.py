@@ -9,7 +9,7 @@ import uuid
 import boto3
 from botocore.config import Config as BotoConfig
 from datetime import datetime
-from typing import Optional, List
+from typing import Any, List, Optional
 from fastapi import APIRouter, HTTPException, UploadFile, File, Form, Query, Depends, Request
 from pydantic import BaseModel, Field
 

@@ -1,6 +1,7 @@
 """
 XP Events API - Daily Login, Streaks, Double XP Events
 """
+from core.db import get_supabase_db
 
 from .xp_models import *  # noqa: F401, F403
 from .xp_endpoints import router as _endpoints_router

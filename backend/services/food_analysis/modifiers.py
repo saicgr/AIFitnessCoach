@@ -11,6 +11,17 @@ from .modifiers_helpers import (  # noqa: F401
     ModifierMeta,
     _build_default_modifiers,
     _classify_modifier,
+    _MODIFIER_METADATA,
+    _MODIFIER_GROUPS,
+    _FOOD_DEFAULT_MODIFIER_GROUPS,
+    _init_modifier_patterns,
+    _MODIFIER_PHRASES_SORTED,
+    _MODIFIER_REGEX,
+    _BULLET_REGEX,
+    _NUM_UNIT_REGEX,
+    _WORD_NUM_UNIT_REGEX,
+    _BARE_NUM_REGEX,
+    _FRACTION_REGEX,
 )
 import re
 from enum import Enum
@@ -1046,5 +1057,7 @@ _FOOD_MODIFIERS = {
     "all the way":          (265, 13.7, 6.5, 19.1, 1.3, 715, 36, 7.0, 0.1),
 }
 
+# Initialize regex patterns that depend on _FOOD_MODIFIERS
+_init_modifier_patterns(_FOOD_MODIFIERS)
 
 # ── Modifier type classification & metadata ───────────────────────

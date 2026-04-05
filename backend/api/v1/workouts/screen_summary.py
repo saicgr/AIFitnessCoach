@@ -5,6 +5,7 @@ Returns lightweight data for the Workouts screen: weekly progress counts,
 recent completed sessions, and upcoming workout summaries. Designed to be
 fast (~5-10KB response vs 2-5MB from full workout list).
 """
+from core.db import get_supabase_db
 from datetime import date, timedelta
 from typing import List, Optional
 import asyncio

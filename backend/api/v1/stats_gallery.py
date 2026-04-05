@@ -3,6 +3,7 @@ Stats Gallery API Endpoints
 
 Handles shareable stats images - upload, list, delete, and share to feed.
 """
+from core.db import get_supabase_db
 import base64
 import uuid
 import logging

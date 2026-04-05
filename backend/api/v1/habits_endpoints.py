@@ -25,9 +25,18 @@ Endpoints:
 - POST /{user_id}/from-template - Create habit from template
 - POST /{user_id}/suggestions - Get AI habit suggestions
 - GET /{user_id}/insights - Get AI-generated insights
-router = APIRouter()
-
 """
+from typing import List, Optional
+from datetime import datetime, timedelta
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
+import logging
+logger = logging.getLogger(__name__)
+from core.auth import get_current_user, verify_user_ownership
+from core.db import get_supabase_db
+from core.timezone_utils import resolve_timezone, get_user_today
+from core.exceptions import safe_internal_error
+
+router = APIRouter()
 @router.post("/{user_id}/batch-log", response_model=BulkHabitLogResponse)
 async def batch_log_habits(
     user_id: str, request: BulkHabitLogCreate,

@@ -1,4 +1,11 @@
 """Second part of personal_goals_endpoints.py (auto-split for size)."""
+from datetime import datetime, timedelta, date
+from fastapi import Depends, HTTPException
+import logging
+logger = logging.getLogger(__name__)
+from core.auth import get_current_user
+from core.db import get_supabase_db
+from core.exceptions import safe_internal_error
 
 async def get_suggestions_summary(user_id: str,
     current_user: dict = Depends(get_current_user),

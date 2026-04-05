@@ -7,6 +7,11 @@ and helper functions for classification and default modifier building.
 
 
 """
+from typing import Any, Dict, List, NamedTuple, Optional
+from enum import Enum
+import re
+
+
 class ModifierType(str, Enum):
     ADDON = "addon"
     REMOVAL = "removal"
@@ -370,6 +375,7 @@ for _vn in ("beef steak", "grilled steak", "steak dinner", "cooked steak",
 
 def _build_default_modifiers(food_name: str) -> List[Dict[str, Any]]:
     """Build default modifier details for foods with applicable modifier groups."""
+    from services.food_analysis.modifiers import _FOOD_MODIFIERS
     food_key = food_name.lower().strip()
     groups = _FOOD_DEFAULT_MODIFIER_GROUPS.get(food_key)
     if not groups:
@@ -410,6 +416,7 @@ def _build_default_modifiers(food_name: str) -> List[Dict[str, Any]]:
 
 def _classify_modifier(phrase: str) -> ModifierType:
     """Heuristic classification for modifiers not in _MODIFIER_METADATA."""
+    from services.food_analysis.modifiers import _FOOD_MODIFIERS
     if phrase in _MODIFIER_METADATA:
         return _MODIFIER_METADATA[phrase].type
     if phrase.startswith(("no ", "without ", "skip ")):
@@ -422,40 +429,67 @@ def _classify_modifier(phrase: str) -> ModifierType:
     return ModifierType.ADDON
 
 
-# Pre-sorted by phrase length (longest first) to avoid partial matches
-_MODIFIER_PHRASES_SORTED = sorted(_FOOD_MODIFIERS.keys(), key=len, reverse=True)
+# Lazy-initialized regex patterns (depend on _FOOD_MODIFIERS from parent module)
+_MODIFIER_PHRASES_SORTED = None
+_MODIFIER_REGEX = None
+_NUM_UNIT_REGEX = None
+_WORD_NUM_UNIT_REGEX = None
+_BULLET_REGEX = None
+_BARE_NUM_REGEX = None
+_FRACTION_REGEX = None
 
-# Regex to extract modifier phrases from text
-_MODIFIER_REGEX = re.compile(
-    r'\b(' + '|'.join(re.escape(p) for p in _MODIFIER_PHRASES_SORTED) + r')\b',
-    re.IGNORECASE,
-)
 
-# Bullet / prefix patterns
-_BULLET_REGEX = re.compile(
-    r'^(?:[-•*]\s+|\d+[.)]\s+|(?:breakfast|lunch|dinner|snack|brunch|supper)\s*:\s*)',
-    re.IGNORECASE,
-)
+def _init_modifier_patterns(food_modifiers=None):
+    """Initialize regex patterns that depend on _FOOD_MODIFIERS (lazy to avoid circular imports).
 
-# Numeric + count-unit: "6 slices pizza"
-_NUM_UNIT_REGEX = re.compile(
-    r'^(\d+(?:\.\d+)?)\s+(' + '|'.join(_COUNT_UNITS) + r')\s+(?:of\s+)?(.+)$',
-    re.IGNORECASE,
-)
+    Args:
+        food_modifiers: The _FOOD_MODIFIERS dict. If None, imports it (for backward compat).
+    """
+    global _MODIFIER_PHRASES_SORTED, _MODIFIER_REGEX, _NUM_UNIT_REGEX
+    global _WORD_NUM_UNIT_REGEX, _BULLET_REGEX, _BARE_NUM_REGEX, _FRACTION_REGEX
 
-# Word number + optional unit: "one plate biryani", "half a pizza", "a bowl of soup"
-_WORD_NUM_PATTERN = '|'.join(re.escape(w) for w in _WORD_NUMBERS)
-_WORD_NUM_UNIT_REGEX = re.compile(
-    r'^(' + _WORD_NUM_PATTERN + r')\s+'
-    r'(?:a\s+)?'
-    r'(?:(' + '|'.join(_COUNT_UNITS) + r')\s+(?:of\s+)?)?'
-    r'(.+)$',
-    re.IGNORECASE,
-)
+    if _MODIFIER_PHRASES_SORTED is not None:
+        return
 
-# Bare number prefix: "2 dosa", "100 rice"
-_BARE_NUM_REGEX = re.compile(r'^(\d+(?:\.\d+)?)\s+(.+)$')
+    if food_modifiers is None:
+        from services.food_analysis.modifiers import _FOOD_MODIFIERS
+        food_modifiers = _FOOD_MODIFIERS
+    from services.food_analysis.constants import _COUNT_UNITS, _WORD_NUMBERS
 
-# Fraction prefix: "1/2 pizza"
-_FRACTION_REGEX = re.compile(r'^(\d+)/(\d+)\s+(.+)$')
+    # Pre-sorted by phrase length (longest first) to avoid partial matches
+    _MODIFIER_PHRASES_SORTED = sorted(food_modifiers.keys(), key=len, reverse=True)
+
+    # Regex to extract modifier phrases from text
+    _MODIFIER_REGEX = re.compile(
+        r'\b(' + '|'.join(re.escape(p) for p in _MODIFIER_PHRASES_SORTED) + r')\b',
+        re.IGNORECASE,
+    )
+
+    # Bullet / prefix patterns
+    _BULLET_REGEX = re.compile(
+        r'^(?:[-•*]\s+|\d+[.)]\s+|(?:breakfast|lunch|dinner|snack|brunch|supper)\s*:\s*)',
+        re.IGNORECASE,
+    )
+
+    # Numeric + count-unit: "6 slices pizza"
+    _NUM_UNIT_REGEX = re.compile(
+        r'^(\d+(?:\.\d+)?)\s+(' + '|'.join(_COUNT_UNITS) + r')\s+(?:of\s+)?(.+)$',
+        re.IGNORECASE,
+    )
+
+    # Word number + optional unit
+    _WORD_NUM_PATTERN = '|'.join(re.escape(w) for w in _WORD_NUMBERS)
+    _WORD_NUM_UNIT_REGEX = re.compile(
+        r'^(' + _WORD_NUM_PATTERN + r')\s+'
+        r'(?:a\s+)?'
+        r'(?:(' + '|'.join(_COUNT_UNITS) + r')\s+(?:of\s+)?)?'
+        r'(.+)$',
+        re.IGNORECASE,
+    )
+
+    # Bare number prefix: "2 dosa", "100 rice"
+    _BARE_NUM_REGEX = re.compile(r'^(\d+(?:\.\d+)?)\s+(.+)$')
+
+    # Fraction prefix: "1/2 pizza"
+    _FRACTION_REGEX = re.compile(r'^(\d+)/(\d+)\s+(.+)$')
 

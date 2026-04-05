@@ -3,6 +3,9 @@ Gemini Service Workout Generation - Core workout plan generation.
 
 
 """
+from typing import Any, Dict, List, Optional
+import logging
+logger = logging.getLogger(__name__)
 class WorkoutGenerationMixin:
     """Mixin providing core workout generation methods for GeminiService."""
 

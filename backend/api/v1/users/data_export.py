@@ -1,6 +1,7 @@
 """
 Data export and import endpoints.
 """
+from core.db import get_supabase_db
 import io
 from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File

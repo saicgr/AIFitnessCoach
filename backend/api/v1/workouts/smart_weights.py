@@ -10,6 +10,7 @@ Provides intelligent weight suggestions for exercises based on:
 This is a pre-workout weight suggestion (auto-fill), distinct from the
 real-time weight_suggestions.py which provides intra-workout adjustments.
 """
+from core.db import get_supabase_db
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from core.auth import get_current_user

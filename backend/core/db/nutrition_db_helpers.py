@@ -9,6 +9,14 @@ Handles all nutrition-related CRUD operations including:
 
 
 """
+from typing import Any, Dict, List, Optional
+from datetime import datetime, timedelta
+import logging
+from core.db.base import BaseDB
+
+logger = logging.getLogger(__name__)
+
+
 class NutritionDB(BaseDB):
     """
     Database operations for nutrition tracking.

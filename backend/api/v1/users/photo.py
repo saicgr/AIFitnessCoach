@@ -1,6 +1,7 @@
 """
 Profile photo upload and delete endpoints (S3-backed).
 """
+from core.db import get_supabase_db
 import uuid
 from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File

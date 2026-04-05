@@ -18,6 +18,15 @@ Insights:
 Calendar:
 - GET  /api/v1/fasting-impact/calendar/{user_id} - Get calendar view data with fasting/workout/goal info
 """
+from typing import Any, Dict, List, Optional
+from datetime import datetime, timedelta, date
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
+from pydantic import BaseModel, Field
+import logging
+logger = logging.getLogger(__name__)
+from core.auth import get_current_user
+from core.db import get_supabase_db
+from core.exceptions import safe_internal_error
 
 from .fasting_impact_models import (
     LogWeightWithFastingRequest,

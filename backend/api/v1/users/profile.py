@@ -1,6 +1,7 @@
 """
 User profile CRUD endpoints: get, update, delete, reset, photo upload/delete.
 """
+from core.db import get_supabase_db
 import json
 from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException, Request

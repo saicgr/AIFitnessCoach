@@ -10,9 +10,17 @@ Allows users to:
 - End chat sessions
 
 This provides a real-time human support option when AI chat is insufficient.
-router = APIRouter()
-
 """
+from typing import List, Optional
+from datetime import datetime
+from fastapi import APIRouter, Depends, HTTPException
+import logging
+logger = logging.getLogger(__name__)
+from core.auth import get_current_user
+from core.db import get_supabase_db
+from core.exceptions import safe_internal_error
+
+router = APIRouter()
 @router.post("/{ticket_id}/typing", response_model=LiveChatTypingResponse)
 async def update_typing_indicator(ticket_id: str, request: LiveChatTypingRequest,
     current_user: dict = Depends(get_current_user),

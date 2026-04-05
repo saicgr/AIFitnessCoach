@@ -6,6 +6,14 @@ diabetes tracking, and hormonal health event logging and analytics.
 
 
 """
+from typing import Any, Dict, List, Optional
+from datetime import datetime
+import logging
+from services.user_context.models import EventType
+
+logger = logging.getLogger(__name__)
+
+
 class HealthLoggingMixin:
     """Mixin for health-related event logging and analytics."""
 

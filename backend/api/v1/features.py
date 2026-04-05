@@ -13,6 +13,7 @@ RATE LIMITS:
 - /vote: 100 requests/hour
 - Other endpoints: default global limit
 """
+from core.db import get_supabase_db
 from datetime import datetime
 from fastapi import APIRouter, HTTPException, Request, Depends
 from typing import Optional, List

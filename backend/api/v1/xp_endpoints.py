@@ -1,6 +1,16 @@
 """Secondary endpoints for xp.  Sub-router included by main module.
 XP Events API - Daily Login, Streaks, Double XP Events
 """
+from typing import Optional
+from datetime import datetime, timedelta
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
+from pydantic import BaseModel
+import logging
+logger = logging.getLogger(__name__)
+from core.auth import get_current_user
+from core.db import get_supabase_db
+from core.timezone_utils import resolve_timezone, get_user_today
+from core.exceptions import safe_internal_error
 
 from .xp_models import (
     DailyLoginResponse,

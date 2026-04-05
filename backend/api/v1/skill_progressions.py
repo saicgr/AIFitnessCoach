@@ -7,6 +7,7 @@ Tracks bodyweight skill progressions like:
 - Squat progressions (assisted -> bodyweight -> pistol)
 - Handstand progressions (wall hold -> freestanding -> handstand pushup)
 """
+from core.db import get_supabase_db
 
 from fastapi import APIRouter, Depends, HTTPException
 from core.auth import get_current_user

@@ -29,12 +29,13 @@ Fasting Scores:
 - GET  /api/v1/fasting/score/{user_id}/current - Get current/latest score
 - GET  /api/v1/fasting/score/trend/{user_id} - Get score trend vs last week
 """
+from core.db import get_supabase_db
 
 from .fasting_models import *  # noqa: F401, F403
 from .fasting_endpoints import router as _endpoints_router
 
 from fastapi import APIRouter, HTTPException, Query, Request, Depends
-from typing import List, Optional
+from typing import Any, List, Optional
 from datetime import datetime, date, timedelta
 from decimal import Decimal
 import uuid

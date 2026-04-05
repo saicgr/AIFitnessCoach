@@ -6,6 +6,7 @@ This module handles exercise modifications within workouts:
 - PUT /{workout_id}/warmup/exercises - Update warmup exercises
 - PUT /{workout_id}/stretches/exercises - Update stretch exercises
 """
+from core.db import get_supabase_db
 from datetime import datetime
 
 from fastapi import APIRouter, Depends, HTTPException

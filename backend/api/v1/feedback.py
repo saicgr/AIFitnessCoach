@@ -6,6 +6,7 @@ for both overall workout and individual exercises.
 
 Also includes AI Coach feedback using RAG for personalized workout analysis.
 """
+from core.db import get_supabase_db
 
 from .feedback_models import *  # noqa: F401, F403
 from .feedback_endpoints import router as _endpoints_router

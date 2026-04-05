@@ -9,6 +9,7 @@ This module allows users to:
 5. Specify preferred stretches to always include
 6. Specify avoided stretches to never include
 """
+from core.db import get_supabase_db
 from fastapi import APIRouter, Depends, HTTPException, Query
 from core.auth import get_current_user
 from core.exceptions import safe_internal_error

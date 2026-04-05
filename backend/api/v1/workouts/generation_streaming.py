@@ -5,6 +5,7 @@ Extracted from generation.py to keep files under 1000 lines.
 Provides:
 - POST /generate-stream - SSE streaming workout generation
 """
+from core.db import get_supabase_db
 import json
 import asyncio
 from datetime import datetime

@@ -1,4 +1,18 @@
 """Second part of cache_service_helpers.py (auto-split for size)."""
+from typing import Any, Dict, List, Optional, Tuple
+import hashlib
+import json
+import logging
+import re
+from sqlalchemy import text
+from core.supabase_client import get_supabase
+from services.food_analysis.parser import ParsedFoodItem
+from services.food_analysis.constants import (
+    _WEIGHT_REGEX, _WEIGHT_AFTER_REGEX, _VOLUME_REGEX, _VOLUME_AFTER_REGEX,
+    _weight_unit_to_grams, _volume_unit_to_ml,
+)
+
+logger = logging.getLogger(__name__)
 
 
 class FoodAnalysisCacheServicePart2:

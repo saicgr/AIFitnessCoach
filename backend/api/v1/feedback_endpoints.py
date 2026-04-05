@@ -6,6 +6,14 @@ for both overall workout and individual exercises.
 
 Also includes AI Coach feedback using RAG for personalized workout analysis.
 """
+from typing import List, Optional
+from fastapi import APIRouter, Depends, HTTPException
+from pydantic import BaseModel
+import logging
+logger = logging.getLogger(__name__)
+from core.auth import get_current_user
+from core.db import get_supabase_db
+from core.exceptions import safe_internal_error
 
 from .feedback_models import (
     SetDetail,

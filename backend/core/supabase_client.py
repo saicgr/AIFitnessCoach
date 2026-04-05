@@ -2,6 +2,7 @@
 Supabase client wrapper for FitWiz.
 Provides database and auth functionality via Supabase.
 """
+from fastapi import Depends
 from supabase import create_client, Client
 from supabase.lib.client_options import ClientOptions
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker

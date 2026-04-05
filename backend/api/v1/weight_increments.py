@@ -4,6 +4,7 @@ Weight Increments API Endpoints.
 Allows users to customize weight step sizes per equipment type (dumbbell, barbell, etc.).
 Supports both kg and lbs units.
 """
+from core.db import get_supabase_db
 
 from fastapi import APIRouter, Depends, HTTPException
 from core.auth import get_current_user

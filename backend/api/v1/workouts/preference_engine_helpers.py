@@ -9,6 +9,9 @@ Core principle: Parse JSON → find target → replace with library match → up
 
 
 """
+from datetime import datetime, timedelta, date
+import logging
+logger = logging.getLogger(__name__)
 def _inject_into_section(
     db,
     workout_id: str,

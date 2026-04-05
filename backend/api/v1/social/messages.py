@@ -8,6 +8,7 @@ Allows users to:
 - Mark messages as read
 - Create/manage group conversations (F12)
 """
+from core.db import get_supabase_db
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from starlette.requests import Request

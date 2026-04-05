@@ -6,6 +6,12 @@ behavioral patterns, and health-related context structures.
 
 
 """
+from typing import Any, Dict, List, Optional
+from dataclasses import dataclass, field
+from datetime import date, datetime
+
+
+@dataclass
 class CardioPatterns:
     """Analyzed cardio activity patterns for AI recommendations."""
     # Recent activity (last 7 days)

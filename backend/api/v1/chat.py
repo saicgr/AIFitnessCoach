@@ -26,6 +26,7 @@ RATE LIMITS:
 - /history GET: 30 requests/minute
 - /history DELETE: 3 requests/minute
 """
+from core.db import get_supabase_db
 
 from .chat_models import *  # noqa: F401, F403
 from .chat_endpoints import router as _endpoints_router

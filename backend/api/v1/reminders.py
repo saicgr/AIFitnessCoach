@@ -6,6 +6,7 @@ ENDPOINTS:
 - POST /api/v1/reminders/send-user/{user_id} - Send reminder to a specific user
 - GET  /api/v1/reminders/status - Check email service status
 """
+from core.db import get_supabase_db
 
 import json
 from datetime import date, datetime

@@ -9,6 +9,7 @@ Allows users to:
 Reports are analyzed by Gemini AI to understand why a response
 might have been problematic, helping improve the AI coach over time.
 """
+from core.db import get_supabase_db
 
 from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
 from typing import List, Optional

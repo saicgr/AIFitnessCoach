@@ -13,6 +13,15 @@ want to keep in every workout regardless of the weekly variation setting.
 
 Avoided exercises/muscles are excluded from AI-generated workouts entirely.
 """
+from typing import List, Optional
+from datetime import datetime, date
+from fastapi import APIRouter, Depends, HTTPException, Query
+from pydantic import BaseModel, Field
+import logging
+logger = logging.getLogger(__name__)
+from core.auth import get_current_user
+from core.db import get_supabase_db
+from core.exceptions import safe_internal_error
 
 from .exercise_preferences_models import (
     StapleExerciseCreate,

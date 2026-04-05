@@ -21,6 +21,20 @@ Expected Performance:
 
 
 """
+from typing import Any, Dict, List, Optional
+import asyncio
+import json
+import logging
+from datetime import datetime, timedelta
+from sqlalchemy import text
+from core.db.facade import get_supabase_db
+from core.db.nutrition_db import NutritionDB
+from core.supabase_client import get_supabase
+from services.gemini_service import GeminiService
+
+logger = logging.getLogger(__name__)
+
+
 class FoodAnalysisCacheService:
     """
     Caching layer for food analysis to speed up repeated queries.
@@ -1013,3 +1027,6 @@ class FoodAnalysisCacheService:
                 return "dairy"
         return "general"
 
+
+# Re-export from part2 for backward compatibility
+from services.food_analysis.cache_service_helpers_part2 import get_food_analysis_cache_service  # noqa: F401

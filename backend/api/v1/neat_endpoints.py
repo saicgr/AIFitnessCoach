@@ -14,9 +14,17 @@ Endpoints:
 - Reminder Preferences: Configure movement reminder settings
 - Dashboard: Combined endpoint for efficient UI loading
 - Scheduler: Cron job endpoints for background processing
-router = APIRouter()
-
 """
+from typing import Any, Dict
+from datetime import datetime, timedelta, date
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
+import logging
+logger = logging.getLogger(__name__)
+from core.auth import get_current_user
+from core.db import get_supabase_db
+from core.exceptions import safe_internal_error
+
+router = APIRouter()
 @router.get("/streaks/{user_id}/summary", response_model=StreakSummary, tags=["NEAT Streaks"])
 async def get_streak_summary(user_id: str,
     current_user: dict = Depends(get_current_user),

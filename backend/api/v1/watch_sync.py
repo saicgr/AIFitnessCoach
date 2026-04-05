@@ -4,6 +4,7 @@ WearOS Watch Sync API Router.
 Provides endpoints for batch syncing data from WearOS watch to backend.
 Supports workout logs, nutrition, fasting, and activity data with Gemini integration.
 """
+from core.db import get_supabase_db
 from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel, Field
 from typing import Optional, List

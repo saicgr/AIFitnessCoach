@@ -11,6 +11,7 @@ ENDPOINTS:
 - GET  /api/v1/layouts/templates - Get all system templates
 - POST /api/v1/layouts/user/{user_id}/from-template/{template_id} - Create from template
 """
+from core.db import get_supabase_db
 from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException, Request
 from core.auth import get_current_user, verify_user_ownership, verify_resource_ownership

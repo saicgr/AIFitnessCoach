@@ -19,6 +19,14 @@ Endpoints:
 - POST /fitness/calculate - Calculate overall fitness score
 - GET /overview - Combined dashboard data
 """
+from typing import Any, Dict, List, Optional
+from datetime import datetime, timedelta, date
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query
+from pydantic import BaseModel
+import logging
+logger = logging.getLogger(__name__)
+from core.auth import get_current_user
+from core.db import get_supabase_db
 
 from .scores_models import (
     ReadinessCheckInRequest,

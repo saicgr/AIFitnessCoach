@@ -11,6 +11,7 @@ Allows users to:
 
 This provides a real-time human support option when AI chat is insufficient.
 """
+from core.db import get_supabase_db
 from .live_chat_endpoints import router as _endpoints_router
 
 

@@ -17,6 +17,14 @@ Cardio Sessions:
 - DELETE /cardio/sessions/{session_id} - Delete a session
 - GET /cardio/sessions/{user_id}/stats - Get aggregate cardio statistics
 """
+from typing import Dict, List, Optional
+from datetime import datetime, timedelta
+from fastapi import APIRouter, Depends, HTTPException, Query
+import logging
+logger = logging.getLogger(__name__)
+from core.auth import get_current_user
+from core.db import get_supabase_db
+from core.exceptions import safe_internal_error
 
 from .cardio_models import (
     HRZoneResponse,

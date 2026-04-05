@@ -7,6 +7,7 @@ This module handles workout version management:
 - GET /{workout_id}/versions - Get version history
 - POST /revert - Revert to a previous version
 """
+from core.db import get_supabase_db
 import json
 import time
 from datetime import datetime

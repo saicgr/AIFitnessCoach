@@ -11,6 +11,7 @@ the hero card is empty.
 NOTE: Workouts are filtered by active gym profile. Users only see workouts
 belonging to the currently active gym profile.
 """
+from core.db import get_supabase_db
 from datetime import datetime, date, timedelta
 from typing import Optional, List, Set
 import asyncio

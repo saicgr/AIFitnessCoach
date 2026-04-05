@@ -10,6 +10,7 @@ Provides admin-specific functionality for:
 - Agent presence tracking
 - Support ticket and report management
 """
+from core.db import get_supabase_db
 from .live_chat_endpoints import router as _endpoints_router
 
 

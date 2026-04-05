@@ -11,6 +11,16 @@ ChromaDB queries to avoid redundant network calls (500ms-2s each).
 
 
 """
+from typing import Any, Dict, List, Optional
+from core.config import get_settings
+from core.chroma_cloud import get_chroma_cloud_client
+from core.logger import get_logger
+from services.gemini_service import GeminiService
+
+settings = get_settings()
+_rag_logger = get_logger(__name__)
+
+
 class NutritionRAGService:
     """
     RAG service for nutrition and food log history.

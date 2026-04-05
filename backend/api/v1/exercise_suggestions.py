@@ -9,6 +9,7 @@ RATE LIMITS:
 
 Updated: 2025-12-21 - Trigger Render redeploy for swap exercise feature
 """
+from core.db import get_supabase_db
 import re
 from fastapi import APIRouter, HTTPException, Request, Depends
 from typing import List, Optional, Dict, Any

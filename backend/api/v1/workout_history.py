@@ -10,6 +10,7 @@ This module allows users to:
 The imported data feeds into the strength history system so the AI
 can generate workouts with appropriate weights from day one.
 """
+from core.db import get_supabase_db
 from fastapi import APIRouter, Depends, HTTPException, Query
 from core.auth import get_current_user, verify_user_ownership, verify_resource_ownership
 from core.exceptions import safe_internal_error

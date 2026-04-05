@@ -9,6 +9,7 @@ S3 Bucket Structure:
     └── subfolder2/
         └── video3.mp4
 """
+from core.db import get_supabase_db
 from typing import List
 
 from fastapi import APIRouter, Depends, HTTPException

@@ -9,9 +9,18 @@ Endpoints:
 - GET /consistency/patterns - Get detailed time/day patterns
 - GET /consistency/calendar - Get calendar heatmap data
 - POST /consistency/streak-recovery - Initiate streak recovery
-router = APIRouter()
-
 """
+from typing import Optional
+from datetime import datetime, timedelta, date
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, Request
+import logging
+logger = logging.getLogger(__name__)
+from core.auth import get_current_user
+from core.db import get_supabase_db
+from core.timezone_utils import resolve_timezone, get_user_today
+from core.exceptions import safe_internal_error
+
+router = APIRouter()
 @router.get("/search-exercise", tags=["Consistency"])
 async def search_exercise_history(
     request: Request,

@@ -9,6 +9,14 @@ This addresses the common complaint:
 but then hit a paywall to even see how the app works, let alone what your plan
 might look like."
 """
+from typing import Any, Dict, List, Optional
+from datetime import datetime, timedelta
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
+from pydantic import BaseModel
+import logging
+logger = logging.getLogger(__name__)
+from core.db import get_supabase_db
+from core.exceptions import safe_internal_error
 
 from .demo_models import (
     PreviewPlanRequest,

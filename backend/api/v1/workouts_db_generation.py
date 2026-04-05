@@ -3,6 +3,7 @@ Workout generation, streaming, and suggestion endpoints.
 
 Sub-router included by workouts_db.py main router.
 """
+from core.db import get_supabase_db
 from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks, Request
 from fastapi.responses import StreamingResponse
 from core.auth import get_current_user

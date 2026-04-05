@@ -9,6 +9,7 @@ Provides real-time weight suggestions during active workouts based on:
 
 Uses Gemini AI to generate intelligent, personalized suggestions.
 """
+from core.db import get_supabase_db
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 from core.auth import get_current_user

@@ -4,6 +4,7 @@ Database-backed job queue for background media analysis (form check, food analys
 This service persists job state to Supabase so jobs survive server restarts.
 If the table doesn't exist yet, it falls back to in-memory storage.
 """
+from fastapi import HTTPException
 from typing import Optional, List, Dict, Any
 from datetime import datetime, timedelta
 from core.supabase_db import get_supabase_db

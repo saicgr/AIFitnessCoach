@@ -15,6 +15,11 @@ This module also builds an alias index at import time for O(1) lookups.
 
 
 """
+from typing import Dict
+from dataclasses import dataclass
+
+
+@dataclass
 class IngredientRecord:
     score: int           # 1 (anti-inflammatory) to 10 (highly inflammatory)
     category: str        # matches IngredientCategory enum values

@@ -4,6 +4,7 @@ program customization, and generation-params endpoints.
 
 Sub-router included by workouts_db.py main router.
 """
+from core.db import get_supabase_db
 from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks, Request
 from core.auth import get_current_user
 from core.exceptions import safe_internal_error

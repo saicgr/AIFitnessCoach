@@ -20,6 +20,7 @@ Benefits:
 - Enhanced muscle pump
 - Greater workout density
 """
+from core.db import get_supabase_db
 
 from .supersets_models import *  # noqa: F401, F403
 from .supersets_endpoints import router as _endpoints_router

@@ -4,6 +4,7 @@ Flexibility Assessment API endpoints.
 Tracks flexibility test results and progress over time.
 Provides personalized stretch recommendations based on assessment results.
 """
+from core.db import get_supabase_db
 
 from fastapi import APIRouter, HTTPException, Query, Depends
 from typing import List, Optional

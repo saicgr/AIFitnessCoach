@@ -3,6 +3,7 @@ Health Metrics API Router.
 
 Provides endpoints for calculating and storing health metrics.
 """
+from core.db import get_supabase_db
 import io
 
 import pandas as pd

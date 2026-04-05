@@ -5,6 +5,9 @@ Handles flexibility testing, evaluation, progress tracking, and personalized rec
 
 
 """
+from typing import Any, Dict, List, Optional
+import logging
+logger = logging.getLogger(__name__)
 def _get_age_group(age: int) -> str:
     """Get the age group string for norm lookup."""
     if age < 30:

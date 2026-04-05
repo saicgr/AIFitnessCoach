@@ -18,6 +18,7 @@ Endpoints:
 - GET    /{user_id}/gcal/busy-times?date=    - Get busy blocks from Google Calendar
 - POST   /{user_id}/gcal/push-event          - Push item to Google Calendar
 """
+from core.db import get_supabase_db
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from datetime import datetime, date, timezone

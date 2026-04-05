@@ -6,6 +6,7 @@ This module handles AI-powered workout suggestions:
 - GET /{workout_id}/summary - Get AI summary of a workout
 - GET /{workout_id}/generation-params - Get AI reasoning for exercise selection
 """
+from core.db import get_supabase_db
 import json
 from datetime import datetime
 from typing import List, Optional

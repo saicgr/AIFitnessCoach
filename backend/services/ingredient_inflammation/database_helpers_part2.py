@@ -1,4 +1,5 @@
 """Second part of database_helpers.py (auto-split for size)."""
+from typing import Dict, Optional
 
 
 class IngredientRecordPart2:

@@ -18,6 +18,7 @@ Insights:
 Calendar:
 - GET  /api/v1/fasting-impact/calendar/{user_id} - Get calendar view data with fasting/workout/goal info
 """
+from core.db import get_supabase_db
 
 from .fasting_impact_models import *  # noqa: F401, F403
 from .fasting_impact_endpoints import router as _endpoints_router

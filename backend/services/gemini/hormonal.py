@@ -1,6 +1,7 @@
 """
 Gemini Service Hormonal Health Prompts.
 """
+from typing import Dict, List, Optional
 
 # ============================================================================
 # HORMONAL HEALTH PROMPTS

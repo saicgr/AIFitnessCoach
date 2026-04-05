@@ -39,6 +39,24 @@ RAGCache = RedisCache
 # Note: Embedding cache removed - gemini_service.get_embedding_async() already caches
 _query_cache = RedisCache(prefix="rag_query", ttl_seconds=1800, max_size=50)   # 30 min TTL for query results (reduced for 512MB)
 
+# Module-level RAG service instance (set by chat.py on startup)
+_rag_service_instance: Optional["RAGService"] = None
+
+
+def get_rag_service() -> "RAGService":
+    """FastAPI dependency to get the RAG service instance."""
+    from fastapi import HTTPException
+    if _rag_service_instance is None:
+        # Fallback: try to get from chat module where it's initialized
+        try:
+            from api.v1.chat import rag_service
+            if rag_service is not None:
+                return rag_service
+        except ImportError:
+            pass
+        raise HTTPException(status_code=503, detail="RAG service not initialized")
+    return _rag_service_instance
+
 
 class RAGService:
     """

@@ -29,6 +29,7 @@ Meal Templates:
 Food Search:
 - GET  /api/v1/nutrition/search - Fast food search with caching
 """
+from core.db import get_supabase_db
 
 from .nutrition_preferences_models import *  # noqa: F401, F403
 from .nutrition_preferences_endpoints import router as _endpoints_router

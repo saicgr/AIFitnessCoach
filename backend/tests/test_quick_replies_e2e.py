@@ -9,6 +9,7 @@ These tests validate that:
 Run all tests: pytest tests/test_quick_replies_e2e.py -v
 Run fast only: pytest tests/test_quick_replies_e2e.py -v -m "not slow"
 """
+from typing import Any
 import pytest
 import sys
 import os

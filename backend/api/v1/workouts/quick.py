@@ -7,6 +7,7 @@ for busy users who want 5-30 minute workouts.
 - POST /quick - Generate a quick workout tailored to duration and focus
 - POST /quick/save - Save a locally-generated quick workout to the server
 """
+from core.db import get_supabase_db
 import asyncio
 import json
 from datetime import datetime

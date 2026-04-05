@@ -1,4 +1,5 @@
 """Second part of prompts_helpers.py (auto-split for size)."""
+from typing import Any
 
 
 class PromptsMixinPart2:

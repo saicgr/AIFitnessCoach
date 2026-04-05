@@ -1,4 +1,8 @@
 """Second part of nutrition_db_helpers.py (auto-split for size)."""
+from typing import Any, Dict, List, Optional
+from datetime import datetime, timedelta
+import logging
+logger = logging.getLogger(__name__)
 
 
 class NutritionDBPart2:

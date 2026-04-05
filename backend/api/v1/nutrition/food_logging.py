@@ -1,4 +1,5 @@
 """Food logging endpoints (image, text, direct)."""
+from core.db import get_supabase_db
 from datetime import datetime, timedelta
 from typing import List, Optional, Tuple
 import uuid

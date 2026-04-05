@@ -12,6 +12,7 @@ Large endpoint groups are split into focused sub-modules:
 - workout_operations.py: Swap, add, extend operations
 - generation_helpers.py: Shared helper functions (MET estimation, normalization)
 """
+from core.db import get_supabase_db
 from .generation_endpoints import router as _endpoints_router
 
 import hashlib

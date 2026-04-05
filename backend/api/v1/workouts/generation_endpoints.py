@@ -11,9 +11,16 @@ Large endpoint groups are split into focused sub-modules:
 - mood_generation.py: Mood-based workout generation
 - workout_operations.py: Swap, add, extend operations
 - generation_helpers.py: Shared helper functions (MET estimation, normalization)
-router = APIRouter()
-
 """
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request
+import logging
+logger = logging.getLogger(__name__)
+from core.auth import get_current_user
+from core.db import get_supabase_db
+from core.timezone_utils import resolve_timezone, get_user_today
+from core.exceptions import safe_internal_error
+
+router = APIRouter()
 @router.post("/generate", response_model=Workout)
 @user_limiter.limit("15/minute")
 async def generate_workout(request: Request, *, body: GenerateWorkoutRequest, background_tasks: BackgroundTasks,

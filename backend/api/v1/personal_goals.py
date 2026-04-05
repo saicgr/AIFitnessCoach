@@ -19,6 +19,7 @@ Endpoints:
 - POST /goals/suggestions/{id}/dismiss - Dismiss a suggestion
 - POST /goals/suggestions/{id}/accept - Create goal from suggestion
 """
+from core.db import get_supabase_db
 from .personal_goals_endpoints import router as _endpoints_router
 
 

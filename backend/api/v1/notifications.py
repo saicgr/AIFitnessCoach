@@ -11,6 +11,7 @@ ENDPOINTS:
 - POST /api/v1/notifications/track-interaction - Track notification open/interaction
 - POST /api/v1/notifications/scheduler/recalculate-optimal-times - Recalculate optimal send times
 """
+from core.db import get_supabase_db
 
 from .notifications_models import *  # noqa: F401, F403
 from .notifications_endpoints import router as _endpoints_router

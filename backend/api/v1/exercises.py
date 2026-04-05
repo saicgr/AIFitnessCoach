@@ -15,6 +15,7 @@ CUSTOM EXERCISE ENDPOINTS:
 - POST /api/v1/exercises/custom/{user_id} - Create a custom exercise for user
 - DELETE /api/v1/exercises/custom/{user_id}/{exercise_id} - Delete user's custom exercise
 """
+from core.db import get_supabase_db
 
 from .exercises_models import *  # noqa: F401, F403
 from .exercises_endpoints import router as _endpoints_router

@@ -7,6 +7,7 @@ Returns the next N days of already-generated workouts with full exercise data.
 This is a read-only endpoint - it returns whatever exists in the DB.
 If fewer days than requested exist, the client knows to trigger generation when online.
 """
+from core.db import get_supabase_db
 from datetime import date, datetime, timedelta
 from typing import List, Optional
 

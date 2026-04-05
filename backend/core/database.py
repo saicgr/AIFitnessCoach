@@ -9,6 +9,7 @@ Connection pool settings:
   - pool_recycle: Seconds before a connection is recycled to avoid stale connections (default 1800 = 30 min)
   - pool_pre_ping: Test connection health before handing it to a request (default True)
 """
+from fastapi import Depends
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
 from sqlalchemy.orm import declarative_base
 from core.config import get_settings

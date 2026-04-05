@@ -8,6 +8,7 @@ Provides endpoints for:
 - Exercises for specific muscle groups
 - Muscle training history over time
 """
+from core.db import get_supabase_db
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from core.auth import get_current_user, verify_user_ownership

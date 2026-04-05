@@ -16,6 +16,7 @@ RATE LIMITS:
 - /suggest: 5 requests/minute (AI-intensive)
 - Other endpoints: default global limit
 """
+from core.db import get_supabase_db
 from fastapi import APIRouter, Depends, HTTPException, Query, BackgroundTasks
 from core.auth import get_current_user
 from core.exceptions import safe_internal_error

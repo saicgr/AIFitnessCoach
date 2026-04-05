@@ -15,6 +15,7 @@ ENDPOINTS:
 - PUT  /api/v1/scheduling/preferences - Update user scheduling preferences
 - GET  /api/v1/scheduling/history - Get scheduling action history
 """
+from core.db import get_supabase_db
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from core.auth import get_current_user

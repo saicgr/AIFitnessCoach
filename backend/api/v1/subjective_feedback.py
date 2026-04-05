@@ -7,6 +7,7 @@ enabling insights like "Your mood improved 23% since starting".
 This feature addresses the user's desire to "feel their results"
 beyond just physical metrics.
 """
+from core.db import get_supabase_db
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from core.auth import get_current_user

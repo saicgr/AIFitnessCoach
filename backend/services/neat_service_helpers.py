@@ -24,6 +24,16 @@ Research-backed approach:
 
 
 """
+from typing import Any, Dict, List, Optional
+from datetime import datetime, timedelta, date
+import logging
+import time
+from core.db import get_supabase_db
+from models.neat import NEATGoal
+
+logger = logging.getLogger(__name__)
+
+
 class NEATService:
     """
     Comprehensive NEAT (Non-Exercise Activity Thermogenesis) Service.

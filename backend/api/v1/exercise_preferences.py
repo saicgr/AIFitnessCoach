@@ -1,6 +1,8 @@
 """
 Exercise Preferences API - Staple exercises, variation control, and avoidance lists.
 """
+from pydantic import BaseModel, Field
+from core.db import get_supabase_db
 from fastapi import APIRouter, HTTPException, Query, Depends
 from typing import List, Optional
 from datetime import datetime, date, timedelta

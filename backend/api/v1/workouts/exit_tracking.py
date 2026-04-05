@@ -6,7 +6,8 @@ This module handles tracking when users exit workouts early:
 - GET /{workout_id}/exits - Get exit records for a workout
 - GET /user/{user_id}/exit-stats - Get exit statistics for a user
 """
-from typing import List
+from core.db import get_supabase_db
+from typing import Any, List
 
 from fastapi import APIRouter, Depends, HTTPException
 from core.auth import get_current_user

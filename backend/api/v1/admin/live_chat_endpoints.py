@@ -9,9 +9,16 @@ Provides admin-specific functionality for:
 - Dashboard statistics and monitoring
 - Agent presence tracking
 - Support ticket and report management
-router = APIRouter()
-
 """
+from typing import Optional
+from datetime import datetime
+from fastapi import APIRouter, Depends, HTTPException
+import logging
+logger = logging.getLogger(__name__)
+from core.db import get_supabase_db
+from core.exceptions import safe_internal_error
+
+router = APIRouter()
 @router.post("/live-chats/{ticket_id}/close", response_model=CloseChatResponse)
 async def close_chat(
     ticket_id: str,

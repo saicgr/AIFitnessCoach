@@ -11,6 +11,7 @@ Endpoints:
 - GET /{user_id}/mood-weekly - Get weekly mood data
 - GET /{user_id}/mood-calendar - Get monthly mood calendar
 """
+from core.db import get_supabase_db
 import json
 import asyncio
 from datetime import datetime, timedelta

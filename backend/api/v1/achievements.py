@@ -7,6 +7,7 @@ Tracks user achievements like:
 - Workout consistency streaks
 - Habit streaks (hydration, protein, sleep)
 """
+from core.db import get_supabase_db
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 from typing import List, Optional

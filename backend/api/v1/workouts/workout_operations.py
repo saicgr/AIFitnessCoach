@@ -7,6 +7,7 @@ Endpoints:
 - POST /add-exercise - Add a new exercise to an existing workout
 - POST /extend - Extend a workout with additional AI-generated exercises
 """
+from core.db import get_supabase_db
 import json
 import re
 import uuid

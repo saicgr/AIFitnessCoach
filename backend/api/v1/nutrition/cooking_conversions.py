@@ -1,4 +1,5 @@
 """Cooking conversion endpoints."""
+from core.db import get_supabase_db
 from typing import List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query

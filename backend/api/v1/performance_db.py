@@ -17,6 +17,7 @@ ENDPOINTS:
 - GET  /api/v1/performance-db/rest-intervals - List rest intervals
 - GET  /api/v1/performance-db/rest-intervals/stats/{workout_log_id} - Get rest stats
 """
+from core.db import get_supabase_db
 
 from .performance_db_models import *  # noqa: F401, F403
 from .performance_db_endpoints import router as _endpoints_router

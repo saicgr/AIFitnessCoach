@@ -9,6 +9,9 @@ Provides single and batch food lookups with in-memory TTL caching.
 
 
 """
+from typing import Dict, List, Optional
+import logging
+logger = logging.getLogger(__name__)
 class FoodDatabaseLookupService:
     """
     Service for looking up foods in Supabase with two-tier search.

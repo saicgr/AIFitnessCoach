@@ -3,6 +3,7 @@ Workout Gallery API Endpoints
 
 Handles shareable workout recap images - upload, list, delete, and share to feed.
 """
+from core.db import get_supabase_db
 import base64
 import uuid
 from datetime import datetime

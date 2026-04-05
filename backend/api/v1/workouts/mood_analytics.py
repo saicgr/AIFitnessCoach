@@ -10,6 +10,7 @@ Provides mood tracking and visualization data:
 - GET /{user_id}/mood-weekly - Weekly mood data for chart
 - GET /{user_id}/mood-calendar - Monthly mood data for calendar heatmap
 """
+from core.db import get_supabase_db
 import calendar
 from datetime import datetime, date as date_type, timedelta
 from typing import List, Dict, Any, Optional

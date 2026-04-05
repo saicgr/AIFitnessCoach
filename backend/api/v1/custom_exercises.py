@@ -8,6 +8,7 @@ This module allows users to:
 4. Share exercises publicly with other users
 5. Search both library and custom exercises
 """
+from core.db import get_supabase_db
 from fastapi import APIRouter, Depends, HTTPException, Query, UploadFile, File
 from pydantic import BaseModel, Field
 from typing import List, Optional, Dict, Any

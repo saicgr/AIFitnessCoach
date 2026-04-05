@@ -5,6 +5,12 @@ Comprehensive diabetes management for Type 1, Type 2, and other diabetes types.
 Includes blood glucose logging, insulin tracking, A1C management, carbohydrate
 counting, and Health Connect integration.
 """
+from typing import Optional
+from datetime import datetime, timedelta, date
+from fastapi import APIRouter, Depends, HTTPException
+from core.auth import get_current_user
+from core.db import get_supabase_db
+from core.exceptions import safe_internal_error
 
 from .diabetes_models import (
     CreateDiabetesProfileRequest,

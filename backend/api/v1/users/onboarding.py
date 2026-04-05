@@ -1,6 +1,7 @@
 """
 Onboarding-related endpoints: preferences, nutrition targets, fasting sync, gym profiles.
 """
+from core.db import get_supabase_db
 import asyncio
 import json
 from datetime import datetime

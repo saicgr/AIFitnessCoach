@@ -8,6 +8,7 @@ Provides endpoints for:
 - Most performed exercises
 - Exercise chart data for visualizations
 """
+from core.db import get_supabase_db
 
 from fastapi import APIRouter, HTTPException, Query, Depends
 from core.auth import get_current_user

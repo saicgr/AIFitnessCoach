@@ -7,6 +7,7 @@ Provides endpoints for:
 - Earned trophies
 - Recently earned trophies
 """
+from core.db import get_supabase_db
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from core.auth import get_current_user

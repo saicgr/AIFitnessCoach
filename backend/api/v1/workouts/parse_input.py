@@ -6,6 +6,7 @@ This module handles AI-powered parsing of natural language workout input:
 - POST /parse-input-v2 - Dual-mode parsing: sets for current exercise + new exercises
 - POST /add-exercises-batch - Add multiple parsed exercises to a workout
 """
+from core.db import get_supabase_db
 import json
 from typing import List, Optional
 

@@ -14,9 +14,16 @@ ENDPOINTS:
 - POST /api/v1/gym-profiles/{id}/activate - Activate (switch to) a profile
 - POST /api/v1/gym-profiles/reorder - Update display order of profiles
 - GET  /api/v1/gym-profiles/active - Get user's currently active profile
-router = APIRouter()
-
 """
+from typing import Optional
+from datetime import datetime
+from fastapi import APIRouter, Depends, HTTPException, Query
+import logging
+logger = logging.getLogger(__name__)
+from core.auth import get_current_user
+from core.exceptions import safe_internal_error
+
+router = APIRouter()
 @router.put("/{profile_id}", response_model=GymProfile)
 async def update_gym_profile(
     profile_id: str, update: GymProfileUpdate,

@@ -9,6 +9,7 @@ ENDPOINTS:
 - PUT /api/v1/hydration/goal/{user_id} - Update daily hydration goal
 - GET /api/v1/hydration/goal/{user_id} - Get user's hydration goal
 """
+from core.db import get_supabase_db
 from fastapi import APIRouter, HTTPException, Query, Request, Depends
 from typing import List, Optional
 from datetime import datetime, date, timedelta

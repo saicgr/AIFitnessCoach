@@ -23,6 +23,7 @@ For user-based rate limiting (better for authenticated endpoints):
 Note: The limiter must be attached to the FastAPI app in main.py:
     app.state.limiter = limiter
 """
+from fastapi import Request
 import json
 import logging
 import os

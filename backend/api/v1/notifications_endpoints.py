@@ -11,6 +11,14 @@ ENDPOINTS:
 - POST /api/v1/notifications/track-interaction - Track notification open/interaction
 - POST /api/v1/notifications/scheduler/recalculate-optimal-times - Recalculate optimal send times
 """
+from typing import Optional
+from fastapi import APIRouter, Depends, HTTPException
+from pydantic import BaseModel
+import logging
+logger = logging.getLogger(__name__)
+from core.auth import get_current_user
+from core.db import get_supabase_db
+from core.exceptions import safe_internal_error
 
 from .notifications_models import (
     TestNotificationRequest,

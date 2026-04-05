@@ -17,6 +17,19 @@ ENDPOINTS:
 - GET  /api/v1/performance-db/rest-intervals - List rest intervals
 - GET  /api/v1/performance-db/rest-intervals/stats/{workout_log_id} - Get rest stats
 """
+from typing import List, Optional
+from fastapi import APIRouter, Depends, Query
+from pydantic import BaseModel
+import logging
+logger = logging.getLogger(__name__)
+from core.auth import get_current_user
+from core.db import get_supabase_db
+from core.exceptions import safe_internal_error
+from models.schemas import (
+    WorkoutExitCreate, WorkoutExit,
+    DrinkIntakeCreate, DrinkIntake,
+    RestIntervalCreate, RestInterval,
+)
 
 from .performance_db_models import (
     ExerciseLastPerformance,
@@ -30,6 +43,23 @@ from .performance_db_models import (
 )
 
 router = APIRouter()
+
+def row_to_workout_exit(row: dict) -> WorkoutExit:
+    """Convert a Supabase row dict to WorkoutExit model."""
+    return WorkoutExit(
+        id=row.get("id"),
+        user_id=row.get("user_id"),
+        workout_id=row.get("workout_id"),
+        exit_reason=row.get("exit_reason"),
+        exit_notes=row.get("exit_notes"),
+        exercises_completed=row.get("exercises_completed", 0),
+        total_exercises=row.get("total_exercises", 0),
+        sets_completed=row.get("sets_completed", 0),
+        time_spent_seconds=row.get("time_spent_seconds", 0),
+        progress_percentage=row.get("progress_percentage", 0.0),
+        exited_at=row.get("exited_at"),
+    )
+
 
 @router.post("/workout-exit", response_model=WorkoutExit)
 async def create_workout_exit(data: WorkoutExitCreate,

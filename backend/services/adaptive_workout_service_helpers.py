@@ -16,6 +16,10 @@ Key factors considered:
 
 
 """
+from typing import Any, Dict, List
+from datetime import datetime, timedelta
+import logging
+logger = logging.getLogger(__name__)
 class AdaptiveWorkoutService:
     """Calculates adaptive workout parameters based on performance history."""
 

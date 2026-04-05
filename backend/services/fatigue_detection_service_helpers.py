@@ -28,6 +28,10 @@ Usage:
     )
     recommendation = service.get_set_recommendation(analysis)
 """
+from typing import Any, Dict, List, Optional
+from datetime import datetime
+import logging
+logger = logging.getLogger(__name__)
 
 
 async def log_fatigue_detection_event(

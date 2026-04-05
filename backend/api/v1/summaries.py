@@ -6,6 +6,7 @@ Generates AI-powered weekly workout summaries with:
 - Personalized AI encouragement
 - Tips for the next week
 """
+from core.db import get_supabase_db
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 from typing import List, Optional

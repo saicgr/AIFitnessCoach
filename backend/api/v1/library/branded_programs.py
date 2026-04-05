@@ -12,6 +12,7 @@ This module handles branded program operations for the Flutter app:
 - DELETE /branded-programs/current - End user's current program
 - GET /branded-programs/history - Get user's program history
 """
+from core.db import get_supabase_db
 from typing import List, Dict, Any, Optional
 from datetime import datetime
 

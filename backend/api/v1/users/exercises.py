@@ -1,6 +1,7 @@
 """
 Favorite exercises and exercise queue endpoints.
 """
+from core.db import get_supabase_db
 from fastapi import APIRouter, Depends, HTTPException
 from core.auth import get_current_user, verify_user_ownership
 from core.exceptions import safe_internal_error

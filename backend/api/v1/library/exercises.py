@@ -12,6 +12,7 @@ This module handles exercise library operations:
 """
 from __future__ import annotations
 from typing import List, Dict, Any, Optional
+from core.db import get_supabase_db
 
 import difflib
 

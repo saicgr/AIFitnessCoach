@@ -1,4 +1,7 @@
 """Second part of workout_generation_helpers.py (auto-split for size)."""
+from typing import Dict, List, Optional
+import logging
+logger = logging.getLogger(__name__)
 
 
 class WorkoutGenerationMixinPart2:
